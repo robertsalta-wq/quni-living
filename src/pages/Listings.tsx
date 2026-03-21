@@ -8,7 +8,7 @@ import {
 } from '../lib/listings'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingsQuery } from '../hooks/useListingsQuery'
-import { PropertyCard } from '../components/listings/PropertyCard'
+import { PropertyCard } from '../components/PropertyCard'
 import { ListingsGridSkeleton } from '../components/listings/ListingsGridSkeleton'
 
 export default function Listings() {

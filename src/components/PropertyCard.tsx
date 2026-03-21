@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import type { Property } from '../../lib/listings'
-import { isRoomType, ROOM_TYPE_LABELS } from '../../lib/listings'
+import type { Property } from '../lib/listings'
+import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 
 type Props = { property: Property }
 
