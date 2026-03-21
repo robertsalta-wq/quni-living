@@ -199,7 +199,7 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-12">
         <p className="text-gray-500 text-center">Loading your dashboard…</p>
       </div>
     )
@@ -221,7 +221,7 @@ export default function StudentDashboard() {
   const welcomeName = profile ? firstNameFromStudent(profile) : 'there'
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
       {error && profile && (
         <div
           className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
