@@ -1,4 +1,7 @@
-/** Absolute OAuth return URL — add this path in Supabase Auth → URL Configuration → Redirect URLs */
+/**
+ * OAuth return URL after Google (etc.). Must be listed in Supabase → Authentication → URL Configuration → Redirect URLs
+ * (e.g. http://localhost:5173/auth/callback and your production /auth/callback).
+ */
 export function getAuthCallbackUrl() {
   return `${window.location.origin}/auth/callback`
 }

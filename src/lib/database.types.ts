@@ -144,11 +144,24 @@ export interface Database {
           id: string
           user_id: string
           full_name: string | null
+          first_name: string | null
+          last_name: string | null
           email: string | null
           phone: string | null
+          gender: string | null
+          nationality: string | null
           university_id: string | null
+          campus_id: string | null
           course: string | null
           year_of_study: number | null
+          student_type: string | null
+          room_type_preference: string | null
+          budget_min_per_week: number | null
+          budget_max_per_week: number | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          is_smoker: boolean | null
+          date_of_birth: string | null
           avatar_url: string | null
           created_at: string
         }
@@ -156,11 +169,24 @@ export interface Database {
           id?: string
           user_id: string
           full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           email?: string | null
           phone?: string | null
+          gender?: string | null
+          nationality?: string | null
           university_id?: string | null
+          campus_id?: string | null
           course?: string | null
           year_of_study?: number | null
+          student_type?: string | null
+          room_type_preference?: string | null
+          budget_min_per_week?: number | null
+          budget_max_per_week?: number | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          is_smoker?: boolean | null
+          date_of_birth?: string | null
           avatar_url?: string | null
           created_at?: string
         }
@@ -168,11 +194,24 @@ export interface Database {
           id?: string
           user_id?: string
           full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           email?: string | null
           phone?: string | null
+          gender?: string | null
+          nationality?: string | null
           university_id?: string | null
+          campus_id?: string | null
           course?: string | null
           year_of_study?: number | null
+          student_type?: string | null
+          room_type_preference?: string | null
+          budget_min_per_week?: number | null
+          budget_max_per_week?: number | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          is_smoker?: boolean | null
+          date_of_birth?: string | null
           avatar_url?: string | null
           created_at?: string
         }

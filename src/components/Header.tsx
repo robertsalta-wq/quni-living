@@ -32,6 +32,8 @@ export default function Header() {
     .slice(0, 2)
     .toUpperCase()
 
+  const profilePhotoUrl = profile?.avatar_url?.trim() || null
+
   const metaRole = user?.user_metadata?.role as string | undefined
   const dashboardHref =
     metaRole === 'student' || metaRole === 'landlord'
@@ -80,9 +82,17 @@ export default function Header() {
                 aria-expanded={menuOpen}
                 aria-haspopup="true"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-800">
-                  {initials}
-                </span>
+                {profilePhotoUrl ? (
+                  <img
+                    src={profilePhotoUrl}
+                    alt=""
+                    className="h-8 w-8 rounded-full object-cover border border-gray-200 bg-gray-100"
+                  />
+                ) : (
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-800">
+                    {initials}
+                  </span>
+                )}
                 <span className="hidden sm:inline text-sm text-gray-700 max-w-[120px] truncate">
                   {displayName}
                 </span>

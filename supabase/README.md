@@ -28,14 +28,23 @@ Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
 
 If you **already applied the older Quni schema** (single `profiles`, `price_per_week`, etc.), use a **fresh Supabase project** or manually drop conflicting tables before running this script.
 
-## Landlord profile (extra columns + avatar upload)
+## Landlord profile (extra columns + profile photo upload)
 
 If your project was created before these columns existed, run **`landlord_profile_extend.sql`** in SQL Editor (adds `first_name`, `last_name`, `company_name`, `abn`, `landlord_type`, and address fields `address`, `suburb`, `state`, `postcode` on `landlord_profiles`).
 
-For **profile photos** in the app:
+For **a photo of yourself** on the landlord profile:
 
-1. Storage → create a **public** bucket named **`landlord-avatars`**.
-2. Run **`storage_landlord_avatars.sql`** in SQL Editor (RLS policies: users upload/read only under `landlord-avatars/{their_user_id}/`).
+1. Storage → create a **public** bucket named **`landlord-avatars`** (legacy id; stores profile photos).
+2. Run **`storage_landlord_profile_photos.sql`** in SQL Editor (RLS: upload/read under `landlord-avatars/{their_user_id}/`).
+
+## Student profile (extra columns + profile photo upload)
+
+If your project was created before these columns existed, run **`student_profile_extend.sql`** in SQL Editor (adds `first_name`, `last_name`, `gender`, `nationality`, `campus_id`, `student_type`, `room_type_preference`, budget fields, emergency contacts, `is_smoker`, `date_of_birth`; ensures **`campuses`** exists with public read RLS).
+
+For **a photo of yourself** on the student profile:
+
+1. Storage → create a **public** bucket named **`student-avatars`** (legacy id; stores profile photos).
+2. Run **`storage_student_profile_photos.sql`** in SQL Editor.
 
 ## Listings show “No listings found”
 
@@ -43,6 +52,22 @@ That’s normal when **`properties`** has no rows. Either:
 
 - Use the app as a **Landlord** and add a property via your property form / flow, or  
 - Run **`seed_demo_listings.sql`** in SQL Editor (adds **5 demo listings with Unsplash photo URLs** in `images[]`, **only if** at least one **`landlord_profiles`** row exists). To re-seed after an older run: `DELETE FROM public.properties WHERE slug LIKE 'demo-%';` then run the script again.
+
+## Google OAuth on localhost
+
+The app sends users back to **`{origin}/auth/callback`** (see `src/lib/oauth.ts`). That URL must be allowed in Supabase or the session exchange fails after Google.
+
+1. **Supabase Dashboard** → **Authentication** → **URL Configuration**
+2. Under **Redirect URLs**, add (match how you open the app — `localhost` and `127.0.0.1` are different origins):
+   - `http://localhost:5173/auth/callback`
+   - `http://127.0.0.1:5173/auth/callback` (optional but useful if you use this URL)
+3. Save. **Restart** `npm run dev` if you changed `.env.local`.
+
+**Vercel works but localhost does not?** Production is already on the allow list; you still must add the `http://localhost:5173/auth/callback` entry above.
+
+**Google Cloud Console** (only if Google sign-in is broken everywhere): the OAuth client Supabase uses must list  
+`https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback`  
+as an **Authorized redirect URI**. Supabase usually documents this when you enable the Google provider.
 
 ## 2. Env
 

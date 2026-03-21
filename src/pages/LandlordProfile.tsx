@@ -10,8 +10,9 @@ type PropertyPick = Pick<
   'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured'
 >
 
-const AVATAR_BUCKET = 'landlord-avatars'
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+/** Supabase Storage bucket id (legacy name); stores profile photos of the landlord. */
+const PROFILE_PHOTO_BUCKET = 'landlord-avatars'
+const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024
 
 const LANDLORD_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Select landlord type' },
@@ -71,7 +72,7 @@ function statusBadgeClass(status: PropertyPick['status']) {
 type LandlordTab = 'profile' | 'properties'
 
 export default function LandlordProfile() {
-  const { user } = useAuthContext()
+  const { user, refreshProfile } = useAuthContext()
   const [activeTab, setActiveTab] = useState<LandlordTab>('profile')
   const [profile, setProfile] = useState<LandlordRow | null>(null)
   const [listings, setListings] = useState<PropertyPick[]>([])
@@ -166,7 +167,7 @@ export default function LandlordProfile() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !user?.id) return
-    if (file.size > MAX_AVATAR_BYTES) {
+    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
       setPhotoError('Photo must be 2 MB or smaller.')
       return
     }
@@ -179,15 +180,15 @@ export default function LandlordProfile() {
     try {
       const ext = file.name.split('.').pop()?.toLowerCase()
       const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
-      const path = `${user.id}/avatar.${safeExt}`
+      const path = `${user.id}/profile-photo.${safeExt}`
 
-      const { error: upErr } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, {
+      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, file, {
         upsert: true,
         contentType: file.type,
       })
       if (upErr) throw upErr
 
-      const { data: pub } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+      const { data: pub } = supabase.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path)
 
       const { error: dbErr } = await supabase
         .from('landlord_profiles')
@@ -196,11 +197,12 @@ export default function LandlordProfile() {
       if (dbErr) throw dbErr
 
       await load()
+      await refreshProfile()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed.'
       setPhotoError(
         msg.includes('Bucket not found') || msg.includes('not found')
-          ? 'Photo storage is not set up yet. Create a public bucket named "landlord-avatars" in Supabase Storage and run supabase/storage_landlord_avatars.sql.'
+          ? 'Photo storage is not set up yet. Create a public bucket named "landlord-avatars" in Supabase Storage and run supabase/storage_landlord_profile_photos.sql.'
           : msg,
       )
     } finally {
@@ -272,7 +274,7 @@ export default function LandlordProfile() {
     )
   }
 
-  const avatarUrl = profile.avatar_url
+  const profilePhotoUrl = profile.avatar_url
 
   return (
     <div className="max-w-site mx-auto px-4 sm:px-6 py-8 pb-16">
@@ -522,11 +524,17 @@ export default function LandlordProfile() {
           </div>
 
           <div>
-            <span className="block text-sm font-semibold text-gray-900 mb-2">Profile photo</span>
+            <span className="block text-sm font-semibold text-gray-900 mb-1">Photo of yourself</span>
+            <p className="text-xs text-gray-500 mb-2">Students see this on your listings. Use a clear photo of you, not a logo.</p>
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div className="h-24 w-24 rounded-full overflow-hidden bg-indigo-100 border border-gray-200 shrink-0">
-                {avatarUrl ? (
-                  <img key={avatarUrl} src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                {profilePhotoUrl ? (
+                  <img
+                    key={profilePhotoUrl}
+                    src={profilePhotoUrl}
+                    alt="Your profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-indigo-800 text-xl font-semibold">
                     {initialsFrom(firstName, lastName, profile.full_name, displayEmail)}
@@ -548,7 +556,7 @@ export default function LandlordProfile() {
                   className="w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50"
                 >
                   <span className="text-lg leading-none">+</span>
-                  {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
+                  {uploadingPhoto ? 'Uploading…' : 'Upload your photo'}
                 </button>
                 <p className="text-xs text-gray-500 mt-2">Max: 2 MB</p>
                 {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
