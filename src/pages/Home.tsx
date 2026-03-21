@@ -343,6 +343,47 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="bg-[#FF6F61] w-full py-16 sm:py-20">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-stretch">
+            <div className="order-2 lg:order-1 flex flex-col justify-center">
+              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] text-white/70 mb-4 [font-variant:small-caps]">
+                For landlords
+              </p>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-white !mt-0 !mb-4 leading-tight">
+                More income. Less vacancy. Predictable returns.
+              </h2>
+              <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
+                Student accommodation is one of Sydney&apos;s most resilient rental markets. Quni Living connects
+                verified landlords with quality students — giving you consistent occupancy, structured leases, and a
+                platform that handles enquiries and bookings for you.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/services/landlord-partnerships"
+                  className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors"
+                >
+                  Find out more
+                </Link>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center justify-center rounded-lg border-2 border-white text-white px-5 py-2.5 text-sm font-medium hover:bg-white/10 transition-colors"
+                >
+                  List your property
+                </Link>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2 lg:h-full min-h-0">
+              <img
+                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"
+                alt=""
+                className="w-full rounded-2xl object-cover shadow-lg aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[280px]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
