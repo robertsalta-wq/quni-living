@@ -26,6 +26,13 @@ import AdminApps from './pages/admin/AdminApps'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Services from './pages/Services'
+import ServiceStudentAccommodation from './pages/services/StudentAccommodation'
+import ServicePropertyManagement from './pages/services/PropertyManagement'
+import ServiceLandlordPartnerships from './pages/services/LandlordPartnerships'
+import ServiceFullyFurnished from './pages/services/FullyFurnished'
 
 function App() {
   const location = useLocation()
@@ -41,6 +48,13 @@ function App() {
           <Route path="/listings" element={<Listings />} />
           <Route path="/search" element={<Search />} />
           <Route path="/properties/:slug" element={<PropertyDetail />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/services/student-accommodation" element={<ServiceStudentAccommodation />} />
+          <Route path="/services/property-management" element={<ServicePropertyManagement />} />
+          <Route path="/services/landlord-partnerships" element={<ServiceLandlordPartnerships />} />
+          <Route path="/services/fully-furnished" element={<ServiceFullyFurnished />} />
 
           {/* Auth */}
           <Route path="/auth/callback" element={<AuthCallback />} />

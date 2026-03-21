@@ -91,14 +91,19 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/#about" className={linkClass}>
+                <Link to="/about" className={linkClass}>
                   About
                 </Link>
               </li>
               <li>
-                <a href="mailto:info@quininvestments.com.au" className={linkClass}>
+                <Link to="/contact" className={linkClass}>
                   Contact
-                </a>
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className={linkClass}>
+                  Services
+                </Link>
               </li>
             </ul>
           </div>
@@ -106,10 +111,26 @@ export default function Footer() {
           <div>
             <h2 className="font-display font-bold text-lg text-white mb-4">Our Services</h2>
             <ul className="space-y-2.5 text-sm">
-              <li>Student Accommodation</li>
-              <li>Property Management</li>
-              <li>Landlord Partnerships</li>
-              <li>Fully Furnished Units</li>
+              <li>
+                <Link to="/services/student-accommodation" className={linkClass}>
+                  Student Accommodation
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/property-management" className={linkClass}>
+                  Property Management
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/landlord-partnerships" className={linkClass}>
+                  Landlord Partnerships
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/fully-furnished" className={linkClass}>
+                  Fully Furnished Units
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -118,18 +139,16 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex gap-2.5 items-start">
                 <IconLocation className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
-                <span>Macquarie Park &amp; Ryde, NSW</span>
+                <span>Macquarie Park &amp; Ryde Precincts, Sydney NSW</span>
               </li>
               <li className="flex gap-2.5 items-start">
                 <IconPhone className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
-                <a href="tel:+61234567890" className={linkClass}>
-                  +61 2 3456 7890
-                </a>
+                <span className="text-sm">Coming soon</span>
               </li>
               <li className="flex gap-2.5 items-start">
                 <IconMail className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
-                <a href="mailto:info@quininvestments.com.au" className={linkClass}>
-                  info@quininvestments.com.au
+                <a href="mailto:hello@quni.com.au" className={linkClass}>
+                  hello@quni.com.au
                 </a>
               </li>
             </ul>

@@ -4,16 +4,29 @@ import { useAuthContext } from '../context/AuthContext'
 import { getDashboardPath } from '../lib/authProfile'
 import { formatDisplayName } from '../lib/formatDisplayName'
 
+const SERVICE_LINKS = [
+  { to: '/services/student-accommodation', label: 'Student Accommodation' },
+  { to: '/services/property-management', label: 'Property Management' },
+  { to: '/services/landlord-partnerships', label: 'Landlord Partnerships' },
+  { to: '/services/fully-furnished', label: 'Fully Furnished Units' },
+] as const
+
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [servicesOpen, setServicesOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const servicesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function close(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const t = e.target as Node
+      if (menuRef.current && !menuRef.current.contains(t)) {
         setMenuOpen(false)
+      }
+      if (servicesRef.current && !servicesRef.current.contains(t)) {
+        setServicesOpen(false)
       }
     }
     document.addEventListener('click', close)
@@ -73,7 +86,7 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           <Link to="/" className="text-gray-600 hover:text-gray-900 text-sm">
             Home
           </Link>
@@ -82,6 +95,48 @@ export default function Header() {
           </Link>
           <Link to="/search" className="text-gray-600 hover:text-gray-900 text-sm">
             Search
+          </Link>
+          <Link to="/about" className="text-gray-600 hover:text-gray-900 text-sm">
+            About
+          </Link>
+          <div className="relative" ref={servicesRef}>
+            <button
+              type="button"
+              onClick={() => setServicesOpen((o) => !o)}
+              className="text-gray-600 hover:text-gray-900 text-sm inline-flex items-center gap-1"
+              aria-expanded={servicesOpen}
+              aria-haspopup="true"
+            >
+              Services
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {servicesOpen && (
+              <div className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-1 shadow-lg z-50">
+                <Link
+                  to="/services"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-medium"
+                  onClick={() => setServicesOpen(false)}
+                >
+                  All services
+                </Link>
+                <div className="border-t border-gray-100 my-1" />
+                {SERVICE_LINKS.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setServicesOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link to="/contact" className="text-gray-600 hover:text-gray-900 text-sm">
+            Contact
           </Link>
           {role === 'admin' && (
             <Link
