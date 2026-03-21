@@ -76,7 +76,7 @@ export default function Listings() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-2xl font-bold text-gray-900">Student Accommodation</h1>
           <p className="text-sm text-gray-500 mt-1">
             {loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} available`}
@@ -84,7 +84,7 @@ export default function Listings() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col md:flex-row gap-6">
           <aside className="w-full md:w-64 shrink-0 order-2 md:order-none">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky md:top-24">

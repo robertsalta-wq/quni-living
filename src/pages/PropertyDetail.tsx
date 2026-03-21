@@ -139,7 +139,7 @@ export default function PropertyDetail() {
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+        <div className="max-w-site mx-auto px-4 sm:px-6 py-4">
           <nav className="text-sm text-gray-500 mb-1">
             <Link to="/listings" className="hover:text-indigo-600">
               Listings
@@ -150,7 +150,7 @@ export default function PropertyDetail() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-site mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 space-y-4">
             <div className="rounded-2xl overflow-hidden bg-gray-200 aspect-[16/10] lg:aspect-[2/1]">
