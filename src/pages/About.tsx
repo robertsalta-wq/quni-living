@@ -7,7 +7,7 @@ export default function About() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-white">
       <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-14 md:py-20 text-center">
+        <div className="max-w-site mx-auto px-6 py-12 sm:py-16 text-center">
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">About Quni Living</h1>
           <p className="mt-4 text-base sm:text-lg text-white max-w-3xl mx-auto leading-relaxed">
             We&apos;re on a mission to make student accommodation simpler, safer and more affordable across Australia.

@@ -16,7 +16,6 @@ const MAIN_NAV_LINKS = [
   { to: '/listings', label: 'Listings' },
   { to: '/search', label: 'Search' },
   { to: '/about', label: 'About' },
-  { to: '/services/landlord-partnerships', label: 'For landlords' },
   { to: '/contact', label: 'Contact' },
 ] as const
 
@@ -166,9 +165,6 @@ export default function Header() {
           </Link>
           <Link to="/about" className="text-gray-600 hover:text-gray-900 text-sm">
             About
-          </Link>
-          <Link to="/services/landlord-partnerships" className="text-gray-600 hover:text-gray-900 text-sm">
-            For landlords
           </Link>
           <div className="relative" ref={servicesRef}>
             <button
