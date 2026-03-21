@@ -13,7 +13,7 @@ import StudentDashboard from './pages/StudentDashboard'
 import LandlordDashboard from './pages/LandlordDashboard'
 import StudentProfile from './pages/StudentProfile'
 import LandlordProfile from './pages/LandlordProfile'
-import PropertyForm from './pages/PropertyForm'
+import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminBookings from './pages/admin/AdminBookings'
@@ -77,7 +77,7 @@ function App() {
           <Route
             path="/landlord-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['landlord']}>
+              <ProtectedRoute allowedRoles={['landlord', 'admin']}>
                 <LandlordDashboard />
               </ProtectedRoute>
             }
@@ -91,6 +91,22 @@ function App() {
             }
           />
           <Route
+            path="/landlord/property/new"
+            element={
+              <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                <LandlordPropertyFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/landlord/property/edit/:id"
+            element={
+              <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                <LandlordPropertyFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/booking"
             element={
               <ProtectedRoute allowedRoles={['student']}>
@@ -98,8 +114,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          <Route path="/property-form" element={<PropertyForm />} />
           <Route
             path="/admin"
             element={

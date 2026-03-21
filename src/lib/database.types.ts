@@ -244,6 +244,8 @@ export interface Database {
           campus_id: string | null
           available_from: string | null
           status: 'active' | 'inactive' | 'pending'
+          linen_supplied: boolean | null
+          weekly_cleaning_service: boolean | null
           created_at: string
           updated_at: string
         }
@@ -273,6 +275,8 @@ export interface Database {
           campus_id?: string | null
           available_from?: string | null
           status?: 'active' | 'inactive' | 'pending'
+          linen_supplied?: boolean | null
+          weekly_cleaning_service?: boolean | null
           created_at?: string
           updated_at?: string
         }
@@ -302,6 +306,8 @@ export interface Database {
           campus_id?: string | null
           available_from?: string | null
           status?: 'active' | 'inactive' | 'pending'
+          linen_supplied?: boolean | null
+          weekly_cleaning_service?: boolean | null
           created_at?: string
           updated_at?: string
         }

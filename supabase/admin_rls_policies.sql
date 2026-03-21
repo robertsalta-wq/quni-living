@@ -58,6 +58,18 @@ create policy "Platform admins update all properties"
   using (public.is_platform_admin())
   with check (public.is_platform_admin());
 
+drop policy if exists "Platform admins insert properties" on public.properties;
+create policy "Platform admins insert properties"
+  on public.properties for insert
+  with check (public.is_platform_admin());
+
+drop policy if exists "Platform admins manage all property_features" on public.property_features;
+create policy "Platform admins manage all property_features"
+  on public.property_features for all
+  to authenticated
+  using (public.is_platform_admin())
+  with check (public.is_platform_admin());
+
 -- Student profiles (directory)
 drop policy if exists "Platform admins select all student_profiles" on public.student_profiles;
 

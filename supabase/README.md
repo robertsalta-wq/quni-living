@@ -26,6 +26,13 @@ Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
 
 The in-app admin panel reads and updates bookings, enquiries, properties, and landlord verification. After the main schema, run **`admin_rls_policies.sql`** in SQL Editor. It adds `is_platform_admin()` (same emails as `src/lib/adminEmails.ts`) and RLS policies so those accounts can use the dashboard with the **anon** browser client. Without it, admin pages will show permission errors.
 
+**Re-run `admin_rls_policies.sql` after updates** when the repo adds new admin policies (e.g. inserting properties or managing `property_features` from `/landlord/property/new` as an admin).
+
+### Landlord property form (`/landlord/property/new`, edit)
+
+1. Run **`property_form_extend.sql`** if you need **linen supplied** and **weekly cleaning service** booleans on `properties` (matches the app types).
+2. Storage → create a **public** bucket **`property-images`**, then run **`storage_property_images.sql`** so authenticated users can upload under `property-images/{their_user_id}/…`.
+
 **If onboarding errors with** `Could not find the table 'public.landlord_profiles' in the schema cache`, your project never had the profile tables. Run **`profile_tables_bootstrap.sql`** first (minimal: `universities`, `landlord_profiles`, `student_profiles` + RLS), then retry.
 
 **If Listings shows an error** about missing `properties` (or “schema cache”), run the full **`quni_supabase_schema.sql`** in SQL Editor. The bootstrap file does **not** create `properties`, `features`, `bookings`, etc. The full script uses `create table if not exists` and idempotent policy drops, so it’s safe to run after the bootstrap.

@@ -147,7 +147,7 @@ export default function AdminProperties() {
                       </td>
                       <td className={adminTdClass}>
                         <Link
-                          to={`/properties/${row.slug}`}
+                          to={`/landlord/property/edit/${row.id}`}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                         >
                           Edit
