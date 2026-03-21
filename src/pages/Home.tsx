@@ -10,6 +10,20 @@ const HERO_COLLAGE_TOP_FALLBACK =
 const HERO_COLLAGE_BOTTOM_FALLBACK =
   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
 
+/** Per-letter colours for “Everything” — matches Wix reference (teal E → taupe mid → deep red tail) */
+const HERO_EVERYTHING_LETTERS: { ch: string; className: string }[] = [
+  { ch: 'E', className: 'text-[#5F7C78]' },
+  { ch: 'v', className: 'text-[#6F6B66]' },
+  { ch: 'e', className: 'text-[#736D67]' },
+  { ch: 'r', className: 'text-[#7A655C]' },
+  { ch: 'y', className: 'text-[#855648]' },
+  { ch: 't', className: 'text-[#8E483D]' },
+  { ch: 'h', className: 'text-[#7E1E1E]' },
+  { ch: 'i', className: 'text-[#731B1B]' },
+  { ch: 'n', className: 'text-[#681818]' },
+  { ch: 'g', className: 'text-[#5A1416]' },
+]
+
 const HOW_STEPS = [
   {
     n: 1,
@@ -141,19 +155,29 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
       {/* Hero — coral band; collage + badges reference Wix trial */}
-      <section className="bg-[#FF6F61] border-b border-black/10">
+      <section className="bg-[#FF7261] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
               <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4">
                 Australia&apos;s student accommodation marketplace
               </p>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white tracking-tight !mt-0 !mb-4 leading-[1.08]">
-                <span className="block">Live Well,</span>
+              <h1 className="font-display text-5xl sm:text-6xl lg:text-[4rem] font-bold tracking-tight text-white !mt-0 !mb-4 leading-[0.8] sm:leading-[0.82]">
+                <span className="block">Live Well</span>
                 <span className="block">Study Better</span>
+                <span className="block -mt-px sm:-mt-0.5">
+                  <span className="inline-flex tracking-[-0.03em]">
+                    {HERO_EVERYTHING_LETTERS.map(({ ch, className }, i) => (
+                      <span key={i} className={className}>
+                        {ch}
+                      </span>
+                    ))}
+                  </span>
+                </span>
+                <span className="block">Included</span>
               </h1>
-              <p className="text-white text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
-                Everything included — student accommodation near Australia&apos;s top universities
+              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
+                — Student accommodation near Australia&apos;s top universities
               </p>
 
               <form
@@ -190,7 +214,7 @@ export default function Home() {
                 </select>
                 <button
                   type="submit"
-                  className="shrink-0 rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
+                  className="shrink-0 rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF7261] transition-colors"
                 >
                   Search
                 </button>
