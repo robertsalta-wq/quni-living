@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getDashboardPath } from '../lib/authProfile'
+import { formatDisplayName } from '../lib/formatDisplayName'
 
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
@@ -19,11 +20,23 @@ export default function Header() {
     return () => document.removeEventListener('click', close)
   }, [])
 
-  const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ??
-    (user?.user_metadata?.name as string | undefined) ??
-    user?.email?.split('@')[0] ??
-    'Account'
+  const displayName = (() => {
+    let raw: string | undefined
+    if (profile && (role === 'student' || role === 'landlord')) {
+      const p = profile as {
+        first_name?: string | null
+        last_name?: string | null
+        full_name?: string | null
+      }
+      const parts = [p.first_name?.trim(), p.last_name?.trim()].filter(Boolean)
+      raw = parts.length > 0 ? parts.join(' ') : p.full_name?.trim()
+    }
+    if (!raw) raw = (user?.user_metadata?.full_name as string | undefined)?.trim()
+    if (!raw) raw = (user?.user_metadata?.name as string | undefined)?.trim()
+    if (!raw) raw = user?.email?.split('@')[0]
+    const formatted = formatDisplayName(raw)
+    return formatted || 'Account'
+  })()
 
   const initials = displayName
     .split(/\s+/)

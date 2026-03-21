@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
+import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -31,10 +32,14 @@ type TabId = 'listings' | 'enquiries' | 'bookings'
 
 function firstNameFromLandlord(p: LandlordRow): string {
   const fn = p.first_name?.trim()
-  if (fn) return fn
+  if (fn) return formatDisplayName(fn).split(/\s+/)[0] || 'there'
   const full = p.full_name?.trim()
-  if (full) return full.split(/\s+/)[0] ?? 'there'
-  return p.email?.split('@')[0] || 'there'
+  if (full) {
+    const w = formatDisplayName(full).split(/\s+/)[0]
+    return w || 'there'
+  }
+  const local = p.email?.split('@')[0]
+  return local ? formatDisplayName(local) : 'there'
 }
 
 function listingStatusClass(s: PropertyRow['status']) {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { formatDisplayName } from '../lib/formatDisplayName'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 
@@ -218,12 +219,14 @@ export default function LandlordProfile() {
     if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current)
     setSaving(true)
     try {
-      const combinedName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
+      const fnNorm = firstName.trim() ? formatDisplayName(firstName.trim()) : null
+      const lnNorm = lastName.trim() ? formatDisplayName(lastName.trim()) : null
+      const combinedName = [fnNorm, lnNorm].filter(Boolean).join(' ') || null
       const { error: uErr } = await supabase
         .from('landlord_profiles')
         .update({
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
+          first_name: fnNorm,
+          last_name: lnNorm,
           full_name: combinedName,
           phone: phone.trim() || null,
           company_name: companyName.trim() || null,
