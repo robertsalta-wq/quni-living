@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import {
+  supabase,
+  isSupabaseConfigured,
+  getSupabaseBrowserKeyMisuseMessage,
+} from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { fetchRoleAndProfile, getDashboardPath, needsOnboarding } from '../lib/authProfile'
-import { getAuthCallbackUrl } from '../lib/oauth'
+import { getGoogleOAuthOptions } from '../lib/oauth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -88,10 +92,18 @@ export default function Login() {
     }
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: getAuthCallbackUrl() },
+      options: getGoogleOAuthOptions(),
     })
     if (oErr) setError(oErr.message)
   }
+
+  const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
+  const errLower = (error ?? '').toLowerCase()
+  const secretKeyError =
+    errLower.includes('forbidden') && errLower.includes('secret')
+  /** Amber banner already explains bad key — hide duplicate red box for same email-login error. */
+  const redundantSecretBanner =
+    Boolean(keyMisuse && secretKeyError && !errorMessage && !detailText)
 
   return (
     <div className="max-w-md mx-auto px-6 py-12">
@@ -103,10 +115,28 @@ export default function Login() {
         </Link>
       </p>
 
-      {(error || errorMessage || detailText) && (
+      {keyMisuse && (
+        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Wrong API key type</p>
+          <p className="mt-2 text-amber-900/90">{keyMisuse}</p>
+        </div>
+      )}
+
+      {(error || errorMessage || detailText) && !redundantSecretBanner && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
-          {error || errorMessage}
-          {detailText && (
+          {secretKeyError && !keyMisuse ? (
+            <>
+              <p>Wrong API key: use the Publishable key, not a Secret key.</p>
+              <p className="text-red-700/90 text-xs mt-2">
+                Supabase → Project Settings → API → copy the key under <strong>Publishable keys</strong> into{' '}
+                <code className="bg-red-100/80 px-1 rounded">VITE_SUPABASE_ANON_KEY</code>, then restart dev server
+                or redeploy Vercel.
+              </p>
+            </>
+          ) : (
+            error || errorMessage
+          )}
+          {detailText && !secretKeyError && (
             <p className="text-red-700/90 text-xs mt-1 whitespace-pre-wrap break-words">{detailText}</p>
           )}
         </div>

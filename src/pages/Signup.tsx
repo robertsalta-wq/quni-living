@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { getAuthCallbackUrl } from '../lib/oauth'
+import {
+  supabase,
+  isSupabaseConfigured,
+  getSupabaseBrowserKeyMisuseMessage,
+} from '../lib/supabase'
+import { getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 
 type RoleChoice = 'student' | 'landlord'
 
@@ -64,7 +68,7 @@ export default function Signup() {
     }
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: getAuthCallbackUrl() },
+      options: getGoogleOAuthOptions(),
     })
     if (oErr) setError(oErr.message)
   }
@@ -84,6 +88,11 @@ export default function Signup() {
     )
   }
 
+  const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
+  const errLower = (error ?? '').toLowerCase()
+  const secretKeyError =
+    errLower.includes('forbidden') && errLower.includes('secret')
+
   return (
     <div className="max-w-md mx-auto px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
@@ -94,9 +103,26 @@ export default function Signup() {
         </Link>
       </p>
 
+      {keyMisuse && (
+        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Wrong API key type</p>
+          <p className="mt-2 text-amber-900/90">{keyMisuse}</p>
+        </div>
+      )}
+
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
+          {secretKeyError && !keyMisuse ? (
+            <>
+              <p>Wrong API key: use the Publishable key, not a Secret key.</p>
+              <p className="text-red-700/90 text-xs mt-2">
+                Supabase → Project Settings → API → <strong>Publishable keys</strong> → copy into{' '}
+                <code className="bg-red-100/80 px-1 rounded">VITE_SUPABASE_ANON_KEY</code>.
+              </p>
+            </>
+          ) : (
+            error
+          )}
         </div>
       )}
 

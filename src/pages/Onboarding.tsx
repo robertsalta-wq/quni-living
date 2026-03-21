@@ -1,10 +1,48 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import {
+  supabase,
+  isSupabaseConfigured,
+  getSupabaseBrowserKeyMisuseMessage,
+} from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { fetchRoleAndProfile, getDashboardPath } from '../lib/authProfile'
 
 type Choice = 'student' | 'landlord'
+
+function formatError(e: unknown): string {
+  if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
+    const m = (e as { message: string }).message
+    if (m) return m
+  }
+  if (e instanceof Error && e.message) return e.message
+  return 'Something went wrong. Please try again.'
+}
+
+/** Avoid `upsert` under RLS (often fails); use update-then-insert. */
+async function saveProfileRow(
+  table: 'student_profiles' | 'landlord_profiles',
+  payload: { user_id: string; full_name: string; email: string },
+): Promise<{ error: Error | null }> {
+  const { data: existing, error: selErr } = await supabase
+    .from(table)
+    .select('user_id')
+    .eq('user_id', payload.user_id)
+    .maybeSingle()
+
+  if (selErr) return { error: new Error(selErr.message) }
+
+  if (existing) {
+    const { error: upErr } = await supabase
+      .from(table)
+      .update({ full_name: payload.full_name, email: payload.email })
+      .eq('user_id', payload.user_id)
+    return { error: upErr ? new Error(upErr.message) : null }
+  }
+
+  const { error: insErr } = await supabase.from(table).insert(payload)
+  return { error: insErr ? new Error(insErr.message) : null }
+}
 
 export default function Onboarding() {
   const { user, loading: authLoading, refreshProfile } = useAuthContext()
@@ -50,17 +88,15 @@ export default function Onboarding() {
       }
 
       if (choice === 'student') {
-        await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
-        const { error: insErr } = await supabase.from('student_profiles').upsert(payload, {
-          onConflict: 'user_id',
-        })
-        if (insErr) throw insErr
+        const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
+        if (delErr) throw new Error(delErr.message)
+        const { error: saveErr } = await saveProfileRow('student_profiles', payload)
+        if (saveErr) throw saveErr
       } else {
-        await supabase.from('student_profiles').delete().eq('user_id', user.id)
-        const { error: insErr } = await supabase.from('landlord_profiles').upsert(payload, {
-          onConflict: 'user_id',
-        })
-        if (insErr) throw insErr
+        const { error: delErr } = await supabase.from('student_profiles').delete().eq('user_id', user.id)
+        if (delErr) throw new Error(delErr.message)
+        const { error: saveErr } = await saveProfileRow('landlord_profiles', payload)
+        if (saveErr) throw saveErr
       }
 
       const { error: metaErr } = await supabase.auth.updateUser({
@@ -72,7 +108,12 @@ export default function Onboarding() {
       navigate(getDashboardPath(choice), { replace: true })
     } catch (e) {
       console.error(e)
-      setError('Something went wrong. Please try again.')
+      const msg = formatError(e)
+      const hint =
+        /row level security|rls|permission denied|42501/i.test(msg)
+          ? ' If this mentions RLS or permission, open Supabase → Table Editor → student_profiles / landlord_profiles and confirm policies allow users to insert/update their own row (see supabase/quni_supabase_schema.sql).'
+          : ''
+      setError(msg + hint)
     } finally {
       setSubmitting(false)
     }
@@ -94,13 +135,22 @@ export default function Onboarding() {
     )
   }
 
+  const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
+
   return (
     <div className="max-w-lg mx-auto px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome to Quni</h1>
       <p className="text-gray-600 text-sm mt-2 mb-8">Tell us how you&apos;ll use the platform.</p>
 
+      {keyMisuse && (
+        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Wrong API key</p>
+          <p className="mt-2 text-amber-900/90">{keyMisuse}</p>
+        </div>
+      )}
+
       {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 whitespace-pre-wrap break-words">
           {error}
         </div>
       )}
