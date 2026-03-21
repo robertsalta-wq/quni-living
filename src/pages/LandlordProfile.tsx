@@ -68,8 +68,11 @@ function statusBadgeClass(status: PropertyPick['status']) {
   }
 }
 
+type LandlordTab = 'profile' | 'properties'
+
 export default function LandlordProfile() {
   const { user } = useAuthContext()
+  const [activeTab, setActiveTab] = useState<LandlordTab>('profile')
   const [profile, setProfile] = useState<LandlordRow | null>(null)
   const [listings, setListings] = useState<PropertyPick[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -274,9 +277,57 @@ export default function LandlordProfile() {
   return (
     <div className="max-w-site mx-auto px-4 sm:px-6 py-8 pb-16">
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Landlord profile</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-8">Update your details and manage your listings.</p>
+      <p className="text-sm text-gray-500 mt-1 mb-6">Update your details and manage your listings.</p>
 
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-10 max-w-2xl">
+      <div
+        className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
+        role="tablist"
+        aria-label="Landlord account sections"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="tab-profile"
+          aria-selected={activeTab === 'profile'}
+          aria-controls="panel-profile"
+          tabIndex={0}
+          onClick={() => setActiveTab('profile')}
+          className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
+            activeTab === 'profile'
+              ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
+              : 'text-gray-600 hover:text-gray-900 border border-transparent'
+          }`}
+        >
+          Profile
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-properties"
+          aria-selected={activeTab === 'properties'}
+          aria-controls="panel-properties"
+          tabIndex={0}
+          onClick={() => setActiveTab('properties')}
+          className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
+            activeTab === 'properties'
+              ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
+              : 'text-gray-600 hover:text-gray-900 border border-transparent'
+          }`}
+        >
+          Properties
+          {listings.length > 0 && (
+            <span className="ml-1.5 text-xs font-medium text-gray-500 tabular-nums">({listings.length})</span>
+          )}
+        </button>
+      </div>
+
+      <div
+        id="panel-profile"
+        role="tabpanel"
+        aria-labelledby="tab-profile"
+        hidden={activeTab !== 'profile'}
+      >
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl">
         <form onSubmit={handleSave} className="space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -523,10 +574,17 @@ export default function LandlordProfile() {
           </button>
         </form>
       </section>
+      </div>
 
+      <div
+        id="panel-properties"
+        role="tabpanel"
+        aria-labelledby="tab-properties"
+        hidden={activeTab !== 'properties'}
+      >
       <section>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>
+          <h2 className="text-lg font-semibold text-gray-900">My listings</h2>
           <Link
             to="/landlord-dashboard"
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-700 w-fit"
@@ -605,6 +663,7 @@ export default function LandlordProfile() {
           </ul>
         )}
       </section>
+      </div>
     </div>
   )
 }
