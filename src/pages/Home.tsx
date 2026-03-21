@@ -10,18 +10,18 @@ const HERO_COLLAGE_TOP_FALLBACK =
 const HERO_COLLAGE_BOTTOM_FALLBACK =
   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
 
-/** Per-letter colours for “Everything” — matches Wix reference (teal E → taupe mid → deep red tail) */
+/** Per-letter colours for “Everything” — light teal → white → peach on coral */
 const HERO_EVERYTHING_LETTERS: { ch: string; className: string }[] = [
-  { ch: 'E', className: 'text-[#5F7C78]' },
-  { ch: 'v', className: 'text-[#6F6B66]' },
-  { ch: 'e', className: 'text-[#736D67]' },
-  { ch: 'r', className: 'text-[#7A655C]' },
-  { ch: 'y', className: 'text-[#855648]' },
-  { ch: 't', className: 'text-[#8E483D]' },
-  { ch: 'h', className: 'text-[#7E1E1E]' },
-  { ch: 'i', className: 'text-[#731B1B]' },
-  { ch: 'n', className: 'text-[#681818]' },
-  { ch: 'g', className: 'text-[#5A1416]' },
+  { ch: 'E', className: 'text-[#A8D5C8]' },
+  { ch: 'v', className: 'text-[#A8D5C8]' },
+  { ch: 'e', className: 'text-[#C8E6E0]' },
+  { ch: 'r', className: 'text-[#C8E6E0]' },
+  { ch: 'y', className: 'text-[#C8E6E0]' },
+  { ch: 't', className: 'text-white' },
+  { ch: 'h', className: 'text-white' },
+  { ch: 'i', className: 'text-[#F0D5C8]' },
+  { ch: 'n', className: 'text-[#F0D5C8]' },
+  { ch: 'g', className: 'text-[#F0D5C8]' },
 ]
 
 const HOW_STEPS = [
@@ -156,7 +156,7 @@ export default function Home() {
     <div className="flex-1 flex flex-col min-h-0 w-full">
       {/* Hero — coral band; collage + badges reference Wix trial */}
       <section className="bg-[#FF7261] border-b border-black/10">
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
               <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4">
@@ -176,8 +176,12 @@ export default function Home() {
                 </span>
                 <span className="block">Included</span>
               </h1>
-              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
-                — Student accommodation near Australia&apos;s top universities
+              <div className="flex items-center gap-2 text-white/80 text-sm">
+                <span className="w-2 h-2 rounded-full bg-white/60 inline-block" />
+                <span>Sydney Universities</span>
+              </div>
+              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal mt-3">
+                Student accommodation near Australia&apos;s top universities
               </p>
 
               <form
@@ -226,10 +230,10 @@ export default function Home() {
             <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
               {/* Floating badges */}
               <div
-                className="absolute left-0 top-6 sm:top-10 z-30 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#FF7261] text-white shadow-lg ring-2 ring-white/50"
+                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF7261] text-white shadow-lg ring-2 ring-white/50"
                 aria-hidden
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -244,7 +248,7 @@ export default function Home() {
                 $ All Inclusive
               </div>
               <div
-                className="absolute bottom-2 right-0 z-30 flex items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF7261] px-2.5 py-2 text-white shadow-lg"
+                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF7261] px-2.5 py-2 text-white shadow-lg"
                 aria-hidden
               >
                 <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -264,7 +268,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Bottom image — left, overlaps */}
-              <div className="relative z-20 -mt-16 ml-0 w-2/3">
+              <div className="relative z-20 -mt-8 ml-0 w-2/3">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
                   <img
                     src={heroCollageBottomSrc}
@@ -302,7 +306,7 @@ export default function Home() {
           )}
 
           {!featuredLoading && featured.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {featured.map((p) => (
                 <PropertyCard key={p.id} property={p} />
               ))}
