@@ -27,24 +27,31 @@ export default function LandlordPartnerships() {
     >
       {/* Opening statement */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-16 md:py-20 text-center">
+        <div className="max-w-3xl mx-auto px-6 py-10 md:py-12 text-center">
           <p className="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
             Partner with Quni Living to reach serious student tenants across Sydney. We help you keep occupancy steadier near
             campuses and run proper leases — not short-stay chaos — whether you list a whole home or individual rooms.
           </p>
         </div>
+        <div className="max-w-site mx-auto px-6 pb-10 md:pb-12">
+          <img
+            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200"
+            alt=""
+            className="rounded-2xl object-cover h-64 w-full mt-8"
+          />
+        </div>
       </section>
 
       {/* The numbers that matter — stat cards */}
       <section className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-16 md:py-20">
-          <p className="text-center text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-3">
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
+          <p className="text-center text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-2">
             Why rent to students
           </p>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 text-center tracking-tight mb-12">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 text-center tracking-tight mb-6">
             The numbers that matter
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
               <h3 className="font-display text-lg font-bold text-[#FF6F61]">Yield</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
@@ -70,7 +77,7 @@ export default function LandlordPartnerships() {
 
       {/* Why explore — callout */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-16 md:py-20">
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
           <div className="max-w-3xl mx-auto rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
             <h2 className="font-display text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
               Why explore renting to students?
@@ -81,7 +88,7 @@ export default function LandlordPartnerships() {
               oversight, and leases (not Airbnb-style turnover), the sections below spell out how that works — and you can
               talk to us anytime with no obligation.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center sm:justify-start gap-3">
+            <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-3">
               <Link
                 to="/contact"
                 className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
@@ -101,7 +108,7 @@ export default function LandlordPartnerships() {
 
       {/* Process line */}
       <section className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-12 md:py-16 text-center">
+        <div className="max-w-3xl mx-auto px-6 py-8 text-center">
           <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
             We focus on the property, the tenants, and protecting your asset — with one clear process instead of juggling
             multiple informal arrangements.
@@ -111,61 +118,77 @@ export default function LandlordPartnerships() {
 
       {/* Leasing models + whole-property detail */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-16 md:py-20">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center mb-3">
-            How would you like to rent your property?
-          </h2>
-          <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
-            Two common models — we assess layout, location, and demand before recommending the best fit.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto mb-14">
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
-              <h3 className="font-display text-lg font-semibold text-gray-900">Whole property</h3>
-              <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-                Familiar single-lease structure with strong student demand and typically lower vacancy than ad-hoc letting.
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
+          <div className="grid lg:grid-cols-2 lg:gap-8 lg:items-stretch">
+            <div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center lg:text-left mb-2">
+                How would you like to rent your property?
+              </h2>
+              <p className="text-center lg:text-left text-gray-600 max-w-2xl lg:max-w-none mx-auto lg:mx-0 mb-6">
+                Two common models — we assess layout, location, and demand before recommending the best fit.
               </p>
+              <div className="grid sm:grid-cols-2 gap-4 lg:gap-6 mb-6">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
+                  <h3 className="font-display text-lg font-semibold text-gray-900">Whole property</h3>
+                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+                    Familiar single-lease structure with strong student demand and typically lower vacancy than ad-hoc letting.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
+                  <h3 className="font-display text-lg font-semibold text-gray-900">By the room</h3>
+                  <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+                    Flexible leasing so total weekly income can align with your goals and the property layout.
+                  </p>
+                </div>
+              </div>
+              <div className="max-w-2xl lg:max-w-none">
+                <h3 className="font-display text-lg font-bold text-gray-900">Whole-property student leasing</h3>
+                <p className="mt-2 text-gray-700">Ideal if you want traditional leasing with stronger demand and fewer empty weeks.</p>
+                <ul className="mt-3 space-y-2 text-gray-700">
+                  <li className="flex gap-2">
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
+                      •
+                    </span>
+                    <span>Competitive market rent supported by student demand</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
+                      •
+                    </span>
+                    <span>Medium–longer stays reduce re-letting gaps</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
+                      •
+                    </span>
+                    <span>One lease, one manager, predictable income</span>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
-              <h3 className="font-display text-lg font-semibold text-gray-900">By the room</h3>
-              <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-                Flexible leasing so total weekly income can align with your goals and the property layout.
-              </p>
+            <div className="mt-6 lg:mt-0 min-h-0 flex">
+              <img
+                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600"
+                alt=""
+                className="rounded-2xl object-cover w-full h-full min-h-[300px] lg:min-h-0"
+              />
             </div>
-          </div>
-          <div className="max-w-2xl mx-auto">
-            <h3 className="font-display text-lg font-bold text-gray-900">Whole-property student leasing</h3>
-            <p className="mt-2 text-gray-700">Ideal if you want traditional leasing with stronger demand and fewer empty weeks.</p>
-            <ul className="mt-4 space-y-2 text-gray-700">
-              <li className="flex gap-2">
-                <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>Competitive market rent supported by student demand</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>Medium–longer stays reduce re-letting gaps</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>One lease, one manager, predictable income</span>
-              </li>
-            </ul>
           </div>
         </div>
       </section>
 
       {/* Checklist + Quick example */}
       <section className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-16 md:py-20">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
+          <img
+            src="https://images.unsplash.com/photo-1582407947304-fd86f28f8b9f?w=800"
+            alt=""
+            className="rounded-2xl object-cover h-48 w-full mb-8"
+          />
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
             <div>
-              <h2 className="font-display text-2xl font-bold text-gray-900 tracking-tight mb-6">What Quni helps with</h2>
-              <ul className="space-y-4">
+              <h2 className="font-display text-2xl font-bold text-gray-900 tracking-tight mb-4">What Quni helps with</h2>
+              <ul className="space-y-3">
                 {CHECKLIST.map((item) => (
                   <li key={item} className="flex gap-3 text-gray-700">
                     <span
@@ -178,7 +201,7 @@ export default function LandlordPartnerships() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-8 text-gray-900 font-semibold">One manager. One process. No chaos.</p>
+              <p className="mt-5 text-gray-900 font-semibold">One manager. One process. No chaos.</p>
             </div>
             <div>
               <div className="rounded-2xl border-2 border-[#FF6F61]/35 bg-white p-6 sm:p-8 shadow-md">
@@ -202,17 +225,17 @@ export default function LandlordPartnerships() {
 
       {/* Income estimate CTA */}
       <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-14 md:py-16 text-center">
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12 text-center">
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Curious what your property could earn?
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 text-base sm:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
             We can outline expected weekly income, likely vacancy profile, and the best leasing structure — clear assumptions, no hype.
           </p>
-          <p className="mt-6 text-sm text-white/80 italic max-w-xl mx-auto">
+          <p className="mt-4 text-sm text-white/80 italic max-w-xl mx-auto">
             Not short-stay. Not Airbnb. Proper leases. Professional management.
           </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <Link
               to="/landlord-signup"
               className="inline-flex items-center justify-center rounded-xl bg-gray-900 text-white px-6 py-3 text-sm font-semibold hover:bg-gray-800 transition-colors"

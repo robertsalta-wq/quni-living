@@ -61,7 +61,7 @@ export default function ServicePageLayout({
       <section className="bg-[#FF6F61] text-white shrink-0">
         <div className="max-w-site mx-auto px-6 py-8 text-center">
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">{title}</h1>
-          <p className="mt-2 text-sm sm:text-base text-white/95 max-w-2xl mx-auto leading-relaxed">{subtitle}</p>
+          <p className="mt-1 text-sm sm:text-base text-white/95 max-w-xl mx-auto text-center leading-relaxed">{subtitle}</p>
         </div>
       </section>
 
