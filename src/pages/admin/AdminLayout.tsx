@@ -59,6 +59,14 @@ export default function AdminLayout() {
             <p className="text-xs font-medium text-gray-500 mt-0.5">Admin</p>
           </Link>
         </div>
+        <div className="px-2 pb-1">
+          <Link
+            to="/"
+            className="block rounded-lg px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-colors"
+          >
+            View homepage
+          </Link>
+        </div>
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5">
           {NAV.map(({ to, label, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => navClassName(isActive)}>
