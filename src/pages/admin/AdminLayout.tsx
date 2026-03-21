@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
-import { isAdminEmail } from '../../lib/adminEmails'
+import { isAdminUser } from '../../lib/adminEmails'
 
 const NAV = [
   { to: '/admin', label: 'Overview', end: true },
@@ -32,12 +32,12 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (!user) return
-    if (!isAdminEmail(user.email)) {
+    if (!isAdminUser(user)) {
       navigate('/', { replace: true })
     }
   }, [user, navigate])
 
-  if (user && !isAdminEmail(user.email)) {
+  if (user && !isAdminUser(user)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />

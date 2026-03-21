@@ -15,9 +15,9 @@ type Counts = {
 }
 
 async function countRows(
-  fetcher: () => Promise<{ count: number | null; error: { message: string } | null }>,
+  fetcher: () => PromiseLike<{ count: number | null; error: { message: string } | null }>,
 ): Promise<number> {
-  const { count, error } = await fetcher()
+  const { count, error } = await Promise.resolve(fetcher())
   if (error) throw new Error(error.message)
   return count ?? 0
 }
@@ -50,24 +50,38 @@ export default function AdminOverview() {
           landlords,
         ] = await Promise.all([
           countRows(() =>
-            supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+            Promise.resolve(
+              supabase.from('properties').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+            ),
           ),
-          countRows(() => supabase.from('bookings').select('id', { count: 'exact', head: true })),
+          countRows(() => Promise.resolve(supabase.from('bookings').select('id', { count: 'exact', head: true }))),
           countRows(() =>
-            supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          ),
-          countRows(() =>
-            supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
-          ),
-          countRows(() => supabase.from('enquiries').select('id', { count: 'exact', head: true })),
-          countRows(() =>
-            supabase.from('enquiries').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+            Promise.resolve(
+              supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            ),
           ),
           countRows(() =>
-            supabase.from('enquiries').select('id', { count: 'exact', head: true }).eq('status', 'read'),
+            Promise.resolve(
+              supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
+            ),
           ),
-          countRows(() => supabase.from('student_profiles').select('id', { count: 'exact', head: true })),
-          countRows(() => supabase.from('landlord_profiles').select('id', { count: 'exact', head: true })),
+          countRows(() => Promise.resolve(supabase.from('enquiries').select('id', { count: 'exact', head: true }))),
+          countRows(() =>
+            Promise.resolve(
+              supabase.from('enquiries').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+            ),
+          ),
+          countRows(() =>
+            Promise.resolve(
+              supabase.from('enquiries').select('id', { count: 'exact', head: true }).eq('status', 'read'),
+            ),
+          ),
+          countRows(() =>
+            Promise.resolve(supabase.from('student_profiles').select('id', { count: 'exact', head: true })),
+          ),
+          countRows(() =>
+            Promise.resolve(supabase.from('landlord_profiles').select('id', { count: 'exact', head: true })),
+          ),
         ])
         if (!cancelled) {
           setCounts({

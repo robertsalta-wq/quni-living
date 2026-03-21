@@ -33,7 +33,10 @@ export function useProvideAuth(): AuthState {
       setRole(null)
       return
     }
-    const { role: r, profile: p } = await fetchRoleAndProfile(u)
+    // Session user from storage can omit `email`; getUser() returns the verified user (needed for admin detection).
+    const { data } = await supabase.auth.getUser()
+    const resolved = data.user ?? u
+    const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
     setRole(r)
     setProfile(p)
   }, [])

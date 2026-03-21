@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js'
-import { isAdminEmail } from './adminEmails'
+import { isAdminUser } from './adminEmails'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
@@ -19,7 +19,7 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
-  if (isAdminEmail(user.email)) {
+  if (isAdminUser(user)) {
     return { role: 'admin', profile: null }
   }
 

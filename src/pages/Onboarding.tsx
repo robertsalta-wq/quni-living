@@ -6,6 +6,7 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isAdminUser } from '../lib/adminEmails'
 import { fetchRoleAndProfile, getDashboardPath } from '../lib/authProfile'
 
 type Choice = 'student' | 'landlord'
@@ -140,7 +141,7 @@ export default function Onboarding() {
     )
   }
 
-  if (contextRole === 'admin') {
+  if (contextRole === 'admin' || isAdminUser(user)) {
     return <Navigate to="/admin" replace />
   }
 
