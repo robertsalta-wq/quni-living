@@ -5,9 +5,10 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Property, University } from '../lib/listings'
 import { PropertyCard } from '../components/PropertyCard'
 
-/** Student studying at a desk — pinned hero art (not from listings) */
-const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1000&q=80&auto=format&fit=crop'
+const HERO_COLLAGE_TOP_FALLBACK =
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
+const HERO_COLLAGE_BOTTOM_FALLBACK =
+  'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
 
 const HOW_STEPS = [
   {
@@ -134,22 +135,25 @@ export default function Home() {
     return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Sydney universities`
   })()
 
+  const heroCollageTopSrc = featured[0]?.images?.[0] ?? HERO_COLLAGE_TOP_FALLBACK
+  const heroCollageBottomSrc = featured[1]?.images?.[0] ?? HERO_COLLAGE_BOTTOM_FALLBACK
+
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
-      {/* Hero — secondary (sage) from brand palette; header stays cream */}
-      <section className="bg-[#8FB9AB] border-b border-[#596C68]/20">
+      {/* Hero — coral band; collage + badges reference Wix trial */}
+      <section className="bg-[#FF6F61] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
-              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#596C68] mb-4">
+              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4">
                 Australia&apos;s student accommodation marketplace
               </p>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-[#596C68] tracking-tight !mt-0 !mb-4 leading-[1.1]">
-                Find your perfect student home
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white tracking-tight !mt-0 !mb-4 leading-[1.08]">
+                <span className="block">Live Well,</span>
+                <span className="block">Study Better</span>
               </h1>
-              <p className="text-[#596C68]/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
-                Browse verified listings near your university. Studios, shared rooms, apartments and more — all
-                student-friendly.
+              <p className="text-white text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
+                Everything included — student accommodation near Australia&apos;s top universities
               </p>
 
               <form
@@ -166,7 +170,7 @@ export default function Home() {
                   onChange={(e) => setLocationInput(e.target.value)}
                   placeholder="Suburb or university…"
                   autoComplete="off"
-                  className="flex-1 min-w-0 rounded-xl border border-[#596C68]/25 bg-[#FDF2F7] px-4 py-3 text-sm text-[#596C68] placeholder:text-[#596C68]/45 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#596C68]/50 focus:border-[#596C68]/40"
+                  className="flex-1 min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 />
                 <label className="sr-only" htmlFor="home-search-uni">
                   University
@@ -175,7 +179,7 @@ export default function Home() {
                   id="home-search-uni"
                   value={universityId}
                   onChange={(e) => setUniversityId(e.target.value)}
-                  className="w-full lg:w-[min(100%,220px)] shrink-0 rounded-xl border border-[#596C68]/25 bg-[#FDF2F7] px-4 py-3 text-sm text-[#596C68] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#596C68]/50 focus:border-[#596C68]/40"
+                  className="w-full lg:w-[min(100%,220px)] shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 >
                   <option value="">All universities</option>
                   {universities.map((u) => (
@@ -186,21 +190,65 @@ export default function Home() {
                 </select>
                 <button
                   type="submit"
-                  className="shrink-0 rounded-xl bg-[#596C68] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#4d5e59] focus:outline-none focus:ring-2 focus:ring-[#596C68] focus:ring-offset-2 focus:ring-offset-[#8FB9AB] transition-colors"
+                  className="shrink-0 rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
                 >
                   Search
                 </button>
               </form>
 
-              <p className="mt-4 text-sm text-[#596C68]/80">{trustLine}</p>
+              <p className="mt-4 text-sm text-white/70">{trustLine}</p>
             </div>
 
-            <div className="relative min-h-[260px] lg:min-h-0 lg:min-h-[340px] rounded-3xl overflow-hidden shadow-xl border border-white/50 ring-1 ring-[#596C68]/10">
-              <img
-                src={HERO_IMAGE}
-                alt="Student studying at a desk with a laptop"
-                className="absolute inset-0 w-full h-full object-cover object-center"
-              />
+            <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
+              {/* Floating badges */}
+              <div
+                className="absolute left-0 top-6 sm:top-10 z-30 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#FF7261] text-white shadow-lg ring-2 ring-white/50"
+                aria-hidden
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+              </div>
+              <div
+                className="absolute right-0 top-[28%] sm:top-[32%] z-30 rounded-full bg-teal-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md whitespace-nowrap"
+                aria-hidden
+              >
+                $ All Inclusive
+              </div>
+              <div
+                className="absolute bottom-2 right-0 z-30 flex items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF7261] px-2.5 py-2 text-white shadow-lg"
+                aria-hidden
+              >
+                <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="text-[11px] font-semibold leading-tight">Fast Wifi</span>
+              </div>
+
+              {/* Top image — right */}
+              <div className="relative z-10 flex justify-end pr-1">
+                <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
+                  <img
+                    src={heroCollageTopSrc}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+              {/* Bottom image — left, overlaps */}
+              <div className="relative z-20 -mt-16 ml-0 w-2/3">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
+                  <img
+                    src={heroCollageBottomSrc}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
