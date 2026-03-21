@@ -22,6 +22,8 @@ There is **no** `saved_properties` table in this version (add later if you want 
 
 Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
 
+**If onboarding errors with** `Could not find the table 'public.landlord_profiles' in the schema cache`, your project never had the profile tables. Run **`profile_tables_bootstrap.sql`** first (minimal: `universities`, `landlord_profiles`, `student_profiles` + RLS), then retry. For listings/bookings, still run the full **`quni_supabase_schema.sql`** when you can.
+
 If you **already applied the older Quni schema** (single `profiles`, `price_per_week`, etc.), use a **fresh Supabase project** or manually drop conflicting tables before running this script.
 
 ## 2. Env

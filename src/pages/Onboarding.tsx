@@ -109,9 +109,10 @@ export default function Onboarding() {
     } catch (e) {
       console.error(e)
       const msg = formatError(e)
-      const hint =
-        /row level security|rls|permission denied|42501/i.test(msg)
-          ? ' If this mentions RLS or permission, open Supabase → Table Editor → student_profiles / landlord_profiles and confirm policies allow users to insert/update their own row (see supabase/quni_supabase_schema.sql).'
+      const hint = /could not find the table|schema cache|PGRST205/i.test(msg)
+        ? ' Your Supabase project is missing tables. Open Supabase → SQL Editor, paste and run `supabase/profile_tables_bootstrap.sql` from this repo (or run the full `supabase/quni_supabase_schema.sql`). Wait a few seconds, then try again.'
+        : /row level security|rls|permission denied|42501/i.test(msg)
+          ? ' If this mentions RLS or permission, confirm policies allow users to insert/update their own row (see supabase/quni_supabase_schema.sql or profile_tables_bootstrap.sql).'
           : ''
       setError(msg + hint)
     } finally {
