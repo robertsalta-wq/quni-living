@@ -84,7 +84,7 @@ Set in `.env.local` / Vercel:
 EmailJS needs a **To Email** on **each** template (not only the message body). If that field is blank, sending fails.
 
 1. Open [Email Templates](https://dashboard.emailjs.com/admin) → edit **confirmation** template.
-2. Find **To Email** (or **Recipients** / **Send To**). Set it to **`{{to_email}}`** (or `{{email}}` / `{{user_email}}` — see table below).
+2. Find **To Email** (or **Recipients** / **Send To**). Set it to **`{{sender_email}}`** (or `{{to_email}}`, `{{email}}`, `{{user_email}}` — see table below).
 3. Edit **notify** template → set **To Email** to **`hello@quni.com.au`** (static is fine), or **`{{notify_to}}`**, **`{{to_email}}`**, or **`{{admin_email}}`** on the notify template only.
 
 Save both templates. No code deploy required for template-only fixes.
@@ -103,10 +103,10 @@ That response means `VITE_EMAILJS_SERVICE_ID` does not match any **Email Service
 | Parameter | Confirmation (→ sender’s inbox) | Notify (→ Quni) |
 |-----------|--------------------------------|-----------------|
 | `property_title`, `message` | ✓ | ✓ |
+| `sender_name`, `sender_email` | ✓ (**recommended To:** `{{sender_email}}`) | ✓ (submitter, for body) |
 | `to_name`, `reply_to`, `from_name`, `from_email` | ✓ | |
-| `to_email`, `email`, `user_email`, `recipient_email` | **sender’s email** (use one in **To Email**) | **hello@quni.com.au** (notify template only) |
-| `sender_name`, `sender_email` | | ✓ |
-| `notify_to`, `to_email`, `admin_email`, `recipient_email` | | ✓ (all set to `hello@quni.com.au` on notify template) |
+| `to_email`, `email`, `user_email`, `recipient_email` | sender’s email (aliases) | **hello@quni.com.au** (notify template only) |
+| `notify_to`, `to_email`, `admin_email`, `recipient_email` | | ✓ (notify template; `to_email` = Quni) |
 
 ## Google OAuth on localhost
 

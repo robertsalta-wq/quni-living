@@ -37,7 +37,7 @@ export type EnquiryEmailPayload = {
 }
 
 /**
- * Confirmation → sender. In EmailJS, set template **To Email** to `{{to_email}}` (or `{{email}}` / `{{user_email}}`).
+ * Confirmation → sender. In EmailJS, set **To Email** to `{{sender_email}}` (also: `{{to_email}}`, `{{email}}`, …).
  * Notify → Quni. Set **To Email** to `hello@quni.com.au` or `{{notify_to}}` / `{{to_email}}` / `{{admin_email}}`.
  */
 export async function sendEnquiryEmails(cfg: Extract<EmailJsEnquiryConfig, { ok: true }>, p: EnquiryEmailPayload) {
@@ -48,6 +48,8 @@ export async function sendEnquiryEmails(cfg: Extract<EmailJsEnquiryConfig, { ok:
     message: p.message,
     to_name: p.senderName,
     to_email: p.senderEmail,
+    sender_name: p.senderName,
+    sender_email: p.senderEmail,
     reply_to: p.senderEmail,
     from_name: p.senderName,
     from_email: p.senderEmail,
