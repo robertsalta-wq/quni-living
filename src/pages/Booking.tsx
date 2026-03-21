@@ -259,11 +259,33 @@ export default function Booking() {
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
+  const mainPhoto = (property.images ?? []).find((src) => Boolean(src?.trim())) ?? null
+
   return (
     <div className="max-w-xl mx-auto px-4 sm:px-6 py-10 pb-16">
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Book this property</h1>
-      <p className="text-base font-semibold text-gray-900 mt-2">{property.title}</p>
-      {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:items-start">
+        <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-[4/3] sm:max-h-36 rounded-xl overflow-hidden border border-gray-100 bg-gray-100 shadow-sm">
+          {mainPhoto ? (
+            <img src={mainPhoto} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full min-h-[8rem] sm:min-h-0 flex items-center justify-center text-gray-300">
+              <svg className="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Book this property</h1>
+          <p className="text-base font-semibold text-gray-900 mt-2">{property.title}</p>
+          {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
+        </div>
+      </div>
 
       {!property.landlord_id && (
         <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
