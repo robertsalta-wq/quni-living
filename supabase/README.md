@@ -53,6 +53,21 @@ That’s normal when **`properties`** has no rows. Either:
 - Use the app as a **Landlord** and add a property via your property form / flow, or  
 - Run **`seed_demo_listings.sql`** in SQL Editor (adds **5 demo listings with Unsplash photo URLs** in `images[]`, **only if** at least one **`landlord_profiles`** row exists). To re-seed after an older run: `DELETE FROM public.properties WHERE slug LIKE 'demo-%';` then run the script again.
 
+## Cloudflare Turnstile (enquiry + booking forms)
+
+Forms call **`POST /api/verify-turnstile`** on Vercel (see repo `api/verify-turnstile.js`).
+
+| Variable | Where |
+|----------|--------|
+| `VITE_TURNSTILE_SITE_KEY` | Vercel + `.env.local` (public site key) |
+| `TURNSTILE_SECRET_KEY` | **Vercel only** (server secret — never `VITE_*`) |
+
+**Local `npm run dev`:** the browser cannot reach `/api/*` unless you run `vercel dev`, or set  
+`VITE_TURNSTILE_VERIFY_URL=https://your-deployment.vercel.app/api/verify-turnstile`  
+in `.env.local` so verification hits production (OK for testing).
+
+Cloudflare test keys (always pass): [Turnstile docs](https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+
 ## Property enquiries + EmailJS
 
 The listing page **Send an enquiry** form inserts into **`enquiries`** (policy: anyone can insert) and sends two emails via **EmailJS**.

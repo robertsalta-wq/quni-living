@@ -3,6 +3,8 @@ import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { AuthProfile } from '../lib/authProfile'
 import { getEmailJsEnquiryConfig, sendEnquiryEmails } from '../lib/enquiryEmail'
+import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
+import TurnstileCaptcha from './TurnstileCaptcha'
 
 type Props = {
   propertyId: string
@@ -48,6 +50,8 @@ export default function PropertyEnquiryForm({
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaResetKey, setCaptchaResetKey] = useState(0)
 
   useEffect(() => {
     if (!loggedIn) return
@@ -75,6 +79,19 @@ export default function PropertyEnquiryForm({
     const emailCfg = getEmailJsEnquiryConfig()
     if (!emailCfg.ok) {
       setError(emailCfg.reason)
+      return
+    }
+
+    if (!isTurnstileSiteKeyConfigured()) {
+      setError('Captcha is not configured. The site admin must add VITE_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.')
+      return
+    }
+
+    const captcha = await verifyTurnstileToken(captchaToken)
+    if (!captcha.ok) {
+      setError(captcha.message)
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
       return
     }
 
@@ -113,6 +130,8 @@ export default function PropertyEnquiryForm({
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : 'Something went wrong.'
       setError(raw)
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
     } finally {
       setSubmitting(false)
     }
@@ -180,6 +199,12 @@ export default function PropertyEnquiryForm({
           className={`${inputClass} resize-y min-h-[5rem]`}
         />
       </div>
+
+      <TurnstileCaptcha
+        resetKey={captchaResetKey}
+        onTokenChange={setCaptchaToken}
+        disabled={submitting}
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{error}</div>

@@ -5,6 +5,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
 import type { Database } from '../lib/database.types'
+import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
+import TurnstileCaptcha from '../components/TurnstileCaptcha'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -45,6 +47,8 @@ export default function Booking() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaResetKey, setCaptchaResetKey] = useState(0)
 
   const prefillDoneRef = useRef(false)
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
@@ -150,6 +154,21 @@ export default function Booking() {
       return
     }
 
+    if (!isTurnstileSiteKeyConfigured()) {
+      setSubmitError(
+        'Captcha is not configured. The site admin must add VITE_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.',
+      )
+      return
+    }
+
+    const captcha = await verifyTurnstileToken(captchaToken)
+    if (!captcha.ok) {
+      setSubmitError(captcha.message)
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
+      return
+    }
+
     const notesParts = [`Occupants: ${occ}`]
     if (message.trim()) notesParts.push('', message.trim())
     const notes = notesParts.join('\n')
@@ -170,6 +189,8 @@ export default function Booking() {
       setSuccess(true)
     } catch (err: unknown) {
       setSubmitError(err instanceof Error ? err.message : 'Could not submit booking.')
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
     } finally {
       setSubmitting(false)
     }
@@ -434,6 +455,12 @@ export default function Booking() {
             host.
           </label>
         </div>
+
+        <TurnstileCaptcha
+          resetKey={captchaResetKey}
+          onTokenChange={setCaptchaToken}
+          disabled={submitting}
+        />
 
         {submitError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{submitError}</div>
