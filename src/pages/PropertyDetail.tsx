@@ -279,7 +279,7 @@ export default function PropertyDetail() {
 
               {user ? (
                 <Link
-                  to="/booking"
+                  to={`/booking?slug=${encodeURIComponent(slug)}`}
                   className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3"
                 >
                   Request to book
