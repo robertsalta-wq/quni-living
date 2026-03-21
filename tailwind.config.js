@@ -10,6 +10,11 @@ export default {
         /** App content width cap (listings, property detail, header alignment) */
         site: '1200px',
       },
+      fontFamily: {
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        /** Footer body text (reference design); rest of app keeps default sans */
+        footer: ['"Open Sans"', 'system-ui', 'Segoe UI', 'sans-serif'],
+      },
     },
   },
   plugins: [],

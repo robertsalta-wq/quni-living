@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header'
+import Footer from './components/Footer'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Listings from './pages/Listings'
@@ -132,6 +133,7 @@ function App() {
           </Route>
         </Routes>
       </main>
+      {!adminShell && <Footer />}
     </>
   )
 }

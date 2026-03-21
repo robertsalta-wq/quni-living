@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Home() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div id="about" className="max-w-3xl mx-auto px-6 py-10 scroll-mt-24">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
         Quni Living
       </h1>

@@ -199,7 +199,7 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-site mx-auto px-4 sm:px-6 py-12">
         <p className="text-gray-500 text-center">Loading your dashboard…</p>
       </div>
     )
@@ -221,7 +221,7 @@ export default function StudentDashboard() {
   const welcomeName = profile ? firstNameFromStudent(profile) : 'there'
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
+    <div className="max-w-site mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
       {error && profile && (
         <div
           className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
@@ -233,10 +233,10 @@ export default function StudentDashboard() {
 
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Welcome back, {welcomeName}
           </h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">
+          <p className="text-gray-500 mt-2 text-base max-w-2xl">
             Here’s a quick look at your bookings and enquiries — everything in one place.
           </p>
         </div>
@@ -273,7 +273,7 @@ export default function StudentDashboard() {
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-amber-800 mt-2">Complete your profile</p>
+              <p className="text-sm font-semibold text-stone-800 mt-2">Complete your profile</p>
               <p className="text-sm text-gray-600 mt-1">Add a few details so landlords can get to know you.</p>
               <Link to="/student-profile" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 mt-3 inline-block">
                 Finish setup →
@@ -343,9 +343,12 @@ export default function StudentDashboard() {
                 const img = firstPropertyImage(prop?.images ?? null)
                 const rent = b.weekly_rent ?? prop?.rent_per_week ?? null
                 return (
-                  <li key={b.id} className={cardClass}>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="shrink-0 w-full sm:w-36 aspect-[4/3] rounded-xl overflow-hidden border border-gray-100 bg-gray-100">
+                  <li
+                    key={b.id}
+                    className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden"
+                  >
+                    <div className="flex flex-col sm:flex-row gap-4 p-5">
+                      <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-100">
                         {img ? (
                           <img src={img} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -376,19 +379,19 @@ export default function StudentDashboard() {
                           {formatDate(b.start_date)}
                           {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
                         </p>
-                        <p className="text-sm font-semibold text-gray-900 mt-1">{formatWeeklyRent(rent)}</p>
-                        {b.status === 'pending' && (
-                          <p className="text-sm text-amber-800 mt-3 bg-amber-50 rounded-lg px-3 py-2 border border-amber-100">
-                            Awaiting landlord confirmation
-                          </p>
-                        )}
-                        {b.status === 'confirmed' && (
-                          <p className="text-sm text-green-800 mt-3 bg-green-50 rounded-lg px-3 py-2 border border-green-100">
-                            Your booking is confirmed
-                          </p>
-                        )}
+                        <p className="text-base font-bold text-gray-900 mt-1">{formatWeeklyRent(rent)}</p>
                       </div>
                     </div>
+                    {b.status === 'pending' && (
+                      <div className="border-t border-amber-100 bg-amber-50 px-5 py-3 text-sm text-amber-900">
+                        Awaiting landlord confirmation
+                      </div>
+                    )}
+                    {b.status === 'confirmed' && (
+                      <div className="border-t border-green-100 bg-green-50 px-5 py-3 text-sm text-green-800">
+                        Your booking is confirmed
+                      </div>
+                    )}
                   </li>
                 )
               })}
