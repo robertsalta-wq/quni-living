@@ -22,9 +22,18 @@ There is **no** `saved_properties` table in this version (add later if you want 
 
 Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
 
-**If onboarding errors with** `Could not find the table 'public.landlord_profiles' in the schema cache`, your project never had the profile tables. Run **`profile_tables_bootstrap.sql`** first (minimal: `universities`, `landlord_profiles`, `student_profiles` + RLS), then retry. For listings/bookings, still run the full **`quni_supabase_schema.sql`** when you can.
+**If onboarding errors with** `Could not find the table 'public.landlord_profiles' in the schema cache`, your project never had the profile tables. Run **`profile_tables_bootstrap.sql`** first (minimal: `universities`, `landlord_profiles`, `student_profiles` + RLS), then retry.
+
+**If Listings shows an error** about missing `properties` (or “schema cache”), run the full **`quni_supabase_schema.sql`** in SQL Editor. The bootstrap file does **not** create `properties`, `features`, `bookings`, etc. The full script uses `create table if not exists` and idempotent policy drops, so it’s safe to run after the bootstrap.
 
 If you **already applied the older Quni schema** (single `profiles`, `price_per_week`, etc.), use a **fresh Supabase project** or manually drop conflicting tables before running this script.
+
+## Listings show “No listings found”
+
+That’s normal when **`properties`** has no rows. Either:
+
+- Use the app as a **Landlord** and add a property via your property form / flow, or  
+- Run **`seed_demo_listings.sql`** in SQL Editor (adds **5 demo listings with Unsplash photo URLs** in `images[]`, **only if** at least one **`landlord_profiles`** row exists). To re-seed after an older run: `DELETE FROM public.properties WHERE slug LIKE 'demo-%';` then run the script again.
 
 ## 2. Env
 

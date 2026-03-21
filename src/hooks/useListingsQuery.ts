@@ -116,7 +116,17 @@ export function useListingsQuery(
       } catch (e) {
         if (!cancelled) {
           console.error(e)
-          setError('Failed to load listings. Please try again.')
+          const raw =
+            e && typeof e === 'object' && 'message' in e
+              ? String((e as { message: unknown }).message)
+              : ''
+          const missingSchema =
+            /could not find the table|schema cache|PGRST205|relation .* does not exist/i.test(raw)
+          setError(
+            missingSchema
+              ? 'Listings need the full database schema. In Supabase → SQL Editor, run supabase/quni_supabase_schema.sql (see supabase/README.md). Wait ~30s, then Retry.'
+              : raw || 'Failed to load listings. Please try again.',
+          )
           setProperties([])
           setTotal(0)
         }

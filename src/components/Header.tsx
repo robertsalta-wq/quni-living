@@ -140,13 +140,13 @@ export default function Header() {
                 Sign up
               </Link>
               <Link
-                to="/login"
+                to="/signup"
                 className="border border-gray-900 text-gray-900 px-2 sm:px-3 py-2 rounded text-sm hover:bg-gray-50 text-xs sm:text-sm"
               >
                 I&apos;m a student
               </Link>
               <Link
-                to="/login"
+                to="/signup"
                 className="border border-gray-900 text-gray-900 px-2 sm:px-3 py-2 rounded text-sm hover:bg-gray-50 text-xs sm:text-sm"
               >
                 I&apos;m a landlord
