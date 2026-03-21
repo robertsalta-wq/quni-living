@@ -76,8 +76,18 @@ Set in `.env.local` / Vercel:
 
 - `VITE_EMAILJS_SERVICE_ID` — from **[Email Services](https://dashboard.emailjs.com/admin)** (the connected provider, e.g. Gmail), **not** from templates. ID usually looks like `service_xxxxxxx`.
 - `VITE_EMAILJS_PUBLIC_KEY` — [Account](https://dashboard.emailjs.com/admin/account) → **Public Key** (must be from the **same** EmailJS account as the service and templates).
-- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — from **Email Templates** → template ID like `template_xxxxxxx` (email to the **sender**; use **To** = `{{to_email}}` if your plan supports it).
-- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — second template for **hello@quni.com.au** (set **To** in the template, or use `{{notify_to}}`).
+- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — from **Email Templates** → template ID like `template_xxxxxxx`.
+- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — second template for internal notification.
+
+### EmailJS: “The recipients address is empty”
+
+EmailJS needs a **To Email** on **each** template (not only the message body). If that field is blank, sending fails.
+
+1. Open [Email Templates](https://dashboard.emailjs.com/admin) → edit **confirmation** template.
+2. Find **To Email** (or **Recipients** / **Send To**). Set it to **`{{to_email}}`** (or `{{email}}` / `{{user_email}}` — see table below).
+3. Edit **notify** template → set **To Email** to **`hello@quni.com.au`** (static is fine), or **`{{notify_to}}`**, **`{{to_email}}`**, or **`{{admin_email}}`** on the notify template only.
+
+Save both templates. No code deploy required for template-only fixes.
 
 ### “The service ID not found” (EmailJS)
 
@@ -90,12 +100,13 @@ That response means `VITE_EMAILJS_SERVICE_ID` does not match any **Email Service
 
 **Template parameters sent by the app**
 
-| Parameter | Confirmation (sender) | Notify (Quni) |
-|-----------|-------------------------|----------------|
-| `property_title` | ✓ | ✓ |
-| `message` | ✓ | ✓ |
-| `to_name`, `to_email`, `reply_to`, `from_name`, `from_email` | ✓ | |
-| `sender_name`, `sender_email`, `notify_to` | | ✓ (`notify_to` is always `hello@quni.com.au`) |
+| Parameter | Confirmation (→ sender’s inbox) | Notify (→ Quni) |
+|-----------|--------------------------------|-----------------|
+| `property_title`, `message` | ✓ | ✓ |
+| `to_name`, `reply_to`, `from_name`, `from_email` | ✓ | |
+| `to_email`, `email`, `user_email`, `recipient_email` | **sender’s email** (use one in **To Email**) | **hello@quni.com.au** (notify template only) |
+| `sender_name`, `sender_email` | | ✓ |
+| `notify_to`, `to_email`, `admin_email`, `recipient_email` | | ✓ (all set to `hello@quni.com.au` on notify template) |
 
 ## Google OAuth on localhost
 

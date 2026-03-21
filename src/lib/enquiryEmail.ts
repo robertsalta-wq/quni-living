@@ -37,8 +37,8 @@ export type EnquiryEmailPayload = {
 }
 
 /**
- * Confirmation → sender. Template params (suggested): property_title, message, to_name, to_email, reply_to.
- * Notify → Quni. Template params (suggested): property_title, sender_name, sender_email, message, notify_to ({{notify_to}} = hello@quni.com.au for “To” if your template uses it).
+ * Confirmation → sender. In EmailJS, set template **To Email** to `{{to_email}}` (or `{{email}}` / `{{user_email}}`).
+ * Notify → Quni. Set **To Email** to `hello@quni.com.au` or `{{notify_to}}` / `{{to_email}}` / `{{admin_email}}`.
  */
 export async function sendEnquiryEmails(cfg: Extract<EmailJsEnquiryConfig, { ok: true }>, p: EnquiryEmailPayload) {
   const common = { publicKey: cfg.publicKey }
@@ -51,6 +51,10 @@ export async function sendEnquiryEmails(cfg: Extract<EmailJsEnquiryConfig, { ok:
     reply_to: p.senderEmail,
     from_name: p.senderName,
     from_email: p.senderEmail,
+    // Aliases — EmailJS “To” must reference one of these or it stays empty
+    email: p.senderEmail,
+    user_email: p.senderEmail,
+    recipient_email: p.senderEmail,
   }
 
   const notifyParams = {
@@ -59,6 +63,10 @@ export async function sendEnquiryEmails(cfg: Extract<EmailJsEnquiryConfig, { ok:
     sender_email: p.senderEmail,
     message: p.message,
     notify_to: NOTIFY_QUNI,
+    // Same keys many dashboards use for admin “To” (notify template only)
+    to_email: NOTIFY_QUNI,
+    admin_email: NOTIFY_QUNI,
+    recipient_email: NOTIFY_QUNI,
   }
 
   await Promise.all([
