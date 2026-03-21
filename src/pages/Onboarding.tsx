@@ -59,9 +59,11 @@ export default function Onboarding() {
       return
     }
     ;(async () => {
-      const meta = user.user_metadata?.role
-      const { role, profile } = await fetchRoleAndProfile(user)
-      if (role === 'admin') {
+      const { data } = await supabase.auth.getUser()
+      const u = data.user ?? user
+      const meta = u.user_metadata?.role
+      const { role, profile } = await fetchRoleAndProfile(u)
+      if (role === 'admin' || isAdminUser(u)) {
         navigate('/admin', { replace: true })
         return
       }

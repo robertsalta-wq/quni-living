@@ -29,13 +29,16 @@ export function useProvideAuth(): AuthState {
 
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
+      setUser(null)
       setProfile(null)
       setRole(null)
       return
     }
-    // Session user from storage can omit `email`; getUser() returns the verified user (needed for admin detection).
+    // Session user from storage/JWT can omit `email`. Replace context `user` with getUser() result so
+    // isAdminUser(user), Header, and onboarding checks see the same email Supabase verified.
     const { data } = await supabase.auth.getUser()
     const resolved = data.user ?? u
+    setUser(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
     setRole(r)
     setProfile(p)

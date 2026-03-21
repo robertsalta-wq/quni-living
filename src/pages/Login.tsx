@@ -6,6 +6,7 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isAdminUser } from '../lib/adminEmails'
 import { fetchRoleAndProfile, getDashboardPath, needsOnboarding } from '../lib/authProfile'
 import { getGoogleOAuthOptions } from '../lib/oauth'
 
@@ -45,7 +46,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    if (role === 'admin') {
+    if (role === 'admin' || isAdminUser(user)) {
       const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
       navigate(from && from !== '/login' ? from : '/admin', { replace: true })
       return
@@ -74,8 +75,10 @@ export default function Login() {
       if (signErr) throw signErr
       if (!data.user) throw new Error('No user returned')
 
-      const { role: r, profile: p } = await fetchRoleAndProfile(data.user)
-      if (r === 'admin') {
+      const { data: verified } = await supabase.auth.getUser()
+      const u = verified.user ?? data.user
+      const { role: r, profile: p } = await fetchRoleAndProfile(u)
+      if (r === 'admin' || isAdminUser(u)) {
         const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
         navigate(from && from !== '/login' ? from : '/admin', { replace: true })
         return
