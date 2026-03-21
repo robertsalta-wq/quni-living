@@ -33,6 +33,10 @@ The in-app admin panel reads and updates bookings, enquiries, properties, and la
 1. Run **`property_form_extend.sql`** if you need **linen supplied** and **weekly cleaning service** booleans on `properties` (matches the app types).
 2. Storage → create a **public** bucket **`property-images`**, then run **`storage_property_images.sql`** so authenticated users can upload under `property-images/{their_user_id}/…`.
 
+### Landlord dashboard (mark enquiries read)
+
+Run **`landlord_enquiries_update_rls.sql`** so landlords can update enquiry rows (e.g. `new` → `read`) from `/landlord-dashboard`.
+
 **If onboarding errors with** `Could not find the table 'public.landlord_profiles' in the schema cache`, your project never had the profile tables. Run **`profile_tables_bootstrap.sql`** first (minimal: `universities`, `landlord_profiles`, `student_profiles` + RLS), then retry.
 
 **If Listings shows an error** about missing `properties` (or “schema cache”), run the full **`quni_supabase_schema.sql`** in SQL Editor. The bootstrap file does **not** create `properties`, `features`, `bookings`, etc. The full script uses `create table if not exists` and idempotent policy drops, so it’s safe to run after the bootstrap.

@@ -77,7 +77,7 @@ function App() {
           <Route
             path="/landlord-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+              <ProtectedRoute allowedRoles={['landlord']}>
                 <LandlordDashboard />
               </ProtectedRoute>
             }
