@@ -85,9 +85,9 @@ export default function Listings() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="w-full lg:w-64 shrink-0">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm lg:sticky lg:top-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          <aside className="w-full md:w-64 shrink-0 order-2 md:order-none">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky md:top-24">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900 text-sm">Filters</h2>
                 {filters.hasActiveFilters && (
