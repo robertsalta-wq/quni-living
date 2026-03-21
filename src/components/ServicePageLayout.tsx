@@ -13,9 +13,18 @@ type Props = {
   relatedMode: RelatedListingsMode
   children: React.ReactNode
   extraCta?: ExtraCta
+  /** Full-bleed main content (no max-w-3xl prose wrapper) — use for custom multi-section pages */
+  contentVariant?: 'default' | 'fullBleed'
 }
 
-export default function ServicePageLayout({ title, subtitle, relatedMode, children, extraCta }: Props) {
+export default function ServicePageLayout({
+  title,
+  subtitle,
+  relatedMode,
+  children,
+  extraCta,
+  contentVariant = 'default',
+}: Props) {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(isSupabaseConfigured)
   const [error, setError] = useState<string | null>(null)
@@ -49,28 +58,32 @@ export default function ServicePageLayout({ title, subtitle, relatedMode, childr
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-12 sm:py-16 text-center">
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">{title}</h1>
-          <p className="mt-4 text-base sm:text-lg text-white/95 max-w-2xl mx-auto leading-relaxed">{subtitle}</p>
+      <section className="bg-[#FF6F61] text-white shrink-0">
+        <div className="max-w-site mx-auto px-6 py-8 text-center">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">{title}</h1>
+          <p className="mt-2 text-sm sm:text-base text-white/95 max-w-2xl mx-auto leading-relaxed">{subtitle}</p>
         </div>
       </section>
 
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-          <div className="text-gray-700 leading-relaxed space-y-4 text-base">{children}</div>
-          {extraCta && (
-            <div className="mt-8">
-              <Link
-                to={extraCta.to}
-                className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
-                {extraCta.label}
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
+      {contentVariant === 'fullBleed' ? (
+        <div className="flex flex-col w-full min-w-0">{children}</div>
+      ) : (
+        <section className="bg-white border-b border-gray-100">
+          <div className="max-w-3xl mx-auto px-6 py-12 md:py-16">
+            <div className="text-gray-700 leading-relaxed space-y-4 text-base">{children}</div>
+            {extraCta && (
+              <div className="mt-8">
+                <Link
+                  to={extraCta.to}
+                  className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors"
+                >
+                  {extraCta.label}
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
         <h2 className="font-display text-xl font-bold text-gray-900 mb-6">Related listings</h2>
