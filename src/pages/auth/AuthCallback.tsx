@@ -24,19 +24,49 @@ export default function AuthCallback() {
 
     ;(async () => {
       const params = new URLSearchParams(window.location.search)
-      const code = params.get('code')
-
-      if (!code) {
-        navigate('/login?error=auth_failed', { replace: true })
+      const oauthErr = params.get('error')
+      const oauthDesc = params.get('error_description')
+      if (oauthErr) {
+        const msg = oauthDesc?.replace(/\+/g, ' ') ?? oauthErr
+        navigate(
+          `/login?error=oauth&detail=${encodeURIComponent(msg)}`,
+          { replace: true },
+        )
         return
       }
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      const code = params.get('code')
+
+      // Prefer explicit exchange; if `code` missing, session may already exist (e.g. retry).
+      let sessionErr = null as { message: string } | null
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        sessionErr = error
+      }
       if (cancelled) return
 
-      if (error) {
-        console.error(error)
-        navigate('/login?error=auth_failed', { replace: true })
+      if (sessionErr) {
+        console.error(sessionErr)
+        navigate(
+          `/login?error=auth_failed&detail=${encodeURIComponent(sessionErr.message)}`,
+          { replace: true },
+        )
+        return
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (cancelled) return
+
+      if (!session) {
+        navigate(
+          '/login?error=missing_code&detail=' +
+            encodeURIComponent(
+              'No session after sign-in. Check Supabase Redirect URLs include this page (e.g. https://your-app.vercel.app/auth/callback).',
+            ),
+          { replace: true },
+        )
         return
       }
 
@@ -47,7 +77,10 @@ export default function AuthCallback() {
       if (cancelled) return
 
       if (userError || !user) {
-        navigate('/login?error=auth_failed', { replace: true })
+        navigate(
+          `/login?error=auth_failed&detail=${encodeURIComponent(userError?.message ?? 'No user after session')}`,
+          { replace: true },
+        )
         return
       }
 
@@ -64,7 +97,10 @@ export default function AuthCallback() {
       navigate(getDashboardPath(role), { replace: true })
     })().catch((e) => {
       console.error(e)
-      if (!cancelled) navigate('/login?error=auth_failed', { replace: true })
+      if (!cancelled) {
+        const msg = e instanceof Error ? e.message : 'Unknown error'
+        navigate(`/login?error=auth_failed&detail=${encodeURIComponent(msg)}`, { replace: true })
+      }
     })
 
     return () => {

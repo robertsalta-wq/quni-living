@@ -17,14 +17,27 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
 
   const urlError = searchParams.get('error')
+  const urlDetail = searchParams.get('detail')
+
   const errorMessage =
     urlError === 'auth_failed'
       ? 'Sign-in failed. Please try again.'
       : urlError === 'missing_code'
-        ? 'Invalid sign-in link. Please try again.'
+        ? 'Invalid or incomplete sign-in link.'
+        : urlError === 'oauth'
+          ? 'Google sign-in was cancelled or denied.'
         : urlError === 'config'
           ? 'App is not configured for authentication.'
           : null
+
+  let detailText: string | null = null
+  if (urlDetail) {
+    try {
+      detailText = decodeURIComponent(urlDetail.replace(/\+/g, ' '))
+    } catch {
+      detailText = urlDetail
+    }
+  }
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -90,9 +103,12 @@ export default function Login() {
         </Link>
       </p>
 
-      {(error || errorMessage) && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {(error || errorMessage || detailText) && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
           {error || errorMessage}
+          {detailText && (
+            <p className="text-red-700/90 text-xs mt-1 whitespace-pre-wrap break-words">{detailText}</p>
+          )}
         </div>
       )}
 

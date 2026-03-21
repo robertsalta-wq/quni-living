@@ -20,7 +20,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // OAuth PKCE: exchange only on `/auth/callback`. If true, the client can consume
+    // `?code=` before React reads it → false "Sign-in failed" on Google login.
+    detectSessionInUrl: false,
     flowType: 'pkce',
   },
 })
