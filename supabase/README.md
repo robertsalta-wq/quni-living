@@ -53,6 +53,26 @@ That’s normal when **`properties`** has no rows. Either:
 - Use the app as a **Landlord** and add a property via your property form / flow, or  
 - Run **`seed_demo_listings.sql`** in SQL Editor (adds **5 demo listings with Unsplash photo URLs** in `images[]`, **only if** at least one **`landlord_profiles`** row exists). To re-seed after an older run: `DELETE FROM public.properties WHERE slug LIKE 'demo-%';` then run the script again.
 
+## Property enquiries + EmailJS
+
+The listing page **Send an enquiry** form inserts into **`enquiries`** (policy: anyone can insert) and sends two emails via **EmailJS**.
+
+Set in `.env.local` / Vercel:
+
+- `VITE_EMAILJS_SERVICE_ID`
+- `VITE_EMAILJS_PUBLIC_KEY`
+- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — email to the **sender** (use dynamic **To** = `{{to_email}}` if your plan supports it)
+- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — email to **hello@quni.com.au** (set **To** in the template, or use `{{notify_to}}` if you wire it as the recipient)
+
+**Template parameters sent by the app**
+
+| Parameter | Confirmation (sender) | Notify (Quni) |
+|-----------|-------------------------|----------------|
+| `property_title` | ✓ | ✓ |
+| `message` | ✓ | ✓ |
+| `to_name`, `to_email`, `reply_to`, `from_name`, `from_email` | ✓ | |
+| `sender_name`, `sender_email`, `notify_to` | | ✓ (`notify_to` is always `hello@quni.com.au`) |
+
 ## Google OAuth on localhost
 
 The app sends users back to **`{origin}/auth/callback`** (see `src/lib/oauth.ts`). That URL must be allowed in Supabase or the session exchange fails after Google.

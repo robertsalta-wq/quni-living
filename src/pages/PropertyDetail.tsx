@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 
@@ -16,7 +17,7 @@ export default function PropertyDetail() {
   const slug = slugParam?.trim() ?? ''
   const shouldFetch = Boolean(slug) && isSupabaseConfigured
 
-  const { user } = useAuthContext()
+  const { user, profile, role } = useAuthContext()
   const [property, setProperty] = useState<Property | null>(null)
   const [loading, setLoading] = useState(shouldFetch)
   const [error, setError] = useState<string | null>(null)
@@ -277,10 +278,21 @@ export default function PropertyDetail() {
                 </div>
               </div>
 
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <PropertyEnquiryForm
+                  propertyId={property.id}
+                  landlordId={property.landlord_id}
+                  propertyTitle={property.title}
+                  user={user}
+                  profile={profile}
+                  role={role}
+                />
+              </div>
+
               {user ? (
                 <Link
                   to={`/booking?slug=${encodeURIComponent(slug)}`}
-                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3"
+                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3 mt-6"
                 >
                   Request to book
                 </Link>
@@ -288,7 +300,7 @@ export default function PropertyDetail() {
                 <Link
                   to="/login"
                   state={{ from: { pathname: `/properties/${slug}` } }}
-                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3"
+                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3 mt-6"
                 >
                   Log in to book
                 </Link>
