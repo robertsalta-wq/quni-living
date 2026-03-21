@@ -11,13 +11,24 @@ const SERVICE_LINKS = [
   { to: '/services/fully-furnished', label: 'Fully Furnished Units' },
 ] as const
 
+const MAIN_NAV_LINKS = [
+  { to: '/', label: 'Home' },
+  { to: '/listings', label: 'Listings' },
+  { to: '/search', label: 'Search' },
+  { to: '/about', label: 'About' },
+  { to: '/services/landlord-partnerships', label: 'For landlords' },
+  { to: '/contact', label: 'Contact' },
+] as const
+
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [servicesOpen, setServicesOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const servicesRef = useRef<HTMLDivElement>(null)
+  const mobileNavRootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function close(e: MouseEvent) {
@@ -27,6 +38,9 @@ export default function Header() {
       }
       if (servicesRef.current && !servicesRef.current.contains(t)) {
         setServicesOpen(false)
+      }
+      if (mobileNavRootRef.current && !mobileNavRootRef.current.contains(t)) {
+        setMobileNavOpen(false)
       }
     }
     document.addEventListener('click', close)
@@ -86,6 +100,60 @@ export default function Header() {
           />
         </Link>
 
+        <div className="md:hidden relative flex-1 flex justify-end" ref={mobileNavRootRef}>
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((o) => !o)}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+            aria-expanded={mobileNavOpen}
+            aria-haspopup="true"
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+          >
+            {mobileNavOpen ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+          {mobileNavOpen && (
+            <div className="absolute right-0 top-full mt-2 w-[min(calc(100vw-3rem),18rem)] rounded-xl border border-gray-100 bg-white py-2 shadow-lg z-50 max-h-[min(70vh,24rem)] overflow-y-auto">
+              {MAIN_NAV_LINKS.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="border-t border-gray-100 my-1" />
+              <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Services</p>
+              <Link
+                to="/services"
+                className="block px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                All services
+              </Link>
+              {SERVICE_LINKS.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           <Link to="/" className="text-gray-600 hover:text-gray-900 text-sm">
             Home
@@ -98,6 +166,9 @@ export default function Header() {
           </Link>
           <Link to="/about" className="text-gray-600 hover:text-gray-900 text-sm">
             About
+          </Link>
+          <Link to="/services/landlord-partnerships" className="text-gray-600 hover:text-gray-900 text-sm">
+            For landlords
           </Link>
           <div className="relative" ref={servicesRef}>
             <button
@@ -257,7 +328,7 @@ export default function Header() {
                 I&apos;m a student
               </Link>
               <Link
-                to="/signup"
+                to="/services/landlord-partnerships"
                 className="border border-gray-900 text-gray-900 px-2 sm:px-3 py-2 rounded text-sm hover:bg-gray-50 text-xs sm:text-sm"
               >
                 I&apos;m a landlord

@@ -40,7 +40,22 @@ function IconSofa({ className }: { className?: string }) {
   )
 }
 
+function IconTrending({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 7-7M14 8h6v6" />
+    </svg>
+  )
+}
+
 const cards = [
+  {
+    to: '/services/landlord-partnerships',
+    title: 'Why rent to students',
+    Icon: IconTrending,
+    description:
+      'Strong demand near campuses, predictable leases, and professional management — see how student rentals can improve yield and vacancy.',
+  },
   {
     to: '/services/student-accommodation',
     title: 'Student Accommodation',

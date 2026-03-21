@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
@@ -55,6 +55,7 @@ function App() {
           <Route path="/services/property-management" element={<ServicePropertyManagement />} />
           <Route path="/services/landlord-partnerships" element={<ServiceLandlordPartnerships />} />
           <Route path="/services/fully-furnished" element={<ServiceFullyFurnished />} />
+          <Route path="/for-landlords" element={<Navigate to="/services/landlord-partnerships" replace />} />
 
           {/* Auth */}
           <Route path="/auth/callback" element={<AuthCallback />} />

@@ -105,6 +105,11 @@ export default function Footer() {
                   Services
                 </Link>
               </li>
+              <li>
+                <Link to="/services/landlord-partnerships" className={linkClass}>
+                  For landlords
+                </Link>
+              </li>
             </ul>
           </div>
 
