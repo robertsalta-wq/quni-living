@@ -28,6 +28,15 @@ Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
 
 If you **already applied the older Quni schema** (single `profiles`, `price_per_week`, etc.), use a **fresh Supabase project** or manually drop conflicting tables before running this script.
 
+## Landlord profile (extra columns + avatar upload)
+
+If your project was created before these columns existed, run **`landlord_profile_extend.sql`** in SQL Editor (adds `first_name`, `last_name`, `company_name`, `abn`, `landlord_type`, and address fields `address`, `suburb`, `state`, `postcode` on `landlord_profiles`).
+
+For **profile photos** in the app:
+
+1. Storage → create a **public** bucket named **`landlord-avatars`**.
+2. Run **`storage_landlord_avatars.sql`** in SQL Editor (RLS policies: users upload/read only under `landlord-avatars/{their_user_id}/`).
+
 ## Listings show “No listings found”
 
 That’s normal when **`properties`** has no rows. Either:

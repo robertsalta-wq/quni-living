@@ -10,8 +10,44 @@ type PropertyPick = Pick<
   'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured'
 >
 
-function initialsFrom(name: string | null | undefined, email: string | null | undefined) {
-  const s = (name?.trim() || email?.split('@')[0] || '?').split(/\s+/)
+const AVATAR_BUCKET = 'landlord-avatars'
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+
+const LANDLORD_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Select landlord type' },
+  { value: 'individual', label: 'Individual' },
+  { value: 'company', label: 'Company' },
+  { value: 'trust', label: 'Trust' },
+  { value: 'other', label: 'Other' },
+]
+
+const AU_STATE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'NSW', label: 'NSW' },
+  { value: 'VIC', label: 'VIC' },
+  { value: 'QLD', label: 'QLD' },
+  { value: 'SA', label: 'SA' },
+  { value: 'WA', label: 'WA' },
+  { value: 'TAS', label: 'TAS' },
+  { value: 'NT', label: 'NT' },
+  { value: 'ACT', label: 'ACT' },
+]
+
+function splitFullName(full: string | null | undefined): [string, string] {
+  if (!full?.trim()) return ['', '']
+  const parts = full.trim().split(/\s+/)
+  if (parts.length === 1) return [parts[0], '']
+  return [parts[0]!, parts.slice(1).join(' ')]
+}
+
+function initialsFrom(first: string, last: string, fullFallback: string | null, email: string | null | undefined) {
+  const f = first.trim()
+  const l = last.trim()
+  if (f || l) {
+    const a = f[0] ?? ''
+    const b = l[0] ?? f[1] ?? ''
+    return `${a}${b}`.toUpperCase() || '?'
+  }
+  const s = (fullFallback?.trim() || email?.split('@')[0] || '?').split(/\s+/)
   return s
     .map((w) => w[0])
     .join('')
@@ -39,14 +75,26 @@ export default function LandlordProfile() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [abn, setAbn] = useState('')
+  const [addressLine, setAddressLine] = useState('')
+  const [suburb, setSuburb] = useState('')
+  const [addressState, setAddressState] = useState('NSW')
+  const [postcode, setPostcode] = useState('')
+  const [landlordType, setLandlordType] = useState('')
   const [bio, setBio] = useState('')
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
   const savedTimerRef = useRef<number | null>(null)
+
+  const [photoError, setPhotoError] = useState<string | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     if (!user?.id) return
@@ -69,8 +117,17 @@ export default function LandlordProfile() {
       }
 
       setProfile(prof)
-      setFullName(prof.full_name ?? '')
+      const [fn, ln] = splitFullName(prof.full_name)
+      setFirstName(prof.first_name ?? fn)
+      setLastName(prof.last_name ?? ln)
       setPhone(prof.phone ?? '')
+      setCompanyName(prof.company_name ?? '')
+      setAbn(prof.abn ?? '')
+      setAddressLine(prof.address ?? '')
+      setSuburb(prof.suburb ?? '')
+      setAddressState(prof.state?.trim() || 'NSW')
+      setPostcode(prof.postcode ?? '')
+      setLandlordType(prof.landlord_type ?? '')
       setBio(prof.bio ?? '')
 
       const { data: props, error: lErr } = await supabase
@@ -101,6 +158,53 @@ export default function LandlordProfile() {
     }
   }, [])
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setPhotoError(null)
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !user?.id) return
+    if (file.size > MAX_AVATAR_BYTES) {
+      setPhotoError('Photo must be 2 MB or smaller.')
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Please choose an image file.')
+      return
+    }
+
+    setUploadingPhoto(true)
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
+      const path = `${user.id}/avatar.${safeExt}`
+
+      const { error: upErr } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, {
+        upsert: true,
+        contentType: file.type,
+      })
+      if (upErr) throw upErr
+
+      const { data: pub } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+
+      const { error: dbErr } = await supabase
+        .from('landlord_profiles')
+        .update({ avatar_url: pub.publicUrl })
+        .eq('user_id', user.id)
+      if (dbErr) throw dbErr
+
+      await load()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed.'
+      setPhotoError(
+        msg.includes('Bucket not found') || msg.includes('not found')
+          ? 'Photo storage is not set up yet. Create a public bucket named "landlord-avatars" in Supabase Storage and run supabase/storage_landlord_avatars.sql.'
+          : msg,
+      )
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!user?.id) return
@@ -109,11 +213,21 @@ export default function LandlordProfile() {
     if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current)
     setSaving(true)
     try {
+      const combinedName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
       const { error: uErr } = await supabase
         .from('landlord_profiles')
         .update({
-          full_name: fullName.trim() || null,
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          full_name: combinedName,
           phone: phone.trim() || null,
+          company_name: companyName.trim() || null,
+          abn: abn.trim() || null,
+          address: addressLine.trim() || null,
+          suburb: suburb.trim() || null,
+          state: addressState.trim() || null,
+          postcode: postcode.trim() || null,
+          landlord_type: landlordType.trim() || null,
           bio: bio.trim() || null,
         })
         .eq('user_id', user.id)
@@ -155,71 +269,238 @@ export default function LandlordProfile() {
     )
   }
 
+  const avatarUrl = profile.avatar_url
+
   return (
     <div className="max-w-site mx-auto px-4 sm:px-6 py-8 pb-16">
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Landlord profile</h1>
       <p className="text-sm text-gray-500 mt-1 mb-8">Update your details and manage your listings.</p>
 
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-10">
-        <form onSubmit={handleSave} className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-            <div
-              className="h-24 w-24 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-2xl font-semibold shrink-0"
-              aria-hidden
-            >
-              {initialsFrom(fullName || profile.full_name, displayEmail)}
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-10 max-w-2xl">
+        <form onSubmit={handleSave} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="ll-first" className="block text-sm font-semibold text-gray-900 mb-1">
+                First name
+              </label>
+              <input
+                id="ll-first"
+                type="text"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
             </div>
-            <div className="flex-1 space-y-4 w-full min-w-0">
+            <div>
+              <label htmlFor="ll-last" className="block text-sm font-semibold text-gray-900 mb-1">
+                Last name
+              </label>
+              <input
+                id="ll-last"
+                type="text"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="ll-email" className="block text-sm font-semibold text-gray-900 mb-1">
+              Email
+            </label>
+            <input
+              id="ll-email"
+              type="email"
+              readOnly
+              value={displayEmail}
+              className="w-full rounded-lg border border-gray-900/10 bg-gray-50 text-gray-600 px-3 py-2 text-sm cursor-not-allowed"
+            />
+            <p className="text-xs text-gray-400 mt-1">Email can&apos;t be changed here.</p>
+          </div>
+
+          <div>
+            <label htmlFor="ll-phone" className="block text-sm font-semibold text-gray-900 mb-1">
+              Phone
+            </label>
+            <input
+              id="ll-phone"
+              type="tel"
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="ll-company" className="block text-sm font-semibold text-gray-900 mb-1">
+              Company name
+            </label>
+            <input
+              id="ll-company"
+              type="text"
+              autoComplete="organization"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            <p className="text-xs text-gray-500 mt-1">Optional — if you list under a business name.</p>
+          </div>
+
+          <div>
+            <label htmlFor="ll-abn" className="block text-sm font-semibold text-gray-900 mb-1">
+              ABN
+            </label>
+            <input
+              id="ll-abn"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="e.g. 12 345 678 901"
+              value={abn}
+              onChange={(e) => setAbn(e.target.value)}
+              className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            <p className="text-xs text-gray-500 mt-1">Australian Business Number, if applicable.</p>
+          </div>
+
+          <div className="pt-1 border-t border-gray-100">
+            <p className="text-sm font-semibold text-gray-900 mb-3">Address</p>
+            <p className="text-xs text-gray-500 -mt-2 mb-3">
+              Business or correspondence address (same format as property listings).
+            </p>
+            <div className="space-y-4">
               <div>
-                <label htmlFor="ll-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full name
+                <label htmlFor="ll-address" className="block text-sm font-semibold text-gray-900 mb-1">
+                  Street address
                 </label>
                 <input
-                  id="ll-name"
+                  id="ll-address"
                   type="text"
-                  autoComplete="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  autoComplete="street-address"
+                  placeholder="Unit / street number and name"
+                  value={addressLine}
+                  onChange={(e) => setAddressLine(e.target.value)}
+                  className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="ll-suburb" className="block text-sm font-semibold text-gray-900 mb-1">
+                    Suburb
+                  </label>
+                  <input
+                    id="ll-suburb"
+                    type="text"
+                    autoComplete="address-level2"
+                    value={suburb}
+                    onChange={(e) => setSuburb(e.target.value)}
+                    className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ll-postcode" className="block text-sm font-semibold text-gray-900 mb-1">
+                    Postcode
+                  </label>
+                  <input
+                    id="ll-postcode"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={10}
+                    placeholder="e.g. 2000"
+                    value={postcode}
+                    onChange={(e) => setPostcode(e.target.value)}
+                    className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+              </div>
               <div>
-                <label htmlFor="ll-email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
+                <label htmlFor="ll-state" className="block text-sm font-semibold text-gray-900 mb-1">
+                  State
                 </label>
+                <select
+                  id="ll-state"
+                  value={addressState}
+                  onChange={(e) => setAddressState(e.target.value)}
+                  className="w-full sm:max-w-xs rounded-lg border border-gray-900/20 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                >
+                  {AU_STATE_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="ll-type" className="block text-sm font-semibold text-gray-900 mb-1">
+              Landlord type
+            </label>
+            <select
+              id="ll-type"
+              value={landlordType}
+              onChange={(e) => setLandlordType(e.target.value)}
+              className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              {LANDLORD_TYPE_OPTIONS.map((o) => (
+                <option key={o.value || 'empty'} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Helps students understand who they&apos;re renting from.</p>
+          </div>
+
+          <div>
+            <label htmlFor="ll-bio" className="block text-sm font-semibold text-gray-900 mb-1">
+              Bio
+            </label>
+            <textarea
+              id="ll-bio"
+              rows={4}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y min-h-[6rem]"
+            />
+          </div>
+
+          <div>
+            <span className="block text-sm font-semibold text-gray-900 mb-2">Profile photo</span>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-indigo-100 border border-gray-200 shrink-0">
+                {avatarUrl ? (
+                  <img key={avatarUrl} src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-indigo-800 text-xl font-semibold">
+                    {initialsFrom(firstName, lastName, profile.full_name, displayEmail)}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
                 <input
-                  id="ll-email"
-                  type="email"
-                  readOnly
-                  value={displayEmail}
-                  className="w-full rounded-lg border border-gray-100 bg-gray-50 text-gray-500 px-3 py-2 text-sm cursor-not-allowed"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handlePhotoChange}
                 />
-                <p className="text-xs text-gray-400 mt-1">Email can&apos;t be changed here.</p>
-              </div>
-              <div>
-                <label htmlFor="ll-phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  id="ll-phone"
-                  type="tel"
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
-              </div>
-              <div>
-                <label htmlFor="ll-bio" className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio
-                </label>
-                <textarea
-                  id="ll-bio"
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y min-h-[6rem]"
-                />
+                <button
+                  type="button"
+                  disabled={uploadingPhoto}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50"
+                >
+                  <span className="text-lg leading-none">+</span>
+                  {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
+                </button>
+                <p className="text-xs text-gray-500 mt-2">Max: 2 MB</p>
+                {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
               </div>
             </div>
           </div>
@@ -233,15 +514,13 @@ export default function LandlordProfile() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-gray-900 text-white px-5 py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Save profile'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full rounded-lg bg-gray-900 text-white py-3 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Submit'}
+          </button>
         </form>
       </section>
 

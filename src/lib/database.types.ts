@@ -81,6 +81,15 @@ export interface Database {
           id: string
           user_id: string
           full_name: string | null
+          first_name: string | null
+          last_name: string | null
+          company_name: string | null
+          abn: string | null
+          landlord_type: string | null
+          address: string | null
+          suburb: string | null
+          state: string | null
+          postcode: string | null
           email: string | null
           phone: string | null
           bio: string | null
@@ -92,6 +101,15 @@ export interface Database {
           id?: string
           user_id: string
           full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          company_name?: string | null
+          abn?: string | null
+          landlord_type?: string | null
+          address?: string | null
+          suburb?: string | null
+          state?: string | null
+          postcode?: string | null
           email?: string | null
           phone?: string | null
           bio?: string | null
@@ -103,6 +121,15 @@ export interface Database {
           id?: string
           user_id?: string
           full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          company_name?: string | null
+          abn?: string | null
+          landlord_type?: string | null
+          address?: string | null
+          suburb?: string | null
+          state?: string | null
+          postcode?: string | null
           email?: string | null
           phone?: string | null
           bio?: string | null
