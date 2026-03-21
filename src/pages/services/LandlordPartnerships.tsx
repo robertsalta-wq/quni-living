@@ -77,7 +77,7 @@ export default function LandlordPartnerships() {
 
       {/* Why explore — callout */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
+        <div className="max-w-site mx-auto px-6 pt-10 md:pt-12 pb-0">
           <div className="max-w-3xl mx-auto rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
             <h2 className="font-display text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
               Why explore renting to students?
@@ -108,7 +108,7 @@ export default function LandlordPartnerships() {
 
       {/* Process line */}
       <section className="bg-gray-50 border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-8 text-center">
+        <div className="max-w-3xl mx-auto px-6 pb-8 pt-0 text-center">
           <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
             We focus on the property, the tenants, and protecting your asset — with one clear process instead of juggling
             multiple informal arrangements.
@@ -168,7 +168,7 @@ export default function LandlordPartnerships() {
             </div>
             <div className="mt-6 lg:mt-0 min-h-0 flex">
               <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600"
+                src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600"
                 alt=""
                 className="rounded-2xl object-cover w-full h-full min-h-[300px] lg:min-h-0"
               />
@@ -182,8 +182,8 @@ export default function LandlordPartnerships() {
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
           <img
             src="https://images.unsplash.com/photo-1582407947304-fd86f28f8b9f?w=800"
-            alt=""
-            className="rounded-2xl object-cover h-48 w-full mb-8"
+            alt="Property management"
+            className="block rounded-2xl object-cover h-48 w-full mb-8"
           />
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
             <div>
