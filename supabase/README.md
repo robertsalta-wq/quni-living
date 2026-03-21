@@ -74,10 +74,19 @@ The listing page **Send an enquiry** form inserts into **`enquiries`** (policy: 
 
 Set in `.env.local` / Vercel:
 
-- `VITE_EMAILJS_SERVICE_ID`
-- `VITE_EMAILJS_PUBLIC_KEY`
-- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — email to the **sender** (use dynamic **To** = `{{to_email}}` if your plan supports it)
-- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — email to **hello@quni.com.au** (set **To** in the template, or use `{{notify_to}}` if you wire it as the recipient)
+- `VITE_EMAILJS_SERVICE_ID` — from **[Email Services](https://dashboard.emailjs.com/admin)** (the connected provider, e.g. Gmail), **not** from templates. ID usually looks like `service_xxxxxxx`.
+- `VITE_EMAILJS_PUBLIC_KEY` — [Account](https://dashboard.emailjs.com/admin/account) → **Public Key** (must be from the **same** EmailJS account as the service and templates).
+- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — from **Email Templates** → template ID like `template_xxxxxxx` (email to the **sender**; use **To** = `{{to_email}}` if your plan supports it).
+- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — second template for **hello@quni.com.au** (set **To** in the template, or use `{{notify_to}}`).
+
+### “The service ID not found” (EmailJS)
+
+That response means `VITE_EMAILJS_SERVICE_ID` does not match any **Email Service** under the account for your **Public Key**. Typical fixes:
+
+1. Open [Email Services](https://dashboard.emailjs.com/admin) and **add** a service (Gmail, Outlook, etc.) if you only created templates so far.
+2. Copy the **Service ID** from that row (not the Template ID).
+3. Confirm `VITE_EMAILJS_PUBLIC_KEY` is the public key from the **same** EmailJS login.
+4. Remove accidental spaces/quotes in Vercel; **redeploy** after changing any `VITE_*` variable.
 
 **Template parameters sent by the app**
 
