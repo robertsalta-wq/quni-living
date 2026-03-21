@@ -9,11 +9,11 @@ import type { Database } from '../lib/database.types'
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 function displayNameFromStudent(p: StudentRow | null, email: string | undefined): string {
-  if (!p) return ''
+  if (!p) return email?.split('@')[0]?.trim() ?? ''
   const fn = p.first_name?.trim() ?? ''
   const ln = p.last_name?.trim() ?? ''
   if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
-  return p.full_name?.trim() ?? ''
+  return p.full_name?.trim() || email?.split('@')[0]?.trim() || ''
 }
 
 function weeksBetweenInclusive(start: string, end: string): number {
