@@ -45,6 +45,11 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
+    if (role === 'admin') {
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
+      navigate(from && from !== '/login' ? from : '/admin', { replace: true })
+      return
+    }
     if (!user.user_metadata?.role || profile === null || needsOnboarding(role, profile)) {
       navigate('/onboarding', { replace: true })
       return
@@ -70,6 +75,11 @@ export default function Login() {
       if (!data.user) throw new Error('No user returned')
 
       const { role: r, profile: p } = await fetchRoleAndProfile(data.user)
+      if (r === 'admin') {
+        const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
+        navigate(from && from !== '/login' ? from : '/admin', { replace: true })
+        return
+      }
       if (!data.user.user_metadata?.role || needsOnboarding(r, p) || p === null) {
         navigate('/onboarding', { replace: true })
         return

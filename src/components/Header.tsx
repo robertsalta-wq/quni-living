@@ -4,7 +4,7 @@ import { useAuthContext } from '../context/AuthContext'
 import { getDashboardPath } from '../lib/authProfile'
 
 export default function Header() {
-  const { user, profile, loading, signOut } = useAuthContext()
+  const { user, profile, loading, signOut, role } = useAuthContext()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -34,13 +34,14 @@ export default function Header() {
 
   const profilePhotoUrl = profile?.avatar_url?.trim() || null
 
-  const metaRole = user?.user_metadata?.role as string | undefined
   const dashboardHref =
-    metaRole === 'student' || metaRole === 'landlord'
-      ? getDashboardPath(metaRole as 'student' | 'landlord')
-      : '/onboarding'
+    role === 'admin'
+      ? '/admin'
+      : role === 'student' || role === 'landlord'
+        ? getDashboardPath(role)
+        : '/onboarding'
   const profileHref =
-    metaRole === 'student' ? '/student-profile' : metaRole === 'landlord' ? '/landlord-profile' : '/onboarding'
+    role === 'student' ? '/student-profile' : role === 'landlord' ? '/landlord-profile' : role === 'admin' ? '/admin' : '/onboarding'
 
   async function handleSignOut() {
     setMenuOpen(false)
@@ -68,13 +69,30 @@ export default function Header() {
           <Link to="/search" className="text-gray-600 hover:text-gray-900 text-sm">
             Search
           </Link>
+          {role === 'admin' && (
+            <Link
+              to="/admin"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              Admin dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
-            <div className="relative" ref={menuRef}>
+            <>
+              {role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className="md:hidden text-sm font-medium text-indigo-600 hover:text-indigo-800 shrink-0"
+                >
+                  Admin
+                </Link>
+              )}
+              <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
@@ -93,13 +111,26 @@ export default function Header() {
                     {initials}
                   </span>
                 )}
+                {role === 'admin' && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-indigo-800 bg-indigo-100 px-1.5 py-0.5 rounded shrink-0">
+                    Admin
+                  </span>
+                )}
                 <span className="hidden sm:inline text-sm text-gray-700 max-w-[120px] truncate">
                   {displayName}
                 </span>
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-xl border border-gray-100 bg-white py-1 shadow-lg z-50">
-                  {!metaRole || !profile ? (
+                  {role === 'admin' ? (
+                    <Link
+                      to="/admin"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Admin dashboard
+                    </Link>
+                  ) : !user.user_metadata?.role || !profile ? (
                     <Link
                       to="/onboarding"
                       className="block px-4 py-2 text-sm text-amber-700 hover:bg-gray-50"
@@ -134,7 +165,8 @@ export default function Header() {
                   </button>
                 </div>
               )}
-            </div>
+              </div>
+            </>
           ) : (
             <>
               <Link

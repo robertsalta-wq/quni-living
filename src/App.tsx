@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
@@ -14,15 +14,25 @@ import LandlordDashboard from './pages/LandlordDashboard'
 import StudentProfile from './pages/StudentProfile'
 import LandlordProfile from './pages/LandlordProfile'
 import PropertyForm from './pages/PropertyForm'
-import Admin from './pages/Admin'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminOverview from './pages/admin/AdminOverview'
+import AdminBookings from './pages/admin/AdminBookings'
+import AdminEnquiries from './pages/admin/AdminEnquiries'
+import AdminProperties from './pages/admin/AdminProperties'
+import AdminStudents from './pages/admin/AdminStudents'
+import AdminLandlords from './pages/admin/AdminLandlords'
+import AdminApps from './pages/admin/AdminApps'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
 
 function App() {
+  const location = useLocation()
+  const adminShell = location.pathname.startsWith('/admin')
+
   return (
     <>
-      <Header />
+      {!adminShell && <Header />}
       <main className="flex-1 w-full min-w-0 min-h-0">
         <Routes>
           {/* Public */}
@@ -51,7 +61,7 @@ function App() {
           <Route
             path="/student-dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['student']}>
                 <StudentDashboard />
               </ProtectedRoute>
             }
@@ -59,7 +69,7 @@ function App() {
           <Route
             path="/student-profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['student']}>
                 <StudentProfile />
               </ProtectedRoute>
             }
@@ -67,7 +77,7 @@ function App() {
           <Route
             path="/landlord-dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['landlord']}>
                 <LandlordDashboard />
               </ProtectedRoute>
             }
@@ -75,7 +85,7 @@ function App() {
           <Route
             path="/landlord-profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['landlord']}>
                 <LandlordProfile />
               </ProtectedRoute>
             }
@@ -83,14 +93,29 @@ function App() {
           <Route
             path="/booking"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['student']}>
                 <Booking />
               </ProtectedRoute>
             }
           />
 
           <Route path="/property-form" element={<PropertyForm />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminOverview />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="enquiries" element={<AdminEnquiries />} />
+            <Route path="properties" element={<AdminProperties />} />
+            <Route path="students" element={<AdminStudents />} />
+            <Route path="landlords" element={<AdminLandlords />} />
+            <Route path="apps" element={<AdminApps />} />
+          </Route>
         </Routes>
       </main>
     </>

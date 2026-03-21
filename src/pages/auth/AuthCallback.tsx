@@ -87,6 +87,11 @@ export default function AuthCallback() {
       const { role, profile } = await fetchRoleAndProfile(user)
       if (cancelled) return
 
+      if (role === 'admin') {
+        navigate('/admin', { replace: true })
+        return
+      }
+
       // Google OAuth: DB trigger may create a student row before role is chosen — require explicit role in metadata
       const metaRole = user.user_metadata?.role
       if (!metaRole || needsOnboarding(role, profile)) {

@@ -1,8 +1,9 @@
 import type { User } from '@supabase/supabase-js'
+import { isAdminEmail } from './adminEmails'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
-export type UserRole = 'student' | 'landlord' | null
+export type UserRole = 'student' | 'landlord' | 'admin' | null
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -18,6 +19,10 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
+  if (isAdminEmail(user.email)) {
+    return { role: 'admin', profile: null }
+  }
+
   const [{ data: spRaw }, { data: lpRaw }] = await Promise.all([
     supabase.from('student_profiles').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('landlord_profiles').select('*').eq('user_id', user.id).maybeSingle(),
@@ -39,11 +44,13 @@ export async function fetchRoleAndProfile(user: User): Promise<{
 export function getDashboardPath(role: UserRole): string {
   if (role === 'student') return '/student-dashboard'
   if (role === 'landlord') return '/landlord-dashboard'
+  if (role === 'admin') return '/admin'
   return '/'
 }
 
 /** True if user needs to complete onboarding (no profile row for resolved flow) */
 export function needsOnboarding(role: UserRole, profile: AuthProfile | null): boolean {
+  if (role === 'admin') return false
   if (!role) return true
   return profile === null
 }

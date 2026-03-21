@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import type { AuthProfile } from '../lib/authProfile'
+import type { AuthProfile, UserRole } from '../lib/authProfile'
 import { getEmailJsEnquiryConfig, sendEnquiryEmails } from '../lib/enquiryEmail'
 import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
 import TurnstileCaptcha from './TurnstileCaptcha'
@@ -12,7 +12,7 @@ type Props = {
   propertyTitle: string
   user: User | null
   profile: AuthProfile | null
-  role: 'student' | 'landlord' | null
+  role: UserRole
 }
 
 function enquiryDisplayName(user: User | null, profile: AuthProfile | null): string {

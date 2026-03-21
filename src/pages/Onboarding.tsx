@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import {
   supabase,
   isSupabaseConfigured,
@@ -45,7 +45,7 @@ async function saveProfileRow(
 }
 
 export default function Onboarding() {
-  const { user, loading: authLoading, refreshProfile } = useAuthContext()
+  const { user, loading: authLoading, refreshProfile, role: contextRole } = useAuthContext()
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +60,10 @@ export default function Onboarding() {
     ;(async () => {
       const meta = user.user_metadata?.role
       const { role, profile } = await fetchRoleAndProfile(user)
+      if (role === 'admin') {
+        navigate('/admin', { replace: true })
+        return
+      }
       if (
         (meta === 'student' || meta === 'landlord') &&
         profile !== null &&
@@ -134,6 +138,10 @@ export default function Onboarding() {
         <div className="h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
+  }
+
+  if (contextRole === 'admin') {
+    return <Navigate to="/admin" replace />
   }
 
   const keyMisuse = getSupabaseBrowserKeyMisuseMessage()

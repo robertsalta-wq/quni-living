@@ -1,14 +1,21 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import type { UserRole } from '../lib/authProfile'
 
-type Props = { children: React.ReactNode }
+type AllowedRole = Exclude<UserRole, null>
+
+type Props = {
+  children: React.ReactNode
+  /** If set, user must have this resolved role or they are sent to `/`. */
+  allowedRoles?: AllowedRole[]
+}
 
 /**
- * Requires Supabase session + a profile row (student or landlord).
+ * Requires Supabase session + a profile row (student or landlord), except admins (no profile).
  */
-export function ProtectedRoute({ children }: Props) {
-  const { user, loading, profile } = useAuthContext()
+export function ProtectedRoute({ children, allowedRoles }: Props) {
+  const { user, loading, profile, role } = useAuthContext()
   const location = useLocation()
 
   if (!isSupabaseConfigured) {
@@ -33,8 +40,19 @@ export function ProtectedRoute({ children }: Props) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  if (role === 'admin') {
+    if (allowedRoles?.length && !allowedRoles.includes('admin')) {
+      return <Navigate to="/" replace />
+    }
+    return <>{children}</>
+  }
+
   if (!user.user_metadata?.role || profile === null) {
     return <Navigate to="/onboarding" replace />
+  }
+
+  if (allowedRoles?.length && (!role || !allowedRoles.includes(role))) {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
