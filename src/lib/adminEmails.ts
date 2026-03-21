@@ -1,5 +1,5 @@
 /** Hardcoded admin accounts — compared case-insensitively to `user.email`. */
-export const ADMIN_EMAILS = ['hello@quni.com.au', 'robertsalta@gmail.com'] as const
+export const ADMIN_EMAILS = ['hello@quni.com.au'] as const
 
 const ADMIN_SET = new Set(ADMIN_EMAILS.map((e) => e.toLowerCase()))
 
