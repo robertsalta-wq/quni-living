@@ -5,8 +5,9 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import type { Property, University } from '../lib/listings'
 import { PropertyCard } from '../components/PropertyCard'
 
-const HERO_FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800'
+/** Student studying at a desk — pinned hero art (not from listings) */
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1000&q=80&auto=format&fit=crop'
 
 const HOW_STEPS = [
   {
@@ -33,7 +34,6 @@ export default function Home() {
   const [universities, setUniversities] = useState<University[]>([])
   const [listingCount, setListingCount] = useState<number | null>(null)
   const [countLoading, setCountLoading] = useState(isSupabaseConfigured)
-  const [heroImageUrl, setHeroImageUrl] = useState<string>(HERO_FALLBACK_IMAGE)
   const [featured, setFeatured] = useState<Property[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(isSupabaseConfigured)
 
@@ -73,26 +73,6 @@ export default function Home() {
         }
         setCountLoading(false)
       })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return
-    let cancelled = false
-    ;(async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('images')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(24)
-      if (cancelled || error) return
-      const rows = data ?? []
-      const first = rows.find((r) => Array.isArray(r.images) && r.images.length > 0 && r.images[0])
-      if (first?.images?.[0]) setHeroImageUrl(first.images[0])
-    })()
     return () => {
       cancelled = true
     }
@@ -156,18 +136,18 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
-      {/* Hero — cream band continuous with header */}
-      <section className="bg-[#FEF9E4] border-b border-[#E8E0CC]">
+      {/* Hero — secondary (sage) from brand palette; header stays cream */}
+      <section className="bg-[#8FB9AB] border-b border-[#596C68]/20">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-stretch">
             <div className="flex flex-col justify-center min-w-0">
-              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-indigo-600 mb-4">
+              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#596C68] mb-4">
                 Australia&apos;s student accommodation marketplace
               </p>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-gray-900 tracking-tight !mt-0 !mb-4 leading-[1.1]">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-[#596C68] tracking-tight !mt-0 !mb-4 leading-[1.1]">
                 Find your perfect student home
               </h1>
-              <p className="text-gray-600 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
+              <p className="text-[#596C68]/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
                 Browse verified listings near your university. Studios, shared rooms, apartments and more — all
                 student-friendly.
               </p>
@@ -186,7 +166,7 @@ export default function Home() {
                   onChange={(e) => setLocationInput(e.target.value)}
                   placeholder="Suburb or university…"
                   autoComplete="off"
-                  className="flex-1 min-w-0 rounded-xl border border-[#E8E0CC] bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  className="flex-1 min-w-0 rounded-xl border border-[#596C68]/25 bg-[#FDF2F7] px-4 py-3 text-sm text-[#596C68] placeholder:text-[#596C68]/45 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#596C68]/50 focus:border-[#596C68]/40"
                 />
                 <label className="sr-only" htmlFor="home-search-uni">
                   University
@@ -195,7 +175,7 @@ export default function Home() {
                   id="home-search-uni"
                   value={universityId}
                   onChange={(e) => setUniversityId(e.target.value)}
-                  className="w-full lg:w-[min(100%,220px)] shrink-0 rounded-xl border border-[#E8E0CC] bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  className="w-full lg:w-[min(100%,220px)] shrink-0 rounded-xl border border-[#596C68]/25 bg-[#FDF2F7] px-4 py-3 text-sm text-[#596C68] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#596C68]/50 focus:border-[#596C68]/40"
                 >
                   <option value="">All universities</option>
                   {universities.map((u) => (
@@ -206,20 +186,20 @@ export default function Home() {
                 </select>
                 <button
                   type="submit"
-                  className="shrink-0 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#FEF9E4] transition-colors"
+                  className="shrink-0 rounded-xl bg-[#596C68] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#4d5e59] focus:outline-none focus:ring-2 focus:ring-[#596C68] focus:ring-offset-2 focus:ring-offset-[#8FB9AB] transition-colors"
                 >
                   Search
                 </button>
               </form>
 
-              <p className="mt-4 text-sm text-gray-500">{trustLine}</p>
+              <p className="mt-4 text-sm text-[#596C68]/80">{trustLine}</p>
             </div>
 
-            <div className="relative min-h-[260px] lg:min-h-0 lg:min-h-[340px] rounded-3xl overflow-hidden shadow-xl border border-white/60 ring-1 ring-black/5">
+            <div className="relative min-h-[260px] lg:min-h-0 lg:min-h-[340px] rounded-3xl overflow-hidden shadow-xl border border-white/50 ring-1 ring-[#596C68]/10">
               <img
-                src={heroImageUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                src={HERO_IMAGE}
+                alt="Student studying at a desk with a laptop"
+                className="absolute inset-0 w-full h-full object-cover object-center"
               />
             </div>
           </div>
