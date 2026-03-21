@@ -57,7 +57,7 @@ export default function Listings() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
         <div className="max-w-3xl mx-auto px-4 py-16">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Listings</h1>
           <p className="text-gray-600 mb-4">
@@ -74,7 +74,7 @@ export default function Listings() {
   const roomTypeEntries = Object.entries(ROOM_TYPE_LABELS) as [RoomType, string][]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <h1 className="text-2xl font-bold text-gray-900">Student Accommodation</h1>

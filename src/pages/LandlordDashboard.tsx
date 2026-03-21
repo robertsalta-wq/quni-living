@@ -183,7 +183,7 @@ export default function LandlordDashboard() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="min-h-screen bg-gray-50 px-6 py-12 text-sm text-gray-600">
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-6 py-12 text-sm text-gray-600">
         Configure Supabase in <code className="bg-gray-100 px-1 rounded">.env.local</code>.
       </div>
     )
@@ -191,7 +191,7 @@ export default function LandlordDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex-1 flex min-h-0 w-full bg-gray-50 items-center justify-center">
         <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -199,7 +199,7 @@ export default function LandlordDashboard() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 px-6 py-12 max-w-lg mx-auto">
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-6 py-12 max-w-lg mx-auto">
         <p className="text-red-700 text-sm">{error ?? 'Landlord profile not found.'}</p>
         <Link to="/landlord-profile" className="mt-4 inline-block text-sm font-medium text-indigo-600">
           Go to profile
@@ -211,7 +211,7 @@ export default function LandlordDashboard() {
   const welcomeName = firstNameFromLandlord(profile)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div>

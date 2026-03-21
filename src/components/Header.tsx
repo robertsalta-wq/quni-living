@@ -63,13 +63,14 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <header className="w-full bg-[#FEF9E4] border-b border-[#E8E0CC] sticky top-0 z-50">
       <div className="max-w-site mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-full opacity-60" />
-          </div>
-          <span className="text-xl font-semibold text-gray-900">Quni</span>
+        <Link to="/" className="flex items-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 rounded-sm">
+          <img
+            src="/quni-logo.png"
+            alt="Quni"
+            className="h-9 sm:h-10 w-auto object-contain object-left"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

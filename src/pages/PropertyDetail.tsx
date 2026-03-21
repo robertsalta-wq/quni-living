@@ -138,7 +138,7 @@ export default function PropertyDetail() {
   const rent = Number(property.rent_per_week)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-4 sm:px-6 py-4">
           <nav className="text-sm text-gray-500 mb-1">

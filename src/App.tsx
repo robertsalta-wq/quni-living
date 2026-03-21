@@ -34,7 +34,7 @@ function App() {
   return (
     <>
       {!adminShell && <Header />}
-      <main className="flex-1 w-full min-w-0 min-h-0">
+      <main className="flex-1 flex flex-col min-h-0 w-full min-w-0">
         <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />

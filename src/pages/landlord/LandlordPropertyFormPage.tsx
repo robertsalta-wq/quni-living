@@ -426,7 +426,7 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-8">
           <Link
