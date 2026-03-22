@@ -6,14 +6,6 @@ import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS, ROOM_TYPE_SHORT_LABELS } from '../lib/listings'
 
-function SpecChip({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-700 ring-1 ring-inset ring-stone-900/5">
-      {children}
-    </span>
-  )
-}
-
 function SidebarRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex justify-between gap-4 text-sm">
@@ -223,17 +215,33 @@ export default function PropertyDetail() {
   const landlordInitial = landlord?.full_name?.trim()?.[0]?.toUpperCase() ?? '?'
   const landlordAvatar = landlord?.avatar_url?.trim()
 
+  const heroSpecParts: string[] = [
+    `${beds} bed${beds !== 1 ? 's' : ''}`,
+    `${baths} bath${baths !== 1 ? 's' : ''}`,
+  ]
+  if (roomShort) heroSpecParts.push(roomShort)
+  if (campusDisplay) heroSpecParts.push(campusDisplay)
+  const heroSpecLine = heroSpecParts.join(' · ')
+
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-20">
-      <div className="max-w-site mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
-        <nav className="text-sm text-stone-500 mb-5">
-          <Link to="/listings" className="hover:text-stone-800 transition-colors">
-            Listings
-          </Link>
-          <span className="mx-2 text-stone-300">/</span>
-          <span className="text-stone-800 font-medium line-clamp-1">{property.title}</span>
-        </nav>
+      <div className="w-full bg-[#FF6F61] py-6 sm:py-8">
+        <div className="max-w-site mx-auto px-4 sm:px-6 space-y-3 sm:space-y-4">
+          <nav className="text-sm text-white/80">
+            <Link to="/listings" className="hover:text-white transition-colors">
+              Listings
+            </Link>
+            <span className="mx-2 text-white/50">/</span>
+            <span className="text-white font-medium line-clamp-1">{property.title}</span>
+          </nav>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight text-balance">
+            {property.title}
+          </h1>
+          <p className="text-sm sm:text-base text-white/80 leading-relaxed">{heroSpecLine}</p>
+        </div>
+      </div>
 
+      <div className="max-w-site mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
         {/* Gallery — dominant focal area */}
         <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-200 shadow-sm ring-1 ring-black/5 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[2.35/1] max-h-[min(72vh,560px)] lg:max-h-[520px]">
           {mainImage ? (
@@ -277,53 +285,14 @@ export default function PropertyDetail() {
           {/* Main column — narrative & detail (left on desktop) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10 sm:space-y-12 order-2 lg:order-1">
             <header className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <h1 className="font-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight text-balance max-w-3xl">
-                  {property.title}
-                </h1>
-                {property.featured && (
-                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-violet-700 bg-violet-50 ring-1 ring-violet-200/80 rounded-full px-3 py-1">
-                    Featured
-                  </span>
-                )}
-              </div>
+              {property.featured && (
+                <span className="inline-flex text-xs font-semibold uppercase tracking-wider text-violet-700 bg-violet-50 ring-1 ring-violet-200/80 rounded-full px-3 py-1">
+                  Featured
+                </span>
+              )}
               {addressDisplay && (
                 <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">{addressDisplay}</p>
               )}
-              <div className="flex flex-wrap gap-2">
-                <SpecChip>
-                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                  {beds} bed{beds !== 1 ? 's' : ''}
-                </SpecChip>
-                <SpecChip>
-                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10 5v7m4-7v7M5 21V10a1 1 0 011-1h12a1 1 0 011 1v11"
-                    />
-                  </svg>
-                  {baths} bath{baths !== 1 ? 's' : ''}
-                </SpecChip>
-                {roomShort && (
-                  <SpecChip>
-                    <span className="text-stone-500">{roomShort}</span>
-                  </SpecChip>
-                )}
-                {campusDisplay && (
-                  <SpecChip>
-                    <span className="text-stone-600 line-clamp-1">{campusDisplay}</span>
-                  </SpecChip>
-                )}
-              </div>
             </header>
 
             {property.description ? (
