@@ -90,16 +90,21 @@ export default function Header() {
 
   return (
     <header className="w-full bg-[#FEF9E4] border-b border-[#E8E0CC] sticky top-0 z-50">
-      <div className="max-w-site mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 rounded-sm">
+      <div
+        className="max-w-site mx-auto w-full px-3 py-4 sm:px-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 md:flex md:items-center md:justify-between md:gap-4"
+      >
+        <Link
+          to="/"
+          className="flex min-w-0 items-center justify-self-start shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 rounded-sm"
+        >
           <img
             src="/quni-logo.png"
             alt="Quni"
-            className="h-9 sm:h-10 w-auto object-contain object-left"
+            className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
           />
         </Link>
 
-        <div className="md:hidden relative flex min-w-0 flex-1 justify-end" ref={mobileNavRootRef}>
+        <div className="relative flex justify-center justify-self-center md:hidden" ref={mobileNavRootRef}>
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
@@ -222,7 +227,7 @@ export default function Header() {
           )}
         </nav>
 
-        <div className="flex max-w-[100%] flex-wrap items-center justify-end gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+        <div className="flex min-w-0 items-center justify-end justify-self-end gap-1 sm:gap-2 md:gap-3 shrink-0">
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
@@ -259,7 +264,7 @@ export default function Header() {
                     Admin
                   </span>
                 )}
-                <span className="hidden sm:inline text-sm text-gray-700 max-w-[120px] truncate">
+                <span className="hidden md:inline text-sm text-gray-700 max-w-[120px] truncate">
                   {displayName}
                 </span>
               </button>
@@ -325,18 +330,18 @@ export default function Header() {
                 Sign up
               </Link>
               <Link
-                to="/signup"
-                className="whitespace-nowrap rounded border border-gray-900 px-2 py-1.5 text-xs text-gray-900 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm"
+                to="/signup?role=student"
+                className="whitespace-nowrap rounded border border-gray-900 px-1.5 py-1.5 text-[11px] text-gray-900 hover:bg-gray-50 md:px-3 md:py-2 md:text-sm"
               >
-                <span className="sm:hidden">Student</span>
-                <span className="hidden sm:inline">I&apos;m a student</span>
+                <span className="md:hidden">Student</span>
+                <span className="hidden md:inline">I&apos;m a student</span>
               </Link>
               <Link
                 to="/services/landlord-partnerships"
-                className="whitespace-nowrap rounded border border-gray-900 px-2 py-1.5 text-xs text-gray-900 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm"
+                className="whitespace-nowrap rounded border border-gray-900 px-1.5 py-1.5 text-[11px] text-gray-900 hover:bg-gray-50 md:px-3 md:py-2 md:text-sm"
               >
-                <span className="sm:hidden">Landlord</span>
-                <span className="hidden sm:inline">I&apos;m a landlord</span>
+                <span className="md:hidden">Landlord</span>
+                <span className="hidden md:inline">I&apos;m a landlord</span>
               </Link>
             </>
           )}
