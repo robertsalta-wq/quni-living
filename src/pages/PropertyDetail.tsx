@@ -6,11 +6,19 @@ import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS, ROOM_TYPE_SHORT_LABELS } from '../lib/listings'
 
-function MetaRow({ label, children }: { label: string; children: ReactNode }) {
+function SpecChip({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
-      <dt className="font-medium text-gray-800 shrink-0">{label}</dt>
-      <dd className="text-gray-600">{children}</dd>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-700 ring-1 ring-inset ring-stone-900/5">
+      {children}
+    </span>
+  )
+}
+
+function SidebarRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex justify-between gap-4 text-sm">
+      <span className="shrink-0 text-stone-500">{label}</span>
+      <span className="text-right font-medium text-stone-900 tabular-nums">{children}</span>
     </div>
   )
 }
@@ -136,8 +144,8 @@ export default function PropertyDetail() {
 
   if (loading && shouldFetch) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[50vh] flex items-center justify-center bg-stone-50">
+        <div className="h-10 w-10 border-2 border-stone-800 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -212,23 +220,79 @@ export default function PropertyDetail() {
   const bookHref = user ? `/booking?slug=${encodeURIComponent(slug)}` : '/login'
   const bookState = user ? undefined : { from: { pathname: `/properties/${slug}` } }
 
+  const landlordInitial = landlord?.full_name?.trim()?.[0]?.toUpperCase() ?? '?'
+  const landlordAvatar = landlord?.avatar_url?.trim()
+
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-      <div className="bg-[#7a8f7a] text-white">
-        <div className="max-w-site mx-auto px-4 sm:px-6 py-5 sm:py-6">
-          <nav className="text-xs text-white/80 mb-3">
-            <Link to="/listings" className="hover:text-white">
-              Listings
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-white/95">{property.title}</span>
-          </nav>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">{property.title}</h1>
-            <ul className="flex flex-wrap gap-6 sm:gap-8 text-sm text-white/95">
-              <li className="flex items-center gap-2">
-                <span className="text-white/70" aria-hidden>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-20">
+      <div className="max-w-site mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        <nav className="text-sm text-stone-500 mb-5">
+          <Link to="/listings" className="hover:text-stone-800 transition-colors">
+            Listings
+          </Link>
+          <span className="mx-2 text-stone-300">/</span>
+          <span className="text-stone-800 font-medium line-clamp-1">{property.title}</span>
+        </nav>
+
+        {/* Gallery — dominant focal area */}
+        <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-200 shadow-sm ring-1 ring-black/5 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[2.35/1] max-h-[min(72vh,560px)] lg:max-h-[520px]">
+          {mainImage ? (
+            <img src={mainImage} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-stone-400">
+              <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {images.length > 1 && (
+          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto pb-1 mt-4 -mx-1 px-1">
+            {images.map((src, i) => (
+              <button
+                key={`${src}-${i}`}
+                type="button"
+                onClick={() => setImageIndex(i)}
+                className={`shrink-0 w-[4.5rem] h-[3.25rem] sm:w-24 sm:h-[4.5rem] rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
+                  i === imageIndex
+                    ? 'ring-stone-900 shadow-md scale-[1.02]'
+                    : 'ring-transparent opacity-75 hover:opacity-100 hover:ring-stone-300'
+                }`}
+              >
+                <img src={src} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-site mx-auto px-4 sm:px-6 mt-10 sm:mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 xl:gap-16 items-start">
+          {/* Main column — narrative & detail (left on desktop) */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-10 sm:space-y-12 order-2 lg:order-1">
+            <header className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <h1 className="font-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight text-balance max-w-3xl">
+                  {property.title}
+                </h1>
+                {property.featured && (
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-violet-700 bg-violet-50 ring-1 ring-violet-200/80 rounded-full px-3 py-1">
+                    Featured
+                  </span>
+                )}
+              </div>
+              {addressDisplay && (
+                <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl">{addressDisplay}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <SpecChip>
+                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -236,14 +300,10 @@ export default function PropertyDetail() {
                       d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                     />
                   </svg>
-                </span>
-                <span>
-                  {beds} bedroom{beds !== 1 ? 's' : ''}
-                </span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-white/70" aria-hidden>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {beds} bed{beds !== 1 ? 's' : ''}
+                </SpecChip>
+                <SpecChip>
+                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -251,153 +311,154 @@ export default function PropertyDetail() {
                       d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10 5v7m4-7v7M5 21V10a1 1 0 011-1h12a1 1 0 011 1v11"
                     />
                   </svg>
-                </span>
-                <span>
-                  {baths} bathroom{baths !== 1 ? 's' : ''}
-                </span>
-              </li>
-              {roomShort && (
-                <li className="flex items-center gap-2">
-                  <span className="text-white/70" aria-hidden>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 6h16M4 10h16M4 14h10"
-                      />
-                    </svg>
-                  </span>
-                  <span>{roomShort}</span>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-site mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          <div className="lg:col-span-5 space-y-4">
-            <div className="rounded-2xl overflow-hidden bg-gray-200 aspect-[16/10]">
-              {mainImage ? (
-                <img src={mainImage} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {images.map((src, i) => (
-                  <button
-                    key={`${src}-${i}`}
-                    type="button"
-                    onClick={() => setImageIndex(i)}
-                    className={`shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                      i === imageIndex ? 'border-indigo-600 ring-2 ring-indigo-100' : 'border-transparent opacity-80 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">At a glance</h2>
-              <dl className="space-y-3">
-                {property.bond != null && Number(property.bond) > 0 && (
-                  <MetaRow label="Bond:">${Number(property.bond).toLocaleString()}</MetaRow>
+                  {baths} bath{baths !== 1 ? 's' : ''}
+                </SpecChip>
+                {roomShort && (
+                  <SpecChip>
+                    <span className="text-stone-500">{roomShort}</span>
+                  </SpecChip>
                 )}
-                {property.lease_length?.trim() && <MetaRow label="Lease:">{property.lease_length.trim()}</MetaRow>}
-                {availableFormatted && <MetaRow label="Available from:">{availableFormatted}</MetaRow>}
-                <MetaRow label="Name:">{landlord?.full_name?.trim() || 'Private landlord'}</MetaRow>
-                {roomLabel && <MetaRow label="Listing type:">{roomLabel}</MetaRow>}
-                {campusDisplay && <MetaRow label="Campus:">{campusDisplay}</MetaRow>}
-              </dl>
-              {property.featured && (
-                <p className="mt-4 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg px-3 py-2 inline-block">
-                  Featured listing
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 space-y-6">
-            {addressDisplay && (
-              <p className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">{addressDisplay}</p>
-            )}
-            <p className="text-2xl font-bold text-gray-900">
-              ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              <span className="text-base font-semibold text-gray-600"> / week</span>
-            </p>
+                {campusDisplay && (
+                  <SpecChip>
+                    <span className="text-stone-600 line-clamp-1">{campusDisplay}</span>
+                  </SpecChip>
+                )}
+              </div>
+            </header>
 
             {property.description ? (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Description</h2>
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{property.description}</p>
-              </div>
+              <section className="space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">About this place</h2>
+                <p className="text-stone-700 text-base leading-[1.7] whitespace-pre-wrap max-w-prose">
+                  {property.description}
+                </p>
+              </section>
             ) : null}
 
             {activeKeyFeatures.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Key features</h2>
-                <ul className="space-y-2">
+              <section className="space-y-4">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Included</h2>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {keyFeatures.map(
                     (f) =>
                       f.on && (
-                        <li key={f.label} className="flex items-center gap-2 text-sm text-gray-800">
-                          <span className="text-emerald-600 font-semibold" aria-hidden>
-                            ✓
+                        <li
+                          key={f.label}
+                          className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-stone-800 ring-1 ring-stone-900/5 shadow-sm"
+                        >
+                          <span
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"
+                            aria-hidden
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
                           </span>
                           {f.label}
                         </li>
                       ),
                   )}
                 </ul>
-              </div>
+              </section>
             )}
 
             {amenityNames.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Amenities</h2>
-                <p className="text-sm text-gray-700 leading-relaxed">{amenityNames.join(' · ')}</p>
-              </div>
+              <section className="space-y-4">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Amenities</h2>
+                <div className="flex flex-wrap gap-2">
+                  {amenityNames.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex rounded-full border border-stone-200 bg-white px-3.5 py-1.5 text-sm text-stone-700 shadow-sm"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </section>
             )}
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                to={bookHref}
-                state={bookState}
-                className="flex-1 text-center rounded-xl bg-gray-900 text-white py-3.5 text-sm font-semibold hover:bg-gray-800"
-              >
-                Book now
-              </Link>
-              <button
-                type="button"
-                onClick={openEnquiryModal}
-                className="flex-1 text-center rounded-xl bg-gray-900 text-white py-3.5 text-sm font-semibold hover:bg-gray-800"
-              >
-                Enquire
-              </button>
-            </div>
 
             <Link
               to="/listings"
-              className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors"
             >
-              ← More listings
+              <span aria-hidden>←</span> Back to all listings
             </Link>
           </div>
+
+          {/* Sticky booking card — right on desktop, first on mobile for faster action */}
+          <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
+            <div className="lg:sticky lg:top-28 space-y-6">
+              <div className="rounded-2xl sm:rounded-3xl bg-white p-6 sm:p-8 shadow-[0_1px_0_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-stone-900/5">
+                <div className="pb-6 border-b border-stone-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500 mb-2">From</p>
+                  <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-stone-900 tracking-tight">
+                    ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
+                  </p>
+                </div>
+
+                <div className="py-6 space-y-3 border-b border-stone-100">
+                  {property.bond != null && Number(property.bond) > 0 && (
+                    <SidebarRow label="Bond">{`$${Number(property.bond).toLocaleString()}`}</SidebarRow>
+                  )}
+                  {property.lease_length?.trim() && (
+                    <SidebarRow label="Lease">{property.lease_length.trim()}</SidebarRow>
+                  )}
+                  {availableFormatted && <SidebarRow label="Available">{availableFormatted}</SidebarRow>}
+                  {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
+                  {campusDisplay && (
+                    <div className="text-sm space-y-1">
+                      <span className="text-stone-500">Campus</span>
+                      <p className="font-medium text-stone-900 leading-snug">{campusDisplay}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-6 pb-6 border-b border-stone-100">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500 mb-3">Listed by</p>
+                  <div className="flex items-center gap-3">
+                    {landlordAvatar ? (
+                      <img
+                        src={landlordAvatar}
+                        alt=""
+                        className="h-12 w-12 rounded-full object-cover ring-2 ring-stone-100"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-semibold text-sm ring-2 ring-stone-100">
+                        {landlordInitial}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-stone-900 truncate">
+                        {landlord?.full_name?.trim() || 'Private landlord'}
+                      </p>
+                      {landlord?.verified && (
+                        <p className="text-xs font-medium text-emerald-700 mt-0.5">Verified host</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex flex-col gap-3">
+                  <Link
+                    to={bookHref}
+                    state={bookState}
+                    className="flex w-full items-center justify-center rounded-xl bg-stone-900 text-white py-3.5 text-sm font-semibold tracking-wide hover:bg-stone-800 transition-colors"
+                  >
+                    Book now
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={openEnquiryModal}
+                    className="flex w-full items-center justify-center rounded-xl border-2 border-stone-200 bg-white text-stone-900 py-3.5 text-sm font-semibold tracking-wide hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                  >
+                    Enquire
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
 
