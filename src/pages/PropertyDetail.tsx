@@ -232,9 +232,9 @@ export default function PropertyDetail() {
   const heroSpecLine = heroSpecParts.join(' · ')
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-stone-50 pb-20">
-      <div className="w-full bg-[#8FB9AB] py-8 sm:py-10">
-        <div className="max-w-site mx-auto px-4 sm:px-6 space-y-3 sm:space-y-4">
+    <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-stone-50 pb-20 overflow-x-clip">
+      <div className="max-w-site mx-auto w-full min-w-0">
+        <div className="bg-[#8FB9AB] py-8 sm:py-10 px-4 sm:px-6 space-y-3 sm:space-y-4">
           <nav className="text-sm text-white/80">
             <Link to="/listings" className="hover:text-white transition-colors">
               Listings
@@ -247,9 +247,8 @@ export default function PropertyDetail() {
           </h1>
           <p className="text-sm sm:text-base text-white/80 leading-relaxed">{heroSpecLine}</p>
         </div>
-      </div>
 
-      <div className="max-w-site mx-auto min-w-0 px-4 sm:px-6 pt-6 sm:pt-8">
+        <div className="min-w-0 px-4 sm:px-6 pt-6 sm:pt-8">
         {/* Gallery — dominant focal area */}
         <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-200 shadow-sm ring-1 ring-black/5 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[2.35/1] max-h-[min(72vh,560px)] lg:max-h-[520px]">
           {mainImage ? (
@@ -304,9 +303,9 @@ export default function PropertyDetail() {
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      <div className="max-w-site mx-auto px-4 sm:px-6 mt-10 sm:mt-12">
+        <div className="px-4 sm:px-6 mt-10 sm:mt-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 xl:gap-16 items-start">
           {/* Main column — narrative & detail (left on desktop) */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10 sm:space-y-12 order-2 lg:order-1">
@@ -454,6 +453,7 @@ export default function PropertyDetail() {
               </div>
             </div>
           </aside>
+        </div>
         </div>
       </div>
 
