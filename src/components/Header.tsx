@@ -99,11 +99,11 @@ export default function Header() {
           />
         </Link>
 
-        <div className="md:hidden relative flex-1 flex justify-end" ref={mobileNavRootRef}>
+        <div className="md:hidden relative flex min-w-0 flex-1 justify-end" ref={mobileNavRootRef}>
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
-            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
             aria-expanded={mobileNavOpen}
             aria-haspopup="true"
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
@@ -119,37 +119,44 @@ export default function Header() {
             )}
           </button>
           {mobileNavOpen && (
-            <div className="absolute right-0 top-full mt-2 w-[min(calc(100vw-3rem),18rem)] rounded-xl border border-gray-100 bg-white py-2 shadow-lg z-50 max-h-[min(70vh,24rem)] overflow-y-auto">
-              {MAIN_NAV_LINKS.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={() => setMobileNavOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <div className="border-t border-gray-100 my-1" />
-              <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Services</p>
-              <Link
-                to="/services"
-                className="block px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+            <>
+              <div
+                className="fixed inset-0 z-[55] bg-black/25 md:hidden"
+                aria-hidden
                 onClick={() => setMobileNavOpen(false)}
-              >
-                All services
-              </Link>
-              {SERVICE_LINKS.map((item) => (
+              />
+              <div className="fixed left-3 right-3 top-[calc(4.5rem+env(safe-area-inset-top,0px))] z-[60] max-h-[min(70vh,24rem)] overflow-y-auto rounded-xl border border-gray-100 bg-white py-2 shadow-lg md:hidden">
+                {MAIN_NAV_LINKS.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <div className="border-t border-gray-100 my-1" />
+                <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Services</p>
                 <Link
-                  key={item.to}
-                  to={item.to}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  to="/services"
+                  className="block px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
                   onClick={() => setMobileNavOpen(false)}
                 >
-                  {item.label}
+                  All services
                 </Link>
-              ))}
-            </div>
+                {SERVICE_LINKS.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -215,7 +222,7 @@ export default function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex max-w-[100%] flex-wrap items-center justify-end gap-1.5 sm:gap-2 md:gap-3 shrink-0">
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
@@ -319,15 +326,17 @@ export default function Header() {
               </Link>
               <Link
                 to="/signup"
-                className="border border-gray-900 text-gray-900 px-2 sm:px-3 py-2 rounded text-sm hover:bg-gray-50 text-xs sm:text-sm"
+                className="whitespace-nowrap rounded border border-gray-900 px-2 py-1.5 text-xs text-gray-900 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm"
               >
-                I&apos;m a student
+                <span className="sm:hidden">Student</span>
+                <span className="hidden sm:inline">I&apos;m a student</span>
               </Link>
               <Link
                 to="/services/landlord-partnerships"
-                className="border border-gray-900 text-gray-900 px-2 sm:px-3 py-2 rounded text-sm hover:bg-gray-50 text-xs sm:text-sm"
+                className="whitespace-nowrap rounded border border-gray-900 px-2 py-1.5 text-xs text-gray-900 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm"
               >
-                I&apos;m a landlord
+                <span className="sm:hidden">Landlord</span>
+                <span className="hidden sm:inline">I&apos;m a landlord</span>
               </Link>
             </>
           )}
