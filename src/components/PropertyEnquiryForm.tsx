@@ -13,6 +13,10 @@ type Props = {
   user: User | null
   profile: AuthProfile | null
   role: UserRole
+  /** Called after a successful submit (enquiry saved and emails sent). */
+  onSuccess?: () => void
+  /** When false, omits the in-form title and helper line (e.g. modal supplies its own header). */
+  showIntro?: boolean
 }
 
 function enquiryDisplayName(user: User | null, profile: AuthProfile | null): string {
@@ -40,6 +44,8 @@ export default function PropertyEnquiryForm({
   user,
   profile,
   role,
+  onSuccess,
+  showIntro = true,
 }: Props) {
   const loggedIn = Boolean(user)
   const studentId = role === 'student' && profile ? profile.id : null
@@ -127,6 +133,7 @@ export default function PropertyEnquiryForm({
       }
 
       setSent(true)
+      onSuccess?.()
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : 'Something went wrong.'
       setError(raw)
@@ -152,8 +159,12 @@ export default function PropertyEnquiryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Send an enquiry</h2>
-      <p className="text-xs text-gray-500 -mt-2">Ask the host a question about this listing.</p>
+      {showIntro && (
+        <>
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Send an enquiry</h2>
+          <p className="text-xs text-gray-500 -mt-2">Ask the host a question about this listing.</p>
+        </>
+      )}
 
       <div>
         <label htmlFor="enq-name" className={labelClass}>

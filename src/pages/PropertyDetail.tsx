@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
@@ -25,6 +25,45 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(shouldFetch)
   const [error, setError] = useState<string | null>(null)
   const [imageIndex, setImageIndex] = useState(0)
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
+  const enquirySuccessCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const closeEnquiryModal = useCallback(() => {
+    if (enquirySuccessCloseTimerRef.current) {
+      clearTimeout(enquirySuccessCloseTimerRef.current)
+      enquirySuccessCloseTimerRef.current = null
+    }
+    setEnquiryModalOpen(false)
+  }, [])
+
+  const openEnquiryModal = useCallback(() => {
+    if (enquirySuccessCloseTimerRef.current) {
+      clearTimeout(enquirySuccessCloseTimerRef.current)
+      enquirySuccessCloseTimerRef.current = null
+    }
+    setEnquiryModalOpen(true)
+  }, [])
+
+  const handleEnquirySuccess = useCallback(() => {
+    enquirySuccessCloseTimerRef.current = window.setTimeout(() => {
+      enquirySuccessCloseTimerRef.current = null
+      closeEnquiryModal()
+    }, 2000)
+  }, [closeEnquiryModal])
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeEnquiryModal()
+    }
+    if (enquiryModalOpen) {
+      document.addEventListener('keydown', onKeyDown)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [enquiryModalOpen, closeEnquiryModal])
 
   useEffect(() => {
     if (!shouldFetch) return
@@ -343,24 +382,13 @@ export default function PropertyDetail() {
               >
                 Book now
               </Link>
-              <a
-                href="#property-enquire"
+              <button
+                type="button"
+                onClick={openEnquiryModal}
                 className="flex-1 text-center rounded-xl bg-gray-900 text-white py-3.5 text-sm font-semibold hover:bg-gray-800"
               >
                 Enquire
-              </a>
-            </div>
-
-            <div id="property-enquire" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm scroll-mt-24">
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Send an enquiry</h2>
-              <PropertyEnquiryForm
-                propertyId={property.id}
-                landlordId={property.landlord_id}
-                propertyTitle={property.title}
-                user={user}
-                profile={profile}
-                role={role}
-              />
+              </button>
             </div>
 
             <Link
@@ -372,6 +400,59 @@ export default function PropertyDetail() {
           </div>
         </div>
       </div>
+
+      {enquiryModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={closeEnquiryModal}
+          role="presentation"
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="enquiry-modal-title"
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 id="enquiry-modal-title" className="font-display text-xl font-bold text-gray-900">
+                Send an enquiry
+              </h2>
+              <button
+                type="button"
+                onClick={closeEnquiryModal}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 pt-4 pb-2 bg-gray-50 border-b border-gray-100">
+              <p className="text-sm font-medium text-gray-900">{property.title}</p>
+              <p className="text-sm text-gray-500">
+                {property.suburb ?? '—'} · $
+                {Number(property.rent_per_week).toLocaleString(undefined, { maximumFractionDigits: 0 })}/wk
+              </p>
+            </div>
+
+            <div className="p-6">
+              <PropertyEnquiryForm
+                propertyId={property.id}
+                landlordId={property.landlord_id}
+                propertyTitle={property.title}
+                user={user}
+                profile={profile}
+                role={role}
+                showIntro={false}
+                onSuccess={handleEnquirySuccess}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
