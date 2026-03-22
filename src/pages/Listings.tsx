@@ -100,7 +100,7 @@ export default function Listings() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <div className="w-full bg-[#FF6F61] border-b border-[#CC4A3C]/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
             {buildHeading(
               filters.qApplied,
