@@ -11,9 +11,20 @@ export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   house: 'House',
 }
 
+/** Short labels for compact UI (e.g. property hero stats). */
+export const ROOM_TYPE_SHORT_LABELS: Record<RoomType, string> = {
+  single: 'Single',
+  shared: 'Shared',
+  studio: 'Studio',
+  apartment: 'Apartment',
+  house: 'House',
+}
+
 export type University = Database['public']['Tables']['universities']['Row']
 
 /** Shape returned by the Listings Supabase select (embedded FKs are singular objects) */
+type FeaturePick = Pick<Database['public']['Tables']['features']['Row'], 'id' | 'name' | 'icon'>
+
 export type Property = Database['public']['Tables']['properties']['Row'] & {
   landlord_profiles: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
@@ -21,6 +32,7 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
   > | null
   universities: Pick<Database['public']['Tables']['universities']['Row'], 'id' | 'name' | 'slug'> | null
   campuses: Pick<Database['public']['Tables']['campuses']['Row'], 'id' | 'name'> | null
+  property_features?: { features: FeaturePick | null }[] | null
 }
 
 export const LISTINGS_SORT_OPTIONS = [

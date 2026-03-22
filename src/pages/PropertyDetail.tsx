@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import type { Property } from '../lib/listings'
-import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
+import { isRoomType, ROOM_TYPE_LABELS, ROOM_TYPE_SHORT_LABELS } from '../lib/listings'
 
-const LISTING_TYPE_LABELS: Record<string, string> = {
-  rent: 'Rent',
-  homestay: 'Homestay',
-  student_house: 'Student house',
+function MetaRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
+      <dt className="font-medium text-gray-800 shrink-0">{label}</dt>
+      <dd className="text-gray-600">{children}</dd>
+    </div>
+  )
 }
 
 export default function PropertyDetail() {
@@ -38,7 +41,8 @@ export default function PropertyDetail() {
             *,
             landlord_profiles ( id, full_name, avatar_url, verified ),
             universities ( id, name, slug ),
-            campuses ( id, name )
+            campuses ( id, name ),
+            property_features ( features ( id, name, icon ) )
           `,
         )
         .eq('slug', slug)
@@ -63,6 +67,14 @@ export default function PropertyDetail() {
       cancelled = true
     }
   }, [slug, shouldFetch])
+
+  const amenityNames = useMemo(() => {
+    const rows = property?.property_features ?? []
+    const names = rows
+      .map((pf) => pf?.features?.name)
+      .filter((n): n is string => Boolean(n?.trim()))
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b))
+  }, [property?.property_features])
 
   if (!isSupabaseConfigured) {
     return (
@@ -126,35 +138,109 @@ export default function PropertyDetail() {
     property.room_type && isRoomType(property.room_type)
       ? ROOM_TYPE_LABELS[property.room_type]
       : null
-  const listingLabel =
-    property.listing_type && LISTING_TYPE_LABELS[property.listing_type]
-      ? LISTING_TYPE_LABELS[property.listing_type]
-      : property.listing_type
+  const roomShort =
+    property.room_type && isRoomType(property.room_type)
+      ? ROOM_TYPE_SHORT_LABELS[property.room_type]
+      : null
+  const locationParts = [property.address, property.suburb, property.state, property.postcode].filter(Boolean)
+  const locationLine = locationParts.join(', ')
+  const addressDisplay = locationLine ? `${locationLine}, Australia` : null
 
-  const locationLine = [property.address, property.suburb, property.state, property.postcode]
-    .filter(Boolean)
-    .join(', ')
+  const campusDisplay =
+    property.universities && property.campuses?.name
+      ? `${property.universities.name} – ${property.campuses.name}`
+      : property.universities?.name ?? property.campuses?.name ?? null
 
   const rent = Number(property.rent_per_week)
+  const beds = property.bedrooms ?? 1
+  const baths = property.bathrooms ?? 1
+
+  const keyFeatures: { label: string; on: boolean }[] = [
+    { label: 'Fully furnished', on: Boolean(property.furnished) },
+    { label: 'Linen supplied', on: Boolean(property.linen_supplied) },
+    { label: 'Weekly cleaning', on: Boolean(property.weekly_cleaning_service) },
+  ]
+  const activeKeyFeatures = keyFeatures.filter((f) => f.on)
+
+  const availableFormatted = property.available_from
+    ? new Date(property.available_from).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : null
+
+  const bookHref = user ? `/booking?slug=${encodeURIComponent(slug)}` : '/login'
+  const bookState = user ? undefined : { from: { pathname: `/properties/${slug}` } }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-site mx-auto px-4 sm:px-6 py-4">
-          <nav className="text-sm text-gray-500 mb-1">
-            <Link to="/listings" className="hover:text-indigo-600">
+      <div className="bg-[#7a8f7a] text-white">
+        <div className="max-w-site mx-auto px-4 sm:px-6 py-5 sm:py-6">
+          <nav className="text-xs text-white/80 mb-3">
+            <Link to="/listings" className="hover:text-white">
               Listings
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-900">{property.title}</span>
+            <span className="text-white/95">{property.title}</span>
           </nav>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">{property.title}</h1>
+            <ul className="flex flex-wrap gap-6 sm:gap-8 text-sm text-white/95">
+              <li className="flex items-center gap-2">
+                <span className="text-white/70" aria-hidden>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                    />
+                  </svg>
+                </span>
+                <span>
+                  {beds} bedroom{beds !== 1 ? 's' : ''}
+                </span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-white/70" aria-hidden>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M10 5v7m4-7v7M5 21V10a1 1 0 011-1h12a1 1 0 011 1v11"
+                    />
+                  </svg>
+                </span>
+                <span>
+                  {baths} bathroom{baths !== 1 ? 's' : ''}
+                </span>
+              </li>
+              {roomShort && (
+                <li className="flex items-center gap-2">
+                  <span className="text-white/70" aria-hidden>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 6h16M4 10h16M4 14h10"
+                      />
+                    </svg>
+                  </span>
+                  <span>{roomShort}</span>
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
       </div>
 
       <div className="max-w-site mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-2xl overflow-hidden bg-gray-200 aspect-[16/10] lg:aspect-[2/1]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+          <div className="lg:col-span-5 space-y-4">
+            <div className="rounded-2xl overflow-hidden bg-gray-200 aspect-[16/10]">
               {mainImage ? (
                 <img src={mainImage} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -188,132 +274,102 @@ export default function PropertyDetail() {
             )}
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{property.title}</h1>
-                  {locationLine && <p className="text-gray-600 text-sm mt-2">{locationLine}</p>}
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    <span className="text-base font-normal text-gray-500"> /wk</span>
-                  </p>
-                  {property.bond != null && Number(property.bond) > 0 && (
-                    <p className="text-sm text-gray-500 mt-1">Bond ${Number(property.bond).toLocaleString()}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {property.featured && (
-                  <span className="text-xs font-medium bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full">
-                    Featured
-                  </span>
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">At a glance</h2>
+              <dl className="space-y-3">
+                {property.bond != null && Number(property.bond) > 0 && (
+                  <MetaRow label="Bond:">${Number(property.bond).toLocaleString()}</MetaRow>
                 )}
-                {roomLabel && (
-                  <span className="text-xs font-medium bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full">
-                    {roomLabel}
-                  </span>
-                )}
-                {listingLabel && (
-                  <span className="text-xs font-medium bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full">
-                    {listingLabel}
-                  </span>
-                )}
-                {property.furnished && (
-                  <span className="text-xs font-medium bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-full">
-                    Furnished
-                  </span>
-                )}
-                <span className="text-xs font-medium bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
-                  {property.bedrooms ?? 1} bed{(property.bedrooms ?? 1) !== 1 ? 's' : ''} · {property.bathrooms ?? 1}{' '}
-                  bath
-                </span>
-              </div>
-
-              {property.universities && (
-                <p className="text-sm text-gray-600 mb-4">
-                  <span className="font-medium text-gray-800">Near:</span> {property.universities.name}
-                  {property.campuses?.name ? ` · ${property.campuses.name}` : ''}
-                </p>
-              )}
-
-              {property.description ? (
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">About</h2>
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{property.description}</p>
-                </div>
-              ) : null}
-
-              {property.lease_length && (
-                <p className="text-sm text-gray-600 mt-4">
-                  <span className="font-medium text-gray-800">Lease:</span> {property.lease_length}
-                </p>
-              )}
-              {property.available_from && (
-                <p className="text-sm text-gray-600 mt-1">
-                  <span className="font-medium text-gray-800">Available from:</span>{' '}
-                  {new Date(property.available_from).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                {property.lease_length?.trim() && <MetaRow label="Lease:">{property.lease_length.trim()}</MetaRow>}
+                {availableFormatted && <MetaRow label="Available from:">{availableFormatted}</MetaRow>}
+                <MetaRow label="Name:">{landlord?.full_name?.trim() || 'Private landlord'}</MetaRow>
+                {roomLabel && <MetaRow label="Listing type:">{roomLabel}</MetaRow>}
+                {campusDisplay && <MetaRow label="Campus:">{campusDisplay}</MetaRow>}
+              </dl>
+              {property.featured && (
+                <p className="mt-4 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg px-3 py-2 inline-block">
+                  Featured listing
                 </p>
               )}
             </div>
           </div>
 
-          <aside className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm lg:sticky lg:top-24">
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Listed by</h2>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-semibold text-sm">
-                  {landlord?.full_name?.[0]?.toUpperCase() ?? '?'}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{landlord?.full_name ?? 'Private landlord'}</p>
-                  {landlord?.verified && (
-                    <p className="text-xs text-emerald-700 font-medium">Verified landlord</p>
+          <div className="lg:col-span-7 space-y-6">
+            {addressDisplay && (
+              <p className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">{addressDisplay}</p>
+            )}
+            <p className="text-2xl font-bold text-gray-900">
+              ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <span className="text-base font-semibold text-gray-600"> / week</span>
+            </p>
+
+            {property.description ? (
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Description</h2>
+                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{property.description}</p>
+              </div>
+            ) : null}
+
+            {activeKeyFeatures.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Key features</h2>
+                <ul className="space-y-2">
+                  {keyFeatures.map(
+                    (f) =>
+                      f.on && (
+                        <li key={f.label} className="flex items-center gap-2 text-sm text-gray-800">
+                          <span className="text-emerald-600 font-semibold" aria-hidden>
+                            ✓
+                          </span>
+                          {f.label}
+                        </li>
+                      ),
                   )}
-                </div>
+                </ul>
               </div>
+            )}
 
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <PropertyEnquiryForm
-                  propertyId={property.id}
-                  landlordId={property.landlord_id}
-                  propertyTitle={property.title}
-                  user={user}
-                  profile={profile}
-                  role={role}
-                />
+            {amenityNames.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Amenities</h2>
+                <p className="text-sm text-gray-700 leading-relaxed">{amenityNames.join(' · ')}</p>
               </div>
+            )}
 
-              {user ? (
-                <Link
-                  to={`/booking?slug=${encodeURIComponent(slug)}`}
-                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3 mt-6"
-                >
-                  Request to book
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  state={{ from: { pathname: `/properties/${slug}` } }}
-                  className="block w-full text-center rounded-xl bg-gray-900 text-white py-3 text-sm font-medium hover:bg-gray-800 mb-3 mt-6"
-                >
-                  Log in to book
-                </Link>
-              )}
-
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link
-                to="/listings"
-                className="block w-full text-center rounded-xl border border-gray-200 text-gray-800 py-3 text-sm font-medium hover:bg-gray-50"
+                to={bookHref}
+                state={bookState}
+                className="flex-1 text-center rounded-xl bg-gray-900 text-white py-3.5 text-sm font-semibold hover:bg-gray-800"
               >
-                More listings
+                Book now
               </Link>
+              <a
+                href="#property-enquire"
+                className="flex-1 text-center rounded-xl bg-gray-900 text-white py-3.5 text-sm font-semibold hover:bg-gray-800"
+              >
+                Enquire
+              </a>
             </div>
-          </aside>
+
+            <div id="property-enquire" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm scroll-mt-24">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Send an enquiry</h2>
+              <PropertyEnquiryForm
+                propertyId={property.id}
+                landlordId={property.landlord_id}
+                propertyTitle={property.title}
+                user={user}
+                profile={profile}
+                role={role}
+              />
+            </div>
+
+            <Link
+              to="/listings"
+              className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              ← More listings
+            </Link>
+          </div>
         </div>
       </div>
     </div>
