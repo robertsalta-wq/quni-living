@@ -3,9 +3,33 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import {
   LISTINGS_SORT_OPTIONS,
   ROOM_TYPE_LABELS,
+  isRoomType,
   type RoomType,
   type University,
 } from '../lib/listings'
+
+function buildHeading(
+  search: string,
+  universityId: string,
+  roomTypeKey: string,
+  universities: University[],
+): string {
+  const q = search.trim()
+  const uni = universityId
+    ? universities.find((u) => String(u.id) === String(universityId))
+    : undefined
+  const room =
+    roomTypeKey && isRoomType(roomTypeKey) ? ROOM_TYPE_LABELS[roomTypeKey] : undefined
+
+  if (!q && !uni && !room) return 'Student Accommodation'
+  if (room && uni && q) return `${room} near ${uni.name} for “${q}”`
+  if (room && uni) return `${room} near ${uni.name}`
+  if (room && q) return `${room} matching “${q}”`
+  if (uni && q) return `Accommodation near ${uni.name} for “${q}”`
+  if (room) return room
+  if (uni) return `Accommodation near ${uni.name}`
+  return `Results for “${q}”`
+}
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingsQuery } from '../hooks/useListingsQuery'
 import { PropertyCard } from '../components/PropertyCard'
@@ -75,10 +99,17 @@ export default function Listings() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Student Accommodation</h1>
-          <p className="text-sm text-gray-500 mt-1">
+      <div className="w-full bg-[#FF6F61] border-b border-[#CC4A3C]/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
+            {buildHeading(
+              filters.qApplied,
+              filters.university,
+              filters.roomType,
+              universities,
+            )}
+          </h1>
+          <p className="text-white/70 text-sm mt-2">
             {loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} available`}
           </p>
         </div>
