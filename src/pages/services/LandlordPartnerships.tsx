@@ -75,10 +75,10 @@ export default function LandlordPartnerships() {
         </div>
       </section>
 
-      {/* Why explore — callout */}
+      {/* Why explore — callout full width */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 pt-10 md:pt-12 pb-0">
-          <div className="max-w-3xl mx-auto rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
+          <div className="w-full rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
             <h2 className="font-display text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
               Why explore renting to students?
             </h2>
@@ -146,21 +146,15 @@ export default function LandlordPartnerships() {
                 <p className="mt-2 text-gray-700">Ideal if you want traditional leasing with stronger demand and fewer empty weeks.</p>
                 <ul className="mt-3 space-y-2 text-gray-700">
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                      •
-                    </span>
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
                     <span>Competitive market rent supported by student demand</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                      •
-                    </span>
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
                     <span>Medium–longer stays reduce re-letting gaps</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>
-                      •
-                    </span>
+                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
                     <span>One lease, one manager, predictable income</span>
                   </li>
                 </ul>
@@ -181,8 +175,8 @@ export default function LandlordPartnerships() {
       <section className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
           <img
-            src="https://images.unsplash.com/photo-1582407947304-fd86f28f8b9f?w=800"
-            alt="Property management"
+            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"
+            alt=""
             className="block rounded-2xl object-cover h-48 w-full mb-8"
           />
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
@@ -209,8 +203,7 @@ export default function LandlordPartnerships() {
                 <p className="mt-2 font-medium text-gray-900">Example: three-bedroom apartment</p>
                 <ul className="mt-4 space-y-3 text-gray-700 text-sm sm:text-base leading-relaxed">
                   <li>
-                    <span className="font-medium text-gray-900">Traditional lease:</span> one rent, one tenant, vacancy between
-                    leases.
+                    <span className="font-medium text-gray-900">Traditional lease:</span> one rent, one tenant, vacancy between leases.
                   </li>
                   <li>
                     <span className="font-medium text-gray-900">With Quni:</span> whole-property student lease for stable demand, or
