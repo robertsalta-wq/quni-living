@@ -3,37 +3,46 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import {
   LISTINGS_SORT_OPTIONS,
   ROOM_TYPE_LABELS,
-  isRoomType,
   type RoomType,
   type University,
 } from '../lib/listings'
-
-function buildHeading(
-  search: string,
-  universityId: string,
-  roomTypeKey: string,
-  universities: University[],
-): string {
-  const q = search.trim()
-  const uni = universityId
-    ? universities.find((u) => String(u.id) === String(universityId))
-    : undefined
-  const room =
-    roomTypeKey && isRoomType(roomTypeKey) ? ROOM_TYPE_LABELS[roomTypeKey] : undefined
-
-  if (!q && !uni && !room) return 'Student Accommodation'
-  if (room && uni && q) return `${room} near ${uni.name} for “${q}”`
-  if (room && uni) return `${room} near ${uni.name}`
-  if (room && q) return `${room} matching “${q}”`
-  if (uni && q) return `Accommodation near ${uni.name} for “${q}”`
-  if (room) return room
-  if (uni) return `Accommodation near ${uni.name}`
-  return `Results for “${q}”`
-}
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingsQuery } from '../hooks/useListingsQuery'
 import { PropertyCard } from '../components/PropertyCard'
 import { ListingsGridSkeleton } from '../components/listings/ListingsGridSkeleton'
+
+function buildHeading(
+  search: string,
+  university: string,
+  roomType: string,
+  universities: University[],
+): string {
+  const parts: string[] = []
+
+  if (roomType) {
+    const labels: Record<string, string> = {
+      single: 'Single rooms',
+      shared: 'Shared rooms',
+      studio: 'Studios',
+      apartment: 'Apartments',
+      house: 'Houses',
+    }
+    parts.push(labels[roomType] ?? 'Properties')
+  } else {
+    parts.push('Student accommodation')
+  }
+
+  if (university) {
+    const uni = universities.find((u) => u.id === university)
+    if (uni) parts[0] = parts[0] + ` near ${uni.name}`
+  }
+
+  if (search.trim()) {
+    parts[0] = parts[0] + ` matching "${search.trim()}"`
+  }
+
+  return parts[0]
+}
 
 export default function Listings() {
   const filters = useListingsFilters()

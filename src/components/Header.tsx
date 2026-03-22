@@ -14,7 +14,7 @@ const SERVICE_LINKS = [
 const MAIN_NAV_LINKS = [
   { to: '/', label: 'Home' },
   { to: '/listings', label: 'Listings' },
-  { to: '/search', label: 'Search' },
+  { to: '/listings', label: 'Search' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
 ] as const

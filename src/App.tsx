@@ -4,7 +4,6 @@ import Footer from './components/Footer'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Listings from './pages/Listings'
-import Search from './pages/Search'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -46,7 +45,7 @@ function App() {
           {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/listings" element={<Listings />} />
-          <Route path="/search" element={<Search />} />
+          <Route path="/search" element={<Navigate to="/listings" replace />} />
           <Route path="/properties/:slug" element={<PropertyDetail />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
