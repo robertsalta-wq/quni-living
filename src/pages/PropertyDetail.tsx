@@ -27,6 +27,7 @@ export default function PropertyDetail() {
   const [imageIndex, setImageIndex] = useState(0)
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
   const enquirySuccessCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const thumbsScrollRef = useRef<HTMLDivElement>(null)
 
   const closeEnquiryModal = useCallback(() => {
     if (enquirySuccessCloseTimerRef.current) {
@@ -106,6 +107,13 @@ export default function PropertyDetail() {
       cancelled = true
     }
   }, [slug, shouldFetch])
+
+  useEffect(() => {
+    const root = thumbsScrollRef.current
+    if (!root) return
+    const btn = root.querySelector<HTMLElement>(`[data-thumb-index="${imageIndex}"]`)
+    btn?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [imageIndex])
 
   const amenityNames = useMemo(() => {
     const rows = property?.property_features ?? []
@@ -224,8 +232,8 @@ export default function PropertyDetail() {
   const heroSpecLine = heroSpecParts.join(' · ')
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-20">
-      <div className="w-full bg-[#FF6F61] py-6 sm:py-8">
+    <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-stone-50 pb-20">
+      <div className="w-full bg-[#8FB9AB] py-8 sm:py-10">
         <div className="max-w-site mx-auto px-4 sm:px-6 space-y-3 sm:space-y-4">
           <nav className="text-sm text-white/80">
             <Link to="/listings" className="hover:text-white transition-colors">
@@ -241,7 +249,7 @@ export default function PropertyDetail() {
         </div>
       </div>
 
-      <div className="max-w-site mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+      <div className="max-w-site mx-auto min-w-0 px-4 sm:px-6 pt-6 sm:pt-8">
         {/* Gallery — dominant focal area */}
         <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-200 shadow-sm ring-1 ring-black/5 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[2.35/1] max-h-[min(72vh,560px)] lg:max-h-[520px]">
           {mainImage ? (
@@ -261,21 +269,39 @@ export default function PropertyDetail() {
         </div>
 
         {images.length > 1 && (
-          <div className="flex gap-2 sm:gap-2.5 overflow-x-auto pb-1 mt-4 -mx-1 px-1">
-            {images.map((src, i) => (
-              <button
-                key={`${src}-${i}`}
-                type="button"
-                onClick={() => setImageIndex(i)}
-                className={`shrink-0 w-[4.5rem] h-[3.25rem] sm:w-24 sm:h-[4.5rem] rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
-                  i === imageIndex
-                    ? 'ring-stone-900 shadow-md scale-[1.02]'
-                    : 'ring-transparent opacity-75 hover:opacity-100 hover:ring-stone-300'
-                }`}
+          <div className="mt-4 min-w-0">
+            <p className="sr-only" id="property-gallery-thumbs-hint">
+              {images.length} photos. Swipe horizontally on the row below to see every thumbnail.
+            </p>
+            <p className="sm:hidden text-center text-xs text-stone-500 mb-2" aria-hidden>
+              Swipe sideways for all {images.length} photos
+            </p>
+            {/* Full-bleed scroll on mobile so overflow-x isn’t clipped by page padding; min-w-0 allows flex children to shrink */}
+            <div className="-mx-4 sm:mx-0 min-w-0">
+              <div
+                ref={thumbsScrollRef}
+                className="flex w-full min-w-0 gap-2.5 overflow-x-auto overflow-y-hidden overscroll-x-contain py-1 pb-2 sm:pb-1 scroll-smooth snap-x snap-mandatory px-4 sm:px-0 touch-pan-x [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
+                aria-describedby="property-gallery-thumbs-hint"
               >
-                <img src={src} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
+                {images.map((src, i) => (
+                  <button
+                    key={`${src}-${i}`}
+                    type="button"
+                    data-thumb-index={i}
+                    aria-label={`Photo ${i + 1} of ${images.length}`}
+                    aria-pressed={i === imageIndex}
+                    onClick={() => setImageIndex(i)}
+                    className={`snap-start shrink-0 w-[4.5rem] h-[3.25rem] sm:w-24 sm:h-[4.5rem] rounded-xl overflow-hidden ring-2 transition-all duration-200 ${
+                      i === imageIndex
+                        ? 'ring-stone-900 shadow-md scale-[1.02]'
+                        : 'ring-transparent opacity-75 hover:opacity-100 hover:ring-stone-300'
+                    }`}
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover pointer-events-none" draggable={false} />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -286,7 +312,7 @@ export default function PropertyDetail() {
           <div className="lg:col-span-7 xl:col-span-8 space-y-10 sm:space-y-12 order-2 lg:order-1">
             <header className="space-y-4">
               {property.featured && (
-                <span className="inline-flex text-xs font-semibold uppercase tracking-wider text-violet-700 bg-violet-50 ring-1 ring-violet-200/80 rounded-full px-3 py-1">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#FF6F61] text-white">
                   Featured
                 </span>
               )}
@@ -399,9 +425,9 @@ export default function PropertyDetail() {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-semibold text-stone-900 truncate">
-                        {landlord?.full_name?.trim() || 'Private landlord'}
-                      </p>
+                      <span className="font-medium text-gray-900 capitalize">
+                        {(property.landlord_profiles?.full_name ?? 'Private landlord').toLowerCase()}
+                      </span>
                       {landlord?.verified && (
                         <p className="text-xs font-medium text-emerald-700 mt-0.5">Verified host</p>
                       )}
