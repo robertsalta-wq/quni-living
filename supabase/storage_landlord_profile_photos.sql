@@ -2,7 +2,11 @@
 -- Public storage for landlord profile photos (a photo of yourself)
 -- 1) Dashboard → Storage → New bucket → id: landlord-avatars → Public
 --    (Bucket id unchanged for existing projects; it holds profile photos.)
--- 2) Run this in SQL Editor
+-- 2) Run this in SQL Editor (re-run after any change; drops recreate policies).
+--
+-- Client path: {auth_user_uuid}/profile-photo.ext
+-- We match the first path segment to JWT sub OR auth.uid() (trim slashes; split_part
+-- avoids edge cases where storage.foldername() differs by version).
 -- ============================================================
 
 drop policy if exists "Public read landlord avatars" on storage.objects;
@@ -18,12 +22,16 @@ create policy "Public read landlord profile photos"
   on storage.objects for select
   using (bucket_id = 'landlord-avatars');
 
+-- Path must be {user_uuid}/file…; match first segment to JWT sub or auth.uid (trim leading /).
 create policy "Landlords upload own profile photo folder"
   on storage.objects for insert
   to authenticated
   with check (
     bucket_id = 'landlord-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );
 
 create policy "Landlords update own profile photo folder"
@@ -31,7 +39,17 @@ create policy "Landlords update own profile photo folder"
   to authenticated
   using (
     bucket_id = 'landlord-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
+  )
+  with check (
+    bucket_id = 'landlord-avatars'
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );
 
 create policy "Landlords delete own profile photo folder"
@@ -39,5 +57,8 @@ create policy "Landlords delete own profile photo folder"
   to authenticated
   using (
     bucket_id = 'landlord-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );

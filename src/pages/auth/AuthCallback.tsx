@@ -4,16 +4,22 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { isAdminUser } from '../../lib/adminEmails'
 import {
   fetchRoleAndProfile,
-  getDashboardPath,
+  getPostLoginRedirectDestination,
   needsOnboarding,
 } from '../../lib/authProfile'
-
+import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 /**
  * OAuth redirect handler — PKCE `?code=` exchange.
  * Supabase Dashboard → Redirect URLs must include `${origin}/auth/callback`
  */
 export default function AuthCallback() {
   const navigate = useNavigate()
+
+  function isPkceVerifierMissingErrorMessage(message: string | null | undefined): boolean {
+    if (!message) return false
+    const m = message.toLowerCase()
+    return m.includes('pkce') && m.includes('code verifier') && m.includes('not found')
+  }
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -48,6 +54,10 @@ export default function AuthCallback() {
 
       if (sessionErr) {
         console.error(sessionErr)
+        if (isPkceVerifierMissingErrorMessage(sessionErr.message)) {
+          navigate('/login?error=pkce_verifier_missing', { replace: true })
+          return
+        }
         navigate(
           `/login?error=auth_failed&detail=${encodeURIComponent(sessionErr.message)}`,
           { replace: true },
@@ -93,18 +103,25 @@ export default function AuthCallback() {
         return
       }
 
-      // Google OAuth: DB trigger may create a student row before role is chosen — require explicit role in metadata
-      const metaRole = user.user_metadata?.role
-      if (!metaRole || needsOnboarding(role, profile)) {
+      if (!role) {
         navigate('/onboarding', { replace: true })
         return
       }
+      if (needsOnboarding(role, profile)) {
+        navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+        return
+      }
 
-      navigate(getDashboardPath(role), { replace: true })
+      const returnTo = consumePostAuthRedirect()
+      navigate(returnTo ?? getPostLoginRedirectDestination(user, role, profile), { replace: true })
     })().catch((e) => {
       console.error(e)
       if (!cancelled) {
         const msg = e instanceof Error ? e.message : 'Unknown error'
+        if (isPkceVerifierMissingErrorMessage(msg)) {
+          navigate('/login?error=pkce_verifier_missing', { replace: true })
+          return
+        }
         navigate(`/login?error=auth_failed&detail=${encodeURIComponent(msg)}`, { replace: true })
       }
     })

@@ -2,7 +2,7 @@
 
 Schema file: **`quni_supabase_schema.sql`** — matches the Claude/Wix-style model (separate `landlord_profiles` / `student_profiles`, `features`, `rent_per_week`, `images[]`, NSW-style address fields, etc.).
 
-## Tables (9)
+## Tables (10+)
 
 | Table | Purpose |
 |--------|---------|
@@ -15,6 +15,7 @@ Schema file: **`quni_supabase_schema.sql`** — matches the Claude/Wix-style mod
 | `property_features` | Property ↔ feature junction |
 | `bookings` | Student ↔ property bookings |
 | `enquiries` | Messages (anonymous insert allowed for “contact” forms) |
+| `landlord_leads` | Landlord partnerships page lead form (public insert; admin read — run **`landlord_leads.sql`** then re-run **`admin_rls_policies.sql`** for `Platform admins select all landlord_leads`) |
 
 There is **no** `saved_properties` table in this version (add later if you want favourites).
 
@@ -93,6 +94,7 @@ Set in `.env.local` / Vercel:
 - `VITE_EMAILJS_PUBLIC_KEY` — [Account](https://dashboard.emailjs.com/admin/account) → **Public Key** (must be from the **same** EmailJS account as the service and templates).
 - `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — from **Email Templates** → template ID like `template_xxxxxxx`.
 - `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — second template for internal notification.
+- `VITE_EMAILJS_LANDLORD_LEAD_TEMPLATE_ID` — notify template for **`/services/landlord-partnerships`** lead form (set **To Email** to `hello@quni.com.au` or `{{notify_to}}`; body can use `{{message}}`, `{{lead_name}}`, `{{lead_email}}`, `{{lead_phone}}`, `{{lead_suburb}}`, `{{property_count}}`, `{{lead_message}}`).
 
 ### EmailJS: “The recipients address is empty”
 
@@ -138,6 +140,29 @@ The app sends users back to **`{origin}/auth/callback`** (see `src/lib/oauth.ts`
 **Google Cloud Console** (only if Google sign-in is broken everywhere): the OAuth client Supabase uses must list  
 `https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback`  
 as an **Authorized redirect URI**. Supabase usually documents this when you enable the Google provider.
+
+## Stripe Connect + weekly rent (subscriptions)
+
+1. Run **`stripe_connect_foundation.sql`** in SQL Editor (adds Stripe id columns + `stripe_webhook_events`).
+
+### Webhooks — pick one (no global Supabase CLI required)
+
+**A — Vercel (recommended if you deploy on Vercel)**  
+- Add env vars in Vercel (not in `VITE_*`): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_ANON_KEY`** (same publishable/anon key as `VITE_SUPABASE_ANON_KEY` — used to verify the user JWT on `/api/create-connect-account-link`).  
+- Optional: `SITE_URL` or `PUBLIC_SITE_URL` if Stripe return URLs must not rely on the incoming request host (defaults to request origin).  
+- After deploy, set Stripe Dashboard → Webhooks → `https://YOUR_DOMAIN/api/stripe-webhook` (same logic as `supabase/functions/stripe-webhook/index.ts`).  
+- Subscribe to **`account.updated`** as well as subscription events so landlord Connect status (`stripe_charges_enabled`, etc.) stays in sync.  
+- Landlord dashboard → **Connect your bank account** calls `POST /api/create-connect-account-link` with the Supabase session token.  
+- Students → **Save a card for rent** (profile or dashboard) calls `POST /api/student-stripe-payment-setup` — creates a Stripe Customer (`student_profiles.stripe_customer_id`) and opens Checkout in **setup** mode to attach a card.  
+- Vercel matches `/api/*` serverless routes before SPA rewrites.
+
+**B — Supabase Edge Function**  
+- **Without installing the CLI globally:** `npx supabase@latest login` then `npx supabase@latest functions deploy stripe-webhook --no-verify-jwt` (or use [Docker](https://supabase.com/docs/guides/cli/getting-started#installing-the-supabase-cli): `docker run` with the CLI image).  
+- `supabase secrets set STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=...`
+
+Optional in `.env.local` for future Stripe.js: `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...`
+
+Do **not** put `SUPABASE_SERVICE_ROLE_KEY` or Stripe secrets in Vite env.
 
 ## 2. Env
 

@@ -7,10 +7,12 @@ const NAV = [
   { to: '/admin', label: 'Overview', end: true },
   { to: '/admin/bookings', label: 'Bookings', end: false },
   { to: '/admin/enquiries', label: 'Enquiries', end: false },
+  { to: '/admin/landlord-leads', label: 'Landlord leads', end: false },
   { to: '/admin/properties', label: 'Properties', end: false },
   { to: '/admin/students', label: 'Students', end: false },
   { to: '/admin/landlords', label: 'Landlords', end: false },
   { to: '/admin/apps', label: 'Apps', end: false },
+  { to: '/admin/payments', label: 'Payments', end: false },
 ] as const
 
 function navClassName(isActive: boolean) {
@@ -52,10 +54,10 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-900">
-      <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-gray-100 bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-5 py-5">
+      <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-[#E8E0CC] bg-[#FEF9E4] shadow-sm">
+        <div className="border-b border-[#E8E0CC] bg-[#FEF9E4] px-5 py-5">
           <Link to="/admin" className="block">
-            <span className="text-lg font-semibold text-gray-900 tracking-tight">Quni</span>
+            <img src="/quni-logo.png" alt="Quni" className="h-9 w-auto max-w-full object-contain" />
             <p className="text-xs font-medium text-gray-500 mt-0.5">Admin</p>
           </Link>
         </div>
@@ -74,7 +76,7 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-gray-100 p-4 space-y-3">
+        <div className="border-t border-[#E8E0CC] p-4 space-y-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
             <p className="text-xs text-gray-500 truncate">{user?.email ?? ''}</p>

@@ -1,5 +1,10 @@
 import { Link } from 'react-router-dom'
 import ServicePageLayout from '../../components/ServicePageLayout'
+import Seo from '../../components/Seo'
+import LandlordPartnershipLeadForm from '../../components/LandlordPartnershipLeadForm'
+import LandlordAIBanner from '../../components/LandlordAIBanner'
+
+const SIGNUP_LANDLORD = '/signup?role=landlord'
 
 const CHECKLIST = [
   'Student screening & placement',
@@ -17,14 +22,45 @@ function IconCheck({ className }: { className?: string }) {
   )
 }
 
+function LandlordLeadCaptureBand() {
+  return (
+    <section className="bg-[#FF6F61] text-white w-full shrink-0" aria-labelledby="landlord-lead-heading">
+      <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
+        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
+          <h2
+            id="landlord-lead-heading"
+            className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight"
+          >
+            Ready to list your property?
+          </h2>
+          <p className="mt-3 text-base sm:text-lg text-white/95 leading-relaxed">
+            Join Quni Living and connect with verified student tenants. It takes less than 5 minutes to get started.
+          </p>
+        </div>
+        <LandlordPartnershipLeadForm />
+      </div>
+    </section>
+  )
+}
+
 export default function LandlordPartnerships() {
   return (
-    <ServicePageLayout
+    <>
+      <Seo
+        title="Landlord partnerships"
+        description="Partner with Quni Living for student accommodation near Sydney campuses. Structured leases, placement support, and predictable returns."
+        canonicalPath="/services/landlord-partnerships"
+      />
+      <ServicePageLayout
       title="Landlord Partnerships"
       subtitle="More income. Less vacancy. Predictable returns — student accommodation with a structured, numbers-driven approach."
       relatedMode="newest"
       contentVariant="fullBleed"
+      heroCta={{ label: 'List your property free →', to: SIGNUP_LANDLORD, variant: 'coralProminentOnCoral' }}
+      afterRelated={<LandlordLeadCaptureBand />}
     >
+      <LandlordAIBanner />
+
       {/* Opening statement */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-10 md:py-12 text-center">
@@ -39,6 +75,32 @@ export default function LandlordPartnerships() {
             alt=""
             className="rounded-2xl object-cover h-64 w-full mt-8"
           />
+        </div>
+      </section>
+
+      {/* AI features banner */}
+      <section className="bg-[#FDF0EC] border-b border-[#FF6F61]/20">
+        <div className="max-w-site mx-auto px-6 py-10 md:py-12">
+          <div className="w-full rounded-2xl border border-[#FF6F61]/25 bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
+            <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-2">
+              Powered by AI
+            </p>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              The smartest tools in student accommodation — built for landlords like you.
+            </h2>
+            <p className="mt-3 text-gray-700 leading-relaxed max-w-3xl">
+              Write listings in one click, price with live market data, and reply to enquiries instantly. No other
+              platform comes close.
+            </p>
+            <div className="mt-5">
+              <Link
+                to="/landlords/ai"
+                className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
+              >
+                See our AI features →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -96,7 +158,7 @@ export default function LandlordPartnerships() {
                 Speak with Quni
               </Link>
               <Link
-                to="/landlord-signup"
+                to={SIGNUP_LANDLORD}
                 className="inline-flex items-center justify-center rounded-xl border-2 border-gray-200 bg-white text-gray-900 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
               >
                 Become a partner
@@ -216,28 +278,29 @@ export default function LandlordPartnerships() {
         </div>
       </section>
 
-      {/* Income estimate CTA */}
-      <section className="bg-[#FF6F61] text-white">
+      {/* Income estimate — links to signup; full lead capture sits above footer */}
+      <section className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12 text-center">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Curious what your property could earn?
           </h2>
-          <p className="mt-3 text-base sm:text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
             We can outline expected weekly income, likely vacancy profile, and the best leasing structure — clear assumptions, no hype.
           </p>
-          <p className="mt-4 text-sm text-white/80 italic max-w-xl mx-auto">
+          <p className="mt-4 text-sm text-gray-500 italic max-w-xl mx-auto">
             Not short-stay. Not Airbnb. Proper leases. Professional management.
           </p>
           <div className="mt-5">
             <Link
-              to="/landlord-signup"
-              className="inline-flex items-center justify-center rounded-xl bg-gray-900 text-white px-6 py-3 text-sm font-semibold hover:bg-gray-800 transition-colors"
+              to={SIGNUP_LANDLORD}
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-6 py-3 text-sm font-semibold hover:opacity-95 transition-opacity"
             >
-              List your property
+              List your property free →
             </Link>
           </div>
         </div>
       </section>
     </ServicePageLayout>
+    </>
   )
 }

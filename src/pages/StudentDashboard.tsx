@@ -5,6 +5,9 @@ import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
+import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
+import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
+import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -54,9 +57,10 @@ function firstPropertyImage(images: string[] | null | undefined): string | null 
 }
 
 function bookingStatusClass(s: BookingStatus) {
-  if (s === 'pending') return 'bg-amber-100 text-amber-900'
-  if (s === 'confirmed') return 'bg-green-100 text-green-800'
+  if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-900'
+  if (s === 'confirmed' || s === 'active') return 'bg-green-100 text-green-800'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
+  if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
   return 'bg-gray-100 text-gray-600'
 }
 
@@ -177,11 +181,10 @@ export default function StudentDashboard() {
     void load()
   }, [load])
 
-  const pendingBookings = bookings.filter((b) => b.status === 'pending').length
-  const profileComplete =
-    Boolean(profile?.phone?.trim()) &&
-    Boolean(profile?.university_id) &&
-    Boolean(profile?.course?.trim())
+  const pendingBookings = bookings.filter(
+    (b) => b.status === 'pending' || b.status === 'pending_confirmation' || b.status === 'pending_payment',
+  ).length
+  const profileComplete = isStudentCoreProfileComplete(profile)
 
   const primaryBtnClass =
     'inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2'
@@ -222,6 +225,15 @@ export default function StudentDashboard() {
 
   return (
     <div className="max-w-site mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
+      {profile && user?.id && (
+        <OnboardingChecklistBanner
+          role="student"
+          userId={user.id}
+          studentProfile={profile}
+          landlordProfile={null}
+          onRefresh={load}
+        />
+      )}
       {error && profile && (
         <div
           className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
@@ -244,6 +256,8 @@ export default function StudentDashboard() {
           Browse listings
         </Link>
       </div>
+
+      {profile && <StudentStripePaymentsCard profile={profile} onRefresh={load} />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className={cardClass}>

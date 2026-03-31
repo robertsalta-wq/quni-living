@@ -1,0 +1,5 @@
+# Supabase CLI — https://supabase.com/docs/guides/cli/config
+# Link project: supabase link --project-ref YOUR_REF
+
+[functions.stripe-webhook]
+verify_jwt = false

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import {
@@ -22,24 +23,45 @@ type BookingRow = Database['public']['Tables']['bookings']['Row'] & {
   properties: { title: string; suburb: string | null } | null
 }
 
-const STATUSES: BookingStatus[] = ['pending', 'confirmed', 'cancelled', 'completed']
+const STATUSES: BookingStatus[] = [
+  'pending',
+  'pending_payment',
+  'pending_confirmation',
+  'confirmed',
+  'active',
+  'completed',
+  'cancelled',
+  'declined',
+  'expired',
+  'payment_failed',
+]
 
 function statusBadgeClass(s: BookingStatus) {
   switch (s) {
     case 'pending':
+    case 'pending_payment':
+    case 'pending_confirmation':
       return 'bg-amber-100 text-amber-800'
     case 'confirmed':
+    case 'active':
       return 'bg-emerald-100 text-emerald-800'
     case 'cancelled':
       return 'bg-gray-100 text-gray-600'
     case 'completed':
       return 'bg-indigo-100 text-indigo-800'
+    case 'declined':
+    case 'expired':
+    case 'payment_failed':
+      return 'bg-red-50 text-red-800'
     default:
       return 'bg-gray-100 text-gray-700'
   }
 }
 
 export default function AdminBookings() {
+  const [searchParams] = useSearchParams()
+  const highlightId = searchParams.get('highlight')?.trim() || null
+  const highlightRef = useRef<HTMLTableRowElement | null>(null)
   const [rows, setRows] = useState<BookingRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -71,6 +93,12 @@ export default function AdminBookings() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (!highlightId || loading) return
+    const t = window.setTimeout(() => highlightRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100)
+    return () => window.clearTimeout(t)
+  }, [highlightId, loading, rows])
 
   async function setStatus(id: string, status: BookingStatus) {
     setUpdatingId(id)
@@ -134,7 +162,15 @@ export default function AdminBookings() {
                     '—'
                   )
                   return (
-                    <tr key={row.id}>
+                    <tr
+                      key={row.id}
+                      ref={highlightId === row.id ? highlightRef : undefined}
+                      className={
+                        highlightId === row.id
+                          ? 'bg-amber-50/80 outline outline-2 outline-amber-200 -outline-offset-2'
+                          : ''
+                      }
+                    >
                       <td className={adminTdClass}>
                         <span className="font-medium text-gray-900">{studentName}</span>
                         <span className="block text-xs text-gray-500">{studentEmail}</span>

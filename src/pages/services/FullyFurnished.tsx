@@ -1,7 +1,14 @@
 import ServicePageLayout from '../../components/ServicePageLayout'
+import Seo from '../../components/Seo'
 
 export default function FullyFurnished() {
   return (
+    <>
+      <Seo
+        title="Fully furnished student accommodation"
+        description="Move-in ready furnished student rentals — furniture, linen, and essentials. Browse on Quni Living, Australia."
+        canonicalPath="/services/fully-furnished"
+      />
     <ServicePageLayout
       title="Fully Furnished Units"
       subtitle="Move in ready — everything included"
@@ -14,5 +21,6 @@ export default function FullyFurnished() {
       </p>
       <p>Filter by &quot;Furnished&quot; on our listings page to find properties ready to go.</p>
     </ServicePageLayout>
+    </>
   )
 }

@@ -2,43 +2,39 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
-import type { Property, University } from '../lib/listings'
+import type { Property } from '../lib/listings'
 import { PropertyCard } from '../components/PropertyCard'
+import UniversityCampusSelect from '../components/UniversityCampusSelect'
+import LandlordAIBanner from '../components/LandlordAIBanner'
+import Seo from '../components/Seo'
+import {
+  SITE_URL,
+  SITE_NAME,
+  DEFAULT_DESCRIPTION,
+  ORGANIZATION_EMAIL,
+  absoluteUrl,
+} from '../lib/site'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
 const HERO_COLLAGE_BOTTOM_FALLBACK =
   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
 
-/** Per-letter colours for “Everything” — light teal → white → peach on coral */
-const HERO_EVERYTHING_LETTERS: { ch: string; className: string }[] = [
-  { ch: 'E', className: 'text-[#A8D5C8]' },
-  { ch: 'v', className: 'text-[#A8D5C8]' },
-  { ch: 'e', className: 'text-[#C8E6E0]' },
-  { ch: 'r', className: 'text-[#C8E6E0]' },
-  { ch: 'y', className: 'text-[#C8E6E0]' },
-  { ch: 't', className: 'text-white' },
-  { ch: 'h', className: 'text-white' },
-  { ch: 'i', className: 'text-[#F0D5C8]' },
-  { ch: 'n', className: 'text-[#F0D5C8]' },
-  { ch: 'g', className: 'text-[#F0D5C8]' },
-]
-
 const HOW_STEPS = [
   {
     n: 1,
     title: 'Search',
-    desc: 'Browse listings near your university',
+    desc: 'Browse verified student listings near your university campus.',
   },
   {
     n: 2,
     title: 'Enquire',
-    desc: 'Message the landlord directly',
+    desc: 'Message landlords directly through your secure dashboard.',
   },
   {
     n: 3,
     title: 'Book',
-    desc: 'Request your booking online',
+    desc: 'Request your booking and secure your stay online.',
   },
 ] as const
 
@@ -46,26 +42,11 @@ export default function Home() {
   const navigate = useNavigate()
   const [locationInput, setLocationInput] = useState('')
   const [universityId, setUniversityId] = useState('')
-  const [universities, setUniversities] = useState<University[]>([])
+  const [campusId, setCampusId] = useState('')
   const [listingCount, setListingCount] = useState<number | null>(null)
   const [countLoading, setCountLoading] = useState(isSupabaseConfigured)
   const [featured, setFeatured] = useState<Property[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(isSupabaseConfigured)
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return
-    let cancelled = false
-    supabase
-      .from('universities')
-      .select('id, name')
-      .order('name')
-      .then(({ data }) => {
-        if (!cancelled && data) setUniversities(data as University[])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -134,7 +115,8 @@ export default function Home() {
     const params = new URLSearchParams()
     const q = locationInput.trim()
     if (q) params.set('q', q)
-    if (universityId) params.set('uni', universityId)
+    if (universityId) params.set('university_id', universityId)
+    if (campusId) params.set('campus_id', campusId)
     const qs = params.toString()
     navigate(qs ? `/listings?${qs}` : '/listings')
   }
@@ -152,44 +134,71 @@ export default function Home() {
   const heroCollageTopSrc = featured[0]?.images?.[0] ?? HERO_COLLAGE_TOP_FALLBACK
   const heroCollageBottomSrc = featured[1]?.images?.[0] ?? HERO_COLLAGE_BOTTOM_FALLBACK
 
+  const homeOgImage =
+    heroCollageTopSrc && /^https?:\/\//i.test(heroCollageTopSrc) ? heroCollageTopSrc : undefined
+
+  const homeJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: SITE_NAME,
+        description: DEFAULT_DESCRIPTION,
+        inLanguage: 'en-AU',
+        publisher: { '@id': `${SITE_URL}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${SITE_URL}/listings?q={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#organization`,
+        name: SITE_NAME,
+        url: SITE_URL,
+        logo: absoluteUrl('/favicon.svg'),
+        email: ORGANIZATION_EMAIL,
+      },
+    ],
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
+      <Seo
+        title="Student accommodation near university"
+        description={DEFAULT_DESCRIPTION}
+        canonicalPath="/"
+        image={homeOgImage}
+        jsonLd={homeJsonLd}
+      />
       {/* Hero — coral band; collage + badges reference Wix trial */}
-      <section className="bg-[#FF7261] border-b border-black/10">
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
+      <section className="bg-[#FF6F61] border-b border-black/10">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
               <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4">
                 Australia&apos;s student accommodation marketplace
               </p>
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-[4rem] font-bold tracking-tight text-white !mt-0 !mb-4 leading-[0.8] sm:leading-[0.82]">
-                <span className="block">Live Well</span>
-                <span className="block">Study Better</span>
-                <span className="block -mt-px sm:-mt-0.5">
-                  <span className="inline-flex tracking-[-0.03em]">
-                    {HERO_EVERYTHING_LETTERS.map(({ ch, className }, i) => (
-                      <span key={i} className={className}>
-                        {ch}
-                      </span>
-                    ))}
-                  </span>
-                </span>
-                <span className="block">Included</span>
+              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[4.5rem] font-bold tracking-tight text-white !mt-0 mb-8 sm:mb-10 leading-tight">
+                <span className="block">Live Well.</span>
+                <span className="block">Study Better.</span>
               </h1>
-              <div className="flex items-center gap-2 text-white/80 text-sm">
-                <span className="w-2 h-2 rounded-full bg-white/60 inline-block" />
-                <span>Sydney Universities</span>
-              </div>
-              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal mt-3">
+              <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
                 Student accommodation near Australia&apos;s top universities
               </p>
 
               <form
                 onSubmit={handleSearch}
-                className="flex flex-col lg:flex-row gap-3 lg:gap-2 lg:items-stretch w-full max-w-xl"
+                className="flex flex-col gap-3 w-full min-w-0 max-w-xl"
               >
                 <label className="sr-only" htmlFor="home-search-location">
-                  Location
+                  Suburb or university
                 </label>
                 <input
                   id="home-search-location"
@@ -198,27 +207,36 @@ export default function Home() {
                   onChange={(e) => setLocationInput(e.target.value)}
                   placeholder="Suburb or university…"
                   autoComplete="off"
-                  className="flex-1 min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  className="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 />
                 <label className="sr-only" htmlFor="home-search-uni">
                   University
                 </label>
-                <select
-                  id="home-search-uni"
-                  value={universityId}
-                  onChange={(e) => setUniversityId(e.target.value)}
-                  className="w-full lg:w-[min(100%,220px)] shrink-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
-                >
-                  <option value="">All universities</option>
-                  {universities.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="sr-only" htmlFor="home-search-campus">
+                  Campus
+                </label>
+                <UniversityCampusSelect
+                  universityId={universityId || null}
+                  campusId={campusId || null}
+                  onUniversityChange={(id) => {
+                    setUniversityId(id)
+                    setCampusId('')
+                  }}
+                  onCampusChange={setCampusId}
+                  showState
+                  showLabels={false}
+                  variant="pairRow"
+                  className="w-full min-w-0"
+                  campusPlaceholderNoUniversity="Select campus"
+                  campusPlaceholderWithUniversity="All campuses"
+                  universitySelectClassName="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  campusSelectClassName="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
+                  universityIdAttr="home-search-uni"
+                  campusIdAttr="home-search-campus"
+                />
                 <button
                   type="submit"
-                  className="shrink-0 rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF7261] transition-colors"
+                  className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
                 >
                   Search
                 </button>
@@ -230,7 +248,7 @@ export default function Home() {
             <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
               {/* Floating badges */}
               <div
-                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF7261] text-white shadow-lg ring-2 ring-white/50"
+                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6F61] text-white shadow-lg ring-2 ring-white/50"
                 aria-hidden
               >
                 <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -248,7 +266,7 @@ export default function Home() {
                 $ All Inclusive
               </div>
               <div
-                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF7261] px-2.5 py-2 text-white shadow-lg"
+                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF6F61] px-2.5 py-2 text-white shadow-lg"
                 aria-hidden
               >
                 <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -366,24 +384,62 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="bg-white py-12 sm:py-16">
+      <section className="bg-[#F6FAF8] py-14 sm:py-18 border-y border-[#E3EEE9]">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center !mt-0 !mb-10 sm:!mb-12">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center !mt-0 !mb-3">
             How it works
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+          <p className="text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-10 sm:mb-12">
+            Finding student housing should feel simple: discover, connect, and secure your place in a few steps.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
             {HOW_STEPS.map((step) => (
-              <div key={step.n} className="text-center md:text-left">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm mb-3 mx-auto md:mx-0">
+              <div
+                key={step.n}
+                className="relative rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
+              >
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[#FF6F61] mb-4 mx-auto md:mx-0">
+                  {step.n === 1 && (
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                    </svg>
+                  )}
+                  {step.n === 2 && (
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5m8-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  )}
+                  {step.n === 3 && (
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 7h.01M4 11.5l8.086-8.086a2 2 0 0 1 2.828 0l5.672 5.672a2 2 0 0 1 0 2.828L12.5 20a2 2 0 0 1-2.828 0L4 14.328a2 2 0 0 1 0-2.828Z"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <div className="absolute right-4 top-4 inline-flex items-center justify-center h-7 min-w-7 rounded-full bg-[#FDEDEA] px-2 text-xs font-bold text-[#CC4A3C]">
                   {step.n}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{step.title}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{step.title}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
+          <div className="mt-10 sm:mt-12 flex justify-center">
+            <Link
+              to="/listings"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2 transition-colors"
+            >
+              Browse listings
+            </Link>
+          </div>
         </div>
       </section>
+
+      <LandlordAIBanner />
+
     </div>
   )
 }

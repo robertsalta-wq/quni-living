@@ -20,6 +20,7 @@ drop policy if exists "Public can read campuses" on public.campuses;
 
 create policy "Public can read campuses"
   on public.campuses for select
+  to anon, authenticated
   using (true);
 
 alter table public.student_profiles

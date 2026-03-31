@@ -57,12 +57,18 @@ export default function AdminOverview() {
           countRows(() => Promise.resolve(supabase.from('bookings').select('id', { count: 'exact', head: true }))),
           countRows(() =>
             Promise.resolve(
-              supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+              supabase
+                .from('bookings')
+                .select('id', { count: 'exact', head: true })
+                .in('status', ['pending', 'pending_payment', 'pending_confirmation']),
             ),
           ),
           countRows(() =>
             Promise.resolve(
-              supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
+              supabase
+                .from('bookings')
+                .select('id', { count: 'exact', head: true })
+                .in('status', ['confirmed', 'active']),
             ),
           ),
           countRows(() => Promise.resolve(supabase.from('enquiries').select('id', { count: 'exact', head: true }))),

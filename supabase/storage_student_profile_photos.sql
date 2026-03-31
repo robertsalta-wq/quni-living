@@ -23,7 +23,10 @@ create policy "Students upload own profile photo folder"
   to authenticated
   with check (
     bucket_id = 'student-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );
 
 create policy "Students update own profile photo folder"
@@ -31,7 +34,17 @@ create policy "Students update own profile photo folder"
   to authenticated
   using (
     bucket_id = 'student-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
+  )
+  with check (
+    bucket_id = 'student-avatars'
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );
 
 create policy "Students delete own profile photo folder"
@@ -39,5 +52,8 @@ create policy "Students delete own profile photo folder"
   to authenticated
   using (
     bucket_id = 'student-avatars'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and (
+      split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.jwt() ->> 'sub')
+      or split_part(trim(both '/' from coalesce(name, '')), '/', 1) = (select auth.uid()::text)
+    )
   );

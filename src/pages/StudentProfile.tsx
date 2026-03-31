@@ -4,17 +4,20 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
+import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
+import PageHeroBand from '../components/PageHeroBand'
+import UniversityCampusSelect from '../components/UniversityCampusSelect'
+import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
+import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
-type UniversityRow = Database['public']['Tables']['universities']['Row']
-type CampusRow = Database['public']['Tables']['campuses']['Row']
 
 type BookingWithProperty = {
   id: string
   start_date: string
   end_date: string | null
   weekly_rent: number | null
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  status: Database['public']['Tables']['bookings']['Row']['status']
   notes: string | null
   created_at: string
   property: {
@@ -110,13 +113,20 @@ function initialsFrom(first: string, last: string, fullFallback: string | null, 
 function bookingStatusClass(status: BookingWithProperty['status']) {
   switch (status) {
     case 'confirmed':
+    case 'active':
       return 'bg-emerald-100 text-emerald-800'
     case 'pending':
+    case 'pending_payment':
+    case 'pending_confirmation':
       return 'bg-amber-100 text-amber-900'
     case 'cancelled':
       return 'bg-gray-100 text-gray-700'
     case 'completed':
       return 'bg-indigo-100 text-indigo-800'
+    case 'declined':
+    case 'expired':
+    case 'payment_failed':
+      return 'bg-red-50 text-red-800'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -126,10 +136,13 @@ type StudentTab = 'profile' | 'bookings'
 
 export default function StudentProfile() {
   const { user, refreshProfile } = useAuthContext()
+  const {
+    universities: refUniversities,
+    loading: refDataLoading,
+    error: refDataError,
+  } = useUniversityCampusReference()
   const [activeTab, setActiveTab] = useState<StudentTab>('profile')
   const [profile, setProfile] = useState<StudentRow | null>(null)
-  const [universities, setUniversities] = useState<UniversityRow[]>([])
-  const [campuses, setCampuses] = useState<CampusRow[]>([])
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [bookingsError, setBookingsError] = useState<string | null>(null)
@@ -169,13 +182,11 @@ export default function StudentProfile() {
     setLoadError(null)
     setLoading(true)
     try {
-      const [{ data: uniRows, error: uniErr }, { data: profRaw, error: pErr }] = await Promise.all([
-        supabase.from('universities').select('id, name, slug, city, state').order('name'),
-        supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
-      ])
-
-      if (uniErr) throw uniErr
-      setUniversities((uniRows ?? []) as UniversityRow[])
+      const { data: profRaw, error: pErr } = await supabase
+        .from('student_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
       if (pErr) throw pErr
       const prof = profRaw as StudentRow | null
@@ -209,24 +220,10 @@ export default function StudentProfile() {
         prof.budget_max_per_week != null ? String(prof.budget_max_per_week) : '',
       )
 
-      const uid = prof.university_id
-      if (uid) {
-        const { data: campRows, error: cErr } = await supabase
-          .from('campuses')
-          .select('id, name, university_id, address')
-          .eq('university_id', uid)
-          .order('name')
-        if (cErr) throw cErr
-        setCampuses((campRows ?? []) as CampusRow[])
-      } else {
-        setCampuses([])
-      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not load profile.'
       setLoadError(msg)
       setProfile(null)
-      setUniversities([])
-      setCampuses([])
     } finally {
       setLoading(false)
     }
@@ -241,30 +238,6 @@ export default function StudentProfile() {
       if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current)
     }
   }, [])
-
-  useEffect(() => {
-    if (!universityId) {
-      setCampuses([])
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      const { data, error } = await supabase
-        .from('campuses')
-        .select('id, name, university_id, address')
-        .eq('university_id', universityId)
-        .order('name')
-      if (cancelled) return
-      if (error) {
-        setCampuses([])
-        return
-      }
-      setCampuses((data ?? []) as CampusRow[])
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [universityId])
 
   useEffect(() => {
     if (activeTab !== 'bookings' || !profile?.id) return
@@ -378,8 +351,12 @@ export default function StudentProfile() {
         return
       }
 
-      const selectedCampusValid =
-        !campusId || campuses.some((c) => c.id === campusId && c.university_id === universityId)
+      let selectedCampusValid = !campusId
+      if (campusId && universityId.trim()) {
+        const slug = refUniversities.find((u) => u.id === universityId.trim())?.slug
+        const rows = await fetchCampusesForUniversityId(universityId.trim(), slug ?? null)
+        selectedCampusValid = rows.some((c) => c.id === campusId)
+      }
 
       const { error: uErr } = await supabase
         .from('student_profiles')
@@ -429,20 +406,31 @@ export default function StudentProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+        <PageHeroBand
+          title="My Profile"
+          subtitle="Keep your details up to date for landlords"
+        />
+        <div className="min-h-[40vh] flex flex-1 items-center justify-center">
+          <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     )
   }
 
   if (loadError || !profile) {
     return (
-      <div className="max-w-site mx-auto px-4 sm:px-6 py-10">
-        <h1 className="text-2xl font-bold text-gray-900">Student profile</h1>
-        <p className="text-red-600 text-sm mt-4">{loadError ?? 'Profile unavailable.'}</p>
-        <Link to="/student-dashboard" className="text-indigo-600 text-sm font-medium mt-4 inline-block">
-          Go to dashboard
-        </Link>
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+        <PageHeroBand
+          title="My Profile"
+          subtitle="Keep your details up to date for landlords"
+        />
+        <div className="max-w-site mx-auto px-4 sm:px-6 py-10">
+          <p className="text-red-600 text-sm">{loadError ?? 'Profile unavailable.'}</p>
+          <Link to="/student-dashboard" className="text-indigo-600 text-sm font-medium mt-4 inline-block">
+            Go to dashboard
+          </Link>
+        </div>
       </div>
     )
   }
@@ -453,10 +441,13 @@ export default function StudentProfile() {
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
   return (
-    <div className="max-w-site mx-auto px-4 sm:px-6 py-8 pb-16">
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Student profile</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">Your details and booking history.</p>
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+      <PageHeroBand
+        title="My Profile"
+        subtitle="Keep your details up to date for landlords"
+      />
 
+      <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
       <div
         className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
         role="tablist"
@@ -502,8 +493,10 @@ export default function StudentProfile() {
         aria-labelledby="tab-student-profile"
         hidden={activeTab !== 'profile'}
       >
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 max-w-2xl">
-          <form onSubmit={handleSave} className="space-y-5">
+        <StudentStripePaymentsCard profile={profile} onRefresh={load} />
+
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 w-full">
+          <form onSubmit={handleSave} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="st-first" className={labelClass}>
@@ -533,6 +526,91 @@ export default function StudentProfile() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="st-phone" className={labelClass}>
+                  Phone
+                </label>
+                <input
+                  id="st-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="st-gender" className={labelClass}>
+                  Gender
+                </label>
+                <select
+                  id="st-gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className={inputClass}
+                >
+                  {GENDER_OPTIONS.map((o) => (
+                    <option key={o.value || 'empty'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="st-nationality" className={labelClass}>
+                  Nationality
+                </label>
+                <select
+                  id="st-nationality"
+                  value={nationality}
+                  onChange={(e) => setNationality(e.target.value)}
+                  className={inputClass}
+                >
+                  {NATIONALITY_OPTIONS.map((o) => (
+                    <option key={o.value || 'empty'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="st-year" className={labelClass}>
+                  Year of study
+                </label>
+                <select
+                  id="st-year"
+                  value={yearOfStudy}
+                  onChange={(e) => setYearOfStudy(e.target.value)}
+                  className={inputClass}
+                >
+                  {YEAR_OPTIONS.map((o) => (
+                    <option key={o.value || 'empty'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="st-course" className={labelClass}>
+                Course
+              </label>
+              <input
+                id="st-course"
+                type="text"
+                autoComplete="off"
+                placeholder="e.g. Bachelor of Arts"
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
             <div>
               <label htmlFor="st-email" className={labelClass}>
                 Email
@@ -545,38 +623,6 @@ export default function StudentProfile() {
                 className="w-full rounded-lg border border-gray-900/10 bg-gray-50 text-gray-600 px-3 py-2 text-sm cursor-not-allowed"
               />
               <p className="text-xs text-gray-400 mt-1">Email can&apos;t be changed here.</p>
-            </div>
-
-            <div>
-              <label htmlFor="st-phone" className={labelClass}>
-                Phone
-              </label>
-              <input
-                id="st-phone"
-                type="tel"
-                autoComplete="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="st-gender" className={labelClass}>
-                Gender
-              </label>
-              <select
-                id="st-gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className={inputClass}
-              >
-                {GENDER_OPTIONS.map((o) => (
-                  <option key={o.value || 'empty'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div>
@@ -620,173 +666,91 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="st-nationality" className={labelClass}>
-                Nationality
-              </label>
-              <select
-                id="st-nationality"
-                value={nationality}
-                onChange={(e) => setNationality(e.target.value)}
-                className={inputClass}
-              >
-                {NATIONALITY_OPTIONS.map((o) => (
-                  <option key={o.value || 'empty'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="st-em-name" className={labelClass}>
+                  Emergency contact name
+                </label>
+                <input
+                  id="st-em-name"
+                  type="text"
+                  autoComplete="name"
+                  value={emergencyName}
+                  onChange={(e) => setEmergencyName(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="st-em-phone" className={labelClass}>
+                  Emergency contact number
+                </label>
+                <input
+                  id="st-em-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={emergencyPhone}
+                  onChange={(e) => setEmergencyPhone(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="st-year" className={labelClass}>
-                Year of study
-              </label>
-              <select
-                id="st-year"
-                value={yearOfStudy}
-                onChange={(e) => setYearOfStudy(e.target.value)}
-                className={inputClass}
-              >
-                {YEAR_OPTIONS.map((o) => (
-                  <option key={o.value || 'empty'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="st-dob" className={labelClass}>
+                  Date of birth
+                </label>
+                <input
+                  id="st-dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="st-type" className={labelClass}>
+                  Student type
+                </label>
+                <select
+                  id="st-type"
+                  value={studentType}
+                  onChange={(e) => setStudentType(e.target.value)}
+                  className={inputClass}
+                >
+                  {STUDENT_TYPE_OPTIONS.map((o) => (
+                    <option key={o.value || 'empty'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="st-course" className={labelClass}>
-                Course
-              </label>
-              <input
-                id="st-course"
-                type="text"
-                autoComplete="off"
-                placeholder="e.g. Bachelor of Arts"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="st-em-name" className={labelClass}>
-                Emergency contact name
-              </label>
-              <input
-                id="st-em-name"
-                type="text"
-                autoComplete="name"
-                value={emergencyName}
-                onChange={(e) => setEmergencyName(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="st-em-phone" className={labelClass}>
-                Emergency contact number
-              </label>
-              <input
-                id="st-em-phone"
-                type="tel"
-                autoComplete="tel"
-                value={emergencyPhone}
-                onChange={(e) => setEmergencyPhone(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <input
-                id="st-smoker"
-                type="checkbox"
-                checked={isSmoker}
-                onChange={(e) => setIsSmoker(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-900/30 text-indigo-600 focus:ring-indigo-400"
-              />
-              <label htmlFor="st-smoker" className="text-sm font-semibold text-gray-900">
-                I am a smoker
-              </label>
-            </div>
-
-            <div>
-              <label htmlFor="st-dob" className={labelClass}>
-                Date of birth
-              </label>
-              <input
-                id="st-dob"
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="st-uni" className={labelClass}>
-                University
-              </label>
-              <select
-                id="st-uni"
-                value={universityId}
-                onChange={(e) => {
-                  setUniversityId(e.target.value)
-                  setCampusId('')
-                }}
-                className={inputClass}
-              >
-                <option value="">Select university</option>
-                {universities.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-              {universities.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">No universities in the database yet.</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="st-campus" className={labelClass}>
-                Campus
-              </label>
-              <select
-                id="st-campus"
-                value={campusId}
-                disabled={!universityId}
-                onChange={(e) => setCampusId(e.target.value)}
-                className={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
-              >
-                <option value="">{universityId ? 'Select campus' : 'Choose a university first'}</option>
-                {campuses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="st-type" className={labelClass}>
-                Student type
-              </label>
-              <select
-                id="st-type"
-                value={studentType}
-                onChange={(e) => setStudentType(e.target.value)}
-                className={inputClass}
-              >
-                {STUDENT_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value || 'empty'} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <UniversityCampusSelect
+              universityId={universityId || null}
+              campusId={campusId || null}
+              onUniversityChange={(id) => {
+                setUniversityId(id)
+                setCampusId('')
+              }}
+              onCampusChange={setCampusId}
+              showState
+              variant="responsiveGrid"
+              labelClassName={labelClass}
+              universitySelectClassName={inputClass}
+              campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+              universityIdAttr="st-uni"
+              campusIdAttr="st-campus"
+            />
+            {refDataError && (
+              <p className="text-xs text-red-600 mt-2" role="alert">
+                Could not load universities: {refDataError}
+              </p>
+            )}
+            {refUniversities.length === 0 && !refDataLoading && !refDataError && (
+              <p className="text-xs text-gray-500">No universities in the database yet.</p>
+            )}
 
             <div>
               <label htmlFor="st-room" className={labelClass}>
@@ -837,6 +801,19 @@ export default function StudentProfile() {
               </div>
             </div>
 
+            <div className="flex items-center gap-3">
+              <input
+                id="st-smoker"
+                type="checkbox"
+                checked={isSmoker}
+                onChange={(e) => setIsSmoker(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-900/30 text-indigo-600 focus:ring-indigo-400"
+              />
+              <label htmlFor="st-smoker" className="text-sm font-semibold text-gray-900">
+                I am a smoker
+              </label>
+            </div>
+
             {saveError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{saveError}</div>
             )}
@@ -863,7 +840,7 @@ export default function StudentProfile() {
         aria-labelledby="tab-student-bookings"
         hidden={activeTab !== 'bookings'}
       >
-        <section className="max-w-2xl">
+        <section className="w-full">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Your bookings</h2>
           <p className="text-sm text-gray-500 mb-6">Properties you&apos;ve booked or applied for.</p>
 
@@ -961,9 +938,6 @@ export default function StudentProfile() {
           )}
         </section>
       </div>
-
-      <div className="mt-12 -mx-4 sm:-mx-6 px-4 sm:px-6 py-6 bg-[#f08070] text-white text-center text-sm rounded-t-xl">
-        Quni Living — student accommodation
       </div>
     </div>
   )

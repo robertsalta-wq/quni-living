@@ -1,0 +1,12 @@
+/**
+ * Browser-safe Stripe config. Only the publishable key belongs in Vite.
+ * Secret keys, webhook secrets, and Connect account creation stay in Edge Functions / server.
+ */
+export function getStripePublishableKey(): string | undefined {
+  const k = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  return typeof k === 'string' && k.trim() ? k.trim() : undefined
+}
+
+export function isStripePublishableKeyConfigured(): boolean {
+  return Boolean(getStripePublishableKey())
+}

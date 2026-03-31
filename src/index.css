@@ -12,6 +12,9 @@
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
+  /* Logo panel + main nav bar (warm cream; not sage #8FB9AB) */
+  --brand-header-bg: #fef9e4;
+  --brand-header-border: #e8e0cc;
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -36,6 +39,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --brand-header-bg: #fef9e4;
+    --brand-header-border: #e8e0cc;
     --text: #9ca3af;
     --text-h: #f3f4f6;
     --bg: #16171d;

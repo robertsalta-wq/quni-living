@@ -40,3 +40,9 @@ export function formatMoney(n: number | null | undefined): string {
   if (n == null || Number.isNaN(Number(n))) return '—'
   return `$${Number(n).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
+
+/** Integer cents → AUD $x.xx */
+export function formatAudCents(cents: number | null | undefined): string {
+  if (cents == null || Number.isNaN(Number(cents))) return '—'
+  return `$${(Number(cents) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}

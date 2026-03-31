@@ -7,9 +7,11 @@ type Props = {
   resetKey: number
   onTokenChange: (token: string | null) => void
   disabled?: boolean
+  /** Override label styling (e.g. white text on coral backgrounds) */
+  labelClassName?: string
 }
 
-export default function TurnstileCaptcha({ resetKey, onTokenChange, disabled }: Props) {
+export default function TurnstileCaptcha({ resetKey, onTokenChange, disabled, labelClassName }: Props) {
   if (!siteKey) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -20,9 +22,11 @@ export default function TurnstileCaptcha({ resetKey, onTokenChange, disabled }: 
     )
   }
 
+  const labelCls = labelClassName ?? 'text-xs font-semibold text-gray-800 mb-2'
+
   return (
     <div className={disabled ? 'pointer-events-none opacity-60' : ''}>
-      <p className="text-xs font-semibold text-gray-800 mb-2">I&apos;m not a robot</p>
+      <p className={labelCls}>I&apos;m not a robot</p>
       <Turnstile
         key={resetKey}
         siteKey={siteKey}

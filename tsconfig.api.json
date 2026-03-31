@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.api.tsbuildinfo",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node", "vite/client"]
+  },
+  "include": ["api/**/*.ts", "api/**/*.tsx", "src/lib/database.types.ts", "src/lib/documents/ResidentialTenancyAgreement.tsx", "src/lib/docuseal.ts"]
+}

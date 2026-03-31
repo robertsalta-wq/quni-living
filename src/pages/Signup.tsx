@@ -1,44 +1,187 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   supabase,
   isSupabaseConfigured,
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
+import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
+import { getQuniSelectedRole, setQuniSelectedRole, type QuniSignupRole } from '../lib/quniSelectedRole'
+import Seo from '../components/Seo'
 
-type RoleChoice = 'student' | 'landlord'
+type SignupStep = 'primary' | 'details'
 
-/** Google first on /signup; email path uses role → details. ?role= skips to email form (shortcuts). */
-type SignupStep = 'primary' | 'role' | 'details'
+const SIGNUP_TERMS_CHECKBOX_CLASS =
+  'mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-0 accent-[#FF6F61]'
+
+/** Supabase often returns a generic message when Auth cannot send the confirmation email. */
+function formatSignupErrorForDisplay(raw: string): string {
+  const lower = raw.toLowerCase()
+  if (
+    lower.includes('confirmation email') ||
+    lower.includes('sending confirmation') ||
+    lower.includes('error sending magic link')
+  ) {
+    return [
+      'We could not send the confirmation email. This is usually fixed in your Supabase project:',
+      '• Authentication → URL Configuration: set Site URL to your live site (e.g. https://quni-living.vercel.app) and add the same origin + /auth/callback under Redirect URLs.',
+      '• Project Settings → Auth: if you use custom SMTP, confirm host, port, and credentials; otherwise check Auth logs for provider errors or rate limits.',
+      '• Try again in a few minutes if the mail provider rate-limits signups.',
+    ].join('\n')
+  }
+  return raw
+}
+
+type SignupTermsFieldsProps = {
+  showLandlordAgreement: boolean
+  termsPrivacy: boolean
+  setTermsPrivacy: (v: boolean) => void
+  landlordAgreement: boolean
+  setLandlordAgreement: (v: boolean) => void
+  termsError: boolean
+  clearTermsError: () => void
+}
+
+function SignupTermsFields({
+  showLandlordAgreement,
+  termsPrivacy,
+  setTermsPrivacy,
+  landlordAgreement,
+  setLandlordAgreement,
+  termsError,
+  clearTermsError,
+}: SignupTermsFieldsProps) {
+  return (
+    <div className="space-y-3">
+      <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+        <input
+          type="checkbox"
+          checked={termsPrivacy}
+          onChange={(e) => {
+            setTermsPrivacy(e.target.checked)
+            clearTermsError()
+          }}
+          className={SIGNUP_TERMS_CHECKBOX_CLASS}
+        />
+        <span>
+          I agree to the{' '}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+          >
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+          >
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+      {showLandlordAgreement && (
+        <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+          <input
+            type="checkbox"
+            checked={landlordAgreement}
+            onChange={(e) => {
+              setLandlordAgreement(e.target.checked)
+              clearTermsError()
+            }}
+            className={SIGNUP_TERMS_CHECKBOX_CLASS}
+          />
+          <span>
+            I agree to the{' '}
+            <a
+              href="/landlord-service-agreement"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+            >
+              Landlord Service Agreement
+            </a>
+          </span>
+        </label>
+      )}
+      {termsError && <p className="text-sm text-red-600 font-medium">Please accept the terms to continue</p>}
+    </div>
+  )
+}
 
 export default function Signup() {
   const [searchParams] = useSearchParams()
-  const initialRole = searchParams.get('role') === 'landlord' ? 'landlord' : 'student'
+  const location = useLocation()
   const roleFromUrl = searchParams.get('role')
 
   const [step, setStep] = useState<SignupStep>(() =>
     roleFromUrl === 'student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
   )
-  const [role, setRole] = useState<RoleChoice>(initialRole)
+  const [role, setRole] = useState<QuniSignupRole | null>(() =>
+    roleFromUrl === 'landlord' ? 'landlord' : roleFromUrl === 'student' ? 'student' : null,
+  )
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [checkEmail, setCheckEmail] = useState(false)
+  const [termsPrivacy, setTermsPrivacy] = useState(false)
+  const [landlordAgreement, setLandlordAgreement] = useState(false)
+  const [termsError, setTermsError] = useState(false)
 
   useEffect(() => {
     const r = searchParams.get('role')
     if (r === 'student' || r === 'landlord') {
       setRole(r)
+      setQuniSelectedRole(r)
       setStep('details')
     }
   }, [searchParams])
 
+  useEffect(() => {
+    persistAuthReturnIntent(searchParams, location.state)
+  }, [searchParams, location.state])
+
+  useEffect(() => {
+    if (step === 'details' && !role) setStep('primary')
+  }, [step, role])
+
+  function pickRole(r: QuniSignupRole) {
+    setRole(r)
+    setQuniSelectedRole(r)
+    if (r === 'student') setLandlordAgreement(false)
+  }
+
+  /** Role from UI or localStorage (e.g. refreshed mid-flow). */
+  const effectiveSignupRole: QuniSignupRole | null =
+    role ?? getQuniSelectedRole()
+  const showLandlordAgreement = effectiveSignupRole === 'landlord'
+
+  function termsAcceptedForSignup(): boolean {
+    if (!termsPrivacy) return false
+    if (showLandlordAgreement && !landlordAgreement) return false
+    return true
+  }
+
+  const signupTermsFieldsProps: SignupTermsFieldsProps = {
+    showLandlordAgreement,
+    termsPrivacy,
+    setTermsPrivacy,
+    landlordAgreement,
+    setLandlordAgreement,
+    termsError,
+    clearTermsError: () => setTermsError(false),
+  }
+
   function googleButton(className: string) {
     return (
-      <button type="button" onClick={handleGoogleSignup} className={className}>
+      <button type="button" onClick={handleGoogleSignup} disabled={!role} className={className}>
         <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path
             fill="currentColor"
@@ -65,6 +208,14 @@ export default function Signup() {
   async function handleEmailSignup(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!role) {
+      setError('Please choose whether you are signing up as a student or landlord.')
+      return
+    }
+    if (!termsAcceptedForSignup()) {
+      setTermsError(true)
+      return
+    }
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
@@ -85,7 +236,8 @@ export default function Signup() {
       if (signErr) throw signErr
       setCheckEmail(true)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Could not sign up.'
+      const raw = e instanceof Error ? e.message : 'Could not sign up.'
+      const msg = formatSignupErrorForDisplay(raw)
       setError(msg)
     } finally {
       setSubmitting(false)
@@ -94,10 +246,19 @@ export default function Signup() {
 
   async function handleGoogleSignup() {
     setError(null)
+    if (!role) {
+      setError('Choose Student or Landlord above before continuing with Google.')
+      return
+    }
+    if (!termsAcceptedForSignup()) {
+      setTermsError(true)
+      return
+    }
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
     }
+    setQuniSelectedRole(role)
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: getGoogleOAuthOptions(),
@@ -106,31 +267,57 @@ export default function Signup() {
   }
 
   if (checkEmail) {
+    const redirectQ = searchParams.get('redirect')
+    const loginBackHref =
+      redirectQ && isSafeInternalPath(redirectQ)
+        ? `/login?redirect=${encodeURIComponent(redirectQ)}`
+        : '/login'
     return (
       <div className="max-w-md mx-auto px-6 py-12 text-center">
+        <Seo
+          title="Confirm your email"
+          description="Finish creating your Quni Living account — student accommodation and landlord listings in Australia."
+          canonicalPath="/signup"
+        />
         <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
         <p className="text-gray-600 text-sm mt-3">
           We sent a confirmation link to <strong>{email}</strong>. Open it to finish setting up your
           account.
         </p>
-        <Link to="/login" className="inline-block mt-8 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+        <Link to={loginBackHref} className="inline-block mt-8 text-sm font-medium text-indigo-600 hover:text-indigo-800">
           Back to log in
         </Link>
       </div>
     )
   }
 
+  const redirectQ = searchParams.get('redirect')
+  const loginHref =
+    redirectQ && isSafeInternalPath(redirectQ) ? `/login?redirect=${encodeURIComponent(redirectQ)}` : '/login'
+
   const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
   const errLower = (error ?? '').toLowerCase()
   const secretKeyError =
     errLower.includes('forbidden') && errLower.includes('secret')
 
+  const roleCardClass = (r: QuniSignupRole) =>
+    `w-full rounded-xl border-2 p-5 text-left transition-colors ${
+      role === r
+        ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
+    }`
+
   return (
     <div className="max-w-md mx-auto px-6 py-12">
+      <Seo
+        title="Create an account"
+        description="Sign up for Quni Living — find student accommodation near university or list your property for verified student tenants."
+        canonicalPath="/signup"
+      />
       <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
       <p className="text-sm text-gray-600 mt-1 mb-8">
         Already have an account?{' '}
-        <Link to="/login" className="text-indigo-600 font-medium hover:text-indigo-800">
+        <Link to={loginHref} className="text-indigo-600 font-medium hover:text-indigo-800">
           Log in
         </Link>
       </p>
@@ -153,19 +340,38 @@ export default function Signup() {
               </p>
             </>
           ) : (
-            error
+            <div className="whitespace-pre-line">{error}</div>
           )}
         </div>
       )}
 
       {step === 'primary' && (
         <div className="space-y-6">
-          <p className="text-sm text-gray-600">
-            Use Google to create your account. If you&apos;re new, you&apos;ll choose <strong>Student</strong> or{' '}
-            <strong>Landlord</strong> right after you sign in.
-          </p>
+          <div>
+            <p className="text-sm font-medium text-gray-800 mb-3">I am signing up as a…</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button type="button" onClick={() => pickRole('student')} className={roleCardClass('student')}>
+                <span className="font-semibold text-gray-900">Student</span>
+                <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
+              </button>
+              <button type="button" onClick={() => pickRole('landlord')} className={roleCardClass('landlord')}>
+                <span className="font-semibold text-gray-900">Landlord</span>
+                <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
+              </button>
+            </div>
+            {!role && (
+              <p className="text-xs text-amber-800 mt-2">Choose one option above to continue with Google or email.</p>
+            )}
+          </div>
+
+          {role ? <SignupTermsFields {...signupTermsFieldsProps} /> : null}
+
           {googleButton(
-            'w-full rounded-lg border border-gray-200 py-3 text-sm font-medium text-gray-800 hover:bg-gray-50 flex items-center justify-center gap-2',
+            `w-full rounded-lg border border-gray-200 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
+              role
+                ? 'text-gray-800 hover:bg-gray-50'
+                : 'text-gray-400 bg-gray-50 cursor-not-allowed opacity-70'
+            }`,
           )}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -177,61 +383,45 @@ export default function Signup() {
           </div>
           <button
             type="button"
-            onClick={() => setStep('role')}
-            className="w-full rounded-lg bg-gray-900 text-white py-2.5 text-sm font-medium hover:bg-gray-800"
+            disabled={!role}
+            onClick={() => setStep('details')}
+            className="w-full rounded-lg bg-gray-900 text-white py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Sign up with email
           </button>
-          <p className="text-xs text-gray-500 text-center">
-            Email sign-up asks for student or landlord first so we can attach it to your account.
-          </p>
         </div>
       )}
 
-      {step === 'role' && (
-        <div className="space-y-4">
-          <button
-            type="button"
-            onClick={() => setStep('primary')}
-            className="text-xs text-gray-500 hover:text-gray-800"
-          >
-            ← Back
-          </button>
-          <p className="text-sm font-medium text-gray-700">I am a…</p>
-          <button
-            type="button"
-            onClick={() => {
-              setRole('student')
-              setStep('details')
-            }}
-            className="w-full rounded-xl border border-gray-200 p-5 text-left hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
-          >
-            <span className="font-semibold text-gray-900">Student</span>
-            <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setRole('landlord')
-              setStep('details')
-            }}
-            className="w-full rounded-xl border border-gray-200 p-5 text-left hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors"
-          >
-            <span className="font-semibold text-gray-900">Landlord</span>
-            <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
-          </button>
-        </div>
-      )}
-
-      {step === 'details' && (
+      {step === 'details' && role && (
         <>
           <button
             type="button"
-            onClick={() => setStep('role')}
+            onClick={() => setStep('primary')}
             className="text-xs text-gray-500 hover:text-gray-800 mb-4"
           >
-            ← Change role ({role === 'student' ? 'Student' : 'Landlord'})
+            ← Back
           </button>
+          <p className="text-sm text-gray-600 mb-4">
+            Signing up as a <span className="font-semibold text-gray-900">{role === 'student' ? 'Student' : 'Landlord'}</span>.
+          </p>
+
+          <div
+            className="mb-6 rounded-xl border border-stone-200/80 bg-[#FEF9E4] px-4 py-3"
+            style={{ borderLeftWidth: 4, borderLeftColor: '#FF6F61' }}
+            aria-label="Sign-up steps"
+          >
+            <p className="text-xs font-semibold text-stone-700 uppercase tracking-wide mb-2">Your sign-up steps</p>
+            <div className="flex gap-1.5 mb-2" aria-hidden>
+              <div className="h-1.5 flex-1 rounded-full bg-[#FF6F61]" />
+              <div className="h-1.5 flex-1 rounded-full bg-stone-200" />
+              <div className="h-1.5 flex-1 rounded-full bg-stone-200" />
+            </div>
+            <ol className="text-sm text-stone-800 space-y-1 list-decimal list-inside">
+              <li className="font-medium text-stone-900">Create account (this page)</li>
+              <li>Confirm your email</li>
+              <li>Complete your {role === 'student' ? 'student' : 'landlord'} profile</li>
+            </ol>
+          </div>
 
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div>
@@ -277,6 +467,7 @@ export default function Signup() {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
+            <SignupTermsFields {...signupTermsFieldsProps} />
             <button
               type="submit"
               disabled={submitting}
@@ -296,11 +487,12 @@ export default function Signup() {
           </div>
 
           {googleButton(
-            'w-full rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 flex items-center justify-center gap-2',
+            `w-full rounded-lg border border-gray-200 py-2.5 text-sm font-medium flex items-center justify-center gap-2 ${
+              role
+                ? 'text-gray-800 hover:bg-gray-50'
+                : 'text-gray-400 bg-gray-50 cursor-not-allowed opacity-70'
+            }`,
           )}
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            With Google you won&apos;t need a password; you&apos;ll confirm student or landlord after sign-in.
-          </p>
         </>
       )}
     </div>

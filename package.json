@@ -8,16 +8,27 @@
     "dev:refresh": "vite --force",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:properties": "npx tsx src/scripts/seedProperties.ts",
+    "generate:suburbs": "node scripts/suburb-generator/generate.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@emailjs/browser": "^4.4.1",
     "@marsidev/react-turnstile": "^1.4.2",
+    "@react-pdf/renderer": "^4.3.2",
+    "@sentry/react": "^10.45.0",
+    "@stripe/react-stripe-js": "^5.6.1",
+    "@stripe/stripe-js": "^8.11.0",
     "@supabase/supabase-js": "^2.99.3",
     "@types/react-router-dom": "^5.3.3",
+    "dotenv": "^17.3.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.1"
+    "react-helmet-async": "^3.0.0",
+    "react-router-dom": "^7.13.1",
+    "recharts": "^2.15.4",
+    "stripe": "^20.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

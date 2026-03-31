@@ -1,6 +1,9 @@
 -- Platform admin access (matches src/lib/adminEmails.ts).
 -- Run in Supabase SQL Editor after quni_supabase_schema.sql so the dashboard can
 -- read/update bookings, enquiries, properties, and landlord verification.
+--
+-- Optional: landlord_leads is created by supabase/landlord_leads.sql. If that table
+-- does not exist yet, the landlord_leads admin policy block below is skipped.
 
 create or replace function public.is_platform_admin()
 returns boolean
@@ -84,3 +87,22 @@ create policy "Platform admins update all landlord_profiles"
   on public.landlord_profiles for update
   using (public.is_platform_admin())
   with check (public.is_platform_admin());
+
+-- Landlord partnership leads (only if supabase/landlord_leads.sql has been applied)
+do $landlord_leads_admin$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'landlord_leads'
+  ) then
+    execute 'drop policy if exists "Platform admins select all landlord_leads" on public.landlord_leads';
+    execute $p$
+      create policy "Platform admins select all landlord_leads"
+        on public.landlord_leads for select
+        using (public.is_platform_admin());
+    $p$;
+  end if;
+end
+$landlord_leads_admin$;

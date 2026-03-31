@@ -1,21 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
-import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { isSupabaseConfigured } from '../lib/supabase'
 import {
   LISTINGS_SORT_OPTIONS,
   ROOM_TYPE_LABELS,
   type RoomType,
-  type University,
 } from '../lib/listings'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingsQuery } from '../hooks/useListingsQuery'
+import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
+import { universityShortLabel } from '../lib/universityCampusReference'
 import { PropertyCard } from '../components/PropertyCard'
 import { ListingsGridSkeleton } from '../components/listings/ListingsGridSkeleton'
+import UniversityCampusSelect from '../components/UniversityCampusSelect'
+import Seo from '../components/Seo'
+import PageHeroBand from '../components/PageHeroBand'
 
-function buildHeading(
+function buildListingsHeading(
   search: string,
-  university: string,
+  universityId: string,
+  campusId: string,
   roomType: string,
-  universities: University[],
+  universities: { id: string; name: string; slug: string }[],
+  campuses: { id: string; name: string; university_id: string | null }[],
 ): string {
   const parts: string[] = []
 
@@ -32,8 +39,15 @@ function buildHeading(
     parts.push('Student accommodation')
   }
 
-  if (university) {
-    const uni = universities.find((u) => u.id === university)
+  if (campusId) {
+    const c = campuses.find((x) => x.id === campusId)
+    const uid = c?.university_id ?? universityId
+    const u = uid ? universities.find((x) => x.id === uid) : undefined
+    if (c && u) {
+      parts[0] = `Properties near ${c.name}, ${universityShortLabel(u)}`
+    }
+  } else if (universityId) {
+    const uni = universities.find((u) => u.id === universityId)
     if (uni) parts[0] = parts[0] + ` near ${uni.name}`
   }
 
@@ -45,13 +59,18 @@ function buildHeading(
 }
 
 export default function Listings() {
-  const filters = useListingsFilters()
-  const [universities, setUniversities] = useState<University[]>([])
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { universities, campuses } = useUniversityCampusReference()
+  const filters = useListingsFilters({ universities, campuses })
+  const [studentOnboardingWelcome, setStudentOnboardingWelcome] = useState(false)
 
   const queryFilters = useMemo(
     () => ({
       q: filters.qApplied,
       university: filters.university,
+      campus: filters.campus,
+      suburb: filters.suburb,
       roomType: filters.roomType,
       priceFilter: filters.priceFilter,
       furnished: filters.furnished,
@@ -60,6 +79,8 @@ export default function Listings() {
     [
       filters.qApplied,
       filters.university,
+      filters.campus,
+      filters.suburb,
       filters.roomType,
       filters.priceFilter,
       filters.furnished,
@@ -74,23 +95,21 @@ export default function Listings() {
   )
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
-    let cancelled = false
-    supabase
-      .from('universities')
-      .select('*')
-      .order('name')
-      .then(({ data }) => {
-        if (!cancelled && data) setUniversities(data as University[])
-      })
-    return () => {
-      cancelled = true
+    const st = location.state as { studentOnboardingWelcome?: boolean } | null
+    if (st?.studentOnboardingWelcome) {
+      setStudentOnboardingWelcome(true)
+      navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: {} })
     }
-  }, [])
+  }, [location.pathname, location.search, location.state, navigate])
 
   if (!isSupabaseConfigured) {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+        <Seo
+          title="Student accommodation listings"
+          description="Browse verified student accommodation near Australian universities on Quni Living."
+          canonicalPath="/listings"
+        />
         <div className="max-w-3xl mx-auto px-4 py-16">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Listings</h1>
           <p className="text-gray-600 mb-4">
@@ -106,27 +125,39 @@ export default function Listings() {
 
   const roomTypeEntries = Object.entries(ROOM_TYPE_LABELS) as [RoomType, string][]
 
+  const listingsSeoTitle = buildListingsHeading(
+    filters.qApplied,
+    filters.university,
+    filters.campus,
+    filters.roomType,
+    universities,
+    campuses,
+  )
+  const listingsSeoDescription =
+    total > 0
+      ? `${total} listing${total !== 1 ? 's' : ''} · ${listingsSeoTitle}. Verified student accommodation in Australia on Quni Living.`
+      : `No exact matches for ${listingsSeoTitle}. Adjust filters or browse all student accommodation on Quni Living.`
+
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <div className="w-full bg-[#FF6F61] border-b border-[#CC4A3C]/20">
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-white tracking-tight">
-            {buildHeading(
-              filters.qApplied,
-              filters.university,
-              filters.roomType,
-              universities,
-            )}
-          </h1>
-          <p className="text-white/70 text-sm mt-2">
-            {loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} available`}
-          </p>
-        </div>
-      </div>
+      <Seo title={listingsSeoTitle} description={listingsSeoDescription} />
+      <PageHeroBand
+        title={listingsSeoTitle}
+        subtitle={loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} available`}
+      />
 
-      <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <aside className="w-full md:w-64 shrink-0 order-2 md:order-none">
+      <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+        {studentOnboardingWelcome && (
+          <div
+            className="mb-6 rounded-xl border border-[#FF6F61]/30 bg-[#FFF8F0] px-4 py-3 text-sm text-stone-800 shadow-sm"
+            role="status"
+          >
+            <span className="font-semibold text-stone-900">Welcome!</span>{' '}
+            Your profile is ready — explore listings matched to what you told us.
+          </div>
+        )}
+        <div className="grid w-full grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start justify-items-stretch">
+          <aside className="w-full min-w-0 md:w-auto md:max-w-[16rem]">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky md:top-24">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900 text-sm">Filters</h2>
@@ -172,22 +203,17 @@ export default function Listings() {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="listings-uni" className="block text-xs font-medium text-gray-700 mb-1.5">
-                  University
-                </label>
-                <select
-                  id="listings-uni"
-                  value={filters.university}
-                  onChange={(e) => filters.setUniversity(e.target.value)}
-                  className="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
-                >
-                  <option value="">All universities</option>
-                  {universities.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                <UniversityCampusSelect
+                  universityId={filters.university || null}
+                  campusId={filters.campus || null}
+                  onUniversityChange={filters.setUniversity}
+                  onCampusChange={filters.setCampus}
+                  showState
+                  universitySelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                  campusSelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                  universityIdAttr="listings-uni"
+                  campusIdAttr="listings-campus"
+                />
               </div>
 
               <div className="mb-4">
@@ -248,7 +274,7 @@ export default function Listings() {
             </div>
           </aside>
 
-          <main className="flex-1 min-w-0">
+          <div className="w-full min-w-0 text-left">
             <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
               <p className="text-sm text-gray-500">
                 {loading
@@ -286,29 +312,42 @@ export default function Listings() {
             {loading && <ListingsGridSkeleton count={6} />}
 
             {!loading && !error && properties.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                    />
-                  </svg>
+              <section
+                className="w-full border-t border-gray-200 pt-8 mt-2"
+                aria-label="No results"
+              >
+                <div className="flex w-full items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                    <svg
+                      className="w-7 h-7 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">No listings found</h3>
+                    <p className="text-sm text-gray-500 mb-3">Try adjusting your filters</p>
+                    {filters.hasActiveFilters && (
+                      <button
+                        type="button"
+                        onClick={filters.clearAll}
+                        className="text-sm text-indigo-600 font-medium hover:text-indigo-800"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">No listings found</h3>
-                <p className="text-sm text-gray-500 mb-4">Try adjusting your filters</p>
-                {filters.hasActiveFilters && (
-                  <button
-                    type="button"
-                    onClick={filters.clearAll}
-                    className="text-sm text-indigo-600 font-medium hover:text-indigo-800"
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
+              </section>
             )}
 
             {!loading && properties.length > 0 && (
@@ -318,7 +357,7 @@ export default function Listings() {
                 ))}
               </div>
             )}
-          </main>
+          </div>
         </div>
       </div>
     </div>

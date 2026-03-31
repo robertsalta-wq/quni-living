@@ -7,10 +7,13 @@ import {
   type ListingsSort,
   type Property,
 } from '../lib/listings'
+import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 
 export type ListingsQueryFilters = {
   q: string
   university: string
+  campus: string
+  suburb: string
   roomType: string
   priceFilter: string
   furnished: boolean
@@ -59,15 +62,7 @@ export function useListingsQuery(
       try {
         let query = supabase
           .from('properties')
-          .select(
-            `
-            *,
-            landlord_profiles ( id, full_name, avatar_url, verified ),
-            universities ( id, name, slug ),
-            campuses ( id, name )
-          `,
-            { count: 'exact' },
-          )
+          .select(PROPERTY_CARD_LIST_SELECT, { count: 'exact' })
           .eq('status', 'active')
 
         const q = f.q.trim()
@@ -78,8 +73,16 @@ export function useListingsQuery(
           )
         }
 
-        if (f.university) {
+        if (f.campus) {
+          query = query.eq('campus_id', f.campus)
+        } else if (f.university) {
           query = query.eq('university_id', f.university)
+        }
+
+        const sub = f.suburb.trim()
+        if (sub.length > 0) {
+          const safe = escapeIlikePattern(sub)
+          query = query.ilike('suburb', safe)
         }
 
         if (f.roomType && isRoomType(f.roomType)) {

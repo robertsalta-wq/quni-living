@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import PageHeroBand from './PageHeroBand'
 import { PropertyCard } from './PropertyCard'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { fetchRelatedListings, type RelatedListingsMode } from '../lib/relatedListings'
@@ -7,12 +8,18 @@ import type { Property } from '../lib/listings'
 
 type ExtraCta = { label: string; to: string }
 
+type HeroCta = { label: string; to: string; variant?: 'coralProminentOnCoral' }
+
 type Props = {
   title: string
   subtitle: string
   relatedMode: RelatedListingsMode
   children: React.ReactNode
   extraCta?: ExtraCta
+  /** Optional CTA in the coral page hero (e.g. landlord signup) */
+  heroCta?: HeroCta
+  /** Renders after the “Related listings” block, above the site footer */
+  afterRelated?: React.ReactNode
   /** Full-bleed main content (no max-w-3xl prose wrapper) — use for custom multi-section pages */
   contentVariant?: 'default' | 'fullBleed'
 }
@@ -23,6 +30,8 @@ export default function ServicePageLayout({
   relatedMode,
   children,
   extraCta,
+  heroCta,
+  afterRelated,
   contentVariant = 'default',
 }: Props) {
   const [properties, setProperties] = useState<Property[]>([])
@@ -58,12 +67,33 @@ export default function ServicePageLayout({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <section className="bg-[#FF6F61] text-white shrink-0">
-        <div className="max-w-site mx-auto px-6 py-8 text-center">
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">{title}</h1>
-          <p className="mt-1 text-sm sm:text-base text-white/95 max-w-xl mx-auto text-center leading-relaxed">{subtitle}</p>
-        </div>
-      </section>
+      <PageHeroBand
+        title={title}
+        subtitle={subtitle}
+        belowSubtitle={
+          heroCta ? (
+            <div className="mt-6 flex justify-start">
+              {heroCta.variant === 'coralProminentOnCoral' ? (
+                <span className="inline-block rounded-xl p-[3px] bg-white shadow-md">
+                  <Link
+                    to={heroCta.to}
+                    className="inline-flex items-center justify-center rounded-[10px] bg-[#FF6F61] px-6 py-3 text-sm sm:text-base font-semibold text-white hover:opacity-95 transition-opacity"
+                  >
+                    {heroCta.label}
+                  </Link>
+                </span>
+              ) : (
+                <Link
+                  to={heroCta.to}
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-white/95 transition-colors"
+                >
+                  {heroCta.label}
+                </Link>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
 
       {contentVariant === 'fullBleed' ? (
         <div className="flex flex-col w-full min-w-0">{children}</div>
@@ -124,6 +154,8 @@ export default function ServicePageLayout({
           </Link>
         </div>
       </section>
+
+      {afterRelated}
     </div>
   )
 }

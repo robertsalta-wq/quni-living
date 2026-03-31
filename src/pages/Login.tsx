@@ -7,8 +7,18 @@ import {
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isAdminUser } from '../lib/adminEmails'
-import { fetchRoleAndProfile, getDashboardPath, needsOnboarding } from '../lib/authProfile'
+import {
+  fetchRoleAndProfile,
+  getPostLoginRedirectDestination,
+  needsOnboarding,
+} from '../lib/authProfile'
 import { getGoogleOAuthOptions } from '../lib/oauth'
+import {
+  isSafeInternalPath,
+  persistAuthReturnIntent,
+  resolvePostLoginDestination,
+} from '../lib/postAuthRedirect'
+import Seo from '../components/Seo'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -20,13 +30,19 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
   const urlError = searchParams.get('error')
   const urlDetail = searchParams.get('detail')
+  const showPkceVerifierMissing = urlError === 'pkce_verifier_missing'
 
   const errorMessage =
     urlError === 'auth_failed'
       ? 'Sign-in failed. Please try again.'
+      : urlError === 'pkce_verifier_missing'
+        ? 'Your confirmation link has expired or was opened in a different browser. Please log in below with your email and password, or request a new confirmation email.'
       : urlError === 'missing_code'
         ? 'Invalid or incomplete sign-in link.'
         : urlError === 'oauth'
@@ -45,19 +61,37 @@ export default function Login() {
   }
 
   useEffect(() => {
+    persistAuthReturnIntent(searchParams, location.state)
+  }, [searchParams, location.state])
+
+  useEffect(() => {
+    if (!showPkceVerifierMissing) {
+      setResendError(null)
+      setResendSuccess(false)
+    }
+  }, [showPkceVerifierMissing])
+
+  useEffect(() => {
     if (authLoading || !user) return
     if (role === 'admin' || isAdminUser(user)) {
-      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
-      navigate(from && from !== '/login' ? from : '/admin', { replace: true })
+      const next = resolvePostLoginDestination(searchParams, location.state)
+      navigate(next && next !== '/login' ? next : '/admin', { replace: true })
       return
     }
-    if (!user.user_metadata?.role || profile === null || needsOnboarding(role, profile)) {
+    if (!user.user_metadata?.role) {
       navigate('/onboarding', { replace: true })
       return
     }
-    const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
-    navigate(from && from !== '/login' ? from : getDashboardPath(role), { replace: true })
-  }, [user, profile, role, authLoading, navigate, location.state])
+    if (profile === null || needsOnboarding(role, profile)) {
+      navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+      return
+    }
+    const next = resolvePostLoginDestination(searchParams, location.state)
+    navigate(
+      next && next !== '/login' ? next : getPostLoginRedirectDestination(user, role, profile),
+      { replace: true },
+    )
+  }, [user, profile, role, authLoading, navigate, location.state, searchParams])
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -79,16 +113,23 @@ export default function Login() {
       const u = verified.user ?? data.user
       const { role: r, profile: p } = await fetchRoleAndProfile(u)
       if (r === 'admin' || isAdminUser(u)) {
-        const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
-        navigate(from && from !== '/login' ? from : '/admin', { replace: true })
+        const next = resolvePostLoginDestination(searchParams, location.state)
+        navigate(next && next !== '/login' ? next : '/admin', { replace: true })
         return
       }
-      if (!data.user.user_metadata?.role || needsOnboarding(r, p) || p === null) {
+      if (!data.user.user_metadata?.role) {
         navigate('/onboarding', { replace: true })
         return
       }
-      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname
-      navigate(from && from !== '/login' ? from : getDashboardPath(r), { replace: true })
+      if (p === null || needsOnboarding(r, p)) {
+        navigate(r === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+        return
+      }
+      const next = resolvePostLoginDestination(searchParams, location.state)
+      navigate(
+        next && next !== '/login' ? next : getPostLoginRedirectDestination(u, r, p),
+        { replace: true },
+      )
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Invalid email or password.'
       setError(msg)
@@ -99,6 +140,8 @@ export default function Login() {
 
   async function handleGoogle() {
     setError(null)
+    setResendError(null)
+    setResendSuccess(false)
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
@@ -110,6 +153,10 @@ export default function Login() {
     if (oErr) setError(oErr.message)
   }
 
+  const redirectQ = searchParams.get('redirect')
+  const signupHref =
+    redirectQ && isSafeInternalPath(redirectQ) ? `/signup?redirect=${encodeURIComponent(redirectQ)}` : '/signup'
+
   const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
   const errLower = (error ?? '').toLowerCase()
   const secretKeyError =
@@ -120,10 +167,15 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto px-6 py-12">
+      <Seo
+        title="Log in"
+        description="Log in to Quni Living to browse student accommodation, message landlords, and manage bookings."
+        canonicalPath="/login"
+      />
       <h1 className="text-2xl font-bold text-gray-900">Log in</h1>
       <p className="text-sm text-gray-600 mt-1 mb-8">
         New here?{' '}
-        <Link to="/signup" className="text-indigo-600 font-medium hover:text-indigo-800">
+        <Link to={signupHref} className="text-indigo-600 font-medium hover:text-indigo-800">
           Create an account
         </Link>
       </p>
@@ -192,6 +244,51 @@ export default function Login() {
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+
+      {showPkceVerifierMissing && (
+        <div className="mt-4 space-y-2">
+          <button
+            type="button"
+            disabled={resendLoading}
+            onClick={async () => {
+              setResendError(null)
+              setResendSuccess(false)
+              setError(null)
+              if (!isSupabaseConfigured) {
+                setResendError('Supabase is not configured.')
+                return
+              }
+              const e = email.trim()
+              if (!e) {
+                setResendError('Enter your email above to resend the confirmation email.')
+                return
+              }
+              setResendLoading(true)
+              try {
+                const { error: resendErr } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: e,
+                })
+                if (resendErr) throw resendErr
+                setResendSuccess(true)
+              } catch (err) {
+                setResendError(err instanceof Error ? err.message : 'Could not resend confirmation email.')
+              } finally {
+                setResendLoading(false)
+              }
+            }}
+            className="w-full rounded-lg bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50"
+          >
+            {resendLoading ? 'Resending…' : 'Resend confirmation email'}
+          </button>
+          {resendError && <p className="text-sm text-red-600">{resendError}</p>}
+          {resendSuccess && (
+            <p className="text-sm text-emerald-700" role="status">
+              If an account exists for that email, we sent a new confirmation email.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="relative my-8">
         <div className="absolute inset-0 flex items-center">

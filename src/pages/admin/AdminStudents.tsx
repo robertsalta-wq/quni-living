@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate, studentDisplayName } from './adminUi'
@@ -8,6 +9,9 @@ type StudentRow = Database['public']['Tables']['student_profiles']['Row'] & {
 }
 
 export default function AdminStudents() {
+  const [searchParams] = useSearchParams()
+  const highlightProfileId = searchParams.get('profile')?.trim() || null
+  const highlightRef = useRef<HTMLTableRowElement | null>(null)
   const [rows, setRows] = useState<StudentRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,6 +41,12 @@ export default function AdminStudents() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (!highlightProfileId || loading) return
+    const t = window.setTimeout(() => highlightRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100)
+    return () => window.clearTimeout(t)
+  }, [highlightProfileId, loading, rows])
 
   return (
     <div>
@@ -73,7 +83,13 @@ export default function AdminStudents() {
                 </tr>
               ) : (
                 rows.map((row) => (
-                  <tr key={row.id}>
+                  <tr
+                    key={row.id}
+                    ref={highlightProfileId === row.id ? highlightRef : undefined}
+                    className={
+                      highlightProfileId === row.id ? 'bg-amber-50/80 outline outline-2 outline-amber-200 -outline-offset-2' : ''
+                    }
+                  >
                     <td className={adminTdClass}>
                       <span className="font-medium text-gray-900">{studentDisplayName(row)}</span>
                     </td>

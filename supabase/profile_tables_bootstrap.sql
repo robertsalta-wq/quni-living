@@ -30,6 +30,13 @@ create table if not exists public.landlord_profiles (
   created_at timestamptz default now()
 );
 
+alter table public.landlord_profiles
+  add column if not exists terms_accepted_at timestamptz;
+alter table public.landlord_profiles
+  add column if not exists landlord_terms_accepted_at timestamptz;
+alter table public.landlord_profiles
+  add column if not exists onboarding_complete boolean default false;
+
 create table if not exists public.student_profiles (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null unique references auth.users (id) on delete cascade,

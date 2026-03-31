@@ -1,7 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import type { UserRole } from '../lib/authProfile'
+import type { LandlordProfileRow, StudentProfileRow, UserRole } from '../lib/authProfile'
+import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 
 type AllowedRole = Exclude<UserRole, null>
 
@@ -9,12 +10,21 @@ type Props = {
   children: React.ReactNode
   /** If set, user must have this resolved role or they are sent to `/`. */
   allowedRoles?: AllowedRole[]
+  /** When unauthenticated, send to `/signup?role=student&redirect=…` instead of login. */
+  redirectUnauthenticatedToStudentSignup?: boolean
+  /** Student routes: require core profile (university, course, phone, budget) before access. */
+  requireStudentListingActions?: boolean
 }
 
 /**
  * Requires Supabase session + a profile row (student or landlord), except admins (no profile).
  */
-export function ProtectedRoute({ children, allowedRoles }: Props) {
+export function ProtectedRoute({
+  children,
+  allowedRoles,
+  redirectUnauthenticatedToStudentSignup,
+  requireStudentListingActions,
+}: Props) {
   const { user, loading, profile, role } = useAuthContext()
   const location = useLocation()
 
@@ -37,6 +47,10 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
   }
 
   if (!user) {
+    if (redirectUnauthenticatedToStudentSignup) {
+      const next = encodeURIComponent(`${location.pathname}${location.search}`)
+      return <Navigate to={`/signup?role=student&redirect=${next}`} replace />
+    }
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
@@ -47,7 +61,7 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     return <>{children}</>
   }
 
-  if (!user.user_metadata?.role || profile === null) {
+  if (!role || profile === null) {
     return <Navigate to="/onboarding" replace />
   }
 
@@ -55,11 +69,27 @@ export function ProtectedRoute({ children, allowedRoles }: Props) {
     return <Navigate to="/" replace />
   }
 
+  if (role === 'landlord' && profile) {
+    const lp = profile as LandlordProfileRow
+    const path = location.pathname
+    if (lp.onboarding_complete !== true && !path.startsWith('/onboarding/landlord')) {
+      return <Navigate to="/onboarding/landlord" replace />
+    }
+  }
+
+  if (requireStudentListingActions && role === 'student' && profile) {
+    const sp = profile as StudentProfileRow
+    const path = location.pathname
+    if (!isStudentListingActionsUnlocked(sp) && !path.startsWith('/onboarding/student')) {
+      return <Navigate to="/onboarding/student" replace state={{ from: location }} />
+    }
+  }
+
   return <>{children}</>
 }
 
 /** Logged-in only (profile optional) — e.g. onboarding */
-export function RequireUser({ children }: Props) {
+export function RequireUser({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthContext()
   const location = useLocation()
 

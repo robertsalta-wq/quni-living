@@ -6,6 +6,7 @@ import {
   type AuthProfile,
   type UserRole,
 } from '../lib/authProfile'
+import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 
 export type AuthState = {
   user: User | null
@@ -84,6 +85,7 @@ export function useProvideAuth(): AuthState {
   }, [hydrateFromUser])
 
   const signOut = useCallback(async () => {
+    clearOnboardingDismissed()
     await supabase.auth.signOut()
     setUser(null)
     setSession(null)

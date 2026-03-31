@@ -1,19 +1,82 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { campusUrlSlug } from '../lib/slug'
+import { resolveUniversitySlugParam } from '../lib/universitySlugAliases'
 
-const KEYS = ['q', 'uni', 'type', 'price', 'furnished', 'sort'] as const
+const KEYS = [
+  'q',
+  'uni',
+  'university_id',
+  'campus',
+  'campus_id',
+  'suburb',
+  'type',
+  'price',
+  'furnished',
+  'sort',
+] as const
+
+type UniversityRef = { id: string; slug: string; name: string }
+type CampusRef = { id: string; name: string; university_id: string | null; slug?: string | null }
+
+type UseListingsFiltersOptions = {
+  universities?: UniversityRef[]
+  campuses?: CampusRef[]
+}
+
+function looksLikeUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
 
 /**
  * Listings URL contract (shareable):
- * `q`, `uni`, `type`, `price`, `furnished`, `sort`
+ * `q`, `uni` (or `university_id`), `campus` (or `campus_id`), `suburb`, `type`, `price`, `furnished`, `sort`
  */
-export function useListingsFilters() {
+export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const universities = options.universities ?? []
+  const campuses = options.campuses ?? []
+
+  const uniIdBySlug = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const u of universities) map.set((u.slug ?? '').toLowerCase(), u.id)
+    return map
+  }, [universities])
+
+  const uniSlugById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const u of universities) map.set(u.id, (u.slug ?? '').toLowerCase())
+    return map
+  }, [universities])
 
   const qFromUrl = searchParams.get('q') ?? ''
   const [qInput, setQInput] = useState(qFromUrl)
 
-  const university = searchParams.get('uni') ?? ''
+  const universityRaw = searchParams.get('uni') ?? searchParams.get('university_id') ?? ''
+  const university = useMemo(() => {
+    const val = universityRaw.trim()
+    if (!val) return ''
+    if (looksLikeUuid(val)) return val
+    const lower = val.toLowerCase()
+    const canonicalSlug = resolveUniversitySlugParam(lower)
+    return uniIdBySlug.get(canonicalSlug) ?? uniIdBySlug.get(lower) ?? ''
+  }, [uniIdBySlug, universityRaw])
+
+  const campusRaw = searchParams.get('campus') ?? searchParams.get('campus_id') ?? ''
+  const campus = useMemo(() => {
+    const val = campusRaw.trim()
+    if (!val) return ''
+    if (looksLikeUuid(val)) return val
+    const campusSlug = val.toLowerCase()
+    const forUni = campuses.find((c) => {
+      if (!c.university_id || c.university_id !== university) return false
+      return campusUrlSlug(c).toLowerCase() === campusSlug
+    })
+    return forUni?.id ?? ''
+  }, [campusRaw, campuses, university])
+
+  const suburb = searchParams.get('suburb') ?? ''
+
   const roomType = searchParams.get('type') ?? ''
   const priceFilter = searchParams.get('price') ?? ''
   const furnished = searchParams.get('furnished') === 'true'
@@ -22,6 +85,38 @@ export function useListingsFilters() {
   useEffect(() => {
     setQInput(qFromUrl)
   }, [qFromUrl])
+
+  useEffect(() => {
+    const uniRaw = universityRaw.trim()
+    const campusParam = campusRaw.trim()
+    const uniSlug = university ? uniSlugById.get(university) : null
+    const campusSlug = campus
+      ? (() => {
+          const row = campuses.find((c) => c.id === campus)
+          return row ? campusUrlSlug(row) : null
+        })()
+      : null
+
+    const shouldFixUni = Boolean(uniRaw && looksLikeUuid(uniRaw) && uniSlug)
+    const shouldFixCampus = Boolean(campusParam && looksLikeUuid(campusParam) && campusSlug)
+    if (!shouldFixUni && !shouldFixCampus) return
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (shouldFixUni && uniSlug) {
+          next.set('uni', uniSlug)
+          next.delete('university_id')
+        }
+        if (shouldFixCampus && campusSlug) {
+          next.set('campus', campusSlug)
+          next.delete('campus_id')
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }, [campus, campusRaw, campuses, setSearchParams, uniSlugById, university, universityRaw])
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -58,7 +153,25 @@ export function useListingsFilters() {
     [setSearchParams],
   )
 
-  const setUniversity = useCallback((v: string) => patch({ uni: v || null }), [patch])
+  const setUniversity = useCallback(
+    (v: string) => {
+      const uniSlug = uniSlugById.get(v) ?? null
+      patch({
+        uni: uniSlug,
+        university_id: null,
+        campus: null,
+        campus_id: null,
+      })
+    },
+    [patch, uniSlugById],
+  )
+  const setCampus = useCallback(
+    (v: string) => {
+      const selected = campuses.find((c) => c.id === v)
+      patch({ campus: selected ? campusUrlSlug(selected) : null, campus_id: null })
+    },
+    [campuses, patch],
+  )
   const setRoomType = useCallback((v: string) => patch({ type: v || null }), [patch])
   const setPriceFilter = useCallback((v: string) => patch({ price: v || null }), [patch])
   const setFurnished = useCallback(
@@ -84,11 +197,13 @@ export function useListingsFilters() {
     return (
       Boolean(qFromUrl) ||
       Boolean(university) ||
+      Boolean(campus) ||
+      Boolean(suburb.trim()) ||
       Boolean(roomType) ||
       Boolean(priceFilter) ||
       furnished
     )
-  }, [qFromUrl, university, roomType, priceFilter, furnished])
+  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished])
 
   const querySignature = useMemo(() => searchParams.toString(), [searchParams])
 
@@ -98,6 +213,9 @@ export function useListingsFilters() {
     qApplied: qFromUrl,
     university,
     setUniversity,
+    campus,
+    setCampus,
+    suburb,
     roomType,
     setRoomType,
     priceFilter,

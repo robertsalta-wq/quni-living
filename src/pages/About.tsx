@@ -1,19 +1,23 @@
 import { Link } from 'react-router-dom'
+import Seo from '../components/Seo'
+import PageHeroBand from '../components/PageHeroBand'
 
 const STORY_IMAGE =
   'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800'
 
 export default function About() {
   return (
+    <>
+      <Seo
+        title="About Quni Living"
+        description="Quni Living connects students with verified landlords across Australia. Our mission is simpler, safer, more affordable student accommodation."
+        canonicalPath="/about"
+      />
     <div className="flex-1 flex flex-col min-h-0 w-full bg-white">
-      <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-12 sm:py-16 text-center">
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">About Quni Living</h1>
-          <p className="mt-4 text-base sm:text-lg text-white max-w-3xl mx-auto leading-relaxed">
-            We&apos;re on a mission to make student accommodation simpler, safer and more affordable across Australia.
-          </p>
-        </div>
-      </section>
+      <PageHeroBand
+        title="About Quni Living"
+        subtitle="We're on a mission to make student accommodation simpler, safer and more affordable across Australia."
+      />
 
       <section className="max-w-site mx-auto px-6 py-14 md:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
@@ -118,5 +122,6 @@ export default function About() {
         </div>
       </section>
     </div>
+    </>
   )
 }

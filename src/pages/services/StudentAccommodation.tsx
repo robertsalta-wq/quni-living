@@ -1,7 +1,14 @@
 import ServicePageLayout from '../../components/ServicePageLayout'
+import Seo from '../../components/Seo'
 
 export default function StudentAccommodation() {
   return (
+    <>
+      <Seo
+        title="Student accommodation"
+        description="Find verified student accommodation near Sydney universities — studios, shared rooms, apartments and houses on Quni Living."
+        canonicalPath="/services/student-accommodation"
+      />
     <ServicePageLayout
       title="Student Accommodation"
       subtitle={"Verified listings near Sydney's top universities"}
@@ -16,5 +23,6 @@ export default function StudentAccommodation() {
         university, price range, room type and more to find your perfect match.
       </p>
     </ServicePageLayout>
+    </>
   )
 }

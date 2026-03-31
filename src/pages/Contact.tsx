@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { getEmailJsContactConfig, sendContactEmail } from '../lib/contactEmail'
 import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
 import TurnstileCaptcha from '../components/TurnstileCaptcha'
+import Seo from '../components/Seo'
+import PageHeroBand from '../components/PageHeroBand'
 
 const SUBJECT_OPTIONS = [
   { value: 'general', label: 'General Enquiry' },
@@ -164,15 +166,15 @@ export default function Contact() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-12 sm:py-16 text-center">
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Get in Touch</h1>
-          <p className="mt-4 text-base sm:text-lg text-white max-w-3xl mx-auto leading-relaxed">
-            We&apos;d love to hear from you — whether you&apos;re a student looking for accommodation or a landlord
-            wanting to list your property.
-          </p>
-        </div>
-      </section>
+      <Seo
+        title="Contact"
+        description="Contact Quni Living for student accommodation enquiries, landlord listings, or partnerships. Based in Sydney, serving Australia."
+        canonicalPath="/contact"
+      />
+      <PageHeroBand
+        title="Get in Touch"
+        subtitle="We'd love to hear from you — whether you're a student looking for accommodation or a landlord wanting to list your property."
+      />
 
       <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">

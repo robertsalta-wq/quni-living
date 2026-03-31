@@ -31,7 +31,7 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
     'id' | 'full_name' | 'avatar_url' | 'verified'
   > | null
   universities: Pick<Database['public']['Tables']['universities']['Row'], 'id' | 'name' | 'slug'> | null
-  campuses: Pick<Database['public']['Tables']['campuses']['Row'], 'id' | 'name'> | null
+  campuses: Pick<Database['public']['Tables']['campuses']['Row'], 'id' | 'name' | 'slug'> | null
   property_features?: { features: FeaturePick | null }[] | null
 }
 
@@ -70,4 +70,23 @@ export function escapeIlikePattern(raw: string) {
 
 export function isRoomType(value: string): value is RoomType {
   return Object.prototype.hasOwnProperty.call(ROOM_TYPE_LABELS, value)
+}
+
+/** Listing / bond context for bookings (`properties.property_type`) */
+export type PropertyListingType =
+  | 'entire_property'
+  | 'private_room_landlord_off_site'
+  | 'private_room_landlord_on_site'
+  | 'shared_room'
+
+export const PROPERTY_LISTING_TYPE_LABELS: Record<PropertyListingType, string> = {
+  entire_property: 'Entire property — House, apartment or unit (landlord does not live on site)',
+  private_room_landlord_off_site: 'Private room — landlord not on site — Room in a property, landlord lives elsewhere',
+  private_room_landlord_on_site:
+    'Private room — landlord lives on site — Room in landlord\'s own home (boarder/lodger arrangement)',
+  shared_room: 'Shared room — Shared bedroom with other tenants',
+}
+
+export function isPropertyListingType(value: string): value is PropertyListingType {
+  return Object.prototype.hasOwnProperty.call(PROPERTY_LISTING_TYPE_LABELS, value)
 }

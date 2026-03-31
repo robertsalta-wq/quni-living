@@ -7,7 +7,10 @@ export default {
   theme: {
     extend: {
       maxWidth: {
-        /** App content width cap (listings, property detail, header alignment) */
+        /**
+         * App content width cap (listings, property detail, header alignment).
+         * Property detail hero/gallery: import `SITE_CONTENT_MAX_CLASS` from `src/lib/site.ts` — keep in sync with this value.
+         */
         site: '1200px',
       },
       fontFamily: {

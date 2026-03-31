@@ -1,7 +1,14 @@
 import ServicePageLayout from '../../components/ServicePageLayout'
+import Seo from '../../components/Seo'
 
 export default function PropertyManagement() {
   return (
+    <>
+      <Seo
+        title="Property management for landlords"
+        description="List and manage student accommodation with Quni Living — enquiries, bookings, and your landlord dashboard in one place."
+        canonicalPath="/services/property-management"
+      />
     <ServicePageLayout
       title="Property Management"
       subtitle="List, manage and grow your rental portfolio with Quni Living"
@@ -17,5 +24,6 @@ export default function PropertyManagement() {
         quality accommodation near their university.
       </p>
     </ServicePageLayout>
+    </>
   )
 }

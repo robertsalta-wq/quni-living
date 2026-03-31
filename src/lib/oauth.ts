@@ -14,5 +14,8 @@ export function getGoogleOAuthOptions() {
   return {
     redirectTo: getAuthCallbackUrl(),
     scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+    // Forces Google to show the account picker so "Log out → Log in with a different Gmail"
+    // doesn't automatically reuse the previously authenticated Google session.
+    queryParams: { prompt: 'select_account' },
   }
 }

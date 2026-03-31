@@ -4,12 +4,14 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatMoney } from './adminUi'
+import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 
 type PropertyStatus = Database['public']['Tables']['properties']['Row']['status']
+type AdminPropertyStatus = PropertyStatus | 'suspended'
 
-type PropertyRow = Database['public']['Tables']['properties']['Row']
+type PropertyRow = Omit<Database['public']['Tables']['properties']['Row'], 'status'> & { status: AdminPropertyStatus }
 
-function statusBadgeClass(s: PropertyStatus) {
+function statusBadgeClass(s: AdminPropertyStatus) {
   switch (s) {
     case 'active':
       return 'bg-emerald-100 text-emerald-800'
@@ -17,6 +19,8 @@ function statusBadgeClass(s: PropertyStatus) {
       return 'bg-amber-100 text-amber-800'
     case 'inactive':
       return 'bg-gray-100 text-gray-600'
+    case 'suspended':
+      return 'bg-red-100 text-red-800'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -63,6 +67,26 @@ export default function AdminProperties() {
     if (upErr) {
       setError(upErr.message)
       setRows((r) => r.map((row) => (row.id === id ? { ...row, featured: prev } : row)))
+    }
+    setUpdatingId(null)
+  }
+
+  async function updateStatus(id: string, status: AdminPropertyStatus) {
+    const prev = rows.find((r) => r.id === id)?.status ?? 'inactive'
+    setRows((r) => r.map((row) => (row.id === id ? { ...row, status } : row)))
+    setUpdatingId(id)
+    setError(null)
+    const { error: upErr } = await withSentryMonitoring('AdminProperties/update-property-status', () =>
+      supabase
+        .from('properties')
+        .update({
+          status: status as Database['public']['Tables']['properties']['Update']['status'],
+        })
+        .eq('id', id),
+    )
+    if (upErr) {
+      setError(upErr.message)
+      setRows((r) => r.map((row) => (row.id === id ? { ...row, status: prev } : row)))
     }
     setUpdatingId(null)
   }
@@ -127,11 +151,23 @@ export default function AdminProperties() {
                       <td className={adminTdClass}>{formatMoney(row.rent_per_week)}</td>
                       <td className={adminTdClass}>{roomLabel(row.room_type)}</td>
                       <td className={adminTdClass}>
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(row.status)}`}
-                        >
-                          {row.status}
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          <span
+                            className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(row.status)}`}
+                          >
+                            {row.status}
+                          </span>
+                          <select
+                            value={row.status}
+                            disabled={updatingId === row.id}
+                            onChange={(e) => void updateStatus(row.id, e.target.value as AdminPropertyStatus)}
+                            className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
+                          >
+                            <option value="active">active</option>
+                            <option value="inactive">inactive</option>
+                            <option value="suspended">suspended</option>
+                          </select>
+                        </div>
                       </td>
                       <td className={adminTdClass}>
                         <label className="inline-flex cursor-pointer items-center gap-2">

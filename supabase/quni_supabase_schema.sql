@@ -64,6 +64,14 @@ create table if not exists public.landlord_profiles (
   created_at timestamptz default now()
 );
 
+alter table public.landlord_profiles
+  add column if not exists terms_accepted_at timestamptz;
+alter table public.landlord_profiles
+  add column if not exists landlord_terms_accepted_at timestamptz;
+
+alter table public.landlord_profiles
+  add column if not exists onboarding_complete boolean default false;
+
 -- ============================================================
 -- STUDENT PROFILES
 -- ============================================================
@@ -291,7 +299,12 @@ create policy "Public can read universities"
 
 create policy "Public can read campuses"
   on public.campuses for select
+  to anon, authenticated
   using (true);
+
+-- API (anon key) needs table grants in addition to RLS for reference reads
+grant select on table public.universities to anon, authenticated;
+grant select on table public.campuses to anon, authenticated;
 
 create policy "Public can read features"
   on public.features for select

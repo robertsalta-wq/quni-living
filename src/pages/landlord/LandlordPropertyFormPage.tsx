@@ -1,14 +1,23 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
 import { generatePropertySlug } from '../../lib/generatePropertySlug'
-import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
+import {
+  PROPERTY_LISTING_TYPE_LABELS,
+  ROOM_TYPE_LABELS,
+  isPropertyListingType,
+  type PropertyListingType,
+  type RoomType,
+} from '../../lib/listings'
+import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
+import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
+import UniversityCampusSelect from '../../components/UniversityCampusSelect'
+import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
+import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 
-type UniversityRow = Database['public']['Tables']['universities']['Row']
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
-type CampusRow = Database['public']['Tables']['campuses']['Row']
 type FeatureRow = Database['public']['Tables']['features']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type PropertyInsert = Database['public']['Tables']['properties']['Insert']
@@ -16,6 +25,17 @@ type PropertyUpdate = Database['public']['Tables']['properties']['Update']
 
 type PropertyWithFeatures = PropertyRow & {
   property_features: { feature_id: string }[] | null
+  show_add_another_university?: boolean | null
+}
+
+type GeoPoint = { lat: number; lon: number }
+
+type NearbyCampusSuggestion = {
+  campusId: string
+  universityId: string
+  campusLabel: string
+  universityLabel: string
+  distanceKm: number
 }
 
 const LISTING_OPTIONS = [
@@ -27,6 +47,7 @@ const LISTING_OPTIONS = [
 const LEASE_OPTIONS = ['Flexible', '6 months', '12 months', '2 years'] as const
 
 const ROOM_ENTRIES = Object.entries(ROOM_TYPE_LABELS) as [RoomType, string][]
+const PROPERTY_TYPE_ENTRIES = Object.entries(PROPERTY_LISTING_TYPE_LABELS) as [PropertyListingType, string][]
 
 const MAX_IMAGES = 10
 const MAX_FILE_BYTES = 5 * 1024 * 1024
@@ -61,13 +82,13 @@ export default function LandlordPropertyFormPage() {
 
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
 
+  const { universities: uniRefRows, campuses: campusRefRows, loading: refsLoading } = useUniversityCampusReference()
+
   const [pageError, setPageError] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const [universities, setUniversities] = useState<UniversityRow[]>([])
-  const [campuses, setCampuses] = useState<CampusRow[]>([])
   const [features, setFeatures] = useState<FeatureRow[]>([])
   const [landlordOptions, setLandlordOptions] = useState<{ id: string; label: string }[]>([])
   const [existingSlug, setExistingSlug] = useState<string | null>(null)
@@ -81,6 +102,7 @@ export default function LandlordPropertyFormPage() {
   const [bedrooms, setBedrooms] = useState('1')
   const [bathrooms, setBathrooms] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('single')
+  const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
   const [furnished, setFurnished] = useState(false)
   const [linenSupplied, setLinenSupplied] = useState(false)
   const [weeklyCleaning, setWeeklyCleaning] = useState(false)
@@ -93,7 +115,60 @@ export default function LandlordPropertyFormPage() {
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
 
+  const [latitude, setLatitude] = useState<number | null>(null)
+  const [longitude, setLongitude] = useState<number | null>(null)
+
+  const [nearbyCampusSuggestions, setNearbyCampusSuggestions] = useState<NearbyCampusSuggestion[]>([])
+  const [nearbyCampusLoading, setNearbyCampusLoading] = useState(false)
+  const [nearbyCampusError, setNearbyCampusError] = useState<string | null>(null)
+  const [nearbyLookupNonce, setNearbyLookupNonce] = useState(0)
+
+  // When a user manually edits the university/campus dropdown while geocoding is in-flight,
+  // we don't want the auto-fill to overwrite their selection.
+  const manualUniCampusSelectionRef = useRef(false)
+  /** True after loading an existing listing that already had university/campus in DB — never auto-fill over those. */
+  const skipNearbyAutoFillOverwriteRef = useRef(false)
+
+  const [showAddAnotherUniversity, setShowAddAnotherUniversity] = useState(false)
+  const [addAnotherUniversityHelpOpen, setAddAnotherUniversityHelpOpen] = useState(false)
+  const addAnotherUniversityHelpRef = useRef<HTMLDivElement>(null)
+
+  const addressDirtyRef = useRef(false)
+  /** Normalised address at last edit load — used to detect unchanged address vs DB. */
+  const loadedPropertyAddressSigRef = useRef('')
+  /**
+   * On edit, if the listing had no university/campus in DB, do not auto-fill the nearest match into
+   * state on open (that made the form look "saved" while DB stayed null). User picks from the list
+   * or changes address; new listings still auto-fill.
+   */
+  const editDeferNearbyAutoFillRef = useRef(false)
+  const lastNearbySigRef = useRef<string>('')
+  const geoCacheRef = useRef<Map<string, GeoPoint | null>>(new Map())
+  const geoCacheLoadedRef = useRef(false)
+  const nearbyRequestIdRef = useRef(0)
+  const editModeGeocodeFiredRef = useRef(false)
+  const universityIdRef = useRef<string>(universityId)
+  const campusIdRef = useRef<string>(campusId)
+
   const [rentPerWeek, setRentPerWeek] = useState('')
+  const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
+  const weeklyRentNum = useMemo(() => {
+    const t = rentPerWeek.trim()
+    if (!t) return undefined
+    const n = Number(t)
+    return Number.isFinite(n) ? n : undefined
+  }, [rentPerWeek])
+
+  const nearbyUniversitiesForAi = useMemo(() => {
+    const u = uniRefRows.find((x) => x.id === universityId)
+    return u?.name ? [u.name] : []
+  }, [universityId, uniRefRows])
+
+  const amenitiesForAi = useMemo(
+    () => features.filter((f) => selectedFeatureIds.has(f.id)).map((f) => f.name),
+    [features, selectedFeatureIds],
+  )
+
   const [bond, setBond] = useState('')
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
@@ -110,27 +185,14 @@ export default function LandlordPropertyFormPage() {
     })
   }, [])
 
-  const loadCampuses = useCallback(async (uid: string) => {
-    if (!uid) {
-      setCampuses([])
-      return
-    }
-    const { data, error } = await supabase
-      .from('campuses')
-      .select('id, name, university_id, address')
-      .eq('university_id', uid)
-      .order('name')
-    if (error) {
-      setCampuses([])
-      return
-    }
-    setCampuses((data ?? []) as CampusRow[])
+  const applyNearbySuggestion = useCallback((s: NearbyCampusSuggestion) => {
+    editDeferNearbyAutoFillRef.current = false
+    manualUniCampusSelectionRef.current = true
+    universityIdRef.current = s.universityId
+    campusIdRef.current = s.campusId
+    setUniversityId(s.universityId)
+    setCampusId(s.campusId)
   }, [])
-
-  useEffect(() => {
-    void loadCampuses(universityId)
-    if (!universityId) setCampusId('')
-  }, [universityId, loadCampuses])
 
   const loadPage = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -140,14 +202,27 @@ export default function LandlordPropertyFormPage() {
     setPageError(null)
     setLoadingPage(true)
     try {
-      const [uniRes, featRes] = await Promise.all([
-        supabase.from('universities').select('id, name, slug, city, state').order('name'),
-        supabase.from('features').select('id, name, icon').order('name'),
-      ])
-      if (uniRes.error) throw uniRes.error
-      if (featRes.error) throw featRes.error
-      setUniversities((uniRes.data ?? []) as UniversityRow[])
-      setFeatures((featRes.data ?? []) as FeatureRow[])
+      const { data: featData, error: featErr } = await supabase
+        .from('features')
+        .select('id, name, icon')
+        .order('name')
+      if (featErr) throw featErr
+      setFeatures((featData ?? []) as FeatureRow[])
+
+      if (!isEdit || !propertyId) {
+        skipNearbyAutoFillOverwriteRef.current = false
+        manualUniCampusSelectionRef.current = false
+        editDeferNearbyAutoFillRef.current = false
+        editModeGeocodeFiredRef.current = false
+        loadedPropertyAddressSigRef.current = ''
+        setShowAddAnotherUniversity(false)
+        // If the user navigated here from an edit route without unmounting,
+        // ensure we don't carry over stale university/campus selections.
+        setUniversityId('')
+        setCampusId('')
+        universityIdRef.current = ''
+        campusIdRef.current = ''
+      }
 
       if (role === 'admin') {
         const { data: ll, error: llErr } = await supabase
@@ -201,6 +276,9 @@ export default function LandlordPropertyFormPage() {
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
         setBathrooms(prop.bathrooms != null ? String(prop.bathrooms) : '1')
         setRoomType(prop.room_type ?? 'single')
+        setPropertyListingType(
+          prop.property_type && isPropertyListingType(prop.property_type) ? prop.property_type : 'entire_property',
+        )
         setFurnished(Boolean(prop.furnished))
         setLinenSupplied(Boolean(prop.linen_supplied))
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
@@ -208,8 +286,26 @@ export default function LandlordPropertyFormPage() {
         setSuburb(prop.suburb ?? '')
         setState(prop.state ?? 'NSW')
         setPostcode(prop.postcode ?? '')
+        setLatitude(prop.latitude ?? null)
+        setLongitude(prop.longitude ?? null)
         setUniversityId(prop.university_id ?? '')
         setCampusId(prop.campus_id ?? '')
+        universityIdRef.current = prop.university_id ?? ''
+        campusIdRef.current = prop.campus_id ?? ''
+        manualUniCampusSelectionRef.current = Boolean(prop.university_id || prop.campus_id)
+        skipNearbyAutoFillOverwriteRef.current = Boolean(prop.university_id || prop.campus_id)
+        // Persisted explicit user preference (default false for older rows / new listings).
+        setShowAddAnotherUniversity(Boolean(prop.show_add_another_university ?? false))
+        loadedPropertyAddressSigRef.current = [
+          prop.address ?? '',
+          prop.suburb ?? '',
+          prop.state ?? 'NSW',
+          prop.postcode ?? '',
+        ]
+          .map((x) => x.trim())
+          .join('|')
+          .toLowerCase()
+        editDeferNearbyAutoFillRef.current = !prop.university_id && !prop.campus_id
         setRentPerWeek(String(prop.rent_per_week ?? ''))
         setBond(prop.bond != null ? String(prop.bond) : '')
         setLeaseLength(prop.lease_length ?? 'Flexible')
@@ -217,18 +313,304 @@ export default function LandlordPropertyFormPage() {
         setImages(Array.isArray(prop.images) ? [...prop.images] : [])
         const pf = prop.property_features
         setSelectedFeatureIds(new Set((pf ?? []).map((x) => x.feature_id)))
-        if (prop.university_id) await loadCampuses(prop.university_id)
       }
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Could not load form.')
     } finally {
       setLoadingPage(false)
     }
-  }, [user?.id, isEdit, propertyId, role, landlordProfile?.id, loadCampuses])
+  }, [user?.id, isEdit, propertyId, role, landlordProfile?.id])
 
   useEffect(() => {
     void loadPage()
   }, [loadPage])
+
+  useEffect(() => {
+    if (!isEdit || loadingPage) return
+    if (editModeGeocodeFiredRef.current) return
+    const addr = address.trim()
+    const sub = suburb.trim()
+    const st = state.trim()
+    const pc = postcode.trim()
+    if (!addr || !sub || !st || !pc) return
+    const t = window.setTimeout(() => {
+      if (editModeGeocodeFiredRef.current) return
+      editModeGeocodeFiredRef.current = true
+      addressDirtyRef.current = true
+      lastNearbySigRef.current = ''
+      setNearbyLookupNonce((n) => n + 1)
+    }, 500)
+    return () => window.clearTimeout(t)
+  }, [isEdit, loadingPage, address, suburb, state, postcode])
+
+  useEffect(() => {
+    if (!addAnotherUniversityHelpOpen) return
+    const close = (e: MouseEvent) => {
+      if (addAnotherUniversityHelpRef.current && !addAnotherUniversityHelpRef.current.contains(e.target as Node)) {
+        setAddAnotherUniversityHelpOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [addAnotherUniversityHelpOpen])
+
+  // Keep a small local cache so we don't repeatedly geocode the same suburb/address.
+  // (Also helps Nominatim rate limits while the user types.)
+  useEffect(() => {
+    if (geoCacheLoadedRef.current) return
+    geoCacheLoadedRef.current = true
+    const GEO_CACHE_LS_KEY = 'quni_geo_cache_v1'
+    const GEO_CACHE_LS_TTL_MS = 1000 * 60 * 60 * 24 * 30
+    try {
+      const raw = localStorage.getItem(GEO_CACHE_LS_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as Record<string, { lat?: number; lon?: number; ts: number }>
+      const now = Date.now()
+      for (const [k, v] of Object.entries(parsed ?? {})) {
+        if (!v || typeof v.lat !== 'number' || typeof v.lon !== 'number' || typeof v.ts !== 'number') continue
+        if (now - v.ts > GEO_CACHE_LS_TTL_MS) continue
+        geoCacheRef.current.set(k, { lat: v.lat, lon: v.lon })
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
+    universityIdRef.current = universityId
+  }, [universityId])
+
+  useEffect(() => {
+    campusIdRef.current = campusId
+  }, [campusId])
+
+  function haversineKm(a: GeoPoint, b: GeoPoint): number {
+    const R = 6371 // Earth radius km
+    const toRad = (deg: number) => (deg * Math.PI) / 180
+    const dLat = toRad(b.lat - a.lat)
+    const dLon = toRad(b.lon - a.lon)
+    const sLat1 = toRad(a.lat)
+    const sLat2 = toRad(b.lat)
+    const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(sLat1) * Math.cos(sLat2)
+    const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+    return R * c
+  }
+
+  async function geocodeCached(query: string, signal?: AbortSignal): Promise<GeoPoint | null> {
+    const GEO_CACHE_LS_KEY = 'quni_geo_cache_v1'
+    const GEO_CACHE_LS_TTL_MS = 1000 * 60 * 60 * 24 * 30
+
+    const norm = query.trim().toLowerCase()
+    if (!norm) return null
+
+    const known = geoCacheRef.current.get(norm)
+    if (known !== undefined) return known
+
+    let lat: number | null = null
+    let lon: number | null = null
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal })
+      const body = await res.json().catch(() => null)
+      if (res.ok && body?.ok === true && typeof body.lat === 'number' && typeof body.lon === 'number') {
+        lat = body.lat
+        lon = body.lon
+      }
+    } catch {
+      // ignore network errors; treat as cache miss
+    }
+
+    const pt = lat != null && lon != null ? { lat, lon } : null
+    geoCacheRef.current.set(norm, pt)
+
+    try {
+      const raw = localStorage.getItem(GEO_CACHE_LS_KEY)
+      const parsed = raw
+        ? (JSON.parse(raw) as Record<string, { lat?: number; lon?: number; ts: number }>)
+        : {}
+      parsed[norm] = pt ? { lat: pt.lat, lon: pt.lon, ts: Date.now() } : { ts: Date.now() }
+      localStorage.setItem(GEO_CACHE_LS_KEY, JSON.stringify(parsed))
+      // Soft TTL cleanup (avoid unbounded growth)
+      const cutoff = Date.now() - GEO_CACHE_LS_TTL_MS
+      for (const [k, v] of Object.entries(parsed)) {
+        if (!v || typeof v.ts !== 'number' || v.ts < cutoff) delete parsed[k]
+      }
+      localStorage.setItem(GEO_CACHE_LS_KEY, JSON.stringify(parsed))
+    } catch {
+      /* ignore */
+    }
+
+    return pt
+  }
+
+  useEffect(() => {
+    const campusCount = campusRefRows.length
+    const uniCount = uniRefRows.length
+    if (!addressDirtyRef.current) return
+    if (refsLoading) return
+    if (campusCount === 0 || uniCount === 0) return
+
+    const addr = address.trim()
+    const sub = suburb.trim()
+    const st = state.trim()
+    const pc = postcode.trim()
+    const allAddressFieldsFilled = Boolean(addr && sub && st && pc)
+
+    if (!allAddressFieldsFilled) {
+      nearbyRequestIdRef.current += 1
+      setNearbyCampusLoading(false)
+      setNearbyCampusSuggestions([])
+      setNearbyCampusError(null)
+      lastNearbySigRef.current = ''
+      return
+    }
+
+    const sig = [addr, sub, st, pc].join('|').toLowerCase()
+    if (sig.length < 6) return
+    if (sig === lastNearbySigRef.current) return
+
+    const timeout = window.setTimeout(() => {
+      const requestId = ++nearbyRequestIdRef.current
+      lastNearbySigRef.current = sig
+      void (async () => {
+        setNearbyCampusLoading(true)
+        setNearbyCampusError(null)
+        setNearbyCampusSuggestions([])
+
+        const fullAddressQuery = [addr, sub, st, pc, 'Australia'].join(', ')
+
+        const ac = new AbortController()
+        try {
+          const propertyPoint = await geocodeCached(fullAddressQuery, ac.signal)
+          if (!propertyPoint) {
+            setNearbyCampusError('We could not find your address. Please check it and try again.')
+            setNearbyCampusLoading(false)
+            return
+          }
+
+          // Keep lat/lng in sync for saving (and for future map/SEO features).
+          setLatitude(propertyPoint.lat)
+          setLongitude(propertyPoint.lon)
+
+          const stateNorm = state.trim().toUpperCase()
+          const candidates = campusRefRows.filter((c) => {
+            const cSub = c.suburb?.trim() ?? ''
+            const cUni = c.university_id ?? ''
+            const cState = c.state?.trim().toUpperCase() ?? ''
+            if (!cSub || !cUni) return false
+            if (!stateNorm) return true
+            return cState === stateNorm
+          })
+
+          // Fallback if the state match was too strict.
+          const effectiveCandidates = candidates.length > 0 ? candidates : campusRefRows.filter((c) => (c.suburb?.trim() ?? '') !== '' && c.university_id != null)
+
+          if (effectiveCandidates.length === 0) {
+            setNearbyCampusError('No campus reference data found to compare against.')
+            setNearbyCampusLoading(false)
+            return
+          }
+
+          const uniById = new Map<string, string>(uniRefRows.map((u) => [u.id, u.name]))
+
+          const campusPointById = new Map<string, GeoPoint>()
+          const campusGeoQueryById = new Map<string, string>()
+          for (const c of effectiveCandidates) {
+            const fromDb = campusLatLonFromRow(c)
+            if (fromDb) {
+              campusPointById.set(c.id, fromDb)
+            } else {
+              const cState = (c.state ?? stateNorm).trim()
+              const q = `${c.name}, ${c.suburb}, ${cState}, Australia`.replace(/\s+/g, ' ').trim()
+              campusGeoQueryById.set(c.id, q)
+            }
+          }
+
+          const uniqueGeoQueries = [...new Set([...campusGeoQueryById.values()])].slice(0, 30)
+          const coordsByQuery = new Map<string, GeoPoint>()
+
+          for (const q of uniqueGeoQueries) {
+            if (requestId !== nearbyRequestIdRef.current) return
+            const pt = await geocodeCached(q, ac.signal)
+            if (pt) coordsByQuery.set(q, pt)
+            // Light pacing to reduce rate limit risk.
+            await new Promise((r) => window.setTimeout(r, 150))
+          }
+
+          const suggestions: NearbyCampusSuggestion[] = []
+          for (const c of effectiveCandidates) {
+            if (requestId !== nearbyRequestIdRef.current) return
+            const pt =
+              campusPointById.get(c.id) ??
+              (() => {
+                const q = campusGeoQueryById.get(c.id)
+                return q ? coordsByQuery.get(q) : undefined
+              })()
+            if (!pt) continue
+            const uName = c.university_id ? uniById.get(c.university_id) ?? '' : ''
+            if (!c.university_id) continue
+            const distKm = haversineKm(propertyPoint, pt)
+            suggestions.push({
+              campusId: c.id,
+              universityId: c.university_id,
+              campusLabel: c.suburb?.trim() ? `${c.name} (${c.suburb})` : c.name,
+              universityLabel: uName || c.university_id,
+              distanceKm: distKm,
+            })
+          }
+
+          suggestions.sort((a, b) => a.distanceKm - b.distanceKm)
+          // Show a handful of nearby options so landlords can pick from a shortlist.
+          // The closest one is auto-filled if the landlord hasn't selected anything yet.
+          const top = suggestions.slice(0, 5)
+
+          if (top.length === 0) {
+            setNearbyCampusError('Could not determine nearby campuses from your address.')
+            setNearbyCampusLoading(false)
+            return
+          }
+
+          setNearbyCampusSuggestions(top)
+          setNearbyCampusLoading(false)
+
+          if (
+            isEdit &&
+            editDeferNearbyAutoFillRef.current &&
+            loadedPropertyAddressSigRef.current !== '' &&
+            sig !== loadedPropertyAddressSigRef.current
+          ) {
+            editDeferNearbyAutoFillRef.current = false
+          }
+
+          const addressUnchangedFromLoaded =
+            isEdit &&
+            loadedPropertyAddressSigRef.current !== '' &&
+            sig === loadedPropertyAddressSigRef.current
+
+          const deferAutoApplyNearby =
+            isEdit && editDeferNearbyAutoFillRef.current && addressUnchangedFromLoaded
+
+          // Auto-select for new listings (and edits after address change / once defer cleared), unless we
+          // must preserve DB-loaded values or the user already chose something.
+          if (
+            !deferAutoApplyNearby &&
+            !skipNearbyAutoFillOverwriteRef.current &&
+            !manualUniCampusSelectionRef.current &&
+            !universityIdRef.current.trim() &&
+            !campusIdRef.current.trim()
+          ) {
+            setUniversityId(top[0].universityId)
+            setCampusId(top[0].campusId)
+            universityIdRef.current = top[0].universityId
+            campusIdRef.current = top[0].campusId
+          }
+        } finally {
+          ac.abort()
+        }
+      })()
+    }, 800)
+
+    return () => window.clearTimeout(timeout)
+  }, [address, postcode, suburb, state, campusRefRows, uniRefRows, refsLoading, isEdit, nearbyLookupNonce])
 
   const removeImage = useCallback(
     async (url: string) => {
@@ -293,6 +675,9 @@ export default function LandlordPropertyFormPage() {
     e.preventDefault()
     setSubmitError(null)
     if (!user?.id) return
+    // If the nearby-campus lookup overlay is up, it can intercept clicks and make the
+    // submit button feel unresponsive. Always close it on submit.
+    setNearbyCampusLoading(false)
 
     const t = title.trim()
     if (!t) {
@@ -326,13 +711,45 @@ export default function LandlordPropertyFormPage() {
 
     const featureIds = [...selectedFeatureIds]
 
-    const baseFields: PropertyUpdate = {
+    const topSuggest = nearbyCampusSuggestions[0]
+    const uniFromForm = universityId.trim()
+    const campusFromForm = campusId.trim()
+
+    // If "Add another university" is OFF, we treat the nearby suggestions as the source of truth
+    // and ignore whatever is currently in the dropdown (it may be stale from earlier auto-fill).
+    // If the checkbox is ON, we persist the explicit dropdown selection (or nulls).
+    const resolvedUniversityId = showAddAnotherUniversity ? (uniFromForm || null) : topSuggest?.universityId?.trim() || null
+    const resolvedCampusId = showAddAnotherUniversity ? (campusFromForm || null) : topSuggest?.campusId?.trim() || null
+
+    // Ensure coordinates are persisted on every save/publish.
+    // Nearby-campus lookup usually sets these, but we also geocode here as a fallback so
+    // listings always have latitude/longitude when address fields are present.
+    const addr = address.trim()
+    const sub = suburb.trim()
+    const st = state.trim()
+    const pc = postcode.trim()
+    const canGeocode = Boolean(addr && sub && st && pc)
+    let resolvedLat = latitude
+    let resolvedLon = longitude
+    if (canGeocode && (resolvedLat == null || resolvedLon == null)) {
+      const fullAddressQuery = [addr, sub, st, pc, 'Australia'].join(', ')
+      const pt = await geocodeCached(fullAddressQuery)
+      if (pt) {
+        resolvedLat = pt.lat
+        resolvedLon = pt.lon
+        setLatitude(pt.lat)
+        setLongitude(pt.lon)
+      }
+    }
+
+    const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
       description: description.trim() || null,
       listing_type: listingType || null,
       bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
       bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
       room_type: roomType || null,
+      property_type: propertyListingType,
       furnished,
       linen_supplied: linenSupplied,
       weekly_cleaning_service: weeklyCleaning,
@@ -340,8 +757,11 @@ export default function LandlordPropertyFormPage() {
       suburb: suburb.trim() || null,
       state: state.trim() || 'NSW',
       postcode: postcode.trim() || null,
-      university_id: universityId || null,
-      campus_id: campusId || null,
+      latitude: resolvedLat ?? null,
+      longitude: resolvedLon ?? null,
+      university_id: resolvedUniversityId,
+      campus_id: resolvedCampusId,
+      show_add_another_university: showAddAnotherUniversity,
       rent_per_week: rent,
       bond: bond.trim() ? Number(bond) : null,
       lease_length: leaseLength || null,
@@ -352,8 +772,26 @@ export default function LandlordPropertyFormPage() {
     setSubmitting(true)
     try {
       if (isEdit && propertyId) {
-        const { error: upErr } = await supabase.from('properties').update(baseFields).eq('id', propertyId)
+        const { data: updatedRow, error: upErr } = await supabase
+          .from('properties')
+          .update(baseFields)
+          .eq('id', propertyId)
+          .select('university_id, campus_id')
+          .single()
         if (upErr) throw upErr
+        const uRow = updatedRow as { university_id: string | null; campus_id: string | null } | null
+        if (
+          uRow &&
+          (uRow.university_id !== resolvedUniversityId || uRow.campus_id !== resolvedCampusId)
+        ) {
+          console.warn('University/campus IDs did not persist as expected (update)', {
+            resolvedUniversityId,
+            resolvedCampusId,
+            updatedUniversityId: uRow.university_id,
+            updatedCampusId: uRow.campus_id,
+            showAddAnotherUniversity,
+          })
+        }
         await savePropertyFeatures(propertyId, featureIds)
         const slug = existingSlug ?? generatePropertySlug(t)
         navigate(`/properties/${slug}`, { replace: true })
@@ -368,11 +806,20 @@ export default function LandlordPropertyFormPage() {
             landlord_id: landlordId,
             status: 'active',
             featured: false,
-          } as PropertyInsert)
-          .select('id')
+          } as PropertyInsert & { show_add_another_university?: boolean })
+          .select('id, university_id, campus_id')
           .single()
         if (insErr) throw insErr
-        const newId = (inserted as { id: string }).id
+        const insertedRow = inserted as { id: string; university_id: string | null; campus_id: string | null }
+        const newId = insertedRow.id
+        if (insertedRow.university_id !== resolvedUniversityId || insertedRow.campus_id !== resolvedCampusId) {
+          console.warn('University/campus IDs did not persist as expected', {
+            resolvedUniversityId,
+            resolvedCampusId,
+            insertedUniversityId: insertedRow.university_id,
+            insertedCampusId: insertedRow.campus_id,
+          })
+        }
         await savePropertyFeatures(newId, featureIds)
         navigate('/landlord-dashboard', { replace: true })
       }
@@ -489,18 +936,6 @@ export default function LandlordPropertyFormPage() {
                 />
               </div>
               <div>
-                <label htmlFor="pf-desc" className={labelClass}>
-                  Description
-                </label>
-                <textarea
-                  id="pf-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className={inputClass}
-                />
-              </div>
-              <div>
                 <label htmlFor="pf-listing" className={labelClass}>
                   Listing type
                 </label>
@@ -516,6 +951,28 @@ export default function LandlordPropertyFormPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label htmlFor="pf-desc" className={labelClass}>
+                  Description
+                </label>
+                <textarea
+                  id="pf-desc"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className={inputClass}
+                />
+                <AIDescriptionGenerator
+                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
+                  weeklyRent={weeklyRentNum}
+                  suburb={suburb}
+                  nearbyUniversities={nearbyUniversitiesForAi}
+                  amenities={amenitiesForAi}
+                  furnished={furnished}
+                  existingDescription={description}
+                  onGenerated={setDescription}
+                />
               </div>
             </div>,
           )}
@@ -562,6 +1019,26 @@ export default function LandlordPropertyFormPage() {
                   className={inputClass}
                 >
                   {ROOM_ENTRIES.map(([v, lab]) => (
+                    <option key={v} value={v}>
+                      {lab}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="pf-property-type" className={labelClass}>
+                  Property type
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Used for student booking and bond guidance. This is separate from the room layout above.
+                </p>
+                <select
+                  id="pf-property-type"
+                  value={propertyListingType}
+                  onChange={(e) => setPropertyListingType(e.target.value as PropertyListingType)}
+                  className={inputClass}
+                >
+                  {PROPERTY_TYPE_ENTRIES.map(([v, lab]) => (
                     <option key={v} value={v}>
                       {lab}
                     </option>
@@ -626,67 +1103,172 @@ export default function LandlordPropertyFormPage() {
                 <label htmlFor="pf-addr" className={labelClass}>
                   Address
                 </label>
-                <input id="pf-addr" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} />
+                <input
+                  id="pf-addr"
+                  value={address}
+                  onChange={(e) => {
+                    addressDirtyRef.current = true
+                    setAddress(e.target.value)
+                  }}
+                  className={inputClass}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="pf-suburb" className={labelClass}>
                     Suburb
                   </label>
-                  <input id="pf-suburb" value={suburb} onChange={(e) => setSuburb(e.target.value)} className={inputClass} />
+                  <input
+                    id="pf-suburb"
+                    value={suburb}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setSuburb(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
                 </div>
                 <div>
                   <label htmlFor="pf-state" className={labelClass}>
                     State
                   </label>
-                  <input id="pf-state" value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
+                  <input
+                    id="pf-state"
+                    value={state}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setState(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
                 </div>
               </div>
               <div>
                 <label htmlFor="pf-pc" className={labelClass}>
                   Postcode
                 </label>
-                <input id="pf-pc" value={postcode} onChange={(e) => setPostcode(e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="pf-uni" className={labelClass}>
-                  University
-                </label>
-                <select
-                  id="pf-uni"
-                  value={universityId}
+                <input
+                  id="pf-pc"
+                  value={postcode}
                   onChange={(e) => {
-                    setUniversityId(e.target.value)
-                    setCampusId('')
+                    addressDirtyRef.current = true
+                    setPostcode(e.target.value)
                   }}
                   className={inputClass}
-                >
-                  <option value="">—</option>
-                  {universities.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div>
-                <label htmlFor="pf-campus" className={labelClass}>
-                  Campus
-                </label>
-                <select
-                  id="pf-campus"
-                  value={campusId}
-                  onChange={(e) => setCampusId(e.target.value)}
-                  disabled={!universityId}
-                  className={inputClass}
-                >
-                  <option value="">—</option>
-                  {campuses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <span className={labelClass}>Nearest university campus</span>
+                <p className="text-xs text-gray-500 mb-2">
+                  We list the closest campuses from your address. <span className="font-medium text-gray-700">New</span>{' '}
+                  listings save the nearest match automatically unless you override.{' '}
+                  <span className="font-medium text-gray-700">Editing</span> a listing that has no campus saved yet: tap a
+                  suggestion to select it (or use Add another university below)—we won’t assume a campus until you choose
+                  one or save after an address change.
+                </p>
+
+                {nearbyCampusError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    {nearbyCampusError}
+                  </p>
+                )}
+                {nearbyCampusSuggestions.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
+                    <div className="space-y-2">
+                      {nearbyCampusSuggestions.map((s) => (
+                        <button
+                          key={s.campusId}
+                          type="button"
+                          onClick={() => applyNearbySuggestion(s)}
+                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {s.universityLabel}: {s.campusLabel}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-[11px] text-gray-500">
+                            {universityId === s.universityId && campusId === s.campusId ? 'Selected' : 'Tap to select'}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Based on approximate geocoding from your address.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-800">
+                      <input
+                        type="checkbox"
+                        id="pf-add-another-uni"
+                        checked={showAddAnotherUniversity}
+                        onChange={(e) => {
+                          setShowAddAnotherUniversity(e.target.checked)
+                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
+                        }}
+                        disabled={refsLoading || nearbyCampusLoading}
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span>Add another university (optional)</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      aria-label="Help: additional university"
+                      aria-expanded={addAnotherUniversityHelpOpen}
+                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
+                    >
+                      ?
+                    </button>
+                  </div>
+                  {addAnotherUniversityHelpOpen && (
+                    <div
+                      role="tooltip"
+                      className="mt-2 max-w-sm rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-md"
+                    >
+                      You can choose one additional university and campus for this listing—for example if your property
+                      is a better fit for a campus other than the closest match we suggested above.
+                    </div>
+                  )}
+                </div>
+
+                {showAddAnotherUniversity && (
+                  <div className="mt-4">
+                    <UniversityCampusSelect
+                      universityId={universityId || null}
+                      campusId={campusId || null}
+                      onUniversityChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        universityIdRef.current = id
+                        setUniversityId(id)
+                        campusIdRef.current = ''
+                        setCampusId('')
+                      }}
+                      onCampusChange={(id) => {
+                        manualUniCampusSelectionRef.current = true
+                        campusIdRef.current = id
+                        setCampusId(id)
+                      }}
+                      showState
+                      disabled={refsLoading || nearbyCampusLoading}
+                      labelClassName={labelClass}
+                      universitySelectClassName={inputClass}
+                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+                      universityLabel="University"
+                      campusLabel="Campus"
+                      universityIdAttr="pf-uni"
+                      campusIdAttr="pf-campus"
+                    />
+                  </div>
+                )}
               </div>
             </div>,
           )}
@@ -695,9 +1277,18 @@ export default function LandlordPropertyFormPage() {
             'Pricing & availability',
             <div className="space-y-4">
               <div>
-                <label htmlFor="pf-rent" className={labelClass}>
-                  Rent per week ($) <span className="text-red-500">*</span>
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label htmlFor="pf-rent" className={labelClass}>
+                    Rent per week ($) <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setPricingSuggestionOpen(true)}
+                    className="text-xs font-medium text-[#FF6B6B] hover:underline"
+                  >
+                    Get AI price suggestion
+                  </button>
+                </div>
                 <input
                   id="pf-rent"
                   type="number"
@@ -802,6 +1393,40 @@ export default function LandlordPropertyFormPage() {
           </div>
         </form>
       </div>
+
+      {nearbyCampusLoading && !submitting && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="campus-search-overlay-title"
+          aria-busy="true"
+        >
+          <div className="max-w-sm w-full rounded-2xl bg-white shadow-xl border border-gray-100 px-8 py-10 text-center">
+            <div
+              className="mx-auto h-12 w-12 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-5"
+              aria-hidden
+            />
+            <p id="campus-search-overlay-title" className="text-base font-semibold text-gray-900">
+              Finding nearby campuses
+            </p>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              Working out which university campuses are closest to your address. This may take a few seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <AIPricingSuggestionModal
+        isOpen={pricingSuggestionOpen}
+        onClose={() => setPricingSuggestionOpen(false)}
+        onAccept={(price) => setRentPerWeek(String(price))}
+        roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
+        suburb={suburb}
+        nearbyUniversities={nearbyUniversitiesForAi}
+        amenities={amenitiesForAi}
+        furnished={furnished}
+      />
     </div>
   )
 }

@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import Seo from '../components/Seo'
+import PageHeroBand from '../components/PageHeroBand'
 
 function IconHouse({ className }: { className?: string }) {
   return (
@@ -86,14 +88,15 @@ const cards = [
 export default function Services() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-      <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-12 sm:py-16 text-center">
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Our Services</h1>
-          <p className="mt-4 text-base sm:text-lg text-white max-w-3xl mx-auto leading-relaxed">
-            Everything you need — whether you&apos;re looking for a home or managing a property.
-          </p>
-        </div>
-      </section>
+      <Seo
+        title="Services"
+        description="Student accommodation search, landlord listings, property management, and furnished rentals — services from Quni Living, Australia."
+        canonicalPath="/services"
+      />
+      <PageHeroBand
+        title="Our Services"
+        subtitle="Everything you need — whether you're looking for a home or managing a property."
+      />
 
       <section className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

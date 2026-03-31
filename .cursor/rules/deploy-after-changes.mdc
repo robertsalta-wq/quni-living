@@ -1,0 +1,23 @@
+---
+description: Auto-deploy to Vercel production after code changes; user should not need to ask.
+alwaysApply: true
+---
+
+# Deploy after changes
+
+When you **finish** a task that changes anything that ships to production (e.g. `src/`, `api/`, `public/`, `vercel.json`, `index.html`, `package.json` dependencies used at build time), **deploy without waiting for the user to ask**.
+
+1. From the project root `quni-living`, run:
+
+   `npx vercel deploy --prod --yes`
+
+2. Use a long enough command timeout (e.g. 120s+); deployment often takes 30–90s.
+
+3. **Skip deploy** when:
+   - The user explicitly said not to deploy for this task, or
+   - Changes are limited to docs, comments-only, `.cursor/`, `supabase/*.sql` reference files, or other non-built artifacts that do not require a new deployment for the live site, or
+   - You made no file changes in this turn.
+
+4. If the command fails (not logged in, no network, project unlinked), say what failed and what the user can do once (e.g. `npx vercel login`, link project). Do not block the rest of the answer on deploy success.
+
+5. After a successful deploy, give the **production URL** (e.g. `https://quni-living.vercel.app` or the deployment alias shown in CLI output) in one short line.

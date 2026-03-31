@@ -63,7 +63,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#FF7261] text-[#333] font-footer mt-auto">
       <div className="max-w-site mx-auto px-6 py-14 md:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex items-center gap-2.5">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#4a4a4a] text-white text-sm font-semibold font-footer">
@@ -75,6 +75,17 @@ export default function Footer() {
               Premium student accommodation in Macquarie Park and Ryde. Professional, stable, and
               student-focused.
             </p>
+          </div>
+
+          <div>
+            <h2 className="font-display font-bold text-lg text-white mb-4">For Students</h2>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/student-accommodation" className={linkClass}>
+                  Student accommodation guides →
+                </Link>
+              </li>
+            </ul>
           </div>
 
           <div>
@@ -96,6 +107,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/pricing" className={linkClass}>
+                  Pricing
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className={linkClass}>
                   Contact
                 </Link>
@@ -108,6 +124,32 @@ export default function Footer() {
               <li>
                 <Link to="/services/landlord-partnerships" className={linkClass}>
                   For landlords
+                </Link>
+              </li>
+              <li>
+                <Link to="/landlords/ai" className={linkClass}>
+                  AI listing tools
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="font-display font-bold text-lg text-white mb-4">Legal</h2>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/terms" className={linkClass}>
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className={linkClass}>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/landlord-service-agreement" className={linkClass}>
+                  Landlord Service Agreement
                 </Link>
               </li>
             </ul>
@@ -163,12 +205,12 @@ export default function Footer() {
         <div className="mt-12 border-t border-[#333]/35 pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs sm:text-sm text-[#333]">
           <p>© {new Date().getFullYear()} Quni. All rights reserved.</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <a href="#" className={`${linkClass} text-xs sm:text-sm`}>
+            <Link to="/privacy" className={`${linkClass} text-xs sm:text-sm`}>
               Privacy Policy
-            </a>
-            <a href="#" className={`${linkClass} text-xs sm:text-sm`}>
+            </Link>
+            <Link to="/terms" className={`${linkClass} text-xs sm:text-sm`}>
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>
