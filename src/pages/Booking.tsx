@@ -69,6 +69,14 @@ function weeklyRentCents(rent: number): number {
   return Math.round(rent * 100)
 }
 
+function paymentElementLoadErrorMessage(payload: unknown): string {
+  if (payload && typeof payload === 'object' && 'error' in payload) {
+    const e = (payload as { error?: { message?: string } }).error
+    if (e && typeof e.message === 'string' && e.message.trim()) return e.message.trim()
+  }
+  return 'Payment form could not load. Check that your Stripe publishable key matches the same account and mode (test/live) as the server secret key, then redeploy.'
+}
+
 function DepositPaymentInner({
   onPaid,
   totalAudDisplay,
@@ -80,12 +88,27 @@ function DepositPaymentInner({
   const elements = useElements()
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [elementReady, setElementReady] = useState(false)
+  const [elementLoadError, setElementLoadError] = useState<string | null>(null)
 
   async function submit() {
     if (!stripe || !elements) return
+    if (!elementReady || elementLoadError) {
+      setErr(
+        elementLoadError ??
+          'Wait for the card form to appear above. If it does not load, refresh the page or contact support.',
+      )
+      return
+    }
     setErr(null)
     setBusy(true)
     try {
+      const { error: submitErr } = await elements.submit()
+      if (submitErr) {
+        setErr(submitErr.message ?? 'Check your payment details.')
+        return
+      }
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -112,16 +135,35 @@ function DepositPaymentInner({
     }
   }
 
+  const payDisabled = busy || !stripe || !elementReady || Boolean(elementLoadError)
+
   return (
     <div className="space-y-4">
-      <PaymentElement />
+      <PaymentElement
+        onReady={() => {
+          setElementReady(true)
+          setElementLoadError(null)
+        }}
+        onLoadError={(e) => {
+          setElementReady(false)
+          setElementLoadError(paymentElementLoadErrorMessage(e))
+        }}
+      />
+      {elementLoadError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {elementLoadError}
+        </div>
+      )}
+      {!elementLoadError && stripe && !elementReady && (
+        <p className="text-sm text-gray-500">Loading secure payment form…</p>
+      )}
       {err && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{err}</div>
       )}
       <button
         type="button"
         onClick={() => void submit()}
-        disabled={busy || !stripe}
+        disabled={payDisabled}
         className="w-full rounded-xl bg-stone-900 text-white py-3 text-sm font-semibold hover:bg-stone-800 disabled:opacity-50"
       >
         {busy ? 'Processing…' : `Pay $${totalAudDisplay}`}
@@ -718,6 +760,7 @@ export default function Booking() {
           )}
 
           <Elements
+            key={clientSecret}
             stripe={stripePromise}
             options={{
               clientSecret,

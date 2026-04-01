@@ -228,6 +228,8 @@ export default async function handler(request) {
     currency: 'aud',
     capture_method: 'manual',
     customer: customerId,
+    // Required so the card can be reused for weekly rent subscription when the landlord confirms.
+    setup_future_usage: 'off_session',
     automatic_payment_methods: { enabled: true },
     metadata: {
       bookingType: 'deposit',

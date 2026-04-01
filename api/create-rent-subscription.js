@@ -52,6 +52,20 @@ function moveInUnixUtcMidnight(moveInIso) {
   return Math.floor(Date.UTC(y, m - 1, d) / 1000)
 }
 
+/** Absolute origin for serverless → serverless calls (relative /api/... URLs fail on Vercel). */
+function internalApiOrigin() {
+  const explicit = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim().replace(/\/$/, '')
+  if (explicit.startsWith('http://') || explicit.startsWith('https://')) {
+    return explicit
+  }
+  const vercel = (process.env.VERCEL_URL || '').trim().replace(/\/$/, '')
+  if (vercel) {
+    const host = vercel.replace(/^https?:\/\//i, '')
+    return `https://${host}`
+  }
+  return 'https://quni-living.vercel.app'
+}
+
 export default async function handler(request) {
   const origin = request.headers.get('origin') || '*'
 
@@ -98,6 +112,7 @@ export default async function handler(request) {
     return json({ error: 'bookingId is required' }, 400, origin)
   }
 
+  try {
   const supabaseAuth = createClient(supabaseUrl, anonKey)
   const {
     data: { user },
@@ -197,7 +212,7 @@ export default async function handler(request) {
     return json({ error: `Payment is not ready to capture (status: ${pi.status})` }, 400, origin)
   }
 
-  const pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id
+  let pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id
   if (!pmId) {
     return json({ error: 'No payment method on file for this booking' }, 400, origin)
   }
@@ -211,14 +226,63 @@ export default async function handler(request) {
     return json({ error: 'Student billing profile is missing' }, 400, origin)
   }
 
-  try {
-    await stripe.paymentMethods.attach(pmId, { customer: customerId })
-  } catch (e) {
-    const msg = e && typeof e === 'object' && 'message' in e ? String(e.message) : ''
-    if (!msg.includes('already been attached')) {
-      throw e
+  /** If deposit PI PM can't be reused, use another card already saved on the student. */
+  async function alternatePaymentMethodId(excludeId) {
+    const cust = await stripe.customers.retrieve(customerId, {
+      expand: ['invoice_settings.default_payment_method'],
+    })
+    const def = cust.invoice_settings?.default_payment_method
+    const defId = typeof def === 'string' ? def : def?.id
+    if (defId && defId !== excludeId) return defId
+    const list = await stripe.paymentMethods.list({ customer: customerId, type: 'card' })
+    for (const pm of list.data) {
+      if (pm.id !== excludeId) return pm.id
+    }
+    return null
+  }
+
+  function isPmReuseError(msg) {
+    const m = msg.toLowerCase()
+    return (
+      m.includes('may not be used again') ||
+      m.includes('previously used without') ||
+      m.includes('was detached') ||
+      m.includes('has already been used')
+    )
+  }
+
+  const pmRecord = await stripe.paymentMethods.retrieve(pmId)
+  const alreadyOnCustomer =
+    typeof pmRecord.customer === 'string'
+      ? pmRecord.customer === customerId
+      : pmRecord.customer?.id === customerId
+
+  if (!alreadyOnCustomer) {
+    try {
+      await stripe.paymentMethods.attach(pmId, { customer: customerId })
+    } catch (e) {
+      const msg = e && typeof e === 'object' && 'message' in e ? String(e.message) : ''
+      if (msg.includes('already been attached')) {
+        // ok
+      } else if (isPmReuseError(msg)) {
+        const alt = await alternatePaymentMethodId(pmId)
+        if (!alt) {
+          return json(
+            {
+              error:
+                'This booking’s card cannot be charged again for weekly rent (Stripe single-use limitation). Ask the student to add a saved payment method under Student profile → Payments, then try confirming again. New bookings will save the card automatically.',
+            },
+            400,
+            origin,
+          )
+        }
+        pmId = alt
+      } else {
+        throw e
+      }
     }
   }
+
   await stripe.customers.update(customerId, {
     invoice_settings: { default_payment_method: pmId },
   })
@@ -236,13 +300,19 @@ export default async function handler(request) {
     return json({ error: 'Invalid lease length for subscription' }, 400, origin)
   }
 
+  // Stripe subscription items[].price_data requires `product` (id), not inline `product_data`.
+  const rentProduct = await stripe.products.create({
+    name: `Weekly rent — ${propertyTitle}`,
+    metadata: { booking_id: booking.id, property_id: booking.property_id ?? '' },
+  })
+
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
     items: [
       {
         price_data: {
           currency: 'aud',
-          product_data: { name: `Weekly rent — ${propertyTitle}` },
+          product: rentProduct.id,
           unit_amount: weeklyCents,
           recurring: { interval: 'week' },
         },
@@ -376,10 +446,19 @@ export default async function handler(request) {
   }
 
   const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-  if (leaseFlowSecret) {
+  const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
+  if (!leaseFlowSecret) {
+    console.warn(
+      '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
+    )
+  } else {
+    console.log('[create-rent-subscription] triggering generate-lease', {
+      booking_id: booking.id,
+      url: generateLeaseUrl,
+    })
     void (async () => {
       try {
-        const res = await fetch(`${siteBase}/api/documents/generate-lease`, {
+        const res = await fetch(generateLeaseUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -406,4 +485,18 @@ export default async function handler(request) {
     200,
     origin,
   )
+  } catch (e) {
+    console.error('create-rent-subscription', e)
+    let msg = 'Booking confirmation failed'
+    if (e && typeof e === 'object') {
+      if ('message' in e && typeof e.message === 'string' && e.message.trim()) {
+        msg = e.message.trim()
+      }
+      const raw = 'raw' in e && e.raw && typeof e.raw === 'object' && 'message' in e.raw
+      if (raw && typeof e.raw.message === 'string' && e.raw.message.trim()) {
+        msg = e.raw.message.trim()
+      }
+    }
+    return json({ error: msg.slice(0, 500) }, 500, origin)
+  }
 }

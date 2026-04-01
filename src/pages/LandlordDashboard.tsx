@@ -40,6 +40,17 @@ type BookingWithRelations = BookingRow & {
 
 type TabId = 'listings' | 'enquiries' | 'bookings'
 
+/** Avoid JSON.parse on HTML/plain-text error bodies from the platform. */
+async function readJsonApiResponse(res: Response): Promise<{ error?: string } & Record<string, unknown>> {
+  const raw = await res.text()
+  if (!raw.trim()) return {}
+  try {
+    return JSON.parse(raw) as { error?: string } & Record<string, unknown>
+  } catch {
+    return { error: raw.trim().slice(0, 280) || `Request failed (${res.status})` }
+  }
+}
+
 function firstNameFromLandlord(p: LandlordRow): string {
   const fn = p.first_name?.trim()
   if (fn) return formatDisplayName(fn).split(/\s+/)[0] || 'there'
@@ -156,22 +167,78 @@ export default function LandlordDashboard() {
           .select('*, properties ( title, slug )')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
-        supabase
-          .from('bookings')
-          .select(
-            '*, properties ( title, slug, suburb ), student_profiles ( full_name, email, phone, avatar_url, course, universities ( name ) )',
-          )
-          .eq('landlord_id', prof.id)
-          .order('created_at', { ascending: false }),
+        supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
       ])
 
       if (propRes.error) throw propRes.error
       if (enqRes.error) throw enqRes.error
       if (bookRes.error) throw bookRes.error
 
+      type BookingStudentDbRow = {
+        id: string
+        full_name: string | null
+        email: string | null
+        phone: string | null
+        avatar_url: string | null
+        course: string | null
+        universities: { name: string } | null
+      }
+      type BookingPropertyDbRow = { id: string; title: string; slug: string; suburb: string | null }
+
+      const bookingRows = (bookRes.data ?? []) as BookingRow[]
+      const studentIds = [...new Set(bookingRows.map((b) => b.student_id).filter(Boolean))] as string[]
+      const bookingPropertyIds = [...new Set(bookingRows.map((b) => b.property_id).filter(Boolean))] as string[]
+
+      const [studRes, bookingPropsRes] = await Promise.all([
+        studentIds.length > 0
+          ? supabase
+              .from('student_profiles')
+              .select('id, full_name, email, phone, avatar_url, course, universities ( name )')
+              .in('id', studentIds)
+          : Promise.resolve({ data: [] as BookingStudentDbRow[], error: null }),
+        bookingPropertyIds.length > 0
+          ? supabase.from('properties').select('id, title, slug, suburb').in('id', bookingPropertyIds)
+          : Promise.resolve({ data: [] as BookingPropertyDbRow[], error: null }),
+      ])
+
+      if (bookingPropsRes.error) throw bookingPropsRes.error
+
+      const studentById = new Map<string, BookingStudentDbRow>()
+      if (!studRes.error && studRes.data) {
+        for (const row of studRes.data as BookingStudentDbRow[]) {
+          if (row?.id) studentById.set(row.id, row)
+        }
+      }
+
+      const propertyById = new Map<string, { title: string; slug: string; suburb: string | null }>()
+      for (const row of (bookingPropsRes.data ?? []) as BookingPropertyDbRow[]) {
+        if (row?.id) {
+          propertyById.set(row.id, { title: row.title, slug: row.slug, suburb: row.suburb ?? null })
+        }
+      }
+
+      const mergedBookings: BookingWithRelations[] = bookingRows.map((b) => {
+        const sp = b.student_id ? studentById.get(b.student_id) : undefined
+        const pr = b.property_id ? propertyById.get(b.property_id) : undefined
+        return {
+          ...b,
+          properties: pr ? { title: pr.title, slug: pr.slug, suburb: pr.suburb } : null,
+          student_profiles: sp
+            ? {
+                full_name: sp.full_name,
+                email: sp.email,
+                phone: sp.phone,
+                avatar_url: sp.avatar_url,
+                course: sp.course,
+                universities: sp.universities ?? null,
+              }
+            : null,
+        }
+      })
+
       setProperties((propRes.data ?? []) as PropertySummary[])
       setEnquiries((enqRes.data ?? []) as EnquiryWithProperty[])
-      setBookings((bookRes.data ?? []) as BookingWithRelations[])
+      setBookings(mergedBookings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load dashboard.')
       setProfile(null)
@@ -413,8 +480,8 @@ export default function LandlordDashboard() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ bookingId: b.id }),
         })
-        const j = (await res.json()) as { error?: string }
-        if (!res.ok) throw new Error(j.error || 'Could not confirm booking.')
+        const j = await readJsonApiResponse(res)
+        if (!res.ok) throw new Error((typeof j.error === 'string' && j.error) || 'Could not confirm booking.')
 
         await load()
       } catch (e) {
@@ -440,8 +507,8 @@ export default function LandlordDashboard() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ bookingId: b.id }),
         })
-        const j = (await res.json()) as { error?: string }
-        if (!res.ok) throw new Error(j.error || 'Could not decline booking.')
+        const j = await readJsonApiResponse(res)
+        if (!res.ok) throw new Error((typeof j.error === 'string' && j.error) || 'Could not decline booking.')
 
         await load()
       } catch (e) {
@@ -680,23 +747,32 @@ export default function LandlordDashboard() {
           <nav className="flex gap-1 -mb-px" aria-label="Dashboard sections">
             {(
               [
-                ['listings', 'Listings'],
-                ['enquiries', 'Enquiries'],
-                ['bookings', 'Bookings'],
+                ['listings', 'Listings', null] as const,
+                ['enquiries', 'Enquiries', enquiries.length > 0 ? enquiries.length : null] as const,
+                [
+                  'bookings',
+                  'Bookings',
+                  pendingBookings > 0 ? pendingBookings : bookings.length > 0 ? bookings.length : null,
+                ] as const,
               ] as const
-            ).map(([id, label]) => (
+            ).map(([id, label, badge]) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setTab(id)}
                 className={[
-                  'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors',
+                  'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
                   tab === id
                     ? 'border-indigo-600 text-indigo-700 bg-white'
                     : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
                 ].join(' ')}
               >
                 {label}
+                {badge != null && (
+                  <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                    {badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
