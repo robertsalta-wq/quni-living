@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { getPostLoginRedirectDestination } from '../lib/authProfile'
+import { getNavDashboardPath } from '../lib/authProfile'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup, { AiSparkleIcon } from './SiteBrandLockup'
 
@@ -82,7 +82,7 @@ export default function Header() {
 
   const dashboardHref =
     user && (role === 'student' || role === 'landlord' || role === 'admin')
-      ? getPostLoginRedirectDestination(user, role, profile)
+      ? getNavDashboardPath(role, profile)
       : '/onboarding'
   const profileHref =
     role === 'student'

@@ -66,9 +66,28 @@ export function getPostLoginRedirectDestination(
   return '/onboarding'
 }
 
-/** Legacy helper — prefer `getPostLoginRedirectDestination` when user + profile are available. */
+/**
+ * Dashboard URL for header / account nav. Unlike post-login redirect, completed students go to
+ * `/student-dashboard` (not `/listings`).
+ */
+export function getNavDashboardPath(role: UserRole, profile: AuthProfile | null): string {
+  if (role === 'admin') return '/admin'
+  if (role === 'landlord') {
+    const lp = profile as LandlordProfileRow | null
+    if (lp && lp.onboarding_complete !== true) return '/onboarding/landlord'
+    return '/landlord/dashboard'
+  }
+  if (role === 'student') {
+    const sp = profile as StudentProfileRow | null
+    if (!sp || sp.onboarding_complete !== true) return '/onboarding/student'
+    return '/student-dashboard'
+  }
+  return '/onboarding'
+}
+
+/** Legacy helper — prefer `getPostLoginRedirectDestination` or `getNavDashboardPath` by context. */
 export function getDashboardPath(role: UserRole): string {
-  if (role === 'student') return '/listings'
+  if (role === 'student') return '/student-dashboard'
   if (role === 'landlord') return '/landlord/dashboard'
   if (role === 'admin') return '/admin'
   return '/onboarding'

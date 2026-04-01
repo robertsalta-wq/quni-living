@@ -65,6 +65,8 @@ function landlordAddressLine(lp: Record<string, unknown>): string {
 }
 
 export default async function handler(request: Request): Promise<Response> {
+  console.log('[generate-lease] incoming request', { method: request.method })
+
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405)
   }

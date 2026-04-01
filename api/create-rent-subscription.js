@@ -6,6 +6,7 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { waitUntil } from '@vercel/functions'
 import { sendEmail } from './lib/sendEmail.js'
 import {
   bookingConfirmedStudent,
@@ -456,7 +457,9 @@ export default async function handler(request) {
       booking_id: booking.id,
       url: generateLeaseUrl,
     })
-    void (async () => {
+    // Edge runtime ends the isolate when the Response is returned; a bare void IIFE is dropped.
+    // waitUntil keeps this fetch alive until it settles (Vercel request context).
+    const generateLeaseTask = (async () => {
       try {
         const res = await fetch(generateLeaseUrl, {
           method: 'POST',
@@ -474,6 +477,7 @@ export default async function handler(request) {
         console.error('generate-lease trigger', e)
       }
     })()
+    waitUntil(generateLeaseTask)
   }
 
   return json(
