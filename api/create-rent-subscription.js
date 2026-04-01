@@ -466,6 +466,8 @@ export default async function handler(request) {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${leaseFlowSecret}`,
+            // Vercel sometimes drops Authorization on server-to-server fetch; duplicate secret here.
+            'X-Internal-Doc-Flow-Secret': leaseFlowSecret,
           },
           body: JSON.stringify({ booking_id: booking.id }),
         })

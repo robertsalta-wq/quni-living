@@ -5,7 +5,7 @@
  * optionally send to DocuSeal (see src/lib/docuseal.ts).
  *
  * POST JSON: { booking_id: string }
- * Authorization: Bearer INTERNAL_DOC_FLOW_SECRET
+ * Authorization: Bearer INTERNAL_DOC_FLOW_SECRET (or X-Internal-Doc-Flow-Secret — some Vercel paths strip Authorization on internal fetch)
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, INTERNAL_DOC_FLOW_SECRET,
  *      DOCUSEAL_* (optional for signing step)
@@ -72,9 +72,24 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const secret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-  const auth = request.headers.get('authorization') || ''
-  const token = auth.replace(/^Bearer\s+/i, '').trim()
-  if (!secret || token !== secret) {
+  const authHeader = request.headers.get('Authorization') ?? ''
+  let token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!token) {
+    token = (request.headers.get('x-internal-doc-flow-secret') || '').trim()
+  }
+
+  const authHeaderPreview = authHeader.slice(0, 10) || '(empty)'
+  const secretPreview = secret.slice(0, 10) || '(empty)'
+  const tokenPreview = token.slice(0, 10) || '(empty)'
+  const match = Boolean(secret) && token === secret
+  console.log('[generate-lease] auth check', {
+    authorizationHeaderFirst10: authHeaderPreview,
+    expectedSecretFirst10: secretPreview,
+    resolvedTokenFirst10: tokenPreview,
+    match,
+  })
+
+  if (!secret || !match) {
     return json({ error: 'Unauthorized' }, 401)
   }
 
