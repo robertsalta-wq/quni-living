@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import AiSparkleIcon from './AiSparkleIcon'
 
 const coralBtnClass =
   'inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF6B6B] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
@@ -89,7 +90,7 @@ export default function AIDescriptionGenerator({
   ])
 
   const hasExistingDescription = Boolean(existingDescription?.trim())
-  const writeLabel = hasGeneratedOnce ? 'Regenerate with AI' : 'Write with AI ✨'
+  const writeLabel = hasGeneratedOnce ? 'Regenerate with AI' : 'Write with AI'
 
   return (
     <div className="mt-2 space-y-2">
@@ -102,13 +103,20 @@ export default function AIDescriptionGenerator({
           disabled={!canSubmit || loading}
           className={coralBtnClass}
         >
-          {loading && (
-            <span
-              className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent"
-              aria-hidden
-            />
+          {loading ? (
+            <>
+              <span
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent"
+                aria-hidden
+              />
+              Generating…
+            </>
+          ) : (
+            <>
+              <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
+              {writeLabel}
+            </>
           )}
-          {loading ? 'Generating…' : writeLabel}
         </button>
         {hasExistingDescription && (
           <button
@@ -119,7 +127,14 @@ export default function AIDescriptionGenerator({
             disabled={!canSubmit || loading}
             className={coralOutlineBtnClass}
           >
-            {loading ? 'Generating…' : 'Improve mine'}
+            {loading ? (
+              'Generating…'
+            ) : (
+              <>
+                <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6B6B]" />
+                Improve mine
+              </>
+            )}
           </button>
         )}
         {!canSubmit && (

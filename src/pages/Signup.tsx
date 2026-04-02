@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   supabase,
   isSupabaseConfigured,
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
-import { getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
+import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
-import { getQuniSelectedRole, setQuniSelectedRole, type QuniSignupRole } from '../lib/quniSelectedRole'
+import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
+import {
+  clearQuniAccommodationVerificationRoute,
+  getQuniAccommodationVerificationRoute,
+  setQuniAccommodationVerificationRoute,
+} from '../lib/quniAccommodationRoute'
 import Seo from '../components/Seo'
+
+/** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
+type SignupAccountKind = 'student' | 'non_student' | 'landlord'
 
 type SignupStep = 'primary' | 'details'
 
@@ -115,15 +123,22 @@ function SignupTermsFields({
 }
 
 export default function Signup() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const location = useLocation()
   const roleFromUrl = searchParams.get('role')
 
   const [step, setStep] = useState<SignupStep>(() =>
-    roleFromUrl === 'student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
+    roleFromUrl === 'student' || roleFromUrl === 'non_student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
   )
-  const [role, setRole] = useState<QuniSignupRole | null>(() =>
-    roleFromUrl === 'landlord' ? 'landlord' : roleFromUrl === 'student' ? 'student' : null,
+  const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
+    roleFromUrl === 'landlord'
+      ? 'landlord'
+      : roleFromUrl === 'non_student'
+        ? 'non_student'
+        : roleFromUrl === 'student'
+          ? 'student'
+          : null,
   )
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -134,12 +149,26 @@ export default function Signup() {
   const [termsPrivacy, setTermsPrivacy] = useState(false)
   const [landlordAgreement, setLandlordAgreement] = useState(false)
   const [termsError, setTermsError] = useState(false)
+  const [confirmResendBusy, setConfirmResendBusy] = useState(false)
+  const [confirmResendError, setConfirmResendError] = useState<string | null>(null)
+  const [confirmResendSuccess, setConfirmResendSuccess] = useState(false)
 
   useEffect(() => {
     const r = searchParams.get('role')
-    if (r === 'student' || r === 'landlord') {
-      setRole(r)
-      setQuniSelectedRole(r)
+    if (r === 'student') {
+      setAccountKind('student')
+      setQuniSelectedRole('student')
+      setQuniAccommodationVerificationRoute('student')
+      setStep('details')
+    } else if (r === 'non_student') {
+      setAccountKind('non_student')
+      setQuniSelectedRole('student')
+      setQuniAccommodationVerificationRoute('non_student')
+      setStep('details')
+    } else if (r === 'landlord') {
+      setAccountKind('landlord')
+      setQuniSelectedRole('landlord')
+      clearQuniAccommodationVerificationRoute()
       setStep('details')
     }
   }, [searchParams])
@@ -149,19 +178,36 @@ export default function Signup() {
   }, [searchParams, location.state])
 
   useEffect(() => {
-    if (step === 'details' && !role) setStep('primary')
-  }, [step, role])
+    if (step === 'details' && !accountKind) setStep('primary')
+  }, [step, accountKind])
 
-  function pickRole(r: QuniSignupRole) {
-    setRole(r)
-    setQuniSelectedRole(r)
-    if (r === 'student') setLandlordAgreement(false)
+  function pickAccountKind(k: SignupAccountKind) {
+    setAccountKind(k)
+    if (k === 'landlord') {
+      clearQuniAccommodationVerificationRoute()
+      setQuniSelectedRole('landlord')
+      setLandlordAgreement(false)
+    } else if (k === 'student') {
+      setQuniAccommodationVerificationRoute('student')
+      setQuniSelectedRole('student')
+      setLandlordAgreement(false)
+    } else {
+      setQuniAccommodationVerificationRoute('non_student')
+      setQuniSelectedRole('student')
+      setLandlordAgreement(false)
+    }
   }
 
-  /** Role from UI or localStorage (e.g. refreshed mid-flow). */
-  const effectiveSignupRole: QuniSignupRole | null =
-    role ?? getQuniSelectedRole()
-  const showLandlordAgreement = effectiveSignupRole === 'landlord'
+  /** Landlord vs tenant-side account from UI or localStorage (e.g. refreshed mid-flow). */
+  const effectiveAccountKind: SignupAccountKind | null =
+    accountKind ??
+    (() => {
+      const sr = getQuniSelectedRole()
+      if (sr === 'landlord') return 'landlord'
+      if (sr !== 'student') return null
+      return getQuniAccommodationVerificationRoute() === 'non_student' ? 'non_student' : 'student'
+    })()
+  const showLandlordAgreement = effectiveAccountKind === 'landlord'
 
   function termsAcceptedForSignup(): boolean {
     if (!termsPrivacy) return false
@@ -181,7 +227,7 @@ export default function Signup() {
 
   function googleButton(className: string) {
     return (
-      <button type="button" onClick={handleGoogleSignup} disabled={!role} className={className}>
+      <button type="button" onClick={handleGoogleSignup} disabled={!accountKind} className={className}>
         <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
           <path
             fill="currentColor"
@@ -208,8 +254,8 @@ export default function Signup() {
   async function handleEmailSignup(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!role) {
-      setError('Please choose whether you are signing up as a student or landlord.')
+    if (!accountKind) {
+      setError('Please choose Student, Non-Student, or Landlord above.')
       return
     }
     if (!termsAcceptedForSignup()) {
@@ -220,20 +266,44 @@ export default function Signup() {
       setError('Supabase is not configured.')
       return
     }
+    const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
+    const userData: Record<string, string> = {
+      role: authRole,
+      full_name: fullName.trim(),
+    }
+    if (accountKind === 'student') userData.accommodation_verification_route = 'student'
+    if (accountKind === 'non_student') userData.accommodation_verification_route = 'non_student'
+
     setSubmitting(true)
     try {
-      const { error: signErr } = await supabase.auth.signUp({
+      const { data, error: signErr } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
-          data: {
-            role,
-            full_name: fullName.trim(),
-          },
+          data: userData,
           emailRedirectTo: getAuthCallbackUrl(),
         },
       })
       if (signErr) throw signErr
+      const created = data.user
+      // Supabase often hides "email already registered": success with no identities / no user.
+      const identities = created?.identities
+      const looksLikeDuplicateOrBlocked =
+        !created ||
+        (Array.isArray(identities) && identities.length === 0)
+      if (looksLikeDuplicateOrBlocked) {
+        setError(
+          [
+            'We could not start a new account with that email.',
+            'It may already be registered — try logging in. If you never confirmed the original sign-up, use “Resend confirmation” on the log-in page.',
+          ].join('\n'),
+        )
+        return
+      }
+      if (data.session) {
+        navigate('/onboarding', { replace: true })
+        return
+      }
       setCheckEmail(true)
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : 'Could not sign up.'
@@ -246,8 +316,8 @@ export default function Signup() {
 
   async function handleGoogleSignup() {
     setError(null)
-    if (!role) {
-      setError('Choose Student or Landlord above before continuing with Google.')
+    if (!accountKind) {
+      setError('Choose Student, Non-Student, or Landlord above before continuing with Google.')
       return
     }
     if (!termsAcceptedForSignup()) {
@@ -258,7 +328,8 @@ export default function Signup() {
       setError('Supabase is not configured.')
       return
     }
-    setQuniSelectedRole(role)
+    const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
+    setQuniSelectedRole(authRole)
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: getGoogleOAuthOptions(),
@@ -284,6 +355,46 @@ export default function Signup() {
           We sent a confirmation link to <strong>{email}</strong>. Open it to finish setting up your
           account.
         </p>
+        <p className="text-gray-500 text-xs mt-3 max-w-sm mx-auto">
+          Nothing in your inbox? Check spam. If you already used this email to sign up but didn&apos;t confirm, use the
+          button below — a second sign-up doesn&apos;t always trigger another email automatically.
+        </p>
+        <button
+          type="button"
+          disabled={confirmResendBusy}
+          onClick={async () => {
+            setConfirmResendError(null)
+            setConfirmResendSuccess(false)
+            setConfirmResendBusy(true)
+            try {
+              const { error: rErr } = await supabase.auth.resend({
+                type: 'signup',
+                email: email.trim(),
+                options: { emailRedirectTo: getAuthCallbackUrl() },
+              })
+              if (rErr) throw rErr
+              setConfirmResendSuccess(true)
+            } catch (err) {
+              setConfirmResendError(formatAuthEmailErrorMessage(err))
+            } finally {
+              setConfirmResendBusy(false)
+            }
+          }}
+          className="mt-6 w-full max-w-xs mx-auto rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
+        >
+          {confirmResendBusy ? 'Sending…' : 'Resend confirmation email'}
+        </button>
+        {confirmResendError && (
+          <p className="text-xs text-red-700 mt-3 max-w-sm mx-auto whitespace-pre-wrap text-left" role="alert">
+            {confirmResendError}
+          </p>
+        )}
+        {confirmResendSuccess && (
+          <p className="text-xs text-emerald-800 mt-3 max-w-sm mx-auto" role="status">
+            Request accepted. If this address has an <strong>unconfirmed</strong> signup, check inbox and spam in a few
+            minutes. Already-confirmed accounts do not get another signup email — use <strong>Log in</strong> instead.
+          </p>
+        )}
         <Link to={loginBackHref} className="inline-block mt-8 text-sm font-medium text-indigo-600 hover:text-indigo-800">
           Back to log in
         </Link>
@@ -300,15 +411,21 @@ export default function Signup() {
   const secretKeyError =
     errLower.includes('forbidden') && errLower.includes('secret')
 
-  const roleCardClass = (r: QuniSignupRole) =>
+  const roleCardClass = (k: SignupAccountKind) =>
     `w-full rounded-xl border-2 p-5 text-left transition-colors ${
-      role === r
+      accountKind === k
         ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
     }`
 
+  const signupKindLabel =
+    accountKind === 'landlord' ? 'Landlord' : accountKind === 'non_student' ? 'Non-Student' : 'Student'
+
+  const profileStepNoun =
+    accountKind === 'landlord' ? 'landlord' : accountKind === 'non_student' ? 'tenant' : 'student'
+
   return (
-    <div className="max-w-md mx-auto px-6 py-12">
+    <div className="max-w-2xl mx-auto px-6 py-12">
       <Seo
         title="Create an account"
         description="Sign up for Quni Living — find student accommodation near university or list your property for verified student tenants."
@@ -349,26 +466,31 @@ export default function Signup() {
         <div className="space-y-6">
           <div>
             <p className="text-sm font-medium text-gray-800 mb-3">I am signing up as a…</p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button type="button" onClick={() => pickRole('student')} className={roleCardClass('student')}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" onClick={() => pickAccountKind('student')} className={roleCardClass('student')}>
                 <span className="font-semibold text-gray-900">Student</span>
                 <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
               </button>
-              <button type="button" onClick={() => pickRole('landlord')} className={roleCardClass('landlord')}>
+              <button type="button" onClick={() => pickAccountKind('non_student')} className={roleCardClass('non_student')}>
+                <span className="font-semibold text-gray-900">Non-Student</span>
+                <p className="text-sm text-gray-600 mt-1">Find rooms near university and manage your bookings.</p>
+                <p className="text-xs text-gray-500 mt-1">Government ID verification required.</p>
+              </button>
+              <button type="button" onClick={() => pickAccountKind('landlord')} className={roleCardClass('landlord')}>
                 <span className="font-semibold text-gray-900">Landlord</span>
                 <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
               </button>
             </div>
-            {!role && (
+            {!accountKind && (
               <p className="text-xs text-amber-800 mt-2">Choose one option above to continue with Google or email.</p>
             )}
           </div>
 
-          {role ? <SignupTermsFields {...signupTermsFieldsProps} /> : null}
+          {accountKind ? <SignupTermsFields {...signupTermsFieldsProps} /> : null}
 
           {googleButton(
             `w-full rounded-lg border border-gray-200 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
-              role
+              accountKind
                 ? 'text-gray-800 hover:bg-gray-50'
                 : 'text-gray-400 bg-gray-50 cursor-not-allowed opacity-70'
             }`,
@@ -383,7 +505,7 @@ export default function Signup() {
           </div>
           <button
             type="button"
-            disabled={!role}
+            disabled={!accountKind}
             onClick={() => setStep('details')}
             className="w-full rounded-lg bg-gray-900 text-white py-2.5 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -392,7 +514,7 @@ export default function Signup() {
         </div>
       )}
 
-      {step === 'details' && role && (
+      {step === 'details' && accountKind && (
         <>
           <button
             type="button"
@@ -402,7 +524,7 @@ export default function Signup() {
             ← Back
           </button>
           <p className="text-sm text-gray-600 mb-4">
-            Signing up as a <span className="font-semibold text-gray-900">{role === 'student' ? 'Student' : 'Landlord'}</span>.
+            Signing up as a <span className="font-semibold text-gray-900">{signupKindLabel}</span>.
           </p>
 
           <div
@@ -419,7 +541,7 @@ export default function Signup() {
             <ol className="text-sm text-stone-800 space-y-1 list-decimal list-inside">
               <li className="font-medium text-stone-900">Create account (this page)</li>
               <li>Confirm your email</li>
-              <li>Complete your {role === 'student' ? 'student' : 'landlord'} profile</li>
+              <li>Complete your {profileStepNoun} profile</li>
             </ol>
           </div>
 
@@ -488,7 +610,7 @@ export default function Signup() {
 
           {googleButton(
             `w-full rounded-lg border border-gray-200 py-2.5 text-sm font-medium flex items-center justify-center gap-2 ${
-              role
+              accountKind
                 ? 'text-gray-800 hover:bg-gray-50'
                 : 'text-gray-400 bg-gray-50 cursor-not-allowed opacity-70'
             }`,

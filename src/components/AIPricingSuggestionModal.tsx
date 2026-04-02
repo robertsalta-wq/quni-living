@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import AiSparkleIcon from './AiSparkleIcon'
 
 type PricingSuggestion = {
   low: number
@@ -141,7 +142,11 @@ export default function AIPricingSuggestionModal({
           </div>
         ) : error ? (
           <div className="space-y-4">
-            <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+            <h2
+              id={titleId}
+              className="flex items-center gap-2 text-lg font-semibold text-gray-900"
+            >
+              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[#FF6B6B]" />
               AI pricing suggestion
             </h2>
             <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
@@ -168,7 +173,11 @@ export default function AIPricingSuggestionModal({
           </div>
         ) : suggestion ? (
           <div className="space-y-5">
-            <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+            <h2
+              id={titleId}
+              className="flex items-center gap-2 text-lg font-semibold text-gray-900"
+            >
+              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[#FF6B6B]" />
               Suggested price range
             </h2>
             <p className="text-3xl font-bold tracking-tight text-gray-900">

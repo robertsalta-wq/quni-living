@@ -8,12 +8,37 @@ import {
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import { isAdminUser } from '../lib/adminEmails'
-import { fetchRoleAndProfile, getPostLoginRedirectDestination } from '../lib/authProfile'
+import {
+  fetchRoleAndProfile,
+  getPostLoginRedirectDestination,
+  type AuthProfile,
+  type LandlordProfileRow,
+  type StudentProfileRow,
+} from '../lib/authProfile'
 import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
 import { clearQuniSelectedRole, getQuniSelectedRole } from '../lib/quniSelectedRole'
 import { reportFormError } from '../lib/reportFormError'
 
 type Choice = 'student' | 'landlord'
+
+/**
+ * Skip `/onboarding` (role + terms) when the profile already reflects a finished setup.
+ * Includes `onboarding_complete` so legacy rows (e.g. DB missing `terms_accepted_at` column once) still escape.
+ */
+function profileTermsComplete(role: 'student' | 'landlord', profile: AuthProfile): boolean {
+  if (role === 'student') {
+    const sp = profile as StudentProfileRow
+    return Boolean(
+      sp.terms_accepted_at ||
+        sp.onboarding_complete === true ||
+        /* Profile verification flow — don’t block users who already proved a uni email */
+        sp.uni_email_verified === true,
+    )
+  }
+  const lp = profile as LandlordProfileRow
+  if (lp.onboarding_complete === true) return true
+  return Boolean(lp.terms_accepted_at && lp.landlord_terms_accepted_at)
+}
 
 function formatError(e: unknown): string {
   if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
@@ -90,24 +115,35 @@ export default function Onboarding() {
       navigate('/login', { replace: true })
       return
     }
+    let cancelled = false
     ;(async () => {
       const { data } = await supabase.auth.getUser()
       const u = data.user ?? user
-      const meta = u.user_metadata?.role
       const { role, profile } = await fetchRoleAndProfile(u)
+      if (cancelled) return
       if (role === 'admin' || isAdminUser(u)) {
         navigate('/admin', { replace: true })
         return
       }
+      // Do not require JWT user_metadata.role to match — legacy accounts can have a profile +
+      // terms_accepted_at while metadata.role is missing, which previously trapped users here forever.
       if (
-        (meta === 'student' || meta === 'landlord') &&
         profile !== null &&
-        role === meta
+        (role === 'student' || role === 'landlord') &&
+        profileTermsComplete(role, profile)
       ) {
+        const metaRole = u.user_metadata?.role
+        if (metaRole !== role) {
+          const { error: metaErr } = await supabase.auth.updateUser({ data: { role } })
+          if (!metaErr) await refreshProfile()
+        }
         navigate(getPostLoginRedirectDestination(u, role, profile), { replace: true })
       }
     })()
-  }, [user, authLoading, navigate])
+    return () => {
+      cancelled = true
+    }
+  }, [user, authLoading, navigate, refreshProfile])
 
   async function handleComplete() {
     if (!user) return
@@ -125,29 +161,38 @@ export default function Onboarding() {
     setError(null)
     setSubmitting(true)
     try {
+      const { data: authFresh, error: authFreshErr } = await withSentryMonitoring(
+        'Onboarding/get-user-before-profile-save',
+        () => supabase.auth.getUser(),
+      )
+      const sessionUser = authFresh.user
+      if (authFreshErr || !sessionUser?.id) {
+        throw new Error(authFreshErr?.message ?? 'Your session could not be verified. Please log in again.')
+      }
+
       const fullName =
-        (user.user_metadata?.full_name as string | undefined) ??
-        (user.user_metadata?.name as string | undefined) ??
-        user.email?.split('@')[0] ??
+        (sessionUser.user_metadata?.full_name as string | undefined) ??
+        (sessionUser.user_metadata?.name as string | undefined) ??
+        sessionUser.email?.split('@')[0] ??
         ''
 
       const payload = {
-        user_id: user.id,
+        user_id: sessionUser.id,
         full_name: fullName,
-        email: user.email ?? '',
+        email: sessionUser.email ?? '',
       }
       const acceptedAt = new Date().toISOString()
 
       if (resolvedRole === 'student') {
         const { error: delErr } = await withSentryMonitoring('Onboarding/delete-landlord-profile', () =>
-          supabase.from('landlord_profiles').delete().eq('user_id', user.id),
+          supabase.from('landlord_profiles').delete().eq('user_id', sessionUser.id),
         )
         if (delErr) throw new Error(delErr.message)
         const { error: saveErr } = await saveProfileRow('student_profiles', payload, acceptedAt)
         if (saveErr) throw saveErr
       } else {
         const { error: delErr } = await withSentryMonitoring('Onboarding/delete-student-profile', () =>
-          supabase.from('student_profiles').delete().eq('user_id', user.id),
+          supabase.from('student_profiles').delete().eq('user_id', sessionUser.id),
         )
         if (delErr) throw new Error(delErr.message)
         const { error: saveErr } = await saveProfileRow('landlord_profiles', payload, acceptedAt)
@@ -162,7 +207,7 @@ export default function Onboarding() {
       clearQuniSelectedRole()
       await refreshProfile()
       const { data: freshUserData } = await supabase.auth.getUser()
-      const uAfter = freshUserData.user ?? user
+      const uAfter = freshUserData.user ?? sessionUser
       const { role: rAfter, profile: pAfter } = await fetchRoleAndProfile(uAfter)
       const returnTo = consumePostAuthRedirect()
       navigate(returnTo ?? getPostLoginRedirectDestination(uAfter, rAfter, pAfter), { replace: true })
@@ -173,7 +218,11 @@ export default function Onboarding() {
         ? ' Your Supabase project is missing tables. Open Supabase → SQL Editor, paste and run `supabase/profile_tables_bootstrap.sql` from this repo (or run the full `supabase/quni_supabase_schema.sql`). Wait a few seconds, then try again.'
         : /row level security|rls|permission denied|42501/i.test(msg)
           ? ' If this mentions RLS or permission, confirm policies allow users to insert/update their own row (see supabase/quni_supabase_schema.sql or profile_tables_bootstrap.sql).'
-          : ''
+          : /student_profiles_user_id_fkey|landlord_profiles_user_id_fkey|violates foreign key constraint.*user_id/i.test(
+                msg,
+              )
+            ? ' Run `supabase/migrations/20260402170000_profile_user_id_fkey_auth_users.sql` in the Supabase SQL Editor so `user_id` references `auth.users(id)`. If it still fails, check for orphaned profile rows whose `user_id` no longer exists in Authentication → Users.'
+            : ''
       const errorStr = msg + hint
       setError(errorStr)
       if (errorStr) reportFormError('Onboarding', 'formError', errorStr)
@@ -208,9 +257,18 @@ export default function Onboarding() {
     <div className="max-w-lg mx-auto px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome to Quni</h1>
       <p className="text-gray-600 text-sm mt-2">
-        You&apos;re signing up as a{' '}
-        <span className="font-semibold text-gray-900">{isLandlord ? 'landlord' : 'student'}</span>. Please accept the
-        terms below to continue.
+        {isLandlord ? (
+          <>
+            You&apos;re continuing as a <span className="font-semibold text-gray-900">landlord</span>. Please accept the
+            terms below to continue.
+          </>
+        ) : (
+          <>
+            You&apos;re continuing as a <span className="font-semibold text-gray-900">tenant</span>
+            <span className="text-gray-500"> (covers both student and non-student sign-ups).</span> Please accept the
+            terms below to continue.
+          </>
+        )}
       </p>
 
       {usedRoleFallback && (

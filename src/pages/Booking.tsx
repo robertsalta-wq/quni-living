@@ -175,10 +175,11 @@ function DepositPaymentInner({
 export default function Booking() {
   const { propertyId: propertyIdParam } = useParams<{ propertyId: string }>()
   const propertyId = propertyIdParam?.trim() ?? ''
-  const { user, profile, role } = useAuthContext()
+  const { user, profile, role, loading: authLoading } = useAuthContext()
 
   const [property, setProperty] = useState<PropertyForBooking | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [studentBookingBlocked, setStudentBookingBlocked] = useState(false)
   const [loadingProperty, setLoadingProperty] = useState(Boolean(propertyId && isSupabaseConfigured))
 
   const [myLandlordId, setMyLandlordId] = useState<string | null>(null)
@@ -201,15 +202,40 @@ export default function Booking() {
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
 
   const loadProperty = useCallback(async () => {
-    if (!propertyId || !isSupabaseConfigured) {
-      setProperty(null)
-      setLoadError(null)
-      setLoadingProperty(false)
+    if (!propertyId || !isSupabaseConfigured || authLoading) {
+      if (!propertyId || !isSupabaseConfigured) {
+        setProperty(null)
+        setLoadError(null)
+        setStudentBookingBlocked(false)
+        setLoadingProperty(false)
+      }
       return
     }
     setLoadingProperty(true)
     setLoadError(null)
+    setStudentBookingBlocked(false)
     try {
+      if (user && role === 'student') {
+        const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer_by_id', {
+          p_id: propertyId,
+        })
+        if (rpcErr) throw rpcErr
+        const st = typeof access === 'string' ? access : null
+        if (st === 'forbidden_student_only') {
+          setProperty(null)
+          setStudentBookingBlocked(true)
+          setLoadError(null)
+          setLoadingProperty(false)
+          return
+        }
+        if (st === 'not_found') {
+          setProperty(null)
+          setLoadError('This listing is not available for booking.')
+          setLoadingProperty(false)
+          return
+        }
+      }
+
       const { data, error } = await withSentryMonitoring('Booking/load-property', () =>
         supabase
           .from('properties')
@@ -235,7 +261,7 @@ export default function Booking() {
     } finally {
       setLoadingProperty(false)
     }
-  }, [propertyId])
+  }, [propertyId, user, role, authLoading])
 
   useEffect(() => {
     void loadProperty()
@@ -416,6 +442,20 @@ export default function Booking() {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (studentBookingBlocked) {
+    return (
+      <div className="max-w-lg mx-auto px-6 py-12">
+        <h1 className="text-2xl font-bold text-gray-900">Student tenants only</h1>
+        <p className="text-gray-600 text-sm mt-3 leading-relaxed">
+          This landlord has listed for student tenants only.
+        </p>
+        <Link to="/listings" className="inline-block mt-6 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+          Browse listings
+        </Link>
       </div>
     )
   }

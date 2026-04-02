@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirm your email</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111827">
+    <h2 style="margin-top: 0">Welcome to Quni Living</h2>
+    <p>Thanks for signing up to Quni Living.</p>
+    <p>Click the button below to confirm your email address and get started.</p>
+    <p>
+      <a
+        href="{{ .ConfirmationURL }}"
+        style="
+          background: #e8583a;
+          color: #fff;
+          padding: 12px 24px;
+          border-radius: 6px;
+          text-decoration: none;
+          display: inline-block;
+        "
+        >Confirm your email →</a
+      >
+    </p>
+    <p>
+      If the button doesn't work, copy and paste this link into your browser:<br />
+      {{ .ConfirmationURL }}
+    </p>
+    <p>If you didn't create an account with Quni Living, you can safely ignore this email.</p>
+  </body>
+</html>

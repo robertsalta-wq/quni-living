@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import AiSparkleIcon from './AiSparkleIcon'
 
 export default function LandlordAIBanner() {
   return (
@@ -66,7 +67,7 @@ export default function LandlordAIBanner() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(182,95,207,0.45)] bg-[rgba(182,95,207,0.2)] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-[#D49EE8]">
-              <span className="h-2 w-2 rounded-full bg-[#D49EE8] animate-pulse" />
+              <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#D49EE8]" />
               AI-powered platform
             </div>
             <h2 className="mt-5 font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white">
@@ -103,17 +104,26 @@ export default function LandlordAIBanner() {
             <div className="absolute left-1/2 top-1/2 h-28 w-28 sm:h-32 sm:w-32 -translate-x-1/2 -translate-y-1/2 ai-brain bg-[radial-gradient(circle_at_35%_30%,#B65FCF_0%,#7B2D9E_55%,#1A0B2E_100%)]" />
 
             <div className="ai-card absolute top-4 left-4 sm:top-5 sm:left-5 p-3 w-[42%] min-w-[152px]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/50">AI listing</p>
+              <p className="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-white/50">
+                <AiSparkleIcon className="h-3 w-3 shrink-0 text-[#E8583A]/90" />
+                AI listing
+              </p>
               <p className="mt-1 text-sm font-medium text-[#E8583A] ai-cursor">Writing your description</p>
             </div>
 
             <div className="ai-card ai-card-2 absolute top-4 right-4 sm:top-5 sm:right-5 p-3 w-[42%] min-w-[152px] text-right">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/50">Market price</p>
+              <p className="ml-auto flex w-fit items-center justify-end gap-1 text-[10px] uppercase tracking-[0.16em] text-white/50">
+                <AiSparkleIcon className="h-3 w-3 shrink-0 text-white/45" />
+                Market price
+              </p>
               <p className="mt-1 text-sm font-medium text-white">$280 - $320 /wk</p>
             </div>
 
             <div className="ai-card ai-card-3 absolute bottom-4 left-4 sm:bottom-5 sm:left-5 p-3 w-[42%] min-w-[152px]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/50">Enquiry reply</p>
+              <p className="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-white/50">
+                <AiSparkleIcon className="h-3 w-3 shrink-0 text-[#4ade80]/80" />
+                Enquiry reply
+              </p>
               <p className="mt-1 text-sm font-medium text-[#4ade80]">✓ Sent in 3 seconds</p>
             </div>
 

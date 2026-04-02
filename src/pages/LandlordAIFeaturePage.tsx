@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import SiteBrandLockup from '../components/SiteBrandLockup'
+import AiSparkleIcon from '../components/AiSparkleIcon'
 
 type FeatureRowProps = {
   number: string
@@ -208,8 +209,18 @@ export default function LandlordAIFeaturePage() {
                 Bright and fully furnished private room in a quiet student-friendly home...
               </div>
               <div className="flex gap-2">
-                <button className="rounded-lg bg-[#E8583A] px-3 py-2 text-xs font-semibold text-white">Write with AI ✦</button>
-                <button className="rounded-lg border border-[#E8583A]/60 px-3 py-2 text-xs font-semibold text-[#E8583A]">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8583A] px-3 py-2 text-xs font-semibold text-white"
+                >
+                  <AiSparkleIcon className="h-3.5 w-3.5 shrink-0 text-white" />
+                  Write with AI
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8583A]/60 px-3 py-2 text-xs font-semibold text-[#E8583A]"
+                >
+                  <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                   Improve mine
                 </button>
               </div>
@@ -237,7 +248,11 @@ export default function LandlordAIFeaturePage() {
                 $300 competitive and realistic.
               </div>
               <p className="text-xs text-stone-500">Sources: Flatmates.com.au · Scape · Iglu</p>
-              <button className="w-full rounded-lg bg-[#E8583A] px-4 py-2.5 text-sm font-semibold text-white">
+              <button
+                type="button"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E8583A] px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
                 Use $300/week →
               </button>
             </div>
@@ -259,7 +274,11 @@ export default function LandlordAIFeaturePage() {
               <div className="rounded-lg border border-white/10 bg-black/20 p-3">
                 <p className="font-medium text-stone-100">Emily Chen · emily@email.com</p>
                 <p className="mt-1 text-stone-300">Hi, is this room still available from next month?</p>
-                <button className="mt-3 rounded-lg border border-[#E8583A]/60 px-3 py-1.5 text-xs font-semibold text-[#E8583A]">
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#E8583A]/60 px-3 py-1.5 text-xs font-semibold text-[#E8583A]"
+                >
+                  <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                   Draft a reply with AI
                 </button>
               </div>

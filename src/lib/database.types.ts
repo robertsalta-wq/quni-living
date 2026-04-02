@@ -94,6 +94,54 @@ export interface Database {
         }
         Relationships: []
       }
+      admin_vendor_subscriptions: {
+        Row: {
+          id: string
+          title: string
+          subtitle: string | null
+          href: string
+          billing_href: string | null
+          plan_name: string | null
+          amount: number
+          currency: 'AUD' | 'USD'
+          cadence: 'monthly' | 'yearly' | 'usage' | 'free'
+          logo_src: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subtitle?: string | null
+          href: string
+          billing_href?: string | null
+          plan_name?: string | null
+          amount?: number
+          currency?: 'AUD' | 'USD'
+          cadence?: 'monthly' | 'yearly' | 'usage' | 'free'
+          logo_src?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subtitle?: string | null
+          href?: string
+          billing_href?: string | null
+          plan_name?: string | null
+          amount?: number
+          currency?: 'AUD' | 'USD'
+          cadence?: 'monthly' | 'yearly' | 'usage' | 'free'
+          logo_src?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       landlord_profiles: {
         Row: {
           id: string
@@ -217,8 +265,19 @@ export interface Database {
           date_of_birth: string | null
           avatar_url: string | null
           stripe_customer_id: string | null
+          uni_email: string | null
+          uni_email_verified: boolean | null
+          uni_email_verified_at: string | null
+          id_document_url: string | null
+          id_submitted_at: string | null
+          enrolment_doc_url: string | null
+          enrolment_submitted_at: string | null
           onboarding_complete: boolean
           terms_accepted_at: string | null
+          verification_type: 'student' | 'identity' | 'none'
+          identity_supporting_doc_url: string | null
+          identity_supporting_submitted_at: string | null
+          accommodation_verification_route: 'student' | 'non_student' | null
           created_at: string
         }
         Insert: {
@@ -250,8 +309,19 @@ export interface Database {
           date_of_birth?: string | null
           avatar_url?: string | null
           stripe_customer_id?: string | null
+          uni_email?: string | null
+          uni_email_verified?: boolean | null
+          uni_email_verified_at?: string | null
+          id_document_url?: string | null
+          id_submitted_at?: string | null
+          enrolment_doc_url?: string | null
+          enrolment_submitted_at?: string | null
           onboarding_complete?: boolean
           terms_accepted_at?: string | null
+          verification_type?: 'student' | 'identity' | 'none'
+          identity_supporting_doc_url?: string | null
+          identity_supporting_submitted_at?: string | null
+          accommodation_verification_route?: 'student' | 'non_student' | null
           created_at?: string
         }
         Update: {
@@ -283,11 +353,37 @@ export interface Database {
           date_of_birth?: string | null
           avatar_url?: string | null
           stripe_customer_id?: string | null
+          uni_email?: string | null
+          uni_email_verified?: boolean | null
+          uni_email_verified_at?: string | null
+          id_document_url?: string | null
+          id_submitted_at?: string | null
+          enrolment_doc_url?: string | null
+          enrolment_submitted_at?: string | null
           onboarding_complete?: boolean
           terms_accepted_at?: string | null
+          verification_type?: 'student' | 'identity' | 'none'
+          identity_supporting_doc_url?: string | null
+          identity_supporting_submitted_at?: string | null
+          accommodation_verification_route?: 'student' | 'non_student' | null
           created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'student_profiles_campus_id_fkey'
+            columns: ['campus_id']
+            isOneToOne: false
+            referencedRelation: 'campuses'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'student_profiles_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
       }
       properties: {
         Row: {
@@ -319,6 +415,7 @@ export interface Database {
           linen_supplied: boolean | null
           weekly_cleaning_service: boolean | null
           property_type: string | null
+          open_to_non_students: boolean
           created_at: string
           updated_at: string
         }
@@ -351,6 +448,7 @@ export interface Database {
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
+          open_to_non_students?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -383,10 +481,33 @@ export interface Database {
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
+          open_to_non_students?: boolean
           created_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'properties_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'properties_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'properties_campus_id_fkey'
+            columns: ['campus_id']
+            isOneToOne: false
+            referencedRelation: 'campuses'
+            referencedColumns: ['id']
+          },
+        ]
       }
       property_features: {
         Row: {
@@ -401,7 +522,22 @@ export interface Database {
           property_id?: string
           feature_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'property_features_feature_id_fkey'
+            columns: ['feature_id']
+            isOneToOne: false
+            referencedRelation: 'features'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'property_features_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
       }
       bookings: {
         Row: {
@@ -518,7 +654,29 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'bookings_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bookings_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bookings_student_id_fkey'
+            columns: ['student_id']
+            isOneToOne: false
+            referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       payments: {
         Row: {
@@ -587,7 +745,15 @@ export interface Database {
           refunded_by_admin_user_id?: string | null
           stripe_refund_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'payments_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
       }
       platform_settings: {
         Row: {
@@ -707,7 +873,36 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'bonds_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bonds_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bonds_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bonds_student_id_fkey'
+            columns: ['student_id']
+            isOneToOne: false
+            referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       stripe_webhook_events: {
         Row: {
@@ -767,7 +962,29 @@ export interface Database {
           status?: 'new' | 'read' | 'replied' | 'archived'
           created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'enquiries_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'enquiries_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'enquiries_student_id_fkey'
+            columns: ['student_id']
+            isOneToOne: false
+            referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       tenancies: {
         Row: {
@@ -942,7 +1159,16 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      property_access_status_for_viewer: {
+        Args: { p_slug: string }
+        Returns: string
+      }
+      property_access_status_for_viewer_by_id: {
+        Args: { p_id: string }
+        Returns: string
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

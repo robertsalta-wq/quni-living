@@ -38,6 +38,7 @@ const PRIVATE_PREFIXES = [
   '/landlord/property',
   '/booking/',
   '/onboarding',
+  '/verify-email',
   '/auth/callback',
 ] as const
 

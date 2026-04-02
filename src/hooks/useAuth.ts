@@ -71,9 +71,16 @@ export function useProvideAuth(): AuthState {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
+    } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
       setUser(s?.user ?? null)
+      // TOKEN_REFRESHED / USER_UPDATED fire during normal use (tab focus, metadata). A global
+      // loading gate remounts ProtectedRoute children and wipes wizard state (e.g. student onboarding step).
+      const silentRefresh = event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED'
+      if (silentRefresh) {
+        void hydrateFromUser(s?.user ?? null)
+        return
+      }
       setLoading(true)
       hydrateFromUser(s?.user ?? null).finally(() => setLoading(false))
     })

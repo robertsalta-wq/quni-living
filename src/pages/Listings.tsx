@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuthContext } from '../context/AuthContext'
+import type { Database } from '../lib/database.types'
 import {
   LISTINGS_SORT_OPTIONS,
   ROOM_TYPE_LABELS,
@@ -58,9 +60,12 @@ function buildListingsHeading(
   return parts[0]
 }
 
+type StudentRow = Database['public']['Tables']['student_profiles']['Row']
+
 export default function Listings() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, profile, role } = useAuthContext()
   const { universities, campuses } = useUniversityCampusReference()
   const filters = useListingsFilters({ universities, campuses })
   const [studentOnboardingWelcome, setStudentOnboardingWelcome] = useState(false)
@@ -93,6 +98,12 @@ export default function Listings() {
     isSupabaseConfigured,
     filters.querySignature,
   )
+
+  const showNonStudentListingHint =
+    Boolean(user) &&
+    role === 'student' &&
+    profile &&
+    (profile as StudentRow).verification_type !== 'student'
 
   useEffect(() => {
     const st = location.state as { studentOnboardingWelcome?: boolean } | null
@@ -154,6 +165,18 @@ export default function Listings() {
           >
             <span className="font-semibold text-stone-900">Welcome!</span>{' '}
             Your profile is ready — explore listings matched to what you told us.
+          </div>
+        )}
+        {showNonStudentListingHint && (
+          <div
+            className="mb-6 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-800"
+            role="status"
+          >
+            You&apos;re viewing listings that are open to non-students. Complete{' '}
+            <Link to="/student-profile" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+              student verification
+            </Link>{' '}
+            to unlock every active listing, or stay on this view if you&apos;re on the identity verification path.
           </div>
         )}
         <div className="grid w-full grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start justify-items-stretch">

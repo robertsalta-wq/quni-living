@@ -73,8 +73,30 @@ export function isStep2Saved(p: StudentProfileRow): boolean {
   return Boolean(p.emergency_contact_name?.trim() && p.emergency_contact_phone?.trim())
 }
 
-export function inferStudentOnboardingStep(p: StudentProfileRow): 1 | 2 | 3 {
-  if (!isStep1Saved(p)) return 1
+/** Identity-path step 1: no university or course requirements. */
+export function isStep1SavedIdentityPath(p: StudentProfileRow): boolean {
+  return Boolean(
+    p.first_name?.trim() &&
+      p.last_name?.trim() &&
+      p.gender?.trim() &&
+      p.phone?.trim() &&
+      p.budget_min_per_week != null &&
+      p.budget_max_per_week != null,
+  )
+}
+
+/** Identity-style onboarding (no uni); DB route is `non_student` (legacy rows may still use `identity`). */
+export function isNonStudentAccommodationRoute(route: string | null | undefined): boolean {
+  return route === 'non_student' || route === 'identity'
+}
+
+export function inferStudentOnboardingStep(
+  p: StudentProfileRow,
+  route: StudentProfileRow['accommodation_verification_route'] | null | undefined,
+): 1 | 2 | 3 {
+  const r = route ?? p.accommodation_verification_route
+  const step1Done = isNonStudentAccommodationRoute(r) ? isStep1SavedIdentityPath(p) : isStep1Saved(p)
+  if (!step1Done) return 1
   if (!isStep2Saved(p)) return 2
   return 3
 }

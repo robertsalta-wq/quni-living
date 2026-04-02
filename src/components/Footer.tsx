@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import AiSparkleIcon from './AiSparkleIcon'
 
 function IconLocation(props: { className?: string }) {
   return (
@@ -127,7 +128,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/landlords/ai" className={linkClass}>
+                <Link to="/landlords/ai" className={`${linkClass} inline-flex items-center gap-1.5`}>
+                  <AiSparkleIcon className="h-3.5 w-3.5 shrink-0 opacity-90" />
                   AI listing tools
                 </Link>
               </li>

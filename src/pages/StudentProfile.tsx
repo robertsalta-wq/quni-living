@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { getValidAccessTokenForFunctions } from '../lib/supabaseEdgeInvoke'
+import { readSupabaseFunctionInvokeError } from '../lib/readSupabaseFunctionInvokeError'
+import { removeAllStudentVerificationDocuments } from '../lib/studentDocumentsStorage'
 import type { Database } from '../lib/database.types'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
+import { StudentVerificationPanel } from '../components/student/StudentVerificationPanel'
+import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import PageHeroBand from '../components/PageHeroBand'
 import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
@@ -132,10 +137,11 @@ function bookingStatusClass(status: BookingWithProperty['status']) {
   }
 }
 
-type StudentTab = 'profile' | 'bookings'
+type StudentTab = 'profile' | 'verification' | 'bookings'
 
 export default function StudentProfile() {
-  const { user, refreshProfile } = useAuthContext()
+  const { user, refreshProfile, signOut } = useAuthContext()
+  const navigate = useNavigate()
   const {
     universities: refUniversities,
     loading: refDataLoading,
@@ -170,12 +176,14 @@ export default function StudentProfile() {
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [savedFlash, setSavedFlash] = useState(false)
-  const savedTimerRef = useRef<number | null>(null)
 
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null)
+  const [deleteAccountBusy, setDeleteAccountBusy] = useState(false)
 
   const load = useCallback(async () => {
     if (!user?.id) return
@@ -232,12 +240,6 @@ export default function StudentProfile() {
   useEffect(() => {
     void load()
   }, [load])
-
-  useEffect(() => {
-    return () => {
-      if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current)
-    }
-  }, [])
 
   useEffect(() => {
     if (activeTab !== 'bookings' || !profile?.id) return
@@ -330,12 +332,47 @@ export default function StudentProfile() {
     }
   }
 
+  async function handleDeleteAccount() {
+    if (!user?.id) return
+    setDeleteAccountError(null)
+    setDeleteAccountBusy(true)
+    try {
+      try {
+        await removeAllStudentVerificationDocuments(supabase, user.id)
+      } catch (e) {
+        console.error('Student verification documents cleanup failed before account delete', e)
+      }
+      const auth = await getValidAccessTokenForFunctions()
+      if ('error' in auth) {
+        setDeleteAccountError(auth.error)
+        return
+      }
+      const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
+        'delete-student-account',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${auth.token}` },
+        },
+      )
+      if (error) {
+        setDeleteAccountError(await readSupabaseFunctionInvokeError(data, error))
+        return
+      }
+      if (data && typeof data === 'object' && 'error' in data && data.error) {
+        setDeleteAccountError(String(data.error))
+        return
+      }
+      await signOut()
+      navigate('/')
+    } finally {
+      setDeleteAccountBusy(false)
+    }
+  }
+
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     if (!user?.id) return
     setSaveError(null)
-    setSavedFlash(false)
-    if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current)
     setSaving(true)
     try {
       const combinedName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
@@ -384,12 +421,9 @@ export default function StudentProfile() {
 
       if (uErr) throw uErr
 
-      setSavedFlash(true)
-      savedTimerRef.current = window.setTimeout(() => {
-        setSavedFlash(false)
-        savedTimerRef.current = null
-      }, 3000)
       await load()
+      await refreshProfile()
+      navigate('/student-dashboard', { replace: true })
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : 'Save failed.'
       setSaveError(
@@ -468,6 +502,22 @@ export default function StudentProfile() {
           }`}
         >
           Profile
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-student-verification"
+          aria-selected={activeTab === 'verification'}
+          aria-controls="panel-student-verification"
+          tabIndex={0}
+          onClick={() => setActiveTab('verification')}
+          className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
+            activeTab === 'verification'
+              ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
+              : 'text-gray-600 hover:text-gray-900 border border-transparent'
+          }`}
+        >
+          Verification
         </button>
         <button
           type="button"
@@ -817,11 +867,6 @@ export default function StudentProfile() {
             {saveError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{saveError}</div>
             )}
-            {savedFlash && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                Profile saved
-              </div>
-            )}
 
             <button
               type="submit"
@@ -832,6 +877,47 @@ export default function StudentProfile() {
             </button>
           </form>
         </section>
+
+        <section
+          className="mt-8 bg-white rounded-2xl border border-red-200 shadow-sm p-6 sm:p-8 w-full"
+          aria-labelledby="danger-zone-heading"
+        >
+          <h2 id="danger-zone-heading" className="text-base font-semibold text-gray-900">
+            Danger zone
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Permanently delete your student account and all verification documents stored for your profile.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteAccountError(null)
+              setDeleteAccountOpen(true)
+            }}
+            className="mt-4 rounded-lg border-2 border-red-300 text-red-700 bg-red-50/80 px-4 py-2.5 text-sm font-semibold hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+          >
+            Delete account
+          </button>
+        </section>
+
+        <StudentDeleteAccountModal
+          open={deleteAccountOpen}
+          onClose={() => !deleteAccountBusy && setDeleteAccountOpen(false)}
+          onDelete={handleDeleteAccount}
+          deleting={deleteAccountBusy}
+          error={deleteAccountError}
+        />
+      </div>
+
+      <div
+        id="panel-student-verification"
+        role="tabpanel"
+        aria-labelledby="tab-student-verification"
+        hidden={activeTab !== 'verification'}
+      >
+        {user?.id && (
+          <StudentVerificationPanel profile={profile} userId={user.id} onRefresh={load} />
+        )}
       </div>
 
       <div

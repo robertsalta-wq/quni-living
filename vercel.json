@@ -6,6 +6,9 @@
     "api/ai/generate-description.ts": {
       "maxDuration": 30
     },
+    "api/ai/student-assessment.ts": {
+      "maxDuration": 30
+    },
     "api/documents/generate-lease.ts": {
       "maxDuration": 60
     },

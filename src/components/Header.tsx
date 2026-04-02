@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { getNavDashboardPath } from '../lib/authProfile'
+import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
+
+function finishSetupHref(r: UserRole): string {
+  if (r === null) return '/onboarding'
+  if (r === 'student') return '/onboarding/student'
+  return '/onboarding/landlord'
+}
 import { formatDisplayName } from '../lib/formatDisplayName'
-import SiteBrandLockup, { AiSparkleIcon } from './SiteBrandLockup'
+import SiteBrandLockup from './SiteBrandLockup'
+import AiSparkleIcon from './AiSparkleIcon'
 
 const SERVICE_LINKS = [
   { to: '/services/student-accommodation', label: 'Student Accommodation' },
@@ -232,9 +239,9 @@ export default function Header() {
                       >
                         Admin dashboard
                       </Link>
-                    ) : !user.user_metadata?.role || !profile ? (
+                    ) : needsOnboarding(role, profile) ? (
                       <Link
-                        to="/onboarding"
+                        to={finishSetupHref(role)}
                         className="block px-4 py-2 text-sm text-amber-700 hover:bg-gray-50"
                         onClick={() => setMenuOpen(false)}
                       >
@@ -415,9 +422,9 @@ export default function Header() {
                         Dashboard
                       </Link>
                     )}
-                    {!user.user_metadata?.role || !profile ? (
+                    {needsOnboarding(role, profile) ? (
                       <Link
-                        to="/onboarding"
+                        to={finishSetupHref(role)}
                         className="block text-sm text-amber-700"
                         onClick={closeMobileNav}
                       >

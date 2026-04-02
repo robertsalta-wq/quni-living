@@ -8,6 +8,7 @@ import {
   needsOnboarding,
 } from '../../lib/authProfile'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
+import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 /**
  * OAuth redirect handler — PKCE `?code=` exchange.
  * Supabase Dashboard → Redirect URLs must include `${origin}/auth/callback`
@@ -52,25 +53,26 @@ export default function AuthCallback() {
       }
       if (cancelled) return
 
-      if (sessionErr) {
-        console.error(sessionErr)
-        if (isPkceVerifierMissingErrorMessage(sessionErr.message)) {
-          navigate('/login?error=pkce_verifier_missing', { replace: true })
-          return
-        }
-        navigate(
-          `/login?error=auth_failed&detail=${encodeURIComponent(sessionErr.message)}`,
-          { replace: true },
-        )
-        return
-      }
-
       const {
         data: { session },
       } = await supabase.auth.getSession()
       if (cancelled) return
 
+      // Exchange can report an error even when a session is already valid (e.g. double submit).
+      // Only send users to login when there is genuinely no session.
       if (!session) {
+        if (sessionErr) {
+          console.error(sessionErr)
+          if (isPkceVerifierMissingErrorMessage(sessionErr.message)) {
+            navigate('/login?error=pkce_verifier_missing', { replace: true })
+            return
+          }
+          navigate(
+            `/login?error=auth_failed&detail=${encodeURIComponent(sessionErr.message)}`,
+            { replace: true },
+          )
+          return
+        }
         navigate(
           '/login?error=missing_code&detail=' +
             encodeURIComponent(
@@ -79,6 +81,10 @@ export default function AuthCallback() {
           { replace: true },
         )
         return
+      }
+
+      if (sessionErr) {
+        console.warn('Auth callback: exchange reported error but session exists; continuing', sessionErr)
       }
 
       const {
@@ -94,6 +100,8 @@ export default function AuthCallback() {
         )
         return
       }
+
+      await applyPendingAccommodationRouteToStudentProfile(user.id, user.created_at)
 
       const { role, profile } = await fetchRoleAndProfile(user)
       if (cancelled) return

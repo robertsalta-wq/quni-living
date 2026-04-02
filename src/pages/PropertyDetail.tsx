@@ -162,7 +162,7 @@ export default function PropertyDetail() {
   const location = useLocation()
   const shouldFetch = Boolean(slug) && isSupabaseConfigured
 
-  const { user, profile, role, refreshProfile } = useAuthContext()
+  const { user, profile, role, refreshProfile, loading: authLoading } = useAuthContext()
   const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference()
   const uniNameById = useMemo(() => {
     const m = new Map<string, string>()
@@ -177,6 +177,7 @@ export default function PropertyDetail() {
   const [property, setProperty] = useState<Property | null>(null)
   const [loading, setLoading] = useState(shouldFetch)
   const [error, setError] = useState<string | null>(null)
+  const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
   const enquirySuccessCloseTimerRef = useRef<number | null>(null)
@@ -225,13 +226,41 @@ export default function PropertyDetail() {
   }, [enquiryModalOpen, closeEnquiryModal])
 
   useEffect(() => {
-    if (!shouldFetch) return
+    if (!shouldFetch || authLoading) return
 
     let cancelled = false
 
     void (async () => {
       setLoading(true)
       setError(null)
+      setStudentListingBlocked(false)
+
+      if (user && role === 'student') {
+        const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer', {
+          p_slug: slug,
+        })
+        if (cancelled) return
+        if (rpcErr) {
+          setError(rpcErr.message)
+          setProperty(null)
+          setLoading(false)
+          return
+        }
+        const st = typeof access === 'string' ? access : null
+        if (st === 'not_found') {
+          setProperty(null)
+          setError(null)
+          setLoading(false)
+          return
+        }
+        if (st === 'forbidden_student_only') {
+          setProperty(null)
+          setStudentListingBlocked(true)
+          setLoading(false)
+          return
+        }
+      }
+
       const { data, error: fetchError } = await supabase
         .from('properties')
         .select(
@@ -263,7 +292,7 @@ export default function PropertyDetail() {
     return () => {
       cancelled = true
     }
-  }, [slug, shouldFetch])
+  }, [slug, shouldFetch, user, role, authLoading])
 
   useEffect(() => {
     const root = thumbsScrollRef.current
@@ -594,6 +623,31 @@ export default function PropertyDetail() {
           <p className="text-red-700 text-sm mb-4">{error}</p>
           <Link to="/listings" className="text-indigo-600 text-sm font-medium">
             Back to listings
+          </Link>
+        </div>
+      </>
+    )
+  }
+
+  if (!loading && studentListingBlocked) {
+    return (
+      <>
+        <Seo
+          title="Student tenants only"
+          noindex
+          description="This listing is available to verified student tenants on Quni Living."
+          canonicalPath={`/properties/${slug}`}
+        />
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <h1 className="text-xl font-semibold text-gray-900">Student tenants only</h1>
+          <p className="text-gray-600 text-sm mt-2">
+            This landlord has listed for student tenants only.
+          </p>
+          <Link
+            to="/listings"
+            className="inline-block mt-6 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+          >
+            Browse listings
           </Link>
         </div>
       </>

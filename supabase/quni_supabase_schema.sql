@@ -206,6 +206,13 @@ create trigger bookings_updated_at
 -- ============================================================
 -- AUTH → PROFILE ROW (student or landlord from raw_user_meta_data.role)
 -- ============================================================
+alter table public.student_profiles
+  add column if not exists accommodation_verification_route text
+    check (
+      accommodation_verification_route is null
+      or accommodation_verification_route in ('student', 'non_student')
+    );
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -214,6 +221,7 @@ set search_path = public
 as $$
 declare
   nm text;
+  route text;
 begin
   nm := coalesce(
     nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
@@ -221,13 +229,21 @@ begin
     split_part(coalesce(new.email, ''), '@', 1)
   );
 
+  route := nullif(trim(lower(new.raw_user_meta_data->>'accommodation_verification_route')), '');
+  if route = 'identity' then
+    route := 'non_student';
+  end if;
+  if route is not null and route not in ('student', 'non_student') then
+    route := null;
+  end if;
+
   if coalesce(new.raw_user_meta_data->>'role', '') = 'landlord' then
     insert into public.landlord_profiles (user_id, email, full_name)
     values (new.id, new.email, nm)
     on conflict (user_id) do nothing;
   else
-    insert into public.student_profiles (user_id, email, full_name)
-    values (new.id, new.email, nm)
+    insert into public.student_profiles (user_id, email, full_name, accommodation_verification_route)
+    values (new.id, new.email, nm, route)
     on conflict (user_id) do nothing;
   end if;
 
@@ -350,11 +366,27 @@ create policy "Public can read landlord profiles"
   on public.landlord_profiles for select
   using (true);
 
+-- See supabase/student_profiles_rls_recursion_fix.sql — subquery on student_profiles inside
+-- bookings/enquiries RLS + landlord read policies on student_profiles causes recursion.
+create or replace function public.current_auth_student_profile_id()
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select sp.id
+  from public.student_profiles sp
+  where sp.user_id = (select auth.uid())
+  limit 1;
+$$;
+
+revoke all on function public.current_auth_student_profile_id() from public;
+grant execute on function public.current_auth_student_profile_id() to authenticated, anon;
+
 create policy "Students see own bookings"
   on public.bookings for select
-  using (
-    student_id in (select sp.id from public.student_profiles sp where sp.user_id = auth.uid())
-  );
+  using (student_id = public.current_auth_student_profile_id());
 
 create policy "Landlords see bookings for their properties"
   on public.bookings for select
@@ -364,22 +396,18 @@ create policy "Landlords see bookings for their properties"
 
 create policy "Students can create bookings"
   on public.bookings for insert
-  with check (
-    student_id in (select sp.id from public.student_profiles sp where sp.user_id = auth.uid())
-  );
+  with check (student_id = public.current_auth_student_profile_id());
 
 create policy "Participants can update booking status"
   on public.bookings for update
   using (
-    student_id in (select sp.id from public.student_profiles sp where sp.user_id = auth.uid())
+    student_id = public.current_auth_student_profile_id()
     or landlord_id in (select lp.id from public.landlord_profiles lp where lp.user_id = auth.uid())
   );
 
 create policy "Students see own enquiries"
   on public.enquiries for select
-  using (
-    student_id in (select sp.id from public.student_profiles sp where sp.user_id = auth.uid())
-  );
+  using (student_id = public.current_auth_student_profile_id());
 
 create policy "Landlords see enquiries for their properties"
   on public.enquiries for select

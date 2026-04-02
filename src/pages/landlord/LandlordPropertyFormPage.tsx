@@ -13,6 +13,7 @@ import {
 } from '../../lib/listings'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
+import AiSparkleIcon from '../../components/AiSparkleIcon'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
@@ -106,6 +107,7 @@ export default function LandlordPropertyFormPage() {
   const [furnished, setFurnished] = useState(false)
   const [linenSupplied, setLinenSupplied] = useState(false)
   const [weeklyCleaning, setWeeklyCleaning] = useState(false)
+  const [openToNonStudents, setOpenToNonStudents] = useState(false)
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<string>>(new Set())
 
   const [address, setAddress] = useState('')
@@ -282,6 +284,7 @@ export default function LandlordPropertyFormPage() {
         setFurnished(Boolean(prop.furnished))
         setLinenSupplied(Boolean(prop.linen_supplied))
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
+        setOpenToNonStudents(Boolean(prop.open_to_non_students))
         setAddress(prop.address ?? '')
         setSuburb(prop.suburb ?? '')
         setState(prop.state ?? 'NSW')
@@ -762,6 +765,7 @@ export default function LandlordPropertyFormPage() {
       university_id: resolvedUniversityId,
       campus_id: resolvedCampusId,
       show_add_another_university: showAddAnotherUniversity,
+      open_to_non_students: openToNonStudents,
       rent_per_week: rent,
       bond: bond.trim() ? Number(bond) : null,
       lease_length: leaseLength || null,
@@ -1045,6 +1049,23 @@ export default function LandlordPropertyFormPage() {
                   ))}
                 </select>
               </div>
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
+                <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>
+                <label htmlFor="pf-open-non-students" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
+                  <input
+                    id="pf-open-non-students"
+                    type="checkbox"
+                    checked={openToNonStudents}
+                    onChange={(e) => setOpenToNonStudents(e.target.checked)}
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
+                  />
+                  <span className="font-medium text-gray-900">Open to non-students</span>
+                </label>
+                <p className="text-xs text-gray-600 mt-2 pl-7 leading-snug">
+                  When unchecked, only tenants with full student verification can see and enquire on this listing. Verified
+                  students can always see all active listings.
+                </p>
+              </div>
               <div className="flex flex-col gap-3">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-800">
                   <input
@@ -1284,8 +1305,9 @@ export default function LandlordPropertyFormPage() {
                   <button
                     type="button"
                     onClick={() => setPricingSuggestionOpen(true)}
-                    className="text-xs font-medium text-[#FF6B6B] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[#FF6B6B] hover:underline"
                   >
+                    <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                     Get AI price suggestion
                   </button>
                 </div>

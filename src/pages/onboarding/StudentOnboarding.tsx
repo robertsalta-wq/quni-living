@@ -16,6 +16,7 @@ import {
   STUDY_LEVEL_OPTIONS,
   budgetRangeToMinMax,
   minMaxToBudgetRange,
+  isNonStudentAccommodationRoute,
   type BudgetRangeValue,
   type StudentProfileRow,
 } from '../../lib/studentOnboarding'
@@ -101,7 +102,7 @@ export default function StudentOnboarding() {
     setEmergencyRelationship(p.emergency_contact_relationship?.trim() ?? '')
     setEmergencyPhone(p.emergency_contact_phone?.trim() ?? '')
     setEmergencyEmail(p.emergency_contact_email?.trim() ?? '')
-    setStep(inferStudentOnboardingStep(p))
+    setStep(inferStudentOnboardingStep(p, p.accommodation_verification_route))
   }, [])
 
   useEffect(() => {
@@ -189,13 +190,17 @@ export default function StudentOnboarding() {
     }
   }
 
+  const isIdentityPath = isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
+
   function validateStep1(): boolean {
     const e: Record<string, string> = {}
     if (!firstName.trim()) e.firstName = 'First name is required.'
     if (!lastName.trim()) e.lastName = 'Last name is required.'
-    if (!universityId) e.universityId = 'Select your university.'
-    if (!course.trim()) e.course = 'Enter your course or degree.'
-    if (!studyLevel) e.studyLevel = 'Select your year of study.'
+    if (!isIdentityPath) {
+      if (!universityId) e.universityId = 'Select your university.'
+      if (!course.trim()) e.course = 'Enter your course or degree.'
+      if (!studyLevel) e.studyLevel = 'Select your year of study.'
+    }
     if (!gender) e.gender = 'Select an option.'
     if (!phone.trim()) e.phone = 'Phone number is required.'
     else if (!isValidAuPhone(phone)) e.phone = 'Enter a valid phone number.'
@@ -232,35 +237,65 @@ export default function StudentOnboarding() {
     if (!validateStep1() || !user?.id) return
     const { min, max } = budgetRangeToMinMax(budgetRange as BudgetRangeValue)
     const combined = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
-    const yearNum = studyLevelToYear(studyLevel)
+    const yearNum = isIdentityPath ? null : studyLevelToYear(studyLevel)
 
-    const corePayload = {
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      full_name: combined,
-      university_id: universityId,
-      campus_id: universityId ? campusId.trim() || null : null,
-      course: course.trim(),
-      year_of_study: yearNum,
-      gender,
-      phone: phone.trim(),
-      budget_min_per_week: min,
-      budget_max_per_week: max,
-    }
-    const onboardingExtras = {
-      study_level: studyLevel,
-      preferred_move_in_date: moveInDate,
-      preferred_lease_length: leaseLength,
-    }
+    const corePayload = isIdentityPath
+      ? {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          full_name: combined,
+          university_id: null,
+          campus_id: null,
+          course: null,
+          year_of_study: null,
+          study_level: null,
+          gender,
+          phone: phone.trim(),
+          budget_min_per_week: min,
+          budget_max_per_week: max,
+        }
+      : {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          full_name: combined,
+          university_id: universityId,
+          campus_id: universityId ? campusId.trim() || null : null,
+          course: course.trim(),
+          year_of_study: yearNum,
+          gender,
+          phone: phone.trim(),
+          budget_min_per_week: min,
+          budget_max_per_week: max,
+        }
+    const onboardingExtras = isIdentityPath
+      ? {
+          study_level: null,
+          preferred_move_in_date: moveInDate,
+          preferred_lease_length: leaseLength,
+        }
+      : {
+          study_level: studyLevel,
+          preferred_move_in_date: moveInDate,
+          preferred_lease_length: leaseLength,
+        }
     const fullPayload = { ...corePayload, ...onboardingExtras }
-    const bootstrapPayload = {
-      full_name: combined,
-      university_id: universityId,
-      campus_id: universityId ? campusId.trim() || null : null,
-      course: course.trim(),
-      year_of_study: yearNum,
-      phone: phone.trim(),
-    }
+    const bootstrapPayload = isIdentityPath
+      ? {
+          full_name: combined,
+          university_id: null,
+          campus_id: null,
+          course: null,
+          year_of_study: null,
+          phone: phone.trim(),
+        }
+      : {
+          full_name: combined,
+          university_id: universityId,
+          campus_id: universityId ? campusId.trim() || null : null,
+          course: course.trim(),
+          year_of_study: yearNum,
+          phone: phone.trim(),
+        }
 
     setSubmitting(true)
     try {
@@ -543,7 +578,9 @@ export default function StudentOnboarding() {
                 <form onSubmit={saveStep1} className="space-y-5">
                   <h2 className="text-lg font-bold text-stone-900">About you</h2>
                   <p className="text-sm text-stone-600">
-                    Tell us a bit about yourself so we can match you with the right homes.
+                    {isIdentityPath
+                      ? 'Tell us a bit about yourself so we can match you with homes listed as open to non-students.'
+                      : 'Tell us a bit about yourself so we can match you with the right homes.'}
                   </p>
 
                   <div className="flex flex-col items-center gap-3 pb-2">
@@ -594,59 +631,63 @@ export default function StudentOnboarding() {
                     </div>
                   </div>
 
-                  <div>
-                    <UniversityCampusSelect
-                      universityId={universityId || null}
-                      campusId={campusId || null}
-                      onUniversityChange={(id) => {
-                        setUniversityId(id)
-                        setCampusId('')
-                      }}
-                      onCampusChange={setCampusId}
-                      required
-                      showState
-                      labelClassName={labelClass}
-                      universitySelectClassName={selectClass}
-                      campusSelectClassName={selectClass}
-                      universityIdAttr="so-uni"
-                      campusIdAttr="so-campus"
-                    />
-                    {fieldErrors.universityId && <p className={errClass}>{fieldErrors.universityId}</p>}
-                  </div>
+                  {!isIdentityPath && (
+                    <>
+                      <div>
+                        <UniversityCampusSelect
+                          universityId={universityId || null}
+                          campusId={campusId || null}
+                          onUniversityChange={(id) => {
+                            setUniversityId(id)
+                            setCampusId('')
+                          }}
+                          onCampusChange={setCampusId}
+                          required
+                          showState
+                          labelClassName={labelClass}
+                          universitySelectClassName={selectClass}
+                          campusSelectClassName={selectClass}
+                          universityIdAttr="so-uni"
+                          campusIdAttr="so-campus"
+                        />
+                        {fieldErrors.universityId && <p className={errClass}>{fieldErrors.universityId}</p>}
+                      </div>
 
-                  <div>
-                    <label htmlFor="so-course" className={labelClass}>
-                      Course / degree
-                    </label>
-                    <input
-                      id="so-course"
-                      value={course}
-                      onChange={(ev) => setCourse(ev.target.value)}
-                      placeholder="e.g. Bachelor of Commerce"
-                      className={inputClass}
-                    />
-                    {fieldErrors.course && <p className={errClass}>{fieldErrors.course}</p>}
-                  </div>
+                      <div>
+                        <label htmlFor="so-course" className={labelClass}>
+                          Course / degree
+                        </label>
+                        <input
+                          id="so-course"
+                          value={course}
+                          onChange={(ev) => setCourse(ev.target.value)}
+                          placeholder="e.g. Bachelor of Commerce"
+                          className={inputClass}
+                        />
+                        {fieldErrors.course && <p className={errClass}>{fieldErrors.course}</p>}
+                      </div>
 
-                  <div>
-                    <label htmlFor="so-year" className={labelClass}>
-                      Year of study
-                    </label>
-                    <select
-                      id="so-year"
-                      value={studyLevel}
-                      onChange={(ev) => setStudyLevel(ev.target.value)}
-                      className={selectClass}
-                    >
-                      <option value="">Select</option>
-                      {STUDY_LEVEL_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    {fieldErrors.studyLevel && <p className={errClass}>{fieldErrors.studyLevel}</p>}
-                  </div>
+                      <div>
+                        <label htmlFor="so-year" className={labelClass}>
+                          Year of study
+                        </label>
+                        <select
+                          id="so-year"
+                          value={studyLevel}
+                          onChange={(ev) => setStudyLevel(ev.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">Select</option>
+                          {STUDY_LEVEL_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                        {fieldErrors.studyLevel && <p className={errClass}>{fieldErrors.studyLevel}</p>}
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <label htmlFor="so-gender" className={labelClass}>

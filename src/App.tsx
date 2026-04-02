@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
+import VerifyEmail from './pages/VerifyEmail'
 import Signup from './pages/Signup'
 import StudentSignup from './pages/StudentSignup'
 import LandlordSignup from './pages/LandlordSignup'
@@ -106,6 +107,7 @@ function App() {
           {/* Auth */}
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/student-signup" element={<StudentSignup />} />
           <Route path="/landlord-signup" element={<LandlordSignup />} />

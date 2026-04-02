@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import AiSparkleIcon from '../../components/AiSparkleIcon'
 import ServicePageLayout from '../../components/ServicePageLayout'
 import Seo from '../../components/Seo'
 import LandlordPartnershipLeadForm from '../../components/LandlordPartnershipLeadForm'
@@ -82,7 +83,8 @@ export default function LandlordPartnerships() {
       <section className="bg-[#FDF0EC] border-b border-[#FF6F61]/20">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
           <div className="w-full rounded-2xl border border-[#FF6F61]/25 bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
-            <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-2">
+            <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF6F61] sm:text-xs">
+              <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
               Powered by AI
             </p>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
@@ -95,8 +97,9 @@ export default function LandlordPartnerships() {
             <div className="mt-5">
               <Link
                 to="/landlords/ai"
-                className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6F61] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-95"
               >
+                <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
                 See our AI features →
               </Link>
             </div>

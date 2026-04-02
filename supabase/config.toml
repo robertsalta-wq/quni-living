@@ -1,5 +1,26 @@
 # Supabase CLI — https://supabase.com/docs/guides/cli/config
 # Link project: supabase link --project-ref YOUR_REF
+#
+# Email templates: used by local `supabase start`. For hosted Supabase, copy HTML into
+# Dashboard → Authentication → Email Templates → Confirm signup.
+
+[auth.email.template.confirmation]
+subject = "Confirm your Quni Living account"
+content_path = "./supabase/templates/confirmation.html"
 
 [functions.stripe-webhook]
+verify_jwt = false
+
+# Gateway JWT check conflicts with some publishable/legacy key setups and returns
+# "Invalid JWT" before the function runs. Auth is enforced inside each handler via getUser().
+[functions.send-uni-otp]
+verify_jwt = false
+
+[functions.verify-uni-otp]
+verify_jwt = false
+
+[functions.delete-student-account]
+verify_jwt = false
+
+[functions.delete-user-documents]
 verify_jwt = false

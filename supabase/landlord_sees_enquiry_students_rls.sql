@@ -1,0 +1,4 @@
+-- Enquiry-linked landlord read of student_profiles is included in:
+--   **landlord_read_student_profiles_definer.sql**
+--
+-- Run that file once per project (it covers both bookings and enquiries).

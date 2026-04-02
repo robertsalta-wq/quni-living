@@ -7,6 +7,15 @@ import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
 import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripePayoutsCard'
+import {
+  buildLandlordVerificationFromProfile,
+  LandlordApplicantVerificationBadges,
+  LandlordApplicantVerificationDetail,
+} from '../components/landlord/LandlordApplicantVerificationBadges'
+import LandlordStudentProfileModal, {
+  type LandlordSafeStudentSnapshot,
+} from '../components/landlord/LandlordStudentProfileModal'
+import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/onboardingChecklist'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
@@ -28,17 +37,13 @@ type EnquiryWithProperty = EnquiryRow & {
 
 type BookingWithRelations = BookingRow & {
   properties: { title: string; slug: string; suburb: string | null } | null
-  student_profiles: {
-    full_name: string | null
-    email: string | null
-    phone: string | null
-    avatar_url: string | null
-    course: string | null
-    universities: { name: string } | null
-  } | null
+  student_profiles: LandlordSafeStudentSnapshot | null
 }
 
 type TabId = 'listings' | 'enquiries' | 'bookings'
+
+/** Loaded for landlord dashboard — safe fields only (see LandlordSafeStudentSnapshot). */
+type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
 /** Avoid JSON.parse on HTML/plain-text error bodies from the platform. */
 async function readJsonApiResponse(res: Response): Promise<{ error?: string } & Record<string, unknown>> {
@@ -92,7 +97,13 @@ function studentDisplayFromBooking(b: BookingWithRelations): string {
   const sp = b.student_profiles
   if (!sp) return '—'
   if (sp.full_name?.trim()) return sp.full_name.trim()
-  return sp.email?.trim() || '—'
+  return '—'
+}
+
+/** Stable key for session UI (e.g. AI assessment nudge label) per applicant on a booking. */
+function applicantSessionKeyFromBooking(b: BookingWithRelations): string {
+  const sp = b.student_profiles
+  return sp?.id ?? b.student_id ?? b.id
 }
 
 const ENQUIRY_TRUNC = 100
@@ -138,6 +149,19 @@ export default function LandlordDashboard() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
   const [updatingListingId, setUpdatingListingId] = useState<string | null>(null)
+  const [studentProfileModal, setStudentProfileModal] = useState<{
+    student: LandlordSafeStudentSnapshot | null
+    fallbackName: string
+    scrollToVerification: boolean
+    scrollToAiAssessment: boolean
+    sessionKey: string
+  } | null>(null)
+  const [aiAssessmentGeneratedSessionKeys, setAiAssessmentGeneratedSessionKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [landlordStudentByProfileId, setLandlordStudentByProfileId] = useState<
+    Record<string, LandlordLoadedStudentRow>
+  >({})
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -174,41 +198,48 @@ export default function LandlordDashboard() {
       if (enqRes.error) throw enqRes.error
       if (bookRes.error) throw bookRes.error
 
-      type BookingStudentDbRow = {
-        id: string
-        full_name: string | null
-        email: string | null
-        phone: string | null
-        avatar_url: string | null
-        course: string | null
-        universities: { name: string } | null
-      }
       type BookingPropertyDbRow = { id: string; title: string; slug: string; suburb: string | null }
 
       const bookingRows = (bookRes.data ?? []) as BookingRow[]
-      const studentIds = [...new Set(bookingRows.map((b) => b.student_id).filter(Boolean))] as string[]
+      const enquiryRows = (enqRes.data ?? []) as EnquiryWithProperty[]
+      const studentIds = [
+        ...new Set(
+          [
+            ...bookingRows.map((b) => b.student_id).filter(Boolean),
+            ...enquiryRows.map((e) => e.student_id).filter(Boolean),
+          ] as string[],
+        ),
+      ]
       const bookingPropertyIds = [...new Set(bookingRows.map((b) => b.property_id).filter(Boolean))] as string[]
 
       const [studRes, bookingPropsRes] = await Promise.all([
         studentIds.length > 0
           ? supabase
               .from('student_profiles')
-              .select('id, full_name, email, phone, avatar_url, course, universities ( name )')
+              .select(
+                'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, uni_email_verified, uni_email_verified_at, id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )',
+              )
               .in('id', studentIds)
-          : Promise.resolve({ data: [] as BookingStudentDbRow[], error: null }),
+          : Promise.resolve({ data: [] as LandlordLoadedStudentRow[], error: null }),
         bookingPropertyIds.length > 0
           ? supabase.from('properties').select('id, title, slug, suburb').in('id', bookingPropertyIds)
           : Promise.resolve({ data: [] as BookingPropertyDbRow[], error: null }),
       ])
 
       if (bookingPropsRes.error) throw bookingPropsRes.error
+      if (studRes.error) throw studRes.error
 
-      const studentById = new Map<string, BookingStudentDbRow>()
+      const studentById = new Map<string, LandlordLoadedStudentRow>()
+      const studentRecord: Record<string, LandlordLoadedStudentRow> = {}
       if (!studRes.error && studRes.data) {
-        for (const row of studRes.data as BookingStudentDbRow[]) {
-          if (row?.id) studentById.set(row.id, row)
+        for (const row of studRes.data as LandlordLoadedStudentRow[]) {
+          if (row?.id) {
+            studentById.set(row.id, row)
+            studentRecord[row.id] = row
+          }
         }
       }
+      setLandlordStudentByProfileId(studentRecord)
 
       const propertyById = new Map<string, { title: string; slug: string; suburb: string | null }>()
       for (const row of (bookingPropsRes.data ?? []) as BookingPropertyDbRow[]) {
@@ -223,21 +254,12 @@ export default function LandlordDashboard() {
         return {
           ...b,
           properties: pr ? { title: pr.title, slug: pr.slug, suburb: pr.suburb } : null,
-          student_profiles: sp
-            ? {
-                full_name: sp.full_name,
-                email: sp.email,
-                phone: sp.phone,
-                avatar_url: sp.avatar_url,
-                course: sp.course,
-                universities: sp.universities ?? null,
-              }
-            : null,
+          student_profiles: sp ? { ...sp } : null,
         }
       })
 
       setProperties((propRes.data ?? []) as PropertySummary[])
-      setEnquiries((enqRes.data ?? []) as EnquiryWithProperty[])
+      setEnquiries(enquiryRows)
       setBookings(mergedBookings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load dashboard.')
@@ -245,6 +267,7 @@ export default function LandlordDashboard() {
       setProperties([])
       setEnquiries([])
       setBookings([])
+      setLandlordStudentByProfileId({})
     } finally {
       setLoading(false)
     }
@@ -904,6 +927,7 @@ export default function LandlordDashboard() {
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                       <th className="px-4 py-3">Student</th>
+                      <th className="px-4 py-3">Verification</th>
                       <th className="px-4 py-3">Property</th>
                       <th className="px-4 py-3">Message</th>
                       <th className="px-4 py-3">Received</th>
@@ -929,9 +953,38 @@ export default function LandlordDashboard() {
                             className="border-b border-gray-100 align-top cursor-pointer hover:bg-gray-50/60"
                             onClick={() => toggleEnquiryRow(row)}
                           >
-                            <td className="px-4 py-3">
-                              <span className="font-medium text-gray-900">{row.name?.trim() || '—'}</span>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              {row.student_id ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setStudentProfileModal({
+                                      student: landlordStudentByProfileId[row.student_id!] ?? null,
+                                      fallbackName: row.name?.trim() || row.email?.trim() || 'Student',
+                                      scrollToVerification: false,
+                                      scrollToAiAssessment: false,
+                                      sessionKey: row.student_id ?? row.id,
+                                    })
+                                  }
+                                  className="text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
+                                >
+                                  {row.name?.trim() || '—'}
+                                </button>
+                              ) : (
+                                <span className="font-medium text-gray-900">{row.name?.trim() || '—'}</span>
+                              )}
                               <span className="block text-xs text-gray-500">{row.email?.trim() || '—'}</span>
+                            </td>
+                            <td className="px-4 py-3 max-w-[11rem]">
+                              {row.student_id ? (
+                                <LandlordApplicantVerificationBadges
+                                  verification={buildLandlordVerificationFromProfile(
+                                    landlordStudentByProfileId[row.student_id] ?? null,
+                                  )}
+                                />
+                              ) : (
+                                <span className="text-[11px] text-gray-400">—</span>
+                              )}
                             </td>
                             <td className="px-4 py-3">
                               {slug ? (
@@ -978,7 +1031,7 @@ export default function LandlordDashboard() {
                           {isExpanded && (
                             <tr className="border-b border-gray-100">
                               <td
-                                colSpan={6}
+                                colSpan={7}
                                 className="px-4 py-4"
                                 style={{ backgroundColor: 'var(--color-background-secondary)' }}
                               >
@@ -988,20 +1041,78 @@ export default function LandlordDashboard() {
                                     <p className="mt-1 text-sm text-gray-800 whitespace-pre-wrap break-words">{msg}</p>
                                   </div>
                                   <p className="text-xs text-gray-600">Received: {formatDate(row.created_at)}</p>
+                                  {row.student_id ? (
+                                    <div className="rounded-xl border border-gray-100 bg-white/90 px-4 py-3">
+                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                          Student profile
+                                        </p>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-1 shrink-0">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setStudentProfileModal({
+                                                student: landlordStudentByProfileId[row.student_id!] ?? null,
+                                                fallbackName:
+                                                  row.name?.trim() || row.email?.trim() || 'Student',
+                                                scrollToVerification: false,
+                                                scrollToAiAssessment: false,
+                                                sessionKey: row.student_id ?? row.id,
+                                              })
+                                            }
+                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+                                          >
+                                            View profile
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setStudentProfileModal({
+                                                student: landlordStudentByProfileId[row.student_id!] ?? null,
+                                                fallbackName:
+                                                  row.name?.trim() || row.email?.trim() || 'Student',
+                                                scrollToVerification: true,
+                                                scrollToAiAssessment: false,
+                                                sessionKey: row.student_id ?? row.id,
+                                              })
+                                            }
+                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+                                          >
+                                            Verification details
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <div className="mt-2">
+                                        <LandlordApplicantVerificationDetail
+                                          verification={buildLandlordVerificationFromProfile(
+                                            landlordStudentByProfileId[row.student_id] ?? null,
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-500">
+                                      This enquiry was not linked to a signed-in student account, so verification status
+                                      is unavailable.
+                                    </p>
+                                  )}
                                   {canDraft && !draftReply && (
                                     <button
                                       type="button"
                                       onClick={() => void draftEnquiryReply(row)}
                                       disabled={isDrafting}
-                                      className="inline-flex items-center rounded-lg border border-[#FF6F61] bg-white px-3 py-1.5 text-xs font-semibold text-[#FF6F61] hover:bg-[#fff4f3] disabled:opacity-60"
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#FF6F61] bg-white px-3 py-1.5 text-xs font-semibold text-[#FF6F61] hover:bg-[#fff4f3] disabled:opacity-60"
                                     >
                                       {isDrafting ? (
                                         <>
-                                          <span className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#FF6F61] border-t-transparent" />
+                                          <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[#FF6F61] border-t-transparent" />
                                           Drafting...
                                         </>
                                       ) : (
-                                        'Draft a reply with AI'
+                                        <>
+                                          <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
+                                          Draft a reply with AI
+                                        </>
                                       )}
                                     </button>
                                   )}
@@ -1073,6 +1184,9 @@ export default function LandlordDashboard() {
                   const sp = b.student_profiles
                   const uni = sp?.universities?.name?.trim()
                   const moveInRaw = (b.move_in_date || b.start_date || '').slice(0, 10)
+                  const bookingVerification = buildLandlordVerificationFromProfile(sp)
+                  const applicantSessionKey = applicantSessionKeyFromBooking(b)
+                  const hasAiAssessmentThisSession = aiAssessmentGeneratedSessionKeys.has(applicantSessionKey)
                   return (
                     <div
                       key={b.id}
@@ -1092,10 +1206,39 @@ export default function LandlordDashboard() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="font-semibold text-gray-900">{studentDisplayFromBooking(b)}</p>
-                            {uni && <p className="text-sm text-gray-600">{uni}</p>}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setStudentProfileModal({
+                                  student: sp ?? null,
+                                  fallbackName: studentDisplayFromBooking(b),
+                                  scrollToVerification: false,
+                                  scrollToAiAssessment: false,
+                                  sessionKey: applicantSessionKeyFromBooking(b),
+                                })
+                              }
+                              className="text-left font-semibold text-gray-900 hover:text-indigo-700 hover:underline underline-offset-2"
+                            >
+                              {studentDisplayFromBooking(b)}
+                            </button>
+                            <LandlordApplicantVerificationBadges verification={bookingVerification} />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setStudentProfileModal({
+                                  student: sp ?? null,
+                                  fallbackName: studentDisplayFromBooking(b),
+                                  scrollToVerification: true,
+                                  scrollToAiAssessment: false,
+                                  sessionKey: applicantSessionKeyFromBooking(b),
+                                })
+                              }
+                              className="mt-1 block text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+                            >
+                              Verification details
+                            </button>
+                            {uni && <p className="text-sm text-gray-600 mt-2">{uni}</p>}
                             {sp?.course?.trim() && <p className="text-sm text-gray-600">{sp.course.trim()}</p>}
-                            <p className="text-xs text-gray-500 mt-1">{sp?.email ?? '—'}</p>
                           </div>
                         </div>
                         <div className="sm:ml-auto text-left sm:text-right">
@@ -1125,7 +1268,31 @@ export default function LandlordDashboard() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-3 pt-1">
+                      <div className="mt-3 border-t border-amber-200/50 pt-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setStudentProfileModal({
+                              student: sp ?? null,
+                              fallbackName: studentDisplayFromBooking(b),
+                              scrollToVerification: false,
+                              scrollToAiAssessment: true,
+                              sessionKey: applicantSessionKey,
+                            })
+                          }
+                          className="group w-full rounded-lg border border-[#FF6F61]/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-[#FF6F61]/85 underline-offset-2 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/[0.07] hover:text-[#FF6F61] hover:underline sm:text-center"
+                        >
+                          <span className="inline-flex items-center justify-center gap-2 sm:max-w-md sm:mx-auto">
+                            <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]/85 group-hover:text-[#FF6F61]" />
+                            <span>
+                              {hasAiAssessmentThisSession
+                                ? 'View AI assessment'
+                                : 'Not sure yet? Get an AI assessment of this student before deciding.'}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-3 pt-2">
                         <button
                           type="button"
                           disabled={bookingActionId === b.id}
@@ -1160,6 +1327,7 @@ export default function LandlordDashboard() {
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                         <th className="px-4 py-3">Student</th>
+                        <th className="px-4 py-3">Verification</th>
                         <th className="px-4 py-3">Property</th>
                         <th className="px-4 py-3">Stay</th>
                         <th className="px-4 py-3">Rent / wk</th>
@@ -1170,8 +1338,26 @@ export default function LandlordDashboard() {
                       {otherBookings.map((b) => (
                         <tr key={b.id} className="border-b border-gray-100 align-top">
                           <td className="px-4 py-3">
-                            <span className="font-medium text-gray-900">{studentDisplayFromBooking(b)}</span>
-                            <span className="block text-xs text-gray-500">{b.student_profiles?.email ?? '—'}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setStudentProfileModal({
+                                  student: b.student_profiles,
+                                  fallbackName: studentDisplayFromBooking(b),
+                                  scrollToVerification: false,
+                                  scrollToAiAssessment: false,
+                                  sessionKey: applicantSessionKeyFromBooking(b),
+                                })
+                              }
+                              className="text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
+                            >
+                              {studentDisplayFromBooking(b)}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 max-w-[11rem] align-top">
+                            <LandlordApplicantVerificationBadges
+                              verification={buildLandlordVerificationFromProfile(b.student_profiles)}
+                            />
                           </td>
                           <td className="px-4 py-3">
                             <span className="font-medium text-gray-900">{b.properties?.title ?? '—'}</span>
@@ -1204,6 +1390,27 @@ export default function LandlordDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {studentProfileModal && (
+          <LandlordStudentProfileModal
+            open
+            onClose={() => setStudentProfileModal(null)}
+            student={studentProfileModal.student}
+            fallbackName={studentProfileModal.fallbackName}
+            scrollToVerification={studentProfileModal.scrollToVerification}
+            scrollToAiAssessment={studentProfileModal.scrollToAiAssessment}
+            assessmentIdentityKey={studentProfileModal.sessionKey}
+            onAiAssessmentGenerated={() => {
+              const k = studentProfileModal.sessionKey
+              setAiAssessmentGeneratedSessionKeys((prev) => new Set(prev).add(k))
+            }}
+            landlordFirstName={
+              profile?.first_name?.trim() ||
+              profile?.full_name?.trim()?.split(/\s+/).filter(Boolean)[0] ||
+              null
+            }
+          />
         )}
 
         {stripeRequiredModalOpen && (

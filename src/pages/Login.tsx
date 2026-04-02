@@ -12,13 +12,14 @@ import {
   getPostLoginRedirectDestination,
   needsOnboarding,
 } from '../lib/authProfile'
-import { getGoogleOAuthOptions } from '../lib/oauth'
+import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import {
   isSafeInternalPath,
   persistAuthReturnIntent,
   resolvePostLoginDestination,
 } from '../lib/postAuthRedirect'
 import Seo from '../components/Seo'
+import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -38,19 +39,6 @@ export default function Login() {
   const urlDetail = searchParams.get('detail')
   const showPkceVerifierMissing = urlError === 'pkce_verifier_missing'
 
-  const errorMessage =
-    urlError === 'auth_failed'
-      ? 'Sign-in failed. Please try again.'
-      : urlError === 'pkce_verifier_missing'
-        ? 'Your confirmation link has expired or was opened in a different browser. Please log in below with your email and password, or request a new confirmation email.'
-      : urlError === 'missing_code'
-        ? 'Invalid or incomplete sign-in link.'
-        : urlError === 'oauth'
-          ? 'Google sign-in was cancelled or denied.'
-        : urlError === 'config'
-          ? 'App is not configured for authentication.'
-          : null
-
   let detailText: string | null = null
   if (urlDetail) {
     try {
@@ -58,6 +46,38 @@ export default function Login() {
     } catch {
       detailText = urlDetail
     }
+  }
+
+  /** Magic-link / PKCE style errors sometimes arrive under error=oauth; avoid contradicting “Google cancelled” copy. */
+  function detailLooksLikeEmailOrLinkError(d: string): boolean {
+    return /email\s+link|link\s+is\s+invalid|invalid\s+or\s+has\s+expired|token\s+(has\s+)?expired|otp|magic\s+link/i.test(
+      d,
+    )
+  }
+
+  let errorMessage: string | null = null
+  let urlDetailSecondary: string | null = null
+
+  if (urlError === 'auth_failed') {
+    errorMessage = 'Sign-in failed. Please try again.'
+    urlDetailSecondary = detailText
+  } else if (urlError === 'pkce_verifier_missing') {
+    errorMessage =
+      'Your confirmation link has expired or was opened in a different browser. Please log in below with your email and password, or request a new confirmation email.'
+  } else if (urlError === 'missing_code') {
+    errorMessage = 'Invalid or incomplete sign-in link.'
+    urlDetailSecondary = detailText
+  } else if (urlError === 'oauth') {
+    if (detailText && detailLooksLikeEmailOrLinkError(detailText)) {
+      errorMessage =
+        'That sign-in link is invalid or has expired. Use your email and password below, or try Google again.'
+    } else if (detailText?.trim()) {
+      errorMessage = detailText.trim()
+    } else {
+      errorMessage = 'Google sign-in was cancelled or denied.'
+    }
+  } else if (urlError === 'config') {
+    errorMessage = 'App is not configured for authentication.'
   }
 
   useEffect(() => {
@@ -78,7 +98,9 @@ export default function Login() {
       navigate(next && next !== '/login' ? next : '/admin', { replace: true })
       return
     }
-    if (!user.user_metadata?.role) {
+    // Use resolved role from DB + metadata (AuthContext), not only JWT metadata — older accounts may
+    // have student_profiles but missing user_metadata.role; they must not be sent to role-pick terms.
+    if (role === null) {
       navigate('/onboarding', { replace: true })
       return
     }
@@ -109,6 +131,8 @@ export default function Login() {
       if (signErr) throw signErr
       if (!data.user) throw new Error('No user returned')
 
+      clearQuniAccommodationVerificationRoute()
+
       const { data: verified } = await supabase.auth.getUser()
       const u = verified.user ?? data.user
       const { role: r, profile: p } = await fetchRoleAndProfile(u)
@@ -117,7 +141,7 @@ export default function Login() {
         navigate(next && next !== '/login' ? next : '/admin', { replace: true })
         return
       }
-      if (!data.user.user_metadata?.role) {
+      if (r === null) {
         navigate('/onboarding', { replace: true })
         return
       }
@@ -163,7 +187,7 @@ export default function Login() {
     errLower.includes('forbidden') && errLower.includes('secret')
   /** Amber banner already explains bad key — hide duplicate red box for same email-login error. */
   const redundantSecretBanner =
-    Boolean(keyMisuse && secretKeyError && !errorMessage && !detailText)
+    Boolean(keyMisuse && secretKeyError && !errorMessage && !urlDetailSecondary)
 
   return (
     <div className="max-w-md mx-auto px-6 py-12">
@@ -187,7 +211,7 @@ export default function Login() {
         </div>
       )}
 
-      {(error || errorMessage || detailText) && !redundantSecretBanner && (
+      {(error || errorMessage || urlDetailSecondary) && !redundantSecretBanner && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
           {secretKeyError && !keyMisuse ? (
             <>
@@ -201,8 +225,8 @@ export default function Login() {
           ) : (
             error || errorMessage
           )}
-          {detailText && !secretKeyError && (
-            <p className="text-red-700/90 text-xs mt-1 whitespace-pre-wrap break-words">{detailText}</p>
+          {urlDetailSecondary && !secretKeyError && (
+            <p className="text-red-700/90 text-xs mt-1 whitespace-pre-wrap break-words">{urlDetailSecondary}</p>
           )}
         </div>
       )}
@@ -268,11 +292,12 @@ export default function Login() {
                 const { error: resendErr } = await supabase.auth.resend({
                   type: 'signup',
                   email: e,
+                  options: { emailRedirectTo: getAuthCallbackUrl() },
                 })
                 if (resendErr) throw resendErr
                 setResendSuccess(true)
               } catch (err) {
-                setResendError(err instanceof Error ? err.message : 'Could not resend confirmation email.')
+                setResendError(formatAuthEmailErrorMessage(err))
               } finally {
                 setResendLoading(false)
               }
@@ -281,10 +306,13 @@ export default function Login() {
           >
             {resendLoading ? 'Resending…' : 'Resend confirmation email'}
           </button>
-          {resendError && <p className="text-sm text-red-600">{resendError}</p>}
+          {resendError && (
+            <p className="text-sm text-red-600 whitespace-pre-wrap break-words">{resendError}</p>
+          )}
           {resendSuccess && (
             <p className="text-sm text-emerald-700" role="status">
-              If an account exists for that email, we sent a new confirmation email.
+              Request accepted. Unconfirmed signups get another email (check spam). Already-confirmed accounts receive
+              nothing — use Log in.
             </p>
           )}
         </div>

@@ -3,6 +3,8 @@ import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { LandlordProfileRow, StudentProfileRow, UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
+import { isAdminUser } from '../lib/adminEmails'
+import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 type AllowedRole = Exclude<UserRole, null>
 
@@ -52,6 +54,10 @@ export function ProtectedRoute({
       return <Navigate to={`/signup?role=student&redirect=${next}`} replace />
     }
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (!isAdminUser(user) && userNeedsEmailAddressVerification(user)) {
+    return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 
   if (role === 'admin') {
@@ -111,6 +117,10 @@ export function RequireUser({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (!isAdminUser(user) && userNeedsEmailAddressVerification(user)) {
+    return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 
   return <>{children}</>

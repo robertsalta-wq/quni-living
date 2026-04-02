@@ -62,6 +62,43 @@ For **a photo of yourself** on the student profile:
 1. Storage → create a **public** bucket named **`student-avatars`** (legacy id; stores profile photos).
 2. Run **`storage_student_profile_photos.sql`** in SQL Editor.
 
+### Student verification tab (`/student-profile` → Verification)
+
+Run **`student_verification.sql`** in SQL Editor. It adds `uni_email` / document columns on **`student_profiles`**, creates **`verification_otps`** with a **unique index on `user_id`** (one active code per account), creates the **private** Storage bucket **`student-documents`**, and RLS so students read/write only under `{their_user_id}/…` while platform admin emails (same as `admin_rls_policies.sql`) can read all objects in that bucket.
+
+If your project already had **`verification_otps`** from an older run **without** that unique index, run **`verification_otps_one_per_user.sql`** once (dedupes rows + creates the index) so **`send-uni-otp`** upserts correctly.
+
+Deploy Edge Functions and set **`RESEND_API_KEY`** in Supabase (Dashboard → Edge Functions → Secrets, or `supabase secrets set RESEND_API_KEY=re_...`):
+
+```bash
+supabase functions deploy send-uni-otp
+supabase functions deploy verify-uni-otp
+```
+
+OTP email sends **From** **`noreply@quni.com.au`** (same as booking emails) with **Reply-To** **`hello@quni.com.au`** — verify **quni.com.au** in Resend so both addresses are allowed.
+
+`supabase/config.toml` sets **`verify_jwt = false`** for `send-uni-otp` and `verify-uni-otp` so the API gateway does not reject valid sessions as **“Invalid JWT”** (auth is still enforced inside each function with `getUser()`). Redeploy with the CLI so this applies. If you deploy only from the Dashboard, turn off **Verify JWT** for those two functions there instead.
+
+### Student account deletion (`/student-profile` → Delete account)
+
+The app removes objects under **`student-documents/{user_id}/`** before deleting the auth user, and a **Database Webhook** can call a second Edge Function as a safety net if anything remains.
+
+Deploy:
+
+```bash
+supabase functions deploy delete-student-account --no-verify-jwt
+supabase functions deploy delete-user-documents --no-verify-jwt
+```
+
+`supabase/config.toml` sets **`verify_jwt = false`** for both (same pattern as OTP functions). **`delete-student-account`** still requires a valid user JWT in `Authorization` and only allows users who have a **`student_profiles`** row.
+
+**Database Webhook (safety net)** — Dashboard → **Database** → **Webhooks** → **Create**:
+
+1. **Table**: `users` in schema **`auth`**, event **DELETE** only.  
+2. **URL**: `https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/delete-user-documents`  
+3. **HTTP Headers**: add **`x-webhook-secret`** with a long random value.  
+4. Supabase → Edge Functions → **Secrets**: **`DELETE_USER_DOCS_WEBHOOK_SECRET`** = the same value (the function rejects requests if the header does not match).
+
 ## Listings show “No listings found”
 
 That’s normal when **`properties`** has no rows. Either:
