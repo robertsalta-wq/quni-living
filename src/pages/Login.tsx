@@ -63,14 +63,14 @@ export default function Login() {
     urlDetailSecondary = detailText
   } else if (urlError === 'pkce_verifier_missing') {
     errorMessage =
-      'Your confirmation link has expired or was opened in a different browser. Please log in below with your email and password, or request a new confirmation email.'
+      'This confirmation link could not be used (often an older link from before our last update, or opened in a different app than where you signed up). Use your email and password below, or tap “Resend confirmation email” and open only the newest link.'
   } else if (urlError === 'missing_code') {
     errorMessage = 'Invalid or incomplete sign-in link.'
     urlDetailSecondary = detailText
   } else if (urlError === 'oauth') {
     if (detailText && detailLooksLikeEmailOrLinkError(detailText)) {
       errorMessage =
-        'That sign-in link is invalid or has expired. Use your email and password below, or try Google again.'
+        'That confirmation or sign-in link could not be used (it may have been previewed by your email app, expired, or already used). If you already confirmed your account, sign in with your email and password below. Otherwise try the link once in a private window, or request a new confirmation email from the log-in page.'
     } else if (detailText?.trim()) {
       errorMessage = detailText.trim()
     } else {
@@ -78,6 +78,10 @@ export default function Login() {
     }
   } else if (urlError === 'config') {
     errorMessage = 'App is not configured for authentication.'
+  } else if (urlError === 'invalid_session') {
+    errorMessage =
+      'Your session is no longer valid. That can happen if the account was removed, you switched Supabase projects, or this browser kept an old sign-in after a failed sign-up.'
+    urlDetailSecondary = detailText
   }
 
   useEffect(() => {

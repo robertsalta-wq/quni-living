@@ -217,7 +217,7 @@ export default function LandlordDashboard() {
           ? supabase
               .from('student_profiles')
               .select(
-                'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, uni_email_verified, uni_email_verified_at, id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )',
+                'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at, work_email_verified, work_email_verified_at, id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )',
               )
               .in('id', studentIds)
           : Promise.resolve({ data: [] as LandlordLoadedStudentRow[], error: null }),

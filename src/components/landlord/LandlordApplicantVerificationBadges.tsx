@@ -2,8 +2,11 @@ import { formatDate } from '../../pages/admin/adminUi'
 
 export type LandlordSeenStudentVerification = {
   verification_type: 'student' | 'identity' | 'none' | null
+  accommodation_verification_route: 'student' | 'non_student' | null
   uni_email_verified: boolean | null
   uni_email_verified_at: string | null
+  work_email_verified: boolean | null
+  work_email_verified_at: string | null
   /** Derived without selecting document URLs (see id_submitted_at on profile). */
   id_provided: boolean
   id_submitted_at: string | null
@@ -23,8 +26,11 @@ const pillClass =
  */
 export function buildLandlordVerificationFromProfile(row: {
   verification_type?: 'student' | 'identity' | 'none' | null
+  accommodation_verification_route?: 'student' | 'non_student' | null
   uni_email_verified?: boolean | null
   uni_email_verified_at?: string | null
+  work_email_verified?: boolean | null
+  work_email_verified_at?: string | null
   id_submitted_at?: string | null
   enrolment_submitted_at?: string | null
   identity_supporting_submitted_at?: string | null
@@ -32,8 +38,11 @@ export function buildLandlordVerificationFromProfile(row: {
   if (!row) return null
   return {
     verification_type: row.verification_type ?? 'none',
+    accommodation_verification_route: row.accommodation_verification_route ?? null,
     uni_email_verified: row.uni_email_verified ?? null,
     uni_email_verified_at: row.uni_email_verified_at ?? null,
+    work_email_verified: row.work_email_verified ?? null,
+    work_email_verified_at: row.work_email_verified_at ?? null,
     id_provided: row.id_submitted_at != null && String(row.id_submitted_at).trim() !== '',
     id_submitted_at: row.id_submitted_at ?? null,
     enrolment_provided:
@@ -70,15 +79,21 @@ export function LandlordApplicantVerificationBadges({
         <span className={tierPillClass} title="Identity verification complete">
           <span aria-hidden>✅</span> Verified Identity
         </span>
+        {v.work_email_verified === true && (
+          <span className={pillClass} title="Work email verified">
+            <span aria-hidden>✅</span> Work Email Verified
+          </span>
+        )}
       </div>
     )
   }
 
   const uni = v?.uni_email_verified === true
+  const work = v?.work_email_verified === true
   const id = Boolean(v?.id_provided)
   const en = Boolean(v?.enrolment_provided)
   const sup = Boolean(v?.identity_supporting_provided)
-  const any = uni || id || en || sup
+  const any = uni || work || id || en || sup
 
   if (!any) {
     return <p className="text-[11px] sm:text-xs text-gray-500 mt-1.5">No verification completed.</p>
@@ -89,6 +104,11 @@ export function LandlordApplicantVerificationBadges({
       {uni && (
         <span className={pillClass} title="University email verified">
           <span aria-hidden>✅</span> Uni Email Verified
+        </span>
+      )}
+      {work && (
+        <span className={pillClass} title="Work email verified">
+          <span aria-hidden>✅</span> Work Email Verified
         </span>
       )}
       {id && (
@@ -116,29 +136,38 @@ export function LandlordApplicantVerificationDetail({
   verification: LandlordSeenStudentVerification | null | undefined
 }) {
   const v = verification
-  const rows: { label: string; ok: boolean; at: string | null }[] =
-    v?.verification_type === 'identity'
-      ? [
-          { label: 'ID document', ok: Boolean(v?.id_provided), at: v?.id_submitted_at ?? null },
-          {
-            label: 'Supporting document',
-            ok: Boolean(v?.identity_supporting_provided),
-            at: v?.identity_supporting_submitted_at ?? null,
-          },
-        ]
-      : [
-          {
-            label: 'Uni email',
-            ok: v?.uni_email_verified === true,
-            at: v?.uni_email_verified_at ?? null,
-          },
-          { label: 'ID document', ok: Boolean(v?.id_provided), at: v?.id_submitted_at ?? null },
-          {
-            label: 'Enrolment document',
-            ok: Boolean(v?.enrolment_provided),
-            at: v?.enrolment_submitted_at ?? null,
-          },
-        ]
+  const identityLike =
+    v?.verification_type === 'identity' ||
+    v?.accommodation_verification_route === 'non_student' ||
+    v?.identity_supporting_provided === true
+
+  const rows: { label: string; ok: boolean; at: string | null }[] = identityLike
+    ? [
+        {
+          label: 'Work email',
+          ok: v?.work_email_verified === true,
+          at: v?.work_email_verified_at ?? null,
+        },
+        { label: 'ID document', ok: Boolean(v?.id_provided), at: v?.id_submitted_at ?? null },
+        {
+          label: 'Supporting document',
+          ok: Boolean(v?.identity_supporting_provided),
+          at: v?.identity_supporting_submitted_at ?? null,
+        },
+      ]
+    : [
+        {
+          label: 'Uni email',
+          ok: v?.uni_email_verified === true,
+          at: v?.uni_email_verified_at ?? null,
+        },
+        { label: 'ID document', ok: Boolean(v?.id_provided), at: v?.id_submitted_at ?? null },
+        {
+          label: 'Enrolment document',
+          ok: Boolean(v?.enrolment_provided),
+          at: v?.enrolment_submitted_at ?? null,
+        },
+      ]
 
   return (
     <ul className="space-y-2 text-sm">
@@ -147,6 +176,8 @@ export function LandlordApplicantVerificationDetail({
         if (r.ok) {
           if (r.label === 'Uni email') {
             okLine = r.at ? `Uni email verified ${formatDate(r.at)}` : 'Uni email verified'
+        } else if (r.label === 'Work email') {
+          okLine = r.at ? `Work email verified ${formatDate(r.at)}` : 'Work email verified'
           } else if (r.label === 'ID document') {
             okLine = r.at ? `ID provided ${formatDate(r.at)}` : 'ID provided'
           } else if (r.label === 'Supporting document') {

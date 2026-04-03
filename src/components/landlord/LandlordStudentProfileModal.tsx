@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase'
 export type LandlordSafeStudentSnapshot = {
   id: string
   verification_type: 'student' | 'identity' | 'none' | null
+  accommodation_verification_route: 'student' | 'non_student' | null
   full_name: string | null
   avatar_url: string | null
   course: string | null
@@ -25,6 +26,8 @@ export type LandlordSafeStudentSnapshot = {
   universities: { name: string } | null
   uni_email_verified: boolean | null
   uni_email_verified_at: string | null
+  work_email_verified: boolean | null
+  work_email_verified_at: string | null
   id_submitted_at: string | null
   enrolment_submitted_at: string | null
   identity_supporting_submitted_at: string | null

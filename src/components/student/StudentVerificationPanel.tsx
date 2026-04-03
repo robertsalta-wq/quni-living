@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
 import { isValidUniEmailForVerification, uniEmailDomainErrorMessage } from '../../lib/uniEmailDomains'
+import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '../../lib/workEmailDomains'
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
@@ -26,6 +27,7 @@ type DocKind = 'id' | 'enrolment' | 'identity_supporting'
 
 export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) {
   const emailVerified = Boolean(profile.uni_email_verified && profile.uni_email)
+  const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
   const idSubmitted = Boolean(profile.id_submitted_at && profile.id_document_url)
   const enrolSubmitted = Boolean(profile.enrolment_submitted_at && profile.enrolment_doc_url)
   const identitySupportingSubmitted = Boolean(
@@ -37,9 +39,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     (profile.verification_type === 'none' && isNonStudentAccommodationRoute(profile.accommodation_verification_route))
 
   const completeCount = useIdentityFlow
-    ? [idSubmitted, identitySupportingSubmitted].filter(Boolean).length
+    ? [workEmailVerified, idSubmitted, identitySupportingSubmitted].filter(Boolean).length
     : [emailVerified, idSubmitted, enrolSubmitted].filter(Boolean).length
-  const progressTotal = useIdentityFlow ? 2 : 3
+  const progressTotal = 3
   const progressPct = Math.round((completeCount / progressTotal) * 100)
 
   const [uniEmailInput, setUniEmailInput] = useState(profile.uni_email ?? '')
@@ -51,6 +53,16 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const [verifying, setVerifying] = useState(false)
   const [resendAt, setResendAt] = useState<number | null>(null)
   const [, setResendTick] = useState(0)
+
+  const [workEmailInput, setWorkEmailInput] = useState(profile.work_email ?? '')
+  const [workOtpInput, setWorkOtpInput] = useState('')
+  const [workCodeSent, setWorkCodeSent] = useState(false)
+  const [workSendError, setWorkSendError] = useState<string | null>(null)
+  const [workVerifyError, setWorkVerifyError] = useState<string | null>(null)
+  const [workSending, setWorkSending] = useState(false)
+  const [workVerifying, setWorkVerifying] = useState(false)
+  const [workResendAt, setWorkResendAt] = useState<number | null>(null)
+  const [, setWorkResendTick] = useState(0)
 
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
@@ -110,13 +122,29 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   }, [profile.uni_email, emailVerified])
 
   useEffect(() => {
+    if (!useIdentityFlow) return
+    if (!workEmailVerified) {
+      setWorkEmailInput((prev) => (prev.trim() ? prev : profile.work_email ?? ''))
+    }
+  }, [profile.work_email, workEmailVerified, useIdentityFlow])
+
+  useEffect(() => {
     if (resendAt == null || Date.now() >= resendAt) return
     const t = window.setInterval(() => setResendTick((x) => x + 1), 1000)
     return () => window.clearInterval(t)
   }, [resendAt])
 
+  useEffect(() => {
+    if (workResendAt == null || Date.now() >= workResendAt) return
+    const t = window.setInterval(() => setWorkResendTick((x) => x + 1), 1000)
+    return () => window.clearInterval(t)
+  }, [workResendAt])
+
   const resendRemaining =
     resendAt != null && Date.now() < resendAt ? Math.ceil((resendAt - Date.now()) / 1000) : 0
+
+  const workResendRemaining =
+    workResendAt != null && Date.now() < workResendAt ? Math.ceil((workResendAt - Date.now()) / 1000) : 0
 
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
@@ -197,6 +225,82 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       setVerifying(false)
     }
   }, [otpInput, onRefresh])
+
+  const sendWorkCode = useCallback(async () => {
+    setWorkSendError(null)
+    setWorkVerifyError(null)
+    const trimmed = workEmailInput.trim().toLowerCase()
+    if (!isValidWorkEmailForVerification(trimmed)) {
+      setWorkSendError(workEmailDomainErrorMessage())
+      return
+    }
+    setWorkSending(true)
+    try {
+      const auth = await getValidAccessTokenForFunctions()
+      if ('error' in auth) {
+        setWorkSendError(auth.error)
+        return
+      }
+      const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
+        'send-work-otp',
+        {
+          body: { work_email: trimmed },
+          headers: { Authorization: `Bearer ${auth.token}` },
+        },
+      )
+      if (error) {
+        setWorkSendError(await readSupabaseFunctionInvokeError(data, error))
+        return
+      }
+      if (data && typeof data === 'object' && 'error' in data && data.error) {
+        setWorkSendError(String(data.error))
+        return
+      }
+      setWorkCodeSent(true)
+      setWorkOtpInput('')
+      setWorkResendAt(Date.now() + RESEND_SECONDS * 1000)
+    } finally {
+      setWorkSending(false)
+    }
+  }, [workEmailInput])
+
+  const verifyWorkCode = useCallback(async () => {
+    setWorkVerifyError(null)
+    const digits = workOtpInput.replace(/\D/g, '')
+    if (digits.length !== 6) {
+      setWorkVerifyError('Enter the 6-digit code from your email.')
+      return
+    }
+    setWorkVerifying(true)
+    try {
+      const auth = await getValidAccessTokenForFunctions()
+      if ('error' in auth) {
+        setWorkVerifyError(auth.error)
+        return
+      }
+      const { data, error } = await supabase.functions.invoke<{ ok?: boolean; error?: string }>(
+        'verify-work-otp',
+        {
+          body: { otp: digits },
+          headers: { Authorization: `Bearer ${auth.token}` },
+        },
+      )
+      if (error) {
+        setWorkVerifyError(await readSupabaseFunctionInvokeError(data, error))
+        return
+      }
+      if (data && typeof data === 'object' && 'error' in data && data.error) {
+        setWorkVerifyError(String(data.error))
+        return
+      }
+      setWorkCodeSent(false)
+      setWorkOtpInput('')
+      setWorkResendAt(null)
+      await onRefresh()
+    } finally {
+      setWorkVerifying(false)
+    }
+  }, [workOtpInput, onRefresh])
 
   async function uploadDoc(
     file: File,
@@ -298,8 +402,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             Identity verification
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {completeCount} of 2 complete — government ID plus one supporting document (payslip, employment letter, or
-            bank statement).
+            {completeCount} of 3 complete — work email (optional), government ID plus one supporting document (payslip,
+            employment letter, or bank statement).
           </p>
           <div className="mt-4 h-2.5 rounded-full bg-stone-200 overflow-hidden">
             <div
@@ -309,17 +413,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               aria-valuenow={progressPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`${completeCount} of 2 verification steps complete`}
+              aria-label={`${completeCount} of 3 verification steps complete`}
             />
           </div>
           <ol className="flex flex-wrap gap-4 mt-5 text-xs font-semibold text-gray-600">
             <li className="flex items-center gap-2">
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                  workEmailVerified ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
+                }`}
+              >
+                {workEmailVerified ? '✓' : '1'}
+              </span>
+              Work email
+            </li>
+            <li className="flex items-center gap-2">
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
                   idSubmitted ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
                 }`}
               >
-                {idSubmitted ? '✓' : '1'}
+                {idSubmitted ? '✓' : '2'}
               </span>
               Photo ID
             </li>
@@ -331,11 +445,133 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
                     : 'bg-white border border-stone-200 text-stone-500'
                 }`}
               >
-                {identitySupportingSubmitted ? '✓' : '2'}
+                {identitySupportingSubmitted ? '✓' : '3'}
               </span>
               Supporting document
             </li>
           </ol>
+        </section>
+
+        <section className={cardClass} aria-labelledby="verify-work-email-heading">
+          <h3 id="verify-work-email-heading" className="text-base font-bold text-gray-900">
+            Work email verification <span className="text-stone-500 font-semibold text-xs">(optional)</span>
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Verify your work email to show you can be contacted quickly about your application.
+          </p>
+
+          {workEmailVerified ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
+              <span className="text-lg" aria-hidden>
+                ✅
+              </span>
+              <span className="font-semibold">Verified</span>
+              <span className="text-emerald-800">{profile.work_email}</span>
+              {profile.work_email_verified_at && (
+                <span className="text-emerald-700/90 text-xs w-full sm:w-auto sm:ml-2">
+                  on {formatDate(profile.work_email_verified_at)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {!workCodeSent ? (
+                <div>
+                  <label htmlFor="work-email-verify" className={labelClass}>
+                    Work email
+                  </label>
+                  <input
+                    id="work-email-verify"
+                    type="email"
+                    autoComplete="email"
+                    value={workEmailInput}
+                    onChange={(e) => {
+                      setWorkEmailInput(e.target.value)
+                      setWorkSendError(null)
+                    }}
+                    placeholder="you@company.com"
+                    className={inputClass}
+                  />
+                  {workSendError && (
+                    <p className="text-xs text-red-600 mt-2" role="alert">
+                      {workSendError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    className={`${coralBtn} mt-3`}
+                    disabled={workSending}
+                    onClick={() => void sendWorkCode()}
+                  >
+                    {workSending ? 'Sending…' : 'Send code'}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    We sent a code to {workEmailInput.trim().toLowerCase()}. Enter it below to verify.
+                  </p>
+                  <div className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4">
+                    <p className="font-semibold text-stone-800">While you wait</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>
+                        Check <strong>Spam</strong> and search your inbox for <strong>Quni</strong>.
+                      </li>
+                      <li>
+                        Avoid tapping <strong>Resend</strong> too often — each send creates a <strong>new</strong> code.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <label htmlFor="work-otp" className={labelClass}>
+                    6-digit code
+                  </label>
+                  <input
+                    id="work-otp"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={workOtpInput}
+                    onChange={(e) => {
+                      setWorkOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      setWorkVerifyError(null)
+                    }}
+                    className={`${inputClass} tracking-widest font-mono text-lg`}
+                    placeholder="000000"
+                  />
+                  {workVerifyError && (
+                    <p className="text-xs text-red-600 mt-2" role="alert">
+                      {workVerifyError}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                    <button
+                      type="button"
+                      className={coralBtn}
+                      disabled={workVerifying}
+                      onClick={() => void verifyWorkCode()}
+                    >
+                      {workVerifying ? 'Checking…' : 'Verify code'}
+                    </button>
+                    {workResendRemaining > 0 ? (
+                      <span className="text-xs text-gray-500">Resend in {workResendRemaining}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-sm font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                        disabled={workSending}
+                        onClick={() => void sendWorkCode()}
+                      >
+                        Resend code
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className={cardClass} aria-labelledby="verify-id-heading">

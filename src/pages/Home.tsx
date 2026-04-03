@@ -47,6 +47,9 @@ export default function Home() {
   const [countLoading, setCountLoading] = useState(isSupabaseConfigured)
   const [featured, setFeatured] = useState<Property[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(isSupabaseConfigured)
+  const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(
+    () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
+  )
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -225,12 +228,12 @@ export default function Home() {
                   onCampusChange={setCampusId}
                   showState
                   showLabels={false}
-                  variant="pairRow"
-                  className="w-full min-w-0"
+                  variant="stack"
+                  className="w-full min-w-0 flex flex-col gap-3"
                   campusPlaceholderNoUniversity="Select campus"
                   campusPlaceholderWithUniversity="All campuses"
-                  universitySelectClassName="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
-                  campusSelectClassName="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
+                  universitySelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  campusSelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
                   universityIdAttr="home-search-uni"
                   campusIdAttr="home-search-campus"
                 />
@@ -299,6 +302,32 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {!nonStudentBannerDismissed && (
+        <div className="bg-teal-50 border-b border-teal-200 w-full py-3">
+          <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-gray-800 min-w-0 flex-1">
+              Not a student? Quality furnished rooms in Newtown, Glebe, Randwick and more.
+            </p>
+            <div className="flex items-center shrink-0">
+              <Link to="/rent-near-campus" className="text-sm text-teal-700 font-medium">
+                Find out more →
+              </Link>
+              <button
+                type="button"
+                className="ml-4 text-gray-400 hover:text-gray-600 text-lg leading-none p-0.5"
+                aria-label="Dismiss"
+                onClick={() => {
+                  localStorage.setItem('quni_nonstu_banner_dismissed', 'true')
+                  setNonStudentBannerDismissed(true)
+                }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="bg-[#8FB9AB] w-full py-16 sm:py-20">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">

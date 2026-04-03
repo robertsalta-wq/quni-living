@@ -18,6 +18,7 @@ import {
 import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
 import { clearQuniSelectedRole, getQuniSelectedRole } from '../lib/quniSelectedRole'
 import { reportFormError } from '../lib/reportFormError'
+import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 
 type Choice = 'student' | 'landlord'
 
@@ -90,7 +91,7 @@ async function saveProfileRow(
 }
 
 export default function Onboarding() {
-  const { user, loading: authLoading, refreshProfile, role: contextRole } = useAuthContext()
+  const { user, loading: authLoading, refreshProfile, role: contextRole, signOut } = useAuthContext()
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -117,7 +118,18 @@ export default function Onboarding() {
     }
     let cancelled = false
     ;(async () => {
-      const { data } = await supabase.auth.getUser()
+      const { data, error: guErr } = await supabase.auth.getUser()
+      if (guErr && isStaleOrInvalidJwtUserError(guErr.message)) {
+        await signOut()
+        navigate(
+          '/login?error=invalid_session&detail=' +
+            encodeURIComponent(
+              'This browser had an old sign-in that no longer exists on the server. Log in again with your email and password.',
+            ),
+          { replace: true },
+        )
+        return
+      }
       const u = data.user ?? user
       const { role, profile } = await fetchRoleAndProfile(u)
       if (cancelled) return
@@ -143,7 +155,7 @@ export default function Onboarding() {
     return () => {
       cancelled = true
     }
-  }, [user, authLoading, navigate, refreshProfile])
+  }, [user, authLoading, navigate, refreshProfile, signOut])
 
   async function handleComplete() {
     if (!user) return
@@ -166,6 +178,17 @@ export default function Onboarding() {
         () => supabase.auth.getUser(),
       )
       const sessionUser = authFresh.user
+      if (authFreshErr && isStaleOrInvalidJwtUserError(authFreshErr.message)) {
+        await signOut()
+        navigate(
+          '/login?error=invalid_session&detail=' +
+            encodeURIComponent(
+              'This browser had an old sign-in that no longer exists on the server. Log in again with your email and password.',
+            ),
+          { replace: true },
+        )
+        return
+      }
       if (authFreshErr || !sessionUser?.id) {
         throw new Error(authFreshErr?.message ?? 'Your session could not be verified. Please log in again.')
       }

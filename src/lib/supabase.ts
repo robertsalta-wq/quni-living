@@ -68,9 +68,24 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    // OAuth PKCE: exchange only on `/auth/callback`. If true, the client can consume
-    // `?code=` before React reads it → false "Sign-in failed" on Google login.
-    detectSessionInUrl: false,
-    flowType: 'pkce',
+    /**
+     * Implicit flow (not PKCE) so **email confirmation links work in any browser** (mail app webview,
+     * phone, etc.). PKCE ties the one-time `code` to a `code_verifier` stored only where sign-up
+     * started — opening the link elsewhere causes "PKCE code verifier not found".
+     *
+     * Only parse auth tokens from the URL on `/auth/callback` so other routes are unaffected.
+     */
+    flowType: 'implicit',
+    detectSessionInUrl(url, params) {
+      const path = url.pathname.replace(/\/$/, '') || '/'
+      if (!path.endsWith('/auth/callback')) return false
+      return Boolean(
+        params.access_token ||
+          params.refresh_token ||
+          params.error_description ||
+          params.error ||
+          params.error_code,
+      )
+    },
   },
 })

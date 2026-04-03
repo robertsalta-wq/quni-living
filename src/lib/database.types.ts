@@ -268,6 +268,9 @@ export interface Database {
           uni_email: string | null
           uni_email_verified: boolean | null
           uni_email_verified_at: string | null
+          work_email: string | null
+          work_email_verified: boolean | null
+          work_email_verified_at: string | null
           id_document_url: string | null
           id_submitted_at: string | null
           enrolment_doc_url: string | null
@@ -312,6 +315,9 @@ export interface Database {
           uni_email?: string | null
           uni_email_verified?: boolean | null
           uni_email_verified_at?: string | null
+          work_email?: string | null
+          work_email_verified?: boolean | null
+          work_email_verified_at?: string | null
           id_document_url?: string | null
           id_submitted_at?: string | null
           enrolment_doc_url?: string | null
@@ -356,6 +362,9 @@ export interface Database {
           uni_email?: string | null
           uni_email_verified?: boolean | null
           uni_email_verified_at?: string | null
+          work_email?: string | null
+          work_email_verified?: boolean | null
+          work_email_verified_at?: string | null
           id_document_url?: string | null
           id_submitted_at?: string | null
           enrolment_doc_url?: string | null

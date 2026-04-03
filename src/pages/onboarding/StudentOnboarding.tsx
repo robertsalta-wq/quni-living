@@ -463,7 +463,10 @@ export default function StudentOnboarding() {
       }
 
       await refreshProfile()
-      setWelcome(true)
+      // Keep post-onboarding routing consistent with the student flow:
+      // once `onboarding_complete` is persisted, skip the completion screen and land on listings.
+      consumePostAuthRedirect()
+      navigate('/listings', { replace: true })
     } finally {
       setSubmitting(false)
     }

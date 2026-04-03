@@ -7,6 +7,7 @@ import {
   type UserRole,
 } from '../lib/authProfile'
 import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
+import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 
 export type AuthState = {
   user: User | null
@@ -37,7 +38,16 @@ export function useProvideAuth(): AuthState {
     }
     // Session user from storage/JWT can omit `email`. Replace context `user` with getUser() result so
     // isAdminUser(user), Header, and onboarding checks see the same email Supabase verified.
-    const { data } = await supabase.auth.getUser()
+    const { data, error } = await supabase.auth.getUser()
+    if (error && isStaleOrInvalidJwtUserError(error.message)) {
+      clearOnboardingDismissed()
+      await supabase.auth.signOut()
+      setUser(null)
+      setSession(null)
+      setProfile(null)
+      setRole(null)
+      return
+    }
     const resolved = data.user ?? u
     setUser(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
@@ -48,9 +58,9 @@ export function useProvideAuth(): AuthState {
   const refreshProfile = useCallback(async () => {
     if (!isSupabaseConfigured) return
     const {
-      data: { user: u },
-    } = await supabase.auth.getUser()
-    await hydrateFromUser(u)
+      data: { session: s },
+    } = await supabase.auth.getSession()
+    await hydrateFromUser(s?.user ?? null)
   }, [hydrateFromUser])
 
   useEffect(() => {

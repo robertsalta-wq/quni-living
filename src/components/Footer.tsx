@@ -133,6 +133,11 @@ export default function Footer() {
                   AI listing tools
                 </Link>
               </li>
+              <li>
+                <Link to="/rent-near-campus" className={linkClass}>
+                  Rent near university
+                </Link>
+              </li>
             </ul>
           </div>
 

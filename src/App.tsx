@@ -7,6 +7,7 @@ import ScrollToTop from './components/ScrollToTop'
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
+import RentNearCampus from './pages/RentNearCampus'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
@@ -49,6 +50,7 @@ import StudentAccommodationIndex from './pages/seo/StudentAccommodationIndex'
 import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import CampusAccommodation from './pages/seo/CampusAccommodation'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
+import AIChatWidget from './components/aiChat/AIChatWidget'
 
 function App() {
   const location = useLocation()
@@ -78,6 +80,7 @@ function App() {
           <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
+          <Route path="/rent-near-campus" element={<RentNearCampus />} />
           <Route path="/listings" element={<Listings />} />
           <Route path="/student-accommodation" element={<StudentAccommodationIndex />} />
           <Route path="/student-accommodation/:universitySlug" element={<UniversityAccommodation />} />
@@ -237,6 +240,7 @@ function App() {
         </main>
         {!adminShell && !aiLandingShell && <Footer />}
         <FeedbackButton />
+        <AIChatWidget />
       </>
     </Sentry.ErrorBoundary>
   )

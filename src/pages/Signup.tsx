@@ -481,6 +481,12 @@ export default function Signup() {
                 <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
               </button>
             </div>
+            <p className="text-xs text-gray-600 mt-3">
+              New to renting near campus as a professional?{' '}
+              <Link to="/rent-near-campus" className="text-indigo-600 font-medium hover:text-indigo-800">
+                Preview the non-student landing page.
+              </Link>
+            </p>
             {!accountKind && (
               <p className="text-xs text-amber-800 mt-2">Choose one option above to continue with Google or email.</p>
             )}

@@ -17,6 +17,7 @@ import { fetchPropertiesByIds, rpcPropertiesNearCampus } from '../lib/properties
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 import { PropertyCard } from '../components/PropertyCard'
 import Seo from '../components/Seo'
+import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 
@@ -1220,6 +1221,13 @@ export default function PropertyDetail() {
                     </p>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <ChatEmbed
+                  defaultOpen={false}
+                  listingContext={{ propertyId: property.id, sourcePage: 'property_detail' }}
+                />
               </div>
             </aside>
           </div>
