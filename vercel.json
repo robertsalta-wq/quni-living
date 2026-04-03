@@ -1,5 +1,8 @@
 {
   "functions": {
+    "api/chat.ts": {
+      "maxDuration": 60
+    },
     "api/ai/suggest-pricing.ts": {
       "maxDuration": 30
     },
