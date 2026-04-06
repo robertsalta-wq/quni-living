@@ -43,9 +43,9 @@ export async function fetchRoleAndProfile(user: User): Promise<{
 }
 
 /**
- * Default destination after login when no explicit `?redirect=` is used.
- * Student: incomplete onboarding → /onboarding/student; complete → /listings.
- * Landlord → /onboarding/landlord until wizard complete, then /landlord/dashboard. Admin → /admin. No role → /onboarding.
+ * Default destination after login when no explicit `?redirect=` (or other meaningful return path) is used.
+ * Student: incomplete onboarding → /onboarding/student; complete → /student-dashboard.
+ * Landlord → /onboarding/landlord until wizard complete, then /landlord-dashboard. Admin → /admin. No role → /onboarding.
  */
 export function getPostLoginRedirectDestination(
   user: User,
@@ -56,12 +56,12 @@ export function getPostLoginRedirectDestination(
   if (role === 'landlord') {
     const lp = profile as LandlordProfileRow | null
     if (lp && lp.onboarding_complete !== true) return '/onboarding/landlord'
-    return '/landlord/dashboard'
+    return '/landlord-dashboard'
   }
   if (role === 'student') {
     const sp = profile as StudentProfileRow | null
     if (!sp || sp.onboarding_complete !== true) return '/onboarding/student'
-    return '/listings'
+    return '/student-dashboard'
   }
   return '/onboarding'
 }

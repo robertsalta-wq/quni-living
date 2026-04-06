@@ -550,8 +550,6 @@ export default async function handler(request) {
 
     const depositCents = typeof booking.deposit_amount === 'number' ? booking.deposit_amount : null
 
-    const leaseLength = booking.lease_length || 'Flexible'
-
     const sendStudent = async () => {
       if (!studentEmail) return
       const t = bookingConfirmedStudent({

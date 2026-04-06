@@ -205,7 +205,7 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const res = await fetch('/api/create-rent-subscription', {
+      const res = await fetch(apiUrl('/api/create-rent-subscription'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bookingId }),
@@ -234,7 +234,7 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const res = await fetch('/api/refund-booking-deposit', {
+      const res = await fetch(apiUrl('/api/refund-booking-deposit'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bookingId, declineReason: declineReason.trim() || undefined }),
@@ -316,7 +316,7 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const res = await fetch('/api/booking-request-info', {
+      const res = await fetch(apiUrl('/api/booking-request-info'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bookingId, message: infoMessage.trim() }),

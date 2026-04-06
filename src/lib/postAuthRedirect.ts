@@ -6,25 +6,39 @@ export function isSafeInternalPath(p: string): boolean {
   return true
 }
 
+/**
+ * Paths that must not override role-based post-login routing. Typical case: user opens Log in from
+ * the marketing home (`state.from` or stored redirect is `/`), which would otherwise send landlords
+ * and students to `/` instead of their dashboard.
+ */
+export function isShallowReturnIntentPath(p: string): boolean {
+  return p === '/'
+}
+
 /** Persist ?redirect= for OAuth flows that lose the query string on return. */
 export function rememberPostAuthRedirectFromSearch(searchParams: URLSearchParams): void {
   const raw = searchParams.get('redirect')
   if (!raw) return
   try {
     const decoded = decodeURIComponent(raw)
-    if (isSafeInternalPath(decoded)) sessionStorage.setItem(KEY, decoded)
+    if (isSafeInternalPath(decoded) && !isShallowReturnIntentPath(decoded)) sessionStorage.setItem(KEY, decoded)
   } catch {
     /* ignore malformed */
   }
 }
 
 export function setPostAuthRedirect(path: string): void {
-  if (isSafeInternalPath(path)) sessionStorage.setItem(KEY, path)
+  if (isSafeInternalPath(path) && !isShallowReturnIntentPath(path)) sessionStorage.setItem(KEY, path)
 }
 
 export function peekPostAuthRedirect(): string | null {
   const v = sessionStorage.getItem(KEY)
-  return v && isSafeInternalPath(v) ? v : null
+  if (!v || !isSafeInternalPath(v)) return null
+  if (isShallowReturnIntentPath(v)) {
+    sessionStorage.removeItem(KEY)
+    return null
+  }
+  return v
 }
 
 export function consumePostAuthRedirect(): string | null {
@@ -38,7 +52,13 @@ export function persistAuthReturnIntent(searchParams: URLSearchParams, locationS
   rememberPostAuthRedirectFromSearch(searchParams)
   if (searchParams.get('redirect')) return
   const from = (locationState as { from?: { pathname?: string } })?.from?.pathname
-  if (from && isSafeInternalPath(from) && from !== '/login' && from !== '/signup') {
+  if (
+    from &&
+    isSafeInternalPath(from) &&
+    !isShallowReturnIntentPath(from) &&
+    from !== '/login' &&
+    from !== '/signup'
+  ) {
     setPostAuthRedirect(from)
   }
 }
@@ -55,7 +75,7 @@ export function resolvePostLoginDestination(
   if (raw) {
     try {
       const decoded = decodeURIComponent(raw)
-      if (isSafeInternalPath(decoded)) {
+      if (isSafeInternalPath(decoded) && !isShallowReturnIntentPath(decoded)) {
         sessionStorage.removeItem(KEY)
         return decoded
       }
@@ -64,7 +84,7 @@ export function resolvePostLoginDestination(
     }
   }
   const from = (locationState as { from?: { pathname?: string } })?.from?.pathname
-  if (from && isSafeInternalPath(from) && from !== '/login') {
+  if (from && isSafeInternalPath(from) && from !== '/login' && !isShallowReturnIntentPath(from)) {
     sessionStorage.removeItem(KEY)
     return from
   }
