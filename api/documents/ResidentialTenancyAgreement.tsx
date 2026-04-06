@@ -1,7 +1,7 @@
 // @ts-nocheck — Vercel's isolated API TypeScript pass uses Node16 resolution without this project's jsx/tsconfig.api graph.
 import type { ReactNode } from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import type { ResidentialTenancyAgreementProps } from './rtaTypes'
+import type { ResidentialTenancyAgreementProps } from './rtaTypes.ts'
 
 const navy = '#1B3A6B'
 const gold = '#C9A84C'

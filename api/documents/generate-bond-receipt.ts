@@ -13,7 +13,7 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
-import { BondReceiptPdf } from './BondReceiptPdf'
+import { BondReceiptPdf } from './BondReceiptPdf.tsx'
 
 /** Mirrors `src/lib/listings.ts` — kept local so Vercel’s API TS compile graph stays self-contained. */
 function isBoardingLodgerBondContext(
