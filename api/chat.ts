@@ -5,6 +5,8 @@
 import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
+import { retrieveRelevantKnowledge } from './lib/knowledgeRetrieval.js'
+
 export const config = {
   runtime: 'nodejs',
   maxDuration: 60,
@@ -713,6 +715,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return SYSTEM_PROMPTS.visitor
   })()
 
+  let knowledgeContext = ''
+  try {
+    knowledgeContext = await retrieveRelevantKnowledge(
+      userMessage,
+      'NSW', // TODO: detect state from user profile later
+      4,
+    )
+  } catch (e) {
+    console.error('[chat] RAG retrieval failed:', e)
+  }
+
+  const ragBlock = knowledgeContext
+    ? `\n\n--- RELEVANT KNOWLEDGE BASE ---\n${knowledgeContext}\n--- END KNOWLEDGE BASE ---`
+    : ''
+  const finalSystemPrompt = systemPrompt + ragBlock
+
   // Rolling window:
   // - we trust client to provide the conversation window.
   const anthropicMessages = messages.slice(-12).map((m) => ({ role: m.role, content: m.content }))
@@ -749,7 +767,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: chatMaxTokens,
-        system: systemPrompt,
+        system: finalSystemPrompt,
         messages: anthropicMessages.length ? anthropicMessages : [{ role: 'user', content: userMessage }],
         stream: true,
       }),
@@ -783,7 +801,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         body: JSON.stringify({
           model: 'claude-sonnet-4-5',
           max_tokens: chatMaxTokens,
-          system: systemPrompt,
+          system: finalSystemPrompt,
           messages: anthropicMessages.length ? anthropicMessages : [{ role: 'user', content: userMessage }],
           stream: false,
         }),

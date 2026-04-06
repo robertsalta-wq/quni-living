@@ -2,6 +2,8 @@
 
 One place to see **every name** the app expects on Vercel and how to add it. Prefer the [Dashboard](https://vercel.com/docs/projects/environment-variables) (Project → Settings → Environment Variables) or the CLI below.
 
+**AI chat RAG:** add **`OPENAI_API_KEY`** on Vercel (Production and Preview as needed). Without it, `/api/chat` still answers but **does not retrieve** knowledge-base chunks; `/api/admin/knowledge` POST will return 500 until the key is set.
+
 ## Pull to your machine (do not commit)
 
 From the repo root, linked to the Vercel project:
@@ -55,6 +57,7 @@ vercel env add DELETE_USER_DOCS_WEBHOOK_SECRET production
 vercel env add SITE_URL production
 vercel env add PUBLIC_SITE_URL production
 vercel env add ANTHROPIC_API_KEY production
+vercel env add OPENAI_API_KEY production
 vercel env add CHAT_LIMIT_LOGGED_IN_PER_24H production
 vercel env add CHAT_LIMIT_VISITOR_PER_HOUR production
 vercel env add CHAT_LISTING_CONTEXT_MAX_IDS production

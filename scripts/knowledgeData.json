@@ -1,0 +1,184 @@
+[
+  {
+    "id": "6fad4b80-0001-4000-8000-000000000001",
+    "title": "NSW residential leases: cooling-off period",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Unlike some consumer contracts, NSW residential tenancy agreements generally do not include a statutory cooling-off period once a lease is signed. If you have not yet signed, you can still negotiate or walk away. If you have signed, your rights to end the tenancy early depend on the lease type (fixed term vs periodic), break-lease clauses, and mutual agreement with the landlord. Always check your written agreement and current NSW Fair Trading guidance."
+  },
+  {
+    "id": "6fad4b80-0002-4000-8000-000000000002",
+    "title": "NSW rental bond: maximum amount and lodging with Fair Trading",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "For most NSW residential tenancies, the bond cannot exceed four weeks rent (special rules can apply to very high weekly rents). The landlord or agent must lodge the bond with NSW Fair Trading (Rental Bonds Online is commonly used) within 10 working days after you pay it. You should receive information confirming lodgement. If you are unsure whether your bond was lodged, you can check with NSW Fair Trading."
+  },
+  {
+    "id": "6fad4b80-0003-4000-8000-000000000003",
+    "title": "NSW bond return after tenancy ends",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "When a tenancy ends, the landlord or agent generally must apply to Fair Trading to release the bond within 14 days (unless you have already agreed in writing to a deduction). Disputes over how much should be returned can be handled through Fair Trading’s bond claim process and, if needed, NSW Civil and Administrative Tribunal (NCAT). Tenants should provide a forwarding address and keep copies of condition reports and rent records."
+  },
+  {
+    "id": "6fad4b80-0004-4000-8000-000000000004",
+    "title": "NSW rent increases: notice and frequency",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "For most NSW residential tenancies, rent can only be increased if the agreement allows it (or after a fixed term ends, depending on arrangement). When an increase is permitted, the landlord must give at least 60 days written notice using the approved form, and in a continuing tenancy increases are generally limited to once in any 12-month period. Exact rules depend on tenancy type and start date; verify against current NSW Fair Trading materials."
+  },
+  {
+    "id": "6fad4b80-0005-4000-8000-000000000005",
+    "title": "NSW landlord entry: notice and frequency",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Except in emergencies, the landlord or agent should give you at least 24 hours written notice before entering for a routine inspection or other non-urgent reason, and entry for inspections is typically limited to at most about once in any 7-day period unless you agree otherwise—always verify against current NSW Fair Trading materials and your written agreement. Emergencies (e.g. burst pipe, gas smell, serious safety risk) can justify immediate entry without ordinary notice."
+  },
+  {
+    "id": "6fad4b80-0006-4000-8000-000000000006",
+    "title": "NSW repairs: urgent vs non-urgent",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Landlords must keep the premises in reasonable repair. Urgent repairs (things that make the property unsafe or essential services unusable) should be addressed quickly—Fair Trading guidance often refers to arranging urgent repairs as soon as possible, and there are statutory pathways for tenants to authorise urgent repairs up to a set amount in defined circumstances. Non-urgent repairs should still be carried out within a reasonable time after notice. Document requests in writing and keep photos where relevant."
+  },
+  {
+    "id": "6fad4b80-0007-4000-8000-000000000007",
+    "title": "NSW breaking a fixed-term lease (tenant)",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Ending a fixed-term tenancy early without grounds can mean you are responsible for break fees or the landlord’s reasonable costs to re-let (such as advertising and a letting fee proportionate to the remainder of the term), subject to the landlord’s duty to mitigate loss. Mutual surrender (agreed in writing) is often the cleanest path. If you are experiencing serious hardship or certain domestic violence circumstances, different rules may apply—seek specialist tenancy advice."
+  },
+  {
+    "id": "6fad4b80-0008-4000-8000-000000000008",
+    "title": "NSW notices to vacate: tenants and landlords (overview)",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Notice periods depend on whether the agreement is fixed term or periodic, who is giving notice, and the reason. Tenants typically give 14 days for a periodic tenancy or 21 days to end at the end of a fixed term (confirm current forms and minimum periods). Landlord notice periods vary widely (for example 30 to 90 days or more) depending on the grounds and tenancy type. Use the official NSW notice forms and dates; wrong notice can invalidate the process."
+  },
+  {
+    "id": "6fad4b80-0009-4000-8000-000000000009",
+    "title": "NSW discrimination, children, and pets in renting",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Anti-discrimination law limits some reasons a landlord may refuse a tenant. Refusing applicants because they have children is generally not lawful in NSW rental housing contexts covered by discrimination protections. Pets are different: landlords may refuse pets unless the tenancy agreement or strata rules and current rental law say otherwise; recent reforms have shifted some defaults—check current NSW Fair Trading guidance on pets in rentals and any strata by-laws."
+  },
+  {
+    "id": "6fad4b80-000a-4000-8000-00000000000a",
+    "title": "NSW: if the landlord will not return the bond or claims unfair deductions",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "If the landlord or agent delays lodgement, withholds the bond without grounds, or claims deductions you dispute, start by checking Rental Bonds Online status and gather your ingoing/outgoing condition reports, photos, rent ledger, and messages. You can dispute a bond claim through Fair Trading’s processes. If agreement cannot be reached, NCAT can decide bond disputes. For non-lodgement, contact NSW Fair Trading—bonds must generally be lodged within the statutory timeframe."
+  },
+  {
+    "id": "6fad4b80-000b-4000-8000-00000000000b",
+    "title": "NSW: making a complaint to Fair Trading (tenancy)",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "NSW Fair Trading handles many rental compliance issues (bond lodgement, some agent conduct, and consumer information). You can lodge a complaint online or by phone (13 32 20). Have your address, dates, agency details, and evidence ready. Fair Trading may investigate compliance or mediate in some matters. Tribunal applications (NCAT) are separate and may be needed for orders about possession, rent, or bond disputes that are not resolved by agreement."
+  },
+  {
+    "id": "6fad4b80-000c-4000-8000-00000000000c",
+    "title": "NSW: landlord or agent enters without proper notice (student and general renters)",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "If someone enters without lawful notice or consent (and it is not a genuine emergency), document the date/time, who entered, and any evidence (messages, photos, witnesses). You can complain to Fair Trading about agent conduct in some cases. Repeated or serious breaches may support tribunal applications about breach of quiet enjoyment. Avoid retaliatory actions; use written communication and official pathways. For tailored advice, contact Tenants’ Union of NSW or your student legal service."
+  },
+  {
+    "id": "6fad4b80-000d-4000-8000-00000000000d",
+    "title": "NSW bond deductions and reasonable wear and tear",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "At the end of a tenancy, landlords may claim bond money only for lawful amounts—typically unpaid rent or damage beyond reasonable wear and tear. Fair wear and tear means deterioration from ordinary daily use (e.g. minor carpet flattening, small scuffs) rather than negligence, stains, holes, or broken items. The ingoing and outgoing condition reports are critical evidence. If deductions seem unfair, dispute the claim via Fair Trading/NCAT with photos and records."
+  },
+  {
+    "id": "6fad4b80-000e-4000-8000-00000000000e",
+    "title": "NSW condition reports and why they matter",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "At the start and end of a tenancy, a condition report records the property’s state. In NSW, the landlord/agent must provide an ingoing report; tenants should complete the tenant section within the required timeframe and keep a copy. Disputes about cleaning or damage often turn on this document plus photos and time-stamped communications."
+  },
+  {
+    "id": "6fad4b80-000f-4000-8000-00000000000f",
+    "title": "NSW smoke alarms and basic safety obligations",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Landlords must ensure smoke alarms meet NSW rules (type, placement, maintenance). Tenants must not remove or interfere with alarms and should report faults promptly. If alarms are missing or faulty, request repair in writing and escalate via Fair Trading guidance if needed. This summary is general—check current NSW legislation and Fire and Rescue NSW guidance."
+  },
+  {
+    "id": "6fad4b80-0010-4000-8000-000000000010",
+    "title": "NSW locks, keys, and security devices",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Tenants have rights around security. Changing locks can require landlord consent except in certain safety circumstances; provide copies of keys where required. If you are excluded unlawfully or locks are changed without process, seek urgent advice. Rules are detail-heavy—confirm with Fair Trading or a tenancy adviser."
+  },
+  {
+    "id": "6fad4b80-0011-4000-8000-000000000011",
+    "title": "Quni platform fees for students (booking and weekly)",
+    "category": "platform_policy",
+    "state": null,
+    "content": "On Quni, students pay a one-off booking fee (currently $49) when proceeding with a booking, plus an ongoing weekly platform fee of 3% of rent while the tenancy is managed through the platform. Exact amounts and tax treatment should be confirmed at checkout and in your agreement with Quni."
+  },
+  {
+    "id": "6fad4b80-0012-4000-8000-000000000012",
+    "title": "Quni landlord fees and listing cost",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Landlords pay a one-off acceptance fee (currently $29) when accepting a booking, plus an ongoing weekly service fee of 8% of rent while the tenancy is on-platform. Creating a standard listing on Quni is free; premium placement or add-ons may exist separately—check the landlord dashboard and current terms."
+  },
+  {
+    "id": "6fad4b80-0013-4000-8000-000000000013",
+    "title": "Quni student verification requirements",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Students typically complete verification using a university email OTP, photo ID, and proof of enrolment. Verification helps landlords trust applicants and may be required before certain actions (such as booking or payments). Requirements can change—follow the in-app checklist."
+  },
+  {
+    "id": "6fad4b80-0014-4000-8000-000000000014",
+    "title": "Quni non-student renters and identity checks",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Renters who are not students may use a separate identity verification tier appropriate to their profile. The goal is consistent trust and safety on the marketplace. See onboarding prompts for the exact documents and steps."
+  },
+  {
+    "id": "6fad4b80-0015-4000-8000-000000000015",
+    "title": "Quni payouts via Stripe Connect",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Quni uses Stripe Connect for landlord payouts. Transfers to a bank account typically settle in about 2–3 business days depending on bank processing, public holidays, and Stripe’s timelines. Ensure your Connect onboarding is complete to avoid delays."
+  },
+  {
+    "id": "6fad4b80-0016-4000-8000-000000000016",
+    "title": "Quni dispute resolution between users",
+    "category": "platform_policy",
+    "state": null,
+    "content": "If a dispute arises between a student and landlord on Quni, parties should first communicate in good faith through the platform and keep a written record. For payment, booking, or account issues, contact Quni support at hello@quni.com.au with relevant IDs and screenshots. Matters that are really residential tenancy disputes (bond, possession, repairs) are usually handled under NSW tenancy law via Fair Trading or NCAT, not by Quni as a substitute for those agencies."
+  },
+  {
+    "id": "6fad4b80-0017-4000-8000-000000000017",
+    "title": "Quni AI and legal disclaimer",
+    "category": "disclaimer",
+    "state": null,
+    "content": "Quni AI provides general information only, not legal advice. Laws and policies change, and your situation may differ. For specific legal problems, contact NSW Fair Trading on 13 32 20 or the Tenants’ Union of NSW. For urgent safety issues, contact emergency services."
+  },
+  {
+    "id": "6fad4b80-0018-4000-8000-000000000018",
+    "title": "NSW: rent in advance and rent payment records",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Landlords may ask for rent in advance within legal limits at the start of a tenancy. During the tenancy, keep receipts or electronic records for every payment. If amounts or dates disagree, written records are essential for tribunal proceedings."
+  },
+  {
+    "id": "6fad4b80-0019-4000-8000-000000000019",
+    "title": "NSW: sub-letting and assignment",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "You generally cannot sub-let or assign your tenancy without the landlord’s consent, and the landlord must not unreasonably withhold consent in many standard residential cases—exceptions and details depend on your agreement and current law. Always get agreements in writing before handing keys or taking money from a sub-tenant."
+  },
+  {
+    "id": "6fad4b80-001a-4000-8000-00000000001a",
+    "title": "NSW: water usage charges and utilities",
+    "category": "tenancy_law",
+    "state": "NSW",
+    "content": "Whether a tenant pays water usage depends on whether the property meets efficiency standards and what the lease says. Electricity and internet are commonly tenant accounts unless otherwise agreed. Read your lease and any disclosure materials; dispute unclear charges in writing."
+  }
+]

@@ -13,6 +13,7 @@ const NAV = [
   { to: '/admin/landlords', label: 'Landlords', end: false },
   { to: '/admin/apps', label: 'Apps', end: false },
   { to: '/admin/payments', label: 'Payments', end: false },
+  { to: '/admin/knowledge-base', label: 'Knowledge base', end: false },
 ] as const
 
 function navClassName(isActive: boolean) {

@@ -32,6 +32,7 @@ import AdminStudents from './pages/admin/AdminStudents'
 import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
 import AdminPayments from './pages/admin/AdminPayments'
+import KnowledgeBase from './pages/admin/KnowledgeBase'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
@@ -255,6 +256,7 @@ function App() {
             <Route path="landlords" element={<AdminLandlords />} />
             <Route path="apps" element={<AdminApps />} />
             <Route path="payments" element={<AdminPayments />} />
+            <Route path="knowledge-base" element={<KnowledgeBase />} />
           </Route>
           </Routes>
         </main>

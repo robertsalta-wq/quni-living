@@ -18,6 +18,7 @@
     "cap:android": "npm run cap:sync && npx cap open android",
     "generate:android-icons": "node scripts/generate-android-launcher-icons.mjs",
     "seed:properties": "npx tsx src/scripts/seedProperties.ts",
+    "seed:knowledge": "node scripts/run-with-env.mjs npx tsx scripts/seedKnowledge.ts",
     "generate:suburbs": "node scripts/suburb-generator/generate.js",
     "supabase:deploy:functions": "npx supabase@latest functions deploy send-uni-otp && npx supabase@latest functions deploy verify-uni-otp && npx supabase@latest functions deploy send-work-otp && npx supabase@latest functions deploy verify-work-otp && npx supabase@latest functions deploy delete-student-account --no-verify-jwt && npx supabase@latest functions deploy delete-user-documents --no-verify-jwt && npx supabase@latest functions deploy stripe-webhook --no-verify-jwt"
   },
