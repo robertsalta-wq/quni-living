@@ -414,9 +414,11 @@ export default async function handler(request) {
       .neq('id', booking.id)
       .in('status', ['pending_confirmation', 'awaiting_info'])
 
-    if (compErr) {
-      console.error('load competitor bookings', compErr)
-    } else {
+    const runCompetitorDeclines = async () => {
+      if (compErr) {
+        console.error('load competitor bookings', compErr)
+        return
+      }
       for (const row of competitors ?? []) {
         const nowDecline = new Date().toISOString()
         const { error: decErr } = await admin
@@ -489,7 +491,8 @@ export default async function handler(request) {
       }
     }
 
-    if (booking.property_id) {
+    const runPropertyBooked = async () => {
+      if (!booking.property_id) return
       const { error: propUpErr } = await admin
         .from('properties')
         .update({ status: 'booked' })
@@ -498,6 +501,8 @@ export default async function handler(request) {
         console.error('property booked status update', propUpErr)
       }
     }
+
+    await Promise.all([runCompetitorDeclines(), runPropertyBooked()])
 
     const propForBond =
       booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
@@ -587,39 +592,45 @@ export default async function handler(request) {
       await sendEmail({ to: landlordEmail, subject: t.subject, html: t.html })
     }
 
-    try {
-      await Promise.all([sendStudent(), sendLandlord()])
-    } catch (e) {
-      console.error('booking confirmed emails (Resend)', e)
-    }
-
-    const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-    const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
-    if (!leaseFlowSecret) {
-      console.warn(
-        '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
-      )
-    } else {
-      console.log('[create-rent-subscription] triggering generate-lease', {
-        booking_id: booking.id,
-        url: generateLeaseUrl,
-      })
-      const generateLeaseTask = (async () => {
-        try {
-          const res = await fetch(generateLeaseUrl, {
-            method: 'POST',
-            headers: internalPostHeaders(leaseFlowSecret),
-            body: JSON.stringify({ booking_id: booking.id }),
-          })
-          if (!res.ok) {
-            const t = await res.text()
-            console.error('generate-lease failed', res.status, t)
-          }
-        } catch (e) {
-          console.error('generate-lease trigger', e)
+    /** Emails + lease PDF are slow; defer so the HTTP response returns before Vercel’s execution cap (e.g. 10s on Hobby). */
+    const followUpPromise = (async () => {
+      try {
+        await Promise.all([sendStudent(), sendLandlord()])
+      } catch (e) {
+        console.error('booking confirmed emails (Resend)', e)
+      }
+      const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
+      const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
+      if (!leaseFlowSecret) {
+        console.warn(
+          '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
+        )
+        return
+      }
+      try {
+        const res = await fetch(generateLeaseUrl, {
+          method: 'POST',
+          headers: internalPostHeaders(leaseFlowSecret),
+          body: JSON.stringify({ booking_id: booking.id }),
+        })
+        if (!res.ok) {
+          const t = await res.text()
+          console.error('generate-lease failed', res.status, t)
         }
-      })()
-      waitUntil(generateLeaseTask)
+      } catch (e) {
+        console.error('generate-lease trigger', e)
+      }
+    })()
+
+    let followUpDeferred = false
+    try {
+      waitUntil(followUpPromise)
+      followUpDeferred = Boolean(process.env.VERCEL)
+    } catch (wuErr) {
+      console.error('waitUntil failed; awaiting follow-up inline', wuErr)
+    }
+    if (!followUpDeferred) {
+      await followUpPromise
     }
 
     return json(
