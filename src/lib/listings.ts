@@ -90,3 +90,28 @@ export const PROPERTY_LISTING_TYPE_LABELS: Record<PropertyListingType, string> =
 export function isPropertyListingType(value: string): value is PropertyListingType {
   return Object.prototype.hasOwnProperty.call(PROPERTY_LISTING_TYPE_LABELS, value)
 }
+
+/**
+ * Bond / RTA copy: boarding, lodger, or homestay-style arrangements where the landlord typically
+ * lives on site — bond is not lodged with NSW Fair Trading as an RTA bond.
+ *
+ * Uses `properties.property_type` (listing mode) plus `properties.listing_type === 'homestay'`
+ * for legacy or alternate data. Unknown / null `property_type` defaults to standard rental
+ * unless `listing_type` is homestay.
+ */
+const BOARDING_LODGER_PROPERTY_TYPE_VALUES = new Set<string>([
+  'private_room_landlord_on_site',
+  'boarding',
+  'lodger',
+  'homestay',
+])
+
+export function isBoardingLodgerBondContext(
+  propertyType: string | null | undefined,
+  listingType: string | null | undefined,
+): boolean {
+  if (listingType === 'homestay') return true
+  const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
+  if (!pt) return false
+  return BOARDING_LODGER_PROPERTY_TYPE_VALUES.has(pt)
+}

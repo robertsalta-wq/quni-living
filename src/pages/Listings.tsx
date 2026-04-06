@@ -94,10 +94,16 @@ export default function Listings() {
     ],
   )
 
-  const { properties, total, loading, error, refetch } = useListingsQuery(
+  const viewerStudentProfileId =
+    role === 'student' && profile && 'id' in (profile as StudentRow)
+      ? (profile as StudentRow).id
+      : null
+
+  const { properties, total, loading, error, refetch, leasedPropertyIds } = useListingsQuery(
     queryFilters,
     isSupabaseConfigured,
     filters.querySignature,
+    viewerStudentProfileId,
   )
 
   const aiListingContext = useMemo(() => {
@@ -391,7 +397,7 @@ export default function Listings() {
             {!loading && properties.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {properties.map((p) => (
-                  <PropertyCard key={p.id} property={p} />
+                  <PropertyCard key={p.id} property={p} leased={leasedPropertyIds.has(p.id)} />
                 ))}
               </div>
             )}

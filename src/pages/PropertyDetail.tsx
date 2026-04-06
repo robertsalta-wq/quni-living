@@ -15,6 +15,7 @@ import {
 } from '../lib/universityCampusReference'
 import { fetchPropertiesByIds, rpcPropertiesNearCampus } from '../lib/propertiesNearCampusRpc'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
+import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
 import { PropertyCard } from '../components/PropertyCard'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
@@ -364,6 +365,11 @@ export default function PropertyDetail() {
     }
   }, [user, role, refreshProfile])
 
+  const excludeStudentIdForLeaseRpc = useMemo(() => {
+    if (user && role === 'student' && studentProfile?.id) return studentProfile.id
+    return null
+  }, [user, role, studentProfile?.id])
+
   const amenityNames = useMemo(() => {
     const rows = property?.property_features ?? []
     const names = rows
@@ -421,6 +427,8 @@ export default function PropertyDetail() {
   >([])
 
   const [nearbyListings, setNearbyListings] = useState<Property[]>([])
+  const [leasedToOthers, setLeasedToOthers] = useState(false)
+  const [nearbyLeasedIds, setNearbyLeasedIds] = useState<Set<string>>(() => new Set())
 
   /** Geocode from address, or use saved property coordinates when present. */
   useEffect(() => {
@@ -600,6 +608,37 @@ export default function PropertyDetail() {
     }
   }, [property?.id, listingGeoPoint])
 
+  useEffect(() => {
+    if (!property?.id || !isSupabaseConfigured) {
+      setLeasedToOthers(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const s = await fetchPropertyIdsLeasedToOthers(supabase, [property.id], excludeStudentIdForLeaseRpc)
+      if (!cancelled) setLeasedToOthers(s.has(property.id))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [property?.id, excludeStudentIdForLeaseRpc, isSupabaseConfigured])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || nearbyListings.length === 0) {
+      setNearbyLeasedIds(new Set())
+      return
+    }
+    const ids = nearbyListings.map((p) => p.id)
+    let cancelled = false
+    void (async () => {
+      const s = await fetchPropertyIdsLeasedToOthers(supabase, ids, excludeStudentIdForLeaseRpc)
+      if (!cancelled) setNearbyLeasedIds(s)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [nearbyListings, excludeStudentIdForLeaseRpc, isSupabaseConfigured])
+
   if (!isSupabaseConfigured) {
     return (
       <>
@@ -734,6 +773,8 @@ export default function PropertyDetail() {
   }
 
   const listingIsBooked = propertyStatus === 'booked'
+  const bookingClosed = listingIsBooked || leasedToOthers
+  const showLeaseBanner = leasedToOthers
   const showActiveBookingLink =
     role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
@@ -875,6 +916,18 @@ export default function PropertyDetail() {
           </span>
         </nav>
       </div>
+
+      {showLeaseBanner && (
+        <div className={`${SITE_CONTENT_MAX_CLASS} mb-3 sm:mb-4`} role="status">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
+            <p className="font-semibold text-amber-950">Currently leased</p>
+            <p className="mt-1 text-amber-900/90 leading-relaxed">
+              This property has an active confirmed booking and is not available for new tenants. You can still view
+              details or browse other listings.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Gallery width must use SITE_CONTENT_MAX_CLASS (1200px) — do not use viewport-full-bleed here. */}
       <div className={SITE_CONTENT_MAX_CLASS}>
@@ -1133,7 +1186,7 @@ export default function PropertyDetail() {
                   <p className="text-xs text-stone-500">Approximate distances shown — straight-line, not driving time.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {nearbyListings.map((p) => (
-                      <PropertyCard key={p.id} property={p} />
+                      <PropertyCard key={p.id} property={p} leased={nearbyLeasedIds.has(p.id)} />
                     ))}
                   </div>
                 </section>
@@ -1214,7 +1267,7 @@ export default function PropertyDetail() {
                           Complete profile →
                         </Link>
                       </div>
-                    ) : listingIsBooked ? (
+                    ) : bookingClosed ? (
                       <div className="flex w-full items-center justify-center rounded-xl border border-stone-200 bg-stone-100 py-3.5 text-sm font-semibold text-stone-600 tracking-wide">
                         Currently unavailable
                       </div>
@@ -1301,7 +1354,7 @@ export default function PropertyDetail() {
             >
               Complete profile
             </Link>
-          ) : listingIsBooked ? (
+          ) : bookingClosed ? (
             <span className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-2.5 shrink-0 max-w-[55%] text-center leading-snug">
               Unavailable
             </span>

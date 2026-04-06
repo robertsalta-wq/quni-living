@@ -9,6 +9,7 @@ import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
 import {
+  isBoardingLodgerBondContext,
   isPropertyListingType,
   PROPERTY_LISTING_TYPE_LABELS,
   type PropertyListingType,
@@ -22,6 +23,7 @@ import {
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
 import { apiUrl } from '../lib/apiUrl'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
+import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
 
 function bookingDraftStorageKey(listingId: string) {
   return `booking_draft_${listingId}`
@@ -495,7 +497,11 @@ export default function Booking() {
   const [property, setProperty] = useState<PropertyForBooking | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [studentBookingBlocked, setStudentBookingBlocked] = useState(false)
+  const [propertyLeasedByOther, setPropertyLeasedByOther] = useState(false)
   const [loadingProperty, setLoadingProperty] = useState(Boolean(propertyId && isSupabaseConfigured))
+
+  const propertyLoadTargetRef = useRef(propertyId)
+  propertyLoadTargetRef.current = propertyId
 
   const [myLandlordId, setMyLandlordId] = useState<string | null>(null)
 
@@ -538,13 +544,16 @@ export default function Booking() {
         setProperty(null)
         setLoadError(null)
         setStudentBookingBlocked(false)
+        setPropertyLeasedByOther(false)
         setLoadingProperty(false)
       }
       return
     }
+    const loadTarget = propertyId
     setLoadingProperty(true)
     setLoadError(null)
     setStudentBookingBlocked(false)
+    setPropertyLeasedByOther(false)
     try {
       if (user && role === 'student') {
         const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer_by_id', {
@@ -556,12 +565,14 @@ export default function Booking() {
           setProperty(null)
           setStudentBookingBlocked(true)
           setLoadError(null)
+          setPropertyLeasedByOther(false)
           setLoadingProperty(false)
           return
         }
         if (st === 'not_found') {
           setProperty(null)
           setLoadError('This listing is not available for booking.')
+          setPropertyLeasedByOther(false)
           setLoadingProperty(false)
           return
         }
@@ -584,15 +595,29 @@ export default function Booking() {
       )
 
       if (error) throw error
+      if (propertyLoadTargetRef.current !== loadTarget) return
+
       setProperty(data ? (data as PropertyForBooking) : null)
-      if (!data) setLoadError('This listing is not available for booking.')
+      if (!data) {
+        setLoadError('This listing is not available for booking.')
+        setPropertyLeasedByOther(false)
+      } else {
+        const leased = await fetchPropertyIdsLeasedToOthers(
+          supabase,
+          [data.id],
+          studentProfile?.id ?? null,
+        )
+        if (propertyLoadTargetRef.current !== loadTarget) return
+        setPropertyLeasedByOther(leased.has(data.id))
+      }
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : 'Could not load listing.')
       setProperty(null)
+      setPropertyLeasedByOther(false)
     } finally {
       setLoadingProperty(false)
     }
-  }, [propertyId, user, role, authLoading])
+  }, [propertyId, user, role, authLoading, studentProfile?.id])
 
   useEffect(() => {
     void loadProperty()
@@ -1094,7 +1119,7 @@ export default function Booking() {
     )
   }
 
-  if (property.status === 'booked') {
+  if (propertyLeasedByOther) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
         <h1
@@ -1115,7 +1140,7 @@ export default function Booking() {
             Browse listings
           </Link>
           <Link
-            to={property.slug ? `/listings/${property.slug}` : '/listings'}
+            to={property.slug ? `/properties/${property.slug}` : '/listings'}
             className="inline-flex justify-center rounded-xl border border-stone-200 text-stone-800 px-5 py-3 text-sm font-medium hover:bg-[#FEF9E4]"
           >
             Back to listing
@@ -1161,6 +1186,7 @@ export default function Booking() {
     property.property_type && isPropertyListingType(property.property_type)
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
+  const boardingLodgerBondCopy = isBoardingLodgerBondContext(property.property_type, property.listing_type)
 
   const bondAmountAud =
     property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
@@ -1345,28 +1371,41 @@ export default function Booking() {
                 <>No bond is required for this property.</>
               )}
             </p>
-            <p>
-              Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
-              <strong>10 business days</strong>.
-            </p>
-            <div>
-              <p className="font-semibold text-gray-900">
-                {(property.state ?? 'NSW').toUpperCase()} — state bond authority
-              </p>
-              <p className="mt-1">{bondAuthorityName}</p>
-            </div>
+            {boardingLodgerBondCopy ? (
+              <>
+                <p>
+                  As this is a boarding/lodger arrangement, the Residential Tenancies Act does not apply. Your bond is held
+                  directly by your landlord and is not required to be lodged with NSW Fair Trading.
+                </p>
+                <p>We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.</p>
+                <p>Your landlord can generate an official bond receipt through their Quni Living dashboard.</p>
+              </>
+            ) : (
+              <>
+                <p>
+                  Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
+                  <strong>10 business days</strong>.
+                </p>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {(property.state ?? 'NSW').toUpperCase()} — state bond authority
+                  </p>
+                  <p className="mt-1">{bondAuthorityName}</p>
+                </div>
+                <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
+                  <p className="font-semibold">Always get a receipt when you pay your bond.</p>
+                  <p className="mt-1">
+                    Never pay a bond without receiving official confirmation of lodgement from the state authority.
+                  </p>
+                </div>
+              </>
+            )}
             {listingTypeLabel && (
               <p className="text-xs text-gray-600 pt-2 border-t border-stone-100">
                 <span className="font-medium text-gray-800">Property type: </span>
                 {listingTypeLabel}
               </p>
             )}
-            <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
-              <p className="font-semibold">Always get a receipt when you pay your bond.</p>
-              <p className="mt-1">
-                Never pay a bond without receiving official confirmation of lodgement from the state authority.
-              </p>
-            </div>
           </div>
 
           <label className="flex items-start gap-3 cursor-pointer">
@@ -1377,7 +1416,16 @@ export default function Booking() {
               className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
             />
             <span className="text-sm text-gray-800">
-              I understand the bond is paid directly to my landlord and must be lodged with the relevant state authority.
+              {boardingLodgerBondCopy ? (
+                <>
+                  I understand the bond is paid directly to my landlord and will not be lodged with NSW Fair Trading.
+                </>
+              ) : (
+                <>
+                  I understand the bond is paid directly to my landlord and must be lodged with the relevant state
+                  authority.
+                </>
+              )}
             </span>
           </label>
 

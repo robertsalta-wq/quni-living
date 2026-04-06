@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 
-type Props = { property: Property }
+type Props = { property: Property; leased?: boolean }
 
-export function PropertyCard({ property }: Props) {
+export function PropertyCard({ property, leased }: Props) {
   const image = property.images?.[0]
   const landlordName = property.landlord_profiles?.full_name ?? 'Private landlord'
   const isVerified = property.landlord_profiles?.verified ?? false
@@ -51,6 +51,11 @@ export function PropertyCard({ property }: Props) {
         {property.furnished && (
           <span className="absolute top-3 right-3 bg-white/90 text-gray-700 text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm">
             Furnished
+          </span>
+        )}
+        {leased && (
+          <span className="absolute bottom-3 left-3 bg-stone-900/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm shadow-sm">
+            Currently leased
           </span>
         )}
       </div>

@@ -14,6 +14,8 @@ import LandlordApplicantAIAssessmentPanel from '../../components/landlord/Landlo
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
+import { isBoardingLodgerBondContext } from '../../lib/listings'
+import { apiUrl } from '../../lib/apiUrl'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -103,6 +105,14 @@ export default function LandlordBookingReviewPage() {
 
   const [infoOpen, setInfoOpen] = useState(false)
   const [infoMessage, setInfoMessage] = useState('')
+
+  const [bondModalOpen, setBondModalOpen] = useState(false)
+  const [bondDate, setBondDate] = useState('')
+  const [bondAmount, setBondAmount] = useState('')
+  const [bondMethod, setBondMethod] = useState<'Cash' | 'Bank Transfer' | 'Other'>('Bank Transfer')
+  const [bondNotes, setBondNotes] = useState('')
+  const [bondBusy, setBondBusy] = useState(false)
+  const [bondFormError, setBondFormError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!data?.booking) return
@@ -231,6 +241,72 @@ export default function LandlordBookingReviewPage() {
       setActionBusy(false)
     }
   }, [bookingId, declineReason, navigate])
+
+  function todayYmdLocal(): string {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  const openBondModal = useCallback(() => {
+    if (!data?.tenancy) return
+    setBondDate(todayYmdLocal())
+    const t = data.tenancy.bond_amount
+    const p = data.property?.bond
+    const fromTenancy = t != null && Number.isFinite(Number(t)) && Number(t) > 0 ? Number(t) : null
+    const fromProp = p != null && Number.isFinite(Number(p)) && Number(p) > 0 ? Number(p) : null
+    setBondAmount(fromTenancy != null ? String(fromTenancy) : fromProp != null ? String(fromProp) : '')
+    setBondMethod('Bank Transfer')
+    setBondNotes('')
+    setBondFormError(null)
+    setBondModalOpen(true)
+  }, [data?.tenancy, data?.property?.bond])
+
+  const onSubmitBondReceipt = useCallback(async () => {
+    if (!data?.tenancy?.id) return
+    setBondFormError(null)
+    const amt = Number(bondAmount)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(bondDate)) {
+      setBondFormError('Please choose a valid date.')
+      return
+    }
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setBondFormError('Enter a valid amount greater than zero.')
+      return
+    }
+    setBondBusy(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) throw new Error('Session expired. Please sign in again.')
+      const res = await fetch(apiUrl('/api/documents/generate-bond-receipt'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tenancy_id: data.tenancy.id,
+          date_received: bondDate,
+          amount: amt,
+          payment_method: bondMethod,
+          notes: bondNotes.trim() || null,
+        }),
+      })
+      const j = await readJsonApiResponse(res)
+      if (!res.ok) {
+        throw new Error((typeof j.error === 'string' && j.error) || 'Could not generate bond receipt.')
+      }
+      setBondModalOpen(false)
+      await reload()
+    } catch (e) {
+      setBondFormError(e instanceof Error ? e.message : 'Something went wrong.')
+    } finally {
+      setBondBusy(false)
+    }
+  }, [bondAmount, bondDate, bondMethod, bondNotes, data?.tenancy?.id, reload])
 
   const onRequestInfo = useCallback(async () => {
     if (!bookingId || !infoMessage.trim()) return

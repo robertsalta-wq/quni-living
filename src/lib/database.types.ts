@@ -1135,6 +1135,7 @@ export interface Database {
             | 'termination_notice'
             | 'rent_increase_notice'
             | 'bond_lodgement'
+            | 'bond_receipt'
             | 'other'
           status:
             | 'draft'
@@ -1163,6 +1164,7 @@ export interface Database {
             | 'termination_notice'
             | 'rent_increase_notice'
             | 'bond_lodgement'
+            | 'bond_receipt'
             | 'other'
           status?:
             | 'draft'
@@ -1191,6 +1193,7 @@ export interface Database {
             | 'termination_notice'
             | 'rent_increase_notice'
             | 'bond_lodgement'
+            | 'bond_receipt'
             | 'other'
           status?:
             | 'draft'

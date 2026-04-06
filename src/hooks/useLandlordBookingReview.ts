@@ -13,6 +13,11 @@ export type LandlordBookingReviewProperty = Database['public']['Tables']['proper
 
 export type LandlordBookingReviewStudent = (StudentRow & { universities?: { name: string } | null }) | null
 
+export type LandlordBookingReviewTenancy = Pick<
+  Database['public']['Tables']['tenancies']['Row'],
+  'id' | 'bond_lodged_at' | 'bond_amount' | 'bond_lodgement_reference'
+>
+
 export type LandlordBookingReviewData = {
   booking: BookingRow
   property: LandlordBookingReviewProperty | null
@@ -22,6 +27,8 @@ export type LandlordBookingReviewData = {
   fitRows: ReturnType<typeof buildBookingFitSummary>
   /** Other students with pending_confirmation / awaiting_info on the same property (excludes this booking). */
   otherPendingPipelineCount: number
+  /** Present once a tenancy row exists for this booking (e.g. after confirmation / lease flow). */
+  tenancy: LandlordBookingReviewTenancy | null
 }
 
 function formatReceivedAgo(iso: string): string {
@@ -154,6 +161,12 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         if (!cntErr && typeof count === 'number') otherPendingPipelineCount = count
       }
 
+      const { data: tenancyRow } = await supabase
+        .from('tenancies')
+        .select('id, bond_lodged_at, bond_amount, bond_lodgement_reference')
+        .eq('booking_id', booking.id)
+        .maybeSingle()
+
       setData({
         booking: booking as BookingRow,
         property: prop,
@@ -162,6 +175,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         landlordStripeReady: stripeReady,
         fitRows,
         otherPendingPipelineCount,
+        tenancy: (tenancyRow as LandlordBookingReviewTenancy | null) ?? null,
       })
       setReceivedAgo(formatReceivedAgo(booking.created_at))
     } catch (e) {
