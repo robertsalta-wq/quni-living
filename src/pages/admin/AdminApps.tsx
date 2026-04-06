@@ -148,6 +148,127 @@ function AppsSkeleton() {
   )
 }
 
+const FIREBASE_CONSOLE_HREF = 'https://console.firebase.google.com/'
+const GOOGLE_PLAY_CONSOLE_HREF = 'https://play.google.com/console'
+
+type AppsGridItem =
+  | { kind: 'firebase'; sortKey: string }
+  | { kind: 'googleplay'; sortKey: string }
+  | { kind: 'vendor'; sortKey: string; row: VendorRow }
+
+function buildSortedAppsGridItems(rows: VendorRow[]): AppsGridItem[] {
+  const items: AppsGridItem[] = [
+    { kind: 'firebase', sortKey: 'Firebase' },
+    { kind: 'googleplay', sortKey: 'Google Play Console' },
+    ...rows.map((row) => ({
+      kind: 'vendor' as const,
+      sortKey: row.title.trim() || row.id,
+      row,
+    })),
+  ]
+  items.sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'en', { sensitivity: 'base' }))
+  return items
+}
+
+function FirebaseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        fill="#FFCA28"
+        d="M3.89 15.672 6.255.461A.542.542 0 0 1 7.27.289l9.941 5.721a.542.542 0 0 1 .183.744l-2.524 4.786 1.755-3.043a.542.542 0 0 1 .744-.183L22.463 9.11a.542.542 0 0 1 .183.744l-4.947 9.413a.542.542 0 0 1-.744.183L2.524 15.929a.542.542 0 0 1-.634-.257Z"
+      />
+    </svg>
+  )
+}
+
+function GooglePlayIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path
+        fill="#00D9FF"
+        d="M3.609 1.814 13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92z"
+      />
+      <path fill="#FFD23F" d="m14.499 12 2.302 2.302-10.937 6.333 8.635-8.635z" />
+      <path
+        fill="#00F076"
+        d="m17.698 8.802 2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491z"
+      />
+      <path fill="#FF3A44" d="M5.864 2.658 16.802 8.99l-2.303 2.303-8.635-8.635z" />
+    </svg>
+  )
+}
+
+function GooglePlayAppCard({ linkClass }: { linkClass: string }) {
+  return (
+    <div
+      className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-emerald-100/90 border-emerald-100/50 bg-emerald-50/15 relative`}
+    >
+      <div className="flex items-start gap-3 flex-1">
+        <div
+          className="h-9 w-9 shrink-0 rounded-xl border border-emerald-100/80 bg-white flex items-center justify-center"
+          aria-hidden
+        >
+          <GooglePlayIcon className="shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900">Google Play Console</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Android releases, internal testing tracks, store listing, and Play integrity for the Quni Living app.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
+        <p className="text-sm text-gray-800 mt-1">One-time $25 dev account + any Play billing you enable</p>
+      </div>
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a href={GOOGLE_PLAY_CONSOLE_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          Open Play Console →
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function FirebaseAppCard({ linkClass }: { linkClass: string }) {
+  return (
+    <div
+      className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-amber-100/90 border-amber-100/50 bg-amber-50/20 relative`}
+    >
+      <div className="flex items-start gap-3 flex-1">
+        <div
+          className="h-9 w-9 shrink-0 rounded-xl border border-amber-100/80 bg-white flex items-center justify-center"
+          aria-hidden
+        >
+          <FirebaseIcon className="shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900">Firebase</p>
+          <p className="text-sm text-gray-500 mt-1">
+            FCM push, mobile app config, and Google-backed project tools (linked to your Capacitor builds).
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
+        <p className="text-sm text-gray-800 mt-1">Free tier / usage — see Google Cloud billing if linked</p>
+      </div>
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a href={FIREBASE_CONSOLE_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          Open Firebase Console →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 function PencilIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -322,7 +443,6 @@ export default function AdminApps() {
       .from('admin_vendor_subscriptions')
       .select('*')
       .eq('is_active', true)
-      .order('title', { ascending: true })
     setLoading(false)
     if (qErr) {
       setError(qErr.message)
@@ -347,13 +467,18 @@ export default function AdminApps() {
     maximumFractionDigits: totalMonthlyAudApprox % 1 === 0 ? 0 : 2,
   }).format(totalMonthlyAudApprox)
 
+  const appsGridItems = useMemo(() => (rows ? buildSortedAppsGridItems(rows) : null), [rows])
+
   const linkClass =
     'text-xs text-indigo-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 rounded'
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Apps</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">External tools for running Quni Living — costs are stored in Supabase and editable below.</p>
+      <p className="text-sm text-gray-500 mt-1 mb-6">
+        External tools for running Quni Living — costs are stored in Supabase and editable below. Firebase and Google
+        Play Console are fixed shortcuts for the native Android stack; all cards are sorted A–Z by name.
+      </p>
 
       {!loading && !error && rows && rows.length > 0 ? (
         <div className={`${adminCardClass} mb-6 border-indigo-100/80 bg-indigo-50/40`}>
@@ -371,12 +496,20 @@ export default function AdminApps() {
       {loading ? <AppsSkeleton /> : null}
 
       {!loading && rows && rows.length === 0 && !error ? (
-        <p className="text-sm text-gray-600">No active vendors. Add rows in Supabase or run the latest migration.</p>
+        <p className="text-sm text-gray-600 mb-4">No active vendors. Add rows in Supabase or run the latest migration.</p>
       ) : null}
 
-      {!loading && rows && rows.length > 0 ? (
+      {!loading && !error && appsGridItems ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((row) => {
+          {appsGridItems.map((item) => {
+            if (item.kind === 'firebase') {
+              return <FirebaseAppCard key="firebase" linkClass={linkClass} />
+            }
+            if (item.kind === 'googleplay') {
+              return <GooglePlayAppCard key="googleplay" linkClass={linkClass} />
+            }
+
+            const row = item.row
             const sub = rowToSubscription(row)
             const billingHref = sub.billingHref?.trim()
 

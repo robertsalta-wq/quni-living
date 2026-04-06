@@ -1,3 +1,4 @@
+import { apiUrl } from './apiUrl'
 import { supabase } from './supabase'
 
 /**
@@ -15,7 +16,7 @@ export async function sendBookingRequestToLandlord(bookingId: string): Promise<v
     return
   }
 
-  const res = await fetch('/api/send-booking-request-email', {
+  const res = await fetch(apiUrl('/api/send-booking-request-email'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

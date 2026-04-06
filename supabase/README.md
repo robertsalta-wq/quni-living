@@ -19,6 +19,72 @@ Schema file: **`quni_supabase_schema.sql`** — matches the Claude/Wix-style mod
 
 There is **no** `saved_properties` table in this version (add later if you want favourites).
 
+## Phase D — Supabase CLI (linked project, functions, secrets, migrations)
+
+Use this after [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) is installed (`npx supabase@latest` works without a global install). From the repo root, run `supabase login` once per machine, then `supabase link --project-ref <REF>` if this checkout is not linked yet.
+
+### D1 — Confirm linked project matches production
+
+1. `npx supabase@latest projects list` — the **LINKED** column (●) must be the project your app uses in production.
+2. Compare **REFERENCE ID** to production: `VITE_SUPABASE_URL` in Vercel **Production** (or your host) must be `https://<REFERENCE_ID>.supabase.co`.
+3. After `supabase link`, the ref is also stored under `supabase/.temp/project-ref` (verify it matches production if that file exists).
+
+If the wrong project is linked: `supabase link --project-ref <production_ref>`.
+
+### D2 — Deploy Edge Functions
+
+Deploy every function in `supabase/functions/` after code or `config.toml` changes:
+
+```bash
+npx supabase@latest functions deploy send-uni-otp
+npx supabase@latest functions deploy verify-uni-otp
+npx supabase@latest functions deploy send-work-otp
+npx supabase@latest functions deploy verify-work-otp
+npx supabase@latest functions deploy delete-student-account --no-verify-jwt
+npx supabase@latest functions deploy delete-user-documents --no-verify-jwt
+npx supabase@latest functions deploy stripe-webhook --no-verify-jwt
+```
+
+Shortcut (same commands):
+
+```bash
+npm run supabase:deploy:functions
+```
+
+`supabase/config.toml` sets **`verify_jwt = false`** for the OTP and delete functions so the gateway does not return **Invalid JWT** before your handler runs; auth is enforced inside each function. **`--no-verify-jwt`** on deploy keeps the hosted setting aligned when the CLI applies flags. Redeploy after editing `config.toml` so changes take effect.
+
+### D3 — Secrets (hosted project, not committed)
+
+Run locally after login + link. Do **not** commit values.
+
+| Secret | When needed |
+|--------|-------------|
+| `RESEND_API_KEY` | OTP email (`send-*-otp` functions) |
+| `DELETE_USER_DOCS_WEBHOOK_SECRET` | `delete-user-documents` (must match Database Webhook header `x-webhook-secret`) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Only if you use the **Supabase** `stripe-webhook` function (not required if Stripe is handled only on Vercel — see Stripe section below) |
+
+Example (one key at a time or space-separated, depending on CLI version):
+
+```bash
+npx supabase@latest secrets set RESEND_API_KEY=re_xxxxxxxx
+```
+
+Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` for Edge Functions automatically; you do not set those via `secrets set`.
+
+### D4 — Migrations workflow (single repeatable path)
+
+**Canonical path:** versioned files under **`supabase/migrations/`** (timestamp prefix, e.g. `20260403120000_name.sql`) + apply to the linked remote with:
+
+```bash
+npx supabase@latest db push
+```
+
+Use this for anything that must stay in git, deploy to production predictably, and match other environments. Commit the migration file in the same PR as any app change that depends on it.
+
+**SQL Editor (dashboard)** is for **one-off** or **legacy** steps: running ad-hoc scripts from `supabase/*.sql` that are not yet represented as migrations, or emergency hotfixes. If a dashboard edit must be permanent, follow up with a migration (or `supabase db diff`) so the repo stays the source of truth.
+
+Do **not** mix ad-hoc Editor changes and `db push` without reconciling: prefer adding a migration file for repeatable schema changes.
+
 ## 1. Run the SQL
 
 Dashboard → **SQL Editor** → paste `quni_supabase_schema.sql` → Run.
@@ -68,16 +134,18 @@ Run **`student_verification.sql`** in SQL Editor. It adds `uni_email` / document
 
 If your project already had **`verification_otps`** from an older run **without** that unique index, run **`verification_otps_one_per_user.sql`** once (dedupes rows + creates the index) so **`send-uni-otp`** upserts correctly.
 
-Deploy Edge Functions and set **`RESEND_API_KEY`** in Supabase (Dashboard → Edge Functions → Secrets, or `supabase secrets set RESEND_API_KEY=re_...`):
+Deploy Edge Functions and set **`RESEND_API_KEY`** in Supabase (Dashboard → Edge Functions → Secrets, or `supabase secrets set RESEND_API_KEY=re_...`). See **Phase D** above for the full deploy list and `npm run supabase:deploy:functions`.
 
 ```bash
-supabase functions deploy send-uni-otp
-supabase functions deploy verify-uni-otp
+npx supabase@latest functions deploy send-uni-otp
+npx supabase@latest functions deploy verify-uni-otp
+npx supabase@latest functions deploy send-work-otp
+npx supabase@latest functions deploy verify-work-otp
 ```
 
 OTP email sends **From** **`noreply@quni.com.au`** (same as booking emails) with **Reply-To** **`hello@quni.com.au`** — verify **quni.com.au** in Resend so both addresses are allowed.
 
-`supabase/config.toml` sets **`verify_jwt = false`** for `send-uni-otp` and `verify-uni-otp` so the API gateway does not reject valid sessions as **“Invalid JWT”** (auth is still enforced inside each function with `getUser()`). Redeploy with the CLI so this applies. If you deploy only from the Dashboard, turn off **Verify JWT** for those two functions there instead.
+`supabase/config.toml` sets **`verify_jwt = false`** for `send-uni-otp`, `verify-uni-otp`, `send-work-otp`, and `verify-work-otp` so the API gateway does not reject valid sessions as **“Invalid JWT”** (auth is still enforced inside each function with `getUser()`). Redeploy with the CLI so this applies. If you deploy only from the Dashboard, turn off **Verify JWT** for those functions there instead.
 
 ### Student account deletion (`/student-profile` → Delete account)
 
@@ -121,46 +189,19 @@ in `.env.local` so verification hits production (OK for testing).
 
 Cloudflare test keys (always pass): [Turnstile docs](https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
 
-## Property enquiries + EmailJS
+## Property enquiries, contact, and landlord leads (Resend)
 
-The listing page **Send an enquiry** form inserts into **`enquiries`** (policy: anyone can insert) and sends two emails via **EmailJS**.
+Transactional and public-form email is sent with **[Resend](https://resend.com/)** from Vercel serverless routes. Configure **`RESEND_API_KEY`** on Vercel (server-only — never `VITE_*`). The app uses `noreply@quni.com.au` as the sender; ensure your domain and sending identity are verified in the Resend dashboard.
 
-Set in `.env.local` / Vercel:
+**Listing “Send an enquiry”** — inserts into **`enquiries`** (policy: anyone can insert), then calls **`POST /api/enquiry-email`** with a Cloudflare Turnstile token. That route sends two messages: a confirmation to the enquirer and a notification to **hello@quni.com.au** (with Reply-To set to the enquirer where appropriate).
 
-- `VITE_EMAILJS_SERVICE_ID` — from **[Email Services](https://dashboard.emailjs.com/admin)** (the connected provider, e.g. Gmail), **not** from templates. ID usually looks like `service_xxxxxxx`.
-- `VITE_EMAILJS_PUBLIC_KEY` — [Account](https://dashboard.emailjs.com/admin/account) → **Public Key** (must be from the **same** EmailJS account as the service and templates).
-- `VITE_EMAILJS_ENQUIRY_CONFIRMATION_TEMPLATE_ID` — from **Email Templates** → template ID like `template_xxxxxxx`.
-- `VITE_EMAILJS_ENQUIRY_NOTIFY_TEMPLATE_ID` — second template for internal notification.
-- `VITE_EMAILJS_LANDLORD_LEAD_TEMPLATE_ID` — notify template for **`/services/landlord-partnerships`** lead form (set **To Email** to `hello@quni.com.au` or `{{notify_to}}`; body can use `{{message}}`, `{{lead_name}}`, `{{lead_email}}`, `{{lead_phone}}`, `{{lead_suburb}}`, `{{property_count}}`, `{{lead_message}}`).
+**Landlord partnerships lead form** (`/services/landlord-partnerships`) — inserts into **`landlord_leads`**, then **`POST /api/landlord-lead-email`** (Turnstile + Resend notify to **hello@quni.com.au**).
 
-### EmailJS: “The recipients address is empty”
+**Contact page** — **`POST /api/contact`** (Turnstile + Resend to **hello@quni.com.au**).
 
-EmailJS needs a **To Email** on **each** template (not only the message body). If that field is blank, sending fails.
+Other booking-related notifications also use Resend from **`api/`** routes; see **`.env.example`** and **`docs/vercel-env-setup.md`** for the full variable list.
 
-1. Open [Email Templates](https://dashboard.emailjs.com/admin) → edit **confirmation** template.
-2. Find **To Email** (or **Recipients** / **Send To**). Set it to **`{{sender_email}}`** (or `{{to_email}}`, `{{email}}`, `{{user_email}}` — see table below).
-3. Edit **notify** template → set **To Email** to **`hello@quni.com.au`** (static is fine), or **`{{notify_to}}`**, **`{{to_email}}`**, or **`{{admin_email}}`** on the notify template only.
-
-Save both templates. No code deploy required for template-only fixes.
-
-### “The service ID not found” (EmailJS)
-
-That response means `VITE_EMAILJS_SERVICE_ID` does not match any **Email Service** under the account for your **Public Key**. Typical fixes:
-
-1. Open [Email Services](https://dashboard.emailjs.com/admin) and **add** a service (Gmail, Outlook, etc.) if you only created templates so far.
-2. Copy the **Service ID** from that row (not the Template ID).
-3. Confirm `VITE_EMAILJS_PUBLIC_KEY` is the public key from the **same** EmailJS login.
-4. Remove accidental spaces/quotes in Vercel; **redeploy** after changing any `VITE_*` variable.
-
-**Template parameters sent by the app**
-
-| Parameter | Confirmation (→ sender’s inbox) | Notify (→ Quni) |
-|-----------|--------------------------------|-----------------|
-| `property_title`, `message` | ✓ | ✓ |
-| `sender_name`, `sender_email` | ✓ (**recommended To:** `{{sender_email}}`) | ✓ (submitter, for body) |
-| `to_name`, `reply_to`, `from_name`, `from_email` | ✓ | |
-| `to_email`, `email`, `user_email`, `recipient_email` | sender’s email (aliases) | **hello@quni.com.au** (notify template only) |
-| `notify_to`, `to_email`, `admin_email`, `recipient_email` | | ✓ (notify template; `to_email` = Quni) |
+Turnstile (**`VITE_TURNSTILE_SITE_KEY`** + **`TURNSTILE_SECRET_KEY`**) is required for the public forms above; see the **Cloudflare Turnstile** section earlier in this file.
 
 ## Google OAuth on localhost
 

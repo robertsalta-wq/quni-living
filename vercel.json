@@ -19,7 +19,13 @@
       "maxDuration": 60
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/((?!api/).+)",
+      "destination": "/index.html"
+    },
+    { "source": "/", "destination": "/index.html" }
+  ],
   "crons": [
     { "path": "/api/cron/expire-bookings", "schedule": "0 * * * *" },
     { "path": "/api/cron/release-deposits", "schedule": "0 0 * * *" }

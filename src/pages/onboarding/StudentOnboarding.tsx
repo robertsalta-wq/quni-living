@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
@@ -23,9 +23,157 @@ import {
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
+import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 
 const PROFILE_PHOTO_BUCKET = 'student-avatars'
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024
+
+const STUDENT_ONBOARDING_DRAFT_KEY = 'student_onboarding_draft' as const
+const STUDENT_ONBOARDING_DRAFT_VERSION = 1 as const
+
+const BUDGET_RANGE_VALUE_SET = new Set<string>(BUDGET_RANGE_OPTIONS.map((o) => o.value))
+const STUDY_LEVEL_VALUE_SET = new Set<string>(STUDY_LEVEL_OPTIONS.map((o) => o.value))
+const GENDER_VALUE_SET = new Set<string>(GENDER_OPTIONS.map((o) => o.value))
+const LEASE_LENGTH_VALUE_SET = new Set<string>(LEASE_LENGTH_OPTIONS.map((o) => o.value))
+
+const ONBOARD_OCC_SET = new Set(['sole', 'couple', 'open'])
+const ONBOARD_MOVE_FLEX_SET = new Set(['exact', 'one_week', 'two_weeks'])
+const ONBOARD_BILLS_SET = new Set(['included', 'separate', 'either'])
+const ONBOARD_FURN_SET = new Set(['furnished', 'unfurnished', 'either'])
+
+/** Local draft — profile-style fields only; terms acceptance is never persisted. */
+type StudentOnboardingDraftV1 = {
+  v: typeof STUDENT_ONBOARDING_DRAFT_VERSION
+  step: 1 | 2 | 3
+  firstName: string
+  lastName: string
+  universityId: string
+  campusId: string
+  course: string
+  studyLevel: string
+  gender: string
+  phone: string
+  budgetRange: BudgetRangeValue | ''
+  moveInDate: string
+  leaseLength: string
+  avatarUrl: string | null
+  emergencyName: string
+  emergencyRelationship: string
+  emergencyPhone: string
+  emergencyEmail: string
+  bio: string
+  occupancyType: string
+  moveInFlex: string
+  hasPets: boolean
+  needsParking: boolean
+  billsPref: string
+  furnishingPref: string
+  hasGuarantor: boolean
+  guarantorName: string
+}
+
+function studentOnboardingDraftFromState(
+  s: Omit<StudentOnboardingDraftV1, 'v'>,
+): StudentOnboardingDraftV1 {
+  return { v: STUDENT_ONBOARDING_DRAFT_VERSION, ...s }
+}
+
+function parseStudentOnboardingDraft(raw: string | null): StudentOnboardingDraftV1 | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as unknown
+    if (!o || typeof o !== 'object') return null
+    const d = o as Record<string, unknown>
+    if (d.v !== STUDENT_ONBOARDING_DRAFT_VERSION) return null
+    const step = d.step === 1 || d.step === 2 || d.step === 3 ? d.step : 1
+    const budgetRaw = typeof d.budgetRange === 'string' && BUDGET_RANGE_VALUE_SET.has(d.budgetRange) ? d.budgetRange : ''
+    const study =
+      typeof d.studyLevel === 'string' && (d.studyLevel === '' || STUDY_LEVEL_VALUE_SET.has(d.studyLevel))
+        ? d.studyLevel
+        : ''
+    const gen =
+      typeof d.gender === 'string' && (d.gender === '' || GENDER_VALUE_SET.has(d.gender)) ? d.gender : ''
+    const lease =
+      typeof d.leaseLength === 'string' && (d.leaseLength === '' || LEASE_LENGTH_VALUE_SET.has(d.leaseLength))
+        ? d.leaseLength
+        : ''
+    return {
+      v: STUDENT_ONBOARDING_DRAFT_VERSION,
+      step,
+      firstName: typeof d.firstName === 'string' ? d.firstName : '',
+      lastName: typeof d.lastName === 'string' ? d.lastName : '',
+      universityId: typeof d.universityId === 'string' ? d.universityId : '',
+      campusId: typeof d.campusId === 'string' ? d.campusId : '',
+      course: typeof d.course === 'string' ? d.course : '',
+      studyLevel: study,
+      gender: gen,
+      phone: typeof d.phone === 'string' ? d.phone : '',
+      budgetRange: budgetRaw as BudgetRangeValue | '',
+      moveInDate: typeof d.moveInDate === 'string' ? d.moveInDate : '',
+      leaseLength: lease,
+      avatarUrl: typeof d.avatarUrl === 'string' && d.avatarUrl.trim() !== '' ? d.avatarUrl : null,
+      emergencyName: typeof d.emergencyName === 'string' ? d.emergencyName : '',
+      emergencyRelationship: typeof d.emergencyRelationship === 'string' ? d.emergencyRelationship : '',
+      emergencyPhone: typeof d.emergencyPhone === 'string' ? d.emergencyPhone : '',
+      emergencyEmail: typeof d.emergencyEmail === 'string' ? d.emergencyEmail : '',
+      bio: typeof d.bio === 'string' ? d.bio : '',
+      occupancyType:
+        typeof d.occupancyType === 'string' && (d.occupancyType === '' || ONBOARD_OCC_SET.has(d.occupancyType))
+          ? d.occupancyType
+          : '',
+      moveInFlex:
+        typeof d.moveInFlex === 'string' && (d.moveInFlex === '' || ONBOARD_MOVE_FLEX_SET.has(d.moveInFlex))
+          ? d.moveInFlex
+          : '',
+      hasPets: Boolean(d.hasPets),
+      needsParking: Boolean(d.needsParking),
+      billsPref:
+        typeof d.billsPref === 'string' && (d.billsPref === '' || ONBOARD_BILLS_SET.has(d.billsPref))
+          ? d.billsPref
+          : '',
+      furnishingPref:
+        typeof d.furnishingPref === 'string' && (d.furnishingPref === '' || ONBOARD_FURN_SET.has(d.furnishingPref))
+          ? d.furnishingPref
+          : '',
+      hasGuarantor: Boolean(d.hasGuarantor),
+      guarantorName: typeof d.guarantorName === 'string' ? d.guarantorName : '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function isStudentOnboardingDraftMeaningful(d: StudentOnboardingDraftV1): boolean {
+  return (
+    d.step === 2 ||
+    d.step === 3 ||
+    d.firstName.trim() !== '' ||
+    d.lastName.trim() !== '' ||
+    d.universityId.trim() !== '' ||
+    d.campusId.trim() !== '' ||
+    d.course.trim() !== '' ||
+    d.studyLevel !== '' ||
+    d.gender !== '' ||
+    d.phone.trim() !== '' ||
+    d.budgetRange !== '' ||
+    d.moveInDate.trim() !== '' ||
+    d.leaseLength !== '' ||
+    (d.avatarUrl != null && d.avatarUrl.trim() !== '') ||
+    d.emergencyName.trim() !== '' ||
+    d.emergencyRelationship.trim() !== '' ||
+    d.emergencyPhone.trim() !== '' ||
+    d.emergencyEmail.trim() !== '' ||
+    d.bio.trim() !== '' ||
+    d.occupancyType !== '' ||
+    d.moveInFlex !== '' ||
+    d.hasPets ||
+    d.needsParking ||
+    d.billsPref !== '' ||
+    d.furnishingPref !== '' ||
+    d.hasGuarantor ||
+    d.guarantorName.trim() !== ''
+  )
+}
 
 function studyLevelToYear(level: string): number | null {
   const m: Record<string, number> = {
@@ -47,6 +195,7 @@ const errClass = 'text-red-600 text-xs mt-1'
 
 export default function StudentOnboarding() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, role, refreshProfile } = useAuthContext()
 
   const [loading, setLoading] = useState(true)
@@ -81,9 +230,85 @@ export default function StudentOnboarding() {
   const [emergencyRelationship, setEmergencyRelationship] = useState('')
   const [emergencyPhone, setEmergencyPhone] = useState('')
   const [emergencyEmail, setEmergencyEmail] = useState('')
+  const [bio, setBio] = useState('')
+  const [occupancyType, setOccupancyType] = useState('')
+  const [moveInFlex, setMoveInFlex] = useState('')
+  const [hasPets, setHasPets] = useState(false)
+  const [needsParking, setNeedsParking] = useState(false)
+  const [billsPref, setBillsPref] = useState('')
+  const [furnishingPref, setFurnishingPref] = useState('')
+  const [hasGuarantor, setHasGuarantor] = useState(false)
+  const [guarantorName, setGuarantorName] = useState('')
 
   // Step 3
   const [termsAccepted, setTermsAccepted] = useState(false)
+
+  const studentOnboardingDraftSnapshot = useMemo(
+    () =>
+      studentOnboardingDraftFromState({
+        step,
+        firstName,
+        lastName,
+        universityId,
+        campusId,
+        course,
+        studyLevel,
+        gender,
+        phone,
+        budgetRange,
+        moveInDate,
+        leaseLength,
+        avatarUrl,
+        emergencyName,
+        emergencyRelationship,
+        emergencyPhone,
+        emergencyEmail,
+        bio,
+        occupancyType,
+        moveInFlex,
+        hasPets,
+        needsParking,
+        billsPref,
+        furnishingPref,
+        hasGuarantor,
+        guarantorName,
+      }),
+    [
+      step,
+      firstName,
+      lastName,
+      universityId,
+      campusId,
+      course,
+      studyLevel,
+      gender,
+      phone,
+      budgetRange,
+      moveInDate,
+      leaseLength,
+      avatarUrl,
+      emergencyName,
+      emergencyRelationship,
+      emergencyPhone,
+      emergencyEmail,
+      bio,
+      occupancyType,
+      moveInFlex,
+      hasPets,
+      needsParking,
+      billsPref,
+      furnishingPref,
+      hasGuarantor,
+      guarantorName,
+    ],
+  )
+
+  const restoredLocationKeyRef = useRef<string | null>(null)
+  const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
+  const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
 
   const hydrateFromProfile = useCallback((p: StudentProfileRow) => {
     setFirstName(p.first_name?.trim() ?? '')
@@ -102,8 +327,125 @@ export default function StudentOnboarding() {
     setEmergencyRelationship(p.emergency_contact_relationship?.trim() ?? '')
     setEmergencyPhone(p.emergency_contact_phone?.trim() ?? '')
     setEmergencyEmail(p.emergency_contact_email?.trim() ?? '')
+    setBio(p.bio?.trim() ?? '')
+    setOccupancyType(p.occupancy_type ?? '')
+    setMoveInFlex(p.move_in_flexibility ?? '')
+    setHasPets(p.has_pets === true)
+    setNeedsParking(p.needs_parking === true)
+    setBillsPref(p.bills_preference ?? '')
+    setFurnishingPref(p.furnishing_preference ?? '')
+    setHasGuarantor(p.has_guarantor === true)
+    setGuarantorName(p.guarantor_name?.trim() ?? '')
     setStep(inferStudentOnboardingStep(p, p.accommodation_verification_route))
   }, [])
+
+  const handleDraftStartFresh = useCallback(() => {
+    try {
+      localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
+    } catch {
+      /* ignore */
+    }
+    setShowResumeDraftBanner(false)
+    resumeDraftBannerDismissedKeyRef.current = location.key
+    if (profile) {
+      hydrateFromProfile(profile)
+    }
+    setTermsAccepted(false)
+    setFormError(null)
+    setFieldErrors({})
+    setPartialSaveHint(null)
+    setDraftSavedVisible(false)
+    if (draftSavedHideTimerRef.current) {
+      window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = null
+    }
+  }, [profile, hydrateFromProfile, location.key])
+
+  useEffect(() => {
+    return () => {
+      if (draftSavedHideTimerRef.current) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading) restoredLocationKeyRef.current = null
+  }, [loading])
+
+  useEffect(() => {
+    if (welcome) {
+      setDraftSaveEnabled(false)
+      setShowResumeDraftBanner(false)
+      return
+    }
+    if (loading || !profile) {
+      setDraftSaveEnabled(false)
+      return
+    }
+
+    if (restoredLocationKeyRef.current === location.key) {
+      setDraftSaveEnabled(true)
+      return
+    }
+    restoredLocationKeyRef.current = location.key
+
+    const parsed = parseStudentOnboardingDraft(localStorage.getItem(STUDENT_ONBOARDING_DRAFT_KEY))
+    if (parsed && isStudentOnboardingDraftMeaningful(parsed)) {
+      setStep(parsed.step)
+      setFirstName(parsed.firstName)
+      setLastName(parsed.lastName)
+      setUniversityId(parsed.universityId)
+      setCampusId(parsed.campusId)
+      setCourse(parsed.course)
+      setStudyLevel(parsed.studyLevel)
+      setGender(parsed.gender)
+      setPhone(parsed.phone)
+      setBudgetRange(parsed.budgetRange)
+      setMoveInDate(parsed.moveInDate)
+      setLeaseLength(parsed.leaseLength)
+      setAvatarUrl(parsed.avatarUrl)
+      setEmergencyName(parsed.emergencyName)
+      setEmergencyRelationship(parsed.emergencyRelationship)
+      setEmergencyPhone(parsed.emergencyPhone)
+      setEmergencyEmail(parsed.emergencyEmail)
+      setBio(parsed.bio)
+      setOccupancyType(parsed.occupancyType)
+      setMoveInFlex(parsed.moveInFlex)
+      setHasPets(parsed.hasPets)
+      setNeedsParking(parsed.needsParking)
+      setBillsPref(parsed.billsPref)
+      setFurnishingPref(parsed.furnishingPref)
+      setHasGuarantor(parsed.hasGuarantor)
+      setGuarantorName(parsed.guarantorName)
+      setTermsAccepted(false)
+      if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
+        setShowResumeDraftBanner(true)
+      }
+    } else {
+      setShowResumeDraftBanner(false)
+    }
+    setDraftSaveEnabled(true)
+  }, [welcome, loading, profile?.id, location.key])
+
+  useEffect(() => {
+    if (welcome || !draftSaveEnabled || loading || !profile) return
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(STUDENT_ONBOARDING_DRAFT_KEY, JSON.stringify(studentOnboardingDraftSnapshot))
+      } catch {
+        /* quota / private mode */
+      }
+      setDraftSavedVisible(true)
+      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = window.setTimeout(() => {
+        setDraftSavedVisible(false)
+        draftSavedHideTimerRef.current = null
+      }, 2200)
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [studentOnboardingDraftSnapshot, welcome, draftSaveEnabled, loading, profile?.id])
 
   useEffect(() => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -150,22 +492,13 @@ export default function StudentOnboarding() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !user?.id) return
-    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
-      setPhotoError('Photo must be 2 MB or smaller.')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please choose an image file.')
-      return
-    }
     setPhotoUploading(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase()
-      const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
-      const path = `${user.id}/profile-photo.${safeExt}`
-      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, file, {
+      const prepared = await prepareProfilePhotoForUpload(file, MAX_PROFILE_PHOTO_BYTES)
+      const path = `${user.id}/profile-photo.${prepared.ext}`
+      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, prepared.blob, {
         upsert: true,
-        contentType: file.type,
+        contentType: prepared.contentType,
       })
       if (upErr) throw upErr
       const { data: pub } = supabase.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path)
@@ -208,9 +541,6 @@ export default function StudentOnboarding() {
     if (!moveInDate) e.moveInDate = 'Choose a preferred move-in date.'
     if (!leaseLength) e.leaseLength = 'Select a preferred lease length.'
     setFieldErrors(e)
-    for (const [fieldName, errorMessage] of Object.entries(e)) {
-      if (errorMessage) reportFormError('StudentOnboarding', fieldName, errorMessage)
-    }
     return Object.keys(e).length === 0
   }
 
@@ -224,9 +554,6 @@ export default function StudentOnboarding() {
       e.emergencyEmail = 'Enter a valid email address.'
     }
     setFieldErrors(e)
-    for (const [fieldName, errorMessage] of Object.entries(e)) {
-      if (errorMessage) reportFormError('StudentOnboarding', fieldName, errorMessage)
-    }
     return Object.keys(e).length === 0
   }
 
@@ -336,7 +663,7 @@ export default function StudentOnboarding() {
             : ''
         const formErrMsg = msg + hint
         setFormError(formErrMsg)
-        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg)
+        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg, { sentry: true })
         return
       }
 
@@ -347,6 +674,11 @@ export default function StudentOnboarding() {
         supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
       )
       if (data) setProfile(data as StudentProfileRow)
+      try {
+        localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
     } finally {
       setSubmitting(false)
     }
@@ -364,6 +696,17 @@ export default function StudentOnboarding() {
         emergency_contact_relationship: emergencyRelationship.trim(),
         emergency_contact_phone: emergencyPhone.trim(),
         emergency_contact_email: emergencyEmail.trim() || null,
+        bio: bio.trim() || null,
+        occupancy_type: occupancyType ? (occupancyType as 'sole' | 'couple' | 'open') : null,
+        move_in_flexibility: moveInFlex ? (moveInFlex as 'exact' | 'one_week' | 'two_weeks') : null,
+        has_pets: hasPets,
+        needs_parking: needsParking,
+        bills_preference: billsPref ? (billsPref as 'included' | 'separate' | 'either') : null,
+        furnishing_preference: furnishingPref
+          ? (furnishingPref as 'furnished' | 'unfurnished' | 'either')
+          : null,
+        has_guarantor: hasGuarantor,
+        guarantor_name: hasGuarantor && guarantorName.trim() ? guarantorName.trim() : null,
       }
       const corePayload = {
         emergency_contact_name: emergencyName.trim(),
@@ -393,7 +736,7 @@ export default function StudentOnboarding() {
             ? ' Run `supabase/student_profile_extend.sql` and `supabase/student_onboarding.sql` in Supabase.'
             : '')
         setFormError(formErrMsg)
-        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg)
+        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg, { sentry: true })
         return
       }
 
@@ -404,6 +747,11 @@ export default function StudentOnboarding() {
         supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
       )
       if (data) setProfile(data as StudentProfileRow)
+      try {
+        localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
     } finally {
       setSubmitting(false)
     }
@@ -414,11 +762,9 @@ export default function StudentOnboarding() {
     setFormError(null)
     setPartialSaveHint(null)
     if (!termsAccepted) {
-      const termsFieldErr = { terms: 'Please accept the Terms of Service and Privacy Policy to continue.' }
-      setFieldErrors(termsFieldErr)
-      for (const [fieldName, errorMessage] of Object.entries(termsFieldErr)) {
-        if (errorMessage) reportFormError('StudentOnboarding', fieldName, errorMessage)
-      }
+      setFieldErrors({
+        terms: 'Please accept the Terms of Service and Privacy Policy to continue.',
+      })
       return
     }
     setFieldErrors({})
@@ -453,16 +799,26 @@ export default function StudentOnboarding() {
             'The database is missing onboarding columns. Run `supabase/student_onboarding.sql` in Supabase → SQL Editor so completion and terms acceptance are stored. You can continue using the site on this device for now.',
           )
           await refreshProfile()
+          try {
+            localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
+          } catch {
+            /* ignore */
+          }
           setWelcome(true)
           return
         }
         const formErrMsg = messageFromSupabaseError(error)
         setFormError(formErrMsg)
-        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg)
+        if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg, { sentry: true })
         return
       }
 
       await refreshProfile()
+      try {
+        localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
       // Keep post-onboarding routing consistent with the student flow:
       // once `onboarding_complete` is persisted, skip the completion screen and land on listings.
       consumePostAuthRedirect()
@@ -534,6 +890,39 @@ export default function StudentOnboarding() {
       />
 
       <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-8">
+        {!welcome && showResumeDraftBanner && (
+          <div
+            className="mb-4 rounded-xl border border-[#FF6F61]/25 bg-[#FF6F61]/8 px-4 py-3 text-sm text-stone-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            role="region"
+            aria-label="Saved draft"
+          >
+            <p className="text-stone-700">Resume draft? We restored your last saved answers.</p>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  resumeDraftBannerDismissedKeyRef.current = location.key
+                  setShowResumeDraftBanner(false)
+                }}
+                className="rounded-lg bg-[#FF6F61] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#e85d52]"
+              >
+                Continue editing
+              </button>
+              <button
+                type="button"
+                onClick={handleDraftStartFresh}
+                className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
+              >
+                Start fresh
+              </button>
+            </div>
+          </div>
+        )}
+        {!welcome && draftSavedVisible && (
+          <p className="text-xs text-stone-400 text-right mb-2 tabular-nums" aria-live="polite">
+            Draft saved
+          </p>
+        )}
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10">
           {welcome ? (
             <div className="text-center space-y-6">
@@ -645,6 +1034,7 @@ export default function StudentOnboarding() {
                             setCampusId('')
                           }}
                           onCampusChange={setCampusId}
+                          referenceScope="full"
                           required
                           showState
                           labelClassName={labelClass}
@@ -857,6 +1247,136 @@ export default function StudentOnboarding() {
                     {fieldErrors.emergencyEmail && <p className={errClass}>{fieldErrors.emergencyEmail}</p>}
                   </div>
 
+                  <div className="rounded-xl border border-stone-200 bg-[#FEF9E4]/50 px-4 py-4 space-y-4">
+                    <h3 className="text-sm font-bold text-stone-900">Living preferences</h3>
+                    <p className="text-xs text-stone-600">Optional — helps landlords see if you&apos;re a good fit.</p>
+                    <div>
+                      <label htmlFor="so-bio" className={labelClass}>
+                        Short bio
+                      </label>
+                      <textarea
+                        id="so-bio"
+                        rows={3}
+                        value={bio}
+                        onChange={(ev) => setBio(ev.target.value)}
+                        className={inputClass}
+                        placeholder="A few sentences about you"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="so-occ" className={labelClass}>
+                          Occupancy
+                        </label>
+                        <select
+                          id="so-occ"
+                          value={occupancyType}
+                          onChange={(ev) => setOccupancyType(ev.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">Select</option>
+                          <option value="sole">Sole occupant</option>
+                          <option value="couple">Couple</option>
+                          <option value="open">Flexible</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="so-mflex" className={labelClass}>
+                          Move-in flexibility
+                        </label>
+                        <select
+                          id="so-mflex"
+                          value={moveInFlex}
+                          onChange={(ev) => setMoveInFlex(ev.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">Select</option>
+                          <option value="exact">Exact date</option>
+                          <option value="one_week">± 1 week</option>
+                          <option value="two_weeks">± 2 weeks</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 text-sm text-stone-800">
+                        <input
+                          type="checkbox"
+                          checked={hasPets}
+                          onChange={(ev) => setHasPets(ev.target.checked)}
+                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                        />
+                        I have pets
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-stone-800">
+                        <input
+                          type="checkbox"
+                          checked={needsParking}
+                          onChange={(ev) => setNeedsParking(ev.target.checked)}
+                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                        />
+                        I need parking
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="so-bills" className={labelClass}>
+                          Bills preference
+                        </label>
+                        <select
+                          id="so-bills"
+                          value={billsPref}
+                          onChange={(ev) => setBillsPref(ev.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">No preference</option>
+                          <option value="included">Bills included</option>
+                          <option value="separate">Bills separate</option>
+                          <option value="either">Either</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="so-furn" className={labelClass}>
+                          Furnishing preference
+                        </label>
+                        <select
+                          id="so-furn"
+                          value={furnishingPref}
+                          onChange={(ev) => setFurnishingPref(ev.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="">No preference</option>
+                          <option value="furnished">Furnished</option>
+                          <option value="unfurnished">Unfurnished</option>
+                          <option value="either">Either</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-sm text-stone-800">
+                        <input
+                          type="checkbox"
+                          checked={hasGuarantor}
+                          onChange={(ev) => setHasGuarantor(ev.target.checked)}
+                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                        />
+                        I have a guarantor
+                      </label>
+                      {hasGuarantor && (
+                        <div className="mt-2">
+                          <label htmlFor="so-gname" className={labelClass}>
+                            Guarantor name (optional)
+                          </label>
+                          <input
+                            id="so-gname"
+                            value={guarantorName}
+                            onChange={(ev) => setGuarantorName(ev.target.value)}
+                            className={inputClass}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
                     <button
                       type="button"
@@ -883,23 +1403,30 @@ export default function StudentOnboarding() {
                     Almost there — confirm you agree to our policies before you start browsing.
                   </p>
 
-                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
-                    <input
-                      type="checkbox"
-                      checked={termsAccepted}
-                      onChange={(ev) => {
-                        setTermsAccepted(ev.target.checked)
-                        setFieldErrors((prev) => ({ ...prev, terms: '' }))
-                      }}
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] accent-[#FF6F61]"
-                    />
-                    <span>
+                  <label
+                    htmlFor="so-terms-accept"
+                    className="relative z-10 flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed touch-manipulation"
+                  >
+                    <span className="flex shrink-0 items-center justify-center min-h-[44px] min-w-[44px] -ml-2 pl-2 self-start rounded-lg active:bg-stone-50/80">
+                      <input
+                        id="so-terms-accept"
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(ev) => {
+                          setTermsAccepted(ev.target.checked)
+                          setFieldErrors((prev) => ({ ...prev, terms: '' }))
+                        }}
+                        className="h-5 w-5 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] accent-[#FF6F61]"
+                      />
+                    </span>
+                    <span className="pt-2.5 min-w-0">
                       I agree to the{' '}
                       <a
                         href="/terms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#FF6F61] font-medium underline underline-offset-2"
+                        className="relative z-[1] text-[#FF6F61] font-medium underline underline-offset-2"
+                        onPointerDown={(e) => e.stopPropagation()}
                       >
                         Terms of Service
                       </a>{' '}
@@ -908,7 +1435,8 @@ export default function StudentOnboarding() {
                         href="/privacy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#FF6F61] font-medium underline underline-offset-2"
+                        className="relative z-[1] text-[#FF6F61] font-medium underline underline-offset-2"
+                        onPointerDown={(e) => e.stopPropagation()}
                       >
                         Privacy Policy
                       </a>

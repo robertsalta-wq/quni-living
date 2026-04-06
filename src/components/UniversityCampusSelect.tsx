@@ -4,6 +4,7 @@ import {
   fetchCampusesForUniversityId,
   groupUniversitiesByState,
   type CampusReferenceRow,
+  type UniversityCampusReferenceScope,
 } from '../lib/universityCampusReference'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { isSupabaseConfigured } from '../lib/supabase'
@@ -40,6 +41,11 @@ export type UniversityCampusSelectProps = {
   campusCellClassName?: string
   /** stack: vertical; responsiveGrid: 2 cols sm+; flexRow: horizontal row sm+; flexRowLg: row lg+; pairRow: always side-by-side (hero row of two selects) */
   variant?: 'stack' | 'responsiveGrid' | 'flexRow' | 'flexRowLg' | 'pairRow'
+  /**
+   * `full`: all universities/campuses from reference data (e.g. home search).
+   * `withListings`: only locations that currently have active listings (filters, landlord tools).
+   */
+  referenceScope?: UniversityCampusReferenceScope
 }
 
 export default function UniversityCampusSelect({
@@ -65,8 +71,10 @@ export default function UniversityCampusSelect({
   universityCellClassName,
   campusCellClassName,
   variant = 'stack',
+  referenceScope = 'withListings',
 }: UniversityCampusSelectProps) {
-  const { universities, loading } = useUniversityCampusReference()
+  const { universities, loading } = useUniversityCampusReference(referenceScope)
+  const campusListingFilter = referenceScope === 'withListings'
 
   const uniKey = universityId?.trim() ?? ''
   const slugForUni = useMemo(
@@ -84,7 +92,9 @@ export default function UniversityCampusSelect({
     }
     let cancelled = false
     setLoadingCampuses(true)
-    void fetchCampusesForUniversityId(uniKey, slugForUni).then((rows) => {
+    void fetchCampusesForUniversityId(uniKey, slugForUni, {
+      onlyWithActiveListings: campusListingFilter,
+    }).then((rows) => {
       if (!cancelled) {
         setCampusRows(rows)
         setLoadingCampuses(false)
@@ -93,7 +103,7 @@ export default function UniversityCampusSelect({
     return () => {
       cancelled = true
     }
-  }, [uniKey, slugForUni])
+  }, [uniKey, slugForUni, campusListingFilter])
 
   const grouped = useMemo(() => {
     if (!showState) return null

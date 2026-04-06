@@ -165,7 +165,7 @@ export default function Home() {
         '@id': `${SITE_URL}/#organization`,
         name: SITE_NAME,
         url: SITE_URL,
-        logo: absoluteUrl('/favicon.svg'),
+        logo: absoluteUrl('/favicon.png'),
         email: ORGANIZATION_EMAIL,
       },
     ],
@@ -226,6 +226,7 @@ export default function Home() {
                     setCampusId('')
                   }}
                   onCampusChange={setCampusId}
+                  referenceScope="full"
                   showState
                   showLabels={false}
                   variant="stack"

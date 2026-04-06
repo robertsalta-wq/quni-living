@@ -19,6 +19,12 @@ verify_jwt = false
 [functions.verify-uni-otp]
 verify_jwt = false
 
+[functions.send-work-otp]
+verify_jwt = false
+
+[functions.verify-work-otp]
+verify_jwt = false
+
 [functions.delete-student-account]
 verify_jwt = false
 

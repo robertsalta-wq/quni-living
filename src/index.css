@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* Set to 48px on native Android only (see nativeStatusBarInsetFallback.ts). */
+  --quni-status-bar-fallback: 0px;
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -24,7 +26,8 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* App is light-only; ignore system dark mode (see meta color-scheme in index.html). */
+  color-scheme: light only;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -37,26 +40,8 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --brand-header-bg: #fef9e4;
-    --brand-header-border: #e8e0cc;
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html {
+  color-scheme: light only;
 }
 
 /* App shell: column layout so pages sit below the header (see App.tsx <main>) */
@@ -69,10 +54,54 @@
   flex-direction: column;
   box-sizing: border-box;
   text-align: left;
+  color-scheme: light only;
 }
 
 body {
   margin: 0;
+  color-scheme: light only;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/*
+ * Android Chrome often keeps dark-themed native fields when the OS is in dark mode,
+ * even if the document uses color-scheme: light. Pin light controls + a white surface
+ * for text-like fields (many forms omit Tailwind bg-* on inputs).
+ */
+input,
+textarea,
+select,
+button {
+  color-scheme: light only;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='hidden']):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']),
+textarea,
+select {
+  background-color: #fff;
+  color: var(--text-h);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+/* Prefer vertical panning for document scroll on mobile WebViews (e.g. Android Chrome). */
+.booking-scroll {
+  touch-action: pan-y;
+}
+
+/* Virtual keyboard overlap: extra scroll room when env() is supported (Chrome 108+ / supporting WebViews). */
+@supports (padding-bottom: env(keyboard-inset-height)) {
+  .booking-scroll {
+    padding-bottom: max(
+      5rem,
+      calc(env(safe-area-inset-bottom, 0px) + env(keyboard-inset-height, 0px))
+    ) !important;
+  }
 }
 
 h1,
@@ -117,4 +146,30 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+@layer utilities {
+  /**
+   * Fixed/sticky header top inset: `env()` covers mobile Safari/Chrome with viewport-fit=cover.
+   * Capacitor Android 15+ injects `--safe-area-inset-*` on the document (see SystemBars.java);
+   * `max()` uses whichever is non-zero so native and mobile web both get the right offset.
+   */
+  .pt-safe-top {
+    padding-top: max(
+      env(safe-area-inset-top, 0px),
+      var(--safe-area-inset-top, 0px),
+      var(--quni-status-bar-fallback, 0px)
+    );
+  }
+
+  /** Matches fixed mobile header height (~5rem) plus the same combined top inset as `.pt-safe-top`. */
+  .pt-main-below-fixed-header {
+    padding-top: calc(
+      5rem + max(
+        env(safe-area-inset-top, 0px),
+        var(--safe-area-inset-top, 0px),
+        var(--quni-status-bar-fallback, 0px)
+      )
+    );
+  }
 }

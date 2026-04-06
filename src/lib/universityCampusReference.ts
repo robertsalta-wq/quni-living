@@ -142,7 +142,8 @@ type ActivePropertyLocationIndex = {
   campusIdsByUniversity: Map<string, Set<string>>
 }
 
-let cache: Promise<UniversityCampusReferenceData> | null = null
+let cacheWithListings: Promise<UniversityCampusReferenceData> | null = null
+let cacheFull: Promise<UniversityCampusReferenceData> | null = null
 let activePropertyLocationCache: Promise<ActivePropertyLocationIndex> | null = null
 
 /** Normalise UUID strings for comparison (PostgREST often returns lowercase; DOM values may not). */
@@ -272,6 +273,12 @@ async function loadFresh(): Promise<UniversityCampusReferenceData> {
     return campusIdsForUniversity?.has(campusId) ?? false
   })
   return { universities: filteredUniversities, campuses: filteredCampuses }
+}
+
+/** All reference rows (not restricted to universities/campuses that currently have active listings). */
+async function loadFreshFull(): Promise<UniversityCampusReferenceData> {
+  const [universities, campuses] = await Promise.all([fetchUniversities(), fetchCampuses()])
+  return { universities, campuses }
 }
 
 function mapCampusRow(r: {
@@ -416,22 +423,34 @@ function slugEq(a: string | null | undefined, b: string | null | undefined): boo
 /**
  * Campuses for the selected university: match normalised `university_id` or parent slug.
  */
+export type FetchCampusesForUniversityOptions = {
+  /**
+   * When true (default), only campuses tied to at least one active listing for that university.
+   * When false, return all campuses for the university (e.g. home search / discovery).
+   */
+  onlyWithActiveListings?: boolean
+}
+
 export async function fetchCampusesForUniversityId(
   universityId: string,
   universitySlug?: string | null,
+  options?: FetchCampusesForUniversityOptions,
 ): Promise<CampusReferenceRow[]> {
   if (!isSupabaseConfigured || !universityId.trim()) return []
+  const onlyWithActiveListings = options?.onlyWithActiveListings !== false
   const uid = normUuid(universityId)
   const slug = universitySlug?.trim() ?? null
-  const activeLocations = await getActivePropertyLocationIndexCached()
-  const activeCampusIdsForUniversity = activeLocations.campusIdsByUniversity.get(uid) ?? new Set<string>()
-  if (activeCampusIdsForUniversity.size === 0) return []
+  const activeLocations = onlyWithActiveListings ? await getActivePropertyLocationIndexCached() : null
+  const activeCampusIdsForUniversity =
+    activeLocations != null ? (activeLocations.campusIdsByUniversity.get(uid) ?? new Set<string>()) : null
+  if (onlyWithActiveListings && activeCampusIdsForUniversity!.size === 0) return []
 
   const direct = await fetchCampusesDirectByUniversityId(universityId)
   if (direct.length > 0) {
-    return direct
-      .filter((c) => activeCampusIdsForUniversity.has(normUuid(c.id)))
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const list = onlyWithActiveListings
+      ? direct.filter((c) => activeCampusIdsForUniversity!.has(normUuid(c.id)))
+      : direct
+    return list.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   const rows = await getAllCampusesJoinedCached()
@@ -442,7 +461,7 @@ export async function fetchCampusesForUniversityId(
   })
 
   if (matched.length === 0 && slug) {
-    const ref = await loadUniversityCampusReference()
+    const ref = await loadUniversityCampusReference(onlyWithActiveListings ? 'withListings' : 'full')
     const idsForSlug = new Set(
       ref.universities.filter((u) => slugEq(u.slug, slug)).map((u) => normUuid(u.id)),
     )
@@ -451,45 +470,62 @@ export async function fetchCampusesForUniversityId(
     }
   }
 
-  return matched
-    .map((r) =>
-      mapCampusRow({
-        id: r.id,
-        name: r.name,
-        university_id: r.university_id,
-        suburb: r.suburb,
-        state: r.state,
-        slug: r.slug,
-        latitude: r.latitude,
-        longitude: r.longitude,
-      }),
-    )
-    .filter((c) => activeCampusIdsForUniversity.has(normUuid(c.id)))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const mapped = matched.map((r) =>
+    mapCampusRow({
+      id: r.id,
+      name: r.name,
+      university_id: r.university_id,
+      suburb: r.suburb,
+      state: r.state,
+      slug: r.slug,
+      latitude: r.latitude,
+      longitude: r.longitude,
+    }),
+  )
+  const filtered = onlyWithActiveListings
+    ? mapped.filter((c) => activeCampusIdsForUniversity!.has(normUuid(c.id)))
+    : mapped
+  return filtered.sort((a, b) => a.name.localeCompare(b.name))
 }
+
+export type UniversityCampusReferenceScope = 'withListings' | 'full'
 
 /**
  * Loads universities and campuses once per page session; re-used by all pickers.
  * Safe when Supabase is not configured (returns empty arrays).
  * Falls back to columns from `quni_supabase_schema.sql` if extended columns are missing.
+ *
+ * - `withListings` (default): only universities/campuses that appear on at least one active property.
+ * - `full`: entire reference tables (better for search/discovery when listing index is empty or unavailable).
  */
-export function loadUniversityCampusReference(): Promise<UniversityCampusReferenceData> {
+export function loadUniversityCampusReference(scope: UniversityCampusReferenceScope = 'withListings'): Promise<UniversityCampusReferenceData> {
   if (!isSupabaseConfigured) {
     return Promise.resolve({ universities: [], campuses: [] })
   }
-  if (!cache) {
+  if (scope === 'full') {
+    if (!cacheFull) {
+      const p = loadFreshFull()
+      cacheFull = p
+      p.catch(() => {
+        cacheFull = null
+      })
+    }
+    return cacheFull
+  }
+  if (!cacheWithListings) {
     const p = loadFresh()
-    cache = p
+    cacheWithListings = p
     p.catch(() => {
-      cache = null
+      cacheWithListings = null
     })
   }
-  return cache
+  return cacheWithListings
 }
 
 /** For tests or after re-seeding reference data. */
 export function clearUniversityCampusReferenceCache(): void {
-  cache = null
+  cacheWithListings = null
+  cacheFull = null
   allCampusesJoinedCache = null
   activePropertyLocationCache = null
 }

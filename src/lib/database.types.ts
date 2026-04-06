@@ -281,6 +281,15 @@ export interface Database {
           identity_supporting_doc_url: string | null
           identity_supporting_submitted_at: string | null
           accommodation_verification_route: 'student' | 'non_student' | null
+          bio: string | null
+          occupancy_type: 'sole' | 'couple' | 'open' | null
+          move_in_flexibility: 'exact' | 'one_week' | 'two_weeks' | null
+          has_pets: boolean | null
+          needs_parking: boolean | null
+          bills_preference: 'included' | 'separate' | 'either' | null
+          furnishing_preference: 'furnished' | 'unfurnished' | 'either' | null
+          has_guarantor: boolean | null
+          guarantor_name: string | null
           created_at: string
         }
         Insert: {
@@ -328,6 +337,15 @@ export interface Database {
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
+          bio?: string | null
+          occupancy_type?: 'sole' | 'couple' | 'open' | null
+          move_in_flexibility?: 'exact' | 'one_week' | 'two_weeks' | null
+          has_pets?: boolean | null
+          needs_parking?: boolean | null
+          bills_preference?: 'included' | 'separate' | 'either' | null
+          furnishing_preference?: 'furnished' | 'unfurnished' | 'either' | null
+          has_guarantor?: boolean | null
+          guarantor_name?: string | null
           created_at?: string
         }
         Update: {
@@ -375,6 +393,15 @@ export interface Database {
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
+          bio?: string | null
+          occupancy_type?: 'sole' | 'couple' | 'open' | null
+          move_in_flexibility?: 'exact' | 'one_week' | 'two_weeks' | null
+          has_pets?: boolean | null
+          needs_parking?: boolean | null
+          bills_preference?: 'included' | 'separate' | 'either' | null
+          furnishing_preference?: 'furnished' | 'unfurnished' | 'either' | null
+          has_guarantor?: boolean | null
+          guarantor_name?: string | null
           created_at?: string
         }
         Relationships: [
@@ -420,13 +447,14 @@ export interface Database {
           university_id: string | null
           campus_id: string | null
           available_from: string | null
-          status: 'active' | 'inactive' | 'pending' | 'suspended'
+          status: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
           linen_supplied: boolean | null
           weekly_cleaning_service: boolean | null
           property_type: string | null
           open_to_non_students: boolean
           created_at: string
           updated_at: string
+          property_group_id: string | null
         }
         Insert: {
           id?: string
@@ -453,13 +481,14 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
-          status?: 'active' | 'inactive' | 'pending' | 'suspended'
+          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
           open_to_non_students?: boolean
           created_at?: string
           updated_at?: string
+          property_group_id?: string | null
         }
         Update: {
           id?: string
@@ -486,13 +515,14 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
-          status?: 'active' | 'inactive' | 'pending' | 'suspended'
+          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
           open_to_non_students?: boolean
           created_at?: string
           updated_at?: string
+          property_group_id?: string | null
         }
         Relationships: [
           {
@@ -561,6 +591,7 @@ export interface Database {
             | 'pending'
             | 'pending_payment'
             | 'pending_confirmation'
+            | 'awaiting_info'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -584,6 +615,9 @@ export interface Database {
           property_type: string | null
           stripe_subscription_id: string | null
           stripe_subscription_status: string | null
+          ai_assessment: string | null
+          ai_assessment_at: string | null
+          decline_reason: string | null
           created_at: string
           updated_at: string
         }
@@ -599,6 +633,7 @@ export interface Database {
             | 'pending'
             | 'pending_payment'
             | 'pending_confirmation'
+            | 'awaiting_info'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -607,6 +642,7 @@ export interface Database {
             | 'payment_failed'
             | 'completed'
           notes?: string | null
+          decline_reason?: string | null
           move_in_date?: string | null
           lease_length?: string | null
           student_message?: string | null
@@ -622,6 +658,8 @@ export interface Database {
           property_type?: string | null
           stripe_subscription_id?: string | null
           stripe_subscription_status?: string | null
+          ai_assessment?: string | null
+          ai_assessment_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -637,6 +675,7 @@ export interface Database {
             | 'pending'
             | 'pending_payment'
             | 'pending_confirmation'
+            | 'awaiting_info'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -645,6 +684,7 @@ export interface Database {
             | 'payment_failed'
             | 'completed'
           notes?: string | null
+          decline_reason?: string | null
           move_in_date?: string | null
           lease_length?: string | null
           student_message?: string | null
@@ -660,6 +700,8 @@ export interface Database {
           property_type?: string | null
           stripe_subscription_id?: string | null
           stripe_subscription_status?: string | null
+          ai_assessment?: string | null
+          ai_assessment_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -683,6 +725,41 @@ export interface Database {
             columns: ['student_id']
             isOneToOne: false
             referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      booking_messages: {
+        Row: {
+          id: string
+          booking_id: string
+          sender_id: string
+          sender_role: 'landlord' | 'student'
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          sender_id: string
+          sender_role: 'landlord' | 'student'
+          message: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          sender_id?: string
+          sender_role?: 'landlord' | 'student'
+          message?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'booking_messages_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
             referencedColumns: ['id']
           },
         ]
@@ -1175,6 +1252,10 @@ export interface Database {
       }
       property_access_status_for_viewer_by_id: {
         Args: { p_id: string }
+        Returns: string
+      }
+      duplicate_property_listing: {
+        Args: { p_source_id: string }
         Returns: string
       }
     }

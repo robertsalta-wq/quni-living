@@ -181,15 +181,18 @@ export default function Listings() {
             role="status"
           >
             You&apos;re viewing listings that are open to non-students. Complete{' '}
-            <Link to="/student-profile" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+            <Link
+              to="/student-profile?tab=verification"
+              className="font-semibold text-[#FF6F61] underline underline-offset-2"
+            >
               student verification
             </Link>{' '}
             to unlock every active listing, or stay on this view if you&apos;re on the identity verification path.
           </div>
         )}
 
-        <div className="mb-6 max-w-[420px]">
-          <ChatEmbed defaultOpen listingContext={aiListingContext} />
+        <div className="mb-6 w-full">
+          <ChatEmbed variant="listings" listingContext={aiListingContext} />
         </div>
         <div className="grid w-full grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start justify-items-stretch">
           <aside className="w-full min-w-0 md:w-auto md:max-w-[16rem]">

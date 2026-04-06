@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
@@ -19,6 +19,7 @@ import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/onboardingChecklist'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
+import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -45,16 +46,19 @@ type TabId = 'listings' | 'enquiries' | 'bookings'
 /** Loaded for landlord dashboard — safe fields only (see LandlordSafeStudentSnapshot). */
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
-/** Avoid JSON.parse on HTML/plain-text error bodies from the platform. */
-async function readJsonApiResponse(res: Response): Promise<{ error?: string } & Record<string, unknown>> {
-  const raw = await res.text()
-  if (!raw.trim()) return {}
-  try {
-    return JSON.parse(raw) as { error?: string } & Record<string, unknown>
-  } catch {
-    return { error: raw.trim().slice(0, 280) || `Request failed (${res.status})` }
-  }
-}
+const LANDLORD_DASHBOARD_STUDENT_SELECT_BASE =
+  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, bio, occupancy_type, move_in_flexibility, has_pets, needs_parking, bills_preference, furnishing_preference, has_guarantor, guarantor_name, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+const LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX =
+  ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
+const LANDLORD_DASHBOARD_STUDENT_SELECT_FULL =
+  `${LANDLORD_DASHBOARD_STUDENT_SELECT_BASE}, work_email_verified, work_email_verified_at${LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX}`
+const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY =
+  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX =
+  ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
+const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_FULL =
+  `${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY}, work_email_verified, work_email_verified_at${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX}`
+const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_CORE = `${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY}${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX}`
 
 function firstNameFromLandlord(p: LandlordRow): string {
   const fn = p.first_name?.trim()
@@ -71,11 +75,13 @@ function firstNameFromLandlord(p: LandlordRow): string {
 function listingStatusClass(s: PropertyRow['status']) {
   if (s === 'active') return 'bg-emerald-100 text-emerald-800'
   if (s === 'pending') return 'bg-amber-100 text-amber-800'
+  if (s === 'draft') return 'bg-slate-100 text-slate-700'
   return 'bg-gray-100 text-gray-600'
 }
 
 function listingStatusLabel(s: PropertyRow['status']) {
   if (s === 'inactive') return 'paused'
+  if (s === 'draft') return 'draft'
   return s
 }
 
@@ -87,6 +93,7 @@ function enquiryStatusClass(s: EnquiryStatus) {
 
 function bookingStatusClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-800'
+  if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
   if (s === 'confirmed' || s === 'active') return 'bg-emerald-100 text-emerald-800'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
@@ -127,11 +134,54 @@ function ExpiresIn({ expiresAt }: { expiresAt: string | null | undefined }) {
     const id = window.setInterval(() => setTxt(fmt()), 30_000)
     return () => clearInterval(id)
   }, [expiresAt])
-  return <span className="text-sm font-semibold text-amber-900 tabular-nums">{txt}</span>
+  return (
+    <span className="block max-w-full text-sm font-semibold text-amber-900 tabular-nums break-words">
+      {txt}
+    </span>
+  )
+}
+
+/** Prominent tenancy start date for landlord follow-up (rent is arranged off-platform until recurring rent exists). */
+function formatMoveInDateProminent(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const t = iso.trim().slice(0, 10)
+  try {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T12:00:00`) : new Date(iso)
+    return d.toLocaleDateString('en-AU', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  } catch {
+    return '—'
+  }
+}
+
+function LandlordBookingPaymentErrorBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-3">
+      <p>
+        Payment could not be processed. Please check your details and try again, or contact support at{' '}
+        <a href="mailto:hello@quni.com.au" className="font-medium text-red-900 underline underline-offset-2">
+          hello@quni.com.au
+        </a>
+        .
+      </p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="rounded-lg bg-white border border-red-200 px-4 py-2 text-sm font-semibold text-red-900 hover:bg-red-100/80"
+      >
+        Try again
+      </button>
+    </div>
+  )
 }
 
 export default function LandlordDashboard() {
   const { user } = useAuthContext()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -141,7 +191,6 @@ export default function LandlordDashboard() {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
   const [tab, setTab] = useState<TabId>('listings')
   const [selectedEnquiryId, setSelectedEnquiryId] = useState<string | null>(null)
-  const [bookingActionId, setBookingActionId] = useState<string | null>(null)
   const [draftReplies, setDraftReplies] = useState<Record<string, string>>({})
   const [draftingReplyIds, setDraftingReplyIds] = useState<Record<string, boolean>>({})
   const [sendingReplyIds, setSendingReplyIds] = useState<Record<string, boolean>>({})
@@ -149,6 +198,11 @@ export default function LandlordDashboard() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
   const [updatingListingId, setUpdatingListingId] = useState<string | null>(null)
+  const [duplicateConfirmProperty, setDuplicateConfirmProperty] = useState<PropertySummary | null>(null)
+  const [duplicatingListingId, setDuplicatingListingId] = useState<string | null>(null)
+  const [publishingListingId, setPublishingListingId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
+  const toastTimerRef = useRef<number | null>(null)
   const [studentProfileModal, setStudentProfileModal] = useState<{
     student: LandlordSafeStudentSnapshot | null
     fallbackName: string
@@ -159,6 +213,7 @@ export default function LandlordDashboard() {
   const [aiAssessmentGeneratedSessionKeys, setAiAssessmentGeneratedSessionKeys] = useState<Set<string>>(
     () => new Set(),
   )
+  const [landlordBookingPaymentError, setLandlordBookingPaymentError] = useState(false)
   const [landlordStudentByProfileId, setLandlordStudentByProfileId] = useState<
     Record<string, LandlordLoadedStudentRow>
   >({})
@@ -175,8 +230,16 @@ export default function LandlordDashboard() {
         .from('landlord_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
       if (pErr) throw pErr
+      if (!profRaw) {
+        setProfile(null)
+        setProperties([])
+        setEnquiries([])
+        setBookings([])
+        setLandlordStudentByProfileId({})
+        return
+      }
       const prof = profRaw as LandlordRow
       setProfile(prof)
 
@@ -214,12 +277,66 @@ export default function LandlordDashboard() {
 
       const [studRes, bookingPropsRes] = await Promise.all([
         studentIds.length > 0
-          ? supabase
-              .from('student_profiles')
-              .select(
-                'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at, work_email_verified, work_email_verified_at, id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )',
-              )
-              .in('id', studentIds)
+          ? (async () => {
+              let r = await supabase
+                .from('student_profiles')
+                .select(LANDLORD_DASHBOARD_STUDENT_SELECT_FULL)
+                .in('id', studentIds)
+              if (!r.error) {
+                return { data: (r.data ?? []) as LandlordLoadedStudentRow[], error: null }
+              }
+              if (looksLikeMissingDbColumn(r.error)) {
+                const r2 = await supabase
+                  .from('student_profiles')
+                  .select(LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_FULL)
+                  .in('id', studentIds)
+                if (!r2.error && r2.data) {
+                  return {
+                    data: r2.data.map((row) => ({
+                      ...row,
+                      bio: null,
+                      occupancy_type: null,
+                      move_in_flexibility: null,
+                      has_pets: null,
+                      needs_parking: null,
+                      bills_preference: null,
+                      furnishing_preference: null,
+                      has_guarantor: null,
+                      guarantor_name: null,
+                    })) as LandlordLoadedStudentRow[],
+                    error: null,
+                  }
+                }
+                if (r2.error && looksLikeMissingDbColumn(r2.error)) {
+                  const r3 = await supabase
+                    .from('student_profiles')
+                    .select(LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_CORE)
+                    .in('id', studentIds)
+                  if (!r3.error && r3.data) {
+                    return {
+                      data: r3.data.map((row) => ({
+                        ...row,
+                        work_email_verified: null,
+                        work_email_verified_at: null,
+                        bio: null,
+                        occupancy_type: null,
+                        move_in_flexibility: null,
+                        has_pets: null,
+                        needs_parking: null,
+                        bills_preference: null,
+                        furnishing_preference: null,
+                        has_guarantor: null,
+                        guarantor_name: null,
+                      })) as LandlordLoadedStudentRow[],
+                      error: null,
+                    }
+                  }
+                  return r3
+                }
+                return r2
+              }
+              return r
+            })()
           : Promise.resolve({ data: [] as LandlordLoadedStudentRow[], error: null }),
         bookingPropertyIds.length > 0
           ? supabase.from('properties').select('id, title, slug, suburb').in('id', bookingPropertyIds)
@@ -262,7 +379,7 @@ export default function LandlordDashboard() {
       setEnquiries(enquiryRows)
       setBookings(mergedBookings)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load dashboard.')
+      setError(messageFromSupabaseError(e))
       setProfile(null)
       setProperties([])
       setEnquiries([])
@@ -276,6 +393,21 @@ export default function LandlordDashboard() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
+    }
+  }, [])
+
+  const showToast = useCallback((t: { kind: 'success' | 'error'; message: string }) => {
+    if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
+    setToast(t)
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null)
+      toastTimerRef.current = null
+    }, 4000)
+  }, [])
 
   const stripeConnectParam = searchParams.get('stripe_connect')
   useEffect(() => {
@@ -486,63 +618,53 @@ export default function LandlordDashboard() {
     }
   }, [load])
 
-  const confirmBooking = useCallback(
-    async (b: BookingWithRelations) => {
-      if (profile?.stripe_charges_enabled !== true) {
-        setStripeRequiredModalOpen(true)
-        return
-      }
-      setBookingActionId(b.id)
+  const publishDraftListing = useCallback(
+    async (property: PropertySummary) => {
+      if (property.status !== 'draft') return
+      setPublishingListingId(property.id)
       try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        const token = sessionData.session?.access_token
-        if (!token) throw new Error('Session expired. Please sign in again.')
-
-        const res = await fetch('/api/create-rent-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ bookingId: b.id }),
-        })
-        const j = await readJsonApiResponse(res)
-        if (!res.ok) throw new Error((typeof j.error === 'string' && j.error) || 'Could not confirm booking.')
-
+        const { error: updateError } = await supabase
+          .from('properties')
+          .update({ status: 'active' })
+          .eq('id', property.id)
+        if (updateError) throw updateError
         await load()
+        showToast({ kind: 'success', message: 'Listing published and now live.' })
       } catch (e) {
-        console.error(e)
-        setError(e instanceof Error ? e.message : 'Could not confirm booking.')
+        const msg =
+          e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string'
+            ? String((e as { message: string }).message)
+            : 'Could not publish listing.'
+        showToast({ kind: 'error', message: msg })
       } finally {
-        setBookingActionId(null)
+        setPublishingListingId(null)
       }
     },
-    [load, profile?.stripe_charges_enabled],
+    [load, showToast],
   )
 
-  const declineBooking = useCallback(
-    async (b: BookingWithRelations) => {
-      setBookingActionId(b.id)
-      try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        const token = sessionData.session?.access_token
-        if (!token) throw new Error('Session expired. Please sign in again.')
-
-        const res = await fetch('/api/refund-booking-deposit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ bookingId: b.id }),
-        })
-        const j = await readJsonApiResponse(res)
-        if (!res.ok) throw new Error((typeof j.error === 'string' && j.error) || 'Could not decline booking.')
-
-        await load()
-      } catch (e) {
-        console.error(e)
-        setError(e instanceof Error ? e.message : 'Could not decline booking.')
-      } finally {
-        setBookingActionId(null)
+  const confirmDuplicateListing = useCallback(async () => {
+    const src = duplicateConfirmProperty
+    if (!src) return
+    setDuplicatingListingId(src.id)
+    setError(null)
+    try {
+      const { data: newId, error: rpcErr } = await supabase.rpc('duplicate_property_listing', {
+        p_source_id: src.id,
+      })
+      if (rpcErr) throw rpcErr
+      if (typeof newId !== 'string' || !newId.trim()) {
+        throw new Error('Duplicate did not return a listing id.')
       }
-    },
-    [load],
-  )
+      setDuplicateConfirmProperty(null)
+      navigate(`/landlord/property/edit/${newId.trim()}`)
+      void load()
+    } catch (e) {
+      setError(messageFromSupabaseError(e))
+    } finally {
+      setDuplicatingListingId(null)
+    }
+  }, [duplicateConfirmProperty, load, navigate])
 
   const togglePropertyStatus = useCallback(
     async (property: PropertySummary) => {
@@ -557,7 +679,7 @@ export default function LandlordDashboard() {
         if (updateError) throw updateError
         await load()
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not update listing status.')
+        setError(messageFromSupabaseError(e))
       } finally {
         setUpdatingListingId(null)
       }
@@ -568,15 +690,27 @@ export default function LandlordDashboard() {
   const activeListings = properties.filter((p) => p.status === 'active').length
   const newEnquiries = enquiries.filter((e) => e.status === 'new').length
   const pendingBookings = bookings.filter(
-    (b) => b.status === 'pending' || b.status === 'pending_confirmation' || b.status === 'pending_payment',
+    (b) =>
+      b.status === 'pending' ||
+      b.status === 'pending_confirmation' ||
+      b.status === 'pending_payment' ||
+      b.status === 'awaiting_info',
   ).length
 
   const pendingConfirmation = useMemo(
-    () => bookings.filter((b) => b.status === 'pending_confirmation' && b.stripe_payment_intent_id),
+    () =>
+      bookings.filter(
+        (b) =>
+          (b.status === 'pending_confirmation' && b.stripe_payment_intent_id) || b.status === 'awaiting_info',
+      ),
     [bookings],
   )
   const otherBookings = useMemo(
-    () => bookings.filter((b) => !(b.status === 'pending_confirmation' && b.stripe_payment_intent_id)),
+    () =>
+      bookings.filter(
+        (b) =>
+          !((b.status === 'pending_confirmation' && b.stripe_payment_intent_id) || b.status === 'awaiting_info'),
+      ),
     [bookings],
   )
   const checklistTotal = 7
@@ -635,7 +769,7 @@ export default function LandlordDashboard() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-      <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+      <div className="max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         {user?.id && (
           <OnboardingChecklistBanner
             role="landlord"
@@ -875,38 +1009,60 @@ export default function LandlordDashboard() {
                           {p.title}
                         </h3>
                         <p className="text-xs text-gray-500 mb-4">{p.suburb ?? 'Location TBC'}</p>
-                        <div className="mt-auto flex gap-2">
-                          <Link
-                            to={`/landlord/property/edit/${p.id}`}
-                            className="flex-1 text-center rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </Link>
-                          <Link
-                            to={`/properties/${p.slug}`}
-                            className="flex-1 text-center rounded-lg bg-[#FF6F61] py-2 text-sm font-medium text-white hover:bg-[#e85d52]"
-                          >
-                            View
-                          </Link>
-                          {(p.status === 'active' || p.status === 'inactive') && (
+                        <div className="mt-auto flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <Link
+                              to={`/landlord/property/edit/${p.id}`}
+                              className="flex-1 text-center rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                              Edit
+                            </Link>
+                            <Link
+                              to={`/properties/${p.slug}`}
+                              className="flex-1 text-center rounded-lg bg-[#FF6F61] py-2 text-sm font-medium text-white hover:bg-[#e85d52]"
+                            >
+                              View
+                            </Link>
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            {p.status === 'draft' && (
+                              <button
+                                type="button"
+                                onClick={() => void publishDraftListing(p)}
+                                disabled={publishingListingId === p.id || duplicatingListingId === p.id}
+                                className="flex-1 min-w-[7.5rem] text-center rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-60"
+                              >
+                                {publishingListingId === p.id ? 'Publishing…' : 'Publish'}
+                              </button>
+                            )}
                             <button
                               type="button"
-                              onClick={() => void togglePropertyStatus(p)}
-                              disabled={updatingListingId === p.id}
-                              className={[
-                                'flex-1 text-center rounded-lg border bg-white py-2 text-sm font-medium disabled:opacity-60',
-                                p.status === 'active'
-                                  ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                  : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50',
-                              ].join(' ')}
+                              onClick={() => setDuplicateConfirmProperty(p)}
+                              disabled={duplicatingListingId === p.id || publishingListingId === p.id}
+                              className="flex-1 min-w-[7.5rem] text-center rounded-lg border border-indigo-200 bg-indigo-50 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
                             >
-                              {updatingListingId === p.id
-                                ? 'Updating...'
-                                : p.status === 'active'
-                                  ? 'Pause listing'
-                                  : 'Reactivate'}
+                              {duplicatingListingId === p.id ? 'Duplicating…' : 'Duplicate'}
                             </button>
-                          )}
+                            {(p.status === 'active' || p.status === 'inactive') && (
+                              <button
+                                type="button"
+                                onClick={() => void togglePropertyStatus(p)}
+                                disabled={updatingListingId === p.id}
+                                className={[
+                                  'flex-1 min-w-[7.5rem] text-center rounded-lg border bg-white py-2 text-sm font-medium disabled:opacity-60',
+                                  p.status === 'active'
+                                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50',
+                                ].join(' ')}
+                              >
+                                {updatingListingId === p.id
+                                  ? 'Updating...'
+                                  : p.status === 'active'
+                                    ? 'Pause listing'
+                                    : 'Reactivate'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1176,10 +1332,13 @@ export default function LandlordDashboard() {
         )}
 
         {tab === 'bookings' && (
-          <div className="space-y-6">
+          <div className="space-y-6 w-full min-w-0 max-w-full">
+            {landlordBookingPaymentError && (
+              <LandlordBookingPaymentErrorBanner onDismiss={() => setLandlordBookingPaymentError(false)} />
+            )}
             {pendingConfirmation.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-900">Needs your response</h3>
+              <div className="space-y-4 w-full min-w-0 max-w-full">
+                <h3 className="text-sm font-semibold text-gray-900">Booking requests</h3>
                 {pendingConfirmation.map((b) => {
                   const sp = b.student_profiles
                   const uni = sp?.universities?.name?.trim()
@@ -1187,13 +1346,24 @@ export default function LandlordDashboard() {
                   const bookingVerification = buildLandlordVerificationFromProfile(sp)
                   const applicantSessionKey = applicantSessionKeyFromBooking(b)
                   const hasAiAssessmentThisSession = aiAssessmentGeneratedSessionKeys.has(applicantSessionKey)
+                  const awaitingStudent = b.status === 'awaiting_info'
                   return (
                     <div
                       key={b.id}
-                      className="rounded-2xl border border-amber-100 bg-amber-50/40 p-5 sm:p-6 shadow-sm space-y-4"
+                      className="box-border w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-amber-100 bg-amber-50/40 p-5 sm:p-6 shadow-sm space-y-4"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                        <div className="flex items-start gap-3 min-w-0">
+                      <div className="min-w-0 overflow-hidden rounded-xl border border-indigo-200/90 bg-white/90 px-4 py-3 shadow-sm">
+                        <p className="text-xs font-semibold text-indigo-900 uppercase tracking-wide">Move-in date</p>
+                        <p className="mt-1 break-words text-lg font-bold text-gray-900 tabular-nums">
+                          {formatMoveInDateProminent(moveInRaw || b.start_date)}
+                        </p>
+                        <p className="mt-2 break-words text-xs text-gray-600 leading-relaxed">
+                          Use this date when arranging ongoing rent with your tenant. Rent is not charged automatically on
+                          Quni until you set up recurring payments separately (when available).
+                        </p>
+                      </div>
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
                           {sp?.avatar_url ? (
                             <img
                               src={sp.avatar_url}
@@ -1205,7 +1375,7 @@ export default function LandlordDashboard() {
                               {studentDisplayFromBooking(b).charAt(0).toUpperCase() || '?'}
                             </div>
                           )}
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1 overflow-hidden">
                             <button
                               type="button"
                               onClick={() =>
@@ -1217,7 +1387,7 @@ export default function LandlordDashboard() {
                                   sessionKey: applicantSessionKeyFromBooking(b),
                                 })
                               }
-                              className="text-left font-semibold text-gray-900 hover:text-indigo-700 hover:underline underline-offset-2"
+                              className="max-w-full text-left break-words font-semibold text-gray-900 hover:text-indigo-700 hover:underline underline-offset-2"
                             >
                               {studentDisplayFromBooking(b)}
                             </button>
@@ -1237,24 +1407,37 @@ export default function LandlordDashboard() {
                             >
                               Verification details
                             </button>
-                            {uni && <p className="text-sm text-gray-600 mt-2">{uni}</p>}
-                            {sp?.course?.trim() && <p className="text-sm text-gray-600">{sp.course.trim()}</p>}
+                            {uni && (
+                              <p className="mt-2 break-words text-sm text-gray-600">{uni}</p>
+                            )}
+                            {sp?.course?.trim() && (
+                              <p className="break-words text-sm text-gray-600">{sp.course.trim()}</p>
+                            )}
                           </div>
                         </div>
-                        <div className="sm:ml-auto text-left sm:text-right">
-                          <ExpiresIn expiresAt={b.expires_at} />
-                          <p className="text-xs text-amber-900/80 mt-1 max-w-xs sm:ml-auto">
-                            You have 48 hours to respond before this request expires.
-                          </p>
+                        <div className="min-w-0 w-full shrink-0 text-left sm:ml-auto sm:w-auto sm:max-w-[min(20rem,100%)] sm:text-right">
+                          {!awaitingStudent && (
+                            <>
+                              <ExpiresIn expiresAt={b.expires_at} />
+                              <p className="mt-1 max-w-full break-words text-xs text-amber-900/80 sm:ml-auto">
+                                You have 48 hours to respond before this request expires.
+                              </p>
+                            </>
+                          )}
+                          {awaitingStudent && (
+                            <p className="break-words text-sm font-semibold text-sky-900">
+                              Awaiting student response
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <p>
+                      <div className="min-w-0 space-y-1 text-sm text-gray-700">
+                        <p className="break-words">
                           <span className="text-gray-500">Property:</span>{' '}
                           <span className="font-medium text-gray-900">{b.properties?.title ?? '—'}</span>
                           {b.properties?.suburb ? ` · ${b.properties.suburb}` : ''}
                         </p>
-                        <p>
+                        <p className="break-words">
                           <span className="text-gray-500">Move-in:</span>{' '}
                           <span className="font-medium">{formatDate(moveInRaw || b.start_date)}</span>
                           <span className="text-gray-400 mx-1">·</span>
@@ -1262,9 +1445,13 @@ export default function LandlordDashboard() {
                           <span className="font-medium">{b.lease_length?.trim() || '—'}</span>
                         </p>
                         {b.student_message?.trim() && (
-                          <div className="mt-2 rounded-xl bg-white/80 border border-amber-100/80 px-4 py-3">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Message</p>
-                            <p className="text-gray-800 whitespace-pre-wrap">{b.student_message.trim()}</p>
+                          <div className="mt-2 min-w-0 overflow-hidden rounded-xl border border-amber-100/80 bg-white/80 px-4 py-3">
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Message
+                            </p>
+                            <p className="break-words whitespace-pre-wrap text-gray-800">
+                              {b.student_message.trim()}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -1280,11 +1467,11 @@ export default function LandlordDashboard() {
                               sessionKey: applicantSessionKey,
                             })
                           }
-                          className="group w-full rounded-lg border border-[#FF6F61]/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-[#FF6F61]/85 underline-offset-2 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/[0.07] hover:text-[#FF6F61] hover:underline sm:text-center"
+                          className="group w-full min-w-0 rounded-lg border border-[#FF6F61]/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-[#FF6F61]/85 underline-offset-2 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/[0.07] hover:text-[#FF6F61] hover:underline sm:text-center"
                         >
-                          <span className="inline-flex items-center justify-center gap-2 sm:max-w-md sm:mx-auto">
+                          <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-2 sm:mx-auto sm:max-w-md">
                             <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]/85 group-hover:text-[#FF6F61]" />
-                            <span>
+                            <span className="min-w-0 flex-1 break-words sm:flex-none sm:text-center">
                               {hasAiAssessmentThisSession
                                 ? 'View AI assessment'
                                 : 'Not sure yet? Get an AI assessment of this student before deciding.'}
@@ -1292,23 +1479,18 @@ export default function LandlordDashboard() {
                           </span>
                         </button>
                       </div>
-                      <div className="flex flex-wrap gap-3 pt-2">
-                        <button
-                          type="button"
-                          disabled={bookingActionId === b.id}
-                          onClick={() => void confirmBooking(b)}
-                          className="rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                      <div className="flex min-w-0 flex-wrap gap-3 pt-2">
+                        <Link
+                          to={`/landlord/bookings/${b.id}/review`}
+                          className="inline-flex w-full min-w-0 max-w-full shrink-0 items-center justify-center break-words rounded-xl bg-[#FF6F61] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] sm:w-auto"
                         >
-                          {bookingActionId === b.id ? '…' : 'Confirm booking'}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={bookingActionId === b.id}
-                          onClick={() => void declineBooking(b)}
-                          className="rounded-xl border-2 border-gray-300 bg-white text-gray-700 px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          {bookingActionId === b.id ? '…' : 'Decline booking'}
-                        </button>
+                          Review request →
+                        </Link>
+                        {!awaitingStudent && (
+                          <span className="min-w-0 max-w-full self-center break-words text-xs font-medium text-amber-900/90">
+                            Awaiting your response
+                          </span>
+                        )}
                       </div>
                     </div>
                   )
@@ -1329,9 +1511,10 @@ export default function LandlordDashboard() {
                         <th className="px-4 py-3">Student</th>
                         <th className="px-4 py-3">Verification</th>
                         <th className="px-4 py-3">Property</th>
-                        <th className="px-4 py-3">Stay</th>
+                        <th className="px-4 py-3">Move-in → end</th>
                         <th className="px-4 py-3">Rent / wk</th>
                         <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 w-28">Review</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1382,6 +1565,14 @@ export default function LandlordDashboard() {
                               {b.status}
                             </span>
                           </td>
+                          <td className="px-4 py-3">
+                            <Link
+                              to={`/landlord/bookings/${b.id}/review`}
+                              className="text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                            >
+                              Open
+                            </Link>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1413,6 +1604,42 @@ export default function LandlordDashboard() {
           />
         )}
 
+        {duplicateConfirmProperty && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => {
+                if (!duplicatingListingId) setDuplicateConfirmProperty(null)
+              }}
+              aria-hidden
+            />
+            <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900">Duplicate listing?</h3>
+              <p className="mt-2 text-sm text-gray-600">
+                This will create a draft copy of this listing. You can then edit the room details.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void confirmDuplicateListing()}
+                  disabled={Boolean(duplicatingListingId)}
+                  className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
+                >
+                  {duplicatingListingId ? 'Duplicating…' : 'Confirm'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDuplicateConfirmProperty(null)}
+                  disabled={Boolean(duplicatingListingId)}
+                  className="rounded-xl border border-gray-300 bg-white text-gray-700 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {stripeRequiredModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40" onClick={() => setStripeRequiredModalOpen(false)} aria-hidden />
@@ -1439,6 +1666,21 @@ export default function LandlordDashboard() {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {toast && (
+          <div
+            className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4"
+            role={toast.kind === 'success' ? 'status' : 'alert'}
+          >
+            <div
+              className={`rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
+                toast.kind === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+              }`}
+            >
+              {toast.message}
             </div>
           </div>
         )}

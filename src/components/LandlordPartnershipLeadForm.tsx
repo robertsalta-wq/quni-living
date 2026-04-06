@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
-import { getEmailJsLandlordLeadConfig, sendLandlordLeadEmail } from '../lib/landlordLeadEmail'
-import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
+import { isTurnstileSiteKeyConfigured } from '../lib/verifyTurnstile'
+import { apiUrl } from '../lib/apiUrl'
 import TurnstileCaptcha from './TurnstileCaptcha'
 
 const PROPERTY_OPTIONS = [
@@ -64,24 +64,13 @@ export default function LandlordPartnershipLeadForm() {
       return
     }
 
-    const emailCfg = getEmailJsLandlordLeadConfig()
-    if (!emailCfg.ok) {
-      setFormError(emailCfg.reason)
-      return
-    }
-
     if (!isTurnstileSiteKeyConfigured()) {
-      setFormError(
-        'Captcha is not configured. The site admin must add VITE_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.',
-      )
+      setFormError('This form is not available right now. Please email hello@quni.com.au directly.')
       return
     }
 
-    const captcha = await verifyTurnstileToken(captchaToken)
-    if (!captcha.ok) {
-      setFieldErrors((prev) => ({ ...prev, captcha: captcha.message }))
-      setCaptchaToken(null)
-      setCaptchaResetKey((k) => k + 1)
+    if (!captchaToken?.trim()) {
+      setFieldErrors((prev) => ({ ...prev, captcha: 'Please complete the verification.' }))
       return
     }
 
@@ -100,14 +89,23 @@ export default function LandlordPartnershipLeadForm() {
       if (insErr) throw insErr
 
       try {
-        await sendLandlordLeadEmail(emailCfg, {
-          name: row.name,
-          email: row.email,
-          phone: row.phone,
-          suburb: row.suburb,
-          propertyCount: row.property_count,
-          message: row.message ?? '',
+        const mailRes = await fetch(apiUrl('/api/landlord-lead-email'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: row.name,
+            email: row.email,
+            phone: row.phone,
+            suburb: row.suburb,
+            propertyCount: row.property_count,
+            message: row.message ?? '',
+            turnstileToken: captchaToken,
+          }),
         })
+        const mailData = (await mailRes.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+        if (!mailRes.ok || !mailData.ok) {
+          console.error('Landlord lead email failed', mailData.error || mailRes.status)
+        }
       } catch (emailErr) {
         console.error('Landlord lead email failed', emailErr)
       }

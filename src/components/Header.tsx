@@ -114,7 +114,7 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] sticky top-0 z-50">
+    <header className="pt-safe-top w-full shrink-0 bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
       <div ref={mobileNavRootRef} className="max-w-site mx-auto w-full px-3 py-4 sm:px-6">
         <div className="flex items-center justify-between gap-3">
         <SiteBrandLockup />
@@ -310,10 +310,7 @@ export default function Header() {
               aria-hidden
               onClick={() => setMobileNavOpen(false)}
             />
-            <div
-              className="fixed inset-y-0 right-0 z-[60] flex w-[min(100%,20rem)] flex-col border-l border-gray-100 bg-white shadow-xl md:hidden"
-              style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-            >
+            <div className="fixed inset-y-0 right-0 z-[60] flex w-[min(100%,20rem)] flex-col border-l border-gray-100 bg-white pt-safe-top shadow-xl md:hidden">
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <span className="text-sm font-semibold text-gray-900">Menu</span>
                 <button

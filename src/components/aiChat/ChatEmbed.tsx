@@ -5,9 +5,11 @@ import ChatPanel from './ChatPanel'
 type Props = {
   listingContext?: ListingContext
   defaultOpen?: boolean
+  /** Listings page: always-open inline panel (no banner / toggle). */
+  variant?: 'default' | 'listings'
 }
 
-export default function ChatEmbed({ listingContext, defaultOpen }: Props) {
+export default function ChatEmbed({ listingContext, defaultOpen, variant = 'default' }: Props) {
   const [open, setOpen] = useState(Boolean(defaultOpen))
 
   const hasAnyContext = useMemo(() => {
@@ -16,6 +18,10 @@ export default function ChatEmbed({ listingContext, defaultOpen }: Props) {
     if (listingContext.listingIds && listingContext.listingIds.length > 0) return true
     return false
   }, [listingContext])
+
+  if (variant === 'listings') {
+    return <ChatPanel variant="listings" listingContext={listingContext} />
+  }
 
   if (open) {
     return <ChatPanel variant="embed" listingContext={listingContext} onClose={() => setOpen(false)} />

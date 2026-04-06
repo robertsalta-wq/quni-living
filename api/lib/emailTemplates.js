@@ -153,6 +153,53 @@ ${bondBlock}
 }
 
 /** @param {object} data */
+/** Landlord asked follow-up questions before deciding. */
+export function bookingMoreInfoFromLandlordStudent(data) {
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const studentName = escapeHtml(data.student_name || 'there')
+  const landlordMessage = escapeHtml((data.landlord_message || '').trim()).replace(/\n/g, '<br>')
+  const replyUrl = escapeHtml(
+    data.reply_url || 'https://quni-living.vercel.app/student-profile?tab=bookings',
+  )
+
+  const inner = `<h2 style="color: #1A1A2E;">More information needed</h2>
+<p>Hi ${studentName},</p>
+<p>Your host has a question about your booking request for <strong>${propertyAddress}</strong>.</p>
+<div style="background:#FEF9E4;border-radius:8px;padding:16px;margin:16px 0;border:1px solid #f0e6c4;">
+<p style="margin:0;font-size:14px;line-height:1.5;">${landlordMessage || '<em>(No message text)</em>'}</p>
+</div>
+<p>Please sign in and reply from your <strong>Bookings</strong> tab so they can continue reviewing your request.</p>
+<a href="${replyUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking &amp; reply →</a>`
+
+  return {
+    subject: `Your host has a question — ${data.property_address || data.property_title || 'booking request'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Auto-declined because another student was confirmed for the same property. */
+/** @param {object} data */
+export function bookingAutoDeclinedPropertyTakenStudent(data) {
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const studentName = escapeHtml(data.student_name || 'there')
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Update on your booking request</h2>
+<p>Hi ${studentName},</p>
+<p>Thank you for your interest in <strong>${propertyAddress}</strong> through Quni Living.</p>
+<p>Another student has been selected for this property, so we are unable to proceed with your request.</p>
+<p>Your booking deposit will be refunded to your original payment method within <strong>5–7 business days</strong>. You will not be charged for this listing.</p>
+<p>There are many other great homes for students on Quni Living — we encourage you to keep browsing and find the right place for you.</p>
+<a href="${listingsUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse listings →</a>
+<p style="margin-top: 24px; font-size: 14px; color: #666;">Warm regards,<br><strong>Quni Living</strong></p>`
+
+  return {
+    subject: 'Update on your Quni Living booking request',
+    html: wrapContent(inner),
+  }
+}
+
+/** @param {object} data */
 export function bookingDeclinedStudent(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
   const studentName = escapeHtml(data.student_name || 'there')

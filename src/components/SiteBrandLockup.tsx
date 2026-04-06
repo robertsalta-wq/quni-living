@@ -6,7 +6,7 @@ const LOGO_SRC = '/quni-logo.png'
 /**
  * PNG wordmark recolor via CSS mask only works if the asset has real alpha around the artwork.
  * Many raster logos are exported on an opaque rectangle, which reads as a solid color block when masked.
- * For the AI landing header we use the vector favicon + purple wordmark text instead.
+ * For the AI landing header we use purple wordmark text instead of masking the PNG.
  */
 function QuniLogoImg({ wordmarkColor }: { wordmarkColor?: string }) {
   const sizeClass = 'h-9 w-auto max-w-full object-contain object-left sm:h-10'

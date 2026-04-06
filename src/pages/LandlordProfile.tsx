@@ -6,6 +6,7 @@ import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripePayoutsCard'
 import PageHeroBand from '../components/PageHeroBand'
+import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
@@ -339,24 +340,15 @@ export default function LandlordProfile() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !user?.id) return
-    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
-      setPhotoError('Photo must be 2 MB or smaller.')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please choose an image file.')
-      return
-    }
 
     setUploadingPhoto(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase()
-      const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
-      const path = `${user.id}/profile-photo.${safeExt}`
+      const prepared = await prepareProfilePhotoForUpload(file, MAX_PROFILE_PHOTO_BYTES)
+      const path = `${user.id}/profile-photo.${prepared.ext}`
 
-      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, file, {
+      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, prepared.blob, {
         upsert: true,
-        contentType: file.type,
+        contentType: prepared.contentType,
       })
       if (upErr) {
         const m = upErr.message?.trim() || 'Upload failed.'
@@ -915,7 +907,7 @@ export default function LandlordProfile() {
                   <span className="text-lg leading-none">+</span>
                   {uploadingPhoto ? 'Uploading…' : 'Upload your photo'}
                 </button>
-                <p className="text-xs text-gray-500 mt-2">Max: 2 MB</p>
+                <p className="text-xs text-gray-500 mt-2">Larger photos are resized automatically (max 2 MB).</p>
                 {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
@@ -58,6 +58,7 @@ function firstPropertyImage(images: string[] | null | undefined): string | null 
 
 function bookingStatusClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-900'
+  if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
   if (s === 'confirmed' || s === 'active') return 'bg-green-100 text-green-800'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
@@ -98,6 +99,7 @@ function PropertyThumbPlaceholder() {
 
 export default function StudentDashboard() {
   const { user } = useAuthContext()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentRow | null>(null)
@@ -181,8 +183,17 @@ export default function StudentDashboard() {
     void load()
   }, [load])
 
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t === 'bookings' || t === 'enquiries' || t === 'saved') setTab(t)
+  }, [searchParams])
+
   const pendingBookings = bookings.filter(
-    (b) => b.status === 'pending' || b.status === 'pending_confirmation' || b.status === 'pending_payment',
+    (b) =>
+      b.status === 'pending' ||
+      b.status === 'pending_confirmation' ||
+      b.status === 'pending_payment' ||
+      b.status === 'awaiting_info',
   ).length
   const profileComplete = isStudentCoreProfileComplete(profile)
 

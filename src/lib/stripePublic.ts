@@ -10,3 +10,9 @@ export function getStripePublishableKey(): string | undefined {
 export function isStripePublishableKeyConfigured(): boolean {
   return Boolean(getStripePublishableKey())
 }
+
+/** True when the Vite publishable key is Stripe test mode (`pk_test_…`), not live. */
+export function isStripeTestPublishableKey(): boolean {
+  const k = getStripePublishableKey()
+  return Boolean(k?.startsWith('pk_test_'))
+}

@@ -172,7 +172,7 @@ export default async function handler(request) {
     move_in_date: moveIn,
     lease_length: booking.lease_length || '—',
     student_message: typeof booking.student_message === 'string' ? booking.student_message : '',
-    dashboard_url: `${dashboardBase}/landlord/dashboard?tab=bookings`,
+    dashboard_url: `${dashboardBase}/landlord/bookings/${bookingId}/review`,
   })
 
   try {

@@ -145,7 +145,7 @@ export default function Privacy() {
           'Stripe (payment processing and identity verification)',
           'Supabase (database and authentication infrastructure)',
           'Vercel (website hosting)',
-          'EmailJS (transactional email delivery)',
+          'Resend (transactional email delivery)',
           'Cloudflare (spam protection)',
         ]}
       />

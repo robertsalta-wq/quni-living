@@ -213,6 +213,15 @@ alter table public.student_profiles
       or accommodation_verification_route in ('student', 'non_student')
     );
 
+alter table public.student_profiles
+  add column if not exists work_email text;
+
+alter table public.student_profiles
+  add column if not exists work_email_verified boolean default false;
+
+alter table public.student_profiles
+  add column if not exists work_email_verified_at timestamptz;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

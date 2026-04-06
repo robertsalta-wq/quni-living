@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import {
   loadUniversityCampusReference,
   type UniversityCampusReferenceData,
+  type UniversityCampusReferenceScope,
 } from '../lib/universityCampusReference'
 
-export function useUniversityCampusReference(): UniversityCampusReferenceData & {
+export function useUniversityCampusReference(scope: UniversityCampusReferenceScope = 'withListings'): UniversityCampusReferenceData & {
   loading: boolean
   error: string | null
 } {
@@ -19,7 +20,7 @@ export function useUniversityCampusReference(): UniversityCampusReferenceData & 
     let cancelled = false
     setLoading(true)
     setError(null)
-    loadUniversityCampusReference()
+    loadUniversityCampusReference(scope)
       .then((d) => {
         if (!cancelled) setData(d)
       })
@@ -35,7 +36,7 @@ export function useUniversityCampusReference(): UniversityCampusReferenceData & 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [scope])
 
   return { ...data, loading, error }
 }

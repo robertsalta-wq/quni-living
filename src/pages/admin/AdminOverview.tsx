@@ -60,7 +60,7 @@ export default function AdminOverview() {
               supabase
                 .from('bookings')
                 .select('id', { count: 'exact', head: true })
-                .in('status', ['pending', 'pending_payment', 'pending_confirmation']),
+                .in('status', ['pending', 'pending_payment', 'pending_confirmation', 'awaiting_info']),
             ),
           ),
           countRows(() =>

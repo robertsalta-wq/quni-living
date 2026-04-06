@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { AuthProfile, UserRole } from '../lib/authProfile'
-import { getEmailJsEnquiryConfig, sendEnquiryEmails } from '../lib/enquiryEmail'
-import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
+import { isTurnstileSiteKeyConfigured } from '../lib/verifyTurnstile'
+import { apiUrl } from '../lib/apiUrl'
 import TurnstileCaptcha from './TurnstileCaptcha'
 
 type Props = {
@@ -82,22 +82,13 @@ export default function PropertyEnquiryForm({
       return
     }
 
-    const emailCfg = getEmailJsEnquiryConfig()
-    if (!emailCfg.ok) {
-      setError(emailCfg.reason)
-      return
-    }
-
     if (!isTurnstileSiteKeyConfigured()) {
-      setError('Captcha is not configured. The site admin must add VITE_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.')
+      setError('This form is not available right now. Please email hello@quni.com.au directly.')
       return
     }
 
-    const captcha = await verifyTurnstileToken(captchaToken)
-    if (!captcha.ok) {
-      setError(captcha.message)
-      setCaptchaToken(null)
-      setCaptchaResetKey((k) => k + 1)
+    if (!captchaToken?.trim()) {
+      setError('Please complete the verification step.')
       return
     }
 
@@ -113,20 +104,21 @@ export default function PropertyEnquiryForm({
       })
       if (insErr) throw insErr
 
-      try {
-        await sendEnquiryEmails(emailCfg, {
+      const mailRes = await fetch(apiUrl('/api/enquiry-email'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           propertyTitle,
           senderName: formName,
           senderEmail: formEmail,
           message: formMessage,
-        })
-      } catch (mailErr: unknown) {
-        let detail = 'Email delivery failed.'
-        if (mailErr && typeof mailErr === 'object' && 'text' in mailErr && typeof (mailErr as { text: string }).text === 'string') {
-          detail = (mailErr as { text: string }).text
-        } else if (mailErr instanceof Error) {
-          detail = mailErr.message
-        }
+          turnstileToken: captchaToken,
+        }),
+      })
+      const mailData = (await mailRes.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+      if (!mailRes.ok || !mailData.ok) {
+        const detail =
+          typeof mailData.error === 'string' && mailData.error ? mailData.error : 'Email delivery failed.'
         throw new Error(
           `Your enquiry was saved, but we could not send the emails (${detail}). Please try again in a few minutes or contact hello@quni.com.au.`,
         )

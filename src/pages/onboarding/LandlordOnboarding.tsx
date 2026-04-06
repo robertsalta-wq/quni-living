@@ -15,6 +15,7 @@ import {
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
+import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -205,7 +206,7 @@ export default function LandlordOnboarding() {
         completionWritten.current = false
         const formErrMsg = error.message
         setFormError(formErrMsg)
-        if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+        if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
         return
       }
       setLandlordWizardCompleteLocalStorage()
@@ -219,24 +220,15 @@ export default function LandlordOnboarding() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !user?.id) return
-    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
-      setPhotoError('Photo must be 2 MB or smaller.')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please choose an image file.')
-      return
-    }
 
     setPhotoUploading(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase()
-      const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
-      const path = `${user.id}/profile-photo.${safeExt}`
+      const prepared = await prepareProfilePhotoForUpload(file, MAX_PROFILE_PHOTO_BYTES)
+      const path = `${user.id}/profile-photo.${prepared.ext}`
 
-      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, file, {
+      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, prepared.blob, {
         upsert: true,
-        contentType: file.type,
+        contentType: prepared.contentType,
       })
       if (upErr) {
         setPhotoError(upErr.message || 'Upload failed.')
@@ -282,9 +274,6 @@ export default function LandlordOnboarding() {
     if (!state) e.state = 'Select state.'
     if (!bio.trim()) e.bio = 'Add a short bio for students.'
     setFieldErrors(e)
-    for (const [fieldName, errorMessage] of Object.entries(e)) {
-      if (errorMessage) reportFormError('LandlordOnboarding', fieldName, errorMessage)
-    }
     return Object.keys(e).length === 0
   }
 
@@ -355,7 +344,7 @@ export default function LandlordOnboarding() {
     } catch (err) {
       const formErrMsg = messageFromSupabaseError(err)
       setFormError(formErrMsg)
-      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
     } finally {
       setSubmitting(false)
     }
@@ -390,7 +379,7 @@ export default function LandlordOnboarding() {
     } catch (e) {
       const formErrMsg = messageFromSupabaseError(e)
       setFormError(formErrMsg)
-      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
     } finally {
       setSubmitting(false)
     }
@@ -442,7 +431,7 @@ export default function LandlordOnboarding() {
     } catch (e) {
       const formErrMsg = e instanceof Error ? e.message : 'Could not start Stripe setup.'
       setFormError(formErrMsg)
-      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
     } finally {
       setConnectLoading(false)
     }
@@ -470,7 +459,7 @@ export default function LandlordOnboarding() {
           const formErrMsg =
             'Your database is missing insurance columns. Run supabase/landlord_onboarding_wizard_columns.sql in the Supabase SQL Editor, then try again.'
           setFormError(formErrMsg)
-          if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+          if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
           return
         }
         throw error
@@ -481,7 +470,7 @@ export default function LandlordOnboarding() {
     } catch (e) {
       const formErrMsg = messageFromSupabaseError(e)
       setFormError(formErrMsg)
-      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg)
+      if (formErrMsg) reportFormError('LandlordOnboarding', 'formError', formErrMsg, { sentry: true })
     } finally {
       setSubmitting(false)
     }

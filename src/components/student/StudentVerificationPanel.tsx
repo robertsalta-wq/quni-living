@@ -14,6 +14,60 @@ type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 const DOC_BUCKET = 'student-documents'
 const MAX_DOC_BYTES = 5 * 1024 * 1024
 const RESEND_SECONDS = 60
+const UPLOAD_ACK_MS = 12_000
+
+function workOtpPendingStorageKey(userId: string) {
+  return `quni:workOtpPending:v1:${userId}`
+}
+
+function readWorkOtpPendingEmail(userId: string): string | null {
+  try {
+    const raw = sessionStorage.getItem(workOtpPendingStorageKey(userId))
+    if (!raw) return null
+    const o = JSON.parse(raw) as { email?: unknown }
+    if (!o || typeof o.email !== 'string') return null
+    const e = o.email.trim().toLowerCase()
+    return e || null
+  } catch {
+    return null
+  }
+}
+
+function writeWorkOtpPending(userId: string, emailNorm: string) {
+  try {
+    sessionStorage.setItem(workOtpPendingStorageKey(userId), JSON.stringify({ email: emailNorm }))
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function clearWorkOtpPending(userId: string) {
+  try {
+    sessionStorage.removeItem(workOtpPendingStorageKey(userId))
+  } catch {
+    /* ignore */
+  }
+}
+
+function UploadReceivedBanner({ fileName }: { fileName: string }) {
+  return (
+    <div
+      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 flex gap-2.5 items-start shadow-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="text-xl leading-none text-emerald-600 shrink-0" aria-hidden>
+        ✓
+      </span>
+      <div className="min-w-0">
+        <p className="font-semibold text-emerald-950">Document received</p>
+        <p className="text-emerald-900/90 mt-1">
+          Saved securely — <span className="font-medium break-all">{fileName}</span>
+        </p>
+      </div>
+    </div>
+  )
+}
 
 const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm'
 
@@ -67,6 +121,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
   const identitySupportInputRef = useRef<HTMLInputElement>(null)
+  const uploadAckClearTimersRef = useRef<Partial<Record<DocKind, number>>>({})
+  const [uploadAckByKind, setUploadAckByKind] = useState<Partial<Record<DocKind, { fileName: string }>>>({})
   const [idUploadError, setIdUploadError] = useState<string | null>(null)
   const [enrolUploadError, setEnrolUploadError] = useState<string | null>(null)
   const [identitySupportUploadError, setIdentitySupportUploadError] = useState<string | null>(null)
@@ -139,6 +195,33 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     const t = window.setInterval(() => setWorkResendTick((x) => x + 1), 1000)
     return () => window.clearInterval(t)
   }, [workResendAt])
+
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(uploadAckClearTimersRef.current)) {
+        if (typeof t === 'number') window.clearTimeout(t)
+      }
+      uploadAckClearTimersRef.current = {}
+    }
+  }, [])
+
+  useEffect(() => {
+    if (workEmailVerified) {
+      clearWorkOtpPending(userId)
+      setWorkCodeSent(false)
+      return
+    }
+    const pending = readWorkOtpPendingEmail(userId)
+    if (!pending) return
+    setWorkCodeSent(true)
+    setWorkEmailInput((prev) => {
+      const pt = prev.trim().toLowerCase()
+      if (pt === pending) return prev
+      const prof = (profile.work_email ?? '').trim().toLowerCase()
+      if (prof === pending && profile.work_email) return profile.work_email
+      return pending
+    })
+  }, [userId, workEmailVerified, profile.work_email])
 
   const resendRemaining =
     resendAt != null && Date.now() < resendAt ? Math.ceil((resendAt - Date.now()) / 1000) : 0
@@ -256,13 +339,14 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         setWorkSendError(String(data.error))
         return
       }
+      writeWorkOtpPending(userId, trimmed)
       setWorkCodeSent(true)
       setWorkOtpInput('')
       setWorkResendAt(Date.now() + RESEND_SECONDS * 1000)
     } finally {
       setWorkSending(false)
     }
-  }, [workEmailInput])
+  }, [workEmailInput, userId])
 
   const verifyWorkCode = useCallback(async () => {
     setWorkVerifyError(null)
@@ -293,6 +377,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         setWorkVerifyError(String(data.error))
         return
       }
+      clearWorkOtpPending(userId)
       setWorkCodeSent(false)
       setWorkOtpInput('')
       setWorkResendAt(null)
@@ -300,7 +385,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     } finally {
       setWorkVerifying(false)
     }
-  }, [workOtpInput, onRefresh])
+  }, [workOtpInput, onRefresh, userId])
 
   async function uploadDoc(
     file: File,
@@ -356,6 +441,18 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
       const { error: dbErr } = await supabase.from('student_profiles').update(patch).eq('user_id', userId)
       if (dbErr) throw dbErr
+
+      setUploadAckByKind((m) => ({ ...m, [kind]: { fileName: file.name } }))
+      const prevAckT = uploadAckClearTimersRef.current[kind]
+      if (typeof prevAckT === 'number') window.clearTimeout(prevAckT)
+      uploadAckClearTimersRef.current[kind] = window.setTimeout(() => {
+        setUploadAckByKind((m) => {
+          const next = { ...m }
+          delete next[kind]
+          return next
+        })
+        delete uploadAckClearTimersRef.current[kind]
+      }, UPLOAD_ACK_MS)
 
       await onRefresh()
     } catch (e: unknown) {
@@ -486,8 +583,16 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
                     autoComplete="email"
                     value={workEmailInput}
                     onChange={(e) => {
-                      setWorkEmailInput(e.target.value)
+                      const next = e.target.value
+                      setWorkEmailInput(next)
                       setWorkSendError(null)
+                      const pending = readWorkOtpPendingEmail(userId)
+                      if (pending && next.trim().toLowerCase() !== pending) {
+                        clearWorkOtpPending(userId)
+                        setWorkCodeSent(false)
+                        setWorkOtpInput('')
+                        setWorkResendAt(null)
+                      }
                     }}
                     placeholder="you@company.com"
                     className={inputClass}
@@ -581,40 +686,43 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <p className="text-sm text-gray-600 mt-1">
             Upload a clear photo of your passport or Australian driver&apos;s licence.
           </p>
-          {idSubmitted ? (
-            <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-              <p className="font-semibold">
-                <span aria-hidden>📄</span> ID provided
-              </p>
-              {profile.id_submitted_at && (
-                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
-            </div>
-          ) : (
-            <div className="mt-4">
-              <input
-                ref={idInputRef}
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                className="sr-only"
-                onChange={onIdFile}
-              />
-              <button
-                type="button"
-                disabled={idUploading}
-                onClick={() => idInputRef.current?.click()}
-                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-              >
-                {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-              </button>
-              {idUploadError && (
-                <p className="text-xs text-red-600 mt-2" role="alert">
-                  {idUploadError}
+          <div className="mt-4 space-y-3">
+            {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
+            {idSubmitted ? (
+              <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
+                <p className="font-semibold">
+                  <span aria-hidden>📄</span> ID on file
                 </p>
-              )}
-            </div>
-          )}
+                {profile.id_submitted_at && (
+                  <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
+              </div>
+            ) : (
+              <div>
+                <input
+                  ref={idInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  className="sr-only"
+                  onChange={onIdFile}
+                />
+                <button
+                  type="button"
+                  disabled={idUploading}
+                  onClick={() => idInputRef.current?.click()}
+                  className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+                >
+                  {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
+                </button>
+                {idUploadError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    {idUploadError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </section>
 
         <section className={cardClass} aria-labelledby="verify-support-heading">
@@ -624,39 +732,44 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <p className="text-sm text-gray-600 mt-1">
             Upload a recent payslip, employment letter, or bank statement (JPEG, PNG, or PDF).
           </p>
-          {identitySupportingSubmitted ? (
-            <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-              <p className="font-semibold">
-                <span aria-hidden>📎</span> Document provided
-              </p>
-              {profile.identity_supporting_submitted_at && (
-                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.identity_supporting_submitted_at)}</p>
-              )}
-            </div>
-          ) : (
-            <div className="mt-4">
-              <input
-                ref={identitySupportInputRef}
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                className="sr-only"
-                onChange={onIdentitySupportFile}
-              />
-              <button
-                type="button"
-                disabled={identitySupportUploading}
-                onClick={() => identitySupportInputRef.current?.click()}
-                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-              >
-                {identitySupportUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-              </button>
-              {identitySupportUploadError && (
-                <p className="text-xs text-red-600 mt-2" role="alert">
-                  {identitySupportUploadError}
+          <div className="mt-4 space-y-3">
+            {uploadAckByKind.identity_supporting && (
+              <UploadReceivedBanner fileName={uploadAckByKind.identity_supporting.fileName} />
+            )}
+            {identitySupportingSubmitted ? (
+              <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
+                <p className="font-semibold">
+                  <span aria-hidden>📎</span> Document on file
                 </p>
-              )}
-            </div>
-          )}
+                {profile.identity_supporting_submitted_at && (
+                  <p className="text-gray-600 mt-1">Submitted {formatDate(profile.identity_supporting_submitted_at)}</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <input
+                  ref={identitySupportInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  className="sr-only"
+                  onChange={onIdentitySupportFile}
+                />
+                <button
+                  type="button"
+                  disabled={identitySupportUploading}
+                  onClick={() => identitySupportInputRef.current?.click()}
+                  className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+                >
+                  {identitySupportUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
+                </button>
+                {identitySupportUploadError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    {identitySupportUploadError}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </section>
       </div>
     )
@@ -860,40 +973,43 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <p className="text-sm text-gray-600 mt-1">
           Upload a clear photo of your passport or Australian driver&apos;s licence.
         </p>
-        {idSubmitted ? (
-          <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-            <p className="font-semibold">
-              <span aria-hidden>📄</span> ID provided
-            </p>
-            {profile.id_submitted_at && (
-              <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
-          </div>
-        ) : (
-          <div className="mt-4">
-            <input
-              ref={idInputRef}
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              className="sr-only"
-              onChange={onIdFile}
-            />
-            <button
-              type="button"
-              disabled={idUploading}
-              onClick={() => idInputRef.current?.click()}
-              className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-            >
-              {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-            </button>
-            {idUploadError && (
-              <p className="text-xs text-red-600 mt-2" role="alert">
-                {idUploadError}
+        <div className="mt-4 space-y-3">
+          {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
+          {idSubmitted ? (
+            <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
+              <p className="font-semibold">
+                <span aria-hidden>📄</span> ID on file
               </p>
-            )}
-          </div>
-        )}
+              {profile.id_submitted_at && (
+                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
+            </div>
+          ) : (
+            <div>
+              <input
+                ref={idInputRef}
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                className="sr-only"
+                onChange={onIdFile}
+              />
+              <button
+                type="button"
+                disabled={idUploading}
+                onClick={() => idInputRef.current?.click()}
+                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+              >
+                {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
+              </button>
+              {idUploadError && (
+                <p className="text-xs text-red-600 mt-2" role="alert">
+                  {idUploadError}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className={cardClass} aria-labelledby="verify-enrol-heading">
@@ -904,39 +1020,42 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           Upload your university enrolment confirmation letter or Confirmation of Enrolment (CoE) for international
           students.
         </p>
-        {enrolSubmitted ? (
-          <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-            <p className="font-semibold">
-              <span aria-hidden>🎓</span> Enrolment submitted
-            </p>
-            {profile.enrolment_submitted_at && (
-              <p className="text-gray-600 mt-1">Submitted {formatDate(profile.enrolment_submitted_at)}</p>
-            )}
-          </div>
-        ) : (
-          <div className="mt-4">
-            <input
-              ref={enrolInputRef}
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              className="sr-only"
-              onChange={onEnrolFile}
-            />
-            <button
-              type="button"
-              disabled={enrolUploading}
-              onClick={() => enrolInputRef.current?.click()}
-              className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-            >
-              {enrolUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-            </button>
-            {enrolUploadError && (
-              <p className="text-xs text-red-600 mt-2" role="alert">
-                {enrolUploadError}
+        <div className="mt-4 space-y-3">
+          {uploadAckByKind.enrolment && <UploadReceivedBanner fileName={uploadAckByKind.enrolment.fileName} />}
+          {enrolSubmitted ? (
+            <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
+              <p className="font-semibold">
+                <span aria-hidden>🎓</span> Enrolment on file
               </p>
-            )}
-          </div>
-        )}
+              {profile.enrolment_submitted_at && (
+                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.enrolment_submitted_at)}</p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <input
+                ref={enrolInputRef}
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                className="sr-only"
+                onChange={onEnrolFile}
+              />
+              <button
+                type="button"
+                disabled={enrolUploading}
+                onClick={() => enrolInputRef.current?.click()}
+                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+              >
+                {enrolUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
+              </button>
+              {enrolUploadError && (
+                <p className="text-xs text-red-600 mt-2" role="alert">
+                  {enrolUploadError}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   )

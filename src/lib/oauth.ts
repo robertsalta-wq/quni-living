@@ -1,8 +1,19 @@
+import { Capacitor } from '@capacitor/core'
+
 /**
- * OAuth return URL after Google (etc.). Must be listed in Supabase → Authentication → URL Configuration → Redirect URLs
- * (e.g. http://localhost:5173/auth/callback and your production /auth/callback).
+ * OAuth return URL after Google (etc.). Web builds: add each environment’s
+ * `{origin}/auth/callback` under Supabase → Authentication → URL Configuration → Redirect URLs.
+ *
+ * Native (Capacitor): this function returns a custom-scheme URL. You must manually add the
+ * following exact string in the Supabase dashboard under Authentication → Redirect URLs
+ * (same allow-list as web redirects; easy to miss when only web URLs are configured):
+ *
+ *   com.quni.living://auth/callback
  */
 export function getAuthCallbackUrl() {
+  if (Capacitor.isNativePlatform()) {
+    return 'com.quni.living://auth/callback'
+  }
   return `${window.location.origin}/auth/callback`
 }
 

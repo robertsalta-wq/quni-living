@@ -14,6 +14,7 @@ dist-ssr
 
 # Env files with secrets (keep .env.example committed)
 .env
+.env.vercel
 !.env.example
 
 # Editor directories and files
@@ -28,3 +29,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Local scratch / duplicate tree (do not upload to Vercel)
+.tmp-vercel-worktree

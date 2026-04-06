@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
+import type { Stripe } from '@stripe/stripe-js'
 import { Link, useParams } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -12,8 +14,26 @@ import {
   type PropertyListingType,
 } from '../lib/listings'
 import type { Database } from '../lib/database.types'
-import { getStripePublishableKey, isStripePublishableKeyConfigured } from '../lib/stripePublic'
+import {
+  getStripePublishableKey,
+  isStripePublishableKeyConfigured,
+  isStripeTestPublishableKey,
+} from '../lib/stripePublic'
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
+import { apiUrl } from '../lib/apiUrl'
+import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
+
+function bookingDraftStorageKey(listingId: string) {
+  return `booking_draft_${listingId}`
+}
+
+function clearBookingDraft(listingId: string) {
+  try {
+    localStorage.removeItem(bookingDraftStorageKey(listingId))
+  } catch {
+    /* ignore */
+  }
+}
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -31,7 +51,278 @@ const LEASE_OPTIONS = ['3 months', '6 months', '12 months', 'Flexible'] as const
 type LeaseOption = (typeof LEASE_OPTIONS)[number]
 
 const BOOKING_FEE_AUD = 49
-const BOOKING_FEE_CENTS = 4900
+
+/** User-facing copy for Stripe/payment failures (deposit step and payment-intent setup). */
+type BookingConflictState =
+  | { kind: 'property_unavailable' }
+  | { kind: 'duplicate_booking' }
+  | { kind: 'race_condition' }
+  | {
+      kind: 'date_overlap'
+      conflict: { property_address: string; start_date: string; end_date: string }
+    }
+
+function formatAuShortDate(isoDate: string): string {
+  const s = isoDate.trim()
+  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return s || '—'
+  const [y, m, d] = s.slice(0, 10).split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  return dt.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function parseDateOverlapConflict(raw: unknown): {
+  property_address: string
+  start_date: string
+  end_date: string
+} {
+  if (!raw || typeof raw !== 'object') {
+    return { property_address: 'another property', start_date: '', end_date: '' }
+  }
+  const c = raw as Record<string, unknown>
+  const addr =
+    typeof c.property_address === 'string' && c.property_address.trim() ? c.property_address.trim() : 'another property'
+  return {
+    property_address: addr,
+    start_date: typeof c.start_date === 'string' ? c.start_date.slice(0, 10) : '',
+    end_date: typeof c.end_date === 'string' ? c.end_date.slice(0, 10) : '',
+  }
+}
+
+type DateOverlapConflict = { property_address: string; start_date: string; end_date: string }
+
+function DateOverlapConflictActions(opts: {
+  conflict: DateOverlapConflict
+  onDismiss: () => void
+  onChooseDifferentDates?: () => void
+}) {
+  const startDisp = formatAuShortDate(opts.conflict.start_date)
+  const endDisp = formatAuShortDate(opts.conflict.end_date)
+  return (
+    <>
+      <p
+        id="booking-date-overlap-title"
+        className="font-semibold text-stone-900 md:pr-10"
+        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+      >
+        Booking dates overlap
+      </p>
+      <p className="text-stone-700 leading-relaxed">
+        You already have a booking at{' '}
+        <span className="font-medium text-stone-900">{opts.conflict.property_address}</span> from {startDisp} to{' '}
+        {endDisp} that overlaps with your requested dates.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
+        <Link
+          to="/student-dashboard?tab=bookings"
+          className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-4 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+        >
+          View my bookings
+        </Link>
+        {opts.onChooseDifferentDates ? (
+          <button
+            type="button"
+            onClick={opts.onChooseDifferentDates}
+            className="inline-flex justify-center rounded-xl border border-stone-400 text-stone-900 px-4 py-3 text-sm font-semibold hover:bg-white/80"
+          >
+            Choose different dates
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={opts.onDismiss}
+          className="inline-flex justify-center rounded-xl border border-stone-300 text-stone-800 px-4 py-3 text-sm font-medium hover:bg-white/80"
+        >
+          Dismiss
+        </button>
+      </div>
+    </>
+  )
+}
+
+/** Desktop: centered modal. Mobile: bottom sheet. Portal to document.body. */
+function BookingDateOverlapOverlay(opts: {
+  conflict: DateOverlapConflict
+  onDismiss: () => void
+  onChooseDifferentDates?: () => void
+}) {
+  const [sheetEnter, setSheetEnter] = useState(false)
+
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(() => setSheetEnter(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') opts.onDismiss()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [opts.onDismiss])
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex md:items-center md:justify-center md:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="booking-date-overlap-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 z-0 bg-black/60"
+        aria-label="Dismiss"
+        onClick={opts.onDismiss}
+      />
+
+      {/* Mobile: bottom sheet */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex max-h-[min(92dvh,100%)] flex-col justify-end md:hidden">
+        <div
+          className={`pointer-events-auto w-full max-h-[min(92dvh,100%)] overflow-y-auto rounded-t-2xl border border-b-0 border-stone-200 bg-[#FEF9E4] shadow-2xl transition-transform duration-300 ease-out ${
+            sheetEnter ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          <div className="flex justify-center pt-3 pb-2 shrink-0">
+            <div className="h-1.5 w-10 rounded-full bg-stone-300" aria-hidden />
+          </div>
+          <div className="space-y-3 px-4 pb-6 pt-1 text-sm text-stone-900 [padding-bottom:max(1.5rem,env(safe-area-inset-bottom))]">
+            <DateOverlapConflictActions
+              conflict={opts.conflict}
+              onDismiss={opts.onDismiss}
+              onChooseDifferentDates={opts.onChooseDifferentDates}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop: modal */}
+      <div className="pointer-events-none relative z-10 hidden w-full max-w-md flex-col md:flex">
+        <div className="pointer-events-auto relative w-full rounded-xl border border-stone-200 bg-[#FEF9E4] px-4 py-4 text-sm text-stone-900 shadow-2xl space-y-3">
+          <button
+            type="button"
+            onClick={opts.onDismiss}
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-stone-500 hover:bg-stone-200/60 hover:text-stone-800"
+            aria-label="Close"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+          <DateOverlapConflictActions
+            conflict={opts.conflict}
+            onDismiss={opts.onDismiss}
+            onChooseDifferentDates={opts.onChooseDifferentDates}
+          />
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function BookingConflictPanel(opts: {
+  state: BookingConflictState
+  onDismiss: () => void
+  onChooseDifferentDates?: () => void
+}) {
+  if (opts.state.kind === 'date_overlap') {
+    return (
+      <BookingDateOverlapOverlay
+        conflict={opts.state.conflict}
+        onDismiss={opts.onDismiss}
+        onChooseDifferentDates={opts.onChooseDifferentDates}
+      />
+    )
+  }
+
+  const copy =
+    opts.state.kind === 'property_unavailable'
+      ? {
+          title: 'No longer available',
+          body: 'This property is no longer available. It has been booked by another student.',
+          primary: { to: '/listings', label: 'Browse other listings' },
+        }
+      : opts.state.kind === 'duplicate_booking'
+        ? {
+            title: 'Existing request',
+            body: 'You already have an active booking request for this property.',
+            primary: { to: '/student-dashboard?tab=bookings', label: 'View your booking' },
+          }
+        : {
+            title: 'Property just taken',
+            body:
+              'Sorry, this property was just booked by another student. Your payment has been cancelled and you will not be charged.',
+            primary: { to: '/listings', label: 'Browse other listings' },
+          }
+
+  return (
+    <div className="rounded-xl border border-stone-200 bg-[#FEF9E4] px-4 py-4 text-sm text-stone-900 space-y-3">
+      <p className="font-semibold text-stone-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+        {copy.title}
+      </p>
+      <p className="text-stone-700 leading-relaxed">{copy.body}</p>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Link
+          to={copy.primary.to}
+          className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-4 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+        >
+          {copy.primary.label}
+        </Link>
+        <button
+          type="button"
+          onClick={opts.onDismiss}
+          className="inline-flex justify-center rounded-xl border border-stone-300 text-stone-800 px-4 py-3 text-sm font-medium hover:bg-white/80"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function bookingPaymentUserErrorBlock(opts: {
+  variant: 'payment' | 'form'
+  onTryAgain: () => void
+}) {
+  const isForm = opts.variant === 'form'
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-3">
+      <p>
+        {isForm ? (
+          <>
+            The secure payment form could not be loaded. Please refresh the page or contact support at{' '}
+            <a href="mailto:hello@quni.com.au" className="font-medium text-red-900 underline underline-offset-2">
+              hello@quni.com.au
+            </a>
+            .
+          </>
+        ) : (
+          <>
+            Payment could not be processed. Please check your details and try again, or contact support at{' '}
+            <a href="mailto:hello@quni.com.au" className="font-medium text-red-900 underline underline-offset-2">
+              hello@quni.com.au
+            </a>
+            .
+          </>
+        )}
+      </p>
+      <button
+        type="button"
+        onClick={opts.onTryAgain}
+        className="rounded-lg bg-white border border-red-200 px-4 py-2 text-sm font-semibold text-red-900 hover:bg-red-100/80"
+      >
+        {isForm ? 'Refresh page' : 'Try again'}
+      </button>
+    </div>
+  )
+}
 
 function addDaysIso(iso: string, days: number): string {
   const [y, m, d] = iso.split('-').map(Number)
@@ -42,12 +333,6 @@ function addDaysIso(iso: string, days: number): string {
 
 function minMoveInIso(): string {
   return addDaysIso(new Date().toISOString().slice(0, 10), 7)
-}
-
-function leaseEndDate(moveIn: string, lease: LeaseOption): string | null {
-  if (lease === 'Flexible') return null
-  const days = lease === '3 months' ? 92 : lease === '6 months' ? 183 : 365
-  return addDaysIso(moveIn, days)
 }
 
 function bondAuthorityBody(state: string | null | undefined): string {
@@ -65,8 +350,11 @@ function bondAuthorityBody(state: string | null | undefined): string {
   return map[s] ?? map.NSW
 }
 
-function weeklyRentCents(rent: number): number {
-  return Math.round(rent * 100)
+function scrollEditableIntoView(el: EventTarget | null) {
+  if (!(el instanceof HTMLElement)) return
+  requestAnimationFrame(() => {
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  })
 }
 
 function paymentElementLoadErrorMessage(payload: unknown): string {
@@ -87,25 +375,24 @@ function DepositPaymentInner({
   const stripe = useStripe()
   const elements = useElements()
   const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
+  const [stripeUserIssue, setStripeUserIssue] = useState<'payment' | 'form' | null>(null)
   const [elementReady, setElementReady] = useState(false)
-  const [elementLoadError, setElementLoadError] = useState<string | null>(null)
+  const [elementBroken, setElementBroken] = useState(false)
 
   async function submit() {
     if (!stripe || !elements) return
-    if (!elementReady || elementLoadError) {
-      setErr(
-        elementLoadError ??
-          'Wait for the card form to appear above. If it does not load, refresh the page or contact support.',
-      )
+    if (!elementReady || elementBroken) {
+      if (!elementBroken) {
+        setStripeUserIssue(null)
+      }
       return
     }
-    setErr(null)
+    setStripeUserIssue(null)
     setBusy(true)
     try {
       const { error: submitErr } = await elements.submit()
       if (submitErr) {
-        setErr(submitErr.message ?? 'Check your payment details.')
+        setStripeUserIssue('payment')
         return
       }
 
@@ -118,7 +405,7 @@ function DepositPaymentInner({
       })
 
       if (error) {
-        setErr(error.message ?? 'Payment failed.')
+        setStripeUserIssue('payment')
         return
       }
 
@@ -127,38 +414,41 @@ function DepositPaymentInner({
         return
       }
 
-      setErr(`Payment status: ${paymentIntent?.status ?? 'unknown'}. Try again or contact support.`)
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Payment error.')
+      setStripeUserIssue('payment')
+    } catch {
+      setStripeUserIssue('payment')
     } finally {
       setBusy(false)
     }
   }
 
-  const payDisabled = busy || !stripe || !elementReady || Boolean(elementLoadError)
+  const payDisabled = busy || !stripe || !elementReady || elementBroken
 
   return (
     <div className="space-y-4">
       <PaymentElement
         onReady={() => {
           setElementReady(true)
-          setElementLoadError(null)
+          setElementBroken(false)
         }}
         onLoadError={(e) => {
           setElementReady(false)
-          setElementLoadError(paymentElementLoadErrorMessage(e))
+          setElementBroken(true)
+          console.warn('[booking] PaymentElement load error', paymentElementLoadErrorMessage(e))
+          setStripeUserIssue('form')
         }}
       />
-      {elementLoadError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {elementLoadError}
-        </div>
+      {stripeUserIssue && (
+        bookingPaymentUserErrorBlock({
+          variant: stripeUserIssue === 'form' ? 'form' : 'payment',
+          onTryAgain:
+            stripeUserIssue === 'form'
+              ? () => window.location.reload()
+              : () => setStripeUserIssue(null),
+        })
       )}
-      {!elementLoadError && stripe && !elementReady && (
+      {!elementBroken && stripe && !elementReady && (
         <p className="text-sm text-gray-500">Loading secure payment form…</p>
-      )}
-      {err && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{err}</div>
       )}
       <button
         type="button"
@@ -196,8 +486,24 @@ export default function Booking() {
   const [piError, setPiError] = useState<string | null>(null)
 
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [bookingConflict, setBookingConflict] = useState<BookingConflictState | null>(null)
   const [submittingBooking, setSubmittingBooking] = useState(false)
+  const moveInFieldRef = useRef<HTMLInputElement>(null)
+  const chooseDifferentDatesAfterOverlap = useCallback(() => {
+    setBookingConflict(null)
+    setStep(1)
+    setClientSecret(null)
+    setDepositCents(null)
+    requestAnimationFrame(() => {
+      moveInFieldRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    })
+  }, [])
   const [success, setSuccess] = useState(false)
+
+  const [keyboardInsetPx, setKeyboardInsetPx] = useState(0)
+  const [draftPersistReady, setDraftPersistReady] = useState(false)
+  const draftHydrationAttemptedRef = useRef(false)
+  const { setElevateFloatingChrome } = useBookingFlowChrome()
 
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
 
@@ -248,7 +554,7 @@ export default function Booking() {
           `,
           )
           .eq('id', propertyId)
-          .eq('status', 'active')
+          .in('status', ['active', 'booked'])
           .maybeSingle(),
       )
 
@@ -280,6 +586,138 @@ export default function Booking() {
     })()
   }, [user?.id])
 
+  useEffect(() => {
+    setDraftPersistReady(false)
+    draftHydrationAttemptedRef.current = false
+  }, [propertyId])
+
+  useEffect(() => {
+    if (!propertyId || !property?.id || property.id !== propertyId) return
+    if (draftHydrationAttemptedRef.current) return
+    draftHydrationAttemptedRef.current = true
+
+    let restoredDraft = false
+    try {
+      const raw = localStorage.getItem(bookingDraftStorageKey(propertyId))
+      if (raw) {
+        const d = JSON.parse(raw) as {
+          listingId?: string
+          step?: number
+          moveIn?: string
+          leaseLength?: string
+          message?: string
+          bondCheck?: boolean
+          clientSecret?: string | null
+          depositCents?: number | null
+        }
+        if (!d.listingId || d.listingId === propertyId) {
+          restoredDraft = true
+          const leaseOk = LEASE_OPTIONS.includes(d.leaseLength as LeaseOption)
+            ? (d.leaseLength as LeaseOption)
+            : '6 months'
+          if (typeof d.moveIn === 'string' && d.moveIn) setMoveIn(d.moveIn)
+          setLeaseLength(leaseOk)
+          if (typeof d.message === 'string') setMessage(d.message)
+          if (typeof d.bondCheck === 'boolean') setBondCheck(d.bondCheck)
+
+          let nextStep: 1 | 2 | 3 = d.step === 2 ? 2 : d.step === 3 ? 3 : 1
+          if (nextStep === 3 && (!d.clientSecret || typeof d.clientSecret !== 'string')) {
+            nextStep = 2
+          }
+          setStep(nextStep)
+          if (nextStep === 3 && d.clientSecret) {
+            setClientSecret(d.clientSecret)
+            if (typeof d.depositCents === 'number') setDepositCents(d.depositCents)
+            setBondCheck(true)
+          }
+        }
+      }
+    } catch {
+      /* ignore corrupt draft */
+    }
+
+    if (restoredDraft) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      }, 100)
+    }
+
+    queueMicrotask(() => setDraftPersistReady(true))
+  }, [propertyId, property?.id])
+
+  useEffect(() => {
+    if (!propertyId || !property?.id || property.id !== propertyId) return
+    if (!draftPersistReady) return
+    if (success) return
+
+    try {
+      localStorage.setItem(
+        bookingDraftStorageKey(propertyId),
+        JSON.stringify({
+          v: 1,
+          listingId: propertyId,
+          step,
+          moveIn,
+          leaseLength,
+          message,
+          bondCheck,
+          clientSecret,
+          depositCents,
+        }),
+      )
+    } catch {
+      /* quota / private mode */
+    }
+  }, [
+    propertyId,
+    property?.id,
+    draftPersistReady,
+    step,
+    moveIn,
+    leaseLength,
+    message,
+    bondCheck,
+    clientSecret,
+    depositCents,
+    success,
+  ])
+
+  useEffect(() => {
+    setElevateFloatingChrome(step === 3)
+    return () => setElevateFloatingChrome(false)
+  }, [step, setElevateFloatingChrome])
+
+  useEffect(() => {
+    if (step !== 3) {
+      setKeyboardInsetPx(0)
+      return
+    }
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const obscured = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setKeyboardInsetPx(obscured)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [step])
+
+  useEffect(() => {
+    if (!success) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    const t = window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      document.getElementById('booking-success-heading')?.scrollIntoView({ block: 'start', behavior: 'auto' })
+    }, 100)
+    return () => window.clearTimeout(t)
+  }, [success])
+
   const rent = property ? Number(property.rent_per_week) : 0
   const platformPctWeekly = rent > 0 ? Math.round(rent * 0.03) : 0
   const totalWeekly = rent + platformPctWeekly
@@ -289,13 +727,59 @@ export default function Booking() {
     maximumFractionDigits: 0,
   })
 
-  const stripePromise = useMemo(() => {
-    const k = getStripePublishableKey()
-    return k ? loadStripe(k) : null
-  }, [])
+  const stripePublishableKey = useMemo(() => getStripePublishableKey(), [])
+  const stripePromise = useMemo(
+    () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
+    [stripePublishableKey],
+  )
+  const [stripeJsReady, setStripeJsReady] = useState<Stripe | null>(null)
+  const [stripeJsInitError, setStripeJsInitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!stripePromise) {
+      setStripeJsReady(null)
+      setStripeJsInitError(null)
+      return
+    }
+    let cancelled = false
+    const timeoutMs = 30000
+    const to = window.setTimeout(() => {
+      if (!cancelled) {
+        setStripeJsReady(null)
+        setStripeJsInitError(
+          'Payment security (Stripe) is taking too long to load. Check your connection, try disabling VPN or content blockers, or complete booking in a regular browser.',
+        )
+      }
+    }, timeoutMs)
+    void stripePromise
+      .then((stripe) => {
+        if (cancelled) return
+        window.clearTimeout(to)
+        if (!stripe) {
+          setStripeJsReady(null)
+          setStripeJsInitError(
+            'Could not initialize payments. The Stripe publishable key may be missing or invalid in this build.',
+          )
+          return
+        }
+        setStripeJsReady(stripe)
+        setStripeJsInitError(null)
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return
+        window.clearTimeout(to)
+        setStripeJsReady(null)
+        setStripeJsInitError(e instanceof Error ? e.message : 'Could not load Stripe.js.')
+      })
+    return () => {
+      cancelled = true
+      window.clearTimeout(to)
+    }
+  }, [stripePromise])
 
   const startPaymentStep = useCallback(async () => {
     setPiError(null)
+    setBookingConflict(null)
     if (!property?.id || !studentProfile) return
     setPiBusy(true)
     try {
@@ -306,7 +790,8 @@ export default function Booking() {
         return
       }
 
-      const res = await fetch('/api/create-booking-payment-intent', {
+      const piEndpoint = apiUrl('/api/create-booking-payment-intent')
+      const res = await fetch(piEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -321,14 +806,34 @@ export default function Booking() {
         }),
       })
 
-      const j = (await res.json()) as {
+      const raw = await res.text()
+      let j: {
         error?: string
         message?: string
         clientSecret?: string
         depositCents?: number
+        bookingId?: string
+        conflict?: unknown
+      }
+      try {
+        j = JSON.parse(raw) as typeof j
+      } catch {
+        const looksHtml = raw.trimStart().toLowerCase().startsWith('<!doctype') || raw.trimStart().startsWith('<html')
+        setPiError(
+          looksHtml
+            ? 'Could not reach the payment service (received a web page instead of data). If you are in the Quni app, update to the latest version. On a computer, try booking from the live site or run the dev server with API routes (see project README).'
+            : 'Invalid response from the payment service. Please try again.',
+        )
+        return
       }
 
       if (!res.ok) {
+        console.warn('[booking] create-booking-payment-intent failed', {
+          status: res.status,
+          url: piEndpoint,
+          error: j.error,
+          message: j.message,
+        })
         if (j.error === 'stripe_not_ready') {
           setPiError(
             j.message ??
@@ -336,12 +841,24 @@ export default function Booking() {
           )
           return
         }
-        setPiError(j.error || j.message || 'Could not start payment.')
+        if (res.status === 409 && j.error === 'date_overlap') {
+          setBookingConflict({ kind: 'date_overlap', conflict: parseDateOverlapConflict(j.conflict) })
+          return
+        }
+        const piConflict = j.error
+        if (
+          res.status === 409 &&
+          (piConflict === 'property_unavailable' || piConflict === 'duplicate_booking' || piConflict === 'race_condition')
+        ) {
+          setBookingConflict({ kind: piConflict })
+          return
+        }
+        setPiError('__payment_user__')
         return
       }
 
       if (!j.clientSecret || typeof j.depositCents !== 'number') {
-        setPiError('Invalid payment setup response.')
+        setPiError('__payment_user__')
         return
       }
 
@@ -349,7 +866,11 @@ export default function Booking() {
       setDepositCents(j.depositCents)
       setStep(3)
     } catch (e) {
-      setPiError(e instanceof Error ? e.message : 'Could not start payment.')
+      console.warn('[booking] create-booking-payment-intent request error', {
+        url: apiUrl('/api/create-booking-payment-intent'),
+        message: e instanceof Error ? e.message : String(e),
+      })
+      setPiError('__payment_user__')
     } finally {
       setPiBusy(false)
     }
@@ -358,47 +879,80 @@ export default function Booking() {
   const finalizeBooking = useCallback(
     async (paymentIntentId: string) => {
       if (!property?.id || !property.landlord_id || !studentProfile) return
-      const dep = depositCents ?? weeklyRentCents(rent)
       setSubmitError(null)
+      setBookingConflict(null)
       setSubmittingBooking(true)
       try {
-        const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
-        const endDate = leaseEndDate(moveIn, leaseLength)
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData.session?.access_token
+        if (!token) {
+          setSubmitError('Session expired. Please sign in again.')
+          return
+        }
+
         const pt = property.property_type
         const propertyTypeSnapshot =
           pt && isPropertyListingType(pt) ? pt : ('entire_property' satisfies PropertyListingType)
 
-        const row: Database['public']['Tables']['bookings']['Insert'] = {
-          property_id: property.id,
-          student_id: studentProfile.id,
-          landlord_id: property.landlord_id,
-          start_date: moveIn,
-          move_in_date: moveIn,
-          end_date: endDate,
-          weekly_rent: rent,
-          status: 'pending_confirmation',
-          notes: null,
-          student_message: message.trim() || null,
-          lease_length: leaseLength,
-          bond_acknowledged: true,
-          stripe_payment_intent_id: paymentIntentId,
-          deposit_amount: dep,
-          platform_fee_amount: BOOKING_FEE_CENTS,
-          booking_fee_paid: true,
-          property_type: propertyTypeSnapshot,
-          expires_at: expiresAt,
+        const commitUrl = apiUrl('/api/create-booking-payment-intent')
+        const res = await fetch(commitUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            commit: true,
+            paymentIntentId,
+            propertyId: property.id,
+            moveInDate: moveIn,
+            leaseLength,
+            studentMessage: message.trim(),
+            bondAcknowledged: true,
+            propertyType: propertyTypeSnapshot,
+          }),
+        })
+
+        const raw = await res.text()
+        let j: { error?: string; message?: string; bookingId?: string; ok?: boolean; conflict?: unknown }
+        try {
+          j = JSON.parse(raw) as typeof j
+        } catch {
+          setSubmitError('Invalid response while saving your booking. Please try again.')
+          return
         }
 
-        const { data: inserted, error: insErr } = await withSentryMonitoring('Booking/insert-booking', () =>
-          supabase.from('bookings').insert(row).select('id').single(),
-        )
-        if (insErr) throw insErr
+        if (res.status === 409 && j.error === 'date_overlap') {
+          setBookingConflict({ kind: 'date_overlap', conflict: parseDateOverlapConflict(j.conflict) })
+          return
+        }
+        const commitConflict = j.error
+        if (
+          res.status === 409 &&
+          (commitConflict === 'property_unavailable' || commitConflict === 'duplicate_booking')
+        ) {
+          setBookingConflict({ kind: commitConflict })
+          return
+        }
+        if (res.status === 409 && j.error === 'race_condition') {
+          setBookingConflict({ kind: 'race_condition' })
+          return
+        }
+        if (!res.ok || !j.ok || typeof j.bookingId !== 'string') {
+          setSubmitError(
+            (typeof j.message === 'string' && j.message.trim()) ||
+              (typeof j.error === 'string' && j.error) ||
+              'Could not save booking.',
+          )
+          return
+        }
 
         const lp = property.landlord_profiles
-        if (lp?.email?.trim() && inserted?.id) {
-          void sendBookingRequestToLandlord(inserted.id)
+        if (lp?.email?.trim() && j.bookingId) {
+          void sendBookingRequestToLandlord(j.bookingId)
         }
 
+        clearBookingDraft(property.id)
         setSuccess(true)
       } catch (e) {
         setSubmitError(e instanceof Error ? e.message : 'Could not save booking.')
@@ -409,12 +963,9 @@ export default function Booking() {
     [
       property,
       studentProfile,
-      depositCents,
-      rent,
       moveIn,
       leaseLength,
       message,
-      user?.email,
     ],
   )
 
@@ -518,10 +1069,43 @@ export default function Booking() {
     )
   }
 
+  if (property.status === 'booked') {
+    return (
+      <div className="max-w-lg mx-auto px-6 py-12">
+        <h1
+          className="text-2xl font-bold text-stone-900"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          This listing is no longer available to book
+        </h1>
+        <p className="text-stone-600 text-sm mt-3 leading-relaxed">
+          This property has been booked through Quni Living. You can still browse other student accommodation on the
+          listings page.
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <Link
+            to="/listings"
+            className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+          >
+            Browse listings
+          </Link>
+          <Link
+            to={property.slug ? `/listings/${property.slug}` : '/listings'}
+            className="inline-flex justify-center rounded-xl border border-stone-200 text-stone-800 px-5 py-3 text-sm font-medium hover:bg-[#FEF9E4]"
+          >
+            Back to listing
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   if (success) {
     return (
       <div className="max-w-lg mx-auto px-6 py-16 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Request sent</h1>
+        <h1 id="booking-success-heading" className="text-2xl font-bold text-gray-900">
+          Request sent
+        </h1>
         <p className="text-gray-600 text-sm mt-3 leading-relaxed">
           Your booking deposit is held securely until your host responds. They have <strong>48 hours</strong> to confirm
           or decline. You can track status under <strong className="text-gray-800">Student profile → Bookings</strong> or
@@ -557,8 +1141,18 @@ export default function Booking() {
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
+  const bookingRootStyle: CSSProperties | undefined =
+    step === 3 && keyboardInsetPx > 0
+      ? { paddingBottom: `max(12rem, ${keyboardInsetPx + 48}px)` }
+      : undefined
+
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 pb-20">
+    <div
+      className={`max-w-2xl mx-auto w-full px-4 sm:px-6 py-10 booking-scroll ${
+        step === 3 ? 'max-md:pb-[min(42dvh,19rem)] pb-20 sm:pb-10' : 'pb-20'
+      }`}
+      style={bookingRootStyle}
+    >
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:items-start">
         <div className="shrink-0 w-full sm:w-44 aspect-[4/3] rounded-xl overflow-hidden border border-gray-100 bg-gray-100 shadow-sm">
           {mainPhoto ? (
@@ -622,11 +1216,13 @@ export default function Booking() {
               Move-in date
             </label>
             <input
+              ref={moveInFieldRef}
               id="bk-move-in"
               type="date"
               min={minMoveInIso()}
               value={moveIn}
               onChange={(e) => setMoveIn(e.target.value)}
+              onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
               required
             />
@@ -640,6 +1236,7 @@ export default function Booking() {
               id="bk-lease"
               value={leaseLength}
               onChange={(e) => setLeaseLength(e.target.value as LeaseOption)}
+              onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
             >
               {LEASE_OPTIONS.map((o) => (
@@ -659,6 +1256,7 @@ export default function Booking() {
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onFocus={(e) => scrollEditableIntoView(e.target)}
               placeholder="Introduce yourself — tell the landlord a bit about your studies and why you're interested in the property"
               className={`${inputClass} resize-y min-h-[6rem]`}
             />
@@ -685,6 +1283,7 @@ export default function Booking() {
             </button>
             <Link
               to={property.slug ? `/properties/${property.slug}` : '/listings'}
+              onClick={() => clearBookingDraft(property.id)}
               className="flex-1 text-center rounded-xl border border-gray-200 text-gray-800 py-3 text-sm font-medium hover:bg-gray-50"
             >
               Back to listing
@@ -762,62 +1361,132 @@ export default function Booking() {
               {piBusy ? 'Preparing payment…' : 'Continue to payment'}
             </button>
           </div>
-          {piError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{piError}</div>
+          {bookingConflict && (
+            <BookingConflictPanel
+              state={bookingConflict}
+              onDismiss={() => setBookingConflict(null)}
+              onChooseDifferentDates={
+                bookingConflict.kind === 'date_overlap' ? chooseDifferentDatesAfterOverlap : undefined
+              }
+            />
           )}
+          {piError &&
+            (piError === '__payment_user__' ? (
+              bookingPaymentUserErrorBlock({
+                variant: 'payment',
+                onTryAgain: () => setPiError(null),
+              })
+            ) : (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{piError}</div>
+            ))}
         </div>
       )}
 
-      {step === 3 && clientSecret && stripePromise && (
-        <div className="mt-8 space-y-6">
-          <h2 className="text-lg font-bold text-gray-900">Pay booking deposit</h2>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Your booking deposit of <strong className="text-gray-900">${depositDollars.toLocaleString('en-AU')}</strong>{' '}
-            is held securely by Quni Living until your move-in date. It will be released to your landlord after you move
-            in. If your landlord declines your request, you will receive a full automatic refund within 5–7 business
-            days.
-          </p>
-
-          <div className="rounded-2xl border border-gray-100 bg-stone-50/80 p-5 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Booking deposit</span>
-              <span className="font-semibold tabular-nums">${depositDollars.toLocaleString('en-AU')} (1 week rent)</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Platform fee</span>
-              <span className="font-semibold tabular-nums">${BOOKING_FEE_AUD.toLocaleString('en-AU')} (one-off)</span>
-            </div>
-            <div className="flex justify-between pt-2 border-t border-gray-200 font-bold text-gray-900">
-              <span>Total charged now</span>
-              <span className="tabular-nums">${totalChargeDisplay}</span>
-            </div>
-          </div>
-
-          {!isStripePublishableKeyConfigured() && (
+      {step === 3 && (
+        <div className="mt-8 space-y-6 max-md:min-h-[min(48dvh,26rem)] scroll-mt-4">
+          {!clientSecret ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Add <code className="text-xs">VITE_STRIPE_PUBLISHABLE_KEY</code> to enable card payments.
+              Payment session is not ready. Go back one step and tap <strong>Continue to payment</strong> again.
             </div>
-          )}
+          ) : (
+            <>
+              <h2 className="text-lg font-bold text-gray-900">Pay booking deposit</h2>
+              {bookingConflict && (
+                <BookingConflictPanel
+                  state={bookingConflict}
+                  onDismiss={() => setBookingConflict(null)}
+                  onChooseDifferentDates={
+                    bookingConflict.kind === 'date_overlap' ? chooseDifferentDatesAfterOverlap : undefined
+                  }
+                />
+              )}
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Your booking deposit of <strong className="text-gray-900">${depositDollars.toLocaleString('en-AU')}</strong>{' '}
+                is held securely by Quni Living until your move-in date. It will be released to your landlord after you move
+                in. If your landlord declines your request, you will receive a full automatic refund within 5–7 business
+                days.
+              </p>
 
-          <Elements
-            key={clientSecret}
-            stripe={stripePromise}
-            options={{
-              clientSecret,
-              appearance: { theme: 'stripe', variables: { colorPrimary: '#FF6F61' } },
-            }}
-          >
-            <DepositPaymentInner
-              totalAudDisplay={totalChargeDisplay}
-              onPaid={(piId) => void finalizeBooking(piId)}
-            />
-          </Elements>
+              <div className="rounded-2xl border border-gray-100 bg-stone-50/80 p-5 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Booking deposit</span>
+                  <span className="font-semibold tabular-nums">${depositDollars.toLocaleString('en-AU')} (1 week rent)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Platform fee</span>
+                  <span className="font-semibold tabular-nums">${BOOKING_FEE_AUD.toLocaleString('en-AU')} (one-off)</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-gray-200 font-bold text-gray-900">
+                  <span>Total charged now</span>
+                  <span className="tabular-nums">${totalChargeDisplay}</span>
+                </div>
+              </div>
 
-          {submittingBooking && (
-            <p className="text-sm text-gray-500 text-center">Saving your booking…</p>
-          )}
-          {submitError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{submitError}</div>
+              {!isStripePublishableKeyConfigured() || !stripePromise ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 leading-relaxed">
+                  <p className="font-semibold text-red-900">Card payments are not configured in this app build</p>
+                  <p className="mt-2">
+                    The booking deposit step needs <code className="text-xs bg-red-100/80 px-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code>{' '}
+                    at build time (same Stripe mode as the server). Rebuild the native app after adding it, or complete payment on the website.
+                  </p>
+                </div>
+              ) : stripeJsInitError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{stripeJsInitError}</div>
+              ) : !stripeJsReady ? (
+                <div className="flex flex-col items-center gap-3 py-8 text-center">
+                  <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-600">Loading secure payment form…</p>
+                </div>
+              ) : (
+                <div className="max-md:min-h-[min(40dvh,22rem)] space-y-4">
+                  {isStripeTestPublishableKey() && (
+                    <div
+                      role="note"
+                      className="rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-2.5 text-xs text-slate-600 leading-snug"
+                    >
+                      <span className="font-semibold text-slate-700">Test mode:</span> Use card 4242 4242 4242 4242, any
+                      future expiry, any CVC
+                    </div>
+                  )}
+
+                  <Elements
+                    key={clientSecret}
+                    stripe={stripeJsReady}
+                    options={{
+                      clientSecret,
+                      appearance: { theme: 'stripe', variables: { colorPrimary: '#FF6F61' } },
+                    }}
+                  >
+                    <DepositPaymentInner
+                      totalAudDisplay={totalChargeDisplay}
+                      onPaid={(piId) => void finalizeBooking(piId)}
+                    />
+                  </Elements>
+                </div>
+              )}
+
+              {submittingBooking && (
+                <p className="text-sm text-gray-500 text-center">Saving your booking…</p>
+              )}
+              {submitError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-3">
+                  <p>{submitError}</p>
+                  <p className="text-xs text-red-900/90">
+                    Need help?{' '}
+                    <a href="mailto:hello@quni.com.au" className="font-medium underline underline-offset-2">
+                      hello@quni.com.au
+                    </a>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitError(null)}
+                    className="rounded-lg bg-white border border-red-200 px-4 py-2 text-xs font-semibold text-red-900 hover:bg-red-100/80"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           <button

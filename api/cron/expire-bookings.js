@@ -48,7 +48,7 @@ export default async function handler(request) {
       properties ( title, address, suburb, state, postcode )
     `,
     )
-    .eq('status', 'pending_confirmation')
+    .in('status', ['pending_confirmation', 'awaiting_info'])
     .lt('expires_at', nowIso)
 
   if (error) {

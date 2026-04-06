@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Quni Living</string>
+    <string name="title_activity_main">Quni Living</string>
+    <string name="package_name">com.quni.living</string>
+    <string name="custom_url_scheme">com.quni.living</string>
+</resources>

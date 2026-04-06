@@ -11,7 +11,7 @@ import ChatPromptChips from './ChatPromptChips'
 import TurnstileGate from './TurnstileGate'
 
 type Props = {
-  variant: 'widget' | 'embed'
+  variant: 'widget' | 'embed' | 'listings'
   listingContext?: ListingContext
   onClose?: () => void
 }
@@ -73,6 +73,15 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
 
   const isStreaming = chatStream.state === 'streaming'
 
+  const isListingsInline = variant === 'listings'
+  /** Listings page uses `listings`; property embed uses `embed` — same compact chrome. */
+  const isCompactInline = variant === 'embed' || variant === 'listings'
+  /** Inline compact UIs shrink to content; embed on mobile is fullscreen and keeps a scrollable message column. */
+  const useCompactAutoLayout = isCompactInline && !(variant === 'embed' && isMobile)
+  const inputId = isListingsInline ? 'quni-chat-input-listings' : 'quni-chat-input'
+
+  const hasScrollableConversation = messages.length > 0 || isStreaming
+
   /** Last Turnstile token for visitors; reused on every /api/chat call until persona changes (not cleared per send). */
   const [storedVisitorTurnstileToken, setStoredVisitorTurnstileToken] = useState<string | null>(null)
 
@@ -92,10 +101,11 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   }, [personaKey])
 
   const placeholder = useMemo(() => {
+    if (isCompactInline) return 'Ask Quni AI about these listings...'
     if (personaKey === 'landlord') return 'Ask for help drafting…'
     if (personaKey === 'student_renter') return 'Ask about listings, suburbs, or fit…'
     return 'Ask a question about Quni…'
-  }, [personaKey])
+  }, [isCompactInline, personaKey])
 
   const scrollToBottom = useCallback(() => {
     const el = listRef.current
@@ -107,6 +117,15 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
     // When messages or streaming output changes, keep the view pinned to the latest content.
     scrollToBottom()
   }, [messages, chatStream.assistantText, scrollToBottom])
+
+  useEffect(() => {
+    if (!isCompactInline) return
+    const el = composerRef.current
+    if (!el) return
+    el.style.height = '0px'
+    const h = Math.max(44, el.scrollHeight)
+    el.style.height = `${h}px`
+  }, [draft, isCompactInline, messages.length])
 
   useEffect(() => {
     // Commit assistant text only after the stream completes.
@@ -127,11 +146,14 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
     }
   }, [chatStream.state])
 
+  const chatAbortRef = useRef(chatStream.abort)
+  chatAbortRef.current = chatStream.abort
+
   useEffect(() => {
     return () => {
-      chatStream.abort()
+      chatAbortRef.current()
     }
-  }, [chatStream])
+  }, [])
 
   const send = useCallback(
     async (turnstileToken: string | null) => {
@@ -173,6 +195,16 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
           ? incomingTurnstile ?? storedVisitorTurnstileToken ?? undefined
           : undefined
 
+      // Context `session` can still be null until the initial getSession() resolves; read the live
+      // session here so logged-in users always send Authorization: Bearer …
+      let accessToken: string | undefined
+      if (isSupabaseConfigured) {
+        const { data } = await supabase.auth.getSession()
+        accessToken = data.session?.access_token ?? undefined
+      } else {
+        accessToken = session?.access_token
+      }
+
       const args = {
         messages: nextMessagesForRequest,
         userMessage: trimmed,
@@ -183,7 +215,7 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
         visitorSessionId: personaKey === 'visitor' ? visitorSessionId ?? undefined : undefined,
         turnstileToken: turnstileForRequest,
         conversationId,
-        accessToken: session?.access_token,
+        accessToken,
       }
 
       if (personaKey === 'visitor' && !visitorSessionId) {
@@ -204,9 +236,17 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
       storedVisitorTurnstileToken,
       visitorSessionId,
       conversationId,
-      session?.access_token,
+      session,
     ],
   )
+
+  const sendRef = useRef(send)
+  sendRef.current = send
+
+  /** Stable identity for TurnstileGate: avoids remount churn while draft/messages update `send`. */
+  const onVisitorTurnstileSend = useCallback((turnstileToken: string | null) => {
+    void sendRef.current(turnstileToken)
+  }, [])
 
   const clearChat = useCallback(() => {
     if (isStreaming) chatStream.abort()
@@ -230,52 +270,81 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
 
   const commonPanelClass = variant === 'widget' ? 'fixed bottom-6 right-6 z-[1000]' : 'w-full'
 
-  const panelCardClass = isMobile
-    ? 'fixed inset-0 z-[1000] bg-white'
-    : commonPanelClass
+  const panelCardClass = isListingsInline
+    ? 'w-full'
+    : isMobile
+      ? 'fixed inset-0 z-[1000] bg-white'
+      : commonPanelClass
 
-  const cardInnerClass = isMobile
-    ? 'flex flex-col h-full'
-    : 'w-[420px] max-w-[calc(100%-2rem)] rounded-2xl border border-gray-100 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)]'
+  const desktopFloatingCardClass =
+    'flex flex-col min-h-0 max-h-[min(600px,calc(100vh-100px))] w-[420px] max-w-[calc(100%-2rem)] rounded-2xl border border-gray-100 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)]'
+
+  const cardInnerClass =
+    variant === 'listings'
+      ? 'flex flex-col h-auto w-full rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden'
+      : isMobile
+        ? 'flex flex-col h-full'
+        : isCompactInline
+          ? `${desktopFloatingCardClass} h-auto overflow-hidden`
+          : desktopFloatingCardClass
 
   const showClose = Boolean(onClose)
 
   return (
     <div className={panelCardClass}>
       <div className={cardInnerClass}>
-        <div
-          className={[
-            'flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100',
-            isMobile ? 'sticky top-0 bg-white' : '',
-          ].join(' ')}
-        >
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
-            {firstName ? <p className="text-xs text-gray-500">Hi {firstName}</p> : <p className="text-xs text-gray-500">Ask me anything.</p>}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={clearChat}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              {messages.length === 0 ? 'Reset' : 'New chat'}
-            </button>
-            {showClose ? (
+        {!isCompactInline ? (
+          <div
+            className={[
+              'flex shrink-0 items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 bg-white',
+              isMobile && !isListingsInline ? 'sticky top-0' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
+              {firstName ? (
+                <p className="text-xs text-gray-500">Hi {firstName}</p>
+              ) : (
+                <p className="text-xs text-gray-500">Ask me anything.</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={clearChat}
                 className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                aria-label="Close chat"
               >
-                Close
+                {messages.length === 0 ? 'Reset' : 'New chat'}
               </button>
-            ) : null}
+              {showClose ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  aria-label="Close chat"
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3">
+        <div
+          className={useCompactAutoLayout ? 'flex flex-col' : 'flex flex-1 min-h-0 flex-col'}
+        >
+          <div
+            ref={listRef}
+            className={
+              useCompactAutoLayout
+                ? hasScrollableConversation
+                  ? 'max-h-[min(280px,45vh)] overflow-y-auto px-4 py-3 space-y-3 shrink-0 sm:max-h-[min(340px,55vh)]'
+                  : 'hidden'
+                : 'min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4'
+            }
+          >
             {messages.map((m, idx) => (
               <ChatMessageBubble key={`${idx}-${m.role}-${m.content.slice(0, 12)}`} role={m.role} text={m.content} />
             ))}
@@ -284,7 +353,7 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
               <ChatMessageBubble role="assistant" text={chatStream.assistantText} isStreaming />
             ) : null}
 
-            {messages.length === 0 ? (
+            {messages.length === 0 && !isCompactInline ? (
               <div className="pt-2">
                 <ChatPromptChips personaKey={personaKey} onPick={onPickChip} disabled={isStreaming} />
               </div>
@@ -299,7 +368,17 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
             </div>
           ) : null}
 
-          <div className="border-t border-gray-100 px-4 py-3 bg-white">
+          <div
+            className={[
+              'border-t border-gray-100 bg-white',
+              isCompactInline ? 'px-3 py-2' : 'px-4 py-3',
+            ].join(' ')}
+          >
+            {isCompactInline && messages.length === 0 ? (
+              <div className="mb-2">
+                <ChatPromptChips personaKey={personaKey} onPick={onPickChip} disabled={isStreaming} />
+              </div>
+            ) : null}
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -309,22 +388,27 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
                 }
                 handleSendClick()
               }}
-              className="space-y-3"
+              className={isCompactInline ? 'flex flex-col gap-2' : 'space-y-3'}
             >
-              <label className="sr-only" htmlFor="quni-chat-input">
+              <label className="sr-only" htmlFor={inputId}>
                 Chat input
               </label>
 
               <textarea
-                id="quni-chat-input"
+                id={inputId}
                 ref={composerRef}
                 value={draft}
                 onChange={(e) => {
                   setDraft(e.target.value)
                   setLocalError(null)
                 }}
-                rows={3}
-                className="w-full resize-none rounded-xl border border-gray-200 px-3 py-2.5 text-sm leading-relaxed text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 focus:border-[#FF6F61] bg-white"
+                rows={isCompactInline ? 1 : 3}
+                className={[
+                  'w-full resize-none rounded-xl border border-gray-200 px-3 text-sm leading-snug text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 focus:border-[#FF6F61] bg-white',
+                  isCompactInline
+                    ? 'min-h-[44px] max-h-[min(200px,40vh)] overflow-y-auto py-2.5'
+                    : 'py-2.5 leading-relaxed',
+                ].join(' ')}
                 placeholder={placeholder}
                 disabled={isStreaming}
                 onFocus={() => setHasEverFocused(true)}
@@ -335,23 +419,28 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
                   key={visitorTurnstileGateKey}
                   sending={isStreaming}
                   buttonLabel="Send message"
-                  onSend={async (turnstileToken) => {
-                    await send(turnstileToken)
-                  }}
+                  onSend={onVisitorTurnstileSend}
+                  compactInline={isCompactInline}
                 />
               ) : (
-                <button
-                  type="submit"
-                  disabled={
-                    isStreaming ||
-                    !draft.trim() ||
-                    (personaKey === 'visitor' && !visitorSessionId) ||
-                    (personaKey === 'visitor' && messages.length > 0 && !storedVisitorTurnstileToken)
-                  }
-                  className="w-full rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {isStreaming ? 'Sending…' : 'Send'}
-                </button>
+                <div className={isCompactInline ? 'flex justify-end' : ''}>
+                  <button
+                    type="submit"
+                    disabled={
+                      isStreaming ||
+                      !draft.trim() ||
+                      (personaKey === 'visitor' && !visitorSessionId) ||
+                      (personaKey === 'visitor' && messages.length > 0 && !storedVisitorTurnstileToken)
+                    }
+                    className={
+                      isCompactInline
+                        ? 'shrink-0 rounded-xl bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
+                        : 'w-full rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
+                    }
+                  >
+                    {isStreaming ? 'Sending…' : 'Send'}
+                  </button>
+                </div>
               )}
             </form>
           </div>

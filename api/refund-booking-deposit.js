@@ -66,6 +66,8 @@ export default async function handler(request) {
   }
 
   const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
+  const declineReason =
+    typeof body.declineReason === 'string' ? body.declineReason.trim().slice(0, 500) : ''
   if (!bookingId) {
     return json({ error: 'bookingId is required' }, 400, origin)
   }
@@ -104,6 +106,7 @@ export default async function handler(request) {
       landlord_id,
       student_id,
       status,
+      notes,
       stripe_payment_intent_id,
       deposit_amount,
       weekly_rent,
@@ -122,7 +125,8 @@ export default async function handler(request) {
     return json({ error: 'Forbidden' }, 403, origin)
   }
 
-  if (booking.status !== 'pending_confirmation') {
+  const declinable = booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
+  if (!declinable) {
     return json({ error: 'Booking is not awaiting confirmation' }, 400, origin)
   }
 
@@ -145,9 +149,18 @@ export default async function handler(request) {
   }
 
   const nowIso = new Date().toISOString()
+  const prevNotes = typeof booking.notes === 'string' ? booking.notes.trim() : ''
+  const reasonLine = declineReason ? `Decline reason (${nowIso}): ${declineReason}` : ''
+  const mergedNotes = [prevNotes, reasonLine].filter(Boolean).join('\n\n') || null
+
   const { error: upErr } = await admin
     .from('bookings')
-    .update({ status: 'declined', declined_at: nowIso })
+    .update({
+      status: 'declined',
+      declined_at: nowIso,
+      notes: mergedNotes,
+      decline_reason: declineReason || null,
+    })
     .eq('id', booking.id)
 
   if (upErr) {

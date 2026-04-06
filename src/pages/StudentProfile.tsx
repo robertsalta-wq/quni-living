@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { getValidAccessTokenForFunctions } from '../lib/supabaseEdgeInvoke'
@@ -14,8 +14,11 @@ import PageHeroBand from '../components/PageHeroBand'
 import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
+import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
+
+type BookingMessageRow = Database['public']['Tables']['booking_messages']['Row']
 
 type BookingWithProperty = {
   id: string
@@ -33,6 +36,7 @@ type BookingWithProperty = {
     suburb: string | null
     images: string[] | null
   } | null
+  booking_messages?: BookingMessageRow[] | null
 }
 
 /** Supabase Storage bucket id (legacy name); stores profile photos of the student. */
@@ -92,6 +96,182 @@ const ROOM_PREF_OPTIONS: { value: string; label: string }[] = [
   { value: 'house', label: 'House' },
 ]
 
+const OCCUPANCY_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Select' },
+  { value: 'sole', label: 'Sole occupant' },
+  { value: 'couple', label: 'Couple' },
+  { value: 'open', label: 'Flexible' },
+]
+
+const MOVE_IN_FLEX_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Select' },
+  { value: 'exact', label: 'Exact date' },
+  { value: 'one_week', label: '± 1 week' },
+  { value: 'two_weeks', label: '± 2 weeks' },
+]
+
+const BILLS_PREF_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'No preference' },
+  { value: 'included', label: 'Bills included' },
+  { value: 'separate', label: 'Bills separate' },
+  { value: 'either', label: 'Either' },
+]
+
+const FURNISHING_PREF_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'No preference' },
+  { value: 'furnished', label: 'Furnished' },
+  { value: 'unfurnished', label: 'Unfurnished' },
+  { value: 'either', label: 'Either' },
+]
+
+const STUDENT_PROFILE_DRAFT_KEY = 'student_profile_draft' as const
+const STUDENT_PROFILE_DRAFT_VERSION = 1 as const
+
+const SP_GENDER_SET = new Set(GENDER_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_YEAR_SET = new Set(YEAR_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_NATIONALITY_SET = new Set(NATIONALITY_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_STUDENT_TYPE_SET = new Set(STUDENT_TYPE_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_ROOM_PREF_SET = new Set(ROOM_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_OCC_SET = new Set(OCCUPANCY_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_MOVE_FLEX_SET = new Set(MOVE_IN_FLEX_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_BILLS_SET = new Set(BILLS_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
+const SP_FURN_SET = new Set(FURNISHING_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
+
+type StudentProfileDraftV1 = {
+  v: typeof STUDENT_PROFILE_DRAFT_VERSION
+  firstName: string
+  lastName: string
+  phone: string
+  gender: string
+  nationality: string
+  yearOfStudy: string
+  course: string
+  emergencyName: string
+  emergencyPhone: string
+  isSmoker: boolean
+  dateOfBirth: string
+  universityId: string
+  campusId: string
+  studentType: string
+  roomPref: string
+  budgetMin: string
+  budgetMax: string
+  bio: string
+  occupancyType: string
+  moveInFlex: string
+  hasPets: boolean
+  needsParking: boolean
+  billsPref: string
+  furnishingPref: string
+  hasGuarantor: boolean
+  guarantorName: string
+}
+
+function studentProfileDraftFromState(s: Omit<StudentProfileDraftV1, 'v'>): StudentProfileDraftV1 {
+  return { v: STUDENT_PROFILE_DRAFT_VERSION, ...s }
+}
+
+function parseStudentProfileDraft(raw: string | null): StudentProfileDraftV1 | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as unknown
+    if (!o || typeof o !== 'object') return null
+    const d = o as Record<string, unknown>
+    if (d.v !== STUDENT_PROFILE_DRAFT_VERSION) return null
+    const gender = typeof d.gender === 'string' && (d.gender === '' || SP_GENDER_SET.has(d.gender)) ? d.gender : ''
+    const year =
+      typeof d.yearOfStudy === 'string' && (d.yearOfStudy === '' || SP_YEAR_SET.has(d.yearOfStudy))
+        ? d.yearOfStudy
+        : ''
+    const nat =
+      typeof d.nationality === 'string' && (d.nationality === '' || SP_NATIONALITY_SET.has(d.nationality))
+        ? d.nationality
+        : ''
+    const stu =
+      typeof d.studentType === 'string' && (d.studentType === '' || SP_STUDENT_TYPE_SET.has(d.studentType))
+        ? d.studentType
+        : ''
+    const room =
+      typeof d.roomPref === 'string' && (d.roomPref === '' || SP_ROOM_PREF_SET.has(d.roomPref)) ? d.roomPref : ''
+    const occ =
+      typeof d.occupancyType === 'string' && (d.occupancyType === '' || SP_OCC_SET.has(d.occupancyType))
+        ? d.occupancyType
+        : ''
+    const flex =
+      typeof d.moveInFlex === 'string' && (d.moveInFlex === '' || SP_MOVE_FLEX_SET.has(d.moveInFlex))
+        ? d.moveInFlex
+        : ''
+    const bills =
+      typeof d.billsPref === 'string' && (d.billsPref === '' || SP_BILLS_SET.has(d.billsPref)) ? d.billsPref : ''
+    const furn =
+      typeof d.furnishingPref === 'string' && (d.furnishingPref === '' || SP_FURN_SET.has(d.furnishingPref))
+        ? d.furnishingPref
+        : ''
+    return {
+      v: STUDENT_PROFILE_DRAFT_VERSION,
+      firstName: typeof d.firstName === 'string' ? d.firstName : '',
+      lastName: typeof d.lastName === 'string' ? d.lastName : '',
+      phone: typeof d.phone === 'string' ? d.phone : '',
+      gender,
+      nationality: nat,
+      yearOfStudy: year,
+      course: typeof d.course === 'string' ? d.course : '',
+      emergencyName: typeof d.emergencyName === 'string' ? d.emergencyName : '',
+      emergencyPhone: typeof d.emergencyPhone === 'string' ? d.emergencyPhone : '',
+      isSmoker: Boolean(d.isSmoker),
+      dateOfBirth: typeof d.dateOfBirth === 'string' ? d.dateOfBirth : '',
+      universityId: typeof d.universityId === 'string' ? d.universityId : '',
+      campusId: typeof d.campusId === 'string' ? d.campusId : '',
+      studentType: stu,
+      roomPref: room,
+      budgetMin: typeof d.budgetMin === 'string' ? d.budgetMin : '',
+      budgetMax: typeof d.budgetMax === 'string' ? d.budgetMax : '',
+      bio: typeof d.bio === 'string' ? d.bio : '',
+      occupancyType: occ,
+      moveInFlex: flex,
+      hasPets: Boolean(d.hasPets),
+      needsParking: Boolean(d.needsParking),
+      billsPref: bills,
+      furnishingPref: furn,
+      hasGuarantor: Boolean(d.hasGuarantor),
+      guarantorName: typeof d.guarantorName === 'string' ? d.guarantorName : '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function isStudentProfileDraftMeaningful(d: StudentProfileDraftV1): boolean {
+  return (
+    d.firstName.trim() !== '' ||
+    d.lastName.trim() !== '' ||
+    d.phone.trim() !== '' ||
+    d.gender !== '' ||
+    d.nationality !== '' ||
+    d.yearOfStudy !== '' ||
+    d.course.trim() !== '' ||
+    d.emergencyName.trim() !== '' ||
+    d.emergencyPhone.trim() !== '' ||
+    d.isSmoker ||
+    d.dateOfBirth.trim() !== '' ||
+    d.universityId.trim() !== '' ||
+    d.campusId.trim() !== '' ||
+    d.studentType !== '' ||
+    d.roomPref !== '' ||
+    d.budgetMin.trim() !== '' ||
+    d.budgetMax.trim() !== '' ||
+    d.bio.trim() !== '' ||
+    d.occupancyType !== '' ||
+    d.moveInFlex !== '' ||
+    d.hasPets ||
+    d.needsParking ||
+    d.billsPref !== '' ||
+    d.furnishingPref !== '' ||
+    d.hasGuarantor ||
+    d.guarantorName.trim() !== ''
+  )
+}
+
 function splitFullName(full: string | null | undefined): [string, string] {
   if (!full?.trim()) return ['', '']
   const parts = full.trim().split(/\s+/)
@@ -124,6 +304,8 @@ function bookingStatusClass(status: BookingWithProperty['status']) {
     case 'pending_payment':
     case 'pending_confirmation':
       return 'bg-amber-100 text-amber-900'
+    case 'awaiting_info':
+      return 'bg-sky-100 text-sky-900'
     case 'cancelled':
       return 'bg-gray-100 text-gray-700'
     case 'completed':
@@ -142,12 +324,22 @@ type StudentTab = 'profile' | 'verification' | 'bookings'
 export default function StudentProfile() {
   const { user, refreshProfile, signOut } = useAuthContext()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const {
     universities: refUniversities,
     loading: refDataLoading,
     error: refDataError,
-  } = useUniversityCampusReference()
-  const [activeTab, setActiveTab] = useState<StudentTab>('profile')
+  } = useUniversityCampusReference('full')
+  const [activeTab, setActiveTab] = useState<StudentTab>(() => {
+    try {
+      const t = new URLSearchParams(window.location.search).get('tab')
+      if (t === 'bookings' || t === 'verification') return t
+    } catch {
+      /* ignore */
+    }
+    return 'profile'
+  })
   const [profile, setProfile] = useState<StudentRow | null>(null)
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
   const [bookingsLoading, setBookingsLoading] = useState(false)
@@ -173,6 +365,18 @@ export default function StudentProfile() {
   const [roomPref, setRoomPref] = useState('')
   const [budgetMin, setBudgetMin] = useState('')
   const [budgetMax, setBudgetMax] = useState('')
+  const [bio, setBio] = useState('')
+  const [occupancyType, setOccupancyType] = useState('')
+  const [moveInFlex, setMoveInFlex] = useState('')
+  const [hasPets, setHasPets] = useState(false)
+  const [needsParking, setNeedsParking] = useState(false)
+  const [billsPref, setBillsPref] = useState('')
+  const [furnishingPref, setFurnishingPref] = useState('')
+  const [hasGuarantor, setHasGuarantor] = useState(false)
+  const [guarantorName, setGuarantorName] = useState('')
+
+  const [bookingReplyById, setBookingReplyById] = useState<Record<string, string>>({})
+  const [bookingReplyBusy, setBookingReplyBusy] = useState<string | null>(null)
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -184,11 +388,127 @@ export default function StudentProfile() {
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
   const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null)
   const [deleteAccountBusy, setDeleteAccountBusy] = useState(false)
+  const [dangerZoneVisible, setDangerZoneVisible] = useState(false)
+  const dangerZoneRef = useRef<HTMLElement>(null)
 
-  const load = useCallback(async () => {
+  const applyProfileToForm = useCallback((prof: StudentRow) => {
+    const [fn, ln] = splitFullName(prof.full_name)
+    setFirstName(prof.first_name ?? fn)
+    setLastName(prof.last_name ?? ln)
+    setPhone(prof.phone ?? '')
+    setGender(prof.gender ?? '')
+    setNationality(prof.nationality ?? '')
+    setYearOfStudy(prof.year_of_study != null ? String(prof.year_of_study) : '')
+    setCourse(prof.course ?? '')
+    setEmergencyName(prof.emergency_contact_name ?? '')
+    setEmergencyPhone(prof.emergency_contact_phone ?? '')
+    setIsSmoker(Boolean(prof.is_smoker))
+    setDateOfBirth(prof.date_of_birth ? prof.date_of_birth.slice(0, 10) : '')
+    setUniversityId(prof.university_id ?? '')
+    setCampusId(prof.campus_id ?? '')
+    setStudentType(prof.student_type ?? '')
+    setRoomPref(prof.room_type_preference ?? '')
+    setBudgetMin(prof.budget_min_per_week != null ? String(prof.budget_min_per_week) : '')
+    setBudgetMax(prof.budget_max_per_week != null ? String(prof.budget_max_per_week) : '')
+    setBio(prof.bio?.trim() ?? '')
+    setOccupancyType(prof.occupancy_type ?? '')
+    setMoveInFlex(prof.move_in_flexibility ?? '')
+    setHasPets(prof.has_pets === true)
+    setNeedsParking(prof.needs_parking === true)
+    setBillsPref(prof.bills_preference ?? '')
+    setFurnishingPref(prof.furnishing_preference ?? '')
+    setHasGuarantor(prof.has_guarantor === true)
+    setGuarantorName(prof.guarantor_name?.trim() ?? '')
+  }, [])
+
+  const studentProfileDraftSnapshot = useMemo(
+    () =>
+      studentProfileDraftFromState({
+        firstName,
+        lastName,
+        phone,
+        gender,
+        nationality,
+        yearOfStudy,
+        course,
+        emergencyName,
+        emergencyPhone,
+        isSmoker,
+        dateOfBirth,
+        universityId,
+        campusId,
+        studentType,
+        roomPref,
+        budgetMin,
+        budgetMax,
+        bio,
+        occupancyType,
+        moveInFlex,
+        hasPets,
+        needsParking,
+        billsPref,
+        furnishingPref,
+        hasGuarantor,
+        guarantorName,
+      }),
+    [
+      firstName,
+      lastName,
+      phone,
+      gender,
+      nationality,
+      yearOfStudy,
+      course,
+      emergencyName,
+      emergencyPhone,
+      isSmoker,
+      dateOfBirth,
+      universityId,
+      campusId,
+      studentType,
+      roomPref,
+      budgetMin,
+      budgetMax,
+      bio,
+      occupancyType,
+      moveInFlex,
+      hasPets,
+      needsParking,
+      billsPref,
+      furnishingPref,
+      hasGuarantor,
+      guarantorName,
+    ],
+  )
+
+  const restoredLocationKeyRef = useRef<string | null>(null)
+  const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
+  const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+
+  const handleDraftStartFresh = useCallback(() => {
+    try {
+      localStorage.removeItem(STUDENT_PROFILE_DRAFT_KEY)
+    } catch {
+      /* ignore */
+    }
+    setShowResumeDraftBanner(false)
+    resumeDraftBannerDismissedKeyRef.current = location.key
+    if (profile) applyProfileToForm(profile)
+    setDraftSavedVisible(false)
+    if (draftSavedHideTimerRef.current) {
+      window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = null
+    }
+  }, [profile, applyProfileToForm, location.key])
+
+  const load = useCallback(async (opts?: { background?: boolean }) => {
     if (!user?.id) return
+    const background = opts?.background === true
     setLoadError(null)
-    setLoading(true)
+    if (!background) setLoading(true)
     try {
       const { data: profRaw, error: pErr } = await supabase
         .from('student_profiles')
@@ -205,41 +525,125 @@ export default function StudentProfile() {
       }
 
       setProfile(prof)
-      const [fn, ln] = splitFullName(prof.full_name)
-      setFirstName(prof.first_name ?? fn)
-      setLastName(prof.last_name ?? ln)
-      setPhone(prof.phone ?? '')
-      setGender(prof.gender ?? '')
-      setNationality(prof.nationality ?? '')
-      setYearOfStudy(prof.year_of_study != null ? String(prof.year_of_study) : '')
-      setCourse(prof.course ?? '')
-      setEmergencyName(prof.emergency_contact_name ?? '')
-      setEmergencyPhone(prof.emergency_contact_phone ?? '')
-      setIsSmoker(Boolean(prof.is_smoker))
-      setDateOfBirth(prof.date_of_birth ? prof.date_of_birth.slice(0, 10) : '')
-      setUniversityId(prof.university_id ?? '')
-      setCampusId(prof.campus_id ?? '')
-      setStudentType(prof.student_type ?? '')
-      setRoomPref(prof.room_type_preference ?? '')
-      setBudgetMin(
-        prof.budget_min_per_week != null ? String(prof.budget_min_per_week) : '',
-      )
-      setBudgetMax(
-        prof.budget_max_per_week != null ? String(prof.budget_max_per_week) : '',
-      )
+      applyProfileToForm(prof)
 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not load profile.'
       setLoadError(msg)
       setProfile(null)
     } finally {
-      setLoading(false)
+      if (!background) setLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, applyProfileToForm])
+
+  const refreshProfileData = useCallback(() => load({ background: true }), [load])
+
+  const selectStudentTab = useCallback(
+    (tab: StudentTab) => {
+      setActiveTab(tab)
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev)
+          if (tab === 'profile') p.delete('tab')
+          else p.set('tab', tab)
+          return p
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (draftSavedHideTimerRef.current) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading) restoredLocationKeyRef.current = null
+  }, [loading])
+
+  useEffect(() => {
+    if (loading || !profile) {
+      setDraftSaveEnabled(false)
+      return
+    }
+
+    if (restoredLocationKeyRef.current === location.key) {
+      setDraftSaveEnabled(true)
+      return
+    }
+    restoredLocationKeyRef.current = location.key
+
+    const parsed = parseStudentProfileDraft(localStorage.getItem(STUDENT_PROFILE_DRAFT_KEY))
+    if (parsed && isStudentProfileDraftMeaningful(parsed)) {
+      setFirstName(parsed.firstName)
+      setLastName(parsed.lastName)
+      setPhone(parsed.phone)
+      setGender(parsed.gender)
+      setNationality(parsed.nationality)
+      setYearOfStudy(parsed.yearOfStudy)
+      setCourse(parsed.course)
+      setEmergencyName(parsed.emergencyName)
+      setEmergencyPhone(parsed.emergencyPhone)
+      setIsSmoker(parsed.isSmoker)
+      setDateOfBirth(parsed.dateOfBirth)
+      setUniversityId(parsed.universityId)
+      setCampusId(parsed.campusId)
+      setStudentType(parsed.studentType)
+      setRoomPref(parsed.roomPref)
+      setBudgetMin(parsed.budgetMin)
+      setBudgetMax(parsed.budgetMax)
+      setBio(parsed.bio)
+      setOccupancyType(parsed.occupancyType)
+      setMoveInFlex(parsed.moveInFlex)
+      setHasPets(parsed.hasPets)
+      setNeedsParking(parsed.needsParking)
+      setBillsPref(parsed.billsPref)
+      setFurnishingPref(parsed.furnishingPref)
+      setHasGuarantor(parsed.hasGuarantor)
+      setGuarantorName(parsed.guarantorName)
+      if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
+        setShowResumeDraftBanner(true)
+      }
+    } else {
+      setShowResumeDraftBanner(false)
+    }
+    setDraftSaveEnabled(true)
+  }, [loading, profile?.id, location.key])
+
+  useEffect(() => {
+    if (!draftSaveEnabled || loading || !profile) return
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(STUDENT_PROFILE_DRAFT_KEY, JSON.stringify(studentProfileDraftSnapshot))
+      } catch {
+        /* quota / private mode */
+      }
+      setDraftSavedVisible(true)
+      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = window.setTimeout(() => {
+        setDraftSavedVisible(false)
+        draftSavedHideTimerRef.current = null
+      }, 2200)
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [studentProfileDraftSnapshot, draftSaveEnabled, loading, profile?.id])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'bookings') setActiveTab('bookings')
+    else if (tab === 'verification') setActiveTab('verification')
+    else setActiveTab('profile')
+  }, [searchParams])
 
   useEffect(() => {
     if (activeTab !== 'bookings' || !profile?.id) return
@@ -259,7 +663,8 @@ export default function StudentProfile() {
             status,
             notes,
             created_at,
-            property:properties ( id, title, slug, rent_per_week, suburb, images )
+            property:properties ( id, title, slug, rent_per_week, suburb, images ),
+            booking_messages ( id, sender_role, message, created_at, sender_id )
           `,
           )
           .eq('student_id', profile.id)
@@ -267,7 +672,13 @@ export default function StudentProfile() {
 
         if (error) throw error
         if (!cancelled) {
-          const rows = (data ?? []) as unknown as BookingWithProperty[]
+          const rows = (data ?? []).map((raw) => {
+            const r = raw as BookingWithProperty & { booking_messages?: BookingMessageRow[] | null }
+            const msgs = [...(r.booking_messages ?? [])].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+            )
+            return { ...r, booking_messages: msgs }
+          })
           setBookings(rows)
         }
       } catch (e: unknown) {
@@ -289,24 +700,15 @@ export default function StudentProfile() {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !user?.id) return
-    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
-      setPhotoError('Photo must be 2 MB or smaller.')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please choose an image file.')
-      return
-    }
 
     setUploadingPhoto(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase()
-      const safeExt = ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
-      const path = `${user.id}/profile-photo.${safeExt}`
+      const prepared = await prepareProfilePhotoForUpload(file, MAX_PROFILE_PHOTO_BYTES)
+      const path = `${user.id}/profile-photo.${prepared.ext}`
 
-      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, file, {
+      const { error: upErr } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).upload(path, prepared.blob, {
         upsert: true,
-        contentType: file.type,
+        contentType: prepared.contentType,
       })
       if (upErr) throw upErr
 
@@ -318,7 +720,7 @@ export default function StudentProfile() {
         .eq('user_id', user.id)
       if (dbErr) throw dbErr
 
-      await load()
+      await load({ background: true })
       await refreshProfile()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed.'
@@ -391,7 +793,9 @@ export default function StudentProfile() {
       let selectedCampusValid = !campusId
       if (campusId && universityId.trim()) {
         const slug = refUniversities.find((u) => u.id === universityId.trim())?.slug
-        const rows = await fetchCampusesForUniversityId(universityId.trim(), slug ?? null)
+        const rows = await fetchCampusesForUniversityId(universityId.trim(), slug ?? null, {
+          onlyWithActiveListings: false,
+        })
         selectedCampusValid = rows.some((c) => c.id === campusId)
       }
 
@@ -416,12 +820,28 @@ export default function StudentProfile() {
           room_type_preference: roomPref.trim() || null,
           budget_min_per_week: bMin,
           budget_max_per_week: bMax,
+          bio: bio.trim() || null,
+          occupancy_type: occupancyType ? (occupancyType as 'sole' | 'couple' | 'open') : null,
+          move_in_flexibility: moveInFlex ? (moveInFlex as 'exact' | 'one_week' | 'two_weeks') : null,
+          has_pets: hasPets,
+          needs_parking: needsParking,
+          bills_preference: billsPref ? (billsPref as 'included' | 'separate' | 'either') : null,
+          furnishing_preference: furnishingPref
+            ? (furnishingPref as 'furnished' | 'unfurnished' | 'either')
+            : null,
+          has_guarantor: hasGuarantor,
+          guarantor_name: hasGuarantor && guarantorName.trim() ? guarantorName.trim() : null,
         })
         .eq('user_id', user.id)
 
       if (uErr) throw uErr
 
-      await load()
+      try {
+        localStorage.removeItem(STUDENT_PROFILE_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
+      await load({ background: true })
       await refreshProfile()
       navigate('/student-dashboard', { replace: true })
     } catch (err: unknown) {
@@ -482,6 +902,39 @@ export default function StudentProfile() {
       />
 
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
+      {showResumeDraftBanner && (
+        <div
+          className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          role="region"
+          aria-label="Saved draft"
+        >
+          <p className="text-gray-700">Resume draft? We restored your last saved profile details.</p>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                resumeDraftBannerDismissedKeyRef.current = location.key
+                setShowResumeDraftBanner(false)
+              }}
+              className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+            >
+              Continue editing
+            </button>
+            <button
+              type="button"
+              onClick={handleDraftStartFresh}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
+      {draftSavedVisible && activeTab === 'profile' && (
+        <p className="text-xs text-gray-400 text-right mb-2 tabular-nums" aria-live="polite">
+          Draft saved
+        </p>
+      )}
       <div
         className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
         role="tablist"
@@ -494,7 +947,7 @@ export default function StudentProfile() {
           aria-selected={activeTab === 'profile'}
           aria-controls="panel-student-profile"
           tabIndex={0}
-          onClick={() => setActiveTab('profile')}
+          onClick={() => selectStudentTab('profile')}
           className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
             activeTab === 'profile'
               ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
@@ -510,7 +963,7 @@ export default function StudentProfile() {
           aria-selected={activeTab === 'verification'}
           aria-controls="panel-student-verification"
           tabIndex={0}
-          onClick={() => setActiveTab('verification')}
+          onClick={() => selectStudentTab('verification')}
           className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
             activeTab === 'verification'
               ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
@@ -526,7 +979,7 @@ export default function StudentProfile() {
           aria-selected={activeTab === 'bookings'}
           aria-controls="panel-student-bookings"
           tabIndex={0}
-          onClick={() => setActiveTab('bookings')}
+          onClick={() => selectStudentTab('bookings')}
           className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
             activeTab === 'bookings'
               ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
@@ -543,7 +996,7 @@ export default function StudentProfile() {
         aria-labelledby="tab-student-profile"
         hidden={activeTab !== 'profile'}
       >
-        <StudentStripePaymentsCard profile={profile} onRefresh={load} />
+        <StudentStripePaymentsCard profile={profile} onRefresh={refreshProfileData} />
 
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 w-full">
           <form onSubmit={handleSave} className="space-y-6">
@@ -710,7 +1163,7 @@ export default function StudentProfile() {
                     <span className="text-lg leading-none">+</span>
                     {uploadingPhoto ? 'Uploading…' : 'Upload your photo'}
                   </button>
-                  <p className="text-xs text-gray-500 mt-2">Max: 2 MB</p>
+                  <p className="text-xs text-gray-500 mt-2">Larger photos are resized automatically (max 2 MB).</p>
                   {photoError && <p className="text-xs text-red-600 mt-2">{photoError}</p>}
                 </div>
               </div>
@@ -785,6 +1238,7 @@ export default function StudentProfile() {
                 setCampusId('')
               }}
               onCampusChange={setCampusId}
+              referenceScope="full"
               showState
               variant="responsiveGrid"
               labelClassName={labelClass}
@@ -851,6 +1305,143 @@ export default function StudentProfile() {
               </div>
             </div>
 
+            <div className="rounded-xl border border-gray-100 bg-[#FEF9E4]/40 px-4 py-4 space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900">Living preferences</h3>
+              <p className="text-xs text-gray-600">
+                Optional — helps hosts see if you&apos;re a good fit. You can change these anytime.
+              </p>
+              <div>
+                <label htmlFor="st-bio" className={labelClass}>
+                  Short bio
+                </label>
+                <textarea
+                  id="st-bio"
+                  rows={3}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className={inputClass}
+                  placeholder="A few sentences about you"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="st-occ" className={labelClass}>
+                    Occupancy
+                  </label>
+                  <select
+                    id="st-occ"
+                    value={occupancyType}
+                    onChange={(e) => setOccupancyType(e.target.value)}
+                    className={inputClass}
+                  >
+                    {OCCUPANCY_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="st-mflex" className={labelClass}>
+                    Move-in flexibility
+                  </label>
+                  <select
+                    id="st-mflex"
+                    value={moveInFlex}
+                    onChange={(e) => setMoveInFlex(e.target.value)}
+                    className={inputClass}
+                  >
+                    {MOVE_IN_FLEX_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={hasPets}
+                    onChange={(e) => setHasPets(e.target.checked)}
+                    className="rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                  />
+                  I have pets
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={needsParking}
+                    onChange={(e) => setNeedsParking(e.target.checked)}
+                    className="rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                  />
+                  I need parking
+                </label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="st-bills" className={labelClass}>
+                    Bills preference
+                  </label>
+                  <select
+                    id="st-bills"
+                    value={billsPref}
+                    onChange={(e) => setBillsPref(e.target.value)}
+                    className={inputClass}
+                  >
+                    {BILLS_PREF_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="st-furn" className={labelClass}>
+                    Furnishing preference
+                  </label>
+                  <select
+                    id="st-furn"
+                    value={furnishingPref}
+                    onChange={(e) => setFurnishingPref(e.target.value)}
+                    className={inputClass}
+                  >
+                    {FURNISHING_PREF_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={hasGuarantor}
+                    onChange={(e) => setHasGuarantor(e.target.checked)}
+                    className="rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                  />
+                  I have a guarantor
+                </label>
+                {hasGuarantor && (
+                  <div className="mt-2">
+                    <label htmlFor="st-gname" className={labelClass}>
+                      Guarantor name (optional)
+                    </label>
+                    <input
+                      id="st-gname"
+                      type="text"
+                      value={guarantorName}
+                      onChange={(e) => setGuarantorName(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="flex items-center gap-3">
               <input
                 id="st-smoker"
@@ -878,8 +1469,34 @@ export default function StudentProfile() {
           </form>
         </section>
 
+        <div className="mt-6 flex justify-center sm:justify-start">
+          <button
+            type="button"
+            id="toggle-student-danger-zone"
+            aria-expanded={dangerZoneVisible}
+            aria-controls="student-profile-danger-zone"
+            onClick={() => {
+              setDangerZoneVisible((prev) => {
+                const next = !prev
+                if (next) {
+                  window.setTimeout(() => {
+                    dangerZoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                  }, 0)
+                }
+                return next
+              })
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700 underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 rounded px-0.5 -mx-0.5"
+          >
+            {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
+          </button>
+        </div>
+
+        {dangerZoneVisible && (
         <section
-          className="mt-8 bg-white rounded-2xl border border-red-200 shadow-sm p-6 sm:p-8 w-full"
+          ref={dangerZoneRef}
+          id="student-profile-danger-zone"
+          className="mt-6 bg-white rounded-2xl border border-red-200 shadow-sm p-6 sm:p-8 w-full"
           aria-labelledby="danger-zone-heading"
         >
           <h2 id="danger-zone-heading" className="text-base font-semibold text-gray-900">
@@ -899,6 +1516,7 @@ export default function StudentProfile() {
             Delete account
           </button>
         </section>
+        )}
 
         <StudentDeleteAccountModal
           open={deleteAccountOpen}
@@ -916,7 +1534,7 @@ export default function StudentProfile() {
         hidden={activeTab !== 'verification'}
       >
         {user?.id && (
-          <StudentVerificationPanel profile={profile} userId={user.id} onRefresh={load} />
+          <StudentVerificationPanel profile={profile} userId={user.id} onRefresh={refreshProfileData} />
         )}
       </div>
 
@@ -1003,9 +1621,110 @@ export default function StudentProfile() {
                         <span
                           className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${bookingStatusClass(b.status)}`}
                         >
-                          {b.status}
+                          {b.status.replace(/_/g, ' ')}
                         </span>
                       </div>
+                      {b.booking_messages && b.booking_messages.length > 0 && (
+                        <div className="mt-4 space-y-2 border-t border-gray-100 pt-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
+                          <ul className="space-y-2 max-h-48 overflow-y-auto">
+                            {b.booking_messages.map((m) => (
+                              <li
+                                key={m.id}
+                                className={`rounded-lg px-3 py-2 text-sm ${
+                                  m.sender_role === 'landlord' ? 'bg-sky-50 text-gray-800' : 'bg-gray-50 text-gray-800'
+                                }`}
+                              >
+                                <span className="text-xs font-semibold text-gray-500">
+                                  {m.sender_role === 'landlord' ? 'Host' : 'You'} ·{' '}
+                                  {new Date(m.created_at).toLocaleString('en-AU', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short',
+                                  })}
+                                </span>
+                                <p className="mt-1 whitespace-pre-wrap">{m.message}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {b.status === 'awaiting_info' && (
+                        <div className="mt-4 border-t border-gray-100 pt-3">
+                          <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor={`reply-${b.id}`}>
+                            Your reply
+                          </label>
+                          <textarea
+                            id={`reply-${b.id}`}
+                            rows={3}
+                            value={bookingReplyById[b.id] ?? ''}
+                            onChange={(e) =>
+                              setBookingReplyById((prev) => ({ ...prev, [b.id]: e.target.value }))
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                            placeholder="Reply to your host…"
+                          />
+                          <button
+                            type="button"
+                            disabled={bookingReplyBusy === b.id || !(bookingReplyById[b.id] ?? '').trim()}
+                            onClick={async () => {
+                              const text = (bookingReplyById[b.id] ?? '').trim()
+                              if (!text || !user?.id) return
+                              setBookingReplyBusy(b.id)
+                              try {
+                                const { data: sess } = await supabase.auth.getSession()
+                                const uid = sess.session?.user?.id
+                                if (!uid) throw new Error('Sign in required.')
+                                const { error: insErr } = await supabase.from('booking_messages').insert({
+                                  booking_id: b.id,
+                                  sender_id: uid,
+                                  sender_role: 'student',
+                                  message: text,
+                                })
+                                if (insErr) throw insErr
+                                setBookingReplyById((prev) => ({ ...prev, [b.id]: '' }))
+                                const { data: fresh } = await supabase
+                                  .from('bookings')
+                                  .select(
+                                    `
+                                    id,
+                                    start_date,
+                                    end_date,
+                                    weekly_rent,
+                                    status,
+                                    notes,
+                                    created_at,
+                                    property:properties ( id, title, slug, rent_per_week, suburb, images ),
+                                    booking_messages ( id, sender_role, message, created_at, sender_id )
+                                  `,
+                                  )
+                                  .eq('id', b.id)
+                                  .maybeSingle()
+                                if (fresh) {
+                                  const r = fresh as BookingWithProperty & {
+                                    booking_messages?: BookingMessageRow[] | null
+                                  }
+                                  const msgs = [...(r.booking_messages ?? [])].sort(
+                                    (a, c) =>
+                                      new Date(a.created_at).getTime() - new Date(c.created_at).getTime(),
+                                  )
+                                  setBookings((prev) =>
+                                    prev.map((row) =>
+                                      row.id === b.id ? { ...row, booking_messages: msgs, status: r.status } : row,
+                                    ),
+                                  )
+                                }
+                              } catch (err) {
+                                setBookingsError(err instanceof Error ? err.message : 'Could not send reply.')
+                              } finally {
+                                setBookingReplyBusy(null)
+                              }
+                            }}
+                            className="mt-2 rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                          >
+                            {bookingReplyBusy === b.id ? 'Sending…' : 'Send reply'}
+                          </button>
+                        </div>
+                      )}
                       <div className="mt-auto pt-4">
                         {p?.slug && (
                           <Link

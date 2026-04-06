@@ -162,12 +162,10 @@ export default function Onboarding() {
     setAgreementError(false)
     if (!termsPrivacy) {
       setAgreementError(true)
-      reportFormError('Onboarding', 'agreementError', 'Terms not accepted')
       return
     }
     if (isLandlord && !landlordAgreement) {
       setAgreementError(true)
-      reportFormError('Onboarding', 'agreementError', 'Terms not accepted')
       return
     }
     setError(null)
@@ -248,7 +246,7 @@ export default function Onboarding() {
             : ''
       const errorStr = msg + hint
       setError(errorStr)
-      if (errorStr) reportFormError('Onboarding', 'formError', errorStr)
+      if (errorStr) reportFormError('Onboarding', 'formError', errorStr, { sentry: true })
     } finally {
       setSubmitting(false)
     }

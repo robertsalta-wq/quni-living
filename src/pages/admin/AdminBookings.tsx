@@ -27,6 +27,7 @@ const STATUSES: BookingStatus[] = [
   'pending',
   'pending_payment',
   'pending_confirmation',
+  'awaiting_info',
   'confirmed',
   'active',
   'completed',
@@ -42,6 +43,8 @@ function statusBadgeClass(s: BookingStatus) {
     case 'pending_payment':
     case 'pending_confirmation':
       return 'bg-amber-100 text-amber-800'
+    case 'awaiting_info':
+      return 'bg-sky-100 text-sky-900'
     case 'confirmed':
     case 'active':
       return 'bg-emerald-100 text-emerald-800'

@@ -1,5 +1,9 @@
 /**
- * Landlord confirms booking: capture deposit PI + create weekly rent subscription (Connect).
+ * Landlord confirms a booking: captures the student's booking-deposit PaymentIntent (one-off) and
+ * creates a weekly rent Stripe subscription (Connect).
+ *
+ * Move-in far in the future: Stripe rejects billing_cycle_anchor beyond ~one weekly period; we use
+ * trial_end = move-in so the first rent invoice aligns with the tenancy start.
  *
  * POST JSON: { bookingId }
  * Authorization: Bearer <Supabase access_token> (landlord)
@@ -11,11 +15,14 @@ import { sendEmail } from './lib/sendEmail.js'
 import {
   bookingConfirmedStudent,
   bookingConfirmedLandlord,
+  bookingAutoDeclinedPropertyTakenStudent,
   propertyAddressLine,
 } from './lib/emailTemplates.js'
+import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
 import { bondAuthorityForState } from './lib/bondAuthority.js'
 
-export const config = { runtime: 'edge' }
+/** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
+export const config = { runtime: 'nodejs', maxDuration: 60 }
 
 function json(body, status = 200, origin) {
   const allowOrigin = origin || '*'
@@ -51,6 +58,20 @@ function leaseEndUnixFromMoveIn(moveInIso, leaseLength) {
 function moveInUnixUtcMidnight(moveInIso) {
   const [y, m, d] = moveInIso.split('-').map(Number)
   return Math.floor(Date.UTC(y, m - 1, d) / 1000)
+}
+
+/** Headers for internal POSTs (deployment protection bypass when configured on Vercel). */
+function internalPostHeaders(secret) {
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${secret}`,
+    'X-Internal-Doc-Flow-Secret': secret,
+  }
+  const bypass = (process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '').trim()
+  if (bypass) {
+    headers['x-vercel-protection-bypass'] = bypass
+  }
+  return headers
 }
 
 /** Absolute origin for serverless → serverless calls (relative /api/... URLs fail on Vercel). */
@@ -114,40 +135,40 @@ export default async function handler(request) {
   }
 
   try {
-  const supabaseAuth = createClient(supabaseUrl, anonKey)
-  const {
-    data: { user },
-    error: userErr,
-  } = await supabaseAuth.auth.getUser(token)
+    const supabaseAuth = createClient(supabaseUrl, anonKey)
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabaseAuth.auth.getUser(token)
 
-  if (userErr || !user) {
-    return json({ error: 'Invalid or expired session' }, 401, origin)
-  }
+    if (userErr || !user) {
+      return json({ error: 'Invalid or expired session' }, 401, origin)
+    }
 
-  if (user.user_metadata?.role !== 'landlord') {
-    return json({ error: 'Only landlord accounts can confirm bookings' }, 403, origin)
-  }
+    if (user.user_metadata?.role !== 'landlord') {
+      return json({ error: 'Only landlord accounts can confirm bookings' }, 403, origin)
+    }
 
-  const admin = createClient(supabaseUrl, serviceRole)
+    const admin = createClient(supabaseUrl, serviceRole)
 
-  const { data: landlord, error: llErr } = await admin
-    .from('landlord_profiles')
-    .select('id, stripe_connect_account_id, stripe_charges_enabled')
-    .eq('user_id', user.id)
-    .maybeSingle()
+    const { data: landlord, error: llErr } = await admin
+      .from('landlord_profiles')
+      .select('id, stripe_connect_account_id, stripe_charges_enabled')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-  if (llErr || !landlord) {
-    return json({ error: 'Landlord profile not found' }, 404, origin)
-  }
+    if (llErr || !landlord) {
+      return json({ error: 'Landlord profile not found' }, 404, origin)
+    }
 
-  if (landlord.stripe_charges_enabled !== true) {
-    return json({ error: 'Landlord Stripe account not ready for charges' }, 400, origin)
-  }
+    if (landlord.stripe_charges_enabled !== true) {
+      return json({ error: 'Landlord Stripe account not ready for charges' }, 400, origin)
+    }
 
-  const { data: booking, error: bErr } = await admin
-    .from('bookings')
-    .select(
-      `
+    const { data: booking, error: bErr } = await admin
+      .from('bookings')
+      .select(
+        `
       id,
       landlord_id,
       student_id,
@@ -165,332 +186,453 @@ export default async function handler(request) {
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
-    )
-    .eq('id', bookingId)
-    .maybeSingle()
+      )
+      .eq('id', bookingId)
+      .maybeSingle()
 
-  if (bErr || !booking) {
-    return json({ error: 'Booking not found' }, 404, origin)
-  }
-
-  if (booking.landlord_id !== landlord.id) {
-    return json({ error: 'Forbidden' }, 403, origin)
-  }
-
-  if (booking.status !== 'pending_confirmation') {
-    return json({ error: 'Booking is not awaiting confirmation' }, 400, origin)
-  }
-
-  if (booking.expires_at && new Date(booking.expires_at).getTime() < Date.now()) {
-    return json({ error: 'This booking request has expired' }, 400, origin)
-  }
-
-  if (!booking.stripe_payment_intent_id) {
-    return json({ error: 'Booking has no payment on file' }, 400, origin)
-  }
-
-  if (!landlord.stripe_connect_account_id || !landlord.stripe_charges_enabled) {
-    return json({ error: 'Connect payouts are not ready on your account' }, 400, origin)
-  }
-
-  const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
-  if (!moveIn) {
-    return json({ error: 'Booking is missing move-in date' }, 400, origin)
-  }
-
-  const weeklyCents = weeklyRentCents(booking.weekly_rent)
-  if (weeklyCents == null) {
-    return json({ error: 'Invalid weekly rent' }, 400, origin)
-  }
-
-  const stripe = new Stripe(stripeSecret)
-  const piId = booking.stripe_payment_intent_id
-
-  let pi = await stripe.paymentIntents.retrieve(piId)
-  if (pi.status === 'requires_capture') {
-    pi = await stripe.paymentIntents.capture(piId)
-  } else if (pi.status !== 'succeeded') {
-    return json({ error: `Payment is not ready to capture (status: ${pi.status})` }, 400, origin)
-  }
-
-  let pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id
-  if (!pmId) {
-    return json({ error: 'No payment method on file for this booking' }, 400, origin)
-  }
-
-  const sp =
-    booking.student_profiles && typeof booking.student_profiles === 'object' ? booking.student_profiles : {}
-  const lp =
-    booking.landlord_profiles && typeof booking.landlord_profiles === 'object' ? booking.landlord_profiles : {}
-  let customerId = sp.stripe_customer_id?.trim() || null
-  if (!customerId) {
-    return json({ error: 'Student billing profile is missing' }, 400, origin)
-  }
-
-  /** If deposit PI PM can't be reused, use another card already saved on the student. */
-  async function alternatePaymentMethodId(excludeId) {
-    const cust = await stripe.customers.retrieve(customerId, {
-      expand: ['invoice_settings.default_payment_method'],
-    })
-    const def = cust.invoice_settings?.default_payment_method
-    const defId = typeof def === 'string' ? def : def?.id
-    if (defId && defId !== excludeId) return defId
-    const list = await stripe.paymentMethods.list({ customer: customerId, type: 'card' })
-    for (const pm of list.data) {
-      if (pm.id !== excludeId) return pm.id
+    if (bErr || !booking) {
+      return json({ error: 'Booking not found' }, 404, origin)
     }
-    return null
-  }
 
-  function isPmReuseError(msg) {
-    const m = msg.toLowerCase()
-    return (
-      m.includes('may not be used again') ||
-      m.includes('previously used without') ||
-      m.includes('was detached') ||
-      m.includes('has already been used')
-    )
-  }
-
-  const pmRecord = await stripe.paymentMethods.retrieve(pmId)
-  const alreadyOnCustomer =
-    typeof pmRecord.customer === 'string'
-      ? pmRecord.customer === customerId
-      : pmRecord.customer?.id === customerId
-
-  if (!alreadyOnCustomer) {
-    try {
-      await stripe.paymentMethods.attach(pmId, { customer: customerId })
-    } catch (e) {
-      const msg = e && typeof e === 'object' && 'message' in e ? String(e.message) : ''
-      if (msg.includes('already been attached')) {
-        // ok
-      } else if (isPmReuseError(msg)) {
-        const alt = await alternatePaymentMethodId(pmId)
-        if (!alt) {
-          return json(
-            {
-              error:
-                'This booking’s card cannot be charged again for weekly rent (Stripe single-use limitation). Ask the student to add a saved payment method under Student profile → Payments, then try confirming again. New bookings will save the card automatically.',
-            },
-            400,
-            origin,
-          )
-        }
-        pmId = alt
-      } else {
-        throw e
-      }
+    if (booking.landlord_id !== landlord.id) {
+      return json({ error: 'Forbidden' }, 403, origin)
     }
-  }
 
-  await stripe.customers.update(customerId, {
-    invoice_settings: { default_payment_method: pmId },
-  })
-
-  const propertyTitle =
-    booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
-      ? String(booking.properties.title ?? 'Property')
-      : 'Property'
-
-  const leaseLength = booking.lease_length || 'Flexible'
-  const anchor = moveInUnixUtcMidnight(moveIn)
-  const cancelAt = leaseEndUnixFromMoveIn(moveIn, leaseLength)
-
-  if (cancelAt <= anchor) {
-    return json({ error: 'Invalid lease length for subscription' }, 400, origin)
-  }
-
-  // Stripe subscription items[].price_data requires `product` (id), not inline `product_data`.
-  const rentProduct = await stripe.products.create({
-    name: `Weekly rent — ${propertyTitle}`,
-    metadata: { booking_id: booking.id, property_id: booking.property_id ?? '' },
-  })
-
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [
-      {
-        price_data: {
-          currency: 'aud',
-          product: rentProduct.id,
-          unit_amount: weeklyCents,
-          recurring: { interval: 'week' },
+    const confirmable = booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
+    if (!confirmable) {
+      return json(
+        {
+          error: 'invalid_status',
+          message: 'This booking cannot be confirmed in its current state.',
         },
-      },
-    ],
-    default_payment_method: pmId,
-    transfer_data: { destination: landlord.stripe_connect_account_id },
-    application_fee_percent: 8,
-    billing_cycle_anchor: anchor,
-    proration_behavior: 'none',
-    cancel_at: cancelAt,
-    metadata: {
-      booking_id: booking.id,
-      property_id: booking.property_id ?? '',
-    },
-  })
+        400,
+        origin,
+      )
+    }
 
-  const nowIso = new Date().toISOString()
-  const { error: upErr } = await admin
-    .from('bookings')
-    .update({
-      status: 'confirmed',
-      confirmed_at: nowIso,
-      stripe_subscription_id: subscription.id,
-      stripe_subscription_status: subscription.status,
-    })
-    .eq('id', booking.id)
+    if (booking.expires_at && new Date(booking.expires_at).getTime() < Date.now()) {
+      return json({ error: 'This booking request has expired' }, 400, origin)
+    }
 
-  if (upErr) {
-    console.error('booking update after subscription', upErr)
-    return json({ error: 'Could not save booking after subscription' }, 500, origin)
-  }
+    if (!booking.stripe_payment_intent_id) {
+      return json({ error: 'Booking has no payment on file' }, 400, origin)
+    }
 
-  const propForBond =
-    booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
-  const bondState = typeof propForBond.state === 'string' && propForBond.state.trim() ? propForBond.state.trim() : 'NSW'
-  const bondAuthority = bondAuthorityForState(bondState)
-  const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
-  const landlordUserId = typeof lp.user_id === 'string' && lp.user_id.trim() ? lp.user_id.trim() : null
+    if (!landlord.stripe_connect_account_id || !landlord.stripe_charges_enabled) {
+      return json({ error: 'Connect payouts are not ready on your account' }, 400, origin)
+    }
 
-  if (studentUserId && landlordUserId && booking.property_id) {
-    const bondCents = weeklyCents * 4
-    const { data: existingBond } = await admin.from('bonds').select('id').eq('booking_id', booking.id).maybeSingle()
-    if (!existingBond && bondCents > 0) {
-      const ackStudent = booking.bond_acknowledged === true
-      const { error: bondInsErr } = await admin.from('bonds').insert({
-        booking_id: booking.id,
-        student_id: studentUserId,
-        landlord_id: landlordUserId,
-        property_id: booking.property_id,
-        bond_amount: bondCents,
-        bond_type: 'cash',
-        bond_status: 'pending_lodgement',
-        state: bondState,
-        bond_authority: bondAuthority,
-        acknowledged_by_student: ackStudent,
-        student_acknowledged_at: ackStudent ? nowIso : null,
-        acknowledged_by_landlord: true,
-        landlord_acknowledged_at: nowIso,
+    const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
+    if (!moveIn) {
+      return json({ error: 'Booking is missing move-in date' }, 400, origin)
+    }
+
+    const weeklyCents = weeklyRentCents(booking.weekly_rent)
+    if (weeklyCents == null) {
+      return json({ error: 'Invalid weekly rent' }, 400, origin)
+    }
+
+    const stripe = new Stripe(stripeSecret)
+    const piId = booking.stripe_payment_intent_id
+
+    let pi = await stripe.paymentIntents.retrieve(piId)
+    if (pi.status === 'requires_capture') {
+      pi = await stripe.paymentIntents.capture(piId)
+    } else if (pi.status !== 'succeeded') {
+      return json({ error: `Payment is not ready to capture (status: ${pi.status})` }, 400, origin)
+    }
+
+    let pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id
+    if (!pmId) {
+      return json({ error: 'No payment method on file for this booking' }, 400, origin)
+    }
+
+    const sp =
+      booking.student_profiles && typeof booking.student_profiles === 'object' ? booking.student_profiles : {}
+    const lp =
+      booking.landlord_profiles && typeof booking.landlord_profiles === 'object' ? booking.landlord_profiles : {}
+    let customerId = typeof sp.stripe_customer_id === 'string' ? sp.stripe_customer_id.trim() : null
+    if (!customerId) {
+      return json({ error: 'Student billing profile is missing' }, 400, origin)
+    }
+
+    /** If deposit PI PM can't be reused, use another card already saved on the student. */
+    async function alternatePaymentMethodId(excludeId) {
+      const cust = await stripe.customers.retrieve(customerId, {
+        expand: ['invoice_settings.default_payment_method'],
       })
-      if (bondInsErr) {
-        console.error('bond insert on confirm', bondInsErr)
+      const def = cust.invoice_settings?.default_payment_method
+      const defId = typeof def === 'string' ? def : def?.id
+      if (defId && defId !== excludeId) return defId
+      const list = await stripe.paymentMethods.list({ customer: customerId, type: 'card' })
+      for (const pm of list.data) {
+        if (pm.id !== excludeId) return pm.id
+      }
+      return null
+    }
+
+    function isPmReuseError(msg) {
+      const m = msg.toLowerCase()
+      return (
+        m.includes('may not be used again') ||
+        m.includes('previously used without') ||
+        m.includes('was detached') ||
+        m.includes('has already been used')
+      )
+    }
+
+    const pmRecord = await stripe.paymentMethods.retrieve(pmId)
+    const alreadyOnCustomer =
+      typeof pmRecord.customer === 'string'
+        ? pmRecord.customer === customerId
+        : pmRecord.customer?.id === customerId
+
+    if (!alreadyOnCustomer) {
+      try {
+        await stripe.paymentMethods.attach(pmId, { customer: customerId })
+      } catch (e) {
+        const msg = e && typeof e === 'object' && 'message' in e ? String(e.message) : ''
+        if (msg.includes('already been attached')) {
+          // ok
+        } else if (isPmReuseError(msg)) {
+          const alt = await alternatePaymentMethodId(pmId)
+          if (!alt) {
+            return json(
+              {
+                error:
+                  'This booking’s card cannot be charged again for weekly rent (Stripe single-use limitation). Ask the student to add a saved payment method under Student profile → Payments, then try confirming again. New bookings will save the card automatically.',
+              },
+              400,
+              origin,
+            )
+          }
+          pmId = alt
+        } else {
+          throw e
+        }
       }
     }
-  }
 
-  const siteBase =
-    origin && origin !== '*'
-      ? origin.replace(/\/$/, '')
-      : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(/\/$/, '')
-
-  const propRow = booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
-  const addr = propertyAddressLine(propRow)
-  const title =
-    booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
-      ? String(booking.properties.title ?? 'Property')
-      : 'Property'
-  const studentName =
-    [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
-    (typeof sp.full_name === 'string' && sp.full_name.trim()) ||
-    'Student'
-
-  const studentEmail = typeof sp.email === 'string' ? sp.email.trim() : ''
-  const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
-  const landlordName = typeof lp.full_name === 'string' ? lp.full_name.trim() || 'Host' : 'Host'
-  const landlordPhone = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '—'
-
-  const depositCents = typeof booking.deposit_amount === 'number' ? booking.deposit_amount : null
-
-  const sendStudent = async () => {
-    if (!studentEmail) return
-    const t = bookingConfirmedStudent({
-      student_name: studentName,
-      property_address: addr || title,
-      property_title: title,
-      move_in_date: moveIn,
-      lease_length: leaseLength,
-      weekly_rent: booking.weekly_rent,
-      landlord_name: landlordName,
-      landlord_phone: landlordPhone,
-      deposit_amount_cents: depositCents ?? undefined,
-      dashboard_url: `${siteBase}/student-dashboard`,
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: pmId },
     })
-    await sendEmail({ to: studentEmail, subject: t.subject, html: t.html })
-  }
 
-  const bondCentsForEmail = weeklyCents * 4
+    const propertyTitle =
+      booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
+        ? String(booking.properties.title ?? 'Property')
+        : 'Property'
 
-  const sendLandlord = async () => {
-    if (!landlordEmail) return
-    const t = bookingConfirmedLandlord({
-      landlord_name: landlordName,
-      student_name: studentName,
-      property_address: addr || title,
-      property_title: title,
-      move_in_date: moveIn,
-      lease_length: leaseLength,
-      weekly_rent: booking.weekly_rent,
-      deposit_amount_cents: depositCents ?? undefined,
-      bond_amount_cents: bondCentsForEmail > 0 ? bondCentsForEmail : undefined,
-      bond_authority: bondAuthority,
-      dashboard_url: `${siteBase}/landlord/dashboard?tab=bookings`,
+    const leaseLength = booking.lease_length || 'Flexible'
+    const anchor = moveInUnixUtcMidnight(moveIn)
+    const cancelAt = leaseEndUnixFromMoveIn(moveIn, leaseLength)
+
+    if (cancelAt <= anchor) {
+      return json({ error: 'Invalid lease length for subscription' }, 400, origin)
+    }
+
+    const rentProduct = await stripe.products.create({
+      name: `Weekly rent — ${propertyTitle}`,
+      metadata: { booking_id: booking.id, property_id: booking.property_id ?? '' },
     })
-    await sendEmail({ to: landlordEmail, subject: t.subject, html: t.html })
-  }
 
-  try {
-    await Promise.all([sendStudent(), sendLandlord()])
-  } catch (e) {
-    console.error('booking confirmed emails (Resend)', e)
-  }
+    const nowSec = Math.floor(Date.now() / 1000)
+    /** Stripe weekly subs reject billing_cycle_anchor beyond ~one period; use trial until move-in. */
+    const maxAnchorAheadSec = 6 * 24 * 60 * 60
 
-  const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-  const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
-  if (!leaseFlowSecret) {
-    console.warn(
-      '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
-    )
-  } else {
-    console.log('[create-rent-subscription] triggering generate-lease', {
-      booking_id: booking.id,
-      url: generateLeaseUrl,
-    })
-    // Edge runtime ends the isolate when the Response is returned; a bare void IIFE is dropped.
-    // waitUntil keeps this fetch alive until it settles (Vercel request context).
-    const generateLeaseTask = (async () => {
-      try {
-        const res = await fetch(generateLeaseUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${leaseFlowSecret}`,
-            // Vercel sometimes drops Authorization on server-to-server fetch; duplicate secret here.
-            'X-Internal-Doc-Flow-Secret': leaseFlowSecret,
+    const subscriptionBody = {
+      customer: customerId,
+      items: [
+        {
+          price_data: {
+            currency: 'aud',
+            product: rentProduct.id,
+            unit_amount: weeklyCents,
+            recurring: { interval: 'week' },
           },
-          body: JSON.stringify({ booking_id: booking.id }),
-        })
-        if (!res.ok) {
-          const t = await res.text()
-          console.error('generate-lease failed', res.status, t)
-        }
-      } catch (e) {
-        console.error('generate-lease trigger', e)
-      }
-    })()
-    waitUntil(generateLeaseTask)
-  }
+        },
+      ],
+      default_payment_method: pmId,
+      transfer_data: { destination: landlord.stripe_connect_account_id },
+      application_fee_percent: 8,
+      cancel_at: cancelAt,
+      metadata: {
+        booking_id: booking.id,
+        property_id: booking.property_id ?? '',
+      },
+    }
 
-  return json(
-    {
-      ok: true,
-      subscriptionId: subscription.id,
-      subscriptionStatus: subscription.status,
-    },
-    200,
-    origin,
-  )
+    if (anchor > nowSec + maxAnchorAheadSec) {
+      subscriptionBody.trial_end = anchor
+    } else if (anchor > nowSec) {
+      subscriptionBody.billing_cycle_anchor = anchor
+      subscriptionBody.proration_behavior = 'none'
+    } else {
+      subscriptionBody.proration_behavior = 'none'
+    }
+
+    const subscription = await stripe.subscriptions.create(subscriptionBody)
+
+    const nowIso = new Date().toISOString()
+    const { error: upErr } = await admin
+      .from('bookings')
+      .update({
+        status: 'confirmed',
+        confirmed_at: nowIso,
+        stripe_subscription_id: subscription.id,
+        stripe_subscription_status: subscription.status,
+      })
+      .eq('id', booking.id)
+
+    if (upErr) {
+      console.error('booking update after subscription', upErr)
+      return json({ error: 'Could not save booking after subscription' }, 500, origin)
+    }
+
+    const siteBase =
+      origin && origin !== '*'
+        ? origin.replace(/\/$/, '')
+        : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(/\/$/, '')
+
+    const propRowForAutoDecline =
+      booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
+    const addrForAutoDecline = propertyAddressLine(propRowForAutoDecline)
+    const titleForAutoDecline =
+      booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
+        ? String(booking.properties.title ?? 'Property')
+        : 'Property'
+
+    const { data: competitors, error: compErr } = await admin
+      .from('bookings')
+      .select(
+        `
+        id,
+        stripe_payment_intent_id,
+        student_profiles ( email, full_name, first_name, last_name )
+      `,
+      )
+      .eq('property_id', booking.property_id)
+      .neq('id', booking.id)
+      .in('status', ['pending_confirmation', 'awaiting_info'])
+
+    if (compErr) {
+      console.error('load competitor bookings', compErr)
+    } else {
+      for (const row of competitors ?? []) {
+        const nowDecline = new Date().toISOString()
+        const { error: decErr } = await admin
+          .from('bookings')
+          .update({
+            status: 'declined',
+            declined_at: nowDecline,
+            decline_reason: 'property_taken',
+          })
+          .eq('id', row.id)
+
+        if (decErr) {
+          console.error('auto-decline update', decErr)
+          continue
+        }
+
+        const piRow = typeof row.stripe_payment_intent_id === 'string' ? row.stripe_payment_intent_id.trim() : ''
+        if (piRow) {
+          try {
+            const opi = await stripe.paymentIntents.retrieve(piRow)
+            if (opi.status === 'requires_capture' || opi.status === 'requires_confirmation') {
+              await stripe.paymentIntents.cancel(piRow)
+            } else if (opi.status === 'succeeded') {
+              await stripe.refunds.create({ payment_intent: piRow })
+            }
+          } catch (stripeEx) {
+            console.error('auto-decline stripe', stripeEx)
+            const errText = stripeEx instanceof Error ? stripeEx.message : String(stripeEx)
+            await captureSentryMessageEdge('Auto-decline refund/cancel failed after property confirmed', {
+              declinedBookingId: row.id,
+              propertyId: booking.property_id,
+              paymentIntentId: piRow,
+              err: errText,
+            })
+            try {
+              await sendEmail({
+                to: 'hello@quni.com.au',
+                subject: `Urgent: auto-decline refund failed — booking ${row.id}`,
+                html: `<p>Refund/cancel failed for booking <code>${row.id}</code> after another booking was confirmed for the same property.</p>
+<p>Property id: <code>${booking.property_id}</code></p>
+<p>PaymentIntent: <code>${piRow}</code></p>
+<p>Error: ${errText.replace(/</g, '&lt;')}</p>`,
+              })
+            } catch (mailEx) {
+              console.error('alert hello@quni.com.au failed', mailEx)
+            }
+          }
+        }
+
+        const stRow = row.student_profiles && typeof row.student_profiles === 'object' ? row.student_profiles : {}
+        const compEmail = typeof stRow.email === 'string' ? stRow.email.trim() : ''
+        const compName =
+          [stRow.first_name, stRow.last_name].filter(Boolean).join(' ').trim() ||
+          (typeof stRow.full_name === 'string' && stRow.full_name.trim()) ||
+          'there'
+
+        if (compEmail) {
+          try {
+            const t = bookingAutoDeclinedPropertyTakenStudent({
+              student_name: compName,
+              property_address: addrForAutoDecline || titleForAutoDecline,
+              property_title: titleForAutoDecline,
+              listings_url: `${siteBase}/listings`,
+            })
+            await sendEmail({ to: compEmail, subject: t.subject, html: t.html })
+          } catch (mailEx) {
+            console.error('auto-decline student email', mailEx)
+          }
+        }
+      }
+    }
+
+    if (booking.property_id) {
+      const { error: propUpErr } = await admin
+        .from('properties')
+        .update({ status: 'booked' })
+        .eq('id', booking.property_id)
+      if (propUpErr) {
+        console.error('property booked status update', propUpErr)
+      }
+    }
+
+    const propForBond =
+      booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
+    const bondState = typeof propForBond.state === 'string' && propForBond.state.trim() ? propForBond.state.trim() : 'NSW'
+    const bondAuthority = bondAuthorityForState(bondState)
+    const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
+    const landlordUserId = typeof lp.user_id === 'string' && lp.user_id.trim() ? lp.user_id.trim() : null
+
+    if (studentUserId && landlordUserId && booking.property_id) {
+      const bondCents = weeklyCents * 4
+      const { data: existingBond } = await admin.from('bonds').select('id').eq('booking_id', booking.id).maybeSingle()
+      if (!existingBond && bondCents > 0) {
+        const ackStudent = booking.bond_acknowledged === true
+        const { error: bondInsErr } = await admin.from('bonds').insert({
+          booking_id: booking.id,
+          student_id: studentUserId,
+          landlord_id: landlordUserId,
+          property_id: booking.property_id,
+          bond_amount: bondCents,
+          bond_type: 'cash',
+          bond_status: 'pending_lodgement',
+          state: bondState,
+          bond_authority: bondAuthority,
+          acknowledged_by_student: ackStudent,
+          student_acknowledged_at: ackStudent ? nowIso : null,
+          acknowledged_by_landlord: true,
+          landlord_acknowledged_at: nowIso,
+        })
+        if (bondInsErr) {
+          console.error('bond insert on confirm', bondInsErr)
+        }
+      }
+    }
+
+    const propRow = booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
+    const addr = propertyAddressLine(propRow)
+    const title =
+      booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
+        ? String(booking.properties.title ?? 'Property')
+        : 'Property'
+    const studentName =
+      [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
+      (typeof sp.full_name === 'string' && sp.full_name.trim()) ||
+      'Student'
+
+    const studentEmail = typeof sp.email === 'string' ? sp.email.trim() : ''
+    const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
+    const landlordName = typeof lp.full_name === 'string' ? lp.full_name.trim() || 'Host' : 'Host'
+    const landlordPhone = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '—'
+
+    const depositCents = typeof booking.deposit_amount === 'number' ? booking.deposit_amount : null
+
+    const leaseLength = booking.lease_length || 'Flexible'
+
+    const sendStudent = async () => {
+      if (!studentEmail) return
+      const t = bookingConfirmedStudent({
+        student_name: studentName,
+        property_address: addr || title,
+        property_title: title,
+        move_in_date: moveIn,
+        lease_length: leaseLength,
+        weekly_rent: booking.weekly_rent,
+        landlord_name: landlordName,
+        landlord_phone: landlordPhone,
+        deposit_amount_cents: depositCents ?? undefined,
+        dashboard_url: `${siteBase}/student-dashboard`,
+      })
+      await sendEmail({ to: studentEmail, subject: t.subject, html: t.html })
+    }
+
+    const bondCentsForEmail = weeklyCents * 4
+
+    const sendLandlord = async () => {
+      if (!landlordEmail) return
+      const t = bookingConfirmedLandlord({
+        landlord_name: landlordName,
+        student_name: studentName,
+        property_address: addr || title,
+        property_title: title,
+        move_in_date: moveIn,
+        lease_length: leaseLength,
+        weekly_rent: booking.weekly_rent,
+        deposit_amount_cents: depositCents ?? undefined,
+        bond_amount_cents: bondCentsForEmail > 0 ? bondCentsForEmail : undefined,
+        bond_authority: bondAuthority,
+        dashboard_url: `${siteBase}/landlord/dashboard?tab=bookings`,
+      })
+      await sendEmail({ to: landlordEmail, subject: t.subject, html: t.html })
+    }
+
+    try {
+      await Promise.all([sendStudent(), sendLandlord()])
+    } catch (e) {
+      console.error('booking confirmed emails (Resend)', e)
+    }
+
+    const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
+    const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
+    if (!leaseFlowSecret) {
+      console.warn(
+        '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
+      )
+    } else {
+      console.log('[create-rent-subscription] triggering generate-lease', {
+        booking_id: booking.id,
+        url: generateLeaseUrl,
+      })
+      const generateLeaseTask = (async () => {
+        try {
+          const res = await fetch(generateLeaseUrl, {
+            method: 'POST',
+            headers: internalPostHeaders(leaseFlowSecret),
+            body: JSON.stringify({ booking_id: booking.id }),
+          })
+          if (!res.ok) {
+            const t = await res.text()
+            console.error('generate-lease failed', res.status, t)
+          }
+        } catch (e) {
+          console.error('generate-lease trigger', e)
+        }
+      })()
+      waitUntil(generateLeaseTask)
+    }
+
+    return json(
+      {
+        ok: true,
+        subscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+      },
+      200,
+      origin,
+    )
   } catch (e) {
     console.error('create-rent-subscription', e)
     let msg = 'Booking confirmation failed'

@@ -4,6 +4,7 @@ import FeedbackButton from './components/FeedbackButton'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
+import NativePushNotificationsInitializer from './components/NativePushNotificationsInitializer'
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
@@ -20,6 +21,7 @@ import LandlordDashboard from './pages/LandlordDashboard'
 import StudentProfile from './pages/StudentProfile'
 import LandlordProfile from './pages/LandlordProfile'
 import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
+import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminBookings from './pages/admin/AdminBookings'
@@ -51,11 +53,13 @@ import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import CampusAccommodation from './pages/seo/CampusAccommodation'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import AIChatWidget from './components/aiChat/AIChatWidget'
+import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 
 function App() {
   const location = useLocation()
   const adminShell = location.pathname.startsWith('/admin')
   const aiLandingShell = location.pathname === '/landlords/ai'
+  const showPublicChrome = !adminShell && !aiLandingShell
 
   return (
     <Sentry.ErrorBoundary
@@ -72,11 +76,19 @@ function App() {
         </div>
       }
     >
-      <>
+      <BookingFlowChromeProvider>
+        <>
         <ScrollToTop />
+        <NativePushNotificationsInitializer />
         <SeoPrivateRoutes />
-        {!adminShell && !aiLandingShell && <Header />}
-        <main className="flex-1 flex flex-col min-h-0 w-full min-w-0">
+        {showPublicChrome && <Header />}
+        <main
+          className={
+            showPublicChrome
+              ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:pt-main-below-fixed-header md:pt-0'
+              : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
+          }
+        >
           <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
@@ -175,6 +187,14 @@ function App() {
             }
           />
           <Route
+            path="/landlord/bookings/:bookingId/review"
+            element={
+              <ProtectedRoute allowedRoles={['landlord']}>
+                <LandlordBookingReviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/landlord-profile"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
@@ -238,10 +258,11 @@ function App() {
           </Route>
           </Routes>
         </main>
-        {!adminShell && !aiLandingShell && <Footer />}
+        {showPublicChrome && <Footer />}
         <FeedbackButton />
         <AIChatWidget />
-      </>
+        </>
+      </BookingFlowChromeProvider>
     </Sentry.ErrorBoundary>
   )
 }

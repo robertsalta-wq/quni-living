@@ -17,7 +17,7 @@ export type LandlordSeenStudentVerification = {
 }
 
 const pillClass =
-  'inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-emerald-900'
+  'inline-flex max-w-full min-w-0 items-center gap-0.5 whitespace-normal break-words rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-emerald-900'
 
 /**
  * Landlord queries must not select `id_document_url` / `enrolment_doc_url`.
@@ -56,7 +56,7 @@ export function buildLandlordVerificationFromProfile(row: {
 }
 
 const tierPillClass =
-  'inline-flex items-center gap-0.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-indigo-900 ring-1 ring-indigo-200/80'
+  'inline-flex max-w-full min-w-0 items-center gap-0.5 whitespace-normal break-words rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-indigo-900 ring-1 ring-indigo-200/80'
 
 export function LandlordApplicantVerificationBadges({
   verification,
@@ -66,7 +66,7 @@ export function LandlordApplicantVerificationBadges({
   const v = verification
   if (v?.verification_type === 'student') {
     return (
-      <div className="flex flex-wrap gap-1.5 mt-1.5" aria-label="Tenant verification">
+      <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Tenant verification">
         <span className={tierPillClass} title="Fully verified student tenant">
           <span aria-hidden>🎓</span> Verified Student
         </span>
@@ -75,7 +75,7 @@ export function LandlordApplicantVerificationBadges({
   }
   if (v?.verification_type === 'identity') {
     return (
-      <div className="flex flex-wrap gap-1.5 mt-1.5" aria-label="Tenant verification">
+      <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Tenant verification">
         <span className={tierPillClass} title="Identity verification complete">
           <span aria-hidden>✅</span> Verified Identity
         </span>
@@ -100,7 +100,7 @@ export function LandlordApplicantVerificationBadges({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 mt-1.5" aria-label="Student verification">
+    <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Student verification">
       {uni && (
         <span className={pillClass} title="University email verified">
           <span aria-hidden>✅</span> Uni Email Verified

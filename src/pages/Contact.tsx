@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { getEmailJsContactConfig, sendContactEmail } from '../lib/contactEmail'
-import { isTurnstileSiteKeyConfigured, verifyTurnstileToken } from '../lib/verifyTurnstile'
+import { isTurnstileSiteKeyConfigured } from '../lib/verifyTurnstile'
+import { apiUrl } from '../lib/apiUrl'
 import TurnstileCaptcha from '../components/TurnstileCaptcha'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
@@ -115,35 +115,36 @@ export default function Contact() {
       return
     }
 
-    const cfg = getEmailJsContactConfig()
-    if (!cfg.ok) {
-      setError(cfg.reason)
-      return
-    }
-
     if (!isTurnstileSiteKeyConfigured()) {
-      setError(
-        'Captcha is not configured. The site admin must add VITE_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY.',
-      )
+      setError('This form is not available right now. Please email hello@quni.com.au directly.')
       return
     }
 
-    const captcha = await verifyTurnstileToken(captchaToken)
-    if (!captcha.ok) {
-      setError(captcha.message)
-      setCaptchaToken(null)
-      setCaptchaResetKey((k) => k + 1)
+    if (!captchaToken?.trim()) {
+      setError('Please complete the verification step.')
       return
     }
 
     setSubmitting(true)
     try {
-      await sendContactEmail(cfg, {
-        senderName: n,
-        senderEmail: em,
-        subject: subjectLabel,
-        message: msg,
+      const res = await fetch(apiUrl('/api/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: n,
+          email: em,
+          subject: subjectLabel,
+          message: msg,
+          turnstileToken: captchaToken,
+        }),
       })
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+      if (!res.ok || !data.ok) {
+        setError(typeof data.error === 'string' && data.error ? data.error : 'Something went wrong. Please try again.')
+        setCaptchaToken(null)
+        setCaptchaResetKey((k) => k + 1)
+        return
+      }
       setSent(true)
       setName('')
       setEmail('')
@@ -151,12 +152,8 @@ export default function Contact() {
       setSubjectKey('general')
       setCaptchaToken(null)
       setCaptchaResetKey((k) => k + 1)
-    } catch (err: unknown) {
-      let detail = 'Something went wrong. Please try again.'
-      if (err && typeof err === 'object' && 'text' in err && typeof (err as { text: string }).text === 'string') {
-        detail = (err as { text: string }).text
-      }
-      setError(detail)
+    } catch {
+      setError('Something went wrong. Please try again.')
       setCaptchaToken(null)
       setCaptchaResetKey((k) => k + 1)
     } finally {
@@ -240,7 +237,7 @@ export default function Contact() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                    className="w-full bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                   />
                 </div>
                 <div>
@@ -253,7 +250,7 @@ export default function Contact() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
+                    className="w-full bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                   />
                 </div>
                 <div>
@@ -264,7 +261,7 @@ export default function Contact() {
                     id="contact-subject"
                     value={subjectKey}
                     onChange={(e) => setSubjectKey(e.target.value as (typeof SUBJECT_OPTIONS)[number]['value'])}
-                    className="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                    className="w-full bg-white py-2 pl-3 pr-8 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                   >
                     {SUBJECT_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
@@ -283,7 +280,7 @@ export default function Contact() {
                     rows={5}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 resize-y min-h-[120px]"
+                    className="w-full bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 resize-y min-h-[120px]"
                   />
                 </div>
 

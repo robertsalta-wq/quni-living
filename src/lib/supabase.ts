@@ -78,7 +78,15 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     flowType: 'implicit',
     detectSessionInUrl(url, params) {
       const path = url.pathname.replace(/\/$/, '') || '/'
-      if (!path.endsWith('/auth/callback')) return false
+
+      // Web callback: https://.../auth/callback (pathname ends with `/auth/callback`)
+      // Native callback: com.quni.living://auth/callback (protocol-based deep link; `auth`
+      // may parse into `url.host`, so we compare `/${url.host}${url.pathname}` too).
+      const isWebCallback = path.endsWith('/auth/callback')
+      const nativePath = url.host ? `/${url.host}${url.pathname}`.replace(/\/$/, '') || '/' : path
+      const isNativeCallback = url.protocol === 'com.quni.living:' && nativePath.endsWith('/auth/callback')
+      if (!isWebCallback && !isNativeCallback) return false
+
       return Boolean(
         params.access_token ||
           params.refresh_token ||

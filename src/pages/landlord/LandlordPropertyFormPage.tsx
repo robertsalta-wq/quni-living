@@ -8,6 +8,7 @@ import {
   PROPERTY_LISTING_TYPE_LABELS,
   ROOM_TYPE_LABELS,
   isPropertyListingType,
+  isRoomType,
   type PropertyListingType,
   type RoomType,
 } from '../../lib/listings'
@@ -47,6 +48,139 @@ const LISTING_OPTIONS = [
 
 const LEASE_OPTIONS = ['Flexible', '6 months', '12 months', '2 years'] as const
 
+const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft' as const
+const LANDLORD_PROPERTY_DRAFT_VERSION = 1 as const
+
+/** Persisted new-listing draft — property fields only (no admin landlord id or auth). */
+type LandlordPropertyDraftV1 = {
+  v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
+  title: string
+  description: string
+  listingType: 'rent' | 'homestay' | 'student_house' | ''
+  bedrooms: string
+  bathrooms: string
+  roomType: RoomType | ''
+  propertyListingType: PropertyListingType
+  furnished: boolean
+  linenSupplied: boolean
+  weeklyCleaning: boolean
+  openToNonStudents: boolean
+  selectedFeatureIds: string[]
+  address: string
+  suburb: string
+  state: string
+  postcode: string
+  universityId: string
+  campusId: string
+  latitude: number | null
+  longitude: number | null
+  showAddAnotherUniversity: boolean
+  rentPerWeek: string
+  bond: string
+  leaseLength: string
+  availableFrom: string
+  images: string[]
+}
+
+function landlordPropertyDraftFromState(
+  s: Omit<LandlordPropertyDraftV1, 'v'>,
+): LandlordPropertyDraftV1 {
+  return { v: LANDLORD_PROPERTY_DRAFT_VERSION, ...s }
+}
+
+function parseDraftListingType(raw: unknown): LandlordPropertyDraftV1['listingType'] {
+  if (raw === 'rent' || raw === 'homestay' || raw === 'student_house' || raw === '') return raw
+  return 'rent'
+}
+
+function parseDraftRoomType(raw: unknown): RoomType | '' {
+  if (raw === '') return ''
+  if (typeof raw === 'string' && isRoomType(raw)) return raw
+  return 'single'
+}
+
+function parseDraftLeaseLength(raw: unknown): LandlordPropertyDraftV1['leaseLength'] {
+  if (typeof raw === 'string' && (LEASE_OPTIONS as readonly string[]).includes(raw)) return raw
+  return 'Flexible'
+}
+
+function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1 | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as unknown
+    if (!o || typeof o !== 'object') return null
+    const d = o as Record<string, unknown>
+    if (d.v !== LANDLORD_PROPERTY_DRAFT_VERSION) return null
+
+    const propertyListingType: PropertyListingType =
+      typeof d.propertyListingType === 'string' && isPropertyListingType(d.propertyListingType)
+        ? d.propertyListingType
+        : 'entire_property'
+
+    const draft: LandlordPropertyDraftV1 = {
+      v: LANDLORD_PROPERTY_DRAFT_VERSION,
+      title: typeof d.title === 'string' ? d.title : '',
+      description: typeof d.description === 'string' ? d.description : '',
+      listingType: parseDraftListingType(d.listingType),
+      bedrooms: typeof d.bedrooms === 'string' ? d.bedrooms : '1',
+      bathrooms: typeof d.bathrooms === 'string' ? d.bathrooms : '1',
+      roomType: parseDraftRoomType(d.roomType),
+      propertyListingType,
+      furnished: Boolean(d.furnished),
+      linenSupplied: Boolean(d.linenSupplied),
+      weeklyCleaning: Boolean(d.weeklyCleaning),
+      openToNonStudents: Boolean(d.openToNonStudents),
+      selectedFeatureIds: Array.isArray(d.selectedFeatureIds)
+        ? d.selectedFeatureIds.filter((x): x is string => typeof x === 'string')
+        : [],
+      address: typeof d.address === 'string' ? d.address : '',
+      suburb: typeof d.suburb === 'string' ? d.suburb : '',
+      state: typeof d.state === 'string' ? d.state : 'NSW',
+      postcode: typeof d.postcode === 'string' ? d.postcode : '',
+      universityId: typeof d.universityId === 'string' ? d.universityId : '',
+      campusId: typeof d.campusId === 'string' ? d.campusId : '',
+      latitude: typeof d.latitude === 'number' && Number.isFinite(d.latitude) ? d.latitude : null,
+      longitude: typeof d.longitude === 'number' && Number.isFinite(d.longitude) ? d.longitude : null,
+      showAddAnotherUniversity: Boolean(d.showAddAnotherUniversity),
+      rentPerWeek: typeof d.rentPerWeek === 'string' ? d.rentPerWeek : '',
+      bond: typeof d.bond === 'string' ? d.bond : '',
+      leaseLength: parseDraftLeaseLength(d.leaseLength),
+      availableFrom: typeof d.availableFrom === 'string' ? d.availableFrom : '',
+      images: Array.isArray(d.images) ? d.images.filter((x): x is string => typeof x === 'string') : [],
+    }
+    return draft
+  } catch {
+    return null
+  }
+}
+
+function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean {
+  return (
+    d.title.trim() !== '' ||
+    d.description.trim() !== '' ||
+    d.address.trim() !== '' ||
+    d.suburb.trim() !== '' ||
+    d.postcode.trim() !== '' ||
+    d.rentPerWeek.trim() !== '' ||
+    d.bond.trim() !== '' ||
+    d.availableFrom.trim() !== '' ||
+    d.images.length > 0 ||
+    d.selectedFeatureIds.length > 0 ||
+    d.universityId.trim() !== '' ||
+    d.campusId.trim() !== '' ||
+    d.listingType !== 'rent' ||
+    d.bedrooms !== '1' ||
+    d.bathrooms !== '1' ||
+    d.roomType !== 'single' ||
+    d.propertyListingType !== 'entire_property' ||
+    d.furnished ||
+    d.linenSupplied ||
+    d.weeklyCleaning ||
+    d.openToNonStudents ||
+    d.showAddAnotherUniversity
+  )
+}
+
 const ROOM_ENTRIES = Object.entries(ROOM_TYPE_LABELS) as [RoomType, string][]
 const PROPERTY_TYPE_ENTRIES = Object.entries(PROPERTY_LISTING_TYPE_LABELS) as [PropertyListingType, string][]
 
@@ -83,7 +217,8 @@ export default function LandlordPropertyFormPage() {
 
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
 
-  const { universities: uniRefRows, campuses: campusRefRows, loading: refsLoading } = useUniversityCampusReference()
+  const { universities: uniRefRows, campuses: campusRefRows, loading: refsLoading } =
+    useUniversityCampusReference('full')
 
   const [pageError, setPageError] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(true)
@@ -178,6 +313,74 @@ export default function LandlordPropertyFormPage() {
   const [images, setImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  const landlordPropertyDraftSnapshot = useMemo(
+    () =>
+      landlordPropertyDraftFromState({
+        title,
+        description,
+        listingType,
+        bedrooms,
+        bathrooms,
+        roomType,
+        propertyListingType,
+        furnished,
+        linenSupplied,
+        weeklyCleaning,
+        openToNonStudents,
+        selectedFeatureIds: [...selectedFeatureIds],
+        address,
+        suburb,
+        state,
+        postcode,
+        universityId,
+        campusId,
+        latitude,
+        longitude,
+        showAddAnotherUniversity,
+        rentPerWeek,
+        bond,
+        leaseLength,
+        availableFrom,
+        images,
+      }),
+    [
+      title,
+      description,
+      listingType,
+      bedrooms,
+      bathrooms,
+      roomType,
+      propertyListingType,
+      furnished,
+      linenSupplied,
+      weeklyCleaning,
+      openToNonStudents,
+      selectedFeatureIds,
+      address,
+      suburb,
+      state,
+      postcode,
+      universityId,
+      campusId,
+      latitude,
+      longitude,
+      showAddAnotherUniversity,
+      rentPerWeek,
+      bond,
+      leaseLength,
+      availableFrom,
+      images,
+    ],
+  )
+
+  const restoredLocationKeyRef = useRef<string | null>(null)
+  /** When set to `location.key`, do not show the resume banner again after re-fetch/re-load on the same navigation. */
+  const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
+  const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+
   const toggleFeature = useCallback((id: string) => {
     setSelectedFeatureIds((prev) => {
       const next = new Set(prev)
@@ -195,6 +398,58 @@ export default function LandlordPropertyFormPage() {
     setUniversityId(s.universityId)
     setCampusId(s.campusId)
   }, [])
+
+  const handleDraftStartFresh = useCallback(() => {
+    try {
+      localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
+    } catch {
+      /* ignore */
+    }
+    setShowResumeDraftBanner(false)
+    resumeDraftBannerDismissedKeyRef.current = location.key
+    setTitle('')
+    setDescription('')
+    setListingType('rent')
+    setBedrooms('1')
+    setBathrooms('1')
+    setRoomType('single')
+    setPropertyListingType('entire_property')
+    setFurnished(false)
+    setLinenSupplied(false)
+    setWeeklyCleaning(false)
+    setOpenToNonStudents(false)
+    setSelectedFeatureIds(new Set())
+    setAddress('')
+    setSuburb('')
+    setState('NSW')
+    setPostcode('')
+    setLatitude(null)
+    setLongitude(null)
+    universityIdRef.current = ''
+    campusIdRef.current = ''
+    setUniversityId('')
+    setCampusId('')
+    manualUniCampusSelectionRef.current = false
+    skipNearbyAutoFillOverwriteRef.current = false
+    editDeferNearbyAutoFillRef.current = false
+    loadedPropertyAddressSigRef.current = ''
+    addressDirtyRef.current = false
+    lastNearbySigRef.current = ''
+    setNearbyCampusSuggestions([])
+    setNearbyCampusError(null)
+    setShowAddAnotherUniversity(false)
+    setRentPerWeek('')
+    setBond('')
+    setLeaseLength('Flexible')
+    setAvailableFrom('')
+    setImages([])
+    setAdminLandlordId('')
+    setDraftSavedVisible(false)
+    if (draftSavedHideTimerRef.current) {
+      window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = null
+    }
+  }, [location.key])
 
   const loadPage = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -327,6 +582,112 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     void loadPage()
   }, [loadPage])
+
+  useEffect(() => {
+    return () => {
+      if (draftSavedHideTimerRef.current) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isEdit || !loadingPage) return
+    restoredLocationKeyRef.current = null
+  }, [isEdit, loadingPage])
+
+  useEffect(() => {
+    if (isEdit) {
+      setDraftSaveEnabled(false)
+      setShowResumeDraftBanner(false)
+      return
+    }
+    if (loadingPage) {
+      setDraftSaveEnabled(false)
+      return
+    }
+
+    if (restoredLocationKeyRef.current === location.key) {
+      setDraftSaveEnabled(true)
+      return
+    }
+    restoredLocationKeyRef.current = location.key
+
+    const parsed = parseLandlordPropertyDraft(localStorage.getItem(LANDLORD_PROPERTY_DRAFT_KEY))
+    if (parsed && isLandlordPropertyDraftMeaningful(parsed)) {
+      const valid = new Set(features.map((f) => f.id))
+      const featureIds = parsed.selectedFeatureIds.filter((id) => valid.has(id))
+
+      setTitle(parsed.title)
+      setDescription(parsed.description)
+      setListingType(parsed.listingType)
+      setBedrooms(parsed.bedrooms)
+      setBathrooms(parsed.bathrooms)
+      setRoomType(parsed.roomType)
+      setPropertyListingType(parsed.propertyListingType)
+      setFurnished(parsed.furnished)
+      setLinenSupplied(parsed.linenSupplied)
+      setWeeklyCleaning(parsed.weeklyCleaning)
+      setOpenToNonStudents(parsed.openToNonStudents)
+      setSelectedFeatureIds(new Set(featureIds))
+      setAddress(parsed.address)
+      setSuburb(parsed.suburb)
+      setState(parsed.state)
+      setPostcode(parsed.postcode)
+      setLatitude(parsed.latitude)
+      setLongitude(parsed.longitude)
+      universityIdRef.current = parsed.universityId
+      campusIdRef.current = parsed.campusId
+      setUniversityId(parsed.universityId)
+      setCampusId(parsed.campusId)
+      const hasUni = Boolean(parsed.universityId.trim() || parsed.campusId.trim())
+      manualUniCampusSelectionRef.current = hasUni
+      skipNearbyAutoFillOverwriteRef.current = hasUni
+      setShowAddAnotherUniversity(parsed.showAddAnotherUniversity)
+      setRentPerWeek(parsed.rentPerWeek)
+      setBond(parsed.bond)
+      setLeaseLength(parsed.leaseLength)
+      setAvailableFrom(parsed.availableFrom)
+      setImages([...parsed.images])
+
+      const addrDirty =
+        Boolean(parsed.address.trim()) ||
+        Boolean(parsed.suburb.trim()) ||
+        Boolean(parsed.postcode.trim()) ||
+        parsed.state.trim().toUpperCase() !== 'NSW'
+      addressDirtyRef.current = addrDirty
+      lastNearbySigRef.current = ''
+      if (addrDirty) {
+        setNearbyLookupNonce((n) => n + 1)
+      }
+
+      if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
+        setShowResumeDraftBanner(true)
+      }
+    } else {
+      setShowResumeDraftBanner(false)
+    }
+    setDraftSaveEnabled(true)
+  }, [isEdit, loadingPage, location.key, features])
+
+  useEffect(() => {
+    if (isEdit || !draftSaveEnabled || loadingPage) return
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(LANDLORD_PROPERTY_DRAFT_KEY, JSON.stringify(landlordPropertyDraftSnapshot))
+      } catch {
+        /* quota / private mode */
+      }
+      setDraftSavedVisible(true)
+      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = window.setTimeout(() => {
+        setDraftSavedVisible(false)
+        draftSavedHideTimerRef.current = null
+      }, 2200)
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [landlordPropertyDraftSnapshot, isEdit, draftSaveEnabled, loadingPage])
 
   useEffect(() => {
     if (!isEdit || loadingPage) return
@@ -825,6 +1186,11 @@ export default function LandlordPropertyFormPage() {
           })
         }
         await savePropertyFeatures(newId, featureIds)
+        try {
+          localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
+        } catch {
+          /* ignore */
+        }
         navigate('/landlord-dashboard', { replace: true })
       }
     } catch (err) {
@@ -886,13 +1252,51 @@ export default function LandlordPropertyFormPage() {
           >
             ← Landlord dashboard
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {isEdit ? 'Edit listing' : 'New listing'}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {isEdit ? 'Update your property details and photos.' : 'Create a new property on Quni.'}
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                {isEdit ? 'Edit listing' : 'New listing'}
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {isEdit ? 'Update your property details and photos.' : 'Create a new property on Quni.'}
+              </p>
+            </div>
+            {!isEdit && draftSavedVisible && (
+              <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
+                Draft saved
+              </p>
+            )}
+          </div>
         </div>
+
+        {!isEdit && showResumeDraftBanner && (
+          <div
+            className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            role="region"
+            aria-label="Saved draft"
+          >
+            <p className="text-gray-700">Resume draft? We restored your last saved listing details.</p>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  resumeDraftBannerDismissedKeyRef.current = location.key
+                  setShowResumeDraftBanner(false)
+                }}
+                className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+              >
+                Continue editing
+              </button>
+              <button
+                type="button"
+                onClick={handleDraftStartFresh}
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Start fresh
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {submitError && (
@@ -1278,6 +1682,7 @@ export default function LandlordPropertyFormPage() {
                         campusIdRef.current = id
                         setCampusId(id)
                       }}
+                      referenceScope="full"
                       showState
                       disabled={refsLoading || nearbyCampusLoading}
                       labelClassName={labelClass}

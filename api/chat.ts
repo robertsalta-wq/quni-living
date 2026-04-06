@@ -7,6 +7,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 export const config = {
   runtime: 'nodejs',
+  maxDuration: 60,
 }
 
 type ChatRole = 'user' | 'assistant'
@@ -380,6 +381,9 @@ async function streamAnthropicTextDelta(
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[chat] handler called, method:', req.method)
+  console.log('[chat] content-type:', req.headers['content-type'])
+
   const originHeader = req.headers['origin']
   const origin = (Array.isArray(originHeader) ? originHeader[0] : originHeader) || null
 
@@ -713,21 +717,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // - we trust client to provide the conversation window.
   const anthropicMessages = messages.slice(-12).map((m) => ({ role: m.role, content: m.content }))
 
-  // Node runtime streaming:
-  // - set response headers and stream deltas with res.write
-  res.status(200)
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-  res.setHeader('Access-Control-Allow-Origin', origin || '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
-  res.setHeader('Cache-Control', 'no-cache, no-store')
-  res.setHeader('Transfer-Encoding', 'chunked')
-
   let fullAssistantText = ''
   let assistantRowInserted = false
+  /** True only after we commit 200 + streaming headers (must not call sendJson / second status after this). */
+  let streamingCommitted = false
+
+  const beginTextStream = (): void => {
+    res.status(200)
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Access-Control-Allow-Origin', origin || '*')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    res.setHeader('Cache-Control', 'no-cache, no-store')
+    res.setHeader('Transfer-Encoding', 'chunked')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Connection', 'keep-alive')
+    res.flushHeaders()
+    streamingCommitted = true
+  }
 
   try {
-    // Anthropic stream call.
+    // Anthropic stream call — wait for OK before committing streaming headers so errors can still be JSON.
     console.log('[chat] calling Anthropic')
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -749,9 +759,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!anthropicRes.ok) {
       const errBody = await anthropicRes.text().catch(() => '')
       console.error('[chat] anthropic error body:', errBody)
-      res.status(400).json({ error: 'anthropic_error', message: errBody || 'Anthropic request failed.' })
+      sendJson(res, { error: 'anthropic_error', message: errBody || 'Anthropic request failed.' }, 400)
       return
     }
+
+    beginTextStream()
 
     fullAssistantText = await streamAnthropicTextDelta(anthropicRes, (textDelta) => {
       res.write(textDelta)
@@ -808,6 +820,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : 'Unexpected chat error'
+    if (!streamingCommitted) {
+      sendJson(res, { error: 'chat_stream_failed', message: errMsg }, 500)
+    } else {
+      console.error('[chat] error after stream started', e)
+    }
     if (!assistantRowInserted) {
       try {
         await supabaseAdmin.from('chat_messages').insert({
@@ -826,7 +843,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
   } finally {
-    res.end()
+    if (streamingCommitted && !res.writableEnded) {
+      res.end()
+    }
   }
 }
 

@@ -1,11 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { isRoomType, ROOM_TYPE_LABELS } from '../../lib/listings'
-import {
-  buildLandlordVerificationFromProfile,
-  LandlordApplicantVerificationBadges,
-  LandlordApplicantVerificationDetail,
-} from './LandlordApplicantVerificationBadges'
-import AiSparkleIcon from '../AiSparkleIcon'
+import { buildLandlordVerificationFromProfile } from './LandlordApplicantVerificationBadges'
+import LandlordApplicantVerificationSection from './LandlordApplicantVerificationSection'
+import LandlordApplicantAIAssessmentPanel from './LandlordApplicantAIAssessmentPanel'
 import { supabase } from '../../lib/supabase'
 
 /** Fields landlords may load for applicants (no email, phone, DOB, emergency, document URLs). */
@@ -32,6 +29,15 @@ export type LandlordSafeStudentSnapshot = {
   enrolment_submitted_at: string | null
   identity_supporting_submitted_at: string | null
   is_smoker: boolean | null
+  bio: string | null
+  occupancy_type: string | null
+  move_in_flexibility: string | null
+  has_pets: boolean | null
+  needs_parking: boolean | null
+  bills_preference: string | null
+  furnishing_preference: string | null
+  has_guarantor: boolean | null
+  guarantor_name: string | null
 }
 
 function formatStudyLevel(raw: string | null | undefined): string | null {
@@ -175,12 +181,21 @@ export default function LandlordStudentProfileModal({
       yearOfStudy: yearVal != null && Number.isFinite(Number(yearVal)) ? Number(yearVal) : null,
       studentType: stTypeRaw ?? '',
       uniEmailVerified: verification?.uni_email_verified === true,
+      workEmailVerified: verification?.work_email_verified === true,
       idProvided: Boolean(verification?.id_provided),
       enrolmentProvided: Boolean(verification?.enrolment_provided),
       roomTypePreference: roomPrefStr,
       budgetMin: student?.budget_min_per_week ?? null,
       budgetMax: student?.budget_max_per_week ?? null,
       isSmoker: student?.is_smoker ?? null,
+      occupancyType: student?.occupancy_type ?? null,
+      moveInFlexibility: student?.move_in_flexibility ?? null,
+      hasPets: student?.has_pets ?? null,
+      needsParking: student?.needs_parking ?? null,
+      billsPreference: student?.bills_preference ?? null,
+      furnishingPreference: student?.furnishing_preference ?? null,
+      hasGuarantor: student?.has_guarantor ?? null,
+      guarantorName: student?.guarantor_name ?? null,
       ...(landlordFn ? { landlordFirstName: landlordFn } : {}),
     }
     try {
@@ -313,71 +328,76 @@ export default function LandlordStudentProfileModal({
                     <dd className="font-medium text-gray-900">{budget}</dd>
                   </div>
                 )}
-                {!roomPref && !budget && (
+                {student?.occupancy_type?.trim() && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Occupancy</dt>
+                    <dd className="font-medium text-gray-900">{student.occupancy_type.replace(/_/g, ' ')}</dd>
+                  </div>
+                )}
+                {student?.move_in_flexibility?.trim() && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Move-in flexibility</dt>
+                    <dd className="font-medium text-gray-900">{student.move_in_flexibility.replace(/_/g, ' ')}</dd>
+                  </div>
+                )}
+                {student?.has_pets != null && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Pets</dt>
+                    <dd className="font-medium text-gray-900">{student.has_pets ? 'Yes' : 'No'}</dd>
+                  </div>
+                )}
+                {student?.needs_parking != null && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Parking</dt>
+                    <dd className="font-medium text-gray-900">{student.needs_parking ? 'Needs parking' : 'No requirement'}</dd>
+                  </div>
+                )}
+                {student?.bills_preference?.trim() && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Bills</dt>
+                    <dd className="font-medium text-gray-900">{student.bills_preference.replace(/_/g, ' ')}</dd>
+                  </div>
+                )}
+                {student?.furnishing_preference?.trim() && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Furnishing</dt>
+                    <dd className="font-medium text-gray-900">{student.furnishing_preference.replace(/_/g, ' ')}</dd>
+                  </div>
+                )}
+                {student?.has_guarantor === true && (
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Guarantor</dt>
+                    <dd className="font-medium text-gray-900">{student.guarantor_name?.trim() || 'Yes'}</dd>
+                  </div>
+                )}
+                {!roomPref &&
+                  !budget &&
+                  !student?.occupancy_type?.trim() &&
+                  !student?.move_in_flexibility?.trim() &&
+                  student?.has_pets == null &&
+                  student?.needs_parking == null &&
+                  !student?.bills_preference?.trim() &&
+                  !student?.furnishing_preference?.trim() &&
+                  student?.has_guarantor !== true && (
                   <p className="text-sm text-gray-500">No housing preferences shared yet.</p>
                 )}
               </dl>
             </section>
 
-            <section
-              id={verificationAnchorId}
-              className="scroll-mt-4 rounded-xl border border-emerald-100/80 bg-emerald-50/40 px-4 py-3"
-            >
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-900/80">Verification</h3>
-              <p className="mt-1 text-xs text-gray-600">
-                Document files are not shared; you only see whether each step was completed.
-              </p>
-              <div className="mt-3">
-                <LandlordApplicantVerificationBadges verification={verification} />
-              </div>
-              <div className="mt-4 rounded-lg border border-white/80 bg-white/70 px-3 py-2">
-                <LandlordApplicantVerificationDetail verification={verification} />
-              </div>
-            </section>
+            <LandlordApplicantVerificationSection student={student} verificationAnchorId={verificationAnchorId} />
 
             {student?.verification_type === 'student' && (
-              <section
-                id={aiAssessmentAnchorId}
-                className="scroll-mt-4 rounded-xl border border-gray-100 bg-white px-4 py-4"
-              >
-                <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]" />
-                  AI Assessment
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => void requestAiAssessment()}
-                  disabled={aiLoading}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF6F61] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] disabled:opacity-60"
-                >
-                  {aiLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent"
-                        aria-hidden
-                      />
-                      Assessing student profile…
-                    </span>
-                  ) : (
-                    <>
-                      <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
-                      Get AI assessment
-                    </>
-                  )}
-                </button>
-                {aiError && (
-                  <p className="mt-2 text-center text-xs text-gray-500">Assessment unavailable. Please try again.</p>
-                )}
-                {aiAssessment && (
-                  <div className="mt-3 rounded-xl border border-stone-200/90 bg-[#FFF8F0] px-3 py-3 text-left text-sm leading-relaxed text-gray-800">
-                    <p className="whitespace-pre-wrap">{aiAssessment}</p>
-                    <p className="mt-3 text-[11px] leading-snug text-gray-500">
-                      This assessment is AI-generated and is intended as a guide only. The landlord is responsible for
-                      making their own decision.
-                    </p>
-                  </div>
-                )}
-              </section>
+              <LandlordApplicantAIAssessmentPanel
+                anchorId={aiAssessmentAnchorId}
+                assessment={aiAssessment}
+                assessmentAt={null}
+                loading={aiLoading}
+                error={aiError}
+                onGenerate={() => void requestAiAssessment()}
+                onRefresh={() => void requestAiAssessment()}
+                refreshDisabled={false}
+                showGenerate
+              />
             )}
           </div>
         </div>

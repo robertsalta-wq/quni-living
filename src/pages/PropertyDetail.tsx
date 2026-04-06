@@ -305,6 +305,36 @@ export default function PropertyDetail() {
   const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null
   const studentListingActionsOk = !user || role !== 'student' || isStudentListingActionsUnlocked(studentProfile)
 
+  const [activePipelineBookingId, setActivePipelineBookingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user?.id || role !== 'student' || !property?.id || !isSupabaseConfigured) {
+      setActivePipelineBookingId(null)
+      return
+    }
+    const sp = studentProfile
+    if (!sp?.id) {
+      setActivePipelineBookingId(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const { data } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('property_id', property.id)
+        .eq('student_id', sp.id)
+        .in('status', ['pending_confirmation', 'awaiting_info', 'confirmed', 'active'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!cancelled) setActivePipelineBookingId(data?.id ?? null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, role, property?.id, studentProfile?.id, isSupabaseConfigured])
+
   useEffect(() => {
     if (!user?.id || role !== 'student' || !isSupabaseConfigured) return
     const channel = supabase
@@ -681,7 +711,7 @@ export default function PropertyDetail() {
   }
 
   const propertyStatus = property.status as PublicPropertyStatus
-  if (propertyStatus !== 'active') {
+  if (propertyStatus !== 'active' && propertyStatus !== 'booked') {
     return (
       <>
         <Seo
@@ -702,6 +732,10 @@ export default function PropertyDetail() {
       </>
     )
   }
+
+  const listingIsBooked = propertyStatus === 'booked'
+  const showActiveBookingLink =
+    role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
   const images = (property.images ?? []).filter(Boolean)
   const mainImage = images[imageIndex] ?? images[0] ?? null
@@ -1180,6 +1214,22 @@ export default function PropertyDetail() {
                           Complete profile →
                         </Link>
                       </div>
+                    ) : listingIsBooked ? (
+                      <div className="flex w-full items-center justify-center rounded-xl border border-stone-200 bg-stone-100 py-3.5 text-sm font-semibold text-stone-600 tracking-wide">
+                        Currently unavailable
+                      </div>
+                    ) : showActiveBookingLink ? (
+                      <div className="rounded-xl border border-[#FF6F61]/20 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
+                        <p className="text-sm font-medium text-stone-800 leading-snug">
+                          You have an active booking request for this property.
+                        </p>
+                        <Link
+                          to="/student-dashboard?tab=bookings"
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
+                        >
+                          View your booking
+                        </Link>
+                      </div>
                     ) : (
                       <>
                         <Link
@@ -1250,6 +1300,17 @@ export default function PropertyDetail() {
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shrink-0"
             >
               Complete profile
+            </Link>
+          ) : listingIsBooked ? (
+            <span className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-600 text-xs font-semibold px-3 py-2.5 shrink-0 max-w-[55%] text-center leading-snug">
+              Unavailable
+            </span>
+          ) : showActiveBookingLink ? (
+            <Link
+              to="/student-dashboard?tab=bookings"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shadow-sm shrink-0"
+            >
+              Your booking →
             </Link>
           ) : (
             <Link
