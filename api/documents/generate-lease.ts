@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { ResidentialTenancyAgreement } from './ResidentialTenancyAgreement.js'
 import type { ResidentialTenancyAgreementProps } from './rtaTypes'
-import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal'
+import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal.js'
 
 export const config = {
   runtime: 'nodejs',

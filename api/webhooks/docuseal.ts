@@ -6,7 +6,7 @@
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DOCUSEAL_API_URL, DOCUSEAL_API_TOKEN, RESEND_API_KEY
  */
-import { handleSigningWebhook } from '../lib/docuseal'
+import { handleSigningWebhook } from '../lib/docuseal.js'
 
 export const config = {
   runtime: 'nodejs',
