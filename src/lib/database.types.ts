@@ -447,7 +447,7 @@ export interface Database {
           university_id: string | null
           campus_id: string | null
           available_from: string | null
-          status: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
+          status: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied: boolean | null
           weekly_cleaning_service: boolean | null
           property_type: string | null
@@ -481,7 +481,7 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
-          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
+          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
@@ -515,7 +515,7 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
-          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft' | 'booked'
+          status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null

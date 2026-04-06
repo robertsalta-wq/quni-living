@@ -601,7 +601,7 @@ export default function Booking() {
           `,
           )
           .eq('id', propertyId)
-          .in('status', ['active', 'booked'])
+          .eq('status', 'active')
           .maybeSingle(),
       )
 

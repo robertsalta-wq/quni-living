@@ -512,18 +512,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const runPropertyBooked = async () => {
-      if (!booking.property_id) return
-      const { error: propUpErr } = await admin
-        .from('properties')
-        .update({ status: 'booked' })
-        .eq('id', booking.property_id)
-      if (propUpErr) {
-        console.error('property booked status update', propUpErr)
-      }
-    }
-
-    await Promise.all([runCompetitorDeclines(), runPropertyBooked()])
+    await runCompetitorDeclines()
 
     const propForBond =
       booking.properties && typeof booking.properties === 'object' ? booking.properties : {}

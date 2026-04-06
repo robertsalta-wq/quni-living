@@ -809,7 +809,7 @@ export default function PropertyDetail() {
   }
 
   const propertyStatus = property.status as PublicPropertyStatus
-  if (propertyStatus !== 'active' && propertyStatus !== 'booked') {
+  if (propertyStatus !== 'active') {
     return (
       <>
         <Seo
@@ -831,8 +831,7 @@ export default function PropertyDetail() {
     )
   }
 
-  const listingIsBooked = propertyStatus === 'booked'
-  const bookingClosed = listingIsBooked
+  const bookingClosed = Boolean(filterMoveIn) && unavailableMainForSelectedDates
   const showActiveBookingLink =
     role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
