@@ -14,8 +14,8 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
-import { ResidentialTenancyAgreement } from './ResidentialTenancyAgreement.tsx'
-import type { ResidentialTenancyAgreementProps } from './rtaTypes.ts'
+import { ResidentialTenancyAgreement } from './ResidentialTenancyAgreement.js'
+import type { ResidentialTenancyAgreementProps } from './rtaTypes'
 import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal'
 
 export const config = {

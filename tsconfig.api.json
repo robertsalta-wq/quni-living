@@ -7,7 +7,7 @@
   },
   "include": [
     "api/**/*.ts",
-    "api/**/*.tsx",
+    "api/documents/ResidentialTenancyAgreement.js",
     "src/lib/database.types.ts",
     "src/lib/documents/ResidentialTenancyAgreement.tsx",
     "src/lib/docuseal.ts"
