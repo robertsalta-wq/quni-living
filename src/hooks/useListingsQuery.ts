@@ -8,7 +8,7 @@ import {
   type Property,
 } from '../lib/listings'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
-import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
+import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 
 export type ListingsQueryFilters = {
   q: string
@@ -19,6 +19,9 @@ export type ListingsQueryFilters = {
   priceFilter: string
   furnished: boolean
   sort: string
+  /** When set (YYYY-MM-DD), RPC marks properties that overlap confirmed/active bookings for [moveIn, moveOut). */
+  availabilityMoveIn: string | null
+  availabilityMoveOut: string | null
 }
 
 type Result = {
@@ -27,8 +30,8 @@ type Result = {
   loading: boolean
   error: string | null
   refetch: () => void
-  /** Properties with a confirmed/active booking held by someone other than the viewer (when viewer student id passed). */
-  leasedPropertyIds: Set<string>
+  /** Property ids not available for the selected date range (empty when no move-in filter). */
+  unavailableForSelectedDatesIds: Set<string>
 }
 
 export function useListingsQuery(
@@ -43,7 +46,9 @@ export function useListingsQuery(
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
-  const [leasedPropertyIds, setLeasedPropertyIds] = useState<Set<string>>(() => new Set())
+  const [unavailableForSelectedDatesIds, setUnavailableForSelectedDatesIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const [tick, setTick] = useState(0)
 
   const filtersRef = useRef(filters)
@@ -56,7 +61,7 @@ export function useListingsQuery(
       setLoading(false)
       setProperties([])
       setTotal(0)
-      setLeasedPropertyIds(new Set())
+      setUnavailableForSelectedDatesIds(new Set())
       return
     }
 
@@ -64,7 +69,7 @@ export function useListingsQuery(
     let cancelled = false
     setLoading(true)
     setError(null)
-    setLeasedPropertyIds(new Set())
+    setUnavailableForSelectedDatesIds(new Set())
 
     ;(async () => {
       try {
@@ -127,13 +132,16 @@ export function useListingsQuery(
         setTotal(count ?? 0)
 
         const ids = rows.map((p) => p.id).filter(Boolean)
-        if (ids.length > 0) {
-          const leased = await fetchPropertyIdsLeasedToOthers(
+        const moveIn = f.availabilityMoveIn?.trim() ?? ''
+        if (ids.length > 0 && moveIn) {
+          const blocked = await fetchUnavailablePropertyIdsForDateRange(
             supabase,
             ids,
+            moveIn,
+            f.availabilityMoveOut,
             viewerStudentProfileId ?? null,
           )
-          if (!cancelled) setLeasedPropertyIds(leased)
+          if (!cancelled) setUnavailableForSelectedDatesIds(blocked)
         }
       } catch (e) {
         if (!cancelled) {
@@ -151,7 +159,7 @@ export function useListingsQuery(
           )
           setProperties([])
           setTotal(0)
-          setLeasedPropertyIds(new Set())
+          setUnavailableForSelectedDatesIds(new Set())
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -163,5 +171,5 @@ export function useListingsQuery(
     }
   }, [enabled, queryKey, tick, viewerStudentProfileId])
 
-  return { properties, total, loading, error, refetch, leasedPropertyIds }
+  return { properties, total, loading, error, refetch, unavailableForSelectedDatesIds }
 }

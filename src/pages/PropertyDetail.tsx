@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
@@ -15,7 +15,14 @@ import {
 } from '../lib/universityCampusReference'
 import { fetchPropertiesByIds, rpcPropertiesNearCampus } from '../lib/propertiesNearCampusRpc'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
-import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
+import {
+  availabilityUnavailableBadgeLabel,
+  buildAvailabilitySearchString,
+  effectiveMoveOutForAvailability,
+  formatAuShortDate,
+  isIsoDateString,
+} from '../lib/listingAvailabilityDates'
+import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { PropertyCard } from '../components/PropertyCard'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
@@ -162,7 +169,45 @@ export default function PropertyDetail() {
   const { slug: slugParam } = useParams<{ slug: string }>()
   const slug = slugParam?.trim() ?? ''
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const shouldFetch = Boolean(slug) && isSupabaseConfigured
+
+  const filterMoveInRaw = searchParams.get('move_in')?.trim() ?? ''
+  const filterMoveIn = isIsoDateString(filterMoveInRaw) ? filterMoveInRaw : ''
+  const filterMoveOutRaw = searchParams.get('move_out')?.trim() ?? ''
+  const filterMoveOut = isIsoDateString(filterMoveOutRaw) ? filterMoveOutRaw : ''
+  const filterLease = searchParams.get('lease')?.trim() ?? ''
+  const effectiveFilterMoveOut = useMemo(
+    () => effectiveMoveOutForAvailability(filterMoveIn || null, filterMoveOut || null, filterLease || null),
+    [filterMoveIn, filterMoveOut, filterLease],
+  )
+
+  const availabilitySearchString = useMemo(
+    () =>
+      buildAvailabilitySearchString(
+        filterMoveIn || null,
+        filterMoveOut || null,
+        filterLease || null,
+      ),
+    [filterMoveIn, filterMoveOut, filterLease],
+  )
+
+  const patchAvailabilityParams = useCallback(
+    (updates: Record<string, string | null | undefined>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          for (const [k, v] of Object.entries(updates)) {
+            if (v === null || v === undefined || v === '') next.delete(k)
+            else next.set(k, v)
+          }
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
 
   const { user, profile, role, refreshProfile, loading: authLoading } = useAuthContext()
   const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference()
@@ -427,8 +472,10 @@ export default function PropertyDetail() {
   >([])
 
   const [nearbyListings, setNearbyListings] = useState<Property[]>([])
-  const [leasedToOthers, setLeasedToOthers] = useState(false)
-  const [nearbyLeasedIds, setNearbyLeasedIds] = useState<Set<string>>(() => new Set())
+  const [unavailableMainForSelectedDates, setUnavailableMainForSelectedDates] = useState(false)
+  const [nearbyUnavailableForDatesIds, setNearbyUnavailableForDatesIds] = useState<Set<string>>(
+    () => new Set(),
+  )
 
   /** Geocode from address, or use saved property coordinates when present. */
   useEffect(() => {
@@ -609,35 +656,47 @@ export default function PropertyDetail() {
   }, [property?.id, listingGeoPoint])
 
   useEffect(() => {
-    if (!property?.id || !isSupabaseConfigured) {
-      setLeasedToOthers(false)
+    if (!property?.id || !isSupabaseConfigured || !filterMoveIn) {
+      setUnavailableMainForSelectedDates(false)
       return
     }
     let cancelled = false
     void (async () => {
-      const s = await fetchPropertyIdsLeasedToOthers(supabase, [property.id], excludeStudentIdForLeaseRpc)
-      if (!cancelled) setLeasedToOthers(s.has(property.id))
+      const s = await fetchUnavailablePropertyIdsForDateRange(
+        supabase,
+        [property.id],
+        filterMoveIn,
+        effectiveFilterMoveOut,
+        excludeStudentIdForLeaseRpc,
+      )
+      if (!cancelled) setUnavailableMainForSelectedDates(s.has(property.id))
     })()
     return () => {
       cancelled = true
     }
-  }, [property?.id, excludeStudentIdForLeaseRpc, isSupabaseConfigured])
+  }, [property?.id, excludeStudentIdForLeaseRpc, isSupabaseConfigured, filterMoveIn, effectiveFilterMoveOut])
 
   useEffect(() => {
-    if (!isSupabaseConfigured || nearbyListings.length === 0) {
-      setNearbyLeasedIds(new Set())
+    if (!isSupabaseConfigured || nearbyListings.length === 0 || !filterMoveIn) {
+      setNearbyUnavailableForDatesIds(new Set())
       return
     }
     const ids = nearbyListings.map((p) => p.id)
     let cancelled = false
     void (async () => {
-      const s = await fetchPropertyIdsLeasedToOthers(supabase, ids, excludeStudentIdForLeaseRpc)
-      if (!cancelled) setNearbyLeasedIds(s)
+      const s = await fetchUnavailablePropertyIdsForDateRange(
+        supabase,
+        ids,
+        filterMoveIn,
+        effectiveFilterMoveOut,
+        excludeStudentIdForLeaseRpc,
+      )
+      if (!cancelled) setNearbyUnavailableForDatesIds(s)
     })()
     return () => {
       cancelled = true
     }
-  }, [nearbyListings, excludeStudentIdForLeaseRpc, isSupabaseConfigured])
+  }, [nearbyListings, excludeStudentIdForLeaseRpc, isSupabaseConfigured, filterMoveIn, effectiveFilterMoveOut])
 
   if (!isSupabaseConfigured) {
     return (
@@ -773,8 +832,7 @@ export default function PropertyDetail() {
   }
 
   const listingIsBooked = propertyStatus === 'booked'
-  const bookingClosed = listingIsBooked || leasedToOthers
-  const showLeaseBanner = leasedToOthers
+  const bookingClosed = listingIsBooked
   const showActiveBookingLink =
     role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
@@ -816,7 +874,7 @@ export default function PropertyDetail() {
       })
     : null
 
-  const bookPath = property?.id ? `/booking/${property.id}` : `/listings/${slug}`
+  const bookPath = property?.id ? `/booking/${property.id}${availabilitySearchString}` : `/listings/${slug}`
   const bookHref = user
     ? bookPath
     : `/signup?role=student&redirect=${encodeURIComponent(bookPath)}`
@@ -917,14 +975,21 @@ export default function PropertyDetail() {
         </nav>
       </div>
 
-      {showLeaseBanner && (
+      {filterMoveIn && unavailableMainForSelectedDates && (
         <div className={`${SITE_CONTENT_MAX_CLASS} mb-3 sm:mb-4`} role="status">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
-            <p className="font-semibold text-amber-950">Currently leased</p>
+            <p className="font-semibold text-amber-950">Not available for your selected dates</p>
             <p className="mt-1 text-amber-900/90 leading-relaxed">
-              This property has an active confirmed booking and is not available for new tenants. You can still view
-              details or browse other listings.
+              This property is not available for your selected dates. Try adjusting your move-in date.
             </p>
+          </div>
+        </div>
+      )}
+
+      {filterMoveIn && !unavailableMainForSelectedDates && (
+        <div className={`${SITE_CONTENT_MAX_CLASS} mb-3 sm:mb-4`} role="status">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
+            <p className="font-semibold text-emerald-900">Available from {formatAuShortDate(filterMoveIn)}</p>
           </div>
         </div>
       )}
@@ -1186,7 +1251,19 @@ export default function PropertyDetail() {
                   <p className="text-xs text-stone-500">Approximate distances shown — straight-line, not driving time.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {nearbyListings.map((p) => (
-                      <PropertyCard key={p.id} property={p} leased={nearbyLeasedIds.has(p.id)} />
+                      <PropertyCard
+                        key={p.id}
+                        property={p}
+                        linkSearch={availabilitySearchString}
+                        unavailableForSelectedDates={
+                          Boolean(filterMoveIn) && nearbyUnavailableForDatesIds.has(p.id)
+                        }
+                        unavailableBadgeLabel={
+                          filterMoveIn && nearbyUnavailableForDatesIds.has(p.id)
+                            ? availabilityUnavailableBadgeLabel(filterMoveIn, effectiveFilterMoveOut)
+                            : undefined
+                        }
+                      />
                     ))}
                   </div>
                 </section>
@@ -1220,10 +1297,73 @@ export default function PropertyDetail() {
                     {property.lease_length?.trim() && (
                       <SidebarRow label="Lease">{property.lease_length.trim()}</SidebarRow>
                     )}
-                    {availableFormatted && (
+                    <div className="pt-3 border-t border-stone-100 space-y-2.5">
+                      <p className={`${sectionLabelClass} mb-0.5`}>Check availability</p>
+                      <div>
+                        <label htmlFor="pd-move-in" className="block text-xs text-stone-500 mb-1">
+                          Move-in
+                        </label>
+                        <input
+                          id="pd-move-in"
+                          type="date"
+                          value={filterMoveIn}
+                          onChange={(e) => patchAvailabilityParams({ move_in: e.target.value || null })}
+                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="pd-move-out" className="block text-xs text-stone-500 mb-1">
+                          Move-out <span className="text-stone-400 font-normal">(optional)</span>
+                        </label>
+                        <input
+                          id="pd-move-out"
+                          type="date"
+                          value={filterMoveOut}
+                          disabled={Boolean(filterLease)}
+                          onChange={(e) =>
+                            patchAvailabilityParams({
+                              move_out: e.target.value || null,
+                              lease: null,
+                            })
+                          }
+                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 disabled:bg-stone-50 disabled:text-stone-400"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="pd-lease" className="block text-xs text-stone-500 mb-1">
+                          Or lease length
+                        </label>
+                        <select
+                          id="pd-lease"
+                          value={filterLease}
+                          disabled={Boolean(filterMoveOut)}
+                          onChange={(e) =>
+                            patchAvailabilityParams({
+                              lease: e.target.value || null,
+                              move_out: null,
+                            })
+                          }
+                          className="w-full py-2 pl-3 pr-8 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 disabled:bg-stone-50 disabled:text-stone-400"
+                        >
+                          <option value="">Open-ended (from move-in)</option>
+                          <option value="3">3 months from move-in</option>
+                          <option value="6">6 months from move-in</option>
+                          <option value="12">12 months from move-in</option>
+                        </select>
+                      </div>
+                    </div>
+                    {!filterMoveIn && availableFormatted && (
                       <div className="flex justify-between gap-4 text-sm">
                         <span className="shrink-0 text-stone-500">Available</span>
                         <span className="text-right font-medium text-[#FF6F61] tabular-nums">{availableFormatted}</span>
+                      </div>
+                    )}
+                    {filterMoveIn && !unavailableMainForSelectedDates && (
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="shrink-0 text-stone-500">Your dates</span>
+                        <span className="text-right font-medium text-emerald-700 tabular-nums">
+                          Available from {formatAuShortDate(filterMoveIn)}
+                        </span>
                       </div>
                     )}
                     {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}

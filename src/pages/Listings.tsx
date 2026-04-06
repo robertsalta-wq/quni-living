@@ -8,6 +8,10 @@ import {
   ROOM_TYPE_LABELS,
   type RoomType,
 } from '../lib/listings'
+import {
+  availabilityUnavailableBadgeLabel,
+  buildAvailabilitySearchString,
+} from '../lib/listingAvailabilityDates'
 import { useListingsFilters } from '../hooks/useListingsFilters'
 import { useListingsQuery } from '../hooks/useListingsQuery'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
@@ -81,6 +85,8 @@ export default function Listings() {
       priceFilter: filters.priceFilter,
       furnished: filters.furnished,
       sort: filters.sort,
+      availabilityMoveIn: filters.moveIn || null,
+      availabilityMoveOut: filters.effectiveAvailabilityMoveOut,
     }),
     [
       filters.qApplied,
@@ -91,7 +97,19 @@ export default function Listings() {
       filters.priceFilter,
       filters.furnished,
       filters.sort,
+      filters.moveIn,
+      filters.effectiveAvailabilityMoveOut,
     ],
+  )
+
+  const availabilityLinkSearch = useMemo(
+    () =>
+      buildAvailabilitySearchString(
+        filters.moveIn || null,
+        filters.moveOut || null,
+        filters.lease || null,
+      ),
+    [filters.moveIn, filters.moveOut, filters.lease],
   )
 
   const viewerStudentProfileId =
@@ -99,7 +117,7 @@ export default function Listings() {
       ? (profile as StudentRow).id
       : null
 
-  const { properties, total, loading, error, refetch, leasedPropertyIds } = useListingsQuery(
+  const { properties, total, loading, error, refetch, unavailableForSelectedDatesIds } = useListingsQuery(
     queryFilters,
     isSupabaseConfigured,
     filters.querySignature,
@@ -297,6 +315,56 @@ export default function Listings() {
                 </select>
               </div>
 
+              <div className="mb-4 space-y-3">
+                <p className="text-xs font-medium text-gray-700">Your dates</p>
+                <div>
+                  <label htmlFor="listings-move-in" className="block text-xs text-gray-600 mb-1">
+                    Move-in
+                  </label>
+                  <input
+                    id="listings-move-in"
+                    type="date"
+                    value={filters.moveIn}
+                    onChange={(e) => filters.setMoveIn(e.target.value)}
+                    className="w-full py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="listings-move-out" className="block text-xs text-gray-600 mb-1">
+                    Move-out <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    id="listings-move-out"
+                    type="date"
+                    value={filters.moveOut}
+                    onChange={(e) => filters.setMoveOut(e.target.value)}
+                    disabled={Boolean(filters.lease)}
+                    className="w-full py-2 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="listings-lease" className="block text-xs text-gray-600 mb-1">
+                    Or lease length
+                  </label>
+                  <select
+                    id="listings-lease"
+                    value={filters.lease}
+                    onChange={(e) => filters.setLease(e.target.value)}
+                    disabled={Boolean(filters.moveOut)}
+                    className="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                  >
+                    <option value="">Open-ended (from move-in)</option>
+                    <option value="3">3 months from move-in</option>
+                    <option value="6">6 months from move-in</option>
+                    <option value="12">12 months from move-in</option>
+                  </select>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-snug">
+                  With dates set, listings show whether each property is free for that window. Unavailable homes stay visible
+                  so you can tweak dates.
+                </p>
+              </div>
+
               <div className="flex items-center gap-2.5">
                 <button
                   type="button"
@@ -396,9 +464,25 @@ export default function Listings() {
 
             {!loading && properties.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {properties.map((p) => (
-                  <PropertyCard key={p.id} property={p} leased={leasedPropertyIds.has(p.id)} />
-                ))}
+                {properties.map((p) => {
+                  const blocked = filters.moveIn ? unavailableForSelectedDatesIds.has(p.id) : false
+                  return (
+                    <PropertyCard
+                      key={p.id}
+                      property={p}
+                      linkSearch={availabilityLinkSearch}
+                      unavailableForSelectedDates={blocked}
+                      unavailableBadgeLabel={
+                        blocked && filters.moveIn
+                          ? availabilityUnavailableBadgeLabel(
+                              filters.moveIn,
+                              filters.effectiveAvailabilityMoveOut,
+                            )
+                          : undefined
+                      }
+                    />
+                  )
+                })}
               </div>
             )}
           </div>

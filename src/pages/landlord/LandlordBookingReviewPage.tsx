@@ -39,6 +39,14 @@ function formatAudCents(cents: number | null | undefined) {
   return `$${(Number(cents) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function todayYmdLocal(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function studentToSnapshot(row: LandlordBookingReviewStudent | null | undefined): LandlordSafeStudentSnapshot | null {
   if (!row) return null
   return {
@@ -242,14 +250,6 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, declineReason, navigate])
 
-  function todayYmdLocal(): string {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
-
   const openBondModal = useCallback(() => {
     if (!data?.tenancy) return
     setBondDate(todayYmdLocal())
@@ -363,10 +363,17 @@ export default function LandlordBookingReviewPage() {
     )
   }
 
-  const { booking, property, messages, fitRows, landlordStripeReady, otherPendingPipelineCount } = data
+  const { booking, property, messages, fitRows, landlordStripeReady, otherPendingPipelineCount, tenancy } = data
   const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
   const depositCents = booking.deposit_amount ?? null
   const feeCents = booking.platform_fee_amount ?? null
+
+  const showMarkBondReceived =
+    Boolean(tenancy) &&
+    !tenancy?.bond_lodged_at &&
+    property &&
+    isBoardingLodgerBondContext(property.property_type, property.listing_type) &&
+    (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
 
   const flowLabel =
     booking.status === 'awaiting_info'
@@ -519,7 +526,32 @@ export default function LandlordBookingReviewPage() {
               <dt className="text-gray-500">Platform booking fee</dt>
               <dd className="font-medium text-right tabular-nums">{formatAudCents(feeCents)}</dd>
             </div>
+            {tenancy?.bond_lodged_at && tenancy.bond_lodgement_reference && (
+              <div className="pt-3 border-t border-gray-100 space-y-1">
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Bond received</p>
+                <p className="text-sm text-gray-800">
+                  Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
+                  {' · '}
+                  {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
+                </p>
+              </div>
+            )}
           </dl>
+          {showMarkBondReceived && (
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={openBondModal}
+                className="w-full sm:w-auto rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52]"
+              >
+                Mark bond as received
+              </button>
+              <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                For boarding/lodger or homestay stays, record when you receive the bond and we&apos;ll email a PDF receipt
+                to you and the student.
+              </p>
+            </div>
+          )}
         </section>
 
         {messages.length > 0 && (
@@ -606,6 +638,100 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setDeclineOpen(false)}
                 disabled={actionBusy}
+                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bondModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close"
+            onClick={() => !bondBusy && setBondModalOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900">Mark bond as received</h3>
+            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+              We&apos;ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the student.
+            </p>
+            {bondFormError && (
+              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{bondFormError}</p>
+            )}
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-date">
+                  Date received
+                </label>
+                <input
+                  id="bond-date"
+                  type="date"
+                  value={bondDate}
+                  onChange={(e) => setBondDate(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-amt">
+                  Amount received (AUD)
+                </label>
+                <input
+                  id="bond-amt"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={bondAmount}
+                  onChange={(e) => setBondAmount(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-method">
+                  Payment method
+                </label>
+                <select
+                  id="bond-method"
+                  value={bondMethod}
+                  onChange={(e) => setBondMethod(e.target.value as typeof bondMethod)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-notes">
+                  Notes <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  id="bond-notes"
+                  rows={3}
+                  value={bondNotes}
+                  onChange={(e) => setBondNotes(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y"
+                  placeholder="Reference, transaction ID, etc."
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void onSubmitBondReceipt()}
+                disabled={bondBusy}
+                className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+              >
+                {bondBusy ? 'Generating…' : 'Generate receipt'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBondModalOpen(false)}
+                disabled={bondBusy}
                 className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
               >
                 Cancel

@@ -5,9 +5,11 @@ import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
+import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
+import { isBoardingLodgerBondContext } from '../lib/listings'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -17,7 +19,7 @@ type EnquiryStatus = EnquiryRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week'
+  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'listing_type'
 >
 
 type PropertyEnquiryEmbed = Pick<
@@ -107,6 +109,8 @@ export default function StudentDashboard() {
   const [enquiries, setEnquiries] = useState<EnquiryWithProperty[]>([])
   const [tab, setTab] = useState<TabId>('bookings')
   const [expandedEnquiryIds, setExpandedEnquiryIds] = useState<Record<string, boolean>>({})
+  const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
+  const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -144,7 +148,7 @@ export default function StudentDashboard() {
       const [bookRes, enqRes] = await Promise.all([
         supabase
           .from('bookings')
-          .select('*, properties ( id, title, slug, suburb, images, rent_per_week )')
+          .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, listing_type )')
           .eq('student_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase
@@ -178,6 +182,37 @@ export default function StudentDashboard() {
       setLoading(false)
     }
   }, [user?.id])
+
+  const downloadBondReceipt = useCallback(async (bookingId: string) => {
+    setBondDownloadErrorId(null)
+    setBondDownloadBusyId(bookingId)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setBondDownloadErrorId(bookingId)
+        return
+      }
+      const res = await fetch(apiUrl('/api/documents/bond-receipt-signed-url'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+      const j = (await res.json()) as { signed_url?: string; error?: string }
+      if (!res.ok || !j.signed_url) {
+        setBondDownloadErrorId(bookingId)
+        return
+      }
+      window.open(j.signed_url, '_blank', 'noopener,noreferrer')
+    } catch {
+      setBondDownloadErrorId(bookingId)
+    } finally {
+      setBondDownloadBusyId(null)
+    }
+  }, [])
 
   useEffect(() => {
     void load()
@@ -412,11 +447,31 @@ export default function StudentDashboard() {
                         Awaiting landlord confirmation
                       </div>
                     )}
-                    {b.status === 'confirmed' && (
+                    {(b.status === 'confirmed' || b.status === 'active') && (
                       <div className="border-t border-green-100 bg-green-50 px-5 py-3 text-sm text-green-800">
                         Your booking is confirmed
                       </div>
                     )}
+                    {(b.status === 'confirmed' || b.status === 'active') &&
+                      prop &&
+                      isBoardingLodgerBondContext(prop.property_type, prop.listing_type) && (
+                        <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
+                          {bondDownloadErrorId === b.id ? (
+                            <p className="text-amber-900 text-xs leading-relaxed">
+                              Bond receipt isn&apos;t available yet. Your host will generate it from their dashboard after
+                              they record your bond payment.
+                            </p>
+                          ) : null}
+                          <button
+                            type="button"
+                            disabled={bondDownloadBusyId === b.id}
+                            onClick={() => void downloadBondReceipt(b.id)}
+                            className="inline-flex items-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2 hover:bg-[#e85d52] disabled:opacity-50"
+                          >
+                            {bondDownloadBusyId === b.id ? 'Opening…' : 'Download bond receipt'}
+                          </button>
+                        </div>
+                      )}
                   </li>
                 )
               })}

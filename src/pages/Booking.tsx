@@ -23,7 +23,8 @@ import {
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
 import { apiUrl } from '../lib/apiUrl'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
-import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
+import { isIsoDateString, moveOutFromBookingLeaseLength } from '../lib/listingAvailabilityDates'
+import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 
 function bookingDraftStorageKey(listingId: string) {
   return `booking_draft_${listingId}`
@@ -497,7 +498,15 @@ export default function Booking() {
   const [property, setProperty] = useState<PropertyForBooking | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [studentBookingBlocked, setStudentBookingBlocked] = useState(false)
-  const [propertyLeasedByOther, setPropertyLeasedByOther] = useState(false)
+  const [bookingDateConflictBlocked, setBookingDateConflictBlocked] = useState(false)
+  const [explicitMoveOutFromUrl, setExplicitMoveOutFromUrl] = useState<string | null>(() => {
+    try {
+      const o = new URLSearchParams(window.location.search).get('move_out')?.trim() ?? ''
+      return isIsoDateString(o) ? o : null
+    } catch {
+      return null
+    }
+  })
   const [loadingProperty, setLoadingProperty] = useState(Boolean(propertyId && isSupabaseConfigured))
 
   const propertyLoadTargetRef = useRef(propertyId)
@@ -538,13 +547,18 @@ export default function Booking() {
 
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
 
+  const conflictMoveOutDate = useMemo(() => {
+    if (explicitMoveOutFromUrl && isIsoDateString(explicitMoveOutFromUrl)) return explicitMoveOutFromUrl
+    if (!moveIn || !isIsoDateString(moveIn)) return null
+    return moveOutFromBookingLeaseLength(moveIn, leaseLength)
+  }, [explicitMoveOutFromUrl, moveIn, leaseLength])
+
   const loadProperty = useCallback(async () => {
     if (!propertyId || !isSupabaseConfigured || authLoading) {
       if (!propertyId || !isSupabaseConfigured) {
         setProperty(null)
         setLoadError(null)
         setStudentBookingBlocked(false)
-        setPropertyLeasedByOther(false)
         setLoadingProperty(false)
       }
       return
@@ -553,7 +567,6 @@ export default function Booking() {
     setLoadingProperty(true)
     setLoadError(null)
     setStudentBookingBlocked(false)
-    setPropertyLeasedByOther(false)
     try {
       if (user && role === 'student') {
         const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer_by_id', {
@@ -565,14 +578,12 @@ export default function Booking() {
           setProperty(null)
           setStudentBookingBlocked(true)
           setLoadError(null)
-          setPropertyLeasedByOther(false)
           setLoadingProperty(false)
           return
         }
         if (st === 'not_found') {
           setProperty(null)
           setLoadError('This listing is not available for booking.')
-          setPropertyLeasedByOther(false)
           setLoadingProperty(false)
           return
         }
@@ -600,24 +611,43 @@ export default function Booking() {
       setProperty(data ? (data as PropertyForBooking) : null)
       if (!data) {
         setLoadError('This listing is not available for booking.')
-        setPropertyLeasedByOther(false)
-      } else {
-        const leased = await fetchPropertyIdsLeasedToOthers(
-          supabase,
-          [data.id],
-          studentProfile?.id ?? null,
-        )
-        if (propertyLoadTargetRef.current !== loadTarget) return
-        setPropertyLeasedByOther(leased.has(data.id))
       }
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : 'Could not load listing.')
       setProperty(null)
-      setPropertyLeasedByOther(false)
     } finally {
       setLoadingProperty(false)
     }
   }, [propertyId, user, role, authLoading, studentProfile?.id])
+
+  useEffect(() => {
+    if (!property?.id || !isSupabaseConfigured) {
+      setBookingDateConflictBlocked(false)
+      return
+    }
+    if (!moveIn || !isIsoDateString(moveIn) || moveIn < minMoveInIso()) {
+      setBookingDateConflictBlocked(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      const blocked = await fetchUnavailablePropertyIdsForDateRange(
+        supabase,
+        [property.id],
+        moveIn,
+        conflictMoveOutDate,
+        studentProfile?.id ?? null,
+      )
+      if (!cancelled) setBookingDateConflictBlocked(blocked.has(property.id))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [property?.id, moveIn, conflictMoveOutDate, studentProfile?.id])
+
+  useEffect(() => {
+    if (bookingDateConflictBlocked && step > 1) setStep(1)
+  }, [bookingDateConflictBlocked, step])
 
   useEffect(() => {
     void loadProperty()
@@ -684,6 +714,21 @@ export default function Booking() {
       }
     } catch {
       /* ignore corrupt draft */
+    }
+
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const urlIn = sp.get('move_in')?.trim() ?? ''
+      if (isIsoDateString(urlIn)) setMoveIn(urlIn)
+      const urlLease = sp.get('lease')?.trim() ?? ''
+      if (urlLease === '3') setLeaseLength('3 months')
+      else if (urlLease === '6') setLeaseLength('6 months')
+      else if (urlLease === '12') setLeaseLength('12 months')
+      else if (urlLease === 'flex') setLeaseLength('Flexible')
+      const urlOut = sp.get('move_out')?.trim() ?? ''
+      if (isIsoDateString(urlOut)) setExplicitMoveOutFromUrl(urlOut)
+    } catch {
+      /* ignore */
     }
 
     if (restoredDraft) {
@@ -1119,37 +1164,6 @@ export default function Booking() {
     )
   }
 
-  if (propertyLeasedByOther) {
-    return (
-      <div className="max-w-lg mx-auto px-6 py-12">
-        <h1
-          className="text-2xl font-bold text-stone-900"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-        >
-          This listing is no longer available to book
-        </h1>
-        <p className="text-stone-600 text-sm mt-3 leading-relaxed">
-          This property has been booked through Quni Living. You can still browse other student accommodation on the
-          listings page.
-        </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/listings"
-            className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
-          >
-            Browse listings
-          </Link>
-          <Link
-            to={property.slug ? `/properties/${property.slug}` : '/listings'}
-            className="inline-flex justify-center rounded-xl border border-stone-200 text-stone-800 px-5 py-3 text-sm font-medium hover:bg-[#FEF9E4]"
-          >
-            Back to listing
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   if (success) {
     return (
       <div className="max-w-lg mx-auto px-6 py-16 text-center">
@@ -1247,6 +1261,32 @@ export default function Booking() {
 
       {step === 1 && (
         <div className="mt-8 space-y-6">
+          {bookingDateConflictBlocked && (
+            <div
+              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-2"
+              role="alert"
+            >
+              <p className="font-semibold text-amber-950">Dates not available</p>
+              <p className="text-amber-900/95 leading-relaxed">
+                Sorry, this property is already booked for your requested dates. Please choose different dates or browse
+                other listings.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <Link
+                  to="/listings"
+                  className="inline-flex justify-center rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-xs font-semibold hover:bg-[#e85d52]"
+                >
+                  Browse listings
+                </Link>
+                <Link
+                  to={property.slug ? `/properties/${property.slug}` : '/listings'}
+                  className="inline-flex justify-center rounded-lg border border-amber-300 text-amber-950 px-4 py-2 text-xs font-semibold hover:bg-amber-100/80"
+                >
+                  Back to listing
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="rounded-2xl border border-gray-100 bg-stone-50/80 p-5 space-y-2">
             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking summary</h2>
             <div className="flex justify-between text-sm">
@@ -1279,7 +1319,10 @@ export default function Booking() {
               type="date"
               min={minMoveInIso()}
               value={moveIn}
-              onChange={(e) => setMoveIn(e.target.value)}
+              onChange={(e) => {
+                setMoveIn(e.target.value)
+                setExplicitMoveOutFromUrl(null)
+              }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
               required
@@ -1293,7 +1336,10 @@ export default function Booking() {
             <select
               id="bk-lease"
               value={leaseLength}
-              onChange={(e) => setLeaseLength(e.target.value as LeaseOption)}
+              onChange={(e) => {
+                setLeaseLength(e.target.value as LeaseOption)
+                setExplicitMoveOutFromUrl(null)
+              }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
             >
@@ -1332,10 +1378,15 @@ export default function Booking() {
                   setSubmitError('Move-in must be at least 7 days from today.')
                   return
                 }
+                if (bookingDateConflictBlocked) {
+                  setSubmitError('Please choose dates that don’t overlap an existing booking.')
+                  return
+                }
                 setSubmitError(null)
                 setStep(2)
               }}
-              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52]"
+              disabled={bookingDateConflictBlocked}
+              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
             >
               Continue
             </button>

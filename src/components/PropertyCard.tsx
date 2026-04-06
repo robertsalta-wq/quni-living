@@ -2,9 +2,21 @@ import { Link } from 'react-router-dom'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 
-type Props = { property: Property; leased?: boolean }
+type Props = {
+  property: Property
+  /** When set, appended to `/properties/:slug` (e.g. `?move_in=…`). */
+  linkSearch?: string
+  /** Dim card when the property conflicts with the viewer's selected dates. */
+  unavailableForSelectedDates?: boolean
+  unavailableBadgeLabel?: string
+}
 
-export function PropertyCard({ property, leased }: Props) {
+export function PropertyCard({
+  property,
+  linkSearch,
+  unavailableForSelectedDates,
+  unavailableBadgeLabel,
+}: Props) {
   const image = property.images?.[0]
   const landlordName = property.landlord_profiles?.full_name ?? 'Private landlord'
   const isVerified = property.landlord_profiles?.verified ?? false
@@ -13,10 +25,17 @@ export function PropertyCard({ property, leased }: Props) {
       ? ROOM_TYPE_LABELS[property.room_type]
       : null
 
+  const to =
+    linkSearch && linkSearch.length > 0
+      ? `/properties/${property.slug}${linkSearch.startsWith('?') ? linkSearch : `?${linkSearch}`}`
+      : `/properties/${property.slug}`
+
   return (
     <Link
-      to={`/properties/${property.slug}`}
-      className="group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+      to={to}
+      className={`group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+        unavailableForSelectedDates ? 'opacity-60 grayscale-[0.35]' : ''
+      }`}
     >
       <div className="relative h-48 bg-gray-100 overflow-hidden">
         {image ? (
@@ -53,9 +72,9 @@ export function PropertyCard({ property, leased }: Props) {
             Furnished
           </span>
         )}
-        {leased && (
-          <span className="absolute bottom-3 left-3 bg-stone-900/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm shadow-sm">
-            Currently leased
+        {unavailableForSelectedDates && unavailableBadgeLabel && (
+          <span className="absolute bottom-3 left-3 bg-stone-800/95 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm shadow-sm max-w-[calc(100%-1.5rem)] line-clamp-2 leading-snug">
+            {unavailableBadgeLabel}
           </span>
         )}
       </div>

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  effectiveMoveOutForAvailability,
+  isIsoDateString,
+} from '../lib/listingAvailabilityDates'
 import { campusUrlSlug } from '../lib/slug'
 import { resolveUniversitySlugParam } from '../lib/universitySlugAliases'
 
@@ -14,6 +18,9 @@ const KEYS = [
   'price',
   'furnished',
   'sort',
+  'move_in',
+  'move_out',
+  'lease',
 ] as const
 
 type UniversityRef = { id: string; slug: string; name: string }
@@ -81,6 +88,17 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
   const priceFilter = searchParams.get('price') ?? ''
   const furnished = searchParams.get('furnished') === 'true'
   const sort = searchParams.get('sort') ?? 'newest'
+
+  const moveInRaw = searchParams.get('move_in')?.trim() ?? ''
+  const moveIn = isIsoDateString(moveInRaw) ? moveInRaw : ''
+  const moveOutRaw = searchParams.get('move_out')?.trim() ?? ''
+  const moveOut = isIsoDateString(moveOutRaw) ? moveOutRaw : ''
+  const lease = searchParams.get('lease')?.trim() ?? ''
+
+  const effectiveAvailabilityMoveOut = useMemo(
+    () => effectiveMoveOutForAvailability(moveIn || null, moveOut || null, lease || null),
+    [moveIn, moveOut, lease],
+  )
 
   useEffect(() => {
     setQInput(qFromUrl)
@@ -183,6 +201,36 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     [patch],
   )
 
+  const setMoveIn = useCallback(
+    (v: string) => {
+      const t = v.trim()
+      patch({ move_in: t && isIsoDateString(t) ? t : null })
+    },
+    [patch],
+  )
+
+  const setMoveOut = useCallback(
+    (v: string) => {
+      const t = v.trim()
+      patch({
+        move_out: t && isIsoDateString(t) ? t : null,
+        lease: null,
+      })
+    },
+    [patch],
+  )
+
+  const setLease = useCallback(
+    (v: string) => {
+      const t = v.trim()
+      patch({
+        lease: t || null,
+        move_out: null,
+      })
+    },
+    [patch],
+  )
+
   const clearAll = useCallback(() => {
     setQInput('')
     setSearchParams((prev) => {
@@ -201,9 +249,12 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
       Boolean(suburb.trim()) ||
       Boolean(roomType) ||
       Boolean(priceFilter) ||
-      furnished
+      furnished ||
+      Boolean(moveIn) ||
+      Boolean(moveOut) ||
+      Boolean(lease)
     )
-  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished])
+  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished, moveIn, moveOut, lease])
 
   const querySignature = useMemo(() => searchParams.toString(), [searchParams])
 
@@ -227,5 +278,12 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     clearAll,
     hasActiveFilters,
     querySignature,
+    moveIn,
+    moveOut,
+    lease,
+    effectiveAvailabilityMoveOut,
+    setMoveIn,
+    setMoveOut,
+    setLease,
   }
 }
