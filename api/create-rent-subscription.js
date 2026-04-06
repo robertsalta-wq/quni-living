@@ -24,17 +24,42 @@ import { bondAuthorityForState } from './lib/bondAuthority.js'
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
-function json(body, status = 200, origin) {
-  const allowOrigin = origin || '*'
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': allowOrigin,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-    },
+function headerString(headers, name) {
+  const v = headers[name]
+  if (v == null) return ''
+  return Array.isArray(v) ? String(v[0] ?? '') : String(v)
+}
+
+/** Vercel may set `req.body`; otherwise read the IncomingMessage stream (Node.js). */
+async function readJsonBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (Buffer.isBuffer(req.body)) {
+      const s = req.body.toString('utf8')
+      return s.trim() ? JSON.parse(s) : {}
+    }
+    if (typeof req.body === 'string') {
+      return req.body.trim() ? JSON.parse(req.body) : {}
+    }
+    if (typeof req.body === 'object') {
+      return req.body
+    }
+  }
+  const raw = await new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', (c) => chunks.push(c))
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+    req.on('error', reject)
   })
+  if (!raw || !raw.trim()) return {}
+  return JSON.parse(raw)
+}
+
+function corsJson(res, body, status = 200, origin) {
+  const allowOrigin = origin || '*'
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  return res.status(status).json(body)
 }
 
 function weeklyRentCents(rentPerWeek) {
@@ -88,23 +113,19 @@ function internalApiOrigin() {
   return 'https://quni-living.vercel.app'
 }
 
-export default async function handler(request) {
-  const origin = request.headers.get('origin') || '*'
+export default async function handler(req, res) {
+  const origin = headerString(req.headers, 'origin') || '*'
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-        'Access-Control-Max-Age': '86400',
-      },
-    })
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    res.setHeader('Access-Control-Max-Age', '86400')
+    return res.status(204).end()
   }
 
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405, origin)
+  if (req.method !== 'POST') {
+    return corsJson(res, { error: 'Method not allowed' }, 405, origin)
   }
 
   const stripeSecret = process.env.STRIPE_SECRET_KEY
@@ -113,25 +134,25 @@ export default async function handler(request) {
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
   if (!stripeSecret || !supabaseUrl || !serviceRole || !anonKey) {
-    return json({ error: 'Server misconfigured' }, 500, origin)
+    return corsJson(res, { error: 'Server misconfigured' }, 500, origin)
   }
 
-  const auth = request.headers.get('authorization') || ''
+  const auth = headerString(req.headers, 'authorization')
   const token = auth.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
-    return json({ error: 'Missing authorization' }, 401, origin)
+    return corsJson(res, { error: 'Missing authorization' }, 401, origin)
   }
 
   let body
   try {
-    body = await request.json()
+    body = await readJsonBody(req)
   } catch {
-    return json({ error: 'Invalid JSON' }, 400, origin)
+    return corsJson(res, { error: 'Invalid JSON' }, 400, origin)
   }
 
   const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
   if (!bookingId) {
-    return json({ error: 'bookingId is required' }, 400, origin)
+    return corsJson(res, { error: 'bookingId is required' }, 400, origin)
   }
 
   try {
@@ -142,11 +163,11 @@ export default async function handler(request) {
     } = await supabaseAuth.auth.getUser(token)
 
     if (userErr || !user) {
-      return json({ error: 'Invalid or expired session' }, 401, origin)
+      return corsJson(res,{ error: 'Invalid or expired session' }, 401, origin)
     }
 
     if (user.user_metadata?.role !== 'landlord') {
-      return json({ error: 'Only landlord accounts can confirm bookings' }, 403, origin)
+      return corsJson(res,{ error: 'Only landlord accounts can confirm bookings' }, 403, origin)
     }
 
     const admin = createClient(supabaseUrl, serviceRole)
@@ -158,11 +179,11 @@ export default async function handler(request) {
       .maybeSingle()
 
     if (llErr || !landlord) {
-      return json({ error: 'Landlord profile not found' }, 404, origin)
+      return corsJson(res,{ error: 'Landlord profile not found' }, 404, origin)
     }
 
     if (landlord.stripe_charges_enabled !== true) {
-      return json({ error: 'Landlord Stripe account not ready for charges' }, 400, origin)
+      return corsJson(res,{ error: 'Landlord Stripe account not ready for charges' }, 400, origin)
     }
 
     const { data: booking, error: bErr } = await admin
@@ -191,16 +212,16 @@ export default async function handler(request) {
       .maybeSingle()
 
     if (bErr || !booking) {
-      return json({ error: 'Booking not found' }, 404, origin)
+      return corsJson(res,{ error: 'Booking not found' }, 404, origin)
     }
 
     if (booking.landlord_id !== landlord.id) {
-      return json({ error: 'Forbidden' }, 403, origin)
+      return corsJson(res,{ error: 'Forbidden' }, 403, origin)
     }
 
     const confirmable = booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
     if (!confirmable) {
-      return json(
+      return corsJson(res,
         {
           error: 'invalid_status',
           message: 'This booking cannot be confirmed in its current state.',
@@ -211,25 +232,25 @@ export default async function handler(request) {
     }
 
     if (booking.expires_at && new Date(booking.expires_at).getTime() < Date.now()) {
-      return json({ error: 'This booking request has expired' }, 400, origin)
+      return corsJson(res,{ error: 'This booking request has expired' }, 400, origin)
     }
 
     if (!booking.stripe_payment_intent_id) {
-      return json({ error: 'Booking has no payment on file' }, 400, origin)
+      return corsJson(res,{ error: 'Booking has no payment on file' }, 400, origin)
     }
 
     if (!landlord.stripe_connect_account_id || !landlord.stripe_charges_enabled) {
-      return json({ error: 'Connect payouts are not ready on your account' }, 400, origin)
+      return corsJson(res,{ error: 'Connect payouts are not ready on your account' }, 400, origin)
     }
 
     const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
     if (!moveIn) {
-      return json({ error: 'Booking is missing move-in date' }, 400, origin)
+      return corsJson(res,{ error: 'Booking is missing move-in date' }, 400, origin)
     }
 
     const weeklyCents = weeklyRentCents(booking.weekly_rent)
     if (weeklyCents == null) {
-      return json({ error: 'Invalid weekly rent' }, 400, origin)
+      return corsJson(res,{ error: 'Invalid weekly rent' }, 400, origin)
     }
 
     const stripe = new Stripe(stripeSecret)
@@ -239,12 +260,12 @@ export default async function handler(request) {
     if (pi.status === 'requires_capture') {
       pi = await stripe.paymentIntents.capture(piId)
     } else if (pi.status !== 'succeeded') {
-      return json({ error: `Payment is not ready to capture (status: ${pi.status})` }, 400, origin)
+      return corsJson(res,{ error: `Payment is not ready to capture (status: ${pi.status})` }, 400, origin)
     }
 
     let pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id
     if (!pmId) {
-      return json({ error: 'No payment method on file for this booking' }, 400, origin)
+      return corsJson(res,{ error: 'No payment method on file for this booking' }, 400, origin)
     }
 
     const sp =
@@ -253,7 +274,7 @@ export default async function handler(request) {
       booking.landlord_profiles && typeof booking.landlord_profiles === 'object' ? booking.landlord_profiles : {}
     let customerId = typeof sp.stripe_customer_id === 'string' ? sp.stripe_customer_id.trim() : null
     if (!customerId) {
-      return json({ error: 'Student billing profile is missing' }, 400, origin)
+      return corsJson(res,{ error: 'Student billing profile is missing' }, 400, origin)
     }
 
     /** If deposit PI PM can't be reused, use another card already saved on the student. */
@@ -297,7 +318,7 @@ export default async function handler(request) {
         } else if (isPmReuseError(msg)) {
           const alt = await alternatePaymentMethodId(pmId)
           if (!alt) {
-            return json(
+            return corsJson(res,
               {
                 error:
                   'This booking’s card cannot be charged again for weekly rent (Stripe single-use limitation). Ask the student to add a saved payment method under Student profile → Payments, then try confirming again. New bookings will save the card automatically.',
@@ -327,7 +348,7 @@ export default async function handler(request) {
     const cancelAt = leaseEndUnixFromMoveIn(moveIn, leaseLength)
 
     if (cancelAt <= anchor) {
-      return json({ error: 'Invalid lease length for subscription' }, 400, origin)
+      return corsJson(res,{ error: 'Invalid lease length for subscription' }, 400, origin)
     }
 
     const rentProduct = await stripe.products.create({
@@ -385,7 +406,7 @@ export default async function handler(request) {
 
     if (upErr) {
       console.error('booking update after subscription', upErr)
-      return json({ error: 'Could not save booking after subscription' }, 500, origin)
+      return corsJson(res,{ error: 'Could not save booking after subscription' }, 500, origin)
     }
 
     const siteBase =
@@ -633,7 +654,7 @@ export default async function handler(request) {
       await followUpPromise
     }
 
-    return json(
+    return corsJson(res,
       {
         ok: true,
         subscriptionId: subscription.id,
@@ -654,6 +675,6 @@ export default async function handler(request) {
         msg = e.raw.message.trim()
       }
     }
-    return json({ error: msg.slice(0, 500) }, 500, origin)
+    return corsJson(res,{ error: msg.slice(0, 500) }, 500, origin)
   }
 }
