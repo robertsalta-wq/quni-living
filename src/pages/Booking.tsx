@@ -1322,6 +1322,7 @@ export default function Booking() {
               onChange={(e) => {
                 setMoveIn(e.target.value)
                 setExplicitMoveOutFromUrl(null)
+                setSubmitError(null)
               }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
@@ -1339,6 +1340,7 @@ export default function Booking() {
               onChange={(e) => {
                 setLeaseLength(e.target.value as LeaseOption)
                 setExplicitMoveOutFromUrl(null)
+                setSubmitError(null)
               }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
@@ -1365,6 +1367,22 @@ export default function Booking() {
               className={`${inputClass} resize-y min-h-[6rem]`}
             />
           </div>
+
+          {submitError && (
+            <div
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-2"
+              role="alert"
+            >
+              <p>{submitError}</p>
+              <button
+                type="button"
+                onClick={() => setSubmitError(null)}
+                className="rounded-lg bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-900 hover:bg-red-100/80"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
