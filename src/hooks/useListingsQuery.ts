@@ -8,6 +8,7 @@ import {
   type Property,
 } from '../lib/listings'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
+import { fetchPropertyIdsLeasedToOthers } from '../lib/propertyLeaseAvailability'
 
 export type ListingsQueryFilters = {
   q: string
@@ -26,6 +27,8 @@ type Result = {
   loading: boolean
   error: string | null
   refetch: () => void
+  /** Properties with a confirmed/active booking held by someone other than the viewer (when viewer student id passed). */
+  leasedPropertyIds: Set<string>
 }
 
 export function useListingsQuery(
@@ -33,11 +36,14 @@ export function useListingsQuery(
   enabled: boolean,
   /** Serialized URL (or any string that changes when filters change) */
   queryKey: string,
+  /** When set (student profile id), that student's own lease is excluded from the set. */
+  viewerStudentProfileId?: string | null,
 ): Result {
   const [properties, setProperties] = useState<Property[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState<string | null>(null)
+  const [leasedPropertyIds, setLeasedPropertyIds] = useState<Set<string>>(() => new Set())
   const [tick, setTick] = useState(0)
 
   const filtersRef = useRef(filters)
@@ -50,6 +56,7 @@ export function useListingsQuery(
       setLoading(false)
       setProperties([])
       setTotal(0)
+      setLeasedPropertyIds(new Set())
       return
     }
 
@@ -57,6 +64,7 @@ export function useListingsQuery(
     let cancelled = false
     setLoading(true)
     setError(null)
+    setLeasedPropertyIds(new Set())
 
     ;(async () => {
       try {
@@ -114,8 +122,19 @@ export function useListingsQuery(
         if (cancelled) return
         if (fetchError) throw fetchError
 
-        setProperties((data ?? []) as Property[])
+        const rows = (data ?? []) as Property[]
+        setProperties(rows)
         setTotal(count ?? 0)
+
+        const ids = rows.map((p) => p.id).filter(Boolean)
+        if (ids.length > 0) {
+          const leased = await fetchPropertyIdsLeasedToOthers(
+            supabase,
+            ids,
+            viewerStudentProfileId ?? null,
+          )
+          if (!cancelled) setLeasedPropertyIds(leased)
+        }
       } catch (e) {
         if (!cancelled) {
           console.error(e)
@@ -132,6 +151,7 @@ export function useListingsQuery(
           )
           setProperties([])
           setTotal(0)
+          setLeasedPropertyIds(new Set())
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -141,7 +161,7 @@ export function useListingsQuery(
     return () => {
       cancelled = true
     }
-  }, [enabled, queryKey, tick])
+  }, [enabled, queryKey, tick, viewerStudentProfileId])
 
-  return { properties, total, loading, error, refetch }
+  return { properties, total, loading, error, refetch, leasedPropertyIds }
 }

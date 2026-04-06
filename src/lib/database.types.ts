@@ -1254,6 +1254,10 @@ export interface Database {
         Args: { p_id: string }
         Returns: string
       }
+      property_ids_leased_to_others: {
+        Args: { p_property_ids: string[]; p_exclude_student_id?: string | null }
+        Returns: string[]
+      }
       duplicate_property_listing: {
         Args: { p_source_id: string }
         Returns: string

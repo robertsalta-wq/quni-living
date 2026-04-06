@@ -350,6 +350,31 @@ function bondAuthorityBody(state: string | null | undefined): string {
   return map[s] ?? map.NSW
 }
 
+function formatBondAmountAud(n: number): string {
+  return `$${n.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
+}
+
+function formatWeeklyRentForBondCopy(n: number): string {
+  const rounded = Math.round(n * 100) / 100
+  const maxFrac = Math.abs(rounded - Math.round(rounded)) < 0.005 ? 0 : 2
+  return `$${n.toLocaleString('en-AU', { maximumFractionDigits: maxFrac, minimumFractionDigits: 0 })}`
+}
+
+/** Whole weeks when close to integer, else one decimal (e.g. 4, 4.5). */
+function formatWeeksCountForBondCopy(weeks: number): string {
+  const x = Math.round(weeks * 100) / 100
+  const whole = Math.round(x)
+  if (Math.abs(x - whole) < 0.05) return String(whole)
+  return x.toFixed(1).replace(/\.0$/, '')
+}
+
+function bondWeeksAtRentPhrase(weeks: number, rentPerWeek: number): string {
+  const w = formatWeeksCountForBondCopy(weeks)
+  const wNum = Number(w)
+  const unit = wNum === 1 ? 'week' : 'weeks'
+  return `${w} ${unit} rent at ${formatWeeklyRentForBondCopy(rentPerWeek)}/week`
+}
+
 function scrollEditableIntoView(el: EventTarget | null) {
   if (!(el instanceof HTMLElement)) return
   requestAnimationFrame(() => {
@@ -1137,6 +1162,13 @@ export default function Booking() {
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
 
+  const bondAmountAud =
+    property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
+      ? Number(property.bond)
+      : null
+  const bondWeeksVsRent = bondAmountAud != null && rent > 0 ? bondAmountAud / rent : null
+  const showNswBondCapCopy = (property.state ?? 'NSW').toUpperCase() === 'NSW'
+
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
@@ -1297,9 +1329,21 @@ export default function Booking() {
           <h2 className="text-lg font-bold text-gray-900">About your bond</h2>
           <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 space-y-4 text-sm text-gray-700 leading-relaxed">
             <p>
-              Your landlord may request a bond of up to <strong>4 weeks rent</strong> (
-              <span className="tabular-nums">${(rent * 4).toLocaleString('en-AU')}</span> at ${rent}/week) payable
-              directly to them before or on your move-in date.
+              {bondAmountAud != null ? (
+                <>
+                  Your landlord has set a bond of <strong className="tabular-nums">{formatBondAmountAud(bondAmountAud)}</strong>
+                  {bondWeeksVsRent != null ? (
+                    <>
+                      {' '}
+                      (<span className="tabular-nums">{bondWeeksAtRentPhrase(bondWeeksVsRent, rent)}</span>)
+                    </>
+                  ) : null}
+                  , payable directly to them before or on your move-in date.
+                  {showNswBondCapCopy ? <> Under NSW law, bond cannot exceed 4 weeks rent.</> : null}
+                </>
+              ) : (
+                <>No bond is required for this property.</>
+              )}
             </p>
             <p>
               Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
