@@ -148,16 +148,19 @@ function AppsSkeleton() {
   )
 }
 
+const APPLE_DEVELOPER_HREF = 'https://developer.apple.com/'
 const FIREBASE_CONSOLE_HREF = 'https://console.firebase.google.com/'
 const GOOGLE_PLAY_CONSOLE_HREF = 'https://play.google.com/console'
 
 type AppsGridItem =
+  | { kind: 'appledeveloper'; sortKey: string }
   | { kind: 'firebase'; sortKey: string }
   | { kind: 'googleplay'; sortKey: string }
   | { kind: 'vendor'; sortKey: string; row: VendorRow }
 
 function buildSortedAppsGridItems(rows: VendorRow[]): AppsGridItem[] {
   const items: AppsGridItem[] = [
+    { kind: 'appledeveloper', sortKey: 'Apple Developer' },
     { kind: 'firebase', sortKey: 'Firebase' },
     { kind: 'googleplay', sortKey: 'Google Play Console' },
     ...rows.map((row) => ({
@@ -168,6 +171,49 @@ function buildSortedAppsGridItems(rows: VendorRow[]): AppsGridItem[] {
   ]
   items.sort((a, b) => a.sortKey.localeCompare(b.sortKey, 'en', { sensitivity: 'base' }))
   return items
+}
+
+function AppleDeveloperIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M16.365 1.43c0 1.14-.493 2.278-1.11 3.04-.704.896-1.922 1.59-3.11 1.59-.15 0-.293-.012-.434-.037.036-.117.063-.238.09-.36 0 0 .028-.09.052-.17.052-.17.1-.35.137-.533.34-1.43-.486-2.988-1.702-3.784a5.582 5.582 0 0 0-1.29-.575c.13-.06.26-.115.4-.165.108-.038.216-.073.328-.105.46-.125.958-.19 1.456-.19.83 0 1.65.135 2.375.402.78.29 1.5.726 2.04 1.327.57.63.98 1.39 1.2 2.25.15.57.19 1.16.15 1.74zM12.035 6.16c-2.18.01-4.022 1.578-4.022 1.578s-1.842-1.568-4.022-1.578C2.793 6.17 1 7.746 1 10.028c0 1.648.89 3.437 2.11 4.874C4.308 16.37 5.708 17.8 7.01 17.8c1.302 0 1.842-.578 3.025-.578 1.183 0 1.723.578 3.025.578 1.302 0 2.702-1.43 3.9-2.898 1.22-1.437 2.11-3.226 2.11-4.874 0-2.282-1.793-3.858-3.99-3.868z"
+      />
+    </svg>
+  )
+}
+
+function AppleDeveloperAppCard({ linkClass }: { linkClass: string }) {
+  return (
+    <div
+      className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-slate-200/90 border-slate-200/60 bg-slate-50/40 relative`}
+    >
+      <div className="flex items-start gap-3 flex-1">
+        <div
+          className="h-9 w-9 shrink-0 rounded-xl border border-slate-200/90 bg-white flex items-center justify-center text-gray-900"
+          aria-hidden
+        >
+          <AppleDeveloperIcon className="shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900">Apple Developer</p>
+          <p className="text-sm text-gray-500 mt-1">
+            iOS distribution, certificates, identifiers, App Store Connect, and TestFlight for the Quni Living app.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
+        <p className="text-sm text-gray-800 mt-1">Apple Developer Program (annual membership)</p>
+      </div>
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a href={APPLE_DEVELOPER_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          Open Apple Developer →
+        </a>
+      </div>
+    </div>
+  )
 }
 
 function FirebaseIcon({ className }: { className?: string }) {
@@ -476,8 +522,8 @@ export default function AdminApps() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Apps</h1>
       <p className="text-sm text-gray-500 mt-1 mb-6">
-        External tools for running Quni Living — costs are stored in Supabase and editable below. Firebase and Google
-        Play Console are fixed shortcuts for the native Android stack; all cards are sorted A–Z by name.
+        External tools for running Quni Living — costs are stored in Supabase and editable below. Apple Developer,
+        Firebase, and Google Play Console are fixed shortcuts for the native app stack; all cards are sorted A–Z by name.
       </p>
 
       {!loading && !error && rows && rows.length > 0 ? (
@@ -502,6 +548,9 @@ export default function AdminApps() {
       {!loading && !error && appsGridItems ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {appsGridItems.map((item) => {
+            if (item.kind === 'appledeveloper') {
+              return <AppleDeveloperAppCard key="appledeveloper" linkClass={linkClass} />
+            }
             if (item.kind === 'firebase') {
               return <FirebaseAppCard key="firebase" linkClass={linkClass} />
             }
