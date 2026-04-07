@@ -14,6 +14,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
+import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
 /** Mirrors `src/lib/listings.ts` — kept local so Vercel’s API TS compile graph stays self-contained. */
 function isBoardingLodgerBondContext(
@@ -33,15 +34,8 @@ export const config = {
 
 const PAYMENT_METHODS = new Set(['Cash', 'Bank Transfer', 'Other'])
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-function parseBearer(request: Request): string {
-  const h = request.headers.get('Authorization')?.trim() ?? ''
+function parseBearerFromHeader(authHeader: string): string {
+  const h = authHeader.trim()
   const m = /^Bearer\s+(.+)$/i.exec(h)
   return (m?.[1] ?? '').trim()
 }
@@ -122,9 +116,9 @@ async function sendResendWithAttachment(opts: {
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405)
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
@@ -133,12 +127,12 @@ export default async function handler(request: Request): Promise<Response> {
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
   if (!supabaseUrl || !serviceRole) {
-    return json({ error: 'Server misconfigured' }, 500)
+    return res.status(500).json({ error: 'Server misconfigured' })
   }
 
-  const bearer = parseBearer(request)
+  const bearer = parseBearerFromHeader(headerString(req.headers, 'authorization'))
   if (!bearer) {
-    return json({ error: 'Unauthorized' }, 401)
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   const admin = createClient<Database>(supabaseUrl, serviceRole)
@@ -149,7 +143,7 @@ export default async function handler(request: Request): Promise<Response> {
     /* internal trigger */
   } else {
     if (!anonKey) {
-      return json({ error: 'Server misconfigured' }, 500)
+      return res.status(500).json({ error: 'Server misconfigured' })
     }
     const authClient = createClient(supabaseUrl, anonKey)
     const {
@@ -157,7 +151,7 @@ export default async function handler(request: Request): Promise<Response> {
       error: userErr,
     } = await authClient.auth.getUser(bearer)
     if (userErr || !user?.id) {
-      return json({ error: 'Unauthorized' }, 401)
+      return res.status(401).json({ error: 'Unauthorized' })
     }
     actingLandlordUserId = user.id
   }
@@ -170,9 +164,9 @@ export default async function handler(request: Request): Promise<Response> {
     notes?: string | null
   }
   try {
-    body = (await request.json()) as typeof body
+    body = (await readJsonBody(req)) as typeof body
   } catch {
-    return json({ error: 'Invalid JSON' }, 400)
+    return res.status(400).json({ error: 'Invalid JSON' })
   }
 
   const tenancyId = typeof body.tenancy_id === 'string' ? body.tenancy_id.trim() : ''
@@ -182,23 +176,23 @@ export default async function handler(request: Request): Promise<Response> {
   const notesRaw = typeof body.notes === 'string' ? body.notes.trim() : ''
 
   if (!tenancyId) {
-    return json({ error: 'tenancy_id is required' }, 400)
+    return res.status(400).json({ error: 'tenancy_id is required' })
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateReceived)) {
-    return json({ error: 'date_received must be YYYY-MM-DD' }, 400)
+    return res.status(400).json({ error: 'date_received must be YYYY-MM-DD' })
   }
   if (typeof amountRaw !== 'number' || !Number.isFinite(amountRaw) || amountRaw <= 0) {
-    return json({ error: 'amount must be a positive number' }, 400)
+    return res.status(400).json({ error: 'amount must be a positive number' })
   }
   const amount = Math.round(amountRaw * 100) / 100
   if (!PAYMENT_METHODS.has(paymentMethod)) {
-    return json({ error: 'payment_method must be Cash, Bank Transfer, or Other' }, 400)
+    return res.status(400).json({ error: 'payment_method must be Cash, Bank Transfer, or Other' })
   }
   const notes = notesRaw ? notesRaw.slice(0, 2000) : null
 
   const { data: tenancy, error: tErr } = await admin.from('tenancies').select('*').eq('id', tenancyId).maybeSingle()
   if (tErr || !tenancy) {
-    return json({ error: 'Tenancy not found' }, 404)
+    return res.status(404).json({ error: 'Tenancy not found' })
   }
 
   if (actingLandlordUserId) {
@@ -208,12 +202,12 @@ export default async function handler(request: Request): Promise<Response> {
       .eq('user_id', actingLandlordUserId)
       .maybeSingle()
     if (lpErr || !lp?.id || lp.id !== tenancy.landlord_profile_id) {
-      return json({ error: 'Forbidden' }, 403)
+      return res.status(403).json({ error: 'Forbidden' })
     }
   }
 
   if (!tenancy.property_id || !tenancy.student_profile_id || !tenancy.landlord_profile_id) {
-    return json({ error: 'Tenancy is missing related records' }, 400)
+    return res.status(400).json({ error: 'Tenancy is missing related records' })
   }
 
   const { data: existingDoc } = await admin
@@ -224,11 +218,11 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (existingDoc) {
-    return json({ error: 'Bond receipt already exists for this tenancy' }, 409)
+    return res.status(409).json({ error: 'Bond receipt already exists for this tenancy' })
   }
 
   if (tenancy.bond_lodged_at) {
-    return json({ error: 'Bond has already been marked as received' }, 409)
+    return res.status(409).json({ error: 'Bond has already been marked as received' })
   }
 
   const { data: prop, error: pErr } = await admin
@@ -238,12 +232,12 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (pErr || !prop) {
-    return json({ error: 'Property not found' }, 404)
+    return res.status(404).json({ error: 'Property not found' })
   }
 
   const propRec = prop as Record<string, unknown>
   if (!isBoardingLodgerBondContext(prop.property_type, prop.listing_type)) {
-    return json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' }, 400)
+    return res.status(400).json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' })
   }
 
   const { data: landlord, error: llErr } = await admin
@@ -259,7 +253,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (llErr || stErr || !landlord || !student) {
-    return json({ error: 'Could not load landlord or student profile' }, 500)
+    return res.status(500).json({ error: 'Could not load landlord or student profile' })
   }
 
   const llRec = landlord as Record<string, unknown>
@@ -299,7 +293,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (upErr) {
     console.error('[generate-bond-receipt] storage upload', upErr)
-    return json({ error: 'Could not upload PDF' }, 500)
+    return res.status(500).json({ error: 'Could not upload PDF' })
   }
 
   const bondLodgedAt = bondLodgedAtIso(dateReceived)
@@ -316,7 +310,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (upT || !updatedTenancy) {
     console.error('[generate-bond-receipt] tenancy update race or error', upT)
-    return json({ error: 'Could not update tenancy (it may have been updated already)' }, 409)
+    return res.status(409).json({ error: 'Could not update tenancy (it may have been updated already)' })
   }
 
   const { data: docRow, error: docErr } = await admin
@@ -338,7 +332,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (docErr || !docRow) {
     console.error('[generate-bond-receipt] tenancy_documents insert', docErr)
-    return json({ error: 'Could not save document record' }, 500)
+    return res.status(500).json({ error: 'Could not save document record' })
   }
 
   const { data: signedData } = await admin.storage
@@ -388,7 +382,7 @@ ${downloadUrl ? `<p><a href="${escapeHtml(downloadUrl)}">Download PDF</a> (link 
     emailErrors.push('student email missing')
   }
 
-  return json({
+  return res.status(200).json({
     ok: true,
     tenancy_id: tenancyId,
     document_id: docRow.id,

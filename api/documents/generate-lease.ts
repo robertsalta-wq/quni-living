@@ -17,17 +17,11 @@ import type { Database } from '../../src/lib/database.types'
 import { ResidentialTenancyAgreement } from './ResidentialTenancyAgreement.js'
 import type { ResidentialTenancyAgreementProps } from './rtaTypes'
 import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal.js'
+import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
 export const config = {
   runtime: 'nodejs',
   maxDuration: 60,
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
 }
 
 function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
@@ -64,18 +58,18 @@ function landlordAddressLine(lp: Record<string, unknown>): string {
   return parts.join(', ') || '—'
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  console.log('[generate-lease] incoming request', { method: request.method })
+export default async function handler(req: any, res: any) {
+  console.log('[generate-lease] incoming request', { method: req.method })
 
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405)
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const secret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-  const authHeader = request.headers.get('Authorization') ?? ''
+  const authHeader = headerString(req.headers, 'authorization')
   let token = authHeader.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
-    token = (request.headers.get('x-internal-doc-flow-secret') || '').trim()
+    token = headerString(req.headers, 'x-internal-doc-flow-secret').trim()
   }
 
   const authHeaderPreview = authHeader.slice(0, 10) || '(empty)'
@@ -90,25 +84,25 @@ export default async function handler(request: Request): Promise<Response> {
   })
 
   if (!secret || !match) {
-    return json({ error: 'Unauthorized' }, 401)
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
   const serviceRole = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
   if (!supabaseUrl || !serviceRole) {
-    return json({ error: 'Server misconfigured' }, 500)
+    return res.status(500).json({ error: 'Server misconfigured' })
   }
 
   let body: { booking_id?: string }
   try {
-    body = (await request.json()) as { booking_id?: string }
+    body = (await readJsonBody(req)) as { booking_id?: string }
   } catch {
-    return json({ error: 'Invalid JSON' }, 400)
+    return res.status(400).json({ error: 'Invalid JSON' })
   }
 
   const bookingId = typeof body.booking_id === 'string' ? body.booking_id.trim() : ''
   if (!bookingId) {
-    return json({ error: 'booking_id is required' }, 400)
+    return res.status(400).json({ error: 'booking_id is required' })
   }
 
   const admin = createClient<Database>(supabaseUrl, serviceRole)
@@ -148,7 +142,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (bErr || !bookingRaw) {
-    return json({ error: 'Booking not found' }, 404)
+    return res.status(404).json({ error: 'Booking not found' })
   }
 
   type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -157,11 +151,11 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (booking.status !== 'confirmed') {
-    return json({ error: 'Booking must be confirmed' }, 400)
+    return res.status(400).json({ error: 'Booking must be confirmed' })
   }
 
   if (!booking.property_id || !booking.student_id || !booking.landlord_id) {
-    return json({ error: 'Booking missing property or profile ids' }, 400)
+    return res.status(400).json({ error: 'Booking missing property or profile ids' })
   }
 
   const { data: lp, error: lpErr } = await admin
@@ -179,7 +173,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (lpErr || spErr || !lp || !sp) {
-    return json({ error: 'Could not load profiles' }, 500)
+    return res.status(500).json({ error: 'Could not load profiles' })
   }
 
   const prop =
@@ -189,12 +183,12 @@ export default async function handler(request: Request): Promise<Response> {
 
   const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
   if (!moveIn) {
-    return json({ error: 'Booking missing move-in / start date' }, 400)
+    return res.status(400).json({ error: 'Booking missing move-in / start date' })
   }
 
   const weeklyRent = Number(booking.weekly_rent)
   if (!Number.isFinite(weeklyRent) || weeklyRent <= 0) {
-    return json({ error: 'Invalid weekly rent' }, 400)
+    return res.status(400).json({ error: 'Invalid weekly rent' })
   }
 
   const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
@@ -228,7 +222,7 @@ export default async function handler(request: Request): Promise<Response> {
 
     if (tInsErr || !insT) {
       console.error('tenancy insert', tInsErr)
-      return json({ error: 'Could not create tenancy' }, 500)
+      return res.status(500).json({ error: 'Could not create tenancy' })
     }
     tenancyId = insT.id
   }
@@ -241,7 +235,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (existingLease && (existingLease.status === 'sent_for_signing' || existingLease.status === 'signed')) {
-    return json({
+    return res.status(200).json({
       ok: true,
       skipped: true,
       tenancy_id: tenancyId,
@@ -269,7 +263,7 @@ export default async function handler(request: Request): Promise<Response> {
 
     if (dErr || !insD) {
       console.error('tenancy_documents insert', dErr)
-      return json({ error: 'Could not create tenancy document' }, 500)
+      return res.status(500).json({ error: 'Could not create tenancy document' })
     }
     documentId = insD.id
   }
@@ -341,7 +335,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (upErr) {
     console.error('storage upload lease draft', upErr)
-    return json({ error: 'Could not upload PDF' }, 500)
+    return res.status(500).json({ error: 'Could not upload PDF' })
   }
 
   const { error: pathErr } = await admin
@@ -351,7 +345,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (pathErr) {
     console.error('tenancy_documents update path', pathErr)
-    return json({ error: 'Could not save file path' }, 500)
+    return res.status(500).json({ error: 'Could not save file path' })
   }
 
   let docusealError: string | undefined
@@ -367,7 +361,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
 
-  return json({
+  return res.status(200).json({
     ok: true,
     tenancy_id: tenancyId,
     document_id: documentId,

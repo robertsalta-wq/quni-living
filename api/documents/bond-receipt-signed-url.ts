@@ -9,28 +9,22 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
+import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
 export const config = {
   runtime: 'nodejs',
   maxDuration: 30,
 }
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
-
-function parseBearer(request: Request): string {
-  const h = request.headers.get('Authorization')?.trim() ?? ''
+function parseBearerFromHeader(authHeader: string): string {
+  const h = authHeader.trim()
   const m = /^Bearer\s+(.+)$/i.exec(h)
   return (m?.[1] ?? '').trim()
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405)
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
@@ -38,12 +32,12 @@ export default async function handler(request: Request): Promise<Response> {
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
   if (!supabaseUrl || !serviceRole || !anonKey) {
-    return json({ error: 'Server misconfigured' }, 500)
+    return res.status(500).json({ error: 'Server misconfigured' })
   }
 
-  const bearer = parseBearer(request)
+  const bearer = parseBearerFromHeader(headerString(req.headers, 'authorization'))
   if (!bearer) {
-    return json({ error: 'Unauthorized' }, 401)
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   const authClient = createClient(supabaseUrl, anonKey)
@@ -52,19 +46,19 @@ export default async function handler(request: Request): Promise<Response> {
     error: userErr,
   } = await authClient.auth.getUser(bearer)
   if (userErr || !user?.id) {
-    return json({ error: 'Unauthorized' }, 401)
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   let body: { booking_id?: string }
   try {
-    body = (await request.json()) as { booking_id?: string }
+    body = (await readJsonBody(req)) as { booking_id?: string }
   } catch {
-    return json({ error: 'Invalid JSON' }, 400)
+    return res.status(400).json({ error: 'Invalid JSON' })
   }
 
   const bookingId = typeof body.booking_id === 'string' ? body.booking_id.trim() : ''
   if (!bookingId) {
-    return json({ error: 'booking_id is required' }, 400)
+    return res.status(400).json({ error: 'booking_id is required' })
   }
 
   const admin = createClient<Database>(supabaseUrl, serviceRole)
@@ -76,7 +70,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (bErr || !booking) {
-    return json({ error: 'Booking not found' }, 404)
+    return res.status(404).json({ error: 'Booking not found' })
   }
 
   const { data: lp } = await admin.from('landlord_profiles').select('id').eq('user_id', user.id).maybeSingle()
@@ -86,13 +80,13 @@ export default async function handler(request: Request): Promise<Response> {
   const isLandlord = lp?.id && booking.landlord_id === lp.id
   const isStudent = sp?.id && booking.student_id === sp.id
   if (!isLandlord && !isStudent) {
-    return json({ error: 'Forbidden' }, 403)
+    return res.status(403).json({ error: 'Forbidden' })
   }
 
   const { data: tenancy, error: tErr } = await admin.from('tenancies').select('id').eq('booking_id', bookingId).maybeSingle()
 
   if (tErr || !tenancy) {
-    return json({ error: 'Tenancy not found for this booking' }, 404)
+    return res.status(404).json({ error: 'Tenancy not found for this booking' })
   }
 
   const { data: doc, error: dErr } = await admin
@@ -103,7 +97,7 @@ export default async function handler(request: Request): Promise<Response> {
     .maybeSingle()
 
   if (dErr || !doc?.file_path) {
-    return json({ error: 'Bond receipt not available yet' }, 404)
+    return res.status(404).json({ error: 'Bond receipt not available yet' })
   }
 
   const { data: signed, error: sErr } = await admin.storage
@@ -112,10 +106,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (sErr || !signed?.signedUrl) {
     console.error('[bond-receipt-signed-url]', sErr)
-    return json({ error: 'Could not create download link' }, 500)
+    return res.status(500).json({ error: 'Could not create download link' })
   }
 
-  return json({
+  return res.status(200).json({
     ok: true,
     signed_url: signed.signedUrl,
     expires_in: 3600,

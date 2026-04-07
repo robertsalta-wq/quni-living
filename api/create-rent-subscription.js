@@ -20,39 +20,10 @@ import {
 } from './lib/emailTemplates.js'
 import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
 import { bondAuthorityForState } from './lib/bondAuthority.js'
+import { headerString, readJsonBody } from './lib/nodeHandler.js'
 
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }
-
-function headerString(headers, name) {
-  const v = headers[name]
-  if (v == null) return ''
-  return Array.isArray(v) ? String(v[0] ?? '') : String(v)
-}
-
-/** Vercel may set `req.body`; otherwise read the IncomingMessage stream (Node.js). */
-async function readJsonBody(req) {
-  if (req.body !== undefined && req.body !== null) {
-    if (Buffer.isBuffer(req.body)) {
-      const s = req.body.toString('utf8')
-      return s.trim() ? JSON.parse(s) : {}
-    }
-    if (typeof req.body === 'string') {
-      return req.body.trim() ? JSON.parse(req.body) : {}
-    }
-    if (typeof req.body === 'object') {
-      return req.body
-    }
-  }
-  const raw = await new Promise((resolve, reject) => {
-    const chunks = []
-    req.on('data', (c) => chunks.push(c))
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
-    req.on('error', reject)
-  })
-  if (!raw || !raw.trim()) return {}
-  return JSON.parse(raw)
-}
 
 function corsJson(res, body, status = 200, origin) {
   const allowOrigin = origin || '*'
