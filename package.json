@@ -39,6 +39,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@vercel/functions": "^3.4.3",
     "dotenv": "^17.3.1",
+    "pdf-lib": "^1.17.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-helmet-async": "^3.0.0",

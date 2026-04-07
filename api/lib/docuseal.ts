@@ -7,24 +7,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Json } from '../../src/lib/database.types'
 import { sendEmail } from './sendEmail.js'
+import {
+  createDocusealSubmissionFromPdf,
+  getDocusealSubmissionsUrl as getDocusealSubmissionsUrlImpl,
+} from './docuseal.shared.js'
 
 const PLATFORM_FEE_PERCENT = 3
 
 export function getDocusealSubmissionsUrl(): string {
-  const rawBase = (process.env.DOCUSEAL_API_URL || '').trim().replace(/\/$/, '')
-  const base = rawBase.replace(/\/api$/i, '')
-  const path = (process.env.DOCUSEAL_SUBMISSIONS_PATH || '/api/submissions/pdf').trim()
-  const p = path.startsWith('/') ? path : `/${path}`
-  return `${base}${p}`
+  return getDocusealSubmissionsUrlImpl()
 }
 
-function docusealHeaders(): HeadersInit {
-  const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
-  return {
-    'Content-Type': 'application/json',
-    'X-Auth-Token': token,
-  }
-}
+// `createDocusealSubmissionFromPdf` moved to `docuseal.shared.js` so it can be
+// used by Node scripts without a TS loader.
 
 function adminClient(): SupabaseClient<Database> {
   const url = (process.env.SUPABASE_URL || '').trim()
@@ -101,49 +96,7 @@ async function fetchDocusealJson(path: string): Promise<unknown> {
 }
 
 /** Create DocuSeal submission from PDF bytes (base64) and two signers. */
-export async function createDocusealSubmissionFromPdf(params: {
-  name: string
-  pdfBase64: string
-  landlord: { name: string; email: string }
-  tenant: { name: string; email: string }
-}): Promise<DocusealSubmissionResponse> {
-  const url = getDocusealSubmissionsUrl()
-  const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
-  if (!token) throw new Error('Missing DOCUSEAL_API_TOKEN')
-
-  const body = {
-    name: params.name,
-    order: 'preserved',
-    documents: [
-      {
-        name: 'Residential Tenancy Agreement.pdf',
-        file: params.pdfBase64,
-      },
-    ],
-    submitters: [
-      { role: 'Landlord', email: params.landlord.email, name: params.landlord.name },
-      { role: 'Tenant', email: params.tenant.email, name: params.tenant.name },
-    ],
-  }
-
-  console.log('[DocuSeal] create submission request', {
-    url,
-    submitters: body.submitters.map((s) => ({ name: s.name, email: s.email })),
-    authHeaderKey: 'X-Auth-Token',
-  })
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: docusealHeaders(),
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) {
-    const t = await res.text()
-    throw new Error(`DocuSeal submission failed: ${res.status} ${t}`)
-  }
-  return (await res.json()) as DocusealSubmissionResponse
-}
+export { createDocusealSubmissionFromPdf }
 
 /** After draft PDF exists in Storage: send to DocuSeal and notify both parties. */
 export async function sendForSigning(documentId: string): Promise<void> {
