@@ -11,7 +11,8 @@ import { sendEmail } from './sendEmail.js'
 const PLATFORM_FEE_PERCENT = 3
 
 export function getDocusealSubmissionsUrl(): string {
-  const base = (process.env.DOCUSEAL_API_URL || '').replace(/\/$/, '')
+  const rawBase = (process.env.DOCUSEAL_API_URL || '').trim().replace(/\/$/, '')
+  const base = rawBase.replace(/\/api$/i, '')
   const path = (process.env.DOCUSEAL_SUBMISSIONS_PATH || '/api/submissions/pdf').trim()
   const p = path.startsWith('/') ? path : `/${path}`
   return `${base}${p}`
@@ -21,7 +22,7 @@ function docusealHeaders(): HeadersInit {
   const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    'X-Auth-Token': token,
   }
 }
 
@@ -86,11 +87,12 @@ type DocusealSubmissionResponse = {
 }
 
 async function fetchDocusealJson(path: string): Promise<unknown> {
-  const base = (process.env.DOCUSEAL_API_URL || '').replace(/\/$/, '')
+  const rawBase = (process.env.DOCUSEAL_API_URL || '').trim().replace(/\/$/, '')
+  const base = rawBase.replace(/\/api$/i, '')
   const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
   if (!base || !token) throw new Error('DocuSeal is not configured')
   const url = path.startsWith('http') ? path : `${base}${path.startsWith('/') ? path : `/${path}`}`
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+  const res = await fetch(url, { headers: { 'X-Auth-Token': token } })
   if (!res.ok) {
     const t = await res.text()
     throw new Error(`DocuSeal GET ${url}: ${res.status} ${t}`)
@@ -111,7 +113,7 @@ export async function createDocusealSubmissionFromPdf(params: {
 
   const body = {
     name: params.name,
-    submitters_order: 'preserved',
+    order: 'preserved',
     documents: [
       {
         name: 'Residential Tenancy Agreement.pdf',
@@ -123,6 +125,12 @@ export async function createDocusealSubmissionFromPdf(params: {
       { role: 'Tenant', email: params.tenant.email, name: params.tenant.name },
     ],
   }
+
+  console.log('[DocuSeal] create submission request', {
+    url,
+    submitters: body.submitters.map((s) => ({ name: s.name, email: s.email })),
+    authHeaderKey: 'X-Auth-Token',
+  })
 
   const res = await fetch(url, {
     method: 'POST',
