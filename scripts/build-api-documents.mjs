@@ -1,6 +1,9 @@
 /**
- * Transpile React-PDF document modules to plain ESM .js for Vercel Node
- * (same rationale as api/documents/OccupancyAgreement.js).
+ * Transpile React-PDF document modules to plain ESM .js under api/documents/
+ * for Vercel Node (same rationale as api/documents/OccupancyAgreement.js).
+ *
+ * Sources live in src/lib/documents/ so api/ never has both foo.ts and foo.js
+ * (Vercel rejects that basename collision for serverless routes).
  */
 import esbuild from 'esbuild'
 import path from 'path'
@@ -9,24 +12,34 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
 
-const entryPoints = [
-  'api/documents/NswResidentialTenancyAgreement.tsx',
-  'api/documents/QuniPlatformAddendum.tsx',
-  'api/documents/ft6600EmbeddedStrings.ts',
+const jobs = [
+  {
+    inFile: 'src/lib/documents/NswResidentialTenancyAgreement.tsx',
+    outFile: 'api/documents/NswResidentialTenancyAgreement.js',
+  },
+  {
+    inFile: 'src/lib/documents/QuniPlatformAddendum.tsx',
+    outFile: 'api/documents/QuniPlatformAddendum.js',
+  },
+  {
+    inFile: 'src/lib/documents/ft6600EmbeddedStrings.ts',
+    outFile: 'api/documents/ft6600EmbeddedStrings.js',
+  },
 ]
 
-await esbuild.build({
-  absWorkingDir: root,
-  entryPoints,
-  outdir: 'api/documents',
-  outbase: 'api/documents',
-  /** Per-file transpile only: imports stay `from "react"`, `from "@react-pdf/renderer"`, etc. (Node resolves at runtime). */
-  bundle: false,
-  platform: 'node',
-  format: 'esm',
-  target: 'node18',
-  jsx: 'automatic',
-  logLevel: 'info',
-})
+for (const { inFile, outFile } of jobs) {
+  await esbuild.build({
+    absWorkingDir: root,
+    entryPoints: [inFile],
+    outfile: outFile,
+    /** Per-file transpile: bare imports stay external (Node resolves at runtime). */
+    bundle: false,
+    platform: 'node',
+    format: 'esm',
+    target: 'node18',
+    jsx: 'automatic',
+    logLevel: 'info',
+  })
+}
 
-console.log('build-api-documents: wrote', entryPoints.length, 'ESM modules under api/documents/')
+console.log('build-api-documents: wrote', jobs.length, 'ESM modules under api/documents/')

@@ -6,13 +6,18 @@
     "types": ["node", "vite/client"],
     "module": "Node16",
     "moduleResolution": "Node16",
-    "allowImportingTsExtensions": false
+    "allowImportingTsExtensions": false,
+    "jsx": "react-jsx"
   },
   "include": [
     "api/**/*.ts",
-    "api/documents/ResidentialTenancyAgreement.js",
+    "api/**/*.tsx",
+    "api/documents/OccupancyAgreement.js",
     "src/lib/database.types.ts",
-    "src/lib/documents/ResidentialTenancyAgreement.tsx",
+    "src/lib/documents/OccupancyAgreement.tsx",
+    "src/lib/documents/NswResidentialTenancyAgreement.tsx",
+    "src/lib/documents/QuniPlatformAddendum.tsx",
+    "src/lib/documents/ft6600EmbeddedStrings.ts",
     "src/lib/docuseal.ts"
   ]
 }
