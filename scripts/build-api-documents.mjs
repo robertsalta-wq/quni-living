@@ -4,6 +4,10 @@
  *
  * Sources live in src/lib/documents/ so api/ never has both foo.ts and foo.js
  * (Vercel rejects that basename collision for serverless routes).
+ *
+ * NSW RTA + Platform Addendum are **bundled** (theme + FT6600 strings inlined) so production
+ * never depends on sibling files like quniDocumentPdfTheme.js — those were easy to omit from git
+ * or from Vercel's serverless file trace, causing ERR_MODULE_NOT_FOUND at render time.
  */
 import esbuild from 'esbuild'
 import path from 'path'
@@ -12,7 +16,9 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
 
-const jobs = [
+const reactPdfExternals = ['react', 'react/jsx-runtime', '@react-pdf/renderer']
+
+const bundleJobs = [
   {
     inFile: 'src/lib/documents/NswResidentialTenancyAgreement.tsx',
     outFile: 'api/documents/NswResidentialTenancyAgreement.js',
@@ -21,25 +27,21 @@ const jobs = [
     inFile: 'src/lib/documents/QuniPlatformAddendum.tsx',
     outFile: 'api/documents/QuniPlatformAddendum.js',
   },
-  {
-    inFile: 'src/lib/documents/ft6600EmbeddedStrings.ts',
-    outFile: 'api/documents/ft6600EmbeddedStrings.js',
-  },
 ]
 
-for (const { inFile, outFile } of jobs) {
+for (const { inFile, outFile } of bundleJobs) {
   await esbuild.build({
     absWorkingDir: root,
     entryPoints: [inFile],
     outfile: outFile,
-    /** Per-file transpile: bare imports stay external (Node resolves at runtime). */
-    bundle: false,
+    bundle: true,
     platform: 'node',
     format: 'esm',
     target: 'node18',
     jsx: 'automatic',
     logLevel: 'info',
+    external: reactPdfExternals,
   })
 }
 
-console.log('build-api-documents: wrote', jobs.length, 'ESM modules under api/documents/')
+console.log('build-api-documents: wrote', bundleJobs.length, 'bundled ESM modules under api/documents/')
