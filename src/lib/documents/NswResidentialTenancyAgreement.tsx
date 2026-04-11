@@ -1,41 +1,194 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import type { ReactNode } from 'react'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { NswResidentialTenancyAgreementProps } from '../../../api/documents/rtaTypes.js'
 import {
-  FT6600_AGREEMENT_HEADER,
   FT6600_CLAUSES_1_TO_55,
   FT6600_NOTES,
   FT6600_TITLE_AND_IMPORTANT,
 } from './ft6600EmbeddedStrings.js'
 
+/** Weekly Stripe billing anchors to the tenancy commencement date (see `api/create-rent-subscription.js`). */
+function rentDueWeekdayFromCommencement(isoDate: string): string {
+  const raw = isoDate.slice(0, 10)
+  const [y, m, d] = raw.split('-').map(Number)
+  if (!y || !m || !d) return 'Monday'
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  return dt.toLocaleDateString('en-AU', { weekday: 'long', timeZone: 'UTC' })
+}
+
+const CONDITION_REPORT_VERBATIM =
+  'A condition report relating to the condition of the premises must be completed by or on behalf of the landlord before or when this agreement is given to the tenant for signing.'
+
+const TENANCY_LAWS_VERBATIM =
+  'The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.'
+
+const RENT_OTHER_DETAIL = 'Via Quni Living platform (quni.com.au)'
+
+const FT_FORM_REFERENCE = 'FT6600_171225 — NSW Fair Trading — Standard form from 19 May 2025'
+
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 48,
-    paddingBottom: 56,
-    paddingHorizontal: 40,
-    fontSize: 8,
+    paddingTop: 36,
+    paddingBottom: 44,
+    paddingHorizontal: 42,
+    fontSize: 10,
     fontFamily: 'Helvetica',
     color: '#1a1a1a',
-    lineHeight: 1.45,
+    lineHeight: 1.55,
     backgroundColor: '#ffffff',
   },
-  footerWrap: { position: 'absolute', bottom: 28, left: 40, right: 40 },
-  footerRule: { borderTopWidth: 0.5, borderTopColor: '#cccccc', marginBottom: 6 },
-  footerText: { fontSize: 7, color: '#666666' },
-  block: { marginBottom: 8 },
-  scheduleRow: { marginBottom: 5 },
-  scheduleLabel: { fontFamily: 'Helvetica-Bold' },
-  bullet: { marginLeft: 10, marginBottom: 2 },
-  docusealTag: { fontSize: 1, color: '#FFFFFF' },
-  sigP: { marginBottom: 5 },
-  sigRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 4 },
-  sigSpace: {
-    marginTop: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#1a1a1a',
+  quniHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 10,
-    minHeight: 18,
+    paddingBottom: 8,
+    borderBottomWidth: 0.75,
+    borderBottomColor: '#c9d2e0',
   },
+  logo: { width: 72, height: 22, objectFit: 'contain', marginRight: 14 },
+  headerTitleCol: { flex: 1, alignItems: 'flex-end' },
+  headerTitle: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f2744',
+    textAlign: 'right',
+  },
+  headerSubtitle: {
+    fontSize: 9,
+    color: '#3d4f63',
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  docMetaLine: {
+    fontSize: 8,
+    color: '#4a5568',
+    marginTop: 6,
+    textAlign: 'right',
+  },
+  formRefLine: {
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f2744',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f2744',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  subHeading: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f2744',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  body: { fontSize: 10, lineHeight: 1.55, textAlign: 'justify' },
+  bodyTight: { fontSize: 10, lineHeight: 1.45, marginBottom: 4, textAlign: 'justify' },
+  importantIntro: { fontSize: 10, marginBottom: 6 },
+  numberedPoint: { fontSize: 10, marginBottom: 5, textAlign: 'justify' },
+  labelBold: { fontFamily: 'Helvetica-Bold', color: '#111827' },
+  value: { fontFamily: 'Helvetica', color: '#1a1a1a' },
+  fieldRow: { marginBottom: 5, flexDirection: 'row', flexWrap: 'wrap' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 },
+  checkboxBox: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    borderColor: '#374151',
+    marginRight: 6,
+    marginTop: 2,
+  },
+  checkboxMark: {
+    fontSize: 8,
+    fontFamily: 'Helvetica-Bold',
+    lineHeight: 1,
+  },
+  clauseSectionTitle: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f2744',
+    textTransform: 'uppercase',
+    marginTop: 8,
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  clauseNote: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Oblique',
+    color: '#374151',
+    marginBottom: 4,
+    marginLeft: 6,
+    textAlign: 'justify',
+  },
+  footerRow: {
+    position: 'absolute',
+    bottom: 18,
+    left: 42,
+    right: 42,
+    fontSize: 7.5,
+    color: '#6b7280',
+    borderTopWidth: 0.5,
+    borderTopColor: '#e5e7eb',
+    paddingTop: 4,
+  },
+  sigBox: {
+    borderWidth: 1,
+    borderColor: '#9ca3af',
+    minHeight: 36,
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 6,
+  },
+  sigHint: { fontSize: 7, color: '#6b7280' },
 })
+
+function resolveQuniLogoPath(): string | null {
+  const p = join(process.cwd(), 'public', 'quni-logo.png')
+  return existsSync(p) ? p : null
+}
+
+function formatMoney(n: number) {
+  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
+}
+
+function formatAuDate(iso: string) {
+  const d = iso.slice(0, 10)
+  const parts = d.split('-')
+  if (parts.length !== 3) return iso
+  const [y, m, day] = parts
+  if (!y || !m || !day) return iso
+  return `${day}/${m}/${y}`
+}
+
+function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
+  const idx = generatedAt.indexOf(',')
+  if (idx > 0) return generatedAt.slice(0, idx).trim()
+  return generatedAt.trim()
+}
+
+function suburbFromAddressLine(addressLine: string): string {
+  const t = addressLine.trim()
+  if (!t || t === '—') return t || '—'
+  const parts = t.split(',').map((s) => s.trim()).filter(Boolean)
+  const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p))
+  if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t
+  if (parts.length >= 2) return parts[parts.length - 2] ?? t
+  return parts[0] ?? t
+}
+
+function extractImportantFourPoints(): string {
+  const marker = 'Please read this before completing'
+  const i = FT6600_TITLE_AND_IMPORTANT.indexOf(marker)
+  return i >= 0 ? FT6600_TITLE_AND_IMPORTANT.slice(i) : FT6600_TITLE_AND_IMPORTANT
+}
 
 function chunkText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text]
@@ -57,434 +210,394 @@ function chunkText(text: string, maxChars: number): string[] {
   return chunks
 }
 
-function formatMoney(n: number) {
-  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
+function stripNotesAsciiBanner(s: string): string {
+  return s.replace(/^=+\r?\nNOTES\r?\n=+\r?\n\r?\n/i, '')
 }
 
-function formatAuDate(iso: string) {
-  const d = iso.slice(0, 10)
-  const parts = d.split('-')
-  if (parts.length !== 3) return iso
-  const [y, m, day] = parts
-  if (!y || !m || !day) return iso
-  return `${day}/${m}/${y}`
+function isSectionHeadingLine(line: string): boolean {
+  const t = line.trim()
+  if (t.length < 4 || t.length > 90) return false
+  if (/^\d/.test(t)) return false
+  if (/^note/i.test(t)) return false
+  if (t !== t.toUpperCase()) return false
+  if (!/^[A-Z0-9][A-Z0-9 '\-#&,]+$/.test(t)) return false
+  return true
 }
 
-function furnishedText(v: boolean | null) {
-  if (v === true) return 'Yes'
-  if (v === false) return 'No'
-  return '—'
-}
-
-function consentText(v: boolean) {
-  return v ? 'Yes' : 'No'
-}
-
-function rentFrequencyWord(freq: 'weekly' | 'fortnightly' | 'monthly') {
-  if (freq === 'weekly') return 'week'
-  if (freq === 'fortnightly') return 'fortnight'
-  return 'month'
-}
-
-function rentAmountForFrequency(
-  weeklyRent: number,
-  platformFeePercent: number,
-  totalWeekly: number,
-  freq: 'weekly' | 'fortnightly' | 'monthly',
-) {
-  if (freq === 'weekly') {
-    return {
-      rent: weeklyRent,
-      platformFee: (weeklyRent * platformFeePercent) / 100,
-      total: totalWeekly,
-    }
-  }
-  if (freq === 'fortnightly') {
-    return {
-      rent: weeklyRent * 2,
-      platformFee: ((weeklyRent * platformFeePercent) / 100) * 2,
-      total: totalWeekly * 2,
-    }
-  }
-  const m = 52 / 12
-  return {
-    rent: Math.round(weeklyRent * m * 100) / 100,
-    platformFee: Math.round(((weeklyRent * platformFeePercent) / 100) * m * 100) / 100,
-    total: Math.round(totalWeekly * m * 100) / 100,
-  }
-}
-
-function tradeLine(v: string | null) {
-  if (v == null || !v.trim()) return '—'
-  return v.trim()
-}
-
-function FixedFooter({ documentId, generatedAt }: { documentId: string; generatedAt: string }) {
+function isCrossedOutClauseLine(line: string): boolean {
+  const s = line.trimStart()
   return (
-    <View style={styles.footerWrap} fixed>
-      <View style={styles.footerRule} />
-      <Text
-        style={styles.footerText}
-        render={({ pageNumber, totalPages }) =>
-          `FT6600 · Document ID: ${documentId} · Generated: ${generatedAt} · Page ${pageNumber}` +
-          (totalPages ? ` of ${totalPages}` : '')
-        }
-      />
+    /^38\.\s/.test(s) ||
+    /^39\.\s/.test(s) ||
+    /^45\.\s/.test(s) ||
+    /^46(\.\s|\.\d+\s)/.test(s)
+  )
+}
+
+function ClauseLine({ line }: { line: string }) {
+  const raw = line
+  const t = raw.trimEnd()
+  if (!t) return <View style={{ height: 3 }} />
+
+  if (isSectionHeadingLine(t)) {
+    return <Text style={styles.clauseSectionTitle}>{t}</Text>
+  }
+
+  if (/^note/i.test(t.trim())) {
+    return <Text style={styles.clauseNote}>{t}</Text>
+  }
+
+  const m = /^(\s*)(\d+(?:\.\d+)*\.?)(\s+)(.*)$/.exec(t)
+  if (m) {
+    const [, indent, num, sp, rest] = m
+    if (isCrossedOutClauseLine(t)) {
+      return (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: 4 }} wrap={false}>
+          <Text style={{ ...styles.bodyTight, textDecoration: 'line-through', flex: 1, paddingRight: 6 }}>
+            {indent}
+            <Text style={{ fontFamily: 'Helvetica-Bold' }}>{num}</Text>
+            {sp}
+            {rest}
+          </Text>
+          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Oblique', color: '#4b5563', marginTop: 1 }}>
+            not applicable
+          </Text>
+        </View>
+      )
+    }
+    return (
+      <Text style={styles.bodyTight}>
+        {indent}
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{num}</Text>
+        {sp}
+        {rest}
+      </Text>
+    )
+  }
+
+  return <Text style={styles.bodyTight}>{raw}</Text>
+}
+
+function ClauseChunkBody({ text }: { text: string }) {
+  const lines = text.split(/\n/)
+  return (
+    <View>
+      {lines.map((line, i) => (
+        <ClauseLine key={i} line={line} />
+      ))}
     </View>
   )
 }
 
-function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
-  const {
-    landlord,
-    tenant,
-    additionalTenantNames,
-    premises,
-    premisesPartDescription,
-    additionalPremisesInclusions,
-    maxOccupantsPermitted,
-    term,
-    rent,
-    bond,
-    landlordAgent,
-    urgentRepairsTradespeople,
-    electronicService,
-    specialConditions,
-    bookingNotes,
-  } = props
-
-  const landlordDisplay = landlord.companyName
-    ? `${landlord.fullName} (${landlord.companyName})`
-    : landlord.fullName
-
-  const endDateText =
-    term.periodic || !term.endDate ? 'Periodic tenancy (no fixed end date)' : formatAuDate(term.endDate)
-
-  const rentParts = rentAmountForFrequency(
-    rent.weeklyRent,
-    rent.platformFeePercent,
-    rent.totalWeekly,
-    rent.rentFrequency,
-  )
-
-  const bondText =
-    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '—'
-
-  const t2 = additionalTenantNames[0]?.trim() ?? ''
-  const t3 = additionalTenantNames[1]?.trim() ?? ''
-  const t4 = additionalTenantNames[2]?.trim() ?? ''
-
-  const inclusions =
-    additionalPremisesInclusions.length > 0 ? additionalPremisesInclusions : ['—']
-
+function NotesBody({ text }: { text: string }) {
+  const lines = text.split(/\n/)
   return (
-    <View style={{ marginTop: 6, marginBottom: 10 }}>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord: </Text>
-          {landlordDisplay}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord address for service: </Text>
-          {landlord.addressLine}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord email: </Text>
-          {landlord.email}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord phone: </Text>
-          {landlord.phone}
-        </Text>
-      </View>
-      {landlordAgent ? (
-        <>
-          <View style={styles.scheduleRow}>
-            <Text>
-              <Text style={styles.scheduleLabel}>Landlord&apos;s agent: </Text>
-              {landlordAgent.name}
+    <View>
+      {lines.map((line, i) => {
+        const t = line.trimEnd()
+        if (!t.trim()) return <View key={i} style={{ height: 3 }} />
+        const head = /^(\d+)\.\s+(.+)$/.exec(t.trim())
+        if (head && head[2] && /^[A-Z]/.test(head[2])) {
+          return (
+            <Text key={i} style={{ ...styles.bodyTight, marginTop: i > 0 ? 6 : 0 }}>
+              <Text style={styles.labelBold}>{`${head[1]}. ${head[2]}`}</Text>
             </Text>
-          </View>
-          <View style={styles.scheduleRow}>
-            <Text>
-              <Text style={styles.scheduleLabel}>Agent licence number: </Text>
-              {landlordAgent.licenseNumber?.trim() || '—'}
+          )
+        }
+        if (t.trim().startsWith('- ')) {
+          return (
+            <Text key={i} style={styles.bodyTight}>
+              {t}
             </Text>
-          </View>
-          <View style={styles.scheduleRow}>
-            <Text>
-              <Text style={styles.scheduleLabel}>Agent business address: </Text>
-              {landlordAgent.businessAddress}
-            </Text>
-          </View>
-          <View style={styles.scheduleRow}>
-            <Text>
-              <Text style={styles.scheduleLabel}>Agent phone: </Text>
-              {landlordAgent.phone}
-            </Text>
-          </View>
-          <View style={styles.scheduleRow}>
-            <Text>
-              <Text style={styles.scheduleLabel}>Agent email: </Text>
-              {landlordAgent.email?.trim() || '—'}
-            </Text>
-          </View>
-        </>
+          )
+        }
+        return (
+          <Text key={i} style={styles.bodyTight}>
+            {t}
+          </Text>
+        )
+      })}
+    </View>
+  )
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View style={styles.fieldRow} wrap={false}>
+      <Text style={styles.body}>
+        <Text style={styles.labelBold}>{label}</Text> <Text style={styles.value}>{children}</Text>
+      </Text>
+    </View>
+  )
+}
+
+function Checkbox({ checked }: { checked: boolean }) {
+  return (
+    <View style={styles.checkboxBox}>
+      {checked ? <Text style={styles.checkboxMark}>X</Text> : null}
+    </View>
+  )
+}
+
+function CheckboxLine({ checked, label }: { checked: boolean; label: string }) {
+  return (
+    <View style={styles.checkboxRow} wrap={false}>
+      <Checkbox checked={checked} />
+      <Text style={styles.body}>
+        <Text style={styles.value}>{label}</Text>
+      </Text>
+    </View>
+  )
+}
+
+type TermChecks = {
+  m6: boolean
+  m12: boolean
+  y2: boolean
+  y3: boolean
+  y5: boolean
+  periodic: boolean
+  other: boolean
+  otherText: string | null
+}
+
+function normalizeLeaseDescription(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Whole calendar months between start (inclusive) and end (exclusive), UTC date parts. */
+function wholeMonthsBetweenStartAndEnd(startIso: string, endIso: string): number | null {
+  const a = startIso.slice(0, 10)
+  const b = endIso.slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b)) return null
+  const [y1, m1, d1] = a.split('-').map(Number)
+  const [y2, m2, d2] = b.split('-').map(Number)
+  if (![y1, m1, d1, y2, m2, d2].every((n) => Number.isFinite(n))) return null
+  const t1 = Date.UTC(y1, m1 - 1, d1)
+  const t2 = Date.UTC(y2, m2 - 1, d2)
+  if (t2 <= t1) return null
+  let months = (y2 - y1) * 12 + (m2 - m1)
+  if (d2 < d1) months -= 1
+  return months >= 1 ? months : 1
+}
+
+function termChecksFromMonthBucket(months: number, otherText: string | null): TermChecks {
+  const base: TermChecks = {
+    m6: false,
+    m12: false,
+    y2: false,
+    y3: false,
+    y5: false,
+    periodic: false,
+    other: false,
+    otherText: null,
+  }
+  if (months <= 3) {
+    return {
+      ...base,
+      other: true,
+      otherText: otherText ?? `${months} month${months === 1 ? '' : 's'}`,
+    }
+  }
+  if (months <= 8) return { ...base, m6: true }
+  if (months <= 15) return { ...base, m12: true }
+  if (months <= 27) return { ...base, y2: true }
+  if (months <= 45) return { ...base, y3: true }
+  return { ...base, y5: true }
+}
+
+function termCheckState(
+  periodic: boolean,
+  leaseLengthDescription: string,
+  startDate: string,
+  endDate: string | null,
+): TermChecks {
+  if (periodic) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: true,
+      other: false,
+      otherText: null,
+    }
+  }
+
+  const trimmedDesc = leaseLengthDescription.trim()
+  const d = normalizeLeaseDescription(trimmedDesc)
+
+  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: true,
+      other: false,
+      otherText: null,
+    }
+  }
+
+  if (/\b5\s*years?\b|\b5\s*yrs?\b|\b60\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: true,
+      periodic: false,
+      other: false,
+      otherText: null,
+    }
+  }
+  if (/\b3\s*years?\b|\b3\s*yrs?\b|\b36\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: true,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null,
+    }
+  }
+  if (/\b2\s*years?\b|\b2\s*yrs?\b|\b24\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: true,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null,
+    }
+  }
+  if (/\b12\s*months?\b|\b1\s*year\b|\b1\s*yr\b|\b52\s*weeks?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: true,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null,
+    }
+  }
+  if (/\b6\s*months?\b|\b26\s*weeks?\b/.test(d)) {
+    return {
+      m6: true,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null,
+    }
+  }
+  if (/\b3\s*months?\b|\b13\s*weeks?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: true,
+      otherText: trimmedDesc || '3 months',
+    }
+  }
+
+  const monthsFromDates =
+    endDate && startDate ? wholeMonthsBetweenStartAndEnd(startDate, endDate) : null
+  if (monthsFromDates != null) {
+    return termChecksFromMonthBucket(monthsFromDates, trimmedDesc || null)
+  }
+
+  const generic = d === 'as agreed' || d === '' || d === 'fixed term'
+  if (generic) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: true,
+      otherText: trimmedDesc || null,
+    }
+  }
+
+  return {
+    m6: false,
+    m12: false,
+    y2: false,
+    y3: false,
+    y5: false,
+    periodic: false,
+    other: true,
+    otherText: trimmedDesc || null,
+  }
+}
+
+function QuniTopHeader({
+  documentId,
+  generatedAt,
+  logoPath,
+}: {
+  documentId: string
+  generatedAt: string
+  logoPath: string | null
+}) {
+  return (
+    <View style={styles.quniHeader}>
+      {logoPath ? (
+        <Image src={logoPath} style={styles.logo} />
       ) : (
-        <View style={styles.scheduleRow}>
-          <Text>
-            <Text style={styles.scheduleLabel}>Landlord&apos;s agent: </Text>
-            Not applicable
-          </Text>
-        </View>
+        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#0f2744', marginRight: 12 }}>Quni</Text>
       )}
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant (1): </Text>
-          {tenant.fullName}
+      <View style={styles.headerTitleCol}>
+        <Text style={styles.headerTitle}>Residential Tenancy Agreement</Text>
+        <Text style={styles.headerSubtitle}>NSW · Residential Tenancies Act 2010</Text>
+        <Text style={styles.docMetaLine}>
+          Document ID: {documentId} · Generated {generatedAt}
         </Text>
       </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant email: </Text>
-          {tenant.email}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant phone: </Text>
-          {tenant.phone}
-        </Text>
-      </View>
-      {tenant.dateOfBirth ? (
-        <View style={styles.scheduleRow}>
-          <Text>
-            <Text style={styles.scheduleLabel}>Tenant date of birth: </Text>
-            {formatAuDate(tenant.dateOfBirth)}
-          </Text>
-        </View>
-      ) : null}
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant (2): </Text>
-          {t2 || '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant (3): </Text>
-          {t3 || '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant (4): </Text>
-          {t4 || '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Residential premises (address): </Text>
-          {premises.addressLine}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Part of premises only (if applicable): </Text>
-          {premisesPartDescription?.trim() || '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text style={styles.scheduleLabel}>Additional things included with residential premises: </Text>
-        {inclusions.map((line, i) => (
-          <Text key={i} style={styles.bullet}>
-            • {line}
-          </Text>
-        ))}
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Maximum occupants permitted: </Text>
-          {maxOccupantsPermitted != null && Number.isFinite(maxOccupantsPermitted)
-            ? String(maxOccupantsPermitted)
-            : '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Property type: </Text>
-          {premises.propertyType ?? '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Room type: </Text>
-          {premises.roomType ?? '—'}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Furnished: </Text>
-          {furnishedText(premises.furnished)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Linen supplied: </Text>
-          {furnishedText(premises.linenSupplied)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Weekly cleaning service: </Text>
-          {furnishedText(premises.weeklyCleaningService)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Commencement date: </Text>
-          {formatAuDate(term.startDate)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>End date (fixed term) / tenancy type: </Text>
-          {endDateText}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Lease length (description): </Text>
-          {term.leaseLengthDescription}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Rent amount (per {rentFrequencyWord(rent.rentFrequency)}): </Text>
-          {formatMoney(rentParts.rent)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Platform fee ({rent.platformFeePercent}%): </Text>
-          {formatMoney(rentParts.platformFee)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Total payable per {rentFrequencyWord(rent.rentFrequency)}: </Text>
-          {formatMoney(rentParts.total)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Rent payment timing: </Text>
-          {rent.paymentTimingDescription}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Rent payment method: </Text>
-          {rent.paymentMethod}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Rental bond: </Text>
-          {bondText}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Urgent repairs — tradesperson (electrician): </Text>
-          {tradeLine(urgentRepairsTradespeople.electrician)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Urgent repairs — tradesperson (plumber): </Text>
-          {tradeLine(urgentRepairsTradespeople.plumber)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Urgent repairs — tradesperson (other): </Text>
-          {tradeLine(urgentRepairsTradespeople.other)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord email for electronic service of notices: </Text>
-          {electronicService.landlordEmail}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant email for electronic service of notices: </Text>
-          {electronicService.tenantEmail}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Landlord consents to electronic service (clause 50): </Text>
-          {consentText(electronicService.landlordConsentsToEmailService)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text>
-          <Text style={styles.scheduleLabel}>Tenant consents to electronic service (clause 50): </Text>
-          {consentText(electronicService.tenantConsentsToEmailService)}
-        </Text>
-      </View>
-      <View style={styles.scheduleRow}>
-        <Text style={styles.scheduleLabel}>Special conditions (additional terms): </Text>
-        {specialConditions.length > 0 ? (
-          specialConditions.map((line, i) => (
-            <Text key={i} style={styles.bullet}>
-              • {line}
-            </Text>
-          ))
-        ) : (
-          <Text style={styles.bullet}>—</Text>
-        )}
-      </View>
-      {bookingNotes ? (
-        <View style={styles.scheduleRow}>
-          <Text>
-            <Text style={styles.scheduleLabel}>Booking notes: </Text>
-            {bookingNotes}
-          </Text>
-        </View>
-      ) : null}
+    </View>
+  )
+}
+
+function PageFooter({ documentId, pageNumber }: { documentId: string; pageNumber: number }) {
+  return (
+    <View style={styles.footerRow}>
+      <Text>
+        {documentId} · Page {pageNumber}
+      </Text>
     </View>
   )
 }
 
 function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
-  const landlordDisplay = props.landlord.companyName
-    ? `${props.landlord.fullName} (${props.landlord.companyName})`
-    : props.landlord.fullName
+  const landlordName = props.landlord.fullName
 
-  const t2 = props.additionalTenantNames[0]?.trim() ?? ''
-  const t3 = props.additionalTenantNames[1]?.trim() ?? ''
-  const t4 = props.additionalTenantNames[2]?.trim() ?? ''
-
-  const sigBanner =
-    '========================================\nSIGNATURES\n========================================\n\nSIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:'
+  const landlordSignIntro =
+    "SIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:"
 
   const lisHeadingAndBody =
-    'LANDLORD INFORMATION STATEMENT\nThe landlord acknowledges that, at or before the time of signing this residential tenancy agreement, the landlord has read and understood the contents of the Landlord Information Statement published by NSW Fair Trading that sets out the landlord\'s rights and obligations.\n\nSignature of landlord:'
+    "LANDLORD INFORMATION STATEMENT\nThe landlord acknowledges that, at or before the time of signing this residential tenancy agreement, the landlord has read and understood the contents of the Landlord Information Statement published by NSW Fair Trading that sets out the landlord's rights and obligations.\n\nSignature of landlord:"
 
   const tenant1Banner = '\nSIGNED BY THE TENANT (1)\nName of tenant:'
-  const tenant2Banner = '\nSIGNED BY THE TENANT (2)\nName of tenant:'
-  const tenant3Banner = '\nSIGNED BY THE TENANT (3)\nName of tenant:'
-  const tenant4Banner = '\nSIGNED BY THE TENANT (4)\nName of tenant:'
 
   const tisHeadingAndBody =
     'TENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was given a copy of the Tenant Information Statement published by NSW Fair Trading.\n\nSignature of tenant:'
@@ -494,102 +607,270 @@ function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
 
   return (
     <View>
-      <Text style={styles.block}>{sigBanner}</Text>
-      <Text style={styles.sigP}>{landlordDisplay}</Text>
-      <View style={styles.sigRow}>
-        <Text>Signature of landlord: </Text>
-        <Text style={styles.docusealTag}>{'{{Landlord Signature;role=First Party;type=signature}}'}</Text>
+      <Text style={styles.sectionHeading}>Signatures</Text>
+      <Text style={styles.body}>{landlordSignIntro}</Text>
+      <Text style={styles.value}>{landlordName}</Text>
+      <View style={styles.sigBox}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.body}>Signature of landlord: </Text>
+          <Text style={styles.sigHint}>{'{{Landlord Signature;role=First Party;type=signature}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <View style={styles.sigRow}>
-        <Text>Landlord Sign Date </Text>
-        <Text style={styles.docusealTag}>{'{{Landlord Sign Date;role=First Party;type=date}}'}</Text>
+      <View style={{ ...styles.sigBox, minHeight: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.sigHint}>Landlord Sign Date </Text>
+          <Text style={styles.sigHint}>{'{{Landlord Sign Date;role=First Party;type=date}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{lisHeadingAndBody}</Text>
-      <View style={styles.sigRow}>
-        <Text>{' '}</Text>
-        <Text style={styles.docusealTag}>{'{{Landlord LIS Signature;role=First Party;type=signature}}'}</Text>
+      <Text style={styles.body}>{lisHeadingAndBody}</Text>
+      <View style={styles.sigBox}>
+        <Text style={styles.sigHint}>{'{{Landlord LIS Signature;role=First Party;type=signature}}'}</Text>
       </View>
-      <View style={styles.sigSpace} />
-      <View style={styles.sigRow}>
-        <Text>Landlord LIS Date </Text>
-        <Text style={styles.docusealTag}>{'{{Landlord LIS Date;role=First Party;type=date}}'}</Text>
+      <View style={{ ...styles.sigBox, minHeight: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.sigHint}>Landlord LIS Date </Text>
+          <Text style={styles.sigHint}>{'{{Landlord LIS Date;role=First Party;type=date}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{tenant1Banner}</Text>
-      <Text style={styles.sigP}>{props.tenant.fullName}</Text>
-      <View style={styles.sigRow}>
-        <Text>Signature of tenant: </Text>
-        <Text style={styles.docusealTag}>{'{{Tenant Signature;role=Second Party;type=signature}}'}</Text>
+      <Text style={styles.body}>{tenant1Banner}</Text>
+      <Text style={styles.value}>{props.tenant.fullName}</Text>
+      <View style={styles.sigBox}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.body}>Signature of tenant: </Text>
+          <Text style={styles.sigHint}>{'{{Tenant Signature;role=Second Party;type=signature}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <View style={styles.sigRow}>
-        <Text>Tenant Sign Date </Text>
-        <Text style={styles.docusealTag}>{'{{Tenant Sign Date;role=Second Party;type=date}}'}</Text>
+      <View style={{ ...styles.sigBox, minHeight: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.sigHint}>Tenant Sign Date </Text>
+          <Text style={styles.sigHint}>{'{{Tenant Sign Date;role=Second Party;type=date}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{tenant2Banner}</Text>
-      <Text style={styles.sigP}>{t2}</Text>
-      <Text style={styles.sigP}>Signature of tenant:</Text>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{tenant3Banner}</Text>
-      <Text style={styles.sigP}>{t3}</Text>
-      <Text style={styles.sigP}>Signature of tenant:</Text>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{tenant4Banner}</Text>
-      <Text style={styles.sigP}>{t4}</Text>
-      <Text style={styles.sigP}>Signature of tenant:</Text>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{tisHeadingAndBody}</Text>
-      <View style={styles.sigRow}>
-        <Text>{' '}</Text>
-        <Text style={styles.docusealTag}>{'{{Tenant TIS Signature;role=Second Party;type=signature}}'}</Text>
+      <Text style={styles.body}>{tisHeadingAndBody}</Text>
+      <View style={styles.sigBox}>
+        <Text style={styles.sigHint}>{'{{Tenant TIS Signature;role=Second Party;type=signature}}'}</Text>
       </View>
-      <View style={styles.sigSpace} />
-      <View style={styles.sigRow}>
-        <Text>Tenant TIS Date </Text>
-        <Text style={styles.docusealTag}>{'{{Tenant TIS Date;role=Second Party;type=date}}'}</Text>
+      <View style={{ ...styles.sigBox, minHeight: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.sigHint}>Tenant TIS Date </Text>
+          <Text style={styles.sigHint}>{'{{Tenant TIS Date;role=Second Party;type=date}}'}</Text>
+        </View>
       </View>
-      <View style={styles.sigSpace} />
-      <Text style={styles.block}>{contactFooter}</Text>
+      <Text style={{ ...styles.body, marginTop: 12, fontSize: 9, lineHeight: 1.5 }}>{contactFooter}</Text>
     </View>
   )
 }
 
 export function NswResidentialTenancyAgreement(props: NswResidentialTenancyAgreementProps) {
-  const { documentId, generatedAt } = props
-  const clauseChunks = chunkText(FT6600_CLAUSES_1_TO_55, 2700)
-  const notesChunks = chunkText(FT6600_NOTES, 3200)
+  const logoPath = resolveQuniLogoPath()
+  const { documentId, generatedAt, landlord, tenant, premises, term, rent, bond, landlordAgent } = props
+  const urgent = props.urgentRepairsTradespeople
+  const es = props.electronicService
+  const importantBody = extractImportantFourPoints()
+  const madeOn = agreementMadeOnFromGeneratedAt(generatedAt)
+  const atSuburb = suburbFromAddressLine(premises.addressLine)
+  const checks = termCheckState(term.periodic, term.leaseLengthDescription, term.startDate, term.endDate)
+  const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
+  const weeklyRentDisplay = formatMoney(rent.weeklyRent)
+  const bondDisplay =
+    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : null
+  const inclusions =
+    props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean)
+  const maxOcc =
+    props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted)
+      ? String(props.maxOccupantsPermitted)
+      : null
+  const elecLine = (v: string | null) => (v && v.trim() ? v.trim() : '')
+  const endDateText =
+    term.periodic || !term.endDate ? null : formatAuDate(term.endDate)
 
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <FixedFooter documentId={documentId} generatedAt={generatedAt} />
-        <Text style={styles.block}>{FT6600_TITLE_AND_IMPORTANT}</Text>
-        <ScheduleBlock {...props} />
-      </Page>
-      <Page size="A4" style={styles.page}>
-        <FixedFooter documentId={documentId} generatedAt={generatedAt} />
-        <Text style={styles.block}>{FT6600_AGREEMENT_HEADER}</Text>
-        <Text style={styles.block}>{clauseChunks[0]}</Text>
-      </Page>
-      {clauseChunks.slice(1).map((chunk, i) => (
-        <Page key={`clause-${i}`} size="A4" style={styles.page}>
-          <FixedFooter documentId={documentId} generatedAt={generatedAt} />
-          <Text style={styles.block}>{chunk}</Text>
-        </Page>
-      ))}
-      {notesChunks.map((chunk, i) => (
-        <Page key={`notes-${i}`} size="A4" style={styles.page}>
-          <FixedFooter documentId={documentId} generatedAt={generatedAt} />
-          <Text style={styles.block}>{chunk}</Text>
-        </Page>
-      ))}
-      <Page size="A4" style={styles.page}>
-        <FixedFooter documentId={documentId} generatedAt={generatedAt} />
-        <SignaturesBlock {...props} />
-      </Page>
-    </Document>
+  const clauseChunks = chunkText(FT6600_CLAUSES_1_TO_55, 2600)
+  const rawNotesChunks = chunkText(FT6600_NOTES, 3000)
+  const notesChunks = rawNotesChunks.map((c, i) => (i === 0 ? stripNotesAsciiBanner(c) : c))
+
+  let pageNum = 0
+  const nextPage = () => {
+    pageNum += 1
+    return pageNum
+  }
+
+  const pages: ReactNode[] = []
+
+  pages.push(
+    <Page key="p1" size="A4" style={styles.page}>
+      <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
+      <Text style={styles.formRefLine}>{FT_FORM_REFERENCE}</Text>
+      <Text style={styles.sectionHeading}>Important information</Text>
+      <Text style={styles.importantIntro}>{importantBody}</Text>
+
+      <Text style={styles.body}>
+        <Text style={styles.labelBold}>THIS AGREEMENT WAS MADE ON: </Text>
+        {madeOn}
+        <Text style={styles.labelBold}> AT: </Text>
+        {atSuburb}
+      </Text>
+
+      <Text style={styles.sectionHeading}>Between</Text>
+      <Field label="Landlord Name (1):" children={landlord.fullName} />
+      <Field
+        label="Landlord telephone number or other contact details:"
+        children={landlord.phone}
+      />
+      <Field label="Business or residential address of landlord(s) for service of notices:" children={landlord.addressLine} />
+
+      <Field label="Tenant Name (1):" children={tenant.fullName} />
+      {tenant.addressForServiceLine ? (
+        <Field label="Tenant's address for service of notices:" children={tenant.addressForServiceLine} />
+      ) : null}
+      <Field label="Contact details:" children={`Phone: ${tenant.phone} · Email: ${tenant.email}`} />
+
+      {landlordAgent ? (
+        <>
+          <Text style={styles.subHeading}>Landlord's agent details</Text>
+          <Field label="Agent name:" children={landlordAgent.name} />
+          <Field label="Business address for service of notices:" children={landlordAgent.businessAddress} />
+          <Field
+            label="Contact details:"
+            children={`Phone: ${landlordAgent.phone}${landlordAgent.email ? ` · Email: ${landlordAgent.email}` : ''}`}
+          />
+        </>
+      ) : (
+        <Field label="Landlord's agent:" children="Not applicable" />
+      )}
+      <PageFooter documentId={documentId} pageNumber={nextPage()} />
+    </Page>,
   )
+
+  pages.push(
+    <Page key="p2" size="A4" style={styles.page}>
+      <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
+      <Text style={styles.subHeading}>Term of agreement</Text>
+      <View style={{ marginBottom: 6 }}>
+        <CheckboxLine checked={checks.m6} label="6 months" />
+        <CheckboxLine checked={checks.m12} label="12 months" />
+        <CheckboxLine checked={checks.y2} label="2 years" />
+        <CheckboxLine checked={checks.y3} label="3 years" />
+        <CheckboxLine checked={checks.y5} label="5 years" />
+        <View style={styles.checkboxRow} wrap={false}>
+          <Checkbox checked={checks.other} />
+          <Text style={styles.body}>
+            <Text style={styles.value}>Other (please specify): </Text>
+            {checks.other && checks.otherText ? (
+              <Text style={styles.value}>{checks.otherText}</Text>
+            ) : null}
+          </Text>
+        </View>
+        <CheckboxLine checked={checks.periodic} label="Periodic (no end date)" />
+      </View>
+      <Field label="Starting on:" children={formatAuDate(term.startDate)} />
+      {endDateText ? <Field label="Ending on:" children={endDateText} /> : null}
+
+      <Text style={styles.subHeading}>Residential premises</Text>
+      <Field label="The residential premises are:" children={premises.addressLine} />
+      {inclusions.length > 0 ? (
+        <Field label="The residential premises include:" children={inclusions.join('; ')} />
+      ) : null}
+
+      <Text style={styles.subHeading}>Rent</Text>
+      <Field label="The rent is:" children={weeklyRentDisplay} />
+      <CheckboxLine checked={rent.rentFrequency === 'weekly'} label="Rent must be paid per: week" />
+      <Field label="Day rent must be paid:" children={rentWeekday} />
+      <Field label="Date first rent payment is due:" children={formatAuDate(term.startDate)} />
+      <Text style={{ ...styles.body, marginTop: 4, marginBottom: 2 }}>Rent must be paid by:</Text>
+      <CheckboxLine checked={false} label="approved electronic bank transfer (such as direct debit, bank transfer or BPAY)" />
+      <CheckboxLine checked={false} label="Centrepay" />
+      <CheckboxLine checked label="Other" />
+      <Field label="Details of payment method:" children={RENT_OTHER_DETAIL} />
+
+      {bondDisplay ? (
+        <>
+          <Text style={styles.subHeading}>Rental bond</Text>
+          <Field label="A rental bond of:" children={`${bondDisplay} must be paid by the tenant on signing this agreement.`} />
+          <CheckboxLine
+            checked
+            label="The tenant provided the rental bond amount to: the landlord or another person"
+          />
+          <CheckboxLine
+            checked={false}
+            label="The tenant provided the rental bond amount to: the landlord's agent"
+          />
+          <CheckboxLine checked={false} label="NSW Fair Trading through Rental Bond Online." />
+        </>
+      ) : null}
+
+      <Text style={styles.subHeading}>Important information</Text>
+      {maxOcc ? (
+        <Field
+          label="Maximum number of occupants:"
+          children={`No more than ${maxOcc} persons may ordinarily live in the premises at any one time.`}
+        />
+      ) : null}
+      <Text style={{ ...styles.body, fontFamily: 'Helvetica-Bold', marginTop: 4 }}>Urgent repairs</Text>
+      <Text style={styles.body}>Nominated tradespeople for urgent repairs</Text>
+      {elecLine(urgent.electrician) ? (
+        <Field label="Electrical repairs:" children={urgent.electrician} />
+      ) : null}
+      {elecLine(urgent.plumber) ? <Field label="Plumbing repairs:" children={urgent.plumber} /> : null}
+      {elecLine(urgent.other) ? <Field label="Other repairs:" children={urgent.other} /> : null}
+      <Field label="Will the tenant be required to pay separately for water usage?" children="No" />
+      <Field label="Is electricity supplied to the premises from an embedded network?" children="No" />
+      <Field label="Is gas supplied to the premises from an embedded network?" children="No" />
+      <Field
+        label="Smoke alarms:"
+        children="Battery operated smoke alarms"
+      />
+      <Field label="Are there any strata or community scheme by-laws applicable to the residential premises?" children="No" />
+
+      <Text style={{ ...styles.body, fontFamily: 'Helvetica-Bold', marginTop: 8 }}>
+        Giving notices and other documents electronically
+      </Text>
+      <Field label="Landlord — express consent to electronic service?" children={es.landlordConsentsToEmailService ? 'Yes' : 'No'} />
+      {es.landlordConsentsToEmailService ? (
+        <Field label="Landlord email for electronic service:" children={es.landlordEmail} />
+      ) : null}
+      <Field label="Tenant — express consent to electronic service?" children={es.tenantConsentsToEmailService ? 'Yes' : 'No'} />
+      {es.tenantConsentsToEmailService ? (
+        <Field label="Tenant email for electronic service:" children={es.tenantEmail} />
+      ) : null}
+
+      <Text style={{ ...styles.subHeading, marginTop: 10 }}>Condition report</Text>
+      <Text style={styles.body}>{CONDITION_REPORT_VERBATIM}</Text>
+      <Text style={{ ...styles.subHeading, marginTop: 8 }}>Tenancy laws</Text>
+      <Text style={styles.body}>{TENANCY_LAWS_VERBATIM}</Text>
+
+      <PageFooter documentId={documentId} pageNumber={nextPage()} />
+    </Page>,
+  )
+
+  clauseChunks.forEach((chunk, i) => {
+    pages.push(
+      <Page key={`clause-${i}`} size="A4" style={styles.page}>
+        <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
+        {i === 0 ? <Text style={styles.sectionHeading}>The agreement</Text> : null}
+        <ClauseChunkBody text={chunk} />
+        <PageFooter documentId={documentId} pageNumber={nextPage()} />
+      </Page>,
+    )
+  })
+
+  notesChunks.forEach((chunk, i) => {
+    pages.push(
+      <Page key={`notes-${i}`} size="A4" style={styles.page}>
+        <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
+        {i === 0 ? <Text style={styles.sectionHeading}>Notes</Text> : null}
+        <NotesBody text={chunk} />
+        <PageFooter documentId={documentId} pageNumber={nextPage()} />
+      </Page>,
+    )
+  })
+
+  pages.push(
+    <Page key="sig" size="A4" style={styles.page}>
+      <QuniTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
+      <SignaturesBlock {...props} />
+      <PageFooter documentId={documentId} pageNumber={nextPage()} />
+    </Page>,
+  )
+
+  return <Document>{pages}</Document>
 }

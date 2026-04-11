@@ -543,16 +543,18 @@ var styles = StyleSheet.create({
   fieldRow: { marginBottom: 5, flexDirection: "row", flexWrap: "wrap" },
   checkboxRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 3 },
   checkboxBox: {
-    width: 11,
-    height: 11,
+    width: 10,
+    height: 10,
     borderWidth: 1,
     borderColor: "#374151",
     marginRight: 6,
-    marginTop: 2,
-    alignItems: "center",
-    justifyContent: "center"
+    marginTop: 2
   },
-  checkboxMark: { fontSize: 9, fontFamily: "Helvetica-Bold", marginTop: -1 },
+  checkboxMark: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    lineHeight: 1
+  },
   clauseSectionTitle: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
@@ -720,7 +722,7 @@ function Field({ label, children }) {
   ] }) });
 }
 function Checkbox({ checked }) {
-  return /* @__PURE__ */ jsx(View, { style: styles.checkboxBox, children: checked ? /* @__PURE__ */ jsx(Text, { style: styles.checkboxMark, children: "\u2713" }) : null });
+  return /* @__PURE__ */ jsx(View, { style: styles.checkboxBox, children: checked ? /* @__PURE__ */ jsx(Text, { style: styles.checkboxMark, children: "X" }) : null });
 }
 function CheckboxLine({ checked, label }) {
   return /* @__PURE__ */ jsxs(View, { style: styles.checkboxRow, wrap: false, children: [
