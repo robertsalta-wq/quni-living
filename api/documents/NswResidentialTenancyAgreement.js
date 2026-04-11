@@ -1,5 +1,7 @@
 // src/lib/documents/NswResidentialTenancyAgreement.tsx
-import { Document, Page, Text as Text2, View as View2 } from "@react-pdf/renderer";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 // src/lib/documents/ft6600EmbeddedStrings.ts
 var FT6600_TITLE_AND_IMPORTANT = `NSW FAIR TRADING \u2014 RESIDENTIAL TENANCY AGREEMENT
@@ -20,10 +22,6 @@ Please read this before completing the residential tenancy agreement (the Agreem
 3. If you require extra space to list additional items and terms, attach a separate sheet. All attachments should be signed and dated by both the landlord or the landlord's agent and the tenant to show that both parties have read and agree to the attachments.
 
 4. The landlord or the landlord's agent must give the tenant a copy of the signed Agreement and any attachments, two copies or one electronic copy of the completed condition report and a copy of the Tenant Information Statement published by NSW Fair Trading.`;
-var FT6600_AGREEMENT_HEADER = `========================================
-THE AGREEMENT
-========================================
-`;
 var FT6600_CLAUSES_1_TO_55 = `RIGHT TO OCCUPY THE PREMISES
 
 1. The landlord agrees that the tenant has the right to occupy the residential premises during the tenancy. The residential premises include the additional things (if any) noted under 'Residential premises' on page 3 of this agreement.
@@ -461,605 +459,172 @@ If this agreement is a periodic agreement, the tenant must give at least 21 days
 
 It is an offence for a person to obtain possession of the residential premises without an order of the Civil and Administrative Tribunal or a judgment or order of a court if the tenant does not willingly move out. A court can order fines and compensation be paid for such an offence. It is an offence for the landlord, or landlord's agent, to give a termination notice on a ground that is not genuine, to provide false or misleading supporting documents or information with a termination notice or, if an exclusion period applies, to enter into a new residential tenancy agreement for the residential premises during the exclusion period.`;
 
-// src/lib/documents/quniDocumentPdfTheme.tsx
-import { StyleSheet, Text, View } from "@react-pdf/renderer";
-import { jsx, jsxs } from "react/jsx-runtime";
-var quniPdf = StyleSheet.create({
+// src/lib/documents/NswResidentialTenancyAgreement.tsx
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+function rentDueWeekdayFromCommencement(isoDate) {
+  const raw = isoDate.slice(0, 10);
+  const [y, m, d] = raw.split("-").map(Number);
+  if (!y || !m || !d) return "Monday";
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.toLocaleDateString("en-AU", { weekday: "long", timeZone: "UTC" });
+}
+var CONDITION_REPORT_VERBATIM = "A condition report relating to the condition of the premises must be completed by or on behalf of the landlord before or when this agreement is given to the tenant for signing.";
+var TENANCY_LAWS_VERBATIM = "The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.";
+var RENT_OTHER_DETAIL = "Via Quni Living platform (quni.com.au)";
+var FT_FORM_REFERENCE = "FT6600_171225 \u2014 NSW Fair Trading \u2014 Standard form from 19 May 2025";
+var styles = StyleSheet.create({
   page: {
-    paddingTop: 44,
-    paddingBottom: 52,
-    paddingLeft: 36,
-    paddingRight: 44,
-    fontSize: 11,
+    paddingTop: 36,
+    paddingBottom: 44,
+    paddingHorizontal: 42,
+    fontSize: 10,
     fontFamily: "Helvetica",
-    color: "#222222",
-    lineHeight: 1.5,
+    color: "#1a1a1a",
+    lineHeight: 1.55,
     backgroundColor: "#ffffff"
   },
-  pageDense: {
-    fontSize: 10,
-    lineHeight: 1.5
-  },
-  wordmark: {
-    fontSize: 22,
-    fontFamily: "Helvetica-Bold",
-    color: "#FF6F61",
-    marginBottom: 4
-  },
-  docTitle: {
-    fontSize: 17,
-    fontFamily: "Helvetica-Bold",
-    color: "#1B2A4A",
-    marginBottom: 4
-  },
-  headerItalicMeta: {
-    fontSize: 8,
-    fontFamily: "Helvetica",
-    fontStyle: "italic",
-    color: "#666666",
-    marginBottom: 8
-  },
-  headerMetaRight: {
-    fontSize: 8,
-    color: "#888888",
-    textAlign: "right",
-    maxWidth: 200
-  },
-  headerRow: {
+  quniHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 2
-  },
-  headerRule: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#FF6F61",
-    marginBottom: 12
-  },
-  sectionRule: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    marginTop: 10,
-    marginBottom: 10
-  },
-  sectionHeading: {
-    fontSize: 12,
-    fontFamily: "Helvetica-Bold",
-    color: "#1B2A4A",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginTop: 8,
-    marginBottom: 8,
-    paddingLeft: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: "#FF6F61",
-    backgroundColor: "#ffffff"
-  },
-  subSectionHeading: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    color: "#333333",
-    marginTop: 6,
-    marginBottom: 4
-  },
-  body: {
-    fontSize: 11,
-    lineHeight: 1.5,
-    color: "#222222"
-  },
-  bodyDense: {
-    fontSize: 10,
-    lineHeight: 1.5,
-    color: "#222222"
-  },
-  notesText: {
-    fontSize: 9,
-    lineHeight: 1.5,
-    fontStyle: "italic",
-    color: "#555555"
-  },
-  fieldBlock: {
-    marginBottom: 8
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    color: "#333333",
-    marginBottom: 3
-  },
-  fieldBox: {
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    minHeight: 22
-  },
-  fieldBoxTall: {
-    minHeight: 48
-  },
-  fieldValue: {
-    fontSize: 10,
-    lineHeight: 1.5,
-    color: "#222222"
-  },
-  fieldInlineRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    marginBottom: 8
-  },
-  checkboxOuter: {
-    width: 14,
-    height: 14,
-    borderWidth: 1,
-    borderColor: "#999999",
-    backgroundColor: "#ffffff",
-    marginRight: 6
-  },
-  checkboxLabel: {
-    fontSize: 10,
-    color: "#222222"
-  },
-  moreInfoBox: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#FFF8F7",
-    borderWidth: 1,
-    borderColor: "#FFD5CF"
-  },
-  moreInfoText: {
-    fontSize: 10,
-    lineHeight: 1.5,
-    color: "#222222"
-  },
-  footerWrap: {
-    position: "absolute",
-    bottom: 24,
-    left: 36,
-    right: 44
-  },
-  footerRule: {
-    borderTopWidth: 1,
-    borderTopColor: "#FF6F61",
-    marginBottom: 6
-  },
-  footerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end"
-  },
-  footerLeftRta: {
-    fontSize: 8,
-    color: "#FF6F61"
-  },
-  footerPageRta: {
-    fontSize: 8,
-    color: "#999999"
-  },
-  footerLeftAddendum: {
-    fontSize: 8,
-    color: "#FF6F61"
-  },
-  footerRightAddendum: {
-    fontSize: 8,
-    color: "#FF6F61"
-  },
-  marginStampWrap: {
-    position: "absolute",
-    right: 8,
-    top: 200,
-    width: 14,
-    transform: "rotate(90deg)"
-  },
-  marginStampText: {
-    fontSize: 7,
-    color: "#bbbbbb"
-  },
-  sigFieldBox: {
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    backgroundColor: "#ffffff",
-    minHeight: 40,
     marginBottom: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 4
+    paddingBottom: 8,
+    borderBottomWidth: 0.75,
+    borderBottomColor: "#c9d2e0"
   },
-  sigDateRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    marginBottom: 4
-  },
-  docusealTag: { fontSize: 1, color: "#FFFFFF" },
-  bullet: { marginLeft: 10, marginBottom: 3 },
-  clauseColumnsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between"
-  },
-  clauseColumn: {
-    width: "48%"
-  }
-});
-var occupancyMatchPdf = StyleSheet.create({
-  page: {
-    paddingTop: 88,
-    paddingBottom: 72,
-    paddingHorizontal: 40,
-    fontSize: 9,
-    fontFamily: "Helvetica",
-    color: "#2C2417",
-    lineHeight: 1.45,
-    backgroundColor: "#FAF6EE"
-  },
-  headerWrap: {
-    position: "absolute",
-    top: 28,
-    left: 40,
-    right: 40
-  },
-  oaHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start"
-  },
-  brandQuni: {
-    fontSize: 22,
+  logo: { width: 72, height: 22, objectFit: "contain", marginRight: 14 },
+  headerTitleCol: { flex: 1, alignItems: "flex-end" },
+  headerTitle: {
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
-    color: "#C9672A",
-    letterSpacing: 0.3
-  },
-  headerRightBlock: { alignItems: "flex-end", maxWidth: 280 },
-  headerDocTitle: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    color: "#C9672A",
-    textAlign: "right",
-    marginBottom: 2
-  },
-  headerSubtitle: {
-    fontSize: 8,
-    color: "#7A736C",
+    color: "#0f2744",
     textAlign: "right"
   },
-  oaHeaderRule: {
-    marginTop: 10,
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#C9672A",
-    width: "100%"
-  },
-  footerWrapOa: {
-    position: "absolute",
-    bottom: 28,
-    left: 40,
-    right: 40
-  },
-  footerRuleOa: {
-    borderTopWidth: 1.5,
-    borderTopColor: "#C9672A",
-    width: "100%",
-    marginBottom: 6
-  },
-  footerRowOa: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end"
-  },
-  footerLeftCoral: {
-    fontSize: 7.5,
-    color: "#C9672A",
-    flex: 1,
-    paddingRight: 8
-  },
-  footerPageCoral: {
-    fontSize: 7.5,
-    color: "#C9672A"
-  },
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    marginTop: 12,
-    marginBottom: 6
-  },
-  sectionBadge: {
-    width: 18,
-    height: 18,
-    backgroundColor: "#C9672A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-    marginTop: 1
-  },
-  sectionBadgeText: {
+  headerSubtitle: {
     fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: "#FFFFFF"
+    color: "#3d4f63",
+    textAlign: "right",
+    marginTop: 2
   },
-  sectionTitleCol: { flex: 1 },
-  sectionTitle: {
-    fontSize: 10.5,
+  docMetaLine: {
+    fontSize: 8,
+    color: "#4a5568",
+    marginTop: 6,
+    textAlign: "right"
+  },
+  formRefLine: {
+    fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: "#2C2417",
+    color: "#0f2744",
+    marginTop: 4,
+    marginBottom: 8
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: "#0f2744",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginTop: 10,
+    marginBottom: 6
+  },
+  subHeading: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: "#0f2744",
+    marginTop: 8,
     marginBottom: 4
   },
-  sectionHeadingRule: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#C9672A",
-    width: "100%"
+  body: { fontSize: 10, lineHeight: 1.55, textAlign: "justify" },
+  bodyTight: { fontSize: 10, lineHeight: 1.45, marginBottom: 4, textAlign: "justify" },
+  importantIntro: { fontSize: 10, marginBottom: 6 },
+  numberedPoint: { fontSize: 10, marginBottom: 5, textAlign: "justify" },
+  labelBold: { fontFamily: "Helvetica-Bold", color: "#111827" },
+  value: { fontFamily: "Helvetica", color: "#1a1a1a" },
+  fieldRow: { marginBottom: 5, flexDirection: "row", flexWrap: "wrap" },
+  checkboxRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 3 },
+  checkboxBox: {
+    width: 11,
+    height: 11,
+    borderWidth: 1,
+    borderColor: "#374151",
+    marginRight: 6,
+    marginTop: 2,
+    alignItems: "center",
+    justifyContent: "center"
   },
-  bodyParagraph: {
-    marginBottom: 5,
+  checkboxMark: { fontSize: 9, fontFamily: "Helvetica-Bold", marginTop: -1 },
+  clauseSectionTitle: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: "#0f2744",
+    textTransform: "uppercase",
+    marginTop: 8,
+    marginBottom: 4,
+    letterSpacing: 0.3
+  },
+  clauseNote: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Oblique",
+    color: "#374151",
+    marginBottom: 4,
+    marginLeft: 6,
     textAlign: "justify"
   },
-  hRuleLight: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-    width: "100%",
-    marginTop: 8,
-    marginBottom: 8
+  footerRow: {
+    position: "absolute",
+    bottom: 18,
+    left: 42,
+    right: 42,
+    fontSize: 7.5,
+    color: "#6b7280",
+    borderTopWidth: 0.5,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 4
   },
-  dataRow: {
-    flexDirection: "row",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#D4C9B8"
-  },
-  dataRowA: { backgroundColor: "#FAF6EE" },
-  dataRowB: { backgroundColor: "#F5EDD8" },
-  dataLabelCell: {
-    width: "32%",
-    paddingVertical: 4,
-    paddingHorizontal: 7
-  },
-  dataValueCell: {
-    flex: 1,
-    paddingVertical: 4,
-    paddingHorizontal: 7
-  },
-  dataLabel: { fontSize: 8, color: "#6B6560" },
-  dataValueBold: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#2C2417" },
-  tableWrap: {
-    marginTop: 6,
-    marginBottom: 6,
-    borderWidth: 0.5,
-    borderColor: "#C4B8A8"
-  },
-  thRow: {
-    flexDirection: "row",
-    backgroundColor: "#C9672A",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#C9672A"
-  },
-  thCell: {
-    flex: 1,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-    borderRightWidth: 0.5,
-    borderRightColor: "#FFFFFF"
-  },
-  thCellLast: {
-    flex: 1,
-    paddingVertical: 5,
-    paddingHorizontal: 6
-  },
-  thText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: "#FFFFFF" },
-  noteBox: {
-    marginTop: 8,
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#F5EDD8",
-    borderWidth: 0.5,
-    borderColor: "#E8DFD0"
-  },
-  noteItalic: {
-    fontSize: 8.5,
-    fontFamily: "Helvetica-Oblique",
-    color: "#2C2417",
-    lineHeight: 1.5
-  },
-  noteItalicMuted: {
-    fontSize: 8.5,
-    fontFamily: "Helvetica-Oblique",
-    color: "#555555",
-    lineHeight: 1.5
-  },
-  clauseLine: { marginBottom: 3, textAlign: "justify" },
-  clauseSectionCaps: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: "#2C2417",
-    marginTop: 6,
-    marginBottom: 3
-  },
-  checkboxOuter: {
-    width: 14,
-    height: 14,
+  sigBox: {
     borderWidth: 1,
-    borderColor: "#999999",
-    backgroundColor: "#FFFFFF",
-    marginRight: 6
+    borderColor: "#9ca3af",
+    minHeight: 36,
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 6
   },
-  checkboxLabel: { fontSize: 8.5, color: "#2C2417" },
-  sigTable: {
-    marginTop: 10,
-    borderWidth: 0.5,
-    borderColor: "#C4B8A8"
-  },
-  sigHeaderRow: { flexDirection: "row", backgroundColor: "#C9672A" },
-  sigHeaderCell: {
-    flex: 1,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRightWidth: 0.5,
-    borderRightColor: "#FFFFFF"
-  },
-  sigHeaderCellLast: { flex: 1, paddingVertical: 7, paddingHorizontal: 10 },
-  sigBodyRow: { flexDirection: "row", minHeight: 120 },
-  sigCol: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRightWidth: 0.5,
-    borderRightColor: "#D4C9B8",
-    backgroundColor: "#FAF6EE"
-  },
-  sigColLast: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    backgroundColor: "#F5EDD8"
-  },
-  sigNameBold: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#2C2417", marginBottom: 12 },
-  sigLabelRow: { flexDirection: "row", alignItems: "flex-end", marginBottom: 4, flexWrap: "wrap" },
-  sigLabel: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: "#C9672A" },
-  sigSpace: {
-    marginTop: 18,
-    borderBottomWidth: 0.75,
-    borderBottomColor: "#2C2417",
-    marginBottom: 14,
-    minHeight: 20
-  },
-  sigBorderBox: {
-    marginTop: 6,
-    borderWidth: 0.5,
-    borderColor: "#C4B8A8",
-    backgroundColor: "#FAF6EE",
-    minHeight: 40,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    marginBottom: 8
-  },
-  docusealTagOa: { fontSize: 1, color: "#FFFFFF" }
+  sigHint: { fontSize: 7, color: "#6b7280" }
 });
-var TENANCY_AGREEMENT_BOLD_OPENERS = [
-  "The landlord and the tenant agree that",
-  "The landlord and the tenant agree",
-  "The landlord agrees that",
-  "The landlord agrees to",
-  "The landlord agrees:",
-  "The tenant agrees that",
-  "The tenant agrees to",
-  "The tenant agrees:"
-];
-function OccupancyMatchFixedHeader({
-  documentTitle,
-  subtitle
-}) {
-  return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerWrap, fixed: true, children: [
-    /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.oaHeaderRow, children: [
-      /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.brandQuni, children: "Quni" }),
-      /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerRightBlock, children: [
-        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerDocTitle, children: documentTitle }),
-        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.oaHeaderRule })
-  ] });
+function resolveQuniLogoPath() {
+  const p = join(process.cwd(), "public", "quni-logo.png");
+  return existsSync(p) ? p : null;
 }
-function OccupancyMatchFooter({
-  documentId,
-  generatedAt,
-  variant
-}) {
-  const left = variant === "rta" ? `Quni Living \xB7 Residential Tenancy Agreement \xB7 Document ID: ${documentId} \xB7 Generated: ${generatedAt}` : `Quni Living \xB7 Platform Addendum \xB7 Document ID: ${documentId} \xB7 Generated: ${generatedAt}`;
-  return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.footerWrapOa, fixed: true, children: [
-    /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.footerRuleOa }),
-    /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.footerRowOa, children: [
-      /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.footerLeftCoral, children: left }),
-      /* @__PURE__ */ jsx(
-        Text,
-        {
-          style: occupancyMatchPdf.footerPageCoral,
-          render: ({ pageNumber, totalPages }) => `Page ${pageNumber}${totalPages ? ` of ${totalPages}` : ""}`
-        }
-      )
-    ] })
-  ] });
+function formatMoney(n) {
+  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
 }
-function OccupancyMatchSectionHeading({ num, title }) {
-  return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.sectionRow, wrap: false, children: [
-    /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.sectionBadge, children: /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.sectionBadgeText, children: String(num) }) }),
-    /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.sectionTitleCol, children: [
-      /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.sectionTitle, children: title }),
-      /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.sectionHeadingRule })
-    ] })
-  ] });
+function formatAuDate(iso) {
+  const d = iso.slice(0, 10);
+  const parts = d.split("-");
+  if (parts.length !== 3) return iso;
+  const [y, m, day] = parts;
+  if (!y || !m || !day) return iso;
+  return `${day}/${m}/${y}`;
 }
-function OccupancyMatchScheduleTable({
-  rows
-}) {
-  return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.tableWrap, children: [
-    /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.thRow, children: [
-      /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.thCell, children: /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.thText, children: "Item" }) }),
-      /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.thCellLast, children: /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.thText, children: "Particulars" }) })
-    ] }),
-    rows.map((r, i) => /* @__PURE__ */ jsxs(
-      View,
-      {
-        style: [
-          occupancyMatchPdf.dataRow,
-          i % 2 === 0 ? occupancyMatchPdf.dataRowA : occupancyMatchPdf.dataRowB
-        ],
-        children: [
-          /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.dataLabelCell, children: /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.dataLabel, children: r.label.trim() === "" ? " " : r.label }) }),
-          /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.dataValueCell, children: typeof r.value === "string" ? /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.dataValueBold, children: r.value }) : /* @__PURE__ */ jsx(View, { children: r.value }) })
-        ]
-      },
-      i
-    ))
-  ] });
+function agreementMadeOnFromGeneratedAt(generatedAt) {
+  const idx = generatedAt.indexOf(",");
+  if (idx > 0) return generatedAt.slice(0, idx).trim();
+  return generatedAt.trim();
 }
-function isAllCapsSectionTitle(line) {
-  const t = line.trim();
-  if (t.length < 3) return false;
-  if (/^=+$/.test(t)) return false;
-  if (/^\d+\.\d/.test(t)) return false;
-  if (!/[A-Z]/.test(t)) return false;
-  return t === t.toUpperCase();
+function suburbFromAddressLine(addressLine) {
+  const t = addressLine.trim();
+  if (!t || t === "\u2014") return t || "\u2014";
+  const parts = t.split(",").map((s) => s.trim()).filter(Boolean);
+  const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p));
+  if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t;
+  if (parts.length >= 2) return parts[parts.length - 2] ?? t;
+  return parts[0] ?? t;
 }
-function ClauseLineText({ line }) {
-  const raw = line;
-  if (!raw.trim()) {
-    return /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.clauseLine, children: " " });
-  }
-  const leadingSpaces = raw.length - raw.trimStart().length;
-  const trimmed = raw.trimStart();
-  const pad = leadingSpaces * 2;
-  if (/^Note(?:\s+\d+)?:/i.test(trimmed)) {
-    return /* @__PURE__ */ jsx(Text, { style: [occupancyMatchPdf.clauseLine, { paddingLeft: pad }], children: /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.noteItalicMuted, children: raw.trim() }) });
-  }
-  if (isAllCapsSectionTitle(trimmed) && !trimmed.includes("=")) {
-    return /* @__PURE__ */ jsx(Text, { style: [occupancyMatchPdf.clauseSectionCaps, { paddingLeft: pad }], children: raw.trim() });
-  }
-  const subClause = /^\d+\.\d/.test(trimmed);
-  if (subClause) {
-    return /* @__PURE__ */ jsx(Text, { style: [occupancyMatchPdf.clauseLine, { paddingLeft: pad + 14 }], wrap: true, children: raw.trim() });
-  }
-  const main = trimmed.match(/^(\d+\.\s+)([\s\S]*)$/);
-  if (main && main[1] && main[2] != null) {
-    const rest = main[2];
-    for (const prefix of TENANCY_AGREEMENT_BOLD_OPENERS) {
-      if (rest.startsWith(prefix)) {
-        return /* @__PURE__ */ jsxs(Text, { style: [occupancyMatchPdf.clauseLine, { paddingLeft: pad }], children: [
-          /* @__PURE__ */ jsx(Text, { children: main[1] }),
-          /* @__PURE__ */ jsx(Text, { style: { fontFamily: "Helvetica-Bold" }, children: prefix }),
-          /* @__PURE__ */ jsx(Text, { children: rest.slice(prefix.length) })
-        ] });
-      }
-    }
-  }
-  return /* @__PURE__ */ jsx(Text, { style: [occupancyMatchPdf.clauseLine, { paddingLeft: pad }], wrap: true, children: raw.trim() });
+function extractImportantFourPoints() {
+  const marker = "Please read this before completing";
+  const i = FT6600_TITLE_AND_IMPORTANT.indexOf(marker);
+  return i >= 0 ? FT6600_TITLE_AND_IMPORTANT.slice(i) : FT6600_TITLE_AND_IMPORTANT;
 }
-function OccupancyMatchClauseChunk({ text }) {
-  const lines = text.split("\n");
-  return /* @__PURE__ */ jsx(View, { children: lines.map((line, i) => /* @__PURE__ */ jsx(ClauseLineText, { line }, i)) });
-}
-function QuniRtaMarginStamp() {
-  return /* @__PURE__ */ jsx(View, { style: quniPdf.marginStampWrap, fixed: true, children: /* @__PURE__ */ jsx(Text, { style: quniPdf.marginStampText, children: "FT6600_171225" }) });
-}
-
-// src/lib/documents/NswResidentialTenancyAgreement.tsx
-import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 function chunkText(text, maxChars) {
   if (text.length <= maxChars) return [text];
   const chunks = [];
@@ -1079,348 +644,510 @@ function chunkText(text, maxChars) {
   }
   return chunks;
 }
-function formatMoney(n) {
-  return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
+function stripNotesAsciiBanner(s) {
+  return s.replace(/^=+\r?\nNOTES\r?\n=+\r?\n\r?\n/i, "");
 }
-function formatAuDate(iso) {
-  const d = iso.slice(0, 10);
-  const parts = d.split("-");
-  if (parts.length !== 3) return iso;
-  const [y, m, day] = parts;
-  if (!y || !m || !day) return iso;
-  return `${day}/${m}/${y}`;
+function isSectionHeadingLine(line) {
+  const t = line.trim();
+  if (t.length < 4 || t.length > 90) return false;
+  if (/^\d/.test(t)) return false;
+  if (/^note/i.test(t)) return false;
+  if (t !== t.toUpperCase()) return false;
+  if (!/^[A-Z0-9][A-Z0-9 '\-#&,]+$/.test(t)) return false;
+  return true;
 }
-function furnishedText(v) {
-  if (v === true) return "Yes";
-  if (v === false) return "No";
-  return "\u2014";
+function isCrossedOutClauseLine(line) {
+  const s = line.trimStart();
+  return /^38\.\s/.test(s) || /^39\.\s/.test(s) || /^45\.\s/.test(s) || /^46(\.\s|\.\d+\s)/.test(s);
 }
-function consentText(v) {
-  return v ? "Yes" : "No";
+function ClauseLine({ line }) {
+  const raw = line;
+  const t = raw.trimEnd();
+  if (!t) return /* @__PURE__ */ jsx(View, { style: { height: 3 } });
+  if (isSectionHeadingLine(t)) {
+    return /* @__PURE__ */ jsx(Text, { style: styles.clauseSectionTitle, children: t });
+  }
+  if (/^note/i.test(t.trim())) {
+    return /* @__PURE__ */ jsx(Text, { style: styles.clauseNote, children: t });
+  }
+  const m = /^(\s*)(\d+(?:\.\d+)*\.?)(\s+)(.*)$/.exec(t);
+  if (m) {
+    const [, indent, num, sp, rest] = m;
+    if (isCrossedOutClauseLine(t)) {
+      return /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", marginBottom: 4 }, wrap: false, children: [
+        /* @__PURE__ */ jsxs(Text, { style: { ...styles.bodyTight, textDecoration: "line-through", flex: 1, paddingRight: 6 }, children: [
+          indent,
+          /* @__PURE__ */ jsx(Text, { style: { fontFamily: "Helvetica-Bold" }, children: num }),
+          sp,
+          rest
+        ] }),
+        /* @__PURE__ */ jsx(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Oblique", color: "#4b5563", marginTop: 1 }, children: "not applicable" })
+      ] });
+    }
+    return /* @__PURE__ */ jsxs(Text, { style: styles.bodyTight, children: [
+      indent,
+      /* @__PURE__ */ jsx(Text, { style: { fontFamily: "Helvetica-Bold" }, children: num }),
+      sp,
+      rest
+    ] });
+  }
+  return /* @__PURE__ */ jsx(Text, { style: styles.bodyTight, children: raw });
 }
-function rentFrequencyWord(freq) {
-  if (freq === "weekly") return "week";
-  if (freq === "fortnightly") return "fortnight";
-  return "month";
+function ClauseChunkBody({ text }) {
+  const lines = text.split(/\n/);
+  return /* @__PURE__ */ jsx(View, { children: lines.map((line, i) => /* @__PURE__ */ jsx(ClauseLine, { line }, i)) });
 }
-function rentAmountForFrequency(weeklyRent, platformFeePercent, totalWeekly, freq) {
-  if (freq === "weekly") {
+function NotesBody({ text }) {
+  const lines = text.split(/\n/);
+  return /* @__PURE__ */ jsx(View, { children: lines.map((line, i) => {
+    const t = line.trimEnd();
+    if (!t.trim()) return /* @__PURE__ */ jsx(View, { style: { height: 3 } }, i);
+    const head = /^(\d+)\.\s+(.+)$/.exec(t.trim());
+    if (head && head[2] && /^[A-Z]/.test(head[2])) {
+      return /* @__PURE__ */ jsx(Text, { style: { ...styles.bodyTight, marginTop: i > 0 ? 6 : 0 }, children: /* @__PURE__ */ jsx(Text, { style: styles.labelBold, children: `${head[1]}. ${head[2]}` }) }, i);
+    }
+    if (t.trim().startsWith("- ")) {
+      return /* @__PURE__ */ jsx(Text, { style: styles.bodyTight, children: t }, i);
+    }
+    return /* @__PURE__ */ jsx(Text, { style: styles.bodyTight, children: t }, i);
+  }) });
+}
+function Field({ label, children }) {
+  return /* @__PURE__ */ jsx(View, { style: styles.fieldRow, wrap: false, children: /* @__PURE__ */ jsxs(Text, { style: styles.body, children: [
+    /* @__PURE__ */ jsx(Text, { style: styles.labelBold, children: label }),
+    " ",
+    /* @__PURE__ */ jsx(Text, { style: styles.value, children })
+  ] }) });
+}
+function Checkbox({ checked }) {
+  return /* @__PURE__ */ jsx(View, { style: styles.checkboxBox, children: checked ? /* @__PURE__ */ jsx(Text, { style: styles.checkboxMark, children: "\u2713" }) : null });
+}
+function CheckboxLine({ checked, label }) {
+  return /* @__PURE__ */ jsxs(View, { style: styles.checkboxRow, wrap: false, children: [
+    /* @__PURE__ */ jsx(Checkbox, { checked }),
+    /* @__PURE__ */ jsx(Text, { style: styles.body, children: /* @__PURE__ */ jsx(Text, { style: styles.value, children: label }) })
+  ] });
+}
+function normalizeLeaseDescription(s) {
+  return s.toLowerCase().replace(/[\u2013\u2014]/g, "-").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+}
+function wholeMonthsBetweenStartAndEnd(startIso, endIso) {
+  const a = startIso.slice(0, 10);
+  const b = endIso.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(a) || !/^\d{4}-\d{2}-\d{2}$/.test(b)) return null;
+  const [y1, m1, d1] = a.split("-").map(Number);
+  const [y2, m2, d2] = b.split("-").map(Number);
+  if (![y1, m1, d1, y2, m2, d2].every((n) => Number.isFinite(n))) return null;
+  const t1 = Date.UTC(y1, m1 - 1, d1);
+  const t2 = Date.UTC(y2, m2 - 1, d2);
+  if (t2 <= t1) return null;
+  let months = (y2 - y1) * 12 + (m2 - m1);
+  if (d2 < d1) months -= 1;
+  return months >= 1 ? months : 1;
+}
+function termChecksFromMonthBucket(months, otherText) {
+  const base = {
+    m6: false,
+    m12: false,
+    y2: false,
+    y3: false,
+    y5: false,
+    periodic: false,
+    other: false,
+    otherText: null
+  };
+  if (months <= 3) {
     return {
-      rent: weeklyRent,
-      platformFee: weeklyRent * platformFeePercent / 100,
-      total: totalWeekly
+      ...base,
+      other: true,
+      otherText: otherText ?? `${months} month${months === 1 ? "" : "s"}`
     };
   }
-  if (freq === "fortnightly") {
+  if (months <= 8) return { ...base, m6: true };
+  if (months <= 15) return { ...base, m12: true };
+  if (months <= 27) return { ...base, y2: true };
+  if (months <= 45) return { ...base, y3: true };
+  return { ...base, y5: true };
+}
+function termCheckState(periodic, leaseLengthDescription, startDate, endDate) {
+  if (periodic) {
     return {
-      rent: weeklyRent * 2,
-      platformFee: weeklyRent * platformFeePercent / 100 * 2,
-      total: totalWeekly * 2
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: true,
+      other: false,
+      otherText: null
     };
   }
-  const m = 52 / 12;
+  const trimmedDesc = leaseLengthDescription.trim();
+  const d = normalizeLeaseDescription(trimmedDesc);
+  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: true,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b5\s*years?\b|\b5\s*yrs?\b|\b60\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: true,
+      periodic: false,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b3\s*years?\b|\b3\s*yrs?\b|\b36\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: true,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b2\s*years?\b|\b2\s*yrs?\b|\b24\s*months?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: true,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b12\s*months?\b|\b1\s*year\b|\b1\s*yr\b|\b52\s*weeks?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: true,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b6\s*months?\b|\b26\s*weeks?\b/.test(d)) {
+    return {
+      m6: true,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: false,
+      otherText: null
+    };
+  }
+  if (/\b3\s*months?\b|\b13\s*weeks?\b/.test(d)) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: true,
+      otherText: trimmedDesc || "3 months"
+    };
+  }
+  const monthsFromDates = endDate && startDate ? wholeMonthsBetweenStartAndEnd(startDate, endDate) : null;
+  if (monthsFromDates != null) {
+    return termChecksFromMonthBucket(monthsFromDates, trimmedDesc || null);
+  }
+  const generic = d === "as agreed" || d === "" || d === "fixed term";
+  if (generic) {
+    return {
+      m6: false,
+      m12: false,
+      y2: false,
+      y3: false,
+      y5: false,
+      periodic: false,
+      other: true,
+      otherText: trimmedDesc || null
+    };
+  }
   return {
-    rent: Math.round(weeklyRent * m * 100) / 100,
-    platformFee: Math.round(weeklyRent * platformFeePercent / 100 * m * 100) / 100,
-    total: Math.round(totalWeekly * m * 100) / 100
+    m6: false,
+    m12: false,
+    y2: false,
+    y3: false,
+    y5: false,
+    periodic: false,
+    other: true,
+    otherText: trimmedDesc || null
   };
 }
-function tradeLine(v) {
-  if (v == null || !v.trim()) return "\u2014";
-  return v.trim();
-}
-function bulletValue(lines) {
-  return /* @__PURE__ */ jsx2(View2, { children: lines.map((line, i) => /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.dataValueBold, children: [
-    "\u2022 ",
-    line
-  ] }, i)) });
-}
-function ScheduleBlock(props) {
-  const {
-    landlord,
-    tenant,
-    additionalTenantNames,
-    premises,
-    premisesPartDescription,
-    additionalPremisesInclusions,
-    maxOccupantsPermitted,
-    term,
-    rent,
-    bond,
-    landlordAgent,
-    urgentRepairsTradespeople,
-    electronicService,
-    specialConditions,
-    bookingNotes
-  } = props;
-  const landlordDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
-  const endDateText = term.periodic || !term.endDate ? "Periodic tenancy (no fixed end date)" : formatAuDate(term.endDate);
-  const rentParts = rentAmountForFrequency(
-    rent.weeklyRent,
-    rent.platformFeePercent,
-    rent.totalWeekly,
-    rent.rentFrequency
-  );
-  const bondText = bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : "\u2014";
-  const t2 = additionalTenantNames[0]?.trim() ?? "";
-  const t3 = additionalTenantNames[1]?.trim() ?? "";
-  const t4 = additionalTenantNames[2]?.trim() ?? "";
-  const inclusions = additionalPremisesInclusions.length > 0 ? additionalPremisesInclusions : ["\u2014"];
-  const partiesRows = [
-    { label: "Landlord:", value: landlordDisplay },
-    { label: "Landlord address for service:", value: landlord.addressLine },
-    { label: "Landlord email:", value: landlord.email },
-    { label: "Landlord phone:", value: landlord.phone }
-  ];
-  if (landlordAgent) {
-    partiesRows.push(
-      { label: "Landlord's agent:", value: landlordAgent.name },
-      { label: "Agent licence number:", value: landlordAgent.licenseNumber?.trim() || "\u2014" },
-      { label: "Agent business address:", value: landlordAgent.businessAddress },
-      { label: "Agent phone:", value: landlordAgent.phone },
-      { label: "Agent email:", value: landlordAgent.email?.trim() || "\u2014" }
-    );
-  } else {
-    partiesRows.push({ label: "Landlord's agent:", value: "Not applicable" });
-  }
-  partiesRows.push(
-    { label: "Tenant (1):", value: tenant.fullName },
-    { label: "Tenant email:", value: tenant.email },
-    { label: "Tenant phone:", value: tenant.phone }
-  );
-  if (tenant.dateOfBirth) {
-    partiesRows.push({ label: "Tenant date of birth:", value: formatAuDate(tenant.dateOfBirth) });
-  }
-  partiesRows.push(
-    { label: "Tenant (2):", value: t2 || "\u2014" },
-    { label: "Tenant (3):", value: t3 || "\u2014" },
-    { label: "Tenant (4):", value: t4 || "\u2014" }
-  );
-  const premisesRows = [
-    { label: "Residential premises (address):", value: premises.addressLine },
-    { label: "Part of premises only (if applicable):", value: premisesPartDescription?.trim() || "\u2014" },
-    {
-      label: "Additional things included with residential premises:",
-      value: bulletValue(inclusions)
-    },
-    {
-      label: "Maximum occupants permitted:",
-      value: maxOccupantsPermitted != null && Number.isFinite(maxOccupantsPermitted) ? String(maxOccupantsPermitted) : "\u2014"
-    },
-    { label: "Property type:", value: premises.propertyType ?? "\u2014" },
-    { label: "Room type:", value: premises.roomType ?? "\u2014" },
-    { label: "Furnished:", value: furnishedText(premises.furnished) },
-    { label: "Linen supplied:", value: furnishedText(premises.linenSupplied) },
-    { label: "Weekly cleaning service:", value: furnishedText(premises.weeklyCleaningService) }
-  ];
-  const termRentRows = [
-    { label: "Commencement date:", value: formatAuDate(term.startDate) },
-    { label: "End date (fixed term) / tenancy type:", value: endDateText },
-    { label: "Lease length (description):", value: term.leaseLengthDescription },
-    {
-      label: `Rent amount (per ${rentFrequencyWord(rent.rentFrequency)}):`,
-      value: formatMoney(rentParts.rent)
-    },
-    {
-      label: `Platform fee (${rent.platformFeePercent}%):`,
-      value: formatMoney(rentParts.platformFee)
-    },
-    {
-      label: `Total payable per ${rentFrequencyWord(rent.rentFrequency)}:`,
-      value: formatMoney(rentParts.total)
-    },
-    { label: "Rent payment timing:", value: rent.paymentTimingDescription },
-    { label: "Rent payment method:", value: rent.paymentMethod },
-    { label: "Rental bond:", value: bondText }
-  ];
-  const consentCheckbox = (checked) => /* @__PURE__ */ jsxs2(View2, { style: { flexDirection: "row", alignItems: "center" }, children: [
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.checkboxOuter }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.checkboxLabel, children: consentText(checked) })
+function QuniTopHeader({
+  documentId,
+  generatedAt,
+  logoPath
+}) {
+  return /* @__PURE__ */ jsxs(View, { style: styles.quniHeader, children: [
+    logoPath ? /* @__PURE__ */ jsx(Image, { src: logoPath, style: styles.logo }) : /* @__PURE__ */ jsx(Text, { style: { fontSize: 11, fontFamily: "Helvetica-Bold", color: "#0f2744", marginRight: 12 }, children: "Quni" }),
+    /* @__PURE__ */ jsxs(View, { style: styles.headerTitleCol, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.headerTitle, children: "Residential Tenancy Agreement" }),
+      /* @__PURE__ */ jsx(Text, { style: styles.headerSubtitle, children: "NSW \xB7 Residential Tenancies Act 2010" }),
+      /* @__PURE__ */ jsxs(Text, { style: styles.docMetaLine, children: [
+        "Document ID: ",
+        documentId,
+        " \xB7 Generated ",
+        generatedAt
+      ] })
+    ] })
   ] });
-  const otherRows = [
-    {
-      label: "Urgent repairs \u2014 tradesperson (electrician):",
-      value: tradeLine(urgentRepairsTradespeople.electrician)
-    },
-    {
-      label: "Urgent repairs \u2014 tradesperson (plumber):",
-      value: tradeLine(urgentRepairsTradespeople.plumber)
-    },
-    {
-      label: "Urgent repairs \u2014 tradesperson (other):",
-      value: tradeLine(urgentRepairsTradespeople.other)
-    },
-    {
-      label: "Landlord email for electronic service of notices:",
-      value: electronicService.landlordEmail
-    },
-    {
-      label: "Tenant email for electronic service of notices:",
-      value: electronicService.tenantEmail
-    },
-    {
-      label: "Landlord consents to electronic service (clause 50):",
-      value: consentCheckbox(electronicService.landlordConsentsToEmailService)
-    },
-    {
-      label: "Tenant consents to electronic service (clause 50):",
-      value: consentCheckbox(electronicService.tenantConsentsToEmailService)
-    },
-    {
-      label: "Special conditions (additional terms):",
-      value: specialConditions.length > 0 ? bulletValue(specialConditions) : /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: "\u2014" })
-    }
-  ];
-  if (bookingNotes) {
-    otherRows.push({ label: "Booking notes:", value: bookingNotes });
-  }
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginTop: 4, marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Parties" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: partiesRows }),
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Premises" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: premisesRows }),
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: "Term, rent and bond" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: termRentRows }),
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 4, title: "Contacts, consent and special conditions" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: otherRows })
-  ] });
+}
+function PageFooter({ documentId, pageNumber }) {
+  return /* @__PURE__ */ jsx(View, { style: styles.footerRow, children: /* @__PURE__ */ jsxs(Text, { children: [
+    documentId,
+    " \xB7 Page ",
+    pageNumber
+  ] }) });
 }
 function SignaturesBlock(props) {
-  const landlordDisplay = props.landlord.companyName ? `${props.landlord.fullName} (${props.landlord.companyName})` : props.landlord.fullName;
-  const t2 = props.additionalTenantNames[0]?.trim() ?? "";
-  const t3 = props.additionalTenantNames[1]?.trim() ?? "";
-  const t4 = props.additionalTenantNames[2]?.trim() ?? "";
-  const sigBanner = "========================================\nSIGNATURES\n========================================\n\nSIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:";
+  const landlordName = props.landlord.fullName;
+  const landlordSignIntro = "SIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:";
   const lisHeadingAndBody = "LANDLORD INFORMATION STATEMENT\nThe landlord acknowledges that, at or before the time of signing this residential tenancy agreement, the landlord has read and understood the contents of the Landlord Information Statement published by NSW Fair Trading that sets out the landlord's rights and obligations.\n\nSignature of landlord:";
   const tenant1Banner = "\nSIGNED BY THE TENANT (1)\nName of tenant:";
-  const tenant2Banner = "\nSIGNED BY THE TENANT (2)\nName of tenant:";
-  const tenant3Banner = "\nSIGNED BY THE TENANT (3)\nName of tenant:";
-  const tenant4Banner = "\nSIGNED BY THE TENANT (4)\nName of tenant:";
   const tisHeadingAndBody = "TENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was given a copy of the Tenant Information Statement published by NSW Fair Trading.\n\nSignature of tenant:";
   const contactFooter = "For information about your rights and obligations as a landlord or tenant, contact:\n(a) NSW Fair Trading on 13 32 20 or nsw.gov.au/fair-trading or\n(b) Law Access NSW on 1300 888 529 or lawaccess.nsw.gov.au or\n(c) your local Tenants Advice and Advocacy Service at tenants.org.au";
-  return /* @__PURE__ */ jsxs2(View2, { children: [
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: sigBanner }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: landlordDisplay }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Signature of landlord: " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Landlord Signature;role=First Party;type=signature}}" })
+  return /* @__PURE__ */ jsxs(View, { children: [
+    /* @__PURE__ */ jsx(Text, { style: styles.sectionHeading, children: "Signatures" }),
+    /* @__PURE__ */ jsx(Text, { style: styles.body, children: landlordSignIntro }),
+    /* @__PURE__ */ jsx(Text, { style: styles.value, children: landlordName }),
+    /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of landlord: " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Landlord Signature;role=First Party;type=signature}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Landlord Sign Date " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Landlord Sign Date;role=First Party;type=date}}" })
+    /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Landlord Sign Date " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Landlord Sign Date;role=First Party;type=date}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: lisHeadingAndBody }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { children: " " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Landlord LIS Signature;role=First Party;type=signature}}" })
+    /* @__PURE__ */ jsx(Text, { style: styles.body, children: lisHeadingAndBody }),
+    /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Landlord LIS Signature;role=First Party;type=signature}}" }) }),
+    /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Landlord LIS Date " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Landlord LIS Date;role=First Party;type=date}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Landlord LIS Date " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Landlord LIS Date;role=First Party;type=date}}" })
+    /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant1Banner }),
+    /* @__PURE__ */ jsx(Text, { style: styles.value, children: props.tenant.fullName }),
+    /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant Signature;role=Second Party;type=signature}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: tenant1Banner }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: props.tenant.fullName }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Signature of tenant: " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Tenant Signature;role=Second Party;type=signature}}" })
+    /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Tenant Sign Date " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant Sign Date;role=Second Party;type=date}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Tenant Sign Date " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Tenant Sign Date;role=Second Party;type=date}}" })
+    /* @__PURE__ */ jsx(Text, { style: styles.body, children: tisHeadingAndBody }),
+    /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant TIS Signature;role=Second Party;type=signature}}" }) }),
+    /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Tenant TIS Date " }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant TIS Date;role=Second Party;type=date}}" })
     ] }) }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: tenant2Banner }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: t2 }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigLabelRow, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature of tenant:" }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: tenant3Banner }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: t3 }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigLabelRow, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature of tenant:" }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: tenant4Banner }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: t4 }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigLabelRow, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature of tenant:" }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: tisHeadingAndBody }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { children: " " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Tenant TIS Signature;role=Second Party;type=signature}}" })
-    ] }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigBorderBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Tenant TIS Date " }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Tenant TIS Date;role=Second Party;type=date}}" })
-    ] }) }),
-    /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.noteBox, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.noteItalicMuted, children: contactFooter }) })
+    /* @__PURE__ */ jsx(Text, { style: { ...styles.body, marginTop: 12, fontSize: 9, lineHeight: 1.5 }, children: contactFooter })
   ] });
 }
 function NswResidentialTenancyAgreement(props) {
-  const { documentId, generatedAt } = props;
-  const clauseChunks = chunkText(FT6600_CLAUSES_1_TO_55, 2700);
-  const notesChunks = chunkText(FT6600_NOTES, 3200);
-  return /* @__PURE__ */ jsxs2(Document, { children: [
-    /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
-        OccupancyMatchFixedHeader,
+  const logoPath = resolveQuniLogoPath();
+  const { documentId, generatedAt, landlord, tenant, premises, term, rent, bond, landlordAgent } = props;
+  const urgent = props.urgentRepairsTradespeople;
+  const es = props.electronicService;
+  const importantBody = extractImportantFourPoints();
+  const madeOn = agreementMadeOnFromGeneratedAt(generatedAt);
+  const atSuburb = suburbFromAddressLine(premises.addressLine);
+  const checks = termCheckState(term.periodic, term.leaseLengthDescription, term.startDate, term.endDate);
+  const rentWeekday = rentDueWeekdayFromCommencement(term.startDate);
+  const weeklyRentDisplay = formatMoney(rent.weeklyRent);
+  const bondDisplay = bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : null;
+  const inclusions = props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean);
+  const maxOcc = props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted) ? String(props.maxOccupantsPermitted) : null;
+  const elecLine = (v) => v && v.trim() ? v.trim() : "";
+  const endDateText = term.periodic || !term.endDate ? null : formatAuDate(term.endDate);
+  const clauseChunks = chunkText(FT6600_CLAUSES_1_TO_55, 2600);
+  const rawNotesChunks = chunkText(FT6600_NOTES, 3e3);
+  const notesChunks = rawNotesChunks.map((c, i) => i === 0 ? stripNotesAsciiBanner(c) : c);
+  let pageNum = 0;
+  const nextPage = () => {
+    pageNum += 1;
+    return pageNum;
+  };
+  const pages = [];
+  pages.push(
+    /* @__PURE__ */ jsxs(Page, { size: "A4", style: styles.page, children: [
+      /* @__PURE__ */ jsx(QuniTopHeader, { documentId, generatedAt, logoPath }),
+      /* @__PURE__ */ jsx(Text, { style: styles.formRefLine, children: FT_FORM_REFERENCE }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sectionHeading, children: "Important information" }),
+      /* @__PURE__ */ jsx(Text, { style: styles.importantIntro, children: importantBody }),
+      /* @__PURE__ */ jsxs(Text, { style: styles.body, children: [
+        /* @__PURE__ */ jsx(Text, { style: styles.labelBold, children: "THIS AGREEMENT WAS MADE ON: " }),
+        madeOn,
+        /* @__PURE__ */ jsx(Text, { style: styles.labelBold, children: " AT: " }),
+        atSuburb
+      ] }),
+      /* @__PURE__ */ jsx(Text, { style: styles.sectionHeading, children: "Between" }),
+      /* @__PURE__ */ jsx(Field, { label: "Landlord Name (1):", children: landlord.fullName }),
+      /* @__PURE__ */ jsx(
+        Field,
         {
-          documentTitle: "Residential Tenancy Agreement",
-          subtitle: "NSW \xB7 Residential Tenancies Act 2010"
+          label: "Landlord telephone number or other contact details:",
+          children: landlord.phone
         }
       ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "rta" }),
-      /* @__PURE__ */ jsx2(QuniRtaMarginStamp, {}),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: FT6600_TITLE_AND_IMPORTANT }),
-      /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.hRuleLight }),
-      /* @__PURE__ */ jsx2(ScheduleBlock, { ...props })
-    ] }),
-    /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
-        OccupancyMatchFixedHeader,
+      /* @__PURE__ */ jsx(Field, { label: "Business or residential address of landlord(s) for service of notices:", children: landlord.addressLine }),
+      /* @__PURE__ */ jsx(Field, { label: "Tenant Name (1):", children: tenant.fullName }),
+      tenant.addressForServiceLine ? /* @__PURE__ */ jsx(Field, { label: "Tenant's address for service of notices:", children: tenant.addressForServiceLine }) : null,
+      /* @__PURE__ */ jsx(Field, { label: "Contact details:", children: `Phone: ${tenant.phone} \xB7 Email: ${tenant.email}` }),
+      landlordAgent ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Landlord's agent details" }),
+        /* @__PURE__ */ jsx(Field, { label: "Agent name:", children: landlordAgent.name }),
+        /* @__PURE__ */ jsx(Field, { label: "Business address for service of notices:", children: landlordAgent.businessAddress }),
+        /* @__PURE__ */ jsx(
+          Field,
+          {
+            label: "Contact details:",
+            children: `Phone: ${landlordAgent.phone}${landlordAgent.email ? ` \xB7 Email: ${landlordAgent.email}` : ""}`
+          }
+        )
+      ] }) : /* @__PURE__ */ jsx(Field, { label: "Landlord's agent:", children: "Not applicable" }),
+      /* @__PURE__ */ jsx(PageFooter, { documentId, pageNumber: nextPage() })
+    ] }, "p1")
+  );
+  pages.push(
+    /* @__PURE__ */ jsxs(Page, { size: "A4", style: styles.page, children: [
+      /* @__PURE__ */ jsx(QuniTopHeader, { documentId, generatedAt, logoPath }),
+      /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Term of agreement" }),
+      /* @__PURE__ */ jsxs(View, { style: { marginBottom: 6 }, children: [
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.m6, label: "6 months" }),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.m12, label: "12 months" }),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.y2, label: "2 years" }),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.y3, label: "3 years" }),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.y5, label: "5 years" }),
+        /* @__PURE__ */ jsxs(View, { style: styles.checkboxRow, wrap: false, children: [
+          /* @__PURE__ */ jsx(Checkbox, { checked: checks.other }),
+          /* @__PURE__ */ jsxs(Text, { style: styles.body, children: [
+            /* @__PURE__ */ jsx(Text, { style: styles.value, children: "Other (please specify): " }),
+            checks.other && checks.otherText ? /* @__PURE__ */ jsx(Text, { style: styles.value, children: checks.otherText }) : null
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: checks.periodic, label: "Periodic (no end date)" })
+      ] }),
+      /* @__PURE__ */ jsx(Field, { label: "Starting on:", children: formatAuDate(term.startDate) }),
+      endDateText ? /* @__PURE__ */ jsx(Field, { label: "Ending on:", children: endDateText }) : null,
+      /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Residential premises" }),
+      /* @__PURE__ */ jsx(Field, { label: "The residential premises are:", children: premises.addressLine }),
+      inclusions.length > 0 ? /* @__PURE__ */ jsx(Field, { label: "The residential premises include:", children: inclusions.join("; ") }) : null,
+      /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Rent" }),
+      /* @__PURE__ */ jsx(Field, { label: "The rent is:", children: weeklyRentDisplay }),
+      /* @__PURE__ */ jsx(CheckboxLine, { checked: rent.rentFrequency === "weekly", label: "Rent must be paid per: week" }),
+      /* @__PURE__ */ jsx(Field, { label: "Day rent must be paid:", children: rentWeekday }),
+      /* @__PURE__ */ jsx(Field, { label: "Date first rent payment is due:", children: formatAuDate(term.startDate) }),
+      /* @__PURE__ */ jsx(Text, { style: { ...styles.body, marginTop: 4, marginBottom: 2 }, children: "Rent must be paid by:" }),
+      /* @__PURE__ */ jsx(CheckboxLine, { checked: false, label: "approved electronic bank transfer (such as direct debit, bank transfer or BPAY)" }),
+      /* @__PURE__ */ jsx(CheckboxLine, { checked: false, label: "Centrepay" }),
+      /* @__PURE__ */ jsx(CheckboxLine, { checked: true, label: "Other" }),
+      /* @__PURE__ */ jsx(Field, { label: "Details of payment method:", children: RENT_OTHER_DETAIL }),
+      bondDisplay ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Rental bond" }),
+        /* @__PURE__ */ jsx(Field, { label: "A rental bond of:", children: `${bondDisplay} must be paid by the tenant on signing this agreement.` }),
+        /* @__PURE__ */ jsx(
+          CheckboxLine,
+          {
+            checked: true,
+            label: "The tenant provided the rental bond amount to: the landlord or another person"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          CheckboxLine,
+          {
+            checked: false,
+            label: "The tenant provided the rental bond amount to: the landlord's agent"
+          }
+        ),
+        /* @__PURE__ */ jsx(CheckboxLine, { checked: false, label: "NSW Fair Trading through Rental Bond Online." })
+      ] }) : null,
+      /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Important information" }),
+      maxOcc ? /* @__PURE__ */ jsx(
+        Field,
         {
-          documentTitle: "Residential Tenancy Agreement",
-          subtitle: "NSW \xB7 Residential Tenancies Act 2010"
+          label: "Maximum number of occupants:",
+          children: `No more than ${maxOcc} persons may ordinarily live in the premises at any one time.`
+        }
+      ) : null,
+      /* @__PURE__ */ jsx(Text, { style: { ...styles.body, fontFamily: "Helvetica-Bold", marginTop: 4 }, children: "Urgent repairs" }),
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Nominated tradespeople for urgent repairs" }),
+      elecLine(urgent.electrician) ? /* @__PURE__ */ jsx(Field, { label: "Electrical repairs:", children: urgent.electrician }) : null,
+      elecLine(urgent.plumber) ? /* @__PURE__ */ jsx(Field, { label: "Plumbing repairs:", children: urgent.plumber }) : null,
+      elecLine(urgent.other) ? /* @__PURE__ */ jsx(Field, { label: "Other repairs:", children: urgent.other }) : null,
+      /* @__PURE__ */ jsx(Field, { label: "Will the tenant be required to pay separately for water usage?", children: "No" }),
+      /* @__PURE__ */ jsx(Field, { label: "Is electricity supplied to the premises from an embedded network?", children: "No" }),
+      /* @__PURE__ */ jsx(Field, { label: "Is gas supplied to the premises from an embedded network?", children: "No" }),
+      /* @__PURE__ */ jsx(
+        Field,
+        {
+          label: "Smoke alarms:",
+          children: "Battery operated smoke alarms"
         }
       ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "rta" }),
-      /* @__PURE__ */ jsx2(QuniRtaMarginStamp, {}),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: FT6600_AGREEMENT_HEADER }),
-      clauseChunks[0] ? /* @__PURE__ */ jsx2(OccupancyMatchClauseChunk, { text: clauseChunks[0] }) : null
-    ] }),
-    clauseChunks.slice(1).map((chunk, i) => /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
-        OccupancyMatchFixedHeader,
-        {
-          documentTitle: "Residential Tenancy Agreement",
-          subtitle: "NSW \xB7 Residential Tenancies Act 2010"
-        }
-      ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "rta" }),
-      /* @__PURE__ */ jsx2(QuniRtaMarginStamp, {}),
-      /* @__PURE__ */ jsx2(OccupancyMatchClauseChunk, { text: chunk })
-    ] }, `clause-${i}`)),
-    notesChunks.map((chunk, i) => /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
-        OccupancyMatchFixedHeader,
-        {
-          documentTitle: "Residential Tenancy Agreement",
-          subtitle: "NSW \xB7 Residential Tenancies Act 2010"
-        }
-      ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "rta" }),
-      /* @__PURE__ */ jsx2(QuniRtaMarginStamp, {}),
-      /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.noteBox, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.noteItalicMuted, children: chunk }) })
-    ] }, `notes-${i}`)),
-    /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
-        OccupancyMatchFixedHeader,
-        {
-          documentTitle: "Residential Tenancy Agreement",
-          subtitle: "NSW \xB7 Residential Tenancies Act 2010"
-        }
-      ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "rta" }),
-      /* @__PURE__ */ jsx2(QuniRtaMarginStamp, {}),
-      /* @__PURE__ */ jsx2(SignaturesBlock, { ...props })
-    ] })
-  ] });
+      /* @__PURE__ */ jsx(Field, { label: "Are there any strata or community scheme by-laws applicable to the residential premises?", children: "No" }),
+      /* @__PURE__ */ jsx(Text, { style: { ...styles.body, fontFamily: "Helvetica-Bold", marginTop: 8 }, children: "Giving notices and other documents electronically" }),
+      /* @__PURE__ */ jsx(Field, { label: "Landlord \u2014 express consent to electronic service?", children: es.landlordConsentsToEmailService ? "Yes" : "No" }),
+      es.landlordConsentsToEmailService ? /* @__PURE__ */ jsx(Field, { label: "Landlord email for electronic service:", children: es.landlordEmail }) : null,
+      /* @__PURE__ */ jsx(Field, { label: "Tenant \u2014 express consent to electronic service?", children: es.tenantConsentsToEmailService ? "Yes" : "No" }),
+      es.tenantConsentsToEmailService ? /* @__PURE__ */ jsx(Field, { label: "Tenant email for electronic service:", children: es.tenantEmail }) : null,
+      /* @__PURE__ */ jsx(Text, { style: { ...styles.subHeading, marginTop: 10 }, children: "Condition report" }),
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: CONDITION_REPORT_VERBATIM }),
+      /* @__PURE__ */ jsx(Text, { style: { ...styles.subHeading, marginTop: 8 }, children: "Tenancy laws" }),
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: TENANCY_LAWS_VERBATIM }),
+      /* @__PURE__ */ jsx(PageFooter, { documentId, pageNumber: nextPage() })
+    ] }, "p2")
+  );
+  clauseChunks.forEach((chunk, i) => {
+    pages.push(
+      /* @__PURE__ */ jsxs(Page, { size: "A4", style: styles.page, children: [
+        /* @__PURE__ */ jsx(QuniTopHeader, { documentId, generatedAt, logoPath }),
+        i === 0 ? /* @__PURE__ */ jsx(Text, { style: styles.sectionHeading, children: "The agreement" }) : null,
+        /* @__PURE__ */ jsx(ClauseChunkBody, { text: chunk }),
+        /* @__PURE__ */ jsx(PageFooter, { documentId, pageNumber: nextPage() })
+      ] }, `clause-${i}`)
+    );
+  });
+  notesChunks.forEach((chunk, i) => {
+    pages.push(
+      /* @__PURE__ */ jsxs(Page, { size: "A4", style: styles.page, children: [
+        /* @__PURE__ */ jsx(QuniTopHeader, { documentId, generatedAt, logoPath }),
+        i === 0 ? /* @__PURE__ */ jsx(Text, { style: styles.sectionHeading, children: "Notes" }) : null,
+        /* @__PURE__ */ jsx(NotesBody, { text: chunk }),
+        /* @__PURE__ */ jsx(PageFooter, { documentId, pageNumber: nextPage() })
+      ] }, `notes-${i}`)
+    );
+  });
+  pages.push(
+    /* @__PURE__ */ jsxs(Page, { size: "A4", style: styles.page, children: [
+      /* @__PURE__ */ jsx(QuniTopHeader, { documentId, generatedAt, logoPath }),
+      /* @__PURE__ */ jsx(SignaturesBlock, { ...props }),
+      /* @__PURE__ */ jsx(PageFooter, { documentId, pageNumber: nextPage() })
+    ] }, "sig")
+  );
+  return /* @__PURE__ */ jsx(Document, { children: pages });
 }
 export {
   NswResidentialTenancyAgreement
