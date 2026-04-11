@@ -14,6 +14,7 @@ import {
   type UniversityReferenceRow,
 } from '../../lib/universityCampusReference'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../../lib/propertyListingDateWindow'
 
 function propertyMatchesUniversityForCount(
   p: {
@@ -61,10 +62,10 @@ export default function StudentAccommodationIndex() {
     let cancelled = false
     ;(async () => {
       setCountsLoading(true)
-      const { data, error } = await supabase
-        .from('properties')
-        .select('university_id, suburb, latitude, longitude')
-        .eq('status', 'active')
+      const { data, error } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select('university_id, suburb, latitude, longitude'),
+        listingIsoDateUtc(),
+      ).eq('status', 'active')
       if (cancelled) return
       if (error) {
         console.error(error)

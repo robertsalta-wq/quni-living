@@ -20,6 +20,7 @@ const reactPdfExternals = ['react', 'react/jsx-runtime', '@react-pdf/renderer']
 
 const bundleJobs = [
   {
+    /** Source of truth for FT6600 PDF — not `NswResidentialTenancyAgreement_legacy.tsx`. */
     inFile: 'src/lib/documents/NswResidentialTenancyAgreement.tsx',
     outFile: 'api/documents/NswResidentialTenancyAgreement.js',
   },

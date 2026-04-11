@@ -1,127 +1,85 @@
-import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
+import { ORGANIZATION_EMAIL } from '../lib/site'
 
-const STORY_IMAGE =
-  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800'
+const PUBLIC_SITE_LABEL = 'quni.com.au'
+const PUBLIC_SITE_URL = 'https://quni.com.au'
 
 export default function About() {
+
   return (
     <>
       <Seo
         title="About Quni Living"
-        description="Quni Living connects students with verified landlords across Australia. Our mission is simpler, safer, more affordable student accommodation."
+        description="Quni Living is a rental platform built for compatibility, reliability, and fair outcomes for landlords and tenants — founded by Quinn Lee in Sydney, NSW."
         canonicalPath="/about"
       />
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-white">
-      <PageHeroBand
-        title="About Quni Living"
-        subtitle="We're on a mission to make student accommodation simpler, safer and more affordable across Australia."
-      />
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-white">
+        <PageHeroBand
+          title="About Quni Living"
+          subtitle="Built for landlords and tenants who expect more"
+        />
 
-      <section className="max-w-site mx-auto px-6 py-14 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-          <div className="space-y-4 text-gray-700 leading-relaxed order-2 lg:order-1">
-            <h2 className="font-display text-2xl font-bold text-gray-900">Our Story</h2>
-            <p>
-              Quni Living was founded with a simple idea — finding student accommodation shouldn&apos;t be stressful. We
-              connect students with verified landlords across Sydney, making it easy to find a home near your university.
-            </p>
-            <p>
-              Whether you&apos;re a domestic student moving out for the first time or an international student arriving in
-              Australia, Quni Living is here to help you settle in and focus on what matters — your studies.
-            </p>
-          </div>
-          <div className="order-1 lg:order-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-            <img src={STORY_IMAGE} alt="" className="w-full h-full object-cover aspect-[4/3] lg:aspect-auto lg:min-h-[320px]" />
-          </div>
-        </div>
-      </section>
+        <article className="max-w-site mx-auto w-full px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <div className="mx-auto max-w-3xl space-y-16 text-gray-700">
+            <section className="space-y-4 leading-relaxed">
+              <h2 className="font-display text-2xl font-bold text-gray-900">About Quinn Lee</h2>
+              <p className="font-semibold text-gray-900">Founder, Quni Living · Sydney, NSW</p>
+              <p>
+                Quinn Lee built Quni Living because she knew there was a better way.
+              </p>
+              <p>
+                As a Sydney-based property investor managing her own portfolio of room-by-room rentals, Quinn
+                experienced firsthand what neither side of the market was getting right. Landlords were stuck with
+                generic platforms that sent unvetted enquiries and zero support. Students and young professionals were
+                navigating a fragmented, stressful search with no structure and no trust layer. The gap between them was
+                obvious and fixable.
+              </p>
+              <p>
+                Quni Living is her answer to that gap. A platform built not just for listings, but for compatibility,
+                reliability, and outcomes. Students find verified homes that suit how they actually live. Landlords
+                access a targeted, trustworthy tenant pool without the friction of traditional property management.
+                Every part of the platform, from AI-assisted tools to NSW-compliant tenancy agreements, reflects
+                Quinn&apos;s belief that the rental experience should be seamless, intentional, and fair for both sides.
+              </p>
+              <p>
+                Quinn brings an unusual combination of strengths to Quni Living: a practical investor&apos;s eye for
+                structure and returns, a deep understanding of Feng Shui and BaZi principles that inform how she thinks
+                about spaces and the people who inhabit them, and the grounded perspective of a mother and entrepreneur
+                who builds things that actually work in the real world.
+              </p>
+              <p>
+                Her approach to property has always been about more than yield. It is about the lived experience, the
+                flow of a space, the fit between a tenant and a home, the small details that make somewhere feel right.
+                Quni Living is the platform that makes that philosophy scalable.
+              </p>
+            </section>
 
-      <section className="bg-gray-50 border-y border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-14 md:py-20">
-          <h2 className="font-display text-2xl font-bold text-gray-900 text-center mb-10">Why choose Quni</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                title: 'Verified Listings',
-                body: 'Every property is reviewed before going live',
-              },
-              {
-                title: 'Near Your University',
-                body: "Listings near Sydney's top universities",
-              },
-              {
-                title: 'Simple Booking',
-                body: 'Enquire and book entirely online',
-              },
-            ].map((card) => (
-              <div
-                key={card.title}
-                className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <h3 className="font-semibold text-gray-900 mb-2">{card.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{card.body}</p>
-              </div>
-            ))}
+            <footer className="border-t border-gray-200 pt-10 text-sm text-gray-600">
+              <p className="leading-relaxed">
+                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="text-gray-900 underline-offset-2 hover:underline">
+                  {ORGANIZATION_EMAIL}
+                </a>
+                <span className="mx-2 text-gray-300" aria-hidden>
+                  |
+                </span>
+                <a
+                  href={PUBLIC_SITE_URL}
+                  className="text-gray-900 underline-offset-2 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {PUBLIC_SITE_LABEL}
+                </a>
+                <span className="mx-2 text-gray-300" aria-hidden>
+                  |
+                </span>
+                <span>Sydney, NSW</span>
+              </p>
+            </footer>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-[#FF6F61] text-white">
-        <div className="max-w-site mx-auto px-6 py-14 md:py-20">
-          <h2 className="font-display text-2xl font-bold text-center mb-10">Our Values</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            {[
-              {
-                title: 'Student First',
-                body: 'Everything we do is designed around the student experience',
-              },
-              {
-                title: 'Transparency',
-                body: 'No hidden fees, no surprises',
-              },
-              {
-                title: 'Community',
-                body: 'Building connections between students and landlords',
-              },
-            ].map((v) => (
-              <div key={v.title}>
-                <h3 className="font-display text-lg font-bold mb-2">{v.title}</h3>
-                <p className="text-sm text-white/95 leading-relaxed">{v.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-site mx-auto px-6 py-14 md:py-16 text-center">
-        <h2 className="font-display text-xl font-bold text-gray-900">Our Team</h2>
-        <p className="mt-2 text-gray-600">Coming soon</p>
-      </section>
-
-      <section className="bg-white border-t border-gray-100">
-        <div className="max-w-site mx-auto px-6 py-14 md:py-20 text-center">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 max-w-xl mx-auto">
-            Ready to find your perfect student home?
-          </h2>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/listings"
-              className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white px-6 py-3 text-sm font-medium hover:opacity-95 transition-opacity"
-            >
-              Browse listings
-            </Link>
-            <Link
-              to="/contact"
-              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-900 text-gray-900 px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
-            >
-              Contact us
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+        </article>
+      </div>
     </>
   )
 }

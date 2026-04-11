@@ -434,7 +434,7 @@ var occupancyMatchPdf = StyleSheet.create({
     borderRightColor: "#FFFFFF"
   },
   sigHeaderCellLast: { flex: 1, paddingVertical: 7, paddingHorizontal: 10 },
-  sigBodyRow: { flexDirection: "row", minHeight: 120 },
+  sigBodyRow: { flexDirection: "row", minHeight: 220 },
   sigCol: {
     flex: 1,
     paddingVertical: 10,
@@ -465,6 +465,27 @@ var occupancyMatchPdf = StyleSheet.create({
     borderColor: "#C4B8A8",
     backgroundColor: "#FAF6EE",
     minHeight: 40,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginBottom: 8
+  },
+  /** DocuSeal field regions — minimum heights for comfortable signing (react-pdf px). */
+  docusealSignatureFieldBox: {
+    marginTop: 6,
+    borderWidth: 0.5,
+    borderColor: "#C4B8A8",
+    backgroundColor: "#FAF6EE",
+    minHeight: 100,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginBottom: 8
+  },
+  docusealDateFieldBox: {
+    marginTop: 6,
+    borderWidth: 0.5,
+    borderColor: "#C4B8A8",
+    backgroundColor: "#FAF6EE",
+    minHeight: 60,
     paddingHorizontal: 6,
     paddingVertical: 4,
     marginBottom: 8
@@ -665,29 +686,25 @@ function SignaturesBlock(props) {
       /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigBodyRow, children: [
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigCol, children: [
           /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: landlordDisplay }),
-          /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Signature;role=First Party;type=signature}}" })
-          ] }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigSpace }),
-          /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          ] }) }),
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Date;role=First Party;type=date}}" })
-          ] }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigSpace })
+          ] }) })
         ] }),
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
           /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: props.tenant.fullName }),
-          /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Signature;role=Second Party;type=signature}}" })
-          ] }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigSpace }),
-          /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          ] }) }),
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Date;role=Second Party;type=date}}" })
-          ] }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigSpace })
+          ] }) })
         ] })
       ] })
     ] })

@@ -70,7 +70,15 @@ async function readErrorBody(res) {
 
 /**
  * Create DocuSeal submission from PDF bytes (base64) and two signers.
- * @param {{ name: string, pdfBase64: string, landlord: {name: string, email: string}, tenant: {name: string, email: string} }} params
+ * @param {{
+ *   name: string,
+ *   pdfBase64?: string,
+ *   documents?: Array<{ name: string, file: string }>,
+ *   landlord: {name: string, email: string},
+ *   tenant: {name: string, email: string},
+ *   submitterSignReason?: boolean
+ * }} params
+ * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
  */
 export async function createDocusealSubmissionFromPdf(params) {
@@ -78,21 +86,40 @@ export async function createDocusealSubmissionFromPdf(params) {
   const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
   if (!token) throw new Error('Missing DOCUSEAL_API_TOKEN')
 
-  const normalizedPdfBase64 = await reencodePdfBase64(params.pdfBase64)
+  let documents
+  if (Array.isArray(params.documents) && params.documents.length > 0) {
+    documents = await Promise.all(
+      params.documents.map(async (d) => ({
+        name: d.name,
+        file: await reencodePdfBase64(d.file),
+      })),
+    )
+  } else {
+    const normalizedPdfBase64 = await reencodePdfBase64(params.pdfBase64)
+    documents = [
+      {
+        name: 'Residential Tenancy Agreement.pdf',
+        file: normalizedPdfBase64,
+      },
+    ]
+  }
+
+  const signReasonOff = params.submitterSignReason === false
+  const submitterFields = (email, name, role) => ({
+    role,
+    email,
+    name,
+    ...(signReasonOff ? { sign_reason: false } : {}),
+  })
 
   const body = {
     name: params.name,
     order: 'preserved',
     send_email: asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
-    documents: [
-      {
-        name: 'Residential Tenancy Agreement.pdf',
-        file: normalizedPdfBase64,
-      },
-    ],
+    documents,
     submitters: [
-      { role: 'Landlord', email: params.landlord.email, name: params.landlord.name },
-      { role: 'Tenant', email: params.tenant.email, name: params.tenant.name },
+      submitterFields(params.landlord.email, params.landlord.name, 'Landlord'),
+      submitterFields(params.tenant.email, params.tenant.name, 'Tenant'),
     ],
   }
 

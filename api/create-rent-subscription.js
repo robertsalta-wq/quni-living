@@ -581,25 +581,45 @@ export default async function handler(req, res) {
         console.error('booking confirmed emails (Resend)', e)
       }
       const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-      const generateLeaseUrl = `${internalApiOrigin()}/api/documents/generate-lease`
       if (!leaseFlowSecret) {
         console.warn(
           '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
         )
         return
       }
+      if (!booking.property_id) {
+        console.warn('[create-rent-subscription] skipping document generate: booking has no property_id')
+        return
+      }
+      const { data: propForDoc, error: propDocErr } = await admin
+        .from('properties')
+        .select('property_type')
+        .eq('id', booking.property_id)
+        .maybeSingle()
+      if (propDocErr) {
+        console.error('load property for document routing', propDocErr)
+      }
+      const pt =
+        !propDocErr && typeof propForDoc?.property_type === 'string'
+          ? propForDoc.property_type.trim()
+          : ''
+      const generatePath =
+        pt === 'private_room_landlord_off_site'
+          ? '/api/documents/generate-residential-tenancy'
+          : '/api/documents/generate-lease'
+      const generateDocUrl = `${internalApiOrigin()}${generatePath}`
       try {
-        const res = await fetch(generateLeaseUrl, {
+        const res = await fetch(generateDocUrl, {
           method: 'POST',
           headers: internalPostHeaders(leaseFlowSecret),
           body: JSON.stringify({ booking_id: booking.id }),
         })
         if (!res.ok) {
           const t = await res.text()
-          console.error('generate-lease failed', res.status, t)
+          console.error(`${generatePath} failed`, res.status, t)
         }
       } catch (e) {
-        console.error('generate-lease trigger', e)
+        console.error(`${generatePath} trigger`, e)
       }
     })()
 

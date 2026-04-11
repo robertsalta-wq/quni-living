@@ -11,6 +11,12 @@
  * - Without `bookingId`: requires `applicantProfileId` + profile fields (dashboard modal); not persisted.
  */
 import { createClient } from '@supabase/supabase-js'
+import {
+  buildBookingFitSummary,
+  formatBookingFitSummaryForPrompt,
+  type BookingFitPropertyInput,
+  type BookingFitStudentInput,
+} from '../lib/bookingFitForAssessment.js'
 
 export const config = {
   runtime: 'edge',
@@ -20,16 +26,20 @@ const ONE_HOUR_MS = 60 * 60 * 1000
 
 const SYSTEM_PROMPT = `You are a helpful assistant on Quni Living, an Australian student accommodation marketplace. You are helping a landlord review a student who has applied for their property.
 
-Address the landlord by their first name naturally once at the opening of the assessment. Use the student's first name throughout — never refer to them as "this applicant", "the student", or "they" as a substitute for their name.
+Address the landlord by their first name naturally once at the opening of the assessment. Use the student's first name throughout — never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all — repeat the first name instead — so gender is never assumed incorrectly.
 
 Based on the student profile data provided, write a short, warm, and balanced 3-4 sentence assessment to help the landlord make an informed decision.
 
 Rules:
 - Open naturally addressing the landlord by first name (e.g. "Hi Rob," or just start with their name in context)
-- Use the student's first name throughout the assessment
+- Use the student's first name throughout the assessment; never use he/she/they pronouns
 - Be factual and balanced — do not make the decision for the landlord
 - Do not reference nationality, gender, or any protected characteristics in your assessment
-- Focus on: verification completeness, student status, university and course credibility, housing preference alignment (including occupancy, move-in flexibility, pets, parking, bills, furnishing preferences when provided), budget fit, smoking status, and fit vs the listing summary when provided
+- When a "Listing fit summary" block is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap — do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing — say what to verify. You may still praise verification credentials separately from preference/listing fit.
+- If there is no listing fit summary block, do not claim strong preference alignment with the listing; summarise what the student asked for and note what to check on the listing.
+- Focus on: verification completeness, student status, university and course credibility, housing preference alignment (including occupancy, move-in flexibility, pets, parking, bills, furnishing preferences when provided), budget fit, smoking status, and fit vs the listing/booking context when that block is present
+- Location and commute: Do not claim the listing is near a specific university, campus, or landmark, and do not discuss commute length, unless those facts appear explicitly in the listing/booking context (e.g. linked campus or university on the listing, or address/suburb lines in that block). You may state the student's university from the profile as a fact; if listing context does not tie the property to a campus/university, do not invent a geographic mismatch or "wrong uni" narrative.
+- Rent: Never invent dollar amounts. Only mention weekly rent if a figure appears in the listing/booking context (listing rent and/or booking weekly rent when provided). If no rent is in the context, do not guess.
 - End with one practical suggestion for what the landlord might want to ask or consider before confirming
 - Keep the tone professional but warm and conversational
 - Never recommend rejecting a student based on protected characteristics`
@@ -113,7 +123,9 @@ function buildUserMessage(input: {
   furnishingPreference: string | null
   hasGuarantor: boolean | null
   guarantorName: string | null
+  studentCampus: string | null
   propertyContext: string | null
+  fitSummaryBlock: string | null
 }): string {
   const studentFirst = input.firstName.trim() || 'Not specified'
   const studentLast = input.lastName.trim() || 'Not specified'
@@ -124,6 +136,7 @@ function buildUserMessage(input: {
     `- First name: ${studentFirst}`,
     `- Last name: ${studentLast}`,
     `- University: ${input.university.trim() || 'Not specified'}`,
+    `- Campus (if specified): ${input.studentCampus?.trim() || 'Not specified'}`,
     `- Course: ${input.course.trim() || 'Not specified'}`,
     `- Year of study: ${input.yearOfStudy != null && Number.isFinite(input.yearOfStudy) ? String(input.yearOfStudy) : 'Not specified'}`,
     `- Student type: ${input.studentType.trim() || 'Not specified'}`,
@@ -144,6 +157,13 @@ function buildUserMessage(input: {
   }
   if (input.propertyContext?.trim()) {
     lines.push('', 'Listing / booking context:', input.propertyContext.trim())
+  }
+  if (input.fitSummaryBlock?.trim()) {
+    lines.push(
+      '',
+      'Listing fit summary (same logic as the on-screen fit table):',
+      input.fitSummaryBlock.trim(),
+    )
   }
   return lines.join('\n')
 }
@@ -174,6 +194,7 @@ type StudentProfileDb = {
   has_guarantor: boolean | null
   guarantor_name: string | null
   universities: { name: string } | null
+  campuses: { name: string } | null
 }
 
 function studentProfileFromBookingJoin(spRaw: unknown): StudentProfileDb | null {
@@ -308,6 +329,8 @@ export default async function handler(request: Request) {
           lease_length,
           available_from,
           listing_type,
+          universities ( name ),
+          campuses ( name, address ),
           property_features ( features ( name ) )
         ),
         student_profiles (
@@ -335,7 +358,8 @@ export default async function handler(request: Request) {
           furnishing_preference,
           has_guarantor,
           guarantor_name,
-          universities ( name )
+          universities ( name ),
+          campuses ( name )
         )
       `,
       )
@@ -390,6 +414,10 @@ export default async function handler(request: Request) {
     }
 
     const uni = sp.universities && typeof sp.universities === 'object' ? sp.universities.name?.trim() ?? '' : ''
+    const stuCampus =
+      sp.campuses && typeof sp.campuses === 'object' && !Array.isArray(sp.campuses)
+        ? (sp.campuses as { name?: string }).name?.trim() ?? ''
+        : ''
     const firstName = sp.first_name?.trim() || ''
     const lastName = sp.last_name?.trim() || ''
     const propRaw = booking.properties
@@ -400,8 +428,25 @@ export default async function handler(request: Request) {
     const propParts: string[] = []
     if (prop && 'title' in prop) {
       propParts.push(`Title: ${String(prop.title ?? '')}`)
+      if (prop.address) propParts.push(`Address (on file): ${String(prop.address)}`)
       if (prop.suburb) propParts.push(`Suburb: ${String(prop.suburb)}`)
-      if (prop.rent_per_week != null) propParts.push(`Weekly rent: $${Number(prop.rent_per_week)}`)
+      if (prop.state) propParts.push(`State: ${String(prop.state)}`)
+      const listUni =
+        prop.universities && typeof prop.universities === 'object' && !Array.isArray(prop.universities)
+          ? (prop.universities as { name?: string }).name?.trim() ?? ''
+          : ''
+      const listCampus =
+        prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
+          ? (prop.campuses as { name?: string; address?: string | null }).name?.trim() ?? ''
+          : ''
+      const listCampusAddr =
+        prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
+          ? (prop.campuses as { address?: string | null }).address?.trim() ?? ''
+          : ''
+      if (listUni) propParts.push(`Listing linked university (platform): ${listUni}`)
+      if (listCampus) propParts.push(`Listing linked campus (platform): ${listCampus}`)
+      if (listCampusAddr) propParts.push(`Campus address (platform): ${listCampusAddr}`)
+      if (prop.rent_per_week != null) propParts.push(`Listing weekly rent: $${Number(prop.rent_per_week)}`)
       if (prop.room_type) propParts.push(`Room / listing type: ${String(prop.room_type)}`)
       if (prop.furnished === true) propParts.push('Furnished: yes')
       else if (prop.furnished === false) propParts.push('Furnished: no')
@@ -412,9 +457,34 @@ export default async function handler(request: Request) {
       const featLine = propertyFeaturesLine(prop.property_features)
       if (featLine) propParts.push(featLine)
     }
+    const bookingWeekly = booking.weekly_rent
+    if (bookingWeekly != null && Number.isFinite(Number(bookingWeekly))) {
+      propParts.push(`This booking weekly rent: $${Math.round(Number(bookingWeekly))}`)
+    }
     propParts.push(
       `Requested move-in: ${String(booking.move_in_date || booking.start_date || '').slice(0, 10)}`,
       `Requested lease length: ${String(booking.lease_length || '').trim() || 'Not specified'}`,
+    )
+
+    const propertyForFit: BookingFitPropertyInput | null =
+      prop && typeof prop === 'object' && 'title' in prop ? (prop as BookingFitPropertyInput) : null
+    const fitSummaryText = formatBookingFitSummaryForPrompt(
+      buildBookingFitSummary({
+        booking: {
+          move_in_date: booking.move_in_date,
+          start_date: booking.start_date,
+          lease_length: booking.lease_length,
+        },
+        student: {
+          occupancy_type: sp.occupancy_type,
+          move_in_flexibility: sp.move_in_flexibility,
+          has_pets: sp.has_pets,
+          needs_parking: sp.needs_parking,
+          bills_preference: sp.bills_preference,
+          furnishing_preference: sp.furnishing_preference,
+        } as BookingFitStudentInput,
+        property: propertyForFit,
+      }),
     )
 
     userMessage = buildUserMessage({
@@ -441,7 +511,9 @@ export default async function handler(request: Request) {
       furnishingPreference: sp.furnishing_preference ?? null,
       hasGuarantor: sp.has_guarantor ?? null,
       guarantorName: sp.guarantor_name ?? null,
+      studentCampus: stuCampus || null,
       propertyContext: propParts.join('\n'),
+      fitSummaryBlock: fitSummaryText,
     })
     persistBookingId = booking.id
   } else {
@@ -556,7 +628,9 @@ export default async function handler(request: Request) {
       furnishingPreference: furn,
       hasGuarantor,
       guarantorName,
+      studentCampus: null,
       propertyContext: null,
+      fitSummaryBlock: null,
     })
   }
 

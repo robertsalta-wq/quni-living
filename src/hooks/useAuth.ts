@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
@@ -23,6 +24,7 @@ export type AuthState = {
  * Auth state + Supabase subscription. Intended to be called once inside `AuthProvider`.
  */
 export function useProvideAuth(): AuthState {
+  const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<AuthProfile | null>(null)
@@ -102,13 +104,16 @@ export function useProvideAuth(): AuthState {
   }, [hydrateFromUser])
 
   const signOut = useCallback(async () => {
+    // Leave protected routes (e.g. /booking/*) before clearing the session; otherwise
+    // ProtectedRoute can redirect to student signup before a caller's navigate('/') runs.
+    navigate('/', { replace: true })
     clearOnboardingDismissed()
     await supabase.auth.signOut()
     setUser(null)
     setSession(null)
     setProfile(null)
     setRole(null)
-  }, [])
+  }, [navigate])
 
   return {
     user,

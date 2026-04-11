@@ -9,7 +9,7 @@
     "env:pull": "vercel env pull .env.vercel -y",
     "env:pull:production": "vercel env pull .env.vercel --environment production -y",
     "dev:refresh": "vite --force",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/build-api-documents.mjs",
     "build:api-documents": "node scripts/build-api-documents.mjs",
     "build:capacitor": "node scripts/build-capacitor.mjs",
     "lint": "eslint .",

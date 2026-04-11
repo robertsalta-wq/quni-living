@@ -4,7 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
-import type { Database } from '../lib/database.types'
+import type { Database, LandlordProfileRow } from '../lib/database.types'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
@@ -23,7 +23,9 @@ import {
   isIsoDateString,
 } from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
+import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
 import { PropertyCard } from '../components/PropertyCard'
+import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
@@ -222,6 +224,13 @@ export default function PropertyDetail() {
     return m
   }, [campusRefRows])
   const [property, setProperty] = useState<Property | null>(null)
+  const listingFromForPicker = useMemo(
+    () => normalizeListingBound(property?.available_from),
+    [property?.available_from],
+  )
+  const listingToForPicker = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
+  /** Previous route slug can remain in `property` until the next fetch settles — avoid running gates on stale rows. */
+  const listingRowStale = Boolean(slug && property && property.slug !== slug)
   const [loading, setLoading] = useState(shouldFetch)
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
@@ -633,6 +642,7 @@ export default function PropertyDetail() {
         supabase,
         orderedIds,
         PROPERTY_CARD_LIST_SELECT,
+        listingIsoDateUtc(),
       )
       if (cancelled) return
       if (fetchErr) {
@@ -723,7 +733,7 @@ export default function PropertyDetail() {
     )
   }
 
-  if (loading && shouldFetch) {
+  if ((loading || listingRowStale) && shouldFetch) {
     const loadingTitle = slug
       .split('-')
       .filter(Boolean)
@@ -809,7 +819,26 @@ export default function PropertyDetail() {
   }
 
   const propertyStatus = property.status as PublicPropertyStatus
-  if (propertyStatus !== 'active') {
+  const listingDay = listingIsoDateUtc()
+  const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
+  const viewerOwnsListing = Boolean(
+    landlordProfile && property.landlord_id && landlordProfile.id === property.landlord_id,
+  )
+  const listingDateWindowStatus = viewerOwnsListing
+    ? ('visible' as const)
+    : propertyListingDateWindowStatus(property, listingDay)
+  const showListingEndedWall =
+    propertyStatus !== 'active' ||
+    (!viewerOwnsListing && listingDateWindowStatus === 'after_end')
+  const showNotYetAvailableBanner =
+    propertyStatus === 'active' && listingDateWindowStatus === 'before_start'
+
+  const notYetBannerLabel = (() => {
+    const raw = (property.available_from ?? '').trim().slice(0, 10)
+    return isIsoDateString(raw) ? formatAuShortDate(raw) : null
+  })()
+
+  if (showListingEndedWall) {
     return (
       <>
         <Seo
@@ -865,13 +894,15 @@ export default function PropertyDetail() {
   const beds = property.bedrooms ?? 1
   const baths = property.bathrooms ?? 1
 
-  const availableFormatted = property.available_from
-    ? new Date(property.available_from).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null
+  const availableFormatted = (() => {
+    const raw = (property.available_from ?? '').trim().slice(0, 10)
+    if (!isIsoDateString(raw)) return null
+    return new Date(`${raw}T12:00:00`).toLocaleDateString('en-AU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  })()
 
   const bookPath = property?.id ? `/booking/${property.id}${availabilitySearchString}` : `/listings/${slug}`
   const bookHref = user
@@ -948,6 +979,18 @@ export default function PropertyDetail() {
         image={listingOg}
         jsonLd={propertyListingJsonLd(property, slug, { campusDisplay, roomLabel })}
       />
+      {showNotYetAvailableBanner && (
+        <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 mb-1`} role="status">
+          <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 shadow-sm">
+            <p className="font-semibold text-sky-950">
+              {notYetBannerLabel ? `Available from ${notYetBannerLabel}` : 'Available from a future date'}
+            </p>
+            <p className="mt-1 text-sky-900/90 leading-relaxed">
+              Earliest move-in is not before this date. You can still view the listing and plan ahead.
+            </p>
+          </div>
+        </div>
+      )}
       <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 text-left`}>
         <nav
           className="flex flex-nowrap items-center gap-x-2 min-w-0 w-full text-left text-sm text-stone-600 mb-2 sm:mb-3 overflow-hidden"
@@ -1302,30 +1345,34 @@ export default function PropertyDetail() {
                         <label htmlFor="pd-move-in" className="block text-xs text-stone-500 mb-1">
                           Move-in
                         </label>
-                        <input
+                        <AUDateField
                           id="pd-move-in"
-                          type="date"
                           value={filterMoveIn}
-                          onChange={(e) => patchAvailabilityParams({ move_in: e.target.value || null })}
+                          min={listingFromForPicker ?? undefined}
+                          max={listingToForPicker ?? undefined}
+                          onChange={(iso) => patchAvailabilityParams({ move_in: iso || null })}
                           className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30"
+                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 bg-white"
                         />
                       </div>
                       <div>
                         <label htmlFor="pd-move-out" className="block text-xs text-stone-500 mb-1">
                           Move-out <span className="text-stone-400 font-normal">(optional)</span>
                         </label>
-                        <input
+                        <AUDateField
                           id="pd-move-out"
-                          type="date"
                           value={filterMoveOut}
+                          min={filterMoveIn || undefined}
+                          max={listingToForPicker ?? undefined}
                           disabled={Boolean(filterLease)}
-                          onChange={(e) =>
+                          onChange={(iso) =>
                             patchAvailabilityParams({
-                              move_out: e.target.value || null,
+                              move_out: iso || null,
                               lease: null,
                             })
                           }
                           className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 disabled:bg-stone-50 disabled:text-stone-400"
+                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 bg-white"
                         />
                       </div>
                       <div>

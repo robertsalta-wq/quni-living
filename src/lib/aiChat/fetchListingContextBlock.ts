@@ -20,6 +20,7 @@ const baseColumns = [
   'bond',
   'lease_length',
   'available_from',
+  'available_to',
   'featured',
   'created_at',
 ]

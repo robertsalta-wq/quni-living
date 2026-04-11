@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Property } from './listings'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from './propertyListingDateWindow'
 
 export type RelatedListingsMode = 'rent' | 'newest' | 'furnished'
 
@@ -11,7 +12,10 @@ const select = `
 `
 
 export async function fetchRelatedListings(mode: RelatedListingsMode): Promise<Property[]> {
-  let query = supabase.from('properties').select(select).eq('status', 'active')
+  let query = applyPropertyListingDateWindow(
+    supabase.from('properties').select(select),
+    listingIsoDateUtc(),
+  ).eq('status', 'active')
 
   if (mode === 'rent') {
     query = query.eq('listing_type', 'rent')

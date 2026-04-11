@@ -5,6 +5,7 @@
  * Uses SUPABASE_SERVICE_ROLE_KEY, DOCUSEAL_API_URL, DOCUSEAL_API_TOKEN, RESEND_API_KEY.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { PDFDocument } from 'pdf-lib'
 import type { Database, Json } from '../../src/lib/database.types'
 import { sendEmail } from './sendEmail.js'
 import {
@@ -93,6 +94,178 @@ async function fetchDocusealJson(path: string): Promise<unknown> {
     throw new Error(`DocuSeal GET ${url}: ${res.status} ${t}`)
   }
   return res.json()
+}
+
+async function fetchPdfBufferFromUrl(pdfUrl: string): Promise<Buffer> {
+  const pdfRes = await fetch(pdfUrl)
+  if (!pdfRes.ok) throw new Error(`Download PDF failed: ${pdfRes.status}`)
+  return Buffer.from(await pdfRes.arrayBuffer())
+}
+
+function extractCombinedDocumentUrlFromSubmissionPayload(root: Record<string, unknown>): string | null {
+  const pick = (o: unknown): string | null => {
+    if (!o || typeof o !== 'object') return null
+    const u = (o as Record<string, unknown>).combined_document_url
+    return typeof u === 'string' && u.startsWith('http') ? u : null
+  }
+  const data = root.data
+  const dataSub =
+    data && typeof data === 'object' ? (data as Record<string, unknown>).submission : undefined
+  return pick(root) || pick(root.submission) || pick(dataSub)
+}
+
+type DocusealDocumentPart = { name: string; url: string }
+
+function extractDocumentPartsFromResponse(docsJson: unknown): DocusealDocumentPart[] {
+  let list: unknown[] = []
+  if (Array.isArray(docsJson)) {
+    list = docsJson
+  } else if (docsJson && typeof docsJson === 'object') {
+    const d = docsJson as Record<string, unknown>
+    if (Array.isArray(d.data)) list = d.data
+    else if (Array.isArray(d.documents)) list = d.documents
+  }
+  const out: DocusealDocumentPart[] = []
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue
+    const r = item as Record<string, unknown>
+    const u = r.url
+    if (typeof u !== 'string' || !u.startsWith('http')) continue
+    const n = typeof r.name === 'string' ? r.name : ''
+    out.push({ name: n, url: u })
+  }
+  return out
+}
+
+function extractDocumentPartsFromSubmissionRoot(sub: Record<string, unknown>): DocusealDocumentPart[] {
+  const docs = sub.documents
+  if (!Array.isArray(docs)) return []
+  const out: DocusealDocumentPart[] = []
+  for (const item of docs) {
+    if (!item || typeof item !== 'object') continue
+    const r = item as Record<string, unknown>
+    const u = r.url
+    if (typeof u !== 'string' || !u.startsWith('http')) continue
+    const n = typeof r.name === 'string' ? r.name : ''
+    out.push({ name: n, url: u })
+  }
+  return out
+}
+
+/** NSW RTA draft first, Quni addendum second — matches signing package order. */
+function sortResidentialPackageDocumentParts(parts: DocusealDocumentPart[]): DocusealDocumentPart[] {
+  const score = (name: string): number => {
+    const n = name.toLowerCase()
+    if (n.includes('addendum')) return 2
+    if (n.includes('nsw') || n.includes('residential tenancy')) return 0
+    return 1
+  }
+  return [...parts].sort((a, b) => score(a.name) - score(b.name))
+}
+
+async function mergePdfBuffersFromUrls(urls: string[]): Promise<Buffer> {
+  const merged = await PDFDocument.create()
+  for (const url of urls) {
+    const buf = await fetchPdfBufferFromUrl(url)
+    const src = await PDFDocument.load(buf, { ignoreEncryption: true })
+    const pages = await merged.copyPages(src, src.getPageIndices())
+    for (const p of pages) merged.addPage(p)
+  }
+  const saved = await merged.save({ useObjectStreams: false, addDefaultPage: false })
+  return Buffer.from(saved)
+}
+
+/**
+ * Download the completed submission PDF from DocuSeal (same combined file signees see when all parties have signed).
+ * For NSW residential packages, prefers `combined_document_url`, then merge=true, then merges multiple per-document URLs in FT6600 → addendum order.
+ */
+export async function downloadSignedSubmissionPdfFromDocuseal(
+  submissionId: string,
+  residentialTenancyPackage: boolean,
+): Promise<Buffer> {
+  const subJson = (await fetchDocusealJson(`/api/submissions/${submissionId}`)) as Record<string, unknown>
+
+  if (residentialTenancyPackage) {
+    const combined = extractCombinedDocumentUrlFromSubmissionPayload(subJson)
+    if (combined) {
+      return fetchPdfBufferFromUrl(combined)
+    }
+  }
+
+  const documentsPath = residentialTenancyPackage
+    ? `/api/submissions/${submissionId}/documents?merge=true`
+    : `/api/submissions/${submissionId}/documents`
+
+  let parts = extractDocumentPartsFromResponse(await fetchDocusealJson(documentsPath))
+
+  if (residentialTenancyPackage && parts.length <= 1) {
+    const fromRoot = extractDocumentPartsFromSubmissionRoot(subJson)
+    if (fromRoot.length > parts.length) parts = fromRoot
+  }
+
+  if (residentialTenancyPackage && parts.length <= 1) {
+    const unmerged = extractDocumentPartsFromResponse(
+      await fetchDocusealJson(`/api/submissions/${submissionId}/documents`),
+    )
+    if (unmerged.length > parts.length) parts = unmerged
+  }
+
+  if (residentialTenancyPackage && parts.length > 1) {
+    return mergePdfBuffersFromUrls(sortResidentialPackageDocumentParts(parts).map((p) => p.url))
+  }
+
+  if (parts.length >= 1) {
+    return fetchPdfBufferFromUrl(parts[0].url)
+  }
+
+  if (residentialTenancyPackage) {
+    throw new Error('Could not resolve signed NSW tenancy package PDF from DocuSeal')
+  }
+
+  const audit = subJson.audit_log_url
+  if (typeof audit === 'string' && audit.startsWith('http')) {
+    return fetchPdfBufferFromUrl(audit)
+  }
+
+  throw new Error('Could not resolve signed PDF URL from DocuSeal')
+}
+
+/**
+ * NSW residential signing package: fetch RTA and addendum as separate PDFs from DocuSeal.
+ * Does not use `combined_document_url` (can be a single merged blob) and does not merge buffers.
+ * Returns null when DocuSeal only exposes one PDF URL (caller may fall back to merged download).
+ */
+export async function downloadSignedResidentialTenancyPackagePartsFromDocuseal(
+  submissionId: string,
+): Promise<{ rta: Buffer; addendum: Buffer } | null> {
+  const subJson = (await fetchDocusealJson(`/api/submissions/${submissionId}`)) as Record<string, unknown>
+
+  let parts = extractDocumentPartsFromResponse(
+    await fetchDocusealJson(`/api/submissions/${submissionId}/documents`),
+  )
+  if (parts.length <= 1) {
+    const fromRoot = extractDocumentPartsFromSubmissionRoot(subJson)
+    if (fromRoot.length > parts.length) parts = fromRoot
+  }
+
+  const sorted = sortResidentialPackageDocumentParts(parts)
+  if (sorted.length < 2) return null
+
+  const addendumPart =
+    sorted.find((p) => p.name.toLowerCase().includes('addendum')) ?? sorted[sorted.length - 1]
+  const rtaPart =
+    sorted.find((p) => {
+      const n = p.name.toLowerCase()
+      return n.includes('nsw') || n.includes('residential tenancy') || n.includes('ft6600')
+    }) ?? sorted[0]
+
+  if (rtaPart.url === addendumPart.url) return null
+
+  const [rta, addendum] = await Promise.all([
+    fetchPdfBufferFromUrl(rtaPart.url),
+    fetchPdfBufferFromUrl(addendumPart.url),
+  ])
+  return { rta, addendum }
 }
 
 /** Create DocuSeal submission from PDF bytes (base64) and two signers. */
@@ -225,6 +398,161 @@ export async function sendForSigning(documentId: string): Promise<void> {
   ])
 }
 
+/** NSW RTA package (FT6600 + Quni addendum): two draft PDFs in Storage, one DocuSeal submission. */
+export async function sendResidentialTenancyPackageForSigning(
+  documentId: string,
+  docusealOpts?: { submitterSignReason?: boolean },
+): Promise<void> {
+  const admin = adminClient()
+
+  const { data: row, error: rowErr } = await admin
+    .from('tenancy_documents')
+    .select('id, tenancy_id, status, file_path, metadata')
+    .eq('id', documentId)
+    .maybeSingle()
+
+  if (rowErr) throw rowErr
+  if (!row?.file_path || !row.tenancy_id) {
+    throw new Error('Tenancy document not found or missing file_path')
+  }
+
+  const meta =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : {}
+  const addendumPath = typeof meta.addendum_file_path === 'string' ? meta.addendum_file_path.trim() : ''
+  if (!addendumPath) {
+    throw new Error('Residential tenancy package missing metadata.addendum_file_path')
+  }
+  if (meta.signing_package !== 'residential_tenancy') {
+    throw new Error('Tenancy document is not a residential_tenancy signing package')
+  }
+
+  const { data: tenancy, error: tErr } = await admin
+    .from('tenancies')
+    .select('landlord_profile_id, student_profile_id')
+    .eq('id', row.tenancy_id)
+    .maybeSingle()
+
+  if (tErr) throw tErr
+  if (!tenancy?.landlord_profile_id || !tenancy.student_profile_id) {
+    throw new Error('Tenancy missing profile ids')
+  }
+
+  const { data: lpRow, error: lpErr } = await admin
+    .from('landlord_profiles')
+    .select('full_name, first_name, last_name, email, company_name')
+    .eq('id', tenancy.landlord_profile_id)
+    .maybeSingle()
+
+  const { data: spRow, error: spErr } = await admin
+    .from('student_profiles')
+    .select('full_name, first_name, last_name, email')
+    .eq('id', tenancy.student_profile_id)
+    .maybeSingle()
+
+  if (lpErr) throw lpErr
+  if (spErr) throw spErr
+  if (!lpRow || !spRow) throw new Error('Could not load landlord or student profile')
+
+  const landlordName =
+    [lpRow.first_name, lpRow.last_name].filter(Boolean).join(' ').trim() ||
+    (typeof lpRow.full_name === 'string' ? lpRow.full_name.trim() : '') ||
+    'Landlord'
+  const tenantName =
+    [spRow.first_name, spRow.last_name].filter(Boolean).join(' ').trim() ||
+    (typeof spRow.full_name === 'string' ? spRow.full_name.trim() : '') ||
+    'Tenant'
+  const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
+  const tenantEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
+
+  if (!landlordEmail || !tenantEmail) {
+    throw new Error('Landlord or tenant email missing for DocuSeal')
+  }
+
+  const { data: rtaBlob, error: rtaDlErr } = await admin.storage
+    .from('tenancy-documents')
+    .download(row.file_path)
+  const { data: addBlob, error: addDlErr } = await admin.storage.from('tenancy-documents').download(addendumPath)
+
+  if (rtaDlErr || !rtaBlob) {
+    throw new Error(rtaDlErr?.message || 'Could not download NSW RTA draft PDF from storage')
+  }
+  if (addDlErr || !addBlob) {
+    throw new Error(addDlErr?.message || 'Could not download addendum draft PDF from storage')
+  }
+
+  const rtaBase64 = Buffer.from(await rtaBlob.arrayBuffer()).toString('base64')
+  const addendumBase64 = Buffer.from(await addBlob.arrayBuffer()).toString('base64')
+
+  const submission = await createDocusealSubmissionFromPdf({
+    name: `NSW RTA — ${landlordName} / ${tenantName}`,
+    documents: [
+      { name: 'NSW Residential Tenancy Agreement.pdf', file: rtaBase64 },
+      { name: 'Quni Platform Addendum.pdf', file: addendumBase64 },
+    ],
+    landlord: { name: landlordName, email: landlordEmail },
+    tenant: { name: tenantName, email: tenantEmail },
+    ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
+  })
+
+  const submissionId = submission.id != null ? String(submission.id) : null
+  if (!submissionId) {
+    throw new Error('DocuSeal response missing submission id')
+  }
+
+  const { error: upErr } = await admin
+    .from('tenancy_documents')
+    .update({
+      docuseal_submission_id: submissionId,
+      status: 'sent_for_signing',
+      metadata: {
+        ...meta,
+        signing_package: 'residential_tenancy',
+        addendum_file_path: addendumPath,
+        docuseal_response: submission as unknown as Json,
+      } as Json,
+    })
+    .eq('id', documentId)
+
+  if (upErr) throw upErr
+
+  const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
+  const landlordLink =
+    submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
+    submitters[0]?.embed_src ||
+    ''
+  const tenantLink =
+    submitters.find((s) => (s.role || '').toLowerCase().includes('tenant'))?.embed_src ||
+    submitters[1]?.embed_src ||
+    ''
+
+  const signHtml = (who: string, link: string) => `
+    <p>Hi ${escapeHtml(who)},</p>
+    <p>Your NSW residential tenancy agreement package is ready to sign (standard form plus Quni platform addendum).</p>
+    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
+    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
+    <p>— Quni Living (quni.com.au)</p>
+  `
+
+  await Promise.all([
+    landlordLink
+      ? sendEmail({
+          to: landlordEmail,
+          subject: 'Your NSW residential tenancy agreement is ready to sign',
+          html: signHtml(landlordName, landlordLink),
+        })
+      : Promise.resolve(),
+    tenantLink
+      ? sendEmail({
+          to: tenantEmail,
+          subject: 'Your NSW residential tenancy agreement is ready to sign',
+          html: signHtml(tenantName, tenantLink),
+        })
+      : Promise.resolve(),
+  ])
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, '&amp;')
@@ -244,7 +572,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   const { data: docRow, error: findErr } = await admin
     .from('tenancy_documents')
-    .select('id, tenancy_id, docuseal_submission_id')
+    .select('id, tenancy_id, docuseal_submission_id, metadata')
     .eq('docuseal_submission_id', submissionId)
     .maybeSingle()
 
@@ -253,46 +581,53 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     return { ok: true, message: 'No matching tenancy_document (ignored)' }
   }
 
-  const docsJson = await fetchDocusealJson(`/api/submissions/${submissionId}/documents`)
-  let list: unknown[] = []
-  if (Array.isArray(docsJson)) {
-    list = docsJson
-  } else if (docsJson && typeof docsJson === 'object') {
-    const d = docsJson as Record<string, unknown>
-    if (Array.isArray(d.data)) list = d.data
-    else if (Array.isArray(d.documents)) list = d.documents
-  }
+  const rowMetaEarly =
+    docRow.metadata && typeof docRow.metadata === 'object' && !Array.isArray(docRow.metadata)
+      ? (docRow.metadata as Record<string, unknown>)
+      : {}
+  const isResidentialTenancyPackage = rowMetaEarly.signing_package === 'residential_tenancy'
 
-  let pdfUrl: string | null = null
-  for (const item of list) {
-    if (!item || typeof item !== 'object') continue
-    const u = (item as Record<string, unknown>).url
-    if (typeof u === 'string' && u.startsWith('http')) {
-      pdfUrl = u
-      break
+  const rowMeta = rowMetaEarly
+
+  let signedPath: string
+  let nextMetadata: Record<string, unknown> = { ...rowMeta }
+
+  if (isResidentialTenancyPackage) {
+    const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
+    const rtaPath = `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
+    const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
+
+    if (dual) {
+      const { error: upRta } = await admin.storage
+        .from('tenancy-documents')
+        .upload(rtaPath, dual.rta, { contentType: 'application/pdf', upsert: true })
+      const { error: upAdd } = await admin.storage
+        .from('tenancy-documents')
+        .upload(addendumPath, dual.addendum, { contentType: 'application/pdf', upsert: true })
+      if (upRta) throw upRta
+      if (upAdd) throw upAdd
+      signedPath = rtaPath
+      nextMetadata = {
+        ...nextMetadata,
+        signed_rta_file_path: rtaPath,
+        signed_addendum_file_path: addendumPath,
+      }
+    } else {
+      const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, true)
+      signedPath = `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
+      const { error: upStorageErr } = await admin.storage
+        .from('tenancy-documents')
+        .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+      if (upStorageErr) throw upStorageErr
     }
+  } else {
+    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
+    signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
+    const { error: upStorageErr } = await admin.storage
+      .from('tenancy-documents')
+      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+    if (upStorageErr) throw upStorageErr
   }
-
-  if (!pdfUrl) {
-    const sub = (await fetchDocusealJson(`/api/submissions/${submissionId}`)) as Record<string, unknown>
-    const audit = sub.audit_log_url
-    if (typeof audit === 'string' && audit.startsWith('http')) pdfUrl = audit
-  }
-
-  if (!pdfUrl) {
-    throw new Error('Could not resolve signed PDF URL from DocuSeal')
-  }
-
-  const pdfRes = await fetch(pdfUrl)
-  if (!pdfRes.ok) throw new Error(`Download signed PDF failed: ${pdfRes.status}`)
-  const pdfBuf = Buffer.from(await pdfRes.arrayBuffer())
-
-  const signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
-  const { error: upStorageErr } = await admin.storage
-    .from('tenancy-documents')
-    .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
-
-  if (upStorageErr) throw upStorageErr
 
   const { data: signedUrlData } = await admin.storage
     .from('tenancy-documents')
@@ -308,7 +643,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
       file_path: signedPath,
       landlord_signed_at: landlordSignedAt,
       student_signed_at: studentSignedAt,
-      metadata: { last_webhook: payload as unknown as Json } as Json,
+      metadata: { ...nextMetadata, last_webhook: payload as unknown as Json } as Json,
     })
     .eq('id', docRow.id)
 
@@ -346,15 +681,21 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     (typeof sp?.full_name === 'string' ? sp.full_name : 'Tenant')
 
   const link = signedUrlData?.signedUrl || ''
+  const signedDocLabel = isResidentialTenancyPackage
+    ? 'Download signed agreement package (7-day link)'
+    : 'Download signed lease (7-day link)'
+  const signedSubject = isResidentialTenancyPackage
+    ? 'Your NSW tenancy agreement is signed — Quni Living'
+    : 'Your lease is signed — Quni Living'
   const doneHtml = (name: string) => `
     <p>Hi ${escapeHtml(name)},</p>
     <p>Your residential tenancy agreement has been fully signed. You can download a copy here:</p>
-    <p><a href="${escapeHtml(link)}">Download signed lease (7-day link)</a></p>
+    <p><a href="${escapeHtml(link)}">${escapeHtml(signedDocLabel)}</a></p>
     <p>— Quni Living</p>
   `
 
-  if (le && link) await sendEmail({ to: le, subject: 'Your lease is signed — Quni Living', html: doneHtml(String(ln)) })
-  if (se && link) await sendEmail({ to: se, subject: 'Your lease is signed — Quni Living', html: doneHtml(String(sn)) })
+  if (le && link) await sendEmail({ to: le, subject: signedSubject, html: doneHtml(String(ln)) })
+  if (se && link) await sendEmail({ to: se, subject: signedSubject, html: doneHtml(String(sn)) })
 
   return { ok: true }
 }

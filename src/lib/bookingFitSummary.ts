@@ -1,3 +1,4 @@
+/** Landlord booking review fit table. Kept in sync with `api/lib/bookingFitForAssessment.ts` (AI assessment). */
 import type { Database } from './database.types'
 import {
   propertyBillsIncluded,

@@ -23,6 +23,7 @@ import {
   type UniversityReferenceRow,
 } from '../../lib/universityCampusReference'
 import { resolveUniversitySlugParam } from '../../lib/universitySlugAliases'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../../lib/propertyListingDateWindow'
 
 /** Optional copy overrides per university (extend in `universityAreaGuides.ts` later). */
 export type UniversityAreaGuideOverrides = {
@@ -178,11 +179,14 @@ export default function UniversityAccommodation({
       ]
 
       const lightSelect =
-        'id, campus_id, rent_per_week, room_type, suburb, university_id, latitude, longitude'
+        'id, campus_id, rent_per_week, room_type, suburb, university_id, latitude, longitude, available_from, available_to'
 
-      const { data: lightByUni, error: lErr1 } = await supabase
-        .from('properties')
-        .select(lightSelect)
+      const listingDay = listingIsoDateUtc()
+
+      const { data: lightByUni, error: lErr1 } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select(lightSelect),
+        listingDay,
+      )
         .eq('university_id', u.id)
         .eq('status', 'active')
 
@@ -210,9 +214,10 @@ export default function UniversityAccommodation({
         console.warn('[Quni] properties_near_campus RPC:', rpcGeoErr.message)
         const uniBox = unionBoundingBoxKmForCampuses(camps, 11)
         if (uniBox) {
-          const { data: lightInBox, error: geoErr } = await supabase
-            .from('properties')
-            .select(lightSelect)
+          const { data: lightInBox, error: geoErr } = await applyPropertyListingDateWindow(
+            supabase.from('properties').select(lightSelect),
+            listingDay,
+          )
             .eq('status', 'active')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null)
@@ -241,6 +246,7 @@ export default function UniversityAccommodation({
           supabase,
           idsToAdd,
           lightSelect,
+          listingDay,
         )
         if (fetchErr) {
           console.error(fetchErr)
@@ -261,9 +267,10 @@ export default function UniversityAccommodation({
         campusSuburbs.length > 0
           ? await Promise.all(
               campusSuburbs.slice(0, 20).map((sub) =>
-                supabase
-                  .from('properties')
-                  .select(lightSelect)
+                applyPropertyListingDateWindow(
+                  supabase.from('properties').select(lightSelect),
+                  listingDay,
+                )
                   .eq('status', 'active')
                   .is('university_id', null)
                   .ilike('suburb', sub),
@@ -299,9 +306,10 @@ export default function UniversityAccommodation({
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       }
 
-      const { data: featByUni, error: fErr1 } = await supabase
-        .from('properties')
-        .select(PROPERTY_CARD_LIST_SELECT)
+      const { data: featByUni, error: fErr1 } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+        listingDay,
+      )
         .eq('university_id', u.id)
         .eq('status', 'active')
         .order('featured', { ascending: false })
@@ -322,6 +330,7 @@ export default function UniversityAccommodation({
           supabase,
           idsToFetch,
           PROPERTY_CARD_LIST_SELECT,
+          listingDay,
         )
         if (featFetchErr) {
           console.error(featFetchErr)
@@ -341,9 +350,10 @@ export default function UniversityAccommodation({
       if (!fErr && campusSuburbs.length > 0) {
         const seenSuburb = new Set<string>([...exactFeatIds, ...geoFeatIds])
         for (const sub of campusSuburbs) {
-          const { data: extra, error: fErrSub } = await supabase
-            .from('properties')
-            .select(PROPERTY_CARD_LIST_SELECT)
+          const { data: extra, error: fErrSub } = await applyPropertyListingDateWindow(
+            supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+            listingDay,
+          )
             .eq('status', 'active')
             .is('university_id', null)
             .ilike('suburb', sub)

@@ -33,6 +33,8 @@ import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
 import AdminPayments from './pages/admin/AdminPayments'
 import KnowledgeBase from './pages/admin/KnowledgeBase'
+import DocumentsPage from './pages/admin/DocumentsPage'
+import TrustChecklist from './pages/admin/TrustChecklist'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
@@ -257,6 +259,8 @@ function App() {
             <Route path="apps" element={<AdminApps />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="knowledge-base" element={<KnowledgeBase />} />
+            <Route path="documents" element={<DocumentsPage />} />
+            <Route path="trust-checklist" element={<TrustChecklist />} />
           </Route>
           </Routes>
         </main>

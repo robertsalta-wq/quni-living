@@ -23,10 +23,13 @@ export default async function handler(req, res) {
 
   const supabase = createClient(supabaseUrl, serviceRole)
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const { data: properties } = await supabase
     .from('properties')
     .select('slug, updated_at')
     .eq('status', 'active')
+    .or(`available_to.is.null,available_to.gte.${today}`)
     .order('updated_at', { ascending: false })
 
   const { data: universities } = await supabase

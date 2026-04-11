@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { campusLatLonFromRow, type CampusReferenceRow } from './universityCampusReference'
+import { propertyListingVisibleOnDate } from './propertyListingDateWindow'
 
 export type PropertiesNearCampusRow = { id: string; distance_km: number }
 
@@ -54,6 +55,8 @@ export async function fetchPropertiesByIds(
   supabase: SupabaseClient,
   ids: string[],
   select: string,
+  /** When set (YYYY-MM-DD), drops rows past `available_to` (expired listings). */
+  visibleOnIsoDate: string | null = null,
 ): Promise<{ data: unknown[] | null; error: Error | null }> {
   if (ids.length === 0) return { data: [], error: null }
   const chunkSize = 120
@@ -64,5 +67,13 @@ export async function fetchPropertiesByIds(
     if (error) return { data: null, error: new Error(error.message) }
     if (data?.length) out.push(...data)
   }
-  return { data: out, error: null }
+  if (!visibleOnIsoDate?.trim()) return { data: out, error: null }
+  const day = visibleOnIsoDate.trim().slice(0, 10)
+  const filtered = out.filter((row) =>
+    propertyListingVisibleOnDate(
+      row as { available_from?: string | null; available_to?: string | null },
+      day,
+    ),
+  )
+  return { data: filtered, error: null }
 }

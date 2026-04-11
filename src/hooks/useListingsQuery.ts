@@ -8,6 +8,7 @@ import {
   type Property,
 } from '../lib/listings'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 
 export type ListingsQueryFilters = {
@@ -73,10 +74,11 @@ export function useListingsQuery(
 
     ;(async () => {
       try {
-        let query = supabase
-          .from('properties')
-          .select(PROPERTY_CARD_LIST_SELECT, { count: 'exact' })
-          .eq('status', 'active')
+        const listingDay = listingIsoDateUtc()
+        let query = applyPropertyListingDateWindow(
+          supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT, { count: 'exact' }),
+          listingDay,
+        ).eq('status', 'active')
 
         const q = f.q.trim()
         if (q.length > 0) {

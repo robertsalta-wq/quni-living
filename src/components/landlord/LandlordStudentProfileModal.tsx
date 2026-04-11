@@ -4,6 +4,7 @@ import { buildLandlordVerificationFromProfile } from './LandlordApplicantVerific
 import LandlordApplicantVerificationSection from './LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from './LandlordApplicantAIAssessmentPanel'
 import { supabase } from '../../lib/supabase'
+import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
 
 /** Fields landlords may load for applicants (no email, phone, DOB, emergency, document URLs). */
 export type LandlordSafeStudentSnapshot = {
@@ -92,6 +93,8 @@ type Props = {
   scrollToAiAssessment: boolean
   /** When this changes, in-modal AI assessment state is cleared (dashboard applicant session key). */
   assessmentIdentityKey: string
+  /** When set (e.g. opened from a booking card), assessment uses server booking context so rent/location are not guessed. */
+  assessmentBookingId?: string | null
   /** Called after a successful AI assessment so the parent can update UI (e.g. link label). */
   onAiAssessmentGenerated?: () => void
   /** Landlord given name for AI context; server prefers `landlord_profiles` from the session JWT. */
@@ -106,6 +109,7 @@ export default function LandlordStudentProfileModal({
   scrollToVerification,
   scrollToAiAssessment,
   assessmentIdentityKey,
+  assessmentBookingId = null,
   onAiAssessmentGenerated,
   landlordFirstName,
 }: Props) {
@@ -166,38 +170,44 @@ export default function LandlordStudentProfileModal({
     }
 
     const landlordFn = landlordFirstName?.trim()
-    if (!student?.id || student.verification_type !== 'student') {
+    const bookingId = assessmentBookingId?.trim() ?? ''
+    if (!bookingId && (!student?.id || student.verification_type !== 'student')) {
       setAiError(true)
       setAiLoading(false)
       return
     }
 
-    const payload = {
-      applicantProfileId: student.id,
-      firstName,
-      lastName,
-      university: uni,
-      course: courseStr,
-      yearOfStudy: yearVal != null && Number.isFinite(Number(yearVal)) ? Number(yearVal) : null,
-      studentType: stTypeRaw ?? '',
-      uniEmailVerified: verification?.uni_email_verified === true,
-      workEmailVerified: verification?.work_email_verified === true,
-      idProvided: Boolean(verification?.id_provided),
-      enrolmentProvided: Boolean(verification?.enrolment_provided),
-      roomTypePreference: roomPrefStr,
-      budgetMin: student?.budget_min_per_week ?? null,
-      budgetMax: student?.budget_max_per_week ?? null,
-      isSmoker: student?.is_smoker ?? null,
-      occupancyType: student?.occupancy_type ?? null,
-      moveInFlexibility: student?.move_in_flexibility ?? null,
-      hasPets: student?.has_pets ?? null,
-      needsParking: student?.needs_parking ?? null,
-      billsPreference: student?.bills_preference ?? null,
-      furnishingPreference: student?.furnishing_preference ?? null,
-      hasGuarantor: student?.has_guarantor ?? null,
-      guarantorName: student?.guarantor_name ?? null,
-      ...(landlordFn ? { landlordFirstName: landlordFn } : {}),
-    }
+    const payload = bookingId
+      ? {
+          bookingId,
+          ...(landlordFn ? { landlordFirstName: landlordFn } : {}),
+        }
+      : {
+          applicantProfileId: student!.id,
+          firstName,
+          lastName,
+          university: uni,
+          course: courseStr,
+          yearOfStudy: yearVal != null && Number.isFinite(Number(yearVal)) ? Number(yearVal) : null,
+          studentType: stTypeRaw ?? '',
+          uniEmailVerified: verification?.uni_email_verified === true,
+          workEmailVerified: verification?.work_email_verified === true,
+          idProvided: Boolean(verification?.id_provided),
+          enrolmentProvided: Boolean(verification?.enrolment_provided),
+          roomTypePreference: roomPrefStr,
+          budgetMin: student?.budget_min_per_week ?? null,
+          budgetMax: student?.budget_max_per_week ?? null,
+          isSmoker: student?.is_smoker ?? null,
+          occupancyType: student?.occupancy_type ?? null,
+          moveInFlexibility: student?.move_in_flexibility ?? null,
+          hasPets: student?.has_pets ?? null,
+          needsParking: student?.needs_parking ?? null,
+          billsPreference: student?.bills_preference ?? null,
+          furnishingPreference: student?.furnishing_preference ?? null,
+          hasGuarantor: student?.has_guarantor ?? null,
+          guarantorName: student?.guarantor_name ?? null,
+          ...(landlordFn ? { landlordFirstName: landlordFn } : {}),
+        }
     try {
       const res = await fetch('/api/ai/student-assessment', {
         method: 'POST',
@@ -262,6 +272,9 @@ export default function LandlordStudentProfileModal({
             <h2 id={titleId} className="mt-4 text-xl font-bold text-gray-900">
               {displayName}
             </h2>
+            <div className="mt-2 flex justify-center">
+              <StudentVerifiedBadge student={student} />
+            </div>
             <p className="mt-2 max-w-sm text-center text-xs leading-relaxed text-gray-500">
               Review this student&apos;s profile and verification status before responding to their booking request.
             </p>

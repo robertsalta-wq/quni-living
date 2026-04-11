@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
 
@@ -30,7 +30,6 @@ const coralCtaClass =
 
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
-  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [servicesOpen, setServicesOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -106,7 +105,6 @@ export default function Header() {
     setMenuOpen(false)
     setMobileNavOpen(false)
     await signOut()
-    navigate('/')
   }
 
   function closeMobileNav() {

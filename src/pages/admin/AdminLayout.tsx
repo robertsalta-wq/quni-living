@@ -3,7 +3,14 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { isAdminUser } from '../../lib/adminEmails'
 
-const NAV = [
+type AdminNavItem = {
+  to: string
+  label: string
+  end: boolean
+  icon?: 'folder' | 'checklist'
+}
+
+const NAV: AdminNavItem[] = [
   { to: '/admin', label: 'Overview', end: true },
   { to: '/admin/bookings', label: 'Bookings', end: false },
   { to: '/admin/enquiries', label: 'Enquiries', end: false },
@@ -14,7 +21,44 @@ const NAV = [
   { to: '/admin/apps', label: 'Apps', end: false },
   { to: '/admin/payments', label: 'Payments', end: false },
   { to: '/admin/knowledge-base', label: 'Knowledge base', end: false },
-] as const
+  { to: '/admin/documents', label: 'Documents', end: false, icon: 'folder' },
+  { to: '/admin/trust-checklist', label: 'Trust checklist', end: false, icon: 'checklist' },
+]
+
+function ChecklistNavIcon() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0 text-gray-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  )
+}
+
+function FolderNavIcon() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0 text-gray-500"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h11a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
 
 function navClassName(isActive: boolean) {
   return [
@@ -50,7 +94,6 @@ export default function AdminLayout() {
 
   async function handleSignOut() {
     await signOut()
-    navigate('/')
   }
 
   return (
@@ -71,9 +114,13 @@ export default function AdminLayout() {
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5">
-          {NAV.map(({ to, label, end }) => (
+          {NAV.map(({ to, label, end, icon }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => navClassName(isActive)}>
-              {label}
+              <span className="flex items-center gap-2">
+                {icon === 'folder' ? <FolderNavIcon /> : null}
+                {icon === 'checklist' ? <ChecklistNavIcon /> : null}
+                {label}
+              </span>
             </NavLink>
           ))}
         </nav>

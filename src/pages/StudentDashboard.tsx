@@ -10,6 +10,7 @@ import { StudentStripePaymentsCard } from '../components/student/StudentStripePa
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
 import { isBoardingLodgerBondContext } from '../lib/listings'
+import NswTenancyAgreementExplainer from '../components/NswTenancyAgreementExplainer'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -111,6 +112,8 @@ export default function StudentDashboard() {
   const [expandedEnquiryIds, setExpandedEnquiryIds] = useState<Record<string, boolean>>({})
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
   const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
+  const [leaseDownloadBusyId, setLeaseDownloadBusyId] = useState<string | null>(null)
+  const [leaseDownloadErrorId, setLeaseDownloadErrorId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -211,6 +214,71 @@ export default function StudentDashboard() {
       setBondDownloadErrorId(bookingId)
     } finally {
       setBondDownloadBusyId(null)
+    }
+  }, [])
+
+  const downloadSignedLease = useCallback(async (bookingId: string) => {
+    setLeaseDownloadErrorId(null)
+    setLeaseDownloadBusyId(bookingId)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setLeaseDownloadErrorId(bookingId)
+        return
+      }
+      const res = await fetch(apiUrl('/api/documents/lease-signed-url'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+      const j = (await res.json()) as {
+        signed_url?: string
+        signed_url_rta?: string
+        signed_url_addendum?: string
+        error?: string
+      }
+      if (!res.ok) {
+        setLeaseDownloadErrorId(bookingId)
+        return
+      }
+      const openUrl = (url: string) => {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+      const trySaveAs = async (url: string, filename: string) => {
+        try {
+          const r = await fetch(url)
+          if (!r.ok) throw new Error('fetch failed')
+          const blob = await r.blob()
+          const objectUrl = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = objectUrl
+          a.download = filename
+          a.rel = 'noopener'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          URL.revokeObjectURL(objectUrl)
+        } catch {
+          openUrl(url)
+        }
+      }
+      if (j.signed_url_rta && j.signed_url_addendum) {
+        await trySaveAs(j.signed_url_rta, 'NSW-Residential-Tenancy-Agreement.pdf')
+        await new Promise((r) => setTimeout(r, 900))
+        await trySaveAs(j.signed_url_addendum, 'Quni-Platform-Addendum.pdf')
+      } else if (j.signed_url) {
+        openUrl(j.signed_url)
+      } else {
+        setLeaseDownloadErrorId(bookingId)
+      }
+    } catch {
+      setLeaseDownloadErrorId(bookingId)
+    } finally {
+      setLeaseDownloadBusyId(null)
     }
   }, [])
 
@@ -450,6 +518,25 @@ export default function StudentDashboard() {
                     {(b.status === 'confirmed' || b.status === 'active') && (
                       <div className="border-t border-green-100 bg-green-50 px-5 py-3 text-sm text-green-800">
                         Your booking is confirmed
+                      </div>
+                    )}
+                    {(b.status === 'confirmed' || b.status === 'active') && (
+                      <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-2">
+                        <NswTenancyAgreementExplainer />
+                        {leaseDownloadErrorId === b.id ? (
+                          <p className="text-amber-900 text-xs leading-relaxed">
+                            Signed agreement isn&apos;t available yet. It will appear here once you and your host have
+                            finished signing.
+                          </p>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={leaseDownloadBusyId === b.id}
+                          onClick={() => void downloadSignedLease(b.id)}
+                          className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          {leaseDownloadBusyId === b.id ? 'Opening…' : 'Download signed agreement'}
+                        </button>
                       </div>
                     )}
                     {(b.status === 'confirmed' || b.status === 'active') &&

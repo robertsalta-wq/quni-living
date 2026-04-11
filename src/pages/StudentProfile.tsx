@@ -765,7 +765,6 @@ export default function StudentProfile() {
         return
       }
       await signOut()
-      navigate('/')
     } finally {
       setDeleteAccountBusy(false)
     }

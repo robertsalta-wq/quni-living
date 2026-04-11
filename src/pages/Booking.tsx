@@ -23,8 +23,19 @@ import {
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
 import { apiUrl } from '../lib/apiUrl'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
-import { isIsoDateString, moveOutFromBookingLeaseLength } from '../lib/listingAvailabilityDates'
+import {
+  formatIsoDateAuNumeric,
+  isIsoDateString,
+  moveOutFromBookingLeaseLength,
+} from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
+import {
+  listingIsoDateUtc,
+  normalizeListingBound,
+  propertyListingDateWindowStatus,
+} from '../lib/propertyListingDateWindow'
+import { AUDateField } from '../components/AUDateField'
+import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
 
 function bookingDraftStorageKey(listingId: string) {
   return `booking_draft_${listingId}`
@@ -54,6 +65,14 @@ const LEASE_OPTIONS = ['3 months', '6 months', '12 months', 'Flexible'] as const
 type LeaseOption = (typeof LEASE_OPTIONS)[number]
 
 const BOOKING_FEE_AUD = 49
+
+type Step1DateBlock =
+  | null
+  | 'incomplete'
+  | 'min_lead'
+  | { kind: 'before_from'; from: string }
+  | { kind: 'after_to'; to: string }
+  | { kind: 'overlap' }
 
 /** User-facing copy for Stripe/payment failures (deposit step and payment-intent setup). */
 type BookingConflictState =
@@ -529,6 +548,7 @@ export default function Booking() {
   const [bookingConflict, setBookingConflict] = useState<BookingConflictState | null>(null)
   const [submittingBooking, setSubmittingBooking] = useState(false)
   const moveInFieldRef = useRef<HTMLInputElement>(null)
+  const [bookingSummaryOpen, setBookingSummaryOpen] = useState(false)
   const chooseDifferentDatesAfterOverlap = useCallback(() => {
     setBookingConflict(null)
     setStep(1)
@@ -552,6 +572,30 @@ export default function Booking() {
     if (!moveIn || !isIsoDateString(moveIn)) return null
     return moveOutFromBookingLeaseLength(moveIn, leaseLength)
   }, [explicitMoveOutFromUrl, moveIn, leaseLength])
+
+  const listingFromBound = useMemo(
+    () => normalizeListingBound(property?.available_from),
+    [property?.available_from],
+  )
+  const listingToBound = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
+
+  const minMoveInForPicker = useMemo(() => {
+    const min7 = minMoveInIso()
+    if (listingFromBound && listingFromBound > min7) return listingFromBound
+    return min7
+  }, [listingFromBound])
+
+  const step1DateBlock: Step1DateBlock = useMemo(() => {
+    if (!moveIn || !isIsoDateString(moveIn)) return 'incomplete'
+    if (moveIn < minMoveInIso()) return 'min_lead'
+    if (listingFromBound && moveIn < listingFromBound) return { kind: 'before_from', from: listingFromBound }
+    if (listingToBound) {
+      if (moveIn > listingToBound) return { kind: 'after_to', to: listingToBound }
+      if (conflictMoveOutDate && conflictMoveOutDate > listingToBound) return { kind: 'after_to', to: listingToBound }
+    }
+    if (bookingDateConflictBlocked) return { kind: 'overlap' }
+    return null
+  }, [moveIn, listingFromBound, listingToBound, conflictMoveOutDate, bookingDateConflictBlocked])
 
   const loadProperty = useCallback(async () => {
     if (!propertyId || !isSupabaseConfigured || authLoading) {
@@ -608,9 +652,14 @@ export default function Booking() {
       if (error) throw error
       if (propertyLoadTargetRef.current !== loadTarget) return
 
-      setProperty(data ? (data as PropertyForBooking) : null)
-      if (!data) {
+      if (data && propertyListingDateWindowStatus(data, listingIsoDateUtc()) === 'after_end') {
+        setProperty(null)
         setLoadError('This listing is not available for booking.')
+      } else {
+        setProperty(data ? (data as PropertyForBooking) : null)
+        if (!data) {
+          setLoadError('This listing is not available for booking.')
+        }
       }
     } catch (e: unknown) {
       setLoadError(e instanceof Error ? e.message : 'Could not load listing.')
@@ -629,6 +678,16 @@ export default function Booking() {
       setBookingDateConflictBlocked(false)
       return
     }
+    const fromB = normalizeListingBound(property.available_from)
+    const toB = normalizeListingBound(property.available_to)
+    if (fromB && moveIn < fromB) {
+      setBookingDateConflictBlocked(false)
+      return
+    }
+    if (toB && (moveIn > toB || (conflictMoveOutDate != null && conflictMoveOutDate > toB))) {
+      setBookingDateConflictBlocked(false)
+      return
+    }
     let cancelled = false
     void (async () => {
       const blocked = await fetchUnavailablePropertyIdsForDateRange(
@@ -643,7 +702,7 @@ export default function Booking() {
     return () => {
       cancelled = true
     }
-  }, [property?.id, moveIn, conflictMoveOutDate, studentProfile?.id])
+  }, [property?.id, property?.available_from, property?.available_to, moveIn, conflictMoveOutDate, studentProfile?.id])
 
   useEffect(() => {
     if (bookingDateConflictBlocked && step > 1) setStep(1)
@@ -1175,6 +1234,7 @@ export default function Booking() {
           or decline. You can track status under <strong className="text-gray-800">Student profile → Bookings</strong> or
           your dashboard.
         </p>
+        <PaymentsSecuredByStripe align="center" className="mt-5 max-w-sm mx-auto" />
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             to="/student-dashboard"
@@ -1261,66 +1321,41 @@ export default function Booking() {
 
       {step === 1 && (
         <div className="mt-8 space-y-6">
-          {bookingDateConflictBlocked && (
-            <div
-              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-2"
+          {step1DateBlock !== null && step1DateBlock !== 'incomplete' && (
+            <p
+              className="flex flex-wrap items-baseline gap-x-1 gap-y-1 rounded-lg border border-amber-200/90 bg-amber-50/90 px-3 py-2 text-sm text-amber-950 leading-snug"
               role="alert"
             >
-              <p className="font-semibold text-amber-950">Dates not available</p>
-              <p className="text-amber-900/95 leading-relaxed">
-                Sorry, this property is already booked for your requested dates. Please choose different dates or browse
-                other listings.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                <Link
-                  to="/listings"
-                  className="inline-flex justify-center rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-xs font-semibold hover:bg-[#e85d52]"
-                >
-                  Browse listings
-                </Link>
-                <Link
-                  to={property.slug ? `/properties/${property.slug}` : '/listings'}
-                  className="inline-flex justify-center rounded-lg border border-amber-300 text-amber-950 px-4 py-2 text-xs font-semibold hover:bg-amber-100/80"
-                >
-                  Back to listing
-                </Link>
-              </div>
-            </div>
-          )}
-          <div className="rounded-2xl border border-gray-100 bg-stone-50/80 p-5 space-y-2">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking summary</h2>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Weekly rent</span>
-              <span className="font-semibold text-gray-900 tabular-nums">${rent.toLocaleString('en-AU')}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Platform fee (3%)</span>
-              <span className="font-semibold text-gray-900 tabular-nums">${platformPctWeekly.toLocaleString('en-AU')}</span>
-            </div>
-            <div className="flex justify-between text-sm pt-1 border-t border-gray-200/80">
-              <span className="text-gray-800 font-medium">Total per week</span>
-              <span className="font-bold text-gray-900 tabular-nums">${totalWeekly.toLocaleString('en-AU')}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Booking deposit</span>
-              <span className="font-semibold text-gray-900 tabular-nums">
-                ${depositDollars.toLocaleString('en-AU')} <span className="text-gray-500 font-normal">(1 week rent)</span>
+              <span>
+                {step1DateBlock === 'min_lead'
+                  ? 'Move-in must be at least 7 days from today.'
+                  : step1DateBlock.kind === 'before_from'
+                    ? `This room is available from ${formatIsoDateAuNumeric(step1DateBlock.from)} — please choose a move-in date on or after this date.`
+                    : step1DateBlock.kind === 'after_to'
+                      ? `This listing is available until ${formatIsoDateAuNumeric(step1DateBlock.to)} — please adjust your dates.`
+                      : 'Sorry, this property is already booked for your selected dates. Please choose different dates.'}
               </span>
-            </div>
-          </div>
+              <Link
+                to="/listings"
+                className="shrink-0 font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
+              >
+                Browse listings
+              </Link>
+            </p>
+          )}
 
           <div>
             <label htmlFor="bk-move-in" className={labelClass}>
               Move-in date
             </label>
-            <input
+            <AUDateField
               ref={moveInFieldRef}
               id="bk-move-in"
-              type="date"
-              min={minMoveInIso()}
               value={moveIn}
-              onChange={(e) => {
-                setMoveIn(e.target.value)
+              min={minMoveInForPicker}
+              max={listingToBound ?? undefined}
+              onChange={(iso) => {
+                setMoveIn(iso)
                 setExplicitMoveOutFromUrl(null)
                 setSubmitError(null)
               }}
@@ -1351,6 +1386,55 @@ export default function Booking() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 bg-stone-50/80 overflow-hidden">
+            <button
+              type="button"
+              className="md:hidden w-full flex items-center justify-between gap-2 px-5 py-3 text-left border-b border-gray-100/80 bg-stone-50/80"
+              aria-expanded={bookingSummaryOpen}
+              onClick={() => setBookingSummaryOpen((o) => !o)}
+            >
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Booking summary</span>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={`shrink-0 text-gray-500 transition-transform ${bookingSummaryOpen ? 'rotate-180' : ''}`}
+                aria-hidden
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <h2 className="hidden md:block text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 pt-5 pb-0">
+              Booking summary
+            </h2>
+            <div
+              className={`space-y-2 px-5 pb-5 pt-4 md:pt-2 ${bookingSummaryOpen ? 'block' : 'hidden'} md:block`}
+            >
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Weekly rent</span>
+                <span className="font-semibold text-gray-900 tabular-nums">${rent.toLocaleString('en-AU')}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Platform fee (3%)</span>
+                <span className="font-semibold text-gray-900 tabular-nums">${platformPctWeekly.toLocaleString('en-AU')}</span>
+              </div>
+              <div className="flex justify-between text-sm pt-1 border-t border-gray-200/80">
+                <span className="text-gray-800 font-medium">Total per week</span>
+                <span className="font-bold text-gray-900 tabular-nums">${totalWeekly.toLocaleString('en-AU')}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Booking deposit</span>
+                <span className="font-semibold text-gray-900 tabular-nums">
+                  ${depositDollars.toLocaleString('en-AU')}{' '}
+                  <span className="text-gray-500 font-normal">(1 week rent)</span>
+                </span>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -1396,14 +1480,28 @@ export default function Booking() {
                   setSubmitError('Move-in must be at least 7 days from today.')
                   return
                 }
+                if (listingFromBound && moveIn < listingFromBound) {
+                  setSubmitError(
+                    `This room is available from ${formatIsoDateAuNumeric(listingFromBound)} — please choose a move-in date on or after this date.`,
+                  )
+                  return
+                }
+                if (listingToBound && (moveIn > listingToBound || (conflictMoveOutDate && conflictMoveOutDate > listingToBound))) {
+                  setSubmitError(
+                    `This listing is available until ${formatIsoDateAuNumeric(listingToBound)} — please adjust your dates.`,
+                  )
+                  return
+                }
                 if (bookingDateConflictBlocked) {
-                  setSubmitError('Please choose dates that don’t overlap an existing booking.')
+                  setSubmitError(
+                    'Sorry, this property is already booked for your selected dates. Please choose different dates.',
+                  )
                   return
                 }
                 setSubmitError(null)
                 setStep(2)
               }}
-              disabled={bookingDateConflictBlocked}
+              disabled={step1DateBlock !== null}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
             >
               Continue
@@ -1582,6 +1680,10 @@ export default function Booking() {
                   <span className="tabular-nums">${totalChargeDisplay}</span>
                 </div>
               </div>
+
+              {clientSecret && isStripePublishableKeyConfigured() && stripePromise ? (
+                <PaymentsSecuredByStripe align="start" className="max-w-md" />
+              ) : null}
 
               {!isStripePublishableKeyConfigured() || !stripePromise ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 leading-relaxed">

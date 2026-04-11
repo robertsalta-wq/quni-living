@@ -21,6 +21,7 @@ import {
   type UniversityReferenceRow,
 } from '../../lib/universityCampusReference'
 import { resolveUniversitySlugParam } from '../../lib/universitySlugAliases'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../../lib/propertyListingDateWindow'
 
 function Breadcrumbs(props: {
   items: { label: string; to?: string }[]
@@ -119,9 +120,11 @@ export default function CampusAccommodation() {
       setSiblingCampuses(allCampuses.filter((c) => c.id !== match.id))
 
       const campusSub = match.suburb?.trim()
-      const { data: byCampusId, error: pErr1 } = await supabase
-        .from('properties')
-        .select(PROPERTY_CARD_LIST_SELECT)
+      const listingDay = listingIsoDateUtc()
+      const { data: byCampusId, error: pErr1 } = await applyPropertyListingDateWindow(
+        supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+        listingDay,
+      )
         .eq('campus_id', match.id)
         .eq('status', 'active')
         .order('featured', { ascending: false })
@@ -153,6 +156,7 @@ export default function CampusAccommodation() {
             supabase,
             orderedIds,
             PROPERTY_CARD_LIST_SELECT,
+            listingDay,
           )
           if (fetchErr) {
             console.error(fetchErr)
@@ -166,9 +170,10 @@ export default function CampusAccommodation() {
         } else {
           if (rpcErr) console.warn('[Quni] properties_near_campus RPC:', rpcErr.message)
           const box = approxBoundingBoxKm(campusPt.lat, campusPt.lon, 5.5)
-          const r = await supabase
-            .from('properties')
-            .select(PROPERTY_CARD_LIST_SELECT)
+          const r = await applyPropertyListingDateWindow(
+            supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+            listingDay,
+          )
             .eq('status', 'active')
             .not('latitude', 'is', null)
             .not('longitude', 'is', null)
@@ -204,9 +209,10 @@ export default function CampusAccommodation() {
       const remainingAfterGeo = 12 - exact.length - geoNearby.length
 
       if (remainingAfterGeo > 0 && campusSub && u.id) {
-        const r = await supabase
-          .from('properties')
-          .select(PROPERTY_CARD_LIST_SELECT)
+        const r = await applyPropertyListingDateWindow(
+          supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+          listingDay,
+        )
           .eq('status', 'active')
           .is('campus_id', null)
           .ilike('suburb', campusSub)

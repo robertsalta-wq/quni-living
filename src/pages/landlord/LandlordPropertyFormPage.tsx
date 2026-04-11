@@ -80,6 +80,8 @@ type LandlordPropertyDraftV1 = {
   leaseLength: string
   availableFrom: string
   images: string[]
+  isRegisteredRoomingHouse: boolean
+  roomingHouseRegistrationNumber: string
 }
 
 function landlordPropertyDraftFromState(
@@ -147,6 +149,9 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       leaseLength: parseDraftLeaseLength(d.leaseLength),
       availableFrom: typeof d.availableFrom === 'string' ? d.availableFrom : '',
       images: Array.isArray(d.images) ? d.images.filter((x): x is string => typeof x === 'string') : [],
+      isRegisteredRoomingHouse: Boolean(d.isRegisteredRoomingHouse),
+      roomingHouseRegistrationNumber:
+        typeof d.roomingHouseRegistrationNumber === 'string' ? d.roomingHouseRegistrationNumber : '',
     }
     return draft
   } catch {
@@ -239,6 +244,8 @@ export default function LandlordPropertyFormPage() {
   const [bathrooms, setBathrooms] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('single')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
+  const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
+  const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
   const [furnished, setFurnished] = useState(false)
   const [linenSupplied, setLinenSupplied] = useState(false)
   const [weeklyCleaning, setWeeklyCleaning] = useState(false)
@@ -342,6 +349,8 @@ export default function LandlordPropertyFormPage() {
         leaseLength,
         availableFrom,
         images,
+        isRegisteredRoomingHouse,
+        roomingHouseRegistrationNumber,
       }),
     [
       title,
@@ -351,6 +360,8 @@ export default function LandlordPropertyFormPage() {
       bathrooms,
       roomType,
       propertyListingType,
+      isRegisteredRoomingHouse,
+      roomingHouseRegistrationNumber,
       furnished,
       linenSupplied,
       weeklyCleaning,
@@ -414,6 +425,8 @@ export default function LandlordPropertyFormPage() {
     setBathrooms('1')
     setRoomType('single')
     setPropertyListingType('entire_property')
+    setIsRegisteredRoomingHouse(false)
+    setRoomingHouseRegistrationNumber('')
     setFurnished(false)
     setLinenSupplied(false)
     setWeeklyCleaning(false)
@@ -536,6 +549,10 @@ export default function LandlordPropertyFormPage() {
         setPropertyListingType(
           prop.property_type && isPropertyListingType(prop.property_type) ? prop.property_type : 'entire_property',
         )
+        setIsRegisteredRoomingHouse(Boolean(prop.is_registered_rooming_house))
+        setRoomingHouseRegistrationNumber(
+          typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
+        )
         setFurnished(Boolean(prop.furnished))
         setLinenSupplied(Boolean(prop.linen_supplied))
         setWeeklyCleaning(Boolean(prop.weekly_cleaning_service))
@@ -626,6 +643,8 @@ export default function LandlordPropertyFormPage() {
       setBathrooms(parsed.bathrooms)
       setRoomType(parsed.roomType)
       setPropertyListingType(parsed.propertyListingType)
+      setIsRegisteredRoomingHouse(parsed.isRegisteredRoomingHouse)
+      setRoomingHouseRegistrationNumber(parsed.roomingHouseRegistrationNumber)
       setFurnished(parsed.furnished)
       setLinenSupplied(parsed.linenSupplied)
       setWeeklyCleaning(parsed.weeklyCleaning)
@@ -1127,6 +1146,11 @@ export default function LandlordPropertyFormPage() {
       campus_id: resolvedCampusId,
       show_add_another_university: showAddAnotherUniversity,
       open_to_non_students: openToNonStudents,
+      is_registered_rooming_house: isRegisteredRoomingHouse,
+      rooming_house_registration_number:
+        isRegisteredRoomingHouse && roomingHouseRegistrationNumber.trim()
+          ? roomingHouseRegistrationNumber.trim()
+          : null,
       rent_per_week: rent,
       bond: bond.trim() ? Number(bond) : null,
       lease_length: leaseLength || null,
@@ -1452,6 +1476,37 @@ export default function LandlordPropertyFormPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label htmlFor="pf-rooming-house" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
+                  <input
+                    id="pf-rooming-house"
+                    type="checkbox"
+                    checked={isRegisteredRoomingHouse}
+                    onChange={(e) => {
+                      const on = e.target.checked
+                      setIsRegisteredRoomingHouse(on)
+                      if (!on) setRoomingHouseRegistrationNumber('')
+                    }}
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
+                  />
+                  <span className="font-medium text-gray-900">This property is a registered rooming house</span>
+                </label>
+                {isRegisteredRoomingHouse ? (
+                  <div className="mt-3 pl-7">
+                    <label htmlFor="pf-rooming-reg" className={labelClass}>
+                      Rooming house registration number
+                    </label>
+                    <input
+                      id="pf-rooming-reg"
+                      type="text"
+                      value={roomingHouseRegistrationNumber}
+                      onChange={(e) => setRoomingHouseRegistrationNumber(e.target.value)}
+                      className={inputClass}
+                      autoComplete="off"
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
                 <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>

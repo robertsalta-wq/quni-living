@@ -6,6 +6,7 @@ import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripePayoutsCard'
 import PageHeroBand from '../components/PageHeroBand'
+import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -528,6 +529,11 @@ export default function LandlordProfile() {
       />
 
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
+      {profile.verified ? (
+        <div className="mb-4 flex justify-center sm:justify-start">
+          <VerifiedLandlordBadge />
+        </div>
+      ) : null}
       <div
         className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
         role="tablist"

@@ -10,6 +10,7 @@ import { isRoomType, ROOM_TYPE_LABELS, ROOM_TYPE_SHORT_LABELS } from '../lib/lis
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow, normUuid } from '../lib/universityCampusReference'
 import { fetchPropertiesByIds, rpcPropertiesNearCampus } from '../lib/propertiesNearCampusRpc'
+import { listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 import { PropertyCard } from '../components/PropertyCard'
 import Seo from '../components/Seo'
@@ -382,6 +383,7 @@ export default function PropertyDetail() {
         supabase,
         orderedIds,
         PROPERTY_CARD_LIST_SELECT,
+        listingIsoDateUtc(),
       )
       if (cancelled) return
       if (fetchErr) {

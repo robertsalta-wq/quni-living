@@ -1,4 +1,5 @@
 import type { LandlordSafeStudentSnapshot } from './LandlordStudentProfileModal'
+import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
 
 type Props = {
   student: LandlordSafeStudentSnapshot | null
@@ -28,6 +29,9 @@ export default function LandlordApplicantReviewHeader({ student, displayName, bi
         )}
         <div className="min-w-0 flex-1 text-center sm:text-left">
           <h2 className="text-xl font-bold text-gray-900">{displayName}</h2>
+          <div className="mt-1.5 flex justify-center sm:justify-start">
+            <StudentVerifiedBadge student={student} />
+          </div>
           <div className="mt-2 space-y-0.5 text-sm text-gray-600">
             {uni && <p>{uni}</p>}
             {course && <p>{course}</p>}

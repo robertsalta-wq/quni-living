@@ -89,6 +89,20 @@ textarea::placeholder {
   opacity: 1;
 }
 
+/*
+ * Stripe.js appends iframes (and occasionally other UI) as direct children of `document.body`.
+ * After the booking payment step unmounts `<Elements>`, a fixed-position Stripe control can
+ * remain visible on the confirmation screen. Hide only while the booking success view is shown.
+ */
+body:has(#booking-success-heading) > iframe[src*='stripe'] {
+  display: none !important;
+}
+
+/* Some Stripe builds wrap the control in a positioned host `div` (iframe not a direct body child). */
+body:has(#booking-success-heading) > div:has(> iframe[src*='stripe']) {
+  display: none !important;
+}
+
 /* Prefer vertical panning for document scroll on mobile WebViews (e.g. Android Chrome). */
 .booking-scroll {
   touch-action: pan-y;

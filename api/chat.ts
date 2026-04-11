@@ -90,6 +90,7 @@ function buildStudentListingContextBlock(props: Array<Record<string, unknown>>):
     const bond = p['bond']
     const leaseLength = getStr('lease_length')
     const availableFrom = getStr('available_from')
+    const availableTo = getStr('available_to')
     const featured = getBool('featured')
     const rentPerWeek = p['rent_per_week']
     const createdAt = getStr('created_at')
@@ -175,6 +176,7 @@ function buildStudentListingContextBlock(props: Array<Record<string, unknown>>):
     if (bondStr) lines.push(`- bond (AUD): ${bondStr}`)
     if (leaseLength) lines.push(`- lease_length: ${leaseLength}`)
     if (availableFrom) lines.push(`- available_from: ${availableFrom}`)
+    if (availableTo) lines.push(`- available_to: ${availableTo}`)
     if (furnished) lines.push(`- furnished: ${furnished}`)
     if (linenSupplied) lines.push(`- linen_supplied: ${linenSupplied}`)
     if (weeklyCleaningService) lines.push(`- weekly_cleaning_service: ${weeklyCleaningService}`)
@@ -639,6 +641,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       'bond',
       'lease_length',
       'available_from',
+      'available_to',
       'featured',
       'created_at',
     ]

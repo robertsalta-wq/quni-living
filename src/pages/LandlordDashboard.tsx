@@ -20,6 +20,7 @@ import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/onboardingChecklist'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
+import { apiUrl } from '../lib/apiUrl'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -36,9 +37,139 @@ type EnquiryWithProperty = EnquiryRow & {
   properties: { title: string; slug: string } | null
 }
 
+/** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
+type LandlordAgreementSignedPaths =
+  | { kind: 'dual'; rta: string; addendum: string }
+  | { kind: 'single'; path: string }
+
 type BookingWithRelations = BookingRow & {
   properties: { title: string; slug: string; suburb: string | null } | null
   student_profiles: LandlordSafeStudentSnapshot | null
+  /** DocuSeal signer embed — only while signing is pending (not after `status === 'signed'`). */
+  landlord_agreement_signing_url: string | null
+  /** When the lease/RTA row is signed and Storage paths exist — download instead of opening DocuSeal. */
+  landlord_agreement_signed_paths: LandlordAgreementSignedPaths | null
+}
+
+/** DocuSeal stores per-submitter signing links on the submission; email uses landlord `embed_src`. */
+function landlordDocusealEmbedFromMetadata(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null
+  const dr = (metadata as Record<string, unknown>).docuseal_response
+  if (!dr || typeof dr !== 'object' || Array.isArray(dr)) return null
+  const submitters = (dr as Record<string, unknown>).submitters
+  if (!Array.isArray(submitters)) return null
+  const landlord = submitters.find(
+    (s) =>
+      s &&
+      typeof s === 'object' &&
+      String((s as Record<string, unknown>).role || '')
+        .toLowerCase()
+        .includes('landlord'),
+  ) as Record<string, unknown> | undefined
+  const first = submitters[0] as Record<string, unknown> | undefined
+  const fromLandlord = landlord && typeof landlord.embed_src === 'string' ? landlord.embed_src.trim() : ''
+  const fromFirst = first && typeof first.embed_src === 'string' ? first.embed_src.trim() : ''
+  const url = fromLandlord || fromFirst
+  return url || null
+}
+
+function docusealSigningDocScore(doc: { document_type: string; status: string }, hasUrl: boolean): number {
+  if (!hasUrl) return 0
+  const dt = doc.document_type
+  if (dt !== 'lease' && dt !== 'residential_tenancy') return 0
+  const st = doc.status
+  /** Completed signings: never use DocuSeal embed (redirects to /completed). */
+  if (st === 'signed') return 0
+  if (dt === 'residential_tenancy' && st === 'sent_for_signing') return 100
+  if (dt === 'lease' && st === 'sent_for_signing') return 80
+  return 10
+}
+
+type TenancyDocRow = {
+  document_type: string
+  status: string
+  metadata: unknown
+  file_path: string | null
+}
+
+type TenancyWithDocsForSigning = {
+  booking_id: string | null
+  tenancy_documents: unknown
+}
+
+function buildLandlordSigningUrlByBookingId(rows: TenancyWithDocsForSigning[] | null | undefined): Map<string, string> {
+  const best = new Map<string, { score: number; url: string }>()
+  for (const row of rows ?? []) {
+    const bid = row.booking_id
+    if (!bid) continue
+    const raw = row.tenancy_documents
+    const docs = Array.isArray(raw) ? raw : raw ? [raw] : []
+    for (const item of docs) {
+      if (!item || typeof item !== 'object') continue
+      const doc = item as TenancyDocRow
+      const url = landlordDocusealEmbedFromMetadata(doc.metadata)
+      if (!url) continue
+      const score = docusealSigningDocScore(doc, true)
+      if (score === 0) continue
+      const prev = best.get(bid)
+      if (!prev || score > prev.score) best.set(bid, { score, url })
+    }
+  }
+  const out = new Map<string, string>()
+  for (const [bid, v] of best) out.set(bid, v.url)
+  return out
+}
+
+function signedAgreementPathsFromDoc(doc: TenancyDocRow): LandlordAgreementSignedPaths | null {
+  if (doc.status !== 'signed') return null
+  if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') return null
+  const meta =
+    doc.metadata && typeof doc.metadata === 'object' && !Array.isArray(doc.metadata)
+      ? (doc.metadata as Record<string, unknown>)
+      : {}
+  const rta =
+    typeof meta.signed_rta_file_path === 'string' && meta.signed_rta_file_path.trim().length > 0
+      ? meta.signed_rta_file_path.trim()
+      : ''
+  const addendum =
+    typeof meta.signed_addendum_file_path === 'string' && meta.signed_addendum_file_path.trim().length > 0
+      ? meta.signed_addendum_file_path.trim()
+      : ''
+  if (rta && addendum) return { kind: 'dual', rta, addendum }
+  const fp = typeof doc.file_path === 'string' && doc.file_path.trim().length > 0 ? doc.file_path.trim() : ''
+  if (fp) return { kind: 'single', path: fp }
+  return null
+}
+
+function signedAgreementDocScore(doc: TenancyDocRow): number {
+  if (doc.status !== 'signed') return 0
+  if (doc.document_type !== 'lease' && doc.document_type !== 'residential_tenancy') return 0
+  if (signedAgreementPathsFromDoc(doc) == null) return 0
+  return doc.document_type === 'residential_tenancy' ? 20 : 10
+}
+
+/** Prefer residential_tenancy over legacy lease when both have signed Storage paths. */
+function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] | null | undefined): Map<string, LandlordAgreementSignedPaths> {
+  const best = new Map<string, { score: number; paths: LandlordAgreementSignedPaths }>()
+  for (const row of rows ?? []) {
+    const bid = row.booking_id
+    if (!bid) continue
+    const raw = row.tenancy_documents
+    const docs = Array.isArray(raw) ? raw : raw ? [raw] : []
+    for (const item of docs) {
+      if (!item || typeof item !== 'object') continue
+      const doc = item as TenancyDocRow
+      const paths = signedAgreementPathsFromDoc(doc)
+      if (!paths) continue
+      const score = signedAgreementDocScore(doc)
+      if (score === 0) continue
+      const prev = best.get(bid)
+      if (!prev || score > prev.score) best.set(bid, { score, paths })
+    }
+  }
+  const out = new Map<string, LandlordAgreementSignedPaths>()
+  for (const [bid, v] of best) out.set(bid, v.paths)
+  return out
 }
 
 type TabId = 'listings' | 'enquiries' | 'bookings'
@@ -107,10 +238,9 @@ function studentDisplayFromBooking(b: BookingWithRelations): string {
   return '—'
 }
 
-/** Stable key for session UI (e.g. AI assessment nudge label) per applicant on a booking. */
+/** Stable key for session UI (e.g. AI assessment nudge) per booking request (not per student — same student can have multiple listings). */
 function applicantSessionKeyFromBooking(b: BookingWithRelations): string {
-  const sp = b.student_profiles
-  return sp?.id ?? b.student_id ?? b.id
+  return b.id
 }
 
 const ENQUIRY_TRUNC = 100
@@ -209,6 +339,8 @@ export default function LandlordDashboard() {
     scrollToVerification: boolean
     scrollToAiAssessment: boolean
     sessionKey: string
+    /** When set, AI assessment loads listing + rent from this booking (avoids empty context from the dashboard modal). */
+    assessmentBookingId: string | null
   } | null>(null)
   const [aiAssessmentGeneratedSessionKeys, setAiAssessmentGeneratedSessionKeys] = useState<Set<string>>(
     () => new Set(),
@@ -217,6 +349,136 @@ export default function LandlordDashboard() {
   const [landlordStudentByProfileId, setLandlordStudentByProfileId] = useState<
     Record<string, LandlordLoadedStudentRow>
   >({})
+  const [leaseDownloadErrorId, setLeaseDownloadErrorId] = useState<string | null>(null)
+  const [agreementActionBusyId, setAgreementActionBusyId] = useState<string | null>(null)
+
+  const downloadAgreementFromSignedUrls = useCallback(
+    async (signedRta: string, signedAddendum: string | null) => {
+      const openUrl = (url: string) => {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+      const trySaveAs = async (url: string, filename: string) => {
+        try {
+          const r = await fetch(url)
+          if (!r.ok) throw new Error('fetch failed')
+          const blob = await r.blob()
+          const objectUrl = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = objectUrl
+          a.download = filename
+          a.rel = 'noopener'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          URL.revokeObjectURL(objectUrl)
+        } catch {
+          openUrl(url)
+        }
+      }
+      if (signedAddendum) {
+        await trySaveAs(signedRta, 'NSW-Residential-Tenancy-Agreement.pdf')
+        await new Promise((r) => setTimeout(r, 900))
+        await trySaveAs(signedAddendum, 'Quni-Platform-Addendum.pdf')
+      } else {
+        openUrl(signedRta)
+      }
+    },
+    [],
+  )
+
+  const fetchLeaseSignedUrlsViaApi = useCallback(async (bookingId: string) => {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (!token) return null
+    const res = await fetch(apiUrl('/api/documents/lease-signed-url'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ booking_id: bookingId }),
+    })
+    const j = (await res.json()) as {
+      signed_url?: string
+      signed_url_rta?: string
+      signed_url_addendum?: string
+      error?: string
+    }
+    if (!res.ok) return null
+    return j
+  }, [])
+
+  const handleLandlordAgreement = useCallback(
+    async (b: BookingWithRelations) => {
+      setLeaseDownloadErrorId(null)
+      setAgreementActionBusyId(b.id)
+      try {
+        const signed = b.landlord_agreement_signed_paths
+        const bucket = supabase.storage.from('tenancy-documents')
+        const expirySec = 60 * 60 * 24 * 7
+
+        if (signed?.kind === 'dual') {
+          const [r1, r2] = await Promise.all([
+            bucket.createSignedUrl(signed.rta, expirySec),
+            bucket.createSignedUrl(signed.addendum, expirySec),
+          ])
+          if (!r1.error && !r2.error && r1.data?.signedUrl && r2.data?.signedUrl) {
+            await downloadAgreementFromSignedUrls(r1.data.signedUrl, r2.data.signedUrl)
+            return
+          }
+          const api = await fetchLeaseSignedUrlsViaApi(b.id)
+          if (api?.signed_url_rta && api.signed_url_addendum) {
+            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum)
+            return
+          }
+          setLeaseDownloadErrorId(b.id)
+          return
+        }
+
+        if (signed?.kind === 'single') {
+          const r = await bucket.createSignedUrl(signed.path, expirySec)
+          if (!r.error && r.data?.signedUrl) {
+            await downloadAgreementFromSignedUrls(r.data.signedUrl, null)
+            return
+          }
+          const api = await fetchLeaseSignedUrlsViaApi(b.id)
+          if (api?.signed_url_rta && api.signed_url_addendum) {
+            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum)
+            return
+          }
+          if (api?.signed_url) {
+            await downloadAgreementFromSignedUrls(api.signed_url, null)
+            return
+          }
+          setLeaseDownloadErrorId(b.id)
+          return
+        }
+
+        const url = b.landlord_agreement_signing_url?.trim()
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer')
+          return
+        }
+
+        const apiOnly = await fetchLeaseSignedUrlsViaApi(b.id)
+        if (apiOnly?.signed_url_rta && apiOnly.signed_url_addendum) {
+          await downloadAgreementFromSignedUrls(apiOnly.signed_url_rta, apiOnly.signed_url_addendum)
+          return
+        }
+        if (apiOnly?.signed_url) {
+          await downloadAgreementFromSignedUrls(apiOnly.signed_url, null)
+          return
+        }
+
+        setLeaseDownloadErrorId(b.id)
+      } catch {
+        setLeaseDownloadErrorId(b.id)
+      } finally {
+        setAgreementActionBusyId(null)
+      }
+    },
+    [downloadAgreementFromSignedUrls, fetchLeaseSignedUrlsViaApi],
+  )
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -274,8 +536,9 @@ export default function LandlordDashboard() {
         ),
       ]
       const bookingPropertyIds = [...new Set(bookingRows.map((b) => b.property_id).filter(Boolean))] as string[]
+      const bookingIds = bookingRows.map((b) => b.id)
 
-      const [studRes, bookingPropsRes] = await Promise.all([
+      const [studRes, bookingPropsRes, tenancyRes] = await Promise.all([
         studentIds.length > 0
           ? (async () => {
               let r = await supabase
@@ -341,10 +604,24 @@ export default function LandlordDashboard() {
         bookingPropertyIds.length > 0
           ? supabase.from('properties').select('id, title, slug, suburb').in('id', bookingPropertyIds)
           : Promise.resolve({ data: [] as BookingPropertyDbRow[], error: null }),
+        bookingIds.length > 0
+          ? supabase
+              .from('tenancies')
+              .select('booking_id, tenancy_documents ( document_type, status, metadata, file_path )')
+              .in('booking_id', bookingIds)
+          : Promise.resolve({ data: [] as TenancyWithDocsForSigning[], error: null }),
       ])
 
       if (bookingPropsRes.error) throw bookingPropsRes.error
       if (studRes.error) throw studRes.error
+
+      const tenancyRows = (tenancyRes.data ?? []) as TenancyWithDocsForSigning[]
+      const signingUrlByBookingId = tenancyRes.error
+        ? new Map<string, string>()
+        : buildLandlordSigningUrlByBookingId(tenancyRows)
+      const signedPathsByBookingId = tenancyRes.error
+        ? new Map<string, LandlordAgreementSignedPaths>()
+        : buildSignedAgreementPathsByBookingId(tenancyRows)
 
       const studentById = new Map<string, LandlordLoadedStudentRow>()
       const studentRecord: Record<string, LandlordLoadedStudentRow> = {}
@@ -372,6 +649,8 @@ export default function LandlordDashboard() {
           ...b,
           properties: pr ? { title: pr.title, slug: pr.slug, suburb: pr.suburb } : null,
           student_profiles: sp ? { ...sp } : null,
+          landlord_agreement_signing_url: signingUrlByBookingId.get(b.id) ?? null,
+          landlord_agreement_signed_paths: signedPathsByBookingId.get(b.id) ?? null,
         }
       })
 
@@ -1120,6 +1399,7 @@ export default function LandlordDashboard() {
                                       scrollToVerification: false,
                                       scrollToAiAssessment: false,
                                       sessionKey: row.student_id ?? row.id,
+                                      assessmentBookingId: null,
                                     })
                                   }
                                   className="text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
@@ -1214,6 +1494,7 @@ export default function LandlordDashboard() {
                                                 scrollToVerification: false,
                                                 scrollToAiAssessment: false,
                                                 sessionKey: row.student_id ?? row.id,
+                                                assessmentBookingId: null,
                                               })
                                             }
                                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
@@ -1230,6 +1511,7 @@ export default function LandlordDashboard() {
                                                 scrollToVerification: true,
                                                 scrollToAiAssessment: false,
                                                 sessionKey: row.student_id ?? row.id,
+                                                assessmentBookingId: null,
                                               })
                                             }
                                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
@@ -1385,6 +1667,7 @@ export default function LandlordDashboard() {
                                   scrollToVerification: false,
                                   scrollToAiAssessment: false,
                                   sessionKey: applicantSessionKeyFromBooking(b),
+                                  assessmentBookingId: b.id,
                                 })
                               }
                               className="max-w-full text-left break-words font-semibold text-gray-900 hover:text-indigo-700 hover:underline underline-offset-2"
@@ -1401,6 +1684,7 @@ export default function LandlordDashboard() {
                                   scrollToVerification: true,
                                   scrollToAiAssessment: false,
                                   sessionKey: applicantSessionKeyFromBooking(b),
+                                  assessmentBookingId: b.id,
                                 })
                               }
                               className="mt-1 block text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
@@ -1465,6 +1749,7 @@ export default function LandlordDashboard() {
                               scrollToVerification: false,
                               scrollToAiAssessment: true,
                               sessionKey: applicantSessionKey,
+                              assessmentBookingId: b.id,
                             })
                           }
                           className="group w-full min-w-0 rounded-lg border border-[#FF6F61]/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-[#FF6F61]/85 underline-offset-2 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/[0.07] hover:text-[#FF6F61] hover:underline sm:text-center"
@@ -1514,7 +1799,7 @@ export default function LandlordDashboard() {
                         <th className="px-4 py-3">Move-in → end</th>
                         <th className="px-4 py-3">Rent / wk</th>
                         <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3 w-28">Review</th>
+                        <th className="px-4 py-3 w-36">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1530,6 +1815,7 @@ export default function LandlordDashboard() {
                                   scrollToVerification: false,
                                   scrollToAiAssessment: false,
                                   sessionKey: applicantSessionKeyFromBooking(b),
+                                  assessmentBookingId: b.id,
                                 })
                               }
                               className="text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
@@ -1566,12 +1852,46 @@ export default function LandlordDashboard() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <Link
-                              to={`/landlord/bookings/${b.id}/review`}
-                              className="text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
-                            >
-                              Open
-                            </Link>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                {b.status === 'confirmed' || b.status === 'active' ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled={agreementActionBusyId === b.id}
+                                      onClick={() => void handleLandlordAgreement(b)}
+                                      className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+                                    >
+                                      {agreementActionBusyId === b.id
+                                        ? 'Opening…'
+                                        : b.landlord_agreement_signed_paths
+                                          ? 'Download agreement'
+                                          : 'Open agreement'}
+                                    </button>
+                                    <span className="text-gray-300 select-none" aria-hidden>
+                                      ·
+                                    </span>
+                                    <Link
+                                      to={`/landlord/bookings/${b.id}/review`}
+                                      className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
+                                    >
+                                      Booking details
+                                    </Link>
+                                  </>
+                                ) : (
+                                  <Link
+                                    to={`/landlord/bookings/${b.id}/review`}
+                                    className="text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                                  >
+                                    Review request
+                                  </Link>
+                                )}
+                              </div>
+                              {leaseDownloadErrorId === b.id &&
+                                (b.status === 'confirmed' || b.status === 'active') && (
+                                  <p className="text-[11px] leading-snug text-gray-500">Agreement not yet generated</p>
+                                )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1592,6 +1912,7 @@ export default function LandlordDashboard() {
             scrollToVerification={studentProfileModal.scrollToVerification}
             scrollToAiAssessment={studentProfileModal.scrollToAiAssessment}
             assessmentIdentityKey={studentProfileModal.sessionKey}
+            assessmentBookingId={studentProfileModal.assessmentBookingId}
             onAiAssessmentGenerated={() => {
               const k = studentProfileModal.sessionKey
               setAiAssessmentGeneratedSessionKeys((prev) => new Set(prev).add(k))

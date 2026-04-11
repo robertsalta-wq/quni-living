@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from './supabase'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from './propertyListingDateWindow'
 
 /** Reference rows for cascading university → campus UI (cached). */
 export type UniversityReferenceRow = {
@@ -211,10 +212,10 @@ async function fetchCampuses(): Promise<CampusReferenceRow[]> {
 }
 
 async function loadActivePropertyLocationIndex(): Promise<ActivePropertyLocationIndex> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('university_id, campus_id')
-    .eq('status', 'active')
+  const { data, error } = await applyPropertyListingDateWindow(
+    supabase.from('properties').select('university_id, campus_id'),
+    listingIsoDateUtc(),
+  ).eq('status', 'active')
 
   if (error) throw error
 

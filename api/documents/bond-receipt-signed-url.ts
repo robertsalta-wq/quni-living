@@ -102,7 +102,7 @@ export default async function handler(req: any, res: any) {
 
   const { data: signed, error: sErr } = await admin.storage
     .from('tenancy-documents')
-    .createSignedUrl(doc.file_path, 3600)
+    .createSignedUrl(doc.file_path, 604800)
 
   if (sErr || !signed?.signedUrl) {
     console.error('[bond-receipt-signed-url]', sErr)
@@ -112,6 +112,6 @@ export default async function handler(req: any, res: any) {
   return res.status(200).json({
     ok: true,
     signed_url: signed.signedUrl,
-    expires_in: 3600,
+    expires_in: 604800,
   })
 }

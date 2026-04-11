@@ -14,8 +14,8 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
-import { ResidentialTenancyAgreement } from './ResidentialTenancyAgreement.js'
-import type { ResidentialTenancyAgreementProps } from './rtaTypes'
+import { OccupancyAgreement } from './OccupancyAgreement.js'
+import type { OccupancyAgreementProps } from './rtaTypes'
 import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
@@ -72,16 +72,7 @@ export default async function handler(req: any, res: any) {
     token = headerString(req.headers, 'x-internal-doc-flow-secret').trim()
   }
 
-  const authHeaderPreview = authHeader.slice(0, 10) || '(empty)'
-  const secretPreview = secret.slice(0, 10) || '(empty)'
-  const tokenPreview = token.slice(0, 10) || '(empty)'
   const match = Boolean(secret) && token === secret
-  console.log('[generate-lease] auth check', {
-    authorizationHeaderFirst10: authHeaderPreview,
-    expectedSecretFirst10: secretPreview,
-    resolvedTokenFirst10: tokenPreview,
-    match,
-  })
 
   if (!secret || !match) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -273,7 +264,7 @@ export default async function handler(req: any, res: any) {
 
   const lpRec = lp as Record<string, unknown>
 
-  const pdfProps: ResidentialTenancyAgreementProps = {
+  const pdfProps: OccupancyAgreementProps = {
     documentId,
     generatedAt: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }),
     landlord: {
@@ -324,7 +315,7 @@ export default async function handler(req: any, res: any) {
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
 
-  const element = React.createElement(ResidentialTenancyAgreement, pdfProps)
+  const element = React.createElement(OccupancyAgreement, pdfProps)
   // @react-pdf/renderer expects Document root; our component returns <Document>.
   const pdfBuffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
 

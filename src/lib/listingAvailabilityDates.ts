@@ -44,6 +44,29 @@ export function formatAuShortDate(isoDate: string): string {
   return dt.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+/** dd/mm/yyyy for display (calendar-day ISO, no TZ shift). */
+export function formatIsoDateAuNumeric(isoDate: string): string {
+  const s = isoDate.trim().slice(0, 10)
+  if (!isIsoDateString(s)) return ''
+  const [y, m, d] = s.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  return dt.toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+/** Parse typed dd/mm/yyyy to YYYY-MM-DD; invalid calendar dates return null. */
+export function parseAuNumericDateToIso(text: string): string | null {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim())
+  if (!m) return null
+  const day = Number(m[1])
+  const month = Number(m[2])
+  const year = Number(m[3])
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null
+  const dt = new Date(year, month - 1, day)
+  if (dt.getFullYear() !== year || dt.getMonth() !== month - 1 || dt.getDate() !== day) return null
+  const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  return isIsoDateString(iso) ? iso : null
+}
+
 export function availabilityUnavailableBadgeLabel(
   moveIn: string,
   moveOutEffective: string | null,

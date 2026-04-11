@@ -94,6 +94,27 @@ export interface Database {
         }
         Relationships: []
       }
+      admin_checklist_progress: {
+        Row: {
+          id: string
+          key: string
+          completed_items: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          completed_items?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          completed_items?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_vendor_subscriptions: {
         Row: {
           id: string
@@ -447,11 +468,14 @@ export interface Database {
           university_id: string | null
           campus_id: string | null
           available_from: string | null
+          available_to: string | null
           status: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied: boolean | null
           weekly_cleaning_service: boolean | null
           property_type: string | null
           open_to_non_students: boolean
+          is_registered_rooming_house: boolean
+          rooming_house_registration_number: string | null
           created_at: string
           updated_at: string
           property_group_id: string | null
@@ -481,11 +505,14 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
+          available_to?: string | null
           status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
           open_to_non_students?: boolean
+          is_registered_rooming_house?: boolean
+          rooming_house_registration_number?: string | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
@@ -515,11 +542,14 @@ export interface Database {
           university_id?: string | null
           campus_id?: string | null
           available_from?: string | null
+          available_to?: string | null
           status?: 'active' | 'inactive' | 'pending' | 'suspended' | 'draft'
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
           property_type?: string | null
           open_to_non_students?: boolean
+          is_registered_rooming_house?: boolean
+          rooming_house_registration_number?: string | null
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
@@ -618,6 +648,7 @@ export interface Database {
           ai_assessment: string | null
           ai_assessment_at: string | null
           decline_reason: string | null
+          housemates_count: number | null
           created_at: string
           updated_at: string
         }
@@ -660,6 +691,7 @@ export interface Database {
           stripe_subscription_status?: string | null
           ai_assessment?: string | null
           ai_assessment_at?: string | null
+          housemates_count?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -702,6 +734,7 @@ export interface Database {
           stripe_subscription_status?: string | null
           ai_assessment?: string | null
           ai_assessment_at?: string | null
+          housemates_count?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -1136,6 +1169,7 @@ export interface Database {
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'
+            | 'residential_tenancy'
             | 'other'
           status:
             | 'draft'
@@ -1165,6 +1199,7 @@ export interface Database {
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'
+            | 'residential_tenancy'
             | 'other'
           status?:
             | 'draft'
@@ -1194,6 +1229,7 @@ export interface Database {
             | 'rent_increase_notice'
             | 'bond_lodgement'
             | 'bond_receipt'
+            | 'residential_tenancy'
             | 'other'
           status?:
             | 'draft'

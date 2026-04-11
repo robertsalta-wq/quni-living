@@ -14,29 +14,125 @@ import {
   ORGANIZATION_EMAIL,
   absoluteUrl,
 } from '../lib/site'
+import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
 const HERO_COLLAGE_BOTTOM_FALLBACK =
   'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
 
-const HOW_STEPS = [
+const STUDENT_HOW_STEPS = [
   {
     n: 1,
     title: 'Search',
-    desc: 'Browse verified student listings near your university campus.',
+    desc: 'Find verified rooms near your university by suburb or campus',
   },
   {
     n: 2,
     title: 'Enquire',
-    desc: 'Message landlords directly through your secure dashboard.',
+    desc: 'Message landlords directly through the platform',
   },
   {
     n: 3,
     title: 'Book',
-    desc: 'Request your booking and secure your stay online.',
+    desc: 'Pay securely and sign your NSW-compliant lease in one place',
   },
 ] as const
+
+const LANDLORD_HOW_STEPS = [
+  {
+    n: 1,
+    title: 'List for free',
+    desc: 'Add your property in minutes with AI-assisted tools',
+  },
+  {
+    n: 2,
+    title: 'Review applicants',
+    desc: 'See verified student profiles and AI fit summaries',
+  },
+  {
+    n: 3,
+    title: 'Get paid',
+    desc: 'Accept a tenant and receive weekly rent via Stripe Connect',
+  },
+] as const
+
+const STUDENT_FAQ = [
+  {
+    id: 'faq-s-1',
+    q: 'Is Quni Living free for students?',
+    a: "Yes — students pay zero platform fees. You see the landlord's asking rent and pay exactly that, with no booking fees or surcharges added by Quni.",
+  },
+  {
+    id: 'faq-s-2',
+    q: 'How do I know the landlord is legitimate?',
+    a: 'Every landlord on Quni goes through our verification process before listing. Verified landlords display a Verified Landlord badge on their profile and listing.',
+  },
+  {
+    id: 'faq-s-3',
+    q: 'Are the tenancy agreements legally binding?',
+    a: 'Yes. Quni generates NSW-compliant tenancy agreements in accordance with the Residential Tenancies Act 2010, signed digitally via DocuSeal.',
+  },
+  {
+    id: 'faq-s-4',
+    q: 'What if something goes wrong with my tenancy?',
+    a: 'Contact us at hello@quni.com.au. We have a dispute resolution process and will work with both parties to resolve issues fairly.',
+  },
+] as const
+
+const LANDLORD_FAQ = [
+  {
+    id: 'faq-l-1',
+    q: 'How much does Quni charge landlords?',
+    a: 'Landlords pay a 10% service fee on weekly rent, deducted before payout. There are no listing fees and no charges until you accept a tenant.',
+  },
+  {
+    id: 'faq-l-2',
+    q: 'How are students verified?',
+    a: 'Students verify via university email OTP. Enhanced verification includes photo ID and enrolment documents, displayed as a Student Verified badge.',
+  },
+  {
+    id: 'faq-l-3',
+    q: 'How do I receive rent payments?',
+    a: 'Via Stripe Connect direct to your bank account. You see exactly what Quni earns and what you receive in your landlord dashboard.',
+  },
+  {
+    id: 'faq-l-4',
+    q: "Can I list if my property isn't near a university?",
+    a: 'Quni is designed for properties near Australian university campuses. Search is organised by university and suburb, so listings near campuses get the most visibility.',
+  },
+] as const
+
+type HowStep = {
+  readonly n: 1 | 2 | 3
+  readonly title: string
+  readonly desc: string
+}
+
+function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
+  const { heading, steps } = props
+  return (
+    <div className="rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
+      <h3 className="font-display text-lg sm:text-xl font-bold text-[#FF6F61] mb-6">{heading}</h3>
+      <ol className="m-0 list-none space-y-6 p-0">
+        {steps.map((step) => (
+          <li key={step.n} className="flex gap-4">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6F61] text-sm font-bold text-white"
+              aria-hidden
+            >
+              {step.n}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <p className="font-semibold text-gray-900">{step.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-gray-600">{step.desc}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -50,6 +146,7 @@ export default function Home() {
   const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(
     () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
   )
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -58,9 +155,10 @@ export default function Home() {
     }
     let cancelled = false
     setCountLoading(true)
-    supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
+    applyPropertyListingDateWindow(
+      supabase.from('properties').select('id', { count: 'exact', head: true }),
+      listingIsoDateUtc(),
+    )
       .eq('status', 'active')
       .then(({ count, error }) => {
         if (cancelled) return
@@ -84,16 +182,17 @@ export default function Home() {
     }
     let cancelled = false
     setFeaturedLoading(true)
-    supabase
-      .from('properties')
-      .select(
+    applyPropertyListingDateWindow(
+      supabase.from('properties').select(
         `
         *,
         landlord_profiles ( id, full_name, avatar_url, verified ),
         universities ( id, name, slug ),
         campuses ( id, name )
       `,
-      )
+      ),
+      listingIsoDateUtc(),
+    )
       .eq('status', 'active')
       .eq('featured', true)
       .order('created_at', { ascending: false })
@@ -304,6 +403,122 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How it works — below hero / search */}
+      <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-14 sm:py-16">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-3">
+            How it works
+          </h2>
+          <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
+            Whether you&apos;re looking for a room or listing one, Quni keeps the journey clear and on-platform.
+          </p>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+            <HowStepColumn heading="For students" steps={STUDENT_HOW_STEPS} />
+            <HowStepColumn heading="For landlords" steps={LANDLORD_HOW_STEPS} />
+          </div>
+          <div className="mt-10 flex justify-center sm:mt-12">
+            <Link
+              to="/listings"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2"
+            >
+              Browse listings
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-b border-gray-100 bg-white py-14 sm:py-16">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-10">
+            Frequently asked questions
+          </h2>
+          <div className="mx-auto max-w-3xl">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">For students</p>
+            <div className="divide-y divide-gray-200 border-b border-gray-200">
+              {STUDENT_FAQ.map((item) => {
+                const open = openFaqId === item.id
+                return (
+                  <div key={item.id} className="border-t border-gray-200 first:border-t-0">
+                    <button
+                      type="button"
+                      id={`${item.id}-btn`}
+                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 sm:text-base"
+                      aria-expanded={open}
+                      aria-controls={`${item.id}-panel`}
+                      onClick={() => setOpenFaqId(open ? null : item.id)}
+                    >
+                      <span className="min-w-0 pr-2">{item.q}</span>
+                      <svg
+                        className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div
+                      id={`${item.id}-panel`}
+                      role="region"
+                      aria-labelledby={`${item.id}-btn`}
+                      hidden={!open}
+                      className={open ? 'pb-4 text-sm leading-relaxed text-gray-600 sm:pr-8' : ''}
+                    >
+                      {open ? item.a : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="my-10 border-t border-gray-200" aria-hidden />
+
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">For landlords</p>
+            <div className="divide-y divide-gray-200 border-b border-gray-200">
+              {LANDLORD_FAQ.map((item) => {
+                const open = openFaqId === item.id
+                return (
+                  <div key={item.id} className="border-t border-gray-200 first:border-t-0">
+                    <button
+                      type="button"
+                      id={`${item.id}-btn`}
+                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 sm:text-base"
+                      aria-expanded={open}
+                      aria-controls={`${item.id}-panel`}
+                      onClick={() => setOpenFaqId(open ? null : item.id)}
+                    >
+                      <span className="min-w-0 pr-2">{item.q}</span>
+                      <svg
+                        className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div
+                      id={`${item.id}-panel`}
+                      role="region"
+                      aria-labelledby={`${item.id}-btn`}
+                      hidden={!open}
+                      className={open ? 'pb-4 text-sm leading-relaxed text-gray-600 sm:pr-8' : ''}
+                    >
+                      {open ? item.a : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {!nonStudentBannerDismissed && (
         <div className="bg-teal-50 border-b border-teal-200 w-full py-3">
           <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3">
@@ -408,61 +623,6 @@ export default function Home() {
               className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors"
             >
               View all listings
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="bg-[#F6FAF8] py-14 sm:py-18 border-y border-[#E3EEE9]">
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center !mt-0 !mb-3">
-            How it works
-          </h2>
-          <p className="text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-10 sm:mb-12">
-            Finding student housing should feel simple: discover, connect, and secure your place in a few steps.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
-            {HOW_STEPS.map((step) => (
-              <div
-                key={step.n}
-                className="relative rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
-              >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[#FF6F61] mb-4 mx-auto md:mx-0">
-                  {step.n === 1 && (
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
-                    </svg>
-                  )}
-                  {step.n === 2 && (
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5m8-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                  )}
-                  {step.n === 3 && (
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 7h.01M4 11.5l8.086-8.086a2 2 0 0 1 2.828 0l5.672 5.672a2 2 0 0 1 0 2.828L12.5 20a2 2 0 0 1-2.828 0L4 14.328a2 2 0 0 1 0-2.828Z"
-                      />
-                    </svg>
-                  )}
-                </div>
-                <div className="absolute right-4 top-4 inline-flex items-center justify-center h-7 min-w-7 rounded-full bg-[#FDEDEA] px-2 text-xs font-bold text-[#CC4A3C]">
-                  {step.n}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{step.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-10 sm:mt-12 flex justify-center">
-            <Link
-              to="/listings"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2 transition-colors"
-            >
-              Browse listings
             </Link>
           </div>
         </div>

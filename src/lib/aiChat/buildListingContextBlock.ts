@@ -23,6 +23,7 @@ export function buildStudentListingContextBlock(props: Array<Record<string, unkn
     const bond = p['bond']
     const leaseLength = getStr('lease_length')
     const availableFrom = getStr('available_from')
+    const availableTo = getStr('available_to')
     const featured = getBool('featured')
     const rentPerWeek = p['rent_per_week']
     const createdAt = getStr('created_at')
@@ -107,6 +108,7 @@ export function buildStudentListingContextBlock(props: Array<Record<string, unkn
     if (bondStr) lines.push(`- bond (AUD): ${bondStr}`)
     if (leaseLength) lines.push(`- lease_length: ${leaseLength}`)
     if (availableFrom) lines.push(`- available_from: ${availableFrom}`)
+    if (availableTo) lines.push(`- available_to: ${availableTo}`)
     if (furnished) lines.push(`- furnished: ${furnished}`)
     if (linenSupplied) lines.push(`- linen_supplied: ${linenSupplied}`)
     if (weeklyCleaningService) lines.push(`- weekly_cleaning_service: ${weeklyCleaningService}`)

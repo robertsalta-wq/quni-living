@@ -30,3 +30,6 @@ verify_jwt = false
 
 [functions.delete-user-documents]
 verify_jwt = false
+
+[functions.drive-documents]
+verify_jwt = false

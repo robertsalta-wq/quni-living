@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 
-/** Hardcoded admin accounts — compared case-insensitively to `user.email`. */
+/** Hardcoded admin accounts — compared case-insensitively to `user.email`. Sync with `supabase/functions/_shared/adminEmails.ts`. */
 export const ADMIN_EMAILS = ['hello@quni.com.au'] as const
 
 const ADMIN_SET = new Set(ADMIN_EMAILS.map((e) => e.toLowerCase()))

@@ -18,10 +18,16 @@
     "api/documents/generate-lease.ts": {
       "maxDuration": 60
     },
+    "api/documents/generate-residential-tenancy.ts": {
+      "maxDuration": 60
+    },
     "api/documents/generate-bond-receipt.ts": {
       "maxDuration": 60
     },
     "api/documents/bond-receipt-signed-url.ts": {
+      "maxDuration": 30
+    },
+    "api/documents/lease-signed-url.ts": {
       "maxDuration": 30
     },
     "api/webhooks/docuseal.ts": {
