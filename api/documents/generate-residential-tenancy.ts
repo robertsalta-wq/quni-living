@@ -19,7 +19,9 @@ import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { PLATFORM_FEE_PERCENT, sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
+import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
+import { buildRtaRentPaymentMethodLine, fetchBankDetailsForRta } from '../../src/lib/platformConfig'
 
 export const config = {
   runtime: 'nodejs',
@@ -257,6 +259,31 @@ export default async function handler(req: any, res: any) {
     })
   }
 
+  let bankDetails
+  try {
+    bankDetails = await fetchBankDetailsForRta(admin)
+  } catch (e) {
+    console.error('[generate-residential-tenancy] platform_config bank fetch', e)
+    await captureSentryMessageEdge('Residential tenancy: failed to load platform_config for bank details', {
+      booking_id: bookingId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+    return res.status(500).json({ error: 'Could not load platform payment settings' })
+  }
+
+  if (!bankDetails.bsb || !bankDetails.accountNumber) {
+    await captureSentryMessageEdge(
+      'Residential tenancy: bank BSB or account number missing in platform_config',
+      { booking_id: bookingId },
+    )
+    return res.status(400).json({
+      error:
+        'Rent payment details are not configured: set bank BSB and account number under Admin → Business settings before generating this document.',
+    })
+  }
+
+  const rentPaymentMethodLine = buildRtaRentPaymentMethodLine(bankDetails)
+
   const landlordUserId = typeof lp.user_id === 'string' ? lp.user_id : null
 
   let documentId: string
@@ -341,7 +368,7 @@ export default async function handler(req: any, res: any) {
     weeklyRent,
     platformFeePercent: PLATFORM_FEE_PERCENT,
     totalWeekly,
-    paymentMethod: 'Via Quni Living platform (quni.com.au)',
+    paymentMethod: rentPaymentMethodLine,
   }
 
   const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '—'

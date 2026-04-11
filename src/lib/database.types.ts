@@ -991,6 +991,42 @@ export interface Database {
           },
         ]
       }
+      platform_config: {
+        Row: {
+          id: string
+          config_key: string
+          config_value: string
+          label: string
+          category: string
+          is_sensitive: boolean
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          config_key: string
+          config_value?: string
+          label: string
+          category: string
+          is_sensitive?: boolean
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          config_key?: string
+          config_value?: string
+          label?: string
+          category?: string
+          is_sensitive?: boolean
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           id: string

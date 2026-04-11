@@ -24,8 +24,6 @@ const CONDITION_REPORT_VERBATIM =
 const TENANCY_LAWS_VERBATIM =
   'The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.'
 
-const RENT_OTHER_DETAIL = 'Via Quni Living platform (quni.com.au)'
-
 const FT_FORM_REFERENCE = 'FT6600_171225 — NSW Fair Trading — Standard form from 19 May 2025'
 
 const styles = StyleSheet.create({
@@ -780,7 +778,7 @@ export function NswResidentialTenancyAgreement(props: NswResidentialTenancyAgree
       <CheckboxLine checked={false} label="approved electronic bank transfer (such as direct debit, bank transfer or BPAY)" />
       <CheckboxLine checked={false} label="Centrepay" />
       <CheckboxLine checked label="Other" />
-      <Field label="Details of payment method:" children={RENT_OTHER_DETAIL} />
+      <Field label="Details of payment method:" children={rent.paymentMethod} />
 
       {bondDisplay ? (
         <>

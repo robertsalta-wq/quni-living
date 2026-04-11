@@ -470,7 +470,6 @@ function rentDueWeekdayFromCommencement(isoDate) {
 }
 var CONDITION_REPORT_VERBATIM = "A condition report relating to the condition of the premises must be completed by or on behalf of the landlord before or when this agreement is given to the tenant for signing.";
 var TENANCY_LAWS_VERBATIM = "The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.";
-var RENT_OTHER_DETAIL = "Via Quni Living platform (quni.com.au)";
 var FT_FORM_REFERENCE = "FT6600_171225 \u2014 NSW Fair Trading \u2014 Standard form from 19 May 2025";
 var styles = StyleSheet.create({
   page: {
@@ -1066,7 +1065,7 @@ function NswResidentialTenancyAgreement(props) {
       /* @__PURE__ */ jsx(CheckboxLine, { checked: false, label: "approved electronic bank transfer (such as direct debit, bank transfer or BPAY)" }),
       /* @__PURE__ */ jsx(CheckboxLine, { checked: false, label: "Centrepay" }),
       /* @__PURE__ */ jsx(CheckboxLine, { checked: true, label: "Other" }),
-      /* @__PURE__ */ jsx(Field, { label: "Details of payment method:", children: RENT_OTHER_DETAIL }),
+      /* @__PURE__ */ jsx(Field, { label: "Details of payment method:", children: rent.paymentMethod }),
       bondDisplay ? /* @__PURE__ */ jsxs(Fragment, { children: [
         /* @__PURE__ */ jsx(Text, { style: styles.subHeading, children: "Rental bond" }),
         /* @__PURE__ */ jsx(Field, { label: "A rental bond of:", children: `${bondDisplay} must be paid by the tenant on signing this agreement.` }),

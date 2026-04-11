@@ -14,6 +14,7 @@
     "api/**/*.tsx",
     "api/documents/OccupancyAgreement.js",
     "src/lib/database.types.ts",
+    "src/lib/platformConfig.ts",
     "src/lib/documents/OccupancyAgreement.tsx",
     "src/lib/documents/NswResidentialTenancyAgreement.tsx",
     "src/lib/documents/QuniPlatformAddendum.tsx",

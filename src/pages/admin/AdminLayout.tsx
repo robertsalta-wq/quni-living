@@ -20,6 +20,7 @@ const NAV: AdminNavItem[] = [
   { to: '/admin/landlords', label: 'Landlords', end: false },
   { to: '/admin/apps', label: 'Apps', end: false },
   { to: '/admin/payments', label: 'Payments', end: false },
+  { to: '/admin/settings', label: 'Business settings', end: false },
   { to: '/admin/pricing', label: 'Pricing', end: false },
   { to: '/admin/knowledge-base', label: 'Knowledge base', end: false },
   { to: '/admin/documents', label: 'Documents', end: false, icon: 'folder' },
