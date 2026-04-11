@@ -37,6 +37,12 @@ const STATUSES: BookingStatus[] = [
   'payment_failed',
 ]
 
+function rentPaymentPreferenceLabel(v: string | null | undefined): string {
+  if (v === 'bank_transfer') return 'Bank transfer'
+  if (v === 'quni_platform') return 'Quni platform (card)'
+  return '—'
+}
+
 function statusBadgeClass(s: BookingStatus) {
   switch (s) {
     case 'pending':
@@ -137,6 +143,7 @@ export default function AdminBookings() {
                 <th className={adminThClass}>Property</th>
                 <th className={adminThClass}>Stay</th>
                 <th className={adminThClass}>Weekly rent</th>
+                <th className={adminThClass}>Rent payment</th>
                 <th className={adminThClass}>Status</th>
                 <th className={adminThClass}>Action</th>
               </tr>
@@ -144,7 +151,7 @@ export default function AdminBookings() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${adminTdClass} text-gray-500 text-center py-10`}>
+                  <td colSpan={7} className={`${adminTdClass} text-gray-500 text-center py-10`}>
                     No bookings yet.
                   </td>
                 </tr>
@@ -185,6 +192,7 @@ export default function AdminBookings() {
                         {formatDate(row.end_date)}
                       </td>
                       <td className={adminTdClass}>{formatMoney(row.weekly_rent)}</td>
+                      <td className={adminTdClass}>{rentPaymentPreferenceLabel(row.rent_payment_method)}</td>
                       <td className={adminTdClass}>
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(row.status)}`}

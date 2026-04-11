@@ -64,6 +64,8 @@ type PropertyForBooking = Omit<Property, 'landlord_profiles'> & {
 const LEASE_OPTIONS = ['3 months', '6 months', '12 months', 'Flexible'] as const
 type LeaseOption = (typeof LEASE_OPTIONS)[number]
 
+type RentPaymentMethod = 'bank_transfer' | 'quni_platform'
+
 const BOOKING_FEE_AUD = 49
 
 type Step1DateBlock =
@@ -533,10 +535,11 @@ export default function Booking() {
 
   const [myLandlordId, setMyLandlordId] = useState<string | null>(null)
 
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [moveIn, setMoveIn] = useState(() => minMoveInIso())
   const [leaseLength, setLeaseLength] = useState<LeaseOption>('6 months')
   const [message, setMessage] = useState('')
+  const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('bank_transfer')
   const [bondCheck, setBondCheck] = useState(false)
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -740,6 +743,7 @@ export default function Booking() {
       const raw = localStorage.getItem(bookingDraftStorageKey(propertyId))
       if (raw) {
         const d = JSON.parse(raw) as {
+          v?: number
           listingId?: string
           step?: number
           moveIn?: string
@@ -748,6 +752,7 @@ export default function Booking() {
           bondCheck?: boolean
           clientSecret?: string | null
           depositCents?: number | null
+          rentPaymentMethod?: string
         }
         if (!d.listingId || d.listingId === propertyId) {
           restoredDraft = true
@@ -758,13 +763,30 @@ export default function Booking() {
           setLeaseLength(leaseOk)
           if (typeof d.message === 'string') setMessage(d.message)
           if (typeof d.bondCheck === 'boolean') setBondCheck(d.bondCheck)
+          if (d.rentPaymentMethod === 'bank_transfer' || d.rentPaymentMethod === 'quni_platform') {
+            setRentPaymentMethod(d.rentPaymentMethod)
+          }
 
-          let nextStep: 1 | 2 | 3 = d.step === 2 ? 2 : d.step === 3 ? 3 : 1
-          if (nextStep === 3 && (!d.clientSecret || typeof d.clientSecret !== 'string')) {
-            nextStep = 2
+          const draftV2 = d.v === 2
+          let nextStep: 1 | 2 | 3 | 4 = 1
+          if (draftV2) {
+            if (d.step === 2) nextStep = 2
+            else if (d.step === 3) nextStep = 3
+            else if (d.step === 4) nextStep = 4
+            if (nextStep === 4 && (!d.clientSecret || typeof d.clientSecret !== 'string')) {
+              nextStep = 3
+            }
+          } else {
+            if (d.step === 2) nextStep = 2
+            else if (d.step === 3) {
+              nextStep = 4
+              if (!d.clientSecret || typeof d.clientSecret !== 'string') {
+                nextStep = 3
+              }
+            }
           }
           setStep(nextStep)
-          if (nextStep === 3 && d.clientSecret) {
+          if (nextStep === 4 && d.clientSecret) {
             setClientSecret(d.clientSecret)
             if (typeof d.depositCents === 'number') setDepositCents(d.depositCents)
             setBondCheck(true)
@@ -809,12 +831,13 @@ export default function Booking() {
       localStorage.setItem(
         bookingDraftStorageKey(propertyId),
         JSON.stringify({
-          v: 1,
+          v: 2,
           listingId: propertyId,
           step,
           moveIn,
           leaseLength,
           message,
+          rentPaymentMethod,
           bondCheck,
           clientSecret,
           depositCents,
@@ -831,6 +854,7 @@ export default function Booking() {
     moveIn,
     leaseLength,
     message,
+    rentPaymentMethod,
     bondCheck,
     clientSecret,
     depositCents,
@@ -838,7 +862,7 @@ export default function Booking() {
   ])
 
   useEffect(() => {
-    setElevateFloatingChrome(step === 3)
+    setElevateFloatingChrome(step === 4)
     return () => setElevateFloatingChrome(false)
   }, [step, setElevateFloatingChrome])
 
@@ -1018,7 +1042,7 @@ export default function Booking() {
 
       setClientSecret(j.clientSecret)
       setDepositCents(j.depositCents)
-      setStep(3)
+      setStep(4)
     } catch (e) {
       console.warn('[booking] create-booking-payment-intent request error', {
         url: apiUrl('/api/create-booking-payment-intent'),
@@ -1064,6 +1088,7 @@ export default function Booking() {
             studentMessage: message.trim(),
             bondAcknowledged: true,
             propertyType: propertyTypeSnapshot,
+            rentPaymentMethod,
           }),
         })
 
@@ -1114,13 +1139,7 @@ export default function Booking() {
         setSubmittingBooking(false)
       }
     },
-    [
-      property,
-      studentProfile,
-      moveIn,
-      leaseLength,
-      message,
-    ],
+    [property, studentProfile, moveIn, leaseLength, message, rentPaymentMethod],
   )
 
   if (!isSupabaseConfigured) {
@@ -1274,14 +1293,16 @@ export default function Booking() {
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
   const bookingRootStyle: CSSProperties | undefined =
-    step === 3 && keyboardInsetPx > 0
+    step === 4 && keyboardInsetPx > 0
       ? { paddingBottom: `max(12rem, ${keyboardInsetPx + 48}px)` }
       : undefined
+
+  const isTier1HostedRoom = property?.property_type === 'private_room_landlord_on_site'
 
   return (
     <div
       className={`max-w-2xl mx-auto w-full px-4 sm:px-6 py-10 booking-scroll ${
-        step === 3 ? 'max-md:pb-[min(42dvh,19rem)] pb-20 sm:pb-10' : 'pb-20'
+        step === 4 ? 'max-md:pb-[min(42dvh,19rem)] pb-20 sm:pb-10' : 'pb-20'
       }`}
       style={bookingRootStyle}
     >
@@ -1311,12 +1332,14 @@ export default function Booking() {
         </div>
       </div>
 
-      <div className="mt-8 flex gap-2 text-xs font-semibold text-gray-500">
+      <div className="mt-8 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-gray-500">
         <span className={step >= 1 ? 'text-[#FF6F61]' : ''}>1. Details</span>
         <span aria-hidden>→</span>
-        <span className={step >= 2 ? 'text-[#FF6F61]' : ''}>2. Bond info</span>
+        <span className={step >= 2 ? 'text-[#FF6F61]' : ''}>2. Rent payment</span>
         <span aria-hidden>→</span>
-        <span className={step >= 3 ? 'text-[#FF6F61]' : ''}>3. Payment</span>
+        <span className={step >= 3 ? 'text-[#FF6F61]' : ''}>3. Bond info</span>
+        <span aria-hidden>→</span>
+        <span className={step >= 4 ? 'text-[#FF6F61]' : ''}>4. Payment</span>
       </div>
 
       {step === 1 && (
@@ -1518,6 +1541,81 @@ export default function Booking() {
       )}
 
       {step === 2 && (
+        <div className="mt-8 space-y-6" role="radiogroup" aria-labelledby="rent-payment-heading">
+          <h2 id="rent-payment-heading" className="text-lg font-bold text-gray-900">
+            How would you like to pay your weekly rent?
+          </h2>
+          {isTier1HostedRoom ? (
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Bank transfer is strongly recommended. You can still pay by card through Quni if you prefer; any card surcharge
+              is passed through at cost. There is no legal requirement to offer bank transfer for this listing type, but both
+              options are available for consistency.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Under NSW residential tenancy rules, your landlord must offer you a free bank transfer option for rent (s.35{' '}
+              <span className="whitespace-nowrap">Residential Tenancies Act 2010</span>). You may still choose to pay by
+              card through Quni if you prefer.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={rentPaymentMethod === 'bank_transfer'}
+              onClick={() => setRentPaymentMethod('bank_transfer')}
+              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                rentPaymentMethod === 'bank_transfer'
+                  ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                  : 'border-stone-200 bg-white hover:border-stone-300'
+              }`}
+            >
+              <div className="text-sm font-bold text-gray-900">Bank transfer (free — no additional cost)</div>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                Transfer directly to Quni&apos;s account each week. BSB and account details provided after booking is
+                confirmed.
+              </p>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={rentPaymentMethod === 'quni_platform'}
+              onClick={() => setRentPaymentMethod('quni_platform')}
+              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                rentPaymentMethod === 'quni_platform'
+                  ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                  : 'border-stone-200 bg-white hover:border-stone-300'
+              }`}
+            >
+              <div className="text-sm font-bold text-gray-900">Pay via Quni platform (card surcharge applies)</div>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                Pay by card via the Quni platform. A processing surcharge applies at actual cost: 1.7% + $0.30 for Australian
+                cards, 3.5% + $0.30 for international cards.
+              </p>
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="flex-1 rounded-xl border border-gray-200 text-gray-800 py-3 text-sm font-medium hover:bg-gray-50"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52]"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
         <div className="mt-8 space-y-6">
           <h2 className="text-lg font-bold text-gray-900">About your bond</h2>
           <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 space-y-4 text-sm text-gray-700 leading-relaxed">
@@ -1600,7 +1698,7 @@ export default function Booking() {
             <button
               type="button"
               onClick={() => {
-                setStep(1)
+                setStep(2)
                 setClientSecret(null)
                 setDepositCents(null)
               }}
@@ -1641,7 +1739,7 @@ export default function Booking() {
         </div>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <div className="mt-8 space-y-6 max-md:min-h-[min(48dvh,26rem)] scroll-mt-4">
           {!clientSecret ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -1755,7 +1853,7 @@ export default function Booking() {
           <button
             type="button"
             onClick={() => {
-              setStep(2)
+              setStep(3)
               setClientSecret(null)
               setDepositCents(null)
               setPiError(null)

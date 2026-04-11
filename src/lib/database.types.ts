@@ -757,6 +757,7 @@ export interface Database {
           expires_at: string | null
           bond_acknowledged: boolean | null
           property_type: string | null
+          rent_payment_method: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id: string | null
           stripe_subscription_status: string | null
           ai_assessment: string | null
@@ -801,6 +802,7 @@ export interface Database {
           expires_at?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
+          rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
           stripe_subscription_status?: string | null
           ai_assessment?: string | null
@@ -844,6 +846,7 @@ export interface Database {
           expires_at?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
+          rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
           stripe_subscription_id?: string | null
           stripe_subscription_status?: string | null
           ai_assessment?: string | null

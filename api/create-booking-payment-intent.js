@@ -2,7 +2,7 @@
  * Student booking deposit — PaymentIntent (manual capture) + optional commit (insert booking via service role).
  *
  * POST JSON (create PI): { propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged }
- * POST JSON (commit): { commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, propertyType? }
+ * POST JSON (commit): { commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform' }
  *
  * Authorization: Bearer <Supabase access_token>
  */
@@ -263,12 +263,25 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const bondAcknowledged = body.bondAcknowledged === true
   const propertyTypeRaw = typeof body.propertyType === 'string' ? body.propertyType.trim() : ''
   const propertyType = VALID_PROPERTY_TYPES.has(propertyTypeRaw) ? propertyTypeRaw : 'entire_property'
+  const rentPaymentMethodRaw =
+    typeof body.rentPaymentMethod === 'string' ? body.rentPaymentMethod.trim() : ''
+  const rentPaymentMethod =
+    rentPaymentMethodRaw === 'bank_transfer' || rentPaymentMethodRaw === 'quni_platform'
+      ? rentPaymentMethodRaw
+      : null
 
   if (!paymentIntentId || !propertyId || !moveInDate || !leaseLength) {
     return json({ error: 'paymentIntentId, propertyId, moveInDate, and leaseLength are required' }, 400, origin)
   }
   if (!bondAcknowledged) {
     return json({ error: 'Bond acknowledgement is required' }, 400, origin)
+  }
+  if (!rentPaymentMethod) {
+    return json(
+      { error: 'rentPaymentMethod is required and must be bank_transfer or quni_platform' },
+      400,
+      origin,
+    )
   }
 
   const minMoveIn = addDaysIso(todayUtcIso(), 7)
@@ -405,6 +418,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     platform_fee_amount: BOOKING_FEE_AUD_CENTS,
     booking_fee_paid: true,
     property_type: propertyType,
+    rent_payment_method: rentPaymentMethod,
     expires_at: expiresAt,
   }
 
