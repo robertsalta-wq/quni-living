@@ -442,6 +442,120 @@ export interface Database {
           },
         ]
       }
+      pricing_change_log: {
+        Row: {
+          id: string
+          changed_at: string
+          tier: string | null
+          field_name: string
+          old_value: string | null
+          new_value: string | null
+          changed_by: string | null
+        }
+        Insert: {
+          id?: string
+          changed_at?: string
+          tier?: string | null
+          field_name: string
+          old_value?: string | null
+          new_value?: string | null
+          changed_by?: string | null
+        }
+        Update: {
+          id?: string
+          changed_at?: string
+          tier?: string | null
+          field_name?: string
+          old_value?: string | null
+          new_value?: string | null
+          changed_by?: string | null
+        }
+        Relationships: []
+      }
+      pricing_config: {
+        Row: {
+          id: string
+          tier: string
+          svc_fee_pct: number
+          student_fee_type: string
+          card_surcharge_enabled: boolean
+          free_transfer_required: boolean
+          fee_model: string
+          utilities_cap: number
+          early_adopter_active: boolean
+          early_adopter_type: string | null
+          early_adopter_value: number | null
+          early_adopter_expiry_type: string | null
+          early_adopter_expiry_date: string | null
+          early_adopter_expiry_count: number | null
+          early_adopter_landlords_used: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          tier: string
+          svc_fee_pct: number
+          student_fee_type: string
+          card_surcharge_enabled?: boolean
+          free_transfer_required?: boolean
+          fee_model: string
+          utilities_cap?: number
+          early_adopter_active?: boolean
+          early_adopter_type?: string | null
+          early_adopter_value?: number | null
+          early_adopter_expiry_type?: string | null
+          early_adopter_expiry_date?: string | null
+          early_adopter_expiry_count?: number | null
+          early_adopter_landlords_used?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          tier?: string
+          svc_fee_pct?: number
+          student_fee_type?: string
+          card_surcharge_enabled?: boolean
+          free_transfer_required?: boolean
+          fee_model?: string
+          utilities_cap?: number
+          early_adopter_active?: boolean
+          early_adopter_type?: string | null
+          early_adopter_value?: number | null
+          early_adopter_expiry_type?: string | null
+          early_adopter_expiry_date?: string | null
+          early_adopter_expiry_count?: number | null
+          early_adopter_landlords_used?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      volume_discount_tiers: {
+        Row: {
+          id: string
+          label: string
+          min_rooms: number
+          max_rooms: number
+          discount_rate_pct: number
+        }
+        Insert: {
+          id?: string
+          label: string
+          min_rooms: number
+          max_rooms: number
+          discount_rate_pct: number
+        }
+        Update: {
+          id?: string
+          label?: string
+          min_rooms?: number
+          max_rooms?: number
+          discount_rate_pct?: number
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           id: string
