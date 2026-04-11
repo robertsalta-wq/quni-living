@@ -36,6 +36,7 @@ import AdminSettings from './pages/admin/AdminSettings'
 import AdminPricing from './pages/admin/AdminPricing'
 import KnowledgeBase from './pages/admin/KnowledgeBase'
 import DocumentsPage from './pages/admin/DocumentsPage'
+import DomainsPage from './pages/admin/DomainsPage'
 import TrustChecklist from './pages/admin/TrustChecklist'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
@@ -264,6 +265,7 @@ function App() {
             <Route path="pricing" element={<AdminPricing />} />
             <Route path="knowledge-base" element={<KnowledgeBase />} />
             <Route path="documents" element={<DocumentsPage />} />
+            <Route path="domains" element={<DomainsPage />} />
             <Route path="trust-checklist" element={<TrustChecklist />} />
           </Route>
           </Routes>

@@ -21,7 +21,7 @@
     "seed:properties": "npx tsx src/scripts/seedProperties.ts",
     "seed:knowledge": "node scripts/run-with-env.mjs npx tsx scripts/seedKnowledge.ts",
     "generate:suburbs": "node scripts/suburb-generator/generate.js",
-    "supabase:deploy:functions": "npx supabase@latest functions deploy send-uni-otp && npx supabase@latest functions deploy verify-uni-otp && npx supabase@latest functions deploy send-work-otp && npx supabase@latest functions deploy verify-work-otp && npx supabase@latest functions deploy delete-student-account --no-verify-jwt && npx supabase@latest functions deploy delete-user-documents --no-verify-jwt && npx supabase@latest functions deploy stripe-webhook --no-verify-jwt && npx supabase@latest functions deploy drive-documents --no-verify-jwt"
+    "supabase:deploy:functions": "npx supabase@latest functions deploy send-uni-otp && npx supabase@latest functions deploy verify-uni-otp && npx supabase@latest functions deploy send-work-otp && npx supabase@latest functions deploy verify-work-otp && npx supabase@latest functions deploy delete-student-account --no-verify-jwt && npx supabase@latest functions deploy delete-user-documents --no-verify-jwt && npx supabase@latest functions deploy stripe-webhook --no-verify-jwt && npx supabase@latest functions deploy drive-documents --no-verify-jwt && npx supabase@latest functions deploy tpp-domains --no-verify-jwt && npx supabase@latest functions deploy tpp-domain-expiry-alert --no-verify-jwt"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -40,6 +40,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@vercel/functions": "^3.4.3",
     "dotenv": "^17.3.1",
+    "lucide-react": "^1.8.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -56,9 +57,9 @@
     "@vercel/node": "^5.7.0",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.27",
+    "esbuild": "^0.27.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "esbuild": "^0.27.0",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "postcss": "^8.5.8",

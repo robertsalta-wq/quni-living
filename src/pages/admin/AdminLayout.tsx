@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
+import { Globe } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { isAdminUser } from '../../lib/adminEmails'
 
@@ -7,7 +8,7 @@ type AdminNavItem = {
   to: string
   label: string
   end: boolean
-  icon?: 'folder' | 'checklist'
+  icon?: 'folder' | 'checklist' | 'globe'
 }
 
 const NAV: AdminNavItem[] = [
@@ -24,6 +25,7 @@ const NAV: AdminNavItem[] = [
   { to: '/admin/pricing', label: 'Pricing', end: false },
   { to: '/admin/knowledge-base', label: 'Knowledge base', end: false },
   { to: '/admin/documents', label: 'Documents', end: false, icon: 'folder' },
+  { to: '/admin/domains', label: 'Domains', end: false, icon: 'globe' },
   { to: '/admin/trust-checklist', label: 'Trust checklist', end: false, icon: 'checklist' },
 ]
 
@@ -120,6 +122,9 @@ export default function AdminLayout() {
             <NavLink key={to} to={to} end={end} className={({ isActive }) => navClassName(isActive)}>
               <span className="flex items-center gap-2">
                 {icon === 'folder' ? <FolderNavIcon /> : null}
+                {icon === 'globe' ? (
+                  <Globe className="h-4 w-4 shrink-0 text-gray-500" strokeWidth={2} aria-hidden />
+                ) : null}
                 {icon === 'checklist' ? <ChecklistNavIcon /> : null}
                 {label}
               </span>

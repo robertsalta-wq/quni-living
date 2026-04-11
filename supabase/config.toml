@@ -33,3 +33,9 @@ verify_jwt = false
 
 [functions.drive-documents]
 verify_jwt = false
+
+[functions.tpp-domains]
+verify_jwt = false
+
+[functions.tpp-domain-expiry-alert]
+verify_jwt = false
