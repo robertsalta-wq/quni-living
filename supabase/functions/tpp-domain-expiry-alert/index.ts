@@ -28,8 +28,8 @@ Deno.serve(async (req) => {
 
   const tppEnv = loadTppEnvFromDeno()
   if (!tppEnv) {
-    console.error('tpp-domain-expiry-alert: missing TPP_API_USER or TPP_API_PASSWORD')
-    return json({ error: 'TPP API is not configured' }, 500)
+    console.error('tpp-domain-expiry-alert: missing TPP_API_USER, TPP_API_PASSWORD, or TPP_ACCOUNT_NUM')
+    return json({ error: 'TPP API is not configured (need UserId, Password, AccountNo)' }, 500)
   }
 
   const resendKey = Deno.env.get('RESEND_API_KEY')?.trim()

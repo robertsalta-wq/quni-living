@@ -69,8 +69,11 @@ Deno.serve(async (req) => {
 
   const tppEnv = loadTppEnvFromDeno()
   if (!tppEnv) {
-    console.error('Missing TPP_API_USER or TPP_API_PASSWORD')
-    return json(req, { error: 'TPP API is not configured on the server.' }, 500)
+    console.error('Missing TPP_API_USER, TPP_API_PASSWORD, or TPP_ACCOUNT_NUM')
+    return json(req, {
+      error:
+        'TPP API is not configured. Set secrets TPP_API_USER (UserId), TPP_API_PASSWORD, and TPP_ACCOUNT_NUM (AccountNo from API credentials).',
+    }, 500)
   }
 
   try {
