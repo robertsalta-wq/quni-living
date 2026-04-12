@@ -11,9 +11,17 @@ type HealthResult = {
   message: string
 }
 
-/** Maps vendor card titles to operational_status.service_name / health check keys. */
-function vendorTitleToHealthService(title: string): string | null {
-  const t = title.toLowerCase()
+type VendorHealthRow = Pick<Database['public']['Tables']['admin_vendor_subscriptions']['Row'], 'title' | 'href'>
+
+/** Maps vendor rows to operational_status.service_name / health check keys (title + dashboard href). */
+function vendorRowToHealthService(row: VendorHealthRow): string | null {
+  const href = (row.href ?? '').trim().toLowerCase()
+  const t = row.title.trim().toLowerCase()
+
+  // Prefer dashboard URL so status dots work even if the display title is edited.
+  if (href.includes('dash.cloudflare.com') || href.includes('cloudflare.com')) return 'cloudflare'
+  if (href.includes('console.anthropic.com') || href.includes('anthropic.com')) return 'anthropic'
+
   if (t.includes('cloudflare')) return 'cloudflare'
   if (t.includes('anthropic')) return 'anthropic'
   if (t.includes('supabase') && t.includes('quni living')) return 'supabase'
@@ -802,7 +810,7 @@ export default function AdminApps() {
                 key={row.id}
                 className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-indigo-100 relative`}
               >
-                <HealthStatusDot serviceKey={vendorTitleToHealthService(row.title)} results={healthResults} />
+                <HealthStatusDot serviceKey={vendorRowToHealthService(row)} results={healthResults} />
                 <div className="flex items-start gap-3 flex-1">
                   <BrandLogo title={row.title} href={row.href} logoSrc={row.logo_src} />
                   <div className="min-w-0 flex-1">
