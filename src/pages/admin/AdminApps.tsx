@@ -1,7 +1,47 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { adminCardClass } from './adminUi'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
+import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import type { Database } from '../../lib/database.types'
+
+type HealthResult = {
+  service: string
+  status: 'operational' | 'degraded' | 'down'
+  message: string
+}
+
+/** Maps vendor card titles to operational_status.service_name / health check keys. */
+function vendorTitleToHealthService(title: string): string | null {
+  const t = title.toLowerCase()
+  if (t.includes('docuseal') || t.includes('railway')) return 'docuseal'
+  if (t.includes('stripe')) return 'stripe'
+  if (t.includes('vercel')) return 'vercel'
+  if (t.includes('resend')) return 'resend'
+  if (t.includes('tpp') || t.includes('wholesale')) return 'tpp_domains'
+  return null
+}
+
+function HealthStatusDot({ serviceKey, results }: { serviceKey: string | null; results: HealthResult[] }) {
+  if (!serviceKey) return null
+  const h = results.find((r) => r.service === serviceKey)
+  if (!h) return null
+  const base = 'absolute top-3 right-11 z-10 h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-white shadow-sm'
+  if (h.status === 'operational') {
+    return <span className={`${base} bg-green-500`} title={h.message} aria-hidden />
+  }
+  if (h.status === 'degraded') {
+    return <span className={`${base} bg-amber-500`} title={h.message} aria-hidden />
+  }
+  return (
+    <span
+      className={`${base} bg-red-500 animate-pulse`}
+      title={h.message}
+      role="status"
+      aria-label={`${h.service} is down`}
+    />
+  )
+}
 
 /** Placeholder FX for rough AUD rollup (replace with a live rate when you care about accuracy). */
 const USD_TO_AUD_PLACEHOLDER = 1.55
@@ -470,11 +510,45 @@ function VendorEditModal({
   )
 }
 
+const HEALTH_POLL_MS = 5 * 60 * 1000
+
 export default function AdminApps() {
   const [rows, setRows] = useState<VendorRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<VendorRow | null>(null)
+  const [healthResults, setHealthResults] = useState<HealthResult[]>([])
+  const [healthLoading, setHealthLoading] = useState(false)
+  const [healthError, setHealthError] = useState<string | null>(null)
+  const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null)
+
+  const loadHealth = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setHealthLoading(true)
+    setHealthError(null)
+    const auth = await getValidAccessTokenForFunctions()
+    if ('error' in auth) {
+      setHealthError(auth.error)
+      setHealthLoading(false)
+      setLastHealthCheck(new Date())
+      return
+    }
+    const { data, error: fnError } = await supabase.functions.invoke<HealthResult[]>('platform-health', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+    setLastHealthCheck(new Date())
+    setHealthLoading(false)
+    if (fnError) {
+      setHealthError(await readSupabaseFunctionInvokeError(data, fnError))
+      return
+    }
+    if (data && typeof data === 'object' && 'error' in data && typeof (data as { error?: string }).error === 'string') {
+      setHealthError((data as { error: string }).error)
+      return
+    }
+    setHealthResults(Array.isArray(data) ? data : [])
+  }, [])
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -502,6 +576,12 @@ export default function AdminApps() {
     void load()
   }, [load])
 
+  useEffect(() => {
+    void loadHealth()
+    const id = window.setInterval(() => void loadHealth(), HEALTH_POLL_MS)
+    return () => window.clearInterval(id)
+  }, [loadHealth])
+
   const totalMonthlyAudApprox = useMemo(() => {
     if (!rows?.length) return 0
     return rows.reduce((sum, r) => sum + monthlyAudApprox(r), 0)
@@ -518,13 +598,58 @@ export default function AdminApps() {
   const linkClass =
     'text-xs text-indigo-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 rounded'
 
+  const downHealth = useMemo(() => healthResults.filter((r) => r.status === 'down'), [healthResults])
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Apps</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
-        External tools for running Quni Living — costs are stored in Supabase and editable below. Apple Developer,
-        Firebase, and Google Play Console are fixed shortcuts for the native app stack; all cards are sorted A–Z by name.
-      </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Apps</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            External tools for running Quni Living — costs are stored in Supabase and editable below. Apple Developer,
+            Firebase, and Google Play Console are fixed shortcuts for the native app stack; all cards are sorted A–Z by
+            name.
+          </p>
+        </div>
+        <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => void loadHealth()}
+            disabled={healthLoading}
+            className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+          >
+            {healthLoading ? 'Refreshing…' : 'Refresh All'}
+          </button>
+          {lastHealthCheck ? (
+            <p className="text-xs text-gray-500 text-right">
+              Last checked:{' '}
+              {lastHealthCheck.toLocaleString('en-AU', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              })}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {downHealth.length > 0 ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <p className="font-semibold">⚠️ Platform issue detected</p>
+          <ul className="mt-2 list-disc list-inside space-y-1">
+            {downHealth.map((r) => (
+              <li key={r.service}>
+                {r.service}: {r.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {healthError ? <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{healthError}</p> : null}
 
       {!loading && !error && rows && rows.length > 0 ? (
         <div className={`${adminCardClass} mb-6 border-indigo-100/80 bg-indigo-50/40`}>
@@ -567,6 +692,7 @@ export default function AdminApps() {
                 key={row.id}
                 className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-indigo-100 relative`}
               >
+                <HealthStatusDot serviceKey={vendorTitleToHealthService(row.title)} results={healthResults} />
                 <div className="flex items-start gap-3 flex-1">
                   <BrandLogo title={row.title} href={row.href} logoSrc={row.logo_src} />
                   <div className="min-w-0 flex-1">

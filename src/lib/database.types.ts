@@ -115,6 +115,27 @@ export interface Database {
         }
         Relationships: []
       }
+      operational_status: {
+        Row: {
+          service_name: string
+          status: 'operational' | 'degraded' | 'down'
+          message: string | null
+          checked_at: string
+        }
+        Insert: {
+          service_name: string
+          status: 'operational' | 'degraded' | 'down'
+          message?: string | null
+          checked_at?: string
+        }
+        Update: {
+          service_name?: string
+          status?: 'operational' | 'degraded' | 'down'
+          message?: string | null
+          checked_at?: string
+        }
+        Relationships: []
+      }
       admin_vendor_subscriptions: {
         Row: {
           id: string

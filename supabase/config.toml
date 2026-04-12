@@ -39,3 +39,9 @@ verify_jwt = false
 
 [functions.tpp-domain-expiry-alert]
 verify_jwt = false
+
+[functions.platform-health]
+verify_jwt = false
+
+[functions.platform-health-cron]
+verify_jwt = false
