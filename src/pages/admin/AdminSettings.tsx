@@ -868,18 +868,15 @@ export default function AdminSettings() {
                         )}
                       </td>
                       <td className={adminTdClass}>
-                        {isFullRowEditing ? (
-                          <input
-                            type="text"
-                            autoComplete="off"
-                            className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
-                            value={row.handle}
-                            onChange={(e) => updateSocialRow(idx, { handle: e.target.value })}
-                            disabled={isUrlEditing}
-                          />
-                        ) : (
-                          <span className="font-mono text-[13px] text-gray-800">{row.handle || '—'}</span>
-                        )}
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                          value={row.handle}
+                          onChange={(e) => updateSocialRow(idx, { handle: e.target.value })}
+                          disabled={isUrlEditing}
+                          aria-label={`Handle for ${row.platform || 'account'}`}
+                        />
                       </td>
                       <td className={`${adminTdClass} max-w-[min(28rem,55vw)]`}>
                         {isUrlEditing ? (
