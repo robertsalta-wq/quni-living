@@ -149,12 +149,99 @@ async function checkVercel(): Promise<HealthResult> {
       redirect: 'follow',
       signal: timeoutSignal(),
     })
-    // Any HTTP status means the deployment is reachable; only network/timeout failures are "down".
     return { service, status: 'operational', message: `HTTP ${res.status}` }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Request failed'
     return { service, status: 'down', message: msg }
   }
+}
+
+type StatusPageV2Body = {
+  status?: { indicator?: string; description?: string }
+}
+
+async function checkStatusPageV2(service: string, url: string): Promise<HealthResult> {
+  try {
+    const res = await fetch(url, { method: 'GET', signal: timeoutSignal() })
+    if (!res.ok) {
+      return { service, status: 'down', message: `HTTP ${res.status}` }
+    }
+    let data: StatusPageV2Body
+    try {
+      data = (await res.json()) as StatusPageV2Body
+    } catch {
+      return { service, status: 'down', message: 'Invalid JSON from status page' }
+    }
+    const ind = (data.status?.indicator ?? '').toLowerCase()
+    const descRaw = (data.status?.description ?? '').trim()
+    const desc = descRaw || (ind ? ind : '') || 'Status unknown'
+    if (ind === 'none') return { service, status: 'operational', message: desc }
+    if (ind === 'minor') return { service, status: 'degraded', message: desc }
+    if (ind === 'major' || ind === 'critical') return { service, status: 'down', message: desc }
+    return { service, status: 'down', message: desc }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Request failed'
+    return { service, status: 'down', message: msg }
+  }
+}
+
+type FirebaseIncidentJson = {
+  end?: string | null
+  external_desc?: string
+  service_name?: string
+  severity?: string
+}
+
+function checkFirebase(): Promise<HealthResult> {
+  const service = 'firebase'
+  return (async () => {
+    try {
+      const res = await fetch('https://status.firebase.google.com/incidents.json', {
+        method: 'GET',
+        signal: timeoutSignal(),
+      })
+      if (!res.ok) {
+        return { service, status: 'down', message: `HTTP ${res.status}` }
+      }
+      let incidents: FirebaseIncidentJson[]
+      try {
+        incidents = (await res.json()) as FirebaseIncidentJson[]
+      } catch {
+        return { service, status: 'down', message: 'Invalid incidents JSON' }
+      }
+      if (!Array.isArray(incidents)) {
+        return { service, status: 'down', message: 'incidents.json was not an array' }
+      }
+
+      const active = incidents.filter((i) => i.end == null || String(i.end).trim() === '')
+      if (active.length === 0) {
+        return { service, status: 'operational', message: 'No active incidents' }
+      }
+
+      const sev = (s: string | undefined) => (s ?? '').toLowerCase()
+      const first = active[0]
+      const title = (first?.external_desc ?? first?.service_name ?? 'Active incident').trim() || 'Active incident'
+
+      const hasHigh = active.some((i) => {
+        const s = sev(i.severity)
+        return s === 'high' || s === 'critical'
+      })
+      if (hasHigh) {
+        return { service, status: 'down', message: title }
+      }
+
+      const hasLow = active.some((i) => sev(i.severity) === 'low')
+      if (hasLow) {
+        return { service, status: 'degraded', message: title }
+      }
+
+      // Active incidents with medium/unknown severity → degraded
+      return { service, status: 'degraded', message: title }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Request failed'
+      return { service, status: 'down', message: msg }
+    }
+  })()
 }
 
 export async function checkAllServices(_env: HealthCheckEnv = {}): Promise<HealthResult[]> {
@@ -165,5 +252,10 @@ export async function checkAllServices(_env: HealthCheckEnv = {}): Promise<Healt
     checkStripe(),
     checkResend(),
     checkVercel(),
+    checkStatusPageV2('cloudflare', 'https://www.cloudflarestatus.com/api/v2/status.json'),
+    checkStatusPageV2('anthropic', 'https://status.anthropic.com/api/v2/status.json'),
+    checkStatusPageV2('supabase', 'https://status.supabase.com/api/v2/status.json'),
+    checkStatusPageV2('sentry', 'https://status.sentry.io/api/v2/status.json'),
+    checkFirebase(),
   ])
 }

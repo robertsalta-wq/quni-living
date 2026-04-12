@@ -72,6 +72,47 @@ Deno.serve(async (req) => {
     }
   }
 
+  let incidentsLogged = 0
+  for (const r of results) {
+    const before = prevMap.get(r.service)
+    const prevBad = before === 'degraded' || before === 'down'
+    const nextBad = r.status === 'degraded' || r.status === 'down'
+
+    if (nextBad && !prevBad) {
+      const { error: insErr } = await admin.from('incident_log').insert({
+        service_name: r.service,
+        status: r.status,
+        message: r.message,
+      })
+      if (insErr) {
+        console.error('incident_log insert', r.service, insErr)
+      } else {
+        incidentsLogged += 1
+      }
+    }
+
+    if (!nextBad && prevBad) {
+      const { data: openRow, error: selErr } = await admin
+        .from('incident_log')
+        .select('id')
+        .eq('service_name', r.service)
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (selErr) {
+        console.error('incident_log select open', r.service, selErr)
+      } else if (openRow?.id) {
+        const { error: resErr } = await admin
+          .from('incident_log')
+          .update({ resolved_at: checkedAt })
+          .eq('id', openRow.id)
+        if (resErr) console.error('incident_log resolve', r.service, resErr)
+      }
+    }
+  }
+
   const firebaseJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim()
   let alerts = 0
 
@@ -95,5 +136,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ checked: results.length, alerts })
+  return json({ checked: results.length, alerts, incidentsLogged })
 })

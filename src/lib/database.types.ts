@@ -136,6 +136,36 @@ export interface Database {
         }
         Relationships: []
       }
+      incident_log: {
+        Row: {
+          id: string
+          service_name: string
+          status: string
+          message: string | null
+          comment: string | null
+          resolved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          service_name: string
+          status: string
+          message?: string | null
+          comment?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          service_name?: string
+          status?: string
+          message?: string | null
+          comment?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       admin_vendor_subscriptions: {
         Row: {
           id: string

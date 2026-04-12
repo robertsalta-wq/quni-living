@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { adminCardClass } from './adminUi'
+import { adminCardClass, adminTableWrapClass, adminThClass, adminTdClass } from './adminUi'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
@@ -14,6 +14,10 @@ type HealthResult = {
 /** Maps vendor card titles to operational_status.service_name / health check keys. */
 function vendorTitleToHealthService(title: string): string | null {
   const t = title.toLowerCase()
+  if (t.includes('cloudflare')) return 'cloudflare'
+  if (t.includes('anthropic')) return 'anthropic'
+  if (t.includes('supabase') && t.includes('quni living')) return 'supabase'
+  if (t.includes('sentry')) return 'sentry'
   if (t.includes('docuseal') || t.includes('railway')) return 'docuseal'
   if (t.includes('stripe')) return 'stripe'
   if (t.includes('vercel')) return 'vercel'
@@ -40,6 +44,90 @@ function HealthStatusDot({ serviceKey, results }: { serviceKey: string | null; r
       role="status"
       aria-label={`${h.service} is down`}
     />
+  )
+}
+
+type IncidentLogRow = Database['public']['Tables']['incident_log']['Row']
+
+function formatIncidentAt(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function IncidentStatusBadge({ status }: { status: string }) {
+  const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold capitalize'
+  if (status === 'operational') {
+    return <span className={`${base} bg-green-100 text-green-800`}>operational</span>
+  }
+  if (status === 'degraded') {
+    return <span className={`${base} bg-amber-100 text-amber-800`}>degraded</span>
+  }
+  if (status === 'down') {
+    return <span className={`${base} bg-red-100 text-red-800`}>down</span>
+  }
+  return <span className={`${base} bg-gray-100 text-gray-700`}>{status}</span>
+}
+
+function IncidentCommentCell({ row, onSaved }: { row: IncidentLogRow; onSaved: () => void }) {
+  const [value, setValue] = useState(row.comment ?? '')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setValue(row.comment ?? '')
+  }, [row.id, row.comment])
+
+  const save = async () => {
+    const trimmed = value.trim()
+    const prev = (row.comment ?? '').trim()
+    if (trimmed === prev) return
+    setSaving(true)
+    const { error } = await supabase.from('incident_log').update({ comment: trimmed || null }).eq('id', row.id)
+    setSaving(false)
+    if (!error) onSaved()
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={() => void save()}
+      disabled={saving}
+      className="w-full min-w-[10rem] max-w-xs rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-300 disabled:opacity-60"
+      placeholder="Add note…"
+      aria-label={`Comment for ${row.service_name} incident`}
+    />
+  )
+}
+
+function IncidentMarkResolved({ row, onSaved }: { row: IncidentLogRow; onSaved: () => void }) {
+  const [busy, setBusy] = useState(false)
+  if (row.resolved_at) return null
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true)
+        try {
+          const now = new Date().toISOString()
+          const { error } = await supabase.from('incident_log').update({ resolved_at: now }).eq('id', row.id)
+          if (!error) onSaved()
+        } finally {
+          setBusy(false)
+        }
+      }}
+      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
+    >
+      {busy ? '…' : 'Mark resolved'}
+    </button>
   )
 }
 
@@ -323,11 +411,12 @@ function GooglePlayAppCard({ linkClass }: { linkClass: string }) {
   )
 }
 
-function FirebaseAppCard({ linkClass }: { linkClass: string }) {
+function FirebaseAppCard({ linkClass, healthResults }: { linkClass: string; healthResults: HealthResult[] }) {
   return (
     <div
       className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-amber-100/90 border-amber-100/50 bg-amber-50/20 relative`}
     >
+      <HealthStatusDot serviceKey="firebase" results={healthResults} />
       <div className="flex items-start gap-3 flex-1">
         <div
           className="h-9 w-9 shrink-0 rounded-xl border border-amber-100/80 bg-white flex items-center justify-center"
@@ -521,6 +610,25 @@ export default function AdminApps() {
   const [healthLoading, setHealthLoading] = useState(false)
   const [healthError, setHealthError] = useState<string | null>(null)
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null)
+  const [incidents, setIncidents] = useState<IncidentLogRow[]>([])
+  const [incidentsLoading, setIncidentsLoading] = useState(false)
+
+  const loadIncidents = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setIncidentsLoading(true)
+    const { data, error: qErr } = await supabase
+      .from('incident_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30)
+    setIncidentsLoading(false)
+    if (qErr) {
+      console.error('incident_log', qErr)
+      setIncidents([])
+      return
+    }
+    setIncidents((data as IncidentLogRow[] | null) ?? [])
+  }, [])
 
   const loadHealth = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -548,7 +656,8 @@ export default function AdminApps() {
       return
     }
     setHealthResults(Array.isArray(data) ? data : [])
-  }, [])
+    void loadIncidents()
+  }, [loadIncidents])
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -574,7 +683,8 @@ export default function AdminApps() {
 
   useEffect(() => {
     void load()
-  }, [load])
+    void loadIncidents()
+  }, [load, loadIncidents])
 
   useEffect(() => {
     void loadHealth()
@@ -677,7 +787,7 @@ export default function AdminApps() {
               return <AppleDeveloperAppCard key="appledeveloper" linkClass={linkClass} />
             }
             if (item.kind === 'firebase') {
-              return <FirebaseAppCard key="firebase" linkClass={linkClass} />
+              return <FirebaseAppCard key="firebase" linkClass={linkClass} healthResults={healthResults} />
             }
             if (item.kind === 'googleplay') {
               return <GooglePlayAppCard key="googleplay" linkClass={linkClass} />
@@ -733,6 +843,64 @@ export default function AdminApps() {
           })}
         </div>
       ) : null}
+
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-gray-900 tracking-tight">Incident Log</h2>
+        {incidentsLoading && incidents.length === 0 ? (
+          <p className="text-sm text-gray-500 mt-3">Loading incidents…</p>
+        ) : incidents.length === 0 ? (
+          <p className="text-sm text-gray-600 mt-3">No incidents recorded — all systems have been operational.</p>
+        ) : (
+          <div className={`${adminTableWrapClass} mt-4`}>
+            <table className="min-w-full border-collapse text-left">
+              <thead>
+                <tr>
+                  <th className={adminThClass}>Service</th>
+                  <th className={adminThClass}>Status</th>
+                  <th className={adminThClass}>Message</th>
+                  <th className={adminThClass}>Started</th>
+                  <th className={adminThClass}>Resolved</th>
+                  <th className={adminThClass}>Comment</th>
+                  <th className={adminThClass}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {incidents.map((row) => (
+                  <tr key={row.id}>
+                    <td className={adminTdClass}>
+                      <span className="font-medium text-gray-900">{row.service_name}</span>
+                    </td>
+                    <td className={adminTdClass}>
+                      <IncidentStatusBadge status={row.status} />
+                    </td>
+                    <td className={`${adminTdClass} max-w-xs`}>
+                      <span className="text-gray-700 break-words">{row.message ?? '—'}</span>
+                    </td>
+                    <td className={`${adminTdClass} whitespace-nowrap tabular-nums text-gray-700`}>
+                      {formatIncidentAt(row.created_at)}
+                    </td>
+                    <td className={adminTdClass}>
+                      {row.resolved_at ? (
+                        <span className="tabular-nums text-gray-700 whitespace-nowrap">{formatIncidentAt(row.resolved_at)}</span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className={adminTdClass}>
+                      <IncidentCommentCell row={row} onSaved={() => void loadIncidents()} />
+                    </td>
+                    <td className={adminTdClass}>
+                      <IncidentMarkResolved row={row} onSaved={() => void loadIncidents()} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {editing ? (
         <VendorEditModal row={editing} onClose={() => setEditing(null)} onSaved={() => void load()} />
