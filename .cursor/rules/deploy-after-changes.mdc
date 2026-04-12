@@ -1,23 +1,25 @@
 ---
-description: Auto-deploy to Vercel production after code changes; user should not need to ask.
+description: Ship to production via commit and push after code changes; do not run Vercel deploy from the agent.
 alwaysApply: true
 ---
 
 # Deploy after changes
 
-When you **finish** a task that changes anything that ships to production (e.g. `src/`, `api/`, `public/`, `vercel.json`, `index.html`, `package.json` dependencies used at build time), **deploy without waiting for the user to ask**.
+When you **finish** a task that changes anything that ships to production (e.g. `src/`, `api/`, `public/`, `vercel.json`, `index.html`, `package.json` dependencies used at build time), **ship without waiting for the user to ask** (via `git push`, not a Vercel CLI deploy).
 
-1. From the project root `quni-living`, run:
+1. From the project root `quni-living`:
 
-   `npx vercel deploy --prod --yes`
+   ```text
+   # Never run vercel deploy directly.
+   # Always: npx tsc -b --noEmit && git add -A &&
+   #         git commit -m "..." && git push origin main
+   ```
 
-2. Use a long enough command timeout (e.g. 120s+); deployment often takes 30–90s.
-
-3. **Skip deploy** when:
+2. **Skip this workflow** when:
    - The user explicitly said not to deploy for this task, or
    - Changes are limited to docs, comments-only, `.cursor/`, `supabase/*.sql` reference files, or other non-built artifacts that do not require a new deployment for the live site, or
    - You made no file changes in this turn.
 
-4. If the command fails (not logged in, no network, project unlinked), say what failed and what the user can do once (e.g. `npx vercel login`, link project). Do not block the rest of the answer on deploy success.
+3. If `tsc`, commit, or push fails (not logged in to git, no network, conflicts), say what failed and what the user can do once. Do not block the rest of the answer on push success.
 
-5. After a successful deploy, give the **production URL** (e.g. `https://quni-living.vercel.app` or the deployment alias shown in CLI output) in one short line.
+4. Production updates via Vercel’s Git integration; do not run `npx vercel deploy` from the agent.

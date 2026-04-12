@@ -4,7 +4,7 @@ import { adminTableWrapClass } from './adminUi'
 
 const CORAL = '#FF6F61'
 const TRUST_KEY = 'trust_checklist'
-const TOTAL_TASKS = 51
+const TOTAL_TASKS = 52
 
 const LISTING_LIVE_TASK_IDS = new Set([11, 22])
 const LANDLORD_CONTACT_TASK_IDS = new Set([13, 14, 15, 16])
@@ -21,7 +21,16 @@ type PhaseDef = {
   taskGroups?: { label: string; taskIds: number[] }[]
 }
 
-type TaskDef = { id: number; label: string; description: string }
+/** Roadmap / delivery status for checklist items that track build state explicitly. */
+type TrustChecklistItemStatus = 'complete' | 'in-progress' | 'planned' | 'not-started'
+
+type TaskDef = {
+  id: number
+  label: string
+  description: string
+  category?: string
+  status?: TrustChecklistItemStatus
+}
 
 const PHASES: PhaseDef[] = [
   {
@@ -75,6 +84,13 @@ const PHASES: PhaseDef[] = [
     title: 'Ongoing',
     subtitle: 'Habits that compound trust and distribution.',
     taskIds: [43, 44, 45, 46, 47],
+  },
+  {
+    tone: 'gray',
+    badgeLabel: 'Phase 7',
+    title: 'Communications — inbox and messaging',
+    subtitle: 'Channels and admin tooling for enquiries and replies.',
+    taskIds: [52],
   },
 ]
 
@@ -341,6 +357,13 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
     description:
       'If bond is ever collected via Stripe, ensure transfer to Fair Trading within 10 working days and add tenant opt-out pathway to RBO direct payment.',
   },
+  52: {
+    id: 52,
+    category: 'Communications',
+    label: 'Gmail inbox integration',
+    description: 'Connect Gmail API to view and reply to enquiries directly from the admin dashboard',
+    status: 'planned',
+  },
 }
 
 function parseCompletedItems(raw: unknown): number[] {
@@ -394,6 +417,86 @@ function phaseAccentBar(tone: PhaseTone): string {
 function phaseTabLabel(phase: PhaseDef): string {
   const i = phase.title.indexOf(' — ')
   return i >= 0 ? phase.title.slice(0, i) : phase.title
+}
+
+function taskStatusPillClass(s: TrustChecklistItemStatus): string {
+  const base =
+    'inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide'
+  switch (s) {
+    case 'complete':
+      return `${base} border-emerald-200 bg-emerald-50 text-emerald-900`
+    case 'in-progress':
+      return `${base} border-sky-200 bg-sky-50 text-sky-900`
+    case 'planned':
+      return `${base} border-amber-200 bg-amber-50 text-amber-900`
+    case 'not-started':
+      return `${base} border-gray-200 bg-gray-100 text-gray-700`
+  }
+}
+
+function statusPillDisplay(s: TrustChecklistItemStatus): string {
+  switch (s) {
+    case 'complete':
+      return 'Complete'
+    case 'in-progress':
+      return 'In progress'
+    case 'planned':
+      return 'Planned'
+    case 'not-started':
+      return 'Not started'
+  }
+}
+
+function ChecklistTaskRow({
+  task,
+  isDone,
+  onToggle,
+}: {
+  task: TaskDef
+  isDone: boolean
+  onToggle: () => void
+}) {
+  const displayStatus: TrustChecklistItemStatus | null =
+    task.status !== undefined ? (isDone ? 'complete' : task.status) : null
+
+  return (
+    <li key={task.id}>
+      <button
+        type="button"
+        aria-pressed={isDone}
+        onClick={onToggle}
+        className="flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50/80"
+      >
+        <span
+          className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+          style={
+            isDone
+              ? { borderColor: CORAL, backgroundColor: CORAL }
+              : { borderColor: '#d1d5db', backgroundColor: 'transparent' }
+          }
+          aria-hidden
+        >
+          {isDone ? (
+            <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+              <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : null}
+        </span>
+        <span className="min-w-0 flex-1">
+          {task.category ? (
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">{task.category}</p>
+          ) : null}
+          <span className="flex flex-wrap items-center gap-2">
+            <span className={`text-sm font-bold text-gray-900 ${isDone ? 'line-through text-gray-500' : ''}`}>{task.label}</span>
+            {displayStatus !== null ? (
+              <span className={taskStatusPillClass(displayStatus)}>{statusPillDisplay(displayStatus)}</span>
+            ) : null}
+          </span>
+          <span className="mt-1 block text-sm text-gray-500">{task.description}</span>
+        </span>
+      </button>
+    </li>
+  )
 }
 
 export default function TrustChecklist() {
@@ -604,38 +707,12 @@ export default function TrustChecklist() {
                                 if (!task) return null
                                 const isDone = completedSet.has(taskId)
                                 return (
-                                  <li key={taskId}>
-                                    <button
-                                      type="button"
-                                      aria-pressed={isDone}
-                                      onClick={() => toggleTask(taskId)}
-                                      className="flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50/80"
-                                    >
-                                      <span
-                                        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                                        style={
-                                          isDone
-                                            ? { borderColor: CORAL, backgroundColor: CORAL }
-                                            : { borderColor: '#d1d5db', backgroundColor: 'transparent' }
-                                        }
-                                        aria-hidden
-                                      >
-                                        {isDone ? (
-                                          <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
-                                            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                                          </svg>
-                                        ) : null}
-                                      </span>
-                                      <span className="min-w-0 flex-1">
-                                        <span
-                                          className={`block text-sm font-bold text-gray-900 ${isDone ? 'line-through text-gray-500' : ''}`}
-                                        >
-                                          {task.label}
-                                        </span>
-                                        <span className="mt-1 block text-sm text-gray-500">{task.description}</span>
-                                      </span>
-                                    </button>
-                                  </li>
+                                  <ChecklistTaskRow
+                                    key={taskId}
+                                    task={task}
+                                    isDone={isDone}
+                                    onToggle={() => toggleTask(taskId)}
+                                  />
                                 )
                               })}
                             </ul>
@@ -649,38 +726,12 @@ export default function TrustChecklist() {
                           if (!task) return null
                           const isDone = completedSet.has(taskId)
                           return (
-                            <li key={taskId}>
-                              <button
-                                type="button"
-                                aria-pressed={isDone}
-                                onClick={() => toggleTask(taskId)}
-                                className="flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50/80"
-                              >
-                                <span
-                                  className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                                  style={
-                                    isDone
-                                      ? { borderColor: CORAL, backgroundColor: CORAL }
-                                      : { borderColor: '#d1d5db', backgroundColor: 'transparent' }
-                                  }
-                                  aria-hidden
-                                >
-                                  {isDone ? (
-                                    <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
-                                      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : null}
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span
-                                    className={`block text-sm font-bold text-gray-900 ${isDone ? 'line-through text-gray-500' : ''}`}
-                                  >
-                                    {task.label}
-                                  </span>
-                                  <span className="mt-1 block text-sm text-gray-500">{task.description}</span>
-                                </span>
-                              </button>
-                            </li>
+                            <ChecklistTaskRow
+                              key={taskId}
+                              task={task}
+                              isDone={isDone}
+                              onToggle={() => toggleTask(taskId)}
+                            />
                           )
                         })}
                       </ul>
