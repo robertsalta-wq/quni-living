@@ -1,4 +1,5 @@
 /// <reference types="@capacitor/push-notifications" />
+/// <reference types="@capacitor-firebase/messaging" />
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig & { bundledWebRuntime: boolean } = {

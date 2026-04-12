@@ -2,7 +2,12 @@ import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { registerNativePushNotificationListeners, requestPermissionAndRegisterPushToken } from '../lib/nativePushNotifications'
+import { isAdminUser } from '../lib/adminEmails'
+import {
+  registerNativePushNotificationListeners,
+  requestPermissionAndRegisterPushToken,
+  unsubscribeAdminAlertsFcmTopic,
+} from '../lib/nativePushNotifications'
 
 export default function NativePushNotificationsInitializer(): null {
   const { user, loading } = useAuthContext()
@@ -20,6 +25,9 @@ export default function NativePushNotificationsInitializer(): null {
 
     if (!user) {
       requestedForUserIdRef.current = null
+      void unsubscribeAdminAlertsFcmTopic().catch(() => {
+        /* best-effort on sign-out */
+      })
       return
     }
 
@@ -28,7 +36,8 @@ export default function NativePushNotificationsInitializer(): null {
     if (requestedForUserIdRef.current === user.id) return
     requestedForUserIdRef.current = user.id
 
-    void requestPermissionAndRegisterPushToken(user.id).catch((err) => {
+    const isAdmin = isAdminUser(user)
+    void requestPermissionAndRegisterPushToken(user.id, { isAdmin }).catch((err) => {
       console.warn('[PushNotifications] permission/register failed', err)
     })
   }, [user, loading])

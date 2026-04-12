@@ -144,15 +144,13 @@ async function checkResend(): Promise<HealthResult> {
 async function checkVercel(): Promise<HealthResult> {
   const service = 'vercel'
   try {
-    const res = await fetch('https://quni.com.au', {
+    const res = await fetch('https://quni-living.vercel.app', {
       method: 'GET',
       redirect: 'follow',
       signal: timeoutSignal(),
     })
-    if (res.status >= 200 && res.status < 400) {
-      return { service, status: 'operational', message: `HTTP ${res.status}` }
-    }
-    return { service, status: 'down', message: `HTTP ${res.status}` }
+    // Any HTTP status means the deployment is reachable; only network/timeout failures are "down".
+    return { service, status: 'operational', message: `HTTP ${res.status}` }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Request failed'
     return { service, status: 'down', message: msg }

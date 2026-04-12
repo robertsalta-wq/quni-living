@@ -2,6 +2,34 @@ import { Capacitor } from '@capacitor/core'
 import { PushNotifications, type ActionPerformed, type PushNotificationSchema } from '@capacitor/push-notifications'
 import { isSupabaseConfigured, supabase } from './supabase'
 
+const ADMIN_ALERTS_FCM_TOPIC = 'admin-alerts'
+
+/**
+ * FCM topic for platform-down alerts (see platform-health-cron). Uses @capacitor-firebase/messaging
+ * on top of the native Firebase SDK (same project as Capacitor Push token).
+ */
+async function syncAdminAlertsFcmTopic(isAdmin: boolean): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return
+  const platform = Capacitor.getPlatform()
+  if (platform !== 'ios' && platform !== 'android') return
+
+  try {
+    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+    if (isAdmin) {
+      await FirebaseMessaging.subscribeToTopic({ topic: ADMIN_ALERTS_FCM_TOPIC })
+    } else {
+      await FirebaseMessaging.unsubscribeFromTopic({ topic: ADMIN_ALERTS_FCM_TOPIC })
+    }
+  } catch (e) {
+    console.warn('[PushNotifications] admin-alerts FCM topic sync failed', e)
+  }
+}
+
+/** Call when the signed-in user signs out so non-admin sessions do not keep the admin topic. */
+export async function unsubscribeAdminAlertsFcmTopic(): Promise<void> {
+  await syncAdminAlertsFcmTopic(false)
+}
+
 let nativeListenersInitialized = false
 let pendingNavigateRoute: string | null = null
 let navigateHandler: ((route: string) => void) | null = null
@@ -102,7 +130,10 @@ export function registerNativePushNotificationListeners(onNavigate: (route: stri
   })()
 }
 
-export async function requestPermissionAndRegisterPushToken(userId: string): Promise<void> {
+export async function requestPermissionAndRegisterPushToken(
+  userId: string,
+  options: { isAdmin: boolean },
+): Promise<void> {
   if (!Capacitor.isNativePlatform()) return
   if (!isSupabaseConfigured) return
 
@@ -176,6 +207,9 @@ export async function requestPermissionAndRegisterPushToken(userId: string): Pro
     if (error) {
       console.warn('[PushNotifications] device token upsert failed', error)
     }
+
+    // After native registration token is available, sync FCM topic (admin platform alerts only).
+    await syncAdminAlertsFcmTopic(options.isAdmin)
   } finally {
     // These handles are assigned inside async listeners; TS may not be able to prove
     // they are non-null by the time we reach `finally`, so we cast to the expected shape.

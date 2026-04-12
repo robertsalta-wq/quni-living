@@ -41,6 +41,10 @@ Your iOS app’s **Push Notifications** capability must be enabled for the targe
 
 4. Follow Firebase’s Android setup (Gradle plugin / dependencies) if not already wired in the Capacitor Android template you use; align with current [Capacitor Android docs](https://capacitorjs.com/docs/android) and Firebase’s latest Gradle instructions.
 
+## FCM topic `admin-alerts` (platform admins)
+
+The app installs `@capacitor-firebase/messaging` and, **after** a native push token is registered, subscribes **platform admin** accounts (`src/lib/adminEmails.ts` / `is_platform_admin`) to the FCM topic **`admin-alerts`** (see `src/lib/nativePushNotifications.ts`). Run **`npx cap sync`** after `npm install` so iOS/Android pick up the plugin. Follow [Capawesome Firebase setup](https://github.com/capawesome-team/capacitor-firebase/blob/main/docs/firebase-setup.md) alongside your existing `google-services.json` / `GoogleService-Info.plist`.
+
 ## Further reading
 
 - [Capacitor Push Notifications](https://capacitorjs.com/docs/apis/push-notifications)
