@@ -18,12 +18,14 @@ export const PLATFORM_CONFIG_KEYS = {
   BANK_ACCOUNT_NAME: 'bank.account_name',
   BANK_BSB: 'bank.bsb',
   BANK_ACCOUNT_NUMBER: 'bank.account_number',
+  BANK_BANK_NAME: 'bank.bank_name',
 } as const
 
 const BANK_KEYS_FOR_RTA = [
   PLATFORM_CONFIG_KEYS.BANK_BSB,
   PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NUMBER,
   PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NAME,
+  PLATFORM_CONFIG_KEYS.BANK_BANK_NAME,
 ] as const
 
 export async function fetchPlatformConfigRows(
@@ -68,6 +70,7 @@ export type BankDetailsForRta = {
   bsb: string
   accountNumber: string
   accountName: string
+  bankName: string
 }
 
 /**
@@ -81,6 +84,7 @@ export async function fetchBankDetailsForRta(
     bsb: (map[PLATFORM_CONFIG_KEYS.BANK_BSB] ?? '').trim(),
     accountNumber: (map[PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NUMBER] ?? '').trim(),
     accountName: (map[PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NAME] ?? '').trim(),
+    bankName: (map[PLATFORM_CONFIG_KEYS.BANK_BANK_NAME] ?? '').trim(),
   }
 }
 

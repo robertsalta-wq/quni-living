@@ -21,7 +21,11 @@ import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { PLATFORM_FEE_PERCENT, sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
-import { buildRtaRentPaymentMethodLine, fetchBankDetailsForRta } from '../../src/lib/platformConfig'
+import {
+  buildRtaRentPaymentMethodLine,
+  fetchBankDetailsForRta,
+  fetchPlatformConfigValueMap,
+} from '../../src/lib/platformConfig'
 
 export const config = {
   runtime: 'nodejs',
@@ -128,6 +132,7 @@ export default async function handler(req: any, res: any) {
       lease_length,
       notes,
       housemates_count,
+      rent_payment_method,
       properties (
         title,
         address,
@@ -140,7 +145,8 @@ export default async function handler(req: any, res: any) {
         furnished,
         bond,
         linen_supplied,
-        weekly_cleaning_service
+        weekly_cleaning_service,
+        house_rules
       )
     `,
     )
@@ -174,7 +180,9 @@ export default async function handler(req: any, res: any) {
 
   const { data: sp, error: spErr } = await admin
     .from('student_profiles')
-    .select('id, user_id, full_name, first_name, last_name, email, phone, date_of_birth')
+    .select(
+      'id, user_id, full_name, first_name, last_name, email, phone, date_of_birth, emergency_contact_name, emergency_contact_phone',
+    )
     .eq('id', booking.student_id)
     .maybeSingle()
 
@@ -336,6 +344,12 @@ export default async function handler(req: any, res: any) {
     phone: landlordPhoneRaw,
   }
 
+  const spRec = sp as Record<string, unknown>
+  const emergencyContactNameRaw =
+    typeof spRec.emergency_contact_name === 'string' ? spRec.emergency_contact_name.trim() : ''
+  const emergencyContactPhoneRaw =
+    typeof spRec.emergency_contact_phone === 'string' ? spRec.emergency_contact_phone.trim() : ''
+
   const sharedTenant = {
     fullName:
       [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
@@ -344,6 +358,8 @@ export default async function handler(req: any, res: any) {
     phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '—',
     dateOfBirth:
       typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
+    emergencyContactName: emergencyContactNameRaw ? emergencyContactNameRaw : null,
+    emergencyContactPhone: emergencyContactPhoneRaw ? emergencyContactPhoneRaw : null,
     addressForServiceLine: null,
   }
 
@@ -407,6 +423,56 @@ export default async function handler(req: any, res: any) {
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
 
+  const rpm = booking.rent_payment_method
+  const rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null =
+    rpm === 'bank_transfer' || rpm === 'quni_platform' ? rpm : null
+
+  let rentEnquiriesEmail = ''
+  let generalEnquiriesEmail = ''
+  let platformDefaultHouseRules = ''
+  try {
+    const commMap = await fetchPlatformConfigValueMap(admin, [
+      'docs.sender_email',
+      'contact.email',
+      'house_rules.default',
+    ])
+    rentEnquiriesEmail = (commMap['docs.sender_email'] ?? '').trim()
+    generalEnquiriesEmail = (commMap['contact.email'] ?? '').trim()
+    platformDefaultHouseRules = (commMap['house_rules.default'] ?? '').trim()
+  } catch (e) {
+    console.error('[generate-residential-tenancy] platform_config communication emails', e)
+    await captureSentryMessageEdge('Residential tenancy: failed to load platform_config for addendum emails', {
+      booking_id: bookingId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+  }
+
+  const ecName = (sharedTenant.emergencyContactName ?? '').trim()
+  const ecPhone = (sharedTenant.emergencyContactPhone ?? '').trim()
+  const emergencyContact =
+    ecName && ecPhone ? `${ecName} — ${ecPhone}` : ecPhone || ecName || '—'
+
+  let utilitiesCap = 0
+  try {
+    const { data: pcRow, error: pcErr } = await admin
+      .from('pricing_config')
+      .select('utilities_cap')
+      .eq('tier', 't2')
+      .limit(1)
+      .maybeSingle()
+    if (!pcErr && pcRow != null) {
+      const raw = (pcRow as { utilities_cap?: number | string | null }).utilities_cap
+      const n = typeof raw === 'number' ? raw : Number(raw)
+      if (Number.isFinite(n) && n >= 0) utilitiesCap = n
+    }
+  } catch (e) {
+    console.error('[generate-residential-tenancy] pricing_config utilities_cap t2', e)
+  }
+
+  const houseRulesFromProperty =
+    typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''
+  const houseRules = houseRulesFromProperty || platformDefaultHouseRules
+
   const addendumProps = {
     documentId,
     generatedAt,
@@ -419,6 +485,19 @@ export default async function handler(req: any, res: any) {
     utilitiesDescription:
       'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
     signingPackage: 'residential_tenancy' as const,
+    rentPaymentMethod,
+    bankDetails: {
+      bsb: bankDetails.bsb,
+      accountNumber: bankDetails.accountNumber,
+      accountName: bankDetails.accountName,
+      bankName: bankDetails.bankName,
+    },
+    emergencyContact,
+    rentEnquiriesEmail,
+    generalEnquiriesEmail,
+    houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
+    utilitiesCap,
+    houseRules,
   }
 
   const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)

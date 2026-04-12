@@ -284,6 +284,8 @@ export default async function handler(req: any, res: any) {
       phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone : '—',
       dateOfBirth:
         typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
+      emergencyContactName: null,
+      emergencyContactPhone: null,
     },
     premises: {
       addressLine: propertyAddressLine(prop) || '—',

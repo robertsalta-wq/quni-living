@@ -21,6 +21,8 @@ export type RtaTenantPdf = {
   email: string
   phone: string
   dateOfBirth: string | null
+  emergencyContactName: string | null
+  emergencyContactPhone: string | null
   /** Tenant address for service of notices (FT6600); omit schedule lines when null/absent. */
   addressForServiceLine?: string | null
 }
@@ -140,4 +142,19 @@ export type QuniPlatformAddendumProps = {
   bond: RtaBondPdf
   utilitiesDescription: string
   signingPackage: 'residential_tenancy'
+  rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null
+  bankDetails: {
+    bsb: string
+    accountNumber: string
+    accountName: string
+    bankName: string
+  }
+  emergencyContact: string
+  rentEnquiriesEmail: string
+  generalEnquiriesEmail: string
+  houseCommunicationsChannel: string
+  /** Quarterly utilities cap (AUD), e.g. from `pricing_config` tier `t2`. */
+  utilitiesCap: number
+  /** Property-specific rules text; may be platform default when property has none. */
+  houseRules: string
 }
