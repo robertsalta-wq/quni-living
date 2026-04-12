@@ -144,8 +144,11 @@ export type QaseTicketContextProperty = {
 }
 
 /**
- * Submitter profile slice (Qase `submitted_by_id` → profiles-style row).
- * `id` is the auth user id when linked.
+ * Submitter slice when joined from `student_profiles` or `landlord_profiles`.
+ * - `id` — profile row PK (`student_profiles.id` / `landlord_profiles.id`)
+ * - `user_id` — same as `auth.users.id` / `auth.uid()` on that profile row
+ * - `role` — optional UI label (e.g. `'student' | 'landlord'`); not a DB column on those tables
+ * Platform admins use `public.is_platform_admin()` (JWT email), not this shape.
  */
 export type QaseTicketContextSubmitter = {
   id: string
