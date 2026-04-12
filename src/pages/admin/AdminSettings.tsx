@@ -808,7 +808,7 @@ export default function AdminSettings() {
                   const isUrlEditing = urlEditIndex === idx
                   const isFullRowEditing = fullEditRowIndex === idx
                   const blockUrlPencil = fullEditRowIndex !== null && !isFullRowEditing
-                  const selPlatform = socialPlatformSelectValue(row.platform)
+                  const selPlatform = isFullRowEditing ? socialPlatformSelectValue(row.platform) : null
                   return (
                     <tr key={`social-row-${idx}`} className="border-b border-gray-100 last:border-0">
                       <td className={adminTdClass}>
@@ -820,7 +820,7 @@ export default function AdminSettings() {
                             <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                               <select
                                 className="max-w-[10rem] rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
-                                value={selPlatform}
+                                value={selPlatform ?? 'Other'}
                                 onChange={(e) => {
                                   const v = e.target.value as (typeof SOCIAL_PLATFORM_OPTIONS)[number]
                                   if (v === 'Other') updateSocialRow(idx, { platform: '' })
@@ -845,40 +845,41 @@ export default function AdminSettings() {
                               ) : null}
                             </div>
                           ) : (
-                            <input
-                              type="text"
-                              autoComplete="off"
-                              className="min-w-0 max-w-[12rem] flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm font-medium text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
-                              value={row.platform}
-                              onChange={(e) => updateSocialRow(idx, { platform: e.target.value })}
-                              disabled={isUrlEditing}
-                            />
+                            <span className="min-w-0 font-medium text-gray-900">{row.platform || '—'}</span>
                           )}
                         </div>
                       </td>
                       <td className={adminTdClass}>
-                        <select
-                          className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
-                          value={row.type}
-                          onChange={(e) =>
-                            updateSocialRow(idx, { type: e.target.value as SocialAccount['type'] })
-                          }
-                          disabled={isUrlEditing}
-                        >
-                          <option value="Brand">Brand</option>
-                          <option value="Personal">Personal</option>
-                          <option value="Company">Company</option>
-                        </select>
+                        {isFullRowEditing ? (
+                          <select
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                            value={row.type}
+                            onChange={(e) =>
+                              updateSocialRow(idx, { type: e.target.value as SocialAccount['type'] })
+                            }
+                            disabled={isUrlEditing}
+                          >
+                            <option value="Brand">Brand</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Company">Company</option>
+                          </select>
+                        ) : (
+                          <span className="text-sm text-gray-800">{row.type}</span>
+                        )}
                       </td>
                       <td className={adminTdClass}>
-                        <input
-                          type="text"
-                          autoComplete="off"
-                          className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
-                          value={row.handle}
-                          onChange={(e) => updateSocialRow(idx, { handle: e.target.value })}
-                          disabled={isUrlEditing}
-                        />
+                        {isFullRowEditing ? (
+                          <input
+                            type="text"
+                            autoComplete="off"
+                            className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                            value={row.handle}
+                            onChange={(e) => updateSocialRow(idx, { handle: e.target.value })}
+                            disabled={isUrlEditing}
+                          />
+                        ) : (
+                          <span className="font-mono text-[13px] text-gray-800">{row.handle || '—'}</span>
+                        )}
                       </td>
                       <td className={`${adminTdClass} max-w-[min(28rem,55vw)]`}>
                         {isUrlEditing ? (
