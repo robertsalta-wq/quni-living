@@ -10,7 +10,6 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { waitUntil } from '@vercel/functions'
 import { sendEmail } from './lib/sendEmail.js'
 import {
   bookingConfirmedStudent,
@@ -573,24 +572,24 @@ export default async function handler(req, res) {
       await sendEmail({ to: landlordEmail, subject: t.subject, html: t.html })
     }
 
-    /** Emails + lease PDF are slow; defer so the HTTP response returns before Vercel’s execution cap (e.g. 10s on Hobby). */
-    const followUpPromise = (async () => {
-      try {
-        await Promise.all([sendStudent(), sendLandlord()])
-      } catch (e) {
-        console.error('booking confirmed emails (Resend)', e)
-      }
-      const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
-      if (!leaseFlowSecret) {
-        console.warn(
-          '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
-        )
-        return
-      }
-      if (!booking.property_id) {
-        console.warn('[create-rent-subscription] skipping document generate: booking has no property_id')
-        return
-      }
+    /**
+     * Emails + tenancy/PDF generation must finish in this invocation.
+     * Previously on Vercel we only used waitUntil() and skipped await — the background work could be cut off
+     * after the HTTP response, leaving bookings confirmed without tenancies or documents.
+     */
+    try {
+      await Promise.all([sendStudent(), sendLandlord()])
+    } catch (e) {
+      console.error('booking confirmed emails (Resend)', e)
+    }
+    const leaseFlowSecret = (process.env.INTERNAL_DOC_FLOW_SECRET || '').trim()
+    if (!leaseFlowSecret) {
+      console.warn(
+        '[create-rent-subscription] skipping generate-lease: INTERNAL_DOC_FLOW_SECRET is not set',
+      )
+    } else if (!booking.property_id) {
+      console.warn('[create-rent-subscription] skipping document generate: booking has no property_id')
+    } else {
       const { data: propForDoc, error: propDocErr } = await admin
         .from('properties')
         .select('property_type')
@@ -621,17 +620,6 @@ export default async function handler(req, res) {
       } catch (e) {
         console.error(`${generatePath} trigger`, e)
       }
-    })()
-
-    let followUpDeferred = false
-    try {
-      waitUntil(followUpPromise)
-      followUpDeferred = Boolean(process.env.VERCEL)
-    } catch (wuErr) {
-      console.error('waitUntil failed; awaiting follow-up inline', wuErr)
-    }
-    if (!followUpDeferred) {
-      await followUpPromise
     }
 
     return corsJson(res,
