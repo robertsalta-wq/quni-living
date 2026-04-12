@@ -139,6 +139,66 @@ function IncidentMarkResolved({ row, onSaved }: { row: IncidentLogRow; onSaved: 
   )
 }
 
+type OperationalStatusRow = Database['public']['Tables']['operational_status']['Row']
+
+const MONITORED_SERVICE_NAMES = [
+  'anthropic',
+  'cloudflare',
+  'docuseal',
+  'firebase',
+  'resend',
+  'sentry',
+  'stripe',
+  'supabase',
+  'tpp_domains',
+  'vercel',
+] as const
+
+const SERVICE_DISPLAY_LABEL: Record<(typeof MONITORED_SERVICE_NAMES)[number], string> = {
+  anthropic: 'Anthropic (Claude API)',
+  cloudflare: 'Cloudflare',
+  docuseal: 'DocuSeal',
+  firebase: 'Firebase',
+  resend: 'Resend',
+  sentry: 'Sentry',
+  stripe: 'Stripe Connect',
+  supabase: 'Supabase',
+  tpp_domains: 'TPP Domains',
+  vercel: 'Vercel',
+}
+
+type AppsPageTab = 'services' | 'status' | 'incidents'
+
+const OPS_POLL_MS = 60_000
+
+function formatRelativeCheckedAt(iso: string, now: Date): string {
+  const t = new Date(iso).getTime()
+  if (!Number.isFinite(t)) return '—'
+  const sec = Math.max(0, Math.floor((now.getTime() - t) / 1000))
+  if (sec < 10) return 'just now'
+  if (sec < 60) return `${sec} second${sec === 1 ? '' : 's'} ago`
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`
+  const day = Math.floor(hr / 24)
+  return `${day} day${day === 1 ? '' : 's'} ago`
+}
+
+function OpsStatusBadge({ status }: { status: OperationalStatusRow['status'] | null }) {
+  const base = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold'
+  if (status === 'operational') {
+    return <span className={`${base} bg-green-100 text-green-800`}>Operational</span>
+  }
+  if (status === 'degraded') {
+    return <span className={`${base} bg-amber-100 text-amber-800`}>Degraded</span>
+  }
+  if (status === 'down') {
+    return <span className={`${base} bg-red-100 text-red-800`}>Down</span>
+  }
+  return <span className={`${base} bg-gray-100 text-gray-600`}>—</span>
+}
+
 /** Placeholder FX for rough AUD rollup (replace with a live rate when you care about accuracy). */
 const USD_TO_AUD_PLACEHOLDER = 1.55
 
@@ -620,6 +680,10 @@ export default function AdminApps() {
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null)
   const [incidents, setIncidents] = useState<IncidentLogRow[]>([])
   const [incidentsLoading, setIncidentsLoading] = useState(false)
+  const [appsTab, setAppsTab] = useState<AppsPageTab>('services')
+  const [opsRows, setOpsRows] = useState<OperationalStatusRow[]>([])
+  const [opsLoading, setOpsLoading] = useState(false)
+  const [statusClock, setStatusClock] = useState(() => Date.now())
 
   const loadIncidents = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -636,6 +700,20 @@ export default function AdminApps() {
       return
     }
     setIncidents((data as IncidentLogRow[] | null) ?? [])
+  }, [])
+
+  const loadOperationalStatus = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setOpsLoading(true)
+    const names = [...MONITORED_SERVICE_NAMES]
+    const { data, error: qErr } = await supabase.from('operational_status').select('*').in('service_name', names)
+    setOpsLoading(false)
+    if (qErr) {
+      console.error('operational_status', qErr)
+      setOpsRows([])
+      return
+    }
+    setOpsRows((data as OperationalStatusRow[] | null) ?? [])
   }, [])
 
   const loadHealth = useCallback(async () => {
@@ -700,6 +778,43 @@ export default function AdminApps() {
     return () => window.clearInterval(id)
   }, [loadHealth])
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    void loadOperationalStatus()
+    const id = window.setInterval(() => {
+      void loadOperationalStatus()
+      setStatusClock(Date.now())
+    }, OPS_POLL_MS)
+    return () => window.clearInterval(id)
+  }, [loadOperationalStatus])
+
+  const opsByService = useMemo(() => {
+    const m = new Map<string, OperationalStatusRow>()
+    for (const r of opsRows) {
+      if (r.service_name) m.set(r.service_name, r)
+    }
+    return m
+  }, [opsRows])
+
+  const statusSummary = useMemo(() => {
+    let down = 0
+    let degraded = 0
+    let known = 0
+    for (const name of MONITORED_SERVICE_NAMES) {
+      const row = opsByService.get(name)
+      if (!row) continue
+      known += 1
+      const st = row.status
+      if (st === 'down') down += 1
+      else if (st === 'degraded') degraded += 1
+    }
+    return { down, degraded, known }
+  }, [opsByService])
+
+  const activeIncidentCount = useMemo(() => incidents.filter((i) => !i.resolved_at).length, [incidents])
+
+  const statusNow = useMemo(() => new Date(statusClock), [statusClock])
+
   const totalMonthlyAudApprox = useMemo(() => {
     if (!rows?.length) return 0
     return rows.reduce((sum, r) => sum + monthlyAudApprox(r), 0)
@@ -717,6 +832,11 @@ export default function AdminApps() {
     'text-xs text-indigo-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 rounded'
 
   const downHealth = useMemo(() => healthResults.filter((r) => r.status === 'down'), [healthResults])
+
+  const tabBtnBase =
+    'border-b-2 pb-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF6F61] rounded-t'
+  const tabBtnInactive = `${tabBtnBase} border-transparent text-gray-500 hover:text-gray-800`
+  const tabBtnActive = `${tabBtnBase} border-[#FF6F61] text-[#FF6F61]`
 
   return (
     <div>
@@ -754,161 +874,263 @@ export default function AdminApps() {
         </div>
       </div>
 
-      {downHealth.length > 0 ? (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-          <p className="font-semibold">⚠️ Platform issue detected</p>
-          <ul className="mt-2 list-disc list-inside space-y-1">
-            {downHealth.map((r) => (
-              <li key={r.service}>
-                {r.service}: {r.message}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="-mb-px flex flex-wrap gap-x-8 gap-y-2" role="tablist" aria-label="Apps page sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appsTab === 'services'}
+            id="apps-tab-services"
+            aria-controls="apps-panel-services"
+            className={appsTab === 'services' ? tabBtnActive : tabBtnInactive}
+            onClick={() => setAppsTab('services')}
+          >
+            Services
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appsTab === 'status'}
+            id="apps-tab-status"
+            aria-controls="apps-panel-status"
+            className={appsTab === 'status' ? tabBtnActive : tabBtnInactive}
+            onClick={() => setAppsTab('status')}
+          >
+            Status
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appsTab === 'incidents'}
+            id="apps-tab-incidents"
+            aria-controls="apps-panel-incidents"
+            className={appsTab === 'incidents' ? tabBtnActive : tabBtnInactive}
+            onClick={() => setAppsTab('incidents')}
+          >
+            {activeIncidentCount > 0 ? `Incident Log (${activeIncidentCount})` : 'Incident Log'}
+          </button>
+        </nav>
+      </div>
 
-      {healthError ? <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{healthError}</p> : null}
+      {appsTab === 'services' ? (
+        <div id="apps-panel-services" role="tabpanel" aria-labelledby="apps-tab-services">
+          {downHealth.length > 0 ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+              <p className="font-semibold">⚠️ Platform issue detected</p>
+              <ul className="mt-2 list-disc list-inside space-y-1">
+                {downHealth.map((r) => (
+                  <li key={r.service}>
+                    {r.service}: {r.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
-      {!loading && !error && rows && rows.length > 0 ? (
-        <div className={`${adminCardClass} mb-6 border-indigo-100/80 bg-indigo-50/40`}>
-          <p className="text-sm font-semibold text-gray-900">Approximate monthly total (AUD)</p>
-          <p className="text-2xl font-bold text-indigo-900 mt-1 tabular-nums">{totalFormatted}</p>
-          <p className="text-xs text-gray-600 mt-2">
-            Rough rollup: USD × {USD_TO_AUD_PLACEHOLDER} (placeholder rate), yearly ÷ 12, usage/free treated as above. Not financial
-            advice — numbers are indicative only.
-          </p>
-        </div>
-      ) : null}
+          {healthError ? <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{healthError}</p> : null}
 
-      {error && !loading ? <p className="text-sm text-red-600 mb-4">{error}</p> : null}
+          {!loading && !error && rows && rows.length > 0 ? (
+            <div className={`${adminCardClass} mb-6 border-indigo-100/80 bg-indigo-50/40`}>
+              <p className="text-sm font-semibold text-gray-900">Approximate monthly total (AUD)</p>
+              <p className="text-2xl font-bold text-indigo-900 mt-1 tabular-nums">{totalFormatted}</p>
+              <p className="text-xs text-gray-600 mt-2">
+                Rough rollup: USD × {USD_TO_AUD_PLACEHOLDER} (placeholder rate), yearly ÷ 12, usage/free treated as above. Not financial
+                advice — numbers are indicative only.
+              </p>
+            </div>
+          ) : null}
 
-      {loading ? <AppsSkeleton /> : null}
+          {error && !loading ? <p className="text-sm text-red-600 mb-4">{error}</p> : null}
 
-      {!loading && rows && rows.length === 0 && !error ? (
-        <p className="text-sm text-gray-600 mb-4">No active vendors. Add rows in Supabase or run the latest migration.</p>
-      ) : null}
+          {loading ? <AppsSkeleton /> : null}
 
-      {!loading && !error && appsGridItems ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {appsGridItems.map((item) => {
-            if (item.kind === 'appledeveloper') {
-              return <AppleDeveloperAppCard key="appledeveloper" linkClass={linkClass} />
-            }
-            if (item.kind === 'firebase') {
-              return <FirebaseAppCard key="firebase" linkClass={linkClass} healthResults={healthResults} />
-            }
-            if (item.kind === 'googleplay') {
-              return <GooglePlayAppCard key="googleplay" linkClass={linkClass} />
-            }
+          {!loading && rows && rows.length === 0 && !error ? (
+            <p className="text-sm text-gray-600 mb-4">No active vendors. Add rows in Supabase or run the latest migration.</p>
+          ) : null}
 
-            const row = item.row
-            const sub = rowToSubscription(row)
-            const billingHref = sub.billingHref?.trim()
+          {!loading && !error && appsGridItems ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {appsGridItems.map((item) => {
+                if (item.kind === 'appledeveloper') {
+                  return <AppleDeveloperAppCard key="appledeveloper" linkClass={linkClass} />
+                }
+                if (item.kind === 'firebase') {
+                  return <FirebaseAppCard key="firebase" linkClass={linkClass} healthResults={healthResults} />
+                }
+                if (item.kind === 'googleplay') {
+                  return <GooglePlayAppCard key="googleplay" linkClass={linkClass} />
+                }
 
-            return (
-              <div
-                key={row.id}
-                className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-indigo-100 relative`}
-              >
-                <HealthStatusDot serviceKey={vendorRowToHealthService(row)} results={healthResults} />
-                <div className="flex items-start gap-3 flex-1">
-                  <BrandLogo title={row.title} href={row.href} logoSrc={row.logo_src} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900">{row.title}</p>
-                        {row.subtitle ? <p className="text-sm text-gray-500 mt-1">{row.subtitle}</p> : null}
+                const row = item.row
+                const sub = rowToSubscription(row)
+                const billingHref = sub.billingHref?.trim()
+
+                return (
+                  <div
+                    key={row.id}
+                    className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-indigo-100 relative`}
+                  >
+                    <HealthStatusDot serviceKey={vendorRowToHealthService(row)} results={healthResults} />
+                    <div className="flex items-start gap-3 flex-1">
+                      <BrandLogo title={row.title} href={row.href} logoSrc={row.logo_src} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900">{row.title}</p>
+                            {row.subtitle ? <p className="text-sm text-gray-500 mt-1">{row.subtitle}</p> : null}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditing(row)}
+                            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            aria-label={`Edit subscription for ${row.title}`}
+                          >
+                            <PencilIcon />
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setEditing(row)}
-                        className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        aria-label={`Edit subscription for ${row.title}`}
-                      >
-                        <PencilIcon />
-                      </button>
+                    </div>
+
+                    <div className="mt-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
+                      <p className="text-sm text-gray-800 mt-1">{formatSubscriptionLine(sub)}</p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <a href={row.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                        Open dashboard →
+                      </a>
+                      {billingHref ? (
+                        <a href={billingHref} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                          Billing / invoices →
+                        </a>
+                      ) : null}
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
-                  <p className="text-sm text-gray-800 mt-1">{formatSubscriptionLine(sub)}</p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <a href={row.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                    Open dashboard →
-                  </a>
-                  {billingHref ? (
-                    <a href={billingHref} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                      Billing / invoices →
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      <div className="mt-10">
-        <h2 className="text-lg font-semibold text-gray-900 tracking-tight">Incident Log</h2>
-        {incidentsLoading && incidents.length === 0 ? (
-          <p className="text-sm text-gray-500 mt-3">Loading incidents…</p>
-        ) : incidents.length === 0 ? (
-          <p className="text-sm text-gray-600 mt-3">No incidents recorded — all systems have been operational.</p>
-        ) : (
-          <div className={`${adminTableWrapClass} mt-4`}>
+      {appsTab === 'status' ? (
+        <div id="apps-panel-status" role="tabpanel" aria-labelledby="apps-tab-status">
+          {opsLoading && statusSummary.known === 0 ? (
+            <p className="text-sm text-gray-600 mb-4">Loading status…</p>
+          ) : !opsLoading && statusSummary.known === 0 ? (
+            <p className="text-sm font-medium text-gray-600 mb-4">
+              No status rows yet — open Services and use Refresh All, or wait for the scheduled health cron.
+            </p>
+          ) : statusSummary.down > 0 ? (
+            <p className="text-sm font-medium text-red-800 mb-4">
+              🔴 {statusSummary.down} service{statusSummary.down === 1 ? '' : 's'} down
+            </p>
+          ) : statusSummary.degraded > 0 ? (
+            <p className="text-sm font-medium text-amber-800 mb-4">
+              ⚠️ {statusSummary.degraded} service{statusSummary.degraded === 1 ? '' : 's'} degraded
+            </p>
+          ) : (
+            <p className="text-sm font-medium text-green-800 mb-4">✅ All systems operational</p>
+          )}
+
+          <div className={adminTableWrapClass}>
             <table className="min-w-full border-collapse text-left">
               <thead>
                 <tr>
                   <th className={adminThClass}>Service</th>
                   <th className={adminThClass}>Status</th>
                   <th className={adminThClass}>Message</th>
-                  <th className={adminThClass}>Started</th>
-                  <th className={adminThClass}>Resolved</th>
-                  <th className={adminThClass}>Comment</th>
-                  <th className={adminThClass}>Actions</th>
+                  <th className={adminThClass}>Last Checked</th>
                 </tr>
               </thead>
               <tbody>
-                {incidents.map((row) => (
-                  <tr key={row.id}>
-                    <td className={adminTdClass}>
-                      <span className="font-medium text-gray-900">{row.service_name}</span>
-                    </td>
-                    <td className={adminTdClass}>
-                      <IncidentStatusBadge status={row.status} />
-                    </td>
-                    <td className={`${adminTdClass} max-w-xs`}>
-                      <span className="text-gray-700 break-words">{row.message ?? '—'}</span>
-                    </td>
-                    <td className={`${adminTdClass} whitespace-nowrap tabular-nums text-gray-700`}>
-                      {formatIncidentAt(row.created_at)}
-                    </td>
-                    <td className={adminTdClass}>
-                      {row.resolved_at ? (
-                        <span className="tabular-nums text-gray-700 whitespace-nowrap">{formatIncidentAt(row.resolved_at)}</span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className={adminTdClass}>
-                      <IncidentCommentCell row={row} onSaved={() => void loadIncidents()} />
-                    </td>
-                    <td className={adminTdClass}>
-                      <IncidentMarkResolved row={row} onSaved={() => void loadIncidents()} />
-                    </td>
-                  </tr>
-                ))}
+                {MONITORED_SERVICE_NAMES.map((name) => {
+                  const row = opsByService.get(name)
+                  return (
+                    <tr key={name}>
+                      <td className={adminTdClass}>
+                        <span className="font-medium text-gray-900">{SERVICE_DISPLAY_LABEL[name]}</span>
+                      </td>
+                      <td className={adminTdClass}>
+                        <OpsStatusBadge status={row?.status ?? null} />
+                      </td>
+                      <td className={`${adminTdClass} max-w-md`}>
+                        <span className="text-gray-700 break-words">{row?.message?.trim() ? row.message : '—'}</span>
+                      </td>
+                      <td className={`${adminTdClass} whitespace-nowrap text-gray-700`}>
+                        {row?.checked_at ? formatRelativeCheckedAt(row.checked_at, statusNow) : opsLoading ? '…' : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      ) : null}
+
+      {appsTab === 'incidents' ? (
+        <div id="apps-panel-incidents" role="tabpanel" aria-labelledby="apps-tab-incidents">
+          <div className="mt-0">
+            <h2 className="text-lg font-semibold text-gray-900 tracking-tight">Incident Log</h2>
+            {incidentsLoading && incidents.length === 0 ? (
+              <p className="text-sm text-gray-500 mt-3">Loading incidents…</p>
+            ) : incidents.length === 0 ? (
+              <p className="text-sm text-gray-600 mt-3">No incidents recorded — all systems have been operational.</p>
+            ) : (
+              <div className={`${adminTableWrapClass} mt-4`}>
+                <table className="min-w-full border-collapse text-left">
+                  <thead>
+                    <tr>
+                      <th className={adminThClass}>Service</th>
+                      <th className={adminThClass}>Status</th>
+                      <th className={adminThClass}>Message</th>
+                      <th className={adminThClass}>Started</th>
+                      <th className={adminThClass}>Resolved</th>
+                      <th className={adminThClass}>Comment</th>
+                      <th className={adminThClass}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {incidents.map((row) => (
+                      <tr key={row.id}>
+                        <td className={adminTdClass}>
+                          <span className="font-medium text-gray-900">{row.service_name}</span>
+                        </td>
+                        <td className={adminTdClass}>
+                          <IncidentStatusBadge status={row.status} />
+                        </td>
+                        <td className={`${adminTdClass} max-w-xs`}>
+                          <span className="text-gray-700 break-words">{row.message ?? '—'}</span>
+                        </td>
+                        <td className={`${adminTdClass} whitespace-nowrap tabular-nums text-gray-700`}>
+                          {formatIncidentAt(row.created_at)}
+                        </td>
+                        <td className={adminTdClass}>
+                          {row.resolved_at ? (
+                            <span className="tabular-nums text-gray-700 whitespace-nowrap">{formatIncidentAt(row.resolved_at)}</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className={adminTdClass}>
+                          <IncidentCommentCell row={row} onSaved={() => void loadIncidents()} />
+                        </td>
+                        <td className={adminTdClass}>
+                          <IncidentMarkResolved row={row} onSaved={() => void loadIncidents()} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {editing ? (
         <VendorEditModal row={editing} onClose={() => setEditing(null)} onSaved={() => void load()} />
