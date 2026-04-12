@@ -82,18 +82,6 @@ insert into public.admin_vendor_subscriptions (
     true
   ),
   (
-    'Supabase (4Logistics)',
-    'Database + auth — 4Logistics project',
-    'https://supabase.com',
-    'https://supabase.com/dashboard/org/_/billing',
-    'Pro (placeholder)',
-    25,
-    'USD',
-    'monthly',
-    null,
-    true
-  ),
-  (
     'Vercel',
     'Deployments',
     'https://vercel.com',
