@@ -38,6 +38,8 @@ import KnowledgeBase from './pages/admin/KnowledgeBase'
 import DocumentsPage from './pages/admin/DocumentsPage'
 import DomainsPage from './pages/admin/DomainsPage'
 import TrustChecklist from './pages/admin/TrustChecklist'
+import QaseTicketList from './pages/admin/QaseTicketList'
+import QaseTicketDetail from './pages/admin/QaseTicketDetail'
 import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
@@ -267,6 +269,8 @@ function App() {
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="domains" element={<DomainsPage />} />
             <Route path="trust-checklist" element={<TrustChecklist />} />
+            <Route path="qase" element={<QaseTicketList />} />
+            <Route path="qase/:ticketId" element={<QaseTicketDetail />} />
           </Route>
           </Routes>
         </main>

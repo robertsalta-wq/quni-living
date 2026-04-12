@@ -24,6 +24,7 @@ const NAV: AdminNavItem[] = [
   { to: '/admin/settings', label: 'Business settings', end: false },
   { to: '/admin/pricing', label: 'Pricing', end: false },
   { to: '/admin/knowledge-base', label: 'Knowledge base', end: false },
+  { to: '/admin/qase', label: 'Support (Qase)', end: false },
   { to: '/admin/documents', label: 'Documents', end: false, icon: 'folder' },
   { to: '/admin/domains', label: 'Domains', end: false, icon: 'globe' },
   { to: '/admin/trust-checklist', label: 'Trust checklist', end: false, icon: 'checklist' },
