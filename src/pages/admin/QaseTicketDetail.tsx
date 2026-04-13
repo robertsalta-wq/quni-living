@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
@@ -7,12 +7,49 @@ import type {
   QaseMessage,
   QasePriority,
   QaseStatus,
+  QaseSubmitterType,
   QaseTicket,
   QaseTicketContextBooking,
   QaseTicketContextProperty,
   QaseTicketWithContext,
 } from '../../types/qase'
 import { adminCardClass, formatDate, formatRelativeTime } from './adminUi'
+
+const MAX_ATTACHMENT_FILES = 10
+const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
+
+const ATTACHMENT_ACCEPT =
+  'image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain'
+
+const ALLOWED_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+])
+
+const IMAGE_MIME_PREFIX = 'image/'
+
+const NOTIFY_URL = 'https://flegysnshryzvkwzfclc.supabase.co/functions/v1/qase-notify'
+
+function fireNotify(messageId: string): void {
+  const secret = import.meta.env.VITE_QASE_INTERNAL_SECRET
+  if (typeof secret !== 'string' || !secret.trim()) return
+  void fetch(NOTIFY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-qase-internal': secret.trim(),
+    },
+    body: JSON.stringify({ message_id: messageId }),
+  }).catch(() => {})
+}
 
 const STATUSES: QaseStatus[] = ['new', 'open', 'pending', 'on_hold', 'solved', 'closed']
 const PRIORITIES: QasePriority[] = ['urgent', 'high', 'normal', 'low']
@@ -50,12 +87,400 @@ function asProperty(row: unknown): QaseTicketContextProperty | null {
   return row as QaseTicketContextProperty
 }
 
+type QaseStudentSubmitterProfile = {
+  id: string
+  full_name: string | null
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  university: string | null
+  created_at: string
+}
+
+type QaseLandlordSubmitterProfile = {
+  id: string
+  full_name: string | null
+  email: string | null
+  phone: string | null
+  created_at: string
+}
+
+type SubmitterPanelState =
+  | { kind: 'anonymous' }
+  | { kind: 'unlinked'; submitterType: 'student' | 'landlord' }
+  | { kind: 'student'; profile: QaseStudentSubmitterProfile }
+  | { kind: 'landlord'; profile: QaseLandlordSubmitterProfile }
+  | { kind: 'fetch_error'; message: string }
+  | { kind: 'profile_missing'; submitterType: 'student' | 'landlord' }
+
+function submitterTypeBadgeClass(t: QaseSubmitterType | string): string {
+  switch (t) {
+    case 'student':
+      return 'bg-sky-100 text-sky-800'
+    case 'landlord':
+      return 'bg-violet-100 text-violet-800'
+    case 'anonymous':
+      return 'bg-gray-100 text-gray-600'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
+}
+
+function formatSubmitterTypeLabel(t: QaseSubmitterType | string): string {
+  if (t === 'anonymous') return 'Anonymous'
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+function studentSubmitterDisplayName(p: Pick<QaseStudentSubmitterProfile, 'full_name' | 'first_name' | 'last_name'>): string {
+  if (p.full_name?.trim()) return p.full_name.trim()
+  const fn = p.first_name?.trim() ?? ''
+  const ln = p.last_name?.trim() ?? ''
+  const combined = `${fn} ${ln}`.trim()
+  return combined || 'Anonymous'
+}
+
+function parseStudentSubmitterRow(row: unknown): QaseStudentSubmitterProfile {
+  const r = row as Record<string, unknown>
+  const uni = r.universities as { name?: string } | null | undefined
+  const uniName = uni && typeof uni === 'object' && typeof uni.name === 'string' ? uni.name : null
+  return {
+    id: String(r.id),
+    full_name: r.full_name == null ? null : String(r.full_name),
+    first_name: r.first_name == null ? null : String(r.first_name),
+    last_name: r.last_name == null ? null : String(r.last_name),
+    email: r.email == null ? null : String(r.email),
+    university: uniName,
+    created_at: String(r.created_at),
+  }
+}
+
+function parseLandlordSubmitterRow(row: unknown): QaseLandlordSubmitterProfile {
+  const r = row as Record<string, unknown>
+  return {
+    id: String(r.id),
+    full_name: r.full_name == null ? null : String(r.full_name),
+    email: r.email == null ? null : String(r.email),
+    phone: r.phone == null ? null : String(r.phone),
+    created_at: String(r.created_at),
+  }
+}
+
+type QaseAttachmentRow = {
+  id: string
+  message_id: string | null
+  file_name: string
+  file_path: string
+  file_size: number
+  mime_type: string
+}
+
+function asAttachmentRow(row: unknown): QaseAttachmentRow {
+  const r = row as Record<string, unknown>
+  return {
+    id: String(r.id),
+    message_id: r.message_id == null ? null : String(r.message_id),
+    file_name: String(r.file_name),
+    file_path: String(r.file_path),
+    file_size: Number(r.file_size),
+    mime_type: String(r.mime_type),
+  }
+}
+
+function sanitizeFileName(name: string): string {
+  const base = name.replace(/^.*[/\\]/, '').trim() || 'file'
+  const cleaned = base.replace(/[^\w.\- ()[\]]+/g, '_').replace(/_+/g, '_')
+  return cleaned.length > 180 ? `${cleaned.slice(0, 176)}…` : cleaned
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function validateAttachmentList(files: File[]): string | null {
+  if (files.length > MAX_ATTACHMENT_FILES) {
+    return `You can attach at most ${MAX_ATTACHMENT_FILES} files.`
+  }
+  const big = files.find((f) => f.size > MAX_ATTACHMENT_BYTES)
+  if (big) {
+    return `${big.name} exceeds the 20MB limit.`
+  }
+  const badType = files.find((f) => f.type && !ALLOWED_MIME.has(f.type))
+  if (badType) {
+    return `${badType.name} is not an allowed file type.`
+  }
+  return null
+}
+
+function isImageAttachmentMime(mime: string): boolean {
+  return mime.startsWith(IMAGE_MIME_PREFIX)
+}
+
+function FileGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+      />
+    </svg>
+  )
+}
+
+function QaseAttachmentChip({
+  attachment,
+  onDeleted,
+  onError,
+}: {
+  attachment: QaseAttachmentRow
+  onDeleted: () => void
+  onError: (msg: string) => void
+}) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null)
+  const [urlLoading, setUrlLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const { data, error } = await supabase.storage.from('qase-attachments').createSignedUrl(attachment.file_path, 3600)
+      if (cancelled) return
+      if (error || !data?.signedUrl) {
+        setSignedUrl(null)
+        setUrlLoading(false)
+        return
+      }
+      setSignedUrl(data.signedUrl)
+      setUrlLoading(false)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [attachment.file_path])
+
+  function openInNewTab() {
+    if (!signedUrl) return
+    window.open(signedUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleRemove(e: MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!window.confirm(`Remove attachment "${attachment.file_name}"?`)) return
+    const { error: rmErr } = await supabase.storage.from('qase-attachments').remove([attachment.file_path])
+    if (rmErr) {
+      onError(rmErr.message)
+      return
+    }
+    const { error: delErr } = await supabase.from('qase_attachments' as 'bookings').delete().eq('id', attachment.id)
+    if (delErr) {
+      onError(delErr.message)
+      return
+    }
+    onDeleted()
+  }
+
+  const isImage = isImageAttachmentMime(attachment.mime_type)
+
+  const shellClass =
+    'relative inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-1 py-1 pr-7 text-left text-sm text-gray-800 shadow-sm'
+
+  const openBtnClass =
+    'inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-0.5 py-0.5 text-left hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50'
+
+  const removeBtnClass =
+    'absolute right-0.5 top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded text-base leading-none text-gray-500 hover:bg-red-100 hover:text-red-700'
+
+  if (isImage) {
+    return (
+      <div className={shellClass} title={attachment.file_name}>
+        <button type="button" onClick={openInNewTab} disabled={!signedUrl} className={openBtnClass}>
+          <span className="relative h-[50px] w-[50px] shrink-0 overflow-hidden rounded-md bg-gray-200">
+            {urlLoading ? (
+              <span className="absolute inset-0 animate-pulse bg-gray-300" />
+            ) : signedUrl ? (
+              <img src={signedUrl} alt="" className="h-full w-full object-cover" width={50} height={50} />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-[10px] text-gray-500">?</span>
+            )}
+          </span>
+          <span className="max-w-[140px] truncate text-xs font-medium">{attachment.file_name}</span>
+        </button>
+        <button type="button" onClick={(e) => void handleRemove(e)} className={removeBtnClass} aria-label={`Remove ${attachment.file_name}`}>
+          ×
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className={shellClass} title={attachment.file_name}>
+      <button type="button" onClick={openInNewTab} disabled={!signedUrl} className={openBtnClass}>
+        <FileGlyph className="h-5 w-5 shrink-0 text-gray-500" />
+        <span className="max-w-[180px] truncate text-xs font-medium">{attachment.file_name}</span>
+      </button>
+      <button type="button" onClick={(e) => void handleRemove(e)} className={removeBtnClass} aria-label={`Remove ${attachment.file_name}`}>
+        ×
+      </button>
+    </div>
+  )
+}
+
 function selectClassName(): string {
   return 'mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20'
 }
 
 function labelClass(): string {
   return 'block text-xs font-semibold uppercase tracking-wide text-gray-500'
+}
+
+function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
+  switch (state.kind) {
+    case 'anonymous':
+      return (
+        <>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass('anonymous')}`}>
+              {formatSubmitterTypeLabel('anonymous')}
+            </span>
+            <span className="text-xs font-medium text-amber-700">Unlinked</span>
+          </div>
+          <p className="text-sm text-gray-700">Anonymous submission — no profile linked</p>
+        </>
+      )
+    case 'unlinked':
+      return (
+        <>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass(state.submitterType)}`}
+            >
+              {formatSubmitterTypeLabel(state.submitterType)}
+            </span>
+            <span className="text-xs font-medium text-amber-700">Unlinked</span>
+          </div>
+          <p className="text-sm text-gray-700">No profile linked to this ticket.</p>
+        </>
+      )
+    case 'fetch_error':
+      return (
+        <p className="text-sm text-red-700" role="alert">
+          {state.message}
+        </p>
+      )
+    case 'profile_missing':
+      return (
+        <>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass(state.submitterType)}`}
+            >
+              {formatSubmitterTypeLabel(state.submitterType)}
+            </span>
+          </div>
+          <p className="text-sm text-amber-800">Submitter profile could not be found.</p>
+        </>
+      )
+    case 'student': {
+      const p = state.profile
+      const name = studentSubmitterDisplayName(p)
+      const emailTrim = p.email?.trim() ?? ''
+      return (
+        <div className="space-y-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass('student')}`}>
+              {formatSubmitterTypeLabel('student')}
+            </span>
+          </div>
+          <div>
+            <span className={labelClass()}>Name</span>
+            <p className="mt-1 text-gray-900 font-medium">{name}</p>
+          </div>
+          <div>
+            <span className={labelClass()}>Email</span>
+            <p className="mt-1 text-gray-800">
+              {emailTrim ? (
+                <a href={`mailto:${encodeURIComponent(emailTrim)}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                  {emailTrim}
+                </a>
+              ) : (
+                '—'
+              )}
+            </p>
+          </div>
+          {p.university?.trim() ? (
+            <div>
+              <span className={labelClass()}>University</span>
+              <p className="mt-1 text-gray-800">{p.university.trim()}</p>
+            </div>
+          ) : null}
+          <div>
+            <span className={labelClass()}>Member since</span>
+            <p className="mt-1 text-gray-800">{formatDate(p.created_at)}</p>
+          </div>
+          <div>
+            <Link to={`/admin/students?profile=${p.id}`} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+              View in Students →
+            </Link>
+          </div>
+        </div>
+      )
+    }
+    case 'landlord': {
+      const p = state.profile
+      const name = p.full_name?.trim() || 'Anonymous'
+      const emailTrim = p.email?.trim() ?? ''
+      const phoneTrim = p.phone?.trim() ?? ''
+      return (
+        <div className="space-y-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass('landlord')}`}>
+              {formatSubmitterTypeLabel('landlord')}
+            </span>
+          </div>
+          <div>
+            <span className={labelClass()}>Name</span>
+            <p className="mt-1 text-gray-900 font-medium">{name}</p>
+          </div>
+          <div>
+            <span className={labelClass()}>Email</span>
+            <p className="mt-1 text-gray-800">
+              {emailTrim ? (
+                <a href={`mailto:${encodeURIComponent(emailTrim)}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                  {emailTrim}
+                </a>
+              ) : (
+                '—'
+              )}
+            </p>
+          </div>
+          {phoneTrim ? (
+            <div>
+              <span className={labelClass()}>Phone</span>
+              <p className="mt-1 text-gray-800">
+                <a href={`tel:${phoneTrim.replace(/\s/g, '')}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                  {phoneTrim}
+                </a>
+              </p>
+            </div>
+          ) : null}
+          <div>
+            <span className={labelClass()}>Member since</span>
+            <p className="mt-1 text-gray-800">{formatDate(p.created_at)}</p>
+          </div>
+          <div>
+            <Link to={`/admin/landlords?profile=${p.id}`} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+              View in Landlords →
+            </Link>
+          </div>
+        </div>
+      )
+    }
+    default:
+      return <p className="text-sm text-gray-500">—</p>
+  }
 }
 
 export default function QaseTicketDetail() {
@@ -73,10 +498,16 @@ export default function QaseTicketDetail() {
   const [relinkOpen, setRelinkOpen] = useState(false)
   const [relinkUuid, setRelinkUuid] = useState('')
   const [savingRelink, setSavingRelink] = useState(false)
+  const [attachments, setAttachments] = useState<QaseAttachmentRow[]>([])
+  const [replyAttachmentFiles, setReplyAttachmentFiles] = useState<File[]>([])
+  const [replyAttachmentValidationError, setReplyAttachmentValidationError] = useState<string | null>(null)
+  const [submitterPanel, setSubmitterPanel] = useState<SubmitterPanelState | null>(null)
 
   const loadAll = useCallback(async () => {
     if (!ticketId || !isSupabaseConfigured) {
       setCtx(null)
+      setAttachments([])
+      setSubmitterPanel(null)
       setLoading(false)
       return
     }
@@ -92,19 +523,27 @@ export default function QaseTicketDetail() {
     if (ticketErr) {
       setError(ticketErr.message)
       setCtx(null)
+      setAttachments([])
+      setSubmitterPanel(null)
       setLoading(false)
       return
     }
     if (!ticketRow) {
       setError('Ticket not found.')
       setCtx(null)
+      setAttachments([])
+      setSubmitterPanel(null)
       setLoading(false)
       return
     }
 
     const ticket = asTicket(ticketRow)
 
-    const [{ data: msgRows, error: msgErr }, { data: catRows, error: catErr }] = await Promise.all([
+    const [
+      { data: msgRows, error: msgErr },
+      { data: catRows, error: catErr },
+      { data: attRows, error: attErr },
+    ] = await Promise.all([
       supabase.from('qase_messages').select('*').eq('ticket_id', ticketId).order('created_at', { ascending: true }),
       supabase
         .from('qase_fields')
@@ -112,14 +551,19 @@ export default function QaseTicketDetail() {
         .eq('field_type', 'category')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('qase_attachments' as 'bookings')
+        .select('id, message_id, file_name, file_path, file_size, mime_type')
+        .eq('ticket_id', ticketId),
     ])
 
-    if (msgErr || catErr) {
-      setError(msgErr?.message ?? catErr?.message ?? 'Failed to load related data')
+    if (msgErr || catErr || attErr) {
+      setError(msgErr?.message ?? catErr?.message ?? attErr?.message ?? 'Failed to load related data')
     }
 
     const messages = (msgRows ?? []).map(asMessage)
     setCategories((catRows ?? []).map(asField))
+    setAttachments((attRows ?? []).map(asAttachmentRow))
 
     let booking: QaseTicketContextBooking | null = null
     let property: QaseTicketContextProperty | null = null
@@ -142,6 +586,46 @@ export default function QaseTicketDetail() {
       property = asProperty(p)
     }
 
+    if (ticket.submitted_by_type === 'anonymous') {
+      setSubmitterPanel({ kind: 'anonymous' })
+    } else if (ticket.submitted_by_type === 'student') {
+      if (!ticket.submitted_by_id) {
+        setSubmitterPanel({ kind: 'unlinked', submitterType: 'student' })
+      } else {
+        const { data: spRow, error: spErr } = await supabase
+          .from('student_profiles')
+          .select('id, full_name, first_name, last_name, email, created_at, universities ( name )')
+          .eq('id', ticket.submitted_by_id)
+          .maybeSingle()
+        if (spErr) {
+          setSubmitterPanel({ kind: 'fetch_error', message: spErr.message })
+        } else if (!spRow) {
+          setSubmitterPanel({ kind: 'profile_missing', submitterType: 'student' })
+        } else {
+          setSubmitterPanel({ kind: 'student', profile: parseStudentSubmitterRow(spRow) })
+        }
+      }
+    } else if (ticket.submitted_by_type === 'landlord') {
+      if (!ticket.submitted_by_id) {
+        setSubmitterPanel({ kind: 'unlinked', submitterType: 'landlord' })
+      } else {
+        const { data: lpRow, error: lpErr } = await supabase
+          .from('landlord_profiles')
+          .select('id, full_name, email, phone, created_at')
+          .eq('id', ticket.submitted_by_id)
+          .maybeSingle()
+        if (lpErr) {
+          setSubmitterPanel({ kind: 'fetch_error', message: lpErr.message })
+        } else if (!lpRow) {
+          setSubmitterPanel({ kind: 'profile_missing', submitterType: 'landlord' })
+        } else {
+          setSubmitterPanel({ kind: 'landlord', profile: parseLandlordSubmitterRow(lpRow) })
+        }
+      }
+    } else {
+      setSubmitterPanel({ kind: 'fetch_error', message: 'Unknown submitter type.' })
+    }
+
     setCtx({
       ...ticket,
       messages,
@@ -157,9 +641,26 @@ export default function QaseTicketDetail() {
 
   const ticket = ctx
 
+  const attachmentsByMessageId = useMemo(() => {
+    const map = new Map<string, QaseAttachmentRow[]>()
+    for (const a of attachments) {
+      if (!a.message_id) continue
+      const arr = map.get(a.message_id) ?? []
+      arr.push(a)
+      map.set(a.message_id, arr)
+    }
+    return map
+  }, [attachments])
+
   const canSendReply = useMemo(() => {
-    return replyBody.trim().length > 0 && !sendingReply && !!ticketId && !!user?.id
-  }, [replyBody, sendingReply, ticketId, user?.id])
+    return (
+      replyBody.trim().length > 0 &&
+      !sendingReply &&
+      !!ticketId &&
+      !!user?.id &&
+      !replyAttachmentValidationError
+    )
+  }, [replyBody, replyAttachmentValidationError, sendingReply, ticketId, user?.id])
 
   async function updateTicket(patch: Partial<QaseTicket>) {
     if (!ticketId) return
@@ -189,25 +690,115 @@ export default function QaseTicketDetail() {
     await updateTicket({ category: next })
   }
 
+  function handleReplyAttachmentInputChange(e: ChangeEvent<HTMLInputElement>) {
+    const list = e.target.files
+    e.target.value = ''
+    if (!list?.length) return
+    const incoming = Array.from(list)
+    const merged = [...replyAttachmentFiles, ...incoming]
+    if (merged.length > MAX_ATTACHMENT_FILES) {
+      const slice = merged.slice(0, MAX_ATTACHMENT_FILES)
+      setReplyAttachmentFiles(slice)
+      const sliceErr = validateAttachmentList(slice)
+      setReplyAttachmentValidationError(
+        sliceErr ?? `You can attach at most ${MAX_ATTACHMENT_FILES} files.`,
+      )
+      return
+    }
+    const err = validateAttachmentList(merged)
+    if (err) {
+      setReplyAttachmentValidationError(err)
+      return
+    }
+    setReplyAttachmentFiles(merged)
+    setReplyAttachmentValidationError(null)
+  }
+
+  function removeReplyAttachmentAt(index: number) {
+    const next = replyAttachmentFiles.filter((_, i) => i !== index)
+    setReplyAttachmentFiles(next)
+    setReplyAttachmentValidationError(validateAttachmentList(next))
+  }
+
   async function handleSendReply() {
     if (!ticketId || !user?.id || !replyBody.trim()) return
     setSendingReply(true)
     setError(null)
-    const { error: insErr } = await supabase.from('qase_messages' as 'bookings').insert({
-      ticket_id: ticketId,
-      author_id: user.id,
-      author_type: 'admin',
-      body: replyBody.trim(),
-      is_internal_note: replyInternal,
-    } as never)
-    setSendingReply(false)
-    if (insErr) {
-      setError(insErr.message)
-      return
+    try {
+      const { data: newMsgRaw, error: insErr } = await supabase
+        .from('qase_messages' as 'bookings')
+        .insert({
+          ticket_id: ticketId,
+          author_id: user.id,
+          author_type: 'admin',
+          body: replyBody.trim(),
+          is_internal_note: replyInternal,
+        } as never)
+        .select('id')
+        .single()
+      const newMsg = newMsgRaw as unknown as { id: string } | null
+      if (insErr) {
+        setError(insErr.message)
+        return
+      }
+      const msgId = newMsg?.id
+      if (msgId && !replyInternal) {
+        fireNotify(msgId)
+      }
+
+      const files = [...replyAttachmentFiles]
+      const uploadFailures: string[] = []
+      if (msgId && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          const safeName = sanitizeFileName(file.name)
+          const path = `${ticketId}/${Date.now()}-${i}-${safeName}`
+          const mime = file.type && ALLOWED_MIME.has(file.type) ? file.type : 'application/octet-stream'
+
+          const { error: upErr } = await supabase.storage.from('qase-attachments').upload(path, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: mime,
+          })
+          if (upErr) {
+            console.error('Qase admin attachment upload', upErr)
+            uploadFailures.push(file.name)
+            continue
+          }
+
+          const { error: attErr } = await supabase.from('qase_attachments' as 'bookings').insert({
+            ticket_id: ticketId,
+            message_id: msgId,
+            file_name: file.name,
+            file_path: path,
+            file_size: file.size,
+            mime_type: mime,
+            uploaded_by_id: user.id,
+            uploaded_by_type: 'admin',
+          } as never)
+
+          if (attErr) {
+            console.error('Qase admin attachment row', attErr)
+            uploadFailures.push(file.name)
+            void supabase.storage.from('qase-attachments').remove([path])
+          }
+        }
+      }
+
+      setReplyBody('')
+      setReplyInternal(false)
+      setReplyAttachmentFiles([])
+      setReplyAttachmentValidationError(null)
+      if (uploadFailures.length > 0) {
+        setError(
+          `Reply posted, but these attachments could not be uploaded: ${uploadFailures.join(', ')}.`,
+        )
+      }
+
+      await loadAll()
+    } finally {
+      setSendingReply(false)
     }
-    setReplyBody('')
-    setReplyInternal(false)
-    await loadAll()
   }
 
   async function handleSaveRelink() {
@@ -285,33 +876,60 @@ export default function QaseTicketDetail() {
                 {(ticket.messages ?? []).length === 0 ? (
                   <p className="text-sm text-gray-500 py-6">No messages yet.</p>
                 ) : (
-                  (ticket.messages ?? []).map((m) => (
-                    <div key={m.id}>
-                      {m.is_internal_note ? (
-                        <div className="rounded-r-lg border border-amber-200 border-l-4 border-l-amber-400 bg-amber-50/60 px-4 py-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                            <span className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                              Internal note
-                            </span>
-                            <span className="text-xs text-amber-800/80" title={m.created_at}>
-                              {formatRelativeTime(m.created_at)}
-                            </span>
+                  (ticket.messages ?? []).map((m) => {
+                    const msgAttachments = attachmentsByMessageId.get(m.id) ?? []
+                    return (
+                      <div key={m.id}>
+                        {m.is_internal_note ? (
+                          <div className="rounded-r-lg border border-amber-200 border-l-4 border-l-amber-400 bg-amber-50/60 px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                              <span className="text-xs font-semibold uppercase tracking-wide text-amber-900">
+                                Internal note
+                              </span>
+                              <span className="text-xs text-amber-800/80" title={m.created_at}>
+                                {formatRelativeTime(m.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
+                            {msgAttachments.length > 0 ? (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {msgAttachments.map((a) => (
+                                  <QaseAttachmentChip
+                                    key={a.id}
+                                    attachment={a}
+                                    onDeleted={() => void loadAll()}
+                                    onError={(msg) => setError(msg)}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
-                          <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
-                        </div>
-                      ) : (
-                        <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                            <span className="text-xs font-medium text-gray-500 capitalize">{m.author_type}</span>
-                            <span className="text-xs text-gray-400" title={m.created_at}>
-                              {formatRelativeTime(m.created_at)}
-                            </span>
+                        ) : (
+                          <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                              <span className="text-xs font-medium text-gray-500 capitalize">{m.author_type}</span>
+                              <span className="text-xs text-gray-400" title={m.created_at}>
+                                {formatRelativeTime(m.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
+                            {msgAttachments.length > 0 ? (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {msgAttachments.map((a) => (
+                                  <QaseAttachmentChip
+                                    key={a.id}
+                                    attachment={a}
+                                    onDeleted={() => void loadAll()}
+                                    onError={(msg) => setError(msg)}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
                           </div>
-                          <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))
+                        )}
+                      </div>
+                    )
+                  })
                 )}
               </div>
 
@@ -326,6 +944,45 @@ export default function QaseTicketDetail() {
                     placeholder="Write a reply…"
                   />
                 </label>
+                <div>
+                  <label htmlFor="qase-reply-attachments" className={labelClass()}>
+                    Attachments (optional)
+                  </label>
+                  <input
+                    id="qase-reply-attachments"
+                    type="file"
+                    multiple
+                    accept={ATTACHMENT_ACCEPT}
+                    onChange={handleReplyAttachmentInputChange}
+                    disabled={sendingReply}
+                    className="mt-1 block w-full text-sm text-gray-700 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-gray-800 hover:file:bg-gray-200"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">Up to 10 files, 20MB each.</p>
+                  {replyAttachmentValidationError && (
+                    <p className="mt-1 text-sm text-red-600" role="alert">
+                      {replyAttachmentValidationError}
+                    </p>
+                  )}
+                  {replyAttachmentFiles.length > 0 && (
+                    <ul className="mt-2 space-y-2 rounded-lg border border-gray-100 bg-gray-50/80 p-3">
+                      {replyAttachmentFiles.map((f, idx) => (
+                        <li key={`${f.name}-${f.size}-${idx}`} className="flex items-start justify-between gap-2 text-sm">
+                          <span className="min-w-0 break-words text-gray-800">
+                            {f.name} <span className="text-gray-500">({formatFileSize(f.size)})</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeReplyAttachmentAt(idx)}
+                            disabled={sendingReply}
+                            className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-800 disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
@@ -561,6 +1218,11 @@ export default function QaseTicketDetail() {
                     </div>
                   )}
                 </div>
+              </section>
+
+              <section className={adminCardClass}>
+                <h2 className="text-sm font-semibold text-gray-900 mb-4">Submitter</h2>
+                {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">—</p>}
               </section>
             </div>
           </div>

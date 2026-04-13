@@ -51,3 +51,6 @@ verify_jwt = false
 
 [functions.qase-inbound-email]
 verify_jwt = false
+
+[functions.qase-notify]
+verify_jwt = false
