@@ -73,6 +73,13 @@ create policy "Platform admins manage all property_features"
   using (public.is_platform_admin())
   with check (public.is_platform_admin());
 
+drop policy if exists "Platform admins manage all property_house_rules" on public.property_house_rules;
+create policy "Platform admins manage all property_house_rules"
+  on public.property_house_rules for all
+  to authenticated
+  using (public.is_platform_admin())
+  with check (public.is_platform_admin());
+
 -- Student profiles (directory)
 drop policy if exists "Platform admins select all student_profiles" on public.student_profiles;
 
