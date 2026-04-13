@@ -223,10 +223,10 @@ function sectionClass(title: string, children: ReactNode, sectionId?: string) {
       id={sectionId}
       className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm scroll-mt-24"
     >
-      <div className="bg-[#FF6F61] px-8 py-3">
+      <div className="bg-[#FF6F61] px-4 py-3 sm:px-6 lg:px-8">
         <h2 className="text-base font-medium text-white">{title}</h2>
       </div>
-      <div className="bg-white p-8">{children}</div>
+      <div className="bg-white p-4 sm:p-6 lg:p-8">{children}</div>
     </section>
   )
 }
@@ -1461,20 +1461,22 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 -mx-6 bg-[#d4e9e2] px-3 py-2"
+            className="sticky top-16 z-10 -mx-6 bg-[#d4e9e2] px-0 py-2 sm:px-6"
             aria-label="Jump to section"
           >
-            <div className="w-full grid grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-2 sm:overflow-x-auto">
-              {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
+            <div className="w-full grid grid-cols-2 gap-0 sm:flex sm:w-auto sm:gap-2 sm:overflow-x-auto sm:px-0">
+              {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }, index) => {
+                const isLast = index === LANDLORD_FORM_NAV_SECTIONS.length - 1
                 const isActive = activeSection === id
+                const spanClass = isLast ? 'col-span-2' : 'col-span-1'
                 return (
                   <a
                     key={id}
                     href={`#${id}`}
                     className={
                       isActive
-                        ? 'col-span-1 flex min-h-0 h-auto items-center justify-center whitespace-nowrap rounded-full border border-[#D85A30] bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium text-white transition-colors sm:w-auto sm:px-3 sm:py-1.5 sm:text-sm'
-                        : 'col-span-1 flex min-h-0 h-auto items-center justify-center whitespace-nowrap rounded-full border border-[#D85A30] bg-white px-1 py-1.5 text-center text-xs font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white sm:w-auto sm:px-3 sm:py-1.5 sm:text-sm'
+                        ? `${spanClass} flex min-h-0 h-auto items-center justify-center whitespace-nowrap rounded-full border-0 bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium text-white outline outline-1 outline-[#D85A30] transition-colors sm:w-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm`
+                        : `${spanClass} flex min-h-0 h-auto items-center justify-center whitespace-nowrap rounded-full border-0 bg-white px-1 py-1.5 text-center text-xs font-medium text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white sm:w-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm`
                     }
                   >
                     {label}
