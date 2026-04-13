@@ -221,10 +221,12 @@ function sectionClass(title: string, children: ReactNode, sectionId?: string) {
   return (
     <section
       id={sectionId}
-      className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm scroll-mt-24"
+      className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm scroll-mt-24"
     >
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
-      {children}
+      <div className="bg-[#FF6F61] px-8 py-3">
+        <h2 className="text-base font-medium text-white">{title}</h2>
+      </div>
+      <div className="bg-white p-8">{children}</div>
     </section>
   )
 }
@@ -1402,7 +1404,7 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden bg-gray-50 pb-16">
+    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden bg-[#d4e9e2] pb-16">
       <div className="mx-auto w-full min-w-0 max-w-[1200px] px-6 py-8">
         <div className="mb-8">
           <Link
@@ -1459,7 +1461,7 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 -mx-6 flex min-w-0 max-w-full flex-wrap gap-2 bg-gray-50 px-6 py-2 text-xs"
+            className="sticky top-16 z-10 -mx-6 flex min-w-0 max-w-full flex-wrap gap-2 bg-[#d4e9e2] px-6 py-2 text-xs"
             aria-label="Jump to section"
           >
             {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
