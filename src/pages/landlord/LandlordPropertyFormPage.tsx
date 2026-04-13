@@ -1464,7 +1464,7 @@ export default function LandlordPropertyFormPage() {
             className="sticky top-16 z-10 -mx-6 bg-[#d4e9e2] px-0 py-2 sm:px-6"
             aria-label="Jump to section"
           >
-            <div className="flex w-full flex-wrap gap-0.5 sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
+            <div className="grid w-full grid-cols-4 gap-0.5 sm:flex sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
               {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
                 const isActive = activeSection === id
                 return (
@@ -1473,8 +1473,8 @@ export default function LandlordPropertyFormPage() {
                     href={`#${id}`}
                     className={
                       isActive
-                        ? 'flex min-h-0 h-auto min-w-0 flex-1 basis-1/4 items-center justify-center rounded-full border-0 bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium leading-snug text-white outline outline-1 outline-[#D85A30] transition-colors break-words sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
-                        : 'flex min-h-0 h-auto min-w-0 flex-1 basis-1/4 items-center justify-center rounded-full border-0 bg-white px-1 py-1.5 text-center text-xs font-medium leading-snug text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors break-words hover:bg-[#D85A30] hover:text-white sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
+                        ? 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-full border-0 bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium leading-snug text-white outline outline-1 outline-[#D85A30] transition-colors break-words sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
+                        : 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-full border-0 bg-white px-1 py-1.5 text-center text-xs font-medium leading-snug text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors break-words hover:bg-[#D85A30] hover:text-white sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
                     }
                   >
                     <span className="block min-w-0 w-full text-center">{label}</span>
