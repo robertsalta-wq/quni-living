@@ -15,7 +15,7 @@ export const SITE_NAME = 'Quni Living'
  * Use for property detail hero, thumbnails, and any block that must align with the header — do not use raw `w-full`
  * for the gallery without this wrapper, or the hero will span the full viewport.
  */
-export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6'
+export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-3 sm:px-6'
 
 export const DEFAULT_DESCRIPTION =
   "Australia's student accommodation marketplace. Browse verified listings near your university, enquire with landlords, and book online with Quni Living."
