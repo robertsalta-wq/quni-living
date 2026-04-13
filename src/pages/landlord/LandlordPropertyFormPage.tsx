@@ -19,6 +19,20 @@ import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 
+/** Checkbox styling — single pattern for every landlord form checkbox. */
+const LANDLORD_FORM_CHECKBOX_CLASS =
+  'h-4 w-4 shrink-0 rounded border-gray-300 text-[#D85A30] accent-[#D85A30] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
+
+const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
+  { id: 'section-basic-info', label: 'Basic info' },
+  { id: 'section-property-details', label: 'Property details' },
+  { id: 'section-inclusions-features', label: 'Inclusions & features' },
+  { id: 'section-house-rules', label: 'House rules' },
+  { id: 'section-location', label: 'Location' },
+  { id: 'section-pricing-availability', label: 'Pricing & availability' },
+  { id: 'section-photos', label: 'Photos' },
+]
+
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 type FeatureRow = Database['public']['Tables']['features']['Row']
 type HouseRulesRefRow = Database['public']['Tables']['house_rules_ref']['Row']
@@ -307,6 +321,7 @@ export default function LandlordPropertyFormPage() {
 
   const [rentPerWeek, setRentPerWeek] = useState('')
   const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
+  const [activeFormSectionId, setActiveFormSectionId] = useState('section-basic-info')
   const weeklyRentNum = useMemo(() => {
     const t = rentPerWeek.trim()
     if (!t) return undefined
@@ -797,6 +812,46 @@ export default function LandlordPropertyFormPage() {
       root.style.scrollBehavior = prev
     }
   }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || loadingPage || pageError) return
+    if (role === 'landlord' && !landlordProfile) return
+
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('[id^="section-"]'))
+    if (nodes.length === 0) return
+
+    let raf = 0
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting)
+        if (visible.length === 0) return
+        let best = visible[0]
+        let bestRatio = best.intersectionRatio
+        for (let i = 1; i < visible.length; i++) {
+          const e = visible[i]
+          if (e.intersectionRatio > bestRatio) {
+            best = e
+            bestRatio = e.intersectionRatio
+          }
+        }
+        const id = best.target.id
+        if (id.startsWith('section-')) {
+          if (raf) cancelAnimationFrame(raf)
+          raf = requestAnimationFrame(() => {
+            setActiveFormSectionId(id)
+            raf = 0
+          })
+        }
+      },
+      { root: null, rootMargin: '-20% 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
+    )
+
+    nodes.forEach((n) => observer.observe(n))
+    return () => {
+      observer.disconnect()
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [isSupabaseConfigured, loadingPage, pageError, role, landlordProfile])
 
   // Keep a small local cache so we don't repeatedly geocode the same suburb/address.
   // (Also helps Nominatim rate limits while the user types.)
@@ -1427,51 +1482,25 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="flex min-w-0 max-w-full flex-wrap gap-2 overflow-x-hidden text-xs"
+            className="sticky top-16 z-10 flex min-w-0 max-w-full gap-2 overflow-x-auto overflow-y-hidden bg-gray-50 py-2 pb-1 text-xs"
             aria-label="Jump to section"
           >
-            <a
-              href="#section-basic-info"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Basic info
-            </a>
-            <a
-              href="#section-property-details"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Property details
-            </a>
-            <a
-              href="#section-inclusions-features"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Inclusions & features
-            </a>
-            <a
-              href="#section-house-rules"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              House rules
-            </a>
-            <a
-              href="#section-location"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Location
-            </a>
-            <a
-              href="#section-pricing-availability"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Pricing & availability
-            </a>
-            <a
-              href="#section-photos"
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-            >
-              Photos
-            </a>
+            {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
+              const isActive = activeFormSectionId === id
+              return (
+                <a
+                  key={id}
+                  href={`#${id}`}
+                  className={
+                    isActive
+                      ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 font-medium text-white transition-colors whitespace-nowrap'
+                      : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white whitespace-nowrap'
+                  }
+                >
+                  {label}
+                </a>
+              )
+            })}
           </nav>
 
           {submitError && (
@@ -1630,7 +1659,7 @@ export default function LandlordPropertyFormPage() {
                 </select>
               </div>
               <div>
-                <label htmlFor="pf-rooming-house" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
+                <label htmlFor="pf-rooming-house" className="flex cursor-pointer items-center gap-2">
                   <input
                     id="pf-rooming-house"
                     type="checkbox"
@@ -1640,12 +1669,12 @@ export default function LandlordPropertyFormPage() {
                       setIsRegisteredRoomingHouse(on)
                       if (!on) setRoomingHouseRegistrationNumber('')
                     }}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
+                    className={LANDLORD_FORM_CHECKBOX_CLASS}
                   />
-                  <span className="font-medium text-gray-900">This property is a registered rooming house</span>
+                  <span className="text-sm text-gray-700">This property is a registered rooming house</span>
                 </label>
                 {isRegisteredRoomingHouse ? (
-                  <div className="mt-3 pl-7">
+                  <div className="mt-3 pl-6">
                     <label htmlFor="pf-rooming-reg" className={labelClass}>
                       Rooming house registration number
                     </label>
@@ -1668,46 +1697,46 @@ export default function LandlordPropertyFormPage() {
             'Inclusions & features',
             <div className="space-y-4">
               <div className="flex flex-col gap-3">
-                <label className="inline-flex items-center gap-2 text-sm text-gray-800">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
                     checked={furnished}
                     onChange={(e) => setFurnished(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className={LANDLORD_FORM_CHECKBOX_CLASS}
                   />
-                  Fully furnished
+                  <span className="text-sm text-gray-700">Fully furnished</span>
                 </label>
-                <label className="inline-flex items-center gap-2 text-sm text-gray-800">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
                     checked={linenSupplied}
                     onChange={(e) => setLinenSupplied(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className={LANDLORD_FORM_CHECKBOX_CLASS}
                   />
-                  Linen supplied
+                  <span className="text-sm text-gray-700">Linen supplied</span>
                 </label>
-                <label className="inline-flex items-center gap-2 text-sm text-gray-800">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
                     checked={weeklyCleaning}
                     onChange={(e) => setWeeklyCleaning(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className={LANDLORD_FORM_CHECKBOX_CLASS}
                   />
-                  Weekly cleaning service
+                  <span className="text-sm text-gray-700">Weekly cleaning service</span>
                 </label>
               </div>
               <div>
                 <p className={`${labelClass} mb-2`}>Property features</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-gray-100 p-3 bg-gray-50/50">
+                <div className="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-2">
                   {features.map((f) => (
-                    <label key={f.id} className="inline-flex items-center gap-2 text-sm text-gray-800">
+                    <label key={f.id} className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         checked={selectedFeatureIds.has(f.id)}
                         onChange={() => toggleFeature(f.id)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className={LANDLORD_FORM_CHECKBOX_CLASS}
                       />
-                      {f.name}
+                      <span className="text-sm text-gray-700">{f.name}</span>
                     </label>
                   ))}
                   {features.length === 0 && (
@@ -1717,17 +1746,17 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
                 <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>
-                <label htmlFor="pf-open-non-students" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
+                <label htmlFor="pf-open-non-students" className="flex cursor-pointer items-center gap-2">
                   <input
                     id="pf-open-non-students"
                     type="checkbox"
                     checked={openToNonStudents}
                     onChange={(e) => setOpenToNonStudents(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
+                    className={LANDLORD_FORM_CHECKBOX_CLASS}
                   />
-                  <span className="font-medium text-gray-900">Open to non-students</span>
+                  <span className="text-sm text-gray-700">Open to non-students</span>
                 </label>
-                <p className="text-xs text-gray-600 mt-2 pl-7 leading-snug">
+                <p className="mt-2 pl-6 text-xs leading-snug text-gray-600">
                   When unchecked, only tenants with full student verification can see and enquire on this listing. Verified
                   students can always see all active listings.
                 </p>
@@ -1740,13 +1769,13 @@ export default function LandlordPropertyFormPage() {
             'House rules',
             <div className="space-y-6">
               <div>
-                <div className="grid min-w-0 grid-cols-1 gap-2 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-2">
+                <div className="max-h-56 min-w-0 space-y-2 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-3">
                   {houseRulesRef.map((r) => (
                     <div
                       key={r.id}
-                      className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2"
                     >
-                      <span className="inline-flex min-w-0 flex-1 items-start gap-2 text-sm text-gray-800">
+                      <span className="inline-flex min-w-0 flex-1 items-center gap-2 text-sm text-gray-800">
                         <span className="shrink-0" aria-hidden>
                           {r.icon}
                         </span>
@@ -1756,7 +1785,7 @@ export default function LandlordPropertyFormPage() {
                         aria-label={`${r.name} permitted`}
                         value={selectedRules[r.id] ?? ''}
                         onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                        className={`${inputClass} min-w-0 w-full sm:w-auto sm:max-w-[11rem] sm:shrink-0`}
+                        className={`${inputClass} w-36 shrink-0`}
                       >
                         <option value="">Select…</option>
                         <option value="yes">Yes</option>
@@ -1916,7 +1945,7 @@ export default function LandlordPropertyFormPage() {
 
                 <div className="mt-4" ref={addAnotherUniversityHelpRef}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-800">
+                    <label htmlFor="pf-add-another-uni" className="flex cursor-pointer items-center gap-2">
                       <input
                         type="checkbox"
                         id="pf-add-another-uni"
@@ -1926,9 +1955,9 @@ export default function LandlordPropertyFormPage() {
                           if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
                         }}
                         disabled={refsLoading || nearbyCampusLoading}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className={LANDLORD_FORM_CHECKBOX_CLASS}
                       />
-                      <span>Add another university (optional)</span>
+                      <span className="text-sm text-gray-700">Add another university (optional)</span>
                     </label>
                     <button
                       type="button"
@@ -2076,12 +2105,12 @@ export default function LandlordPropertyFormPage() {
               {uploadingImage && <p className="text-xs text-gray-500">Uploading…</p>}
               <div className="flex flex-wrap gap-3">
                 {images.map((url) => (
-                  <div key={url} className="relative group w-24 h-24 rounded-lg border border-gray-200 overflow-hidden bg-gray-100">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                  <div key={url} className="relative h-24 w-24 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => void removeImage(url)}
-                      className="absolute inset-0 bg-black/50 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      className="absolute bottom-0 left-0 right-0 flex items-center justify-center bg-black/60 py-1 text-[11px] font-medium text-white"
                     >
                       Remove
                     </button>
