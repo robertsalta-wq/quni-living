@@ -255,43 +255,38 @@ function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
 
 /** Section 6 — House rules. */
 function Section6HouseRules(props: QuniPlatformAddendumProps) {
-  const raw = props.houseRules.trim()
-  const blocks = raw ? raw.split(/\n{2,}/) : []
+  const text = (props.houseRules ?? '').trim()
+  if (!text) return null
+
+  const blocks = text.split(/\n{2,}/)
 
   return (
     <View style={{ marginBottom: 10 }}>
       <OccupancyMatchSectionHeading num={6} title="House rules" />
 
-      {blocks.length === 0 ? (
-        <Text style={occupancyMatchPdf.bodyParagraph}>
-          House rules recorded for this property on the Quni platform apply for the duration of the tenancy, subject
-          to the Residential Tenancies Act 2010 (NSW) and the standard form agreement.
-        </Text>
-      ) : (
-        blocks.map((block, i) => {
-          const lines = block.split('\n')
-          const first = (lines[0] ?? '').trim()
-          const looksLikeCapsHeading =
-            first.length > 0 &&
-            first.length <= 72 &&
-            first === first.toUpperCase() &&
-            /^[A-Z0-9][A-Z0-9 &,.()/\-]+$/.test(first)
-          const rest = looksLikeCapsHeading ? lines.slice(1).join('\n').trim() : block.trim()
+      {blocks.map((block, i) => {
+        const lines = block.split('\n')
+        const first = (lines[0] ?? '').trim()
+        const looksLikeCapsHeading =
+          first.length > 0 &&
+          first.length <= 72 &&
+          first === first.toUpperCase() &&
+          /^[A-Z0-9][A-Z0-9 &,.()/\-]+$/.test(first)
+        const rest = looksLikeCapsHeading ? lines.slice(1).join('\n').trim() : block.trim()
 
-          return (
-            <View key={i} wrap={false} style={{ marginBottom: 6 }}>
-              {looksLikeCapsHeading ? (
-                <Text style={occupancyMatchPdf.clauseSectionCaps}>{first}</Text>
-              ) : null}
-              {rest ? (
-                <Text style={occupancyMatchPdf.bodyParagraph}>{rest}</Text>
-              ) : looksLikeCapsHeading ? null : (
-                <Text style={occupancyMatchPdf.bodyParagraph}>{block.trim()}</Text>
-              )}
-            </View>
-          )
-        })
-      )}
+        return (
+          <View key={i} wrap={false} style={{ marginBottom: 6 }}>
+            {looksLikeCapsHeading ? (
+              <Text style={occupancyMatchPdf.clauseSectionCaps}>{first}</Text>
+            ) : null}
+            {rest ? (
+              <Text style={occupancyMatchPdf.bodyParagraph}>{rest}</Text>
+            ) : looksLikeCapsHeading ? null : (
+              <Text style={occupancyMatchPdf.bodyParagraph}>{block.trim()}</Text>
+            )}
+          </View>
+        )
+      })}
     </View>
   )
 }

@@ -703,11 +703,12 @@ function Section5UtilitiesAndBills(props) {
   ] });
 }
 function Section6HouseRules(props) {
-  const raw = props.houseRules.trim();
-  const blocks = raw ? raw.split(/\n{2,}/) : [];
+  const text = (props.houseRules ?? "").trim();
+  if (!text) return null;
+  const blocks = text.split(/\n{2,}/);
   return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: "House rules" }),
-    blocks.length === 0 ? /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "House rules recorded for this property on the Quni platform apply for the duration of the tenancy, subject to the Residential Tenancies Act 2010 (NSW) and the standard form agreement." }) : blocks.map((block, i) => {
+    blocks.map((block, i) => {
       const lines = block.split("\n");
       const first = (lines[0] ?? "").trim();
       const looksLikeCapsHeading = first.length > 0 && first.length <= 72 && first === first.toUpperCase() && /^[A-Z0-9][A-Z0-9 &,.()/\-]+$/.test(first);

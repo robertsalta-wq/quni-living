@@ -158,5 +158,5 @@ export type QuniPlatformAddendumProps = {
   /** Quarterly utilities cap (AUD), e.g. from `pricing_config` tier `t2`. */
   utilitiesCap: number
   /** Property-specific rules text; may be platform default when property has none. */
-  houseRules: string
+  houseRules: string | null
 }
