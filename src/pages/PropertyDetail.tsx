@@ -85,6 +85,26 @@ function amenityGridItems(amenityNames: string[], furnished: boolean): AmenityGr
   return out.slice(0, 12)
 }
 
+function permittedLabel(permitted: string): string {
+  switch (permitted) {
+    case 'yes':
+      return 'Permitted'
+    case 'no':
+      return 'Not permitted'
+    case 'approval':
+      return 'With approval'
+    default:
+      return permitted
+  }
+}
+
+/** Entire trimmed line is uppercase ASCII letters, spaces, and — / & ( ) - */
+function isHouseRulesHeadingLine(trimmedLine: string): boolean {
+  const t = trimmedLine.trim()
+  if (!t) return false
+  return /^[A-Z\s—\-/&()]+$/.test(t)
+}
+
 type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 
 function SidebarRow({ label, children }: { label: string; children: ReactNode }) {
@@ -236,6 +256,7 @@ export default function PropertyDetail() {
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
+  const [amenitiesHouseTab, setAmenitiesHouseTab] = useState<'amenities' | 'house_rules'>('amenities')
   const enquirySuccessCloseTimerRef = useRef<number | null>(null)
   const thumbsScrollRef = useRef<HTMLDivElement>(null)
   const bookingCardRef = useRef<HTMLDivElement>(null)
@@ -325,7 +346,8 @@ export default function PropertyDetail() {
             landlord_profiles ( id, full_name, avatar_url, verified ),
             universities ( id, name, slug ),
             campuses ( id, name ),
-            property_features ( features ( id, name, icon ) )
+            property_features ( features ( id, name, icon ) ),
+            property_house_rules ( permitted, rule_id, house_rules_ref ( id, name, icon ) )
           `,
         )
         .eq('slug', slug)
@@ -349,6 +371,10 @@ export default function PropertyDetail() {
       cancelled = true
     }
   }, [slug, shouldFetch, user, role, authLoading])
+
+  useEffect(() => {
+    setAmenitiesHouseTab('amenities')
+  }, [property?.id])
 
   useEffect(() => {
     const root = thumbsScrollRef.current
@@ -940,6 +966,12 @@ export default function PropertyDetail() {
   ]
   const amenityGrid = amenityGridItems(amenityNamesForGrid, Boolean(property.furnished))
 
+  const houseRuleRows = property.property_house_rules ?? []
+  const hasHouseRuleBadges = houseRuleRows.length > 0
+  const hasWrittenHouseRules = Boolean(property.house_rules?.trim())
+  const showAmenitiesHouseRulesSection =
+    amenityGrid.length > 0 || hasHouseRuleBadges || hasWrittenHouseRules
+
   const quickInfoItems: { icon: string; text: string }[] = (() => {
     const items: { icon: string; text: string }[] = [{ icon: '📍', text: quickLocation }]
     if (universityForQuickBar) items.push({ icon: '🏫', text: `Near ${universityForQuickBar}` })
@@ -1231,22 +1263,99 @@ export default function PropertyDetail() {
                 </section>
               ) : null}
 
-              {amenityGrid.length > 0 && (
-                <section className="space-y-3 border-t border-stone-100 pt-5">
-                  <h2 className={sectionLabelClass}>Amenities</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-2xl">
-                    {amenityGrid.map((a) => (
-                      <div
-                        key={a.key}
-                        className="flex items-center gap-2.5 rounded-xl border border-stone-200/80 bg-stone-100/50 px-3 py-2 text-sm text-stone-800 shadow-sm"
-                      >
-                        <span className="text-lg shrink-0" aria-hidden>
-                          {a.icon}
-                        </span>
-                        <span className="leading-snug">{a.label}</span>
-                      </div>
-                    ))}
+              {showAmenitiesHouseRulesSection && (
+                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="Amenities and house rules">
+                  <div className="flex flex-wrap gap-1 border-b border-stone-200" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={amenitiesHouseTab === 'amenities'}
+                      onClick={() => setAmenitiesHouseTab('amenities')}
+                      className={`border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
+                        amenitiesHouseTab === 'amenities'
+                          ? 'border-[#FF6F61] text-[#FF6F61]'
+                          : 'border-transparent text-stone-500 hover:text-stone-700'
+                      }`}
+                    >
+                      Amenities
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={amenitiesHouseTab === 'house_rules'}
+                      onClick={() => setAmenitiesHouseTab('house_rules')}
+                      className={`border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
+                        amenitiesHouseTab === 'house_rules'
+                          ? 'border-[#FF6F61] text-[#FF6F61]'
+                          : 'border-transparent text-stone-500 hover:text-stone-700'
+                      }`}
+                    >
+                      House rules
+                    </button>
                   </div>
+                  {amenitiesHouseTab === 'amenities' ? (
+                    amenityGrid.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-2xl">
+                        {amenityGrid.map((a) => (
+                          <div
+                            key={a.key}
+                            className="flex items-center gap-2.5 rounded-xl border border-stone-200/80 bg-stone-100/50 px-3 py-2 text-sm text-stone-800 shadow-sm"
+                          >
+                            <span className="text-lg shrink-0" aria-hidden>
+                              {a.icon}
+                            </span>
+                            <span className="leading-snug">{a.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null
+                  ) : (
+                    <div className="space-y-4 max-w-2xl">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        {houseRuleRows.length === 0 ? (
+                          <p className="text-sm text-stone-600 col-span-full">
+                            No specific house rules have been set for this property.
+                          </p>
+                        ) : (
+                          houseRuleRows.map((row) => {
+                            const ref = row.house_rules_ref
+                            const name = ref?.name?.trim() || 'House rule'
+                            const icon = ref?.icon ?? '✓'
+                            return (
+                              <div
+                                key={row.rule_id}
+                                className="flex items-center gap-2.5 rounded-xl border border-stone-200/80 bg-stone-100/50 px-3 py-2 text-sm text-stone-800 shadow-sm"
+                              >
+                                <span className="text-lg shrink-0" aria-hidden>
+                                  {icon}
+                                </span>
+                                <span className="leading-snug">
+                                  {name} — {permittedLabel(row.permitted)}
+                                </span>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+                      {hasWrittenHouseRules ? (
+                        <div className="space-y-2 text-base leading-relaxed max-w-prose text-stone-700">
+                          {(property.house_rules ?? '').split(/\r?\n/).map((rawLine, i) => {
+                            const t = rawLine.trim()
+                            if (!t) return null
+                            const heading = isHouseRulesHeadingLine(t)
+                            return (
+                              <p
+                                key={`hr-line-${i}`}
+                                className={heading ? 'font-semibold text-stone-900' : undefined}
+                              >
+                                {t}
+                              </p>
+                            )
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </section>
               )}
 

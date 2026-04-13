@@ -24,6 +24,7 @@ export type University = Database['public']['Tables']['universities']['Row']
 
 /** Shape returned by the Listings Supabase select (embedded FKs are singular objects) */
 type FeaturePick = Pick<Database['public']['Tables']['features']['Row'], 'id' | 'name' | 'icon'>
+type HouseRulesRefPick = Pick<Database['public']['Tables']['house_rules_ref']['Row'], 'id' | 'name' | 'icon'>
 
 export type Property = Database['public']['Tables']['properties']['Row'] & {
   landlord_profiles: Pick<
@@ -33,6 +34,11 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
   universities: Pick<Database['public']['Tables']['universities']['Row'], 'id' | 'name' | 'slug'> | null
   campuses: Pick<Database['public']['Tables']['campuses']['Row'], 'id' | 'name' | 'slug'> | null
   property_features?: { features: FeaturePick | null }[] | null
+  property_house_rules?: {
+    permitted: string
+    rule_id: string
+    house_rules_ref: HouseRulesRefPick | null
+  }[] | null
 }
 
 export const LISTINGS_SORT_OPTIONS = [
