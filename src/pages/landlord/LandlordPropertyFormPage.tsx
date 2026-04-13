@@ -1461,25 +1461,27 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 -mx-6 flex min-w-0 max-w-full gap-2 overflow-x-auto bg-[#d4e9e2] px-6 py-2 text-xs"
+            className="sticky top-16 z-10 -mx-6 bg-[#d4e9e2] px-6 py-2"
             aria-label="Jump to section"
           >
-            {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
-              const isActive = activeSection === id
-              return (
-                <a
-                  key={id}
-                  href={`#${id}`}
-                  className={
-                    isActive
-                      ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-2.5 py-1 text-xs font-medium text-white transition-colors whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-sm'
-                      : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-2.5 py-1 text-xs font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-sm'
-                  }
-                >
-                  {label}
-                </a>
-              )
-            })}
+            <div className="grid grid-cols-4 gap-1 sm:flex sm:gap-2 sm:overflow-x-auto">
+              {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
+                const isActive = activeSection === id
+                return (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    className={
+                      isActive
+                        ? 'col-span-1 w-full justify-center rounded-full border border-[#D85A30] bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium text-white transition-colors whitespace-nowrap sm:w-auto sm:px-3 sm:py-1.5 sm:text-sm'
+                        : 'col-span-1 w-full justify-center rounded-full border border-[#D85A30] bg-white px-1 py-1.5 text-center text-xs font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white whitespace-nowrap sm:w-auto sm:px-3 sm:py-1.5 sm:text-sm'
+                    }
+                  >
+                    {label}
+                  </a>
+                )
+              })}
+            </div>
           </nav>
 
           {submitError && (
