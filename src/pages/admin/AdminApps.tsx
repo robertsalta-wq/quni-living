@@ -347,11 +347,14 @@ function AppsSkeleton() {
 const APPLE_DEVELOPER_HREF = 'https://developer.apple.com/'
 const FIREBASE_CONSOLE_HREF = 'https://console.firebase.google.com/'
 const GOOGLE_PLAY_CONSOLE_HREF = 'https://play.google.com/console'
+const GOOGLE_WORKSPACE_ADMIN_HREF = 'https://admin.google.com/'
+const GOOGLE_WORKSPACE_PRODUCT_HREF = 'https://workspace.google.com/'
 
 type AppsGridItem =
   | { kind: 'appledeveloper'; sortKey: string }
   | { kind: 'firebase'; sortKey: string }
   | { kind: 'googleplay'; sortKey: string }
+  | { kind: 'googleworkspace'; sortKey: string }
   | { kind: 'vendor'; sortKey: string; row: VendorRow }
 
 function buildSortedAppsGridItems(rows: VendorRow[]): AppsGridItem[] {
@@ -359,6 +362,7 @@ function buildSortedAppsGridItems(rows: VendorRow[]): AppsGridItem[] {
     { kind: 'appledeveloper', sortKey: 'Apple Developer' },
     { kind: 'firebase', sortKey: 'Firebase' },
     { kind: 'googleplay', sortKey: 'Google Play Console' },
+    { kind: 'googleworkspace', sortKey: 'Google Workspace' },
     ...rows.map((row) => ({
       kind: 'vendor' as const,
       sortKey: row.title.trim() || row.id,
@@ -427,6 +431,53 @@ function FirebaseIcon({ className }: { className?: string }) {
         d="M3.89 15.672 6.255.461A.542.542 0 0 1 7.27.289l9.941 5.721a.542.542 0 0 1 .183.744l-2.524 4.786 1.755-3.043a.542.542 0 0 1 .744-.183L22.463 9.11a.542.542 0 0 1 .183.744l-4.947 9.413a.542.542 0 0 1-.744.183L2.524 15.929a.542.542 0 0 1-.634-.257Z"
       />
     </svg>
+  )
+}
+
+function GoogleWorkspaceIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="2.5" y="2.5" width="8" height="8" rx="1.75" fill="#4285F4" />
+      <rect x="13.5" y="2.5" width="8" height="8" rx="1.75" fill="#34A853" />
+      <rect x="2.5" y="13.5" width="8" height="8" rx="1.75" fill="#FBBC04" />
+      <rect x="13.5" y="13.5" width="8" height="8" rx="1.75" fill="#EA4335" />
+    </svg>
+  )
+}
+
+function GoogleWorkspaceAppCard({ linkClass }: { linkClass: string }) {
+  return (
+    <div
+      className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-blue-100/90 border-blue-100/50 bg-blue-50/20 relative`}
+    >
+      <div className="flex items-start gap-3 flex-1">
+        <div
+          className="h-9 w-9 shrink-0 rounded-xl border border-blue-100/80 bg-white flex items-center justify-center"
+          aria-hidden
+        >
+          <GoogleWorkspaceIcon className="shrink-0" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-gray-900">Google Workspace</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Team email (@your domain), Google Calendar, Drive, Meet, Groups, and Vault-style retention where enabled.
+            Manage users, security, devices, reporting, and billing from the Admin console.
+          </p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
+        <p className="text-sm text-gray-800 mt-1">Per-seat Workspace plan — billed by Google (Starter / Standard / Plus, etc.)</p>
+      </div>
+      <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a href={GOOGLE_WORKSPACE_ADMIN_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          Open Google Admin →
+        </a>
+        <a href={GOOGLE_WORKSPACE_PRODUCT_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
+          Workspace home →
+        </a>
+      </div>
+    </div>
   )
 }
 
@@ -845,8 +896,8 @@ export default function AdminApps() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Apps</h1>
           <p className="text-sm text-gray-500 mt-1">
             External tools for running Quni Living — costs are stored in Supabase and editable below. Apple Developer,
-            Firebase, and Google Play Console are fixed shortcuts for the native app stack; all cards are sorted A–Z by
-            name.
+            Firebase, Google Play Console, and Google Workspace are fixed shortcuts for the app stack and org productivity;
+            vendor cards from the database fill in the rest. All cards are sorted A–Z by name.
           </p>
         </div>
         <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
@@ -959,6 +1010,9 @@ export default function AdminApps() {
                 }
                 if (item.kind === 'googleplay') {
                   return <GooglePlayAppCard key="googleplay" linkClass={linkClass} />
+                }
+                if (item.kind === 'googleworkspace') {
+                  return <GoogleWorkspaceAppCard key="googleworkspace" linkClass={linkClass} />
                 }
 
                 const row = item.row
