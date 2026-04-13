@@ -1464,7 +1464,7 @@ export default function LandlordPropertyFormPage() {
             className="sticky top-16 z-10 -mx-6 bg-[#d4e9e2] px-0 py-2 sm:px-6"
             aria-label="Jump to section"
           >
-            <div className="grid w-full grid-cols-4 gap-0.5 sm:flex sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
+            <div className="grid w-full grid-cols-4 gap-1 sm:flex sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
               {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
                 const isActive = activeSection === id
                 return (
