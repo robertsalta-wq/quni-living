@@ -449,7 +449,11 @@ export function OccupancyAgreement(props) {
     bond,
     specialConditions,
     bookingNotes,
+    houseRules,
   } = props
+
+  const houseRulesText =
+    typeof houseRules === 'string' && houseRules.trim().length > 0 ? houseRules : null
 
   const landlordDisplay = landlord.companyName
     ? `${landlord.fullName} (${landlord.companyName})`
@@ -922,7 +926,23 @@ export function OccupancyAgreement(props) {
       pageProps,
       R(FixedHeader, null),
       R(FixedFooter, { documentId, generatedAt }),
-      R(SectionHeading, { num: 20, title: 'Signatures' }),
+      houseRulesText
+        ? R(
+            View,
+            null,
+            R(SectionHeading, { num: 20, title: 'House rules' }),
+            R(
+              View,
+              null,
+              ...houseRulesText.split(/\r?\n/).flatMap((rawLine, idx) => {
+                const t = rawLine.trim()
+                if (!t) return []
+                return [R(Text, { key: `hr-${idx}`, style: styles.p }, t)]
+              }),
+            ),
+          )
+        : null,
+      R(SectionHeading, { num: houseRulesText ? 21 : 20, title: 'Signatures' }),
       R(
         Text,
         { style: styles.p },

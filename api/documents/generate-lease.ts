@@ -125,7 +125,8 @@ export default async function handler(req: any, res: any) {
         furnished,
         bond,
         linen_supplied,
-        weekly_cleaning_service
+        weekly_cleaning_service,
+        house_rules
       )
     `,
     )
@@ -314,6 +315,7 @@ export default async function handler(req: any, res: any) {
       'Bond handling is the responsibility of the landlord. Quni Living does not hold or manage bond payments.',
       "Rent payments are processed through Quni Living's secure payment system powered by Stripe.",
     ],
+    houseRules: prop.house_rules ?? null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
 

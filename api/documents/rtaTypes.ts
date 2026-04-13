@@ -65,6 +65,8 @@ export type OccupancyAgreementProps = {
   bond: RtaBondPdf
   specialConditions: string[]
   bookingNotes: string | null
+  /** Property house rules text; omit PDF section when null or whitespace-only. */
+  houseRules: string | null
 }
 
 /** Landlord's agent row on the FT6600 schedule (optional). */
