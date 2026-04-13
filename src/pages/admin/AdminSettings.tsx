@@ -11,9 +11,9 @@ const CHANGELOG_REDACTED = '[redacted]'
 
 const SOCIAL_STORAGE_KEY = 'quni_social_accounts'
 
-type SettingsTabId = 'business' | 'contact' | 'bank' | 'compliance' | 'docs' | 'social'
+type SettingsTabId = 'business' | 'contact' | 'bank' | 'compliance' | 'docs' | 'house_rules' | 'social'
 
-const TAB_ORDER: SettingsTabId[] = ['business', 'contact', 'bank', 'compliance', 'docs', 'social']
+const TAB_ORDER: SettingsTabId[] = ['business', 'contact', 'bank', 'compliance', 'docs', 'house_rules', 'social']
 
 const TAB_LABELS: Record<SettingsTabId, string> = {
   business: 'Business',
@@ -21,6 +21,7 @@ const TAB_LABELS: Record<SettingsTabId, string> = {
   bank: 'Bank accounts',
   compliance: 'Compliance & legal',
   docs: 'Document defaults',
+  house_rules: 'House rules',
   social: 'Social media',
 }
 
@@ -256,7 +257,9 @@ function belongsToTab(row: PlatformConfigRow, tab: SettingsTabId): boolean {
     case 'compliance':
       return row.category === 'compliance' && !TRUST_KEYS.has(row.config_key)
     case 'docs':
-      return row.category === 'document_defaults' || row.category === 'house_rules'
+      return row.category === 'document_defaults'
+    case 'house_rules':
+      return row.category === 'house_rules'
     case 'social':
       return false
     default:
@@ -778,11 +781,29 @@ export default function AdminSettings() {
               const row = rowByKey(rows, key)
               return row ? renderFieldRow(row) : null
             })}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'house_rules' && (
+        <div className={adminCardClass}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <Subheading>House rules</Subheading>
+            <button
+              type="button"
+              disabled={savingTab === 'house_rules'}
+              onClick={() => void saveTab('house_rules')}
+              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+            >
+              Save house rules
+            </button>
+          </div>
+          <div className="space-y-4">
             {(() => {
               const row = rowByKey(rows, 'house_rules.default')
               if (!row) return null
               return (
-                <div className="space-y-3 border-t border-gray-100 pt-6">
+                <div className="space-y-3">
                   <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500">
                     Default house rules template
                   </label>
