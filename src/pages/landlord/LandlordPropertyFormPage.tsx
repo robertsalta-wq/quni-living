@@ -1426,7 +1426,7 @@ export default function LandlordPropertyFormPage() {
 
   return (
     <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden bg-gray-50 pb-16">
-      <div className="mx-auto w-full min-w-0 max-w-3xl px-6 py-8">
+      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-6 py-8">
         <div className="mb-8">
           <Link
             to="/landlord-dashboard"
