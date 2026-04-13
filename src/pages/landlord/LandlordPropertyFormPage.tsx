@@ -1756,7 +1756,7 @@ export default function LandlordPropertyFormPage() {
                 {houseRulesRef.map((r) => (
                   <div
                     key={r.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-1"
                   >
                     <span className="flex min-w-0 flex-1 items-center gap-2 text-sm text-gray-700">
                       <span className="shrink-0 text-base" aria-hidden>
@@ -1768,7 +1768,7 @@ export default function LandlordPropertyFormPage() {
                       aria-label={`${r.name} permitted`}
                       value={selectedRules[r.id] ?? ''}
                       onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                      className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
+                      className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-0.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
                     >
                       <option value="">Select…</option>
                       <option value="yes">Yes</option>
