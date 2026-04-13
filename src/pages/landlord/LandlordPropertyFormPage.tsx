@@ -1404,7 +1404,7 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden bg-[#d4e9e2] pb-16">
+    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-clip bg-[#d4e9e2] pb-16">
       <div className="mx-auto w-full min-w-0 max-w-[1200px] px-6 py-8">
         <div className="mb-8">
           <Link
@@ -1461,7 +1461,7 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 -mx-6 flex min-w-0 max-w-full flex-wrap gap-2 bg-[#d4e9e2] px-6 py-2 text-xs"
+            className="sticky top-16 z-10 -mx-6 flex min-w-0 max-w-full gap-2 overflow-x-auto bg-[#d4e9e2] px-6 py-2 text-xs"
             aria-label="Jump to section"
           >
             {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
@@ -1472,8 +1472,8 @@ export default function LandlordPropertyFormPage() {
                   href={`#${id}`}
                   className={
                     isActive
-                      ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 font-medium text-white transition-colors whitespace-nowrap'
-                      : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white whitespace-nowrap'
+                      ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-2.5 py-1 text-xs font-medium text-white transition-colors whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-sm'
+                      : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-2.5 py-1 text-xs font-medium text-[#D85A30] transition-colors hover:bg-[#D85A30] hover:text-white whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-sm'
                   }
                 >
                   {label}
