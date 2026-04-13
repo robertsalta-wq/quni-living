@@ -1370,8 +1370,8 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-hidden bg-gray-50 pb-16">
+      <div className="mx-auto w-full min-w-0 max-w-3xl px-6 py-8">
         <div className="mb-8">
           <Link
             to="/landlord-dashboard"
@@ -1425,8 +1425,11 @@ export default function LandlordPropertyFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <nav className="flex flex-wrap gap-2 text-xs" aria-label="Jump to section">
+        <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
+          <nav
+            className="flex min-w-0 max-w-full flex-wrap gap-2 overflow-x-hidden text-xs"
+            aria-label="Jump to section"
+          >
             <a
               href="#section-basic-info"
               className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
@@ -1737,7 +1740,7 @@ export default function LandlordPropertyFormPage() {
             'House rules',
             <div className="space-y-6">
               <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto rounded-lg border border-gray-100 p-3 bg-gray-50/50">
+                <div className="grid min-w-0 grid-cols-1 gap-2 max-h-56 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-2">
                   {houseRulesRef.map((r) => (
                     <div
                       key={r.id}
@@ -1753,7 +1756,7 @@ export default function LandlordPropertyFormPage() {
                         aria-label={`${r.name} permitted`}
                         value={selectedRules[r.id] ?? ''}
                         onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                        className={`${inputClass} sm:max-w-[11rem] shrink-0`}
+                        className={`${inputClass} min-w-0 w-full sm:w-auto sm:max-w-[11rem] sm:shrink-0`}
                       >
                         <option value="">Select…</option>
                         <option value="yes">Yes</option>
