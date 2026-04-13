@@ -25,7 +25,7 @@ import {
   buildRtaRentPaymentMethodLine,
   fetchBankDetailsForRta,
   fetchPlatformConfigValueMap,
-} from '../../src/lib/platformConfig'
+} from '../lib/platformConfig.js'
 
 export const config = {
   runtime: 'nodejs',
