@@ -21,12 +21,15 @@ import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 type FeatureRow = Database['public']['Tables']['features']['Row']
+type HouseRulesRefRow = Database['public']['Tables']['house_rules_ref']['Row']
+type RulePermitted = 'yes' | 'no' | 'approval'
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type PropertyInsert = Database['public']['Tables']['properties']['Insert']
 type PropertyUpdate = Database['public']['Tables']['properties']['Update']
 
 type PropertyWithFeatures = PropertyRow & {
   property_features: { feature_id: string }[] | null
+  property_house_rules: { rule_id: string; permitted: string }[] | null
   show_add_another_university?: boolean | null
 }
 
@@ -251,6 +254,11 @@ export default function LandlordPropertyFormPage() {
   const [weeklyCleaning, setWeeklyCleaning] = useState(false)
   const [openToNonStudents, setOpenToNonStudents] = useState(false)
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<string>>(new Set())
+  const [houseRulesRef, setHouseRulesRef] = useState<HouseRulesRefRow[]>([])
+  const [selectedRules, setSelectedRules] = useState<Partial<Record<string, RulePermitted>>>({})
+  const [houseRules, setHouseRules] = useState('')
+  const [houseRulesResetAck, setHouseRulesResetAck] = useState(false)
+  const [houseRulesResetError, setHouseRulesResetError] = useState<string | null>(null)
 
   const [address, setAddress] = useState('')
   const [suburb, setSuburb] = useState('')
@@ -401,6 +409,18 @@ export default function LandlordPropertyFormPage() {
     })
   }, [])
 
+  const setRulePermitted = useCallback((ruleId: string, raw: string) => {
+    setSelectedRules((prev) => {
+      const next: Partial<Record<string, RulePermitted>> = { ...prev }
+      if (raw === '') {
+        delete next[ruleId]
+      } else if (raw === 'yes' || raw === 'no' || raw === 'approval') {
+        next[ruleId] = raw
+      }
+      return next
+    })
+  }, [])
+
   const applyNearbySuggestion = useCallback((s: NearbyCampusSuggestion) => {
     editDeferNearbyAutoFillRef.current = false
     manualUniCampusSelectionRef.current = true
@@ -432,6 +452,10 @@ export default function LandlordPropertyFormPage() {
     setWeeklyCleaning(false)
     setOpenToNonStudents(false)
     setSelectedFeatureIds(new Set())
+    setSelectedRules({})
+    setHouseRules('')
+    setHouseRulesResetError(null)
+    setHouseRulesResetAck(false)
     setAddress('')
     setSuburb('')
     setState('NSW')
@@ -479,6 +503,13 @@ export default function LandlordPropertyFormPage() {
       if (featErr) throw featErr
       setFeatures((featData ?? []) as FeatureRow[])
 
+      const { data: hrData, error: hrErr } = await supabase
+        .from('house_rules_ref')
+        .select('id, name, icon, sort_order')
+        .order('sort_order')
+      if (hrErr) throw hrErr
+      setHouseRulesRef((hrData ?? []) as HouseRulesRefRow[])
+
       if (!isEdit || !propertyId) {
         skipNearbyAutoFillOverwriteRef.current = false
         manualUniCampusSelectionRef.current = false
@@ -492,6 +523,10 @@ export default function LandlordPropertyFormPage() {
         setCampusId('')
         universityIdRef.current = ''
         campusIdRef.current = ''
+        setSelectedRules({})
+        setHouseRules('')
+        setHouseRulesResetError(null)
+        setHouseRulesResetAck(false)
       }
 
       if (role === 'admin') {
@@ -524,7 +559,7 @@ export default function LandlordPropertyFormPage() {
       if (isEdit && propertyId) {
         const { data: propRaw, error: pErr } = await supabase
           .from('properties')
-          .select(`*, property_features ( feature_id )`)
+          .select(`*, property_features ( feature_id ), property_house_rules ( rule_id, permitted )`)
           .eq('id', propertyId)
           .single()
         if (pErr) throw pErr
@@ -588,6 +623,14 @@ export default function LandlordPropertyFormPage() {
         setImages(Array.isArray(prop.images) ? [...prop.images] : [])
         const pf = prop.property_features
         setSelectedFeatureIds(new Set((pf ?? []).map((x) => x.feature_id)))
+        const phr = prop.property_house_rules
+        const nextRules: Partial<Record<string, RulePermitted>> = {}
+        for (const row of phr ?? []) {
+          const p = row.permitted
+          if (p === 'yes' || p === 'no' || p === 'approval') nextRules[row.rule_id] = p
+        }
+        setSelectedRules(nextRules)
+        setHouseRules(typeof prop.house_rules === 'string' ? prop.house_rules : '')
       }
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Could not load form.')
@@ -599,6 +642,12 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     void loadPage()
   }, [loadPage])
+
+  useEffect(() => {
+    if (!houseRulesResetAck) return
+    const t = window.setTimeout(() => setHouseRulesResetAck(false), 3000)
+    return () => window.clearTimeout(t)
+  }, [houseRulesResetAck])
 
   useEffect(() => {
     return () => {
@@ -1054,6 +1103,45 @@ export default function LandlordPropertyFormPage() {
     if (insErr) throw insErr
   }
 
+  async function savePropertyHouseRules(pid: string, rules: Partial<Record<string, RulePermitted>>) {
+    const { error: delErr } = await supabase.from('property_house_rules').delete().eq('property_id', pid)
+    if (delErr) throw delErr
+    const rows = Object.entries(rules).filter(
+      (e): e is [string, RulePermitted] => e[1] === 'yes' || e[1] === 'no' || e[1] === 'approval',
+    )
+    if (rows.length === 0) return
+    const { error: insErr } = await supabase.from('property_house_rules').insert(
+      rows.map(([rule_id, permitted]) => ({ property_id: pid, rule_id, permitted })),
+    )
+    if (insErr) throw insErr
+  }
+
+  async function resetHouseRulesToPlatformDefault() {
+    setHouseRulesResetError(null)
+    const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (sessErr || !token) {
+      setHouseRulesResetError('Could not load default. Please try again.')
+      return
+    }
+    try {
+      const res = await fetch('/api/platform/house-rules-default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: '{}',
+      })
+      const body = (await res.json().catch(() => null)) as { default?: unknown } | null
+      if (!res.ok || typeof body?.default !== 'string') {
+        setHouseRulesResetError('Could not load default. Please try again.')
+        return
+      }
+      setHouseRules(body.default)
+      setHouseRulesResetAck(true)
+    } catch {
+      setHouseRulesResetError('Could not load default. Please try again.')
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitError(null)
@@ -1156,6 +1244,7 @@ export default function LandlordPropertyFormPage() {
       lease_length: leaseLength || null,
       available_from: availableFrom.trim() || null,
       images: images.length ? images : null,
+      house_rules: houseRules.trim() || null,
     }
 
     setSubmitting(true)
@@ -1182,6 +1271,7 @@ export default function LandlordPropertyFormPage() {
           })
         }
         await savePropertyFeatures(propertyId, featureIds)
+        await savePropertyHouseRules(propertyId, selectedRules)
         const slug = existingSlug ?? generatePropertySlug(t)
         navigate(`/properties/${slug}`, { replace: true })
       } else {
@@ -1210,6 +1300,7 @@ export default function LandlordPropertyFormPage() {
           })
         }
         await savePropertyFeatures(newId, featureIds)
+        await savePropertyHouseRules(newId, selectedRules)
         try {
           localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
         } catch {
@@ -1571,6 +1662,76 @@ export default function LandlordPropertyFormPage() {
                   {features.length === 0 && (
                     <p className="text-xs text-gray-500 col-span-2">No features in database.</p>
                   )}
+                </div>
+              </div>
+            </div>,
+          )}
+
+          {sectionClass(
+            'House rules',
+            <div className="space-y-6">
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto rounded-lg border border-gray-100 p-3 bg-gray-50/50">
+                  {houseRulesRef.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                    >
+                      <span className="inline-flex items-center gap-2 text-sm text-gray-800 min-w-0">
+                        <span className="shrink-0" aria-hidden>
+                          {r.icon}
+                        </span>
+                        <span className="truncate">{r.name}</span>
+                      </span>
+                      <select
+                        aria-label={`${r.name} permitted`}
+                        value={selectedRules[r.id] ?? ''}
+                        onChange={(e) => setRulePermitted(r.id, e.target.value)}
+                        className={`${inputClass} sm:max-w-[11rem] shrink-0`}
+                      >
+                        <option value="">Select…</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="approval">Approval</option>
+                      </select>
+                    </div>
+                  ))}
+                  {houseRulesRef.length === 0 && (
+                    <p className="text-xs text-gray-500 col-span-2">No house rules reference data.</p>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-3 border-t border-gray-100 pt-6">
+                <p className="text-sm text-gray-600">
+                  These are your property's house rules. They will be shown to students and included in the tenancy
+                  agreement. Customise them to suit your property.
+                </p>
+                <textarea
+                  id="pf-house-rules"
+                  aria-label="House rules text"
+                  value={houseRules}
+                  onChange={(e) => setHouseRules(e.target.value)}
+                  rows={10}
+                  className={inputClass}
+                />
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void resetHouseRulesToPlatformDefault()}
+                    className="self-start rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+                  >
+                    Reset to platform default
+                  </button>
+                  {houseRulesResetAck ? (
+                    <p className="text-sm text-emerald-700" role="status">
+                      Reset to platform default
+                    </p>
+                  ) : null}
+                  {houseRulesResetError ? (
+                    <p className="text-sm text-red-600" role="alert">
+                      {houseRulesResetError}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>,

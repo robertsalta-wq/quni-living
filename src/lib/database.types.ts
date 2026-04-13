@@ -94,6 +94,27 @@ export interface Database {
         }
         Relationships: []
       }
+      house_rules_ref: {
+        Row: {
+          id: string
+          name: string
+          icon: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          name: string
+          icon: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          name?: string
+          icon?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       admin_checklist_progress: {
         Row: {
           id: string
@@ -772,6 +793,39 @@ export interface Database {
             columns: ['property_id']
             isOneToOne: false
             referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      property_house_rules: {
+        Row: {
+          property_id: string
+          rule_id: string
+          permitted: string
+        }
+        Insert: {
+          property_id: string
+          rule_id: string
+          permitted: string
+        }
+        Update: {
+          property_id?: string
+          rule_id?: string
+          permitted?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'property_house_rules_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'property_house_rules_rule_id_fkey'
+            columns: ['rule_id']
+            isOneToOne: false
+            referencedRelation: 'house_rules_ref'
             referencedColumns: ['id']
           },
         ]
