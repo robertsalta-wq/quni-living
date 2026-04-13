@@ -45,3 +45,9 @@ verify_jwt = false
 
 [functions.platform-health-cron]
 verify_jwt = false
+
+[functions.qase-triage]
+verify_jwt = false
+
+[functions.qase-inbound-email]
+verify_jwt = false
