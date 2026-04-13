@@ -203,9 +203,12 @@ function pathFromPropertyImageUrl(url: string): string | null {
   return decodeURIComponent(url.slice(i + marker.length))
 }
 
-function sectionClass(title: string, children: ReactNode) {
+function sectionClass(title: string, children: ReactNode, sectionId?: string) {
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <section
+      id={sectionId}
+      className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm scroll-mt-24"
+    >
       <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
       {children}
     </section>
@@ -785,6 +788,15 @@ export default function LandlordPropertyFormPage() {
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [addAnotherUniversityHelpOpen])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const prev = root.style.scrollBehavior
+    root.style.scrollBehavior = 'smooth'
+    return () => {
+      root.style.scrollBehavior = prev
+    }
+  }, [])
 
   // Keep a small local cache so we don't repeatedly geocode the same suburb/address.
   // (Also helps Nominatim rate limits while the user types.)
@@ -1414,6 +1426,51 @@ export default function LandlordPropertyFormPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          <nav className="flex flex-wrap gap-2 text-xs" aria-label="Jump to section">
+            <a
+              href="#section-basic-info"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Basic info
+            </a>
+            <a
+              href="#section-property-details"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Property details
+            </a>
+            <a
+              href="#section-inclusions-features"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Inclusions & features
+            </a>
+            <a
+              href="#section-house-rules"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              House rules
+            </a>
+            <a
+              href="#section-location"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Location
+            </a>
+            <a
+              href="#section-pricing-availability"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Pricing & availability
+            </a>
+            <a
+              href="#section-photos"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+            >
+              Photos
+            </a>
+          </nav>
+
           {submitError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {submitError}
@@ -1498,6 +1555,7 @@ export default function LandlordPropertyFormPage() {
                 />
               </div>
             </div>,
+            'section-basic-info',
           )}
 
           {sectionClass(
@@ -1599,23 +1657,13 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 ) : null}
               </div>
-              <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
-                <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>
-                <label htmlFor="pf-open-non-students" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
-                  <input
-                    id="pf-open-non-students"
-                    type="checkbox"
-                    checked={openToNonStudents}
-                    onChange={(e) => setOpenToNonStudents(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
-                  />
-                  <span className="font-medium text-gray-900">Open to non-students</span>
-                </label>
-                <p className="text-xs text-gray-600 mt-2 pl-7 leading-snug">
-                  When unchecked, only tenants with full student verification can see and enquire on this listing. Verified
-                  students can always see all active listings.
-                </p>
-              </div>
+            </div>,
+            'section-property-details',
+          )}
+
+          {sectionClass(
+            'Inclusions & features',
+            <div className="space-y-4">
               <div className="flex flex-col gap-3">
                 <label className="inline-flex items-center gap-2 text-sm text-gray-800">
                   <input
@@ -1647,7 +1695,7 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div>
                 <p className={`${labelClass} mb-2`}>Property features</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto rounded-lg border border-gray-100 p-3 bg-gray-50/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-gray-100 p-3 bg-gray-50/50">
                   {features.map((f) => (
                     <label key={f.id} className="inline-flex items-center gap-2 text-sm text-gray-800">
                       <input
@@ -1664,7 +1712,25 @@ export default function LandlordPropertyFormPage() {
                   )}
                 </div>
               </div>
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
+                <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>
+                <label htmlFor="pf-open-non-students" className="inline-flex items-start gap-2 text-sm text-gray-800 cursor-pointer">
+                  <input
+                    id="pf-open-non-students"
+                    type="checkbox"
+                    checked={openToNonStudents}
+                    onChange={(e) => setOpenToNonStudents(e.target.checked)}
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0"
+                  />
+                  <span className="font-medium text-gray-900">Open to non-students</span>
+                </label>
+                <p className="text-xs text-gray-600 mt-2 pl-7 leading-snug">
+                  When unchecked, only tenants with full student verification can see and enquire on this listing. Verified
+                  students can always see all active listings.
+                </p>
+              </div>
             </div>,
+            'section-inclusions-features',
           )}
 
           {sectionClass(
@@ -1675,13 +1741,13 @@ export default function LandlordPropertyFormPage() {
                   {houseRulesRef.map((r) => (
                     <div
                       key={r.id}
-                      className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                      className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
                     >
-                      <span className="inline-flex items-center gap-2 text-sm text-gray-800 min-w-0">
+                      <span className="inline-flex min-w-0 flex-1 items-start gap-2 text-sm text-gray-800">
                         <span className="shrink-0" aria-hidden>
                           {r.icon}
                         </span>
-                        <span className="truncate">{r.name}</span>
+                        <span className="break-words">{r.name}</span>
                       </span>
                       <select
                         aria-label={`${r.name} permitted`}
@@ -1711,7 +1777,7 @@ export default function LandlordPropertyFormPage() {
                   aria-label="House rules text"
                   value={houseRules}
                   onChange={(e) => setHouseRules(e.target.value)}
-                  rows={10}
+                  rows={18}
                   className={inputClass}
                 />
                 <div className="flex flex-col gap-2">
@@ -1735,6 +1801,7 @@ export default function LandlordPropertyFormPage() {
                 </div>
               </div>
             </div>,
+            'section-house-rules',
           )}
 
           {sectionClass(
@@ -1913,6 +1980,7 @@ export default function LandlordPropertyFormPage() {
                 )}
               </div>
             </div>,
+            'section-location',
           )}
 
           {sectionClass(
@@ -1987,6 +2055,7 @@ export default function LandlordPropertyFormPage() {
                 />
               </div>
             </div>,
+            'section-pricing-availability',
           )}
 
           {sectionClass(
@@ -2017,6 +2086,7 @@ export default function LandlordPropertyFormPage() {
                 ))}
               </div>
             </div>,
+            'section-photos',
           )}
 
           <div className="flex gap-3">
