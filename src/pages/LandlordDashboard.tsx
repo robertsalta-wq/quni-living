@@ -21,6 +21,7 @@ import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/o
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
+import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -331,6 +332,7 @@ export default function LandlordDashboard() {
   const [duplicateConfirmProperty, setDuplicateConfirmProperty] = useState<PropertySummary | null>(null)
   const [duplicatingListingId, setDuplicatingListingId] = useState<string | null>(null)
   const [publishingListingId, setPublishingListingId] = useState<string | null>(null)
+  const [qaseOpen, setQaseOpen] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
   const toastTimerRef = useRef<number | null>(null)
   const [studentProfileModal, setStudentProfileModal] = useState<{
@@ -1086,7 +1088,7 @@ export default function LandlordDashboard() {
 
         <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
@@ -1159,6 +1161,17 @@ export default function LandlordDashboard() {
               )}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setQaseOpen(true)}
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
+          >
+            <p className="text-xs font-semibold text-[#FF6F61] uppercase tracking-wide">Need help?</p>
+            <p className="text-lg font-bold text-gray-900 mt-2">Get support</p>
+            <p className="text-sm text-gray-500 mt-1">Submit a support request and we&apos;ll get back to you.</p>
+            <span className="text-sm font-semibold text-[#FF6F61] mt-3 inline-block">Contact support →</span>
+          </button>
         </div>
 
         {profile.stripe_charges_enabled !== true && (
@@ -2004,6 +2017,15 @@ export default function LandlordDashboard() {
               {toast.message}
             </div>
           </div>
+        )}
+
+        {profile && (
+          <QaseSubmitModal
+            isOpen={qaseOpen}
+            onClose={() => setQaseOpen(false)}
+            submitterType="landlord"
+            submitterId={profile.id}
+          />
         )}
       </div>
     </div>

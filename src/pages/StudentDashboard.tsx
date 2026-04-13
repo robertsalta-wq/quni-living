@@ -11,6 +11,7 @@ import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
 import { isBoardingLodgerBondContext } from '../lib/listings'
 import NswTenancyAgreementExplainer from '../components/NswTenancyAgreementExplainer'
+import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -114,6 +115,7 @@ export default function StudentDashboard() {
   const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
   const [leaseDownloadBusyId, setLeaseDownloadBusyId] = useState<string | null>(null)
   const [leaseDownloadErrorId, setLeaseDownloadErrorId] = useState<string | null>(null)
+  const [qaseOpen, setQaseOpen] = useState(false)
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -373,7 +375,7 @@ export default function StudentDashboard() {
 
       {profile && <StudentStripePaymentsCard profile={profile} onRefresh={load} />}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className={cardClass}>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bookings</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{bookings.length}</p>
@@ -418,6 +420,17 @@ export default function StudentDashboard() {
           <p className="text-lg font-bold text-gray-900 mt-2 group-hover:text-indigo-900">Browse student-friendly properties near your uni</p>
           <span className="text-sm font-semibold text-indigo-600 mt-3 inline-block">Explore listings →</span>
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setQaseOpen(true)}
+          className={`${cardClass} w-full text-left hover:border-indigo-200 hover:shadow-md transition-all group`}
+        >
+          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Need help?</p>
+          <p className="text-lg font-bold text-gray-900 mt-2">Get support</p>
+          <p className="text-sm text-gray-500 mt-1">Submit a support request and we&apos;ll get back to you.</p>
+          <span className="text-sm font-semibold text-indigo-600 mt-3 inline-block">Contact support →</span>
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Dashboard sections">
@@ -653,6 +666,15 @@ export default function StudentDashboard() {
             Browse listings
           </Link>
         </div>
+      )}
+
+      {profile && (
+        <QaseSubmitModal
+          isOpen={qaseOpen}
+          onClose={() => setQaseOpen(false)}
+          submitterType="student"
+          submitterId={profile.id}
+        />
       )}
     </div>
   )
