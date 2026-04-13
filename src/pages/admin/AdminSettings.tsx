@@ -256,7 +256,7 @@ function belongsToTab(row: PlatformConfigRow, tab: SettingsTabId): boolean {
     case 'compliance':
       return row.category === 'compliance' && !TRUST_KEYS.has(row.config_key)
     case 'docs':
-      return row.category === 'document_defaults'
+      return row.category === 'document_defaults' || row.category === 'house_rules'
     case 'social':
       return false
     default:
@@ -778,6 +778,26 @@ export default function AdminSettings() {
               const row = rowByKey(rows, key)
               return row ? renderFieldRow(row) : null
             })}
+            {(() => {
+              const row = rowByKey(rows, 'house_rules.default')
+              if (!row) return null
+              return (
+                <div className="space-y-3 border-t border-gray-100 pt-6">
+                  <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                    Default house rules template
+                  </label>
+                  <Note>
+                    Automatically applied to all new listings. Changing this does not update existing properties.
+                  </Note>
+                  <textarea
+                    rows={12}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                    value={draft[row.config_key] ?? ''}
+                    onChange={(e) => setField(row.config_key, e.target.value)}
+                  />
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}
