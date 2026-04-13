@@ -107,6 +107,7 @@ type QaseLandlordSubmitterProfile = {
 
 type SubmitterPanelState =
   | { kind: 'anonymous' }
+  | { kind: 'admin_ticket' }
   | { kind: 'unlinked'; submitterType: 'student' | 'landlord' }
   | { kind: 'student'; profile: QaseStudentSubmitterProfile }
   | { kind: 'landlord'; profile: QaseLandlordSubmitterProfile }
@@ -121,6 +122,8 @@ function submitterTypeBadgeClass(t: QaseSubmitterType | string): string {
       return 'bg-violet-100 text-violet-800'
     case 'anonymous':
       return 'bg-gray-100 text-gray-600'
+    case 'admin':
+      return 'bg-slate-200 text-slate-800'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -128,7 +131,21 @@ function submitterTypeBadgeClass(t: QaseSubmitterType | string): string {
 
 function formatSubmitterTypeLabel(t: QaseSubmitterType | string): string {
   if (t === 'anonymous') return 'Anonymous'
+  if (t === 'admin') return 'Admin'
   return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+/** Avatar letter for thread bubbles (admin / student / landlord). */
+function messageAuthorInitial(authorType: string): string {
+  if (authorType === 'admin') return 'A'
+  if (authorType === 'student') return 'S'
+  if (authorType === 'landlord') return 'L'
+  if (authorType === 'anonymous') return '?'
+  return authorType ? authorType.charAt(0).toUpperCase() : '?'
+}
+
+function messageAuthorDisplayLabel(authorType: string): string {
+  return formatSubmitterTypeLabel(authorType as QaseSubmitterType)
 }
 
 function studentSubmitterDisplayName(p: Pick<QaseStudentSubmitterProfile, 'full_name' | 'first_name' | 'last_name'>): string {
@@ -234,10 +251,13 @@ function QaseAttachmentChip({
   attachment,
   onDeleted,
   onError,
+  inverse,
 }: {
   attachment: QaseAttachmentRow
   onDeleted: () => void
   onError: (msg: string) => void
+  /** Dark / indigo message bubble — higher-contrast chip chrome */
+  inverse?: boolean
 }) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [urlLoading, setUrlLoading] = useState(true)
@@ -284,26 +304,29 @@ function QaseAttachmentChip({
 
   const isImage = isImageAttachmentMime(attachment.mime_type)
 
-  const shellClass =
-    'relative inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-1 py-1 pr-7 text-left text-sm text-gray-800 shadow-sm'
+  const shellClass = inverse
+    ? 'relative inline-flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-1 py-1 pr-7 text-left text-sm text-white shadow-sm'
+    : 'relative inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-1 py-1 pr-7 text-left text-sm text-gray-800 shadow-sm'
 
-  const openBtnClass =
-    'inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-0.5 py-0.5 text-left hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50'
+  const openBtnClass = inverse
+    ? 'inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-0.5 py-0.5 text-left hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/40 disabled:cursor-not-allowed disabled:opacity-50'
+    : 'inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-0.5 py-0.5 text-left hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50'
 
-  const removeBtnClass =
-    'absolute right-0.5 top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded text-base leading-none text-gray-500 hover:bg-red-100 hover:text-red-700'
+  const removeBtnClass = inverse
+    ? 'absolute right-0.5 top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded text-base leading-none text-indigo-100 hover:bg-red-500/30 hover:text-white'
+    : 'absolute right-0.5 top-0.5 z-10 flex h-6 w-6 items-center justify-center rounded text-base leading-none text-gray-500 hover:bg-red-100 hover:text-red-700'
 
   if (isImage) {
     return (
       <div className={shellClass} title={attachment.file_name}>
         <button type="button" onClick={openInNewTab} disabled={!signedUrl} className={openBtnClass}>
-          <span className="relative h-[50px] w-[50px] shrink-0 overflow-hidden rounded-md bg-gray-200">
+          <span className={`relative h-[50px] w-[50px] shrink-0 overflow-hidden rounded-md ${inverse ? 'bg-white/15' : 'bg-gray-200'}`}>
             {urlLoading ? (
-              <span className="absolute inset-0 animate-pulse bg-gray-300" />
+              <span className={`absolute inset-0 animate-pulse ${inverse ? 'bg-white/20' : 'bg-gray-300'}`} />
             ) : signedUrl ? (
               <img src={signedUrl} alt="" className="h-full w-full object-cover" width={50} height={50} />
             ) : (
-              <span className="flex h-full w-full items-center justify-center text-[10px] text-gray-500">?</span>
+              <span className={`flex h-full w-full items-center justify-center text-[10px] ${inverse ? 'text-indigo-100' : 'text-gray-500'}`}>?</span>
             )}
           </span>
           <span className="max-w-[140px] truncate text-xs font-medium">{attachment.file_name}</span>
@@ -318,7 +341,7 @@ function QaseAttachmentChip({
   return (
     <div className={shellClass} title={attachment.file_name}>
       <button type="button" onClick={openInNewTab} disabled={!signedUrl} className={openBtnClass}>
-        <FileGlyph className="h-5 w-5 shrink-0 text-gray-500" />
+        <FileGlyph className={`h-5 w-5 shrink-0 ${inverse ? 'text-indigo-100' : 'text-gray-500'}`} />
         <span className="max-w-[180px] truncate text-xs font-medium">{attachment.file_name}</span>
       </button>
       <button type="button" onClick={(e) => void handleRemove(e)} className={removeBtnClass} aria-label={`Remove ${attachment.file_name}`}>
@@ -348,6 +371,19 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
             <span className="text-xs font-medium text-amber-700">Unlinked</span>
           </div>
           <p className="text-sm text-gray-700">Anonymous submission — no profile linked</p>
+        </>
+      )
+    case 'admin_ticket':
+      return (
+        <>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${submitterTypeBadgeClass('admin')}`}>
+              {formatSubmitterTypeLabel('admin')}
+            </span>
+          </div>
+          <p className="text-sm text-gray-700">
+            Staff-created ticket. No student or landlord profile is linked as the submitter.
+          </p>
         </>
       )
     case 'unlinked':
@@ -622,6 +658,8 @@ export default function QaseTicketDetail() {
           setSubmitterPanel({ kind: 'landlord', profile: parseLandlordSubmitterRow(lpRow) })
         }
       }
+    } else if (ticket.submitted_by_type === 'admin') {
+      setSubmitterPanel({ kind: 'admin_ticket' })
     } else {
       setSubmitterPanel({ kind: 'fetch_error', message: 'Unknown submitter type.' })
     }
@@ -859,7 +897,7 @@ export default function QaseTicketDetail() {
           </button>
         </div>
       ) : (
-        <>
+        <div className="w-full max-w-full">
           <header className="mt-4 mb-8">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">#{ticket.ticket_number}</h1>
             <p className="text-sm text-gray-500 mt-1">{ticket.subject}</p>
@@ -869,71 +907,109 @@ export default function QaseTicketDetail() {
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
           )}
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 lg:gap-10">
-            {/* Left: thread (~60%) */}
-            <div className="lg:col-span-3 space-y-4">
-              <div className="space-y-3">
+          <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-stretch lg:gap-8">
+            {/* Thread column: scrollable messages + pinned reply */}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <div className="min-h-0 max-h-[55vh] flex-1 space-y-4 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-14rem)]">
                 {(ticket.messages ?? []).length === 0 ? (
-                  <p className="text-sm text-gray-500 py-6">No messages yet.</p>
+                  <p className="py-6 text-sm text-gray-500">No messages yet.</p>
                 ) : (
                   (ticket.messages ?? []).map((m) => {
                     const msgAttachments = attachmentsByMessageId.get(m.id) ?? []
+                    const attachmentRow = (inverse?: boolean) =>
+                      msgAttachments.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {msgAttachments.map((a) => (
+                            <QaseAttachmentChip
+                              key={a.id}
+                              attachment={a}
+                              inverse={inverse}
+                              onDeleted={() => void loadAll()}
+                              onError={(msg) => setError(msg)}
+                            />
+                          ))}
+                        </div>
+                      ) : null
+
+                    if (m.is_internal_note) {
+                      return (
+                        <div key={m.id} className="flex w-full justify-start">
+                          <div className="flex w-full min-w-0 max-w-[min(100%,42rem)] items-start gap-2">
+                            <div
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-amber-950 shadow-sm ring-2 ring-amber-300/60"
+                              aria-hidden
+                            >
+                              {messageAuthorInitial(m.author_type)}
+                            </div>
+                            <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-amber-200 border-l-4 border-l-amber-400 bg-amber-50/90 px-3 py-2.5 shadow-sm">
+                              <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                <span className="font-semibold uppercase tracking-wide text-amber-900">Internal note</span>
+                                <span className="text-amber-800/90" title={m.created_at}>
+                                  {formatRelativeTime(m.created_at)}
+                                </span>
+                              </div>
+                              <p className="whitespace-pre-wrap text-sm text-gray-900">{m.body}</p>
+                              {attachmentRow(false)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    const isAdminPublic = m.author_type === 'admin'
+
+                    if (isAdminPublic) {
+                      return (
+                        <div key={m.id} className="flex justify-end">
+                          <div className="flex max-w-[min(100%,36rem)] flex-row-reverse items-start gap-2">
+                            <div
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-md ring-2 ring-indigo-500/25"
+                              aria-hidden
+                            >
+                              {messageAuthorInitial(m.author_type)}
+                            </div>
+                            <div className="min-w-0 rounded-2xl rounded-tr-sm bg-indigo-600 px-3 py-2.5 text-white shadow-md">
+                              <div className="mb-1.5 flex flex-wrap items-center gap-x-2 text-xs font-medium text-indigo-100">
+                                <span>{messageAuthorDisplayLabel(m.author_type)}</span>
+                                <span className="text-indigo-200/95" title={m.created_at}>
+                                  {formatRelativeTime(m.created_at)}
+                                </span>
+                              </div>
+                              <p className="whitespace-pre-wrap text-sm text-white/95">{m.body}</p>
+                              {attachmentRow(true)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
                     return (
-                      <div key={m.id}>
-                        {m.is_internal_note ? (
-                          <div className="rounded-r-lg border border-amber-200 border-l-4 border-l-amber-400 bg-amber-50/60 px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                              <span className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                                Internal note
-                              </span>
-                              <span className="text-xs text-amber-800/80" title={m.created_at}>
+                      <div key={m.id} className="flex justify-start">
+                        <div className="flex max-w-[min(100%,36rem)] items-start gap-2">
+                          <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-700 shadow-sm ring-1 ring-gray-300/80"
+                            aria-hidden
+                          >
+                            {messageAuthorInitial(m.author_type)}
+                          </div>
+                          <div className="min-w-0 rounded-2xl rounded-tl-sm border border-gray-200 bg-gray-50 px-3 py-2.5 shadow-sm">
+                            <div className="mb-1.5 flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+                              <span className="font-medium text-gray-800">{messageAuthorDisplayLabel(m.author_type)}</span>
+                              <span className="text-gray-400" title={m.created_at}>
                                 {formatRelativeTime(m.created_at)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
-                            {msgAttachments.length > 0 ? (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {msgAttachments.map((a) => (
-                                  <QaseAttachmentChip
-                                    key={a.id}
-                                    attachment={a}
-                                    onDeleted={() => void loadAll()}
-                                    onError={(msg) => setError(msg)}
-                                  />
-                                ))}
-                              </div>
-                            ) : null}
+                            <p className="whitespace-pre-wrap text-sm text-gray-900">{m.body}</p>
+                            {attachmentRow(false)}
                           </div>
-                        ) : (
-                          <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                              <span className="text-xs font-medium text-gray-500 capitalize">{m.author_type}</span>
-                              <span className="text-xs text-gray-400" title={m.created_at}>
-                                {formatRelativeTime(m.created_at)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{m.body}</p>
-                            {msgAttachments.length > 0 ? (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {msgAttachments.map((a) => (
-                                  <QaseAttachmentChip
-                                    key={a.id}
-                                    attachment={a}
-                                    onDeleted={() => void loadAll()}
-                                    onError={(msg) => setError(msg)}
-                                  />
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        )}
+                        </div>
                       </div>
                     )
                   })
                 )}
               </div>
 
-              <div className={`${adminCardClass} space-y-3`}>
+              <div className={`${adminCardClass} mt-4 shrink-0 space-y-3`}>
                 <label className="block">
                   <span className={labelClass()}>Reply</span>
                   <textarea
@@ -1003,8 +1079,7 @@ export default function QaseTicketDetail() {
               </div>
             </div>
 
-            {/* Right: metadata (~40%) */}
-            <div className="lg:col-span-2 space-y-6">
+            <aside className="w-full shrink-0 space-y-6 lg:w-[380px] lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               <section className={adminCardClass}>
                 <h2 className="text-sm font-semibold text-gray-900 mb-4">Ticket details</h2>
                 <div className="space-y-4">
@@ -1064,6 +1139,11 @@ export default function QaseTicketDetail() {
                     <p className="mt-1 text-sm text-gray-800">{ticket.resolved_at ? formatDate(ticket.resolved_at) : '—'}</p>
                   </div>
                 </div>
+              </section>
+
+              <section className={adminCardClass}>
+                <h2 className="text-sm font-semibold text-gray-900 mb-4">Submitter</h2>
+                {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">—</p>}
               </section>
 
               <section className={adminCardClass}>
@@ -1219,14 +1299,9 @@ export default function QaseTicketDetail() {
                   )}
                 </div>
               </section>
-
-              <section className={adminCardClass}>
-                <h2 className="text-sm font-semibold text-gray-900 mb-4">Submitter</h2>
-                {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">—</p>}
-              </section>
-            </div>
+            </aside>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

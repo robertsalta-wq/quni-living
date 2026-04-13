@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { QasePriority, QaseStatus, QaseSubmitterType, QaseTicket } from '../../types/qase'
+import QaseAdminCreateModal from '../../components/qase/QaseAdminCreateModal'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatRelativeTime } from './adminUi'
 
 type QueueFilter = 'all' | 'open' | 'pending' | 'unlinked'
@@ -50,6 +51,8 @@ function submitterTypeBadgeClass(t: string): string {
       return 'bg-violet-100 text-violet-800'
     case 'anonymous':
       return 'bg-gray-100 text-gray-600'
+    case 'admin':
+      return 'bg-slate-200 text-slate-800'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -57,6 +60,7 @@ function submitterTypeBadgeClass(t: string): string {
 
 function formatSubmitterLabel(t: string): string {
   if (t === 'anonymous') return 'Anonymous'
+  if (t === 'admin') return 'Admin'
   return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
@@ -81,12 +85,40 @@ function asQaseTicket(row: unknown): QaseTicket {
   return row as QaseTicket
 }
 
+function ticketSearchMatch(row: QaseTicket, qLower: string): boolean {
+  if (!qLower) return true
+  if (row.subject.toLowerCase().includes(qLower)) return true
+  const numQuery = qLower.startsWith('#') ? qLower.slice(1) : qLower
+  if (numQuery && String(row.ticket_number).includes(numQuery)) return true
+  return false
+}
+
+function matchingTicketsLabel(count: number, term: string): string {
+  const quoted = `'${term}'`
+  if (count === 1) return `1 ticket matching ${quoted}`
+  return `${count} tickets matching ${quoted}`
+}
+
 export default function QaseTicketList() {
   const navigate = useNavigate()
   const [rows, setRows] = useState<QaseTicket[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<QueueFilter>('all')
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(searchInput.trim()), 300)
+    return () => window.clearTimeout(t)
+  }, [searchInput])
+
+  const filteredRows = useMemo(() => {
+    const q = debouncedSearch.toLowerCase()
+    if (!q) return rows
+    return rows.filter((r) => ticketSearchMatch(r, q))
+  }, [rows, debouncedSearch])
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -129,14 +161,71 @@ export default function QaseTicketList() {
     return 'No tickets match this filter.'
   }
 
+  const searchActive = debouncedSearch.length > 0
+  const tableEmptyMessage =
+    searchActive && rows.length > 0 && filteredRows.length === 0
+      ? `No tickets matching '${debouncedSearch}'`
+      : emptyMessage()
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Support (Qase)</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">Manage support tickets from students and landlords</p>
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Support (Qase)</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage support tickets from students and landlords</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCreateModalOpen(true)}
+          className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          New ticket
+        </button>
+      </div>
+
+      <QaseAdminCreateModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={(ticketId) => {
+          navigate(`/admin/qase/${ticketId}`)
+        }}
+      />
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
+
+      <div className="mb-6">
+        <label htmlFor="qase-ticket-search" className="sr-only">
+          Search tickets
+        </label>
+        <div className="relative max-w-md">
+          <input
+            id="qase-ticket-search"
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by subject or ticket number..."
+            autoComplete="off"
+            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+          {searchInput ? (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear search"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : null}
+        </div>
+        {searchActive ? (
+          <p className="mt-2 text-sm text-gray-600">{matchingTicketsLabel(filteredRows.length, debouncedSearch)}</p>
+        ) : null}
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         <button type="button" className={filterButtonClass(filter === 'all')} onClick={() => setFilter('all')}>
@@ -178,8 +267,14 @@ export default function QaseTicketList() {
                     {emptyMessage()}
                   </td>
                 </tr>
+              ) : filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className={`${adminTdClass} text-gray-500 text-center py-10`}>
+                    {tableEmptyMessage}
+                  </td>
+                </tr>
               ) : (
-                rows.map((row) => {
+                filteredRows.map((row) => {
                   const st = row.submitted_by_type as QaseSubmitterType | string
                   return (
                     <tr

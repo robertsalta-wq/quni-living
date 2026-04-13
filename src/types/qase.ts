@@ -12,8 +12,8 @@ export type QaseStatus =
 /** `qase_priority` enum */
 export type QasePriority = 'urgent' | 'high' | 'normal' | 'low'
 
-/** `qase_tickets.submitted_by_type` — app / email pipeline values */
-export type QaseSubmitterType = 'student' | 'landlord' | 'anonymous'
+/** `qase_tickets.submitted_by_type` — app / email pipeline values; `admin` = staff-created ticket with no end-user submitter */
+export type QaseSubmitterType = 'student' | 'landlord' | 'anonymous' | 'admin'
 
 /** `qase_messages.author_type` */
 export type QaseAuthorType = 'student' | 'landlord' | 'admin' | 'system'

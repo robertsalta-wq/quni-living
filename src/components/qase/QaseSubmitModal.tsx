@@ -1,4 +1,12 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { QaseField } from '../../types/qase'
 
@@ -52,6 +60,42 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/**
+ * public.knowledge_base columns used here: id, title, content, category.
+ * Full table (see supabase/migrations/20260406150000_knowledge_base_rag.sql):
+ * id, title, content, category, state, embedding, created_at, updated_at.
+ * Confirm in DB: select column_name from information_schema.columns
+ * where table_schema = 'public' and table_name = 'knowledge_base' order by ordinal_position;
+ */
+type KnowledgeBaseArticleRow = {
+  id: string
+  title: string
+  content: string
+  category: string
+}
+
+const KB_PREVIEW_LEN = 100
+const KB_DEBOUNCE_MS = 500
+
+function sanitizeKbIlikeTerm(raw: string): string {
+  return raw.replace(/[%_,]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function previewKbContent(content: string): string {
+  if (content.length <= KB_PREVIEW_LEN) return content
+  return `${content.slice(0, KB_PREVIEW_LEN)}…`
+}
+
+function asKnowledgeArticle(row: unknown): KnowledgeBaseArticleRow {
+  const r = row as Record<string, unknown>
+  return {
+    id: String(r.id),
+    title: String(r.title ?? ''),
+    content: String(r.content ?? ''),
+    category: String(r.category ?? ''),
+  }
+}
+
 function validateAttachmentList(files: File[]): string | null {
   if (files.length > MAX_ATTACHMENT_FILES) {
     return `You can attach at most ${MAX_ATTACHMENT_FILES} files.`
@@ -93,6 +137,12 @@ export default function QaseSubmitModal({
   const [attachmentValidationError, setAttachmentValidationError] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
   const [successAttachmentWarning, setSuccessAttachmentWarning] = useState<string | null>(null)
+  const [debouncedKbQuery, setDebouncedKbQuery] = useState('')
+  const [kbArticles, setKbArticles] = useState<KnowledgeBaseArticleRow[]>([])
+  const [kbLoading, setKbLoading] = useState(false)
+  const [kbError, setKbError] = useState<string | null>(null)
+  const [kbExpanded, setKbExpanded] = useState<Record<string, boolean>>({})
+  const kbFetchSeq = useRef(0)
 
   const resetForm = useCallback(() => {
     setSubject('')
@@ -104,6 +154,11 @@ export default function QaseSubmitModal({
     setAttachmentValidationError(null)
     setUploadProgress(null)
     setSuccessAttachmentWarning(null)
+    setDebouncedKbQuery('')
+    setKbArticles([])
+    setKbLoading(false)
+    setKbError(null)
+    setKbExpanded({})
   }, [])
 
   const loadCategories = useCallback(async () => {
@@ -136,6 +191,60 @@ export default function QaseSubmitModal({
   }, [isOpen, loadCategories, resetForm])
 
   const subjectTrimmed = subject.trim()
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      if (subjectTrimmed.length < 10) {
+        setDebouncedKbQuery('')
+      } else {
+        setDebouncedKbQuery(subjectTrimmed)
+      }
+    }, KB_DEBOUNCE_MS)
+    return () => window.clearTimeout(t)
+  }, [subjectTrimmed])
+
+  useEffect(() => {
+    if (!isOpen || !isSupabaseConfigured) return
+    if (debouncedKbQuery.length < 10) {
+      setKbArticles([])
+      setKbLoading(false)
+      setKbError(null)
+      return
+    }
+    const inner = sanitizeKbIlikeTerm(debouncedKbQuery)
+    if (inner.length === 0) {
+      setKbArticles([])
+      setKbLoading(false)
+      setKbError(null)
+      return
+    }
+
+    const seq = ++kbFetchSeq.current
+    setKbLoading(true)
+    setKbError(null)
+
+    const pattern = `%${inner}%`
+    const orFilter = `title.ilike.${pattern},content.ilike.${pattern}`
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from('knowledge_base' as 'bookings')
+        .select('id, title, content, category')
+        .or(orFilter)
+        .limit(3)
+
+      if (seq !== kbFetchSeq.current) return
+
+      setKbLoading(false)
+      if (error) {
+        setKbError(error.message)
+        setKbArticles([])
+        return
+      }
+      setKbArticles((data ?? []).map(asKnowledgeArticle))
+    })()
+  }, [debouncedKbQuery, isOpen])
+
   const messageTrimmed = message.trim()
   const subjectOk = subjectTrimmed.length > 0 && subjectTrimmed.length <= 255
   const categoryOk = categoryKey.length > 0
@@ -148,6 +257,16 @@ export default function QaseSubmitModal({
     }
     return 'inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
   }, [submitterType])
+
+  const kbAnsweredBtnClass = useMemo(() => {
+    if (submitterType === 'landlord') {
+      return 'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30'
+    }
+    return 'inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-800 shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400/30'
+  }, [submitterType])
+
+  const kbSearchPending = subjectTrimmed.length >= 10 && subjectTrimmed !== debouncedKbQuery
+  const kbShowSpinner = kbSearchPending || kbLoading
 
   const inputClass =
     'mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-500'
@@ -309,6 +428,10 @@ export default function QaseSubmitModal({
     onClose()
   }
 
+  function handleKnowledgeSolved() {
+    onClose()
+  }
+
   if (!isOpen) return null
 
   const submitLabel =
@@ -398,6 +521,78 @@ export default function QaseSubmitModal({
                 />
                 <p className="mt-1 text-xs text-gray-400">{subjectTrimmed.length}/255</p>
               </div>
+
+              {subjectTrimmed.length >= 10 ? (
+                <details className="group rounded-xl border border-indigo-100 bg-indigo-50/50 open:pb-3" open>
+                  <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-indigo-950 [&::-webkit-details-marker]:hidden flex items-center justify-between gap-2 rounded-xl hover:bg-indigo-50/80">
+                    <span>Did you know? · Suggested articles</span>
+                    <svg
+                      className="h-4 w-4 shrink-0 text-indigo-600 transition-transform group-open:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="border-t border-indigo-100/80 px-3 pt-3 space-y-3">
+                    {kbShowSpinner ? (
+                      <div className="flex justify-center py-6" aria-live="polite">
+                        <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : kbError ? (
+                      <p className="text-sm text-red-600" role="alert">
+                        {kbError}
+                      </p>
+                    ) : kbArticles.length === 0 ? (
+                      <p className="text-sm text-gray-600">No matching articles yet. Try a few different words.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {kbArticles.map((article) => {
+                          const expanded = kbExpanded[article.id] === true
+                          const longBody = article.content.length > KB_PREVIEW_LEN
+                          return (
+                            <li
+                              key={article.id}
+                              className="rounded-lg border border-indigo-100/80 bg-white/90 px-3 py-2.5 shadow-sm"
+                            >
+                              <p className="text-sm font-semibold text-gray-900">{article.title}</p>
+                              {article.category ? (
+                                <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-indigo-600/80">
+                                  {article.category}
+                                </p>
+                              ) : null}
+                              <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                                {expanded || !longBody ? article.content : previewKbContent(article.content)}
+                              </p>
+                              {longBody ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setKbExpanded((prev) => ({ ...prev, [article.id]: !expanded }))
+                                  }
+                                  className="mt-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                >
+                                  {expanded ? 'Show less' : 'Show full article'}
+                                </button>
+                              ) : null}
+                              <div className="mt-3">
+                                <button type="button" onClick={handleKnowledgeSolved} className={kbAnsweredBtnClass}>
+                                  This answered my question
+                                </button>
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                    <p className="text-xs text-gray-500 pt-1">
+                      Can&apos;t find what you need? Submit a ticket below.
+                    </p>
+                  </div>
+                </details>
+              ) : null}
 
               <div>
                 <label htmlFor="qase-category" className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
