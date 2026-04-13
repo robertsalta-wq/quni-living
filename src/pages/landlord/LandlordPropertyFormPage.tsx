@@ -1673,37 +1673,40 @@ export default function LandlordPropertyFormPage() {
           {sectionClass(
             'Inclusions & features',
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={furnished}
-                    onChange={(e) => setFurnished(e.target.checked)}
-                    className={LANDLORD_FORM_CHECKBOX_CLASS}
-                  />
-                  <span className="text-sm text-gray-700">Fully furnished</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={linenSupplied}
-                    onChange={(e) => setLinenSupplied(e.target.checked)}
-                    className={LANDLORD_FORM_CHECKBOX_CLASS}
-                  />
-                  <span className="text-sm text-gray-700">Linen supplied</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={weeklyCleaning}
-                    onChange={(e) => setWeeklyCleaning(e.target.checked)}
-                    className={LANDLORD_FORM_CHECKBOX_CLASS}
-                  />
-                  <span className="text-sm text-gray-700">Weekly cleaning service</span>
-                </label>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-gray-700">Inclusions</p>
+                <div className="grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/50 p-3 lg:grid-cols-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={furnished}
+                      onChange={(e) => setFurnished(e.target.checked)}
+                      className={LANDLORD_FORM_CHECKBOX_CLASS}
+                    />
+                    <span className="text-sm text-gray-700">Fully furnished</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={linenSupplied}
+                      onChange={(e) => setLinenSupplied(e.target.checked)}
+                      className={LANDLORD_FORM_CHECKBOX_CLASS}
+                    />
+                    <span className="text-sm text-gray-700">Linen supplied</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={weeklyCleaning}
+                      onChange={(e) => setWeeklyCleaning(e.target.checked)}
+                      className={LANDLORD_FORM_CHECKBOX_CLASS}
+                    />
+                    <span className="text-sm text-gray-700">Weekly cleaning service</span>
+                  </label>
+                </div>
               </div>
               <div>
-                <p className={`${labelClass} mb-2`}>Property features</p>
+                <p className="mb-2 text-xs font-semibold text-gray-700">Property features</p>
                 <div className="grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-2 lg:grid-cols-3">
                   {features.map((f) => (
                     <label key={f.id} className="flex items-center gap-2 cursor-pointer">
@@ -1761,7 +1764,7 @@ export default function LandlordPropertyFormPage() {
                       aria-label={`${r.name} permitted`}
                       value={selectedRules[r.id] ?? ''}
                       onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                      className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
                     >
                       <option value="">Select…</option>
                       <option value="yes">Yes</option>
