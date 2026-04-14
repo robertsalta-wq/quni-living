@@ -27,7 +27,7 @@ const NAV_BEFORE_SERVICES = [
 ] as const
 
 const coralCtaClass =
-  'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]'
+  'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
@@ -276,7 +276,7 @@ export default function Header() {
               </Link>
               <Link to="/signup" className={coralCtaClass}>
                 Sign up
-                <span aria-hidden>→</span>
+                <span aria-hidden className="hidden sm:inline">→</span>
               </Link>
             </>
           )}
