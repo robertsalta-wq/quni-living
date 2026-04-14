@@ -1473,8 +1473,8 @@ export default function LandlordPropertyFormPage() {
                     href={`#${id}`}
                     className={
                       isActive
-                        ? 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-full border-0 bg-[#D85A30] px-1 py-1.5 text-center text-xs font-medium leading-snug text-white outline outline-1 outline-[#D85A30] transition-colors break-words sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
-                        : 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-full border-0 bg-white px-1 py-1.5 text-center text-xs font-medium leading-snug text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors break-words hover:bg-[#D85A30] hover:text-white sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
+                        ? 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-md border-0 bg-[#D85A30] px-2 py-1 text-center text-xs font-medium leading-snug text-white outline outline-1 outline-[#D85A30] transition-colors break-words sm:rounded-full sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
+                        : 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-md border-0 bg-white px-2 py-1 text-center text-xs font-medium leading-snug text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors break-words hover:bg-[#D85A30] hover:text-white sm:rounded-full sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
                     }
                   >
                     <span className="block min-w-0 w-full text-center">{label}</span>
