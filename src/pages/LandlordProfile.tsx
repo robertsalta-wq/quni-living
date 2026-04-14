@@ -1002,14 +1002,14 @@ export default function LandlordProfile() {
               return (
                 <li
                   key={p.id}
-                  className="flex flex-col sm:flex-row gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                  className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                 >
-                  <div className="sm:w-40 h-36 sm:h-auto shrink-0 bg-gray-100">
+                  <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {thumb ? (
                       <img src={thumb} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -1019,22 +1019,25 @@ export default function LandlordProfile() {
                         </svg>
                       </div>
                     )}
-                  </div>
-                  <div className="flex-1 p-4 sm:py-4 sm:pr-4 flex flex-col min-w-0">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">{p.title}</h3>
-                        {p.suburb && <p className="text-sm text-gray-500 mt-0.5">{p.suburb}</p>}
-                        <p className="text-base font-semibold text-gray-900 mt-1">
-                          ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          <span className="text-sm font-normal text-gray-500"> /wk</span>
-                        </p>
-                      </div>
-                      <span
-                        className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ${listingStatusClass(p.status)}`}
-                      >
-                        {listingStatusLabel(p.status)}
+                    {p.featured && (
+                      <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        Featured
                       </span>
+                    )}
+                    <span
+                      className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${listingStatusClass(p.status)}`}
+                    >
+                      {listingStatusLabel(p.status)}
+                    </span>
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col min-w-0">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{p.title}</h3>
+                      {p.suburb && <p className="text-sm text-gray-500 mt-0.5">{p.suburb}</p>}
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        <span className="text-sm font-normal text-gray-500"> /wk</span>
+                      </p>
                     </div>
                     <LandlordPropertyListingActions
                       property={p}
