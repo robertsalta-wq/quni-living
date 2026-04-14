@@ -1405,7 +1405,7 @@ export default function LandlordPropertyFormPage() {
 
   return (
     <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-clip bg-[#d4e9e2] pb-16">
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-3 py-8 sm:px-6">
+      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-0 py-4 sm:px-6 sm:py-8">
         <div className="mb-8">
           <Link
             to="/landlord-dashboard"
@@ -1762,13 +1762,13 @@ export default function LandlordPropertyFormPage() {
                       <span className="shrink-0 text-base" aria-hidden>
                         {r.icon}
                       </span>
-                      <span>{r.name}</span>
+                      <span className="min-w-0 flex-1">{r.name}</span>
                     </span>
                     <select
                       aria-label={`${r.name} permitted`}
                       value={selectedRules[r.id] ?? ''}
                       onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                      className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-0.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
+                      className="w-28 max-w-[7rem] shrink-0 rounded-md border border-gray-200 px-2 py-0.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
                     >
                       <option value="">Select…</option>
                       <option value="yes">Yes</option>
