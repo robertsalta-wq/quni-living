@@ -1009,6 +1009,45 @@ export default function QaseTicketDetail() {
                 )}
               </div>
 
+              {(ticket.ai_suggested_category?.trim() ||
+                ticket.ai_suggested_priority?.trim() ||
+                ticket.ai_draft_reply?.trim()) && (
+                <section className={`${adminCardClass} mt-4 shrink-0`}>
+                  <h2 className="mb-4 text-sm font-semibold text-gray-900">AI triage</h2>
+                  <div className="space-y-3 text-sm">
+                    {ticket.ai_suggested_category ? (
+                      <div>
+                        <span className={labelClass()}>Suggested category</span>
+                        <p className="mt-1 text-gray-800">{ticket.ai_suggested_category}</p>
+                      </div>
+                    ) : null}
+                    {ticket.ai_suggested_priority ? (
+                      <div>
+                        <span className={labelClass()}>Suggested priority</span>
+                        <p className="mt-1 text-gray-800">{ticket.ai_suggested_priority}</p>
+                      </div>
+                    ) : null}
+                    {ticket.ai_draft_reply ? (
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className={labelClass()}>Draft reply</span>
+                          <button
+                            type="button"
+                            className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                            onClick={() => setReplyBody(ticket.ai_draft_reply ?? '')}
+                          >
+                            Use draft
+                          </button>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-gray-800">
+                          {ticket.ai_draft_reply}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              )}
+
               <div className={`${adminCardClass} mt-4 shrink-0 space-y-3`}>
                 <label className="block">
                   <span className={labelClass()}>Reply</span>
@@ -1144,47 +1183,6 @@ export default function QaseTicketDetail() {
               <section className={adminCardClass}>
                 <h2 className="text-sm font-semibold text-gray-900 mb-4">Submitter</h2>
                 {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">—</p>}
-              </section>
-
-              <section className={adminCardClass}>
-                <h2 className="text-sm font-semibold text-gray-900 mb-4">AI triage</h2>
-                {!ticket.ai_suggested_category?.trim() &&
-                !ticket.ai_suggested_priority?.trim() &&
-                !ticket.ai_draft_reply?.trim() ? (
-                  <p className="text-sm text-gray-500">AI triage pending</p>
-                ) : (
-                  <div className="space-y-3 text-sm">
-                    {ticket.ai_suggested_category ? (
-                      <div>
-                        <span className={labelClass()}>Suggested category</span>
-                        <p className="mt-1 text-gray-800">{ticket.ai_suggested_category}</p>
-                      </div>
-                    ) : null}
-                    {ticket.ai_suggested_priority ? (
-                      <div>
-                        <span className={labelClass()}>Suggested priority</span>
-                        <p className="mt-1 text-gray-800">{ticket.ai_suggested_priority}</p>
-                      </div>
-                    ) : null}
-                    {ticket.ai_draft_reply ? (
-                      <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <span className={labelClass()}>Draft reply</span>
-                          <button
-                            type="button"
-                            className="shrink-0 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                            onClick={() => setReplyBody(ticket.ai_draft_reply ?? '')}
-                          >
-                            Use draft
-                          </button>
-                        </div>
-                        <p className="mt-1 text-gray-800 whitespace-pre-wrap rounded-lg bg-gray-50 px-3 py-2 border border-gray-100">
-                          {ticket.ai_draft_reply}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
               </section>
 
               <section className={adminCardClass}>
