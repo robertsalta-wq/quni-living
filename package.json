@@ -13,6 +13,7 @@
     "build:api-documents": "node scripts/build-api-documents.mjs",
     "build:capacitor": "node scripts/build-capacitor.mjs",
     "lint": "eslint .",
+    "test": "vitest run",
     "preview": "vite preview",
     "cap:sync": "npm run build:capacitor && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
@@ -69,6 +70,7 @@
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "vitest": "^3.2.4"
   }
 }

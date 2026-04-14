@@ -12,6 +12,7 @@
   "include": [
     "api/**/*.ts",
     "api/**/*.tsx",
+    "src/lib/tenancy/resolveTenancyPackage.ts",
     "api/documents/OccupancyAgreement.js",
     "src/lib/database.types.ts",
     "src/lib/documents/OccupancyAgreement.tsx",

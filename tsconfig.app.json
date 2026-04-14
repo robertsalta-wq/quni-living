@@ -25,5 +25,9 @@
     "noUncheckedSideEffectImports": true
   },
   "include": ["src"],
-  "exclude": ["src/scripts", "src/lib/documents/NswResidentialTenancyAgreement_legacy.tsx"]
+  "exclude": [
+    "src/scripts",
+    "src/lib/documents/NswResidentialTenancyAgreement_legacy.tsx",
+    "src/**/*.test.ts"
+  ]
 }

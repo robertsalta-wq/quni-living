@@ -1,3 +1,4 @@
+// @ts-nocheck — Vercel Node handler; gradual typing deferred.
 /**
  * Landlord confirms a booking: captures the student's booking-deposit PaymentIntent (one-off) and
  * creates a weekly rent Stripe subscription (Connect).
@@ -20,6 +21,10 @@ import {
 import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
 import { bondAuthorityForState } from './lib/bondAuthority.js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
+import {
+  resolveTenancyPackage,
+  tenancyGeneratorToApiPath,
+} from '../src/lib/tenancy/resolveTenancyPackage'
 
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }
@@ -173,7 +178,7 @@ export default async function handler(req, res) {
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -221,6 +226,39 @@ export default async function handler(req, res) {
     const weeklyCents = weeklyRentCents(booking.weekly_rent)
     if (weeklyCents == null) {
       return corsJson(res,{ error: 'Invalid weekly rent' }, 400, origin)
+    }
+
+    const propForTenancy =
+      booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
+    const tenancyStateRaw = typeof propForTenancy.state === 'string' ? propForTenancy.state.trim() : ''
+    const tenancyState = tenancyStateRaw ? tenancyStateRaw.toUpperCase() : 'NSW'
+    const tenancyPt =
+      typeof propForTenancy.property_type === 'string' ? propForTenancy.property_type.trim() : ''
+    const tenancyRooming = Boolean(propForTenancy.is_registered_rooming_house)
+
+    const tenancyPackage = resolveTenancyPackage({
+      state: tenancyState,
+      property_type: tenancyPt,
+      is_registered_rooming_house: tenancyRooming,
+    })
+    if (!tenancyPackage.supported) {
+      console.error('[create-rent-subscription] unsupported tenancy package', {
+        unsupportedReason: tenancyPackage.unsupportedReason,
+        state: tenancyState,
+        property_type: tenancyPt,
+        is_registered_rooming_house: tenancyRooming,
+      })
+      return corsJson(
+        res,
+        {
+          error: 'tenancy_package_unsupported',
+          message:
+            tenancyPackage.unsupportedReason ??
+            'This property is not supported for tenancy documents yet.',
+        },
+        400,
+        origin,
+      )
     }
 
     const stripe = new Stripe(stripeSecret)
@@ -491,7 +529,12 @@ export default async function handler(req, res) {
     const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
     const landlordUserId = typeof lp.user_id === 'string' && lp.user_id.trim() ? lp.user_id.trim() : null
 
-    if (studentUserId && landlordUserId && booking.property_id) {
+    if (
+      studentUserId &&
+      landlordUserId &&
+      booking.property_id &&
+      tenancyPackage.bondRules.schemeApplies
+    ) {
       const bondCents = weeklyCents * 4
       const { data: existingBond } = await admin.from('bonds').select('id').eq('booking_id', booking.id).maybeSingle()
       if (!existingBond && bondCents > 0) {
@@ -565,7 +608,10 @@ export default async function handler(req, res) {
         lease_length: leaseLength,
         weekly_rent: booking.weekly_rent,
         deposit_amount_cents: depositCents ?? undefined,
-        bond_amount_cents: bondCentsForEmail > 0 ? bondCentsForEmail : undefined,
+        bond_amount_cents:
+          tenancyPackage.bondRules.schemeApplies && bondCentsForEmail > 0
+            ? bondCentsForEmail
+            : undefined,
         bond_authority: bondAuthority,
         dashboard_url: `${siteBase}/landlord/dashboard?tab=bookings`,
       })
@@ -590,35 +636,28 @@ export default async function handler(req, res) {
     } else if (!booking.property_id) {
       console.warn('[create-rent-subscription] skipping document generate: booking has no property_id')
     } else {
-      const { data: propForDoc, error: propDocErr } = await admin
-        .from('properties')
-        .select('property_type')
-        .eq('id', booking.property_id)
-        .maybeSingle()
-      if (propDocErr) {
-        console.error('load property for document routing', propDocErr)
-      }
-      const pt =
-        !propDocErr && typeof propForDoc?.property_type === 'string'
-          ? propForDoc.property_type.trim()
-          : ''
-      const generatePath =
-        pt === 'private_room_landlord_off_site'
-          ? '/api/documents/generate-residential-tenancy'
-          : '/api/documents/generate-lease'
-      const generateDocUrl = `${internalApiOrigin()}${generatePath}`
-      try {
-        const res = await fetch(generateDocUrl, {
-          method: 'POST',
-          headers: internalPostHeaders(leaseFlowSecret),
-          body: JSON.stringify({ booking_id: booking.id }),
-        })
-        if (!res.ok) {
-          const t = await res.text()
-          console.error(`${generatePath} failed`, res.status, t)
+      const generatePath = tenancyGeneratorToApiPath(tenancyPackage.generator)
+      if (!generatePath) {
+        console.error(
+          '[create-rent-subscription] no document API wired for generator yet',
+          tenancyPackage.generator,
+          tenancyPackage.signingPackageName,
+        )
+      } else {
+        const generateDocUrl = `${internalApiOrigin()}${generatePath}`
+        try {
+          const fetchRes = await fetch(generateDocUrl, {
+            method: 'POST',
+            headers: internalPostHeaders(leaseFlowSecret),
+            body: JSON.stringify({ booking_id: booking.id }),
+          })
+          if (!fetchRes.ok) {
+            const t = await fetchRes.text()
+            console.error(`${generatePath} failed`, fetchRes.status, t)
+          }
+        } catch (e) {
+          console.error(`${generatePath} trigger`, e)
         }
-      } catch (e) {
-        console.error(`${generatePath} trigger`, e)
       }
     }
 

@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/create-rent-subscription.js": {
+    "api/create-rent-subscription.ts": {
       "maxDuration": 60
     },
     "api/chat.ts": {
