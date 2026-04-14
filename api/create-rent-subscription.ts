@@ -529,12 +529,7 @@ export default async function handler(req, res) {
     const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
     const landlordUserId = typeof lp.user_id === 'string' && lp.user_id.trim() ? lp.user_id.trim() : null
 
-    if (
-      studentUserId &&
-      landlordUserId &&
-      booking.property_id &&
-      tenancyPackage.bondRules.schemeApplies
-    ) {
+    if (studentUserId && landlordUserId && booking.property_id) {
       const bondCents = weeklyCents * 4
       const { data: existingBond } = await admin.from('bonds').select('id').eq('booking_id', booking.id).maybeSingle()
       if (!existingBond && bondCents > 0) {
