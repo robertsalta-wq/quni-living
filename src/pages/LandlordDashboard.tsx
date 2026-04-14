@@ -18,10 +18,13 @@ import LandlordStudentProfileModal, {
 import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/onboardingChecklist'
-import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
+import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
+import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
+import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
+import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -204,19 +207,6 @@ function firstNameFromLandlord(p: LandlordRow): string {
   return local ? formatDisplayName(local) : 'there'
 }
 
-function listingStatusClass(s: PropertyRow['status']) {
-  if (s === 'active') return 'bg-emerald-100 text-emerald-800'
-  if (s === 'pending') return 'bg-amber-100 text-amber-800'
-  if (s === 'draft') return 'bg-slate-100 text-slate-700'
-  return 'bg-gray-100 text-gray-600'
-}
-
-function listingStatusLabel(s: PropertyRow['status']) {
-  if (s === 'inactive') return 'paused'
-  if (s === 'draft') return 'draft'
-  return s
-}
-
 function enquiryStatusClass(s: EnquiryStatus) {
   if (s === 'new') return 'bg-blue-100 text-blue-800'
   if (s === 'replied') return 'bg-emerald-100 text-emerald-800'
@@ -328,10 +318,6 @@ export default function LandlordDashboard() {
   const [enquiryInlineErrors, setEnquiryInlineErrors] = useState<Record<string, string | null>>({})
   const [connectLoading, setConnectLoading] = useState(false)
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
-  const [updatingListingId, setUpdatingListingId] = useState<string | null>(null)
-  const [duplicateConfirmProperty, setDuplicateConfirmProperty] = useState<PropertySummary | null>(null)
-  const [duplicatingListingId, setDuplicatingListingId] = useState<string | null>(null)
-  const [publishingListingId, setPublishingListingId] = useState<string | null>(null)
   const [qaseOpen, setQaseOpen] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
   const toastTimerRef = useRef<number | null>(null)
@@ -690,6 +676,22 @@ export default function LandlordDashboard() {
     }, 4000)
   }, [])
 
+  const {
+    publishingListingId,
+    duplicatingListingId,
+    updatingListingId,
+    duplicateConfirmProperty,
+    setDuplicateConfirmProperty,
+    publishDraftListing,
+    confirmDuplicateListing,
+    togglePropertyStatus,
+  } = useLandlordPropertyListingActions({
+    reload: load,
+    navigate,
+    showToast,
+    onMutationError: (msg) => setError(msg),
+  })
+
   const stripeConnectParam = searchParams.get('stripe_connect')
   useEffect(() => {
     if (stripeConnectParam !== 'return' && stripeConnectParam !== 'refresh') return
@@ -898,75 +900,6 @@ export default function LandlordDashboard() {
       setConnectLoading(false)
     }
   }, [load])
-
-  const publishDraftListing = useCallback(
-    async (property: PropertySummary) => {
-      if (property.status !== 'draft') return
-      setPublishingListingId(property.id)
-      try {
-        const { error: updateError } = await supabase
-          .from('properties')
-          .update({ status: 'active' })
-          .eq('id', property.id)
-        if (updateError) throw updateError
-        await load()
-        showToast({ kind: 'success', message: 'Listing published and now live.' })
-      } catch (e) {
-        const msg =
-          e && typeof e === 'object' && 'message' in e && typeof (e as { message?: unknown }).message === 'string'
-            ? String((e as { message: string }).message)
-            : 'Could not publish listing.'
-        showToast({ kind: 'error', message: msg })
-      } finally {
-        setPublishingListingId(null)
-      }
-    },
-    [load, showToast],
-  )
-
-  const confirmDuplicateListing = useCallback(async () => {
-    const src = duplicateConfirmProperty
-    if (!src) return
-    setDuplicatingListingId(src.id)
-    setError(null)
-    try {
-      const { data: newId, error: rpcErr } = await supabase.rpc('duplicate_property_listing', {
-        p_source_id: src.id,
-      })
-      if (rpcErr) throw rpcErr
-      if (typeof newId !== 'string' || !newId.trim()) {
-        throw new Error('Duplicate did not return a listing id.')
-      }
-      setDuplicateConfirmProperty(null)
-      navigate(`/landlord/property/edit/${newId.trim()}`)
-      void load()
-    } catch (e) {
-      setError(messageFromSupabaseError(e))
-    } finally {
-      setDuplicatingListingId(null)
-    }
-  }, [duplicateConfirmProperty, load, navigate])
-
-  const togglePropertyStatus = useCallback(
-    async (property: PropertySummary) => {
-      if (property.status !== 'active' && property.status !== 'inactive') return
-      const nextStatus: PropertyRow['status'] = property.status === 'active' ? 'inactive' : 'active'
-      setUpdatingListingId(property.id)
-      setError(null)
-      try {
-        const { error: updateError } = await withSentryMonitoring('LandlordDashboard/toggle-property-status', () =>
-          supabase.from('properties').update({ status: nextStatus }).eq('id', property.id),
-        )
-        if (updateError) throw updateError
-        await load()
-      } catch (e) {
-        setError(messageFromSupabaseError(e))
-      } finally {
-        setUpdatingListingId(null)
-      }
-    },
-    [load],
-  )
 
   const activeListings = properties.filter((p) => p.status === 'active').length
   const newEnquiries = enquiries.filter((e) => e.status === 'new').length
@@ -1301,61 +1234,15 @@ export default function LandlordDashboard() {
                           {p.title}
                         </h3>
                         <p className="text-xs text-gray-500 mb-4">{p.suburb ?? 'Location TBC'}</p>
-                        <div className="mt-auto flex flex-col gap-2">
-                          <div className="flex gap-2">
-                            <Link
-                              to={`/landlord/property/edit/${p.id}`}
-                              className="flex-1 text-center rounded-lg border border-gray-200 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                              Edit
-                            </Link>
-                            <Link
-                              to={`/properties/${p.slug}`}
-                              className="flex-1 text-center rounded-lg bg-[#FF6F61] py-2 text-sm font-medium text-white hover:bg-[#e85d52]"
-                            >
-                              View
-                            </Link>
-                          </div>
-                          <div className="flex gap-2 flex-wrap">
-                            {p.status === 'draft' && (
-                              <button
-                                type="button"
-                                onClick={() => void publishDraftListing(p)}
-                                disabled={publishingListingId === p.id || duplicatingListingId === p.id}
-                                className="flex-1 min-w-[7.5rem] text-center rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-60"
-                              >
-                                {publishingListingId === p.id ? 'Publishing…' : 'Publish'}
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setDuplicateConfirmProperty(p)}
-                              disabled={duplicatingListingId === p.id || publishingListingId === p.id}
-                              className="flex-1 min-w-[7.5rem] text-center rounded-lg border border-indigo-200 bg-indigo-50 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
-                            >
-                              {duplicatingListingId === p.id ? 'Duplicating…' : 'Duplicate'}
-                            </button>
-                            {(p.status === 'active' || p.status === 'inactive') && (
-                              <button
-                                type="button"
-                                onClick={() => void togglePropertyStatus(p)}
-                                disabled={updatingListingId === p.id}
-                                className={[
-                                  'flex-1 min-w-[7.5rem] text-center rounded-lg border bg-white py-2 text-sm font-medium disabled:opacity-60',
-                                  p.status === 'active'
-                                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50',
-                                ].join(' ')}
-                              >
-                                {updatingListingId === p.id
-                                  ? 'Updating...'
-                                  : p.status === 'active'
-                                    ? 'Pause listing'
-                                    : 'Reactivate'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                        <LandlordPropertyListingActions
+                          property={p}
+                          publishingListingId={publishingListingId}
+                          duplicatingListingId={duplicatingListingId}
+                          updatingListingId={updatingListingId}
+                          onPublish={publishDraftListing}
+                          onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
+                          onToggle={togglePropertyStatus}
+                        />
                       </div>
                     </div>
                   )
@@ -1938,41 +1825,12 @@ export default function LandlordDashboard() {
           />
         )}
 
-        {duplicateConfirmProperty && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => {
-                if (!duplicatingListingId) setDuplicateConfirmProperty(null)
-              }}
-              aria-hidden
-            />
-            <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900">Duplicate listing?</h3>
-              <p className="mt-2 text-sm text-gray-600">
-                This will create a draft copy of this listing. You can then edit the room details.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => void confirmDuplicateListing()}
-                  disabled={Boolean(duplicatingListingId)}
-                  className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
-                >
-                  {duplicatingListingId ? 'Duplicating…' : 'Confirm'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDuplicateConfirmProperty(null)}
-                  disabled={Boolean(duplicatingListingId)}
-                  className="rounded-xl border border-gray-300 bg-white text-gray-700 px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <LandlordDuplicateListingModal
+          open={duplicateConfirmProperty != null}
+          duplicatingListingId={duplicatingListingId}
+          onConfirm={() => void confirmDuplicateListing()}
+          onCancel={() => setDuplicateConfirmProperty(null)}
+        />
 
         {stripeRequiredModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

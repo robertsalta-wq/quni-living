@@ -8,6 +8,10 @@ import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripe
 import PageHeroBand from '../components/PageHeroBand'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
+import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
+import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
+import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
+import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
@@ -206,19 +210,6 @@ function ProfileCompletionSummary({
   )
 }
 
-function statusBadgeClass(status: PropertyPick['status']) {
-  switch (status) {
-    case 'active':
-      return 'bg-emerald-100 text-emerald-800'
-    case 'inactive':
-      return 'bg-gray-100 text-gray-700'
-    case 'pending':
-      return 'bg-amber-100 text-amber-900'
-    default:
-      return 'bg-gray-100 text-gray-700'
-  }
-}
-
 type LandlordTab = 'profile' | 'properties'
 
 export default function LandlordProfile() {
@@ -335,6 +326,30 @@ export default function LandlordProfile() {
       if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
     }
   }, [])
+
+  const flashListingToast = useCallback((t: { kind: 'success' | 'error'; message: string }) => {
+    if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
+    setToast(t)
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null)
+      toastTimerRef.current = null
+    }, 4000)
+  }, [])
+
+  const {
+    publishingListingId,
+    duplicatingListingId,
+    updatingListingId,
+    duplicateConfirmProperty,
+    setDuplicateConfirmProperty,
+    publishDraftListing,
+    confirmDuplicateListing,
+    togglePropertyStatus,
+  } = useLandlordPropertyListingActions({
+    reload: load,
+    navigate,
+    showToast: flashListingToast,
+  })
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPhotoError(null)
@@ -534,47 +549,60 @@ export default function LandlordProfile() {
           <VerifiedLandlordBadge />
         </div>
       ) : null}
-      <div
-        className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
-        role="tablist"
-        aria-label="Landlord account sections"
-      >
-        <button
-          type="button"
-          role="tab"
-          id="tab-profile"
-          aria-selected={activeTab === 'profile'}
-          aria-controls="panel-profile"
-          tabIndex={0}
-          onClick={() => setActiveTab('profile')}
-          className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
-            activeTab === 'profile'
-              ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
-              : 'text-gray-600 hover:text-gray-900 border border-transparent'
-          }`}
-        >
-          Profile
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-properties"
-          aria-selected={activeTab === 'properties'}
-          aria-controls="panel-properties"
-          tabIndex={0}
-          onClick={() => setActiveTab('properties')}
-          className={`relative px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
-            activeTab === 'properties'
-              ? 'text-indigo-600 bg-white border border-gray-200 border-b-white -mb-px z-[1]'
-              : 'text-gray-600 hover:text-gray-900 border border-transparent'
-          }`}
-        >
-          Properties
-          {listings.length > 0 && (
-            <span className="ml-1.5 text-xs font-medium text-gray-500 tabular-nums">({listings.length})</span>
-          )}
-        </button>
+      <div className="border-b border-gray-200 mb-8">
+        <nav className="flex gap-1 -mb-px" role="tablist" aria-label="Landlord account sections">
+          <button
+            type="button"
+            role="tab"
+            id="tab-profile"
+            aria-selected={activeTab === 'profile'}
+            aria-controls="panel-profile"
+            tabIndex={0}
+            onClick={() => setActiveTab('profile')}
+            className={[
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+              activeTab === 'profile'
+                ? 'border-indigo-600 text-indigo-700 bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+            ].join(' ')}
+          >
+            Profile
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-properties"
+            aria-selected={activeTab === 'properties'}
+            aria-controls="panel-properties"
+            tabIndex={0}
+            onClick={() => setActiveTab('properties')}
+            className={[
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+              activeTab === 'properties'
+                ? 'border-indigo-600 text-indigo-700 bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+            ].join(' ')}
+          >
+            Properties
+            {listings.length > 0 && (
+              <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                {listings.length}
+              </span>
+            )}
+          </button>
+        </nav>
       </div>
+
+      {toast && (
+        <div
+          className={`mb-6 rounded-lg px-4 py-3 text-sm font-semibold text-white ${
+            toast.kind === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+          }`}
+          role={toast.kind === 'success' ? 'status' : 'alert'}
+        >
+          {toast.message}
+        </div>
+      )}
 
       <div
         id="panel-profile"
@@ -922,16 +950,6 @@ export default function LandlordProfile() {
           {saveError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{saveError}</div>
           )}
-          {toast && (
-            <div
-              className={`rounded-lg px-4 py-3 text-sm font-semibold text-white ${
-                toast.kind === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-              }`}
-              role={toast.kind === 'success' ? 'status' : 'alert'}
-            >
-              {toast.message}
-            </div>
-          )}
 
           <button
             type="submit"
@@ -1013,19 +1031,20 @@ export default function LandlordProfile() {
                         </p>
                       </div>
                       <span
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize shrink-0 ${statusBadgeClass(p.status)}`}
+                        className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ${listingStatusClass(p.status)}`}
                       >
-                        {p.status}
+                        {listingStatusLabel(p.status)}
                       </span>
                     </div>
-                    <div className="mt-auto pt-4 flex flex-wrap gap-3">
-                      <Link
-                        to={`/properties/${p.slug}`}
-                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                      >
-                        Edit
-                      </Link>
-                    </div>
+                    <LandlordPropertyListingActions
+                      property={p}
+                      publishingListingId={publishingListingId}
+                      duplicatingListingId={duplicatingListingId}
+                      updatingListingId={updatingListingId}
+                      onPublish={publishDraftListing}
+                      onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
+                      onToggle={togglePropertyStatus}
+                    />
                   </div>
                 </li>
               )
@@ -1034,6 +1053,13 @@ export default function LandlordProfile() {
         )}
       </section>
       </div>
+
+      <LandlordDuplicateListingModal
+        open={duplicateConfirmProperty != null}
+        duplicatingListingId={duplicatingListingId}
+        onConfirm={() => void confirmDuplicateListing()}
+        onCancel={() => setDuplicateConfirmProperty(null)}
+      />
       </div>
     </div>
   )
