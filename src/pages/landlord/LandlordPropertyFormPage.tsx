@@ -1836,7 +1836,7 @@ export default function LandlordPropertyFormPage() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <label htmlFor="pf-suburb" className={labelClass}>
                     Suburb
                   </label>
@@ -1864,20 +1864,20 @@ export default function LandlordPropertyFormPage() {
                     className={inputClass}
                   />
                 </div>
-              </div>
-              <div>
-                <label htmlFor="pf-pc" className={labelClass}>
-                  Postcode
-                </label>
-                <input
-                  id="pf-pc"
-                  value={postcode}
-                  onChange={(e) => {
-                    addressDirtyRef.current = true
-                    setPostcode(e.target.value)
-                  }}
-                  className={inputClass}
-                />
+                <div className="sm:col-span-2">
+                  <label htmlFor="pf-pc" className={labelClass}>
+                    Postcode
+                  </label>
+                  <input
+                    id="pf-pc"
+                    value={postcode}
+                    onChange={(e) => {
+                      addressDirtyRef.current = true
+                      setPostcode(e.target.value)
+                    }}
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div>
                 <span className={labelClass}>Nearest university campus</span>
