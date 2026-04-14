@@ -230,6 +230,15 @@ export default function Header() {
                 </button>
                 {menuOpen && (
                   <div className="absolute right-0 mt-2 w-52 rounded-xl border border-gray-100 bg-white py-1 shadow-lg z-50">
+                    {showDashboardInAuth ? (
+                      <Link
+                        to={getNavDashboardPath(role, profile)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                    ) : null}
                     {role === 'admin' ? (
                       <Link
                         to="/admin"
