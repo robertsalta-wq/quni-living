@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
+import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
@@ -113,7 +114,7 @@ export default function Header() {
 
   return (
     <header className="pt-safe-top w-full shrink-0 bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
-      <div ref={mobileNavRootRef} className="max-w-site mx-auto w-full px-3 py-4 sm:px-6">
+      <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
         <div className="flex items-center justify-between gap-3">
         <SiteBrandLockup />
 

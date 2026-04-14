@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import AiSparkleIcon from './AiSparkleIcon'
 
 function IconLocation(props: { className?: string }) {
@@ -63,7 +64,7 @@ const linkClass =
 export default function Footer() {
   return (
     <footer className="bg-[#FF7261] text-[#333] font-footer mt-auto">
-      <div className="max-w-site mx-auto px-6 py-14 md:py-16">
+      <div className={`${SITE_CONTENT_MAX_CLASS} py-14 md:py-16`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex items-center gap-2.5">
