@@ -24,7 +24,7 @@ import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import {
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
-} from '../src/lib/tenancy/resolveTenancyPackage'
+} from './lib/resolveTenancyPackage.js'
 
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }

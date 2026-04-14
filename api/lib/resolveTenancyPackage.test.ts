@@ -4,7 +4,7 @@ import {
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
   type TenancyPackageInput,
-} from './resolveTenancyPackage'
+} from './resolveTenancyPackage.js'
 
 function pkg(p: TenancyPackageInput) {
   return resolveTenancyPackage(p)
