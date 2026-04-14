@@ -910,7 +910,7 @@ export default function QaseTicketDetail() {
           <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-stretch lg:gap-8">
             {/* Thread column: scrollable messages + pinned reply */}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="min-h-0 max-h-[55vh] flex-1 space-y-4 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-14rem)]">
+              <div className="min-h-0 max-h-[55vh] space-y-4 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-14rem)]">
                 {(ticket.messages ?? []).length === 0 ? (
                   <p className="py-6 text-sm text-gray-500">No messages yet.</p>
                 ) : (
