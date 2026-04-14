@@ -1461,7 +1461,7 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 -mx-3 sm:-mx-6 bg-[#d4e9e2] px-0 py-2 sm:px-6"
+            className="sticky top-16 z-10 sm:-mx-6 bg-[#d4e9e2] px-0 py-2 sm:px-6"
             aria-label="Jump to section"
           >
             <div className="grid w-full grid-cols-4 gap-1 sm:flex sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
