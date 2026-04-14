@@ -1406,7 +1406,7 @@ export default function LandlordPropertyFormPage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-clip bg-[#d4e9e2] pb-16">
       <div className="mx-auto w-full min-w-0 max-w-[1200px] px-0 py-4 sm:px-6 sm:py-8">
-        <div className="mb-8">
+        <div className="px-3 mb-3">
           <Link
             to="/landlord-dashboard"
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2 inline-block"
@@ -1416,11 +1416,9 @@ export default function LandlordPropertyFormPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                {isEdit ? 'Edit listing' : 'New listing'}
+                {isEdit ? 'Edit your listing' : 'New listing'}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                {isEdit ? 'Update your property details and photos.' : 'Create a new property on Quni.'}
-              </p>
+              {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
             </div>
             {!isEdit && draftSavedVisible && (
               <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
