@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string
   /** Sentry browser SDK DSN (optional in dev) */
   readonly VITE_SENTRY_DSN?: string
+  /** AES key for encrypting vendor credentials in admin (Apps modal) before Supabase update */
+  readonly VITE_CREDENTIALS_ENC_KEY?: string
 }
 
 interface ImportMeta {

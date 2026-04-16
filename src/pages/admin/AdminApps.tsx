@@ -4,6 +4,23 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import type { Database } from '../../lib/database.types'
+import CryptoJS from 'crypto-js'
+
+const ENC_KEY = import.meta.env.VITE_CREDENTIALS_ENC_KEY ?? 'dev-key-change-me'
+
+function encryptPassword(plain: string): string {
+  if (!plain) return ''
+  return CryptoJS.AES.encrypt(plain, ENC_KEY).toString()
+}
+
+function decryptPassword(cipher: string): string {
+  if (!cipher) return ''
+  try {
+    return CryptoJS.AES.decrypt(cipher, ENC_KEY).toString(CryptoJS.enc.Utf8)
+  } catch {
+    return ''
+  }
+}
 
 type HealthResult = {
   service: string
@@ -584,6 +601,36 @@ function PencilIcon({ className }: { className?: string }) {
   )
 }
 
+function EyeShowPasswordIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
+function EyeHidePasswordIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="m1 1 22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function VendorEditModal({
   row,
   onClose,
@@ -593,13 +640,29 @@ function VendorEditModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const [tab, setTab] = useState<'subscription' | 'credentials'>('subscription')
   const [planName, setPlanName] = useState(row.plan_name ?? '')
   const [amount, setAmount] = useState(String(parseAmount(row.amount)))
   const [currency, setCurrency] = useState<'AUD' | 'USD'>(row.currency)
   const [cadence, setCadence] = useState<VendorRow['cadence']>(row.cadence)
   const [billingHref, setBillingHref] = useState(row.billing_href ?? '')
+  const [accountEmail, setAccountEmail] = useState(row.account_email ?? '')
+  const [accountEntity, setAccountEntity] = useState(row.account_entity ?? '')
+  const [plainPassword, setPlainPassword] = useState(decryptPassword(row.encrypted_password ?? ''))
+  const [showPassword, setShowPassword] = useState(false)
+  const [twofaEnabled, setTwofaEnabled] = useState(row.twofa_enabled ?? false)
+  const [twofaMethod, setTwofaMethod] = useState(row.twofa_method ?? '')
+  const [recoveryLocation, setRecoveryLocation] = useState(row.recovery_location ?? '')
+  const [apiKeyNotes, setApiKeyNotes] = useState(row.api_key_notes ?? '')
+  const [connectedTo, setConnectedTo] = useState(row.connected_to ?? '')
+  const [credNotes, setCredNotes] = useState(row.cred_notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const modalTabBase =
+    'border-b-2 pb-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 rounded-t'
+  const modalTabInactive = `${modalTabBase} border-transparent text-gray-500 hover:text-gray-800`
+  const modalTabActive = `${modalTabBase} border-indigo-600 text-indigo-600`
 
   const handleSave = async () => {
     setSaving(true)
@@ -611,6 +674,15 @@ function VendorEditModal({
       currency,
       cadence,
       billing_href: billingHref.trim() || null,
+      account_email: accountEmail.trim() || null,
+      account_entity: (accountEntity || null) as VendorRow['account_entity'],
+      encrypted_password: plainPassword ? encryptPassword(plainPassword) : null,
+      twofa_enabled: twofaEnabled,
+      twofa_method: twofaMethod.trim() || null,
+      recovery_location: recoveryLocation.trim() || null,
+      api_key_notes: apiKeyNotes.trim() || null,
+      connected_to: connectedTo.trim() || null,
+      cred_notes: credNotes.trim() || null,
     }
     const { error: upErr } = await supabase.from('admin_vendor_subscriptions').update(payload).eq('id', row.id)
     setSaving(false)
@@ -630,69 +702,199 @@ function VendorEditModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-gray-100 relative z-10"
+        className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border border-gray-100 relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-gray-900">Edit subscription — {row.title}</h2>
         <p className="text-sm text-gray-500 mt-1">Dashboard link and title are fixed in the database (run a SQL migration to change them).</p>
 
-        <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Plan name</span>
-            <input
-              type="text"
-              value={planName}
-              onChange={(e) => setPlanName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</span>
-            <input
-              type="number"
-              step="any"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mt-4 border-b border-gray-200 flex gap-6" role="tablist" aria-label="Edit vendor sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'subscription'}
+            className={tab === 'subscription' ? modalTabActive : modalTabInactive}
+            onClick={() => setTab('subscription')}
+          >
+            Subscription
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'credentials'}
+            className={tab === 'credentials' ? modalTabActive : modalTabInactive}
+            onClick={() => setTab('credentials')}
+          >
+            Credentials
+          </button>
+        </div>
+
+        {tab === 'subscription' ? (
+          <div className="mt-4 space-y-3">
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Currency</span>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as 'AUD' | 'USD')}
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Plan name</span>
+              <input
+                type="text"
+                value={planName}
+                onChange={(e) => setPlanName(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              >
-                <option value="AUD">AUD</option>
-                <option value="USD">USD</option>
-              </select>
+              />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Cadence</span>
-              <select
-                value={cadence}
-                onChange={(e) => setCadence(e.target.value as VendorRow['cadence'])}
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</span>
+              <input
+                type="number"
+                step="any"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-                <option value="usage">Usage (typical month)</option>
-                <option value="free">Free</option>
-              </select>
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Currency</span>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as 'AUD' | 'USD')}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                >
+                  <option value="AUD">AUD</option>
+                  <option value="USD">USD</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Cadence</span>
+                <select
+                  value={cadence}
+                  onChange={(e) => setCadence(e.target.value as VendorRow['cadence'])}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                  <option value="usage">Usage (typical month)</option>
+                  <option value="free">Free</option>
+                </select>
+              </label>
+            </div>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Billing / invoices URL</span>
+              <input
+                type="url"
+                value={billingHref}
+                onChange={(e) => setBillingHref(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                placeholder="https://"
+              />
             </label>
           </div>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Billing / invoices URL</span>
-            <input
-              type="url"
-              value={billingHref}
-              onChange={(e) => setBillingHref(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              placeholder="https://"
-            />
-          </label>
-        </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account email</span>
+              <input
+                type="email"
+                value={accountEmail}
+                onChange={(e) => setAccountEmail(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Password</span>
+              <div className="relative mt-1">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={plainPassword}
+                  onChange={(e) => setPlainPassword(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 pl-3 pr-11 py-2 text-sm"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeHidePasswordIcon className="shrink-0" /> : <EyeShowPasswordIcon className="shrink-0" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Encrypted before saving. Never stored in plain text.</p>
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Entity</span>
+              <select
+                value={accountEntity}
+                onChange={(e) => setAccountEntity(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              >
+                <option value="">—</option>
+                <option value="quni">Quni Living</option>
+                <option value="4logistics">4Logistics</option>
+                <option value="personal">Personal</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={twofaEnabled}
+                onChange={(e) => setTwofaEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm font-medium text-gray-800">2FA enabled</span>
+            </label>
+            {twofaEnabled ? (
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">2FA method</span>
+                <input
+                  type="text"
+                  value={twofaMethod}
+                  onChange={(e) => setTwofaMethod(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  placeholder="e.g. Authenticator app, SMS"
+                />
+              </label>
+            ) : null}
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recovery codes location</span>
+              <input
+                type="text"
+                value={recoveryLocation}
+                onChange={(e) => setRecoveryLocation(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                placeholder="e.g. stored in 1Password under Quni vault"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">API key notes</span>
+              <textarea
+                value={apiKeyNotes}
+                onChange={(e) => setApiKeyNotes(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y min-h-[4.5rem]"
+                placeholder="List key names and where actual values are stored — do not paste keys here"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Connected to</span>
+              <input
+                type="text"
+                value={connectedTo}
+                onChange={(e) => setConnectedTo(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                placeholder="e.g. Vercel, GitHub, Resend"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Notes</span>
+              <textarea
+                value={credNotes}
+                onChange={(e) => setCredNotes(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y min-h-[4.5rem]"
+                placeholder="Anything else — org name, team members, special config"
+              />
+            </label>
+          </div>
+        )}
 
         {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
 

@@ -200,6 +200,15 @@ export interface Database {
           cadence: 'monthly' | 'yearly' | 'usage' | 'free'
           logo_src: string | null
           is_active: boolean
+          account_email: string | null
+          account_entity: 'quni' | '4logistics' | 'personal' | null
+          encrypted_password: string | null
+          twofa_enabled: boolean | null
+          twofa_method: string | null
+          recovery_location: string | null
+          api_key_notes: string | null
+          connected_to: string | null
+          cred_notes: string | null
           created_at: string
           updated_at: string
         }
@@ -215,6 +224,15 @@ export interface Database {
           cadence?: 'monthly' | 'yearly' | 'usage' | 'free'
           logo_src?: string | null
           is_active?: boolean
+          account_email?: string | null
+          account_entity?: 'quni' | '4logistics' | 'personal' | null
+          encrypted_password?: string | null
+          twofa_enabled?: boolean | null
+          twofa_method?: string | null
+          recovery_location?: string | null
+          api_key_notes?: string | null
+          connected_to?: string | null
+          cred_notes?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -230,6 +248,15 @@ export interface Database {
           cadence?: 'monthly' | 'yearly' | 'usage' | 'free'
           logo_src?: string | null
           is_active?: boolean
+          account_email?: string | null
+          account_entity?: 'quni' | '4logistics' | 'personal' | null
+          encrypted_password?: string | null
+          twofa_enabled?: boolean | null
+          twofa_method?: string | null
+          recovery_location?: string | null
+          api_key_notes?: string | null
+          connected_to?: string | null
+          cred_notes?: string | null
           created_at?: string
           updated_at?: string
         }
