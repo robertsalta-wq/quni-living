@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { adminCardClass, adminTableWrapClass, adminThClass, adminTdClass } from './adminUi'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
@@ -580,6 +580,30 @@ function FirebaseAppCard({ linkClass, healthResults }: { linkClass: string; heal
   )
 }
 
+function KeyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="7.5" cy="15.5" r="5.5" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="m21 2-9.6 9.6M15.5 7.5h3v3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
 function PencilIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -937,6 +961,53 @@ export default function AdminApps() {
   const [opsRows, setOpsRows] = useState<OperationalStatusRow[]>([])
   const [opsLoading, setOpsLoading] = useState(false)
   const [statusClock, setStatusClock] = useState(() => Date.now())
+  const [toast, setToast] = useState<string | null>(null)
+  const toastClearRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [credentialsPopoverId, setCredentialsPopoverId] = useState<string | null>(null)
+  const credentialsPopoverRef = useRef<HTMLDivElement | null>(null)
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    if (toastClearRef.current) clearTimeout(toastClearRef.current)
+    toastClearRef.current = setTimeout(() => {
+      setToast(null)
+      toastClearRef.current = null
+    }, 2500)
+  }, [])
+
+  useEffect(() => {
+    if (!credentialsPopoverId) return
+    const onDown = (e: MouseEvent) => {
+      if (credentialsPopoverRef.current && !credentialsPopoverRef.current.contains(e.target as Node)) {
+        setCredentialsPopoverId(null)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [credentialsPopoverId])
+
+  useEffect(() => {
+    return () => {
+      if (toastClearRef.current) clearTimeout(toastClearRef.current)
+    }
+  }, [])
+
+  const openVendorDashboard = useCallback(
+    (row: VendorRow) => {
+      const href = row.href?.trim()
+      if (!href) return
+      const enc = row.encrypted_password?.trim()
+      if (enc) {
+        const plain = decryptPassword(enc)
+        if (plain) {
+          void navigator.clipboard.writeText(plain)
+          showToast('Password copied to clipboard')
+        }
+      }
+      window.open(href, '_blank', 'noopener,noreferrer')
+    },
+    [showToast],
+  )
 
   const loadIncidents = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -1221,6 +1292,10 @@ export default function AdminApps() {
                 const sub = rowToSubscription(row)
                 const billingHref = sub.billingHref?.trim()
 
+                const emailTrim = row.account_email?.trim() ?? ''
+                const hasStoredPassword = Boolean(row.encrypted_password?.trim())
+                const plainForPopover = hasStoredPassword ? decryptPassword(row.encrypted_password ?? '') : ''
+
                 return (
                   <div
                     key={row.id}
@@ -1235,14 +1310,109 @@ export default function AdminApps() {
                             <p className="font-semibold text-gray-900">{row.title}</p>
                             {row.subtitle ? <p className="text-sm text-gray-500 mt-1">{row.subtitle}</p> : null}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setEditing(row)}
-                            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                            aria-label={`Edit subscription for ${row.title}`}
+                          <div
+                            className="relative shrink-0 flex items-center gap-1"
+                            ref={credentialsPopoverId === row.id ? credentialsPopoverRef : undefined}
                           >
-                            <PencilIcon />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCredentialsPopoverId((prev) => (prev === row.id ? null : row.id))
+                              }
+                              className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              aria-label={`Credentials for ${row.title}`}
+                            >
+                              <KeyIcon />
+                            </button>
+                            {credentialsPopoverId === row.id ? (
+                              <div
+                                className="absolute right-0 top-full z-30 mt-1 w-72 max-w-[min(100vw-2rem,20rem)] rounded-xl border border-gray-100 bg-white p-3 text-sm text-gray-800 shadow-lg"
+                                role="dialog"
+                                aria-label={`Stored credentials for ${row.title}`}
+                              >
+                                <div className="space-y-3">
+                                  <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                      Account email
+                                    </p>
+                                    {emailTrim ? (
+                                      <div className="mt-1 flex items-center gap-2">
+                                        <span className="min-w-0 flex-1 break-all text-gray-900">{emailTrim}</span>
+                                        <button
+                                          type="button"
+                                          className="shrink-0 rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-indigo-600"
+                                          aria-label="Copy email"
+                                          onClick={() => {
+                                            void navigator.clipboard.writeText(emailTrim)
+                                            showToast('Email copied')
+                                          }}
+                                        >
+                                          <CopyIcon />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="mt-1 text-gray-500">No email recorded</p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                      Password
+                                    </p>
+                                    {hasStoredPassword ? (
+                                      <div className="mt-1 flex items-center gap-2">
+                                        <span className="min-w-0 flex-1 font-mono text-gray-900">••••••••</span>
+                                        {plainForPopover ? (
+                                          <button
+                                            type="button"
+                                            className="shrink-0 rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-indigo-600"
+                                            aria-label="Copy password"
+                                            onClick={() => {
+                                              void navigator.clipboard.writeText(plainForPopover)
+                                              showToast('Password copied')
+                                            }}
+                                          >
+                                            <CopyIcon />
+                                          </button>
+                                        ) : null}
+                                      </div>
+                                    ) : (
+                                      <p className="mt-1 text-gray-500">No password recorded</p>
+                                    )}
+                                  </div>
+                                  {row.account_entity ? (
+                                    <div>
+                                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                        Entity
+                                      </p>
+                                      <span
+                                        className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                          row.account_entity === 'quni'
+                                            ? 'bg-indigo-100 text-indigo-800'
+                                            : row.account_entity === '4logistics'
+                                              ? 'bg-blue-100 text-blue-800'
+                                              : 'bg-gray-100 text-gray-800'
+                                        }`}
+                                      >
+                                        {row.account_entity === 'quni'
+                                          ? 'Quni Living'
+                                          : row.account_entity === '4logistics'
+                                            ? '4Logistics'
+                                            : 'Personal'}
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => setEditing(row)}
+                              className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              aria-label={`Edit subscription for ${row.title}`}
+                            >
+                              <PencilIcon />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1253,9 +1423,13 @@ export default function AdminApps() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <a href={row.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                      <button
+                        type="button"
+                        className={linkClass}
+                        onClick={() => openVendorDashboard(row)}
+                      >
                         Open dashboard →
-                      </a>
+                      </button>
                       {billingHref ? (
                         <a href={billingHref} target="_blank" rel="noopener noreferrer" className={linkClass}>
                           Billing / invoices →
@@ -1390,6 +1564,15 @@ export default function AdminApps() {
 
       {editing ? (
         <VendorEditModal row={editing} onClose={() => setEditing(null)} onSaved={() => void load()} />
+      ) : null}
+
+      {toast ? (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-lg"
+        >
+          {toast}
+        </div>
       ) : null}
     </div>
   )
