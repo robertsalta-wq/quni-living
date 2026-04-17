@@ -12,6 +12,8 @@
   "include": [
     "api/**/*.ts",
     "api/**/*.tsx",
+    "src/lib/seoHelpers.ts",
+    "src/lib/warehousePrecincts.ts",
     "api/documents/OccupancyAgreement.js",
     "src/lib/database.types.ts",
     "src/lib/documents/OccupancyAgreement.tsx",
