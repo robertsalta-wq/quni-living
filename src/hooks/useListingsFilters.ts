@@ -14,7 +14,6 @@ const KEYS = [
   'campus',
   'campus_id',
   'suburb',
-  'state',
   'type',
   'price',
   'furnished',
@@ -84,8 +83,6 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
   }, [campusRaw, campuses, university])
 
   const suburb = searchParams.get('suburb') ?? ''
-
-  const state = (searchParams.get('state') ?? '').trim().toUpperCase()
 
   const roomType = searchParams.get('type') ?? ''
   const priceFilter = searchParams.get('price') ?? ''
@@ -250,7 +247,6 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
       Boolean(university) ||
       Boolean(campus) ||
       Boolean(suburb.trim()) ||
-      Boolean(state) ||
       Boolean(roomType) ||
       Boolean(priceFilter) ||
       furnished ||
@@ -258,7 +254,7 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
       Boolean(moveOut) ||
       Boolean(lease)
     )
-  }, [qFromUrl, university, campus, suburb, state, roomType, priceFilter, furnished, moveIn, moveOut, lease])
+  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished, moveIn, moveOut, lease])
 
   const querySignature = useMemo(() => searchParams.toString(), [searchParams])
 
@@ -271,7 +267,6 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     campus,
     setCampus,
     suburb,
-    state,
     roomType,
     setRoomType,
     priceFilter,

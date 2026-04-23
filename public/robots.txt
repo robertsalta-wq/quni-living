@@ -1,4 +1,18 @@
+# If you use a custom domain, update the Sitemap URL to your canonical https origin
+# (should match VITE_SITE_URL in production).
+
 User-agent: *
 Allow: /
 
-Sitemap: https://project-warehouse-lovat.vercel.app/sitemap.xml
+Disallow: /admin
+Disallow: /student-dashboard
+Disallow: /student-profile
+Disallow: /student/profile
+Disallow: /landlord/dashboard
+Disallow: /landlord-profile
+Disallow: /landlord/property
+Disallow: /booking/
+Disallow: /onboarding
+Disallow: /auth/callback
+
+Sitemap: https://quni-living.vercel.app/api/sitemap.xml

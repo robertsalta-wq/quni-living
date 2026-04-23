@@ -1,22 +1,15 @@
 /**
- * Combined sitemap: core marketing URLs, warehousing SEO guides, Supabase-backed listings
- * and student-accommodation guides. Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, optional VITE_SITE_URL.
+ * Dynamic sitemap from Supabase (active listings, universities, campuses).
+ * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, optional VITE_SITE_URL (canonical origin).
  */
 import { createClient } from '@supabase/supabase-js'
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { STATE_SLUG_ORDER } from '../src/lib/seoHelpers.js'
-import { allWarehousingSuburbPaths } from '../src/lib/warehousePrecincts.js'
 
-const SITE_URL = (process.env.VITE_SITE_URL || 'https://project-warehouse-lovat.vercel.app').replace(/\/$/, '')
+const SITE_URL = (process.env.VITE_SITE_URL || 'https://quni-living.vercel.app').replace(
+  /\/$/,
+  ''
+)
 
-type SitemapUrl = {
-  url: string
-  priority: string
-  changefreq: string
-  lastmod?: string
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).end()
   }
@@ -48,20 +41,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .from('campuses')
     .select('id, name, university_id, universities(slug)')
 
-  const staticPages: SitemapUrl[] = [
+  const staticPages = [
     { url: '/', priority: '1.0', changefreq: 'daily' },
     { url: '/listings', priority: '0.9', changefreq: 'hourly' },
-    { url: '/warehousing', priority: '0.9', changefreq: 'daily' },
-    ...STATE_SLUG_ORDER.map((slug) => ({
-      url: `/warehousing/${slug}`,
-      priority: '0.85',
-      changefreq: 'weekly',
-    })),
-    ...allWarehousingSuburbPaths().map((path) => ({
-      url: path,
-      priority: '0.8',
-      changefreq: 'weekly',
-    })),
     { url: '/about', priority: '0.6', changefreq: 'monthly' },
     { url: '/pricing', priority: '0.6', changefreq: 'monthly' },
     { url: '/contact', priority: '0.5', changefreq: 'monthly' },
@@ -89,8 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const campusUrls = (campuses || [])
     .map((c) => {
-      const uniRel = c.universities as { slug?: string } | { slug?: string }[] | null | undefined
-      const uniSlug = Array.isArray(uniRel) ? uniRel[0]?.slug : uniRel?.slug
+      const uniSlug = c.universities?.slug
       if (!uniSlug || !c.name) return null
       const campusSlug = slugify(c.name)
       if (!campusSlug) return null
@@ -100,20 +81,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         changefreq: 'weekly',
       }
     })
-    .filter(Boolean) as SitemapUrl[]
+    .filter(Boolean)
 
-  const allUrls: SitemapUrl[] = [...staticPages, ...propertyUrls, ...universityUrls, ...campusUrls]
+  const allUrls = [...staticPages, ...propertyUrls, ...universityUrls, ...campusUrls]
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allUrls
   .map(
-    (page: SitemapUrl) => `  <url>
+    (page) => `  <url>
     <loc>${escapeXml(`${SITE_URL}${page.url}`)}</loc>
-    ${'lastmod' in page && page.lastmod ? `<lastmod>${escapeXml(page.lastmod)}</lastmod>` : ''}
+    ${page.lastmod ? `<lastmod>${escapeXml(page.lastmod)}</lastmod>` : ''}
     <changefreq>${escapeXml(page.changefreq)}</changefreq>
     <priority>${escapeXml(page.priority)}</priority>
-  </url>`,
+  </url>`
   )
   .join('\n')}
 </urlset>`
@@ -123,14 +104,14 @@ ${allUrls
   res.status(200).send(sitemap)
 }
 
-function slugify(text: string) {
+function slugify(text) {
   return String(text)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
 }
 
-function escapeXml(s: string) {
+function escapeXml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

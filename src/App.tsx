@@ -60,9 +60,6 @@ import LandlordOnboarding from './pages/onboarding/LandlordOnboarding'
 import StudentAccommodationIndex from './pages/seo/StudentAccommodationIndex'
 import UniversityAccommodation from './pages/seo/UniversityAccommodation'
 import CampusAccommodation from './pages/seo/CampusAccommodation'
-import WarehouseIndex from './pages/seo/WarehouseIndex'
-import StateWarehouse from './pages/seo/StateWarehouse'
-import SuburbWarehouse from './pages/seo/SuburbWarehouse'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
@@ -106,10 +103,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/rent-near-campus" element={<RentNearCampus />} />
           <Route path="/listings" element={<Listings />} />
-          <Route path="/warehousing" element={<WarehouseIndex />} />
-          <Route path="/warehousing/:stateSlug" element={<StateWarehouse />} />
-          <Route path="/warehousing/:stateSlug/:suburbSlug" element={<SuburbWarehouse />} />
-          <Route path="/dashboard" element={<Navigate to="/landlord/dashboard" replace />} />
           <Route path="/student-accommodation" element={<StudentAccommodationIndex />} />
           <Route path="/student-accommodation/:universitySlug" element={<UniversityAccommodation />} />
           <Route

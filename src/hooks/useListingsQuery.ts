@@ -16,8 +16,6 @@ export type ListingsQueryFilters = {
   university: string
   campus: string
   suburb: string
-  /** Australian state or territory abbreviation, e.g. NSW (from `?state=`). */
-  state: string
   roomType: string
   priceFilter: string
   furnished: boolean
@@ -100,11 +98,6 @@ export function useListingsQuery(
         if (sub.length > 0) {
           const safe = escapeIlikePattern(sub)
           query = query.ilike('suburb', safe)
-        }
-
-        const st = f.state.trim()
-        if (st.length > 0) {
-          query = query.eq('state', st)
         }
 
         if (f.roomType && isRoomType(f.roomType)) {

@@ -6,15 +6,6 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        brand: {
-          black: '#0d1110',
-        },
-        teal: {
-          light: '#9dd9cf',
-          dark: '#2d5a52',
-        },
-      },
       maxWidth: {
         /**
          * App content width cap (listings, property detail, header alignment).
