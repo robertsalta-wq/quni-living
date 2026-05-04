@@ -8,12 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
-import {
-  isBoardingLodgerBondContext,
-  isPropertyListingType,
-  PROPERTY_LISTING_TYPE_LABELS,
-  type PropertyListingType,
-} from '../lib/listings'
+import { isPropertyListingType, PROPERTY_LISTING_TYPE_LABELS, type PropertyListingType } from '../lib/listings'
 import type { Database } from '../lib/database.types'
 import {
   getStripePublishableKey,
@@ -1299,9 +1294,6 @@ export default function Booking() {
     property.property_type && isPropertyListingType(property.property_type)
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
-  /** Fallback when resolver does not cover state (e.g. QLD) — preserves legacy bond UI */
-  const legacyBoardingLodgerBondCopy = isBoardingLodgerBondContext(property.property_type, property.listing_type)
-  const legacyBondAuthorityName = bondAuthorityBody(property.state)
 
   const bondAmountAud =
     property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
@@ -1686,17 +1678,9 @@ export default function Booking() {
                   </div>
                 </>
               )
-            ) : legacyBoardingLodgerBondCopy ? (
-              <>
-                <p>
-                  As this is a boarding/lodger arrangement, the Residential Tenancies Act does not apply. Your bond is held
-                  directly by your landlord and is not required to be lodged with NSW Fair Trading.
-                </p>
-                <p>We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.</p>
-                <p>Your landlord can generate an official bond receipt through their Quni Living dashboard.</p>
-              </>
             ) : (
               <>
+                {/* Resolver unsupported or T3 deferred — no structured rules; generic scheme-style guidance only */}
                 <p>
                   Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
                   <strong>10 business days</strong>.
@@ -1705,7 +1689,7 @@ export default function Booking() {
                   <p className="font-semibold text-gray-900">
                     {(property.state ?? 'NSW').toUpperCase()} — state bond authority
                   </p>
-                  <p className="mt-1">{legacyBondAuthorityName}</p>
+                  <p className="mt-1">{bondAuthorityBody(property.state)}</p>
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
                   <p className="font-semibold">Always get a receipt when you pay your bond.</p>
@@ -1733,10 +1717,6 @@ export default function Booking() {
             <span className="text-sm text-gray-800">
               {bondRegulatoryCopy ? (
                 bondRegulatoryCopy.acknowledgementCheckbox
-              ) : legacyBoardingLodgerBondCopy ? (
-                <>
-                  I understand the bond is paid directly to my landlord and will not be lodged with NSW Fair Trading.
-                </>
               ) : (
                 <>
                   I understand the bond is paid directly to my landlord and must be lodged with the relevant state

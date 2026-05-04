@@ -139,6 +139,53 @@ describe('resolveTenancyPackage', () => {
     })
   })
 
+  describe('truth table — QLD', () => {
+    it('T1 private_room_landlord_on_site → qld-occupancy, bond scheme on (RTA)', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+      })
+      expect(r.supported).toBe(true)
+      expect(r.tier).toBe('T1')
+      expect(r.generator).toBe('qld-occupancy')
+      expect(r.pdfKind).toBe('occupancy_agreement')
+      expect(r.rules.bond.schemeApplies).toBe(true)
+      expect(r.rules.bond.authorityPublicLabel).toBe('Residential Tenancies Authority (RTA)')
+      expect(r.rules.bond.lodgementDays).toBe(10)
+      expect(r.storagePaths).toBeNull()
+      expect(r.ragState).toBe('QLD')
+      expect(r.unsupportedReason).toBeNull()
+    })
+
+    it('T2 private_room_landlord_off_site → qld-form18a', () => {
+      const r = pkg({
+        state: 'qld',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+      })
+      expect(r.supported).toBe(true)
+      expect(r.tier).toBe('T2')
+      expect(r.generator).toBe('qld-form18a')
+      expect(r.rules.bond.schemeApplies).toBe(true)
+      expect(r.rules.bond.authority).toContain('RTA')
+    })
+
+    it('T3 off_site + rooming house → deferred', () => {
+      const r = pkg({
+        state: 'QLD',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: true,
+      })
+      expect(r.supported).toBe(false)
+      expect(r.tier).toBe('T3')
+      expect(r.generator).toBeNull()
+      expect(r.rules).toBeNull()
+      expect(r.unsupportedReason).toMatch(/not available/i)
+      expect(r.ragState).toBe('QLD')
+    })
+  })
+
   describe('fallbacks', () => {
     it('unknown property_type', () => {
       const r = pkg({
@@ -160,7 +207,7 @@ describe('resolveTenancyPackage', () => {
 
     it('unsupported state', () => {
       const r = pkg({
-        state: 'QLD',
+        state: 'SA',
         property_type: 'entire_property',
         is_registered_rooming_house: false,
       })
@@ -198,6 +245,8 @@ describe('tenancyGeneratorToApiPath', () => {
     expect(tenancyGeneratorToApiPath('nsw-ft6600')).toBe('/api/documents/generate-residential-tenancy')
     expect(tenancyGeneratorToApiPath('nsw-occupancy')).toBe('/api/documents/generate-lease')
     expect(tenancyGeneratorToApiPath('vic-form1')).toBeNull()
+    expect(tenancyGeneratorToApiPath('qld-occupancy')).toBeNull()
+    expect(tenancyGeneratorToApiPath('qld-form18a')).toBeNull()
     expect(tenancyGeneratorToApiPath(null)).toBeNull()
   })
 })

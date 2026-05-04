@@ -95,7 +95,43 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
       is_registered_rooming_house: true,
     },
   },
-  ...(['QLD', 'SA', 'WA', 'ACT', 'NT', 'TAS'] as const).map((st) => ({
+  {
+    id: 'qld-t1',
+    columnLabel: 'Tier 1',
+    rowLabel: 'QLD',
+    section: 'supported',
+    intent: 'Hosted room / boarder-lodger style (on-site landlord)',
+    input: {
+      state: 'QLD',
+      property_type: 'private_room_landlord_on_site',
+      is_registered_rooming_house: false,
+    },
+  },
+  {
+    id: 'qld-t2',
+    columnLabel: 'Tier 2',
+    rowLabel: 'QLD',
+    section: 'supported',
+    intent: 'Residential tenancy–style (off-site / entire / shared)',
+    input: {
+      state: 'QLD',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: false,
+    },
+  },
+  {
+    id: 'qld-t3',
+    columnLabel: 'Tier 3',
+    rowLabel: 'QLD',
+    section: 'supported',
+    intent: 'Registered rooming house — deferred',
+    input: {
+      state: 'QLD',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: true,
+    },
+  },
+  ...(['SA', 'WA', 'ACT', 'NT', 'TAS'] as const).map((st) => ({
     id: `${st.toLowerCase()}-probe`,
     columnLabel: st,
     rowLabel: 'Unsupported',
@@ -166,6 +202,7 @@ export default function AdminStateWorkflows() {
 
   const nswRow = supportedCells.filter((c) => c.scenario.rowLabel === 'NSW')
   const vicRow = supportedCells.filter((c) => c.scenario.rowLabel === 'VIC')
+  const qldRow = supportedCells.filter((c) => c.scenario.rowLabel === 'QLD')
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -200,7 +237,7 @@ export default function AdminStateWorkflows() {
               </tr>
             </thead>
             <tbody>
-              {[nswRow, vicRow].map((rowCells) => {
+              {[nswRow, vicRow, qldRow].map((rowCells) => {
                 const stateLabel = rowCells[0]?.scenario.rowLabel ?? ''
                 return (
                   <tr key={stateLabel} className="border-b border-gray-50 align-top">

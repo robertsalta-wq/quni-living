@@ -4,13 +4,14 @@
  */
 import type { TenancyRules } from './tenancy/rules/types.js'
 import { nswTenancyRules } from './tenancy/rules/nsw.js'
+import { qldTenancyRules } from './tenancy/rules/qld.js'
 import { vicTenancyRules } from './tenancy/rules/vic.js'
 
 export type TenancyTier = 'T1' | 'T2' | 'T3'
 
-export type SupportedJurisdictionState = 'NSW' | 'VIC'
+export type SupportedJurisdictionState = 'NSW' | 'VIC' | 'QLD'
 
-export type RagState = 'NSW' | 'VIC' | null
+export type RagState = 'NSW' | 'VIC' | 'QLD' | null
 
 export interface TenancyPackageInput {
   /** Australian state code (e.g. properties.state) */
@@ -105,7 +106,7 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   const propertyType = typeof input.property_type === 'string' ? input.property_type.trim() : ''
   const isRooming = Boolean(input.is_registered_rooming_house)
 
-  if (stateRaw !== 'NSW' && stateRaw !== 'VIC') {
+  if (stateRaw !== 'NSW' && stateRaw !== 'VIC' && stateRaw !== 'QLD') {
     return unsupportedBase('T2', 'unsupported_state', null)
   }
 
@@ -153,6 +154,20 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         unsupportedReason: null,
       }
     }
+    if (state === 'QLD') {
+      const rules = qldTenancyRules('T1')
+      return {
+        tier: 'T1',
+        supported: true,
+        generator: 'qld-occupancy',
+        pdfKind: 'occupancy_agreement',
+        rules,
+        signingPackageName: 'QLD occupancy agreement',
+        storagePaths: null,
+        ragState,
+        unsupportedReason: null,
+      }
+    }
     const rules = vicTenancyRules('T1')
     return {
       tier: 'T1',
@@ -187,6 +202,20 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         unsupportedReason: null,
       }
     }
+    if (state === 'QLD') {
+      const rules = qldTenancyRules('T2')
+      return {
+        tier: 'T2',
+        supported: true,
+        generator: 'qld-form18a',
+        pdfKind: 'residential_tenancy_agreement',
+        rules,
+        signingPackageName: 'QLD Form 18a — General Tenancy Agreement',
+        storagePaths: null,
+        ragState,
+        unsupportedReason: null,
+      }
+    }
     const rules = vicTenancyRules('T2')
     return {
       tier: 'T2',
@@ -208,5 +237,6 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
 export function tenancyGeneratorToApiPath(generator: string | null): string | null {
   if (generator === 'nsw-ft6600') return '/api/documents/generate-residential-tenancy'
   if (generator === 'nsw-occupancy') return '/api/documents/generate-lease'
+  if (generator === 'qld-occupancy' || generator === 'qld-form18a') return null
   return null
 }
