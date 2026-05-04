@@ -29,6 +29,7 @@ const NAV: AdminNavItem[] = [
   { to: '/admin/documents', label: 'Documents', end: false, icon: 'folder' },
   { to: '/admin/domains', label: 'Domains', end: false, icon: 'globe' },
   { to: '/admin/trust-checklist', label: 'Trust checklist', end: false, icon: 'checklist' },
+  { to: '/admin/state-workflows', label: 'State workflows', end: false },
 ]
 
 function ChecklistNavIcon() {
