@@ -22,8 +22,8 @@ describe('resolveTenancyPackage', () => {
       expect(r.tier).toBe('T1')
       expect(r.generator).toBe('nsw-occupancy')
       expect(r.pdfKind).toBe('occupancy_agreement')
-      expect(r.bondRules.schemeApplies).toBe(false)
-      expect(r.bondRules.authority).toBeNull()
+      expect(r.rules.bond.schemeApplies).toBe(false)
+      expect(r.rules.bond.authority).toBeNull()
       expect(r.storagePaths).toBeNull()
       expect(r.ragState).toBe('NSW')
       expect(r.unsupportedReason).toBeNull()
@@ -38,11 +38,11 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T2')
       expect(r.generator).toBe('nsw-ft6600')
-      expect(r.bondRules.schemeApplies).toBe(true)
-      expect(r.bondRules.authority).toBe('NSW Fair Trading')
-      expect(r.bondRules.maxBondMonths).toBe(1)
-      expect(r.bondRules.lodgementDays).toBe(10)
-      expect(r.bondRules.receiptDays).toBe(15)
+      expect(r.rules.bond.schemeApplies).toBe(true)
+      expect(r.rules.bond.authority).toBe('NSW Fair Trading')
+      expect(r.rules.bond.maxBondMonths).toBe(1)
+      expect(r.rules.bond.lodgementDays).toBe(10)
+      expect(r.rules.bond.receiptDays).toBe(15)
       expect(r.storagePaths?.draft).toBe('nsw_residential_tenancy_agreement_draft.pdf')
       expect(r.storagePaths?.signed).toBe('nsw_residential_tenancy_agreement_signed.pdf')
     })
@@ -56,7 +56,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T2')
       expect(r.generator).toBe('nsw-ft6600')
-      expect(r.bondRules.schemeApplies).toBe(true)
+      expect(r.rules.bond.schemeApplies).toBe(true)
     })
 
     it('T2 shared_room → nsw-ft6600', () => {
@@ -78,6 +78,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(false)
       expect(r.tier).toBe('T3')
       expect(r.generator).toBeNull()
+      expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toMatch(/not available/i)
     })
   })
@@ -92,8 +93,8 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T1')
       expect(r.generator).toBe('vic-form1')
-      expect(r.bondRules.schemeApplies).toBe(true)
-      expect(r.bondRules.authority).toBe('RTBA')
+      expect(r.rules.bond.schemeApplies).toBe(true)
+      expect(r.rules.bond.authority).toBe('RTBA')
       expect(r.storagePaths?.draft).toBe('vic_residential_rental_agreement_draft.pdf')
     })
 
@@ -106,7 +107,7 @@ describe('resolveTenancyPackage', () => {
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T2')
       expect(r.generator).toBe('vic-form1')
-      expect(r.bondRules.schemeApplies).toBe(true)
+      expect(r.rules.bond.schemeApplies).toBe(true)
     })
 
     it('T2 entire_property → vic-form1', () => {
@@ -146,12 +147,14 @@ describe('resolveTenancyPackage', () => {
         is_registered_rooming_house: false,
       })
       expect(r.supported).toBe(false)
+      expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toBe('unknown_property_type')
     })
 
     it('empty property_type', () => {
       const r = pkg({ state: 'NSW', property_type: '', is_registered_rooming_house: false })
       expect(r.supported).toBe(false)
+      expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toBe('unknown_property_type')
     })
 
@@ -162,6 +165,7 @@ describe('resolveTenancyPackage', () => {
         is_registered_rooming_house: false,
       })
       expect(r.supported).toBe(false)
+      expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toBe('unsupported_state')
       expect(r.ragState).toBeNull()
     })
@@ -173,8 +177,19 @@ describe('resolveTenancyPackage', () => {
         is_registered_rooming_house: true,
       })
       expect(r.supported).toBe(false)
+      expect(r.rules).toBeNull()
       expect(r.unsupportedReason).toContain('off-site')
     })
+  })
+
+  it('accepts optional date (ignored in v1)', () => {
+    const r = pkg({
+      state: 'NSW',
+      property_type: 'private_room_landlord_on_site',
+      is_registered_rooming_house: false,
+      date: '2026-06-01',
+    })
+    expect(r.supported).toBe(true)
   })
 })
 

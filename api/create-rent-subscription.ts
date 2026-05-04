@@ -240,6 +240,7 @@ export default async function handler(req, res) {
       state: tenancyState,
       property_type: tenancyPt,
       is_registered_rooming_house: tenancyRooming,
+      date: moveIn || undefined,
     })
     if (!tenancyPackage.supported) {
       console.error('[create-rent-subscription] unsupported tenancy package', {
@@ -604,7 +605,7 @@ export default async function handler(req, res) {
         weekly_rent: booking.weekly_rent,
         deposit_amount_cents: depositCents ?? undefined,
         bond_amount_cents:
-          tenancyPackage.bondRules.schemeApplies && bondCentsForEmail > 0
+          tenancyPackage.rules.bond.schemeApplies && bondCentsForEmail > 0
             ? bondCentsForEmail
             : undefined,
         bond_authority: bondAuthority,

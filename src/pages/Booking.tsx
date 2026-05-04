@@ -29,6 +29,8 @@ import {
   moveOutFromBookingLeaseLength,
 } from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
+import { bondStepRegulatoryCopy } from '../lib/tenancy/bondCopy'
+import { resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import {
   listingIsoDateUtc,
   normalizeListingBound,
@@ -1274,19 +1276,39 @@ export default function Booking() {
 
   const mainPhoto = (property.images ?? []).find((src) => Boolean(src?.trim())) ?? null
   const landlord = property.landlord_profiles
-  const bondAuthorityName = bondAuthorityBody(property.state)
+
+  const tenancyPackage = useMemo(
+    () =>
+      resolveTenancyPackage({
+        state: property.state ?? 'NSW',
+        property_type: property.property_type ?? '',
+        is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+        date: moveIn || undefined,
+      }),
+    [property.state, property.property_type, property.is_registered_rooming_house, moveIn],
+  )
+
+  const bondRegulatoryCopy = useMemo(() => {
+    if (tenancyPackage.supported) {
+      return bondStepRegulatoryCopy(tenancyPackage.rules.bond, property.state)
+    }
+    return null
+  }, [tenancyPackage, property.state])
+
   const listingTypeLabel =
     property.property_type && isPropertyListingType(property.property_type)
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
-  const boardingLodgerBondCopy = isBoardingLodgerBondContext(property.property_type, property.listing_type)
+  /** Fallback when resolver does not cover state (e.g. QLD) — preserves legacy bond UI */
+  const legacyBoardingLodgerBondCopy = isBoardingLodgerBondContext(property.property_type, property.listing_type)
+  const legacyBondAuthorityName = bondAuthorityBody(property.state)
 
   const bondAmountAud =
     property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
       ? Number(property.bond)
       : null
   const bondWeeksVsRent = bondAmountAud != null && rent > 0 ? bondAmountAud / rent : null
-  const showNswBondCapCopy = (property.state ?? 'NSW').toUpperCase() === 'NSW'
+  const showNswBondCapCopyLegacy = (property.state ?? 'NSW').toUpperCase() === 'NSW'
 
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
@@ -1630,13 +1652,41 @@ export default function Booking() {
                     </>
                   ) : null}
                   , payable directly to them before or on your move-in date.
-                  {showNswBondCapCopy ? <> Under NSW law, bond cannot exceed 4 weeks rent.</> : null}
+                  {bondRegulatoryCopy?.bondCapFragment ? (
+                    <>{bondRegulatoryCopy.bondCapFragment}</>
+                  ) : !bondRegulatoryCopy && showNswBondCapCopyLegacy ? (
+                    <> Under NSW law, bond cannot exceed 4 weeks rent.</>
+                  ) : null}
                 </>
               ) : (
                 <>No bond is required for this property.</>
               )}
             </p>
-            {boardingLodgerBondCopy ? (
+            {bondRegulatoryCopy ? (
+              bondRegulatoryCopy.mode === 'landlord_held' ? (
+                <>
+                  {bondRegulatoryCopy.landlordHeldParagraphs.map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <p>
+                    {bondRegulatoryCopy.schemeLeadBeforeBold}
+                    <strong>{bondRegulatoryCopy.schemeBoldDeadline}</strong>
+                    {bondRegulatoryCopy.schemeLeadAfterBold}
+                  </p>
+                  <div>
+                    <p className="font-semibold text-gray-900">{bondRegulatoryCopy.authorityStateHeading}</p>
+                    <p className="mt-1">{bondRegulatoryCopy.authorityPublicLine}</p>
+                  </div>
+                  <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
+                    <p className="font-semibold">{bondRegulatoryCopy.amberTitle}</p>
+                    <p className="mt-1">{bondRegulatoryCopy.amberBody}</p>
+                  </div>
+                </>
+              )
+            ) : legacyBoardingLodgerBondCopy ? (
               <>
                 <p>
                   As this is a boarding/lodger arrangement, the Residential Tenancies Act does not apply. Your bond is held
@@ -1655,7 +1705,7 @@ export default function Booking() {
                   <p className="font-semibold text-gray-900">
                     {(property.state ?? 'NSW').toUpperCase()} — state bond authority
                   </p>
-                  <p className="mt-1">{bondAuthorityName}</p>
+                  <p className="mt-1">{legacyBondAuthorityName}</p>
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
                   <p className="font-semibold">Always get a receipt when you pay your bond.</p>
@@ -1681,7 +1731,9 @@ export default function Booking() {
               className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
             />
             <span className="text-sm text-gray-800">
-              {boardingLodgerBondCopy ? (
+              {bondRegulatoryCopy ? (
+                bondRegulatoryCopy.acknowledgementCheckbox
+              ) : legacyBoardingLodgerBondCopy ? (
                 <>
                   I understand the bond is paid directly to my landlord and will not be lodged with NSW Fair Trading.
                 </>

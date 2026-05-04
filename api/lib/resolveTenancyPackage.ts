@@ -2,6 +2,9 @@
  * Single source of truth: maps listing attributes → tenancy document package (tier, generator, bond rules).
  * Lives under `api/lib` so Vercel Node bundles include it (imports from `src/` are not deployed with `api/*` functions).
  */
+import type { TenancyRules } from './tenancy/rules/types.js'
+import { nswTenancyRules } from './tenancy/rules/nsw.js'
+import { vicTenancyRules } from './tenancy/rules/vic.js'
 
 export type TenancyTier = 'T1' | 'T2' | 'T3'
 
@@ -16,75 +19,48 @@ export interface TenancyPackageInput {
   property_type: string
   /** properties.is_registered_rooming_house */
   is_registered_rooming_house: boolean
+  /**
+   * Tenancy start / agreement date for future rule versioning — v1 ignored.
+   */
+  date?: string | Date
 }
 
-export interface BondRules {
-  schemeApplies: boolean
-  authority: string | null
-  authorityUrl: string | null
-  maxBondMonths: number | null
-  lodgementDays: number | null
-  receiptDays: number | null
-}
+/** @deprecated Use TenancyPackageInput */
+export type ResolveTenancyPackageInput = TenancyPackageInput
 
 export interface TenancyPackageStoragePaths {
   draft: string
   signed: string
 }
 
-export interface TenancyPackageResult {
+type TenancyPackageResultBase = {
   tier: TenancyTier
-  supported: boolean
-  generator: string | null
   pdfKind: string | null
-  bondRules: BondRules
   signingPackageName: string | null
   storagePaths: TenancyPackageStoragePaths | null
   ragState: RagState
-  unsupportedReason: string | null
 }
 
-const NSW_FAIR_TRADING = 'NSW Fair Trading'
-const RTBA = 'RTBA'
+/** Supported package — generator id set; rules fully populated. */
+export type SupportedTenancyPackageResult = TenancyPackageResultBase & {
+  supported: true
+  generator: string
+  rules: TenancyRules
+  unsupportedReason: null
+}
 
-const URL_NSW_RENTING = 'https://www.nsw.gov.au/housing-and-construction/renting'
-const URL_RTBA = 'https://www.rtba.vic.gov.au/'
+/** Unsupported — no generator; rules omitted. */
+export type UnsupportedTenancyPackageResult = TenancyPackageResultBase & {
+  supported: false
+  generator: null
+  rules: null
+  unsupportedReason: string
+}
+
+export type TenancyPackageResult = SupportedTenancyPackageResult | UnsupportedTenancyPackageResult
 
 const T3_DEFERRED_REASON =
   'Rooming/boarding house (T3) tenancy agreements are not available on the platform yet.'
-
-function bondRulesNone(): BondRules {
-  return {
-    schemeApplies: false,
-    authority: null,
-    authorityUrl: null,
-    maxBondMonths: null,
-    lodgementDays: null,
-    receiptDays: null,
-  }
-}
-
-function bondRulesNswStatutory(): BondRules {
-  return {
-    schemeApplies: true,
-    authority: NSW_FAIR_TRADING,
-    authorityUrl: URL_NSW_RENTING,
-    maxBondMonths: 1,
-    lodgementDays: 10,
-    receiptDays: 15,
-  }
-}
-
-function bondRulesVicStatutory(): BondRules {
-  return {
-    schemeApplies: true,
-    authority: RTBA,
-    authorityUrl: URL_RTBA,
-    maxBondMonths: 1,
-    lodgementDays: 10,
-    receiptDays: 15,
-  }
-}
 
 function nswFt6600Paths(): TenancyPackageStoragePaths {
   return {
@@ -104,13 +80,13 @@ function unsupportedBase(
   tier: TenancyTier,
   reason: string,
   ragState: RagState,
-): TenancyPackageResult {
+): UnsupportedTenancyPackageResult {
   return {
     tier,
     supported: false,
     generator: null,
     pdfKind: null,
-    bondRules: bondRulesNone(),
+    rules: null,
     signingPackageName: null,
     storagePaths: null,
     ragState,
@@ -120,8 +96,11 @@ function unsupportedBase(
 
 /**
  * Truth table (property_type × rooming house × state) → package metadata.
+ * `date` is accepted for future versioned rules; v1 ignores it.
  */
 export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackageResult {
+  void input.date
+
   const stateRaw = typeof input.state === 'string' ? input.state.trim().toUpperCase() : ''
   const propertyType = typeof input.property_type === 'string' ? input.property_type.trim() : ''
   const isRooming = Boolean(input.is_registered_rooming_house)
@@ -161,24 +140,26 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
 
   if (propertyType === 'private_room_landlord_on_site' && !isRooming) {
     if (state === 'NSW') {
+      const rules = nswTenancyRules('T1')
       return {
         tier: 'T1',
         supported: true,
         generator: 'nsw-occupancy',
         pdfKind: 'occupancy_agreement',
-        bondRules: bondRulesNone(),
+        rules,
         signingPackageName: 'NSW Residential Occupancy Agreement',
         storagePaths: null,
         ragState,
         unsupportedReason: null,
       }
     }
+    const rules = vicTenancyRules('T1')
     return {
       tier: 'T1',
       supported: true,
       generator: 'vic-form1',
       pdfKind: 'residential_rental_agreement',
-      bondRules: bondRulesVicStatutory(),
+      rules,
       signingPackageName: 'VIC Form 1 — Residential rental agreement',
       storagePaths: vicForm1Paths(),
       ragState,
@@ -193,24 +174,26 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
     !isRooming
   ) {
     if (state === 'NSW') {
+      const rules = nswTenancyRules('T2')
       return {
         tier: 'T2',
         supported: true,
         generator: 'nsw-ft6600',
         pdfKind: 'residential_tenancy_agreement',
-        bondRules: bondRulesNswStatutory(),
+        rules,
         signingPackageName: 'NSW Residential Tenancy Agreement (FT6600)',
         storagePaths: nswFt6600Paths(),
         ragState,
         unsupportedReason: null,
       }
     }
+    const rules = vicTenancyRules('T2')
     return {
       tier: 'T2',
       supported: true,
       generator: 'vic-form1',
       pdfKind: 'residential_rental_agreement',
-      bondRules: bondRulesVicStatutory(),
+      rules,
       signingPackageName: 'VIC Form 1 — Residential rental agreement',
       storagePaths: vicForm1Paths(),
       ragState,
