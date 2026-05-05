@@ -24,7 +24,7 @@ This table maps **RTA Part 1 items** → **platform source** → **default when 
 | **6.2–6.3** Start / end | `move_in_date`, `end_date` / computed end | — |
 | **7** Rent amount & frequency | `weekly_rent` | Weekly only in handler |
 | **8** Rent due day | Derived weekday from start date | Monday fallback |
-| **9** Payment methods / BSB | `platform_config` bank details + payment line | Bank block when configured |
+| **9** Payment methods / BSB | `bookings.rent_payment_method` + `platform_config` bank details | **Two methods** (s.83 / standard term 8(3)): `quni_platform` → Quni platform + direct credit; `bank_transfer` or null → EFT + OTC/branch to same account |
 | **10** Place of payment | — | “As agreed — electronic transfer” |
 | **11** Last rent increase | — | **GAP**: “Not stated — new tenancy / unknown” |
 | **12** Bond | `properties.bond` or 4× weekly rent | — |

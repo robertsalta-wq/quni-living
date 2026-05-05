@@ -167,6 +167,11 @@ export type QldGeneralTenancyAgreementProps = {
     accountName: string
     bankName: string
   } | null
+  /**
+   * `bookings.rent_payment_method` — drives at least two Item 9 methods (Standard term 8(3) / s.83).
+   * Single enum per booking; rendering pairs methods to match operational reality.
+   */
+  rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null
   specialConditions: string[]
   bookingNotes: string | null
 }

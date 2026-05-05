@@ -394,6 +394,10 @@ export default async function handler(req: any, res: any) {
     paymentMethod: rentPaymentMethodLine,
   }
 
+  const rpm = booking.rent_payment_method
+  const rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null =
+    rpm === 'bank_transfer' || rpm === 'quni_platform' ? rpm : null
+
   const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '—'
   const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '—'
 
@@ -434,13 +438,12 @@ export default async function handler(req: any, res: any) {
       accountName: bankDetails.accountName,
       bankName: bankDetails.bankName,
     },
+    rentPaymentPreference,
     specialConditions: [],
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
 
-  const rpm = booking.rent_payment_method
-  const rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null =
-    rpm === 'bank_transfer' || rpm === 'quni_platform' ? rpm : null
+  const rentPaymentMethod = rentPaymentPreference
 
   let rentEnquiriesEmail = ''
   let generalEnquiriesEmail = ''

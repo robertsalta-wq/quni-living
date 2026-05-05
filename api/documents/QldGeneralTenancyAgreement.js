@@ -1076,6 +1076,19 @@ function rentDueWeekdayFromCommencement(isoDate) {
   return dt.toLocaleDateString("en-AU", { weekday: "long", timeZone: "UTC" });
 }
 var FORM_REFERENCE_LINE = "Form 18a \u2014 General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.";
+var QUNI_RENT_PORTAL_URL = "https://quni.com.au";
+function item9RentPaymentMethodPair(preference) {
+  if (preference === "quni_platform") {
+    return {
+      method1: `Scheduled rent payments via the Quni Living platform (${QUNI_RENT_PORTAL_URL}) using the card or other payment facility activated for this tenancy in the tenant's Quni account.`,
+      method2: "Direct credit (electronic funds transfer) to the account details below."
+    };
+  }
+  return {
+    method1: "Electronic funds transfer (internet or mobile banking) to the account details below.",
+    method2: "Over-the-counter deposit at a branch of the nominated financial institution, or any other channel your bank provides to pay into this BSB and account number."
+  };
+}
 var FORM18A_PART3_FORM17A_NOTICE = [
   "The tenant/s must receive a copy of the information statement (Form 17a) and a copy of any applicable by-laws if copies have not",
   "previously been given to the tenant/s. Do not send to the RTA\u2014give this form to the tenant/s, keep a copy for your records."
@@ -1362,9 +1375,11 @@ function QldGeneralTenancyAgreement(props) {
     landlordPostcode,
     premisesPostcode,
     rentPaymentBankDetails,
+    rentPaymentPreference,
     specialConditions,
     bookingNotes
   } = props;
+  const item9Methods = item9RentPaymentMethodPair(rentPaymentPreference);
   const madeOn = agreementMadeOnFromGeneratedAt(generatedAt);
   const atSuburb = suburbFromAddressLine(premises.addressLine);
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate);
@@ -1490,7 +1505,8 @@ function QldGeneralTenancyAgreement(props) {
         }
       ),
       /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 9 \u2014 Methods of rent payment" }),
-      /* @__PURE__ */ jsx2(Field, { label: "Method 1:", children: rent.paymentMethod }),
+      /* @__PURE__ */ jsx2(Field, { label: "Method 1:", children: item9Methods.method1 }),
+      /* @__PURE__ */ jsx2(Field, { label: "Method 2:", children: item9Methods.method2 }),
       rentPaymentBankDetails ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(Field, { label: "BSB no.:", children: rentPaymentBankDetails.bsb }),
         /* @__PURE__ */ jsx2(Field, { label: "Bank/building society/credit union:", children: rentPaymentBankDetails.bankName }),
@@ -1585,5 +1601,6 @@ function QldGeneralTenancyAgreement(props) {
   return /* @__PURE__ */ jsx2(Document, { children: pages });
 }
 export {
-  QldGeneralTenancyAgreement
+  QldGeneralTenancyAgreement,
+  item9RentPaymentMethodPair
 };

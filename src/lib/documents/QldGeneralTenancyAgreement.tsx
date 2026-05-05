@@ -31,6 +31,29 @@ function rentDueWeekdayFromCommencement(isoDate: string): string {
 const FORM_REFERENCE_LINE =
   'Form 18a — General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.'
 
+const QUNI_RENT_PORTAL_URL = 'https://quni.com.au'
+
+/**
+ * Item 9 must name at least two ways to pay rent (Standard term 8(3); s.83 RTRA Act).
+ * Wording is tied to `bookings.rent_payment_method` — no payment rail is described that the booking does not use.
+ */
+export function item9RentPaymentMethodPair(preference: 'bank_transfer' | 'quni_platform' | null): {
+  method1: string
+  method2: string
+} {
+  if (preference === 'quni_platform') {
+    return {
+      method1: `Scheduled rent payments via the Quni Living platform (${QUNI_RENT_PORTAL_URL}) using the card or other payment facility activated for this tenancy in the tenant's Quni account.`,
+      method2: 'Direct credit (electronic funds transfer) to the account details below.',
+    }
+  }
+  return {
+    method1: 'Electronic funds transfer (internet or mobile banking) to the account details below.',
+    method2:
+      'Over-the-counter deposit at a branch of the nominated financial institution, or any other channel your bank provides to pay into this BSB and account number.',
+  }
+}
+
 /** Verbatim — Form 18a Part 3 (final page of RTA PDF). */
 const FORM18A_PART3_FORM17A_NOTICE = [
   'The tenant/s must receive a copy of the information statement (Form 17a) and a copy of any applicable by-laws if copies have not',
@@ -383,9 +406,12 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
     landlordPostcode,
     premisesPostcode,
     rentPaymentBankDetails,
+    rentPaymentPreference,
     specialConditions,
     bookingNotes,
   } = props
+
+  const item9Methods = item9RentPaymentMethodPair(rentPaymentPreference)
 
   const madeOn = agreementMadeOnFromGeneratedAt(generatedAt)
   const atSuburb = suburbFromAddressLine(premises.addressLine)
@@ -523,7 +549,8 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
       />
 
       <Text style={styles.subHeading}>Item 9 — Methods of rent payment</Text>
-      <Field label="Method 1:" children={rent.paymentMethod} />
+      <Field label="Method 1:" children={item9Methods.method1} />
+      <Field label="Method 2:" children={item9Methods.method2} />
       {rentPaymentBankDetails ? (
         <>
           <Field label="BSB no.:" children={rentPaymentBankDetails.bsb} />

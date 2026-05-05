@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import React from 'react'
 import { PDFParse } from 'pdf-parse'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { QldGeneralTenancyAgreement } from './QldGeneralTenancyAgreement.tsx'
+import {
+  item9RentPaymentMethodPair,
+  QldGeneralTenancyAgreement,
+} from './QldGeneralTenancyAgreement.tsx'
 import type { QldGeneralTenancyAgreementProps } from '../../../api/documents/rtaTypes.js'
 import { QLD_FORM18A_PDF_MARKERS } from './qld/form18aPdfMarkers.ts'
 
@@ -72,10 +75,25 @@ function minimalProps(): QldGeneralTenancyAgreementProps {
       accountName: 'Trust Account',
       bankName: 'Example Bank',
     },
+    rentPaymentPreference: 'bank_transfer',
     specialConditions: [],
     bookingNotes: null,
   }
 }
+
+describe('item9RentPaymentMethodPair', () => {
+  it('bank_transfer uses two bank-account channels (s.83 / standard term 8(3))', () => {
+    const p = item9RentPaymentMethodPair('bank_transfer')
+    expect(p.method1).toMatch(/Electronic funds transfer/i)
+    expect(p.method2).toMatch(/Over-the-counter deposit/i)
+  })
+
+  it('quni_platform pairs platform with direct credit', () => {
+    const p = item9RentPaymentMethodPair('quni_platform')
+    expect(p.method1).toMatch(/Quni Living platform/i)
+    expect(p.method2).toMatch(/Direct credit/i)
+  })
+})
 
 describe('QldGeneralTenancyAgreement', () => {
   it('renders a PDF whose extracted text includes prescribed Form 18a markers', async () => {
@@ -90,5 +108,24 @@ describe('QldGeneralTenancyAgreement', () => {
     for (const marker of QLD_FORM18A_PDF_MARKERS) {
       expect(text).toContain(marker.replace(/\s+/g, ' '))
     }
+    expect(text).toContain('Method 1:')
+    expect(text).toContain('Method 2:')
+    const bankPair = item9RentPaymentMethodPair('bank_transfer')
+    expect(text).toContain(bankPair.method1.replace(/\s+/g, ' '))
+    expect(text).toContain(bankPair.method2.replace(/\s+/g, ' '))
+  })
+
+  it('renders platform + direct credit Item 9 lines when rentPaymentPreference is quni_platform', async () => {
+    const props = { ...minimalProps(), rentPaymentPreference: 'quni_platform' as const }
+    const buf = await renderToBuffer(
+      React.createElement(QldGeneralTenancyAgreement, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    const plat = item9RentPaymentMethodPair('quni_platform')
+    expect(text).toContain(plat.method1.replace(/\s+/g, ' '))
+    expect(text).toContain(plat.method2.replace(/\s+/g, ' '))
   })
 })
