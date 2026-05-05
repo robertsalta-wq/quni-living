@@ -17,6 +17,7 @@
     "src/lib/documents/OccupancyAgreement.tsx",
     "src/lib/documents/NswResidentialTenancyAgreement.tsx",
     "src/lib/documents/QuniPlatformAddendum.tsx",
+    "src/lib/documents/QuniPlatformAddendumQld.tsx",
     "src/lib/documents/QuniOccupancyAgreementQld.tsx",
     "src/lib/documents/ft6600EmbeddedStrings.ts",
     "src/lib/docuseal.ts"
