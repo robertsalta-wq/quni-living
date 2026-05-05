@@ -25,6 +25,10 @@ const bundleJobs = [
     outFile: 'api/documents/NswResidentialTenancyAgreement.js',
   },
   {
+    inFile: 'src/lib/documents/QldGeneralTenancyAgreement.tsx',
+    outFile: 'api/documents/QldGeneralTenancyAgreement.js',
+  },
+  {
     inFile: 'src/lib/documents/QuniPlatformAddendum.tsx',
     outFile: 'api/documents/QuniPlatformAddendum.js',
   },

@@ -176,6 +176,8 @@ describe('resolveTenancyPackage', () => {
       expect(r.rules.bond.schemeApplies).toBe(true)
       expect(r.rules.bond.maxBondCopy).toBe('Under Queensland law, bond cannot exceed 4 weeks rent.')
       expect(r.rules.bond.authority).toContain('RTA')
+      expect(r.storagePaths?.draft).toBe('qld_form18a_general_tenancy_agreement_draft.pdf')
+      expect(r.storagePaths?.signed).toBe('qld_form18a_general_tenancy_agreement_signed.pdf')
     })
 
     it('T3 off_site + rooming house → deferred', () => {
@@ -253,7 +255,7 @@ describe('tenancyGeneratorToApiPath', () => {
     expect(tenancyGeneratorToApiPath('nsw-occupancy')).toBe('/api/documents/generate-lease')
     expect(tenancyGeneratorToApiPath('vic-form1')).toBeNull()
     expect(tenancyGeneratorToApiPath('qld-occupancy')).toBe('/api/documents/generate-qld-occupancy')
-    expect(tenancyGeneratorToApiPath('qld-form18a')).toBeNull()
+    expect(tenancyGeneratorToApiPath('qld-form18a')).toBe('/api/documents/generate-qld-residential-tenancy')
     expect(tenancyGeneratorToApiPath(null)).toBeNull()
   })
 })

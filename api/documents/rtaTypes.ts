@@ -5,7 +5,8 @@
  * - `NswResidentialTenancyAgreementProps` — prescribed standard form FT6600 (Dec 2025);
  *   static clause text is sourced from `docs/ft6600-2025-12-17.txt`; these types cover
  *   schedule / variable fields only.
- * - `QuniPlatformAddendumProps` — Quni platform addendum for the residential tenancy package.
+ * - `QuniPlatformAddendumProps` — Quni platform addendum for the residential tenancy package (NSW or QLD signing package).
+ * - `QldGeneralTenancyAgreementProps` — RTA Form 18a schedule fields + Part 2 embedded standard terms.
  */
 
 export type RtaLandlordPdf = {
@@ -132,6 +133,44 @@ export type NswResidentialTenancyAgreementProps = {
   bookingNotes: string | null
 }
 
+/**
+ * Queensland Form 18a — General Tenancy Agreement (prescribed schedule fields + Part 2 verbatim body).
+ * Part 2 standard terms text is embedded from RTA Queensland PDF extraction (`form18aStandardTerms.ts`).
+ */
+export type QldGeneralTenancyAgreementProps = {
+  documentId: string
+  generatedAt: string
+  landlord: RtaLandlordPdf
+  tenant: RtaTenantPdf
+  /** Optional co-tenants for Items 2.1 (2) and (3); platform usually has one tenant. */
+  additionalTenantNames: string[]
+  premises: RtaPremisesPdf
+  /** Item 5.2 inclusions line (furniture, goods, etc.). */
+  premisesInclusionsLine: string | null
+  maxOccupantsPermitted: number | null
+  term: RtaTermPdf
+  rent: NswRtaRentSchedule
+  bond: RtaBondPdf
+  landlordAgent: NswRtaLandlordAgent | null
+  urgentRepairsTradespeople: NswRtaUrgentRepairsContacts
+  electronicService: NswRtaElectronicService
+  /** Item 11 — day last rent increased (ISO date) or null if unknown / N/A. */
+  lastRentIncreaseDate: string | null
+  /** Item 1 — lessor postcode (schedule line). */
+  landlordPostcode: string
+  /** Item 5.1 — premises postcode. */
+  premisesPostcode: string
+  /** Item 9 — direct credit details when rent is paid by bank transfer. */
+  rentPaymentBankDetails: {
+    bsb: string
+    accountNumber: string
+    accountName: string
+    bankName: string
+  } | null
+  specialConditions: string[]
+  bookingNotes: string | null
+}
+
 /** Quni platform addendum PDF (paired with prescribed RTA form in the signing package). */
 export type QuniPlatformAddendumProps = {
   documentId: string
@@ -143,7 +182,8 @@ export type QuniPlatformAddendumProps = {
   rent: RtaRentPdf
   bond: RtaBondPdf
   utilitiesDescription: string
-  signingPackage: 'residential_tenancy'
+  /** NSW FT6600 package vs QLD Form 18a + Quni QLD addendum. */
+  signingPackage: 'residential_tenancy' | 'residential_tenancy_qld'
   rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null
   bankDetails: {
     bsb: string

@@ -152,12 +152,20 @@ function extractDocumentPartsFromSubmissionRoot(sub: Record<string, unknown>): D
   return out
 }
 
-/** NSW RTA draft first, Quni addendum second — matches signing package order. */
+/** Prescribed RTA draft first, Quni addendum second — matches signing package order (NSW or QLD). */
 function sortResidentialPackageDocumentParts(parts: DocusealDocumentPart[]): DocusealDocumentPart[] {
   const score = (name: string): number => {
     const n = name.toLowerCase()
     if (n.includes('addendum')) return 2
-    if (n.includes('nsw') || n.includes('residential tenancy')) return 0
+    if (
+      n.includes('nsw') ||
+      n.includes('ft6600') ||
+      n.includes('form 18a') ||
+      n.includes('qld') ||
+      n.includes('general tenancy')
+    )
+      return 0
+    if (n.includes('residential tenancy') && !n.includes('addendum')) return 0
     return 1
   }
   return [...parts].sort((a, b) => score(a.name) - score(b.name))
@@ -219,7 +227,7 @@ export async function downloadSignedSubmissionPdfFromDocuseal(
   }
 
   if (residentialTenancyPackage) {
-    throw new Error('Could not resolve signed NSW tenancy package PDF from DocuSeal')
+    throw new Error('Could not resolve signed residential tenancy package PDF from DocuSeal')
   }
 
   const audit = subJson.audit_log_url
@@ -256,7 +264,14 @@ export async function downloadSignedResidentialTenancyPackagePartsFromDocuseal(
   const rtaPart =
     sorted.find((p) => {
       const n = p.name.toLowerCase()
-      return n.includes('nsw') || n.includes('residential tenancy') || n.includes('ft6600')
+      return (
+        n.includes('nsw') ||
+        n.includes('ft6600') ||
+        n.includes('form 18a') ||
+        n.includes('qld') ||
+        n.includes('general tenancy') ||
+        (n.includes('residential tenancy') && !n.includes('addendum'))
+      )
     }) ?? sorted[0]
 
   if (rtaPart.url === addendumPart.url) return null
@@ -424,9 +439,11 @@ export async function sendResidentialTenancyPackageForSigning(
   if (!addendumPath) {
     throw new Error('Residential tenancy package missing metadata.addendum_file_path')
   }
-  if (meta.signing_package !== 'residential_tenancy') {
-    throw new Error('Tenancy document is not a residential_tenancy signing package')
+  const signingPkg = meta.signing_package
+  if (signingPkg !== 'residential_tenancy' && signingPkg !== 'residential_tenancy_qld') {
+    throw new Error('Tenancy document is not a residential tenancy signing package (FT6600 or Form 18a)')
   }
+  const isQldResidential = signingPkg === 'residential_tenancy_qld'
 
   const { data: tenancy, error: tErr } = await admin
     .from('tenancies')
@@ -476,7 +493,7 @@ export async function sendResidentialTenancyPackageForSigning(
   const { data: addBlob, error: addDlErr } = await admin.storage.from('tenancy-documents').download(addendumPath)
 
   if (rtaDlErr || !rtaBlob) {
-    throw new Error(rtaDlErr?.message || 'Could not download NSW RTA draft PDF from storage')
+    throw new Error(rtaDlErr?.message || 'Could not download prescribed tenancy draft PDF from storage')
   }
   if (addDlErr || !addBlob) {
     throw new Error(addDlErr?.message || 'Could not download addendum draft PDF from storage')
@@ -486,9 +503,16 @@ export async function sendResidentialTenancyPackageForSigning(
   const addendumBase64 = Buffer.from(await addBlob.arrayBuffer()).toString('base64')
 
   const submission = await createDocusealSubmissionFromPdf({
-    name: `NSW RTA — ${landlordName} / ${tenantName}`,
+    name: isQldResidential
+      ? `QLD Form 18a — ${landlordName} / ${tenantName}`
+      : `NSW RTA — ${landlordName} / ${tenantName}`,
     documents: [
-      { name: 'NSW Residential Tenancy Agreement.pdf', file: rtaBase64 },
+      {
+        name: isQldResidential
+          ? 'QLD Form 18a General Tenancy Agreement.pdf'
+          : 'NSW Residential Tenancy Agreement.pdf',
+        file: rtaBase64,
+      },
       { name: 'Quni Platform Addendum.pdf', file: addendumBase64 },
     ],
     landlord: { name: landlordName, email: landlordEmail },
@@ -508,7 +532,7 @@ export async function sendResidentialTenancyPackageForSigning(
       status: 'sent_for_signing',
       metadata: {
         ...meta,
-        signing_package: 'residential_tenancy',
+        signing_package: signingPkg,
         addendum_file_path: addendumPath,
         docuseal_response: submission as unknown as Json,
       } as Json,
@@ -527,7 +551,16 @@ export async function sendResidentialTenancyPackageForSigning(
     submitters[1]?.embed_src ||
     ''
 
-  const signHtml = (who: string, link: string) => `
+  const signHtml = (who: string, link: string) =>
+    isQldResidential
+      ? `
+    <p>Hi ${escapeHtml(who)},</p>
+    <p>Your Queensland Form 18a general tenancy agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
+    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
+    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
+    <p>— Quni Living (quni.com.au)</p>
+  `
+      : `
     <p>Hi ${escapeHtml(who)},</p>
     <p>Your NSW residential tenancy agreement package is ready to sign (standard form plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
@@ -535,18 +568,22 @@ export async function sendResidentialTenancyPackageForSigning(
     <p>— Quni Living (quni.com.au)</p>
   `
 
+  const readySubject = isQldResidential
+    ? 'Your QLD Form 18a tenancy agreement is ready to sign'
+    : 'Your NSW residential tenancy agreement is ready to sign'
+
   await Promise.all([
     landlordLink
       ? sendEmail({
           to: landlordEmail,
-          subject: 'Your NSW residential tenancy agreement is ready to sign',
+          subject: readySubject,
           html: signHtml(landlordName, landlordLink),
         })
       : Promise.resolve(),
     tenantLink
       ? sendEmail({
           to: tenantEmail,
-          subject: 'Your NSW residential tenancy agreement is ready to sign',
+          subject: readySubject,
           html: signHtml(tenantName, tenantLink),
         })
       : Promise.resolve(),
@@ -585,7 +622,10 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     docRow.metadata && typeof docRow.metadata === 'object' && !Array.isArray(docRow.metadata)
       ? (docRow.metadata as Record<string, unknown>)
       : {}
-  const isResidentialTenancyPackage = rowMetaEarly.signing_package === 'residential_tenancy'
+  const signingPkgEarly = rowMetaEarly.signing_package
+  const isResidentialTenancyPackage =
+    signingPkgEarly === 'residential_tenancy' || signingPkgEarly === 'residential_tenancy_qld'
+  const isQldResidentialPackage = signingPkgEarly === 'residential_tenancy_qld'
 
   const rowMeta = rowMetaEarly
 
@@ -594,7 +634,9 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   if (isResidentialTenancyPackage) {
     const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
-    const rtaPath = `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
+    const rtaPath = isQldResidentialPackage
+      ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
+      : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
     const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
 
     if (dual) {
@@ -685,7 +727,9 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
   const signedSubject = isResidentialTenancyPackage
-    ? 'Your NSW tenancy agreement is signed — Quni Living'
+    ? isQldResidentialPackage
+      ? 'Your QLD tenancy agreement is signed — Quni Living'
+      : 'Your NSW tenancy agreement is signed — Quni Living'
     : 'Your lease is signed — Quni Living'
   const doneHtml = (name: string) => `
     <p>Hi ${escapeHtml(name)},</p>

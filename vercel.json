@@ -27,6 +27,9 @@
     "api/documents/generate-residential-tenancy.ts": {
       "maxDuration": 60
     },
+    "api/documents/generate-qld-residential-tenancy.ts": {
+      "maxDuration": 60
+    },
     "api/documents/generate-bond-receipt.ts": {
       "maxDuration": 60
     },

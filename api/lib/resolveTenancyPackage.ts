@@ -70,6 +70,13 @@ function nswFt6600Paths(): TenancyPackageStoragePaths {
   }
 }
 
+function qldForm18aPaths(): TenancyPackageStoragePaths {
+  return {
+    draft: 'qld_form18a_general_tenancy_agreement_draft.pdf',
+    signed: 'qld_form18a_general_tenancy_agreement_signed.pdf',
+  }
+}
+
 function vicForm1Paths(): TenancyPackageStoragePaths {
   return {
     draft: 'vic_residential_rental_agreement_draft.pdf',
@@ -218,7 +225,7 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         pdfKind: 'residential_tenancy_agreement',
         rules,
         signingPackageName: 'QLD Form 18a — General Tenancy Agreement',
-        storagePaths: null,
+        storagePaths: qldForm18aPaths(),
         ragState,
         unsupportedReason: null,
       }
@@ -245,6 +252,6 @@ export function tenancyGeneratorToApiPath(generator: string | null): string | nu
   if (generator === 'nsw-ft6600') return '/api/documents/generate-residential-tenancy'
   if (generator === 'nsw-occupancy') return '/api/documents/generate-lease'
   if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
-  if (generator === 'qld-form18a') return null
+  if (generator === 'qld-form18a') return '/api/documents/generate-qld-residential-tenancy'
   return null
 }
