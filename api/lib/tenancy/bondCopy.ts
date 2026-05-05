@@ -30,7 +30,6 @@ export function bondStepRegulatoryCopy(
   const bondCapFragment = st === 'NSW' ? ' Under NSW law, bond cannot exceed 4 weeks rent.' : null
 
   if (!bond.schemeApplies) {
-    // landlordHeldParagraphs are NSW Tier 1 boarding/lodger copy today; only used when schemeApplies is false for NSW.
     return {
       mode: 'landlord_held',
       bondCapFragment,
