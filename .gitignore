@@ -30,6 +30,9 @@ dist-ssr
 
 .vercel
 
+# Local security scan output (do not commit)
+gitleaks-report.json
+
 # Android — Firebase, signing, and machine-local config (see also android/.gitignore)
 android/**/google-services.json
 android/**/*.jks
