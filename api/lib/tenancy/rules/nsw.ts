@@ -5,6 +5,7 @@ import type { TenancyBondRules, TenancyRules } from './types.js'
 
 const NSW_T1_BOND: TenancyBondRules = {
   schemeApplies: false,
+  maxBondCopy: null,
   authority: null,
   authorityUrl: null,
   maxBondMonths: null,
@@ -17,6 +18,7 @@ const NSW_T1_BOND: TenancyBondRules = {
 
 const NSW_T2_BOND: TenancyBondRules = {
   schemeApplies: true,
+  maxBondCopy: 'Under NSW law, bond cannot exceed 4 weeks rent.',
   authority: 'NSW Fair Trading',
   authorityUrl: 'https://www.nsw.gov.au/housing-and-construction/renting',
   maxBondMonths: 1,

@@ -172,16 +172,17 @@ function cellGlance(result: TenancyPackageResult | null): string {
   }
   const b = result.rules.bond
   const holder = b.schemeApplies ? 'Scheme' : 'Landlord-held'
-  const auth =
-    b.schemeApplies && (b.authorityPublicLabel || b.authority)
-      ? ` · ${b.authorityPublicLabel ?? b.authority}`
-      : ''
-  const days =
-    b.schemeApplies && b.lodgementDays != null
-      ? ` · ${b.lodgementDays}d lodgement${
-          b.lodgementDaysUnit === 'calendar' ? ' (cal.)' : b.lodgementDaysUnit === 'business' ? ' (bus.)' : ''
-        }`
-      : ''
+  let auth = ''
+  if (b.schemeApplies) {
+    const line = b.authorityPublicLabel || b.authority
+    if (line) auth = ` · ${line}`
+  }
+  let days = ''
+  if (b.schemeApplies) {
+    days = ` · ${b.lodgementDays}d lodgement${
+      b.lodgementDaysUnit === 'calendar' ? ' (cal.)' : ' (bus.)'
+    }`
+  }
   return `${holder}${auth}${days}`
 }
 

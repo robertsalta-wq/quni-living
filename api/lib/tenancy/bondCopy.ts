@@ -6,7 +6,7 @@ import type { TenancyBondRules } from './rules/types.js'
 
 export interface BondRegulatoryCopy {
   mode: 'landlord_held' | 'scheme'
-  /** Leading sentence for statutory bond cap (NSW only today); null to omit */
+  /** Leading statutory bond-cap sentence after bond amount; null to omit */
   bondCapFragment: string | null
   landlordHeldParagraphs: string[]
   schemeLeadBeforeBold: string
@@ -19,6 +19,11 @@ export interface BondRegulatoryCopy {
   acknowledgementCheckbox: string
 }
 
+function bondCapFragmentFromBond(bond: TenancyBondRules): string | null {
+  if (!bond.schemeApplies) return null
+  return bond.maxBondCopy ? ` ${bond.maxBondCopy}` : null
+}
+
 /**
  * @param stateCode — Australian state, e.g. property.state (uppercased inside)
  */
@@ -27,12 +32,11 @@ export function bondStepRegulatoryCopy(
   stateCode: string | null | undefined,
 ): BondRegulatoryCopy {
   const st = (stateCode || 'NSW').toUpperCase()
-  const bondCapFragment = st === 'NSW' ? ' Under NSW law, bond cannot exceed 4 weeks rent.' : null
 
   if (!bond.schemeApplies) {
     return {
       mode: 'landlord_held',
-      bondCapFragment,
+      bondCapFragment: bondCapFragmentFromBond(bond),
       landlordHeldParagraphs: [
         'As this is a boarding/lodger arrangement, the Residential Tenancies Act does not apply. Your bond is held directly by your landlord and is not required to be lodged with NSW Fair Trading.',
         'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
@@ -49,19 +53,19 @@ export function bondStepRegulatoryCopy(
     }
   }
 
-  const days = bond.lodgementDays ?? 10
-  const lodgementUnit = bond.lodgementDaysUnit ?? 'business'
+  const days = bond.lodgementDays
+  const lodgementUnit = bond.lodgementDaysUnit
   const schemeBoldDeadline =
     lodgementUnit === 'calendar' ? `${days} days` : `${days} business days`
   return {
     mode: 'scheme',
-    bondCapFragment,
+    bondCapFragment: bondCapFragmentFromBond(bond),
     landlordHeldParagraphs: [],
     schemeLeadBeforeBold: 'Your landlord is legally required to lodge your bond with the relevant state authority within ',
     schemeBoldDeadline,
     schemeLeadAfterBold: '.',
     authorityStateHeading: `${st} — state bond authority`,
-    authorityPublicLine: bond.authorityPublicLabel ?? '',
+    authorityPublicLine: bond.authorityPublicLabel,
     amberTitle: 'Always get a receipt when you pay your bond.',
     amberBody: 'Never pay a bond without receiving official confirmation of lodgement from the state authority.',
     acknowledgementCheckbox:

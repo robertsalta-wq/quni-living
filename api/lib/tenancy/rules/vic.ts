@@ -5,6 +5,7 @@ import type { TenancyBondRules, TenancyRules } from './types.js'
 
 const VIC_SUPPORTED_BOND: TenancyBondRules = {
   schemeApplies: true,
+  maxBondCopy: null,
   authority: 'RTBA',
   authorityUrl: 'https://www.rtba.vic.gov.au/',
   maxBondMonths: 1,
