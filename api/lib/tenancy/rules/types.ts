@@ -8,6 +8,11 @@ export interface TenancyBondRules {
   authorityUrl: string | null
   maxBondMonths: number | null
   lodgementDays: number | null
+  /**
+   * How lodgementDays should be read in tenant-facing copy.
+   * NSW uses business days; QLD RTRA uses calendar days for the lodgement period.
+   */
+  lodgementDaysUnit: 'business' | 'calendar' | null
   receiptDays: number | null
   /** Line shown under “{STATE} — state bond authority” on the bond step */
   authorityPublicLabel: string | null

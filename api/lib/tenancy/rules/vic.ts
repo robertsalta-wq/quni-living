@@ -9,6 +9,7 @@ const VIC_SUPPORTED_BOND: TenancyBondRules = {
   authorityUrl: 'https://www.rtba.vic.gov.au/',
   maxBondMonths: 1,
   lodgementDays: 10,
+  lodgementDaysUnit: 'business',
   receiptDays: 15,
   authorityPublicLabel: 'Residential Tenancies Bond Authority (RTBA)',
   landlordAckAuthorityName: null,

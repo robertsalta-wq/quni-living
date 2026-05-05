@@ -24,7 +24,11 @@ import {
   moveOutFromBookingLeaseLength,
 } from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
-import { bondStepRegulatoryCopy } from '../lib/tenancy/bondCopy'
+import {
+  bondStepRegulatoryCopy,
+  fallbackBondAuthorityPublicLine,
+  fallbackSchemeLodgementDeadlineBold,
+} from '../lib/tenancy/bondCopy'
 import { resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import {
   listingIsoDateUtc,
@@ -354,21 +358,6 @@ function addDaysIso(iso: string, days: number): string {
 
 function minMoveInIso(): string {
   return addDaysIso(new Date().toISOString().slice(0, 10), 7)
-}
-
-function bondAuthorityBody(state: string | null | undefined): string {
-  const s = (state ?? 'NSW').toUpperCase()
-  const map: Record<string, string> = {
-    NSW: 'NSW Fair Trading (Rental Bonds Online)',
-    VIC: 'Residential Tenancies Bond Authority (RTBA)',
-    QLD: 'Residential Tenancies Authority (RTA)',
-    WA: 'Bond Administrator, Dept of Mines',
-    SA: 'Consumer and Business Services',
-    ACT: 'ACT Revenue Office',
-    TAS: 'Consumer, Building and Occupational Services',
-    NT: 'NT Consumer Affairs',
-  }
-  return map[s] ?? map.NSW
 }
 
 function formatBondAmountAud(n: number): string {
@@ -1300,7 +1289,6 @@ export default function Booking() {
       ? Number(property.bond)
       : null
   const bondWeeksVsRent = bondAmountAud != null && rent > 0 ? bondAmountAud / rent : null
-  const showNswBondCapCopyLegacy = (property.state ?? 'NSW').toUpperCase() === 'NSW'
 
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
@@ -1644,11 +1632,7 @@ export default function Booking() {
                     </>
                   ) : null}
                   , payable directly to them before or on your move-in date.
-                  {bondRegulatoryCopy?.bondCapFragment ? (
-                    <>{bondRegulatoryCopy.bondCapFragment}</>
-                  ) : !bondRegulatoryCopy && showNswBondCapCopyLegacy ? (
-                    <> Under NSW law, bond cannot exceed 4 weeks rent.</>
-                  ) : null}
+                  {bondRegulatoryCopy?.bondCapFragment}
                 </>
               ) : (
                 <>No bond is required for this property.</>
@@ -1683,13 +1667,13 @@ export default function Booking() {
                 {/* Resolver unsupported or T3 deferred — no structured rules; generic scheme-style guidance only */}
                 <p>
                   Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
-                  <strong>10 business days</strong>.
+                  <strong>{fallbackSchemeLodgementDeadlineBold(property.state)}</strong>.
                 </p>
                 <div>
                   <p className="font-semibold text-gray-900">
                     {(property.state ?? 'NSW').toUpperCase()} — state bond authority
                   </p>
-                  <p className="mt-1">{bondAuthorityBody(property.state)}</p>
+                  <p className="mt-1">{fallbackBondAuthorityPublicLine(property.state)}</p>
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
                   <p className="font-semibold">Always get a receipt when you pay your bond.</p>

@@ -30,6 +30,7 @@ export function bondStepRegulatoryCopy(
   const bondCapFragment = st === 'NSW' ? ' Under NSW law, bond cannot exceed 4 weeks rent.' : null
 
   if (!bond.schemeApplies) {
+    // landlordHeldParagraphs are NSW Tier 1 boarding/lodger copy today; only used when schemeApplies is false for NSW.
     return {
       mode: 'landlord_held',
       bondCapFragment,
@@ -50,12 +51,15 @@ export function bondStepRegulatoryCopy(
   }
 
   const days = bond.lodgementDays ?? 10
+  const lodgementUnit = bond.lodgementDaysUnit ?? 'business'
+  const schemeBoldDeadline =
+    lodgementUnit === 'calendar' ? `${days} days` : `${days} business days`
   return {
     mode: 'scheme',
     bondCapFragment,
     landlordHeldParagraphs: [],
     schemeLeadBeforeBold: 'Your landlord is legally required to lodge your bond with the relevant state authority within ',
-    schemeBoldDeadline: `${days} business days`,
+    schemeBoldDeadline,
     schemeLeadAfterBold: '.',
     authorityStateHeading: `${st} — state bond authority`,
     authorityPublicLine: bond.authorityPublicLabel ?? '',
@@ -64,4 +68,31 @@ export function bondStepRegulatoryCopy(
     acknowledgementCheckbox:
       'I understand the bond is paid directly to my landlord and must be lodged with the relevant state authority.',
   }
+}
+
+const FALLBACK_AUTHORITY_PUBLIC_LABEL: Record<string, string> = {
+  NSW: 'NSW Fair Trading (Rental Bonds Online)',
+  VIC: 'Residential Tenancies Bond Authority (RTBA)',
+  QLD: 'Residential Tenancies Authority (RTA)',
+  WA: 'Bond Administrator, Dept of Mines',
+  SA: 'Consumer and Business Services',
+  ACT: 'ACT Revenue Office',
+  TAS: 'Consumer, Building and Occupational Services',
+  NT: 'NT Consumer Affairs',
+}
+
+/** Public bond authority line when `resolveTenancyPackage` is unsupported (no rules object). */
+export function fallbackBondAuthorityPublicLine(state: string | null | undefined): string {
+  const s = (state ?? 'NSW').toUpperCase()
+  return FALLBACK_AUTHORITY_PUBLIC_LABEL[s] ?? FALLBACK_AUTHORITY_PUBLIC_LABEL.NSW
+}
+
+/**
+ * Bold fragment for the statutory lodgement period when rules are unavailable (e.g. unknown property type).
+ * QLD uses calendar days; NSW/VIC use business days for the usual 10-day window.
+ */
+export function fallbackSchemeLodgementDeadlineBold(state: string | null | undefined): string {
+  const s = (state ?? 'NSW').toUpperCase()
+  if (s === 'QLD') return '10 days'
+  return '10 business days'
 }

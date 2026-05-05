@@ -176,7 +176,12 @@ function cellGlance(result: TenancyPackageResult | null): string {
     b.schemeApplies && (b.authorityPublicLabel || b.authority)
       ? ` · ${b.authorityPublicLabel ?? b.authority}`
       : ''
-  const days = b.schemeApplies && b.lodgementDays != null ? ` · ${b.lodgementDays}d lodgement` : ''
+  const days =
+    b.schemeApplies && b.lodgementDays != null
+      ? ` · ${b.lodgementDays}d lodgement${
+          b.lodgementDaysUnit === 'calendar' ? ' (cal.)' : b.lodgementDaysUnit === 'business' ? ' (bus.)' : ''
+        }`
+      : ''
   return `${holder}${auth}${days}`
 }
 
