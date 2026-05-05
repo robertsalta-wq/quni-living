@@ -28,6 +28,10 @@ const bundleJobs = [
     inFile: 'src/lib/documents/QuniPlatformAddendum.tsx',
     outFile: 'api/documents/QuniPlatformAddendum.js',
   },
+  {
+    inFile: 'src/lib/documents/QuniOccupancyAgreementQld.tsx',
+    outFile: 'api/documents/QuniOccupancyAgreementQld.js',
+  },
 ]
 
 for (const { inFile, outFile } of bundleJobs) {

@@ -77,6 +77,13 @@ function vicForm1Paths(): TenancyPackageStoragePaths {
   }
 }
 
+function qldOccupancyPaths(): TenancyPackageStoragePaths {
+  return {
+    draft: 'qld_occupancy_agreement_draft.pdf',
+    signed: 'qld_occupancy_agreement_signed.pdf',
+  }
+}
+
 function unsupportedBase(
   tier: TenancyTier,
   reason: string,
@@ -163,7 +170,7 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         pdfKind: 'occupancy_agreement',
         rules,
         signingPackageName: 'QLD occupancy agreement',
-        storagePaths: null,
+        storagePaths: qldOccupancyPaths(),
         ragState,
         unsupportedReason: null,
       }
@@ -233,10 +240,11 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   return unsupportedBase('T2', 'unknown_property_type', ragState)
 }
 
-/** Maps router generator → internal document API path (NSW only until VIC generators ship). */
+/** Maps router generator → internal document API path for server-side PDF generation. */
 export function tenancyGeneratorToApiPath(generator: string | null): string | null {
   if (generator === 'nsw-ft6600') return '/api/documents/generate-residential-tenancy'
   if (generator === 'nsw-occupancy') return '/api/documents/generate-lease'
-  if (generator === 'qld-occupancy' || generator === 'qld-form18a') return null
+  if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
+  if (generator === 'qld-form18a') return null
   return null
 }
