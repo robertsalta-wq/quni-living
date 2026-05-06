@@ -116,14 +116,14 @@
     "title": "Quni platform fees for students (booking and weekly)",
     "category": "platform_policy",
     "state": null,
-    "content": "On Quni, students pay a one-off booking fee (currently $49) when proceeding with a booking, plus an ongoing weekly platform fee of 3% of rent while the tenancy is managed through the platform. Exact amounts and tax treatment should be confirmed at checkout and in your agreement with Quni."
+    "content": "On Quni's current managed pricing model, students pay $0 platform fee (including booking fee and weekly platform fee). Exact presentation can vary by product flow and should be confirmed at checkout and in your agreement."
   },
   {
     "id": "6fad4b80-0012-4000-8000-000000000012",
     "title": "Quni landlord fees and listing cost",
     "category": "platform_policy",
     "state": null,
-    "content": "Landlords pay a one-off acceptance fee (currently $29) when accepting a booking, plus an ongoing weekly service fee of 8% of rent while the tenancy is on-platform. Creating a standard listing on Quni is free; premium placement or add-ons may exist separately—check the landlord dashboard and current terms."
+    "content": "Landlords can choose Listing tier (flat fee per accepted booking, currently $99) or Managed tier (weekly percentage service fee, currently 7%). Creating a listing remains free; fees are applied according to the selected service tier and current pricing configuration."
   },
   {
     "id": "6fad4b80-0013-4000-8000-000000000013",

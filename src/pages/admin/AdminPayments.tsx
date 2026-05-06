@@ -1244,121 +1244,15 @@ function RefundsTab() {
 }
 
 function FeeSettingsTab() {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [landlordPct, setLandlordPct] = useState('5')
-  const [studentPct, setStudentPct] = useState('3')
-  const [studentBookingFee, setStudentBookingFee] = useState('49')
-  const [landlordAccept, setLandlordAccept] = useState('0')
-
-  const load = useCallback(async () => {
-    if (!isSupabaseConfigured) return
-    setLoading(true)
-    const { data, error: fErr } = await supabase.from('platform_settings').select('key, value')
-    if (fErr) {
-      setError(fErr.message)
-    } else {
-      const map = new Map((data ?? []).map((r) => [r.key, r.value]))
-      setLandlordPct(map.get('landlord_service_fee_pct') ?? '5')
-      setStudentPct(map.get('student_platform_fee_pct') ?? '3')
-      setStudentBookingFee(map.get('student_booking_processing_fee_aud') ?? '49')
-      setLandlordAccept(map.get('landlord_acceptance_fee_aud') ?? '0')
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  async function save() {
-    setSaving(true)
-    setError(null)
-    const { data: sessionData } = await supabase.auth.getSession()
-    const uid = sessionData.session?.user?.id ?? null
-    const rows = [
-      { key: 'landlord_service_fee_pct', value: landlordPct.trim(), updated_by: uid },
-      { key: 'student_platform_fee_pct', value: studentPct.trim(), updated_by: uid },
-      { key: 'student_booking_processing_fee_aud', value: studentBookingFee.trim(), updated_by: uid },
-      { key: 'landlord_acceptance_fee_aud', value: landlordAccept.trim(), updated_by: uid },
-    ]
-    for (const r of rows) {
-      const { error: uErr } = await supabase
-        .from('platform_settings')
-        .update({ value: r.value, updated_by: r.updated_by, updated_at: new Date().toISOString() })
-        .eq('key', r.key)
-      if (uErr) {
-        setError(uErr.message)
-        setSaving(false)
-        return
-      }
-    }
-    setSaving(false)
-    await load()
-  }
-
-  if (loading) {
-    return (
-      <div className="p-12 flex justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-md space-y-4">
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
-      )}
-      <div className={adminCardClass + ' space-y-4'}>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Landlord service fee (%)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={landlordPct}
-            onChange={(e) => setLandlordPct(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Student platform fee (%)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={studentPct}
-            onChange={(e) => setStudentPct(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Student booking processing fee ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={studentBookingFee}
-            onChange={(e) => setStudentBookingFee(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Landlord acceptance fee ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={landlordAccept}
-            onChange={(e) => setLandlordAccept(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-          />
-        </div>
-        <button type="button" className={coralBtnClass} onClick={() => void save()} disabled={saving}>
-          {saving ? 'Saving…' : 'Save settings'}
-        </button>
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        Pricing in this tab is deprecated and read-only. Use <Link to="/admin/pricing" className="underline">/admin/pricing</Link> for all fee configuration.
       </div>
-      <p className="text-sm text-gray-600">
-        Fee changes apply to new bookings only. Existing subscriptions continue at the rate locked in at booking time.
-      </p>
+      <div className={adminCardClass + ' space-y-2 opacity-70'}>
+        <p className="text-sm text-gray-700">Legacy `platform_settings` values are kept only for backward compatibility.</p>
+        <p className="text-sm text-gray-700">No edits are accepted from this screen.</p>
+      </div>
     </div>
   )
 }

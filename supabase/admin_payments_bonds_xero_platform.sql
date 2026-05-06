@@ -56,12 +56,7 @@ create index if not exists platform_settings_key_idx on public.platform_settings
 
 alter table public.platform_settings enable row level security;
 
-insert into public.platform_settings (key, value) values
-  ('landlord_service_fee_pct', '5'),
-  ('student_platform_fee_pct', '3'),
-  ('student_booking_processing_fee_aud', '49'),
-  ('landlord_acceptance_fee_aud', '0')
-on conflict (key) do nothing;
+-- Deprecated fee keys removed in Phase 2: canonical pricing now lives in pricing_config.
 
 -- ---------------------------------------------------------------------------
 -- xero_settings (OAuth — service role / server only; no client SELECT policy)

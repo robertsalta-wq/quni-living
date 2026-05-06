@@ -18,7 +18,7 @@ import type { Database, Json } from '../../src/lib/database.types'
 import { QldGeneralTenancyAgreement } from './QldGeneralTenancyAgreement.js'
 import { QuniPlatformAddendumQld } from './QuniPlatformAddendumQld.js'
 import type { QldGeneralTenancyAgreementProps } from './rtaTypes'
-import { PLATFORM_FEE_PERCENT, sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
+import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 import {
@@ -26,6 +26,11 @@ import {
   fetchBankDetailsForRta,
   fetchPlatformConfigValueMap,
 } from '../lib/platformConfig.js'
+import {
+  formatFeeForDisplay,
+  getPricingForCell,
+  resolvePropertyTierFromListing,
+} from '../lib/pricing/index.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -134,6 +139,7 @@ export default async function handler(req: any, res: any) {
         rent_per_week,
         room_type,
         property_type,
+        is_registered_rooming_house,
         furnished,
         bond,
         linen_supplied,
@@ -313,7 +319,15 @@ export default async function handler(req: any, res: any) {
     documentId = insD.id
   }
 
-  const platformFee = Math.round(weeklyRent * (PLATFORM_FEE_PERCENT / 100) * 100) / 100
+  const propertyTier = resolvePropertyTierFromListing(
+    prop.property_type,
+    prop.is_registered_rooming_house,
+  )
+  const managedPricingCell = await getPricingForCell(propertyTier, 'managed')
+  const managedPricingDisplay = formatFeeForDisplay(managedPricingCell)
+  const platformFeePercent =
+    managedPricingCell.fee_mode === 'percent' ? Number(managedPricingCell.fee_percent || 0) : 0
+  const platformFee = Math.round(weeklyRent * (platformFeePercent / 100) * 100) / 100
   const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
 
   const lpRec = lp as Record<string, unknown>
@@ -389,7 +403,7 @@ export default async function handler(req: any, res: any) {
 
   const sharedRent = {
     weeklyRent,
-    platformFeePercent: PLATFORM_FEE_PERCENT,
+      platformFeePercent,
     totalWeekly,
     paymentMethod: rentPaymentMethodLine,
   }
@@ -474,12 +488,13 @@ export default async function handler(req: any, res: any) {
   try {
     const { data: pcRow, error: pcErr } = await admin
       .from('pricing_config')
-      .select('utilities_cap')
-      .eq('tier', 't2')
+      .select('utilities_cap_aud')
+      .eq('property_tier', propertyTier)
+      .eq('service_tier', 'managed')
       .limit(1)
       .maybeSingle()
     if (!pcErr && pcRow != null) {
-      const raw = (pcRow as { utilities_cap?: number | string | null }).utilities_cap
+      const raw = (pcRow as { utilities_cap_aud?: number | string | null }).utilities_cap_aud
       const n = typeof raw === 'number' ? raw : Number(raw)
       if (Number.isFinite(n) && n >= 0) utilitiesCap = n
     }
@@ -516,6 +531,11 @@ export default async function handler(req: any, res: any) {
     houseCommunicationsChannel: 'Property WhatsApp group (house-related only)',
     utilitiesCap,
     houseRules,
+    landlordServiceFeeText: managedPricingDisplay.landlordFeeDisplay,
+    cardSurchargeDomesticText: managedPricingDisplay.cardSurchargeDomestic,
+    cardSurchargeInternationalText: managedPricingDisplay.cardSurchargeInternational,
+    moveOutLateCheckoutFeeText: managedPricingDisplay.studentFeeFixedDisplay,
+    moveOutInternationalTransferFeeText: managedPricingDisplay.studentFeeFixedDisplay,
   }
 
   const form18aEl = React.createElement(QldGeneralTenancyAgreement, form18aProps)

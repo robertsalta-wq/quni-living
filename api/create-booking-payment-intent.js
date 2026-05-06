@@ -9,10 +9,13 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
+import {
+  calculateBookingFeeCents,
+  getPricingForCell,
+  resolvePropertyTierFromListing,
+} from './lib/pricing/index.js'
 
 export const config = { runtime: 'edge' }
-
-const BOOKING_FEE_AUD_CENTS = 4900
 
 const PROPERTY_PIPELINE_STATUSES = ['pending_confirmation', 'awaiting_info', 'confirmed', 'active']
 const PROPERTY_CONFIRMED_STATUSES = ['confirmed', 'active']
@@ -345,7 +348,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
 
   const { data: property, error: propErr } = await admin
     .from('properties')
-    .select('id, title, landlord_id, rent_per_week, status, suburb, state, property_type')
+    .select('id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house')
     .eq('id', propertyId)
     .maybeSingle()
 
@@ -396,6 +399,18 @@ async function handlePaymentIntentCommit(request, origin, body) {
   if (depositCents == null) {
     return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
   }
+  const propertyTier = resolvePropertyTierFromListing(
+    property.property_type,
+    property.is_registered_rooming_house,
+  )
+  let pricingCell
+  try {
+    pricingCell = await getPricingForCell(propertyTier, 'managed')
+  } catch (e) {
+    console.error('load pricing for booking commit', e)
+    return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
+  }
+  const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
 
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
@@ -415,7 +430,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     bond_acknowledged: true,
     stripe_payment_intent_id: paymentIntentId,
     deposit_amount: depositCents,
-    platform_fee_amount: BOOKING_FEE_AUD_CENTS,
+    platform_fee_amount: bookingFeeCents,
     booking_fee_paid: true,
     property_type: propertyType,
     rent_payment_method: rentPaymentMethod,
@@ -595,6 +610,7 @@ export default async function handler(request) {
       suburb,
       state,
       property_type,
+      is_registered_rooming_house,
       landlord_profiles (
         id,
         stripe_connect_account_id,
@@ -640,8 +656,19 @@ export default async function handler(request) {
   if (depositCents == null) {
     return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
   }
-
-  const amountCents = depositCents + BOOKING_FEE_AUD_CENTS
+  const propertyTier = resolvePropertyTierFromListing(
+    property.property_type,
+    property.is_registered_rooming_house,
+  )
+  let pricingCell
+  try {
+    pricingCell = await getPricingForCell(propertyTier, 'managed')
+  } catch (e) {
+    console.error('load pricing for booking PI', e)
+    return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
+  }
+  const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
+  const amountCents = depositCents + bookingFeeCents
 
   const stripe = new Stripe(stripeSecret)
 
@@ -683,7 +710,7 @@ export default async function handler(request) {
       moveInDate,
       leaseLength,
       depositCents: String(depositCents),
-      bookingFeeCents: String(BOOKING_FEE_AUD_CENTS),
+      bookingFeeCents: String(bookingFeeCents),
       studentMessage: studentMessage ? studentMessage.slice(0, 500) : '',
     },
   })
@@ -694,7 +721,7 @@ export default async function handler(request) {
       paymentIntentId: paymentIntent.id,
       amountCents,
       depositCents,
-      bookingFeeCents: BOOKING_FEE_AUD_CENTS,
+      bookingFeeCents,
     },
     200,
     origin,

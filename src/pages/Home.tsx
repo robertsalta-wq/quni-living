@@ -15,6 +15,7 @@ import {
   absoluteUrl,
 } from '../lib/site'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
+import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -84,7 +85,7 @@ const LANDLORD_FAQ = [
   {
     id: 'faq-l-1',
     q: 'How much does Quni charge landlords?',
-    a: 'Landlords pay a 10% service fee on weekly rent, deducted before payout. There are no listing fees and no charges until you accept a tenant.',
+    a: 'Landlords choose Listing (flat fee per accepted booking) or Managed (percentage fee on weekly rent). There are no charges until a booking is accepted.',
   },
   {
     id: 'faq-l-2',
@@ -147,6 +148,31 @@ export default function Home() {
     () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
   )
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
+  const [dynamicStudentFeeText, setDynamicStudentFeeText] = useState('$0')
+  const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')
+  const [dynamicManagedFeeText, setDynamicManagedFeeText] = useState('7%')
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
+        const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
+        const managed = formatFeeForDisplay(managedCell)
+        const listing = formatFeeForDisplay(listingCell)
+        if (!cancelled) {
+          setDynamicStudentFeeText(managed.studentFeeDisplay)
+          setDynamicListingFeeText(listing.landlordFeeDisplay)
+          setDynamicManagedFeeText(managed.landlordFeeDisplay)
+        }
+      } catch {
+        // keep defaults
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -438,6 +464,10 @@ export default function Home() {
             <div className="divide-y divide-gray-200 border-b border-gray-200">
               {STUDENT_FAQ.map((item) => {
                 const open = openFaqId === item.id
+                const answer =
+                  item.id === 'faq-s-1'
+                    ? `Yes — students pay ${dynamicStudentFeeText} platform fees. You see the landlord's asking rent and pay exactly that, with no booking fees or surcharges added by Quni.`
+                    : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button
@@ -467,7 +497,7 @@ export default function Home() {
                       hidden={!open}
                       className={open ? 'pb-4 text-sm leading-relaxed text-gray-600 sm:pr-8' : ''}
                     >
-                      {open ? item.a : null}
+                      {open ? answer : null}
                     </div>
                   </div>
                 )
@@ -480,6 +510,10 @@ export default function Home() {
             <div className="divide-y divide-gray-200 border-b border-gray-200">
               {LANDLORD_FAQ.map((item) => {
                 const open = openFaqId === item.id
+                const answer =
+                  item.id === 'faq-l-1'
+                    ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
+                    : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button
@@ -509,7 +543,7 @@ export default function Home() {
                       hidden={!open}
                       className={open ? 'pb-4 text-sm leading-relaxed text-gray-600 sm:pr-8' : ''}
                     >
-                      {open ? item.a : null}
+                      {open ? answer : null}
                     </div>
                   </div>
                 )

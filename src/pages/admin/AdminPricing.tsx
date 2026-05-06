@@ -98,10 +98,10 @@ function logFieldLabel(fieldName: string): string {
   const map: Record<string, string> = {
     fee_mode: 'Landlord fee mode',
     fee_percent: 'Landlord fee %',
-    fee_fixed_cents: 'Landlord fixed fee (cents)',
+    fee_fixed_cents: 'Landlord fixed fee ($)',
     student_fee_mode: 'Student fee mode',
     student_fee_percent: 'Student fee %',
-    student_fee_fixed_cents: 'Student fixed fee (cents)',
+    student_fee_fixed_cents: 'Student fixed fee ($)',
     card_surcharge_enabled: 'Card surcharge',
     free_transfer_required: 'Free bank transfer',
     utilities_cap_aud: 'Utilities cap (AUD)',
@@ -133,6 +133,17 @@ function parseMaxRoomsInput(raw: string): number {
 
 function maxRoomsToInput(n: number): string {
   return n >= 999 ? '∞' : String(n)
+}
+
+function centsToDollarsInput(cents: number): string {
+  return (Number(cents || 0) / 100).toFixed(2)
+}
+
+function dollarsInputToCents(raw: string): number {
+  const normalized = raw.replace(/\$/g, '').replace(/,/g, '').trim()
+  const n = Number(normalized)
+  if (!Number.isFinite(n) || n <= 0) return 0
+  return Math.round(n * 100)
 }
 
 function cloneVolume(rows: VolumeTierRow[]): VolumeTierRow[] {
@@ -472,20 +483,19 @@ export default function AdminPricing() {
                               {f.fee_mode === 'fixed' ? (
                                 <div className="mt-2">
                                   <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                                    Landlord fee (cents)
+                                    Landlord fee ($)
                                   </label>
                                   <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                                    min={0}
-                                    step={100}
-                                    value={f.fee_fixed_cents}
+                                    value={centsToDollarsInput(f.fee_fixed_cents)}
                                     onChange={(e) =>
                                       updatePricingField(
                                         tier.id,
                                         serviceTier,
                                         'fee_fixed_cents',
-                                        parseInt(e.target.value, 10) || 0,
+                                        dollarsInputToCents(e.target.value),
                                       )
                                     }
                                   />
@@ -513,6 +523,25 @@ export default function AdminPricing() {
                                   />
                                 </div>
                               )}
+                              <div className="mt-2">
+                                <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                  Student booking fee ($)
+                                </label>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
+                                  value={centsToDollarsInput(f.student_fee_fixed_cents)}
+                                  onChange={(e) =>
+                                    updatePricingField(
+                                      tier.id,
+                                      serviceTier,
+                                      'student_fee_fixed_cents',
+                                      dollarsInputToCents(e.target.value),
+                                    )
+                                  }
+                                />
+                              </div>
                               <button
                                 type="button"
                                 disabled={savingTier === tier.id}

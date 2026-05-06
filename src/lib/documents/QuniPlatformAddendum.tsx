@@ -105,8 +105,9 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
     { label: 'Bank:', value: bankName || '—' },
   ]
 
-  const cardDomestic = '1.7% + $0.30 per transaction (domestic cards)'
-  const cardInternational = '3.5% + $0.30 per transaction (international cards)'
+  const cardDomestic = `${props.cardSurchargeDomesticText ?? '1.7% + $0.30'} per transaction (domestic cards)`
+  const cardInternational = `${props.cardSurchargeInternationalText ?? '3.5% + $0.30'} per transaction (international cards)`
+  const landlordServiceFeeText = props.landlordServiceFeeText ?? '10%'
 
   return (
     <View style={{ marginBottom: 10 }}>
@@ -120,7 +121,7 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        A service fee of 10% of the gross weekly rent is deducted from amounts payable to the landlord through the
+        A service fee of {landlordServiceFeeText} of the gross weekly rent is deducted from amounts payable to the landlord through the
         Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms.
         The tenant&apos;s agreed weekly rent is not increased by this fee.
       </Text>
@@ -354,6 +355,8 @@ function Section8ConditionReport(_props: QuniPlatformAddendumProps) {
 /** Section 9 — Move-out procedures. */
 function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   const dailyRent = props.rent.weeklyRent / 7
+  const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? '$50'
+  const internationalTransferFeeText = props.moveOutInternationalTransferFeeText ?? '$50'
   const feeRows: { label: string; value: string }[] = [
     {
       label: 'Cleaning (if not to standard)',
@@ -365,7 +368,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
     },
     {
       label: 'Late checkout (after 10:00am on vacate date)',
-      value: '$50 flat fee',
+      value: `${lateCheckoutFeeText} flat fee`,
     },
     {
       label: 'Late checkout (still occupying after midnight on vacate date)',
@@ -377,7 +380,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
     },
     {
       label: 'International bank transfer administration (bond refund)',
-      value: '$50 flat fee',
+      value: `${internationalTransferFeeText} flat fee`,
     },
   ]
 
@@ -394,7 +397,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
       <Text style={occupancyMatchPdf.bodyParagraph}>
         Unless otherwise agreed in writing, the tenant must vacate and return possession by{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>10:00am</Text> on the agreed vacate date. If the tenant remains
-        after 10:00am, a <Text style={{ fontFamily: 'Helvetica-Bold' }}>$50</Text> late checkout flat fee applies. If the
+        after 10:00am, a <Text style={{ fontFamily: 'Helvetica-Bold' }}>{lateCheckoutFeeText}</Text> late checkout flat fee applies. If the
         tenant is still occupying the room after midnight on the vacate date, the tenant agrees that{' '}
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>full day rent</Text> applies for that day, calculated as one
         day&apos;s rent (one-seventh of the agreed weekly rent), currently {formatMoney(dailyRent)} per day, in addition

@@ -37,6 +37,11 @@ import {
 } from '../lib/propertyListingDateWindow'
 import { AUDateField } from '../components/AUDateField'
 import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
+import {
+  calculateBookingFeeCents,
+  fetchPricingForPropertyTier,
+  resolvePropertyTierFromListing,
+} from '../lib/pricing'
 
 function bookingDraftStorageKey(listingId: string) {
   return `booking_draft_${listingId}`
@@ -66,8 +71,6 @@ const LEASE_OPTIONS = ['3 months', '6 months', '12 months', 'Flexible'] as const
 type LeaseOption = (typeof LEASE_OPTIONS)[number]
 
 type RentPaymentMethod = 'bank_transfer' | 'quni_platform'
-
-const BOOKING_FEE_AUD = 49
 
 type Step1DateBlock =
   | null
@@ -548,6 +551,7 @@ export default function Booking() {
     })
   }, [])
   const [success, setSuccess] = useState(false)
+  const [managedPricingCell, setManagedPricingCell] = useState<any | null>(null)
 
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0)
   const [draftPersistReady, setDraftPersistReady] = useState(false)
@@ -700,6 +704,29 @@ export default function Booking() {
   useEffect(() => {
     void loadProperty()
   }, [loadProperty])
+
+  useEffect(() => {
+    if (!property) {
+      setManagedPricingCell(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const propertyTier = resolvePropertyTierFromListing(
+          property.property_type,
+          property.is_registered_rooming_house,
+        ) as 't1' | 't2' | 't3'
+        const cell = await fetchPricingForPropertyTier(propertyTier, 'managed')
+        if (!cancelled) setManagedPricingCell(cell)
+      } catch {
+        if (!cancelled) setManagedPricingCell(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [property])
 
   useEffect(() => {
     if (!user?.id || !isSupabaseConfigured) {
@@ -883,10 +910,17 @@ export default function Booking() {
   }, [success])
 
   const rent = property ? Number(property.rent_per_week) : 0
-  const platformPctWeekly = rent > 0 ? Math.round(rent * 0.03) : 0
+  const platformFeePercent =
+    managedPricingCell?.fee_mode === 'percent' ? Number(managedPricingCell.fee_percent || 0) : 0
+  const bookingFeeCents = calculateBookingFeeCents(
+    managedPricingCell ?? { student_fee_mode: 'fixed', student_fee_fixed_cents: 0, student_fee_percent: 0 },
+    Math.round(rent * 100),
+  )
+  const bookingFeeAud = bookingFeeCents / 100
+  const platformPctWeekly = rent > 0 ? Math.round(rent * (platformFeePercent / 100)) : 0
   const totalWeekly = rent + platformPctWeekly
   const depositDollars = rent
-  const totalChargeDisplay = (depositDollars + BOOKING_FEE_AUD).toLocaleString('en-AU', {
+  const totalChargeDisplay = (depositDollars + bookingFeeAud).toLocaleString('en-AU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })
@@ -1445,7 +1479,7 @@ export default function Booking() {
                 <span className="font-semibold text-gray-900 tabular-nums">${rent.toLocaleString('en-AU')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform fee (3%)</span>
+                <span className="text-gray-600">Platform fee ({platformFeePercent.toLocaleString('en-AU')}%)</span>
                 <span className="font-semibold text-gray-900 tabular-nums">${platformPctWeekly.toLocaleString('en-AU')}</span>
               </div>
               <div className="flex justify-between text-sm pt-1 border-t border-gray-200/80">
@@ -1787,7 +1821,7 @@ export default function Booking() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Platform fee</span>
-                  <span className="font-semibold tabular-nums">${BOOKING_FEE_AUD.toLocaleString('en-AU')} (one-off)</span>
+                  <span className="font-semibold tabular-nums">${bookingFeeAud.toLocaleString('en-AU')} (one-off)</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 font-bold text-gray-900">
                   <span>Total charged now</span>

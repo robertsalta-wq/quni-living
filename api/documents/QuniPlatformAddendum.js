@@ -636,12 +636,17 @@ function Section2QuniPlatformAndFee(props) {
     { label: "Account number:", value: acct || "\u2014" },
     { label: "Bank:", value: bankName || "\u2014" }
   ];
-  const cardDomestic = "1.7% + $0.30 per transaction (domestic cards)";
-  const cardInternational = "3.5% + $0.30 per transaction (international cards)";
+  const cardDomestic = `${props.cardSurchargeDomesticText ?? "1.7% + $0.30"} per transaction (domestic cards)`;
+  const cardInternational = `${props.cardSurchargeInternationalText ?? "3.5% + $0.30"} per transaction (international cards)`;
+  const landlordServiceFeeText = props.landlordServiceFeeText ?? "10%";
   return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Quni platform & service fee" }),
     /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: 'Quni Living Pty Ltd (the "Platform") operates an online marketplace and payment facilitation service. The Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the Residential Tenancies Act 2010 (NSW) and the standard form agreement.' }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "A service fee of 10% of the gross weekly rent is deducted from amounts payable to the landlord through the Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms. The tenant's agreed weekly rent is not increased by this fee." }),
+    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+      "A service fee of ",
+      landlordServiceFeeText,
+      " of the gross weekly rent is deducted from amounts payable to the landlord through the Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms. The tenant's agreed weekly rent is not increased by this fee."
+    ] }),
     /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "Rent is payable by direct bank transfer using the following account details (reference your name and the property address when transferring):" }),
     /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: bankRows.map((r) => ({ label: r.label, value: r.value })) }),
     rentPaymentMethod === "quni_platform" ? /* @__PURE__ */ jsx2(View2, { style: [occupancyMatchPdf.noteBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.noteItalicMuted, children: [
@@ -739,6 +744,8 @@ function Section8ConditionReport(_props) {
 }
 function Section9MoveOutProcedures(props) {
   const dailyRent = props.rent.weeklyRent / 7;
+  const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? "$50";
+  const internationalTransferFeeText = props.moveOutInternationalTransferFeeText ?? "$50";
   const feeRows = [
     {
       label: "Cleaning (if not to standard)",
@@ -750,7 +757,7 @@ function Section9MoveOutProcedures(props) {
     },
     {
       label: "Late checkout (after 10:00am on vacate date)",
-      value: "$50 flat fee"
+      value: `${lateCheckoutFeeText} flat fee`
     },
     {
       label: "Late checkout (still occupying after midnight on vacate date)",
@@ -762,7 +769,7 @@ function Section9MoveOutProcedures(props) {
     },
     {
       label: "International bank transfer administration (bond refund)",
-      value: "$50 flat fee"
+      value: `${internationalTransferFeeText} flat fee`
     }
   ];
   return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
@@ -777,7 +784,7 @@ function Section9MoveOutProcedures(props) {
       " ",
       /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "10:00am" }),
       " on the agreed vacate date. If the tenant remains after 10:00am, a ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "$50" }),
+      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: lateCheckoutFeeText }),
       " late checkout flat fee applies. If the tenant is still occupying the room after midnight on the vacate date, the tenant agrees that",
       " ",
       /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "full day rent" }),

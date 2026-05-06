@@ -25,6 +25,7 @@ import {
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
 } from './lib/resolveTenancyPackage.js'
+import { getPricingForCell, resolvePropertyTierFromListing } from './lib/pricing/index.js'
 
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }
@@ -383,7 +384,7 @@ export default async function handler(req, res) {
       ],
       default_payment_method: pmId,
       transfer_data: { destination: landlord.stripe_connect_account_id },
-      application_fee_percent: 8,
+      application_fee_percent: 0,
       cancel_at: cancelAt,
       metadata: {
         booking_id: booking.id,
@@ -399,6 +400,14 @@ export default async function handler(req, res) {
     } else {
       subscriptionBody.proration_behavior = 'none'
     }
+
+    const resolvedPropertyTier = resolvePropertyTierFromListing(
+      propForTenancy.property_type,
+      propForTenancy.is_registered_rooming_house,
+    )
+    const managedPricing = await getPricingForCell(resolvedPropertyTier, 'managed')
+    subscriptionBody.application_fee_percent =
+      managedPricing.fee_mode === 'percent' ? Number(managedPricing.fee_percent || 0) : 0
 
     const subscription = await stripe.subscriptions.create(subscriptionBody)
 

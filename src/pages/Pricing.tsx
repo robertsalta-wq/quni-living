@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
+import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 
 type FeeRowProps = {
   icon: string
@@ -20,7 +21,7 @@ const faqItems = [
   {
     question: 'Why do students pay a platform fee?',
     answer:
-      "The 3% platform fee covers secure payment processing, booking management, and student support. It's charged weekly only when you have an active tenancy.",
+      'Students pay no platform fee under the current managed pricing model.',
   },
   {
     question: 'Is there a minimum lease length?',
@@ -30,7 +31,7 @@ const faqItems = [
   {
     question: 'What happens if my booking is declined?',
     answer:
-      'If a landlord declines your request, your full deposit is automatically refunded within 5-7 business days. The $49 booking fee is non-refundable.',
+      'If a landlord declines your request, your full deposit is automatically refunded within 5-7 business days.',
   },
   {
     question: 'Can I cancel my listing as a landlord?',
@@ -45,7 +46,7 @@ const faqItems = [
   {
     question: 'What is the acceptance fee?',
     answer:
-      'The $29 acceptance fee is charged to landlords when they confirm a booking. It covers admin and platform costs associated with activating a tenancy.',
+      'Quni supports both landlord pricing modes: Listing (flat fee) and Managed (percentage fee).',
   },
 ] as const
 
@@ -56,7 +57,7 @@ const studentSteps: Step[] = [
   },
   {
     title: '2. Request to book',
-    description: 'Pay a $49 booking fee + refundable deposit',
+    description: 'Pay a refundable deposit only (students pay $0 platform fee)',
   },
   {
     title: '3. Move in',
@@ -126,19 +127,44 @@ function HowItWorksCard({
 
 export default function Pricing() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number>(0)
+  const [listingFeeText, setListingFeeText] = useState('$99')
+  const [managedFeeText, setManagedFeeText] = useState('7%')
+  const [studentFeeText, setStudentFeeText] = useState('$0')
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
+        const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
+        const listing = formatFeeForDisplay(listingCell)
+        const managed = formatFeeForDisplay(managedCell)
+        if (!cancelled) {
+          setListingFeeText(listing.landlordFeeDisplay)
+          setManagedFeeText(managed.landlordFeeDisplay)
+          setStudentFeeText(managed.studentFeeDisplay)
+        }
+      } catch {
+        // Keep defaults when pricing endpoint is unavailable.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <>
       <Seo
         title="Pricing — Quni Living"
-        description="Simple, transparent pricing for students and landlords. Booking fee, platform fee, and landlord service fees — no hidden charges."
+        description="Dual-tier pricing for students and landlords. Students pay $0, landlords choose Listing or Managed."
         canonicalPath="/pricing"
       />
 
       <div className="flex-1 flex flex-col min-h-0 w-full bg-[#FEF9E4]">
         <PageHeroBand
-          title="Simple, transparent pricing."
-          subtitle="No hidden fees. You only pay when Quni is working for you."
+          title="Dual-tier, transparent pricing."
+          subtitle="Students pay $0. Landlords choose Listing or Managed."
           belowSubtitle={
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 overflow-hidden rounded-xl border border-white/25 bg-white/10 backdrop-blur-[1px]">
               <div className="px-4 py-3 text-white text-sm font-medium flex items-center justify-center gap-2 text-center">
@@ -170,22 +196,12 @@ export default function Pricing() {
                     description="No sign-up fee for students"
                     value="Free"
                   />
-                  <FeeRow
-                    icon="🎫"
-                    label="Booking fee"
-                    description="One-off booking processing fee"
-                    value="$49"
-                  />
-                  <FeeRow
-                    icon="📊"
-                    label="Platform fee"
-                    description="Charged weekly, only when you have an active booking"
-                    value="3%"
-                  />
+                  <FeeRow icon="🎫" label="Booking fee" description="One-off booking processing fee" value={studentFeeText} />
+                  <FeeRow icon="📊" label="Platform fee" description="Charged weekly for students" value={studentFeeText} />
                   <FeeRow
                     icon="🔐"
                     label="Bond"
-                    description="Held securely via Stripe — released when you move out"
+                    description="Handled under state bond rules by the landlord/authority"
                     value="Varies"
                   />
                 </div>
@@ -214,16 +230,11 @@ export default function Pricing() {
                   />
                   <FeeRow
                     icon="💰"
-                    label="Service fee"
-                    description="Only charged when you have an active tenant"
-                    value="8%"
+                    label="Listing tier"
+                    description="Flat fee per accepted booking (landlord runs tenancy)"
+                    value={listingFeeText}
                   />
-                  <FeeRow
-                    icon="✅"
-                    label="Acceptance fee"
-                    description="One-off per confirmed booking"
-                    value="$29"
-                  />
+                  <FeeRow icon="✅" label="Managed tier" description="Percentage fee with full tenancy operations" value={managedFeeText} />
                   <FeeRow
                     icon="🔓"
                     label="No lock-in"

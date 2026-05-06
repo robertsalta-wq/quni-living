@@ -16,8 +16,9 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { OccupancyAgreement } from './OccupancyAgreement.js'
 import type { OccupancyAgreementProps } from './rtaTypes'
-import { PLATFORM_FEE_PERCENT, sendForSigning } from '../lib/docuseal.js'
+import { getManagedLandlordFeePercentForPropertyTier, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
+import { resolvePropertyTierFromListing } from '../lib/pricing/index.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -122,6 +123,7 @@ export default async function handler(req: any, res: any) {
         rent_per_week,
         room_type,
         property_type,
+        is_registered_rooming_house,
         furnished,
         bond,
         linen_supplied,
@@ -260,7 +262,12 @@ export default async function handler(req: any, res: any) {
     documentId = insD.id
   }
 
-  const platformFee = Math.round(weeklyRent * (PLATFORM_FEE_PERCENT / 100) * 100) / 100
+  const propertyTier = resolvePropertyTierFromListing(
+    prop.property_type,
+    prop.is_registered_rooming_house,
+  )
+  const platformFeePercent = await getManagedLandlordFeePercentForPropertyTier(propertyTier)
+  const platformFee = Math.round(weeklyRent * (platformFeePercent / 100) * 100) / 100
   const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
 
   const lpRec = lp as Record<string, unknown>
@@ -305,7 +312,7 @@ export default async function handler(req: any, res: any) {
     },
     rent: {
       weeklyRent,
-      platformFeePercent: PLATFORM_FEE_PERCENT,
+      platformFeePercent,
       totalWeekly,
       paymentMethod: 'Via Quni Living platform (quni.com.au)',
     },

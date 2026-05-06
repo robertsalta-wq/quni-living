@@ -204,4 +204,9 @@ export type QuniPlatformAddendumProps = {
   utilitiesCap: number
   /** Property-specific rules text; may be platform default when property has none. */
   houseRules: string | null
+  landlordServiceFeeText?: string
+  cardSurchargeDomesticText?: string
+  cardSurchargeInternationalText?: string
+  moveOutLateCheckoutFeeText?: string
+  moveOutInternationalTransferFeeText?: string
 }
