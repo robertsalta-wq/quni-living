@@ -33,6 +33,11 @@ type TierMeta = {
   status: 'live' | 'phase2' | 'deferred'
   statusLabel: string
 }
+type FixedFeeInputRow = {
+  feeFixedInput: string
+  studentFeeFixedInput: string
+}
+type FixedFeeInputState = Record<PricingKey, FixedFeeInputRow>
 
 const TIERS: TierMeta[] = [
   {
@@ -139,11 +144,30 @@ function centsToDollarsInput(cents: number): string {
   return (Number(cents || 0) / 100).toFixed(2)
 }
 
-function dollarsInputToCents(raw: string): number {
+function centsToDollarsForEditing(cents: number): string {
+  return centsToDollarsInput(cents)
+}
+
+function parseDollarsInputToCents(raw: string): number | null {
   const normalized = raw.replace(/\$/g, '').replace(/,/g, '').trim()
+  if (!normalized) return null
   const n = Number(normalized)
-  if (!Number.isFinite(n) || n <= 0) return 0
+  if (!Number.isFinite(n) || n < 0) return null
   return Math.round(n * 100)
+}
+
+function buildFixedFeeInputs(
+  pricingByKey: Record<PricingKey, PricingConfigRow>,
+): FixedFeeInputState {
+  return Object.fromEntries(
+    Object.entries(pricingByKey).map(([k, row]) => [
+      k,
+      {
+        feeFixedInput: centsToDollarsForEditing(row.fee_fixed_cents),
+        studentFeeFixedInput: centsToDollarsForEditing(row.student_fee_fixed_cents),
+      },
+    ]),
+  ) as FixedFeeInputState
 }
 
 function cloneVolume(rows: VolumeTierRow[]): VolumeTierRow[] {
@@ -165,6 +189,7 @@ export default function AdminPricing() {
   })
   const [earlyByKey, setEarlyByKey] = useState<Record<PricingKey, EarlyAdopterUi> | null>(null)
   const [changeLog, setChangeLog] = useState<ChangeLogRow[]>([])
+  const [fixedFeeInputs, setFixedFeeInputs] = useState<FixedFeeInputState | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingTier, setSavingTier] = useState<TierId | null>(null)
   const [savingVolume, setSavingVolume] = useState(false)
@@ -184,6 +209,7 @@ export default function AdminPricing() {
       const bundle = await fetchAdminPricingBundle(supabase)
       setPricingByKey(clonePricingFromBundle(bundle.pricingByKey))
       setBaselineByKey(clonePricingFromBundle(bundle.pricingByKey))
+      setFixedFeeInputs(buildFixedFeeInputs(bundle.pricingByKey))
       setVolumeRows({
         listing: cloneVolume(bundle.volumeTiersByService.listing),
         managed: cloneVolume(bundle.volumeTiersByService.managed),
@@ -227,10 +253,20 @@ export default function AdminPricing() {
     setSavingTier(propertyTier)
     setError(null)
     try {
-      const by = await changedBy()
       const key = keyFor(propertyTier, serviceTier)
+      const by = await changedBy()
       const prevRow = baselineByKey[key]
-      const p = pricingByKey[key]
+      const fixedRaw = fixedFeeInputs?.[key]?.feeFixedInput ?? centsToDollarsForEditing(prevRow.fee_fixed_cents)
+      const studentRaw =
+        fixedFeeInputs?.[key]?.studentFeeFixedInput ?? centsToDollarsForEditing(prevRow.student_fee_fixed_cents)
+      const parsedFixed = parseDollarsInputToCents(fixedRaw)
+      const parsedStudent = parseDollarsInputToCents(studentRaw)
+      const p = {
+        ...(pricingByKey[key] ?? prevRow),
+        fee_fixed_cents: parsedFixed == null ? prevRow.fee_fixed_cents : parsedFixed,
+        student_fee_fixed_cents:
+          parsedStudent == null ? prevRow.student_fee_fixed_cents : parsedStudent,
+      } as PricingConfigRow
       const updated = await savePricingFeeFields(
         supabase,
         propertyTier,
@@ -255,6 +291,17 @@ export default function AdminPricing() {
         if (!prev) return prev
         return { ...prev, [key]: earlyUiFromRow(updated) }
       })
+      setFixedFeeInputs((prev) =>
+        prev
+          ? {
+              ...prev,
+              [key]: {
+                feeFixedInput: centsToDollarsForEditing(updated.fee_fixed_cents),
+                studentFeeFixedInput: centsToDollarsForEditing(updated.student_fee_fixed_cents),
+              },
+            }
+          : prev,
+      )
       setLastSavedText(`Last saved: ${fmtNowAu()}`)
       await refreshLog()
     } catch (e) {
@@ -334,6 +381,62 @@ export default function AdminPricing() {
       if (!prev) return prev
       return { ...prev, [rowKey]: { ...prev[rowKey], [key]: value } }
     })
+  }
+
+  const updateFixedFeeInput = (
+    propertyTier: TierId,
+    serviceTier: ServiceTierId,
+    field: 'fee' | 'student',
+    value: string,
+  ) => {
+    const rowKey = keyFor(propertyTier, serviceTier)
+    setFixedFeeInputs((prev) => {
+      if (!prev) return prev
+      const curr = prev[rowKey] ?? {
+        feeFixedInput: '0.00',
+        studentFeeFixedInput: '0.00',
+      }
+      return {
+        ...prev,
+        [rowKey]:
+          field === 'fee'
+            ? { ...curr, feeFixedInput: value }
+            : { ...curr, studentFeeFixedInput: value },
+      }
+    })
+  }
+
+  const commitFixedFeeInput = (
+    propertyTier: TierId,
+    serviceTier: ServiceTierId,
+    field: 'fee' | 'student',
+  ) => {
+    const rowKey = keyFor(propertyTier, serviceTier)
+    if (!fixedFeeInputs || !pricingByKey) return
+    const raw =
+      field === 'fee'
+        ? fixedFeeInputs[rowKey]?.feeFixedInput ?? ''
+        : fixedFeeInputs[rowKey]?.studentFeeFixedInput ?? ''
+    const parsed = parseDollarsInputToCents(raw)
+    const existing = pricingByKey[rowKey]
+    const fallback = field === 'fee' ? existing.fee_fixed_cents : existing.student_fee_fixed_cents
+    const nextCents = parsed == null ? fallback : parsed
+    if (field === 'fee') {
+      updatePricingField(propertyTier, serviceTier, 'fee_fixed_cents', nextCents)
+    } else {
+      updatePricingField(propertyTier, serviceTier, 'student_fee_fixed_cents', nextCents)
+    }
+    setFixedFeeInputs((prev) =>
+      prev
+        ? {
+            ...prev,
+            [rowKey]:
+              field === 'fee'
+                ? { ...prev[rowKey], feeFixedInput: centsToDollarsForEditing(nextCents) }
+                : { ...prev[rowKey], studentFeeFixedInput: centsToDollarsForEditing(nextCents) },
+          }
+        : prev,
+    )
   }
 
   const updateVolumeRow = (serviceTier: ServiceTierId, index: number, patch: Partial<VolumeTierRow>) => {
@@ -489,15 +592,11 @@ export default function AdminPricing() {
                                     type="text"
                                     inputMode="decimal"
                                     className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                                    value={centsToDollarsInput(f.fee_fixed_cents)}
+                                    value={fixedFeeInputs?.[keyFor(tier.id, serviceTier)]?.feeFixedInput ?? centsToDollarsInput(f.fee_fixed_cents)}
                                     onChange={(e) =>
-                                      updatePricingField(
-                                        tier.id,
-                                        serviceTier,
-                                        'fee_fixed_cents',
-                                        dollarsInputToCents(e.target.value),
-                                      )
+                                      updateFixedFeeInput(tier.id, serviceTier, 'fee', e.target.value)
                                     }
+                                    onBlur={() => commitFixedFeeInput(tier.id, serviceTier, 'fee')}
                                   />
                                 </div>
                               ) : (
@@ -531,15 +630,11 @@ export default function AdminPricing() {
                                   type="text"
                                   inputMode="decimal"
                                   className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                                  value={centsToDollarsInput(f.student_fee_fixed_cents)}
+                                  value={fixedFeeInputs?.[keyFor(tier.id, serviceTier)]?.studentFeeFixedInput ?? centsToDollarsInput(f.student_fee_fixed_cents)}
                                   onChange={(e) =>
-                                    updatePricingField(
-                                      tier.id,
-                                      serviceTier,
-                                      'student_fee_fixed_cents',
-                                      dollarsInputToCents(e.target.value),
-                                    )
+                                    updateFixedFeeInput(tier.id, serviceTier, 'student', e.target.value)
                                   }
+                                  onBlur={() => commitFixedFeeInput(tier.id, serviceTier, 'student')}
                                 />
                               </div>
                               <button
