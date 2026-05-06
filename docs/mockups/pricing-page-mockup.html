@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quni Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #FFF7E6;
+    color: #1A1A1A;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .header {
+    background: #FFF7E6;
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+  }
+  .logo {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #D85A30;
+    letter-spacing: -0.02em;
+  }
+  .nav {
+    display: flex;
+    gap: 28px;
+    margin-left: 32px;
+    font-size: 14px;
+    color: #444;
+  }
+  .nav a { color: inherit; text-decoration: none; }
+  .hero-band {
+    background: #FF6F61;
+    color: white;
+    padding: 28px 40px;
+    text-align: center;
+  }
+  .hero-band-tagline {
+    font-size: 15px;
+    margin-bottom: 16px;
+    opacity: 0.96;
+  }
+  .hero-trust {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .trust-pill {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.32);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+  }
+  .page-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 38px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #1A1A1A;
+    letter-spacing: -0.01em;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 16px;
+    color: #6B6B6B;
+    margin-bottom: 48px;
+  }
+  .pricing-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+    align-items: stretch;
+  }
+  .block {
+    background: #FFF1EB;
+    border: 1px solid rgba(216,90,48,0.20);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .block-header {
+    padding: 20px 32px;
+    background: rgba(216, 90, 48, 0.06);
+    border-bottom: 1px solid rgba(216, 90, 48, 0.18);
+    font-family: 'Lora', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+  .block-body {
+    flex: 1;
+    display: grid;
+  }
+  .block-body.single { grid-template-columns: 1fr; }
+  .block-body.double { grid-template-columns: 1fr 1fr; }
+  .tier {
+    padding: 28px 28px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tier + .tier {
+    border-left: 1px solid rgba(216, 90, 48, 0.15);
+  }
+  .tier-name {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1A1A1A;
+  }
+  .tier-tagline {
+    font-size: 13px;
+    color: #6B6B6B;
+    margin-bottom: 22px;
+  }
+  .line-item {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    column-gap: 12px;
+    row-gap: 2px;
+    align-items: baseline;
+    margin-bottom: 18px;
+  }
+  .line-icon {
+    grid-column: 1;
+    grid-row: 1;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .line-icon svg { width: 16px; height: 16px; }
+  .line-name {
+    grid-column: 2;
+    grid-row: 1;
+    font-weight: 500;
+    font-size: 14px;
+    color: #1A1A1A;
+  }
+  .line-value {
+    grid-column: 3;
+    grid-row: 1;
+    font-family: 'Lora', Georgia, serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #D85A30;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .line-value.small { font-size: 14px; }
+  .line-value.muted { color: #B5B5B5; }
+  .line-description {
+    grid-column: 2 / span 2;
+    grid-row: 2;
+    font-size: 12px;
+    color: #6B6B6B;
+    line-height: 1.5;
+  }
+  .line-description.muted { color: #9A9A9A; }
+  .icon-coral { color: #D85A30; }
+  .icon-muted { color: #B5B5B5; }
+  .availability {
+    font-size: 12px;
+    color: #6B6B6B;
+    font-style: italic;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+  .renter-note {
+    font-size: 12px;
+    color: #6B6B6B;
+    font-style: italic;
+    margin-top: auto;
+    padding-top: 8px;
+    line-height: 1.5;
+  }
+  .cta {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    background: #D85A30;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease;
+  }
+  .cta:hover { background: #993C1D; }
+  .cta-secondary {
+    background: transparent;
+    color: #D85A30;
+    border: 1px solid #D85A30;
+  }
+  .cta-secondary:hover {
+    background: rgba(216, 90, 48, 0.06);
+  }
+  .pricing-row .block:nth-child(2) {
+    background: #E8EFE3;
+    border-color: rgba(108, 142, 89, 0.22);
+  }
+  .pricing-row .block:nth-child(2) .block-header {
+    background: rgba(108, 142, 89, 0.10);
+    border-bottom-color: rgba(108, 142, 89, 0.22);
+  }
+  .pricing-row .block:nth-child(2) .tier + .tier {
+    border-left-color: rgba(108, 142, 89, 0.20);
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Quni</div>
+    <div class="nav">
+      <a href="#">Listings</a>
+      <a href="#">Find Housing</a>
+      <a href="#">About</a>
+      <a href="#">Pricing</a>
+      <a href="#">Contact</a>
+    </div>
+  </div>
+
+  <div class="hero-band">
+    <div class="hero-band-tagline">No hidden fees. You only pay when Quni is working for you.</div>
+    <div class="hero-trust">
+      <div class="trust-pill">Free for renters</div>
+      <div class="trust-pill">Free to list</div>
+      <div class="trust-pill">No lock-in contracts</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <h1 class="page-title">Pricing</h1>
+    <p class="page-subtitle">Free for renters. Free to list for landlords. Choose how much you want Quni to do.</p>
+
+    <div class="pricing-row">
+
+      <div class="block">
+        <div class="block-header">For renters</div>
+        <div class="block-body single">
+          <div class="tier">
+            <div class="tier-name">Free</div>
+            <div class="tier-tagline">Always. Whether you're a student or a professional near campus.</div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4"/><path d="m10 10 4 4"/></svg>
+              </div>
+              <div class="line-name">Browse listings</div>
+              <div class="line-value">Free</div>
+              <div class="line-description">Search every verified room near your university or workplace.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10v8H3z"/><path d="M3 4l5 4 5-4"/></svg>
+              </div>
+              <div class="line-name">Book a room</div>
+              <div class="line-value">Free</div>
+              <div class="line-description">No booking fees, platform fees, or surcharges. Ever.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12v8H6l-3 3v-3H2z"/></svg>
+              </div>
+              <div class="line-name">Message landlords</div>
+              <div class="line-value">Free</div>
+              <div class="line-description">Talk to landlords directly from any listing.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V4a3 3 0 0 1 6 0v3"/></svg>
+              </div>
+              <div class="line-name">Bond</div>
+              <div class="line-value small">Varies</div>
+              <div class="line-description">Lodged with NSW Fair Trading or landlord. Quni never holds it.</div>
+            </div>
+
+            <div class="renter-note">Optional card surcharge if you pay rent by card. Free bank transfer always offered.</div>
+            <button class="cta cta-secondary">Find a room →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="block-header">For landlords</div>
+        <div class="block-body double">
+
+          <div class="tier">
+            <div class="tier-name">Quni Listing</div>
+            <div class="tier-tagline">List your room and find a tenant. You run the tenancy.</div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 6l6-4 6 4v8H2z"/><path d="M6 14V9h4v5"/></svg>
+              </div>
+              <div class="line-name">Listing fee</div>
+              <div class="line-value">$99</div>
+              <div class="line-description">One-off, only when you accept a tenant. No subscription.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Verified renters</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Students and professionals with verified identity.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">AI listing tools</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Description, pricing, and enquiry-reply helpers.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Tenancy documents</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">FT6600 + Quni Addendum, signed in-platform.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-muted">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+              </div>
+              <div class="line-name" style="color:#9A9A9A">Rent collection</div>
+              <div class="line-value small muted">Self-managed</div>
+              <div class="line-description muted">Tenant pays you directly. Quni never touches the money.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-muted">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+              </div>
+              <div class="line-name" style="color:#9A9A9A">Bond lodgement</div>
+              <div class="line-value small muted">Self-managed</div>
+              <div class="line-description muted">You lodge with NSW Fair Trading yourself.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-muted">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+              </div>
+              <div class="line-name" style="color:#9A9A9A">Disputes &amp; maintenance</div>
+              <div class="line-value small muted">Self-managed</div>
+              <div class="line-description muted">You handle directly with your tenant.</div>
+            </div>
+
+            <div class="availability">Available everywhere</div>
+            <button class="cta">Choose Listing</button>
+          </div>
+
+          <div class="tier">
+            <div class="tier-name">Quni Managed</div>
+            <div class="tier-tagline">We run the whole tenancy. From listing to move-out.</div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l5-4 5 4v6H3z"/><path d="M6 13V9h4v4"/></svg>
+              </div>
+              <div class="line-name">Service fee</div>
+              <div class="line-value">7%</div>
+              <div class="line-description">Of weekly rent. All-inclusive — no letting fees or extras. Only charged when you have an active tenant.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Everything in Listing</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Verified renters, AI tools, tenancy documents, e-signing.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Rent collection</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Tenant pays Quni. We pay you weekly via Stripe.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Bond lodgement</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Lodged with NSW Fair Trading on your behalf.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Dispute support</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">We mediate between you and your tenant.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Move-in protection</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Funds held until tenant moves in safely.</div>
+            </div>
+
+            <div class="line-item">
+              <div class="line-icon icon-coral">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,8 7,12 13,4"/></svg>
+              </div>
+              <div class="line-name">Maintenance routing</div>
+              <div class="line-value small">Included</div>
+              <div class="line-description">Tenant requests routed to you, tracked in-platform.</div>
+            </div>
+
+            <div class="availability">Currently available in Queensland</div>
+            <button class="cta">Choose Managed</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

@@ -48,7 +48,102 @@ function LineItem({
   )
 }
 
+type Step = {
+  title: string
+  description: string
+}
+
+const faqItems = [
+  {
+    question: 'Why do students pay a platform fee?',
+    answer:
+      'Students pay no platform fee under the current managed pricing model.',
+  },
+  {
+    question: 'Is there a minimum lease length?',
+    answer:
+      'No — Quni supports flexible, short-term and long-term stays. Lease length is agreed between you and your landlord.',
+  },
+  {
+    question: 'What happens if my booking is declined?',
+    answer:
+      'If a landlord declines your request, your full deposit is automatically refunded within 5-7 business days.',
+  },
+  {
+    question: 'Can I cancel my listing as a landlord?',
+    answer:
+      'Yes — there are no lock-in contracts. You can deactivate or remove your listing at any time from your dashboard.',
+  },
+  {
+    question: 'How is my bond protected?',
+    answer:
+      'Your bond is held securely and must be lodged with the relevant state bond authority by your landlord within 10 business days of move-in. Quni does not hold bond money.',
+  },
+  {
+    question: 'What is the acceptance fee?',
+    answer:
+      'Quni supports both landlord pricing modes: Listing (flat fee) and Managed (percentage fee).',
+  },
+] as const
+
+const studentSteps: Step[] = [
+  {
+    title: '1. Find your place',
+    description: 'Browse verified listings near your university',
+  },
+  {
+    title: '2. Request to book',
+    description: 'Pay a refundable deposit only (students pay $0 platform fee)',
+  },
+  {
+    title: '3. Move in',
+    description: 'Your deposit is released to your landlord 24 hours after move-in',
+  },
+]
+
+const landlordSteps: Step[] = [
+  {
+    title: '1. List for free',
+    description: 'Create your listing in minutes — no upfront cost',
+  },
+  {
+    title: '2. Confirm bookings',
+    description: 'Review student profiles and accept or decline',
+  },
+  {
+    title: '3. Get paid',
+    description: 'Rent paid weekly via Stripe direct to your bank',
+  },
+]
+
+function HowItWorksCard({
+  title,
+  steps,
+  bgClass,
+  accentClass,
+}: {
+  title: string
+  steps: Step[]
+  bgClass: string
+  accentClass: string
+}) {
+  return (
+    <div className={`rounded-2xl shadow-md p-7 md:p-8 ${bgClass}`}>
+      <h3 className={`font-display text-2xl font-bold ${accentClass}`}>{title}</h3>
+      <div className="mt-6 space-y-5">
+        {steps.map((step) => (
+          <div key={step.title}>
+            <p className="font-semibold text-gray-900">{step.title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-700">{step.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function Pricing() {
+  const [openFaqIndex, setOpenFaqIndex] = useState<number>(0)
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
 
@@ -106,7 +201,7 @@ export default function Pricing() {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-[1180px] px-8 pb-20 pt-14">
+        <div className="mx-auto w-full max-w-[1180px] px-8 pb-12 pt-14 md:pb-16">
           <h1 className="m-0 mb-2.5 text-center font-lora text-[38px] font-semibold tracking-[-0.01em] text-[#1A1A1A]">
             Pricing
           </h1>
@@ -477,6 +572,80 @@ export default function Pricing() {
             </div>
           </div>
         </div>
+
+        <section className="max-w-site mx-auto w-full px-6 py-6 md:py-8">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] text-center">How it works</h2>
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+            <HowItWorksCard
+              title="For students"
+              steps={studentSteps}
+              bgClass="bg-[#FFF5F4]"
+              accentClass="text-[#C8554A]"
+            />
+            <HowItWorksCard
+              title="For landlords"
+              steps={landlordSteps}
+              bgClass="bg-[#F0F7F4]"
+              accentClass="text-[#376256]"
+            />
+          </div>
+        </section>
+
+        <section className="max-w-site mx-auto w-full px-6 py-12 md:py-16">
+          <h2 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 text-center">
+            Common questions
+          </h2>
+          <div className="mt-8 rounded-2xl bg-white shadow-md divide-y divide-stone-100">
+            {faqItems.map((item, index) => {
+              const isOpen = openFaqIndex === index
+              return (
+                <div key={item.question}>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-stone-50/70 transition-colors"
+                    onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="font-semibold text-gray-900">{item.question}</span>
+                    <svg
+                      className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden
+                    >
+                      <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {isOpen ? <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{item.answer}</p> : null}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="w-full bg-[#FF6F61]">
+          <div className="max-w-site mx-auto px-6 py-12 md:py-14 text-center">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Ready to find your place?</h2>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/properties"
+                className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] border border-white hover:bg-white/95 transition-colors"
+              >
+                Find a property
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/landlord-signup"
+                className="inline-flex items-center justify-center gap-1 rounded-lg border border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+              >
+                List your property
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
       </div>
     </>
   )
