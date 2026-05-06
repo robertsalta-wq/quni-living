@@ -241,13 +241,13 @@ export default function AdminStateWorkflows() {
                   State
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 1
+                  Tier 1 — Hosted Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 2
+                  Tier 2 — Private Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 3
+                  Tier 3 — Boarding House
                 </th>
               </tr>
             </thead>

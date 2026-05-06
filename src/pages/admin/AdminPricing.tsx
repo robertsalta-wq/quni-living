@@ -24,6 +24,7 @@ type TabId = 'tiers' | 'volume' | 'early' | 'log'
 
 type TierMeta = {
   id: TierId
+  display: string
   name: string
   sub: string
   legal: string
@@ -36,6 +37,7 @@ type TierMeta = {
 const TIERS: TierMeta[] = [
   {
     id: 't1',
+    display: 'Tier 1 — Hosted Room',
     name: 'Hosted room',
     sub: 'Landlord lives on-site',
     legal: 'Boarder/lodger — RTA does not apply',
@@ -46,6 +48,7 @@ const TIERS: TierMeta[] = [
   },
   {
     id: 't2',
+    display: 'Tier 2 — Private Room',
     name: 'Private room',
     sub: 'Landlord does not live on-site',
     legal: 'Residential Tenancies Act 2010 (NSW)',
@@ -56,6 +59,7 @@ const TIERS: TierMeta[] = [
   },
   {
     id: 't3',
+    display: 'Tier 3 — Boarding House',
     name: 'Boarding house',
     sub: '5+ paying residents',
     legal: 'Boarding Houses Act 2012 (NSW)',
@@ -111,6 +115,13 @@ function logFieldLabel(fieldName: string): string {
   if (map[fieldName]) return map[fieldName]
   if (fieldName.startsWith('volume_discount_tiers.')) return fieldName.replace(/^volume_discount_tiers\.[^.]+\./, '')
   return fieldName
+}
+
+function tierDisplayFromId(tier: string | null): string {
+  if (tier === 't1') return 'Tier 1 — Hosted Room'
+  if (tier === 't2') return 'Tier 2 — Private Room'
+  if (tier === 't3') return 'Tier 3 — Boarding House'
+  return '—'
 }
 
 function parseMaxRoomsInput(raw: string): number {
@@ -411,7 +422,7 @@ export default function AdminPricing() {
                     className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
                   >
                     <div className="border-b border-gray-200 px-3.5 py-3">
-                      <div className="text-sm font-medium text-gray-900">{tier.name}</div>
+                      <div className="text-sm font-medium text-gray-900">{tier.display}</div>
                       <div className="mt-0.5 text-[11px] text-gray-500">{tier.sub}</div>
                       <span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-[10px] font-medium ${badgeClass}`}>
                         {tier.statusLabel}
@@ -822,7 +833,7 @@ export default function AdminPricing() {
                         <span className="text-[#0F6E56]">{formatLogValue(l.new_value)}</span>
                       </div>
                       <div className="rounded-md bg-gray-100 px-1.5 py-0.5 text-center text-[10px] text-gray-600">
-                        {(l.tier ?? '—') + (l.service_tier ? `/${l.service_tier}` : '')}
+                        {tierDisplayFromId(l.tier) + (l.service_tier ? `/${l.service_tier}` : '')}
                       </div>
                     </div>
                   ))
