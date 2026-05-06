@@ -18,6 +18,14 @@ import AiSparkleIcon from '../../components/AiSparkleIcon'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
+import {
+  fetchPricingForPropertyTier,
+  formatFeeForDisplay,
+  formatListingTierAcceptanceFee,
+  landlordNetWeeklyAfterManagedFee,
+  resolvePropertyTierFromListing,
+  type PricingCell,
+} from '../../lib/pricing'
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -330,6 +338,42 @@ export default function LandlordPropertyFormPage() {
     const n = Number(t)
     return Number.isFinite(n) ? n : undefined
   }, [rentPerWeek])
+
+  const resolvedPropertyTier = useMemo(
+    () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
+    [propertyListingType, isRegisteredRoomingHouse],
+  )
+
+  const [tierPricingListing, setTierPricingListing] = useState<PricingCell | null>(null)
+  const [tierPricingManaged, setTierPricingManaged] = useState<PricingCell | null>(null)
+  const [tierPricingError, setTierPricingError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const tier = resolvedPropertyTier
+    void (async () => {
+      try {
+        const [listingP, managedP] = await Promise.all([
+          fetchPricingForPropertyTier(tier, 'listing'),
+          fetchPricingForPropertyTier(tier, 'managed'),
+        ])
+        if (!cancelled) {
+          setTierPricingListing(listingP)
+          setTierPricingManaged(managedP)
+          setTierPricingError(null)
+        }
+      } catch {
+        if (!cancelled) {
+          setTierPricingListing(null)
+          setTierPricingManaged(null)
+          setTierPricingError('Could not load tier pricing.')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedPropertyTier])
 
   const nearbyUniversitiesForAi = useMemo(() => {
     const u = uniRefRows.find((x) => x.id === universityId)
@@ -2022,6 +2066,63 @@ export default function LandlordPropertyFormPage() {
                   required
                   className={inputClass}
                 />
+                {tierPricingError ? (
+                  <p className="mt-2 text-xs text-amber-800/90" role="status">
+                    {tierPricingError} Tier estimates are unavailable until pricing loads.
+                  </p>
+                ) : null}
+                {weeklyRentNum != null &&
+                weeklyRentNum > 0 &&
+                tierPricingListing &&
+                tierPricingManaged ? (
+                  <div className="mt-3 rounded-xl border border-gray-200/90 bg-stone-50/90 px-3 py-3 text-xs text-gray-700 leading-relaxed shadow-sm">
+                    <p className="font-semibold text-gray-900">
+                      At{' '}
+                      <span className="tabular-nums">
+                        ${weeklyRentNum.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                      </span>
+                      /week (listed rent), indicative payouts by tier:
+                    </p>
+                    <ul className="mt-2 list-none space-y-2 pl-0">
+                      <li className="flex gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6F61]/80" aria-hidden />
+                        <span>
+                          <strong className="text-gray-900">Quni Listing:</strong>{' '}
+                          <span className="tabular-nums">
+                            ${weeklyRentNum.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                          </span>
+                          /week from rent. Quni charges{' '}
+                          <span className="tabular-nums">{formatListingTierAcceptanceFee(tierPricingListing)}</span> once
+                          when a booking is accepted.
+                        </span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6F61]/80" aria-hidden />
+                        <span>
+                          <strong className="text-gray-900">Quni Managed:</strong>{' '}
+                          {(() => {
+                            const net = landlordNetWeeklyAfterManagedFee(weeklyRentNum, tierPricingManaged)
+                            const feeDisp = formatFeeForDisplay(tierPricingManaged).landlordFeeDisplay
+                            return net != null ? (
+                              <>
+                                <span className="tabular-nums">
+                                  ${net.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                                </span>
+                                /week after {feeDisp} service fee (deducted before payout). All-inclusive for this tier —
+                                no separate acceptance fee.
+                              </>
+                            ) : (
+                              <>Managed payout estimate unavailable for this rent.</>
+                            )
+                          })()}
+                        </span>
+                      </li>
+                    </ul>
+                    <p className="mt-2 text-[11px] text-gray-500 leading-snug">
+                      Service tier is chosen when you accept a booking, not here.
+                    </p>
+                  </div>
+                ) : null}
               </div>
               <div>
                 <label htmlFor="pf-bond" className={labelClass}>

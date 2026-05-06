@@ -41,6 +41,7 @@ import {
   calculateBookingFeeCents,
   fetchPricingForPropertyTier,
   resolvePropertyTierFromListing,
+  type PricingCell,
 } from '../lib/pricing'
 
 function bookingDraftStorageKey(listingId: string) {
@@ -551,7 +552,7 @@ export default function Booking() {
     })
   }, [])
   const [success, setSuccess] = useState(false)
-  const [managedPricingCell, setManagedPricingCell] = useState<any | null>(null)
+  const [managedPricingCell, setManagedPricingCell] = useState<PricingCell | null>(null)
 
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0)
   const [draftPersistReady, setDraftPersistReady] = useState(false)
@@ -910,15 +911,16 @@ export default function Booking() {
   }, [success])
 
   const rent = property ? Number(property.rent_per_week) : 0
-  const platformFeePercent =
-    managedPricingCell?.fee_mode === 'percent' ? Number(managedPricingCell.fee_percent || 0) : 0
   const bookingFeeCents = calculateBookingFeeCents(
-    managedPricingCell ?? { student_fee_mode: 'fixed', student_fee_fixed_cents: 0, student_fee_percent: 0 },
+    managedPricingCell ??
+      ({
+        student_fee_mode: 'fixed',
+        student_fee_fixed_cents: 0,
+        student_fee_percent: 0,
+      } as PricingCell),
     Math.round(rent * 100),
   )
   const bookingFeeAud = bookingFeeCents / 100
-  const platformPctWeekly = rent > 0 ? Math.round(rent * (platformFeePercent / 100)) : 0
-  const totalWeekly = rent + platformPctWeekly
   const depositDollars = rent
   const totalChargeDisplay = (depositDollars + bookingFeeAud).toLocaleString('en-AU', {
     minimumFractionDigits: 0,
@@ -1479,14 +1481,6 @@ export default function Booking() {
                 <span className="font-semibold text-gray-900 tabular-nums">${rent.toLocaleString('en-AU')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform fee ({platformFeePercent.toLocaleString('en-AU')}%)</span>
-                <span className="font-semibold text-gray-900 tabular-nums">${platformPctWeekly.toLocaleString('en-AU')}</span>
-              </div>
-              <div className="flex justify-between text-sm pt-1 border-t border-gray-200/80">
-                <span className="text-gray-800 font-medium">Total per week</span>
-                <span className="font-bold text-gray-900 tabular-nums">${totalWeekly.toLocaleString('en-AU')}</span>
-              </div>
-              <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Booking deposit</span>
                 <span className="font-semibold text-gray-900 tabular-nums">
                   ${depositDollars.toLocaleString('en-AU')}{' '}
@@ -1819,10 +1813,12 @@ export default function Booking() {
                   <span className="text-gray-600">Booking deposit</span>
                   <span className="font-semibold tabular-nums">${depositDollars.toLocaleString('en-AU')} (1 week rent)</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Platform fee</span>
-                  <span className="font-semibold tabular-nums">${bookingFeeAud.toLocaleString('en-AU')} (one-off)</span>
-                </div>
+                {bookingFeeAud > 0 ? (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Platform fee</span>
+                    <span className="font-semibold tabular-nums">${bookingFeeAud.toLocaleString('en-AU')} (one-off)</span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between pt-2 border-t border-gray-200 font-bold text-gray-900">
                   <span>Total charged now</span>
                   <span className="tabular-nums">${totalChargeDisplay}</span>

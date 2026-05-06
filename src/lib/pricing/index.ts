@@ -49,6 +49,31 @@ export function resolvePropertyTierFromListing(
   return 't2'
 }
 
+/** Weekly amount the landlord keeps after the managed-tier landlord fee (Connect application_fee). */
+export function landlordNetWeeklyAfterManagedFee(rentAud: number, cell: PricingCell): number | null {
+  if (!Number.isFinite(rentAud) || rentAud <= 0) return null
+  if (cell.fee_mode === 'percent') {
+    const pct = Number(cell.fee_percent || 0)
+    if (!Number.isFinite(pct) || pct < 0) return null
+    return Math.round((rentAud * (100 - pct)) / 100 * 100) / 100
+  }
+  const fixedAud = Number(cell.fee_fixed_cents || 0) / 100
+  if (!Number.isFinite(fixedAud)) return null
+  return Math.max(0, Math.round((rentAud - fixedAud) * 100) / 100)
+}
+
+/** Human-readable one-off listing-tier acceptance fee from pricing_config (e.g. $99). */
+export function formatListingTierAcceptanceFee(cell: PricingCell): string {
+  if (cell.fee_mode === 'fixed' && Number(cell.fee_fixed_cents) > 0) {
+    const aud = Number(cell.fee_fixed_cents) / 100
+    return `$${aud.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+  }
+  if (cell.fee_mode === 'percent' && Number(cell.fee_percent) > 0) {
+    return `${Number(cell.fee_percent).toLocaleString('en-AU', { maximumFractionDigits: 2 })}%`
+  }
+  return '—'
+}
+
 export function formatFeeForDisplay(cell: PricingCell) {
   const toAud = (cents: number) =>
     `$${(Number(cents || 0) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`

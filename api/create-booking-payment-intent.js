@@ -668,7 +668,7 @@ export default async function handler(request) {
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
   }
   const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
-  const amountCents = depositCents + bookingFeeCents
+  const amountCents = bookingFeeCents > 0 ? depositCents + bookingFeeCents : depositCents
 
   const stripe = new Stripe(stripeSecret)
 
