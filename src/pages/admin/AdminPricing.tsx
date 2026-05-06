@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { adminCardClass } from './adminUi'
 import type {
@@ -190,6 +190,8 @@ export default function AdminPricing() {
   const [earlyByKey, setEarlyByKey] = useState<Record<PricingKey, EarlyAdopterUi> | null>(null)
   const [changeLog, setChangeLog] = useState<ChangeLogRow[]>([])
   const [fixedFeeInputs, setFixedFeeInputs] = useState<FixedFeeInputState | null>(null)
+  /** Mirrors fixed-fee draft strings synchronously so blur/save never read stale React state one keystroke behind. */
+  const fixedFeeDraftRef = useRef<FixedFeeInputState | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingTier, setSavingTier] = useState<TierId | null>(null)
   const [savingVolume, setSavingVolume] = useState(false)
@@ -209,7 +211,9 @@ export default function AdminPricing() {
       const bundle = await fetchAdminPricingBundle(supabase)
       setPricingByKey(clonePricingFromBundle(bundle.pricingByKey))
       setBaselineByKey(clonePricingFromBundle(bundle.pricingByKey))
-      setFixedFeeInputs(buildFixedFeeInputs(bundle.pricingByKey))
+      const feeDrafts = buildFixedFeeInputs(bundle.pricingByKey)
+      fixedFeeDraftRef.current = feeDrafts
+      setFixedFeeInputs(feeDrafts)
       setVolumeRows({
         listing: cloneVolume(bundle.volumeTiersByService.listing),
         managed: cloneVolume(bundle.volumeTiersByService.managed),
@@ -256,9 +260,10 @@ export default function AdminPricing() {
       const key = keyFor(propertyTier, serviceTier)
       const by = await changedBy()
       const prevRow = baselineByKey[key]
-      const fixedRaw = fixedFeeInputs?.[key]?.feeFixedInput ?? centsToDollarsForEditing(prevRow.fee_fixed_cents)
+      const draft = fixedFeeDraftRef.current
+      const fixedRaw = draft?.[key]?.feeFixedInput ?? centsToDollarsForEditing(prevRow.fee_fixed_cents)
       const studentRaw =
-        fixedFeeInputs?.[key]?.studentFeeFixedInput ?? centsToDollarsForEditing(prevRow.student_fee_fixed_cents)
+        draft?.[key]?.studentFeeFixedInput ?? centsToDollarsForEditing(prevRow.student_fee_fixed_cents)
       const parsedFixed = parseDollarsInputToCents(fixedRaw)
       const parsedStudent = parseDollarsInputToCents(studentRaw)
       const p = {
@@ -291,17 +296,18 @@ export default function AdminPricing() {
         if (!prev) return prev
         return { ...prev, [key]: earlyUiFromRow(updated) }
       })
-      setFixedFeeInputs((prev) =>
-        prev
-          ? {
-              ...prev,
-              [key]: {
-                feeFixedInput: centsToDollarsForEditing(updated.fee_fixed_cents),
-                studentFeeFixedInput: centsToDollarsForEditing(updated.student_fee_fixed_cents),
-              },
-            }
-          : prev,
-      )
+      setFixedFeeInputs((prev) => {
+        if (!prev) return prev
+        const next = {
+          ...prev,
+          [key]: {
+            feeFixedInput: centsToDollarsForEditing(updated.fee_fixed_cents),
+            studentFeeFixedInput: centsToDollarsForEditing(updated.student_fee_fixed_cents),
+          },
+        }
+        fixedFeeDraftRef.current = next
+        return next
+      })
       setLastSavedText(`Last saved: ${fmtNowAu()}`)
       await refreshLog()
     } catch (e) {
@@ -396,13 +402,15 @@ export default function AdminPricing() {
         feeFixedInput: '0.00',
         studentFeeFixedInput: '0.00',
       }
-      return {
+      const next = {
         ...prev,
         [rowKey]:
           field === 'fee'
             ? { ...curr, feeFixedInput: value }
             : { ...curr, studentFeeFixedInput: value },
       }
+      fixedFeeDraftRef.current = next
+      return next
     })
   }
 
@@ -410,13 +418,16 @@ export default function AdminPricing() {
     propertyTier: TierId,
     serviceTier: ServiceTierId,
     field: 'fee' | 'student',
+    /** Prefer DOM value on blur — React state can lag one keystroke behind blur. */
+    rawOverride?: string,
   ) => {
     const rowKey = keyFor(propertyTier, serviceTier)
-    if (!fixedFeeInputs || !pricingByKey) return
+    if (!pricingByKey) return
+    const draft = fixedFeeDraftRef.current
     const raw =
-      field === 'fee'
-        ? fixedFeeInputs[rowKey]?.feeFixedInput ?? ''
-        : fixedFeeInputs[rowKey]?.studentFeeFixedInput ?? ''
+      rawOverride ??
+      (field === 'fee' ? draft?.[rowKey]?.feeFixedInput : draft?.[rowKey]?.studentFeeFixedInput) ??
+      ''
     const parsed = parseDollarsInputToCents(raw)
     const existing = pricingByKey[rowKey]
     const fallback = field === 'fee' ? existing.fee_fixed_cents : existing.student_fee_fixed_cents
@@ -426,17 +437,22 @@ export default function AdminPricing() {
     } else {
       updatePricingField(propertyTier, serviceTier, 'student_fee_fixed_cents', nextCents)
     }
-    setFixedFeeInputs((prev) =>
-      prev
-        ? {
-            ...prev,
-            [rowKey]:
-              field === 'fee'
-                ? { ...prev[rowKey], feeFixedInput: centsToDollarsForEditing(nextCents) }
-                : { ...prev[rowKey], studentFeeFixedInput: centsToDollarsForEditing(nextCents) },
-          }
-        : prev,
-    )
+    setFixedFeeInputs((prev) => {
+      if (!prev) return prev
+      const prevRowDraft = prev[rowKey] ?? {
+        feeFixedInput: '0.00',
+        studentFeeFixedInput: '0.00',
+      }
+      const next = {
+        ...prev,
+        [rowKey]:
+          field === 'fee'
+            ? { ...prevRowDraft, feeFixedInput: centsToDollarsForEditing(nextCents) }
+            : { ...prevRowDraft, studentFeeFixedInput: centsToDollarsForEditing(nextCents) },
+      }
+      fixedFeeDraftRef.current = next
+      return next
+    })
   }
 
   const updateVolumeRow = (serviceTier: ServiceTierId, index: number, patch: Partial<VolumeTierRow>) => {
@@ -596,7 +612,9 @@ export default function AdminPricing() {
                                     onChange={(e) =>
                                       updateFixedFeeInput(tier.id, serviceTier, 'fee', e.target.value)
                                     }
-                                    onBlur={() => commitFixedFeeInput(tier.id, serviceTier, 'fee')}
+                                    onBlur={(e) =>
+                                      commitFixedFeeInput(tier.id, serviceTier, 'fee', e.currentTarget.value)
+                                    }
                                   />
                                 </div>
                               ) : (
@@ -634,7 +652,9 @@ export default function AdminPricing() {
                                   onChange={(e) =>
                                     updateFixedFeeInput(tier.id, serviceTier, 'student', e.target.value)
                                   }
-                                  onBlur={() => commitFixedFeeInput(tier.id, serviceTier, 'student')}
+                                  onBlur={(e) =>
+                                    commitFixedFeeInput(tier.id, serviceTier, 'student', e.currentTarget.value)
+                                  }
                                 />
                               </div>
                               <button
