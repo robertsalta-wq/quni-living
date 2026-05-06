@@ -11,8 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
 import {
   calculateBookingFeeCents,
-  getPricingForCell,
-  resolvePropertyTierFromListing,
+  getActivePricingSnapshotForProperty,
 } from './lib/pricing/index.js'
 
 export const config = { runtime: 'edge' }
@@ -399,13 +398,9 @@ async function handlePaymentIntentCommit(request, origin, body) {
   if (depositCents == null) {
     return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
   }
-  const propertyTier = resolvePropertyTierFromListing(
-    property.property_type,
-    property.is_registered_rooming_house,
-  )
   let pricingCell
   try {
-    pricingCell = await getPricingForCell(propertyTier, 'managed')
+    pricingCell = await getActivePricingSnapshotForProperty(property.id, 'managed')
   } catch (e) {
     console.error('load pricing for booking commit', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
@@ -656,13 +651,9 @@ export default async function handler(request) {
   if (depositCents == null) {
     return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
   }
-  const propertyTier = resolvePropertyTierFromListing(
-    property.property_type,
-    property.is_registered_rooming_house,
-  )
   let pricingCell
   try {
-    pricingCell = await getPricingForCell(propertyTier, 'managed')
+    pricingCell = await getActivePricingSnapshotForProperty(property.id, 'managed')
   } catch (e) {
     console.error('load pricing for booking PI', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)

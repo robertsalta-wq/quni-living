@@ -28,6 +28,7 @@ import AdminBookings from './pages/admin/AdminBookings'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
 import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
 import AdminProperties from './pages/admin/AdminProperties'
+import AdminPropertyFees from './pages/admin/AdminPropertyFees'
 import AdminStudents from './pages/admin/AdminStudents'
 import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
@@ -261,6 +262,7 @@ function App() {
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="landlord-leads" element={<AdminLandlordLeads />} />
             <Route path="properties" element={<AdminProperties />} />
+            <Route path="properties/:propertyId/fees" element={<AdminPropertyFees />} />
             <Route path="students" element={<AdminStudents />} />
             <Route path="landlords" element={<AdminLandlords />} />
             <Route path="apps" element={<AdminApps />} />

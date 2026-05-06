@@ -25,7 +25,7 @@ import {
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
 } from './lib/resolveTenancyPackage.js'
-import { getPricingForCell, resolvePropertyTierFromListing } from './lib/pricing/index.js'
+import { getActivePricingSnapshotForProperty } from './lib/pricing/index.js'
 
 /** Node runtime: isolates this route from Edge bundles (Stripe + internal fetch); avoids Vercel Edge cross-bundle issues with other /api routes. */
 export const config = { runtime: 'nodejs', maxDuration: 60 }
@@ -401,11 +401,11 @@ export default async function handler(req, res) {
       subscriptionBody.proration_behavior = 'none'
     }
 
-    const resolvedPropertyTier = resolvePropertyTierFromListing(
-      propForTenancy.property_type,
-      propForTenancy.is_registered_rooming_house,
-    )
-    const managedPricing = await getPricingForCell(resolvedPropertyTier, 'managed')
+    if (!booking.property_id) {
+      return corsJson(res, { error: 'Booking is missing a property' }, 400, origin)
+    }
+
+    const managedPricing = await getActivePricingSnapshotForProperty(booking.property_id, 'managed')
     subscriptionBody.application_fee_percent =
       managedPricing.fee_mode === 'percent' ? Number(managedPricing.fee_percent || 0) : 0
 

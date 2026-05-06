@@ -16,9 +16,8 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { OccupancyAgreement } from './OccupancyAgreement.js'
 import type { OccupancyAgreementProps } from './rtaTypes'
-import { getManagedLandlordFeePercentForPropertyTier, sendForSigning } from '../lib/docuseal.js'
+import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
-import { resolvePropertyTierFromListing } from '../lib/pricing/index.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -262,11 +261,7 @@ export default async function handler(req: any, res: any) {
     documentId = insD.id
   }
 
-  const propertyTier = resolvePropertyTierFromListing(
-    prop.property_type,
-    prop.is_registered_rooming_house,
-  )
-  const platformFeePercent = await getManagedLandlordFeePercentForPropertyTier(propertyTier)
+  const platformFeePercent = await getManagedLandlordFeePercentForProperty(booking.property_id)
   const platformFee = Math.round(weeklyRent * (platformFeePercent / 100) * 100) / 100
   const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
 

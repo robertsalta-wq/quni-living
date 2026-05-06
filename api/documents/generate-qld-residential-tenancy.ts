@@ -28,8 +28,7 @@ import {
 } from '../lib/platformConfig.js'
 import {
   formatFeeForDisplay,
-  getPricingForCell,
-  resolvePropertyTierFromListing,
+  getActivePricingSnapshotForProperty,
 } from '../lib/pricing/index.js'
 
 export const config = {
@@ -319,11 +318,10 @@ export default async function handler(req: any, res: any) {
     documentId = insD.id
   }
 
-  const propertyTier = resolvePropertyTierFromListing(
-    prop.property_type,
-    prop.is_registered_rooming_house,
-  )
-  const managedPricingCell = await getPricingForCell(propertyTier, 'managed')
+  if (!booking.property_id) {
+    return res.status(400).json({ error: 'Booking missing property id' })
+  }
+  const managedPricingCell = await getActivePricingSnapshotForProperty(booking.property_id, 'managed')
   const managedPricingDisplay = formatFeeForDisplay(managedPricingCell)
   const platformFeePercent =
     managedPricingCell.fee_mode === 'percent' ? Number(managedPricingCell.fee_percent || 0) : 0
@@ -484,23 +482,8 @@ export default async function handler(req: any, res: any) {
   const emergencyContact =
     ecName && ecPhone ? `${ecName} — ${ecPhone}` : ecPhone || ecName || '—'
 
-  let utilitiesCap = 0
-  try {
-    const { data: pcRow, error: pcErr } = await admin
-      .from('pricing_config')
-      .select('utilities_cap_aud')
-      .eq('property_tier', propertyTier)
-      .eq('service_tier', 'managed')
-      .limit(1)
-      .maybeSingle()
-    if (!pcErr && pcRow != null) {
-      const raw = (pcRow as { utilities_cap_aud?: number | string | null }).utilities_cap_aud
-      const n = typeof raw === 'number' ? raw : Number(raw)
-      if (Number.isFinite(n) && n >= 0) utilitiesCap = n
-    }
-  } catch (e) {
-    console.error('[generate-qld-residential-tenancy] pricing_config utilities_cap t2', e)
-  }
+  const rawCap = Number(managedPricingCell.utilities_cap_aud ?? 0)
+  const utilitiesCap = Number.isFinite(rawCap) && rawCap >= 0 ? rawCap : 0
 
   const houseRulesFromProperty =
     typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''

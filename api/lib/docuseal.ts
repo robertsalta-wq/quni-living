@@ -12,7 +12,7 @@ import {
   createDocusealSubmissionFromPdf,
   getDocusealSubmissionsUrl as getDocusealSubmissionsUrlImpl,
 } from './docuseal.shared.js'
-import { getPricingForCell } from './pricing/index.js'
+import { getActivePricingSnapshotForProperty } from './pricing/index.js'
 
 export function getDocusealSubmissionsUrl(): string {
   return getDocusealSubmissionsUrlImpl()
@@ -762,10 +762,8 @@ function extractCompletedAt(payload: unknown, role: 'landlord' | 'tenant'): stri
   return new Date().toISOString()
 }
 
-export async function getManagedLandlordFeePercentForPropertyTier(
-  propertyTier: 't1' | 't2' | 't3',
-): Promise<number> {
-  const pricingCell = await getPricingForCell(propertyTier, 'managed')
+export async function getManagedLandlordFeePercentForProperty(propertyId: string): Promise<number> {
+  const pricingCell = await getActivePricingSnapshotForProperty(propertyId, 'managed')
   if (pricingCell.fee_mode !== 'percent') return 0
   return Number(pricingCell.fee_percent || 0)
 }

@@ -67,6 +67,53 @@ export async function getPricingForCell(propertyTier, serviceTier = DEFAULT_SERV
   return data
 }
 
+/** Maps `property_fee_snapshots` row to the same shape as `getPricingForCell` (PricingCell). */
+export function mapSnapshotRowToPricingCell(row) {
+  if (!row || typeof row !== 'object') {
+    throw new Error('Invalid snapshot row')
+  }
+  const src = row.source_property_tier ? normalizePropertyTier(row.source_property_tier) : null
+  const st = normalizeServiceTier(row.service_tier)
+  return {
+    property_tier: src,
+    service_tier: st,
+    fee_mode: row.fee_mode,
+    fee_percent: Number(row.fee_percent ?? 0),
+    fee_fixed_cents: Number(row.fee_fixed_cents ?? 0),
+    student_fee_mode: row.student_fee_mode,
+    student_fee_percent: Number(row.student_fee_percent ?? 0),
+    student_fee_fixed_cents: Number(row.student_fee_fixed_cents ?? 0),
+    card_surcharge_enabled: Boolean(row.card_surcharge_enabled),
+    free_transfer_required: Boolean(row.free_transfer_required),
+    utilities_cap_aud: Number(row.utilities_cap_aud ?? 0),
+  }
+}
+
+/**
+ * Active per-listing fee snapshot (locked at listing creation). Use for booking/subscription/doc flows.
+ */
+export async function getActivePricingSnapshotForProperty(propertyId, serviceTier = DEFAULT_SERVICE_TIER) {
+  const id = String(propertyId || '').trim()
+  if (!id) throw new Error('propertyId is required')
+  const serviceTierNormalized = normalizeServiceTier(serviceTier)
+  const admin = adminClient()
+  const { data, error } = await admin
+    .from('property_fee_snapshots')
+    .select(
+      'source_property_tier,service_tier,fee_mode,fee_percent,fee_fixed_cents,student_fee_mode,student_fee_percent,student_fee_fixed_cents,card_surcharge_enabled,free_transfer_required,utilities_cap_aud',
+    )
+    .eq('property_id', id)
+    .eq('service_tier', serviceTierNormalized)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) {
+    throw new Error(`Missing active fee snapshot for property ${id} (${serviceTierNormalized})`)
+  }
+  return mapSnapshotRowToPricingCell(data)
+}
+
 export function formatFeeForDisplay(cell) {
   const landlordFeeDisplay =
     cell.fee_mode === 'percent'

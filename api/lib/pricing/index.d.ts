@@ -17,6 +17,13 @@ export function getPricingForCell(
   serviceTier?: 'listing' | 'managed' | string,
 ): Promise<PricingCell>
 
+export function mapSnapshotRowToPricingCell(row: Record<string, unknown>): PricingCell
+
+export function getActivePricingSnapshotForProperty(
+  propertyId: string,
+  serviceTier?: 'listing' | 'managed' | string,
+): Promise<PricingCell>
+
 export function formatFeeForDisplay(cell: PricingCell): {
   landlordFeeDisplay: string
   studentFeeDisplay: string

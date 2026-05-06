@@ -114,13 +114,14 @@ export default function AdminProperties() {
                 <th className={adminThClass}>Room type</th>
                 <th className={adminThClass}>Status</th>
                 <th className={adminThClass}>Featured</th>
+                <th className={adminThClass}>Fees</th>
                 <th className={adminThClass}>Edit</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${adminTdClass} text-gray-500 text-center py-10`}>
+                  <td colSpan={7} className={`${adminTdClass} text-gray-500 text-center py-10`}>
                     No properties yet.
                   </td>
                 </tr>
@@ -180,6 +181,14 @@ export default function AdminProperties() {
                           />
                           <span className="text-xs text-gray-500">Featured</span>
                         </label>
+                      </td>
+                      <td className={adminTdClass}>
+                        <Link
+                          to={`/admin/properties/${row.id}/fees`}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                        >
+                          Fees
+                        </Link>
                       </td>
                       <td className={adminTdClass}>
                         <Link

@@ -688,6 +688,77 @@ export interface Database {
         }
         Relationships: []
       }
+      property_fee_snapshots: {
+        Row: {
+          id: string
+          property_id: string
+          service_tier: 'listing' | 'managed'
+          source_property_tier: string
+          fee_mode: string
+          fee_percent: number
+          fee_fixed_cents: number
+          student_fee_mode: string
+          student_fee_percent: number
+          student_fee_fixed_cents: number
+          card_surcharge_enabled: boolean
+          free_transfer_required: boolean
+          utilities_cap_aud: number
+          snapshot_taken_at: string
+          snapshot_source: string
+          changed_by: string | null
+          change_reason: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          service_tier: 'listing' | 'managed'
+          source_property_tier: string
+          fee_mode: string
+          fee_percent: number
+          fee_fixed_cents: number
+          student_fee_mode: string
+          student_fee_percent: number
+          student_fee_fixed_cents: number
+          card_surcharge_enabled: boolean
+          free_transfer_required: boolean
+          utilities_cap_aud: number
+          snapshot_taken_at?: string
+          snapshot_source: string
+          changed_by?: string | null
+          change_reason?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          service_tier?: 'listing' | 'managed'
+          source_property_tier?: string
+          fee_mode?: string
+          fee_percent?: number
+          fee_fixed_cents?: number
+          student_fee_mode?: string
+          student_fee_percent?: number
+          student_fee_fixed_cents?: number
+          card_surcharge_enabled?: boolean
+          free_transfer_required?: boolean
+          utilities_cap_aud?: number
+          snapshot_taken_at?: string
+          snapshot_source?: string
+          changed_by?: string | null
+          change_reason?: string | null
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'property_fee_snapshots_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       properties: {
         Row: {
           id: string
@@ -1626,6 +1697,35 @@ export interface Database {
       duplicate_property_listing: {
         Args: { p_source_id: string }
         Returns: string
+      }
+      admin_update_property_fee_snapshots: {
+        Args: {
+          p_property_id: string
+          p_change_reason: string
+          p_listing_fee_mode: string
+          p_listing_fee_percent: number
+          p_listing_fee_fixed_cents: number
+          p_listing_student_fee_mode: string
+          p_listing_student_fee_percent: number
+          p_listing_student_fee_fixed_cents: number
+          p_listing_card_surcharge_enabled: boolean
+          p_listing_free_transfer_required: boolean
+          p_listing_utilities_cap_aud: number
+          p_managed_fee_mode: string
+          p_managed_fee_percent: number
+          p_managed_fee_fixed_cents: number
+          p_managed_student_fee_mode: string
+          p_managed_student_fee_percent: number
+          p_managed_student_fee_fixed_cents: number
+          p_managed_card_surcharge_enabled: boolean
+          p_managed_free_transfer_required: boolean
+          p_managed_utilities_cap_aud: number
+        }
+        Returns: undefined
+      }
+      admin_reset_property_fee_snapshots_from_template: {
+        Args: { p_property_id: string; p_change_reason: string }
+        Returns: undefined
       }
     }
     Enums: Record<string, never>

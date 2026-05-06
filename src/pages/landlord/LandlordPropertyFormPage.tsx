@@ -19,6 +19,7 @@ import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
 import {
+  fetchLockedPricingSnapshotsForProperty,
   fetchPricingForPropertyTier,
   formatFeeForDisplay,
   formatListingTierAcceptanceFee,
@@ -347,25 +348,38 @@ export default function LandlordPropertyFormPage() {
   const [tierPricingListing, setTierPricingListing] = useState<PricingCell | null>(null)
   const [tierPricingManaged, setTierPricingManaged] = useState<PricingCell | null>(null)
   const [tierPricingError, setTierPricingError] = useState<string | null>(null)
+  const [tierPricingLockedForListing, setTierPricingLockedForListing] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     const tier = resolvedPropertyTier
     void (async () => {
       try {
-        const [listingP, managedP] = await Promise.all([
-          fetchPricingForPropertyTier(tier, 'listing'),
-          fetchPricingForPropertyTier(tier, 'managed'),
-        ])
-        if (!cancelled) {
-          setTierPricingListing(listingP)
-          setTierPricingManaged(managedP)
-          setTierPricingError(null)
+        if (isEdit && propertyId) {
+          const { listing, managed } = await fetchLockedPricingSnapshotsForProperty(supabase, propertyId)
+          if (!cancelled) {
+            setTierPricingListing(listing)
+            setTierPricingManaged(managed)
+            setTierPricingLockedForListing(true)
+            setTierPricingError(null)
+          }
+        } else {
+          const [listingP, managedP] = await Promise.all([
+            fetchPricingForPropertyTier(tier, 'listing'),
+            fetchPricingForPropertyTier(tier, 'managed'),
+          ])
+          if (!cancelled) {
+            setTierPricingListing(listingP)
+            setTierPricingManaged(managedP)
+            setTierPricingLockedForListing(false)
+            setTierPricingError(null)
+          }
         }
       } catch {
         if (!cancelled) {
           setTierPricingListing(null)
           setTierPricingManaged(null)
+          setTierPricingLockedForListing(false)
           setTierPricingError('Could not load tier pricing.')
         }
       }
@@ -373,7 +387,7 @@ export default function LandlordPropertyFormPage() {
     return () => {
       cancelled = true
     }
-  }, [resolvedPropertyTier])
+  }, [resolvedPropertyTier, isEdit, propertyId, supabase])
 
   const nearbyUniversitiesForAi = useMemo(() => {
     const u = uniRefRows.find((x) => x.id === universityId)
@@ -2121,6 +2135,11 @@ export default function LandlordPropertyFormPage() {
                     <p className="mt-2 text-[11px] text-gray-500 leading-snug">
                       Service tier is chosen when you accept a booking, not here.
                     </p>
+                    {tierPricingLockedForListing ? (
+                      <p className="mt-2 text-[11px] text-amber-900/85 leading-snug rounded-lg bg-amber-50/90 border border-amber-100 px-2 py-2">
+                        These fee rates are locked for this listing when it was created. Contact support if they need to be updated.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
