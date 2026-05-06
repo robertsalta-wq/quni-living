@@ -1,148 +1,68 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
-import PageHeroBand from '../components/PageHeroBand'
+import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 
-type FeeRowProps = {
-  icon: string
-  label: string
-  description: string
-  value: string
-  valueColor?: string
-}
+type LineTone = 'default' | 'muted'
+type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
 
-type Step = {
-  title: string
-  description: string
-}
-
-const faqItems = [
-  {
-    question: 'Why do students pay a platform fee?',
-    answer:
-      'Students pay no platform fee under the current managed pricing model.',
-  },
-  {
-    question: 'Is there a minimum lease length?',
-    answer:
-      'No — Quni supports flexible, short-term and long-term stays. Lease length is agreed between you and your landlord.',
-  },
-  {
-    question: 'What happens if my booking is declined?',
-    answer:
-      'If a landlord declines your request, your full deposit is automatically refunded within 5-7 business days.',
-  },
-  {
-    question: 'Can I cancel my listing as a landlord?',
-    answer:
-      'Yes — there are no lock-in contracts. You can deactivate or remove your listing at any time from your dashboard.',
-  },
-  {
-    question: 'How is my bond protected?',
-    answer:
-      'Your bond is held securely and must be lodged with the relevant state bond authority by your landlord within 10 business days of move-in. Quni does not hold bond money.',
-  },
-  {
-    question: 'What is the acceptance fee?',
-    answer:
-      'Quni supports both landlord pricing modes: Listing (flat fee) and Managed (percentage fee).',
-  },
-] as const
-
-const studentSteps: Step[] = [
-  {
-    title: '1. Find your place',
-    description: 'Browse verified listings near your university',
-  },
-  {
-    title: '2. Request to book',
-    description: 'Pay a refundable deposit only (students pay $0 platform fee)',
-  },
-  {
-    title: '3. Move in',
-    description: 'Your deposit is released to your landlord 24 hours after move-in',
-  },
-]
-
-const landlordSteps: Step[] = [
-  {
-    title: '1. List for free',
-    description: 'Create your listing in minutes — no upfront cost',
-  },
-  {
-    title: '2. Confirm bookings',
-    description: 'Review student profiles and accept or decline',
-  },
-  {
-    title: '3. Get paid',
-    description: 'Rent paid weekly via Stripe direct to your bank',
-  },
-]
-
-function FeeRow({ icon, label, description, value, valueColor = 'text-[#FF6F61]' }: FeeRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-stone-100 py-4 last:border-b-0">
-      <div className="flex items-start gap-3">
-        <span className="text-lg leading-none mt-1" aria-hidden>
-          {icon}
-        </span>
-        <div>
-          <p className="font-semibold text-gray-900">{label}</p>
-          <p className="mt-1 text-sm leading-relaxed text-gray-600 max-w-[30ch]">{description}</p>
-        </div>
-      </div>
-      <p className={`font-display text-3xl sm:text-4xl font-bold tabular-nums tracking-tight ${valueColor}`}>
-        {value}
-      </p>
-    </div>
-  )
-}
-
-function HowItWorksCard({
-  title,
-  steps,
-  bgClass,
-  accentClass,
+function LineItem({
+  icon,
+  name,
+  value,
+  description,
+  tone = 'default',
+  valueKind,
 }: {
-  title: string
-  steps: Step[]
-  bgClass: string
-  accentClass: string
+  icon: ReactNode
+  name: string
+  value: string
+  description: string
+  tone?: LineTone
+  valueKind: ValueKind
 }) {
+  const muted = tone === 'muted'
+  const iconWrap = muted ? 'text-[#B5B5B5]' : 'text-[#D85A30]'
+  const nameCls = muted ? 'text-[#9A9A9A]' : 'text-[#1A1A1A]'
+  const descCls = muted ? 'text-[#9A9A9A]' : 'text-[#6B6B6B]'
+  const valueCls =
+    valueKind === 'coralLg'
+      ? 'font-lora text-lg font-semibold text-[#D85A30]'
+      : valueKind === 'coralSm'
+        ? 'font-lora text-sm font-semibold text-[#D85A30]'
+        : 'font-lora text-sm font-semibold text-[#B5B5B5]'
+
   return (
-    <div className={`rounded-2xl shadow-md p-7 md:p-8 ${bgClass}`}>
-      <h3 className={`font-display text-2xl font-bold ${accentClass}`}>{title}</h3>
-      <div className="mt-6 space-y-5">
-        {steps.map((step) => (
-          <div key={step.title}>
-            <p className="font-semibold text-gray-900">{step.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-gray-700">{step.description}</p>
-          </div>
-        ))}
+    <div className="mb-[18px] grid grid-cols-[22px_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5">
+      <div
+        className={`flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4 ${iconWrap}`}
+        aria-hidden
+      >
+        {icon}
       </div>
+      <div className={`text-sm font-medium ${nameCls}`}>{name}</div>
+      <div className={`whitespace-nowrap leading-none ${valueCls}`}>{value}</div>
+      <p className={`col-span-2 col-start-2 text-xs leading-normal ${descCls}`}>{description}</p>
     </div>
   )
 }
 
 export default function Pricing() {
-  const [openFaqIndex, setOpenFaqIndex] = useState<number>(0)
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
-  const [studentFeeText, setStudentFeeText] = useState('$0')
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
       try {
-        const listingCell = await fetchPricingForPropertyTier('t1', 'listing')
-        const managedCell = await fetchPricingForPropertyTier('t1', 'managed')
+        const listingCell = await fetchPricingForPropertyTier('t2', 'listing')
+        const managedCell = await fetchPricingForPropertyTier('t2', 'managed')
         const listing = formatFeeForDisplay(listingCell)
         const managed = formatFeeForDisplay(managedCell)
         if (!cancelled) {
           setListingFeeText(listing.landlordFeeDisplay)
           setManagedFeeText(managed.landlordFeeDisplay)
-          setStudentFeeText(managed.studentFeeDisplay)
         }
       } catch {
         // Keep defaults when pricing endpoint is unavailable.
@@ -153,182 +73,410 @@ export default function Pricing() {
     }
   }, [])
 
+  const ctaPrimary =
+    'mt-4 flex w-full items-center justify-center rounded-[10px] bg-[#D85A30] px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-[#993C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D85A30]'
+  const ctaSecondary =
+    'mt-4 flex w-full items-center justify-center rounded-[10px] border border-[#D85A30] bg-transparent px-3 py-3 text-sm font-medium text-[#D85A30] transition-colors hover:bg-[rgba(216,90,48,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D85A30]'
+
   return (
     <>
       <Seo
         title="Pricing — Quni Living"
-        description="Dual-tier pricing for students and landlords. Students pay $0, landlords choose Listing or Managed."
+        description="Free for renters. Free to list for landlords. Choose Listing or Managed pricing."
         canonicalPath="/pricing"
       />
 
-      <div className="flex-1 flex flex-col min-h-0 w-full bg-[#FEF9E4]">
-        <PageHeroBand
-          title="Dual-tier, transparent pricing."
-          subtitle="Students pay $0. Landlords choose Listing or Managed."
-          belowSubtitle={
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 overflow-hidden rounded-xl border border-white/25 bg-white/10 backdrop-blur-[1px]">
-              <div className="px-4 py-3 text-white text-sm font-medium flex items-center justify-center gap-2 text-center">
-                <span aria-hidden>🏠</span>
-                <span>Free to list</span>
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[#1A1A1A] antialiased">
+        <div className={PAGE_HERO_OUTER_CLASS}>
+          <div className="max-w-site mx-auto w-full px-4 py-7 text-center sm:px-6 lg:px-8">
+            <p className="m-0 text-[15px] text-white opacity-[0.96]">
+              No hidden fees. You only pay when Quni is working for you.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-3.5">
+              <div className="rounded-[10px] border border-white/[0.32] bg-white/[0.15] px-5 py-2.5 text-[13px] font-medium text-white">
+                Free for renters
               </div>
-              <div className="px-4 py-3 text-white text-sm font-medium flex items-center justify-center gap-2 text-center border-t sm:border-t-0 sm:border-l border-white/25">
-                <span aria-hidden>💳</span>
-                <span>No lock-in contracts</span>
+              <div className="rounded-[10px] border border-white/[0.32] bg-white/[0.15] px-5 py-2.5 text-[13px] font-medium text-white">
+                Free to list
               </div>
-              <div className="px-4 py-3 text-white text-sm font-medium flex items-center justify-center gap-2 text-center border-t sm:border-t-0 sm:border-l border-white/25">
-                <span aria-hidden>🔒</span>
-                <span>Secure payments via Stripe</span>
+              <div className="rounded-[10px] border border-white/[0.32] bg-white/[0.15] px-5 py-2.5 text-[13px] font-medium text-white">
+                No lock-in contracts
               </div>
             </div>
-          }
-        />
+          </div>
+        </div>
 
-        <section className="max-w-site mx-auto w-full px-6 py-12 md:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-stretch">
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-[#FFF5F4] shadow-md">
-              <div className="h-1 w-full shrink-0 bg-[#FF6F61]" aria-hidden />
-              <div className="flex flex-1 flex-col p-7 md:p-8 min-h-0">
-                <h2 className="font-display text-3xl font-bold text-gray-900">For Students</h2>
-                <div className="mt-5">
-                  <FeeRow
-                    icon="✨"
-                    label="Free to join"
-                    description="No sign-up fee for students"
+        <div className="mx-auto w-full max-w-[1180px] px-8 pb-20 pt-14">
+          <h1 className="m-0 mb-2.5 text-center font-lora text-[38px] font-semibold tracking-[-0.01em] text-[#1A1A1A]">
+            Pricing
+          </h1>
+          <p className="m-0 mb-12 text-center text-base text-[#6B6B6B]">
+            Free for renters. Free to list for landlords. Choose how much you want Quni to do.
+          </p>
+
+          <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1fr_2fr]">
+            {/* Renters */}
+            <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(216,90,48,0.2)] bg-[#FFF1EB]">
+              <div className="border-b border-[rgba(216,90,48,0.18)] bg-[rgba(216,90,48,0.06)] px-8 py-5 font-lora text-[22px] font-semibold text-[#1A1A1A]">
+                For renters
+              </div>
+              <div className="flex flex-1 flex-col px-7 pb-6 pt-7">
+                <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Free</div>
+                <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                  Always. Whether you&apos;re a student or a professional near campus.
+                </p>
+
+                <div className="mt-[22px]">
+                  <LineItem
+                    icon={
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                        <circle cx="7" cy="7" r="4" />
+                        <path d="m10 10 4 4" />
+                      </svg>
+                    }
+                    name="Browse listings"
                     value="Free"
+                    description="Search every verified room near your university or workplace."
+                    valueKind="coralLg"
                   />
-                  <FeeRow icon="🎫" label="Booking fee" description="One-off booking processing fee" value={studentFeeText} />
-                  <FeeRow icon="📊" label="Platform fee" description="Charged weekly for students" value={studentFeeText} />
-                  <FeeRow
-                    icon="🔐"
-                    label="Bond"
-                    description="Handled under state bond rules by the landlord/authority"
+                  <LineItem
+                    icon={
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                        <path d="M3 4h10v8H3z" />
+                        <path d="M3 4l5 4 5-4" />
+                      </svg>
+                    }
+                    name="Book a room"
+                    value="Free"
+                    description="No booking fees, platform fees, or surcharges. Ever."
+                    valueKind="coralLg"
+                  />
+                  <LineItem
+                    icon={
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                        <path d="M2 4h12v8H6l-3 3v-3H2z" />
+                      </svg>
+                    }
+                    name="Message landlords"
+                    value="Free"
+                    description="Talk to landlords directly from any listing."
+                    valueKind="coralLg"
+                  />
+                  <LineItem
+                    icon={
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                        <rect x="3" y="7" width="10" height="7" rx="1" />
+                        <path d="M5 7V4a3 3 0 0 1 6 0v3" />
+                      </svg>
+                    }
+                    name="Bond"
                     value="Varies"
+                    description="Lodged with NSW Fair Trading or landlord. Quni never holds it."
+                    valueKind="coralSm"
                   />
                 </div>
-                <div className="mt-auto pt-7">
-                  <Link
-                    to="/properties"
-                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
-                  >
-                    Find a property
-                    <span aria-hidden>→</span>
+
+                <p className="mt-auto pt-2 text-xs italic leading-normal text-[#6B6B6B]">
+                  Optional card surcharge if you pay rent by card. Free bank transfer always offered.
+                </p>
+
+                <Link to="/properties" className={ctaSecondary}>
+                  Find a room →
+                </Link>
+              </div>
+            </div>
+
+            {/* Landlords */}
+            <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(108,142,89,0.22)] bg-[#E8EFE3]">
+              <div className="border-b border-[rgba(108,142,89,0.22)] bg-[rgba(108,142,89,0.10)] px-8 py-5 font-lora text-[22px] font-semibold text-[#1A1A1A]">
+                For landlords
+              </div>
+
+              <div className="grid flex-1 grid-cols-1 divide-y divide-[rgba(108,142,89,0.2)] md:grid-cols-2 md:divide-x md:divide-y-0 md:divide-[rgba(108,142,89,0.2)]">
+                {/* Quni Listing */}
+                <div className="flex flex-col px-7 pb-6 pt-7">
+                  <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Listing</div>
+                  <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                    List your room and find a tenant. You run the tenancy.
+                  </p>
+
+                  <div className="mt-[22px]">
+                    <LineItem
+                      icon={
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                          <path d="M2 6l6-4 6 4v8H2z" />
+                          <path d="M6 14V9h4v5" />
+                        </svg>
+                      }
+                      name="Listing fee"
+                      value={listingFeeText}
+                      description="One-off, only when you accept a tenant. No subscription."
+                      valueKind="coralLg"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Verified renters"
+                      value="Included"
+                      description="Students and professionals with verified identity."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="AI listing tools"
+                      value="Included"
+                      description="Description, pricing, and enquiry-reply helpers."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Tenancy documents"
+                      value="Included"
+                      description="FT6600 + Quni Addendum, signed in-platform."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="4" x2="12" y2="12" />
+                          <line x1="12" y1="4" x2="4" y2="12" />
+                        </svg>
+                      }
+                      name="Rent collection"
+                      value="Self-managed"
+                      description="Tenant pays you directly. Quni never touches the money."
+                      tone="muted"
+                      valueKind="mutedSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="4" x2="12" y2="12" />
+                          <line x1="12" y1="4" x2="4" y2="12" />
+                        </svg>
+                      }
+                      name="Bond lodgement"
+                      value="Self-managed"
+                      description="You lodge with NSW Fair Trading yourself."
+                      tone="muted"
+                      valueKind="mutedSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        >
+                          <line x1="4" y1="4" x2="12" y2="12" />
+                          <line x1="12" y1="4" x2="4" y2="12" />
+                        </svg>
+                      }
+                      name="Disputes & maintenance"
+                      value="Self-managed"
+                      description="You handle directly with your tenant."
+                      tone="muted"
+                      valueKind="mutedSm"
+                    />
+                  </div>
+
+                  {/* TODO: Wire to resolveServiceTierAvailability so this stays correct as more states activate */}
+                  <p className="mt-auto pt-2 text-xs italic text-[#6B6B6B]">Available everywhere</p>
+
+                  <Link to="/landlord-signup" className={ctaSecondary}>
+                    Choose Listing
+                  </Link>
+                </div>
+
+                {/* Quni Managed */}
+                <div className="flex flex-col px-7 pb-6 pt-7">
+                  <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Managed</div>
+                  <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                    We run the whole tenancy. From listing to move-out.
+                  </p>
+
+                  <div className="mt-[22px]">
+                    <LineItem
+                      icon={
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+                          <path d="M3 7l5-4 5 4v6H3z" />
+                          <path d="M6 13V9h4v4" />
+                        </svg>
+                      }
+                      name="Service fee"
+                      value={managedFeeText}
+                      description="Of weekly rent. All-inclusive — no letting fees or extras. Only charged when you have an active tenant."
+                      valueKind="coralLg"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Everything in Listing"
+                      value="Included"
+                      description="Verified renters, AI tools, tenancy documents, e-signing."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Rent collection"
+                      value="Included"
+                      description="Tenant pays Quni. We pay you weekly via Stripe."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Bond lodgement"
+                      value="Included"
+                      description="Lodged with NSW Fair Trading on your behalf."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Dispute support"
+                      value="Included"
+                      description="We mediate between you and your tenant."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Move-in protection"
+                      value="Included"
+                      description="Funds held until tenant moves in safely."
+                      valueKind="coralSm"
+                    />
+                    <LineItem
+                      icon={
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="3,8 7,12 13,4" />
+                        </svg>
+                      }
+                      name="Maintenance routing"
+                      value="Included"
+                      description="Tenant requests routed to you, tracked in-platform."
+                      valueKind="coralSm"
+                    />
+                  </div>
+
+                  {/* TODO: Wire to resolveServiceTierAvailability so this stays correct as more states activate */}
+                  <p className="mt-auto pt-2 text-xs italic text-[#6B6B6B]">
+                    Currently available in Queensland
+                  </p>
+
+                  <Link to="/landlord-signup" className={ctaPrimary}>
+                    Choose Managed
                   </Link>
                 </div>
               </div>
             </div>
-
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-[#F0F7F4] shadow-md">
-              <div className="h-1 w-full shrink-0 bg-[#8FB9AB]" aria-hidden />
-              <div className="flex flex-1 flex-col p-7 md:p-8 min-h-0">
-                <h2 className="font-display text-3xl font-bold text-gray-900">For Landlords</h2>
-                <div className="mt-5">
-                  <FeeRow
-                    icon="🏠"
-                    label="List your property"
-                    description="No credit card required"
-                    value="Free"
-                  />
-                  <FeeRow
-                    icon="💰"
-                    label="Listing tier"
-                    description="Flat fee per accepted booking (landlord runs tenancy)"
-                    value={listingFeeText}
-                  />
-                  <FeeRow icon="✅" label="Managed tier" description="Percentage fee with full tenancy operations" value={managedFeeText} />
-                  <FeeRow
-                    icon="🔓"
-                    label="No lock-in"
-                    description="Cancel your listing any time"
-                    value="Ever"
-                  />
-                </div>
-                <div className="mt-auto pt-7">
-                  <Link
-                    to="/landlord-signup"
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-[#8FB9AB] bg-white px-6 py-3 text-sm font-semibold text-[#376256] shadow-sm hover:bg-[#EAF4EF] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8FB9AB]"
-                  >
-                    List your property
-                    <span aria-hidden>→</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
-        </section>
-
-        <section className="max-w-site mx-auto w-full px-6 py-6 md:py-8">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] text-center">How it works</h2>
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            <HowItWorksCard
-              title="For students"
-              steps={studentSteps}
-              bgClass="bg-[#FFF5F4]"
-              accentClass="text-[#C8554A]"
-            />
-            <HowItWorksCard
-              title="For landlords"
-              steps={landlordSteps}
-              bgClass="bg-[#F0F7F4]"
-              accentClass="text-[#376256]"
-            />
-          </div>
-        </section>
-
-        <section className="max-w-site mx-auto w-full px-6 py-12 md:py-16">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 text-center">
-            Common questions
-          </h2>
-          <div className="mt-8 rounded-2xl bg-white shadow-md divide-y divide-stone-100">
-            {faqItems.map((item, index) => {
-              const isOpen = openFaqIndex === index
-              return (
-                <div key={item.question}>
-                  <button
-                    type="button"
-                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-stone-50/70 transition-colors"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
-                    aria-expanded={isOpen}
-                  >
-                    <span className="font-semibold text-gray-900">{item.question}</span>
-                    <svg
-                      className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden
-                    >
-                      <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {isOpen ? <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{item.answer}</p> : null}
-                </div>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="w-full bg-[#FF6F61]">
-          <div className="max-w-site mx-auto px-6 py-12 md:py-14 text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Ready to find your place?</h2>
-            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/properties"
-                className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] border border-white hover:bg-white/95 transition-colors"
-              >
-                Find a property
-                <span aria-hidden>→</span>
-              </Link>
-              <Link
-                to="/landlord-signup"
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
-              >
-                List your property
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
     </>
   )

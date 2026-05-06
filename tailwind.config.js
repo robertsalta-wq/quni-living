@@ -17,6 +17,9 @@ export default {
         display: ['"Playfair Display"', 'Georgia', 'serif'],
         /** Footer body text (reference design); rest of app keeps default sans */
         footer: ['"Open Sans"', 'system-ui', 'Segoe UI', 'sans-serif'],
+        /** Public pricing page (see docs/mockups/pricing-page-mockup.html) */
+        lora: ['"Lora"', 'Georgia', 'serif'],
+        inter: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
       },
     },
   },
