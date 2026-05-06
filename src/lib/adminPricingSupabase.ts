@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
 export type TierId = 't1' | 't2' | 't3'
+export type ServiceTierId = 'listing' | 'managed'
+export type PricingKey = `${TierId}:${ServiceTierId}`
 
 export type PricingConfigRow = Database['public']['Tables']['pricing_config']['Row']
 export type VolumeTierRow = Database['public']['Tables']['volume_discount_tiers']['Row']
@@ -18,20 +20,24 @@ export type EarlyAdopterUi = {
 }
 
 export type AdminPricingBundle = {
-  pricingByTier: Record<TierId, PricingConfigRow>
-  volumeTiers: VolumeTierRow[]
+  pricingByKey: Record<PricingKey, PricingConfigRow>
+  volumeTiersByService: Record<ServiceTierId, VolumeTierRow[]>
   changeLog: ChangeLogRow[]
 }
 
 const TIER_IDS: TierId[] = ['t1', 't2', 't3']
+const SERVICE_TIER_IDS: ServiceTierId[] = ['listing', 'managed']
 
 const FEE_KEYS = [
-  'svc_fee_pct',
-  'student_fee_type',
+  'fee_mode',
+  'fee_percent',
+  'fee_fixed_cents',
+  'student_fee_mode',
+  'student_fee_percent',
+  'student_fee_fixed_cents',
   'card_surcharge_enabled',
   'free_transfer_required',
-  'fee_model',
-  'utilities_cap',
+  'utilities_cap_aud',
 ] as const satisfies readonly (keyof PricingConfigRow)[]
 
 const EARLY_KEYS = [
@@ -70,7 +76,7 @@ export function earlyUiFromRow(row: PricingConfigRow): EarlyAdopterUi {
 
   let value = row.early_adopter_value ?? 0
   if (type === 'percent') {
-    value = absoluteToDiscountPct(row.svc_fee_pct, row.early_adopter_value)
+    value = absoluteToDiscountPct(row.fee_percent, row.early_adopter_value)
   }
   if (type === 'free') {
     value = 0
@@ -93,7 +99,7 @@ export function earlyUiFromRow(row: PricingConfigRow): EarlyAdopterUi {
 export function earlyRowPatchFromUi(
   row: PricingConfigRow,
   ui: EarlyAdopterUi,
-  svcFeePctForConversion: number = row.svc_fee_pct,
+  svcFeePctForConversion: number = row.fee_percent,
 ): Partial<PricingConfigRow> {
   const svc = svcFeePctForConversion
   let earlyValue: number | null = null
@@ -116,12 +122,14 @@ export function earlyRowPatchFromUi(
   }
 }
 
-function tierRecord(rows: PricingConfigRow[]): Record<TierId, PricingConfigRow> {
-  const out = {} as Record<TierId, PricingConfigRow>
-  for (const id of TIER_IDS) {
-    const r = rows.find((x) => x.tier === id)
-    if (!r) throw new Error(`Missing pricing_config row for tier ${id}`)
-    out[id] = r
+function pricingRecord(rows: PricingConfigRow[]): Record<PricingKey, PricingConfigRow> {
+  const out = {} as Record<PricingKey, PricingConfigRow>
+  for (const propertyTier of TIER_IDS) {
+    for (const serviceTier of SERVICE_TIER_IDS) {
+      const r = rows.find((x) => x.property_tier === propertyTier && x.service_tier === serviceTier)
+      if (!r) throw new Error(`Missing pricing_config row for ${propertyTier}/${serviceTier}`)
+      out[`${propertyTier}:${serviceTier}`] = r
+    }
   }
   return out
 }
@@ -130,22 +138,25 @@ export async function fetchAdminPricingBundle(
   supabase: SupabaseClient<Database>,
   logLimit = 500,
 ): Promise<AdminPricingBundle> {
-  const [pc, vol, log] = await Promise.all([
-    supabase.from('pricing_config').select('*').order('tier'),
-    supabase.from('volume_discount_tiers').select('*').order('min_rooms'),
+  const [pc, volManaged, log] = await Promise.all([
+    supabase.from('pricing_config').select('*').order('property_tier').order('service_tier'),
+    supabase.from('volume_discount_tiers').select('*').eq('service_tier', 'managed').order('min_rooms'),
     supabase.from('pricing_change_log').select('*').order('changed_at', { ascending: false }).limit(logLimit),
   ])
 
   if (pc.error) throw pc.error
-  if (vol.error) throw vol.error
+  if (volManaged.error) throw volManaged.error
   if (log.error) throw log.error
 
   const rows = (pc.data ?? []) as PricingConfigRow[]
-  if (rows.length < 3) throw new Error('pricing_config must include t1, t2, t3')
+  if (rows.length < 6) throw new Error('pricing_config must include t1/t2/t3 across listing and managed')
 
   return {
-    pricingByTier: tierRecord(rows),
-    volumeTiers: (vol.data ?? []) as VolumeTierRow[],
+    pricingByKey: pricingRecord(rows),
+    volumeTiersByService: {
+      listing: [],
+      managed: (volManaged.data ?? []) as VolumeTierRow[],
+    },
     changeLog: (log.data ?? []) as ChangeLogRow[],
   }
 }
@@ -161,15 +172,19 @@ async function insertChangeLogs(
 
 export async function savePricingFeeFields(
   supabase: SupabaseClient<Database>,
-  tier: TierId,
+  propertyTier: TierId,
+  serviceTier: ServiceTierId,
   prev: PricingConfigRow,
   next: {
-    svc_fee_pct: number
-    student_fee_type: string
+    fee_mode: string
+    fee_percent: number
+    fee_fixed_cents: number
+    student_fee_mode: string
+    student_fee_percent: number
+    student_fee_fixed_cents: number
     card_surcharge_enabled: boolean
     free_transfer_required: boolean
-    fee_model: string
-    utilities_cap: number
+    utilities_cap_aud: number
   },
   changedBy: string,
 ): Promise<PricingConfigRow> {
@@ -184,7 +199,8 @@ export async function savePricingFeeFields(
     const after = patch[key] as PricingConfigRow[typeof key]
     if (formatLogValue(before) !== formatLogValue(after)) {
       logs.push({
-        tier,
+        tier: propertyTier,
+        service_tier: serviceTier,
         field_name: key,
         old_value: formatLogValue(before),
         new_value: formatLogValue(after),
@@ -211,11 +227,12 @@ export async function savePricingFeeFields(
 
 export async function savePricingEarlyFields(
   supabase: SupabaseClient<Database>,
-  tier: TierId,
+  propertyTier: TierId,
+  serviceTier: ServiceTierId,
   prev: PricingConfigRow,
   ui: EarlyAdopterUi,
   changedBy: string,
-  svcFeePctForConversion: number = prev.svc_fee_pct,
+  svcFeePctForConversion: number = prev.fee_percent,
 ): Promise<PricingConfigRow> {
   const earlyPatch = earlyRowPatchFromUi(prev, ui, svcFeePctForConversion)
   const patch: Partial<PricingConfigRow> = {
@@ -229,7 +246,8 @@ export async function savePricingEarlyFields(
     const after = patch[key] as PricingConfigRow[typeof key]
     if (formatLogValue(before) !== formatLogValue(after)) {
       logs.push({
-        tier,
+        tier: propertyTier,
+        service_tier: serviceTier,
         field_name: key,
         old_value: formatLogValue(before),
         new_value: formatLogValue(after),
@@ -258,6 +276,7 @@ const VOLUME_KEYS = ['label', 'min_rooms', 'max_rooms', 'discount_rate_pct'] as 
 
 export async function saveVolumeDiscountTiers(
   supabase: SupabaseClient<Database>,
+  serviceTier: ServiceTierId,
   prev: VolumeTierRow[],
   next: VolumeTierRow[],
   changedBy: string,
@@ -274,6 +293,7 @@ export async function saveVolumeDiscountTiers(
       if (formatLogValue(before) !== formatLogValue(after)) {
         logs.push({
           tier: null,
+          service_tier: serviceTier,
           field_name: `volume_discount_tiers.${row.id}.${key}`,
           old_value: formatLogValue(before),
           new_value: formatLogValue(after),

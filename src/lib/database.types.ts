@@ -546,6 +546,7 @@ export interface Database {
           id: string
           changed_at: string
           tier: string | null
+          service_tier: string | null
           field_name: string
           old_value: string | null
           new_value: string | null
@@ -555,6 +556,7 @@ export interface Database {
           id?: string
           changed_at?: string
           tier?: string | null
+          service_tier?: string | null
           field_name: string
           old_value?: string | null
           new_value?: string | null
@@ -564,6 +566,7 @@ export interface Database {
           id?: string
           changed_at?: string
           tier?: string | null
+          service_tier?: string | null
           field_name?: string
           old_value?: string | null
           new_value?: string | null
@@ -575,12 +578,21 @@ export interface Database {
         Row: {
           id: string
           tier: string
+          property_tier: string
+          service_tier: string
           svc_fee_pct: number
+          fee_mode: string
+          fee_percent: number
+          fee_fixed_cents: number
           student_fee_type: string
+          student_fee_mode: string
+          student_fee_percent: number
+          student_fee_fixed_cents: number
           card_surcharge_enabled: boolean
           free_transfer_required: boolean
           fee_model: string
           utilities_cap: number
+          utilities_cap_aud: number
           early_adopter_active: boolean
           early_adopter_type: string | null
           early_adopter_value: number | null
@@ -594,12 +606,21 @@ export interface Database {
         Insert: {
           id?: string
           tier: string
+          property_tier?: string
+          service_tier?: string
           svc_fee_pct: number
+          fee_mode?: string
+          fee_percent?: number
+          fee_fixed_cents?: number
           student_fee_type: string
+          student_fee_mode?: string
+          student_fee_percent?: number
+          student_fee_fixed_cents?: number
           card_surcharge_enabled?: boolean
           free_transfer_required?: boolean
           fee_model: string
           utilities_cap?: number
+          utilities_cap_aud?: number
           early_adopter_active?: boolean
           early_adopter_type?: string | null
           early_adopter_value?: number | null
@@ -613,12 +634,21 @@ export interface Database {
         Update: {
           id?: string
           tier?: string
+          property_tier?: string
+          service_tier?: string
           svc_fee_pct?: number
+          fee_mode?: string
+          fee_percent?: number
+          fee_fixed_cents?: number
           student_fee_type?: string
+          student_fee_mode?: string
+          student_fee_percent?: number
+          student_fee_fixed_cents?: number
           card_surcharge_enabled?: boolean
           free_transfer_required?: boolean
           fee_model?: string
           utilities_cap?: number
+          utilities_cap_aud?: number
           early_adopter_active?: boolean
           early_adopter_type?: string | null
           early_adopter_value?: number | null
@@ -634,6 +664,7 @@ export interface Database {
       volume_discount_tiers: {
         Row: {
           id: string
+          service_tier: string
           label: string
           min_rooms: number
           max_rooms: number
@@ -641,6 +672,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          service_tier?: string
           label: string
           min_rooms: number
           max_rooms: number
@@ -648,6 +680,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          service_tier?: string
           label?: string
           min_rooms?: number
           max_rooms?: number

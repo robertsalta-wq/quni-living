@@ -23,6 +23,8 @@ export const PLATFORM_CONFIG_KEYS = {
   BANK_BSB: 'bank.bsb',
   BANK_ACCOUNT_NUMBER: 'bank.account_number',
   BANK_BANK_NAME: 'bank.bank_name',
+  SERVICE_TIER_NAMING: 'service_tier_naming',
+  QUNI_SERVICE_TIER_MODULE_ENABLED: 'quni_service_tier_module_enabled',
 } as const
 
 const BANK_KEYS_FOR_RTA = [
@@ -62,6 +64,25 @@ export async function fetchPlatformConfigValueMap(
     if (row.config_key) out[row.config_key] = row.config_value ?? ''
   }
   return out
+}
+
+export function parseBooleanConfig(value: string | null | undefined, fallback = false): boolean {
+  const v = (value ?? '').trim().toLowerCase()
+  if (v === 'true') return true
+  if (v === 'false') return false
+  return fallback
+}
+
+export function parseIntegerCentsConfig(value: string | null | undefined, fallback = 0): number {
+  const n = Number((value ?? '').trim())
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(0, Math.round(n))
+}
+
+export function parseDecimalConfig(value: string | null | undefined, fallback = 0): number {
+  const n = Number((value ?? '').trim())
+  if (!Number.isFinite(n)) return fallback
+  return n
 }
 
 function formatBsbDisplay(raw: string): string {

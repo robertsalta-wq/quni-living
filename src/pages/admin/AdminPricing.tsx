@@ -1,7 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { adminCardClass } from './adminUi'
-import type { TierId, PricingConfigRow, VolumeTierRow, ChangeLogRow, EarlyAdopterUi } from '../../lib/adminPricingSupabase'
+import type {
+  TierId,
+  PricingConfigRow,
+  VolumeTierRow,
+  ChangeLogRow,
+  EarlyAdopterUi,
+  PricingKey,
+  ServiceTierId,
+} from '../../lib/adminPricingSupabase'
 import {
   fetchAdminPricingBundle,
   savePricingFeeFields,
@@ -12,7 +20,7 @@ import {
   formatLogValue,
 } from '../../lib/adminPricingSupabase'
 
-type TabId = 'tiers' | 'volume' | 'early' | 'summary' | 'log'
+type TabId = 'tiers' | 'volume' | 'early' | 'log'
 
 type TierMeta = {
   id: TierId
@@ -64,16 +72,8 @@ const TIER_PAYMENT_NOTES: Record<TierId, string> = {
   t3: 'Per Boarding Houses Act 2012 requirements',
 }
 
-const TAB_ORDER: TabId[] = ['tiers', 'volume', 'early', 'summary', 'log']
-
-const WORD_PROMPT =
-  'Generate a Word document version of the Quni Living pricing card showing all three tiers, volume discounts, early adopter pricing, and fee model options in a format suitable for inserting into the business plan and marketing plan.'
-
-const BUSINESS_PROMPT =
-  'Generate business plan insert text for the Quni Living fee structure based on the current pricing card settings.'
-
-const MARKETING_PROMPT =
-  'Generate marketing plan insert text for the Quni Living fee structure based on the current pricing card settings.'
+const TAB_ORDER: TabId[] = ['tiers', 'volume', 'early', 'log']
+const SERVICE_TIERS: ServiceTierId[] = ['listing', 'managed']
 
 function fmtNowAu(): string {
   const d = new Date()
@@ -92,12 +92,15 @@ function formatLogTs(iso: string): string {
 
 function logFieldLabel(fieldName: string): string {
   const map: Record<string, string> = {
-    svc_fee_pct: 'Service fee %',
-    student_fee_type: 'Student fee type',
+    fee_mode: 'Landlord fee mode',
+    fee_percent: 'Landlord fee %',
+    fee_fixed_cents: 'Landlord fixed fee (cents)',
+    student_fee_mode: 'Student fee mode',
+    student_fee_percent: 'Student fee %',
+    student_fee_fixed_cents: 'Student fixed fee (cents)',
     card_surcharge_enabled: 'Card surcharge',
     free_transfer_required: 'Free bank transfer',
-    fee_model: 'Fee model',
-    utilities_cap: 'Utilities cap',
+    utilities_cap_aud: 'Utilities cap (AUD)',
     early_adopter_active: 'Early adopter active',
     early_adopter_type: 'Early adopter type',
     early_adopter_value: 'Early adopter value',
@@ -125,22 +128,20 @@ function cloneVolume(rows: VolumeTierRow[]): VolumeTierRow[] {
   return rows.map((r) => ({ ...r }))
 }
 
-function clonePricingFromBundle(m: Record<TierId, PricingConfigRow>): Record<TierId, PricingConfigRow> {
-  return {
-    t1: { ...m.t1 },
-    t2: { ...m.t2 },
-    t3: { ...m.t3 },
-  }
+function clonePricingFromBundle(m: Record<PricingKey, PricingConfigRow>): Record<PricingKey, PricingConfigRow> {
+  return Object.fromEntries(Object.entries(m).map(([k, v]) => [k, { ...v }])) as Record<PricingKey, PricingConfigRow>
 }
 
 export default function AdminPricing() {
   const [activeTab, setActiveTab] = useState<TabId>('tiers')
-  const [pricingByTier, setPricingByTier] = useState<Record<TierId, PricingConfigRow> | null>(null)
-  /** Last persisted rows — used to diff for changelog and to detect changes. */
-  const [baselineByTier, setBaselineByTier] = useState<Record<TierId, PricingConfigRow> | null>(null)
-  const [volumeRows, setVolumeRows] = useState<VolumeTierRow[]>([])
-  const [baselineVolumeRows, setBaselineVolumeRows] = useState<VolumeTierRow[]>([])
-  const [earlyByTier, setEarlyByTier] = useState<Record<TierId, EarlyAdopterUi> | null>(null)
+  const [pricingByKey, setPricingByKey] = useState<Record<PricingKey, PricingConfigRow> | null>(null)
+  const [baselineByKey, setBaselineByKey] = useState<Record<PricingKey, PricingConfigRow> | null>(null)
+  const [volumeRows, setVolumeRows] = useState<Record<ServiceTierId, VolumeTierRow[]>>({ listing: [], managed: [] })
+  const [baselineVolumeRows, setBaselineVolumeRows] = useState<Record<ServiceTierId, VolumeTierRow[]>>({
+    listing: [],
+    managed: [],
+  })
+  const [earlyByKey, setEarlyByKey] = useState<Record<PricingKey, EarlyAdopterUi> | null>(null)
   const [changeLog, setChangeLog] = useState<ChangeLogRow[]>([])
   const [loading, setLoading] = useState(true)
   const [savingTier, setSavingTier] = useState<TierId | null>(null)
@@ -148,8 +149,6 @@ export default function AdminPricing() {
   const [error, setError] = useState<string | null>(null)
   const [lastSavedText, setLastSavedText] = useState('No changes saved yet')
   const [complianceMessage, setComplianceMessage] = useState<string | null>(null)
-  const [exportFeedback, setExportFeedback] = useState<string | null>(null)
-  const [promptKey, setPromptKey] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -161,17 +160,20 @@ export default function AdminPricing() {
     setLoading(true)
     try {
       const bundle = await fetchAdminPricingBundle(supabase)
-      setPricingByTier(clonePricingFromBundle(bundle.pricingByTier))
-      setBaselineByTier(clonePricingFromBundle(bundle.pricingByTier))
-      const vol = cloneVolume(bundle.volumeTiers)
-      setVolumeRows(vol)
-      setBaselineVolumeRows(cloneVolume(bundle.volumeTiers))
-      const early: Record<TierId, EarlyAdopterUi> = {
-        t1: earlyUiFromRow(bundle.pricingByTier.t1),
-        t2: earlyUiFromRow(bundle.pricingByTier.t2),
-        t3: earlyUiFromRow(bundle.pricingByTier.t3),
-      }
-      setEarlyByTier(early)
+      setPricingByKey(clonePricingFromBundle(bundle.pricingByKey))
+      setBaselineByKey(clonePricingFromBundle(bundle.pricingByKey))
+      setVolumeRows({
+        listing: cloneVolume(bundle.volumeTiersByService.listing),
+        managed: cloneVolume(bundle.volumeTiersByService.managed),
+      })
+      setBaselineVolumeRows({
+        listing: cloneVolume(bundle.volumeTiersByService.listing),
+        managed: cloneVolume(bundle.volumeTiersByService.managed),
+      })
+      const early = Object.fromEntries(
+        Object.entries(bundle.pricingByKey).map(([k, v]) => [k, earlyUiFromRow(v)]),
+      ) as Record<PricingKey, EarlyAdopterUi>
+      setEarlyByKey(early)
       setChangeLog(bundle.changeLog)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load pricing data')
@@ -195,33 +197,41 @@ export default function AdminPricing() {
     setChangeLog(rows)
   }, [])
 
-  const onSaveTierFees = async (tier: TierId) => {
-    if (!pricingByTier || !baselineByTier) return
-    setSavingTier(tier)
+  const keyFor = (propertyTier: TierId, serviceTier: ServiceTierId): PricingKey =>
+    `${propertyTier}:${serviceTier}`
+
+  const onSaveTierFees = async (propertyTier: TierId, serviceTier: ServiceTierId) => {
+    if (!pricingByKey || !baselineByKey) return
+    setSavingTier(propertyTier)
     setError(null)
     try {
       const by = await changedBy()
-      const prevRow = baselineByTier[tier]
-      const p = pricingByTier[tier]
+      const key = keyFor(propertyTier, serviceTier)
+      const prevRow = baselineByKey[key]
+      const p = pricingByKey[key]
       const updated = await savePricingFeeFields(
         supabase,
-        tier,
+        propertyTier,
+        serviceTier,
         prevRow,
         {
-          svc_fee_pct: p.svc_fee_pct,
-          student_fee_type: p.student_fee_type,
+          fee_mode: p.fee_mode,
+          fee_percent: p.fee_percent,
+          fee_fixed_cents: p.fee_fixed_cents,
+          student_fee_mode: p.student_fee_mode,
+          student_fee_percent: p.student_fee_percent,
+          student_fee_fixed_cents: p.student_fee_fixed_cents,
           card_surcharge_enabled: p.card_surcharge_enabled,
           free_transfer_required: p.free_transfer_required,
-          fee_model: p.fee_model,
-          utilities_cap: p.utilities_cap,
+          utilities_cap_aud: p.utilities_cap_aud,
         },
         by,
       )
-      setPricingByTier((prev) => (prev ? { ...prev, [tier]: updated } : prev))
-      setBaselineByTier((prev) => (prev ? { ...prev, [tier]: updated } : prev))
-      setEarlyByTier((prev) => {
+      setPricingByKey((prev) => (prev ? { ...prev, [key]: updated } : prev))
+      setBaselineByKey((prev) => (prev ? { ...prev, [key]: updated } : prev))
+      setEarlyByKey((prev) => {
         if (!prev) return prev
-        return { ...prev, [tier]: earlyUiFromRow(updated) }
+        return { ...prev, [key]: earlyUiFromRow(updated) }
       })
       setLastSavedText(`Last saved: ${fmtNowAu()}`)
       await refreshLog()
@@ -232,25 +242,27 @@ export default function AdminPricing() {
     }
   }
 
-  const onSaveEarly = async (tier: TierId) => {
-    if (!pricingByTier || !baselineByTier || !earlyByTier) return
-    setSavingTier(tier)
+  const onSaveEarly = async (propertyTier: TierId, serviceTier: ServiceTierId) => {
+    if (!pricingByKey || !baselineByKey || !earlyByKey) return
+    setSavingTier(propertyTier)
     setError(null)
     try {
       const by = await changedBy()
-      const prevRow = baselineByTier[tier]
-      const ui = earlyByTier[tier]
+      const key = keyFor(propertyTier, serviceTier)
+      const prevRow = baselineByKey[key]
+      const ui = earlyByKey[key]
       const updated = await savePricingEarlyFields(
         supabase,
-        tier,
+        propertyTier,
+        serviceTier,
         prevRow,
         ui,
         by,
-        pricingByTier[tier].svc_fee_pct,
+        pricingByKey[key].fee_percent,
       )
-      setPricingByTier((prev) => (prev ? { ...prev, [tier]: updated } : prev))
-      setBaselineByTier((prev) => (prev ? { ...prev, [tier]: updated } : prev))
-      setEarlyByTier((prev) => (prev ? { ...prev, [tier]: earlyUiFromRow(updated) } : prev))
+      setPricingByKey((prev) => (prev ? { ...prev, [key]: updated } : prev))
+      setBaselineByKey((prev) => (prev ? { ...prev, [key]: updated } : prev))
+      setEarlyByKey((prev) => (prev ? { ...prev, [key]: earlyUiFromRow(updated) } : prev))
       setLastSavedText(`Last saved: ${fmtNowAu()}`)
       await refreshLog()
     } catch (e) {
@@ -260,15 +272,20 @@ export default function AdminPricing() {
     }
   }
 
-  const onSaveVolume = async () => {
+  const onSaveVolume = async (serviceTier: ServiceTierId) => {
     setSavingVolume(true)
     setError(null)
     try {
       const by = await changedBy()
-      const next = await saveVolumeDiscountTiers(supabase, baselineVolumeRows, volumeRows, by)
-      const vol = cloneVolume(next)
-      setVolumeRows(vol)
-      setBaselineVolumeRows(vol)
+      const next = await saveVolumeDiscountTiers(
+        supabase,
+        serviceTier,
+        baselineVolumeRows[serviceTier],
+        volumeRows[serviceTier],
+        by,
+      )
+      setVolumeRows((prev) => ({ ...prev, [serviceTier]: cloneVolume(next) }))
+      setBaselineVolumeRows((prev) => ({ ...prev, [serviceTier]: cloneVolume(next) }))
       setLastSavedText(`Last saved: ${fmtNowAu()}`)
       await refreshLog()
     } catch (e) {
@@ -278,75 +295,50 @@ export default function AdminPricing() {
     }
   }
 
-  const copySummary = async () => {
-    if (!pricingByTier || !earlyByTier) return
-    let text = 'QUNI LIVING — PRICING & FEE STRUCTURE\n'
-    text += `Generated: ${fmtNowAu()}\n\n`
-    for (const tier of TIERS) {
-      const f = pricingByTier[tier.id]
-      const e = earlyByTier[tier.id]
-      text += `--- ${tier.name.toUpperCase()} ---\n`
-      text += `Legal framework: ${tier.legal}\n`
-      text += `Document: ${tier.doc}\n`
-      text += `Bond: ${tier.bond}\n`
-      text += `Service fee: ${f.svc_fee_pct}%\n`
-      text += `Fee model: ${f.fee_model === 'A' ? 'Option A — deduct from landlord payout' : 'Option D — landlord choice'}\n`
-      text += `Student fees: ${f.student_fee_type === 'none' ? 'None' : f.student_fee_type}\n`
-      text += `Card surcharge: ${f.card_surcharge_enabled ? 'Optional pass-through' : 'N/A'}\n`
-      text += `Free bank transfer: ${f.free_transfer_required ? 'Yes — mandatory' : 'Not mandated'}\n`
-      if (f.utilities_cap > 0) text += `Utilities cap: $${f.utilities_cap}/quarter\n`
-      if (e.active) {
-        text += `Early adopter: ${e.type === 'free' ? 'Free' : `${e.value}${e.type === 'percent' ? '% discount' : '% fixed rate'}`}\n`
-      }
-      text += '\n'
-    }
-    text += '--- VOLUME DISCOUNTS ---\n'
-    for (const v of volumeRows) {
-      text += `${v.label}: ${v.discount_rate_pct}%\n`
-    }
-    try {
-      await navigator.clipboard.writeText(text)
-      setExportFeedback('Copied!')
-      setTimeout(() => setExportFeedback(null), 2000)
-    } catch {
-      setError('Could not copy to clipboard')
-    }
-  }
-
-  const copyPrompt = async (key: string, prompt: string) => {
-    try {
-      await navigator.clipboard.writeText(prompt)
-      setPromptKey(key)
-      setTimeout(() => setPromptKey((k) => (k === key ? null : k)), 2000)
-    } catch {
-      setError('Could not copy to clipboard')
-    }
-  }
-
   const onClearLogClick = () => {
     setComplianceMessage(
       'The audit log is retained for compliance purposes and cannot be cleared from the dashboard.',
     )
   }
 
-  const updatePricingField = <K extends keyof PricingConfigRow>(tier: TierId, key: K, value: PricingConfigRow[K]) => {
-    setPricingByTier((prev) => {
+  const updatePricingField = <K extends keyof PricingConfigRow>(
+    propertyTier: TierId,
+    serviceTier: ServiceTierId,
+    key: K,
+    value: PricingConfigRow[K],
+  ) => {
+    const rowKey = keyFor(propertyTier, serviceTier)
+    setPricingByKey((prev) => {
       if (!prev) return prev
-      return { ...prev, [tier]: { ...prev[tier], [key]: value } }
+      return { ...prev, [rowKey]: { ...prev[rowKey], [key]: value } }
     })
   }
 
-  const updateVolumeRow = (index: number, patch: Partial<VolumeTierRow>) => {
+  const updateVolumeRow = (serviceTier: ServiceTierId, index: number, patch: Partial<VolumeTierRow>) => {
     setVolumeRows((rows) => {
-      const next = [...rows]
+      const next = [...rows[serviceTier]]
       next[index] = { ...next[index], ...patch }
-      return next
+      return { ...rows, [serviceTier]: next }
     })
   }
 
-  const updateEarly = (tier: TierId, patch: Partial<EarlyAdopterUi>) => {
-    setEarlyByTier((prev) => (prev ? { ...prev, [tier]: { ...prev[tier], ...patch } } : prev))
+  const updateEarly = (propertyTier: TierId, serviceTier: ServiceTierId, patch: Partial<EarlyAdopterUi>) => {
+    const rowKey = keyFor(propertyTier, serviceTier)
+    setEarlyByKey((prev) => (prev ? { ...prev, [rowKey]: { ...prev[rowKey], ...patch } } : prev))
   }
+
+  const pricingByTier = useMemo(() => {
+    if (!pricingByKey) return null
+    return Object.fromEntries(
+      TIERS.map((t) => [
+        t.id,
+        {
+          listing: pricingByKey[keyFor(t.id, 'listing')],
+          managed: pricingByKey[keyFor(t.id, 'managed')],
+        },
+      ]),
+    ) as Record<TierId, Record<ServiceTierId, PricingConfigRow>>
+  }, [pricingByKey])
 
   if (!isSupabaseConfigured) {
     return (
@@ -364,7 +356,7 @@ export default function AdminPricing() {
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
       )}
 
-      {loading || !pricingByTier || !baselineByTier || !earlyByTier ? (
+      {loading || !pricingByTier || !baselineByKey || !earlyByKey ? (
         <p className="text-sm text-gray-500">Loading pricing…</p>
       ) : (
         <>
@@ -391,7 +383,6 @@ export default function AdminPricing() {
                 {id === 'tiers' && 'Fee structure'}
                 {id === 'volume' && 'Volume discounts'}
                 {id === 'early' && 'Early adopter'}
-                {id === 'summary' && 'Summary & export'}
                 {id === 'log' && (
                   <>
                     Change log{' '}
@@ -407,7 +398,7 @@ export default function AdminPricing() {
           {activeTab === 'tiers' && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {TIERS.map((tier) => {
-                const f = pricingByTier[tier.id]
+                const managedRow = pricingByTier[tier.id].managed
                 const badgeClass =
                   tier.status === 'live'
                     ? 'bg-emerald-100 text-[#0F6E56]'
@@ -444,62 +435,94 @@ export default function AdminPricing() {
                         <p className="text-[11px] leading-snug text-gray-500">{tier.bond}</p>
                       </div>
 
-                      <div className="mt-3 border-t border-gray-200 pt-3 text-[11px] font-medium uppercase tracking-wider text-gray-500">
-                        Landlord fees
+                      <div className="space-y-3">
+                        {SERVICE_TIERS.map((serviceTier) => {
+                          const f = pricingByTier[tier.id][serviceTier]
+                          return (
+                            <div key={serviceTier} className="rounded-lg border border-gray-200 p-3">
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                {serviceTier === 'listing' ? 'Listing tier ($99 fixed)' : 'Managed tier (7% default)'}
+                              </div>
+                              <div>
+                                <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                  Landlord fee mode
+                                </label>
+                                <select
+                                  className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
+                                  value={f.fee_mode}
+                                  onChange={(e) =>
+                                    updatePricingField(tier.id, serviceTier, 'fee_mode', e.target.value)
+                                  }
+                                >
+                                  <option value="fixed">Fixed</option>
+                                  <option value="percent">Percent</option>
+                                </select>
+                              </div>
+                              {f.fee_mode === 'fixed' ? (
+                                <div className="mt-2">
+                                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                    Landlord fee (cents)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
+                                    min={0}
+                                    step={100}
+                                    value={f.fee_fixed_cents}
+                                    onChange={(e) =>
+                                      updatePricingField(
+                                        tier.id,
+                                        serviceTier,
+                                        'fee_fixed_cents',
+                                        parseInt(e.target.value, 10) || 0,
+                                      )
+                                    }
+                                  />
+                                </div>
+                              ) : (
+                                <div className="mt-2">
+                                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                    Landlord fee (%)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
+                                    min={0}
+                                    max={25}
+                                    step={0.5}
+                                    value={f.fee_percent}
+                                    onChange={(e) =>
+                                      updatePricingField(
+                                        tier.id,
+                                        serviceTier,
+                                        'fee_percent',
+                                        parseFloat(e.target.value) || 0,
+                                      )
+                                    }
+                                  />
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                disabled={savingTier === tier.id}
+                                onClick={() => void onSaveTierFees(tier.id, serviceTier)}
+                                className="mt-3 w-full rounded-md bg-[#1D9E75] py-1.5 text-xs font-medium text-white hover:bg-[#0F6E56] disabled:opacity-50"
+                              >
+                                Save {serviceTier}
+                              </button>
+                            </div>
+                          )
+                        })}
                       </div>
-                      <div>
-                        <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                          Service fee (%)
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                          min={0}
-                          max={25}
-                          step={0.5}
-                          value={f.svc_fee_pct}
-                          onChange={(e) =>
-                            updatePricingField(tier.id, 'svc_fee_pct', parseFloat(e.target.value) || 0)
-                          }
-                        />
-                        <p className="mt-0.5 text-[11px] text-gray-500">% of weekly asking rent — deducted before payout</p>
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">Fee model</label>
-                        <select
-                          className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                          value={f.fee_model}
-                          onChange={(e) => updatePricingField(tier.id, 'fee_model', e.target.value)}
-                        >
-                          <option value="A">Option A — deduct from landlord rent</option>
-                          <option value="D">Option D — landlord chooses A or gross-up</option>
-                        </select>
-                      </div>
-
-                      <div className="mt-3 border-t border-gray-200 pt-3 text-[11px] font-medium uppercase tracking-wider text-gray-500">
-                        Student fees
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">Platform fee</label>
-                        <select
-                          className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
-                          value={f.student_fee_type}
-                          onChange={(e) => updatePricingField(tier.id, 'student_fee_type', e.target.value)}
-                        >
-                          <option value="none">None — students pay zero</option>
-                          <option value="percent">% of weekly rent</option>
-                          <option value="fixed">Fixed booking fee</option>
-                        </select>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="mt-3 flex items-center justify-between gap-2">
                         <span className="text-xs text-gray-800">Optional card surcharge (pass-through)</span>
                         <label className="relative inline-flex h-[18px] w-8 cursor-pointer items-center">
                           <input
                             type="checkbox"
                             className="peer sr-only"
-                            checked={f.card_surcharge_enabled}
+                            checked={managedRow.card_surcharge_enabled}
                             onChange={(e) =>
-                              updatePricingField(tier.id, 'card_surcharge_enabled', e.target.checked)
+                              updatePricingField(tier.id, 'managed', 'card_surcharge_enabled', e.target.checked)
                             }
                           />
                           <span className="absolute inset-0 rounded-full bg-gray-300 transition peer-checked:bg-[#1D9E75]" />
@@ -512,9 +535,9 @@ export default function AdminPricing() {
                           <input
                             type="checkbox"
                             className="peer sr-only"
-                            checked={f.free_transfer_required}
+                            checked={managedRow.free_transfer_required}
                             onChange={(e) =>
-                              updatePricingField(tier.id, 'free_transfer_required', e.target.checked)
+                              updatePricingField(tier.id, 'managed', 'free_transfer_required', e.target.checked)
                             }
                           />
                           <span className="absolute inset-0 rounded-full bg-gray-300 transition peer-checked:bg-[#1D9E75]" />
@@ -535,22 +558,19 @@ export default function AdminPricing() {
                           className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                           min={0}
                           step={50}
-                          value={f.utilities_cap}
+                          value={managedRow.utilities_cap_aud}
                           onChange={(e) =>
-                            updatePricingField(tier.id, 'utilities_cap', parseFloat(e.target.value) || 0)
+                            updatePricingField(
+                              tier.id,
+                              'managed',
+                              'utilities_cap_aud',
+                              parseFloat(e.target.value) || 0,
+                            )
                           }
                         />
                         <p className="mt-0.5 text-[11px] text-gray-500">0 = not applicable / billed separately</p>
                       </div>
 
-                      <button
-                        type="button"
-                        disabled={savingTier === tier.id}
-                        onClick={() => void onSaveTierFees(tier.id)}
-                        className="mt-3 w-full rounded-md bg-[#1D9E75] py-1.5 text-xs font-medium text-white hover:bg-[#0F6E56] disabled:opacity-50"
-                      >
-                        {savingTier === tier.id ? 'Saving…' : `Save ${tier.name.toLowerCase()}`}
-                      </button>
                     </div>
                   </div>
                 )
@@ -562,8 +582,7 @@ export default function AdminPricing() {
             <div className={`${adminCardClass} mb-3 p-4`}>
               <div className="text-sm font-medium text-gray-900">Volume discount tiers</div>
               <p className="mt-1 text-xs text-gray-500">
-                Applied per landlord account across all their active listings. Early adopter pricing overrides volume discount
-                while active.
+                Managed tier only. Listing is flat fee and does not combine with volume discounts.
               </p>
               <table className="mt-3 w-full border-collapse text-xs">
                 <thead>
@@ -583,13 +602,13 @@ export default function AdminPricing() {
                   </tr>
                 </thead>
                 <tbody>
-                  {volumeRows.map((v, i) => (
+                  {volumeRows.managed.map((v, i) => (
                     <tr key={v.id}>
                       <td className="border-b border-gray-100 px-1.5 py-1">
                         <input
                           className="w-full min-w-[5rem] rounded border border-gray-300 bg-gray-50 px-1 py-0.5 text-xs"
                           value={v.label}
-                          onChange={(e) => updateVolumeRow(i, { label: e.target.value })}
+                          onChange={(e) => updateVolumeRow('managed', i, { label: e.target.value })}
                         />
                       </td>
                       <td className="border-b border-gray-100 px-1.5 py-1">
@@ -597,14 +616,18 @@ export default function AdminPricing() {
                           type="number"
                           className="w-14 rounded border border-gray-300 bg-gray-50 px-1 py-0.5 text-xs"
                           value={v.min_rooms}
-                          onChange={(e) => updateVolumeRow(i, { min_rooms: parseInt(e.target.value, 10) || 0 })}
+                          onChange={(e) =>
+                            updateVolumeRow('managed', i, { min_rooms: parseInt(e.target.value, 10) || 0 })
+                          }
                         />
                       </td>
                       <td className="border-b border-gray-100 px-1.5 py-1">
                         <input
                           className="w-14 rounded border border-gray-300 bg-gray-50 px-1 py-0.5 text-xs"
                           value={maxRoomsToInput(v.max_rooms)}
-                          onChange={(e) => updateVolumeRow(i, { max_rooms: parseMaxRoomsInput(e.target.value) })}
+                          onChange={(e) =>
+                            updateVolumeRow('managed', i, { max_rooms: parseMaxRoomsInput(e.target.value) })
+                          }
                         />
                       </td>
                       <td className="border-b border-gray-100 px-1.5 py-1">
@@ -614,7 +637,7 @@ export default function AdminPricing() {
                           className="w-16 rounded border border-gray-300 bg-gray-50 px-1 py-0.5 text-xs"
                           value={v.discount_rate_pct}
                           onChange={(e) =>
-                            updateVolumeRow(i, { discount_rate_pct: parseFloat(e.target.value) || 0 })
+                            updateVolumeRow('managed', i, { discount_rate_pct: parseFloat(e.target.value) || 0 })
                           }
                         />{' '}
                         %
@@ -626,7 +649,7 @@ export default function AdminPricing() {
               <button
                 type="button"
                 disabled={savingVolume}
-                onClick={() => void onSaveVolume()}
+                onClick={() => void onSaveVolume('managed')}
                 className="mt-3 rounded-md bg-[#1D9E75] px-4 py-1.5 text-xs font-medium text-white hover:bg-[#0F6E56] disabled:opacity-50"
               >
                 {savingVolume ? 'Saving…' : 'Save volume tiers'}
@@ -637,8 +660,8 @@ export default function AdminPricing() {
           {activeTab === 'early' && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {TIERS.map((tier) => {
-                const e = earlyByTier[tier.id]
-                const svc = pricingByTier[tier.id].svc_fee_pct
+                const e = earlyByKey[keyFor(tier.id, 'managed')]
+                const svc = pricingByTier[tier.id].managed.fee_percent
                 const effectiveDiscountLine =
                   e.type === 'percent'
                     ? `Effective rate: ${(svc * (1 - e.value / 100)).toFixed(1)}% (standard ${svc}%)`
@@ -657,7 +680,7 @@ export default function AdminPricing() {
                             type="checkbox"
                             className="peer sr-only"
                             checked={e.active}
-                            onChange={(ev) => updateEarly(tier.id, { active: ev.target.checked })}
+                            onChange={(ev) => updateEarly(tier.id, 'managed', { active: ev.target.checked })}
                           />
                           <span className="absolute inset-0 rounded-full bg-gray-300 transition peer-checked:bg-[#1D9E75]" />
                           <span className="absolute bottom-0.5 left-0.5 h-3 w-3 rounded-full bg-white transition peer-checked:translate-x-[14px]" />
@@ -670,7 +693,9 @@ export default function AdminPricing() {
                         <select
                           className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                           value={e.type}
-                          onChange={(ev) => updateEarly(tier.id, { type: ev.target.value as EarlyAdopterUi['type'] })}
+                          onChange={(ev) =>
+                            updateEarly(tier.id, 'managed', { type: ev.target.value as EarlyAdopterUi['type'] })
+                          }
                         >
                           <option value="free">Free (0%)</option>
                           <option value="percent">% discount off standard rate</option>
@@ -689,7 +714,9 @@ export default function AdminPricing() {
                             step={0.5}
                             className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                             value={e.value}
-                            onChange={(ev) => updateEarly(tier.id, { value: parseFloat(ev.target.value) || 0 })}
+                            onChange={(ev) =>
+                              updateEarly(tier.id, 'managed', { value: parseFloat(ev.target.value) || 0 })
+                            }
                           />
                           {effectiveDiscountLine && (
                             <p className="mt-0.5 text-[11px] text-gray-500">{effectiveDiscountLine}</p>
@@ -705,7 +732,9 @@ export default function AdminPricing() {
                         <select
                           className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                           value={e.expiry}
-                          onChange={(ev) => updateEarly(tier.id, { expiry: ev.target.value as EarlyAdopterUi['expiry'] })}
+                          onChange={(ev) =>
+                            updateEarly(tier.id, 'managed', { expiry: ev.target.value as EarlyAdopterUi['expiry'] })
+                          }
                         >
                           <option value="date">By date</option>
                           <option value="count">By number of landlords</option>
@@ -721,7 +750,7 @@ export default function AdminPricing() {
                             type="date"
                             className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                             value={e.expiryDate}
-                            onChange={(ev) => updateEarly(tier.id, { expiryDate: ev.target.value })}
+                            onChange={(ev) => updateEarly(tier.id, 'managed', { expiryDate: ev.target.value })}
                           />
                         </div>
                       )}
@@ -735,7 +764,9 @@ export default function AdminPricing() {
                             min={1}
                             className="w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 text-[13px] text-gray-900"
                             value={e.expiryCount}
-                            onChange={(ev) => updateEarly(tier.id, { expiryCount: parseInt(ev.target.value, 10) || 1 })}
+                            onChange={(ev) =>
+                              updateEarly(tier.id, 'managed', { expiryCount: parseInt(ev.target.value, 10) || 1 })
+                            }
                           />
                           <p className="mt-0.5 text-[11px] text-gray-500">
                             Early adopter pricing ends after this many landlords sign up
@@ -745,7 +776,7 @@ export default function AdminPricing() {
                       <button
                         type="button"
                         disabled={savingTier === tier.id}
-                        onClick={() => void onSaveEarly(tier.id)}
+                        onClick={() => void onSaveEarly(tier.id, 'managed')}
                         className="mt-3 w-full rounded-md bg-[#1D9E75] py-1.5 text-xs font-medium text-white hover:bg-[#0F6E56] disabled:opacity-50"
                       >
                         {savingTier === tier.id ? 'Saving…' : `Save ${tier.name.toLowerCase()}`}
@@ -754,120 +785,6 @@ export default function AdminPricing() {
                   </div>
                 )
               })}
-            </div>
-          )}
-
-          {activeTab === 'summary' && pricingByTier && earlyByTier && (
-            <div>
-              {TIERS.map((tier) => {
-                const f = pricingByTier[tier.id]
-                const e = earlyByTier[tier.id]
-                const stdRate = f.svc_fee_pct
-                const earlyRate = e.active
-                  ? e.type === 'free'
-                    ? 0
-                    : e.type === 'percent'
-                      ? Math.round(stdRate * (1 - e.value / 100) * 10) / 10
-                      : e.value
-                  : null
-                return (
-                  <div key={tier.id} className="mb-3 rounded-lg bg-gray-50 p-3.5">
-                    <div className="mb-2 text-[13px] font-medium text-gray-900">
-                      {tier.name}{' '}
-                      <span className="text-[11px] font-normal text-gray-500">— {tier.legal}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Standard service fee</span>
-                      <span className="text-[#0F6E56]">{stdRate}% of weekly rent</span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Fee model</span>
-                      <span className="text-[#0F6E56]">
-                        {f.fee_model === 'A' ? 'Option A — deduct from landlord payout' : 'Option D — landlord choice'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Student platform fee</span>
-                      <span className="text-[#0F6E56]">
-                        {f.student_fee_type === 'none' ? 'None — students pay zero' : f.student_fee_type}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Card surcharge</span>
-                      <span className="text-[#0F6E56]">
-                        {f.card_surcharge_enabled ? 'Optional — passed through at Stripe cost' : 'Not applicable'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Bank transfer</span>
-                      <span className="text-[#0F6E56]">
-                        {f.free_transfer_required ? 'Always offered free — mandatory' : 'Not mandated (RTA does not apply)'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                      <span>Bond</span>
-                      <span className="text-[#0F6E56]">{tier.bond}</span>
-                    </div>
-                    {f.utilities_cap > 0 && (
-                      <div className="flex justify-between border-b border-gray-200 py-1 text-[13px]">
-                        <span>Utilities cap</span>
-                        <span className="text-[#0F6E56]">${f.utilities_cap}/quarter included</span>
-                      </div>
-                    )}
-                    {e.active && earlyRate !== null && (
-                      <div className="flex justify-between py-1 text-[13px] text-[#1D9E75]">
-                        <span>Early adopter rate</span>
-                        <span className="font-medium text-[#1D9E75]">
-                          {earlyRate === 0 ? 'Free (0%)' : `${earlyRate}%`}
-                        </span>
-                      </div>
-                    )}
-                    <div className="mt-2 border-t border-gray-200 pt-2">
-                      <div className="mb-1 text-[11px] text-gray-500">Volume rates (standard)</div>
-                      <div className="flex flex-wrap gap-2">
-                        {volumeRows.map((v) => (
-                          <span
-                            key={v.id}
-                            className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600"
-                          >
-                            {v.label}: {v.discount_rate_pct}%
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void copySummary()}
-                  className="rounded-md border border-gray-300 bg-white px-3.5 py-1.5 text-xs text-gray-900 hover:bg-gray-50"
-                >
-                  {exportFeedback ?? 'Copy summary text'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void copyPrompt('word', WORD_PROMPT)}
-                  className="rounded-md border border-gray-300 bg-white px-3.5 py-1.5 text-xs text-gray-900 hover:bg-gray-50"
-                >
-                  {promptKey === 'word' ? 'Copied!' : 'Generate Word document ↗'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void copyPrompt('biz', BUSINESS_PROMPT)}
-                  className="rounded-md border border-gray-300 bg-white px-3.5 py-1.5 text-xs text-gray-900 hover:bg-gray-50"
-                >
-                  {promptKey === 'biz' ? 'Copied!' : 'Business plan insert ↗'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void copyPrompt('mkt', MARKETING_PROMPT)}
-                  className="rounded-md border border-gray-300 bg-white px-3.5 py-1.5 text-xs text-gray-900 hover:bg-gray-50"
-                >
-                  {promptKey === 'mkt' ? 'Copied!' : 'Marketing plan insert ↗'}
-                </button>
-              </div>
             </div>
           )}
 
@@ -905,7 +822,7 @@ export default function AdminPricing() {
                         <span className="text-[#0F6E56]">{formatLogValue(l.new_value)}</span>
                       </div>
                       <div className="rounded-md bg-gray-100 px-1.5 py-0.5 text-center text-[10px] text-gray-600">
-                        {l.tier ?? '—'}
+                        {(l.tier ?? '—') + (l.service_tier ? `/${l.service_tier}` : '')}
                       </div>
                     </div>
                   ))

@@ -4,6 +4,7 @@ import {
   type TenancyPackageInput,
   type TenancyPackageResult,
 } from '../../lib/tenancy/resolveTenancyPackage'
+import { resolveServiceTierAvailability, type PropertyTier } from '../../lib/serviceTier'
 import { adminCardClass } from './adminUi'
 
 const CORAL = '#FF6F61'
@@ -148,17 +149,25 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
 type ResolvedCell = {
   scenario: CanonicalScenario
   result: TenancyPackageResult | null
+  serviceTier: ReturnType<typeof resolveServiceTierAvailability>
   error: string | null
 }
 
 function resolveAll(): ResolvedCell[] {
+  const propertyTierFromScenario = (id: string): PropertyTier => {
+    if (id.endsWith('-t1')) return 't1'
+    if (id.endsWith('-t2')) return 't2'
+    return 't3'
+  }
   return CANONICAL_SCENARIOS.map((scenario) => {
+    const serviceTier = resolveServiceTierAvailability(scenario.input.state, propertyTierFromScenario(scenario.id))
     try {
-      return { scenario, result: resolveTenancyPackage(scenario.input), error: null }
+      return { scenario, result: resolveTenancyPackage(scenario.input), serviceTier, error: null }
     } catch (e) {
       return {
         scenario,
         result: null,
+        serviceTier,
         error: e instanceof Error ? e.message : String(e),
       }
     }
@@ -278,6 +287,14 @@ export default function AdminStateWorkflows() {
                                     : cell.result.unsupportedReason
                                   : '—'}
                               </p>
+                              <p className="mt-1 text-[11px] text-gray-600">
+                                Listing: {cell.serviceTier.listing === 'available' ? '✓' : '✕'} | Managed:{' '}
+                                {cell.serviceTier.managed === 'available'
+                                  ? '✓'
+                                  : cell.serviceTier.managed === 'gated'
+                                    ? '⚠ Gated'
+                                    : '✕'}
+                              </p>
                             </>
                           )}
                         </button>
@@ -337,6 +354,7 @@ export default function AdminStateWorkflows() {
               <p className="text-red-700 text-sm">Resolver threw: {selected.error}</p>
             ) : selected.result ? (
               <>
+                <JsonBlock label="Service tier availability" value={selected.serviceTier} />
                 <JsonBlock label="TenancyPackageResult (full)" value={selected.result} />
                 {selected.result.supported && selected.result.rules ? (
                   <JsonBlock label="rules.bond (bond fields only)" value={selected.result.rules.bond} />

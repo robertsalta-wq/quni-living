@@ -10,4 +10,7 @@ export {
   fetchPlatformConfigValueMap,
   fetchBankDetailsForRta,
   buildRtaRentPaymentMethodLine,
+  parseBooleanConfig,
+  parseIntegerCentsConfig,
+  parseDecimalConfig,
 } from '../../api/lib/platformConfig.js'
