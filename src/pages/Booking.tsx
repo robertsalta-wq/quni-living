@@ -1162,6 +1162,24 @@ export default function Booking() {
     [property, studentProfile, moveIn, leaseLength, message, rentPaymentMethod],
   )
 
+  const tenancyPackage = useMemo(
+    () =>
+      resolveTenancyPackage({
+        state: property?.state ?? 'NSW',
+        property_type: property?.property_type ?? '',
+        is_registered_rooming_house: Boolean(property?.is_registered_rooming_house),
+        date: moveIn || undefined,
+      }),
+    [property?.state, property?.property_type, property?.is_registered_rooming_house, moveIn],
+  )
+
+  const bondRegulatoryCopy = useMemo(() => {
+    if (!tenancyPackage.supported) {
+      return null
+    }
+    return bondStepRegulatoryCopy(tenancyPackage.rules.bond, property?.state)
+  }, [tenancyPackage, property?.state])
+
   if (!isSupabaseConfigured) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-center text-gray-600 text-sm">
@@ -1294,24 +1312,6 @@ export default function Booking() {
 
   const mainPhoto = (property.images ?? []).find((src) => Boolean(src?.trim())) ?? null
   const landlord = property.landlord_profiles
-
-  const tenancyPackage = useMemo(
-    () =>
-      resolveTenancyPackage({
-        state: property.state ?? 'NSW',
-        property_type: property.property_type ?? '',
-        is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-        date: moveIn || undefined,
-      }),
-    [property.state, property.property_type, property.is_registered_rooming_house, moveIn],
-  )
-
-  const bondRegulatoryCopy = useMemo(() => {
-    if (tenancyPackage.supported) {
-      return bondStepRegulatoryCopy(tenancyPackage.rules.bond, property.state)
-    }
-    return null
-  }, [tenancyPackage, property.state])
 
   const listingTypeLabel =
     property.property_type && isPropertyListingType(property.property_type)
