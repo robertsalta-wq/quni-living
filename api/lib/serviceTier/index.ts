@@ -18,5 +18,5 @@ export function resolveServiceTierAvailability(
   if (normalized === 'NSW') return nswServiceTierAvailability(propertyTier)
   if (normalized === 'QLD') return qldServiceTierAvailability(propertyTier)
   if (normalized === 'VIC') return vicServiceTierAvailability(propertyTier)
-  return { listing: 'unsupported', managed: 'unsupported' }
+  return { listing: 'available', managed: 'unsupported' }
 }

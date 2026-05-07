@@ -13,7 +13,7 @@ type CanonicalScenario = {
   id: string
   columnLabel: string
   rowLabel: string
-  section: 'supported' | 'unsupported'
+  section: 'supported' | 'other_states'
   /** Intent label for docs — tier is always derived by the resolver */
   intent: string
   input: TenancyPackageInput
@@ -132,18 +132,42 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
       is_registered_rooming_house: true,
     },
   },
-  ...(['SA', 'WA', 'ACT', 'NT', 'TAS'] as const).map((st) => ({
-    id: `${st.toLowerCase()}-probe`,
-    columnLabel: st,
-    rowLabel: 'Unsupported',
-    section: 'unsupported' as const,
-    intent: 'Resolver short-circuits on state',
+  {
+    id: 'other-au-t1',
+    columnLabel: 'Tier 1',
+    rowLabel: 'Other Australian states',
+    section: 'other_states',
+    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
     input: {
-      state: st,
-      property_type: 'entire_property',
+      state: 'WA',
+      property_type: 'private_room_landlord_on_site',
       is_registered_rooming_house: false,
     },
-  })),
+  },
+  {
+    id: 'other-au-t2',
+    columnLabel: 'Tier 2',
+    rowLabel: 'Other Australian states',
+    section: 'other_states',
+    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
+    input: {
+      state: 'WA',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: false,
+    },
+  },
+  {
+    id: 'other-au-t3',
+    columnLabel: 'Tier 3',
+    rowLabel: 'Other Australian states',
+    section: 'other_states',
+    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
+    input: {
+      state: 'WA',
+      property_type: 'private_room_landlord_off_site',
+      is_registered_rooming_house: true,
+    },
+  },
 ]
 
 type ResolvedCell = {
@@ -213,11 +237,12 @@ export default function AdminStateWorkflows() {
   const selected = cells.find((c) => c.scenario.id === selectedId) ?? cells[0]
 
   const supportedCells = cells.filter((c) => c.scenario.section === 'supported')
-  const unsupportedCells = cells.filter((c) => c.scenario.section === 'unsupported')
+  const otherStatesCells = cells.filter((c) => c.scenario.section === 'other_states')
 
   const nswRow = supportedCells.filter((c) => c.scenario.rowLabel === 'NSW')
   const vicRow = supportedCells.filter((c) => c.scenario.rowLabel === 'VIC')
   const qldRow = supportedCells.filter((c) => c.scenario.rowLabel === 'QLD')
+  const otherAuRow = otherStatesCells.filter((c) => c.scenario.rowLabel === 'Other Australian states')
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -309,32 +334,79 @@ export default function AdminStateWorkflows() {
       </section>
 
       <section className="space-y-4 mb-10">
-        <h2 className="text-lg font-semibold text-gray-900">Not yet supported (resolver)</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Other Australian states</h2>
         <p className="text-sm text-gray-600">
-          One probe per state — the resolver returns <code className="text-xs bg-gray-100 px-1 rounded">unsupported_state</code>{' '}
-          regardless of tier-like inputs.
+          Non-launch states (WA shown as representative). Tenancy package resolver may still return{' '}
+          <code className="text-xs bg-gray-100 px-1 rounded">unsupported_state</code> — service tier availability is
+          separate: <strong>Listing: available</strong>, <strong>Managed: unsupported</strong>.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {unsupportedCells.map((cell) => (
-            <button
-              key={cell.scenario.id}
-              type="button"
-              onClick={() => setSelectedId(cell.scenario.id)}
-              className={`rounded-xl border-2 p-3 text-left transition-colors ${
-                selectedId === cell.scenario.id
-                  ? 'border-[#FF6F61] bg-[#FF6F61]/5'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
-              }`}
-            >
-              <p className="text-sm font-semibold text-gray-900">{cell.scenario.columnLabel}</p>
-              <p className="text-xs font-mono text-gray-500 mt-1">{cell.scenario.id}</p>
-              {cell.error ? (
-                <p className="text-red-700 text-xs mt-1">{cell.error}</p>
-              ) : (
-                <p className="text-xs text-gray-600 mt-2 line-clamp-4">{cell.result?.unsupportedReason ?? '—'}</p>
-              )}
-            </button>
-          ))}
+        <div className={`${adminCardClass} overflow-x-auto`}>
+          <table className="min-w-[720px] w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500 w-24">
+                  State
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Tier 1 — Hosted Room
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Tier 2 — Private Room
+                </th>
+                <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Tier 3 — Boarding House
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-gray-50 align-top">
+                <td className="py-3 px-3 font-medium text-gray-900">Other Australian states</td>
+                {otherAuRow.map((cell) => (
+                  <td key={cell.scenario.id} className="py-2 px-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(cell.scenario.id)}
+                      className={`w-full text-left rounded-xl border-2 p-3 transition-colors ${
+                        selectedId === cell.scenario.id
+                          ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <p className="text-xs font-mono text-gray-500 mb-1">{cell.scenario.id}</p>
+                      {cell.error ? (
+                        <p className="text-red-700 text-xs">{cell.error}</p>
+                      ) : (
+                        <>
+                          <p className="font-medium text-gray-900">
+                            {cell.result?.supported ? (
+                              <span style={{ color: CORAL }}>Supported</span>
+                            ) : (
+                              <span className="text-amber-800">Not supported</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-3">
+                            {cell.result
+                              ? cell.result.supported
+                                ? `generator: ${cell.result.generator} · ${cellGlance(cell.result)}`
+                                : cell.result.unsupportedReason
+                              : '—'}
+                          </p>
+                          <p className="mt-1 text-[11px] text-gray-600">
+                            Listing: {cell.serviceTier.listing === 'available' ? '✓' : '✕'} | Managed:{' '}
+                            {cell.serviceTier.managed === 'available'
+                              ? '✓'
+                              : cell.serviceTier.managed === 'gated'
+                                ? '⚠ Gated'
+                                : '✕'}
+                          </p>
+                        </>
+                      )}
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
