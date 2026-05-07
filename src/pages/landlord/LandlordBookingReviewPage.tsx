@@ -205,7 +205,7 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const res = await fetch(apiUrl('/api/create-rent-subscription'), {
+      const res = await fetch(apiUrl('/api/confirm-booking'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bookingId }),
