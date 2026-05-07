@@ -46,6 +46,8 @@ import AuthCallback from './pages/auth/AuthCallback'
 import Onboarding from './pages/Onboarding'
 import Booking from './pages/Booking'
 import About from './pages/About'
+import HowItWorks from './pages/HowItWorks'
+import Refunds from './pages/Refunds'
 import Pricing from './pages/Pricing'
 import Contact from './pages/Contact'
 import Services from './pages/Services'
@@ -124,6 +126,8 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/landlord-service-agreement" element={<LandlordServiceAgreement />} />
           <Route path="/about" element={<About />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/refunds" element={<Refunds />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/services" element={<Services />} />

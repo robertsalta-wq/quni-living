@@ -36,6 +36,7 @@ import {
   propertyListingDateWindowStatus,
 } from '../lib/propertyListingDateWindow'
 import { AUDateField } from '../components/AUDateField'
+import NswRentalBondOnlineLink from '../components/bond/NswRentalBondOnlineLink'
 import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
 import {
   calculateBookingFeeCents,
@@ -1683,6 +1684,7 @@ export default function Booking() {
                   <div>
                     <p className="font-semibold text-gray-900">{bondRegulatoryCopy.authorityStateHeading}</p>
                     <p className="mt-1">{bondRegulatoryCopy.authorityPublicLine}</p>
+                    <NswRentalBondOnlineLink when={(property.state ?? '').toUpperCase() === 'NSW'} />
                   </div>
                   <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
                     <p className="font-semibold">{bondRegulatoryCopy.amberTitle}</p>
@@ -1702,6 +1704,7 @@ export default function Booking() {
                     {(property.state ?? 'NSW').toUpperCase()} — state bond authority
                   </p>
                   <p className="mt-1">{fallbackBondAuthorityPublicLine(property.state)}</p>
+                  <NswRentalBondOnlineLink when={(property.state ?? '').toUpperCase() === 'NSW'} />
                 </div>
                 <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-950 text-sm">
                   <p className="font-semibold">Always get a receipt when you pay your bond.</p>

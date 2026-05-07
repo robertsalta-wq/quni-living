@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { LegalH2, LegalH3, LegalP, LegalPageShell, LegalUl, type LegalTocItem } from '../components/legal/LegalPageShell'
 import Seo from '../components/Seo'
 
@@ -147,9 +148,9 @@ export default function Terms() {
       </LegalP>
       <LegalH3 id="landlord-bond">4.4 Bond Lodgement</LegalH3>
       <LegalP>
-        Where a bond is payable, landlords are responsible for lodging the bond with the relevant state or territory bond
-        authority (e.g. NSW Fair Trading, RTBA in Victoria) in accordance with applicable laws. Quni Living does not
-        hold rental bonds on behalf of landlords or students.
+        Where a bond is payable, landlords are responsible for lodging the bond in accordance with applicable state or
+        territory law. Bond is held by the landlord or lodged with the relevant state or territory bond authority,
+        depending on the tenancy type. Quni Living does not hold rental bonds on behalf of landlords or students.
       </LegalP>
 
       <LegalH2 id="student-obligations">5. Student Obligations</LegalH2>
@@ -193,9 +194,11 @@ export default function Terms() {
       </LegalP>
       <LegalH3 id="payments-refunds">6.4 Refunds</LegalH3>
       <LegalP>
-        Refund policies for booking deposits and platform fees are set out in our Refund Policy, available on our
-        website. Recurring rent payments are governed by the terms of the tenancy agreement between the landlord and
-        student.
+        Refund policies for booking deposits and fees charged by Quni are set out in our{' '}
+        <Link to="/refunds" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+          Refund Policy
+        </Link>
+        . Recurring rent payments are governed by the terms of the tenancy agreement between the landlord and student.
       </LegalP>
 
       <LegalH2 id="role">7. Quni Living&apos;s Role and Limitations</LegalH2>

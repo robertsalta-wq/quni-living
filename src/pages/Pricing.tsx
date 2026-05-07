@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
+import { BOND_NEUTRAL_PRICING_SHORT } from '../lib/bondPublicCopy'
+import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 
 type LineTone = 'default' | 'muted'
@@ -48,102 +50,129 @@ function LineItem({
   )
 }
 
-type Step = {
-  title: string
-  description: string
-}
+type FaqItem = { id: string; question: string; answer: ReactNode }
+type FaqBucket = { id: string; label: string; items: FaqItem[] }
 
-const faqItems = [
+const faqBuckets: FaqBucket[] = [
   {
-    question: 'Why do students pay a platform fee?',
-    answer:
-      'Students pay no platform fee under the current managed pricing model.',
+    id: 'money-fees',
+    label: 'Money & fees',
+    items: [
+      {
+        id: 'money-fees-0',
+        question: 'Do renters pay any fees to Quni?',
+        answer:
+          'No. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
+      },
+      {
+        id: 'money-fees-1',
+        question: 'What does a landlord pay on Quni Listing?',
+        answer:
+          'A flat acceptance fee per accepted booking (amount shown above; fees may change with notice). Renters do not pay this fee.',
+      },
+      {
+        id: 'money-fees-2',
+        question: 'What does a landlord pay on Quni Managed?',
+        answer:
+          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts — shown above as the Managed service fee.',
+      },
+      {
+        id: 'money-fees-3',
+        question: 'Is there a card surcharge?',
+        answer:
+          'Optional card surcharge may apply when paying by card where Stripe applies it. Free bank transfer is offered where available.',
+      },
+    ],
   },
   {
-    question: 'Is there a minimum lease length?',
-    answer:
-      'No — Quni supports flexible, short-term and long-term stays. Lease length is agreed between you and your landlord.',
+    id: 'bond-compliance',
+    label: 'Bond & compliance',
+    items: [
+      {
+        id: 'bond-compliance-0',
+        question: 'How is bond handled?',
+        answer:
+          'Bond is held by the landlord or lodged with the relevant state or territory bond authority, depending on your tenancy type. Quni does not hold bond money for any tenancy. On Quni Listing, bond is between landlord and renter. On Quni Managed, lodgement may be coordinated where your tenancy requires a statutory scheme.',
+      },
+      {
+        id: 'bond-compliance-1',
+        question: 'Who sets bond refund rules?',
+        answer:
+          'Cash bond refunds and disputes follow state or territory residential laws and bond authorities — not Quni’s refund policy for platform fees.',
+      },
+    ],
   },
   {
-    question: 'What happens if my booking is declined?',
-    answer:
-      'If a landlord declines your request, your full deposit is automatically refunded within 5-7 business days.',
+    id: 'bookings-cancellations',
+    label: 'Bookings & cancellations',
+    items: [
+      {
+        id: 'bookings-cancellations-0',
+        question: 'Is there a minimum lease length?',
+        answer:
+          'No — Quni supports flexible, short-term and long-term stays where landlords offer them. Lease length is agreed between you and your landlord.',
+      },
+      {
+        id: 'bookings-cancellations-1',
+        question: 'What if my booking is declined?',
+        answer:
+          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows — typically 5–7 business days to your card or bank.',
+      },
+      {
+        id: 'bookings-cancellations-2',
+        question: 'Can I cancel my listing as a landlord?',
+        answer:
+          'Yes — there are no lock-in contracts. You can deactivate or remove your listing from your dashboard.',
+      },
+    ],
   },
   {
-    question: 'Can I cancel my listing as a landlord?',
-    answer:
-      'Yes — there are no lock-in contracts. You can deactivate or remove your listing at any time from your dashboard.',
+    id: 'listing-managed',
+    label: 'Listing vs Managed',
+    items: [
+      {
+        id: 'listing-managed-0',
+        question: 'What is the difference between Quni Listing and Quni Managed?',
+        answer:
+          'Listing: landlord pays a flat fee per accepted booking and runs bond and rent directly with the renter. Managed: landlord pays a percentage of weekly rent while active; tenancy money may pass briefly through Quni before Stripe Connect payout; availability varies by state.',
+      },
+      {
+        id: 'listing-managed-1',
+        question: 'Where is each tier available?',
+        answer:
+          'See the availability lines under each landlord column on this page — they reflect Queensland, New South Wales, and Victoria for typical private-room listings.',
+      },
+    ],
   },
   {
-    question: 'How is my bond protected?',
-    answer:
-      'Your bond is held securely and must be lodged with the relevant state bond authority by your landlord within 10 business days of move-in. Quni does not hold bond money.',
-  },
-  {
-    question: 'What is the acceptance fee?',
-    answer:
-      'Quni supports both landlord pricing modes: Listing (flat fee) and Managed (percentage fee).',
-  },
-] as const
-
-const studentSteps: Step[] = [
-  {
-    title: '1. Find your place',
-    description: 'Browse verified listings near your university',
-  },
-  {
-    title: '2. Request to book',
-    description: 'Pay a refundable deposit only (students pay $0 platform fee)',
-  },
-  {
-    title: '3. Move in',
-    description: 'Your deposit is released to your landlord 24 hours after move-in',
+    id: 'support-disputes',
+    label: 'Support & disputes',
+    items: [
+      {
+        id: 'support-disputes-0',
+        question: 'Something went wrong with my tenancy — can Quni decide bond disputes?',
+        answer: (
+          <>
+            Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
+            help with platform or payment administration where it custodies funds; see our{' '}
+            <Link to="/refunds" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+              Refund Policy
+            </Link>{' '}
+            for money Quni actually receives.
+          </>
+        ),
+      },
+      {
+        id: 'support-disputes-1',
+        question: 'Who do I contact?',
+        answer: 'Email hello@quni.com.au — we respond as soon as we can.',
+      },
+    ],
   },
 ]
-
-const landlordSteps: Step[] = [
-  {
-    title: '1. List for free',
-    description: 'Create your listing in minutes — no upfront cost',
-  },
-  {
-    title: '2. Confirm bookings',
-    description: 'Review student profiles and accept or decline',
-  },
-  {
-    title: '3. Get paid',
-    description: 'Rent paid weekly via Stripe direct to your bank',
-  },
-]
-
-function HowItWorksCard({
-  title,
-  steps,
-  bgClass,
-  accentClass,
-}: {
-  title: string
-  steps: Step[]
-  bgClass: string
-  accentClass: string
-}) {
-  return (
-    <div className={`rounded-2xl shadow-md p-7 md:p-8 ${bgClass}`}>
-      <h3 className={`font-display text-2xl font-bold ${accentClass}`}>{title}</h3>
-      <div className="mt-6 space-y-5">
-        {steps.map((step) => (
-          <div key={step.title}>
-            <p className="font-semibold text-gray-900">{step.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-gray-700">{step.description}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export default function Pricing() {
-  const [openFaqIndex, setOpenFaqIndex] = useState<number>(0)
+  const [openFaqId, setOpenFaqId] = useState<string | null>('money-fees-0')
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
 
@@ -266,7 +295,7 @@ export default function Pricing() {
                     }
                     name="Bond"
                     value="Varies"
-                    description="Lodged with NSW Fair Trading or landlord. Quni never holds it."
+                    description={BOND_NEUTRAL_PRICING_SHORT}
                     valueKind="coralSm"
                   />
                 </div>
@@ -396,7 +425,7 @@ export default function Pricing() {
                       }
                       name="Bond lodgement"
                       value="Self-managed"
-                      description="You lodge with NSW Fair Trading yourself."
+                      description={`You lodge bond under state rules between you and your renter. ${BOND_NEUTRAL_PRICING_SHORT}`}
                       tone="muted"
                       valueKind="mutedSm"
                     />
@@ -421,8 +450,9 @@ export default function Pricing() {
                     />
                   </div>
 
-                  {/* TODO: Wire to resolveServiceTierAvailability so this stays correct as more states activate */}
-                  <p className="mt-auto pt-2 text-xs italic text-[#6B6B6B]">Available everywhere</p>
+                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
+                    {pricingTierAvailabilitySummary('listing')}
+                  </p>
 
                   <Link to="/landlord-signup" className={ctaSecondary}>
                     Choose Listing
@@ -500,7 +530,7 @@ export default function Pricing() {
                       }
                       name="Bond lodgement"
                       value="Included"
-                      description="Lodged with NSW Fair Trading on your behalf."
+                      description="We coordinate lodgement with the bond authority where your tenancy requires it. Bond remains tenancy money — not a Quni fee."
                       valueKind="coralSm"
                     />
                     <LineItem
@@ -559,9 +589,8 @@ export default function Pricing() {
                     />
                   </div>
 
-                  {/* TODO: Wire to resolveServiceTierAvailability so this stays correct as more states activate */}
-                  <p className="mt-auto pt-2 text-xs italic text-[#6B6B6B]">
-                    Currently available in Queensland
+                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
+                    {pricingTierAvailabilitySummary('managed')}
                   </p>
 
                   <Link to="/landlord-signup" className={ctaPrimary}>
@@ -573,21 +602,18 @@ export default function Pricing() {
           </div>
         </div>
 
-        <section className="max-w-site mx-auto w-full px-6 py-6 md:py-8">
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] text-center">How it works</h2>
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-            <HowItWorksCard
-              title="For students"
-              steps={studentSteps}
-              bgClass="bg-[#FFF5F4]"
-              accentClass="text-[#C8554A]"
-            />
-            <HowItWorksCard
-              title="For landlords"
-              steps={landlordSteps}
-              bgClass="bg-[#F0F7F4]"
-              accentClass="text-[#376256]"
-            />
+        <section className="max-w-site mx-auto w-full px-6 py-10 md:py-12">
+          <h2 className="font-display text-center text-3xl font-bold text-[#FF6F61] sm:text-4xl">How it works</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
+            Parallel flows for Quni Listing and Quni Managed — three steps each for renters and landlords.
+          </p>
+          <div className="mt-8 flex justify-center">
+            <Link
+              to="/how-it-works"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+            >
+              See Listing vs Managed flows →
+            </Link>
           </div>
         </section>
 
@@ -595,33 +621,44 @@ export default function Pricing() {
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-gray-900 text-center">
             Common questions
           </h2>
-          <div className="mt-8 rounded-2xl bg-white shadow-md divide-y divide-stone-100">
-            {faqItems.map((item, index) => {
-              const isOpen = openFaqIndex === index
-              return (
-                <div key={item.question}>
-                  <button
-                    type="button"
-                    className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-stone-50/70 transition-colors"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
-                    aria-expanded={isOpen}
-                  >
-                    <span className="font-semibold text-gray-900">{item.question}</span>
-                    <svg
-                      className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden
-                    >
-                      <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                  {isOpen ? <p className="px-6 pb-5 text-sm leading-relaxed text-gray-600">{item.answer}</p> : null}
+          <div className="mt-8 space-y-10 rounded-2xl bg-white p-4 shadow-md sm:p-6 md:p-8">
+            {faqBuckets.map((bucket) => (
+              <div key={bucket.id}>
+                <h3 className="border-b border-stone-100 pb-2 font-display text-lg font-bold text-[#376256]">
+                  {bucket.label}
+                </h3>
+                <div className="mt-3 divide-y divide-stone-100 rounded-xl border border-stone-100">
+                  {bucket.items.map((item) => {
+                    const isOpen = openFaqId === item.id
+                    return (
+                      <div key={item.id}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-stone-50/70 sm:px-5"
+                          onClick={() => setOpenFaqId(isOpen ? null : item.id)}
+                          aria-expanded={isOpen}
+                        >
+                          <span className="font-semibold text-gray-900">{item.question}</span>
+                          <svg
+                            className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden
+                          >
+                            <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        {isOpen ? (
+                          <p className="px-4 pb-4 text-sm leading-relaxed text-gray-600 sm:px-5">{item.answer}</p>
+                        ) : null}
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </section>
 

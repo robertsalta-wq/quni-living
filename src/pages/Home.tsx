@@ -36,7 +36,7 @@ const STUDENT_HOW_STEPS = [
   {
     n: 3,
     title: 'Book',
-    desc: 'Pay securely and sign your NSW-compliant lease in one place',
+    desc: 'Pay your deposit securely and complete signing in one place where supported',
   },
 ] as const
 
@@ -62,7 +62,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-1',
     q: 'Is Quni Living free for students?',
-    a: "Yes — students pay zero platform fees. You see the landlord's asking rent and pay exactly that, with no booking fees or surcharges added by Quni.",
+    a: 'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
   },
   {
     id: 'faq-s-2',
@@ -72,7 +72,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-3',
     q: 'Are the tenancy agreements legally binding?',
-    a: 'Yes. Quni generates NSW-compliant tenancy agreements in accordance with the Residential Tenancies Act 2010, signed digitally via DocuSeal.',
+    a: 'Yes. Where available for your state and property type, Quni helps generate compliant tenancy documents for signature digitally (for example via DocuSeal).',
   },
   {
     id: 'faq-s-4',
@@ -148,7 +148,6 @@ export default function Home() {
     () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
   )
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
-  const [dynamicStudentFeeText, setDynamicStudentFeeText] = useState('$0')
   const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')
   const [dynamicManagedFeeText, setDynamicManagedFeeText] = useState('7%')
 
@@ -161,7 +160,6 @@ export default function Home() {
         const managed = formatFeeForDisplay(managedCell)
         const listing = formatFeeForDisplay(listingCell)
         if (!cancelled) {
-          setDynamicStudentFeeText(managed.studentFeeDisplay)
           setDynamicListingFeeText(listing.landlordFeeDisplay)
           setDynamicManagedFeeText(managed.landlordFeeDisplay)
         }
@@ -464,10 +462,7 @@ export default function Home() {
             <div className="divide-y divide-gray-200 border-b border-gray-200">
               {STUDENT_FAQ.map((item) => {
                 const open = openFaqId === item.id
-                const answer =
-                  item.id === 'faq-s-1'
-                    ? `Yes — students pay ${dynamicStudentFeeText} platform fees. You see the landlord's asking rent and pay exactly that, with no booking fees or surcharges added by Quni.`
-                    : item.a
+                const answer = item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button

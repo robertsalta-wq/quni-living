@@ -151,6 +151,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/refunds" className={linkClass}>
+                  Refund Policy
+                </Link>
+              </li>
+              <li>
                 <Link to="/privacy" className={linkClass}>
                   Privacy Policy
                 </Link>
@@ -218,6 +223,9 @@ export default function Footer() {
             </Link>
             <Link to="/terms" className={`${linkClass} text-xs sm:text-sm`}>
               Terms of Service
+            </Link>
+            <Link to="/refunds" className={`${linkClass} text-xs sm:text-sm`}>
+              Refund Policy
             </Link>
           </div>
         </div>
