@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
-import { BOND_NEUTRAL_MARKETING } from '../lib/bondPublicCopy'
+import { BOND_MANAGED_CONDUIT_SHORT, BOND_NEUTRAL_MARKETING } from '../lib/bondPublicCopy'
 
 type Step = { title: string; description: string }
 
@@ -65,8 +65,7 @@ const MANAGED_STUDENT: Step[] = [
   },
   {
     title: '3. Move in and pay rent',
-    description:
-      'Weekly rent runs through Quni’s Stripe Connect flow; funds may pass briefly through Quni before payout. Bond follows state rules — Quni does not treat bond as a platform fee.',
+    description: `${BOND_MANAGED_CONDUIT_SHORT} Weekly rent follows your tenancy terms and managed payment flows.`,
   },
 ]
 

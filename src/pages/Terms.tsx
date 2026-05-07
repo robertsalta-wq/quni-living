@@ -174,10 +174,22 @@ export default function Terms() {
       />
 
       <LegalH2 id="payments">6. Payments</LegalH2>
-      <LegalH3 id="payments-fees">6.1 Platform Fees</LegalH3>
+      <LegalH3 id="payments-fees">6.1 Fees</LegalH3>
       <LegalP>
-        Quni Living charges platform fees in connection with bookings made through the Platform. Our current fee
-        structure is displayed at the time of booking. Fees are subject to change with notice.
+        Quni offers <strong>Quni Listing</strong> and <strong>Quni Managed</strong>. Fees depend on the landlord&apos;s
+        chosen tier and are shown when you list or book.
+      </LegalP>
+      <LegalP>
+        <strong>Renters</strong> pay <strong>no</strong> booking fee, platform fee, service fee, or card surcharge to
+        Quni in either tier. You may still pay <strong>tenancy money</strong> (for example <strong>bond</strong> and{' '}
+        <strong>rent</strong>) to your landlord or through payment flows that lawfully handle tenancy funds.
+      </LegalP>
+      <LegalP>
+        <strong>Landlords</strong> on <strong>Quni Listing</strong> pay a <strong>flat acceptance fee</strong> per
+        accepted booking (amount shown on the pricing page and in the product). <strong>Landlords</strong> on{' '}
+        <strong>Quni Managed</strong> pay a <strong>percentage of weekly rent</strong> while a managed tenancy is active,
+        collected as part of managed rent flows via our payment provider. Fee details may change with notice; the terms
+        in effect at the time of the relevant action apply.
       </LegalP>
       <LegalH3 id="payments-stripe">6.2 Payment Processing</LegalH3>
       <LegalP>
@@ -194,11 +206,13 @@ export default function Terms() {
       </LegalP>
       <LegalH3 id="payments-refunds">6.4 Refunds</LegalH3>
       <LegalP>
-        Refund policies for booking deposits and fees charged by Quni are set out in our{' '}
+        Refund and reversal rules for <strong>fees and charges that Quni actually receives</strong> are set out in our{' '}
         <Link to="/refunds" className="font-medium text-[#FF6F61] underline hover:opacity-90">
           Refund Policy
-        </Link>
-        . Recurring rent payments are governed by the terms of the tenancy agreement between the landlord and student.
+        </Link>{' '}
+        on the website. <strong>Bond and rent</strong> (tenancy money) are governed by your{' '}
+        <strong>tenancy agreement</strong> and <strong>applicable state or territory law</strong>; Quni does not use the
+        Refund Policy to override those obligations.
       </LegalP>
 
       <LegalH2 id="role">7. Quni Living&apos;s Role and Limitations</LegalH2>
@@ -216,8 +230,9 @@ export default function Terms() {
       <LegalH3 id="role-liability">7.3 Limitation of Liability</LegalH3>
       <LegalP>
         To the maximum extent permitted by Australian law, Quni Living&apos;s liability to you for any loss or damage
-        arising from your use of the Platform is limited to the platform fees paid by you in the three months preceding the
-        relevant claim. We are not liable for any indirect, consequential, or special loss or damage.
+        arising from your use of the Platform is limited to <strong>the fees you paid to Quni in the three months before the
+        relevant claim</strong>, or <strong>AUD $100</strong> if that amount is zero (for example because you are a renter
+        who pays no fees to Quni). We are not liable for any indirect, consequential, or special loss or damage.
       </LegalP>
       <LegalP>
         Nothing in these Terms excludes or limits any guarantee, warranty, or right that cannot be excluded or limited
