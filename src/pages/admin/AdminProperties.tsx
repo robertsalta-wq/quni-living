@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { PropertyFeeSnapshotsModal } from './PropertyFeeSnapshotsModal'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
@@ -31,7 +32,38 @@ function roomLabel(rt: string | null) {
   return ROOM_TYPE_LABELS[rt as RoomType] ?? rt
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export default function AdminProperties() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const feesParam = searchParams.get('fees')
+  const feesPropertyId = useMemo(() => (feesParam && UUID_RE.test(feesParam) ? feesParam : null), [feesParam])
+
+  const openFeesModal = useCallback(
+    (propertyId: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('fees', propertyId)
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+
+  const closeFeesModal = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('fees')
+        return next
+      },
+      { replace: true },
+    )
+  }, [setSearchParams])
+
   const [rows, setRows] = useState<PropertyRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -93,6 +125,8 @@ export default function AdminProperties() {
 
   return (
     <div>
+      <PropertyFeeSnapshotsModal open={Boolean(feesPropertyId)} propertyId={feesPropertyId} onClose={closeFeesModal} />
+
       <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Properties</h1>
       <p className="text-sm text-gray-500 mt-1 mb-6">All listings across every status.</p>
 
@@ -183,12 +217,13 @@ export default function AdminProperties() {
                         </label>
                       </td>
                       <td className={adminTdClass}>
-                        <Link
-                          to={`/admin/properties/${row.id}/fees`}
+                        <button
+                          type="button"
+                          onClick={() => openFeesModal(row.id)}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                         >
                           Fees
-                        </Link>
+                        </button>
                       </td>
                       <td className={adminTdClass}>
                         <Link

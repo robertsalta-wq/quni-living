@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import FeedbackButton from './components/FeedbackButton'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -28,7 +28,6 @@ import AdminBookings from './pages/admin/AdminBookings'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
 import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
 import AdminProperties from './pages/admin/AdminProperties'
-import AdminPropertyFees from './pages/admin/AdminPropertyFees'
 import AdminStudents from './pages/admin/AdminStudents'
 import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
@@ -65,6 +64,12 @@ import CampusAccommodation from './pages/seo/CampusAccommodation'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
+
+function AdminPropertyFeesDeepLinkRedirect() {
+  const { propertyId } = useParams<{ propertyId: string }>()
+  const q = encodeURIComponent(propertyId ?? '')
+  return <Navigate to={`/admin/properties?fees=${q}`} replace />
+}
 
 function App() {
   const location = useLocation()
@@ -262,7 +267,7 @@ function App() {
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="landlord-leads" element={<AdminLandlordLeads />} />
             <Route path="properties" element={<AdminProperties />} />
-            <Route path="properties/:propertyId/fees" element={<AdminPropertyFees />} />
+            <Route path="properties/:propertyId/fees" element={<AdminPropertyFeesDeepLinkRedirect />} />
             <Route path="students" element={<AdminStudents />} />
             <Route path="landlords" element={<AdminLandlords />} />
             <Route path="apps" element={<AdminApps />} />
