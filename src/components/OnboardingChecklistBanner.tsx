@@ -14,6 +14,7 @@ import {
   writeOnboardingCompleteLocal,
   writeOnboardingDismissed,
   type ChecklistStep,
+  type LandlordOnboardingListingBillingOpts,
   type LandlordProfileRow,
   type StudentProfileRow,
 } from '../lib/onboardingChecklist'
@@ -25,14 +26,19 @@ type Props = {
   userId: string
   studentProfile: StudentProfileRow | null
   landlordProfile: LandlordProfileRow | null
+  /** When set, may add the Listing payment-method checklist row (module flag + Stripe status from API). */
+  landlordListingBilling?: LandlordOnboardingListingBillingOpts | null
   onRefresh: () => void | Promise<void>
 }
 
 function StepRow({ step }: { step: ChecklistStep }) {
   const label = step.optional ? `${step.label} (optional)` : step.label
+  const actionClass =
+    'shrink-0 text-sm font-semibold text-[#FF6F61] hover:text-[#e85d52] underline-offset-2 hover:underline'
+
   return (
-    <div className="flex flex-wrap items-center gap-3 py-2.5 border-b border-stone-200/60 last:border-0">
-      <span className="shrink-0 w-6 h-6 flex items-center justify-center" aria-hidden>
+    <div className="flex flex-wrap items-start gap-3 py-2.5 border-b border-stone-200/60 last:border-0">
+      <span className="shrink-0 w-6 h-6 flex items-center justify-center mt-0.5" aria-hidden>
         {step.complete ? (
           <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -41,19 +47,26 @@ function StepRow({ step }: { step: ChecklistStep }) {
           <span className="w-4 h-4 rounded-full border-2 border-stone-400" />
         )}
       </span>
-      <span
-        className={`flex-1 min-w-[12rem] text-sm ${step.complete ? 'text-stone-600' : 'text-stone-900 font-medium'}`}
-      >
-        {label}
-      </span>
-      {!step.complete && step.href && step.actionLabel && (
-        <Link
-          to={step.href}
-          className="shrink-0 text-sm font-semibold text-[#FF6F61] hover:text-[#e85d52] underline-offset-2 hover:underline"
+      <div className="flex-1 min-w-[12rem]">
+        <span
+          className={`text-sm ${step.complete ? 'text-stone-600' : 'text-stone-900 font-medium'}`}
         >
+          {label}
+        </span>
+        {step.subtitle ? (
+          <p className="text-xs text-stone-600 mt-1 leading-snug">{step.subtitle}</p>
+        ) : null}
+      </div>
+      {!step.complete && step.actionLabel && step.actionKind === 'button' && step.onAction ? (
+        <button type="button" onClick={step.onAction} className={actionClass}>
+          {step.actionLabel}
+        </button>
+      ) : null}
+      {!step.complete && step.href && step.actionLabel && step.actionKind !== 'button' ? (
+        <Link to={step.href} className={actionClass}>
           {step.actionLabel}
         </Link>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -63,12 +76,13 @@ export default function OnboardingChecklistBanner({
   userId,
   studentProfile,
   landlordProfile,
+  landlordListingBilling,
   onRefresh,
 }: Props) {
   const steps: ChecklistStep[] =
     role === 'student'
       ? buildStudentOnboardingSteps(studentProfile)
-      : buildLandlordOnboardingSteps(landlordProfile)
+      : buildLandlordOnboardingSteps(landlordProfile, landlordListingBilling ?? undefined)
 
   const isFullyComplete =
     role === 'student' ? isStudentChecklistFullyComplete(steps) : isLandlordChecklistFullyComplete(steps)

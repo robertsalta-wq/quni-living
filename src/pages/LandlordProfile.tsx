@@ -12,6 +12,11 @@ import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplic
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
+import {
+  fetchLandlordListingBillingSnapshot,
+  formatStripeCardOnFile,
+  type LandlordListingBillingSnapshot,
+} from '../lib/landlordListingBilling'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
@@ -221,6 +226,7 @@ export default function LandlordProfile() {
   const [listings, setListings] = useState<PropertyPick[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [listingBillingSnapshot, setListingBillingSnapshot] = useState<LandlordListingBillingSnapshot | null>(null)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -281,11 +287,13 @@ export default function LandlordProfile() {
       if (!prof) {
         setProfile(null)
         setListings([])
+        setListingBillingSnapshot(null)
         setLoadError('No landlord profile found.')
         return
       }
 
       setProfile(prof)
+      void fetchLandlordListingBillingSnapshot().then(setListingBillingSnapshot)
       const [fn, ln] = splitFullName(prof.full_name)
       setFirstName(prof.first_name ?? fn)
       setLastName(prof.last_name ?? ln)
@@ -312,6 +320,7 @@ export default function LandlordProfile() {
       setLoadError(msg)
       setProfile(null)
       setListings([])
+      setListingBillingSnapshot(null)
     } finally {
       setLoading(false)
     }
@@ -700,6 +709,21 @@ export default function LandlordProfile() {
       )}
 
       <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
+
+      {listingBillingSnapshot?.moduleEnabled && listingBillingSnapshot.hasPaymentMethod && listingBillingSnapshot.card ? (
+        <section
+          className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm mb-8 scroll-mt-24"
+          aria-label="Listing booking fees card"
+        >
+          <h2 className="text-sm font-semibold text-gray-900">Quni Listing bookings</h2>
+          <p className="text-sm text-gray-500 mt-1 max-w-xl">
+            Card on file for accepted Listing bookings (platform fee). You are only charged when you accept a booking.
+          </p>
+          <p className="text-sm font-medium text-gray-800 mt-3 tabular-nums">
+            {formatStripeCardOnFile(listingBillingSnapshot.card)}
+          </p>
+        </section>
+      ) : null}
 
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 w-full">
         <form onSubmit={handleSave} className="space-y-6">

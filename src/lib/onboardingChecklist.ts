@@ -124,9 +124,14 @@ export function isLandlordListingUnlocked(p: LandlordProfileRow | null | undefin
 export type ChecklistStep = {
   id: string
   label: string
+  /** Secondary line under the title (e.g. Listing billing copy). */
+  subtitle?: string
   complete: boolean
   href?: string
   actionLabel?: string
+  /** Use a button instead of a Link (e.g. open Stripe modal). */
+  actionKind?: 'link' | 'button'
+  onAction?: () => void
   optional?: boolean
 }
 
@@ -163,7 +168,16 @@ export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefi
   ]
 }
 
-export function buildLandlordOnboardingSteps(p: LandlordProfileRow | null | undefined): ChecklistStep[] {
+export type LandlordOnboardingListingBillingOpts = {
+  listingModuleEnabled: boolean
+  hasListingPaymentMethod: boolean
+  onAddListingPaymentMethod: () => void
+}
+
+export function buildLandlordOnboardingSteps(
+  p: LandlordProfileRow | null | undefined,
+  listingBilling?: LandlordOnboardingListingBillingOpts | null,
+): ChecklistStep[] {
   const profile = p ?? null
   const termsOk = Boolean(profile?.terms_accepted_at)
   const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
@@ -174,7 +188,11 @@ export function buildLandlordOnboardingSteps(p: LandlordProfileRow | null | unde
   const basicsOk = nameOk && phoneOk && bioOk && photoOk
   const bankChargesOk = profile?.stripe_charges_enabled === true
 
-  return [
+  const showListingCardStep =
+    listingBilling?.listingModuleEnabled === true &&
+    listingBilling.hasListingPaymentMethod !== true
+
+  const core: ChecklistStep[] = [
     { id: 'account', label: 'Account created', complete: true },
     {
       id: 'terms',
@@ -205,6 +223,21 @@ export function buildLandlordOnboardingSteps(p: LandlordProfileRow | null | unde
       actionLabel: 'Connect →',
     },
   ]
+
+  if (showListingCardStep && listingBilling) {
+    core.push({
+      id: 'listing_payment_method',
+      label: 'Save a payment method',
+      subtitle:
+        "Required to accept Quni Listing bookings ($99 per accepted booking). You won't be charged until you accept your first booking.",
+      complete: false,
+      actionKind: 'button',
+      actionLabel: 'Add card',
+      onAction: listingBilling.onAddListingPaymentMethod,
+    })
+  }
+
+  return core
 }
 
 export function studentChecklistFraction(steps: ChecklistStep[]): { done: number; total: number; pct: number } {

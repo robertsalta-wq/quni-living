@@ -22,9 +22,14 @@ import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supab
 import { apiUrl } from '../lib/apiUrl'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
+import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
+import {
+  fetchLandlordListingBillingSnapshot,
+  type LandlordListingBillingSnapshot,
+} from '../lib/landlordListingBilling'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -320,6 +325,8 @@ export default function LandlordDashboard() {
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
   const [qaseOpen, setQaseOpen] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
+  const [listingBilling, setListingBilling] = useState<LandlordListingBillingSnapshot | null>(null)
+  const [listingPaymentModalOpen, setListingPaymentModalOpen] = useState(false)
   const toastTimerRef = useRef<number | null>(null)
   const [studentProfileModal, setStudentProfileModal] = useState<{
     student: LandlordSafeStudentSnapshot | null
@@ -488,6 +495,7 @@ export default function LandlordDashboard() {
         setEnquiries([])
         setBookings([])
         setLandlordStudentByProfileId({})
+        setListingBilling(null)
         return
       }
       const prof = profRaw as LandlordRow
@@ -645,6 +653,8 @@ export default function LandlordDashboard() {
       setProperties((propRes.data ?? []) as PropertySummary[])
       setEnquiries(enquiryRows)
       setBookings(mergedBookings)
+
+      void fetchLandlordListingBillingSnapshot().then(setListingBilling)
     } catch (e) {
       setError(messageFromSupabaseError(e))
       setProfile(null)
@@ -652,6 +662,7 @@ export default function LandlordDashboard() {
       setEnquiries([])
       setBookings([])
       setLandlordStudentByProfileId({})
+      setListingBilling(null)
     } finally {
       setLoading(false)
     }
@@ -990,6 +1001,15 @@ export default function LandlordDashboard() {
             userId={user.id}
             studentProfile={null}
             landlordProfile={profile}
+            landlordListingBilling={
+              listingBilling
+                ? {
+                    listingModuleEnabled: listingBilling.moduleEnabled,
+                    hasListingPaymentMethod: listingBilling.hasPaymentMethod,
+                    onAddListingPaymentMethod: () => setListingPaymentModalOpen(true),
+                  }
+                : null
+            }
             onRefresh={load}
           />
         )}
@@ -1876,6 +1896,16 @@ export default function LandlordDashboard() {
             </div>
           </div>
         )}
+
+        <LandlordListingPaymentModal
+          open={listingPaymentModalOpen}
+          onClose={() => setListingPaymentModalOpen(false)}
+          onSuccess={() => {
+            showToast({ kind: 'success', message: 'Payment method saved.' })
+            void fetchLandlordListingBillingSnapshot().then(setListingBilling)
+            void load()
+          }}
+        />
 
         {profile && (
           <QaseSubmitModal
