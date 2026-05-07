@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Supabase public schema — matches supabase/quni_supabase_schema.sql (Claude / Wix-style model).
  * Regenerate: npx supabase gen types typescript --project-id <id> > src/lib/database.types.ts
  */
@@ -285,6 +285,7 @@ export interface Database {
           stripe_connect_details_submitted: boolean | null
           stripe_charges_enabled: boolean | null
           stripe_payouts_enabled: boolean | null
+          stripe_customer_id: string | null
           terms_accepted_at: string | null
           landlord_terms_accepted_at: string | null
           has_landlord_insurance: boolean | null
@@ -315,6 +316,7 @@ export interface Database {
           stripe_connect_details_submitted?: boolean | null
           stripe_charges_enabled?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           landlord_terms_accepted_at?: string | null
           has_landlord_insurance?: boolean | null
@@ -345,6 +347,7 @@ export interface Database {
           stripe_connect_details_submitted?: boolean | null
           stripe_charges_enabled?: boolean | null
           stripe_payouts_enabled?: boolean | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           landlord_terms_accepted_at?: string | null
           has_landlord_insurance?: boolean | null
@@ -573,6 +576,57 @@ export interface Database {
           changed_by?: string | null
         }
         Relationships: []
+      }
+      service_tier_events: {
+        Row: {
+          id: string
+          booking_id: string | null
+          property_id: string | null
+          landlord_id: string | null
+          student_id: string | null
+          event_type: string
+          service_tier: 'listing' | 'managed' | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          booking_id?: string | null
+          property_id?: string | null
+          landlord_id?: string | null
+          student_id?: string | null
+          event_type: string
+          service_tier?: 'listing' | 'managed' | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          booking_id?: string | null
+          property_id?: string | null
+          landlord_id?: string | null
+          student_id?: string | null
+          event_type?: string
+          service_tier?: 'listing' | 'managed' | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'service_tier_events_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'service_tier_events_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
       }
       pricing_config: {
         Row: {
@@ -975,6 +1029,7 @@ export interface Database {
             | 'pending_payment'
             | 'pending_confirmation'
             | 'awaiting_info'
+            | 'bond_pending'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -994,6 +1049,8 @@ export interface Database {
           confirmed_at: string | null
           declined_at: string | null
           expires_at: string | null
+          bond_received_by_landlord_at: string | null
+          bond_window_expires_at: string | null
           bond_acknowledged: boolean | null
           property_type: string | null
           rent_payment_method: 'bank_transfer' | 'quni_platform' | null
@@ -1001,6 +1058,8 @@ export interface Database {
           stripe_subscription_status: string | null
           ai_assessment: string | null
           ai_assessment_at: string | null
+          service_tier_at_request: 'listing' | 'managed' | null
+          service_tier_final: 'listing' | 'managed' | null
           decline_reason: string | null
           housemates_count: number | null
           created_at: string
@@ -1019,6 +1078,7 @@ export interface Database {
             | 'pending_payment'
             | 'pending_confirmation'
             | 'awaiting_info'
+            | 'bond_pending'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -1039,6 +1099,8 @@ export interface Database {
           confirmed_at?: string | null
           declined_at?: string | null
           expires_at?: string | null
+          bond_received_by_landlord_at?: string | null
+          bond_window_expires_at?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
@@ -1046,6 +1108,8 @@ export interface Database {
           stripe_subscription_status?: string | null
           ai_assessment?: string | null
           ai_assessment_at?: string | null
+          service_tier_at_request?: 'listing' | 'managed' | null
+          service_tier_final?: 'listing' | 'managed' | null
           housemates_count?: number | null
           created_at?: string
           updated_at?: string
@@ -1063,6 +1127,7 @@ export interface Database {
             | 'pending_payment'
             | 'pending_confirmation'
             | 'awaiting_info'
+            | 'bond_pending'
             | 'confirmed'
             | 'active'
             | 'cancelled'
@@ -1083,6 +1148,8 @@ export interface Database {
           confirmed_at?: string | null
           declined_at?: string | null
           expires_at?: string | null
+          bond_received_by_landlord_at?: string | null
+          bond_window_expires_at?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
@@ -1090,6 +1157,8 @@ export interface Database {
           stripe_subscription_status?: string | null
           ai_assessment?: string | null
           ai_assessment_at?: string | null
+          service_tier_at_request?: 'listing' | 'managed' | null
+          service_tier_final?: 'listing' | 'managed' | null
           housemates_count?: number | null
           created_at?: string
           updated_at?: string
