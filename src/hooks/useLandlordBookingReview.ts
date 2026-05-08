@@ -23,6 +23,8 @@ export type LandlordBookingReviewTenancy = Pick<
 >
 
 export type LandlordBookingReviewData = {
+  /** Landlord profile id for the signed-in user (matches `bookings.landlord_id` when access is valid). */
+  landlordProfileId: string
   booking: BookingRow
   property: LandlordBookingReviewProperty | null
   student: LandlordBookingReviewStudent
@@ -176,6 +178,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
       }
 
       setData({
+        landlordProfileId: lp.id,
         booking: booking as BookingRow,
         property: prop,
         student: st,

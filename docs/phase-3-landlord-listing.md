@@ -160,6 +160,21 @@ When the landlord accepts as Listing, the renter's authorized deposit hold must 
 
 Existing rows: leave `acknowledged_by_landlord` as-is (it's noise but not actionable). Future confirms simply stop writing to it from the auto-path. If a real Managed bond acknowledgement action is added later, that path writes the field correctly.
 
+### Task H — Bond received action (`POST /api/booking-mark-bond-received`)
+
+Landlord self-report; Quni does not custody bond on Listing tenancies. Implementation follows the Cursor task breakdown; this subsection locks **§2 — Update logic** for that endpoint.
+
+#### §2 — Update logic
+
+**Do not modify `confirmed_at`.** It was set by Task D at the landlord-accept moment and represents the timestamp of landlord commitment, not the moment the booking reaches its “fully confirmed” state. The fact that `confirmed_at` is set while `status` is `bond_pending` is intentional — the column tracks landlord acceptance regardless of subsequent state transitions. (This note is here because it looks like a bug at first glance and isn’t.)
+
+- **a.** Load booking; validate: current user is the landlord on this booking; `service_tier_final === 'listing'`; `status === 'bond_pending'`; if status is already past `bond_pending` (`confirmed`, `active`), return current state idempotently — no error; any other state → structured error.
+- **b.** Update booking: `bond_received_by_landlord_at` = now(); `status` = `confirmed` (match Managed post-confirm status).
+- **c.** Insert `service_tier_events`: `event_type` e.g. `bond_received_acknowledged`; `service_tier` = `listing`; `booking_id`, `property_id`, `landlord_id`, `student_id`; `metadata` includes `bond_received_at` (server inserts via service role — RLS does not allow landlord JWT inserts).
+- **d.** Return updated booking state.
+
+**Transaction / telemetry failure policy:** Prefer an atomic write where Supabase RPC or transaction support allows it (booking update + `service_tier_events` insert in one transaction, matching the pattern in `confirmListing`). If atomic isn’t feasible due to RLS / service-role split, do the booking update first; if the telemetry insert subsequently fails, log a warning but do **not** roll back the booking update. Booking state is the source of truth for users; telemetry is observational. A landlord’s bond-received action should not be rejected because an analytics insert failed.
+
 ---
 
 ## 7. Rollout & feature flagging

@@ -20,6 +20,7 @@ import {
   landlordBookingConfirmAllowed,
   landlordBookingConfirmBlockedBanner,
 } from '../../lib/landlordBookingConfirmGate'
+import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 
@@ -130,6 +131,10 @@ export default function LandlordBookingReviewPage() {
   const [bondFormError, setBondFormError] = useState<string | null>(null)
 
   const [listingPaymentModalOpen, setListingPaymentModalOpen] = useState(false)
+
+  const [bondReceivedBusy, setBondReceivedBusy] = useState(false)
+  const [bondReceivedError, setBondReceivedError] = useState<string | null>(null)
+  const [bondReceivedToast, setBondReceivedToast] = useState<string | null>(null)
 
   useEffect(() => {
     if (!data?.booking) return
@@ -336,6 +341,40 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, infoMessage, reload])
 
+  const onMarkBondReceived = useCallback(async () => {
+    if (!bookingId) return
+    setBondReceivedError(null)
+    setBondReceivedBusy(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setBondReceivedError('You need to be signed in.')
+        return
+      }
+      const res = await fetch(apiUrl('/api/booking-mark-bond-received'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId }),
+      })
+      const j = (await readJsonApiResponse(res)) as { error?: string }
+      if (!res.ok) {
+        setBondReceivedError(typeof j.error === 'string' ? j.error : 'Could not record bond received.')
+        return
+      }
+      setBondReceivedToast('Bond received recorded.')
+      window.setTimeout(() => setBondReceivedToast(null), 4500)
+      await reload()
+    } catch {
+      setBondReceivedError('Something went wrong.')
+    } finally {
+      setBondReceivedBusy(false)
+    }
+  }, [bookingId, reload])
+
   if (!bookingId) {
     return (
       <div className="max-w-site mx-auto px-4 py-10 text-sm text-gray-600">
@@ -367,6 +406,7 @@ export default function LandlordBookingReviewPage() {
   }
 
   const {
+    landlordProfileId,
     booking,
     property,
     messages,
@@ -377,6 +417,13 @@ export default function LandlordBookingReviewPage() {
     otherPendingPipelineCount,
     tenancy,
   } = data
+
+  const showBondReceivedPrimary = landlordListingBondReceivedPrimaryVisible({
+    bookingStatus: booking.status,
+    serviceTierFinal: booking.service_tier_final,
+    bookingLandlordId: booking.landlord_id,
+    viewerLandlordProfileId: landlordProfileId,
+  })
 
   const confirmBlockedBanner = landlordBookingConfirmBlockedBanner({
     bookingStatus: booking.status,
@@ -512,6 +559,10 @@ export default function LandlordBookingReviewPage() {
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{actionError}</div>
         )}
 
+        {bondReceivedError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{bondReceivedError}</div>
+        )}
+
         <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
 
         <section className="space-y-2">
@@ -639,37 +690,63 @@ export default function LandlordBookingReviewPage() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-md px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:backdrop-blur-none md:px-0 md:py-0">
         <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <button
-            type="button"
-            disabled={!canConfirm || actionBusy}
-            onClick={() => void onConfirm()}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 shadow-sm min-h-[3rem]"
-          >
-            {actionBusy ? (
-              <>
-                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
-                <span>Confirming your booking…</span>
-              </>
-            ) : (
-              'Confirm booking'
-            )}
-          </button>
-          <button
-            type="button"
-            disabled={!canDeclineOrInfo || actionBusy}
-            onClick={() => setDeclineOpen(true)}
-            className="flex-1 rounded-xl border-2 border-rose-300 text-rose-800 bg-white px-4 py-3 text-sm font-semibold hover:bg-rose-50 disabled:opacity-50"
-          >
-            Decline booking
-          </button>
-          <button
-            type="button"
-            disabled={!canDeclineOrInfo || actionBusy}
-            onClick={() => setInfoOpen(true)}
-            className="flex-1 rounded-xl border border-gray-300 bg-white text-gray-800 px-4 py-3 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
-          >
-            Request more information
-          </button>
+          {showBondReceivedPrimary ? (
+            <div className="w-full space-y-2">
+              <button
+                type="button"
+                disabled={bondReceivedBusy}
+                onClick={() => void onMarkBondReceived()}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6F61] text-white px-4 py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 shadow-sm min-h-[3rem]"
+              >
+                {bondReceivedBusy ? (
+                  <>
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span>Saving…</span>
+                  </>
+                ) : (
+                  'Bond received from renter'
+                )}
+              </button>
+              <p className="text-xs text-gray-600 leading-relaxed px-0.5">
+                Confirms you&apos;ve received bond directly from the renter. The renter&apos;s lease will become signable
+                once you confirm. This is a self-report — Quni does not hold bond on Listing tenancies.
+              </p>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={!canConfirm || actionBusy}
+                onClick={() => void onConfirm()}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 shadow-sm min-h-[3rem]"
+              >
+                {actionBusy ? (
+                  <>
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    <span>Confirming your booking…</span>
+                  </>
+                ) : (
+                  'Confirm booking'
+                )}
+              </button>
+              <button
+                type="button"
+                disabled={!canDeclineOrInfo || actionBusy}
+                onClick={() => setDeclineOpen(true)}
+                className="flex-1 rounded-xl border-2 border-rose-300 text-rose-800 bg-white px-4 py-3 text-sm font-semibold hover:bg-rose-50 disabled:opacity-50"
+              >
+                Decline booking
+              </button>
+              <button
+                type="button"
+                disabled={!canDeclineOrInfo || actionBusy}
+                onClick={() => setInfoOpen(true)}
+                className="flex-1 rounded-xl border border-gray-300 bg-white text-gray-800 px-4 py-3 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
+              >
+                Request more information
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -814,6 +891,14 @@ export default function LandlordBookingReviewPage() {
           void reload()
         }}
       />
+
+      {bondReceivedToast && (
+        <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
+          <div className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg bg-emerald-600">
+            {bondReceivedToast}
+          </div>
+        </div>
+      )}
 
       {infoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
