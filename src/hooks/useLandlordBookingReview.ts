@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 import { buildBookingFitSummary } from '../lib/bookingFitSummary'
+import {
+  fetchLandlordListingBillingSnapshot,
+  type LandlordListingBillingSnapshot,
+} from '../lib/landlordListingBilling'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -24,6 +28,8 @@ export type LandlordBookingReviewData = {
   student: LandlordBookingReviewStudent
   messages: MessageRow[]
   landlordStripeReady: boolean
+  listingBillingLoaded: boolean
+  listingBilling: LandlordListingBillingSnapshot | null
   fitRows: ReturnType<typeof buildBookingFitSummary>
   /** Other students with pending_confirmation / awaiting_info on the same property (excludes this booking). */
   otherPendingPipelineCount: number
@@ -112,11 +118,19 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         return
       }
 
-      const { data: msgs, error: mErr } = await supabase
-        .from('booking_messages')
-        .select('*')
-        .eq('booking_id', booking.id)
-        .order('created_at', { ascending: true })
+      const [{ data: msgs, error: mErr }, listingSnap, { data: tenancyRow }] = await Promise.all([
+        supabase
+          .from('booking_messages')
+          .select('*')
+          .eq('booking_id', booking.id)
+          .order('created_at', { ascending: true }),
+        fetchLandlordListingBillingSnapshot(),
+        supabase
+          .from('tenancies')
+          .select('id, bond_lodged_at, bond_amount, bond_lodgement_reference')
+          .eq('booking_id', booking.id)
+          .maybeSingle(),
+      ])
 
       if (mErr) {
         setError(mErr.message || 'Could not load messages.')
@@ -161,18 +175,14 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         if (!cntErr && typeof count === 'number') otherPendingPipelineCount = count
       }
 
-      const { data: tenancyRow } = await supabase
-        .from('tenancies')
-        .select('id, bond_lodged_at, bond_amount, bond_lodgement_reference')
-        .eq('booking_id', booking.id)
-        .maybeSingle()
-
       setData({
         booking: booking as BookingRow,
         property: prop,
         student: st,
         messages: (msgs ?? []) as MessageRow[],
         landlordStripeReady: stripeReady,
+        listingBillingLoaded: true,
+        listingBilling: listingSnap,
         fitRows,
         otherPendingPipelineCount,
         tenancy: (tenancyRow as LandlordBookingReviewTenancy | null) ?? null,

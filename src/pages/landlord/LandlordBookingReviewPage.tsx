@@ -16,6 +16,12 @@ import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
 import { isBoardingLodgerBondContext } from '../../lib/listings'
 import { apiUrl } from '../../lib/apiUrl'
+import {
+  landlordBookingConfirmAllowed,
+  landlordBookingConfirmBlockedBanner,
+} from '../../lib/landlordBookingConfirmGate'
+import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
+import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -28,6 +34,7 @@ const SUGGESTED_QUESTIONS = [
 
 function statusBadgeClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-900'
+  if (s === 'bond_pending') return 'bg-amber-100 text-amber-900'
   if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
   if (s === 'confirmed' || s === 'active') return 'bg-emerald-100 text-emerald-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-rose-50 text-rose-900'
@@ -122,6 +129,8 @@ export default function LandlordBookingReviewPage() {
   const [bondBusy, setBondBusy] = useState(false)
   const [bondFormError, setBondFormError] = useState<string | null>(null)
 
+  const [listingPaymentModalOpen, setListingPaymentModalOpen] = useState(false)
+
   useEffect(() => {
     if (!data?.booking) return
     const a = data.booking.ai_assessment
@@ -146,9 +155,14 @@ export default function LandlordBookingReviewPage() {
   }, [aiAssessmentAt, aiLoading])
 
   const canConfirm =
-    data &&
-    (data.booking.status === 'pending_confirmation' || data.booking.status === 'awaiting_info') &&
-    data.landlordStripeReady
+    !!data &&
+    landlordBookingConfirmAllowed({
+      bookingStatus: data.booking.status,
+      serviceTierAtRequest: data.booking.service_tier_at_request ?? null,
+      listingBillingLoaded: data.listingBillingLoaded,
+      listingBilling: data.listingBilling,
+      landlordStripeReady: data.landlordStripeReady,
+    })
 
   const canDeclineOrInfo =
     data &&
@@ -205,19 +219,8 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const res = await fetch(apiUrl('/api/confirm-booking'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bookingId }),
-      })
-      const j = await readJsonApiResponse(res)
-      if (!res.ok) {
-        const msg =
-          (typeof j.message === 'string' && j.message.trim()) ||
-          (typeof j.error === 'string' && j.error) ||
-          'Could not confirm booking.'
-        throw new Error(msg)
-      }
+      const result = await confirmLandlordBookingWithOptionalThreeDS(bookingId, token)
+      if (!result.ok) throw new Error(result.error)
       navigate('/landlord/dashboard?tab=bookings')
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Could not confirm.')
@@ -363,7 +366,25 @@ export default function LandlordBookingReviewPage() {
     )
   }
 
-  const { booking, property, messages, fitRows, landlordStripeReady, otherPendingPipelineCount, tenancy } = data
+  const {
+    booking,
+    property,
+    messages,
+    fitRows,
+    landlordStripeReady,
+    listingBillingLoaded,
+    listingBilling,
+    otherPendingPipelineCount,
+    tenancy,
+  } = data
+
+  const confirmBlockedBanner = landlordBookingConfirmBlockedBanner({
+    bookingStatus: booking.status,
+    serviceTierAtRequest: booking.service_tier_at_request ?? null,
+    listingBillingLoaded,
+    listingBilling,
+    landlordStripeReady,
+  })
   const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
   const depositCents = booking.deposit_amount ?? null
   const feeCents = booking.platform_fee_amount ?? null
@@ -435,7 +456,7 @@ export default function LandlordBookingReviewPage() {
           </div>
         )}
 
-        {!landlordStripeReady && (
+        {confirmBlockedBanner === 'managed_connect_required' && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             <p className="font-medium">Set up your payout account before confirming</p>
             <p className="mt-1 text-amber-900/90">
@@ -447,6 +468,43 @@ export default function LandlordBookingReviewPage() {
             >
               Open dashboard &amp; connect Stripe →
             </Link>
+          </div>
+        )}
+
+        {confirmBlockedBanner === 'listing_module_disabled' && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="leading-relaxed">
+              Listing bookings are temporarily unavailable on Quni. This booking can&apos;t be confirmed right now.
+              Please reach out to{' '}
+              <a href="mailto:hello@quni.com.au" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+                hello@quni.com.au
+              </a>{' '}
+              and we&apos;ll help sort it out.
+            </p>
+          </div>
+        )}
+
+        {confirmBlockedBanner === 'listing_no_payment_method' && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-medium">Add a payment method to confirm</p>
+            <p className="mt-1 text-amber-900/90">
+              You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
+              card on accept.
+            </p>
+            <button
+              type="button"
+              onClick={() => setListingPaymentModalOpen(true)}
+              className="inline-block mt-2 text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
+            >
+              Add a card
+            </button>
+          </div>
+        )}
+
+        {confirmBlockedBanner === 'listing_billing_unavailable' && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-medium">Could not verify Listing billing</p>
+            <p className="mt-1 text-amber-900/90">Refresh the page and try again. If this keeps happening, contact support.</p>
           </div>
         )}
 
@@ -585,9 +643,16 @@ export default function LandlordBookingReviewPage() {
             type="button"
             disabled={!canConfirm || actionBusy}
             onClick={() => void onConfirm()}
-            className="flex-1 rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 shadow-sm"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 shadow-sm min-h-[3rem]"
           >
-            {actionBusy ? '…' : 'Confirm booking'}
+            {actionBusy ? (
+              <>
+                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>Confirming your booking…</span>
+              </>
+            ) : (
+              'Confirm booking'
+            )}
           </button>
           <button
             type="button"
@@ -740,6 +805,15 @@ export default function LandlordBookingReviewPage() {
           </div>
         </div>
       )}
+
+      <LandlordListingPaymentModal
+        open={listingPaymentModalOpen}
+        onClose={() => setListingPaymentModalOpen(false)}
+        onSuccess={() => {
+          setListingPaymentModalOpen(false)
+          void reload()
+        }}
+      />
 
       {infoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
