@@ -209,4 +209,10 @@ export type QuniPlatformAddendumProps = {
   cardSurchargeInternationalText?: string
   moveOutLateCheckoutFeeText?: string
   moveOutInternationalTransferFeeText?: string
+  /** From `platform_config` (`business.legal_name`). Empty/absent → PDF uses default legal name helper. */
+  platformLegalName?: string | null
+  platformAbn?: string | null
+  platformAcn?: string | null
+  /** From `platform_config` (`business.director_name`). Shown on identification line when set. */
+  platformDirectorName?: string | null
 }

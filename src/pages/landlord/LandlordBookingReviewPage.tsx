@@ -49,6 +49,21 @@ function formatAudCents(cents: number | null | undefined) {
   return `$${(Number(cents) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+type ConfirmPhase = 'idle' | 'submitting' | 'payment' | 'finalizing'
+
+function confirmBookingBusyLabel(phase: ConfirmPhase, tier: 'listing' | 'managed'): string {
+  switch (phase) {
+    case 'payment':
+      return 'Confirm card payment…'
+    case 'finalizing':
+      return 'Finalising…'
+    case 'submitting':
+      return tier === 'listing' ? 'Charging listing fee & confirming…' : 'Confirming booking…'
+    default:
+      return 'Confirm booking'
+  }
+}
+
 function todayYmdLocal(): string {
   const d = new Date()
   const y = d.getFullYear()
@@ -116,6 +131,7 @@ export default function LandlordBookingReviewPage() {
   const [aiError, setAiError] = useState(false)
 
   const [actionBusy, setActionBusy] = useState(false)
+  const [confirmPhase, setConfirmPhase] = useState<ConfirmPhase>('idle')
   const [actionError, setActionError] = useState<string | null>(null)
 
   const [declineOpen, setDeclineOpen] = useState(false)
@@ -253,17 +269,30 @@ export default function LandlordBookingReviewPage() {
   const onConfirm = useCallback(async () => {
     if (!bookingId) return
     setActionError(null)
+    setConfirmPhase('submitting')
     setActionBusy(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const result = await confirmLandlordBookingWithOptionalThreeDS(bookingId, token, {}, { serviceTier: selectedConfirmTier })
+      const result = await confirmLandlordBookingWithOptionalThreeDS(
+        bookingId,
+        token,
+        {},
+        {
+          serviceTier: selectedConfirmTier,
+          onProgress: (p) => {
+            if (p.stage === 'payment_auth') setConfirmPhase('payment')
+            if (p.stage === 'retry') setConfirmPhase('finalizing')
+          },
+        },
+      )
       if (!result.ok) throw new Error(result.error)
       navigate('/landlord/dashboard?tab=bookings')
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Could not confirm.')
     } finally {
+      setConfirmPhase('idle')
       setActionBusy(false)
     }
   }, [bookingId, navigate, selectedConfirmTier])
@@ -865,7 +894,7 @@ export default function LandlordBookingReviewPage() {
                 {actionBusy ? (
                   <>
                     <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
-                    <span>Confirming your booking…</span>
+                    <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
                   </>
                 ) : (
                   'Confirm booking'

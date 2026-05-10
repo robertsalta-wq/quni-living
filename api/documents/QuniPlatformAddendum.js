@@ -561,6 +561,28 @@ function OccupancyMatchScheduleTable({
   ] });
 }
 
+// src/lib/platformIdentity.ts
+var DEFAULT_PLATFORM_LEGAL_NAME = "Quni Living Pty Ltd";
+function formatAustralianAbn(raw) {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length !== 11) return raw.trim();
+  return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 11)}`;
+}
+function buildPlatformIdentificationLine(fields) {
+  const parts = [];
+  const abn = typeof fields.abn === "string" ? fields.abn.trim() : "";
+  if (abn) parts.push(`ABN ${formatAustralianAbn(abn)}`);
+  const acn = typeof fields.acn === "string" ? fields.acn.trim() : "";
+  if (acn) parts.push(`ACN ${acn}`);
+  const director = typeof fields.directorName === "string" ? fields.directorName.trim() : "";
+  if (director) parts.push(`Director: ${director}`);
+  return parts.length ? parts.join(" \xB7 ") : null;
+}
+function resolvePlatformLegalEntityName(legalName) {
+  const t = typeof legalName === "string" ? legalName.trim() : "";
+  return t || DEFAULT_PLATFORM_LEGAL_NAME;
+}
+
 // src/lib/documents/QuniPlatformAddendum.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 var QUNI_MAINTENANCE_PORTAL_URL = "https://quni.com.au/maintenance";
@@ -626,6 +648,12 @@ function Section1TenancySummary(props) {
 }
 function Section2QuniPlatformAndFee(props) {
   const { rent, rentPaymentMethod, bankDetails } = props;
+  const entityName = resolvePlatformLegalEntityName(props.platformLegalName);
+  const identificationLine = buildPlatformIdentificationLine({
+    abn: props.platformAbn,
+    acn: props.platformAcn,
+    directorName: props.platformDirectorName
+  });
   const bsb = formatBsbDisplay(bankDetails.bsb.trim());
   const acct = bankDetails.accountNumber.trim();
   const name = bankDetails.accountName.trim();
@@ -641,7 +669,11 @@ function Section2QuniPlatformAndFee(props) {
   const landlordServiceFeeText = props.landlordServiceFeeText ?? "10%";
   return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Quni platform & service fee" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: 'Quni Living Pty Ltd (the "Platform") operates an online marketplace and payment facilitation service. The Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the Residential Tenancies Act 2010 (NSW) and the standard form agreement.' }),
+    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+      entityName,
+      ' (the "Platform") operates an online marketplace and payment facilitation service. The Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the Residential Tenancies Act 2010 (NSW) and the standard form agreement.'
+    ] }),
+    identificationLine ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }], children: identificationLine }) : null,
     /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
       "A service fee of ",
       landlordServiceFeeText,

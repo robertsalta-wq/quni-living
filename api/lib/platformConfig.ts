@@ -13,6 +13,8 @@ export const PLATFORM_CONFIG_KEYS = {
   BUSINESS_TRADING_NAME: 'business.trading_name',
   BUSINESS_ABN: 'business.abn',
   BUSINESS_ACN: 'business.acn',
+  /** Named director shown on platform addendum / PDF identification line when set in Admin. */
+  BUSINESS_DIRECTOR_NAME: 'business.director_name',
   BUSINESS_STRUCTURE: 'business.structure',
   CONTACT_EMAIL: 'contact.email',
   CONTACT_PHONE: 'contact.phone',
@@ -33,6 +35,33 @@ const BANK_KEYS_FOR_RTA = [
   PLATFORM_CONFIG_KEYS.BANK_ACCOUNT_NAME,
   PLATFORM_CONFIG_KEYS.BANK_BANK_NAME,
 ] as const
+
+const BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS = [
+  PLATFORM_CONFIG_KEYS.BUSINESS_LEGAL_NAME,
+  PLATFORM_CONFIG_KEYS.BUSINESS_ABN,
+  PLATFORM_CONFIG_KEYS.BUSINESS_ACN,
+  PLATFORM_CONFIG_KEYS.BUSINESS_DIRECTOR_NAME,
+] as const
+
+export type PlatformBusinessIdentity = {
+  legalName: string
+  abn: string
+  acn: string
+  directorName: string
+}
+
+/** Loads legal entity line items for tenancy package PDFs from `platform_config`. */
+export async function fetchPlatformBusinessIdentityForDocuments(
+  client: SupabaseClient<Database>,
+): Promise<PlatformBusinessIdentity> {
+  const map = await fetchPlatformConfigValueMap(client, [...BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS])
+  return {
+    legalName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_LEGAL_NAME] ?? '').trim(),
+    abn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ABN] ?? '').trim(),
+    acn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ACN] ?? '').trim(),
+    directorName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_DIRECTOR_NAME] ?? '').trim(),
+  }
+}
 
 export async function fetchPlatformConfigRows(
   client: SupabaseClient<Database>,

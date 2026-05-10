@@ -8,6 +8,10 @@ import {
   OccupancyMatchSectionHeading,
   occupancyMatchPdf,
 } from './quniDocumentPdfTheme.js'
+import {
+  buildPlatformIdentificationLine,
+  resolvePlatformLegalEntityName,
+} from '../platformIdentity.js'
 
 const QUNI_MAINTENANCE_PORTAL_URL = 'https://quni.com.au/maintenance'
 const QUNI_MOVE_OUT_FORM_URL = 'https://quni.com.au/move-out'
@@ -93,6 +97,12 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
 /** Section 2 — Quni platform & service fee. */
 function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
   const { rent, rentPaymentMethod, bankDetails } = props
+  const entityName = resolvePlatformLegalEntityName(props.platformLegalName)
+  const identificationLine = buildPlatformIdentificationLine({
+    abn: props.platformAbn,
+    acn: props.platformAcn,
+    directorName: props.platformDirectorName,
+  })
   const bsb = formatBsbDisplay(bankDetails.bsb.trim())
   const acct = bankDetails.accountNumber.trim()
   const name = bankDetails.accountName.trim()
@@ -114,11 +124,15 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
       <OccupancyMatchSectionHeading num={2} title="Quni platform & service fee" />
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        Quni Living Pty Ltd (the &quot;Platform&quot;) operates an online marketplace and payment facilitation
-        service. The Platform is not the landlord, property manager, or agent for the residential premises unless
-        separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises
-        in accordance with the Residential Tenancies Act 2010 (NSW) and the standard form agreement.
+        {entityName} (the &quot;Platform&quot;) operates an online marketplace and payment facilitation service. The
+        Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed
+        in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the
+        Residential Tenancies Act 2010 (NSW) and the standard form agreement.
       </Text>
+
+      {identificationLine ? (
+        <Text style={[occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }]}>{identificationLine}</Text>
+      ) : null}
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
         A service fee of {landlordServiceFeeText} of the gross weekly rent is deducted from amounts payable to the landlord through the

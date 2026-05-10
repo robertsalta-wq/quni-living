@@ -24,6 +24,7 @@ import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 import {
   buildRtaRentPaymentMethodLine,
   fetchBankDetailsForRta,
+  fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../lib/platformConfig.js'
 import {
@@ -481,6 +482,22 @@ export default async function handler(req: any, res: any) {
     typeof prop.house_rules === 'string' ? prop.house_rules.trim() : ''
   const houseRules = houseRulesFromProperty || platformDefaultHouseRules
 
+  let platformIdentity = {
+    legalName: '',
+    abn: '',
+    acn: '',
+    directorName: '',
+  }
+  try {
+    platformIdentity = await fetchPlatformBusinessIdentityForDocuments(admin)
+  } catch (e) {
+    console.error('[generate-residential-tenancy] platform_config business identity', e)
+    await captureSentryMessageEdge('Residential tenancy: failed to load platform_config business identity', {
+      booking_id: bookingId,
+      error: e instanceof Error ? e.message : String(e),
+    })
+  }
+
   const addendumProps = {
     documentId,
     generatedAt,
@@ -511,6 +528,10 @@ export default async function handler(req: any, res: any) {
     cardSurchargeInternationalText: managedPricingDisplay.cardSurchargeInternational,
     moveOutLateCheckoutFeeText: managedPricingDisplay.studentFeeFixedDisplay,
     moveOutInternationalTransferFeeText: managedPricingDisplay.studentFeeFixedDisplay,
+    platformLegalName: platformIdentity.legalName || undefined,
+    platformAbn: platformIdentity.abn || undefined,
+    platformAcn: platformIdentity.acn || undefined,
+    platformDirectorName: platformIdentity.directorName || undefined,
   }
 
   const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)

@@ -58,6 +58,50 @@ describe('confirmLandlordBookingWithOptionalThreeDS', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
+  it('402 flow reports progress stages', async () => {
+    const confirmCardPayment = vi.fn().mockResolvedValue({
+      error: null,
+      paymentIntent: { status: 'succeeded', id: 'pi_x' },
+    })
+
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 402,
+        text: async () =>
+          JSON.stringify({
+            error: 'requires_action',
+            client_secret: 'cs_test_secret',
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => '{}',
+      })
+
+    const onProgress = vi.fn()
+
+    await confirmLandlordBookingWithOptionalThreeDS(
+      'bid',
+      'tok',
+      {
+        fetch: fetch as unknown as typeof globalThis.fetch,
+        loadStripeFn: vi.fn().mockResolvedValue({ confirmCardPayment }) as never,
+        getPublishableKey: () => 'pk_test_x',
+      },
+      { onProgress },
+    )
+
+    expect(onProgress.mock.calls.map((c) => c[0])).toEqual([
+      { stage: 'request' },
+      { stage: 'payment_auth' },
+      { stage: 'retry' },
+      { stage: 'request' },
+    ])
+  })
+
   it('402: Stripe error surfaces without second POST when confirm fails', async () => {
     const confirmCardPayment = vi.fn().mockResolvedValue({
       error: { message: 'Your card was declined.' },

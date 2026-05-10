@@ -18,6 +18,17 @@ export type ConfirmBookingDeps = {
   getPublishableKey: typeof getStripePublishableKey
 }
 
+/** Progress hints for long-running confirm (Listing fee + optional card authentication). */
+export type ConfirmBookingProgress =
+  | { stage: 'request' }
+  | { stage: 'payment_auth' }
+  | { stage: 'retry' }
+
+export type ConfirmBookingOptions = {
+  serviceTier?: 'listing' | 'managed'
+  onProgress?: (p: ConfirmBookingProgress) => void
+}
+
 const defaultDeps: ConfirmBookingDeps = {
   fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
   loadStripeFn: loadStripe,
@@ -31,11 +42,12 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
   bookingId: string,
   accessToken: string,
   deps: Partial<ConfirmBookingDeps> = {},
-  opts?: { serviceTier?: 'listing' | 'managed' },
+  opts?: ConfirmBookingOptions,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const { fetch: fetchFn, loadStripeFn, getPublishableKey } = { ...defaultDeps, ...deps }
 
   async function postOnce(): Promise<Response> {
+    opts?.onProgress?.({ stage: 'request' })
     return fetchFn(apiUrl('/api/confirm-booking'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
@@ -61,6 +73,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
         : ''
 
   if (res.status === 402 && clientSecret) {
+    opts?.onProgress?.({ stage: 'payment_auth' })
     const pk = getPublishableKey()
     if (!pk) {
       return {
@@ -92,6 +105,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
       }
     }
 
+    opts?.onProgress?.({ stage: 'retry' })
     res = await postOnce()
     body = await readJsonApiResponse(res)
 
