@@ -24,6 +24,7 @@ import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
 import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
+import AdminKitchen from './pages/admin/AdminKitchen'
 import AdminBookings from './pages/admin/AdminBookings'
 import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
@@ -268,6 +269,7 @@ function App() {
             }
           >
             <Route index element={<AdminOverview />} />
+            <Route path="_kitchen" element={<AdminKitchen />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
             <Route path="enquiries" element={<AdminEnquiries />} />

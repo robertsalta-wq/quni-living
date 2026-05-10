@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   AppWindow,
   ArrowRight,
   ArrowUpRight,
@@ -51,6 +52,7 @@ import type { LucideIcon } from 'lucide-react'
  * - Add new icons by extending this map only.
  */
 const ICONS = {
+  'alert-triangle': AlertTriangle,
   'app-window': AppWindow,
   'arrow-right': ArrowRight,
   'arrow-up-right': ArrowUpRight,
