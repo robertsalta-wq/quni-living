@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#FF6F61">
+<title>Quni · The Living Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+html, body { margin: 0; background: var(--quni-surface-2); }
+* { box-sizing: border-box; }
+button { font-family: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid rgba(255, 111, 97, 0.45); outline-offset: 2px;
+}
+.tabnums { font-variant-numeric: tabular-nums; }
+.scroll-y { overflow-y: auto; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(8,6,13,.12); border-radius: 999px; border: 2px solid var(--quni-surface-2); }
+::-webkit-scrollbar-track { background: transparent; }
+.kbd { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--quni-line); background: #fff; color: var(--quni-ink-4); box-shadow: 0 1px 0 rgba(8,6,13,.04); }
+[data-row]:hover { background: var(--quni-surface-2) !important; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="shell.jsx"></script>
+<script type="text/babel" src="overview.jsx"></script>
+<script type="text/babel" src="bookings.jsx"></script>
+<script type="text/babel" src="pricing.jsx"></script>
+<script type="text/babel" src="states.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
