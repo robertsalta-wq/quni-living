@@ -3,6 +3,8 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom'
 import { Globe } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { isAdminUser } from '../../lib/adminEmails'
+import { AdminShell } from '../../components/admin/Shell'
+import { useAdminRedesignFlag } from '../../components/admin/useAdminRedesignFlag'
 
 type AdminNavItem = {
   to: string
@@ -78,6 +80,7 @@ function navClassName(isActive: boolean) {
 export default function AdminLayout() {
   const { user, signOut } = useAuthContext()
   const navigate = useNavigate()
+  const redesignEnabled = useAdminRedesignFlag()
 
   const displayName =
     (user?.user_metadata?.full_name as string | undefined)?.trim() ||
@@ -102,6 +105,14 @@ export default function AdminLayout() {
 
   async function handleSignOut() {
     await signOut()
+  }
+
+  if (redesignEnabled) {
+    return (
+      <AdminShell>
+        <Outlet />
+      </AdminShell>
+    )
   }
 
   return (

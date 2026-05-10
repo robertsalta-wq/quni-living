@@ -10,6 +10,28 @@ JSX in this mockup is for design intent only.
 
 ---
 
+## Addendum (2026-05-11): Ratified decisions
+
+The verification pass before PR 1 surfaced ten gaps between this spec and the
+live `quni-living` codebase / Supabase schema. The decisions below are the
+defaults the team has agreed to and **override** the relevant sections of this
+document.
+
+| ID | Decision | Owner area | Status |
+|---|---|---|---|
+| **A** | Use real filenames everywhere. `AdminTierEvents.tsx` → `AdminServiceTierEvents.tsx`; `AdminTrustChecklist.tsx` → `TrustChecklist.tsx`; `AdminDocuments.tsx` → `DocumentsPage.tsx`; `AdminKnowledgeBase.tsx` → `KnowledgeBase.tsx`; `AdminBusinessSettings.tsx` → `AdminSettings.tsx`; `AdminDomains.tsx` → `DomainsPage.tsx`; `AdminDashboard.tsx` → `AdminOverview.tsx`. Qase split (`QaseTicketList.tsx`, `QaseTicketDetail.tsx`, `QaseSettings.tsx`) is **kept**; the "consolidate to single page with tabs" plan is abandoned. | §1, §5 | Applied below |
+| **B2** | "Active tenancies" is computed as confirmed bookings whose `[start_date, end_date]` straddles today (no new table). "Condition reports" stays a stub flagged *Coming soon* in the sidebar until a `condition_reports` table exists. | §3 Living Console, §4 | Pending PR 3 |
+| **C1** | Add a `landlord_leads.stage` column via migration (`'new' \| 'contacted' \| 'qualified' \| 'won' \| 'lost'`) and a matching admin UI. Required for the Supply / Landlord leads pipeline metric. | §4 | Pending |
+| **D1** | Add `pricing_config_changes (id, config_id, snapshot_before jsonb, snapshot_after jsonb, changed_by uuid, changed_at timestamptz)` via migration. Insert a row on every `pricing_config` mutation; the Pricing change log reads from this table. | §3 Pricing, §4 | Pending PR 5 |
+| **E2** | Drop the `pricing_config.lifecycle` pill from the design. No matching column exists and we don't want to add another tier dimension to pricing. | §3 Pricing | Removed |
+| **F1** | Compute the Trust checklist completion percentage client-side from `localStorage` (existing source of truth for `TrustChecklist.tsx`). Do **not** add a `trust_checklists.completion_pct` column for now. | §3 Living Console, §4 | Pending PR 3 |
+| **G1** | Replace the "Stripe payout failed" ATTENTION row with "Payments past 7d" (count + sum from `payments`). We don't ingest Stripe payout webhooks yet. | §3 Living Console, §4 | Pending PR 3 |
+| **H1** | `AdminStudents.tsx` lives under the Marketplace zone (sidebar item between Properties and Landlords, route `/admin/students` until PR 6). | §1, §5 | Applied in PR 1 sidebar |
+| **I1** | Hardcode `Sydney` for the Living Console hero eyebrow. No `business_settings` table is being added in this rollout. | §3 Living Console | Pending PR 3 |
+| **J1** | Implement `get-living-console-snapshot` as a **Vercel API route** (`api/admin/living-console-snapshot.ts`), not a Supabase Edge Function. Matches existing API surface in this repo. | §3 Living Console, §4 | Pending PR 3 |
+
+---
+
 ## 1. Routes table
 
 All routes live under `/admin`. The Living Console is the home; six zones are
@@ -311,32 +333,32 @@ Cache for 60s on the edge.
 
 ## 5. Replace / keep / retire — `src/pages/admin/`
 
-> File names below are **inferred from the previous admin shell**. Map to
-> actual filenames before applying.
+> Filenames below match the live repo. Names that were inferred in the original
+> draft have been corrected per Decision **A** in the addendum at the top of
+> this document.
 
 | Existing file | Action | Replacement |
 |---|---|---|
-| `AdminLayout.tsx` | **Replace** | New `<Shell/>` with sidebar + top bar. Old layout had no top bar. |
-| `AdminSidebar.tsx` | **Replace** | Zone-grouped sidebar with always-visible "The Living Console" item above the six collapsible zones. Single-open behaviour. |
-| `AdminDashboard.tsx` / `AdminOverview.tsx` ⚠ verify name | **Replace** | New `<LivingConsole/>` (hero + ATTENTION + 6 zone cards + Marketplace Pulse). |
+| `AdminLayout.tsx` | **Replace** | New `<AdminShell/>` (cream sidebar + sticky top bar). Feature-flagged via `?redesign=1` / `localStorage.quni_admin_redesign` during PRs 1–6; flag removed in PR 7. |
+| `AdminOverview.tsx` | **Replace** | New `<LivingConsole/>` (hero + ATTENTION + 6 zone cards + Marketplace Pulse). Old card grid retired. |
 | `AdminBookings.tsx` | **Replace** | New `<BookingsPage/>` with toolbar + chip filters + sticky-header table + drawer. |
-| `AdminPricing.tsx` | **Replace** | New `<PricingPage/>` with tabs + live preview + change log. Keep `pricing_config_changes` insert logic. |
-| `AdminTierEvents.tsx` ⚠ verify | **Keep** | Add canonical empty state if missing. |
-| `AdminEnquiries.tsx` ⚠ verify | **Keep** | Wire through new shell. Audit loading state to match canonical spinner. |
-| `AdminProperties.tsx` ⚠ verify | **Keep** | Same. |
-| `AdminLandlords.tsx` ⚠ verify | **Keep** | Same. |
-| `AdminLandlordLeads.tsx` ⚠ verify | **Keep** | Same. |
-| `AdminPayments.tsx` ⚠ verify | **Keep** | Same. Audit error state to match canonical. |
-| `AdminTrustChecklist.tsx` ⚠ verify | **Keep** | Same. |
-| `AdminStateWorkflows.tsx` ⚠ verify | **Keep** | Same. |
-| `AdminApps.tsx` ⚠ verify | **Keep** | Move under `/admin/platform/apps` URL. |
-| `AdminDomains.tsx` ⚠ verify | **Keep** | Move under Platform. |
-| `AdminDocuments.tsx` ⚠ verify | **Move** | From Settings → Trust & compliance. URL: `/admin/trust/documents`. |
-| `AdminKnowledgeBase.tsx` ⚠ verify | **Move** | Settings → Platform. |
-| `AdminQase.tsx` / `AdminQaseSettings.tsx` ⚠ verify | **Consolidate** | Merge into single `<QasePage/>` with a `Settings` tab. The old two-page split is gone. |
-| `AdminBusinessSettings.tsx` ⚠ verify | **Move** | Settings → Platform. |
-| Any `AdminMissionControl.tsx` ⚠ verify | **Retire** | Renamed to The Living Console. Delete after migration. |
-| Any standalone "zone overview" pages (if they exist) | **Retire** | Zones are navigational groupings only; no zone-level pages. |
+| `AdminPricing.tsx` | **Replace** | New `<PricingPage/>` with tabs + live preview + change log. Requires the `pricing_config_changes` migration from Decision D1. |
+| `AdminServiceTierEvents.tsx` | **Keep** | Add canonical empty state if missing. |
+| `AdminEnquiries.tsx` | **Keep** | Wire through new shell. Audit loading state to match canonical spinner. |
+| `AdminProperties.tsx` | **Keep** | Same. |
+| `AdminLandlords.tsx` | **Keep** | Same. |
+| `AdminLandlordLeads.tsx` | **Keep** | Add `stage` column UI per Decision C1. |
+| `AdminStudents.tsx` | **Keep** | Lives under Marketplace zone (Decision H1). Move route to `/admin/marketplace/students` in PR 6. |
+| `AdminPayments.tsx` | **Keep** | Same. Audit error state to match canonical. |
+| `TrustChecklist.tsx` | **Keep** | Same. Per Decision F1 the completion % stays client-side; no schema change. |
+| `AdminStateWorkflows.tsx` | **Keep** | Same. |
+| `AdminApps.tsx` | **Keep** | Move under `/admin/platform/apps` URL in PR 6. |
+| `DomainsPage.tsx` | **Keep** | Move under Platform in PR 6. |
+| `DocumentsPage.tsx` | **Move** | From Settings → Trust & compliance. URL: `/admin/trust/documents` after PR 6. |
+| `KnowledgeBase.tsx` | **Move** | Platform zone. URL: `/admin/platform/kb` after PR 6. |
+| `QaseTicketList.tsx`, `QaseTicketDetail.tsx`, `QaseSettings.tsx` | **Keep** | Per Decision A the three-file split is preserved; the original "consolidate into one page with tabs" plan is dropped. Move under `/admin/platform/qase/*` in PR 6. |
+| `AdminSettings.tsx` | **Move** | Settings → Platform. Becomes "Business settings" route at `/admin/platform/business-settings` in PR 6. |
+| Any standalone "zone overview" pages | **Retire** | Zones are navigational groupings only; no zone-level pages. |
 
 ---
 
