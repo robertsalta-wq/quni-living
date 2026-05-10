@@ -23,6 +23,7 @@ import {
 import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
+import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -141,6 +142,8 @@ export default function LandlordBookingReviewPage() {
   const [listingCancelError, setListingCancelError] = useState<string | null>(null)
   const [listingCancelReason, setListingCancelReason] = useState('')
 
+  const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
+
   useEffect(() => {
     if (!data?.booking) return
     const a = data.booking.ai_assessment
@@ -155,6 +158,28 @@ export default function LandlordBookingReviewPage() {
     [data?.student?.first_name, data?.student?.last_name].filter(Boolean).join(' ').trim() ||
     'Student'
 
+  const tierModel = useMemo(() => {
+    if (!data?.property || !data.listingBillingLoaded) return null
+    return landlordAcceptTierUiModel({
+      state: data.property.state,
+      propertyType: data.property.property_type,
+      isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
+      moduleEnabled: data.listingBilling?.moduleEnabled === true,
+    })
+  }, [
+    data?.property?.id,
+    data?.property?.state,
+    data?.property?.property_type,
+    data?.property?.is_registered_rooming_house,
+    data?.listingBillingLoaded,
+    data?.listingBilling?.moduleEnabled,
+  ])
+
+  useEffect(() => {
+    if (!tierModel) return
+    setSelectedConfirmTier(tierModel.defaultTier)
+  }, [tierModel?.defaultTier, tierModel?.showListing, tierModel?.showManaged])
+
   const refreshCooldownRemainingSec = useMemo(() => {
     if (!aiAssessmentAt) return 0
     const t = new Date(aiAssessmentAt).getTime()
@@ -166,9 +191,11 @@ export default function LandlordBookingReviewPage() {
 
   const canConfirm =
     !!data &&
+    !!tierModel &&
+    (tierModel.showListing || tierModel.showManaged) &&
     landlordBookingConfirmAllowed({
       bookingStatus: data.booking.status,
-      serviceTierAtRequest: data.booking.service_tier_at_request ?? null,
+      selectedConfirmTier,
       listingBillingLoaded: data.listingBillingLoaded,
       listingBilling: data.listingBilling,
       landlordStripeReady: data.landlordStripeReady,
@@ -229,7 +256,7 @@ export default function LandlordBookingReviewPage() {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
       if (!token) throw new Error('Session expired. Please sign in again.')
-      const result = await confirmLandlordBookingWithOptionalThreeDS(bookingId, token)
+      const result = await confirmLandlordBookingWithOptionalThreeDS(bookingId, token, {}, { serviceTier: selectedConfirmTier })
       if (!result.ok) throw new Error(result.error)
       navigate('/landlord/dashboard?tab=bookings')
     } catch (e) {
@@ -237,7 +264,7 @@ export default function LandlordBookingReviewPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [bookingId, navigate])
+  }, [bookingId, navigate, selectedConfirmTier])
 
   const onDecline = useCallback(async () => {
     if (!bookingId) return
@@ -473,7 +500,7 @@ export default function LandlordBookingReviewPage() {
 
   const confirmBlockedBanner = landlordBookingConfirmBlockedBanner({
     bookingStatus: booking.status,
-    serviceTierAtRequest: booking.service_tier_at_request ?? null,
+    selectedConfirmTier,
     listingBillingLoaded,
     listingBilling,
     landlordStripeReady,
@@ -537,6 +564,52 @@ export default function LandlordBookingReviewPage() {
           </div>
         </header>
 
+        {tierModel?.showListing && tierModel.showManaged && (
+          <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
+            <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Choose how you&apos;ll run this booking
+            </h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Both options are available for your state. Managed is the default when both tiers are offered.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setSelectedConfirmTier('managed')}
+                className={`rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                  selectedConfirmTier === 'managed'
+                    ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                    : 'border-stone-200 bg-white hover:border-stone-300'
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-bold text-gray-900">Quni Managed</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-100 text-emerald-900 px-2 py-0.5">
+                    Most popular
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                  Rent collected via Quni with our managed tenancy workflow (where available in your state).
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedConfirmTier('listing')}
+                className={`rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                  selectedConfirmTier === 'listing'
+                    ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                    : 'border-stone-200 bg-white hover:border-stone-300'
+                }`}
+              >
+                <div className="text-sm font-bold text-gray-900">Quni Listing</div>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                  Lower-touch flow: bond and rent are arranged directly with the renter; a listing acceptance fee applies.
+                </p>
+              </button>
+            </div>
+          </section>
+        )}
+
         {otherPendingPipelineCount > 0 && (
           <div
             className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm"
@@ -567,12 +640,7 @@ export default function LandlordBookingReviewPage() {
         {confirmBlockedBanner === 'listing_module_disabled' && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             <p className="leading-relaxed">
-              Listing bookings are temporarily unavailable on Quni. This booking can&apos;t be confirmed right now.
-              Please reach out to{' '}
-              <a href="mailto:hello@quni.com.au" className="font-semibold text-[#FF6F61] underline underline-offset-2">
-                hello@quni.com.au
-              </a>{' '}
-              and we&apos;ll help sort it out.
+              Listing bookings are temporarily paused. Please try again in a few minutes.
             </p>
           </div>
         )}

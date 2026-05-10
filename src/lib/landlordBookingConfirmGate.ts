@@ -9,7 +9,8 @@ export type ConfirmBlockedBanner =
 
 export function landlordBookingConfirmAllowed(args: {
   bookingStatus: string
-  serviceTierAtRequest: 'listing' | 'managed' | null
+  /** Tier the landlord will confirm (three-button flow); drives Listing vs Managed gates. */
+  selectedConfirmTier: 'listing' | 'managed'
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
   landlordStripeReady: boolean
@@ -17,20 +18,19 @@ export function landlordBookingConfirmAllowed(args: {
   const st = args.bookingStatus
   if (st !== 'pending_confirmation' && st !== 'awaiting_info') return false
 
-  if (args.serviceTierAtRequest === 'listing') {
+  if (args.selectedConfirmTier === 'listing') {
     if (!args.listingBillingLoaded) return false
     const lb = args.listingBilling
     if (!lb) return false
     return lb.moduleEnabled === true && lb.hasPaymentMethod === true
   }
 
-  // managed + legacy null tier
   return args.landlordStripeReady
 }
 
 export function landlordBookingConfirmBlockedBanner(args: {
   bookingStatus: string
-  serviceTierAtRequest: 'listing' | 'managed' | null
+  selectedConfirmTier: 'listing' | 'managed'
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
   landlordStripeReady: boolean
@@ -39,7 +39,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
     return null
   }
 
-  if (args.serviceTierAtRequest !== 'listing') {
+  if (args.selectedConfirmTier !== 'listing') {
     return args.landlordStripeReady ? null : 'managed_connect_required'
   }
 

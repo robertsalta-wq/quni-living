@@ -4,6 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { runManagedConfirmBooking } from './lib/booking/confirmManaged.js'
 import { runListingConfirmBooking } from './lib/booking/confirmListing.js'
+import {
+  fetchPlatformConfigValueMap,
+  parseBooleanConfig,
+  PLATFORM_CONFIG_KEYS,
+} from './lib/platformConfig.js'
+import {
+  resolveEffectiveConfirmTier,
+  validateLandlordConfirmTierChoice,
+} from './lib/booking/serviceTierSnapshot.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -90,6 +99,7 @@ export default async function handler(req, res) {
         `
         id,
         landlord_id,
+        property_id,
         status,
         service_tier_at_request,
         service_tier_final,
@@ -145,8 +155,47 @@ export default async function handler(req, res) {
       )
     }
 
-    const tierRaw = bookingLite.service_tier_at_request
-    const useListing = tierRaw === 'listing'
+    const bodyServiceTier =
+      body.serviceTier === 'listing' || body.serviceTier === 'managed' ? body.serviceTier : undefined
+
+    const { data: propertyLite, error: propLiteErr } = await admin
+      .from('properties')
+      .select('state, property_type, is_registered_rooming_house')
+      .eq('id', bookingLite.property_id)
+      .maybeSingle()
+
+    if (propLiteErr || !propertyLite) {
+      return corsJson(res, { error: 'Property not found for booking' }, 404, origin)
+    }
+
+    const cfgMap = await fetchPlatformConfigValueMap(admin, [
+      PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MODULE_ENABLED,
+    ])
+    const moduleEnabled = parseBooleanConfig(
+      cfgMap[PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MODULE_ENABLED],
+      false,
+    )
+
+    const effectiveTier = resolveEffectiveConfirmTier({
+      bodyServiceTier,
+      bookingServiceTierAtRequest: bookingLite.service_tier_at_request,
+      state: propertyLite.state,
+      propertyType: propertyLite.property_type,
+      isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
+      moduleEnabled,
+    })
+
+    const tierErr = validateLandlordConfirmTierChoice(effectiveTier, {
+      moduleEnabled,
+      state: propertyLite.state,
+      propertyType: propertyLite.property_type,
+      isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
+    })
+    if (tierErr) {
+      return corsJson(res, { error: tierErr.message, code: tierErr.code }, 400, origin)
+    }
+
+    const useListing = effectiveTier === 'listing'
 
     const stripe = new Stripe(stripeSecret)
 

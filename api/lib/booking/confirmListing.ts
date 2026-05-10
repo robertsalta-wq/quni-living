@@ -57,10 +57,12 @@ export async function runListingConfirmBooking(params) {
     return jsonFail(403, { error: 'Forbidden' })
   }
 
-  if (booking.status !== 'pending_confirmation') {
+  const confirmableListing =
+    booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
+  if (!confirmableListing) {
     return jsonFail(400, {
       error: 'invalid_status',
-      message: 'Listing confirmation requires status pending_confirmation.',
+      message: 'Listing confirmation requires status pending_confirmation or awaiting_info.',
     })
   }
 

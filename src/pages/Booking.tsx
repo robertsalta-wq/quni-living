@@ -8,7 +8,12 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
-import { isPropertyListingType, PROPERTY_LISTING_TYPE_LABELS, type PropertyListingType } from '../lib/listings'
+import {
+  isBoardingLodgerBondContext,
+  isPropertyListingType,
+  PROPERTY_LISTING_TYPE_LABELS,
+  type PropertyListingType,
+} from '../lib/listings'
 import type { Database } from '../lib/database.types'
 import {
   getStripePublishableKey,
@@ -530,7 +535,7 @@ export default function Booking() {
   const [moveIn, setMoveIn] = useState(() => minMoveInIso())
   const [leaseLength, setLeaseLength] = useState<LeaseOption>('6 months')
   const [message, setMessage] = useState('')
-  const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('bank_transfer')
+  const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('quni_platform')
   const [bondCheck, setBondCheck] = useState(false)
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -1336,7 +1341,9 @@ export default function Booking() {
       ? { paddingBottom: `max(12rem, ${keyboardInsetPx + 48}px)` }
       : undefined
 
-  const isTier1HostedRoom = property?.property_type === 'private_room_landlord_on_site'
+  const stateAu = property?.state?.trim().toUpperCase() ?? ''
+  const rtaExemptArrangement = isBoardingLodgerBondContext(property?.property_type, property?.listing_type)
+  const showNswResidentialTenancyRentCopy = stateAu === 'NSW' && !rtaExemptArrangement
 
   return (
     <div
@@ -1576,21 +1583,47 @@ export default function Booking() {
           <h2 id="rent-payment-heading" className="text-lg font-bold text-gray-900">
             How would you like to pay your weekly rent?
           </h2>
-          {isTier1HostedRoom ? (
+          {rtaExemptArrangement ? (
             <p className="text-sm text-gray-600 leading-relaxed">
-              Bank transfer is strongly recommended. You can still pay by card through Quni if you prefer; any card surcharge
-              is passed through at cost. There is no legal requirement to offer bank transfer for this listing type, but both
-              options are available for consistency.
+              Paying through Quni by card is the usual way to get started; any card surcharge is passed through at cost. You
+              can also pay rent by bank transfer. There is no legal requirement to offer bank transfer for this listing type,
+              but both options are available for consistency.
             </p>
-          ) : (
+          ) : showNswResidentialTenancyRentCopy ? (
             <p className="text-sm text-gray-600 leading-relaxed">
               Under NSW residential tenancy rules, your landlord must offer you a free bank transfer option for rent (s.35{' '}
               <span className="whitespace-nowrap">Residential Tenancies Act 2010</span>). You may still choose to pay by
               card through Quni if you prefer.
             </p>
+          ) : (
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Bank transfer and card payment through Quni are available. Card surcharges apply at actual cost.
+            </p>
           )}
 
           <div className="space-y-3">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={rentPaymentMethod === 'quni_platform'}
+              onClick={() => setRentPaymentMethod('quni_platform')}
+              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                rentPaymentMethod === 'quni_platform'
+                  ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                  : 'border-stone-200 bg-white hover:border-stone-300'
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-gray-900">Pay via Quni (card)</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-100 text-emerald-900 px-2 py-0.5">
+                  Recommended
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                Pay by card via the Quni platform. A processing surcharge applies at actual cost: 1.7% + $0.30 for Australian
+                cards, 3.5% + $0.30 for international cards.
+              </p>
+            </button>
             <button
               type="button"
               role="radio"
@@ -1604,25 +1637,8 @@ export default function Booking() {
             >
               <div className="text-sm font-bold text-gray-900">Bank transfer (free — no additional cost)</div>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Transfer directly to Quni&apos;s account each week. BSB and account details provided after booking is
+                Transfer directly to Quni&apos;s account each week. BSB and account details are provided after booking is
                 confirmed.
-              </p>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={rentPaymentMethod === 'quni_platform'}
-              onClick={() => setRentPaymentMethod('quni_platform')}
-              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
-                rentPaymentMethod === 'quni_platform'
-                  ? 'border-[#FF6F61] bg-[#FF6F61]/5'
-                  : 'border-stone-200 bg-white hover:border-stone-300'
-              }`}
-            >
-              <div className="text-sm font-bold text-gray-900">Pay via Quni platform (card surcharge applies)</div>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Pay by card via the Quni platform. A processing surcharge applies at actual cost: 1.7% + $0.30 for Australian
-                cards, 3.5% + $0.30 for international cards.
               </p>
             </button>
           </div>

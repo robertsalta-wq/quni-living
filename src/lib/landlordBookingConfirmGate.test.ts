@@ -13,7 +13,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: 'confirmed',
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: readyListing,
         landlordStripeReady: false,
@@ -25,7 +25,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: false,
         listingBilling: null,
         landlordStripeReady: true,
@@ -35,7 +35,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: null,
         landlordStripeReady: true,
@@ -45,7 +45,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
         landlordStripeReady: true,
@@ -55,7 +55,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
         landlordStripeReady: true,
@@ -65,7 +65,7 @@ describe('landlordBookingConfirmAllowed', () => {
     expect(
       landlordBookingConfirmAllowed({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: readyListing,
         landlordStripeReady: false,
@@ -73,39 +73,37 @@ describe('landlordBookingConfirmAllowed', () => {
     ).toBe(true)
   })
 
-  it('managed + legacy null: requires Connect', () => {
-    for (const tier of ['managed', null] as const) {
-      expect(
-        landlordBookingConfirmAllowed({
-          bookingStatus: pipeline,
-          serviceTierAtRequest: tier,
-          listingBillingLoaded: true,
-          listingBilling: readyListing,
-          landlordStripeReady: false,
-        }),
-      ).toBe(false)
+  it('managed: requires Connect', () => {
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'managed',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        landlordStripeReady: false,
+      }),
+    ).toBe(false)
 
-      expect(
-        landlordBookingConfirmAllowed({
-          bookingStatus: pipeline,
-          serviceTierAtRequest: tier,
-          listingBillingLoaded: true,
-          listingBilling: readyListing,
-          landlordStripeReady: true,
-        }),
-      ).toBe(true)
-    }
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'managed',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        landlordStripeReady: true,
+      }),
+    ).toBe(true)
   })
 })
 
 describe('landlordBookingConfirmBlockedBanner', () => {
   const pipeline = 'pending_confirmation' as const
 
-  it('managed/null without Connect shows connect banner', () => {
+  it('managed without Connect shows connect banner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
-        serviceTierAtRequest: null,
+        selectedConfirmTier: 'managed',
         listingBillingLoaded: true,
         listingBilling: readyListing,
         landlordStripeReady: false,
@@ -117,7 +115,7 @@ describe('landlordBookingConfirmBlockedBanner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
         landlordStripeReady: true,
@@ -129,7 +127,7 @@ describe('landlordBookingConfirmBlockedBanner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: null,
         landlordStripeReady: true,
@@ -141,7 +139,7 @@ describe('landlordBookingConfirmBlockedBanner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
-        serviceTierAtRequest: 'listing',
+        selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
         landlordStripeReady: true,

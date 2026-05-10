@@ -13,6 +13,7 @@ import {
   calculateBookingFeeCents,
   getActivePricingSnapshotForProperty,
 } from './lib/pricing/index.js'
+import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 
 export const config = { runtime: 'edge' }
 
@@ -347,7 +348,9 @@ async function handlePaymentIntentCommit(request, origin, body) {
 
   const { data: property, error: propErr } = await admin
     .from('properties')
-    .select('id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house')
+    .select(
+      'id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house',
+    )
     .eq('id', propertyId)
     .maybeSingle()
 
@@ -407,6 +410,22 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
 
+  const { data: moduleRow } = await admin
+    .from('platform_config')
+    .select('config_value')
+    .eq('config_key', 'quni_service_tier_module_enabled')
+    .maybeSingle()
+  const moduleEnabled = String(moduleRow?.config_value ?? '')
+    .trim()
+    .toLowerCase() === 'true'
+
+  const serviceTierAtRequest = computeServiceTierAtRequestSnapshot({
+    state: property.state,
+    propertyType: property.property_type,
+    isRegisteredRoomingHouse: property.is_registered_rooming_house,
+    moduleEnabled,
+  })
+
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
@@ -430,6 +449,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     property_type: propertyType,
     rent_payment_method: rentPaymentMethod,
     expires_at: expiresAt,
+    ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),
   }
 
   const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()

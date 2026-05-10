@@ -31,6 +31,7 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
   bookingId: string,
   accessToken: string,
   deps: Partial<ConfirmBookingDeps> = {},
+  opts?: { serviceTier?: 'listing' | 'managed' },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const { fetch: fetchFn, loadStripeFn, getPublishableKey } = { ...defaultDeps, ...deps }
 
@@ -38,7 +39,10 @@ export async function confirmLandlordBookingWithOptionalThreeDS(
     return fetchFn(apiUrl('/api/confirm-booking'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ bookingId }),
+      body: JSON.stringify({
+        bookingId,
+        ...(opts?.serviceTier ? { serviceTier: opts.serviceTier } : {}),
+      }),
     })
   }
 
