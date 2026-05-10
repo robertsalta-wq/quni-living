@@ -25,6 +25,7 @@ import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPag
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminBookings from './pages/admin/AdminBookings'
+import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
 import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
 import AdminProperties from './pages/admin/AdminProperties'
@@ -268,6 +269,7 @@ function App() {
           >
             <Route index element={<AdminOverview />} />
             <Route path="bookings" element={<AdminBookings />} />
+            <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="landlord-leads" element={<AdminLandlordLeads />} />
             <Route path="properties" element={<AdminProperties />} />

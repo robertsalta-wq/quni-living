@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import {
@@ -28,6 +28,7 @@ const STATUSES: BookingStatus[] = [
   'pending_payment',
   'pending_confirmation',
   'awaiting_info',
+  'bond_pending',
   'confirmed',
   'active',
   'completed',
@@ -36,6 +37,12 @@ const STATUSES: BookingStatus[] = [
   'expired',
   'payment_failed',
 ]
+
+function cancellationSnippet(reason: string | null | undefined, max = 56): string {
+  const r = (reason ?? '').trim()
+  if (!r) return ''
+  return r.length > max ? `${r.slice(0, max)}…` : r
+}
 
 function rentPaymentPreferenceLabel(v: string | null | undefined): string {
   if (v === 'bank_transfer') return 'Bank transfer'
@@ -49,6 +56,8 @@ function statusBadgeClass(s: BookingStatus) {
     case 'pending_payment':
     case 'pending_confirmation':
       return 'bg-amber-100 text-amber-800'
+    case 'bond_pending':
+      return 'bg-amber-100 text-amber-900'
     case 'awaiting_info':
       return 'bg-sky-100 text-sky-900'
     case 'confirmed':
@@ -145,13 +154,16 @@ export default function AdminBookings() {
                 <th className={adminThClass}>Weekly rent</th>
                 <th className={adminThClass}>Rent payment</th>
                 <th className={adminThClass}>Status</th>
-                <th className={adminThClass}>Action</th>
+                <th className={adminThClass}>Expired</th>
+                <th className={adminThClass}>Cancellation</th>
+                <th className={adminThClass}>Tier events</th>
+                <th className={adminThClass}>Set status</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className={`${adminTdClass} text-gray-500 text-center py-10`}>
+                  <td colSpan={10} className={`${adminTdClass} text-gray-500 text-center py-10`}>
                     No bookings yet.
                   </td>
                 </tr>
@@ -199,6 +211,32 @@ export default function AdminBookings() {
                         >
                           {row.status}
                         </span>
+                      </td>
+                      <td className={`${adminTdClass} text-xs text-gray-600 whitespace-nowrap`}>
+                        {formatDate(row.expired_at)}
+                      </td>
+                      <td className={`${adminTdClass} text-xs text-gray-600`}>
+                        {row.cancelled_at ? (
+                          <span className="block">
+                            {formatDate(row.cancelled_at)}
+                            {row.cancelled_by ? (
+                              <span className="block text-gray-500">by {row.cancelled_by}</span>
+                            ) : null}
+                            {row.cancellation_reason?.trim() ? (
+                              <span className="block text-gray-500 mt-0.5">{cancellationSnippet(row.cancellation_reason)}</span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className={adminTdClass}>
+                        <Link
+                          to={`/admin/service-tier-events?booking_id=${row.id}`}
+                          className="text-sm font-medium text-indigo-600 hover:underline"
+                        >
+                          View tier events
+                        </Link>
                       </td>
                       <td className={adminTdClass}>
                         <select

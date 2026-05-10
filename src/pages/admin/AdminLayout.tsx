@@ -14,6 +14,7 @@ type AdminNavItem = {
 const NAV: AdminNavItem[] = [
   { to: '/admin', label: 'Overview', end: true },
   { to: '/admin/bookings', label: 'Bookings', end: false },
+  { to: '/admin/service-tier-events', label: 'Tier events', end: false },
   { to: '/admin/enquiries', label: 'Enquiries', end: false },
   { to: '/admin/landlord-leads', label: 'Landlord leads', end: false },
   { to: '/admin/properties', label: 'Properties', end: false },
