@@ -27,6 +27,13 @@ import {
   resolvePropertyTierFromListing,
   type PricingCell,
 } from '../../lib/pricing'
+import { resolveServiceTierAvailability } from '../../lib/serviceTier'
+import {
+  INTENDED_LANDLORD_SERVICE_TIER_KEY,
+  landlordServiceTierTitle,
+  parseLandlordServiceTier,
+  type LandlordServiceTier,
+} from '../../lib/landlordServiceTier'
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -108,6 +115,7 @@ type LandlordPropertyDraftV1 = {
   images: string[]
   isRegisteredRoomingHouse: boolean
   roomingHouseRegistrationNumber: string
+  serviceTier: LandlordServiceTier
 }
 
 function landlordPropertyDraftFromState(
@@ -178,6 +186,7 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       isRegisteredRoomingHouse: Boolean(d.isRegisteredRoomingHouse),
       roomingHouseRegistrationNumber:
         typeof d.roomingHouseRegistrationNumber === 'string' ? d.roomingHouseRegistrationNumber : '',
+      serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'managed',
     }
     return draft
   } catch {
@@ -208,7 +217,8 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.linenSupplied ||
     d.weeklyCleaning ||
     d.openToNonStudents ||
-    d.showAddAnotherUniversity
+    d.showAddAnotherUniversity ||
+    d.serviceTier === 'listing'
   )
 }
 
@@ -275,6 +285,8 @@ export default function LandlordPropertyFormPage() {
   const [bathrooms, setBathrooms] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('single')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
+  const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('managed')
+  const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('managed')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
   const [furnished, setFurnished] = useState(false)
@@ -344,6 +356,16 @@ export default function LandlordPropertyFormPage() {
     () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
     [propertyListingType, isRegisteredRoomingHouse],
   )
+  const serviceTierAvailability = useMemo(
+    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier),
+    [state, resolvedPropertyTier],
+  )
+  const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
+  const managedTierAvailable = serviceTierAvailability.managed === 'available'
+  const managedTierUnavailableReason =
+    serviceTierAvailability.managed === 'gated'
+      ? serviceTierAvailability.notes ?? 'Managed is not available for this property yet.'
+      : 'Managed is not available for this property.'
 
   const [tierPricingListing, setTierPricingListing] = useState<PricingCell | null>(null)
   const [tierPricingManaged, setTierPricingManaged] = useState<PricingCell | null>(null)
@@ -437,6 +459,7 @@ export default function LandlordPropertyFormPage() {
         images,
         isRegisteredRoomingHouse,
         roomingHouseRegistrationNumber,
+        serviceTier,
       }),
     [
       title,
@@ -467,6 +490,7 @@ export default function LandlordPropertyFormPage() {
       leaseLength,
       availableFrom,
       images,
+      serviceTier,
     ],
   )
 
@@ -523,6 +547,8 @@ export default function LandlordPropertyFormPage() {
     setBathrooms('1')
     setRoomType('single')
     setPropertyListingType('entire_property')
+    setServiceTier('managed')
+    setInitialServiceTier('managed')
     setIsRegisteredRoomingHouse(false)
     setRoomingHouseRegistrationNumber('')
     setFurnished(false)
@@ -605,6 +631,7 @@ export default function LandlordPropertyFormPage() {
         setHouseRules('')
         setHouseRulesResetError(null)
         setHouseRulesResetAck(false)
+        setInitialServiceTier('managed')
       }
 
       if (role === 'admin') {
@@ -662,6 +689,9 @@ export default function LandlordPropertyFormPage() {
         setPropertyListingType(
           prop.property_type && isPropertyListingType(prop.property_type) ? prop.property_type : 'entire_property',
         )
+        const loadedServiceTier = parseLandlordServiceTier(prop.service_tier) ?? 'managed'
+        setServiceTier(loadedServiceTier)
+        setInitialServiceTier(loadedServiceTier)
         setIsRegisteredRoomingHouse(Boolean(prop.is_registered_rooming_house))
         setRoomingHouseRegistrationNumber(
           typeof prop.rooming_house_registration_number === 'string' ? prop.rooming_house_registration_number : '',
@@ -770,6 +800,7 @@ export default function LandlordPropertyFormPage() {
       setBathrooms(parsed.bathrooms)
       setRoomType(parsed.roomType)
       setPropertyListingType(parsed.propertyListingType)
+      setServiceTier(parsed.serviceTier)
       setIsRegisteredRoomingHouse(parsed.isRegisteredRoomingHouse)
       setRoomingHouseRegistrationNumber(parsed.roomingHouseRegistrationNumber)
       setFurnished(parsed.furnished)
@@ -813,6 +844,15 @@ export default function LandlordPropertyFormPage() {
       }
     } else {
       setShowResumeDraftBanner(false)
+      const intended = parseLandlordServiceTier(localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY))
+      if (intended) {
+        setServiceTier(intended)
+        try {
+          localStorage.removeItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
+        } catch {
+          /* ignore */
+        }
+      }
     }
     setDraftSaveEnabled(true)
   }, [isEdit, loadingPage, location.key, features])
@@ -1284,6 +1324,19 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (serviceTier === 'listing' && !listingTierAvailable) {
+      setSubmitError('Quni Listing is not available for this property.')
+      return
+    }
+    if (serviceTier === 'managed' && !managedTierAvailable) {
+      setSubmitError(managedTierUnavailableReason)
+      return
+    }
+    if (isEdit && initialServiceTier === 'managed' && serviceTier !== 'managed') {
+      setSubmitError('Managed properties cannot be changed back to Quni Listing.')
+      return
+    }
+
     const featureIds = [...selectedFeatureIds]
 
     const topSuggest = nearbyCampusSuggestions[0]
@@ -1349,6 +1402,7 @@ export default function LandlordPropertyFormPage() {
       available_from: availableFrom.trim() || null,
       images: images.length ? images : null,
       house_rules: houseRules.trim() || null,
+      service_tier: serviceTier,
     }
 
     setSubmitting(true)
@@ -2057,6 +2111,79 @@ export default function LandlordPropertyFormPage() {
             'Pricing & availability',
             <div className="space-y-4">
               <div>
+                <p className={labelClass}>Quni service model</p>
+                <p className="mb-3 text-xs text-gray-500">
+                  Choose how this property runs. Listing is self-managed; Managed can be selected now or upgraded later, but
+                  Managed properties cannot move back to Listing.
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {(['listing', 'managed'] as const).map((tier) => {
+                    const selected = serviceTier === tier
+                    const available =
+                      tier === 'listing' ? listingTierAvailable : managedTierAvailable
+                    const locked = isEdit && initialServiceTier === 'managed' && tier === 'listing'
+                    const disabled = !available || locked
+                    const description =
+                      tier === 'listing'
+                        ? 'You receive the renter lead, then handle bond, rent, maintenance, and disputes directly.'
+                        : 'Quni handles the managed tenancy workflow, including rent collection where available.'
+                    const unavailableCopy =
+                      tier === 'listing'
+                        ? 'Listing is not available for this property.'
+                        : locked
+                          ? 'Managed is permanent for this property.'
+                          : managedTierUnavailableReason
+                    return (
+                      <button
+                        key={tier}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => {
+                          if (disabled || selected) return
+                          if (
+                            isEdit &&
+                            initialServiceTier === 'listing' &&
+                            tier === 'managed' &&
+                            !window.confirm(
+                              'Switch this property to Quni Managed? This cannot be changed back to Quni Listing.',
+                            )
+                          ) {
+                            return
+                          }
+                          setServiceTier(tier)
+                        }}
+                        className={[
+                          'rounded-2xl border p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 disabled:cursor-not-allowed',
+                          selected
+                            ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                            : 'border-gray-200 bg-white hover:border-[#FF6F61]/40',
+                          disabled && !selected ? 'opacity-60 hover:border-gray-200' : '',
+                        ].join(' ')}
+                      >
+                        <span className="block text-sm font-semibold text-gray-900">
+                          {landlordServiceTierTitle(tier)}
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-gray-600">{description}</span>
+                        <span className="mt-3 block text-[11px] font-medium text-gray-500">
+                          {available && !locked
+                            ? selected
+                              ? 'Selected for this property'
+                              : tier === 'listing'
+                                ? 'One-off Listing fee is only charged when you accept a booking.'
+                                : 'Full managed service for this property.'
+                            : unavailableCopy}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {serviceTier === 'managed' && initialServiceTier === 'listing' && isEdit ? (
+                  <p className="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Saving will permanently switch this property to Quni Managed for this and future booking requests.
+                  </p>
+                ) : null}
+              </div>
+              <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label htmlFor="pf-rent" className={labelClass}>
                     Rent per week ($) <span className="text-red-500">*</span>
@@ -2133,7 +2260,8 @@ export default function LandlordPropertyFormPage() {
                       </li>
                     </ul>
                     <p className="mt-2 text-[11px] text-gray-500 leading-snug">
-                      Service tier is chosen when you accept a booking, not here.
+                      This property is set to {landlordServiceTierTitle(serviceTier)}. Listing can be upgraded to
+                      Managed later; Managed cannot be changed back to Listing.
                     </p>
                     {tierPricingLockedForListing ? (
                       <p className="mt-2 text-[11px] text-amber-900/85 leading-snug rounded-lg bg-amber-50/90 border border-amber-100 px-2 py-2">

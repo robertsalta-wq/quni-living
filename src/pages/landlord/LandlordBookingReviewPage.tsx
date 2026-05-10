@@ -25,6 +25,7 @@ import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBoo
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
+import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -183,12 +184,14 @@ export default function LandlordBookingReviewPage() {
       propertyType: data.property.property_type,
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
+      propertyServiceTier: data.property.service_tier,
     })
   }, [
     data?.property?.id,
     data?.property?.state,
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
+    data?.property?.service_tier,
     data?.listingBillingLoaded,
     data?.listingBilling?.moduleEnabled,
   ])
@@ -196,7 +199,7 @@ export default function LandlordBookingReviewPage() {
   useEffect(() => {
     if (!tierModel) return
     setSelectedConfirmTier(tierModel.defaultTier)
-  }, [tierModel?.defaultTier, tierModel?.showListing, tierModel?.showManaged])
+  }, [tierModel?.defaultTier, tierModel?.showListing, tierModel?.showManaged, tierModel?.showManagedUpgrade])
 
   const refreshCooldownRemainingSec = useMemo(() => {
     if (!aiAssessmentAt) return 0
@@ -589,6 +592,9 @@ export default function LandlordBookingReviewPage() {
             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(booking.status)}`}>
               {booking.status.replace(/_/g, ' ')}
             </span>
+            <span className="text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full px-3 py-1">
+              {landlordServiceTierTitle(selectedConfirmTier)}
+            </span>
             {flowLabel && (
               <span className="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
                 {flowLabel}
@@ -597,34 +603,16 @@ export default function LandlordBookingReviewPage() {
           </div>
         </header>
 
-        {tierModel?.showListing && tierModel.showManaged && (
+        {tierModel?.showManagedUpgrade && (
           <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
             <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Choose how you&apos;ll run this booking
+              This property is on Quni Listing
             </h2>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Both options are available for your state. Managed is the default when both tiers are offered.
+              You chose to self-manage this property. You can accept this request as Listing, or permanently upgrade the
+              property to Quni Managed for this and future bookings.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setSelectedConfirmTier('managed')}
-                className={`rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
-                  selectedConfirmTier === 'managed'
-                    ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
-                    : 'border-stone-200 bg-white hover:border-stone-300'
-                }`}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900">Quni Managed</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-100 text-emerald-900 px-2 py-0.5">
-                    Most popular
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                  Rent collected via Quni with our managed tenancy workflow (where available in your state).
-                </p>
-              </button>
               <button
                 type="button"
                 onClick={() => setSelectedConfirmTier('listing')}
@@ -634,9 +622,23 @@ export default function LandlordBookingReviewPage() {
                     : 'border-stone-200 bg-white hover:border-stone-300'
                 }`}
               >
-                <div className="text-sm font-bold text-gray-900">Quni Listing</div>
+                <div className="text-sm font-bold text-gray-900">Accept as Quni Listing</div>
                 <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                  Lower-touch flow: bond and rent are arranged directly with the renter; a listing acceptance fee applies.
+                  You arrange bond and rent directly with the renter. The one-off Listing acceptance fee applies.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedConfirmTier('managed')}
+                className={`rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                  selectedConfirmTier === 'managed'
+                    ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                    : 'border-stone-200 bg-white hover:border-stone-300'
+                }`}
+              >
+                <div className="text-sm font-bold text-gray-900">Upgrade property to Quni Managed</div>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                  Quni handles the managed tenancy workflow. This permanently switches this property to Managed.
                 </p>
               </button>
             </div>
@@ -747,6 +749,10 @@ export default function LandlordBookingReviewPage() {
             <div className="flex justify-between gap-4">
               <dt className="text-gray-500">Lease length</dt>
               <dd className="font-medium text-gray-900 text-right">{booking.lease_length?.trim() || '—'}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-gray-500">Service model</dt>
+              <dd className="font-medium text-gray-900 text-right">{landlordServiceTierTitle(selectedConfirmTier)}</dd>
             </div>
             {booking.student_message?.trim() && (
               <div className="pt-2 border-t border-gray-100">
@@ -897,7 +903,11 @@ export default function LandlordBookingReviewPage() {
                     <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
                   </>
                 ) : (
-                  'Confirm booking'
+                  selectedConfirmTier === 'listing'
+                    ? 'Accept as Quni Listing'
+                    : tierModel?.propertyServiceTier === 'listing'
+                      ? 'Upgrade and accept as Quni Managed'
+                      : 'Accept as Quni Managed'
                 )}
               </button>
               <button

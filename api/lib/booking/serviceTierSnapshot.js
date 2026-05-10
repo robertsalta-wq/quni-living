@@ -37,15 +37,17 @@ export function resolveServiceTierAvailability(stateRaw, propertyTier) {
 }
 
 /**
- * Default snapshot for `bookings.service_tier_at_request` when the renter commits the booking.
- * When both Listing and Managed are valid choices at landlord accept, default Managed (design doc).
+ * Snapshot for `bookings.service_tier_at_request` when the renter commits the booking.
+ * Prefer the property's chosen service tier; legacy callers fall back to state availability.
  */
 export function computeServiceTierAtRequestSnapshot({
   state,
   propertyType,
   isRegisteredRoomingHouse,
   moduleEnabled,
+  propertyServiceTier,
 }) {
+  if (propertyServiceTier === 'listing' || propertyServiceTier === 'managed') return propertyServiceTier
   const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
   const a = resolveServiceTierAvailability(state, pt)
   const listingOk = Boolean(moduleEnabled) && a.listing !== 'unsupported'
@@ -63,6 +65,7 @@ export function computeServiceTierAtRequestSnapshot({
 export function resolveEffectiveConfirmTier({
   bodyServiceTier,
   bookingServiceTierAtRequest,
+  propertyServiceTier,
   state,
   propertyType,
   isRegisteredRoomingHouse,
@@ -77,6 +80,7 @@ export function resolveEffectiveConfirmTier({
     propertyType,
     isRegisteredRoomingHouse,
     moduleEnabled,
+    propertyServiceTier,
   })
   if (fallback === 'listing' || fallback === 'managed') return fallback
   return 'managed'
@@ -85,10 +89,16 @@ export function resolveEffectiveConfirmTier({
 /**
  * @returns {null | { code: string; message: string }}
  */
-export function validateLandlordConfirmTierChoice(serviceTier, { moduleEnabled, state, propertyType, isRegisteredRoomingHouse }) {
+export function validateLandlordConfirmTierChoice(serviceTier, { moduleEnabled, state, propertyType, isRegisteredRoomingHouse, propertyServiceTier }) {
   const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
   const a = resolveServiceTierAvailability(state, pt)
   if (serviceTier === 'listing') {
+    if (propertyServiceTier === 'managed') {
+      return {
+        code: 'tier_not_available',
+        message: 'This property is set to Quni Managed and cannot be accepted as Listing.',
+      }
+    }
     if (!moduleEnabled) {
       return {
         code: 'listing_module_disabled',

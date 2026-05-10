@@ -94,7 +94,7 @@ export async function runManagedConfirmBooking(params) {
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -327,6 +327,26 @@ export async function runManagedConfirmBooking(params) {
     if (upErr) {
       console.error('booking update after subscription', upErr)
       return jsonFail(500, { error: 'Could not save booking after subscription' })
+    }
+
+    const propertyWasListing =
+      booking.properties &&
+      typeof booking.properties === 'object' &&
+      booking.properties.service_tier === 'listing'
+    if (propertyWasListing && booking.property_id) {
+      const { error: propTierErr } = await admin
+        .from('properties')
+        .update({ service_tier: 'managed' })
+        .eq('id', booking.property_id)
+        .eq('service_tier', 'listing')
+      if (propTierErr) {
+        console.error('property service_tier upgrade after managed confirm', propTierErr)
+        await captureSentryMessageEdge('Property tier upgrade failed after managed confirm', {
+          bookingId: booking.id,
+          propertyId: booking.property_id,
+          error: propTierErr.message,
+        })
+      }
     }
 
     const siteBase =

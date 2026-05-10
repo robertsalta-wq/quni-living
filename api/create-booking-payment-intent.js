@@ -349,7 +349,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      'id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house',
+      'id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house, service_tier',
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -403,7 +403,10 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   let pricingCell
   try {
-    pricingCell = await getActivePricingSnapshotForProperty(property.id, 'managed')
+    pricingCell = await getActivePricingSnapshotForProperty(
+      property.id,
+      property.service_tier === 'listing' ? 'listing' : 'managed',
+    )
   } catch (e) {
     console.error('load pricing for booking commit', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
@@ -424,6 +427,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     propertyType: property.property_type,
     isRegisteredRoomingHouse: property.is_registered_rooming_house,
     moduleEnabled,
+    propertyServiceTier: property.service_tier,
   })
 
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
@@ -626,6 +630,7 @@ export default async function handler(request) {
       state,
       property_type,
       is_registered_rooming_house,
+      service_tier,
       landlord_profiles (
         id,
         stripe_connect_account_id,
@@ -655,7 +660,8 @@ export default async function handler(request) {
   }
 
   const lp = property.landlord_profiles
-  if (!lp?.stripe_connect_account_id || !lp.stripe_charges_enabled) {
+  const propertyServiceTier = property.service_tier === 'listing' ? 'listing' : 'managed'
+  if (propertyServiceTier === 'managed' && (!lp?.stripe_connect_account_id || !lp.stripe_charges_enabled)) {
     return json(
       {
         error: 'stripe_not_ready',
@@ -673,7 +679,7 @@ export default async function handler(request) {
   }
   let pricingCell
   try {
-    pricingCell = await getActivePricingSnapshotForProperty(property.id, 'managed')
+    pricingCell = await getActivePricingSnapshotForProperty(property.id, propertyServiceTier)
   } catch (e) {
     console.error('load pricing for booking PI', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)

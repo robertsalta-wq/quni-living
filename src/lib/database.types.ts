@@ -851,6 +851,7 @@ export interface Database {
           created_at: string
           updated_at: string
           property_group_id: string | null
+          service_tier: 'listing' | 'managed'
         }
         Insert: {
           id?: string
@@ -889,6 +890,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
+          service_tier?: 'listing' | 'managed'
         }
         Update: {
           id?: string
@@ -927,6 +929,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           property_group_id?: string | null
+          service_tier?: 'listing' | 'managed'
         }
         Relationships: [
           {

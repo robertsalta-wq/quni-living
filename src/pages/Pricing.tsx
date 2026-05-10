@@ -454,7 +454,7 @@ export default function Pricing() {
                     {pricingTierAvailabilitySummary('listing')}
                   </p>
 
-                  <Link to="/landlord-signup" className={ctaSecondary}>
+                  <Link to="/landlord-signup?tier=listing" className={ctaSecondary}>
                     Choose Listing
                   </Link>
                 </div>
@@ -593,7 +593,7 @@ export default function Pricing() {
                     {pricingTierAvailabilitySummary('managed')}
                   </p>
 
-                  <Link to="/landlord-signup" className={ctaPrimary}>
+                  <Link to="/landlord-signup?tier=managed" className={ctaPrimary}>
                     Choose Managed
                   </Link>
                 </div>

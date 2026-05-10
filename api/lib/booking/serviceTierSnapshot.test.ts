@@ -18,6 +18,18 @@ describe('serviceTierSnapshot', () => {
     ).toBe('managed')
   })
 
+  it('computeServiceTierAtRequestSnapshot uses the property service tier when set', () => {
+    expect(
+      computeServiceTierAtRequestSnapshot({
+        state: 'QLD',
+        propertyType: 'entire_property',
+        isRegisteredRoomingHouse: false,
+        moduleEnabled: true,
+        propertyServiceTier: 'listing',
+      }),
+    ).toBe('listing')
+  })
+
   it('computeServiceTierAtRequestSnapshot uses listing when Managed is not available', () => {
     expect(
       computeServiceTierAtRequestSnapshot({
@@ -50,5 +62,16 @@ describe('serviceTierSnapshot', () => {
         moduleEnabled: true,
       }),
     ).toBe('listing')
+  })
+
+  it('validateLandlordConfirmTierChoice rejects Listing for Managed properties', () => {
+    const err = validateLandlordConfirmTierChoice('listing', {
+      moduleEnabled: true,
+      state: 'QLD',
+      propertyType: 'entire_property',
+      isRegisteredRoomingHouse: false,
+      propertyServiceTier: 'managed',
+    })
+    expect(err?.code).toBe('tier_not_available')
   })
 })

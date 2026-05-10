@@ -30,6 +30,12 @@ import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
+import {
+  landlordServiceTierDescription,
+  landlordServiceTierShortLabel,
+  landlordServiceTierTitle,
+  parseLandlordServiceTier,
+} from '../lib/landlordServiceTier'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
@@ -39,7 +45,17 @@ type BookingStatus = BookingRow['status']
 
 type PropertySummary = Pick<
   PropertyRow,
-  'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured' | 'created_at'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'rent_per_week'
+  | 'room_type'
+  | 'suburb'
+  | 'images'
+  | 'status'
+  | 'featured'
+  | 'created_at'
+  | 'service_tier'
 >
 
 type EnquiryWithProperty = EnquiryRow & {
@@ -225,6 +241,10 @@ function bookingStatusClass(s: BookingStatus) {
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
   return 'bg-gray-100 text-gray-600'
+}
+
+function bookingServiceTier(b: BookingWithRelations): 'listing' | 'managed' | null {
+  return parseLandlordServiceTier(b.service_tier_final) ?? parseLandlordServiceTier(b.service_tier_at_request)
 }
 
 function studentDisplayFromBooking(b: BookingWithRelations): string {
@@ -504,7 +524,7 @@ export default function LandlordDashboard() {
       const [propRes, enqRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at')
+          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase
@@ -913,6 +933,9 @@ export default function LandlordDashboard() {
   }, [load])
 
   const activeListings = properties.filter((p) => p.status === 'active').length
+  const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
+  const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
+  const hasManagedWork = managedTierProperties > 0 || bookings.some((b) => bookingServiceTier(b) === 'managed')
   const newEnquiries = enquiries.filter((e) => e.status === 'new').length
   const pendingBookings = bookings.filter(
     (b) =>
@@ -1041,6 +1064,23 @@ export default function LandlordDashboard() {
 
         <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
 
+        {properties.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your service model</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900">
+              {listingTierProperties > 0 && managedTierProperties > 0
+                ? `${listingTierProperties} self-managed and ${managedTierProperties} Quni Managed properties`
+                : listingTierProperties > 0
+                  ? 'Self-managed with Quni Listing'
+                  : 'Quni Managed'}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-gray-600">
+              Each property keeps its own service model. Quni Listing properties can be upgraded to Managed, while
+              Managed properties stay Managed.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
@@ -1127,11 +1167,12 @@ export default function LandlordDashboard() {
           </button>
         </div>
 
-        {profile.stripe_charges_enabled !== true && (
+        {hasManagedWork && profile.stripe_charges_enabled !== true && (
           <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm font-medium text-amber-900">
-                Connect your bank account to start accepting bookings. Without this you won&apos;t be able to confirm booking requests.
+                Connect your bank account to accept Quni Managed bookings. Listing-only properties can still use a saved
+                card for the one-off Listing fee.
               </p>
               <button
                 type="button"
@@ -1254,6 +1295,20 @@ export default function LandlordDashboard() {
                           {p.title}
                         </h3>
                         <p className="text-xs text-gray-500 mb-4">{p.suburb ?? 'Location TBC'}</p>
+                        <div
+                          className={`mb-4 rounded-xl border px-3 py-2 ${
+                            parseLandlordServiceTier(p.service_tier) === 'listing'
+                              ? 'border-stone-200 bg-stone-50'
+                              : 'border-[#FF6F61]/15 bg-[#FF6F61]/5'
+                          }`}
+                        >
+                          <p className="text-xs font-semibold text-gray-900">
+                            {landlordServiceTierTitle(parseLandlordServiceTier(p.service_tier))}
+                          </p>
+                          <p className="mt-0.5 text-[11px] leading-snug text-gray-600">
+                            {landlordServiceTierDescription(parseLandlordServiceTier(p.service_tier))}
+                          </p>
+                        </div>
                         <LandlordPropertyListingActions
                           property={p}
                           publishingListingId={publishingListingId}
@@ -1642,6 +1697,12 @@ export default function LandlordDashboard() {
                           {b.properties?.suburb ? ` · ${b.properties.suburb}` : ''}
                         </p>
                         <p className="break-words">
+                          <span className="text-gray-500">Service:</span>{' '}
+                          <span className="font-medium text-gray-900">
+                            {landlordServiceTierTitle(bookingServiceTier(b))}
+                          </span>
+                        </p>
+                        <p className="break-words">
                           <span className="text-gray-500">Move-in:</span>{' '}
                           <span className="font-medium">{formatDate(moveInRaw || b.start_date)}</span>
                           <span className="text-gray-400 mx-1">·</span>
@@ -1718,6 +1779,7 @@ export default function LandlordDashboard() {
                         <th className="px-4 py-3">Property</th>
                         <th className="px-4 py-3">Move-in → end</th>
                         <th className="px-4 py-3">Rent / wk</th>
+                        <th className="px-4 py-3">Service</th>
                         <th className="px-4 py-3">Status</th>
                         <th className="px-4 py-3 w-36">Actions</th>
                       </tr>
@@ -1763,6 +1825,11 @@ export default function LandlordDashboard() {
                             {b.weekly_rent != null
                               ? `$${Number(b.weekly_rent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
                               : '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-semibold text-gray-900">
+                              {landlordServiceTierShortLabel(bookingServiceTier(b))}
+                            </span>
                           </td>
                           <td className="px-4 py-3">
                             <span

@@ -160,7 +160,7 @@ export default async function handler(req, res) {
 
     const { data: propertyLite, error: propLiteErr } = await admin
       .from('properties')
-      .select('state, property_type, is_registered_rooming_house')
+      .select('state, property_type, is_registered_rooming_house, service_tier')
       .eq('id', bookingLite.property_id)
       .maybeSingle()
 
@@ -183,6 +183,7 @@ export default async function handler(req, res) {
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
       moduleEnabled,
+      propertyServiceTier: propertyLite.service_tier,
     })
 
     const tierErr = validateLandlordConfirmTierChoice(effectiveTier, {
@@ -190,6 +191,7 @@ export default async function handler(req, res) {
       state: propertyLite.state,
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
+      propertyServiceTier: propertyLite.service_tier,
     })
     if (tierErr) {
       return corsJson(res, { error: tierErr.message, code: tierErr.code }, 400, origin)
