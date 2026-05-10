@@ -51,3 +51,6 @@ scripts/*.pdf
 # One-off design-system snapshot for Claude Design (not live source)
 claude-design-bundle/*
 !claude-design-bundle/README.md
+
+# Supabase CLI local linked-project metadata (machine-local)
+supabase/.temp/
