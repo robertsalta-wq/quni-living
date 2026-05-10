@@ -23,7 +23,7 @@ import LandlordProfile from './pages/LandlordProfile'
 import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
 import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPage'
 import AdminLayout from './pages/admin/AdminLayout'
-import AdminOverview from './pages/admin/AdminOverview'
+import LivingConsoleGate from './pages/admin/LivingConsoleGate'
 import AdminKitchen from './pages/admin/AdminKitchen'
 import AdminBookings from './pages/admin/AdminBookings'
 import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
@@ -268,7 +268,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<AdminOverview />} />
+            <Route index element={<LivingConsoleGate />} />
             <Route path="_kitchen" element={<AdminKitchen />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
