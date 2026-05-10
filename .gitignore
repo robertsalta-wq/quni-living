@@ -47,3 +47,7 @@ android/key.properties
 
 scripts/test-output.pdf
 scripts/*.pdf
+
+# One-off design-system snapshot for Claude Design (not live source)
+claude-design-bundle/*
+!claude-design-bundle/README.md
