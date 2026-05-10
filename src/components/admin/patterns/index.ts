@@ -13,3 +13,9 @@ export type { ZoneCardProps, ZoneCardRow, ZoneIconTone, ZoneRowTone } from './Zo
 
 export { MarketplacePulseCell } from './MarketplacePulseCell'
 export type { MarketplacePulseCellProps, PulseDeltaTone } from './MarketplacePulseCell'
+
+export { ChipFilter } from './ChipFilter'
+export type { ChipFilterProps, ChipFilterOption } from './ChipFilter'
+
+export { DetailDrawer } from './DetailDrawer'
+export type { DetailDrawerProps } from './DetailDrawer'

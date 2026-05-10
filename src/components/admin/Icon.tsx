@@ -40,6 +40,7 @@ import {
   UserPlus,
   Users,
   Workflow,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -94,6 +95,7 @@ const ICONS = {
   'user-plus': UserPlus,
   users: Users,
   workflow: Workflow,
+  x: X,
 } as const satisfies Record<string, LucideIcon>
 
 export type IconName = keyof typeof ICONS

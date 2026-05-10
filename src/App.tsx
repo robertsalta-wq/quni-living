@@ -25,7 +25,7 @@ import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPag
 import AdminLayout from './pages/admin/AdminLayout'
 import LivingConsoleGate from './pages/admin/LivingConsoleGate'
 import AdminKitchen from './pages/admin/AdminKitchen'
-import AdminBookings from './pages/admin/AdminBookings'
+import BookingsGate from './pages/admin/BookingsGate'
 import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
 import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
@@ -270,7 +270,7 @@ function App() {
           >
             <Route index element={<LivingConsoleGate />} />
             <Route path="_kitchen" element={<AdminKitchen />} />
-            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="bookings" element={<BookingsGate />} />
             <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="landlord-leads" element={<AdminLandlordLeads />} />
