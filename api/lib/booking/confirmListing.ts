@@ -1,5 +1,7 @@
 // @ts-nocheck — Listing-tier confirm: cancel renter hold + $99 landlord charge + bond_pending.
 
+import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
+
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID = 'prod_UTXU1Ilz3bfCY7'
 
@@ -207,6 +209,7 @@ export async function runListingConfirmBooking(params) {
       service_tier_final: 'listing',
       bond_window_expires_at: bondWindow,
       confirmed_at: nowIso,
+      listing_fee_stripe_payment_intent_id: chargePi.id,
     })
     .eq('id', booking.id)
     .eq('status', 'pending_confirmation')
@@ -256,6 +259,16 @@ export async function runListingConfirmBooking(params) {
 
   if (evErr) {
     console.error('[confirm-listing] service_tier_events insert', evErr)
+  }
+
+  if (updated) {
+    try {
+      await sendListingBookingAcceptedEmails(admin, booking.id, {
+        bond_window_expires_at: bondWindow,
+      })
+    } catch (e) {
+      console.error('[confirm-listing] acceptance emails', e)
+    }
   }
 
   return {

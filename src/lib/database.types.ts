@@ -1045,10 +1045,12 @@ export interface Database {
           deposit_amount: number | null
           platform_fee_amount: number | null
           stripe_payment_intent_id: string | null
+          listing_fee_stripe_payment_intent_id: string | null
           deposit_released_at: string | null
           confirmed_at: string | null
           declined_at: string | null
           expires_at: string | null
+          expired_at: string | null
           bond_received_by_landlord_at: string | null
           bond_window_expires_at: string | null
           bond_acknowledged: boolean | null
@@ -1061,6 +1063,9 @@ export interface Database {
           service_tier_at_request: 'listing' | 'managed' | null
           service_tier_final: 'listing' | 'managed' | null
           decline_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          cancellation_reason: string | null
           housemates_count: number | null
           created_at: string
           updated_at: string
@@ -1095,10 +1100,12 @@ export interface Database {
           deposit_amount?: number | null
           platform_fee_amount?: number | null
           stripe_payment_intent_id?: string | null
+          listing_fee_stripe_payment_intent_id?: string | null
           deposit_released_at?: string | null
           confirmed_at?: string | null
           declined_at?: string | null
           expires_at?: string | null
+          expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
           bond_acknowledged?: boolean | null
@@ -1110,6 +1117,9 @@ export interface Database {
           ai_assessment_at?: string | null
           service_tier_at_request?: 'listing' | 'managed' | null
           service_tier_final?: 'listing' | 'managed' | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancellation_reason?: string | null
           housemates_count?: number | null
           created_at?: string
           updated_at?: string
@@ -1144,10 +1154,12 @@ export interface Database {
           deposit_amount?: number | null
           platform_fee_amount?: number | null
           stripe_payment_intent_id?: string | null
+          listing_fee_stripe_payment_intent_id?: string | null
           deposit_released_at?: string | null
           confirmed_at?: string | null
           declined_at?: string | null
           expires_at?: string | null
+          expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
           bond_acknowledged?: boolean | null
@@ -1159,6 +1171,9 @@ export interface Database {
           ai_assessment_at?: string | null
           service_tier_at_request?: 'listing' | 'managed' | null
           service_tier_final?: 'listing' | 'managed' | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          cancellation_reason?: string | null
           housemates_count?: number | null
           created_at?: string
           updated_at?: string

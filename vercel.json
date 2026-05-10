@@ -9,6 +9,9 @@
     "api/booking-mark-bond-received.ts": {
       "maxDuration": 30
     },
+    "api/booking-listing-cancel.ts": {
+      "maxDuration": 30
+    },
     "api/chat.ts": {
       "maxDuration": 60
     },

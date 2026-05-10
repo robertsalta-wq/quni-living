@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
+
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
   id: string
@@ -159,6 +161,14 @@ export async function runMarkBondReceivedLandlord(args: {
 
   if (evErr) {
     warn(logger, '[mark-bond-received] service_tier_events insert', evErr)
+  }
+
+  if (updated.service_tier_final === 'listing') {
+    try {
+      await sendListingBondReceivedEmails(admin, bookingId)
+    } catch (e) {
+      warn(logger, '[mark-bond-received] listing bond-received emails', e)
+    }
   }
 
   const row: MarkBondReceivedBookingPayload = {

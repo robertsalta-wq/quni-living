@@ -136,6 +136,11 @@ export default function LandlordBookingReviewPage() {
   const [bondReceivedError, setBondReceivedError] = useState<string | null>(null)
   const [bondReceivedToast, setBondReceivedToast] = useState<string | null>(null)
 
+  const [listingCancelOpen, setListingCancelOpen] = useState(false)
+  const [listingCancelBusy, setListingCancelBusy] = useState(false)
+  const [listingCancelError, setListingCancelError] = useState<string | null>(null)
+  const [listingCancelReason, setListingCancelReason] = useState('')
+
   useEffect(() => {
     if (!data?.booking) return
     const a = data.booking.ai_assessment
@@ -375,6 +380,44 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, reload])
 
+  const onConfirmCancelListing = useCallback(async () => {
+    if (!bookingId) return
+    setListingCancelBusy(true)
+    setListingCancelError(null)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setListingCancelError('You need to be signed in.')
+        return
+      }
+      const reason = listingCancelReason.trim()
+      const res = await fetch(apiUrl('/api/booking-listing-cancel'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookingId,
+          ...(reason ? { reason } : {}),
+        }),
+      })
+      const j = (await readJsonApiResponse(res)) as { error?: string }
+      if (!res.ok) {
+        setListingCancelError(typeof j.error === 'string' ? j.error : 'Could not cancel booking.')
+        return
+      }
+      setListingCancelOpen(false)
+      setListingCancelReason('')
+      await reload()
+    } catch {
+      setListingCancelError('Something went wrong.')
+    } finally {
+      setListingCancelBusy(false)
+    }
+  }, [bookingId, listingCancelReason, reload])
+
   if (!bookingId) {
     return (
       <div className="max-w-site mx-auto px-4 py-10 text-sm text-gray-600">
@@ -424,6 +467,9 @@ export default function LandlordBookingReviewPage() {
     bookingLandlordId: booking.landlord_id,
     viewerLandlordProfileId: landlordProfileId,
   })
+
+  const canCancelListingBondPending =
+    booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
 
   const confirmBlockedBanner = landlordBookingConfirmBlockedBanner({
     bookingStatus: booking.status,
@@ -711,6 +757,19 @@ export default function LandlordBookingReviewPage() {
                 Confirms you&apos;ve received bond directly from the renter. The renter&apos;s lease will become signable
                 once you confirm. This is a self-report — Quni does not hold bond on Listing tenancies.
               </p>
+              {canCancelListingBondPending && (
+                <button
+                  type="button"
+                  disabled={bondReceivedBusy || listingCancelBusy}
+                  onClick={() => {
+                    setListingCancelError(null)
+                    setListingCancelOpen(true)
+                  }}
+                  className="w-full rounded-xl border-2 border-gray-300 bg-white text-gray-800 px-4 py-3 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 min-h-[3rem]"
+                >
+                  Cancel booking
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -749,6 +808,56 @@ export default function LandlordBookingReviewPage() {
           )}
         </div>
       </div>
+
+      {listingCancelOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close"
+            onClick={() => !listingCancelBusy && setListingCancelOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900">Cancel this booking?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Your $99 fee will be refunded in full. The renter will be notified.
+            </p>
+            <label className="block mt-4 text-sm font-medium text-gray-700">
+              Optional note to the renter <span className="text-gray-400 font-normal">(shown in their email)</span>
+            </label>
+            <textarea
+              value={listingCancelReason}
+              onChange={(e) => setListingCancelReason(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              placeholder="Reason for cancelling (optional)"
+            />
+            {listingCancelError && (
+              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                {listingCancelError}
+              </p>
+            )}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void onConfirmCancelListing()}
+                disabled={listingCancelBusy}
+                className="rounded-xl bg-gray-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
+              >
+                {listingCancelBusy ? 'Cancelling…' : 'Confirm cancellation'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setListingCancelOpen(false)}
+                disabled={listingCancelBusy}
+                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {declineOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">

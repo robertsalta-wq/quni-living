@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('./listingTransactionalEmails.js', () => ({
+  sendListingBookingAcceptedEmails: vi.fn().mockResolvedValue(undefined),
+}))
+
+import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
 import { runListingConfirmBooking } from './confirmListing.js'
 
 const landlord = { id: 'll1', stripe_customer_id: 'cus_ll' }
@@ -74,6 +79,10 @@ function stripeHappy() {
 }
 
 describe('runListingConfirmBooking', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('happy path: cancel hold, charge $99, bond_pending, telemetry insert', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
@@ -90,6 +99,13 @@ describe('runListingConfirmBooking', () => {
     if (!result.ok) return
     expect(result.status).toBe('bond_pending')
     expect(result.listing_fee_payment_intent_id).toBe('pi_fee')
+    expect(sendListingBookingAcceptedEmails).toHaveBeenCalledWith(
+      expect.anything(),
+      baseBooking.id,
+      expect.objectContaining({
+        bond_window_expires_at: expect.any(String),
+      }),
+    )
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
     expect(stripe.paymentIntents.create).toHaveBeenCalledWith(
       expect.objectContaining({

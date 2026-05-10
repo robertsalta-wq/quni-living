@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('./listingTransactionalEmails.js', () => ({
+  sendListingBondReceivedEmails: vi.fn().mockResolvedValue(undefined),
+}))
+
+import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'
@@ -89,6 +94,10 @@ function mockAdmin(opts: {
 }
 
 describe('runMarkBondReceivedLandlord', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('happy path: bond_pending → confirmed, flag + telemetry insert', async () => {
     const admin = mockAdmin({})
     const result = await runMarkBondReceivedLandlord({
@@ -102,6 +111,7 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(result.idempotent).toBe(false)
     expect(result.booking.status).toBe('confirmed')
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+    expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
   })
 
   it('wrong user (not landlord on booking)', async () => {
@@ -151,6 +161,7 @@ describe('runMarkBondReceivedLandlord', () => {
     if (!result.ok) return
     expect(result.idempotent).toBe(true)
     expect(result.booking.status).toBe('active')
+    expect(sendListingBondReceivedEmails).not.toHaveBeenCalled()
   })
 
   it('idempotent re-call when already confirmed', async () => {

@@ -253,3 +253,166 @@ export function depositReleasedLandlord(data) {
     html: wrapContent(inner),
   }
 }
+
+/** Listing tier — renter: landlord accepted; pay bond off-platform; deadline; lease preview */
+export function listingBookingAcceptedRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
+  const bookingRef = escapeHtml(data.booking_reference || '—')
+  const bondDeadline = escapeHtml(data.bond_deadline_display || '—')
+  const leasePreviewUrl = escapeHtml(data.lease_preview_url || data.student_dashboard_url || '#')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+
+  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed — next: bond payment</h2>
+<p>Hi ${studentName},</p>
+<p>Good news — your host has accepted your booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
+<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your landlord</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>
+<p><strong>Deadline:</strong> Please arrange bond payment before <strong>${bondDeadline}</strong>. If bond isn&apos;t received in time, this booking may lapse.</p>
+<p><strong>Agreement:</strong> You can review your tenancy agreement (preview) anytime — once bond is confirmed by your host, it becomes ready to sign.</p>
+<a href="${leasePreviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open lease preview →</a>
+<p style="margin-top:20px;font-size:14px;color:#555;">After bond is received, your host will confirm receipt on Quni and you&apos;ll receive another email when your agreement is ready to sign.</p>
+<a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
+
+  return {
+    subject: `Booking confirmed — arrange bond for ${data.property_address || data.property_title || 'your stay'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — landlord: $99 charged; bond direct from renter */
+export function listingBookingAcceptedLandlord(data) {
+  const landlordName = escapeHtml(data.landlord_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const bookingRef = escapeHtml(data.booking_reference || '—')
+  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
+  const bondDeadline = escapeHtml(data.bond_deadline_display || '—')
+  const markBondUrl = escapeHtml(data.mark_bond_received_url || data.dashboard_url || '#')
+
+  const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
+<p>Hi ${landlordName},</p>
+<p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
+<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation.</p>
+<p><strong>Bond:</strong> Collect the bond <strong>directly from the renter</strong> off-platform. When you&apos;ve received it, please confirm on Quni before <strong>${bondDeadline}</strong>.</p>
+<a href="${markBondUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Mark bond received →</a>`
+
+  return {
+    subject: `Listing booking confirmed — ${data.property_address || data.property_title || 'your listing'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — renter: bond acknowledged; lease signable */
+export function listingBondReceivedRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
+  const signUrl = escapeHtml(data.sign_agreement_url || data.student_dashboard_url || '#')
+
+  const inner = `<h2 style="color: #1A1A2E;">Bond received — sign your tenancy agreement</h2>
+<p>Hi ${studentName},</p>
+<p>Your landlord has confirmed bond receipt for <strong>${propertyAddress}</strong>.</p>
+<p><strong>Next step:</strong> Your tenancy agreement is now ready to sign electronically.</p>
+<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>`
+
+  return {
+    subject: `Sign your agreement — ${data.property_address || data.property_title || 'your booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — landlord: bond acknowledged */
+export function listingBondReceivedLandlord(data) {
+  const landlordName = escapeHtml(data.landlord_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Bond receipt recorded</h2>
+<p>Hi ${landlordName},</p>
+<p>Thanks — we&apos;ve recorded bond receipt for your Listing booking at <strong>${propertyAddress}</strong>.</p>
+<p>The renter can now complete signing on their side. You&apos;ll receive DocuSeal notifications as usual.</p>
+<a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
+
+  return {
+    subject: `Bond received recorded — ${data.property_address || data.property_title || 'your listing'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — bond window expired (renter) */
+export function listingBondPendingExpiredRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Booking lapsed — bond not received in time</h2>
+<p>Hi ${studentName},</p>
+<p>Your booking for <strong>${propertyAddress}</strong> has ended because bond wasn&apos;t confirmed before the deadline.</p>
+<p>You can browse other homes on Quni Living anytime.</p>
+<a href="${listingsUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse listings →</a>`
+
+  return {
+    subject: `Booking lapsed — ${data.property_address || data.property_title || 'your request'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — bond window expired (landlord); fee refunded */
+export function listingBondPendingExpiredLandlord(data) {
+  const landlordName = escapeHtml(data.landlord_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Booking lapsed — Listing fee refunded</h2>
+<p>Hi ${landlordName},</p>
+<p>The bond window closed without bond confirmation for <strong>${propertyAddress}</strong>, so this Listing booking has expired.</p>
+<p>Your <strong>${listingFee}</strong> Listing fee has been refunded to your original payment method (typically 5–10 business days, depending on your bank).</p>
+<a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open dashboard →</a>`
+
+  return {
+    subject: `Booking lapsed — fee refunded (${data.property_address || data.property_title || 'listing'})`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — landlord cancelled (renter) */
+export function listingCancelledByLandlordRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const reasonRaw = (data.cancellation_reason || '').trim()
+  const reasonBlock =
+    reasonRaw.length > 0
+      ? `<p><strong>Note from host:</strong><br>${escapeHtml(reasonRaw).replace(/\n/g, '<br>')}</p>`
+      : ''
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Booking cancelled by host</h2>
+<p>Hi ${studentName},</p>
+<p>The host has cancelled your Listing booking for <strong>${propertyAddress}</strong>.</p>
+${reasonBlock}
+<p>There are many other student-friendly homes on Quni Living — keep browsing when you&apos;re ready.</p>
+<a href="${listingsUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse listings →</a>`
+
+  return {
+    subject: `Booking cancelled — ${data.property_address || data.property_title || 'your booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier — landlord cancelled (landlord confirmation); fee refunded */
+export function listingCancelledByLandlordLandlord(data) {
+  const landlordName = escapeHtml(data.landlord_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+
+  const inner = `<h2 style="color: #1A1A2E;">Booking cancelled — fee refunded</h2>
+<p>Hi ${landlordName},</p>
+<p>We&apos;ve cancelled your Listing booking for <strong>${propertyAddress}</strong> as requested.</p>
+<p>Your <strong>${listingFee}</strong> Listing fee refund has been submitted to your original payment method.</p>
+<a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Dashboard →</a>`
+
+  return {
+    subject: `Cancellation confirmed — fee refunded (${data.property_address || data.property_title || 'listing'})`,
+    html: wrapContent(inner),
+  }
+}
