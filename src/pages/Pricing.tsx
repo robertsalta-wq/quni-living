@@ -142,6 +142,12 @@ const faqBuckets: FaqBucket[] = [
         answer:
           'See the availability lines under each landlord column on this page — they reflect Queensland, New South Wales, and Victoria for typical private-room listings.',
       },
+      {
+        id: 'listing-managed-2',
+        question: 'Do I have to pick the same tier for every property?',
+        answer:
+          'No. Each property you list carries its own Quni service model. You can run one property as Quni Listing and another as Quni Managed in the same account. Listing properties can be upgraded to Managed later (for example, when accepting a booking), but Managed properties cannot move back to Listing.',
+      },
     ],
   },
   {

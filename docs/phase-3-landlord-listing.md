@@ -271,3 +271,21 @@ The 7-day platform timeout is for Quni's booking state machine (when `bond_pendi
 ---
 
 *End of design doc. Decisions locked. Ready for Cursor to break into the implementation order at §10. Open audit on Managed deposit + bond flow runs in parallel.*
+
+---
+
+## Addendum (2026-05-10): per-property tier shipped
+
+The original design above treated Listing/Managed as a per-booking decision the landlord made at booking acceptance time. That created friction once a "self-managed flatmates-style" landlord cohort was in scope for the Sydney launch — Managed kept defaulting and Stripe Connect was always pushed.
+
+What actually shipped (migrations `20260510190000_property_service_tier.sql` and `20260510210000_property_service_tier_audit.sql`):
+
+- **Tier lives on the property row.** `properties.service_tier` is `not null default 'managed'` with `check (service_tier in ('listing', 'managed'))`. Existing properties were backfilled to `'managed'`.
+- **Pricing CTA intent persists.** `Pricing.tsx` "Choose Listing" / "Choose Managed" buttons pass `?tier=` to `/landlord-signup`. `LandlordSignup.tsx` writes the value to `localStorage.quni_intended_landlord_service_tier` before the OAuth redirect; `LandlordPropertyFormPage` reads it back on the first new listing.
+- **Property form picks the tier.** `LandlordPropertyFormPage` shows two cards (Listing / Managed) gated by `resolveServiceTierAvailability(state, propertyTier)`. A Listing property may be upgraded to Managed (with a confirm dialog and warning banner). A Managed property cannot move back to Listing.
+- **Booking acceptance follows the property.** `LandlordBookingReviewPage` now derives the tier from `property.service_tier` instead of asking the landlord. Listing properties additionally show an "Upgrade property to Quni Managed" option which permanently flips the property's tier on confirm.
+- **API tier resolution mirrors this.** `serviceTierSnapshot.ts` (`computeServiceTierAtRequestSnapshot`, `resolveEffectiveConfirmTier`, `validateLandlordConfirmTierChoice`) all take `propertyServiceTier` and prefer it. `confirmManaged.ts` updates `properties.service_tier` to `'managed'` when a Listing property's booking is upgraded. `create-booking-payment-intent.js` only enforces the Stripe Connect readiness check when the property tier is Managed (Listing only needs the landlord's saved card for the $99 fee).
+- **Audit + ratchet at the database.** `service_tier_events` now receives `property_created` and `property_tier_changed` rows from triggers on `properties`. A `BEFORE UPDATE` trigger raises if `OLD.service_tier = 'managed' AND NEW.service_tier <> 'managed'`, so the no-downgrade rule holds even if the form/API gating is bypassed.
+- **Dashboard reflects the model.** `LandlordDashboard` shows the landlord's property mix (Listing vs Managed counts), each property card surfaces its tier with a one-line description, and the bookings table has a Service column derived from `service_tier_final` (or `at_request` for pending rows). The Stripe Connect banner is gated on `hasManagedWork` instead of every landlord seeing it.
+
+The booking-level `service_tier_at_request` and `service_tier_final` columns from this design still exist and still carry the per-booking snapshot — they're now sourced from the property tier rather than from a landlord choice at accept time.

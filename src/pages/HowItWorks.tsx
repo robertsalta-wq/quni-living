@@ -40,12 +40,13 @@ const LISTING_STUDENT: Step[] = [
 const LISTING_LANDLORD: Step[] = [
   {
     title: '1. List for free',
-    description: 'Create your listing with AI-assisted tools — no upfront charge.',
+    description:
+      'Create your listing with AI-assisted tools — no upfront charge. Each property you list is set to Listing or Managed; you can run a mix.',
   },
   {
     title: '2. Accept a booking',
     description:
-      'Review the renter and confirm. On Listing tier, a flat acceptance fee applies per accepted booking (see Pricing). Fee collection at confirm is scheduled for a later product release.',
+      'Review the renter and confirm. The flat Listing acceptance fee is charged to your saved card at the moment you accept (see Pricing).',
   },
   {
     title: '3. Run the tenancy',
@@ -72,7 +73,8 @@ const MANAGED_STUDENT: Step[] = [
 const MANAGED_LANDLORD: Step[] = [
   {
     title: '1. List as Managed',
-    description: 'Opt into Quni Managed when your state and property type are supported.',
+    description:
+      'Choose Managed on the property when your state and property type support it. Other properties in your portfolio can stay on Listing.',
   },
   {
     title: '2. Confirm the booking',
@@ -101,8 +103,9 @@ export default function HowItWorks() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm leading-relaxed text-[#6B6B6B] sm:text-base">
               Renters pay <strong className="font-semibold text-gray-800">no</strong> booking, platform, service, or
-              surcharge fees to Quni in either tier. Landlords choose Listing (flat fee per accepted booking) or Managed
-              (percentage of weekly rent).
+              surcharge fees to Quni in either tier. Landlords pick Listing (flat fee per accepted booking) or Managed
+              (percentage of weekly rent) <strong className="font-semibold text-gray-800">per property</strong>, so a
+              landlord can run a mix.
             </p>
           </div>
 
