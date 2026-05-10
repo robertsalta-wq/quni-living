@@ -35,7 +35,7 @@ import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
 import AdminPayments from './pages/admin/AdminPayments'
 import AdminSettings from './pages/admin/AdminSettings'
-import AdminPricing from './pages/admin/AdminPricing'
+import PricingGate from './pages/admin/PricingGate'
 import KnowledgeBase from './pages/admin/KnowledgeBase'
 import DocumentsPage from './pages/admin/DocumentsPage'
 import DomainsPage from './pages/admin/DomainsPage'
@@ -281,7 +281,7 @@ function App() {
             <Route path="apps" element={<AdminApps />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="settings" element={<AdminSettings />} />
-            <Route path="pricing" element={<AdminPricing />} />
+            <Route path="pricing" element={<PricingGate />} />
             <Route path="knowledge-base" element={<KnowledgeBase />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="domains" element={<DomainsPage />} />

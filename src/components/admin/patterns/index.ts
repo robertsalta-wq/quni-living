@@ -19,3 +19,6 @@ export type { ChipFilterProps, ChipFilterOption } from './ChipFilter'
 
 export { DetailDrawer } from './DetailDrawer'
 export type { DetailDrawerProps } from './DetailDrawer'
+
+export { Tabs } from './Tabs'
+export type { TabsProps, TabItem } from './Tabs'
