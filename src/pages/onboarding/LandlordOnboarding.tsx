@@ -16,6 +16,12 @@ import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/su
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
+import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
+import {
+  INTENDED_LANDLORD_SERVICE_TIER_KEY,
+  parseLandlordServiceTier,
+  type LandlordServiceTier,
+} from '../../lib/landlordServiceTier'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -88,9 +94,22 @@ export default function LandlordOnboarding() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [connectReturnError, setConnectReturnError] = useState<string | null>(null)
   const [stripeSkippedForNow, setStripeSkippedForNow] = useState(false)
+  const [cardModalOpen, setCardModalOpen] = useState(false)
+  const [cardSaved, setCardSaved] = useState(false)
+
+  const [intendedTier, setIntendedTier] = useState<LandlordServiceTier | null>(null)
 
   const [hasInsurance, setHasInsurance] = useState(false)
   const [insuranceWarning, setInsuranceWarning] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
+      setIntendedTier(parseLandlordServiceTier(raw))
+    } catch {
+      setIntendedTier(null)
+    }
+  }, [])
 
   const loadProfile = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -819,12 +838,94 @@ export default function LandlordOnboarding() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && intendedTier === 'listing' && (
+            <div className="space-y-6">
+              <h2 className="text-lg font-bold text-stone-900">Add a card for Quni Listing fees</h2>
+              <p className="text-sm text-stone-600 leading-relaxed">
+                You picked Quni Listing on the pricing page — you run the tenancy and bond &amp; rent stay between you and
+                your renter. Quni only charges a flat acceptance fee on your saved card when you accept a booking. You
+                won&apos;t be charged today.
+              </p>
+
+              {cardSaved || landlordStripeStepComplete(profile) ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+                  {cardSaved ? 'Card saved ✓' : 'Bank account connected ✓'}
+                  <p className="text-xs font-normal text-emerald-800/90 mt-1">
+                    {cardSaved
+                      ? 'You can now accept Quni Listing bookings.'
+                      : 'Moving to the next step…'}
+                  </p>
+                  {cardSaved && (
+                    <button
+                      type="button"
+                      onClick={() => setStep(4)}
+                      className="mt-3 rounded-lg bg-[#FF6F61] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e85d52]"
+                    >
+                      Continue →
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCardModalOpen(true)}
+                      className="rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                    >
+                      Save card for Listing fees →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStripeSkippedForNow(true)
+                        setStep(4)
+                      }}
+                      className="rounded-xl border-2 border-stone-300 bg-white text-stone-900 py-3.5 text-sm font-semibold hover:bg-stone-50 transition-colors disabled:opacity-50"
+                    >
+                      Skip for now
+                    </button>
+                  </div>
+                  <p className="text-xs text-stone-600">
+                    You&apos;ll need a saved card before accepting your first Quni Listing booking. You can save it later
+                    from your profile if you skip now.
+                  </p>
+                  <details className="rounded-lg border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-700">
+                    <summary className="cursor-pointer font-medium text-stone-800">
+                      Planning to also list a Quni Managed property?
+                    </summary>
+                    <div className="mt-2 space-y-2 leading-relaxed">
+                      <p>
+                        Managed properties pay rent through Stripe Connect, so you&apos;d also need to connect a bank
+                        account before accepting Managed bookings. You can do that here or anytime from your dashboard.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={connectLoading}
+                        onClick={() => void startStripeConnect()}
+                        className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-50"
+                      >
+                        {connectLoading ? 'Opening Stripe…' : 'Connect bank account (optional)'}
+                      </button>
+                    </div>
+                  </details>
+                  {stripeSkippedForNow && (
+                    <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Card setup skipped for now. You can save a card later from your profile.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 3 && intendedTier !== 'listing' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Connect your bank account to receive rent payments</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
-                We use Stripe to securely process payments. You&apos;ll complete a short Stripe Express onboarding — we never see your
-                full bank details.
+                We use Stripe to securely process Quni Managed rent payouts. You&apos;ll complete a short Stripe Express
+                onboarding — we never see your full bank details. If you intend to run only Quni Listing properties (you
+                handle bond and rent directly), you can skip this and just save a card from your profile instead.
               </p>
 
               {landlordStripeStepComplete(profile) ? (
@@ -856,7 +957,7 @@ export default function LandlordOnboarding() {
                     </button>
                   </div>
                   <p className="text-xs text-stone-600">
-                    You&apos;ll need to connect your bank account before you can accept your first booking.
+                    You&apos;ll need to connect your bank account before you can accept your first Quni Managed booking.
                   </p>
                   {stripeSkippedForNow && (
                     <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -867,6 +968,15 @@ export default function LandlordOnboarding() {
               )}
             </div>
           )}
+
+          <LandlordListingPaymentModal
+            open={cardModalOpen}
+            onClose={() => setCardModalOpen(false)}
+            onSuccess={() => {
+              setCardSaved(true)
+              setCardModalOpen(false)
+            }}
+          />
 
           {step === 4 && (
             <form onSubmit={saveStep4} className="space-y-6">

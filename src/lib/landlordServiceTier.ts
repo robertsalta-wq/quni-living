@@ -19,3 +19,26 @@ export function landlordServiceTierDescription(tier: LandlordServiceTier | null 
     ? 'You handle bond, rent, and day-to-day management directly with the renter.'
     : 'Quni handles rent collection and the managed tenancy workflow for this property.'
 }
+
+/**
+ * One-way ratchet rule for moving a property between service tiers.
+ *
+ * - Same tier: always fine (no change).
+ * - Listing -> Managed: always fine (manual upgrade in the form, or
+ *   automatic upgrade when a Managed booking is accepted on a Listing
+ *   property).
+ * - Managed -> Listing: never allowed. The DB enforces this with a
+ *   BEFORE UPDATE trigger; this helper is the form-side gate.
+ *
+ * `from` is allowed to be null/undefined because brand new listings
+ * have no prior tier and are free to start as either.
+ */
+export function canSwitchPropertyServiceTier(
+  from: LandlordServiceTier | null | undefined,
+  to: LandlordServiceTier,
+): boolean {
+  if (!from) return true
+  if (from === to) return true
+  if (from === 'managed' && to === 'listing') return false
+  return true
+}

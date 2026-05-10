@@ -29,6 +29,7 @@ import {
 } from '../../lib/pricing'
 import { resolveServiceTierAvailability } from '../../lib/serviceTier'
 import {
+  canSwitchPropertyServiceTier,
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
   landlordServiceTierTitle,
   parseLandlordServiceTier,
@@ -1332,7 +1333,7 @@ export default function LandlordPropertyFormPage() {
       setSubmitError(managedTierUnavailableReason)
       return
     }
-    if (isEdit && initialServiceTier === 'managed' && serviceTier !== 'managed') {
+    if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
       setSubmitError('Managed properties cannot be changed back to Quni Listing.')
       return
     }
@@ -2121,7 +2122,7 @@ export default function LandlordPropertyFormPage() {
                     const selected = serviceTier === tier
                     const available =
                       tier === 'listing' ? listingTierAvailable : managedTierAvailable
-                    const locked = isEdit && initialServiceTier === 'managed' && tier === 'listing'
+                    const locked = isEdit && !canSwitchPropertyServiceTier(initialServiceTier, tier)
                     const disabled = !available || locked
                     const description =
                       tier === 'listing'
