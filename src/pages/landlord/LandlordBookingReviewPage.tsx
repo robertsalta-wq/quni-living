@@ -24,6 +24,7 @@ import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordLis
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
+import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -136,6 +137,7 @@ export default function LandlordBookingReviewPage() {
   const [bondReceivedBusy, setBondReceivedBusy] = useState(false)
   const [bondReceivedError, setBondReceivedError] = useState<string | null>(null)
   const [bondReceivedToast, setBondReceivedToast] = useState<string | null>(null)
+  const [leasePanelRefreshKey, setLeasePanelRefreshKey] = useState(0)
 
   const [listingCancelOpen, setListingCancelOpen] = useState(false)
   const [listingCancelBusy, setListingCancelBusy] = useState(false)
@@ -400,6 +402,8 @@ export default function LandlordBookingReviewPage() {
       setBondReceivedToast('Bond received recorded.')
       window.setTimeout(() => setBondReceivedToast(null), 4500)
       await reload()
+      /** Re-fetch lease state so the preview-mode panel flips to ready_to_sign. */
+      setLeasePanelRefreshKey((k) => k + 1)
     } catch {
       setBondReceivedError('Something went wrong.')
     } finally {
@@ -776,6 +780,17 @@ export default function LandlordBookingReviewPage() {
             </div>
           )}
         </section>
+
+        {(booking.status === 'bond_pending' ||
+          booking.status === 'confirmed' ||
+          booking.status === 'active') && (
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Tenancy agreement
+            </h2>
+            <BookingLeasePanel bookingId={booking.id} refreshKey={leasePanelRefreshKey} />
+          </section>
+        )}
 
         {messages.length > 0 && (
           <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">

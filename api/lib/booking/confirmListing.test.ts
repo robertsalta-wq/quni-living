@@ -4,7 +4,12 @@ vi.mock('./listingTransactionalEmails.js', () => ({
   sendListingBookingAcceptedEmails: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('./triggerListingDocumentGeneration.js', () => ({
+  triggerListingDocumentGeneration: vi.fn().mockResolvedValue({ ok: true, skipped: true, reason: 'mock' }),
+}))
+
 import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
+import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { runListingConfirmBooking } from './confirmListing.js'
 
 const landlord = { id: 'll1', stripe_customer_id: 'cus_ll' }
@@ -121,6 +126,26 @@ describe('runListingConfirmBooking', () => {
       { idempotencyKey: `confirm-listing-${baseBooking.id}` },
     )
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+  })
+
+  it('Phase 3 / Task J: confirm Listing triggers document generation in PREVIEW (defer_signing=true)', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({})
+
+    await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(triggerListingDocumentGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookingId: baseBooking.id,
+        deferSigning: true,
+      }),
+    )
   })
 
   it('missing default payment method', async () => {

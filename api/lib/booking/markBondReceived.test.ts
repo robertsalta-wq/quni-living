@@ -4,7 +4,12 @@ vi.mock('./listingTransactionalEmails.js', () => ({
   sendListingBondReceivedEmails: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('./triggerListingDocumentGeneration.js', () => ({
+  triggerListingDocumentGeneration: vi.fn().mockResolvedValue({ ok: true, skipped: true, reason: 'mock' }),
+}))
+
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
+import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'
@@ -112,6 +117,39 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(result.booking.status).toBe('confirmed')
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
     expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
+  })
+
+  it('Phase 3 / Task J: bond received unlocks signing — triggers document generation with deferSigning=false', async () => {
+    const admin = mockAdmin({})
+    await runMarkBondReceivedLandlord({
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId: bookingBase.id,
+    })
+
+    expect(triggerListingDocumentGeneration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookingId: bookingBase.id,
+        deferSigning: false,
+      }),
+    )
+  })
+
+  it('Phase 3 / Task J: idempotent re-call does NOT trigger document generation again', async () => {
+    const admin = mockAdmin({
+      booking: {
+        ...bookingBase,
+        status: 'confirmed',
+        bond_received_by_landlord_at: '2026-05-08T00:00:00.000Z',
+      },
+    })
+    await runMarkBondReceivedLandlord({
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId: bookingBase.id,
+    })
+
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
   })
 
   it('wrong user (not landlord on booking)', async () => {

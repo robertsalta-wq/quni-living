@@ -1,6 +1,7 @@
 // @ts-nocheck — Listing-tier confirm: cancel renter hold + $99 landlord charge + bond_pending.
 
 import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
+import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID = 'prod_UTXU1Ilz3bfCY7'
@@ -270,6 +271,22 @@ export async function runListingConfirmBooking(params) {
       })
     } catch (e) {
       console.error('[confirm-listing] acceptance emails', e)
+    }
+
+    /**
+     * Phase 3 / Task J: generate the lease as a preview-only document at landlord-confirm.
+     * DocuSeal signing flow is deferred until the landlord ticks "Bond received".
+     * Failures are non-fatal — booking is already in `bond_pending` and the lease can be
+     * regenerated when the bond-received action runs.
+     */
+    try {
+      await triggerListingDocumentGeneration({
+        admin,
+        bookingId: booking.id,
+        deferSigning: true,
+      })
+    } catch (e) {
+      console.error('[confirm-listing] preview document generation', e)
     }
   }
 

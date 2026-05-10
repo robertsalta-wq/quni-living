@@ -106,9 +106,9 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Server misconfigured' })
   }
 
-  let body: { booking_id?: string }
+  let body: { booking_id?: string; defer_signing?: boolean }
   try {
-    body = (await readJsonBody(req)) as { booking_id?: string }
+    body = (await readJsonBody(req)) as { booking_id?: string; defer_signing?: boolean }
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' })
   }
@@ -117,6 +117,8 @@ export default async function handler(req: any, res: any) {
   if (!bookingId) {
     return res.status(400).json({ error: 'booking_id is required' })
   }
+
+  const deferSigning = body.defer_signing === true
 
   const admin = createClient<Database>(supabaseUrl, serviceRole)
 
@@ -129,6 +131,7 @@ export default async function handler(req: any, res: any) {
       student_id,
       landlord_id,
       status,
+      service_tier_final,
       weekly_rent,
       move_in_date,
       start_date,
@@ -167,7 +170,14 @@ export default async function handler(req: any, res: any) {
     properties?: Record<string, unknown> | null
   }
 
-  if (booking.status !== 'confirmed') {
+  /**
+   * Phase 3 / Task J: see generate-lease.ts — Listing bookings call this with
+   * `defer_signing=true` while in `bond_pending`; signing is initiated later when
+   * mark-bond-received transitions the booking to `confirmed` and re-triggers this endpoint.
+   */
+  const isListingPreview =
+    deferSigning && booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
+  if (booking.status !== 'confirmed' && !isListingPreview) {
     return res.status(400).json({ error: 'Booking must be confirmed' })
   }
 
@@ -564,7 +574,7 @@ export default async function handler(req: any, res: any) {
   const hasDocuseal =
     (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
 
-  if (hasDocuseal) {
+  if (hasDocuseal && !deferSigning) {
     try {
       await sendResidentialTenancyPackageForSigning(documentId, { submitterSignReason: false })
     } catch (e) {
@@ -579,6 +589,7 @@ export default async function handler(req: any, res: any) {
     document_id: documentId,
     file_path: rtaStoragePath,
     addendum_file_path: addendumStoragePath,
+    deferred_signing: deferSigning,
     ...(docusealError ? { docuseal_error: docusealError } : {}),
   })
 }

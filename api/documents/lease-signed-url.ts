@@ -103,7 +103,9 @@ export default async function handler(req: any, res: any) {
 
   const { data: docRows, error: dErr } = await admin
     .from('tenancy_documents')
-    .select('id, file_path, document_type, docuseal_submission_id, metadata')
+    .select(
+      'id, file_path, document_type, docuseal_submission_id, metadata, landlord_signed_at, student_signed_at',
+    )
     .eq('tenancy_id', tenancy.id)
     .in('document_type', ['lease', 'residential_tenancy'])
     .eq('status', 'signed')
@@ -119,6 +121,23 @@ export default async function handler(req: any, res: any) {
 
   if (!doc?.file_path) {
     return res.status(404).json({ error: 'Signed agreement not available yet' })
+  }
+
+  /**
+   * Phase 3 / Task J: gate downloads on both parties having actually signed.
+   * Status='signed' alone is not enough — the DocuSeal webhook can fire after a single
+   * signature in some configurations. Requiring both per-party timestamps means the
+   * "Download signed agreement" button never serves a partially-signed PDF.
+   */
+  const landlordSignedAt =
+    typeof doc.landlord_signed_at === 'string' ? doc.landlord_signed_at.trim() : ''
+  const studentSignedAt =
+    typeof doc.student_signed_at === 'string' ? doc.student_signed_at.trim() : ''
+  if (!landlordSignedAt || !studentSignedAt) {
+    return res.status(404).json({
+      error: 'Signed agreement not available yet',
+      message: 'Awaiting signatures from both parties before the executed agreement can be downloaded.',
+    })
   }
 
   let rowMeta =

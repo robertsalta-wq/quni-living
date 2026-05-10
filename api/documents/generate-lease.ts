@@ -84,9 +84,9 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Server misconfigured' })
   }
 
-  let body: { booking_id?: string }
+  let body: { booking_id?: string; defer_signing?: boolean }
   try {
-    body = (await readJsonBody(req)) as { booking_id?: string }
+    body = (await readJsonBody(req)) as { booking_id?: string; defer_signing?: boolean }
   } catch {
     return res.status(400).json({ error: 'Invalid JSON' })
   }
@@ -95,6 +95,8 @@ export default async function handler(req: any, res: any) {
   if (!bookingId) {
     return res.status(400).json({ error: 'booking_id is required' })
   }
+
+  const deferSigning = body.defer_signing === true
 
   const admin = createClient<Database>(supabaseUrl, serviceRole)
 
@@ -107,6 +109,7 @@ export default async function handler(req: any, res: any) {
       student_id,
       landlord_id,
       status,
+      service_tier_final,
       weekly_rent,
       move_in_date,
       start_date,
@@ -143,7 +146,16 @@ export default async function handler(req: any, res: any) {
     properties?: Record<string, unknown> | null
   }
 
-  if (booking.status !== 'confirmed') {
+  /**
+   * Phase 3 / Task J: Listing bookings call this generator at landlord-confirm with
+   * `defer_signing=true` while the booking is still `bond_pending`. We render the lease
+   * preview but do not start the DocuSeal signing session until the landlord ticks
+   * "Bond received" (which transitions status -> confirmed and re-triggers this endpoint
+   * with `defer_signing=false`).
+   */
+  const isListingPreview =
+    deferSigning && booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
+  if (booking.status !== 'confirmed' && !isListingPreview) {
     return res.status(400).json({ error: 'Booking must be confirmed' })
   }
 
@@ -349,7 +361,7 @@ export default async function handler(req: any, res: any) {
   const hasDocuseal =
     (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
 
-  if (hasDocuseal) {
+  if (hasDocuseal && !deferSigning) {
     try {
       await sendForSigning(documentId)
     } catch (e) {
@@ -363,6 +375,7 @@ export default async function handler(req: any, res: any) {
     tenancy_id: tenancyId,
     document_id: documentId,
     file_path: storagePath,
+    deferred_signing: deferSigning,
     ...(docusealError ? { docuseal_error: docusealError } : {}),
   })
 }

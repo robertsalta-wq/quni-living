@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
+import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
@@ -168,6 +169,23 @@ export async function runMarkBondReceivedLandlord(args: {
       await sendListingBondReceivedEmails(admin, bookingId)
     } catch (e) {
       warn(logger, '[mark-bond-received] listing bond-received emails', e)
+    }
+
+    /**
+     * Phase 3 / Task J: bond received unlocks DocuSeal signing for the Listing lease.
+     * The generator detects the existing draft (created at landlord-confirm with
+     * `defer_signing: true`) and now initiates the DocuSeal signing session for both parties.
+     * Failures are non-fatal — landlord can retrigger via existing dashboard mechanisms.
+     */
+    try {
+      await triggerListingDocumentGeneration({
+        admin,
+        bookingId,
+        deferSigning: false,
+        logger: { warn: (msg, err) => warn(logger, msg, err), error: (msg, err) => warn(logger, msg, err) },
+      })
+    } catch (e) {
+      warn(logger, '[mark-bond-received] listing signing trigger', e)
     }
   }
 

@@ -608,7 +608,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   const { data: docRow, error: findErr } = await admin
     .from('tenancy_documents')
-    .select('id, tenancy_id, docuseal_submission_id, metadata')
+    .select('id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at')
     .eq('docuseal_submission_id', submissionId)
     .maybeSingle()
 
@@ -674,21 +674,51 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     .from('tenancy-documents')
     .createSignedUrl(signedPath, 60 * 60 * 24 * 7)
 
-  const landlordSignedAt = extractCompletedAt(payload, 'landlord')
-  const studentSignedAt = extractCompletedAt(payload, 'tenant')
+  /**
+   * Phase 3 / Task J: keep per-party timestamps accurate.
+   * - Don't overwrite an existing landlord_signed_at / student_signed_at when a later
+   *   webhook fires that doesn't carry that role's completed_at.
+   * - Only flip status to 'signed' once BOTH parties have a real signed-at timestamp.
+   *   While only one party has signed we keep status as 'sent_for_signing' so the
+   *   "Download signed agreement" UI gate (which requires fully-signed) does not flip
+   *   prematurely.
+   */
+  const existingLandlordAt =
+    typeof docRow.landlord_signed_at === 'string' && docRow.landlord_signed_at.trim()
+      ? docRow.landlord_signed_at
+      : null
+  const existingStudentAt =
+    typeof docRow.student_signed_at === 'string' && docRow.student_signed_at.trim()
+      ? docRow.student_signed_at
+      : null
+
+  const incomingLandlordAt = extractCompletedAt(payload, 'landlord')
+  const incomingStudentAt = extractCompletedAt(payload, 'tenant')
+  const submissionCompletedAt = extractSubmissionCompletedAt(payload)
+
+  const nextLandlordAt = existingLandlordAt ?? incomingLandlordAt ?? submissionCompletedAt
+  const nextStudentAt = existingStudentAt ?? incomingStudentAt ?? submissionCompletedAt
+  const fullySigned = Boolean(nextLandlordAt) && Boolean(nextStudentAt)
+
+  const previousStatus = typeof docRow.status === 'string' ? docRow.status : 'sent_for_signing'
+  const nextStatus = fullySigned ? 'signed' : previousStatus === 'signed' ? 'signed' : 'sent_for_signing'
 
   const { error: upDocErr } = await admin
     .from('tenancy_documents')
     .update({
-      status: 'signed',
+      status: nextStatus,
       file_path: signedPath,
-      landlord_signed_at: landlordSignedAt,
-      student_signed_at: studentSignedAt,
+      landlord_signed_at: nextLandlordAt,
+      student_signed_at: nextStudentAt,
       metadata: { ...nextMetadata, last_webhook: payload as unknown as Json } as Json,
     })
     .eq('id', docRow.id)
 
   if (upDocErr) throw upDocErr
+
+  if (!fullySigned) {
+    return { ok: true, message: 'Webhook stored; awaiting remaining signatures' }
+  }
 
   const { data: tny } = await admin
     .from('tenancies')
@@ -743,13 +773,27 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   return { ok: true }
 }
 
-function extractCompletedAt(payload: unknown, role: 'landlord' | 'tenant'): string | null {
+/**
+ * Extract a real `completed_at` timestamp for the given role from a DocuSeal webhook payload.
+ *
+ * Returns the string timestamp DocuSeal supplied for that submitter, or `null` when:
+ *   - no submitters array is present;
+ *   - the role is not represented in the submitters list;
+ *   - the matching submitter has no completed_at value.
+ *
+ * Phase 3 / Task J: previously this returned `new Date().toISOString()` as a fallback,
+ * which caused both `landlord_signed_at` and `student_signed_at` to be populated whenever
+ * any DocuSeal webhook fired (even after a single party signed). The "fully signed" gate
+ * for the Download button needs accurate per-party timestamps, so we now return null when
+ * the payload does not actually carry a per-role completion time.
+ */
+export function extractCompletedAt(payload: unknown, role: 'landlord' | 'tenant'): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const submitters = root.submitters
-  if (!Array.isArray(submitters)) return new Date().toISOString()
+  if (!Array.isArray(submitters)) return null
   const needle = role === 'landlord' ? 'landlord' : 'tenant'
   for (const s of submitters) {
     if (!s || typeof s !== 'object') continue
@@ -757,8 +801,22 @@ function extractCompletedAt(payload: unknown, role: 'landlord' | 'tenant'): stri
     const roleStr = typeof r === 'string' ? r.toLowerCase() : ''
     if (!roleStr.includes(needle)) continue
     const c = (s as Record<string, unknown>).completed_at
-    if (typeof c === 'string' && c) return c
+    if (typeof c === 'string' && c.trim()) return c
+    return null
   }
+  return null
+}
+
+/** Fallback for the top-level `event_type === 'submission.completed'` case (all parties done). */
+function extractSubmissionCompletedAt(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+  const o = payload as Record<string, unknown>
+  const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
+  if (evt !== 'submission.completed' && evt !== 'form.completed') return null
+  const data = o.data
+  const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
+  const completedAt = root.completed_at
+  if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
   return new Date().toISOString()
 }
 
