@@ -40,7 +40,15 @@ export function AdminShell({ children }: AdminShellProps) {
       <AdminSidebar />
       <div style={{ paddingLeft: ADMIN_SIDEBAR_WIDTH }}>
         <AdminTopBar />
-        <main className="mx-auto w-full max-w-[1600px] px-6 py-8 lg:px-10">{children}</main>
+        {/*
+         * Standard admin page frame.
+         *
+         * Left-aligned (no `mx-auto`, no `max-w-*`) so content sits flush
+         * against the sidebar — Bookings table, Pricing tabs, etc. expand to
+         * fill the viewport rather than getting centred inside a 1600px column.
+         * The Living Console home variant above keeps its own centred layout.
+         */}
+        <main className="w-full px-6 py-8 lg:px-10">{children}</main>
       </div>
     </div>
   )
