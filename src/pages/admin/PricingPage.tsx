@@ -23,7 +23,11 @@ import { Button, Card, EmptyState, Eyebrow, ErrorState, LoadingState, Pill } fro
 import { Icon } from '../../components/admin/Icon'
 import { Tabs } from '../../components/admin/patterns'
 
-type TabId = 'fees' | 'volume' | 'early' | 'log'
+type TabId = 'listing' | 'managed' | 'volume' | 'early' | 'log'
+
+function isFeeTab(t: TabId): t is ServiceTierId {
+  return t === 'listing' || t === 'managed'
+}
 
 interface TierMeta {
   id: TierId
@@ -74,8 +78,6 @@ const TIER_PAYMENT_NOTES: Record<TierId, string> = {
   t2: 'Bank transfer must be offered free — s.35 RTA',
   t3: 'Per Boarding Houses Act 2012 requirements',
 }
-
-const SERVICE_TIERS: ServiceTierId[] = ['listing', 'managed']
 
 function statusTone(s: TierMeta['status']): 'success' | 'info' | 'neutral' {
   if (s === 'live') return 'success'
@@ -460,7 +462,7 @@ function clonePricing(m: Record<PricingKey, PricingConfigRow>): Record<PricingKe
 }
 
 export default function PricingPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('fees')
+  const [activeTab, setActiveTab] = useState<TabId>('listing')
   const [pricingByKey, setPricingByKey] = useState<Record<PricingKey, PricingConfigRow> | null>(null)
   const [baselineByKey, setBaselineByKey] = useState<Record<PricingKey, PricingConfigRow> | null>(null)
   const [volumeRows, setVolumeRows] = useState<Record<ServiceTierId, VolumeTierRow[]>>({ listing: [], managed: [] })
@@ -517,6 +519,10 @@ export default function PricingPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (isFeeTab(activeTab)) setPreviewSvc(activeTab)
+  }, [activeTab])
 
   const changedBy = useCallback(async () => {
     const { data } = await supabase.auth.getUser()
@@ -765,7 +771,8 @@ export default function PricingPage() {
               active={activeTab}
               onChange={setActiveTab}
               items={[
-                { id: 'fees', label: 'Fees', sub: 'Listing & Managed' },
+                { id: 'listing', label: 'Listing', sub: 'Flat fee' },
+                { id: 'managed', label: 'Managed', sub: '% of weekly rent' },
                 { id: 'volume', label: 'Volume', sub: 'Managed only' },
                 { id: 'early', label: 'Early adopter' },
                 { id: 'log', label: 'Change log', count: changeLog.length },
@@ -773,13 +780,15 @@ export default function PricingPage() {
             />
           </div>
 
-          {activeTab === 'fees' ? (
+          {isFeeTab(activeTab) ? (
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
               <div className="flex flex-col gap-4">
+                <FeeTabIntro serviceTier={activeTab} />
                 {TIERS.map((tier) => (
-                  <FeesCard
+                  <TierFeeCard
                     key={tier.id}
                     tier={tier}
+                    serviceTier={activeTab}
                     pricingByKey={pricingByKey}
                     baselineByKey={baselineByKey}
                     feeDraft={feeDraft}
@@ -793,9 +802,8 @@ export default function PricingPage() {
               </div>
               <LivePreview
                 previewTier={previewTier}
-                previewSvc={previewSvc}
+                previewSvc={activeTab}
                 onPreviewTier={setPreviewTier}
-                onPreviewSvc={setPreviewSvc}
                 row={previewRow}
                 dirty={previewDirty}
               />
@@ -984,8 +992,27 @@ export default function PricingPage() {
 
 /** ===== Sub-components ===== */
 
-interface FeesCardProps {
+function FeeTabIntro({ serviceTier }: { serviceTier: ServiceTierId }) {
+  const isListing = serviceTier === 'listing'
+  return (
+    <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3 text-[12px] text-admin-ink-3">
+      <strong className="text-admin-ink-2">
+        {isListing ? 'Quni Listing' : 'Quni Managed'}
+      </strong>
+      {' — '}
+      {isListing
+        ? 'Self-service tier. Landlord runs enquiries, bookings and the agreement; Quni charges a flat fee per booking.'
+        : 'Full-service tier. Quni handles enquiries, viewings, agreements, bond and payouts; pricing is a percentage of weekly rent.'}
+      <span className="ml-1 text-admin-ink-5">
+        Configure how this applies across each property tier below.
+      </span>
+    </div>
+  )
+}
+
+interface TierFeeCardProps {
   tier: TierMeta
+  serviceTier: ServiceTierId
   pricingByKey: Record<PricingKey, PricingConfigRow>
   baselineByKey: Record<PricingKey, PricingConfigRow>
   feeDraft: FixedFeeDraft
@@ -996,8 +1023,9 @@ interface FeesCardProps {
   savingKey: string | null
 }
 
-function FeesCard({
+function TierFeeCard({
   tier,
+  serviceTier,
   pricingByKey,
   baselineByKey,
   feeDraft,
@@ -1006,8 +1034,19 @@ function FeesCard({
   commitFee,
   saveTier,
   savingKey,
-}: FeesCardProps) {
+}: TierFeeCardProps) {
+  const rowKey = keyFor(tier.id, serviceTier)
+  const f = pricingByKey[rowKey]
+  const baseline = baselineByKey[rowKey]
+  const draft = feeDraft[rowKey]
   const managed = pricingByKey[keyFor(tier.id, 'managed')]
+  const isDirty =
+    f.fee_mode !== baseline.fee_mode ||
+    f.fee_percent !== baseline.fee_percent ||
+    f.fee_fixed_cents !== baseline.fee_fixed_cents ||
+    f.student_fee_fixed_cents !== baseline.student_fee_fixed_cents
+  const isSaving = savingKey === rowKey
+  const showShared = serviceTier === 'managed'
   return (
     <Card padding={0}>
       <div className="flex items-start justify-between gap-3 border-b border-admin-line-soft px-6 py-4">
@@ -1020,88 +1059,69 @@ function FeesCard({
             <KvMini k="Bond" v={tier.bond} />
           </div>
         </div>
-        <Pill tone={statusTone(tier.status)} dot={tier.status === 'live' ? 'ok' : tier.status === 'phase2' ? 'watch' : undefined}>
-          {tier.statusLabel}
-        </Pill>
+        <div className="flex flex-col items-end gap-1.5">
+          <Pill tone={statusTone(tier.status)} dot={tier.status === 'live' ? 'ok' : tier.status === 'phase2' ? 'watch' : undefined}>
+            {tier.statusLabel}
+          </Pill>
+          {isDirty ? <Pill tone="warning" dot="action">Unsaved</Pill> : null}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2">
-        {SERVICE_TIERS.map((st) => {
-          const f = pricingByKey[keyFor(tier.id, st)]
-          const baseline = baselineByKey[keyFor(tier.id, st)]
-          const draft = feeDraft[keyFor(tier.id, st)]
-          const isDirty =
-            f.fee_mode !== baseline.fee_mode ||
-            f.fee_percent !== baseline.fee_percent ||
-            f.fee_fixed_cents !== baseline.fee_fixed_cents ||
-            f.student_fee_fixed_cents !== baseline.student_fee_fixed_cents
-          const isSaving = savingKey === keyFor(tier.id, st)
-          return (
-            <div key={st} className="rounded-admin-md border border-admin-line bg-admin-surface-2 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="m-0 text-[11px] font-bold uppercase tracking-[0.08em] text-admin-ink-3">
-                  {st === 'listing' ? 'Listing tier' : 'Managed tier'}
-                </p>
-                {isDirty ? <Pill tone="warning">Unsaved</Pill> : null}
-              </div>
-              <div className="flex flex-col gap-3">
-                <FormRow label="Fee model">
-                  <Segmented
-                    value={f.fee_mode === 'fixed' ? 'fixed' : 'percent'}
-                    options={[
-                      { value: 'fixed', label: 'Flat fee' },
-                      { value: 'percent', label: 'Percentage' },
-                    ]}
-                    onChange={(v) => setPricingField(tier.id, st, 'fee_mode', v)}
-                  />
-                </FormRow>
-                {f.fee_mode === 'fixed' ? (
-                  <FormRow label="Fee amount">
-                    <CurrencyInput
-                      value={draft.feeFixedInput}
-                      onChange={(v) => setFeeDraftField(tier.id, st, 'fee', v)}
-                      onBlur={(raw) => commitFee(tier.id, st, 'fee', raw)}
-                    />
-                  </FormRow>
-                ) : (
-                  <FormRow label="Fee percentage">
-                    <PercentInput
-                      value={f.fee_percent}
-                      max={25}
-                      onChange={(n) => setPricingField(tier.id, st, 'fee_percent', n)}
-                    />
-                  </FormRow>
-                )}
-                <FormRow label="Student booking fee" hint="Charged to the student at booking time.">
-                  <CurrencyInput
-                    value={draft.studentFeeFixedInput}
-                    onChange={(v) => setFeeDraftField(tier.id, st, 'student', v)}
-                    onBlur={(raw) => commitFee(tier.id, st, 'student', raw)}
-                  />
-                </FormRow>
-              </div>
-              <div className="mt-4">
-                <Button
-                  kind="primary"
-                  size="sm"
-                  disabled={isSaving || !isDirty}
-                  onClick={() => void saveTier(tier.id, st)}
-                >
-                  {isSaving ? 'Saving…' : isDirty ? `Save ${st}` : 'Saved'}
-                </Button>
-              </div>
-            </div>
-          )
-        })}
+      <div className="flex flex-col gap-3 px-6 py-5">
+        <FormRow label="Fee model">
+          <Segmented
+            value={f.fee_mode === 'fixed' ? 'fixed' : 'percent'}
+            options={[
+              { value: 'fixed', label: 'Flat fee' },
+              { value: 'percent', label: 'Percentage' },
+            ]}
+            onChange={(v) => setPricingField(tier.id, serviceTier, 'fee_mode', v)}
+          />
+        </FormRow>
+        {f.fee_mode === 'fixed' ? (
+          <FormRow label="Fee amount" hint="Charged to the landlord per accepted booking.">
+            <CurrencyInput
+              value={draft.feeFixedInput}
+              onChange={(v) => setFeeDraftField(tier.id, serviceTier, 'fee', v)}
+              onBlur={(raw) => commitFee(tier.id, serviceTier, 'fee', raw)}
+            />
+          </FormRow>
+        ) : (
+          <FormRow label="Fee percentage" hint="Of the weekly rent. Computed at payout time.">
+            <PercentInput
+              value={f.fee_percent}
+              max={25}
+              onChange={(n) => setPricingField(tier.id, serviceTier, 'fee_percent', n)}
+            />
+          </FormRow>
+        )}
+        <FormRow label="Student booking fee" hint="Charged to the student at booking time.">
+          <CurrencyInput
+            value={draft.studentFeeFixedInput}
+            onChange={(v) => setFeeDraftField(tier.id, serviceTier, 'student', v)}
+            onBlur={(raw) => commitFee(tier.id, serviceTier, 'student', raw)}
+          />
+        </FormRow>
+        <div className="flex justify-end pt-2">
+          <Button
+            kind="primary"
+            size="sm"
+            disabled={isSaving || !isDirty}
+            onClick={() => void saveTier(tier.id, serviceTier)}
+          >
+            {isSaving ? 'Saving…' : isDirty ? `Save ${tier.id.toUpperCase()} ${serviceTier}` : 'Saved'}
+          </Button>
+        </div>
       </div>
 
-      <div className="border-t border-admin-line-soft px-6 py-5">
-        <h4 className="m-0 text-[12px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">
-          Shared payment settings
-        </h4>
-        <p className="m-0 mt-0.5 text-[12px] italic text-admin-ink-5">{TIER_PAYMENT_NOTES[tier.id]}</p>
-        <div className="mt-3 flex flex-col gap-3">
-          <FormRow label="Card surcharge" hint="Optional 1.7% pass-through if the student pays by card.">
+      {showShared ? (
+        <div className="border-t border-admin-line-soft px-6 py-5">
+          <h4 className="m-0 text-[12px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">
+            Shared payment settings
+          </h4>
+          <p className="m-0 mt-0.5 text-[12px] italic text-admin-ink-5">{TIER_PAYMENT_NOTES[tier.id]}</p>
+          <div className="mt-3 flex flex-col gap-3">
+            <FormRow label="Card surcharge" hint="Optional 1.7% pass-through if the student pays by card.">
             <Toggle
               checked={managed.card_surcharge_enabled}
               onChange={(next) => setPricingField(tier.id, 'managed', 'card_surcharge_enabled', next)}
@@ -1115,17 +1135,18 @@ function FeesCard({
               ariaLabel="Free bank transfer required"
             />
           </FormRow>
-          <FormRow label="Utilities cap" hint="Quarterly cap; 0 means not applicable / billed separately.">
-            <NumberInput
-              value={managed.utilities_cap_aud}
-              min={0}
-              step={50}
-              suffix="AUD / quarter"
-              onChange={(n) => setPricingField(tier.id, 'managed', 'utilities_cap_aud', n)}
-            />
-          </FormRow>
+            <FormRow label="Utilities cap" hint="Quarterly cap; 0 means not applicable / billed separately.">
+              <NumberInput
+                value={managed.utilities_cap_aud}
+                min={0}
+                step={50}
+                suffix="AUD / quarter"
+                onChange={(n) => setPricingField(tier.id, 'managed', 'utilities_cap_aud', n)}
+              />
+            </FormRow>
+          </div>
         </div>
-      </div>
+      ) : null}
     </Card>
   )
 }
@@ -1275,18 +1296,19 @@ interface LivePreviewProps {
   previewTier: TierId
   previewSvc: ServiceTierId
   onPreviewTier: (t: TierId) => void
-  onPreviewSvc: (s: ServiceTierId) => void
   row: PricingConfigRow | null
   dirty: boolean
 }
-function LivePreview({ previewTier, previewSvc, onPreviewTier, onPreviewSvc, row, dirty }: LivePreviewProps) {
+function LivePreview({ previewTier, previewSvc, onPreviewTier, row, dirty }: LivePreviewProps) {
   return (
     <div className="sticky top-[88px] flex flex-col gap-3 self-start">
       <Card padding={0}>
         <div className="flex items-center justify-between gap-2 border-b border-admin-line-soft px-5 py-3.5">
           <div>
             <Eyebrow>Live preview</Eyebrow>
-            <p className="m-0 mt-0.5 text-[12px] text-admin-ink-4">What a landlord sees today</p>
+            <p className="m-0 mt-0.5 text-[12px] text-admin-ink-4">
+              What a landlord sees on the {previewSvc === 'listing' ? 'Listing' : 'Managed'} tier
+            </p>
           </div>
           {dirty ? (
             <Pill tone="warning" dot="action">
@@ -1300,14 +1322,7 @@ function LivePreview({ previewTier, previewSvc, onPreviewTier, onPreviewSvc, row
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-admin-line-soft px-5 py-3">
-          <Segmented<ServiceTierId>
-            value={previewSvc}
-            onChange={onPreviewSvc}
-            options={[
-              { value: 'listing', label: 'Listing' },
-              { value: 'managed', label: 'Managed' },
-            ]}
-          />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">Property tier</span>
           <Segmented<TierId>
             value={previewTier}
             onChange={onPreviewTier}
