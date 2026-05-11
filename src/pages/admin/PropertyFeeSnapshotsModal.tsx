@@ -5,7 +5,7 @@ import { adminCardClass, adminTableWrapClass, adminTdClass, adminThClass } from 
 
 type SnapshotRow = Database['public']['Tables']['property_fee_snapshots']['Row']
 
-/** Same behaviour as AdminPricing.tsx for fixed-fee dollar fields. */
+/** Match `PricingPage.tsx` for fixed-fee dollar fields (cents <-> dollar string). */
 function centsToDollarsForEditing(cents: number): string {
   return (Number(cents || 0) / 100).toFixed(2)
 }

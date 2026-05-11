@@ -8,7 +8,6 @@ import {
   Pill,
   Sparkline,
 } from '../../components/admin/primitives'
-import { useAdminRedesignFlag } from '../../components/admin/useAdminRedesignFlag'
 
 const SPARK_DATA = [4, 6, 5, 7, 9, 8, 12, 10, 13]
 
@@ -16,12 +15,10 @@ const SPARK_DATA = [4, 6, 5, 7, 9, 8, 12, 10, 13]
  * Internal-only showcase for the admin design-system primitives.
  *
  * Reachable at `/admin/_kitchen` (no sidebar entry, no breadcrumb override).
- * Lives only while the redesign rollout is in flight; PR 7 retires this page
- * along with the `useAdminRedesignFlag` toggle.
+ * Kept as a living reference for the design tokens / primitives now that the
+ * Living Console is the default shell.
  */
 export default function AdminKitchen() {
-  const redesignEnabled = useAdminRedesignFlag()
-
   return (
     <div className="space-y-10">
       <header className="space-y-3">
@@ -34,16 +31,9 @@ export default function AdminKitchen() {
           <code className="rounded bg-admin-surface-3 px-1 py-0.5 text-[12px]">
             src/components/admin/primitives
           </code>
-          . PR 3 (The Living Console) is the first surface that composes them; this page is here
-          purely so the redesign can be reviewed in isolation before pages start changing.
+          . Kept as a living reference so new admin surfaces can lift the right pattern instead of
+          inventing one.
         </p>
-        {!redesignEnabled ? (
-          <div className="rounded-admin-md border border-admin-warning/30 bg-admin-warning-bg px-4 py-2 text-[13px] text-admin-warning-fg">
-            Heads up — the redesign flag is currently <strong>off</strong>. The chrome around this
-            page is still the legacy admin layout. Append <code>?redesign=1</code> to the URL to see
-            the new shell.
-          </div>
-        ) : null}
       </header>
 
       <KitchenSection title="Eyebrow">

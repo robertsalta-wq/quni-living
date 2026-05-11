@@ -1,12 +1,11 @@
 import type { IconName } from './Icon'
 
 /**
- * Admin sidebar IA — "The Living Console" redesign.
+ * Admin sidebar IA — "The Living Console".
  *
  * Six zone groups + a permanent "The Living Console" home item above them.
- * Sub-items map to the EXISTING flat `/admin/*` routes during PR 1–5 of the
- * rollout; PR 6 will swap routes to nested `/admin/<zone>/<sub>` paths and
- * land redirects from the old flat URLs.
+ * Sub-items keep the existing flat `/admin/*` URLs so bookmarks and external
+ * links don't break; the IA grouping is purely visual.
  *
  * Keep in sync with `docs/admin-redesign/HANDOFF.md` §1 (routes table) and
  * §5 (replace/keep/retire).
@@ -18,7 +17,7 @@ export interface AdminNavSubItem {
   id: string
   label: string
   icon: IconName
-  /** Current flat URL (PR 1–5). Will become the zone-nested URL in PR 6. */
+  /** Flat `/admin/*` URL — bookmarks stay stable across IA changes. */
   to: string
   /**
    * True when the page doesn't exist yet (Tenancies sub-items per Decision B2

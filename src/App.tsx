@@ -23,9 +23,9 @@ import LandlordProfile from './pages/LandlordProfile'
 import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
 import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPage'
 import AdminLayout from './pages/admin/AdminLayout'
-import LivingConsoleGate from './pages/admin/LivingConsoleGate'
+import LivingConsole from './pages/admin/LivingConsole'
 import AdminKitchen from './pages/admin/AdminKitchen'
-import BookingsGate from './pages/admin/BookingsGate'
+import BookingsPage from './pages/admin/BookingsPage'
 import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
 import AdminEnquiries from './pages/admin/AdminEnquiries'
 import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
@@ -35,7 +35,7 @@ import AdminLandlords from './pages/admin/AdminLandlords'
 import AdminApps from './pages/admin/AdminApps'
 import AdminPayments from './pages/admin/AdminPayments'
 import AdminSettings from './pages/admin/AdminSettings'
-import PricingGate from './pages/admin/PricingGate'
+import PricingPage from './pages/admin/PricingPage'
 import KnowledgeBase from './pages/admin/KnowledgeBase'
 import DocumentsPage from './pages/admin/DocumentsPage'
 import DomainsPage from './pages/admin/DomainsPage'
@@ -268,9 +268,9 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<LivingConsoleGate />} />
+            <Route index element={<LivingConsole />} />
             <Route path="_kitchen" element={<AdminKitchen />} />
-            <Route path="bookings" element={<BookingsGate />} />
+            <Route path="bookings" element={<BookingsPage />} />
             <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="landlord-leads" element={<AdminLandlordLeads />} />
@@ -281,7 +281,7 @@ function App() {
             <Route path="apps" element={<AdminApps />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="settings" element={<AdminSettings />} />
-            <Route path="pricing" element={<PricingGate />} />
+            <Route path="pricing" element={<PricingPage />} />
             <Route path="knowledge-base" element={<KnowledgeBase />} />
             <Route path="documents" element={<DocumentsPage />} />
             <Route path="domains" element={<DomainsPage />} />
