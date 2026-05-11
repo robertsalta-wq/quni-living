@@ -224,16 +224,16 @@ function FormSection({ title, subtitle, last, children }: FormSectionProps) {
 interface FormRowProps {
   label: string
   hint?: string
-  children: ReactNode
   /**
-   * When `true`, the label sits above the field as a compact 11px uppercase
-   * eyebrow instead of the standard 180px label / 1fr field grid. Used inside
-   * narrow tier cards on the Pricing page when they sit side-by-side.
+   * Vertical layout (label above field) — for narrow surfaces like the
+   * side-by-side tier cards on Pricing. Default is the documented
+   * 180px-label / 1fr-field grid.
    */
-  vertical?: boolean
+  compact?: boolean
+  children: ReactNode
 }
-function FormRow({ label, hint, children, vertical }: FormRowProps) {
-  if (vertical) {
+function FormRow({ label, hint, compact, children }: FormRowProps) {
+  if (compact) {
     return (
       <div className="flex flex-col gap-1.5">
         <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">{label}</p>
@@ -796,8 +796,8 @@ export default function PricingPage() {
           </div>
 
           {isFeeTab(activeTab) ? (
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_380px]">
-              <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[1fr_380px]">
+              <div className="flex min-w-0 flex-col gap-4">
                 <FeeTabIntro serviceTier={activeTab} />
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                   {TIERS.map((tier) => (
@@ -1064,25 +1064,48 @@ function TierFeeCard({
     f.student_fee_fixed_cents !== baseline.student_fee_fixed_cents
   const isSaving = savingKey === rowKey
   const showShared = serviceTier === 'managed'
-  const shortLabel = tier.label.replace(/^Tier\s+\d+\s+—\s+/, `${tier.id.toUpperCase()} — `)
   return (
     <Card padding={0} className="flex flex-col">
-      <div className="border-b border-admin-line-soft px-5 py-3.5">
-        <div className="mb-1 flex items-center gap-1.5">
-          <Pill tone={statusTone(tier.status)} dot={tier.status === 'live' ? 'ok' : tier.status === 'phase2' ? 'watch' : undefined}>
+      <div className="flex flex-col gap-2 border-b border-admin-line-soft px-5 py-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="m-0 truncate text-[14px] font-semibold text-admin-ink">{tier.label}</h3>
+            <p className="m-0 mt-0.5 text-[12px] text-admin-ink-4">{tier.sub}</p>
+          </div>
+          <Pill
+            tone={statusTone(tier.status)}
+            dot={tier.status === 'live' ? 'ok' : tier.status === 'phase2' ? 'watch' : undefined}
+          >
             {tier.statusLabel}
           </Pill>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <details className="group min-w-0">
+            <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[11px] font-medium text-admin-ink-4 hover:text-admin-ink-2">
+              <Icon name="chevron-right" size={11} className="transition-transform group-open:rotate-90" />
+              Tier details
+            </summary>
+            <dl className="mt-2 grid grid-cols-1 gap-1.5 border-l-2 border-admin-line-soft pl-2.5 text-[11px]">
+              <div>
+                <dt className="m-0 text-[10px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">Legal</dt>
+                <dd className="m-0 mt-0.5 leading-snug text-admin-ink-3">{tier.legal}</dd>
+              </div>
+              <div>
+                <dt className="m-0 text-[10px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">Document</dt>
+                <dd className="m-0 mt-0.5 leading-snug text-admin-ink-3">{tier.doc}</dd>
+              </div>
+              <div>
+                <dt className="m-0 text-[10px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">Bond</dt>
+                <dd className="m-0 mt-0.5 leading-snug text-admin-ink-3">{tier.bond}</dd>
+              </div>
+            </dl>
+          </details>
           {isDirty ? <Pill tone="warning" dot="action">Unsaved</Pill> : null}
         </div>
-        <div className="flex items-center gap-1.5">
-          <h3 className="m-0 text-[14px] font-semibold leading-tight text-admin-ink">{shortLabel}</h3>
-          <TierMetaPopover tier={tier} />
-        </div>
-        <p className="m-0 mt-0.5 text-[11px] text-admin-ink-4">{tier.sub}</p>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 px-5 py-4">
-        <FormRow label="Fee model" vertical>
+      <div className="flex flex-1 flex-col gap-4 px-5 py-5">
+        <FormRow compact label="Fee model">
           <Segmented
             value={f.fee_mode === 'fixed' ? 'fixed' : 'percent'}
             options={[
@@ -1093,7 +1116,7 @@ function TierFeeCard({
           />
         </FormRow>
         {f.fee_mode === 'fixed' ? (
-          <FormRow label="Fee amount" hint="Charged to the landlord per accepted booking." vertical>
+          <FormRow compact label="Fee amount" hint="Charged to the landlord per accepted booking.">
             <CurrencyInput
               value={draft.feeFixedInput}
               onChange={(v) => setFeeDraftField(tier.id, serviceTier, 'fee', v)}
@@ -1101,7 +1124,7 @@ function TierFeeCard({
             />
           </FormRow>
         ) : (
-          <FormRow label="Fee percentage" hint="Of weekly rent, computed at payout." vertical>
+          <FormRow compact label="Fee percentage" hint="Of weekly rent. Computed at payout time.">
             <PercentInput
               value={f.fee_percent}
               max={25}
@@ -1109,7 +1132,7 @@ function TierFeeCard({
             />
           </FormRow>
         )}
-        <FormRow label="Student booking fee" hint="Charged to the student at booking time." vertical>
+        <FormRow compact label="Student booking fee" hint="Charged at booking time.">
           <CurrencyInput
             value={draft.studentFeeFixedInput}
             onChange={(v) => setFeeDraftField(tier.id, serviceTier, 'student', v)}
@@ -1130,30 +1153,40 @@ function TierFeeCard({
       </div>
 
       {showShared ? (
-        <div className="border-t border-admin-line-soft px-5 py-4">
-          <h4 className="m-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-admin-ink-5">
+        <div className="border-t border-admin-line-soft px-5 py-5">
+          <h4 className="m-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">
             Payment settings
           </h4>
           <p className="m-0 mt-0.5 text-[11px] italic leading-snug text-admin-ink-5">{TIER_PAYMENT_NOTES[tier.id]}</p>
           <div className="mt-3 flex flex-col gap-3">
-            <ToggleRow
-              label="Card surcharge"
-              hint="1.7% pass-through on card payments."
-              checked={managed.card_surcharge_enabled}
-              onChange={(next) => setPricingField(tier.id, 'managed', 'card_surcharge_enabled', next)}
-            />
-            <ToggleRow
-              label="Free bank transfer"
-              hint="Always offered with no surcharge."
-              checked={managed.free_transfer_required}
-              onChange={(next) => setPricingField(tier.id, 'managed', 'free_transfer_required', next)}
-            />
-            <FormRow label="Utilities cap" hint="Quarterly cap. 0 = billed separately." vertical>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="m-0 text-[12px] font-medium text-admin-ink-2">Card surcharge</p>
+                <p className="m-0 text-[11px] leading-snug text-admin-ink-5">1.7% pass-through if student pays by card.</p>
+              </div>
+              <Toggle
+                checked={managed.card_surcharge_enabled}
+                onChange={(next) => setPricingField(tier.id, 'managed', 'card_surcharge_enabled', next)}
+                ariaLabel="Card surcharge enabled"
+              />
+            </div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="m-0 text-[12px] font-medium text-admin-ink-2">Free bank transfer</p>
+                <p className="m-0 text-[11px] leading-snug text-admin-ink-5">Always offer bank transfer with no surcharge.</p>
+              </div>
+              <Toggle
+                checked={managed.free_transfer_required}
+                onChange={(next) => setPricingField(tier.id, 'managed', 'free_transfer_required', next)}
+                ariaLabel="Free bank transfer required"
+              />
+            </div>
+            <FormRow compact label="Utilities cap" hint="Quarterly cap; 0 = billed separately.">
               <NumberInput
                 value={managed.utilities_cap_aud}
                 min={0}
                 step={50}
-                suffix="AUD / qtr"
+                suffix="AUD/qtr"
                 onChange={(n) => setPricingField(tier.id, 'managed', 'utilities_cap_aud', n)}
               />
             </FormRow>
@@ -1161,57 +1194,6 @@ function TierFeeCard({
         </div>
       ) : null}
     </Card>
-  )
-}
-
-interface ToggleRowProps {
-  label: string
-  hint?: string
-  checked: boolean
-  onChange: (next: boolean) => void
-}
-function ToggleRow({ label, hint, checked, onChange }: ToggleRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="m-0 text-[12px] font-medium text-admin-ink-2">{label}</p>
-        {hint ? <p className="m-0 mt-0.5 text-[11px] leading-snug text-admin-ink-5">{hint}</p> : null}
-      </div>
-      <Toggle checked={checked} onChange={onChange} ariaLabel={label} />
-    </div>
-  )
-}
-
-function TierMetaPopover({ tier }: { tier: TierMeta }) {
-  return (
-    <span className="group relative inline-flex">
-      <button
-        type="button"
-        aria-label={`${tier.label} — legal, document and bond details`}
-        className="grid h-4 w-4 place-items-center rounded-full text-admin-ink-5 transition-colors hover:bg-admin-surface-3 hover:text-admin-ink-3"
-      >
-        <Icon name="info" size={12} />
-      </button>
-      <span
-        role="tooltip"
-        className="pointer-events-none invisible absolute left-0 top-full z-30 mt-1.5 w-64 rounded-admin-md border border-admin-line bg-white p-3 text-left opacity-0 shadow-admin-modal transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-      >
-        <KvMini k="Legal" v={tier.legal} />
-        <div className="h-2" />
-        <KvMini k="Document" v={tier.doc} />
-        <div className="h-2" />
-        <KvMini k="Bond" v={tier.bond} />
-      </span>
-    </span>
-  )
-}
-
-function KvMini({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5">{k}</p>
-      <p className="m-0 mt-0.5 text-[11px] leading-snug text-admin-ink-3">{v}</p>
-    </div>
   )
 }
 
