@@ -6,6 +6,7 @@ import type { Database } from '../../lib/database.types'
 import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatMoney } from './adminUi'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
+import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
 
 type PropertyStatus = Database['public']['Tables']['properties']['Row']['status']
 type AdminPropertyStatus = PropertyStatus | 'suspended'
@@ -127,18 +128,23 @@ export default function AdminProperties() {
     <div>
       <PropertyFeeSnapshotsModal open={Boolean(feesPropertyId)} propertyId={feesPropertyId} onClose={closeFeesModal} />
 
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Properties</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">All listings across every status.</p>
+      <AdminPageHeader title="Properties" subtitle="All listings across every status." />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
+          {error}
+        </div>
       )}
 
       <div className={adminTableWrapClass}>
         {loading ? (
-          <div className="p-12 flex justify-center">
-            <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <LoadingState label="Loading properties…" />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon="building-2"
+            title="No properties yet"
+            description="Listings appear here as soon as landlords publish them."
+          />
         ) : (
           <table className="min-w-full border-collapse">
             <thead>
@@ -153,14 +159,7 @@ export default function AdminProperties() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className={`${adminTdClass} text-gray-500 text-center py-10`}>
-                    No properties yet.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => {
+              {rows.map((row) => {
                   const thumb = row.images?.[0]?.trim()
                   return (
                     <tr key={row.id}>
@@ -235,8 +234,7 @@ export default function AdminProperties() {
                       </td>
                     </tr>
                   )
-                })
-              )}
+                })}
             </tbody>
           </table>
         )}

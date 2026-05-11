@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 type TppDomainRow = {
   domain: string
@@ -106,25 +107,25 @@ export default function DomainsPage() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Domains</h1>
-          <p className="text-sm text-gray-500 mt-1">Live domain data from TPP Wholesale</p>
-        </div>
-        <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
-          >
-            {loading ? 'Refreshing…' : 'Refresh'}
-          </button>
-          {lastChecked ? (
-            <p className="text-xs text-gray-500 text-right">Last checked: {formatCheckedAt(lastChecked)}</p>
-          ) : null}
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Domains"
+        subtitle="Live domain data from TPP Wholesale"
+        actions={
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={loading}
+              className="inline-flex items-center justify-center rounded-admin-sm bg-admin-coral px-3.5 py-2 text-[13px] font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+            >
+              {loading ? 'Refreshing…' : 'Refresh'}
+            </button>
+            {lastChecked ? (
+              <p className="text-right text-[11px] text-admin-ink-5">Last checked: {formatCheckedAt(lastChecked)}</p>
+            ) : null}
+          </div>
+        }
+      />
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-2">

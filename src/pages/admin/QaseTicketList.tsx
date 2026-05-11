@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { QasePriority, QaseStatus, QaseSubmitterType, QaseTicket } from '../../types/qase'
 import QaseAdminCreateModal from '../../components/qase/QaseAdminCreateModal'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatRelativeTime } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 type QueueFilter = 'all' | 'open' | 'pending' | 'unlinked'
 
@@ -169,19 +170,19 @@ export default function QaseTicketList() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Support (Qase)</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage support tickets from students and landlords</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateModalOpen(true)}
-          className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          New ticket
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Support (Qase)"
+        subtitle="Manage support tickets from students and landlords"
+        actions={
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="inline-flex items-center justify-center rounded-admin-sm bg-admin-coral px-3.5 py-2 text-[13px] font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+          >
+            New ticket
+          </button>
+        }
+      />
 
       <QaseAdminCreateModal
         isOpen={createModalOpen}

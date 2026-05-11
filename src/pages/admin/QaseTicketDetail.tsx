@@ -14,6 +14,7 @@ import type {
   QaseTicketWithContext,
 } from '../../types/qase'
 import { adminCardClass, formatDate, formatRelativeTime } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 const MAX_ATTACHMENT_FILES = 10
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
@@ -898,13 +899,14 @@ export default function QaseTicketDetail() {
         </div>
       ) : (
         <div className="w-full max-w-full">
-          <header className="mt-4 mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">#{ticket.ticket_number}</h1>
-            <p className="text-sm text-gray-500 mt-1">{ticket.subject}</p>
-          </header>
+          <div className="mt-4">
+            <AdminPageHeader title={`#${ticket.ticket_number}`} subtitle={ticket.subject} className="mb-8" />
+          </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+            <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
+              {error}
+            </div>
           )}
 
           <div className="flex w-full flex-col gap-8 lg:flex-row lg:items-stretch lg:gap-8">

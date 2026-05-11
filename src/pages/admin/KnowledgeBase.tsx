@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 type KnowledgeEntry = {
   id: string
@@ -144,14 +145,21 @@ export default function KnowledgeBase() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Knowledge base</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
-        RAG chunks for the AI chat. Saving regenerates embeddings via OpenAI (requires{' '}
-        <code className="text-xs bg-gray-100 px-1 rounded">OPENAI_API_KEY</code> on Vercel).
-      </p>
+      <AdminPageHeader
+        title="Knowledge base"
+        subtitle={
+          <>
+            RAG chunks for the AI chat. Saving regenerates embeddings via OpenAI (requires{' '}
+            <code className="rounded bg-admin-surface-2 px-1 text-[12px] text-admin-ink-3">OPENAI_API_KEY</code> on
+            Vercel).
+          </>
+        }
+      />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
+          {error}
+        </div>
       )}
 
       <div className="grid gap-8 lg:grid-cols-2">

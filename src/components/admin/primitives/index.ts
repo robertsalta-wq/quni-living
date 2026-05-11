@@ -27,3 +27,6 @@ export type { LoadingStateProps } from './LoadingState'
 
 export { ErrorState } from './ErrorState'
 export type { ErrorStateProps } from './ErrorState'
+
+export { AdminPageHeader } from './PageHeader'
+export type { AdminPageHeaderProps } from './PageHeader'

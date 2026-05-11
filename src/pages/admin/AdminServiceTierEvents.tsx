@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
+import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
 
 type TierEventRow = Database['public']['Tables']['service_tier_events']['Row']
 
@@ -125,10 +126,11 @@ export default function AdminServiceTierEvents() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Service tier events</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
-        Read-only audit trail for booking tier transitions and related actions ({PAGE_SIZE} per page).
-      </p>
+      <AdminPageHeader
+        title="Service tier events"
+        subtitle={`Read-only audit trail for booking tier transitions and related actions (${PAGE_SIZE} per page).`}
+      />
+
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <label className="block text-xs font-semibold text-gray-600">
@@ -205,14 +207,20 @@ export default function AdminServiceTierEvents() {
       </p>
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
+          {error}
+        </div>
       )}
 
       <div className={adminTableWrapClass}>
         {loading ? (
-          <div className="p-12 flex justify-center">
-            <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <LoadingState label="Loading events…" />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon="filter"
+            title="No events match these filters"
+            description="Clear filters or widen the date range to see more activity."
+          />
         ) : (
           <table className="min-w-full border-collapse">
             <thead>
@@ -225,14 +233,7 @@ export default function AdminServiceTierEvents() {
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className={`${adminTdClass} text-gray-500 text-center py-10`}>
-                    No events match these filters.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => (
+              {rows.map((row) => (
                   <tr key={row.id}>
                     <td className={`${adminTdClass} whitespace-nowrap`}>{formatDateTime(row.created_at)}</td>
                     <td className={adminTdClass}>
@@ -267,8 +268,7 @@ export default function AdminServiceTierEvents() {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         )}

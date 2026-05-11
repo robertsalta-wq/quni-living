@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 const DRIVE_FOLDER_URL =
   'https://drive.google.com/drive/u/2/folders/13u7rROY2ztVnvxqSpVESGEE74TgsqQOy'
@@ -116,22 +117,22 @@ export default function DocumentsPage() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Document Register</h1>
-          <p className="text-sm text-gray-500 mt-1">Live view of the Quni Living Google Drive folder</p>
-        </div>
-        <a
-          href={DRIVE_FOLDER_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
-          aria-label="Open Quni Living folder in Google Drive"
-        >
-          <ExternalLinkIcon className="h-4 w-4" />
-          Open folder
-        </a>
-      </div>
+      <AdminPageHeader
+        title="Document Register"
+        subtitle="Live view of the Quni Living Google Drive folder"
+        actions={
+          <a
+            href={DRIVE_FOLDER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-admin-sm bg-admin-coral px-3.5 py-2 text-[13px] font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral"
+            aria-label="Open Quni Living folder in Google Drive"
+          >
+            <ExternalLinkIcon className="h-4 w-4" />
+            Open folder
+          </a>
+        }
+      />
 
       {error && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">

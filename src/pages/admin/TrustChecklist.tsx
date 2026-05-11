@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { adminTableWrapClass } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 const CORAL = '#FF6F61'
 const TRUST_KEY = 'trust_checklist'
@@ -562,20 +563,18 @@ export default function TrustChecklist() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Trust checklist</h1>
-          <p className="text-sm text-gray-500 mt-1">Track platform credibility and go-to-market readiness</p>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Trust checklist"
+        subtitle="Track platform credibility and go-to-market readiness"
+      />
 
       {error && (
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg sm:flex-row sm:items-center sm:justify-between">
           <span>{error}</span>
           <button
             type="button"
             onClick={() => void load()}
-            className="shrink-0 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50"
+            className="shrink-0 rounded-admin-sm border border-admin-danger/30 bg-white px-3 py-1.5 text-[13px] font-medium text-admin-danger-fg hover:bg-admin-danger-bg"
           >
             Retry
           </button>

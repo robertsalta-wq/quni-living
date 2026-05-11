@@ -21,6 +21,7 @@ import {
   formatDate,
   studentDisplayName,
 } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 type PaymentRow = Database['public']['Tables']['payments']['Row'] & {
   bookings: {
@@ -192,10 +193,11 @@ export default function AdminPayments() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Payments</h1>
-      <p className="text-sm text-gray-500 mt-1 mb-4">
-        Platform revenue, transactions, subscriptions, refunds, fees, Xero, and bond records.
-      </p>
+      <AdminPageHeader
+        title="Payments"
+        subtitle="Platform revenue, transactions, subscriptions, refunds, fees, Xero, and bond records."
+        className="mb-4"
+      />
 
       <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-px mb-6">
         {TABS.map(({ id, label }) => (

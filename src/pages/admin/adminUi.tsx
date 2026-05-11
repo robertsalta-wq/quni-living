@@ -1,10 +1,13 @@
 import type { Database } from '../../lib/database.types'
 
 export const adminCardClass =
-  'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'
-export const adminTableWrapClass = 'overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm'
-export const adminThClass = 'text-left text-xs font-semibold uppercase tracking-wide text-gray-500 px-4 py-3 border-b border-gray-100 bg-gray-50/80'
-export const adminTdClass = 'px-4 py-3 text-sm text-gray-800 border-b border-gray-100 align-top'
+  'rounded-admin-lg border border-admin-line bg-white p-5 shadow-admin-card'
+export const adminTableWrapClass =
+  'overflow-x-auto rounded-admin-lg border border-admin-line bg-white shadow-admin-card'
+export const adminThClass =
+  'whitespace-nowrap border-b border-admin-line bg-admin-surface-2 px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5'
+export const adminTdClass =
+  'border-b border-admin-line-soft px-3.5 py-3 align-top text-[13px] text-admin-ink-2'
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']

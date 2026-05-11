@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Json } from '../../lib/database.types'
 import type { QaseField, QaseFieldType } from '../../types/qase'
 import { adminCardClass, adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
+import { AdminPageHeader } from '../../components/admin/primitives'
 
 function asField(row: unknown): QaseField {
   return row as QaseField
@@ -207,15 +208,15 @@ export default function QaseSettings() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Qase settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage support ticket categories, priorities, and custom fields</p>
-        </div>
-        <Link to="/admin/qase" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
-          ← Support queue
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Qase settings"
+        subtitle="Manage support ticket categories, priorities, and custom fields"
+        actions={
+          <Link to="/admin/qase" className="text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover">
+            ← Support queue
+          </Link>
+        }
+      />
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
