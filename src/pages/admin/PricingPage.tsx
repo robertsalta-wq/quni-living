@@ -734,10 +734,11 @@ export default function PricingPage() {
   const previewRow = pricingByKey?.[keyFor(previewTier, previewSvc)] ?? null
   const previewBaseline = baselineByKey?.[keyFor(previewTier, previewSvc)] ?? null
   /**
-   * Property-level settings (utilities cap, card surcharge, free transfer) live
-   * canonically on the managed row for each property tier. The preview pulls
-   * them from here regardless of which service tier is being shown so the
-   * landlord-facing feature bullets don't go stale on the Listing tab.
+   * Payment settings live canonically on the managed row for each property
+   * tier. The preview pulls them from here regardless of which service tier is
+   * being shown so the landlord-facing payment bullets don't go stale on the
+   * Listing tab. Utilities are deliberately excluded below because they are a
+   * property-level setting, not a plan feature.
    */
   const previewPropertyRow = pricingByKey?.[keyFor(previewTier, 'managed')] ?? null
   const previewPropertyBaseline = baselineByKey?.[keyFor(previewTier, 'managed')] ?? null
@@ -752,8 +753,7 @@ export default function PricingPage() {
     if (!previewPropertyRow || !previewPropertyBaseline) return false
     return (
       previewPropertyRow.card_surcharge_enabled !== previewPropertyBaseline.card_surcharge_enabled ||
-      previewPropertyRow.free_transfer_required !== previewPropertyBaseline.free_transfer_required ||
-      previewPropertyRow.utilities_cap_aud !== previewPropertyBaseline.utilities_cap_aud
+      previewPropertyRow.free_transfer_required !== previewPropertyBaseline.free_transfer_required
     )
   }, [previewRow, previewBaseline, previewPropertyRow, previewPropertyBaseline])
 
@@ -1403,10 +1403,10 @@ function LivePreview({ previewTier, previewSvc, onPreviewTier, row, propertyRow,
 interface LandlordPreviewCardProps {
   row: PricingConfigRow
   /**
-   * The managed row for the same property tier. Property-level settings
-   * (utilities cap, card surcharge, free bank transfer) only live there, so
-   * the preview reads them from here rather than from the active service-tier
-   * row — otherwise the Listing-tier preview would always show defaults.
+   * The managed row for the same property tier. Payment settings only live
+   * there, so the preview reads them from here rather than from the active
+   * service-tier row — otherwise the Listing-tier preview would always show
+   * defaults.
    */
   propertyRow: PricingConfigRow
   svc: ServiceTierId
@@ -1425,9 +1425,6 @@ function LandlordPreviewCard({ row, propertyRow, svc, tier }: LandlordPreviewCar
     studentFee,
     propertyRow.free_transfer_required ? 'Free bank transfer always offered' : 'Card pay only',
     propertyRow.card_surcharge_enabled ? 'Card surcharge passes through to renter' : 'No card surcharge',
-    propertyRow.utilities_cap_aud > 0
-      ? `Utilities capped at $${propertyRow.utilities_cap_aud} / quarter`
-      : 'Utilities billed separately',
   ]
   return (
     <div className="px-5 py-5">
