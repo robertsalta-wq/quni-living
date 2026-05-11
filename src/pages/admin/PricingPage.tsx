@@ -733,15 +733,29 @@ export default function PricingPage() {
 
   const previewRow = pricingByKey?.[keyFor(previewTier, previewSvc)] ?? null
   const previewBaseline = baselineByKey?.[keyFor(previewTier, previewSvc)] ?? null
+  /**
+   * Property-level settings (utilities cap, card surcharge, free transfer) live
+   * canonically on the managed row for each property tier. The preview pulls
+   * them from here regardless of which service tier is being shown so the
+   * landlord-facing feature bullets don't go stale on the Listing tab.
+   */
+  const previewPropertyRow = pricingByKey?.[keyFor(previewTier, 'managed')] ?? null
+  const previewPropertyBaseline = baselineByKey?.[keyFor(previewTier, 'managed')] ?? null
   const previewDirty = useMemo(() => {
     if (!previewRow || !previewBaseline) return false
-    return (
+    const feeDirty =
       previewRow.fee_mode !== previewBaseline.fee_mode ||
       previewRow.fee_percent !== previewBaseline.fee_percent ||
       previewRow.fee_fixed_cents !== previewBaseline.fee_fixed_cents ||
       previewRow.student_fee_fixed_cents !== previewBaseline.student_fee_fixed_cents
+    if (feeDirty) return true
+    if (!previewPropertyRow || !previewPropertyBaseline) return false
+    return (
+      previewPropertyRow.card_surcharge_enabled !== previewPropertyBaseline.card_surcharge_enabled ||
+      previewPropertyRow.free_transfer_required !== previewPropertyBaseline.free_transfer_required ||
+      previewPropertyRow.utilities_cap_aud !== previewPropertyBaseline.utilities_cap_aud
     )
-  }, [previewRow, previewBaseline])
+  }, [previewRow, previewBaseline, previewPropertyRow, previewPropertyBaseline])
 
   return (
     <div>
@@ -822,6 +836,7 @@ export default function PricingPage() {
                 previewSvc={activeTab}
                 onPreviewTier={setPreviewTier}
                 row={previewRow}
+                propertyRow={previewPropertyRow}
                 dirty={previewDirty}
               />
             </div>
@@ -1334,9 +1349,11 @@ interface LivePreviewProps {
   previewSvc: ServiceTierId
   onPreviewTier: (t: TierId) => void
   row: PricingConfigRow | null
+  /** Managed row for the same property tier; carries the property-level settings. */
+  propertyRow: PricingConfigRow | null
   dirty: boolean
 }
-function LivePreview({ previewTier, previewSvc, onPreviewTier, row, dirty }: LivePreviewProps) {
+function LivePreview({ previewTier, previewSvc, onPreviewTier, row, propertyRow, dirty }: LivePreviewProps) {
   return (
     <div className="sticky top-[88px] flex flex-col gap-3 self-start">
       <Card padding={0}>
@@ -1371,7 +1388,9 @@ function LivePreview({ previewTier, previewSvc, onPreviewTier, row, dirty }: Liv
           />
         </div>
 
-        {row ? <LandlordPreviewCard row={row} svc={previewSvc} tier={previewTier} /> : null}
+        {row ? (
+          <LandlordPreviewCard row={row} propertyRow={propertyRow ?? row} svc={previewSvc} tier={previewTier} />
+        ) : null}
       </Card>
       <p className="m-0 px-1 text-[11px] leading-snug text-admin-ink-5">
         Preview reflects unsaved changes. Public pricing page updates only after individual{' '}
@@ -1383,10 +1402,17 @@ function LivePreview({ previewTier, previewSvc, onPreviewTier, row, dirty }: Liv
 
 interface LandlordPreviewCardProps {
   row: PricingConfigRow
+  /**
+   * The managed row for the same property tier. Property-level settings
+   * (utilities cap, card surcharge, free bank transfer) only live there, so
+   * the preview reads them from here rather than from the active service-tier
+   * row — otherwise the Listing-tier preview would always show defaults.
+   */
+  propertyRow: PricingConfigRow
   svc: ServiceTierId
   tier: TierId
 }
-function LandlordPreviewCard({ row, svc, tier }: LandlordPreviewCardProps) {
+function LandlordPreviewCard({ row, propertyRow, svc, tier }: LandlordPreviewCardProps) {
   const isListing = svc === 'listing'
   const headline = isListing ? 'List it yourself.' : 'Let us manage.'
   const description = isListing
@@ -1397,9 +1423,11 @@ function LandlordPreviewCard({ row, svc, tier }: LandlordPreviewCardProps) {
   const studentFee = row.student_fee_fixed_cents > 0 ? `$${centsToDollars(row.student_fee_fixed_cents).replace(/\.00$/, '')} student booking fee` : 'No student booking fee'
   const features: string[] = [
     studentFee,
-    row.free_transfer_required ? 'Free bank transfer always offered' : 'Card pay only',
-    row.card_surcharge_enabled ? 'Card surcharge passes through to renter' : 'No card surcharge',
-    row.utilities_cap_aud > 0 ? `Utilities capped at $${row.utilities_cap_aud} / quarter` : 'Utilities billed separately',
+    propertyRow.free_transfer_required ? 'Free bank transfer always offered' : 'Card pay only',
+    propertyRow.card_surcharge_enabled ? 'Card surcharge passes through to renter' : 'No card surcharge',
+    propertyRow.utilities_cap_aud > 0
+      ? `Utilities capped at $${propertyRow.utilities_cap_aud} / quarter`
+      : 'Utilities billed separately',
   ]
   return (
     <div className="px-5 py-5">
