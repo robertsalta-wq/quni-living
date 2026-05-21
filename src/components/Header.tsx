@@ -13,17 +13,13 @@ import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 
-const SERVICE_LINKS = [
-  { to: '/services/property-management', label: 'Property Management' },
-  { to: '/services/landlord-partnerships', label: 'Landlord Partnerships' },
-  { to: '/services/fully-furnished', label: 'Fully Furnished Units' },
-] as const
-
-const NAV_BEFORE_SERVICES = [
+const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
   { to: '/student-accommodation', label: 'Accommodation' },
   { to: '/pricing', label: 'Pricing' },
+  { to: '/for-landlords', label: 'For landlords' },
   { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
 ] as const
 
 const coralCtaClass =
@@ -32,11 +28,8 @@ const coralCtaClass =
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [servicesOpen, setServicesOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [mobileServicesOpen, setMobileServicesOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const servicesRef = useRef<HTMLDivElement>(null)
   const mobileNavRootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,9 +38,6 @@ export default function Header() {
       if (menuRef.current && !menuRef.current.contains(t)) {
         setMenuOpen(false)
       }
-      if (servicesRef.current && !servicesRef.current.contains(t)) {
-        setServicesOpen(false)
-      }
       if (mobileNavRootRef.current && !mobileNavRootRef.current.contains(t)) {
         setMobileNavOpen(false)
       }
@@ -55,10 +45,6 @@ export default function Header() {
     document.addEventListener('click', close)
     return () => document.removeEventListener('click', close)
   }, [])
-
-  useEffect(() => {
-    if (!mobileNavOpen) setMobileServicesOpen(false)
-  }, [mobileNavOpen])
 
   const displayName = (() => {
     let raw: string | undefined
@@ -119,50 +105,11 @@ export default function Header() {
         <SiteBrandLockup />
 
         <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-center min-w-0">
-          {NAV_BEFORE_SERVICES.map((item) => (
+          {MAIN_NAV.map((item) => (
             <Link key={item.to} to={item.to} className="text-gray-600 hover:text-gray-900 text-sm shrink-0">
               {item.label}
             </Link>
           ))}
-          <div className="relative shrink-0" ref={servicesRef}>
-            <button
-              type="button"
-              onClick={() => setServicesOpen((o) => !o)}
-              className="text-gray-600 hover:text-gray-900 text-sm inline-flex items-center gap-1"
-              aria-expanded={servicesOpen}
-              aria-haspopup="true"
-            >
-              Services
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {servicesOpen && (
-              <div className="absolute left-0 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-1 shadow-lg z-50">
-                <Link
-                  to="/services"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 font-medium"
-                  onClick={() => setServicesOpen(false)}
-                >
-                  All services
-                </Link>
-                <div className="border-t border-gray-100 my-1" />
-                {SERVICE_LINKS.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setServicesOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-          <Link to="/contact" className="text-gray-600 hover:text-gray-900 text-sm shrink-0">
-            Contact
-          </Link>
           {role === 'admin' && (
             <Link to="/admin" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 shrink-0">
               Admin dashboard
@@ -326,7 +273,7 @@ export default function Header() {
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto py-2">
-                {NAV_BEFORE_SERVICES.map((item) => (
+                {MAIN_NAV.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
@@ -337,51 +284,6 @@ export default function Header() {
                   </Link>
                 ))}
                 <div className="border-t border-gray-100 my-1" />
-                <button
-                  type="button"
-                  onClick={() => setMobileServicesOpen((o) => !o)}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-gray-800 hover:bg-gray-50"
-                  aria-expanded={mobileServicesOpen}
-                >
-                  <span>Services</span>
-                  <svg
-                    className={`w-4 h-4 shrink-0 transition-transform ${mobileServicesOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {mobileServicesOpen && (
-                  <div className="border-b border-gray-100 pb-2">
-                    <Link
-                      to="/services"
-                      className="block py-2 pl-6 pr-4 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={closeMobileNav}
-                    >
-                      All services
-                    </Link>
-                    {SERVICE_LINKS.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        className="block py-2 pl-6 pr-4 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={closeMobileNav}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                <Link
-                  to="/contact"
-                  className="block px-4 py-3 text-sm text-gray-800 hover:bg-gray-50"
-                  onClick={closeMobileNav}
-                >
-                  Contact
-                </Link>
                 <Link
                   to="/landlords/ai"
                   className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-[#FF6F61] hover:bg-[#FF6F61]/5"
