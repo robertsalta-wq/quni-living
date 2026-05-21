@@ -84,7 +84,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li>
                 <Link to="/student-accommodation" className={linkClass}>
-                  Student accommodation guides →
+                  Accommodation guides →
                 </Link>
               </li>
             </ul>
@@ -173,7 +173,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link to="/services/student-accommodation" className={linkClass}>
-                  Student Accommodation
+                  Accommodation
                 </Link>
               </li>
               <li>

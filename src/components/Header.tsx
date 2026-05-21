@@ -14,7 +14,6 @@ import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 
 const SERVICE_LINKS = [
-  { to: '/services/student-accommodation', label: 'Student Accommodation' },
   { to: '/services/property-management', label: 'Property Management' },
   { to: '/services/landlord-partnerships', label: 'Landlord Partnerships' },
   { to: '/services/fully-furnished', label: 'Fully Furnished Units' },
@@ -22,7 +21,8 @@ const SERVICE_LINKS = [
 
 const NAV_BEFORE_SERVICES = [
   { to: '/listings', label: 'Listings' },
-  { to: '/student-accommodation', label: 'Student Accommodation' },
+  { to: '/student-accommodation', label: 'Accommodation' },
+  { to: '/pricing', label: 'Pricing' },
   { to: '/about', label: 'About' },
 ] as const
 
@@ -145,13 +145,6 @@ export default function Header() {
                   onClick={() => setServicesOpen(false)}
                 >
                   All services
-                </Link>
-                <Link
-                  to="/pricing"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={() => setServicesOpen(false)}
-                >
-                  Pricing
                 </Link>
                 <div className="border-t border-gray-100 my-1" />
                 {SERVICE_LINKS.map((item) => (
@@ -369,13 +362,6 @@ export default function Header() {
                       onClick={closeMobileNav}
                     >
                       All services
-                    </Link>
-                    <Link
-                      to="/pricing"
-                      className="block py-2 pl-6 pr-4 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={closeMobileNav}
-                    >
-                      Pricing
                     </Link>
                     {SERVICE_LINKS.map((item) => (
                       <Link
