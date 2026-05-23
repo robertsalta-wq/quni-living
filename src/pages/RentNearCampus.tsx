@@ -13,7 +13,7 @@ const HERO_IMG_PROFESSIONALS_ALT =
   'Professionals crossing a busy city street during the morning commute'
 
 const TICKER_ITEMS = [
-  '✦ Furnished rooms across Sydney',
+  '✦ Furnished rooms across Australia',
   '✦ Landlords who actually reply',
   '✦ Bills included — fewer surprises',
   '✦ Walk in with a suitcase, not a toolkit',
@@ -30,7 +30,7 @@ const WHO_CARDS = [
   },
   {
     title: 'Early-career & CBD commuters',
-    body: 'Uni precincts often give you more room per dollar than a shoebox closer to town — same Sydney, shorter commute drama, and a home you are happy to open the door to.',
+    body: 'Uni precincts often give you more room per dollar than a shoebox closer to town — same city, shorter commute, less drama, and a home you are happy to open the door to.',
   },
   {
     title: 'New to the city',
@@ -97,8 +97,8 @@ export default function RentNearCampus() {
         `}
       </style>
       <Seo
-        title="Furnished rentals near Sydney universities | Quni Living"
-        description="Modern furnished rooms near Newtown, Glebe, Randwick and Sydney uni precincts — for working renters, not student-only listings. Verify once, browse landlords who welcome professionals, book with confidence."
+        title="Furnished rentals near Australian universities | Quni Living"
+        description="Modern furnished rooms in uni precincts across Australia — verified listings, bills sorted, ID-verified renters welcome."
         canonicalPath="/rent-near-campus"
       />
 
@@ -108,14 +108,14 @@ export default function RentNearCampus() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
               <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4 [font-variant:small-caps]">
-                Sydney uni suburbs · for renters building a career
+                Uni precincts · for renters building a career
               </p>
               <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[4.5rem] font-bold tracking-tight text-white !mt-0 mb-8 sm:mb-10 leading-tight">
                 <span className="block">A home that</span>
                 <span className="block">matches your pace.</span>
               </h1>
               <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
-                Furnished rooms in some of Sydney&apos;s best-connected pockets — think light-filled spaces, bills
+                Furnished rooms in some of Australia&apos;s best-connected uni pockets — think light-filled spaces, bills
                 sorted, landlords who chose to welcome working renters. Verify your identity once, then explore and book
                 on your terms.
               </p>
@@ -215,7 +215,7 @@ export default function RentNearCampus() {
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
             You are past the &ldquo;any roof will do&rdquo; phase — you want a place that fits your commute, your
-            headspace, and the version of Sydney you are investing in.
+            headspace, and the version of your city you are investing in.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
             {WHO_CARDS.map((card) => (

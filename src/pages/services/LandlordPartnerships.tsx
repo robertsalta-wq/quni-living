@@ -49,7 +49,7 @@ export default function LandlordPartnerships() {
     <>
       <Seo
         title="Landlord partnerships"
-        description="Partner with Quni Living for student accommodation near Sydney campuses. Structured leases, placement support, and predictable returns."
+        description="Partner with Quni Living for student accommodation near Australian campuses. Structured leases, placement support, and predictable returns."
         canonicalPath="/services/landlord-partnerships"
       />
       <ServicePageLayout
@@ -66,7 +66,7 @@ export default function LandlordPartnerships() {
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-10 md:py-12 text-center">
           <p className="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
-            Partner with Quni Living to reach serious student tenants across Sydney. We help you keep occupancy steadier near
+            Partner with Quni Living to reach serious student tenants across Australia. We help you keep occupancy steadier near
             campuses and run proper leases — not short-stay chaos — whether you list a whole home or individual rooms.
           </p>
         </div>

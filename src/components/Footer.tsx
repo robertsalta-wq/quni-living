@@ -1,25 +1,7 @@
 import { Link } from 'react-router-dom'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import AiSparkleIcon from './AiSparkleIcon'
-
-function IconLocation(props: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={props.className}
-      aria-hidden
-    >
-      <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z" />
-      <circle cx="12" cy="11" r="2.5" />
-    </svg>
-  )
-}
+import LegalFooter from './LegalFooter'
 
 function IconPhone(props: { className?: string }) {
   return (
@@ -74,8 +56,7 @@ export default function Footer() {
               <span className="font-display font-bold text-xl text-white tracking-tight">Quni</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed max-w-xs">
-              Premium student accommodation in Macquarie Park and Ryde. Professional, stable, and
-              student-focused.
+              Verified rooms near Australian universities — for students, graduates, and young professionals.
             </p>
           </div>
 
@@ -193,10 +174,6 @@ export default function Footer() {
             <h2 className="font-display font-bold text-lg text-white mb-4">Contact Us</h2>
             <ul className="space-y-3 text-sm">
               <li className="flex gap-2.5 items-start">
-                <IconLocation className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
-                <span>Macquarie Park &amp; Ryde Precincts, Sydney NSW</span>
-              </li>
-              <li className="flex gap-2.5 items-start">
                 <IconPhone className="w-5 h-5 shrink-0 mt-0.5 text-[#333]" />
                 <span className="text-sm">Coming soon</span>
               </li>
@@ -210,19 +187,22 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-[#333]/35 pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs sm:text-sm text-[#333]">
-          <p>© {new Date().getFullYear()} Quni. All rights reserved.</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <Link to="/privacy" className={`${linkClass} text-xs sm:text-sm`}>
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className={`${linkClass} text-xs sm:text-sm`}>
-              Terms of Service
-            </Link>
-            <Link to="/refunds" className={`${linkClass} text-xs sm:text-sm`}>
-              Refund Policy
-            </Link>
+        <div className="mt-12 border-t border-[#333]/35 pt-6 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs sm:text-sm text-[#333]">
+            <p>© {new Date().getFullYear()} Quni. All rights reserved.</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link to="/privacy" className={`${linkClass} text-xs sm:text-sm`}>
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className={`${linkClass} text-xs sm:text-sm`}>
+                Terms of Service
+              </Link>
+              <Link to="/refunds" className={`${linkClass} text-xs sm:text-sm`}>
+                Refund Policy
+              </Link>
+            </div>
           </div>
+          <LegalFooter className="text-[#333]/85" />
         </div>
       </div>
     </footer>

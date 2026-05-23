@@ -249,12 +249,12 @@ export default function Home() {
 
   const trustLine = (() => {
     if (!isSupabaseConfigured) {
-      return 'Connect Supabase to see live listings near Sydney universities.'
+      return 'Connect Supabase to see live listings near Australian universities.'
     }
     if (countLoading || listingCount === null) {
-      return 'Loading listings near Sydney universities…'
+      return 'Loading listings near Australian universities…'
     }
-    return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Sydney universities`
+    return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
   })()
 
   const heroCollageTopSrc = featured[0]?.images?.[0] ?? HERO_COLLAGE_TOP_FALLBACK
@@ -297,7 +297,7 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
       <Seo
-        title="Student accommodation near university"
+        title="Verified rooms near Australian universities"
         description={DEFAULT_DESCRIPTION}
         canonicalPath="/"
         image={homeOgImage}
@@ -597,7 +597,7 @@ export default function Home() {
                 More income. Less vacancy. Predictable returns.
               </h2>
               <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
-                Student accommodation is one of Sydney&apos;s most resilient rental markets. Quni Living connects
+                Student accommodation is one of Australia&apos;s most resilient rental markets. Quni Living connects
                 verified landlords with quality students — giving you consistent occupancy, structured leases, and a
                 platform that handles enquiries and bookings for you.
               </p>

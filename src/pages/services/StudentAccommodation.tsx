@@ -6,12 +6,12 @@ export default function StudentAccommodation() {
     <>
       <Seo
         title="Student accommodation"
-        description="Find verified student accommodation near Sydney universities — studios, shared rooms, apartments and houses on Quni Living."
+        description="Find verified student accommodation near Australian universities — studios, shared rooms, apartments and houses on Quni Living."
         canonicalPath="/services/student-accommodation"
       />
     <ServicePageLayout
       title="Student Accommodation"
-      subtitle={"Verified listings near Sydney's top universities"}
+      subtitle={"Verified listings near Australia's top universities"}
       relatedMode="rent"
     >
       <p>

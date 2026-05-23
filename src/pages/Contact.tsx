@@ -4,6 +4,7 @@ import { apiUrl } from '../lib/apiUrl'
 import TurnstileCaptcha from '../components/TurnstileCaptcha'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
+import LegalFooter from '../components/LegalFooter'
 
 const SUBJECT_OPTIONS = [
   { value: 'general', label: 'General Enquiry' },
@@ -11,25 +12,6 @@ const SUBJECT_OPTIONS = [
   { value: 'landlord', label: 'Landlord Enquiry' },
   { value: 'partnership', label: 'Partnership' },
 ] as const
-
-function IconLocation({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z" />
-      <circle cx="12" cy="11" r="2.5" />
-    </svg>
-  )
-}
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -165,7 +147,7 @@ export default function Contact() {
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <Seo
         title="Contact"
-        description="Contact Quni Living for student accommodation enquiries, landlord listings, or partnerships. Based in Sydney, serving Australia."
+        description="Contact Quni Living for student accommodation enquiries, landlord listings, or partnerships. Serving Australian universities nationwide."
         canonicalPath="/contact"
       />
       <PageHeroBand
@@ -178,15 +160,6 @@ export default function Contact() {
           <div>
             <h2 className="font-display text-lg font-bold text-gray-900 mb-6">Contact details</h2>
             <ul className="space-y-6 text-gray-700">
-              <li className="flex gap-4 items-start">
-                <span className={`${iconWrap} flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm`}>
-                  <IconLocation className="w-5 h-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Location</p>
-                  <p className="text-sm leading-relaxed">Macquarie Park &amp; Ryde Precincts, Sydney NSW</p>
-                </div>
-              </li>
               <li className="flex gap-4 items-start">
                 <span className={`${iconWrap} flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm`}>
                   <IconEnvelope className="w-5 h-5" />
@@ -307,6 +280,13 @@ export default function Contact() {
             )}
           </div>
         </div>
+
+        <section className="mt-14 border-t border-gray-200 pt-8" aria-labelledby="contact-legal-heading">
+          <h2 id="contact-legal-heading" className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+            Legal
+          </h2>
+          <LegalFooter className="text-gray-600" />
+        </section>
       </div>
     </div>
   )

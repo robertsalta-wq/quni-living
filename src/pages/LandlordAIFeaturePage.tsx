@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import SiteBrandLockup from '../components/SiteBrandLockup'
 import AiSparkleIcon from '../components/AiSparkleIcon'
+import LegalFooter from '../components/LegalFooter'
 
 type FeatureRowProps = {
   number: string
@@ -378,7 +379,10 @@ export default function LandlordAIFeaturePage() {
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
           <span className="text-[#E8583A] text-xl font-semibold">Quni</span>
-          <p className="text-stone-500">© 2026 Quni Living · hello@quni.com.au · Sydney, Australia</p>
+          <div className="text-stone-500 text-right sm:text-right">
+            <p>© {new Date().getFullYear()} Quni Living · hello@quni.com.au · Australia</p>
+            <LegalFooter className="mt-2 text-stone-400" />
+          </div>
         </div>
       </footer>
     </div>

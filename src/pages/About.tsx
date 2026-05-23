@@ -11,7 +11,7 @@ export default function About() {
     <>
       <Seo
         title="About Quni Living"
-        description="Quni Living is a rental platform built for compatibility, reliability, and fair outcomes for landlords and tenants — founded by Quinn Lee in Sydney, NSW."
+        description="Quni Living is a rental platform built for compatibility, reliability, and fair outcomes for landlords and tenants — founded by Quinn Lee in Australia."
         canonicalPath="/about"
       />
       <div className="flex min-h-0 w-full flex-1 flex-col bg-white">
@@ -24,12 +24,12 @@ export default function About() {
           <div className="mx-auto max-w-3xl space-y-16 text-gray-700">
             <section className="space-y-4 leading-relaxed">
               <h2 className="font-display text-2xl font-bold text-gray-900">About Quinn Lee</h2>
-              <p className="font-semibold text-gray-900">Founder, Quni Living · Sydney, NSW</p>
+              <p className="font-semibold text-gray-900">Founder, Quni Living</p>
               <p>
                 Quinn Lee built Quni Living because she knew there was a better way.
               </p>
               <p>
-                As a Sydney-based property investor managing her own portfolio of room-by-room rentals, Quinn
+                As an Australian property investor managing her own portfolio of room-by-room rentals, Quinn
                 experienced firsthand what neither side of the market was getting right. Landlords were stuck with
                 generic platforms that sent unvetted enquiries and zero support. Students and young professionals were
                 navigating a fragmented, stressful search with no structure and no trust layer. The gap between them was
@@ -74,7 +74,7 @@ export default function About() {
                 <span className="mx-2 text-gray-300" aria-hidden>
                   |
                 </span>
-                <span>Sydney, NSW</span>
+                <span>Australia</span>
               </p>
             </footer>
           </div>
