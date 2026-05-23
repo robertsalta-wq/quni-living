@@ -5,6 +5,7 @@ import {
   SITE_URL,
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE,
+  DEFAULT_OG_IMAGE_ALT,
 } from '../lib/site'
 
 export type SeoProps = {
@@ -69,7 +70,14 @@ export default function Seo({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />
       <meta property="og:locale" content="en_AU" />
-      {image ? <meta property="og:image" content={image} /> : null}
+      {image ? (
+        <>
+          <meta property="og:image" content={image} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={DEFAULT_OG_IMAGE_ALT} />
+        </>
+      ) : null}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle(title)} />

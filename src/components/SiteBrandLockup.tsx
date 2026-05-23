@@ -1,42 +1,39 @@
 import { Link } from 'react-router-dom'
 import AiSparkleIcon from './AiSparkleIcon'
 
-const LOGO_SRC = '/quni-logo.png'
+const LOGO = {
+  default: { src: '/quni-logo.png', srcSet: '/quni-logo.png 1x, /quni-logo@2x.png 2x' },
+  ai: { src: '/quni-logo-ai-purple.png', srcSet: '/quni-logo-ai-purple.png 1x, /quni-logo-ai-purple@2x.png 2x' },
+} as const
 
-/**
- * PNG wordmark recolor via CSS mask only works if the asset has real alpha around the artwork.
- * Many raster logos are exported on an opaque rectangle, which reads as a solid color block when masked.
- * For the AI landing header we use purple wordmark text instead of masking the PNG.
- */
-function QuniLogoImg({ wordmarkColor }: { wordmarkColor?: string }) {
-  const sizeClass = 'h-9 w-auto max-w-full object-contain object-left sm:h-10'
+type LogoVariant = keyof typeof LOGO
 
-  if (!wordmarkColor) {
-    return <img src={LOGO_SRC} alt="Quni" className={sizeClass} />
-  }
-
+function QuniLogoImg({ variant }: { variant: LogoVariant }) {
+  const { src, srcSet } = LOGO[variant]
   return (
-    <span className="inline-flex items-center shrink-0 h-9 sm:h-10">
-      <span
-        className="font-display font-bold leading-none tracking-tight text-[2rem] sm:text-[2.15rem]"
-        style={{ color: wordmarkColor }}
-      >
-        Quni
-      </span>
-    </span>
+    <img
+      src={src}
+      srcSet={srcSet}
+      alt="Quni"
+      width={120}
+      height={40}
+      className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
+    />
   )
 }
 
 /** Same logo + AI entry as the main site header (size, spacing, home link). */
-export default function SiteBrandLockup({ logoWordmarkColor }: { logoWordmarkColor?: string }) {
+export default function SiteBrandLockup({ variant = 'default' }: { variant?: LogoVariant }) {
+  const isAi = variant === 'ai'
   return (
     <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 shrink-0">
       <Link
         to="/"
-        className="flex min-w-0 items-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 rounded-sm"
-        aria-label={logoWordmarkColor ? 'Quni' : undefined}
+        className={`flex min-w-0 items-center shrink-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+          isAi ? 'focus-visible:outline-stone-200' : 'focus-visible:outline-gray-900'
+        }`}
       >
-        <QuniLogoImg wordmarkColor={logoWordmarkColor} />
+        <QuniLogoImg variant={variant} />
       </Link>
       <Link
         to="/landlords/ai"

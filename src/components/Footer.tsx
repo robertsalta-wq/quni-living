@@ -45,15 +45,19 @@ const linkClass =
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FF7261] text-[#333] font-footer mt-auto">
+    <footer className="bg-[#FF6F61] text-[#333] font-footer mt-auto">
       <div className={`${SITE_CONTENT_MAX_CLASS} py-14 md:py-16`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#4a4a4a] text-white text-sm font-semibold font-footer">
-                Q
-              </span>
-              <span className="font-display font-bold text-xl text-white tracking-tight">Quni</span>
+            <Link to="/" className="inline-flex items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80">
+              <img
+                src="/quni-logo-white.png"
+                srcSet="/quni-logo-white.png 1x, /quni-logo-white@2x.png 2x"
+                alt="Quni"
+                width={96}
+                height={32}
+                className="h-8 w-auto max-w-full object-contain object-left"
+              />
             </Link>
             <p className="mt-4 text-sm leading-relaxed max-w-xs">
               Verified rooms near Australian universities — for students, graduates, and young professionals.

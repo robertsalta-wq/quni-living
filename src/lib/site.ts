@@ -28,10 +28,10 @@ export const DEFAULT_OG_TITLE = 'Quni Living — verified rooms near Australian 
 export const DEFAULT_OG_URL = 'https://quni.com.au'
 
 const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.trim()
-/** Prefer a 1200×630 JPG/PNG on your domain; fallback is a stable hero-style image. */
-export const DEFAULT_OG_IMAGE =
-  ogFromEnv ||
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&h=630&fit=crop&q=80'
+/** 1200×630 branded share image on the marketing domain (`public/og-default.png`). */
+export const DEFAULT_OG_IMAGE = ogFromEnv || `${DEFAULT_OG_URL}/og-default.png`
+
+export const DEFAULT_OG_IMAGE_ALT = 'Quni — verified rooms near Australian universities'
 
 export const ORGANIZATION_EMAIL = 'hello@quni.com.au'
 

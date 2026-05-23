@@ -108,7 +108,7 @@ export default function LandlordAIFeaturePage() {
 
       <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0F0D0B]/75 backdrop-blur-md">
         <div className="max-w-site mx-auto w-full px-3 py-4 sm:px-6 flex items-center justify-between gap-3">
-          <SiteBrandLockup logoWordmarkColor="#B65FCF" />
+          <SiteBrandLockup variant="ai" />
           <Link
             to="/landlord/onboarding"
             className="inline-flex items-center rounded-xl bg-[#E8583A] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 transition"
