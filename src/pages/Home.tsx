@@ -308,15 +308,17 @@ export default function Home() {
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
-              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-4">
-                Australia&apos;s student accommodation marketplace
+              <p className="text-[11px] sm:text-xs font-semibold tracking-[0.12em] sm:tracking-[0.16em] uppercase text-white/70 mb-4 max-w-xl leading-snug">
+                Australia&apos;s verified accommodation for students, graduates &amp; young
+                professionals
               </p>
               <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-[4.5rem] font-bold tracking-tight text-white !mt-0 mb-8 sm:mb-10 leading-tight">
-                <span className="block">Live Well.</span>
-                <span className="block">Study Better.</span>
+                <span className="block">Live well</span>
+                <span className="block">near campus.</span>
               </h1>
               <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
-                Student accommodation near Australia&apos;s top universities
+                Browse verified listings near your university or workplace — enquire and book on one
+                marketplace.
               </p>
 
               <form
@@ -368,6 +370,16 @@ export default function Home() {
                   Search
                 </button>
               </form>
+
+              <p className="mt-3 text-sm text-white/80">
+                Renting for work, not study?{' '}
+                <Link
+                  to="/rent-near-campus"
+                  className="font-semibold text-white underline underline-offset-2 hover:text-white/90"
+                >
+                  Find rooms for professionals
+                </Link>
+              </p>
 
               <p className="mt-4 text-sm text-white/70">{trustLine}</p>
             </div>

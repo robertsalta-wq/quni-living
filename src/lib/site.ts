@@ -18,7 +18,7 @@ export const SITE_NAME = 'Quni Living'
 export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-3 sm:px-6'
 
 export const DEFAULT_DESCRIPTION =
-  "Australia's student accommodation marketplace. Browse verified listings near your university, enquire with landlords, and book online with Quni Living."
+  "Australia's verified accommodation marketplace for students, graduates, and young professionals. Browse listings near your university or workplace, enquire with landlords, and book online with Quni Living."
 
 const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.trim()
 /** Prefer a 1200×630 JPG/PNG on your domain; fallback is a stable hero-style image. */
