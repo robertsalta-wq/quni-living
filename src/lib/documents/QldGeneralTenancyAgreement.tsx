@@ -198,8 +198,10 @@ const clausePdfStyles: Form18aClauseStyles = {
 }
 
 function resolveQuniLogoPath(): string | null {
-  const p = join(process.cwd(), 'public', 'quni-logo.png')
-  return existsSync(p) ? p : null
+  const pdf = join(process.cwd(), 'public', 'quni-logo-pdf.png')
+  if (existsSync(pdf)) return pdf
+  const fallback = join(process.cwd(), 'public', 'quni-logo.png')
+  return existsSync(fallback) ? fallback : null
 }
 
 function formatMoney(n: number) {

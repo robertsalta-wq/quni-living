@@ -57,7 +57,8 @@ const DEFAULT_FOREGROUND = path.join(
 );
 
 /** Matches android/app/src/main/res/values/ic_launcher_background.xml */
-const LEGACY_PAD_RGBA = { r: 232, g: 112, b: 90, alpha: 1 };
+/** Matches ic_launcher_background (#FEF9E4) and launcher master cream field. */
+const LEGACY_PAD_RGBA = { r: 254, g: 249, b: 228, alpha: 1 };
 
 /** Fraction of canvas used as padding on each side (content uses middle 1 − 2× this). */
 const LEGACY_PAD_FRACTION = 0.28;

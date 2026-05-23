@@ -19,6 +19,7 @@
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:android": "npm run cap:sync && npx cap open android",
     "generate:android-icons": "node scripts/generate-android-launcher-icons.mjs",
+    "generate:android-splash": "node scripts/generate-android-splash.mjs",
     "seed:properties": "npx tsx src/scripts/seedProperties.ts",
     "seed:knowledge": "node scripts/run-with-env.mjs npx tsx scripts/seedKnowledge.ts",
     "generate:suburbs": "node scripts/suburb-generator/generate.js",
