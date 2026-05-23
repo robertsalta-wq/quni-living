@@ -593,8 +593,10 @@ var styles = StyleSheet.create({
   sigHint: { fontSize: 7, color: "#6b7280" }
 });
 function resolveQuniLogoPath() {
-  const p = join(process.cwd(), "public", "quni-logo.png");
-  return existsSync(p) ? p : null;
+  const pdf = join(process.cwd(), "public", "quni-logo-pdf.png");
+  if (existsSync(pdf)) return pdf;
+  const fallback = join(process.cwd(), "public", "quni-logo.png");
+  return existsSync(fallback) ? fallback : null;
 }
 function formatMoney(n) {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
