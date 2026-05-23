@@ -19,7 +19,7 @@ export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-3 sm
 
 /** Default share / meta description (homepage, fallbacks). */
 export const DEFAULT_DESCRIPTION =
-  'Browse verified rooms near your university. Free for students.'
+  'Browse verified rooms near Australian universities. Free for students. ID-verified landlords, RTA-compliant agreements, direct payouts.'
 
 /** Default document title and Open Graph / Twitter title when not route-specific. */
 export const DEFAULT_OG_TITLE = 'Quni Living — verified rooms near Australian universities'
@@ -28,8 +28,10 @@ export const DEFAULT_OG_TITLE = 'Quni Living — verified rooms near Australian 
 export const DEFAULT_OG_URL = 'https://quni.com.au'
 
 const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.trim()
-/** 1200×630 branded share image on the marketing domain (`public/og-default.png`). */
-export const DEFAULT_OG_IMAGE = ogFromEnv || `${DEFAULT_OG_URL}/og-default.png`
+/** 1200×630 branded share image (`public/og-default.png`). Pre-launch: Vercel origin until DNS cutover. */
+// TODO: switch back to https://quni.com.au/og-default.png after DNS cutover
+export const DEFAULT_OG_IMAGE =
+  ogFromEnv || 'https://quni-living.vercel.app/og-default.png'
 
 export const DEFAULT_OG_IMAGE_ALT = 'Quni — verified rooms near Australian universities'
 
