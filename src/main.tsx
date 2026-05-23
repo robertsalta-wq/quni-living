@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './context/AuthContext'
+import { LegalEntityProvider } from './context/LegalEntityContext'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { registerNativeOAuthDeepLinkHandler } from './lib/nativeOAuthDeepLink'
 import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFallback'
@@ -20,9 +21,11 @@ createRoot(document.getElementById('root')!).render(
       <AppNavigationRegistrar />
       <HelmetProvider>
         <AuthProvider>
-          <AppErrorBoundary>
-            <App />
-          </AppErrorBoundary>
+          <LegalEntityProvider>
+            <AppErrorBoundary>
+              <App />
+            </AppErrorBoundary>
+          </LegalEntityProvider>
         </AuthProvider>
       </HelmetProvider>
     </BrowserRouter>
