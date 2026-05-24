@@ -1,9 +1,77 @@
 # Quni Listing go-live — concrete plan
 
-**Scope:** Listing-only launch on production. Managed stays in the codebase but is **hidden and unreachable** until you flip a flag later.
+**Scope:** Listing-only launch on production. Managed stays in the codebase — **teased in marketing, not bookable** until flags are flipped later.
 
-**Status:** Pre-launch checklist  
-**Last updated:** May 2026
+**Status:** Pre-launch checklist — Phase 1 code shipped; inventory + remaining Supabase deferred to Monday  
+**Last updated:** 24 May 2026
+
+**Go-live is postponed until every item in [Pre-go-live — nothing ships until…](#pre-go-live--nothing-ships-until) is checked.**
+
+---
+
+## Pre-go-live — nothing ships until…
+
+**Definition of go-live:** Real strangers can discover listings, book, pay real money, and sign a lease on production. No public traffic or real bookings until **every box below** is done. Postponing launch is correct if anything is incomplete.
+
+### Build & database
+
+- [ ] **Phase 1 code** deployed — Managed teased in UI, not selectable/bookable (**G4**)
+- [ ] **Phase 2 Supabase** complete — migrations pushed; `module_enabled=true`; `managed_enabled=false`; all properties → `service_tier = 'listing'`; `public_platform_features` view live
+- [ ] **Listing inventory** finalized — clean slate (`DELETE` properties + test users) or curated keep-3; 3 verified real listings live (Casa Malvina + 2); landlords verified in admin
+- [ ] **Phase 1.25** — `platform_staff` table + `is_platform_admin()` RPC + **Admin → Team** UI (port Unstash pattern; no hardcoded admin emails)
+- [ ] **Phase 1.5** — per-state × tier Managed toggles editable in **Admin → State workflows** (so state rollouts need no deploy)
+
+### Prove it works
+
+- [ ] **G1** — `npx tsc -b --noEmit` and `npm test` green on release commit
+- [ ] **G2** — full test-mode E2E on production: signup → book → accept → test $99 → bond → DocuSeal → `confirmed`
+- [ ] **G5** — bank + legal entity non-empty in **Admin → Business settings** (lease PDFs)
+- [ ] **Stripe live** — live keys, live Listing product ID, live webhook on production domain
+- [ ] **Vercel env** — all production secrets correct for live mode (see Phase 5)
+- [ ] **Resend** — at least one transactional email delivered end-to-end on production
+- [ ] **DocuSeal** — `sign.quni.com.au` healthy; signing completes on production
+- [ ] **G3** — live smoke test: one real $99 charge, full flow, then refund
+
+### Domain (minimum)
+
+- [ ] **Domain decision made** — Option A (`quni-living.vercel.app`) or Option B (`quni.com.au`) before env + smoke test
+
+### Explicitly deferrable (not blockers for first go-live)
+
+| Item | When |
+|------|------|
+| DNS cutover to `quni.com.au` | After G3 on Option A |
+| Managed tier actually bookable | ~1 month; global + state toggles |
+| 5–10 live listings | 3 real verified listings is enough for cold start |
+
+### Suggested sequence
+
+```text
+Monday      Clean wipe (properties + test users) + finish Phase 2 + create 3 listings
+Week 1      Phase 1.25 (platform_staff / Admin → Team) + Phase 1.5 + G2 test E2E
+Week 1–2    Stripe live + env audit + Resend/DocuSeal + G5
+Week 2      G3 live smoke test
+→ GO LIVE   (only after all checkboxes above)
+```
+
+**Rough progress (24 May 2026):** ~15–20% of this list complete (Phase 1 code + `module_enabled` on production).
+
+---
+
+## Current status (snapshot)
+
+| Item | Status |
+|------|--------|
+| Phase 1 code (Managed gated + teased in UI) | **Done** — deployed to `main` |
+| `quni_service_tier_module_enabled` | **Done** — already `true` on production |
+| `quni_service_tier_managed_enabled` + `public_platform_features` view | **Pending** — migration `20260524120000` not applied |
+| `public_legal_entity_view` migration | **Pending** — migration `20260523120000` not applied |
+| Properties backfill → `service_tier = 'listing'` | **Pending** — all 21 rows still `managed` (OK while Managed globally off) |
+| Listing inventory | **Deferred to Monday** — clean-slate wipe planned |
+| Platform staff / Admin → Team (Phase 1.25) | **Not built** — **required before go-live** |
+| Per-state Managed admin toggles (Phase 1.5) | **Not built** — **required before go-live** |
+| Test-mode E2E (Phase 3) | **Not started** |
+| Stripe live flip (Phase 4) | **Not started** |
 
 ---
 
@@ -27,7 +95,7 @@ Do not proceed to the next phase until the gate passes.
 | **G1** | `npx tsc -b --noEmit` and `npm test` green |
 | **G2** | Test-mode Listing E2E completes (accept → $99 test charge → bond → sign) |
 | **G3** | Live Stripe keys deployed; one real $99 charge + refund verified |
-| **G4** | Managed invisible on pricing, property form, homepage, How it works |
+| **G4** | Managed not bookable on pricing, property form, booking accept (teased “coming soon” in marketing is OK) |
 | **G5** | Bank details in Admin → Business Settings (lease PDFs need them) |
 
 ---
@@ -182,6 +250,57 @@ npm test
 ```
 
 **Gate G1** must pass before Phase 2.
+
+---
+
+## Phase 1.25 — Platform staff / Admin → Team (~1 session)
+
+Port the **Unstash** pattern: admins stay in `auth.users`; platform access is tracked in **`platform_staff`**, not hardcoded email lists in code.
+
+**Why before go-live:** You need to add/remove staff (e.g. `quinn@4logistics.com.au`) without editing four files and redeploying. RLS, app, API, and Edge must share one source of truth.
+
+### 1.25A. Database migration
+
+Create `public.platform_staff` (mirror Unstash):
+
+| Column | Purpose |
+|--------|---------|
+| `email` | Unique; matched to JWT email in `is_platform_admin()` |
+| `role` | `admin` \| `support` \| `moderator` (v1: all grant full admin) |
+| `notes`, `created_by`, timestamps | Audit |
+
+- Seed `hello@quni.com.au` so bootstrap admin is never locked out
+- Replace hardcoded `IN ('hello@quni.com.au')` in `is_platform_admin()` with `EXISTS (SELECT 1 FROM platform_staff WHERE lower(trim(email)) = …)`
+- Update storage policy on `student-documents` if it still hardcodes admin emails
+- RLS: only platform admins can `SELECT`/`INSERT`/`UPDATE`/`DELETE` on `platform_staff`; block deleting the last admin row
+
+### 1.25B. App + API + Edge
+
+| File / area | Change |
+|-------------|--------|
+| `src/lib/adminEmails.ts` | Replace allowlist with RPC `is_platform_admin` (or async fetch on session load) |
+| `src/lib/authProfile.ts` | Admin role from RPC, not email constant |
+| `api/lib/adminAuth.js` | Same DB check (service role query or RPC) |
+| `supabase/functions/_shared/adminEmails.ts` | Remove duplicate allowlist; use RPC |
+| `AuthContext` | Cache admin flag after login |
+
+Remove all hardcoded `ADMIN_EMAILS` once RPC is wired.
+
+### 1.25C. Admin UI — **Admin → Team**
+
+- List current `platform_staff` rows
+- Add staff by email (user may sign up later; email match on login)
+- Optional: deactivate / remove (with last-admin guard)
+- Route: `/admin/team` (or under Settings)
+
+### 1.25D. Verify
+
+- [ ] `hello@quni.com.au` can access `/admin` after migration
+- [ ] Add second email via Team UI → that user gets `/admin` after login (no deploy)
+- [ ] Non-staff user cannot access `/admin` or mutate `platform_staff`
+- [ ] `npm test` + `tsc` green
+
+**Gate:** complete before G2 if multiple people will run E2E or verify landlords.
 
 ---
 
@@ -500,6 +619,8 @@ Skip if staying on `quni-living.vercel.app` for now.
 |-------|----------|
 | 0 Decisions | 15 min |
 | 1 Code | 2–3 hr |
+| 1.25 Platform staff / Admin → Team | ~1 hr |
+| 1.5 State Managed toggles | ~1 hr |
 | 2 Supabase | 30 min |
 | 3 Test-mode E2E | 1–2 hr |
 | 4 Stripe live | 45 min |
@@ -515,20 +636,148 @@ Skip if staying on `quni-living.vercel.app` for now.
 ## Minimal day-of checklist (printable)
 
 ```text
-□ Listing inventory audit: demo-* inactive; 5–10 verified real listings active
+□ Clean inventory: DELETE properties; DELETE test auth users (keep hello@quni.com.au)
 □ Phase 1 code merged + G1 green
+□ Phase 1.25: platform_staff migration + Admin → Team; is_platform_admin() on table
 □ Supabase: module_enabled=true, managed_enabled=false, properties→listing
 □ Bank details in admin
 □ Deploy (test Stripe)
 □ Test-mode E2E pass (G2)
 □ Stripe live keys + product + webhook
 □ Vercel env updated + redeploy
-□ Live E2E pass (G3) + Managed hidden (G4)
+□ Live E2E pass (G3) + Managed not bookable (G4)
 □ Resend test email OK
 □ DocuSeal signing OK
 □ Sentry clean
 □ (Optional) DNS + GSC sitemap
 ```
+
+---
+
+## Monday session checklist
+
+**Goal:** Finalize inventory, finish Phase 2 Supabase, then run Phase 3 test-mode E2E.
+
+**Time budget:** ~2–3 hours total.
+
+### A. Clean slate — properties + test users
+
+**1. Delete all listings** (cascades bookings/enquiries):
+
+```sql
+DELETE FROM public.properties;
+```
+
+**2. Delete test auth users** (keep admin bootstrap):
+
+```sql
+DELETE FROM auth.users
+WHERE lower(trim(email)) <> 'hello@quni.com.au';
+```
+
+**3. Verify:**
+
+```sql
+SELECT count(*) FROM public.properties;  -- 0
+SELECT email FROM auth.users;             -- hello@quni.com.au only
+```
+
+**4. Create 3 listings fresh** via landlord dashboard (Casa Malvina + 2 real). Verify landlord(s) in **Admin → Landlords**.
+
+<details>
+<summary>Legacy: audit + pick-3 from existing rows (skip if using clean slate)</summary>
+
+Run the audit in **Supabase → SQL Editor**:
+
+```sql
+SELECT p.slug, p.title, p.suburb, p.status, lp.verified AS landlord_verified,
+       (p.images[1] LIKE '%unsplash%') AS stock_photo
+FROM public.properties p
+JOIN public.landlord_profiles lp ON lp.id = p.landlord_id
+WHERE p.status = 'active'
+ORDER BY p.slug;
+```
+
+- [ ] Decide **3 slugs** to keep live
+- [ ] Deactivate `demo-*` and other seeds
+
+</details>
+
+### B. Finish Phase 2 Supabase (~15 min)
+
+From repo root (linked project `flegysnshryzvkwzfclc`):
+
+```bash
+npx supabase db push
+```
+
+Or paste in SQL Editor if CLI auth fails.
+
+Then run:
+
+```sql
+-- Managed globally off (migration may already insert this)
+INSERT INTO public.platform_config (config_key, config_value, label, category, is_sensitive, sort_order)
+VALUES ('quni_service_tier_managed_enabled', 'false', 'Enable Quni Managed tier platform-wide', 'compliance', false, 911)
+ON CONFLICT (config_key) DO UPDATE SET config_value = 'false';
+
+-- All properties → Listing tier
+UPDATE public.properties
+SET service_tier = 'listing'
+WHERE service_tier IS DISTINCT FROM 'listing';
+```
+
+Verify:
+
+```sql
+SELECT config_key, config_value
+FROM public.platform_config
+WHERE config_key IN ('quni_service_tier_module_enabled', 'quni_service_tier_managed_enabled');
+
+SELECT service_tier, count(*) FROM public.properties GROUP BY 1;
+
+SELECT * FROM public.public_platform_features;
+-- Expect: listing_module_enabled=true, managed_tier_enabled=false
+```
+
+- [ ] Migrations applied (`20260523120000`, `20260524120000`)
+- [ ] `managed_enabled = false`, `module_enabled = true`
+- [ ] All properties `service_tier = 'listing'`
+- [ ] `public_platform_features` view returns expected flags
+
+### C. Admin spot-checks (~15 min)
+
+- [ ] **Admin → Business settings** — bank details non-empty (**Gate G5**)
+- [ ] **Admin → Properties** — 3 real listings active; landlords verified
+- [ ] **Admin → Team** — add any extra staff emails (after Phase 1.25 ships)
+- [ ] **Admin → Trust checklist** — items 3–11 spot-checked
+
+### D. Phase 3 — test-mode E2E (~1–2 hr)
+
+Production with **Stripe test keys** still set in Vercel.
+
+| Step | Actor | Action | Verify |
+|------|-------|--------|--------|
+| 1 | Landlord | Sign up `/landlord-signup?tier=listing` | Intended tier stored |
+| 2 | Landlord | Onboarding + test card `4242…` | Wizard completes |
+| 3 | Landlord | Create property; tier = **Listing** only | Managed not selectable |
+| 4 | Renter | Sign up → book one of your 3 listings | `pending_confirmation` |
+| 5 | Landlord | Accept as Listing | `bond_pending`; test $99 PI succeeds |
+| 6 | Landlord | Mark bond received | Emails + doc gen triggered |
+| 7 | Both | DocuSeal signing | Booking `confirmed` |
+| 8 | You | UI audit | Managed teased but not bookable (**G4**) |
+
+**Gate G2** must pass before Stripe live flip (Phase 4).
+
+### E. Phase 1.25 — platform staff (required before go-live)
+
+- [ ] `platform_staff` migration applied; `is_platform_admin()` reads table
+- [ ] **Admin → Team** — add staff without code deploy
+
+### F. Phase 1.5 — per-state Managed toggles (required before go-live)
+
+- [ ] Build per-state × tier Managed toggles on **Admin → State workflows** (avoids deploy per state at ~1 month)
+- [ ] DocuSeal + Resend spot-check (Phases 6–7)
 
 ---
 

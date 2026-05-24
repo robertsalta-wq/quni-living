@@ -1,17 +1,24 @@
 /**
- * Verify Supabase JWT and platform admin (email allowlist or user_metadata.role === 'admin').
+ * Verify Supabase JWT and platform admin (platform_staff table or legacy user_metadata.role).
  */
 import { createClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAILS = new Set(['hello@quni.com.au'])
-
-export function isPlatformAdminUser(user) {
+/**
+ * @param {import('@supabase/supabase-js').User | null | undefined} user
+ * @returns {Promise<boolean>}
+ */
+export async function isPlatformAdminUser(user) {
   if (!user) return false
-  const role = user.user_metadata?.role
-  if (role === 'admin') return true
+  if (user.user_metadata?.role === 'admin') return true
   const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : ''
-  if (email && ADMIN_EMAILS.has(email)) return true
-  return false
+  if (!email) return false
+  const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
+  const serviceRole = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
+  if (!supabaseUrl || !serviceRole) return false
+  const admin = createClient(supabaseUrl, serviceRole)
+  const { data, error } = await admin.from('platform_staff').select('id').eq('email', email).maybeSingle()
+  if (error) return false
+  return data != null
 }
 
 /**
@@ -34,7 +41,7 @@ export async function requireAdminUser(request, supabaseUrl, anonKey) {
   if (userErr || !user) {
     return { error: 'Invalid or expired session', status: 401 }
   }
-  if (!isPlatformAdminUser(user)) {
+  if (!(await isPlatformAdminUser(user))) {
     return { error: 'Admin access required', status: 403 }
   }
   return { user }

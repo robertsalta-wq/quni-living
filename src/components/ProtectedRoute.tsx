@@ -3,7 +3,7 @@ import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { LandlordProfileRow, StudentProfileRow, UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
-import { isAdminUser } from '../lib/adminEmails'
+import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 type AllowedRole = Exclude<UserRole, null>
@@ -56,7 +56,7 @@ export function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (!isAdminUser(user) && userNeedsEmailAddressVerification(user)) {
+  if (role !== 'admin' && !isLegacyMetadataAdmin(user) && userNeedsEmailAddressVerification(user)) {
     return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 
@@ -96,7 +96,7 @@ export function ProtectedRoute({
 
 /** Logged-in only (profile optional) — e.g. onboarding */
 export function RequireUser({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuthContext()
+  const { user, loading, role } = useAuthContext()
   const location = useLocation()
 
   if (!isSupabaseConfigured) {
@@ -119,7 +119,7 @@ export function RequireUser({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (!isAdminUser(user) && userNeedsEmailAddressVerification(user)) {
+  if (role !== 'admin' && !isLegacyMetadataAdmin(user) && userNeedsEmailAddressVerification(user)) {
     return <Navigate to="/verify-email" replace state={{ from: location }} />
   }
 

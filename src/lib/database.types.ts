@@ -115,6 +115,36 @@ export interface Database {
         }
         Relationships: []
       }
+      platform_staff: {
+        Row: {
+          id: string
+          email: string
+          role: 'admin' | 'support' | 'moderator'
+          notes: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          role?: 'admin' | 'support' | 'moderator'
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          role?: 'admin' | 'support' | 'moderator'
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
       admin_checklist_progress: {
         Row: {
           id: string
@@ -1764,6 +1794,10 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      is_platform_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       property_access_status_for_viewer: {
         Args: { p_slug: string }
         Returns: string

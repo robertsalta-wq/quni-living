@@ -7,7 +7,6 @@ import {
 } from '../lib/supabase'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
-import { isAdminUser } from '../lib/adminEmails'
 import {
   fetchRoleAndProfile,
   getPostLoginRedirectDestination,
@@ -133,7 +132,7 @@ export default function Onboarding() {
       const u = data.user ?? user
       const { role, profile } = await fetchRoleAndProfile(u)
       if (cancelled) return
-      if (role === 'admin' || isAdminUser(u)) {
+      if (role === 'admin') {
         navigate('/admin', { replace: true })
         return
       }
@@ -268,7 +267,7 @@ export default function Onboarding() {
     )
   }
 
-  if (contextRole === 'admin' || isAdminUser(user)) {
+  if (contextRole === 'admin') {
     return <Navigate to="/admin" replace />
   }
 

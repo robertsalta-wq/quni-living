@@ -1,4 +1,4 @@
--- Platform admin access (matches src/lib/adminEmails.ts).
+-- Platform admin access via public.platform_staff (see migration 20260526120000_platform_staff.sql).
 -- Run in Supabase SQL Editor after quni_supabase_schema.sql so the dashboard can
 -- read/update bookings, enquiries, properties, and landlord verification.
 --
@@ -12,11 +12,10 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    lower(trim(auth.jwt() ->> 'email')) in (
-      'hello@quni.com.au'
-    ),
-    false
+  select exists (
+    select 1
+    from public.platform_staff ps
+    where ps.email = lower(trim(coalesce(auth.jwt() ->> 'email', '')))
   );
 $$;
 

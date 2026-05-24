@@ -102,6 +102,7 @@ export const ADMIN_NAV_ZONES: readonly AdminNavZone[] = [
       { id: 'domains', label: 'Domains', icon: 'globe', to: '/admin/domains' },
       { id: 'kb', label: 'Knowledge base', icon: 'book-open', to: '/admin/knowledge-base' },
       { id: 'qase', label: 'Support (Qase)', icon: 'life-buoy', to: '/admin/qase' },
+      { id: 'team', label: 'Team', icon: 'users', to: '/admin/team' },
       { id: 'business-settings', label: 'Business settings', icon: 'sliders', to: '/admin/settings' },
     ],
   },

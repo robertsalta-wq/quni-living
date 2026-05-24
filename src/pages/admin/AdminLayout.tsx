@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
-import { isAdminUser } from '../../lib/adminEmails'
 import { AdminShell } from '../../components/admin/Shell'
 
 /**
@@ -13,17 +12,17 @@ import { AdminShell } from '../../components/admin/Shell'
  * single source of truth.
  */
 export default function AdminLayout() {
-  const { user } = useAuthContext()
+  const { user, role } = useAuthContext()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (!user) return
-    if (!isAdminUser(user)) {
+    if (role !== 'admin') {
       navigate('/', { replace: true })
     }
-  }, [user, navigate])
+  }, [user, role, navigate])
 
-  if (user && !isAdminUser(user)) {
+  if (user && role !== 'admin') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-admin-surface-2">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-admin-coral border-t-transparent" />

@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js'
-import { isAdminUser } from './adminEmails'
+import { fetchIsPlatformAdmin } from './platformStaff'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
@@ -19,7 +19,7 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
-  if (isAdminUser(user)) {
+  if (user.user_metadata?.role === 'admin' || (await fetchIsPlatformAdmin())) {
     return { role: 'admin', profile: null }
   }
 
@@ -48,11 +48,11 @@ export async function fetchRoleAndProfile(user: User): Promise<{
  * Landlord → /onboarding/landlord until wizard complete, then /landlord-dashboard. Admin → /admin. No role → /onboarding.
  */
 export function getPostLoginRedirectDestination(
-  user: User,
+  _user: User,
   role: UserRole,
   profile: AuthProfile | null,
 ): string {
-  if (role === 'admin' || isAdminUser(user)) return '/admin'
+  if (role === 'admin') return '/admin'
   if (role === 'landlord') {
     const lp = profile as LandlordProfileRow | null
     if (lp && lp.onboarding_complete !== true) return '/onboarding/landlord'

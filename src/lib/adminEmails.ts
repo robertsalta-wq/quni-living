@@ -1,10 +1,5 @@
 import type { User } from '@supabase/supabase-js'
 
-/** Hardcoded admin accounts — compared case-insensitively to `user.email`. Sync with `supabase/functions/_shared/adminEmails.ts`. */
-export const ADMIN_EMAILS = ['hello@quni.com.au'] as const
-
-const ADMIN_SET = new Set(ADMIN_EMAILS.map((e) => e.toLowerCase()))
-
 /**
  * Prefer `user.email`; OAuth / some session payloads only expose email on `identities`.
  */
@@ -21,11 +16,7 @@ export function authUserEmail(user: User | null | undefined): string | null {
   return null
 }
 
-export function isAdminEmail(email: string | null | undefined): boolean {
-  if (!email?.trim()) return false
-  return ADMIN_SET.has(email.trim().toLowerCase())
-}
-
-export function isAdminUser(user: User | null | undefined): boolean {
-  return isAdminEmail(authUserEmail(user))
+/** Legacy JWT metadata fallback only — prefer `role === 'admin'` from AuthContext (platform_staff RPC). */
+export function isLegacyMetadataAdmin(user: User | null | undefined): boolean {
+  return user?.user_metadata?.role === 'admin'
 }

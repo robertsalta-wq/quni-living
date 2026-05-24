@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 
-export function isPlatformAdminUser(user: User | null | undefined): boolean
+export function isPlatformAdminUser(user: User | null | undefined): Promise<boolean>
 
 export function requireAdminUser(
   request: Request,

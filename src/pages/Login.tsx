@@ -6,7 +6,6 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import { isAdminUser } from '../lib/adminEmails'
 import {
   fetchRoleAndProfile,
   getPostLoginRedirectDestination,
@@ -97,7 +96,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
-    if (role === 'admin' || isAdminUser(user)) {
+    if (role === 'admin') {
       const next = resolvePostLoginDestination(searchParams, location.state)
       navigate(next && next !== '/login' ? next : '/admin', { replace: true })
       return
@@ -140,7 +139,7 @@ export default function Login() {
       const { data: verified } = await supabase.auth.getUser()
       const u = verified.user ?? data.user
       const { role: r, profile: p } = await fetchRoleAndProfile(u)
-      if (r === 'admin' || isAdminUser(u)) {
+      if (r === 'admin') {
         const next = resolvePostLoginDestination(searchParams, location.state)
         navigate(next && next !== '/login' ? next : '/admin', { replace: true })
         return

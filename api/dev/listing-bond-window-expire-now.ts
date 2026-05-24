@@ -68,7 +68,7 @@ export default async function handler(req, res) {
   if (userErr || !user) {
     return corsJson(res, { error: 'Invalid or expired session' }, 401, origin)
   }
-  if (!isPlatformAdminUser(user)) {
+  if (!(await isPlatformAdminUser(user))) {
     return corsJson(res, { error: 'Admin access required' }, 403, origin)
   }
 

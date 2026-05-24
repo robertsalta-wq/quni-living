@@ -6,7 +6,7 @@
  *   GOOGLE_DRIVE_API_KEY
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-import { isAdminUser } from '../_shared/adminEmails.ts'
+import { isPlatformAdminUser } from '../_shared/platformStaff.ts'
 
 const QUNI_LIVING_FOLDER_ID = '13u7rROY2ztVnvxqSpVESGEE74TgsqQOy'
 
@@ -103,14 +103,15 @@ Deno.serve(async (req) => {
     error: userErr,
   } = await userClient.auth.getUser()
 
-  if (userErr || !user || !isAdminUser(user)) {
+  const isAdmin = !userErr && user != null && (await isPlatformAdminUser(userClient, user))
+  if (userErr || !user || !isAdmin) {
     const msg =
       userErr?.message?.includes('Invalid JWT') || userErr?.message?.includes('invalid JWT')
         ? 'Your session could not be verified. Sign out, sign in again, then retry.'
-        : user && !isAdminUser(user)
+        : user && !isAdmin
           ? 'Forbidden.'
           : (userErr?.message ?? 'Please sign in again.')
-    return json({ error: msg }, user && !isAdminUser(user) ? 403 : 401)
+    return json({ error: msg }, user && !isAdmin ? 403 : 401)
   }
 
   const driveApiKey = Deno.env.get('GOOGLE_DRIVE_API_KEY')?.trim()

@@ -4,7 +4,7 @@
  * Deploy: supabase functions deploy tpp-domains --no-verify-jwt
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-import { isAdminUser } from '../_shared/adminEmails.ts'
+import { isPlatformAdminUser } from '../_shared/platformStaff.ts'
 import { fetchTppDomainsWithDetails, loadTppEnvFromDeno, TppApiError } from '../_shared/tppWholesale.ts'
 
 function corsHeaders(req: Request): Record<string, string> {
@@ -57,14 +57,15 @@ Deno.serve(async (req) => {
     error: userErr,
   } = await userClient.auth.getUser()
 
-  if (userErr || !user || !isAdminUser(user)) {
+  const isAdmin = !userErr && user != null && (await isPlatformAdminUser(userClient, user))
+  if (userErr || !user || !isAdmin) {
     const msg =
       userErr?.message?.includes('Invalid JWT') || userErr?.message?.includes('invalid JWT')
         ? 'Your session could not be verified. Sign out, sign in again, then retry.'
-        : user && !isAdminUser(user)
+        : user && !isAdmin
           ? 'Forbidden.'
           : (userErr?.message ?? 'Please sign in again.')
-    return json(req, { error: msg }, user && !isAdminUser(user) ? 403 : 401)
+    return json(req, { error: msg }, user && !isAdmin ? 403 : 401)
   }
 
   const tppEnv = loadTppEnvFromDeno()

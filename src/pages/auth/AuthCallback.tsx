@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { isAdminUser } from '../../lib/adminEmails'
 import {
   fetchRoleAndProfile,
   getPostLoginRedirectDestination,
@@ -91,7 +90,7 @@ export default function AuthCallback() {
         const { role, profile } = await fetchRoleAndProfile(user)
         if (cancelled) return
 
-        if (role === 'admin' || isAdminUser(user)) {
+        if (role === 'admin') {
           navigate('/admin', { replace: true })
           return
         }
