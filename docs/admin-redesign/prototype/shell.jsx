@@ -179,7 +179,7 @@ function Sidebar({ active, onNavigate }) {
           <div style={{ width: 30, height: 30, borderRadius: 999, background: C.navy, color: '#fff', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 600 }}>SA</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Sam Admin</p>
-            <p style={{ margin: 0, fontSize: 11, color: C.ink4 }}>sam@quni.au</p>
+            <p style={{ margin: 0, fontSize: 11, color: C.ink4 }}>sam@quni.com.au</p>
           </div>
           <button title="Sign out" style={{ background: 'transparent', border: 0, padding: 4, cursor: 'pointer', color: C.ink4, borderRadius: 6 }}>
             <Icon name="log-out" size={15}/>

@@ -49,12 +49,12 @@ All wordmark PNGs ship with **true transparent backgrounds**. SVG is the master.
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
-<meta property="og:image" content="https://quni.au/og-default.png">
+<meta property="og:image" content="https://quni.com.au/og-default.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Quni — verified rooms near Australian universities">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://quni.au/og-default.png">
+<meta name="twitter:image" content="https://quni.com.au/og-default.png">
 ```
 
 ```html
