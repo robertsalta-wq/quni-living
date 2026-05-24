@@ -16,20 +16,16 @@ with (security_invoker = false)
 as
 select
   coalesce(
-    max(
-      case
-        when pc.config_key = 'quni_service_tier_managed_enabled'
-          then lower(trim(pc.config_value)) = 'true'
-      end
+    bool_or(
+      pc.config_key = 'quni_service_tier_managed_enabled'
+      and lower(trim(pc.config_value)) = 'true'
     ),
     false
   ) as managed_tier_enabled,
   coalesce(
-    max(
-      case
-        when pc.config_key = 'quni_service_tier_module_enabled'
-          then lower(trim(pc.config_value)) = 'true'
-      end
+    bool_or(
+      pc.config_key = 'quni_service_tier_module_enabled'
+      and lower(trim(pc.config_value)) = 'true'
     ),
     false
   ) as listing_module_enabled
