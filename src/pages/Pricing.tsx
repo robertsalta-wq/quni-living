@@ -6,6 +6,10 @@ import { BOND_NEUTRAL_PRICING_SHORT } from '../lib/bondPublicCopy'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
+import {
+  MANAGED_COMING_SOON_HEADLINE,
+  MANAGED_COMING_SOON_SUBLINE,
+} from '../lib/managedComingSoonCopy'
 
 type LineTone = 'default' | 'muted'
 type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
@@ -476,8 +480,8 @@ export default function Pricing() {
                       aria-hidden
                     >
                       <div className="rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-4 py-3 text-center shadow-sm">
-                        <p className="font-lora text-base font-semibold text-[#376256]">Coming soon</p>
-                        <p className="mt-1 text-xs text-[#6B6B6B]">Quni Managed is not available at launch.</p>
+                        <p className="font-lora text-base font-semibold text-[#376256]">{MANAGED_COMING_SOON_HEADLINE}</p>
+                        <p className="mt-1 text-xs text-[#6B6B6B]">{MANAGED_COMING_SOON_SUBLINE}</p>
                       </div>
                     </div>
                   ) : null}
@@ -636,7 +640,9 @@ export default function Pricing() {
         <section className="max-w-site mx-auto w-full px-6 py-10 md:py-12">
           <h2 className="font-display text-center text-3xl font-bold text-[#FF6F61] sm:text-4xl">How it works</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
-            Parallel flows for Quni Listing and Quni Managed — three steps each for renters and landlords.
+            {managedTierEnabled
+              ? 'Parallel flows for Quni Listing and Quni Managed — three steps each for renters and landlords.'
+              : 'Quni Listing is live now. Compare both tiers — Quni Managed launches within the next month.'}
           </p>
           <div className="mt-8 flex justify-center">
             <Link

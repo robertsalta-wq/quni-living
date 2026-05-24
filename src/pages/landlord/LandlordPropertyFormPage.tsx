@@ -30,6 +30,10 @@ import {
 import { resolveServiceTierAvailability } from '../../lib/serviceTier'
 import { usePlatformFeatures, useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
 import {
+  MANAGED_COMING_SOON_SHORT,
+  MANAGED_LANDLORD_PROPERTY_FORM_HINT,
+} from '../../lib/managedComingSoonCopy'
+import {
   canSwitchPropertyServiceTier,
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
   landlordServiceTierTitle,
@@ -2119,27 +2123,28 @@ export default function LandlordPropertyFormPage() {
                 <p className="mb-3 text-xs text-gray-500">
                   {managedTierEnabled
                     ? 'Choose how this property runs. Listing is self-managed; Managed can be selected now or upgraded later, but Managed properties cannot move back to Listing.'
-                    : 'Quni Listing is self-managed — you handle bond, rent, and day-to-day tenancy with your renter.'}
+                    : MANAGED_LANDLORD_PROPERTY_FORM_HINT}
                 </p>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {(['listing', 'managed'] as const)
-                    .filter((tier) => tier === 'listing' || managedTierEnabled)
-                    .map((tier) => {
+                  {(['listing', 'managed'] as const).map((tier) => {
                     const selected = serviceTier === tier
+                    const managedComingSoon = tier === 'managed' && !managedTierEnabled
                     const available =
-                      tier === 'listing' ? listingTierAvailable : managedTierAvailable
+                      tier === 'listing' ? listingTierAvailable : managedTierAvailable && !managedComingSoon
                     const locked = isEdit && !canSwitchPropertyServiceTier(initialServiceTier, tier)
-                    const disabled = !available || locked
+                    const disabled = !available || locked || managedComingSoon
                     const description =
                       tier === 'listing'
                         ? 'You receive the renter lead, then handle bond, rent, maintenance, and disputes directly.'
                         : 'Quni handles the managed tenancy workflow, including rent collection where available.'
                     const unavailableCopy =
-                      tier === 'listing'
-                        ? 'Listing is not available for this property.'
-                        : locked
-                          ? 'Managed is permanent for this property.'
-                          : managedTierUnavailableReason
+                      managedComingSoon
+                        ? MANAGED_COMING_SOON_SHORT
+                        : tier === 'listing'
+                          ? 'Listing is not available for this property.'
+                          : locked
+                            ? 'Managed is permanent for this property.'
+                            : managedTierUnavailableReason
                     return (
                       <button
                         key={tier}
@@ -2169,6 +2174,11 @@ export default function LandlordPropertyFormPage() {
                       >
                         <span className="block text-sm font-semibold text-gray-900">
                           {landlordServiceTierTitle(tier)}
+                          {managedComingSoon ? (
+                            <span className="ml-2 inline-flex rounded-full bg-[#E8EFE3] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#376256]">
+                              Coming soon
+                            </span>
+                          ) : null}
                         </span>
                         <span className="mt-1 block text-xs leading-relaxed text-gray-600">{description}</span>
                         <span className="mt-3 block text-[11px] font-medium text-gray-500">

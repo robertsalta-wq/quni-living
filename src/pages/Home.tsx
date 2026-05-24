@@ -17,6 +17,7 @@ import {
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
+import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -139,17 +140,6 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
 export default function Home() {
   const navigate = useNavigate()
   const { managedTierEnabled } = usePlatformFeatures()
-  const landlordHowSteps: readonly HowStep[] = managedTierEnabled
-    ? LANDLORD_HOW_STEPS
-    : [
-        LANDLORD_HOW_STEPS[0],
-        LANDLORD_HOW_STEPS[1],
-        {
-          n: 3,
-          title: 'Run the tenancy',
-          desc: 'Accept a tenant, pay the flat Listing fee, then collect bond and rent directly with your renter.',
-        },
-      ]
   const [locationInput, setLocationInput] = useState('')
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
@@ -458,12 +448,23 @@ export default function Home() {
           <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-3">
             How it works
           </h2>
-          <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
+          <p className="mx-auto mb-4 max-w-2xl text-center text-sm text-gray-600 sm:text-base">
             Whether you&apos;re looking for a room or listing one, Quni keeps the journey clear and on-platform.
           </p>
+          {!managedTierEnabled ? (
+            <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-[#376256] sm:mb-12 sm:text-base">
+              <Link to="/pricing" className="font-medium underline underline-offset-2 hover:opacity-90">
+                Quni Listing is live
+              </Link>
+              {' · '}
+              Quni Managed (rent collection &amp; weekly payouts) — launching within the next month.
+            </p>
+          ) : (
+            <div className="mb-10 sm:mb-12" aria-hidden />
+          )}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
             <HowStepColumn heading="For students" steps={STUDENT_HOW_STEPS} />
-            <HowStepColumn heading="For landlords" steps={landlordHowSteps} />
+            <HowStepColumn heading="For landlords" steps={LANDLORD_HOW_STEPS} />
           </div>
           <div className="mt-10 flex justify-center sm:mt-12">
             <Link
@@ -534,9 +535,9 @@ export default function Home() {
                   item.id === 'faq-l-1'
                     ? managedTierEnabled
                       ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
-                      : `Quni Listing charges ${dynamicListingFeeText} flat per accepted booking. There are no charges until you accept a tenant.`
+                      : `${MANAGED_LISTING_DUAL_INTRO} Listing fee: ${dynamicListingFeeText} per accepted booking; Managed service fee: ${dynamicManagedFeeText} of weekly rent when it launches.`
                     : item.id === 'faq-l-3' && !managedTierEnabled
-                      ? 'On Quni Listing, bond and rent are paid directly to you. Quni does not custody tenancy funds.'
+                      ? `On Quni Listing, bond and rent are paid directly to you. Quni Managed will add Stripe Connect weekly rent payouts — ${MANAGED_COMING_SOON_SHORT.toLowerCase()}`
                       : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">

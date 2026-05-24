@@ -33,7 +33,7 @@ describe('resolveServiceTierAvailability', () => {
     expect(resolveServiceTierAvailability('QLD', 't2', { managedGloballyEnabled: false })).toEqual({
       listing: 'available',
       managed: 'gated',
-      notes: 'Quni Managed is coming soon.',
+      notes: 'Quni Managed is coming within the next month.',
     })
   })
 })

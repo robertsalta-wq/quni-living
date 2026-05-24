@@ -4,7 +4,7 @@
  */
 import { resolvePropertyTierFromListing } from '../pricing/index.js'
 
-const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming soon.'
+const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming within the next month.'
 
 /** @param {string} stateRaw */
 /** @param {'t1' | 't2' | 't3'} propertyTier */

@@ -16,7 +16,7 @@ export type {
   ServiceTierResolverState,
 } from './types.js'
 
-const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming soon.'
+const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming within the next month.'
 
 function applyManagedGlobalGate(
   availability: ServiceTierAvailability,
