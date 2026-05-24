@@ -25,6 +25,7 @@ export default function AdminTeam() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [role, setRole] = useState<StaffRole>('admin')
   const [notes, setNotes] = useState('')
 
@@ -60,6 +61,7 @@ export default function AdminTeam() {
     setError(null)
     const { error: insertError } = await supabase.from('platform_staff').insert({
       email: normalized,
+      display_name: displayName.trim() || null,
       role,
       notes: notes.trim() || null,
       created_by: user?.id ?? null,
@@ -68,6 +70,7 @@ export default function AdminTeam() {
       setError(insertError.message)
     } else {
       setEmail('')
+      setDisplayName('')
       setNotes('')
       setRole('admin')
       await load()
@@ -75,8 +78,24 @@ export default function AdminTeam() {
     setSaving(false)
   }
 
+  async function handleDisplayNameBlur(row: StaffRow, nextRaw: string) {
+    const next = nextRaw.trim() || null
+    if (next === (row.display_name?.trim() || null)) return
+    setError(null)
+    const { error: upErr } = await supabase
+      .from('platform_staff')
+      .update({ display_name: next })
+      .eq('id', row.id)
+    if (upErr) {
+      setError(upErr.message)
+      return
+    }
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, display_name: next } : r)))
+  }
+
   async function handleRemove(row: StaffRow) {
-    if (!window.confirm(`Remove platform access for ${row.email}?`)) return
+    const label = row.display_name?.trim() || row.email
+    if (!window.confirm(`Remove platform access for ${label}?`)) return
     setError(null)
     const { error: deleteError } = await supabase.from('platform_staff').delete().eq('id', row.id)
     if (deleteError) {
@@ -102,7 +121,17 @@ export default function AdminTeam() {
       <div className={`${adminCardClass} mb-8`}>
         <h2 className="text-sm font-semibold text-gray-900 mb-4">Add team member</h2>
         <form onSubmit={(e) => void handleAdd(e)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block sm:col-span-2">
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">Name</span>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Quinn Lee"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
             <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-500">Email</span>
             <input
               type="email"
@@ -148,7 +177,7 @@ export default function AdminTeam() {
           </div>
         </form>
         <p className="mt-4 text-xs text-gray-500">
-          v1: all roles grant full admin access. The last team member cannot be removed.
+          Account links automatically when they log in with the same email. v1: all roles grant full admin access.
         </p>
       </div>
 
@@ -161,8 +190,10 @@ export default function AdminTeam() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
+                <th className={adminThClass}>Name</th>
                 <th className={adminThClass}>Email</th>
                 <th className={adminThClass}>Role</th>
+                <th className={adminThClass}>Account</th>
                 <th className={adminThClass}>Notes</th>
                 <th className={adminThClass}>Added</th>
                 <th className={adminThClass} />
@@ -171,8 +202,24 @@ export default function AdminTeam() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-gray-50">
+                  <td className={adminTdClass}>
+                    <input
+                      type="text"
+                      defaultValue={row.display_name ?? ''}
+                      placeholder="—"
+                      onBlur={(e) => void handleDisplayNameBlur(row, e.target.value)}
+                      className="w-full min-w-[8rem] rounded border border-transparent bg-transparent px-1 py-0.5 text-sm hover:border-gray-200 focus:border-[#0F6E56] focus:outline-none"
+                    />
+                  </td>
                   <td className={adminTdClass}>{row.email}</td>
                   <td className={adminTdClass}>{row.role}</td>
+                  <td className={adminTdClass}>
+                    {row.user_id ? (
+                      <span className="text-emerald-700">Linked</span>
+                    ) : (
+                      <span className="text-amber-700">Awaiting login</span>
+                    )}
+                  </td>
                   <td className={adminTdClass}>{row.notes ?? '—'}</td>
                   <td className={adminTdClass}>{new Date(row.created_at).toLocaleDateString()}</td>
                   <td className={`${adminTdClass} text-right`}>

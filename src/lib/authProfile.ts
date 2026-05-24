@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js'
-import { fetchIsPlatformAdmin } from './platformStaff'
+import { fetchIsPlatformAdmin, linkPlatformStaffUserIfNeeded } from './platformStaff'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
@@ -20,6 +20,7 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   profile: AuthProfile | null
 }> {
   if (user.user_metadata?.role === 'admin' || (await fetchIsPlatformAdmin())) {
+    await linkPlatformStaffUserIfNeeded(user)
     return { role: 'admin', profile: null }
   }
 

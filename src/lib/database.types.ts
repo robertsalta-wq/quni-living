@@ -120,6 +120,8 @@ export interface Database {
           id: string
           email: string
           role: 'admin' | 'support' | 'moderator'
+          display_name: string | null
+          user_id: string | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -129,6 +131,8 @@ export interface Database {
           id?: string
           email: string
           role?: 'admin' | 'support' | 'moderator'
+          display_name?: string | null
+          user_id?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -138,6 +142,8 @@ export interface Database {
           id?: string
           email?: string
           role?: 'admin' | 'support' | 'moderator'
+          display_name?: string | null
+          user_id?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string
