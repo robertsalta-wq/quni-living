@@ -24,6 +24,7 @@ import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordLis
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 
@@ -121,6 +122,7 @@ async function readJsonApiResponse(res: Response): Promise<{ error?: string } & 
 }
 
 export default function LandlordBookingReviewPage() {
+  const { managedTierEnabled } = usePlatformFeatures()
   const { bookingId } = useParams<{ bookingId: string }>()
   const navigate = useNavigate()
   const { user } = useAuthContext()
@@ -184,6 +186,7 @@ export default function LandlordBookingReviewPage() {
       propertyType: data.property.property_type,
       isRegisteredRoomingHouse: data.property.is_registered_rooming_house,
       moduleEnabled: data.listingBilling?.moduleEnabled === true,
+      managedGloballyEnabled: managedTierEnabled,
       propertyServiceTier: data.property.service_tier,
     })
   }, [
@@ -194,6 +197,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.service_tier,
     data?.listingBillingLoaded,
     data?.listingBilling?.moduleEnabled,
+    managedTierEnabled,
   ])
 
   useEffect(() => {

@@ -48,6 +48,7 @@ vercel env add VITE_SENTRY_DSN production
 vercel env add TURNSTILE_SECRET_KEY production
 vercel env add STRIPE_SECRET_KEY production
 vercel env add STRIPE_WEBHOOK_SECRET production
+vercel env add STRIPE_LISTING_PRODUCT_ID production
 vercel env add SUPABASE_URL production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
 vercel env add SUPABASE_ANON_KEY production

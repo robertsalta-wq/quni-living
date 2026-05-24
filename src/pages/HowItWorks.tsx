@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import { BOND_MANAGED_CONDUIT_SHORT, BOND_NEUTRAL_MARKETING } from '../lib/bondPublicCopy'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 
 type Step = { title: string; description: string }
 
@@ -41,7 +42,7 @@ const LISTING_LANDLORD: Step[] = [
   {
     title: '1. List for free',
     description:
-      'Create your listing with AI-assisted tools — no upfront charge. Each property you list is set to Listing or Managed; you can run a mix.',
+      'Create your listing with AI-assisted tools — no upfront charge. Quni Listing is self-managed: you run bond, rent, and day-to-day tenancy.',
   },
   {
     title: '2. Accept a booking',
@@ -89,23 +90,45 @@ const MANAGED_LANDLORD: Step[] = [
 ]
 
 export default function HowItWorks() {
+  const { managedTierEnabled } = usePlatformFeatures()
+
   return (
     <>
       <Seo
         title="How it works — Quni Living"
-        description="Quni Listing vs Quni Managed: parallel flows for renters and landlords."
+        description={
+          managedTierEnabled
+            ? 'Quni Listing vs Quni Managed: parallel flows for renters and landlords.'
+            : 'How Quni Listing works for renters and landlords.'
+        }
         canonicalPath="/how-it-works"
       />
       <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[#1A1A1A] antialiased">
-        <PageHeroBand title="How it works" subtitle="The same three-step shape — Listing and Managed, side by side." />
+        <PageHeroBand
+          title="How it works"
+          subtitle={
+            managedTierEnabled
+              ? 'The same three-step shape — Listing and Managed, side by side.'
+              : 'Three steps to list, book, and run a Quni Listing tenancy.'
+          }
+        />
 
         <div className="max-w-site mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm leading-relaxed text-[#6B6B6B] sm:text-base">
               Renters pay <strong className="font-semibold text-gray-800">no</strong> booking, platform, service, or
-              surcharge fees to Quni in either tier. Landlords pick Listing (flat fee per accepted booking) or Managed
-              (percentage of weekly rent) <strong className="font-semibold text-gray-800">per property</strong>, so a
-              landlord can run a mix.
+              surcharge fees to Quni.{' '}
+              {managedTierEnabled ? (
+                <>
+                  Landlords pick Listing (flat fee per accepted booking) or Managed (percentage of weekly rent){' '}
+                  <strong className="font-semibold text-gray-800">per property</strong>, so a landlord can run a mix.
+                </>
+              ) : (
+                <>
+                  Landlords use <strong className="font-semibold text-gray-800">Quni Listing</strong> — a flat fee per
+                  accepted booking, then you run bond and rent directly with your renter.
+                </>
+              )}
             </p>
           </div>
 
@@ -130,26 +153,36 @@ export default function HowItWorks() {
             </div>
           </section>
 
-          <section className="mx-auto mt-16 max-w-[1180px]">
-            <h2 className="font-display text-center text-2xl font-bold text-[#376256] sm:text-3xl">Quni Managed</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
-              Quni supports escrow-style rent flows and lease execution where available. Availability varies by state.
-            </p>
-            <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
-              <FlowColumn
-                heading="Renters"
-                steps={MANAGED_STUDENT}
-                bgClass="bg-[#F0F7F4]"
-                accentClass="text-[#376256]"
-              />
-              <FlowColumn
-                heading="Landlords"
-                steps={MANAGED_LANDLORD}
-                bgClass="bg-[#F0F7F4]"
-                accentClass="text-[#376256]"
-              />
-            </div>
-          </section>
+          {managedTierEnabled ? (
+            <section className="mx-auto mt-16 max-w-[1180px]">
+              <h2 className="font-display text-center text-2xl font-bold text-[#376256] sm:text-3xl">Quni Managed</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
+                Quni supports escrow-style rent flows and lease execution where available. Availability varies by state.
+              </p>
+              <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+                <FlowColumn
+                  heading="Renters"
+                  steps={MANAGED_STUDENT}
+                  bgClass="bg-[#F0F7F4]"
+                  accentClass="text-[#376256]"
+                />
+                <FlowColumn
+                  heading="Landlords"
+                  steps={MANAGED_LANDLORD}
+                  bgClass="bg-[#F0F7F4]"
+                  accentClass="text-[#376256]"
+                />
+              </div>
+            </section>
+          ) : (
+            <section className="mx-auto mt-16 max-w-xl rounded-2xl border border-[rgba(108,142,89,0.25)] bg-[#F0F7F4] px-6 py-8 text-center">
+              <h2 className="font-display text-xl font-bold text-[#376256]">Quni Managed — coming soon</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[#6B6B6B]">
+                Full tenancy operations (rent collection, bond coordination, and managed payouts) will launch when
+                Quni Managed opens in your state.
+              </p>
+            </section>
+          )}
 
           <div className="mx-auto mt-14 flex max-w-xl flex-col gap-3 text-center sm:flex-row sm:justify-center">
             <Link

@@ -1,4 +1,5 @@
 import type { Database } from './database.types'
+import type { LandlordServiceTier } from './landlordServiceTier'
 
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -45,6 +46,21 @@ export function landlordStripeStepComplete(p: LandlordProfileRow): boolean {
   return p.stripe_charges_enabled === true
 }
 
+/** Listing landlords: saved Stripe Customer for off-session Listing fee charges. */
+export function landlordListingBillingStepComplete(p: LandlordProfileRow): boolean {
+  return Boolean(p.stripe_customer_id?.trim())
+}
+
+export function landlordPaymentStepComplete(
+  p: LandlordProfileRow,
+  intendedTier?: LandlordServiceTier | null,
+): boolean {
+  if (intendedTier === 'listing') {
+    return landlordListingBillingStepComplete(p) || landlordStripeStepComplete(p)
+  }
+  return landlordStripeStepComplete(p)
+}
+
 export function landlordInsuranceStepComplete(p: LandlordProfileRow): boolean {
   return p.insurance_acknowledged_at != null
 }
@@ -52,10 +68,13 @@ export function landlordInsuranceStepComplete(p: LandlordProfileRow): boolean {
 export type LandlordWizardStep = 1 | 2 | 3 | 4 | 5
 
 /** First step that still needs work (for resume). */
-export function inferLandlordWizardStep(p: LandlordProfileRow): LandlordWizardStep {
+export function inferLandlordWizardStep(
+  p: LandlordProfileRow,
+  intendedTier?: LandlordServiceTier | null,
+): LandlordWizardStep {
   if (!landlordStep1FieldsComplete(p)) return 1
   if (!landlordTermsComplete(p)) return 2
-  if (!landlordStripeStepComplete(p)) return 3
+  if (!landlordPaymentStepComplete(p, intendedTier)) return 3
   if (!landlordInsuranceStepComplete(p)) return 4
   if (!isLandlordWizardComplete(p)) return 5
   return 5

@@ -12,6 +12,7 @@ import {
   setLandlordWizardCompleteLocalStorage,
   type LandlordWizardStep,
 } from '../../lib/landlordOnboarding'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
@@ -60,6 +61,7 @@ export default function LandlordOnboarding() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, role, refreshProfile } = useAuthContext()
+  const { managedTierEnabled } = usePlatformFeatures()
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -98,6 +100,8 @@ export default function LandlordOnboarding() {
   const [cardSaved, setCardSaved] = useState(false)
 
   const [intendedTier, setIntendedTier] = useState<LandlordServiceTier | null>(null)
+  const effectiveIntendedTier: LandlordServiceTier =
+    !managedTierEnabled ? 'listing' : intendedTier ?? 'listing'
 
   const [hasInsurance, setHasInsurance] = useState(false)
   const [insuranceWarning, setInsuranceWarning] = useState(false)
@@ -105,9 +109,9 @@ export default function LandlordOnboarding() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
-      setIntendedTier(parseLandlordServiceTier(raw))
+      setIntendedTier(parseLandlordServiceTier(raw) ?? 'listing')
     } catch {
-      setIntendedTier(null)
+      setIntendedTier('listing')
     }
   }, [])
 
@@ -145,7 +149,8 @@ export default function LandlordOnboarding() {
 
       if (!initialStepSet.current) {
         initialStepSet.current = true
-        setStep(inferLandlordWizardStep(row))
+        const tier = effectiveIntendedTier
+        setStep(inferLandlordWizardStep(row, tier))
       }
     } catch (e) {
       setLoadError(messageFromSupabaseError(e))
@@ -153,7 +158,7 @@ export default function LandlordOnboarding() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, navigate])
+  }, [user?.id, navigate, effectiveIntendedTier])
 
   useEffect(() => {
     void loadProfile()
@@ -838,7 +843,7 @@ export default function LandlordOnboarding() {
             </div>
           )}
 
-          {step === 3 && intendedTier === 'listing' && (
+          {step === 3 && effectiveIntendedTier === 'listing' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Add a card for Quni Listing fees</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
@@ -890,25 +895,27 @@ export default function LandlordOnboarding() {
                     You&apos;ll need a saved card before accepting your first Quni Listing booking. You can save it later
                     from your profile if you skip now.
                   </p>
-                  <details className="rounded-lg border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-700">
-                    <summary className="cursor-pointer font-medium text-stone-800">
-                      Planning to also list a Quni Managed property?
-                    </summary>
-                    <div className="mt-2 space-y-2 leading-relaxed">
-                      <p>
-                        Managed properties pay rent through Stripe Connect, so you&apos;d also need to connect a bank
-                        account before accepting Managed bookings. You can do that here or anytime from your dashboard.
-                      </p>
-                      <button
-                        type="button"
-                        disabled={connectLoading}
-                        onClick={() => void startStripeConnect()}
-                        className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-50"
-                      >
-                        {connectLoading ? 'Opening Stripe…' : 'Connect bank account (optional)'}
-                      </button>
-                    </div>
-                  </details>
+                  {managedTierEnabled ? (
+                    <details className="rounded-lg border border-stone-200 bg-stone-50/70 px-3 py-2 text-xs text-stone-700">
+                      <summary className="cursor-pointer font-medium text-stone-800">
+                        Planning to also list a Quni Managed property?
+                      </summary>
+                      <div className="mt-2 space-y-2 leading-relaxed">
+                        <p>
+                          Managed properties pay rent through Stripe Connect, so you&apos;d also need to connect a bank
+                          account before accepting Managed bookings. You can do that here or anytime from your dashboard.
+                        </p>
+                        <button
+                          type="button"
+                          disabled={connectLoading}
+                          onClick={() => void startStripeConnect()}
+                          className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-50"
+                        >
+                          {connectLoading ? 'Opening Stripe…' : 'Connect bank account (optional)'}
+                        </button>
+                      </div>
+                    </details>
+                  ) : null}
                   {stripeSkippedForNow && (
                     <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       Card setup skipped for now. You can save a card later from your profile.
@@ -919,7 +926,7 @@ export default function LandlordOnboarding() {
             </div>
           )}
 
-          {step === 3 && intendedTier !== 'listing' && (
+          {step === 3 && effectiveIntendedTier !== 'listing' && managedTierEnabled && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Connect your bank account to receive rent payments</h2>
               <p className="text-sm text-stone-600 leading-relaxed">

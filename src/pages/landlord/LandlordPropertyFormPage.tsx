@@ -28,6 +28,7 @@ import {
   type PricingCell,
 } from '../../lib/pricing'
 import { resolveServiceTierAvailability } from '../../lib/serviceTier'
+import { usePlatformFeatures, useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
 import {
   canSwitchPropertyServiceTier,
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
@@ -187,7 +188,7 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       isRegisteredRoomingHouse: Boolean(d.isRegisteredRoomingHouse),
       roomingHouseRegistrationNumber:
         typeof d.roomingHouseRegistrationNumber === 'string' ? d.roomingHouseRegistrationNumber : '',
-      serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'managed',
+      serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'listing',
     }
     return draft
   } catch {
@@ -263,6 +264,8 @@ export default function LandlordPropertyFormPage() {
   const isEdit = Boolean(propertyId)
 
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
+  const { managedTierEnabled } = usePlatformFeatures()
+  const serviceTierResolverOptions = useServiceTierResolverOptions()
 
   const { universities: uniRefRows, campuses: campusRefRows, loading: refsLoading } =
     useUniversityCampusReference('full')
@@ -286,8 +289,8 @@ export default function LandlordPropertyFormPage() {
   const [bathrooms, setBathrooms] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('single')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
-  const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('managed')
-  const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('managed')
+  const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
+  const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
   const [furnished, setFurnished] = useState(false)
@@ -358,8 +361,8 @@ export default function LandlordPropertyFormPage() {
     [propertyListingType, isRegisteredRoomingHouse],
   )
   const serviceTierAvailability = useMemo(
-    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier),
-    [state, resolvedPropertyTier],
+    () => resolveServiceTierAvailability(state.trim() || 'NSW', resolvedPropertyTier, serviceTierResolverOptions),
+    [state, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
   const managedTierAvailable = serviceTierAvailability.managed === 'available'
@@ -548,8 +551,8 @@ export default function LandlordPropertyFormPage() {
     setBathrooms('1')
     setRoomType('single')
     setPropertyListingType('entire_property')
-    setServiceTier('managed')
-    setInitialServiceTier('managed')
+    setServiceTier('listing')
+    setInitialServiceTier('listing')
     setIsRegisteredRoomingHouse(false)
     setRoomingHouseRegistrationNumber('')
     setFurnished(false)
@@ -632,7 +635,7 @@ export default function LandlordPropertyFormPage() {
         setHouseRules('')
         setHouseRulesResetError(null)
         setHouseRulesResetAck(false)
-        setInitialServiceTier('managed')
+        setInitialServiceTier('listing')
       }
 
       if (role === 'admin') {
@@ -690,7 +693,7 @@ export default function LandlordPropertyFormPage() {
         setPropertyListingType(
           prop.property_type && isPropertyListingType(prop.property_type) ? prop.property_type : 'entire_property',
         )
-        const loadedServiceTier = parseLandlordServiceTier(prop.service_tier) ?? 'managed'
+        const loadedServiceTier = parseLandlordServiceTier(prop.service_tier) ?? 'listing'
         setServiceTier(loadedServiceTier)
         setInitialServiceTier(loadedServiceTier)
         setIsRegisteredRoomingHouse(Boolean(prop.is_registered_rooming_house))
@@ -2114,11 +2117,14 @@ export default function LandlordPropertyFormPage() {
               <div>
                 <p className={labelClass}>Quni service model</p>
                 <p className="mb-3 text-xs text-gray-500">
-                  Choose how this property runs. Listing is self-managed; Managed can be selected now or upgraded later, but
-                  Managed properties cannot move back to Listing.
+                  {managedTierEnabled
+                    ? 'Choose how this property runs. Listing is self-managed; Managed can be selected now or upgraded later, but Managed properties cannot move back to Listing.'
+                    : 'Quni Listing is self-managed — you handle bond, rent, and day-to-day tenancy with your renter.'}
                 </p>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {(['listing', 'managed'] as const).map((tier) => {
+                  {(['listing', 'managed'] as const)
+                    .filter((tier) => tier === 'listing' || managedTierEnabled)
+                    .map((tier) => {
                     const selected = serviceTier === tier
                     const available =
                       tier === 'listing' ? listingTierAvailable : managedTierAvailable

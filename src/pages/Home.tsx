@@ -16,6 +16,7 @@ import {
 } from '../lib/site'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/propertyListingDateWindow'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
+import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -137,6 +138,18 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
 
 export default function Home() {
   const navigate = useNavigate()
+  const { managedTierEnabled } = usePlatformFeatures()
+  const landlordHowSteps: readonly HowStep[] = managedTierEnabled
+    ? LANDLORD_HOW_STEPS
+    : [
+        LANDLORD_HOW_STEPS[0],
+        LANDLORD_HOW_STEPS[1],
+        {
+          n: 3,
+          title: 'Run the tenancy',
+          desc: 'Accept a tenant, pay the flat Listing fee, then collect bond and rent directly with your renter.',
+        },
+      ]
   const [locationInput, setLocationInput] = useState('')
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
@@ -450,7 +463,7 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
             <HowStepColumn heading="For students" steps={STUDENT_HOW_STEPS} />
-            <HowStepColumn heading="For landlords" steps={LANDLORD_HOW_STEPS} />
+            <HowStepColumn heading="For landlords" steps={landlordHowSteps} />
           </div>
           <div className="mt-10 flex justify-center sm:mt-12">
             <Link
@@ -519,8 +532,12 @@ export default function Home() {
                 const open = openFaqId === item.id
                 const answer =
                   item.id === 'faq-l-1'
-                    ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
-                    : item.a
+                    ? managedTierEnabled
+                      ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
+                      : `Quni Listing charges ${dynamicListingFeeText} flat per accepted booking. There are no charges until you accept a tenant.`
+                    : item.id === 'faq-l-3' && !managedTierEnabled
+                      ? 'On Quni Listing, bond and rent are paid directly to you. Quni does not custody tenancy funds.'
+                      : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button

@@ -74,4 +74,18 @@ describe('landlordAcceptTierUiModel', () => {
     expect(both.showManagedUpgrade).toBe(true)
     expect(listingOnly.showManagedUpgrade).toBe(false)
   })
+
+  it('hides Managed when globally disabled', () => {
+    const m = landlordAcceptTierUiModel({
+      state: 'QLD',
+      propertyType: 'entire_property',
+      isRegisteredRoomingHouse: false,
+      moduleEnabled: true,
+      managedGloballyEnabled: false,
+      propertyServiceTier: 'listing',
+    })
+    expect(m.showManaged).toBe(false)
+    expect(m.showManagedUpgrade).toBe(false)
+    expect(m.defaultTier).toBe('listing')
+  })
 })

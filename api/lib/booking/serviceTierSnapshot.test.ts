@@ -74,4 +74,27 @@ describe('serviceTierSnapshot', () => {
     })
     expect(err?.code).toBe('tier_not_available')
   })
+
+  it('computeServiceTierAtRequestSnapshot uses listing when Managed is globally disabled', () => {
+    expect(
+      computeServiceTierAtRequestSnapshot({
+        state: 'QLD',
+        propertyType: 'entire_property',
+        isRegisteredRoomingHouse: false,
+        moduleEnabled: true,
+        managedGloballyEnabled: false,
+      }),
+    ).toBe('listing')
+  })
+
+  it('validateLandlordConfirmTierChoice rejects Managed when globally disabled', () => {
+    const err = validateLandlordConfirmTierChoice('managed', {
+      moduleEnabled: true,
+      managedGloballyEnabled: false,
+      state: 'QLD',
+      propertyType: 'entire_property',
+      isRegisteredRoomingHouse: false,
+    })
+    expect(err?.code).toBe('tier_not_available')
+  })
 })

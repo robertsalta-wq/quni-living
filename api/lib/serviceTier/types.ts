@@ -7,6 +7,11 @@ export type ServiceTierAvailability = {
   notes?: string
 }
 
+export type ResolveServiceTierOptions = {
+  /** When false, Managed is gated platform-wide regardless of state matrix. */
+  managedGloballyEnabled?: boolean
+}
+
 export type ServiceTierResolverState =
   | 'NSW'
   | 'QLD'

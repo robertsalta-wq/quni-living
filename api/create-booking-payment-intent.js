@@ -14,6 +14,7 @@ import {
   getActivePricingSnapshotForProperty,
 } from './lib/pricing/index.js'
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
+import { fetchServiceTierPlatformFlags } from './lib/platformConfig.js'
 
 export const config = { runtime: 'edge' }
 
@@ -413,20 +414,14 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
 
-  const { data: moduleRow } = await admin
-    .from('platform_config')
-    .select('config_value')
-    .eq('config_key', 'quni_service_tier_module_enabled')
-    .maybeSingle()
-  const moduleEnabled = String(moduleRow?.config_value ?? '')
-    .trim()
-    .toLowerCase() === 'true'
+  const tierFlags = await fetchServiceTierPlatformFlags(admin)
 
   const serviceTierAtRequest = computeServiceTierAtRequestSnapshot({
     state: property.state,
     propertyType: property.property_type,
     isRegisteredRoomingHouse: property.is_registered_rooming_house,
-    moduleEnabled,
+    moduleEnabled: tierFlags.moduleEnabled,
+    managedGloballyEnabled: tierFlags.managedGloballyEnabled,
     propertyServiceTier: property.service_tier,
   })
 

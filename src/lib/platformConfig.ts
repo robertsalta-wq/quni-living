@@ -8,9 +8,11 @@ export {
   PLATFORM_CONFIG_KEYS,
   fetchPlatformConfigRows,
   fetchPlatformConfigValueMap,
+  fetchServiceTierPlatformFlags,
   fetchBankDetailsForRta,
   buildRtaRentPaymentMethodLine,
   parseBooleanConfig,
   parseIntegerCentsConfig,
   parseDecimalConfig,
 } from '../../api/lib/platformConfig.js'
+export type { ServiceTierPlatformFlags } from '../../api/lib/platformConfig.js'

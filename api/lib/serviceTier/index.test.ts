@@ -28,4 +28,12 @@ describe('resolveServiceTierAvailability', () => {
       notes: 'Managed gated pending Jenny legal clearance',
     })
   })
+
+  it('forces Managed gated when managedGloballyEnabled is false', () => {
+    expect(resolveServiceTierAvailability('QLD', 't2', { managedGloballyEnabled: false })).toEqual({
+      listing: 'available',
+      managed: 'gated',
+      notes: 'Quni Managed is coming soon.',
+    })
+  })
 })

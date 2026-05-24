@@ -1,4 +1,4 @@
-import { resolveServiceTierAvailability, type PropertyTier } from './serviceTier'
+import { resolveServiceTierAvailability, type PropertyTier, type ResolveServiceTierOptions } from './serviceTier'
 
 /** Representative tier for “typical” private-room listings on marketing pages. */
 const SHOWCASE_PROPERTY_TIER: PropertyTier = 't2'
@@ -22,10 +22,16 @@ function stateLabel(code: (typeof STATES)[number]): string {
  * Human-readable availability line for landlord tier cards (Listing vs Managed).
  * Uses resolveServiceTierAvailability so QLD/NSW/VIC rules stay in one place.
  */
-export function pricingTierAvailabilitySummary(serviceTier: 'listing' | 'managed'): string {
+export function pricingTierAvailabilitySummary(
+  serviceTier: 'listing' | 'managed',
+  options?: ResolveServiceTierOptions,
+): string {
+  if (serviceTier === 'managed' && options?.managedGloballyEnabled === false) {
+    return 'Quni Managed is coming soon.'
+  }
   const parts: string[] = []
   for (const code of STATES) {
-    const r = resolveServiceTierAvailability(code, SHOWCASE_PROPERTY_TIER)
+    const r = resolveServiceTierAvailability(code, SHOWCASE_PROPERTY_TIER, options)
     const status = r[serviceTier]
     const label = stateLabel(code)
     if (status === 'available') {

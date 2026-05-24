@@ -4,7 +4,9 @@ import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.j
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 
 const LISTING_FEE_CENTS = 9900
-const LISTING_PRODUCT_ID = 'prod_UTXU1Ilz3bfCY7'
+const LISTING_PRODUCT_ID =
+  (typeof process !== 'undefined' && process.env?.STRIPE_LISTING_PRODUCT_ID?.trim()) ||
+  'prod_UTXU1Ilz3bfCY7'
 
 function jsonFail(status, body) {
   return { ok: false, status, body }

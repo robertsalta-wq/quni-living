@@ -27,7 +27,30 @@ export const PLATFORM_CONFIG_KEYS = {
   BANK_BANK_NAME: 'bank.bank_name',
   SERVICE_TIER_NAMING: 'service_tier_naming',
   QUNI_SERVICE_TIER_MODULE_ENABLED: 'quni_service_tier_module_enabled',
+  QUNI_SERVICE_TIER_MANAGED_ENABLED: 'quni_service_tier_managed_enabled',
 } as const
+
+export type ServiceTierPlatformFlags = {
+  moduleEnabled: boolean
+  managedGloballyEnabled: boolean
+}
+
+/** Loads Listing module + global Managed toggles from platform_config. */
+export async function fetchServiceTierPlatformFlags(
+  client: SupabaseClient<Database>,
+): Promise<ServiceTierPlatformFlags> {
+  const map = await fetchPlatformConfigValueMap(client, [
+    PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MODULE_ENABLED,
+    PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MANAGED_ENABLED,
+  ])
+  return {
+    moduleEnabled: parseBooleanConfig(map[PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MODULE_ENABLED], false),
+    managedGloballyEnabled: parseBooleanConfig(
+      map[PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MANAGED_ENABLED],
+      false,
+    ),
+  }
+}
 
 const BANK_KEYS_FOR_RTA = [
   PLATFORM_CONFIG_KEYS.BANK_BSB,

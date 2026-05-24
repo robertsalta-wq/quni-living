@@ -5,6 +5,7 @@ import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
 import { BOND_NEUTRAL_PRICING_SHORT } from '../lib/bondPublicCopy'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
+import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
 
 type LineTone = 'default' | 'muted'
 type ValueKind = 'coralLg' | 'coralSm' | 'mutedSm'
@@ -178,6 +179,8 @@ const faqBuckets: FaqBucket[] = [
 ]
 
 export default function Pricing() {
+  const { managedTierEnabled } = usePlatformFeatures()
+  const serviceTierOptions = useServiceTierResolverOptions()
   const [openFaqId, setOpenFaqId] = useState<string | null>('money-fees-0')
   const [listingFeeText, setListingFeeText] = useState('$99')
   const [managedFeeText, setManagedFeeText] = useState('7%')
@@ -457,7 +460,7 @@ export default function Pricing() {
                   </div>
 
                   <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
-                    {pricingTierAvailabilitySummary('listing')}
+                    {pricingTierAvailabilitySummary('listing', serviceTierOptions)}
                   </p>
 
                   <Link to="/landlord-signup?tier=listing" className={ctaSecondary}>
@@ -466,7 +469,19 @@ export default function Pricing() {
                 </div>
 
                 {/* Quni Managed */}
-                <div className="flex flex-col px-7 pb-6 pt-7">
+                <div className="relative flex flex-col px-7 pb-6 pt-7">
+                  {!managedTierEnabled ? (
+                    <div
+                      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/75 px-4 backdrop-blur-[1px]"
+                      aria-hidden
+                    >
+                      <div className="rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-4 py-3 text-center shadow-sm">
+                        <p className="font-lora text-base font-semibold text-[#376256]">Coming soon</p>
+                        <p className="mt-1 text-xs text-[#6B6B6B]">Quni Managed is not available at launch.</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className={!managedTierEnabled ? 'opacity-40' : undefined}>
                   <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Managed</div>
                   <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
                     We run the whole tenancy. From listing to move-out.
@@ -596,12 +611,22 @@ export default function Pricing() {
                   </div>
 
                   <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
-                    {pricingTierAvailabilitySummary('managed')}
+                    {pricingTierAvailabilitySummary('managed', serviceTierOptions)}
                   </p>
 
-                  <Link to="/landlord-signup?tier=managed" className={ctaPrimary}>
-                    Choose Managed
-                  </Link>
+                  {managedTierEnabled ? (
+                    <Link to="/landlord-signup?tier=managed" className={ctaPrimary}>
+                      Choose Managed
+                    </Link>
+                  ) : (
+                    <span
+                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed opacity-60`}
+                      aria-disabled="true"
+                    >
+                      Coming soon
+                    </span>
+                  )}
+                  </div>
                 </div>
               </div>
             </div>
