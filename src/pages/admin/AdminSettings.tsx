@@ -3,7 +3,7 @@ import { useAuthContext } from '../../context/AuthContext'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { formatLogValue } from '../../lib/adminPricingSupabase'
 import type { PlatformConfigRow } from '../../lib/platformConfig'
-import { PLATFORM_CONFIG_KEYS } from '../../lib/platformConfig'
+import { PLATFORM_CONFIG_KEYS, parseBooleanConfig } from '../../lib/platformConfig'
 import { Check, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
 import { adminCardClass, adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
 
@@ -234,6 +234,21 @@ const CONTACT_MAILING_KEYS = [
 const CONTACT_DETAILS_KEYS = ['contact.phone', 'contact.email', 'contact.website'] as const
 
 const MAIL_SAME_KEY = 'contact.mailing_same_as_registered'
+
+const SERVICE_TIER_TOGGLE_HINTS: Partial<Record<string, { hint: string; confirmEnable?: string }>> = {
+  [PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MODULE_ENABLED]: {
+    hint: 'When off, Listing bookings are disabled platform-wide.',
+  },
+  [PLATFORM_CONFIG_KEYS.QUNI_SERVICE_TIER_MANAGED_ENABLED]: {
+    hint: 'When off, Managed stays gated everywhere regardless of Admin → State workflows matrix.',
+    confirmEnable:
+      'Enable Quni Managed platform-wide? Per-state matrix on State workflows will control where Managed is bookable.',
+  },
+}
+
+function isServiceTierToggleKey(configKey: string): boolean {
+  return configKey in SERVICE_TIER_TOGGLE_HINTS
+}
 
 function isGstDetailKey(configKey: string): boolean {
   return (
@@ -507,6 +522,33 @@ export default function AdminSettings() {
     )
   }
 
+  function renderBooleanConfigRow(row: PlatformConfigRow) {
+    const meta = SERVICE_TIER_TOGGLE_HINTS[row.config_key]
+    const checked = parseBooleanConfig(draft[row.config_key], false)
+    return (
+      <div key={row.id} className="space-y-1">
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#0F6E56] focus:ring-[#0F6E56]"
+            checked={checked}
+            onChange={(e) => {
+              const next = e.target.checked
+              if (next && meta?.confirmEnable && !window.confirm(meta.confirmEnable)) return
+              setField(row.config_key, next ? 'true' : 'false')
+            }}
+          />
+          <span>
+            <span className="font-medium text-gray-800">{row.label}</span>
+            {meta?.hint ? (
+              <span className="mt-0.5 block text-[13px] leading-relaxed text-gray-500">{meta.hint}</span>
+            ) : null}
+          </span>
+        </label>
+      </div>
+    )
+  }
+
   if (!isSupabaseConfigured) {
     return (
       <div className="px-4 py-6 md:px-8">
@@ -758,7 +800,9 @@ export default function AdminSettings() {
             {rows
               .filter((r) => belongsToTab(r, 'compliance'))
               .sort((a, b) => a.sort_order - b.sort_order)
-              .map((row) => renderFieldRow(row))}
+              .map((row) =>
+                isServiceTierToggleKey(row.config_key) ? renderBooleanConfigRow(row) : renderFieldRow(row),
+              )}
           </div>
         </div>
       )}
