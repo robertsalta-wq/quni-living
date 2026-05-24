@@ -1,3 +1,4 @@
+import { managedMatrixKeyForProperty } from './matrix.js'
 import { nswServiceTierAvailability } from './nsw.js'
 import { qldServiceTierAvailability } from './qld.js'
 import { vicServiceTierAvailability } from './vic.js'
@@ -16,7 +17,35 @@ export type {
   ServiceTierResolverState,
 } from './types.js'
 
+export {
+  MATRIX_STATE_CODES,
+  buildManagedOverridesMap,
+  managedMatrixKey,
+  managedMatrixKeyForProperty,
+  matrixStateCodeForPropertyState,
+  type ManagedMatrixOverride,
+  type ManagedOverridesMap,
+  type MatrixStateCode,
+  type ServiceTierMatrixRow,
+} from './matrix.js'
+
 const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming within the next month.'
+
+function applyManagedStateMatrix(
+  availability: ServiceTierAvailability,
+  state: string,
+  propertyTier: PropertyTier,
+  options?: ResolveServiceTierOptions,
+): ServiceTierAvailability {
+  const key = managedMatrixKeyForProperty(state, propertyTier)
+  const override = options?.managedOverrides?.[key]
+  if (!override) return availability
+  return {
+    listing: availability.listing,
+    managed: override.managed,
+    notes: override.notes ?? availability.notes,
+  }
+}
 
 function applyManagedGlobalGate(
   availability: ServiceTierAvailability,
@@ -43,5 +72,6 @@ export function resolveServiceTierAvailability(
   else if (normalized === 'QLD') base = qldServiceTierAvailability(propertyTier)
   else if (normalized === 'VIC') base = vicServiceTierAvailability(propertyTier)
   else base = { listing: 'available', managed: 'unsupported' }
-  return applyManagedGlobalGate(base, options)
+  const withMatrix = applyManagedStateMatrix(base, state, propertyTier, options)
+  return applyManagedGlobalGate(withMatrix, options)
 }

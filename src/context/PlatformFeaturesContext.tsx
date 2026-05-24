@@ -1,15 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { buildManagedOverridesMap } from '../lib/serviceTier/matrix'
+import type { ManagedOverridesMap } from '../lib/serviceTier'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 export type PlatformFeatures = {
   managedTierEnabled: boolean
   listingModuleEnabled: boolean
+  managedOverrides: ManagedOverridesMap
   loaded: boolean
 }
 
 const DEFAULT_FEATURES: PlatformFeatures = {
   managedTierEnabled: false,
   listingModuleEnabled: false,
+  managedOverrides: {},
   loaded: false,
 }
 
@@ -20,6 +24,13 @@ const PlatformFeaturesContext = createContext<PlatformFeaturesContextValue | nul
 type PublicPlatformFeaturesRow = {
   managed_tier_enabled: boolean | null
   listing_module_enabled: boolean | null
+}
+
+type MatrixRow = {
+  state_code: string
+  property_tier: string
+  managed_status: string
+  notes: string | null
 }
 
 function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
@@ -41,21 +52,43 @@ function useProvidePlatformFeatures(): PlatformFeaturesContextValue {
           }
         }
       }
-      const { data, error } = await (supabase as unknown as FeaturesClient)
-        .from('public_platform_features')
-        .select('*')
-        .maybeSingle()
+      type MatrixClient = {
+        from(table: 'service_tier_state_matrix'): {
+          select(cols: string): Promise<{
+            data: MatrixRow[] | null
+            error: { message: string } | null
+          }>
+        }
+      }
+
+      const [featuresResult, matrixResult] = await Promise.all([
+        (supabase as unknown as FeaturesClient).from('public_platform_features').select('*').maybeSingle(),
+        (supabase as unknown as MatrixClient)
+          .from('service_tier_state_matrix')
+          .select('state_code, property_tier, managed_status, notes'),
+      ])
 
       if (cancelled) return
 
-      if (error || !data) {
-        setFeatures((prev) => (prev.loaded ? prev : { ...DEFAULT_FEATURES, loaded: true }))
+      const managedOverrides =
+        matrixResult.error || !matrixResult.data
+          ? {}
+          : buildManagedOverridesMap(matrixResult.data)
+
+      if (featuresResult.error || !featuresResult.data) {
+        setFeatures({
+          managedTierEnabled: false,
+          listingModuleEnabled: false,
+          managedOverrides,
+          loaded: true,
+        })
         return
       }
 
       setFeatures({
-        managedTierEnabled: data.managed_tier_enabled === true,
-        listingModuleEnabled: data.listing_module_enabled === true,
+        managedTierEnabled: featuresResult.data.managed_tier_enabled === true,
+        listingModuleEnabled: featuresResult.data.listing_module_enabled === true,
+        managedOverrides,
         loaded: true,
       })
     })()
@@ -81,11 +114,12 @@ export function usePlatformFeatures(): PlatformFeatures {
 
 /** Resolver options for client-side service tier availability checks. */
 export function useServiceTierResolverOptions() {
-  const { managedTierEnabled } = usePlatformFeatures()
+  const { managedTierEnabled, managedOverrides } = usePlatformFeatures()
   return useMemo(
     () => ({
       managedGloballyEnabled: managedTierEnabled,
+      managedOverrides,
     }),
-    [managedTierEnabled],
+    [managedTierEnabled, managedOverrides],
   )
 }

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { runManagedConfirmBooking } from './lib/booking/confirmManaged.js'
 import { runListingConfirmBooking } from './lib/booking/confirmListing.js'
-import { fetchServiceTierPlatformFlags } from './lib/platformConfig.js'
+import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import {
   resolveEffectiveConfirmTier,
   validateLandlordConfirmTierChoice,
@@ -164,7 +164,7 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'Property not found for booking' }, 404, origin)
     }
 
-    const tierFlags = await fetchServiceTierPlatformFlags(admin)
+    const tierContext = await fetchServiceTierResolverContext(admin)
 
     const effectiveTier = resolveEffectiveConfirmTier({
       bodyServiceTier,
@@ -172,14 +172,16 @@ export default async function handler(req, res) {
       state: propertyLite.state,
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,
-      moduleEnabled: tierFlags.moduleEnabled,
-      managedGloballyEnabled: tierFlags.managedGloballyEnabled,
+      moduleEnabled: tierContext.moduleEnabled,
+      managedGloballyEnabled: tierContext.managedGloballyEnabled,
+      managedOverrides: tierContext.managedOverrides,
       propertyServiceTier: propertyLite.service_tier,
     })
 
     const tierErr = validateLandlordConfirmTierChoice(effectiveTier, {
-      moduleEnabled: tierFlags.moduleEnabled,
-      managedGloballyEnabled: tierFlags.managedGloballyEnabled,
+      moduleEnabled: tierContext.moduleEnabled,
+      managedGloballyEnabled: tierContext.managedGloballyEnabled,
+      managedOverrides: tierContext.managedOverrides,
       state: propertyLite.state,
       propertyType: propertyLite.property_type,
       isRegisteredRoomingHouse: propertyLite.is_registered_rooming_house,

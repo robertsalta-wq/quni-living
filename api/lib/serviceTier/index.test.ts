@@ -36,4 +36,18 @@ describe('resolveServiceTierAvailability', () => {
       notes: 'Quni Managed is coming within the next month.',
     })
   })
+
+  it('applies admin matrix override for Managed status', () => {
+    expect(
+      resolveServiceTierAvailability('NSW', 't2', {
+        managedOverrides: {
+          'NSW:t2': { managed: 'available', notes: 'Legal clearance received' },
+        },
+      }),
+    ).toEqual({
+      listing: 'available',
+      managed: 'available',
+      notes: 'Legal clearance received',
+    })
+  })
 })

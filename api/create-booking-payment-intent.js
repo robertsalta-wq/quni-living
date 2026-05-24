@@ -14,7 +14,7 @@ import {
   getActivePricingSnapshotForProperty,
 } from './lib/pricing/index.js'
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
-import { fetchServiceTierPlatformFlags } from './lib/platformConfig.js'
+import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 
 export const config = { runtime: 'edge' }
 
@@ -414,14 +414,15 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
 
-  const tierFlags = await fetchServiceTierPlatformFlags(admin)
+  const tierContext = await fetchServiceTierResolverContext(admin)
 
   const serviceTierAtRequest = computeServiceTierAtRequestSnapshot({
     state: property.state,
     propertyType: property.property_type,
     isRegisteredRoomingHouse: property.is_registered_rooming_house,
-    moduleEnabled: tierFlags.moduleEnabled,
-    managedGloballyEnabled: tierFlags.managedGloballyEnabled,
+    moduleEnabled: tierContext.moduleEnabled,
+    managedGloballyEnabled: tierContext.managedGloballyEnabled,
+    managedOverrides: tierContext.managedOverrides,
     propertyServiceTier: property.service_tier,
   })
 

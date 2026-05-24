@@ -1,4 +1,4 @@
-import type { ResolveServiceTierOptions } from './serviceTier'
+import type { ManagedOverridesMap, ResolveServiceTierOptions } from './serviceTier'
 import { resolvePropertyTierFromListing } from './pricing'
 import { resolveServiceTierAvailability, type PropertyTier } from './serviceTier'
 import { parseLandlordServiceTier, type LandlordServiceTier } from './landlordServiceTier'
@@ -25,6 +25,7 @@ export function landlordAcceptTierUiModel(args: {
   isRegisteredRoomingHouse: boolean | null | undefined
   moduleEnabled: boolean
   managedGloballyEnabled?: boolean
+  managedOverrides?: ManagedOverridesMap
   propertyServiceTier: string | null | undefined
 }): LandlordAcceptTierUiModel {
   const propertyServiceTier = parseLandlordServiceTier(args.propertyServiceTier) ?? 'listing'
@@ -34,6 +35,7 @@ export function landlordAcceptTierUiModel(args: {
   ) as PropertyTier
   const resolverOptions: ResolveServiceTierOptions = {
     managedGloballyEnabled: args.managedGloballyEnabled,
+    managedOverrides: args.managedOverrides,
   }
   const avail = resolveServiceTierAvailability(
     String(args.state ?? '').trim(),

@@ -7,9 +7,13 @@ export type ServiceTierAvailability = {
   notes?: string
 }
 
+import type { ManagedOverridesMap } from './matrix.js'
+
 export type ResolveServiceTierOptions = {
   /** When false, Managed is gated platform-wide regardless of state matrix. */
   managedGloballyEnabled?: boolean
+  /** Admin-editable overrides from `service_tier_state_matrix` (key: `STATE:tier`). */
+  managedOverrides?: ManagedOverridesMap
 }
 
 export type ServiceTierResolverState =

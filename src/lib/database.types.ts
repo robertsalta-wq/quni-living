@@ -1353,6 +1353,36 @@ export interface Database {
           },
         ]
       }
+      service_tier_state_matrix: {
+        Row: {
+          id: string
+          state_code: 'NSW' | 'QLD' | 'VIC' | 'DEFAULT'
+          property_tier: 't1' | 't2' | 't3'
+          managed_status: 'available' | 'gated' | 'unsupported'
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          state_code: 'NSW' | 'QLD' | 'VIC' | 'DEFAULT'
+          property_tier: 't1' | 't2' | 't3'
+          managed_status: 'available' | 'gated' | 'unsupported'
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          state_code?: 'NSW' | 'QLD' | 'VIC' | 'DEFAULT'
+          property_tier?: 't1' | 't2' | 't3'
+          managed_status?: 'available' | 'gated' | 'unsupported'
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       platform_config: {
         Row: {
           id: string

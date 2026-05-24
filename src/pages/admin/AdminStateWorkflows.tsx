@@ -1,13 +1,48 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   resolveTenancyPackage,
   type TenancyPackageInput,
   type TenancyPackageResult,
 } from '../../lib/tenancy/resolveTenancyPackage'
-import { resolveServiceTierAvailability, type PropertyTier } from '../../lib/serviceTier'
+import {
+  resolveServiceTierAvailability,
+  type PropertyTier,
+  type ResolveServiceTierOptions,
+  type ServiceTierAvailabilityStatus,
+} from '../../lib/serviceTier'
+import {
+  buildManagedOverridesMap,
+  managedMatrixKey,
+  type MatrixStateCode,
+} from '../../lib/serviceTier/matrix'
+import { useAuthContext } from '../../context/AuthContext'
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import type { Database } from '../../lib/database.types'
 import { adminCardClass } from './adminUi'
 
 const CORAL = '#FF6F61'
+
+type MatrixRow = Database['public']['Tables']['service_tier_state_matrix']['Row']
+
+const MATRIX_STATE_ROWS: { code: MatrixStateCode; label: string }[] = [
+  { code: 'NSW', label: 'NSW' },
+  { code: 'QLD', label: 'QLD' },
+  { code: 'VIC', label: 'VIC' },
+  { code: 'DEFAULT', label: 'Other Australian states' },
+]
+
+const MATRIX_TIERS: { id: PropertyTier; label: string }[] = [
+  { id: 't1', label: 'Tier 1 — Hosted room' },
+  { id: 't2', label: 'Tier 2 — Private room' },
+  { id: 't3', label: 'Tier 3 — Boarding house' },
+]
+
+const MANAGED_STATUS_OPTIONS: { value: ServiceTierAvailabilityStatus; label: string }[] = [
+  { value: 'available', label: 'Available' },
+  { value: 'gated', label: 'Gated' },
+  { value: 'unsupported', label: 'Unsupported' },
+]
 
 type CanonicalScenario = {
   id: string
@@ -177,14 +212,18 @@ type ResolvedCell = {
   error: string | null
 }
 
-function resolveAll(): ResolvedCell[] {
+function resolveAll(resolverOptions?: ResolveServiceTierOptions): ResolvedCell[] {
   const propertyTierFromScenario = (id: string): PropertyTier => {
     if (id.endsWith('-t1')) return 't1'
     if (id.endsWith('-t2')) return 't2'
     return 't3'
   }
   return CANONICAL_SCENARIOS.map((scenario) => {
-    const serviceTier = resolveServiceTierAvailability(scenario.input.state, propertyTierFromScenario(scenario.id))
+    const serviceTier = resolveServiceTierAvailability(
+      scenario.input.state,
+      propertyTierFromScenario(scenario.id),
+      resolverOptions,
+    )
     try {
       return { scenario, result: resolveTenancyPackage(scenario.input), serviceTier, error: null }
     } catch (e) {
@@ -231,8 +270,97 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
 }
 
 export default function AdminStateWorkflows() {
-  const cells = useMemo(() => resolveAll(), [])
+  const { user } = useAuthContext()
+  const { managedTierEnabled } = usePlatformFeatures()
+  const [matrixRows, setMatrixRows] = useState<MatrixRow[]>([])
+  const [matrixLoading, setMatrixLoading] = useState(true)
+  const [matrixError, setMatrixError] = useState<string | null>(null)
+  const [matrixSaving, setMatrixSaving] = useState<string | null>(null)
+
+  const loadMatrix = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setMatrixLoading(true)
+    setMatrixError(null)
+    const { data, error } = await supabase
+      .from('service_tier_state_matrix')
+      .select('*')
+      .order('state_code')
+      .order('property_tier')
+    if (error) {
+      setMatrixError(error.message)
+      setMatrixRows([])
+    } else {
+      setMatrixRows((data ?? []) as MatrixRow[])
+    }
+    setMatrixLoading(false)
+  }, [])
+
+  useEffect(() => {
+    void loadMatrix()
+  }, [loadMatrix])
+
+  const previewOverrides = useMemo(() => buildManagedOverridesMap(matrixRows), [matrixRows])
+
+  const resolverOptions = useMemo(
+    (): ResolveServiceTierOptions => ({
+      managedGloballyEnabled: managedTierEnabled,
+      managedOverrides: previewOverrides,
+    }),
+    [managedTierEnabled, previewOverrides],
+  )
+
+  const cells = useMemo(() => resolveAll(resolverOptions), [resolverOptions])
   const [selectedId, setSelectedId] = useState<string>('nsw-t1')
+
+  const matrixByKey = useMemo(() => {
+    const map = new Map<string, MatrixRow>()
+    for (const row of matrixRows) {
+      map.set(managedMatrixKey(row.state_code as MatrixStateCode, row.property_tier as PropertyTier), row)
+    }
+    return map
+  }, [matrixRows])
+
+  async function handleManagedStatusChange(
+    stateCode: MatrixStateCode,
+    tier: PropertyTier,
+    managedStatus: ServiceTierAvailabilityStatus,
+  ) {
+    const key = managedMatrixKey(stateCode, tier)
+    const existing = matrixByKey.get(key)
+    setMatrixSaving(key)
+    setMatrixError(null)
+    const { data, error } = await supabase
+      .from('service_tier_state_matrix')
+      .upsert(
+        {
+          id: existing?.id,
+          state_code: stateCode,
+          property_tier: tier,
+          managed_status: managedStatus,
+          notes: existing?.notes ?? null,
+          updated_by: user?.id ?? null,
+        },
+        { onConflict: 'state_code,property_tier' },
+      )
+      .select('*')
+      .single()
+    if (error) {
+      setMatrixError(error.message)
+    } else if (data) {
+      const row = data as MatrixRow
+      setMatrixRows((prev) => {
+        const next = prev.filter(
+          (r) => !(r.state_code === row.state_code && r.property_tier === row.property_tier),
+        )
+        return [...next, row].sort((a, b) =>
+          a.state_code === b.state_code
+            ? a.property_tier.localeCompare(b.property_tier)
+            : a.state_code.localeCompare(b.state_code),
+        )
+      })
+    }
+    setMatrixSaving(null)
+  }
 
   const selected = cells.find((c) => c.scenario.id === selectedId) ?? cells[0]
 
@@ -249,15 +377,95 @@ export default function AdminStateWorkflows() {
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">State workflows</h1>
         <p className="mt-2 text-sm text-gray-600 leading-relaxed max-w-3xl">
-          Read-only mirror of <code className="text-xs bg-gray-100 px-1 rounded">resolveTenancyPackage</code>. Each cell
-          uses a canonical <code className="text-xs bg-gray-100 px-1 rounded">TenancyPackageInput</code>; tier is{' '}
-          <strong>derived</strong> by the resolver. This shows what the code does, not legal advice. Canonical inputs{' '}
-          omit <code className="text-xs bg-gray-100 px-1 rounded">date</code> (ignored in v1).
+          Configure <strong>Managed</strong> availability per state and property tier. Listing rules stay in code; tenancy
+          package probes below are read-only. Changes apply without deploy once the global Managed flag is on in Business
+          settings.
         </p>
       </header>
 
+      {matrixError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
+          {matrixError}
+        </div>
+      )}
+
+      <section className={`${adminCardClass} mb-10 space-y-4`}>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Managed tier matrix</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            {managedTierEnabled
+              ? 'Global Managed is ON — matrix below controls where Managed is bookable.'
+              : 'Global Managed is OFF — Managed stays gated everywhere until you enable it in Admin → Settings → Compliance.'}
+          </p>
+        </div>
+        {matrixLoading ? (
+          <p className="text-sm text-gray-500">Loading matrix…</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-[720px] w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    State
+                  </th>
+                  {MATRIX_TIERS.map((tier) => (
+                    <th
+                      key={tier.id}
+                      className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+                    >
+                      {tier.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MATRIX_STATE_ROWS.map(({ code, label }) => (
+                  <tr key={code} className="border-b border-gray-50">
+                    <td className="py-3 px-3 font-medium text-gray-900">{label}</td>
+                    {MATRIX_TIERS.map((tier) => {
+                      const key = managedMatrixKey(code, tier.id)
+                      const row = matrixByKey.get(key)
+                      const status = row?.managed_status ?? 'unsupported'
+                      return (
+                        <td key={key} className="py-2 px-2">
+                          <select
+                            value={status}
+                            disabled={matrixSaving === key}
+                            onChange={(e) =>
+                              void handleManagedStatusChange(
+                                code,
+                                tier.id,
+                                e.target.value as ServiceTierAvailabilityStatus,
+                              )
+                            }
+                            className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm disabled:opacity-50"
+                          >
+                            {MANAGED_STATUS_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                          {row?.notes ? (
+                            <p className="mt-1 text-[11px] text-gray-500 line-clamp-2">{row.notes}</p>
+                          ) : null}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="text-xs text-gray-500">
+          Effective status: {managedTierEnabled ? 'matrix value' : 'gated (global off)'}. Preview updates in the tables
+          below.
+        </p>
+      </section>
+
       <section className="space-y-4 mb-10">
-        <h2 className="text-lg font-semibold text-gray-900">Supported states</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Tenancy package probes (read-only)</h2>
         <div className={`${adminCardClass} overflow-x-auto`}>
           <table className="min-w-[720px] w-full text-sm">
             <thead>

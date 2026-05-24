@@ -35,6 +35,10 @@ export type ServiceTierPlatformFlags = {
   managedGloballyEnabled: boolean
 }
 
+export type ServiceTierResolverContext = ServiceTierPlatformFlags & {
+  managedOverrides: import('./serviceTier/matrix.js').ManagedOverridesMap
+}
+
 /** Loads Listing module + global Managed toggles from platform_config. */
 export async function fetchServiceTierPlatformFlags(
   client: SupabaseClient<Database>,
@@ -50,6 +54,30 @@ export async function fetchServiceTierPlatformFlags(
       false,
     ),
   }
+}
+
+/** Loads admin-editable Managed matrix rows from `service_tier_state_matrix`. */
+export async function fetchServiceTierManagedOverrides(
+  client: SupabaseClient<Database>,
+): Promise<import('./serviceTier/matrix.js').ManagedOverridesMap> {
+  const { buildManagedOverridesMap } = await import('./serviceTier/matrix.js')
+  const { data, error } = await client
+    .from('service_tier_state_matrix')
+    .select('state_code, property_tier, managed_status, notes')
+
+  if (error) throw error
+  return buildManagedOverridesMap(data ?? [])
+}
+
+/** Platform flags + per-state Managed overrides for tier resolution. */
+export async function fetchServiceTierResolverContext(
+  client: SupabaseClient<Database>,
+): Promise<ServiceTierResolverContext> {
+  const [flags, managedOverrides] = await Promise.all([
+    fetchServiceTierPlatformFlags(client),
+    fetchServiceTierManagedOverrides(client),
+  ])
+  return { ...flags, managedOverrides }
 }
 
 const BANK_KEYS_FOR_RTA = [

@@ -1,52 +1,15 @@
 /**
  * Pure tier snapshot + validation for booking commit (Edge/JS) and confirm-booking (Node).
- * Mirrors api/lib/serviceTier/index.ts — keep in sync when matrix changes.
+ * Uses api/lib/serviceTier/index.ts for availability resolution.
  */
 import { resolvePropertyTierFromListing } from '../pricing/index.js'
+import { resolveServiceTierAvailability } from '../serviceTier/index.js'
 
-const MANAGED_COMING_SOON_NOTES = 'Quni Managed is coming within the next month.'
-
-/** @param {string} stateRaw */
-/** @param {'t1' | 't2' | 't3'} propertyTier */
-/** @param {{ managedGloballyEnabled?: boolean }} [options] */
-export function resolveServiceTierAvailability(stateRaw, propertyTier, options) {
-  const normalized = String(stateRaw || '')
-    .trim()
-    .toUpperCase()
-  const pt = propertyTier
-
-  /** @type {{ listing: string, managed: string, notes?: string }} */
-  let base
-  if (normalized === 'NSW') {
-    if (pt === 't1') base = { listing: 'available', managed: 'available' }
-    else if (pt === 't2')
-      base = {
-        listing: 'available',
-        managed: 'gated',
-        notes: 'Managed gated pending Jenny legal clearance',
-      }
-    else base = { listing: 'unsupported', managed: 'unsupported' }
-  } else if (normalized === 'QLD') {
-    if (pt === 't1' || pt === 't2') base = { listing: 'available', managed: 'available' }
-    else base = { listing: 'unsupported', managed: 'unsupported' }
-  } else if (normalized === 'VIC') {
-    if (pt === 't1')
-      base = { listing: 'available', managed: 'gated', notes: 'Managed parked pending VIC lawyer' }
-    else if (pt === 't2')
-      base = { listing: 'available', managed: 'gated', notes: 'Managed gated pending VIC lawyer' }
-    else base = { listing: 'unsupported', managed: 'unsupported' }
-  } else {
-    base = { listing: 'available', managed: 'unsupported' }
+function resolverOptions(managedGloballyEnabled, managedOverrides) {
+  return {
+    managedGloballyEnabled,
+    managedOverrides: managedOverrides ?? undefined,
   }
-
-  if (options?.managedGloballyEnabled === false) {
-    return {
-      listing: base.listing,
-      managed: 'gated',
-      notes: MANAGED_COMING_SOON_NOTES,
-    }
-  }
-  return base
 }
 
 /**
@@ -59,11 +22,16 @@ export function computeServiceTierAtRequestSnapshot({
   isRegisteredRoomingHouse,
   moduleEnabled,
   managedGloballyEnabled,
+  managedOverrides,
   propertyServiceTier,
 }) {
   if (propertyServiceTier === 'listing' || propertyServiceTier === 'managed') return propertyServiceTier
   const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
-  const a = resolveServiceTierAvailability(state, pt, { managedGloballyEnabled })
+  const a = resolveServiceTierAvailability(
+    state,
+    pt,
+    resolverOptions(managedGloballyEnabled, managedOverrides),
+  )
   const listingOk = Boolean(moduleEnabled) && a.listing !== 'unsupported'
   const managedOk = a.managed === 'available'
   if (listingOk && managedOk) return 'managed'
@@ -85,6 +53,7 @@ export function resolveEffectiveConfirmTier({
   isRegisteredRoomingHouse,
   moduleEnabled,
   managedGloballyEnabled,
+  managedOverrides,
 }) {
   const raw = typeof bodyServiceTier === 'string' ? bodyServiceTier.trim().toLowerCase() : ''
   if (raw === 'listing' || raw === 'managed') return raw
@@ -96,6 +65,7 @@ export function resolveEffectiveConfirmTier({
     isRegisteredRoomingHouse,
     moduleEnabled,
     managedGloballyEnabled,
+    managedOverrides,
     propertyServiceTier,
   })
   if (fallback === 'listing' || fallback === 'managed') return fallback
@@ -110,6 +80,7 @@ export function validateLandlordConfirmTierChoice(
   {
     moduleEnabled,
     managedGloballyEnabled,
+    managedOverrides,
     state,
     propertyType,
     isRegisteredRoomingHouse,
@@ -117,7 +88,11 @@ export function validateLandlordConfirmTierChoice(
   },
 ) {
   const pt = resolvePropertyTierFromListing(propertyType, isRegisteredRoomingHouse)
-  const a = resolveServiceTierAvailability(state, pt, { managedGloballyEnabled })
+  const a = resolveServiceTierAvailability(
+    state,
+    pt,
+    resolverOptions(managedGloballyEnabled, managedOverrides),
+  )
   if (serviceTier === 'listing') {
     if (propertyServiceTier === 'managed') {
       return {
@@ -144,3 +119,5 @@ export function validateLandlordConfirmTierChoice(
   }
   return { code: 'invalid_tier', message: 'Invalid service tier.' }
 }
+
+export { resolveServiceTierAvailability } from '../serviceTier/index.js'
