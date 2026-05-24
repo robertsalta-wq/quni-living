@@ -50,7 +50,7 @@ function LineItem({
       </div>
       <div className={`text-sm font-medium ${nameCls}`}>{name}</div>
       <div className={`whitespace-nowrap leading-none ${valueCls}`}>{value}</div>
-      <p className={`col-span-2 col-start-2 text-xs leading-normal ${descCls}`}>{description}</p>
+      <p className={`col-span-2 col-start-2 text-[13px] leading-snug ${descCls}`}>{description}</p>
     </div>
   )
 }
@@ -438,7 +438,7 @@ export default function Pricing() {
                       }
                       name="Bond lodgement"
                       value="Self-managed"
-                      description={`You lodge bond under state rules between you and your renter. ${BOND_NEUTRAL_PRICING_SHORT}`}
+                      description="You lodge bond under state rules with your renter. Quni does not hold bond money."
                       tone="muted"
                       valueKind="mutedSm"
                     />
@@ -473,25 +473,22 @@ export default function Pricing() {
                 </div>
 
                 {/* Quni Managed */}
-                <div className="relative flex flex-col px-7 pb-6 pt-7">
-                  {!managedTierEnabled ? (
-                    <div
-                      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/75 px-4 backdrop-blur-[1px]"
-                      aria-hidden
-                    >
-                      <div className="rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-4 py-3 text-center shadow-sm">
-                        <p className="font-lora text-base font-semibold text-[#376256]">{MANAGED_COMING_SOON_HEADLINE}</p>
-                        <p className="mt-1 text-xs text-[#6B6B6B]">{MANAGED_COMING_SOON_SUBLINE}</p>
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className={!managedTierEnabled ? 'opacity-40' : undefined}>
+                <div className="flex flex-col px-7 pb-6 pt-7">
                   <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Managed</div>
-                  <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                  <p className="mt-1.5 text-[13px] leading-snug text-[#6B6B6B]">
                     We run the whole tenancy. From listing to move-out.
                   </p>
+                  {!managedTierEnabled ? (
+                    <div
+                      className="mt-3 rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-3.5 py-2.5"
+                      role="status"
+                    >
+                      <p className="font-lora text-sm font-semibold text-[#376256]">{MANAGED_COMING_SOON_HEADLINE}</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[#6B6B6B]">{MANAGED_COMING_SOON_SUBLINE}</p>
+                    </div>
+                  ) : null}
 
-                  <div className="mt-[22px]">
+                  <div className={managedTierEnabled ? 'mt-[22px]' : 'mt-4'}>
                     <LineItem
                       icon={
                         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
@@ -624,13 +621,12 @@ export default function Pricing() {
                     </Link>
                   ) : (
                     <span
-                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed opacity-60`}
+                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed bg-[#9A9A9A] hover:bg-[#9A9A9A]`}
                       aria-disabled="true"
                     >
                       Coming soon
                     </span>
                   )}
-                  </div>
                 </div>
               </div>
             </div>

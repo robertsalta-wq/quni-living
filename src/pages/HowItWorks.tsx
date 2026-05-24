@@ -155,7 +155,7 @@ export default function HowItWorks() {
             </div>
           </section>
 
-          <section className="relative mx-auto mt-16 max-w-[1180px]">
+          <section className="mx-auto mt-16 max-w-[1180px]">
             <h2 className="font-display text-center text-2xl font-bold text-[#376256] sm:text-3xl">Quni Managed</h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
               {managedTierEnabled
@@ -173,7 +173,7 @@ export default function HowItWorks() {
                 </div>
               </div>
             ) : null}
-            <div className={`mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10 ${!managedTierEnabled ? 'opacity-45' : ''}`}>
+            <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
               <FlowColumn
                 heading="Renters"
                 steps={MANAGED_STUDENT}
