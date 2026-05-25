@@ -74,6 +74,7 @@ Week 2      G3 live smoke test
 | G1 typecheck + tests | **Done** (25 May 2026) |
 | G5 bank + legal entity | **Mostly done** — primary `bank.*` + core `business.*` set; optional trading/contact fields empty |
 | Vercel env (test) — Phase 3A + 5 audit | **Done** (25 May 2026) — `env:pull:production`; site URLs + `STRIPE_LISTING_PRODUCT_ID` added |
+| Supabase Edge secrets (Phase 6) | **Done** (25 May 2026) — `RESEND_API_KEY`, `DELETE_USER_DOCS_WEBHOOK_SECRET`; Stripe webhooks Vercel-only |
 | Test-mode E2E (Phase 3 / G2) | **Next** — needs ≥1 active listing (use E2E flow or today’s 3) |
 | Stripe live flip (Phase 4) | **Not started** — after G2 |
 
@@ -518,13 +519,16 @@ Redeploy after all changes.
 
 Separate from Vercel. In **Supabase → Edge Functions → Secrets**:
 
-| Secret | Used by |
-|--------|---------|
-| `RESEND_API_KEY` | `send-uni-otp`, `send-work-otp` |
-| `DELETE_USER_DOCS_WEBHOOK_SECRET` | Account deletion webhook |
-| `STRIPE_*` | Only if using Supabase stripe-webhook (skip if Vercel-only) |
+| Secret | Used by | Verified |
+|--------|---------|----------|
+| `RESEND_API_KEY` | `send-uni-otp`, `send-work-otp` | [x] (25 May 2026) |
+| `DELETE_USER_DOCS_WEBHOOK_SECRET` | Account deletion webhook (`delete-user-documents`) | [x] |
+| `STRIPE_*` | Only if using Supabase stripe-webhook | [x] skipped — Stripe webhooks on Vercel only (`/api/stripe-webhook`) |
 
 OTP email verification depends on `RESEND_API_KEY` here even when Vercel also has it.
+
+- [x] **Phase 6 complete** (25 May 2026) — Dashboard secrets audit; required keys present
+- [ ] Confirm **Database → Webhooks**: `auth.users` DELETE → `delete-user-documents` only if that safety net is enabled (secret already set)
 
 ---
 
@@ -804,7 +808,8 @@ Production with **Stripe test keys** still set in Vercel.
 ### F. Phase 1.5 — per-state Managed toggles — **done**
 
 - [x] Per-state × tier Managed toggles on **Admin → State workflows**
-- [ ] DocuSeal + Resend spot-check (Phases 6–7) — **do now** (no listings required)
+- [x] **Phase 6** — Supabase Edge secrets (`RESEND_API_KEY`, `DELETE_USER_DOCS_WEBHOOK_SECRET`; Vercel-only Stripe webhooks)
+- [ ] **Phase 7** — Resend + DocuSeal spot-check (no listings required)
 - [x] **Phase 3 pre-flight** (§3A) — Vercel production env on `quni-living.vercel.app` with **test** Stripe keys (25 May 2026)
 - [x] **Phase 5 test-mode audit** — see §Phase 5 “Test-mode audit”
 - [ ] **Phase 3 / G2** test-mode E2E (§3B / §D) — after ≥1 active listing (your 3 later, or throwaway in steps 1–3)
