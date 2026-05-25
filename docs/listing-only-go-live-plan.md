@@ -27,7 +27,8 @@
 - [ ] **G2** — full test-mode E2E on production: signup → book → accept → test $99 → bond → DocuSeal → `confirmed`
 - [ ] **G5** — bank + legal entity non-empty in **Admin → Business settings** (lease PDFs)
 - [ ] **Stripe live** — live keys, live Listing product ID, live webhook on production domain
-- [ ] **Vercel env** — all production secrets correct for live mode (see Phase 5)
+- [x] **Vercel env (test mode)** — Phase 3A + Phase 5 production audit complete (25 May 2026); Stripe test keys; live flip pending Phase 4
+- [ ] **Vercel env (live mode)** — Phase 5 “Must change for live flip” + redeploy after Phase 4
 - [ ] **Resend** — at least one transactional email delivered end-to-end on production
 - [ ] **DocuSeal** — `sign.quni.com.au` healthy; signing completes on production
 - [ ] **G3** — live smoke test: one real $99 charge, full flow, then refund
@@ -54,7 +55,7 @@ Week 2      G3 live smoke test
 → GO LIVE   (only after all checkboxes above)
 ```
 
-**Rough progress (25 May 2026):** ~45% of this list complete (Phases 1–2 + 1.25 + 1.5 + G1 + clean inventory DB). Blockers for G2/G3: inventory + test/live E2E runs.
+**Rough progress (25 May 2026):** ~50% of this list complete (Phases 1–2 + 1.25 + 1.5 + G1 + clean inventory DB + Vercel test env audit). Blockers for G2/G3: inventory + test E2E run.
 
 ---
 
@@ -72,6 +73,7 @@ Week 2      G3 live smoke test
 | Per-state Managed admin toggles (Phase 1.5) | **Done** — `service_tier_state_matrix` + Admin UI |
 | G1 typecheck + tests | **Done** (25 May 2026) |
 | G5 bank + legal entity | **Mostly done** — primary `bank.*` + core `business.*` set; optional trading/contact fields empty |
+| Vercel env (test) — Phase 3A + 5 audit | **Done** (25 May 2026) — `env:pull:production`; site URLs + `STRIPE_LISTING_PRODUCT_ID` added |
 | Test-mode E2E (Phase 3 / G2) | **Next** — needs ≥1 active listing (use E2E flow or today’s 3) |
 | Stripe live flip (Phase 4) | **Not started** — after G2 |
 
@@ -382,15 +384,16 @@ Deploy Phase 1 code to production **while Stripe is still in test mode**.
 
 ### 3A. Pre-flight on production (test keys)
 
-Confirm Vercel production already has test Stripe keys and:
-
-- `INTERNAL_DOC_FLOW_SECRET` — set (lease gen skips without it)
-- `CRON_SECRET` — set (booking expiry crons)
-- `DOCUSEAL_API_URL`, `DOCUSEAL_API_TOKEN`
-- `RESEND_API_KEY`
-- `VITE_STRIPE_PUBLISHABLE_KEY` = `pk_test_...`
-- `STRIPE_SECRET_KEY` = `sk_test_...`
-- `STRIPE_WEBHOOK_SECRET` = test webhook `whsec_...`
+- [x] Vercel production env verified (25 May 2026) — names in `.env.vercel` after `npm run env:pull:production`
+- [x] `INTERNAL_DOC_FLOW_SECRET` — set (lease gen skips without it)
+- [x] `CRON_SECRET` — set (booking expiry crons)
+- [x] `DOCUSEAL_API_URL`, `DOCUSEAL_API_TOKEN`
+- [x] `RESEND_API_KEY`
+- [x] `VITE_STRIPE_PUBLISHABLE_KEY` = `pk_test_...`
+- [x] `STRIPE_SECRET_KEY` = `sk_test_...` (Sensitive; Production + Preview)
+- [x] `STRIPE_WEBHOOK_SECRET` = test webhook `whsec_...` (Sensitive; Production + Preview)
+- [x] `STRIPE_LISTING_PRODUCT_ID` — test product `prod_...`
+- [x] `VITE_SITE_URL`, `SITE_URL`, `PUBLIC_SITE_URL` — set (pre–`quni.com.au` cutover values)
 
 ### 3B. Test-mode smoke script
 
@@ -408,11 +411,13 @@ Use two fresh accounts (or admin-created test users).
 | 8 | Both | Complete DocuSeal signing | Status → `confirmed` |
 | 9 | You | Grep production UI | No Managed CTAs anywhere |
 
-**Stripe test webhook endpoint:**
+**Stripe test webhook endpoint (current test origin):**
 
 ```text
-https://<your-production-domain>/api/stripe-webhook
+https://quni-living.vercel.app/api/stripe-webhook
 ```
+
+(After `quni.com.au` cutover, add a second endpoint or switch to `https://quni.com.au/api/stripe-webhook` for live mode.)
 
 **Gate G2** must pass before Phase 4.
 
@@ -451,6 +456,13 @@ Update **Production** environment variables, then redeploy.
 
 **Audit (names only):** From repo root, `npm run env:pull:production` writes `.env.vercel` (gitignored). Confirm each variable in the tables below (and Phase 3A) appears there with a non-empty value — do not commit that file. Full name reference: [`.env.example`](../.env.example) and [`docs/vercel-env-setup.md`](vercel-env-setup.md). Omit Vercel-injected `VERCEL_*`; skip duplicate `STRIPE_*` on Supabase if webhooks use Vercel only (Phase 6).
 
+### Test-mode audit (complete 25 May 2026)
+
+- [x] Phase 3A + “Must already be set” names present in production (`.env.vercel` pull)
+- [x] Added `STRIPE_LISTING_PRODUCT_ID`, `VITE_SITE_URL`, `SITE_URL`, `PUBLIC_SITE_URL`
+- [x] `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — marked Sensitive; scoped Production + Preview
+- [x] Stripe keys confirmed **test** mode (`pk_test_` / `sk_test_`)
+
 ### Must change for live flip
 
 | Variable | Value |
@@ -462,24 +474,25 @@ Update **Production** environment variables, then redeploy.
 
 ### Must already be set (verify, don’t skip)
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SUPABASE_URL` | Client |
-| `VITE_SUPABASE_ANON_KEY` | Client |
-| `SUPABASE_URL` | API (same URL, no `VITE_`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | API admin ops |
-| `SUPABASE_ANON_KEY` | JWT verification on connect routes |
-| `RESEND_API_KEY` | Transactional email |
-| `INTERNAL_DOC_FLOW_SECRET` | Lease generation after accept |
-| `CRON_SECRET` | `/api/cron/expire-bookings`, `release-deposits` |
-| `DOCUSEAL_API_URL` | `https://sign.quni.com.au` |
-| `DOCUSEAL_API_TOKEN` | DocuSeal API |
-| `DOCUSEAL_SUBMISSIONS_PATH` | Usually `/api/submissions` |
-| `TURNSTILE_SECRET_KEY` | Form spam protection |
-| `VITE_TURNSTILE_SITE_KEY` | Client Turnstile |
-| `VITE_SENTRY_DSN` | Error monitoring |
-| `SITE_URL` or `PUBLIC_SITE_URL` | Canonical origin for emails/links |
-| `VITE_SITE_URL` | SEO canonical + OG |
+| Variable | Purpose | Verified |
+|----------|---------|----------|
+| `VITE_SUPABASE_URL` | Client | [x] |
+| `VITE_SUPABASE_ANON_KEY` | Client | [x] |
+| `SUPABASE_URL` | API (same URL, no `VITE_`) | [x] |
+| `SUPABASE_SERVICE_ROLE_KEY` | API admin ops | [x] |
+| `SUPABASE_ANON_KEY` | JWT verification on connect routes (optional if same as `VITE_SUPABASE_ANON_KEY`) | [x] fallback |
+| `RESEND_API_KEY` | Transactional email | [x] |
+| `INTERNAL_DOC_FLOW_SECRET` | Lease generation after accept | [x] |
+| `CRON_SECRET` | `/api/cron/expire-bookings`, `release-deposits` | [x] |
+| `DOCUSEAL_API_URL` | `https://sign.quni.com.au` | [x] |
+| `DOCUSEAL_API_TOKEN` | DocuSeal API | [x] |
+| `DOCUSEAL_SUBMISSIONS_PATH` | Usually `/api/submissions` | [x] |
+| `TURNSTILE_SECRET_KEY` | Form spam protection | [x] |
+| `VITE_TURNSTILE_SITE_KEY` | Client Turnstile | [x] |
+| `VITE_SENTRY_DSN` | Error monitoring | [x] |
+| `SITE_URL` or `PUBLIC_SITE_URL` | Canonical origin for emails/links | [x] both set |
+| `VITE_SITE_URL` | SEO canonical + OG | [x] |
+| `STRIPE_LISTING_PRODUCT_ID` | Listing accept fee product | [x] test `prod_...` |
 
 ### If cutting over to quni.com.au (Option B)
 
@@ -530,7 +543,7 @@ Send one test transactional email end-to-end (e.g. trigger a booking notificatio
 ### DocuSeal
 
 - [ ] Railway instance up: `https://sign.quni.com.au`
-- [ ] Vercel env `DOCUSEAL_*` correct
+- [x] Vercel env `DOCUSEAL_*` correct (Phase 5 audit)
 - [ ] DocuSeal webhook → `https://<domain>/api/webhooks/docuseal` (signing completion)
 - [ ] One test Listing signing flow on **live** (after Phase 9 step 7)
 
@@ -649,7 +662,7 @@ Skip if staying on `quni-living.vercel.app` for now.
 □ Deploy (test Stripe)
 □ Test-mode E2E pass (G2)
 □ Stripe live keys + product + webhook
-□ Vercel env updated + redeploy
+☑ Vercel env (test mode) audited — live flip + redeploy pending
 □ Live E2E pass (G3) + Managed not bookable (G4)
 □ Resend test email OK
 □ DocuSeal signing OK
@@ -791,9 +804,11 @@ Production with **Stripe test keys** still set in Vercel.
 ### F. Phase 1.5 — per-state Managed toggles — **done**
 
 - [x] Per-state × tier Managed toggles on **Admin → State workflows**
-- [ ] DocuSeal + Resend spot-check (Phases 6–7) — **next while listings are in progress**
-- [ ] **Phase 3 / G2** test-mode E2E on production (§3B) — after ≥1 active listing
-- [ ] **Phase 0** — confirm launch domain Option A vs B before Stripe live env audit
+- [ ] DocuSeal + Resend spot-check (Phases 6–7) — **do now** (no listings required)
+- [x] **Phase 3 pre-flight** (§3A) — Vercel production env on `quni-living.vercel.app` with **test** Stripe keys (25 May 2026)
+- [x] **Phase 5 test-mode audit** — see §Phase 5 “Test-mode audit”
+- [ ] **Phase 3 / G2** test-mode E2E (§3B / §D) — after ≥1 active listing (your 3 later, or throwaway in steps 1–3)
+- [ ] **`quni.com.au` on Vercel** — before Phase 4 live Stripe + G3 (domain decision done; DNS/env cutover pending)
 
 ---
 
