@@ -29,8 +29,9 @@
 - [ ] **Stripe live** — live keys, live Listing product ID, live webhook on production domain
 - [x] **Vercel env (test mode)** — Phase 3A + Phase 5 production audit complete (25 May 2026); Stripe test keys; live flip pending Phase 4
 - [ ] **Vercel env (live mode)** — Phase 5 “Must change for live flip” + redeploy after Phase 4
-- [ ] **Resend** — at least one transactional email delivered end-to-end on production
-- [ ] **DocuSeal** — `sign.quni.com.au` healthy; signing completes on production
+- [x] **Resend** — `quni.com.au` verified in Resend; transactional email delivered on production (25 May 2026)
+- [x] **DocuSeal (infra)** — `sign.quni.com.au` healthy; webhook `https://quni-living.vercel.app/api/webhooks/docuseal` (25 May 2026)
+- [ ] **DocuSeal (E2E signing)** — full Listing signing on a booking completes in production (**G2**)
 - [ ] **G3** — live smoke test: one real $99 charge, full flow, then refund
 
 ### Domain (minimum)
@@ -75,6 +76,7 @@ Week 2      G3 live smoke test
 | G5 bank + legal entity | **Mostly done** — primary `bank.*` + core `business.*` set; optional trading/contact fields empty |
 | Vercel env (test) — Phase 3A + 5 audit | **Done** (25 May 2026) — `env:pull:production`; site URLs + `STRIPE_LISTING_PRODUCT_ID` added |
 | Supabase Edge secrets (Phase 6) | **Done** (25 May 2026) — `RESEND_API_KEY`, `DELETE_USER_DOCS_WEBHOOK_SECRET`; Stripe webhooks Vercel-only |
+| Resend + DocuSeal spot-check (Phase 7) | **Done** (25 May 2026) — DNS verified; test send OK; DocuSeal login + webhook on Vercel URL |
 | Test-mode E2E (Phase 3 / G2) | **Next** — needs ≥1 active listing (use E2E flow or today’s 3) |
 | Stripe live flip (Phase 4) | **Not started** — after G2 |
 
@@ -111,7 +113,7 @@ Do not proceed to the next phase until the gate passes.
 - [x] Launch domain: **`quni.com.au` primary**; `quniliving.com.au` redirect; Vercel URL OK for test E2E until DNS attached
 - [ ] Seed geography: confirm all seed listings are **NSW T2 private room** (Listing is available; Managed already geo-gated for NSW T2)
 - [ ] One real card for live smoke test (refund after)
-- [ ] DocuSeal Railway instance healthy at `https://sign.quni.com.au`
+- [x] DocuSeal Railway instance healthy at `https://sign.quni.com.au` (25 May 2026)
 - [ ] **Listing inventory policy decided** (see below) — which rows stay `active` vs `inactive`
 
 ---
@@ -538,18 +540,19 @@ OTP email verification depends on `RESEND_API_KEY` here even when Vercel also ha
 
 Verify DNS green in Resend dashboard for:
 
-- **`quni.com.au`** domain
-- Sending identity: **`noreply@quni.com.au`** (actual sender in `api/lib/sendEmail.js`)
-- **`hello@quni.com.au`** (support/contact copy on site)
-
-Send one test transactional email end-to-end (e.g. trigger a booking notification or use Resend dashboard test send).
+- [x] **`quni.com.au`** domain — Verified (25 May 2026)
+- [x] Sending identity: **`noreply@quni.com.au`** (actual sender in `api/lib/sendEmail.js`)
+- [x] **`hello@quni.com.au`** (support/contact copy on site)
+- [x] Test transactional email delivered end-to-end on production
 
 ### DocuSeal
 
-- [ ] Railway instance up: `https://sign.quni.com.au`
+- [x] Railway instance up: `https://sign.quni.com.au` — login OK (25 May 2026)
 - [x] Vercel env `DOCUSEAL_*` correct (Phase 5 audit)
-- [ ] DocuSeal webhook → `https://<domain>/api/webhooks/docuseal` (signing completion)
-- [ ] One test Listing signing flow on **live** (after Phase 9 step 7)
+- [x] DocuSeal webhook → `https://quni-living.vercel.app/api/webhooks/docuseal` (switch to `quni.com.au` after DNS cutover)
+- [ ] One test Listing signing flow on production (**G2** — needs booking + listings)
+
+- [x] **Phase 7 spot-check complete** (25 May 2026) — signing E2E deferred to **G2**
 
 ---
 
@@ -668,8 +671,8 @@ Skip if staying on `quni-living.vercel.app` for now.
 □ Stripe live keys + product + webhook
 ☑ Vercel env (test mode) audited — live flip + redeploy pending
 □ Live E2E pass (G3) + Managed not bookable (G4)
-□ Resend test email OK
-□ DocuSeal signing OK
+☑ Resend test email OK (25 May 2026)
+□ DocuSeal signing OK (G2 — infra + webhook done in Phase 7)
 □ Sentry clean
 □ (Optional) DNS + GSC sitemap
 ```
@@ -809,7 +812,7 @@ Production with **Stripe test keys** still set in Vercel.
 
 - [x] Per-state × tier Managed toggles on **Admin → State workflows**
 - [x] **Phase 6** — Supabase Edge secrets (`RESEND_API_KEY`, `DELETE_USER_DOCS_WEBHOOK_SECRET`; Vercel-only Stripe webhooks)
-- [ ] **Phase 7** — Resend + DocuSeal spot-check (no listings required)
+- [x] **Phase 7** — Resend + DocuSeal spot-check (25 May 2026; signing E2E in G2)
 - [x] **Phase 3 pre-flight** (§3A) — Vercel production env on `quni-living.vercel.app` with **test** Stripe keys (25 May 2026)
 - [x] **Phase 5 test-mode audit** — see §Phase 5 “Test-mode audit”
 - [ ] **Phase 3 / G2** test-mode E2E (§3B / §D) — after ≥1 active listing (your 3 later, or throwaway in steps 1–3)
