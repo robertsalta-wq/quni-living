@@ -2,8 +2,8 @@
 
 **Scope:** Listing-only launch on production. Managed stays in the codebase — **teased in marketing, not bookable** until flags are flipped later.
 
-**Status:** Pre-launch checklist — Phase 1 code shipped; inventory + remaining Supabase deferred to Monday  
-**Last updated:** 24 May 2026
+**Status:** Pre-launch checklist — Phases 1, 1.25, 1.5 code shipped; Phase 2 flags live on production; **0 properties** (clean slate); **3 real listings later today**  
+**Last updated:** 25 May 2026
 
 **Go-live is postponed until every item in [Pre-go-live — nothing ships until…](#pre-go-live--nothing-ships-until) is checked.**
 
@@ -15,15 +15,15 @@
 
 ### Build & database
 
-- [ ] **Phase 1 code** deployed — Managed teased in UI, not selectable/bookable (**G4**)
-- [ ] **Phase 2 Supabase** complete — migrations pushed; `module_enabled=true`; `managed_enabled=false`; all properties → `service_tier = 'listing'`; `public_platform_features` view live
-- [ ] **Listing inventory** finalized — clean slate (`DELETE` properties + test users) or curated keep-3; 3 verified real listings live (Casa Malvina + 2); landlords verified in admin
-- [ ] **Phase 1.25** — `platform_staff` table + `is_platform_admin()` RPC + **Admin → Team** UI (port Unstash pattern; no hardcoded admin emails)
-- [ ] **Phase 1.5** — per-state × tier Managed toggles editable in **Admin → State workflows** (so state rollouts need no deploy)
+- [x] **Phase 1 code** deployed — Managed teased in UI, not selectable/bookable (**G4**)
+- [x] **Phase 2 Supabase** complete — migrations applied (`db push` up to date); `module_enabled=true`; `managed_enabled=false`; `public_platform_features` live (`managed_tier_enabled=false`, `listing_module_enabled=true`)
+- [ ] **Listing inventory** finalized — clean slate done (**0 properties**); **later today:** 3 verified real listings (Casa Malvina + 2); landlords verified in admin
+- [x] **Phase 1.25** — `platform_staff` + `is_platform_admin()` + **Admin → Team** (`hello@quni.com.au`, `quinn@4logistics.com.au` seeded)
+- [x] **Phase 1.5** — per-state × tier Managed matrix in **Admin → State workflows**
 
 ### Prove it works
 
-- [ ] **G1** — `npx tsc -b --noEmit` and `npm test` green on release commit
+- [x] **G1** — `npx tsc -b --noEmit` and `npm test` green (verified 25 May 2026 on `main`)
 - [ ] **G2** — full test-mode E2E on production: signup → book → accept → test $99 → bond → DocuSeal → `confirmed`
 - [ ] **G5** — bank + legal entity non-empty in **Admin → Business settings** (lease PDFs)
 - [ ] **Stripe live** — live keys, live Listing product ID, live webhook on production domain
@@ -34,7 +34,7 @@
 
 ### Domain (minimum)
 
-- [ ] **Domain decision made** — Option A (`quni-living.vercel.app`) or Option B (`quni.com.au`) before env + smoke test
+- [x] **Domain decision made** — **Primary:** `https://quni.com.au` (registered). **Secondary:** `quniliving.com.au` → 301 redirect to primary (avoid two canonical origins). **Staging / pre-DNS:** keep using `quni-living.vercel.app` for G2 if DNS not wired yet; flip env + webhooks when `quni.com.au` is on Vercel.
 
 ### Explicitly deferrable (not blockers for first go-live)
 
@@ -54,7 +54,7 @@ Week 2      G3 live smoke test
 → GO LIVE   (only after all checkboxes above)
 ```
 
-**Rough progress (24 May 2026):** ~15–20% of this list complete (Phase 1 code + `module_enabled` on production).
+**Rough progress (25 May 2026):** ~45% of this list complete (Phases 1–2 + 1.25 + 1.5 + G1 + clean inventory DB). Blockers for G2/G3: inventory + test/live E2E runs.
 
 ---
 
@@ -62,27 +62,30 @@ Week 2      G3 live smoke test
 
 | Item | Status |
 |------|--------|
-| Phase 1 code (Managed gated + teased in UI) | **Done** — deployed to `main` |
-| `quni_service_tier_module_enabled` | **Done** — already `true` on production |
-| `quni_service_tier_managed_enabled` + `public_platform_features` view | **Pending** — migration `20260524120000` not applied |
-| `public_legal_entity_view` migration | **Pending** — migration `20260523120000` not applied |
-| Properties backfill → `service_tier = 'listing'` | **Pending** — all 21 rows still `managed` (OK while Managed globally off) |
-| Listing inventory | **Deferred to Monday** — clean-slate wipe planned |
-| Platform staff / Admin → Team (Phase 1.25) | **Not built** — **required before go-live** |
-| Per-state Managed admin toggles (Phase 1.5) | **Not built** — **required before go-live** |
-| Test-mode E2E (Phase 3) | **Not started** |
-| Stripe live flip (Phase 4) | **Not started** |
+| Phase 1 code (Managed gated + teased in UI) | **Done** — on `main` |
+| `quni_service_tier_module_enabled` | **Done** — `true` on production |
+| `quni_service_tier_managed_enabled` + `public_platform_features` | **Done** — `false` / view returns `managed_tier_enabled=false`, `listing_module_enabled=true` |
+| Migrations (`20260523120000` … `20260526160000`) | **Done** — `npx supabase db push --linked` → up to date |
+| Properties | **0 rows** — clean slate; backfill N/A until listings exist |
+| Listing inventory (3 real) | **Later today** — create via landlord dashboard after go-live prep |
+| Platform staff / Admin → Team (Phase 1.25) | **Done** |
+| Per-state Managed admin toggles (Phase 1.5) | **Done** — `service_tier_state_matrix` + Admin UI |
+| G1 typecheck + tests | **Done** (25 May 2026) |
+| G5 bank + legal entity | **Mostly done** — primary `bank.*` + core `business.*` set; optional trading/contact fields empty |
+| Test-mode E2E (Phase 3 / G2) | **Next** — needs ≥1 active listing (use E2E flow or today’s 3) |
+| Stripe live flip (Phase 4) | **Not started** — after G2 |
 
 ---
 
-## Domain decision (pick one before Phase 5)
+## Domain decision (resolved 25 May 2026)
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **A — Stay on `quni-living.vercel.app`** | Fastest; no DNS risk | Weaker brand; update GSC later |
-| **B — Cut over to `quni.com.au`** | Proper brand | DNS + SSL + `VITE_SITE_URL` + `robots.txt` must align |
+| Domain | Role |
+|--------|------|
+| **`quni.com.au`** | **Canonical production** — leases, emails (`noreply@`, `hello@`), `sign.quni.com.au`, marketing copy, About page, Stripe/DocuSeal webhooks after cutover |
+| **`quniliving.com.au`** | **Redirect only** (301 → `quni.com.au`) — matches social handles (`@quniliving`); do not use as a second `VITE_SITE_URL` |
+| **`quni-living.vercel.app`** | Vercel default; optional redirect to `quni.com.au` after cutover |
 
-**Recommendation:** Option A for first live smoke test, then DNS cutover once Listing E2E passes on live Stripe.
+**Pragmatic launch path:** Run **G2** on whichever origin is live today (Vercel URL is fine). Before **G3 / public go-live**, attach `quni.com.au` in Vercel, set production env (`VITE_SITE_URL`, `SITE_URL`, `PUBLIC_SITE_URL`), update `public/robots.txt` sitemap line, redeploy, then point Stripe live webhook + DocuSeal webhook at `https://quni.com.au/...`.
 
 ---
 
@@ -102,7 +105,7 @@ Do not proceed to the next phase until the gate passes.
 
 ## Phase 0 — Decisions (15 min)
 
-- [ ] Launch domain: Option A or B above
+- [x] Launch domain: **`quni.com.au` primary**; `quniliving.com.au` redirect; Vercel URL OK for test E2E until DNS attached
 - [ ] Seed geography: confirm all seed listings are **NSW T2 private room** (Listing is available; Managed already geo-gated for NSW T2)
 - [ ] One real card for live smoke test (refund after)
 - [ ] DocuSeal Railway instance healthy at `https://sign.quni.com.au`
@@ -446,6 +449,8 @@ Set `STRIPE_LISTING_PRODUCT_ID=prod_<live_id>` on Vercel (after Phase 1E is depl
 
 Update **Production** environment variables, then redeploy.
 
+**Audit (names only):** From repo root, `npm run env:pull:production` writes `.env.vercel` (gitignored). Confirm each variable in the tables below (and Phase 3A) appears there with a non-empty value — do not commit that file. Full name reference: [`.env.example`](../.env.example) and [`docs/vercel-env-setup.md`](vercel-env-setup.md). Omit Vercel-injected `VERCEL_*`; skip duplicate `STRIPE_*` on Supabase if webhooks use Vercel only (Phase 6).
+
 ### Must change for live flip
 
 | Variable | Value |
@@ -654,13 +659,21 @@ Skip if staying on `quni-living.vercel.app` for now.
 
 ---
 
-## Monday session checklist
+## Today’s session (25 May 2026)
 
-**Goal:** Finalize inventory, finish Phase 2 Supabase, then run Phase 3 test-mode E2E.
+**Goal:** Finish anything that does **not** need the 3 production listings, then run **Phase 3 test-mode E2E** once you have at least one active listing (E2E script creates one, or use Casa Malvina + 2 when ready).
 
-**Time budget:** ~2–3 hours total.
+**Time budget:** ~2–3 hours (inventory block ~30–60 min when you create the 3 listings).
 
-### A. Clean slate — properties + test users
+### Done already (verified on production)
+
+- [x] Phase 2 flags + `public_platform_features`
+- [x] Migrations applied (`supabase db push --linked`)
+- [x] Clean slate: `properties` count = **0**
+- [x] `platform_staff` seeded (`hello@quni.com.au`, `quinn@4logistics.com.au`)
+- [x] G1 green locally
+
+### A. Clean slate — properties + test users (complete)
 
 **1. Delete all listings** (cascades bookings/enquiries):
 
@@ -682,7 +695,9 @@ SELECT count(*) FROM public.properties;  -- 0
 SELECT email FROM auth.users;             -- hello@quni.com.au only
 ```
 
-**4. Create 3 listings fresh** via landlord dashboard (Casa Malvina + 2 real). Verify landlord(s) in **Admin → Landlords**.
+**4. Create 3 listings fresh** via landlord dashboard (Casa Malvina + 2 real) — **scheduled later today**. Verify landlord(s) in **Admin → Landlords**.
+
+> You can start **Phase 3 E2E** with a single throwaway listing (steps 1–3 in §3B) before the 3 production listings are polished.
 
 <details>
 <summary>Legacy: audit + pick-3 from existing rows (skip if using clean slate)</summary>
@@ -703,17 +718,16 @@ ORDER BY p.slug;
 
 </details>
 
-### B. Finish Phase 2 Supabase (~15 min)
+### B. Finish Phase 2 Supabase (~15 min) — **done 25 May**
 
-From repo root (linked project `flegysnshryzvkwzfclc`):
+Verified via CLI:
 
 ```bash
-npx supabase db push
+npx supabase db push --linked   # Remote database is up to date
+npx supabase db query --linked "SELECT * FROM public.public_platform_features;"
 ```
 
-Or paste in SQL Editor if CLI auth fails.
-
-Then run:
+Reference SQL if you ever need to re-apply flags without migrations:
 
 ```sql
 -- Managed globally off (migration may already insert this)
@@ -740,10 +754,10 @@ SELECT * FROM public.public_platform_features;
 -- Expect: listing_module_enabled=true, managed_tier_enabled=false
 ```
 
-- [ ] Migrations applied (`20260523120000`, `20260524120000`)
-- [ ] `managed_enabled = false`, `module_enabled = true`
-- [ ] All properties `service_tier = 'listing'`
-- [ ] `public_platform_features` view returns expected flags
+- [x] Migrations applied (through `20260526160000`)
+- [x] `managed_enabled = false`, `module_enabled = true`
+- [ ] All properties `service_tier = 'listing'` (after listings created today)
+- [x] `public_platform_features` view returns expected flags
 
 ### C. Admin spot-checks (~15 min)
 
@@ -769,15 +783,17 @@ Production with **Stripe test keys** still set in Vercel.
 
 **Gate G2** must pass before Stripe live flip (Phase 4).
 
-### E. Phase 1.25 — platform staff (required before go-live)
+### E. Phase 1.25 — platform staff — **done**
 
-- [ ] `platform_staff` migration applied; `is_platform_admin()` reads table
-- [ ] **Admin → Team** — add staff without code deploy
+- [x] `platform_staff` migration applied; `is_platform_admin()` reads table
+- [x] **Admin → Team** — add staff without code deploy
 
-### F. Phase 1.5 — per-state Managed toggles (required before go-live)
+### F. Phase 1.5 — per-state Managed toggles — **done**
 
-- [ ] Build per-state × tier Managed toggles on **Admin → State workflows** (avoids deploy per state at ~1 month)
-- [ ] DocuSeal + Resend spot-check (Phases 6–7)
+- [x] Per-state × tier Managed toggles on **Admin → State workflows**
+- [ ] DocuSeal + Resend spot-check (Phases 6–7) — **next while listings are in progress**
+- [ ] **Phase 3 / G2** test-mode E2E on production (§3B) — after ≥1 active listing
+- [ ] **Phase 0** — confirm launch domain Option A vs B before Stripe live env audit
 
 ---
 
