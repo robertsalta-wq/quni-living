@@ -8,6 +8,7 @@ import {
 } from '../../lib/authProfile'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
+import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 /**
  * Auth redirect handler (email confirm, magic link, OAuth). Uses implicit flow: tokens in the URL
@@ -86,6 +87,7 @@ export default function AuthCallback() {
         }
 
         await applyPendingAccommodationRouteToStudentProfile(user.id, user.created_at)
+        await applyPendingSignupRole(user)
 
         const { role, profile } = await fetchRoleAndProfile(user)
         if (cancelled) return

@@ -6,6 +6,11 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
+import {
+  fetchRoleAndProfile,
+  getPostLoginRedirectDestination,
+  needsOnboarding,
+} from '../lib/authProfile'
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
 import {
@@ -301,7 +306,19 @@ export default function Signup() {
         return
       }
       if (data.session) {
-        navigate('/onboarding', { replace: true })
+        const u = data.user
+        if (u) {
+          const { role, profile } = await fetchRoleAndProfile(u)
+          if (!role) {
+            navigate('/onboarding', { replace: true })
+          } else if (needsOnboarding(role, profile)) {
+            navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+          } else {
+            navigate(getPostLoginRedirectDestination(u, role, profile), { replace: true })
+          }
+        } else {
+          navigate('/onboarding', { replace: true })
+        }
         return
       }
       setCheckEmail(true)

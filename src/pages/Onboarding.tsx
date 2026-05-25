@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import {
   supabase,
@@ -15,7 +15,9 @@ import {
   type StudentProfileRow,
 } from '../lib/authProfile'
 import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
-import { clearQuniSelectedRole, getQuniSelectedRole } from '../lib/quniSelectedRole'
+import { clearQuniSelectedRole } from '../lib/quniSelectedRole'
+import { applyPendingSignupRole } from '../lib/applyPendingSignupRole'
+import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 
@@ -98,13 +100,9 @@ export default function Onboarding() {
   const [landlordAgreement, setLandlordAgreement] = useState(false)
   const [agreementError, setAgreementError] = useState(false)
 
-  const { resolvedRole, usedRoleFallback } = useMemo(() => {
-    const stored = getQuniSelectedRole()
-    return {
-      resolvedRole: (stored === 'landlord' ? 'landlord' : 'student') as Choice,
-      usedRoleFallback: stored === null,
-    }
-  }, [])
+  const [resolvedRole, setResolvedRole] = useState<Choice>('student')
+  const [usedRoleFallback, setUsedRoleFallback] = useState(false)
+  const [roleReady, setRoleReady] = useState(false)
 
   const isLandlord = resolvedRole === 'landlord'
 
@@ -130,6 +128,13 @@ export default function Onboarding() {
         return
       }
       const u = data.user ?? user
+      await applyPendingSignupRole(u)
+      const { role: choice, usedLocalStorageFallback } = await resolveSignupRoleChoice(u)
+      if (cancelled) return
+      setResolvedRole(choice)
+      setUsedRoleFallback(usedLocalStorageFallback)
+      setRoleReady(true)
+
       const { role, profile } = await fetchRoleAndProfile(u)
       if (cancelled) return
       if (role === 'admin') {
@@ -259,7 +264,7 @@ export default function Onboarding() {
     )
   }
 
-  if (authLoading || !user) {
+  if (authLoading || !user || !roleReady) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
         <div className="h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />

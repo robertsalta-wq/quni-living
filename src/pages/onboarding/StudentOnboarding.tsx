@@ -853,7 +853,7 @@ export default function StudentOnboarding() {
   }
 
   if (role && role !== 'student') {
-    return <Navigate to="/" replace />
+    return <Navigate to={role === 'landlord' ? '/onboarding/landlord' : '/'} replace />
   }
 
   if (loading) {

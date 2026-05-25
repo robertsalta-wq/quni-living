@@ -19,5 +19,6 @@ export default function LandlordSignup() {
     }
   }, [tier])
 
-  return <Navigate to="/signup" replace />
+  const signupSearch = tier ? `?role=landlord&tier=${encodeURIComponent(tier)}` : '?role=landlord'
+  return <Navigate to={`/signup${signupSearch}`} replace />
 }
