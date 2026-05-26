@@ -317,7 +317,8 @@ export default function PropertyDetail() {
   }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
-    if (!shouldFetch || authLoading) return
+    // Guests: fetch immediately. Logged-in: wait until role is resolved for student-only gate.
+    if (!shouldFetch || (authLoading && user)) return
 
     let cancelled = false
 
@@ -794,8 +795,18 @@ export default function PropertyDetail() {
           description="Loading verified student accommodation on Quni Living."
           canonicalPath={`/listings/${slug}`}
         />
-        <div className="min-h-[50vh] flex items-center justify-center bg-stone-50">
-          <div className="h-10 w-10 border-2 border-stone-800 border-t-transparent rounded-full animate-spin" />
+        <div className="max-w-site mx-auto px-4 sm:px-6 py-8 bg-stone-50 min-h-[50vh]" aria-busy="true">
+          <div className="aspect-[16/10] max-h-[420px] rounded-2xl bg-stone-200 animate-pulse mb-6" />
+          <div className="h-8 w-2/3 max-w-md rounded-lg bg-stone-200 animate-pulse mb-3" />
+          <div className="h-4 w-1/2 max-w-xs rounded bg-stone-100 animate-pulse mb-8" />
+          <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-3">
+              <div className="h-4 w-full rounded bg-stone-100 animate-pulse" />
+              <div className="h-4 w-5/6 rounded bg-stone-100 animate-pulse" />
+              <div className="h-4 w-4/6 rounded bg-stone-100 animate-pulse" />
+            </div>
+            <div className="hidden lg:block h-48 rounded-2xl bg-stone-200 animate-pulse" />
+          </div>
         </div>
       </>
     )

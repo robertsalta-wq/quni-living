@@ -679,7 +679,7 @@ export default function Booking() {
   }, [moveIn, listingFromBound, listingToBound, conflictMoveOutDate, bookingDateConflictBlocked])
 
   const loadProperty = useCallback(async () => {
-    if (!propertyId || !isSupabaseConfigured || authLoading) {
+    if (!propertyId || !isSupabaseConfigured || (authLoading && user)) {
       if (!propertyId || !isSupabaseConfigured) {
         setProperty(null)
         setLoadError(null)

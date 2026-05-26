@@ -1,0 +1,73 @@
+import { lazy } from 'react'
+
+/** Heavy / infrequent routes — loaded on demand to shrink the initial bundle. */
+
+// Auth & onboarding
+export const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'))
+export const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
+export const Signup = lazy(() => import('./pages/Signup'))
+export const StudentSignup = lazy(() => import('./pages/StudentSignup'))
+export const LandlordSignup = lazy(() => import('./pages/LandlordSignup'))
+export const Onboarding = lazy(() => import('./pages/Onboarding'))
+export const StudentOnboarding = lazy(() => import('./pages/onboarding/StudentOnboarding'))
+export const LandlordOnboarding = lazy(() => import('./pages/onboarding/LandlordOnboarding'))
+
+// Dashboards & account
+export const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
+export const LandlordDashboard = lazy(() => import('./pages/LandlordDashboard'))
+export const StudentProfile = lazy(() => import('./pages/StudentProfile'))
+export const LandlordProfile = lazy(() => import('./pages/LandlordProfile'))
+export const Booking = lazy(() => import('./pages/Booking'))
+
+// Landlord tools
+export const LandlordPropertyFormPage = lazy(() => import('./pages/landlord/LandlordPropertyFormPage'))
+export const LandlordBookingReviewPage = lazy(() => import('./pages/landlord/LandlordBookingReviewPage'))
+
+// Messaging
+export const MessagesInboxPage = lazy(() => import('./pages/MessagesInboxPage'))
+export const ConversationThreadPage = lazy(() => import('./pages/ConversationThreadPage'))
+
+// Marketing & SEO (secondary traffic)
+export const RentNearCampus = lazy(() => import('./pages/RentNearCampus'))
+export const About = lazy(() => import('./pages/About'))
+export const HowItWorks = lazy(() => import('./pages/HowItWorks'))
+export const Refunds = lazy(() => import('./pages/Refunds'))
+export const Pricing = lazy(() => import('./pages/Pricing'))
+export const Contact = lazy(() => import('./pages/Contact'))
+export const Services = lazy(() => import('./pages/Services'))
+export const ServiceStudentAccommodation = lazy(() => import('./pages/services/StudentAccommodation'))
+export const ServicePropertyManagement = lazy(() => import('./pages/services/PropertyManagement'))
+export const ServiceLandlordPartnerships = lazy(() => import('./pages/services/LandlordPartnerships'))
+export const ServiceFullyFurnished = lazy(() => import('./pages/services/FullyFurnished'))
+export const Terms = lazy(() => import('./pages/Terms'))
+export const Privacy = lazy(() => import('./pages/Privacy'))
+export const LandlordServiceAgreement = lazy(() => import('./pages/LandlordServiceAgreement'))
+export const LandlordAIFeaturePage = lazy(() => import('./pages/LandlordAIFeaturePage'))
+export const StudentAccommodationIndex = lazy(() => import('./pages/seo/StudentAccommodationIndex'))
+export const UniversityAccommodation = lazy(() => import('./pages/seo/UniversityAccommodation'))
+export const CampusAccommodation = lazy(() => import('./pages/seo/CampusAccommodation'))
+
+// Admin shell + pages
+export const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
+export const LivingConsole = lazy(() => import('./pages/admin/LivingConsole'))
+export const AdminKitchen = lazy(() => import('./pages/admin/AdminKitchen'))
+export const BookingsPage = lazy(() => import('./pages/admin/BookingsPage'))
+export const AdminServiceTierEvents = lazy(() => import('./pages/admin/AdminServiceTierEvents'))
+export const AdminEnquiries = lazy(() => import('./pages/admin/AdminEnquiries'))
+export const AdminLandlordLeads = lazy(() => import('./pages/admin/AdminLandlordLeads'))
+export const AdminProperties = lazy(() => import('./pages/admin/AdminProperties'))
+export const AdminStudents = lazy(() => import('./pages/admin/AdminStudents'))
+export const AdminLandlords = lazy(() => import('./pages/admin/AdminLandlords'))
+export const AdminApps = lazy(() => import('./pages/admin/AdminApps'))
+export const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'))
+export const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
+export const AdminTeam = lazy(() => import('./pages/admin/AdminTeam'))
+export const PricingPage = lazy(() => import('./pages/admin/PricingPage'))
+export const KnowledgeBase = lazy(() => import('./pages/admin/KnowledgeBase'))
+export const DocumentsPage = lazy(() => import('./pages/admin/DocumentsPage'))
+export const DomainsPage = lazy(() => import('./pages/admin/DomainsPage'))
+export const TrustChecklist = lazy(() => import('./pages/admin/TrustChecklist'))
+export const AdminStateWorkflows = lazy(() => import('./pages/admin/AdminStateWorkflows'))
+export const QaseTicketList = lazy(() => import('./pages/admin/QaseTicketList'))
+export const QaseTicketDetail = lazy(() => import('./pages/admin/QaseTicketDetail'))
+export const QaseSettings = lazy(() => import('./pages/admin/QaseSettings'))

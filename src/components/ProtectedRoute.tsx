@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
+import PageRouteFallback from './PageRouteFallback'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { LandlordProfileRow, StudentProfileRow, UserRole } from '../lib/authProfile'
@@ -41,11 +42,7 @@ export function ProtectedRoute({
   }
 
   if (loading) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <PageRouteFallback />
   }
 
   if (!user) {
@@ -108,11 +105,7 @@ export function RequireUser({ children }: { children: React.ReactNode }) {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <PageRouteFallback />
   }
 
   if (!user) {

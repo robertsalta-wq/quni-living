@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
@@ -81,13 +82,15 @@ function PropertyThumbPlaceholder() {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuthContext()
+  const { user, profile: authProfile, role } = useAuthContext()
+  const authStudent =
+    role === 'student' && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { items: conversations } = useConversationInbox(user?.id)
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<StudentRow | null>(null)
+  const [profile, setProfile] = useState<StudentRow | null>(authStudent)
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
   const [tab, setTab] = useState<TabId>('bookings')
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
@@ -96,26 +99,29 @@ export default function StudentDashboard() {
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
-      setLoading(false)
+      setDataLoading(false)
       return
     }
-    setLoading(true)
+    setDataLoading(true)
     setError(null)
     try {
-      const { data: profRaw, error: pErr } = await supabase
-        .from('student_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+      let prof: StudentRow | null = authStudent
+      if (!prof) {
+        const { data: profRaw, error: pErr } = await supabase
+          .from('student_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
 
-      if (pErr) {
-        setProfile(null)
-        setBookings([])
-        setError(pErr.message || 'Could not load your profile.')
-        return
+        if (pErr) {
+          setProfile(null)
+          setBookings([])
+          setError(pErr.message || 'Could not load your profile.')
+          return
+        }
+        prof = profRaw as StudentRow | null
       }
 
-      const prof = profRaw as StudentRow | null
       if (!prof) {
         setProfile(null)
         setBookings([])
@@ -143,9 +149,9 @@ export default function StudentDashboard() {
       setBookings([])
       setError(e instanceof Error ? e.message : 'Something went wrong loading your dashboard.')
     } finally {
-      setLoading(false)
+      setDataLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, authStudent])
 
   const downloadBondReceipt = useCallback(async (bookingId: string) => {
     setBondDownloadErrorId(null)
@@ -214,12 +220,12 @@ export default function StudentDashboard() {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="max-w-site mx-auto px-4 sm:px-6 py-12">
-        <p className="text-gray-500 text-center">Loading your dashboard…</p>
-      </div>
-    )
+  useEffect(() => {
+    if (authStudent) setProfile(authStudent)
+  }, [authStudent])
+
+  if (dataLoading && !profile) {
+    return <DashboardPageSkeleton />
   }
 
   if (error && !profile) {

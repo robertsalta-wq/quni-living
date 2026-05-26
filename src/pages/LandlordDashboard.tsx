@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { formatDisplayName } from '../lib/formatDisplayName'
@@ -318,12 +319,14 @@ function LandlordBookingPaymentErrorBanner({ onDismiss }: { onDismiss: () => voi
 }
 
 export default function LandlordDashboard() {
-  const { user } = useAuthContext()
+  const { user, profile: authProfile, role } = useAuthContext()
+  const authLandlord =
+    role === 'landlord' && authProfile && 'id' in authProfile ? (authProfile as LandlordRow) : null
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<LandlordRow | null>(null)
+  const [profile, setProfile] = useState<LandlordRow | null>(authLandlord)
   const [properties, setProperties] = useState<PropertySummary[]>([])
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
   const [tab, setTab] = useState<TabId>('listings')
@@ -482,26 +485,29 @@ export default function LandlordDashboard() {
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
-      setLoading(false)
+      setDataLoading(false)
       return
     }
-    setLoading(true)
+    setDataLoading(true)
     setError(null)
     try {
-      const { data: profRaw, error: pErr } = await supabase
-        .from('landlord_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (pErr) throw pErr
-      if (!profRaw) {
+      let prof: LandlordRow | null = authLandlord
+      if (!prof) {
+        const { data: profRaw, error: pErr } = await supabase
+          .from('landlord_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (pErr) throw pErr
+        prof = profRaw as LandlordRow | null
+      }
+      if (!prof) {
         setProfile(null)
         setProperties([])
         setBookings([])
         setListingBilling(null)
         return
       }
-      const prof = profRaw as LandlordRow
       setProfile(prof)
 
       const [propRes, bookRes] = await Promise.all([
@@ -645,9 +651,13 @@ export default function LandlordDashboard() {
       setBookings([])
       setListingBilling(null)
     } finally {
-      setLoading(false)
+      setDataLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, authLandlord])
+
+  useEffect(() => {
+    if (authLandlord) setProfile(authLandlord)
+  }, [authLandlord])
 
   useEffect(() => {
     void load()
@@ -808,10 +818,10 @@ export default function LandlordDashboard() {
     )
   }
 
-  if (loading) {
+  if (dataLoading && !profile) {
     return (
-      <div className="flex-1 flex min-h-0 w-full bg-gray-50 items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex-1 flex min-h-0 w-full bg-gray-50">
+        <DashboardPageSkeleton />
       </div>
     )
   }

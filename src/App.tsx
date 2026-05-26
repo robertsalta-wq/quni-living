@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react'
+import { Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import FeedbackButton from './components/FeedbackButton'
 import Header from './components/Header'
@@ -6,72 +7,16 @@ import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
 import NativePushNotificationsInitializer from './components/NativePushNotificationsInitializer'
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
+import PageRouteFallback from './components/PageRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import Home from './pages/Home'
-import RentNearCampus from './pages/RentNearCampus'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
-import VerifyEmail from './pages/VerifyEmail'
-import Signup from './pages/Signup'
-import StudentSignup from './pages/StudentSignup'
-import LandlordSignup from './pages/LandlordSignup'
-import StudentDashboard from './pages/StudentDashboard'
-import LandlordDashboard from './pages/LandlordDashboard'
-import StudentProfile from './pages/StudentProfile'
-import LandlordProfile from './pages/LandlordProfile'
-import LandlordPropertyFormPage from './pages/landlord/LandlordPropertyFormPage'
-import LandlordBookingReviewPage from './pages/landlord/LandlordBookingReviewPage'
-import AdminLayout from './pages/admin/AdminLayout'
-import LivingConsole from './pages/admin/LivingConsole'
-import AdminKitchen from './pages/admin/AdminKitchen'
-import BookingsPage from './pages/admin/BookingsPage'
-import AdminServiceTierEvents from './pages/admin/AdminServiceTierEvents'
-import AdminEnquiries from './pages/admin/AdminEnquiries'
-import AdminLandlordLeads from './pages/admin/AdminLandlordLeads'
-import AdminProperties from './pages/admin/AdminProperties'
-import AdminStudents from './pages/admin/AdminStudents'
-import AdminLandlords from './pages/admin/AdminLandlords'
-import AdminApps from './pages/admin/AdminApps'
-import AdminPayments from './pages/admin/AdminPayments'
-import AdminSettings from './pages/admin/AdminSettings'
-import AdminTeam from './pages/admin/AdminTeam'
-import PricingPage from './pages/admin/PricingPage'
-import KnowledgeBase from './pages/admin/KnowledgeBase'
-import DocumentsPage from './pages/admin/DocumentsPage'
-import DomainsPage from './pages/admin/DomainsPage'
-import TrustChecklist from './pages/admin/TrustChecklist'
-import AdminStateWorkflows from './pages/admin/AdminStateWorkflows'
-import QaseTicketList from './pages/admin/QaseTicketList'
-import QaseTicketDetail from './pages/admin/QaseTicketDetail'
-import QaseSettings from './pages/admin/QaseSettings'
-import AuthCallback from './pages/auth/AuthCallback'
-import Onboarding from './pages/Onboarding'
-import Booking from './pages/Booking'
-import About from './pages/About'
-import HowItWorks from './pages/HowItWorks'
-import Refunds from './pages/Refunds'
-import Pricing from './pages/Pricing'
-import Contact from './pages/Contact'
-import MessagesInboxPage from './pages/MessagesInboxPage'
-import ConversationThreadPage from './pages/ConversationThreadPage'
-import Services from './pages/Services'
-import ServiceStudentAccommodation from './pages/services/StudentAccommodation'
-import ServicePropertyManagement from './pages/services/PropertyManagement'
-import ServiceLandlordPartnerships from './pages/services/LandlordPartnerships'
-import ServiceFullyFurnished from './pages/services/FullyFurnished'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
-import LandlordServiceAgreement from './pages/LandlordServiceAgreement'
-import StudentOnboarding from './pages/onboarding/StudentOnboarding'
-import LandlordOnboarding from './pages/onboarding/LandlordOnboarding'
-import StudentAccommodationIndex from './pages/seo/StudentAccommodationIndex'
-import UniversityAccommodation from './pages/seo/UniversityAccommodation'
-import CampusAccommodation from './pages/seo/CampusAccommodation'
-import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
+import * as Lazy from './lazyPages'
 
 function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -114,51 +59,52 @@ function App() {
               : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
           }
         >
+          <Suspense fallback={<PageRouteFallback />}>
           <Routes>
-          {/* Public */}
+          {/* Public — eager: home, listings funnel, login */}
           <Route path="/" element={<Home />} />
-          <Route path="/rent-near-campus" element={<RentNearCampus />} />
           <Route path="/listings" element={<Listings />} />
-          <Route path="/student-accommodation" element={<StudentAccommodationIndex />} />
-          <Route path="/student-accommodation/:universitySlug" element={<UniversityAccommodation />} />
-          <Route
-            path="/student-accommodation/:universitySlug/:campusSlug"
-            element={<CampusAccommodation />}
-          />
           <Route path="/listings/:slug" element={<PropertyDetail />} />
           <Route path="/search" element={<Navigate to="/listings" replace />} />
           <Route path="/properties" element={<Navigate to="/listings" replace />} />
           <Route path="/properties/:slug" element={<PropertyDetail />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/landlord-service-agreement" element={<LandlordServiceAgreement />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/refunds" element={<Refunds />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/services/student-accommodation" element={<ServiceStudentAccommodation />} />
-          <Route path="/services/property-management" element={<ServicePropertyManagement />} />
-          <Route path="/services/landlord-partnerships" element={<ServiceLandlordPartnerships />} />
-          <Route path="/services/fully-furnished" element={<ServiceFullyFurnished />} />
+          <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
+          <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
+          <Route path="/student-accommodation/:universitySlug" element={<Lazy.UniversityAccommodation />} />
+          <Route
+            path="/student-accommodation/:universitySlug/:campusSlug"
+            element={<Lazy.CampusAccommodation />}
+          />
+          <Route path="/terms" element={<Lazy.Terms />} />
+          <Route path="/privacy" element={<Lazy.Privacy />} />
+          <Route path="/landlord-service-agreement" element={<Lazy.LandlordServiceAgreement />} />
+          <Route path="/about" element={<Lazy.About />} />
+          <Route path="/how-it-works" element={<Lazy.HowItWorks />} />
+          <Route path="/refunds" element={<Lazy.Refunds />} />
+          <Route path="/pricing" element={<Lazy.Pricing />} />
+          <Route path="/contact" element={<Lazy.Contact />} />
+          <Route path="/services" element={<Lazy.Services />} />
+          <Route path="/services/student-accommodation" element={<Lazy.ServiceStudentAccommodation />} />
+          <Route path="/services/property-management" element={<Lazy.ServicePropertyManagement />} />
+          <Route path="/services/landlord-partnerships" element={<Lazy.ServiceLandlordPartnerships />} />
+          <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
           <Route path="/for-landlords" element={<Navigate to="/services/landlord-partnerships" replace />} />
-          <Route path="/landlords/ai" element={<LandlordAIFeaturePage />} />
+          <Route path="/landlords/ai" element={<Lazy.LandlordAIFeaturePage />} />
           <Route path="/landlord/onboarding" element={<Navigate to="/onboarding/landlord" replace />} />
 
           {/* Auth */}
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/auth/callback" element={<Lazy.AuthCallback />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/student-signup" element={<StudentSignup />} />
-          <Route path="/landlord-signup" element={<LandlordSignup />} />
+          <Route path="/verify-email" element={<Lazy.VerifyEmail />} />
+          <Route path="/signup" element={<Lazy.Signup />} />
+          <Route path="/student-signup" element={<Lazy.StudentSignup />} />
+          <Route path="/landlord-signup" element={<Lazy.LandlordSignup />} />
 
           <Route
             path="/messages"
             element={
               <RequireUser>
-                <MessagesInboxPage />
+                <Lazy.MessagesInboxPage />
               </RequireUser>
             }
           />
@@ -166,7 +112,7 @@ function App() {
             path="/messages/:conversationId"
             element={
               <RequireUser>
-                <ConversationThreadPage />
+                <Lazy.ConversationThreadPage />
               </RequireUser>
             }
           />
@@ -174,7 +120,7 @@ function App() {
             path="/onboarding"
             element={
               <RequireUser>
-                <Onboarding />
+                <Lazy.Onboarding />
               </RequireUser>
             }
           />
@@ -182,7 +128,7 @@ function App() {
             path="/onboarding/student"
             element={
               <ProtectedRoute allowedRoles={['student']}>
-                <StudentOnboarding />
+                <Lazy.StudentOnboarding />
               </ProtectedRoute>
             }
           />
@@ -190,7 +136,7 @@ function App() {
             path="/onboarding/landlord"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <LandlordOnboarding />
+                <Lazy.LandlordOnboarding />
               </ProtectedRoute>
             }
           />
@@ -200,7 +146,7 @@ function App() {
             path="/student-dashboard"
             element={
               <ProtectedRoute allowedRoles={['student']}>
-                <StudentDashboard />
+                <Lazy.StudentDashboard />
               </ProtectedRoute>
             }
           />
@@ -208,7 +154,7 @@ function App() {
             path="/student-profile"
             element={
               <ProtectedRoute allowedRoles={['student']}>
-                <StudentProfile />
+                <Lazy.StudentProfile />
               </ProtectedRoute>
             }
           />
@@ -216,7 +162,7 @@ function App() {
             path="/student/profile"
             element={
               <ProtectedRoute allowedRoles={['student']}>
-                <StudentProfile />
+                <Lazy.StudentProfile />
               </ProtectedRoute>
             }
           />
@@ -225,7 +171,7 @@ function App() {
             path="/landlord/dashboard"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <LandlordDashboard />
+                <Lazy.LandlordDashboard />
               </ProtectedRoute>
             }
           />
@@ -233,7 +179,7 @@ function App() {
             path="/landlord/bookings/:bookingId/review"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <LandlordBookingReviewPage />
+                <Lazy.LandlordBookingReviewPage />
               </ProtectedRoute>
             }
           />
@@ -241,7 +187,7 @@ function App() {
             path="/landlord-profile"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <LandlordProfile />
+                <Lazy.LandlordProfile />
               </ProtectedRoute>
             }
           />
@@ -249,7 +195,7 @@ function App() {
             path="/landlord/profile"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <LandlordProfile />
+                <Lazy.LandlordProfile />
               </ProtectedRoute>
             }
           />
@@ -257,7 +203,7 @@ function App() {
             path="/landlord/property/new"
             element={
               <ProtectedRoute allowedRoles={['landlord', 'admin']}>
-                <LandlordPropertyFormPage />
+                <Lazy.LandlordPropertyFormPage />
               </ProtectedRoute>
             }
           />
@@ -265,7 +211,7 @@ function App() {
             path="/landlord/property/edit/:id"
             element={
               <ProtectedRoute allowedRoles={['landlord', 'admin']}>
-                <LandlordPropertyFormPage />
+                <Lazy.LandlordPropertyFormPage />
               </ProtectedRoute>
             }
           />
@@ -277,7 +223,7 @@ function App() {
                 redirectUnauthenticatedToStudentSignup
                 requireStudentListingActions
               >
-                <Booking />
+                <Lazy.Booking />
               </ProtectedRoute>
             }
           />
@@ -285,35 +231,36 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminLayout />
+                <Lazy.AdminLayout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<LivingConsole />} />
-            <Route path="_kitchen" element={<AdminKitchen />} />
-            <Route path="bookings" element={<BookingsPage />} />
-            <Route path="service-tier-events" element={<AdminServiceTierEvents />} />
-            <Route path="enquiries" element={<AdminEnquiries />} />
-            <Route path="landlord-leads" element={<AdminLandlordLeads />} />
-            <Route path="properties" element={<AdminProperties />} />
+            <Route index element={<Lazy.LivingConsole />} />
+            <Route path="_kitchen" element={<Lazy.AdminKitchen />} />
+            <Route path="bookings" element={<Lazy.BookingsPage />} />
+            <Route path="service-tier-events" element={<Lazy.AdminServiceTierEvents />} />
+            <Route path="enquiries" element={<Lazy.AdminEnquiries />} />
+            <Route path="landlord-leads" element={<Lazy.AdminLandlordLeads />} />
+            <Route path="properties" element={<Lazy.AdminProperties />} />
             <Route path="properties/:propertyId/fees" element={<AdminPropertyFeesDeepLinkRedirect />} />
-            <Route path="students" element={<AdminStudents />} />
-            <Route path="landlords" element={<AdminLandlords />} />
-            <Route path="apps" element={<AdminApps />} />
-            <Route path="payments" element={<AdminPayments />} />
-            <Route path="settings" element={<AdminSettings />} />
-            <Route path="team" element={<AdminTeam />} />
-            <Route path="pricing" element={<PricingPage />} />
-            <Route path="knowledge-base" element={<KnowledgeBase />} />
-            <Route path="documents" element={<DocumentsPage />} />
-            <Route path="domains" element={<DomainsPage />} />
-            <Route path="trust-checklist" element={<TrustChecklist />} />
-            <Route path="state-workflows" element={<AdminStateWorkflows />} />
-            <Route path="qase" element={<QaseTicketList />} />
-            <Route path="qase/settings" element={<QaseSettings />} />
-            <Route path="qase/:ticketId" element={<QaseTicketDetail />} />
+            <Route path="students" element={<Lazy.AdminStudents />} />
+            <Route path="landlords" element={<Lazy.AdminLandlords />} />
+            <Route path="apps" element={<Lazy.AdminApps />} />
+            <Route path="payments" element={<Lazy.AdminPayments />} />
+            <Route path="settings" element={<Lazy.AdminSettings />} />
+            <Route path="team" element={<Lazy.AdminTeam />} />
+            <Route path="pricing" element={<Lazy.PricingPage />} />
+            <Route path="knowledge-base" element={<Lazy.KnowledgeBase />} />
+            <Route path="documents" element={<Lazy.DocumentsPage />} />
+            <Route path="domains" element={<Lazy.DomainsPage />} />
+            <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
+            <Route path="state-workflows" element={<Lazy.AdminStateWorkflows />} />
+            <Route path="qase" element={<Lazy.QaseTicketList />} />
+            <Route path="qase/settings" element={<Lazy.QaseSettings />} />
+            <Route path="qase/:ticketId" element={<Lazy.QaseTicketDetail />} />
           </Route>
           </Routes>
+          </Suspense>
         </main>
         {showPublicChrome && !hideFooterForFormFlow && <Footer />}
         <FeedbackButton />

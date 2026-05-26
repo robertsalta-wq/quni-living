@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -16,9 +16,14 @@ export type AuthState = {
   session: Session | null
   profile: AuthProfile | null
   role: UserRole
+  /** True during first session bootstrap, or while resolving role/profile after sign-in. */
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+}
+
+function isSilentAuthEvent(event: string): boolean {
+  return event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION'
 }
 
 /**
@@ -31,6 +36,8 @@ export function useProvideAuth(): AuthState {
   const [profile, setProfile] = useState<AuthProfile | null>(null)
   const [role, setRole] = useState<UserRole>(null)
   const [loading, setLoading] = useState(isSupabaseConfigured)
+  const bootstrapDoneRef = useRef(false)
+  const hydrateGenRef = useRef(0)
 
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
@@ -80,7 +87,10 @@ export function useProvideAuth(): AuthState {
       setSession(s ?? null)
       setUser(s?.user ?? null)
       hydrateFromUser(s?.user ?? null).finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          bootstrapDoneRef.current = true
+          setLoading(false)
+        }
       })
     })
 
@@ -88,16 +98,27 @@ export function useProvideAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setProfile(null)
+        setRole(null)
+        return
+      }
       setUser(s?.user ?? null)
-      // TOKEN_REFRESHED / USER_UPDATED fire during normal use (tab focus, metadata). A global
-      // loading gate remounts ProtectedRoute children and wipes wizard state (e.g. student onboarding step).
-      const silentRefresh = event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED'
-      if (silentRefresh) {
+      // Silent events: refresh profile without remounting protected routes (onboarding wizard, etc.).
+      if (isSilentAuthEvent(event)) {
         void hydrateFromUser(s?.user ?? null)
         return
       }
+      // Sign-in / password recovery: gate protected routes until role/profile resolve.
+      const runId = ++hydrateGenRef.current
       setLoading(true)
-      hydrateFromUser(s?.user ?? null).finally(() => setLoading(false))
+      void hydrateFromUser(s?.user ?? null).finally(() => {
+        if (runId === hydrateGenRef.current) {
+          bootstrapDoneRef.current = true
+          setLoading(false)
+        }
+      })
     })
 
     return () => {
