@@ -1,6 +1,6 @@
 # Occupancy pricing & co-tenant on lease — implementation plan
 
-**Status:** Chunk 2 landed on `main` (booking API) — review `docs/occupancy-pricing-chunk2-review.md` before chunk 3 UI  
+**Status:** Chunk 3 landed on `main` (booking UI) — review `docs/occupancy-pricing-chunk3-review.md` before chunk 4 (landlord form + listing display)  
 **Last updated:** 26 May 2026  
 **Stack:** Supabase (Postgres + RLS) + Vercel API routes + React app + existing PDF/DocuSeal pipeline
 

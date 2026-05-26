@@ -47,9 +47,17 @@ import { AUDateField } from '../components/AUDateField'
 import NswRentalBondOnlineLink from '../components/bond/NswRentalBondOnlineLink'
 import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
 import {
+  BookingOccupancySection,
+  validateBookingOccupancy,
+  type CoTenantFormState,
+} from '../components/booking/BookingOccupancySection'
+import {
   calculateBookingFeeCents,
   fetchPricingForPropertyTier,
+  propertyHasVariableOccupancyPricing,
   resolvePropertyTierFromListing,
+  resolveWeeklyRent,
+  ResolveWeeklyRentError,
   type PricingCell,
 } from '../lib/pricing'
 
@@ -545,6 +553,15 @@ export default function Booking() {
   const [message, setMessage] = useState('')
   const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('quni_platform')
   const [bondCheck, setBondCheck] = useState(false)
+  const [occupantCount, setOccupantCount] = useState<1 | 2>(1)
+  const [parkingSelected, setParkingSelected] = useState(false)
+  const [coTenantForm, setCoTenantForm] = useState<CoTenantFormState>({
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+  })
+  const [occupancyError, setOccupancyError] = useState<string | null>(null)
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [depositCents, setDepositCents] = useState<number | null>(null)
@@ -574,6 +591,62 @@ export default function Booking() {
   const { setElevateFloatingChrome } = useBookingFlowChrome()
 
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
+
+  useEffect(() => {
+    if (studentProfile?.occupancy_type === 'couple') {
+      setOccupantCount(2)
+    }
+  }, [studentProfile?.occupancy_type])
+
+  const maxOccupants = Math.min(10, Math.max(1, Math.floor(Number(property?.max_occupants ?? 1))))
+
+  const occupancyPricingInput = useMemo(() => {
+    if (!property) return null
+    return {
+      rent_per_week: property.rent_per_week,
+      max_occupants: property.max_occupants ?? 1,
+      couple_surcharge_per_week: property.couple_surcharge_per_week,
+      parking_surcharge_per_week: property.parking_surcharge_per_week,
+      parking_available: property.parking_available ?? false,
+    }
+  }, [property])
+
+  const rentResolution = useMemo(() => {
+    if (!occupancyPricingInput) return null
+    try {
+      return resolveWeeklyRent(occupancyPricingInput, { occupantCount, parkingSelected })
+    } catch (e) {
+      const msg =
+        e instanceof ResolveWeeklyRentError ? e.message : 'Could not calculate weekly rent for this selection.'
+      return { error: msg }
+    }
+  }, [occupancyPricingInput, occupantCount, parkingSelected])
+
+  const coTenantEmailWarning = useMemo(() => {
+    const studentEmail = studentProfile?.email?.trim().toLowerCase() ?? ''
+    const coEmail = coTenantForm.email.trim().toLowerCase()
+    return Boolean(studentEmail && coEmail && studentEmail === coEmail)
+  }, [studentProfile?.email, coTenantForm.email])
+
+  const buildCoTenantPayload = useCallback(() => {
+    return {
+      full_name: coTenantForm.fullName.trim(),
+      email: coTenantForm.email.trim(),
+      phone: coTenantForm.phone.trim(),
+      date_of_birth: coTenantForm.dateOfBirth.trim().slice(0, 10),
+    }
+  }, [coTenantForm])
+
+  const validateOccupancyStep = useCallback((): string | null => {
+    if (rentResolution != null && 'error' in rentResolution) return rentResolution.error
+    return validateBookingOccupancy({
+      maxOccupants,
+      occupantCount,
+      parkingSelected,
+      parkingAvailable: Boolean(property?.parking_available),
+      coTenant: coTenantForm,
+    })
+  }, [rentResolution, maxOccupants, occupantCount, parkingSelected, property?.parking_available, coTenantForm])
 
   const conflictMoveOutDate = useMemo(() => {
     if (explicitMoveOutFromUrl && isIsoDateString(explicitMoveOutFromUrl)) return explicitMoveOutFromUrl
@@ -781,6 +854,9 @@ export default function Booking() {
           clientSecret?: string | null
           depositCents?: number | null
           rentPaymentMethod?: string
+          occupantCount?: number
+          parkingSelected?: boolean
+          coTenantForm?: CoTenantFormState
         }
         if (!d.listingId || d.listingId === propertyId) {
           restoredDraft = true
@@ -794,8 +870,20 @@ export default function Booking() {
           if (d.rentPaymentMethod === 'bank_transfer' || d.rentPaymentMethod === 'quni_platform') {
             setRentPaymentMethod(d.rentPaymentMethod)
           }
+          if (d.occupantCount === 2) setOccupantCount(2)
+          else if (d.occupantCount === 1) setOccupantCount(1)
+          if (typeof d.parkingSelected === 'boolean') setParkingSelected(d.parkingSelected)
+          if (d.coTenantForm && typeof d.coTenantForm === 'object') {
+            setCoTenantForm({
+              fullName: typeof d.coTenantForm.fullName === 'string' ? d.coTenantForm.fullName : '',
+              email: typeof d.coTenantForm.email === 'string' ? d.coTenantForm.email : '',
+              phone: typeof d.coTenantForm.phone === 'string' ? d.coTenantForm.phone : '',
+              dateOfBirth:
+                typeof d.coTenantForm.dateOfBirth === 'string' ? d.coTenantForm.dateOfBirth : '',
+            })
+          }
 
-          const draftV2 = d.v === 2
+          const draftV2 = d.v === 2 || d.v === 3
           let nextStep: 1 | 2 | 3 | 4 = 1
           if (draftV2) {
             if (d.step === 2) nextStep = 2
@@ -856,7 +944,7 @@ export default function Booking() {
       localStorage.setItem(
         bookingDraftStorageKey(propertyId),
         JSON.stringify({
-          v: 2,
+          v: 3,
           listingId: propertyId,
           step,
           moveIn,
@@ -864,6 +952,9 @@ export default function Booking() {
           message,
           rentPaymentMethod,
           bondCheck,
+          occupantCount,
+          parkingSelected,
+          coTenantForm,
           clientSecret,
           depositCents,
         }),
@@ -881,6 +972,9 @@ export default function Booking() {
     message,
     rentPaymentMethod,
     bondCheck,
+    occupantCount,
+    parkingSelected,
+    coTenantForm,
     clientSecret,
     depositCents,
     success,
@@ -921,7 +1015,22 @@ export default function Booking() {
     return () => window.clearTimeout(t)
   }, [success])
 
-  const rent = property ? Number(property.rent_per_week) : 0
+  const baseRentDisplay = property ? Number(property.rent_per_week) : 0
+  const weeklyRent =
+    rentResolution && 'weeklyRent' in rentResolution ? rentResolution.weeklyRent : baseRentDisplay
+  const breakdownAud =
+    rentResolution && 'breakdownAud' in rentResolution
+      ? rentResolution.breakdownAud
+      : { base: baseRentDisplay }
+  const listingShowsFromPrice =
+    property != null &&
+    propertyHasVariableOccupancyPricing({
+      rent_per_week: property.rent_per_week,
+      max_occupants: property.max_occupants ?? 1,
+      couple_surcharge_per_week: property.couple_surcharge_per_week,
+      parking_surcharge_per_week: property.parking_surcharge_per_week,
+      parking_available: property.parking_available ?? false,
+    })
   const bookingFeeCents = calculateBookingFeeCents(
     managedPricingCell ??
       ({
@@ -929,10 +1038,10 @@ export default function Booking() {
         student_fee_fixed_cents: 0,
         student_fee_percent: 0,
       } as PricingCell),
-    Math.round(rent * 100),
+    Math.round(weeklyRent * 100),
   )
   const bookingFeeAud = bookingFeeCents / 100
-  const depositDollars = rent
+  const depositDollars = weeklyRent
   const totalChargeDisplay = (depositDollars + bookingFeeAud).toLocaleString('en-AU', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -992,6 +1101,12 @@ export default function Booking() {
     setPiError(null)
     setBookingConflict(null)
     if (!property?.id || !studentProfile) return
+    const occErr = validateOccupancyStep()
+    if (occErr) {
+      setOccupancyError(occErr)
+      return
+    }
+    setOccupancyError(null)
     setPiBusy(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -1014,6 +1129,8 @@ export default function Booking() {
           leaseLength,
           studentMessage: message.trim(),
           bondAcknowledged: true,
+          occupantCount,
+          parkingSelected,
         }),
       })
 
@@ -1064,6 +1181,10 @@ export default function Booking() {
           setBookingConflict({ kind: piConflict })
           return
         }
+        if (res.status === 400 && typeof j.message === 'string' && j.message.trim()) {
+          setOccupancyError(j.message.trim())
+          return
+        }
         setPiError('__payment_user__')
         return
       }
@@ -1085,7 +1206,7 @@ export default function Booking() {
     } finally {
       setPiBusy(false)
     }
-  }, [property?.id, studentProfile, moveIn, leaseLength, message])
+  }, [property?.id, studentProfile, moveIn, leaseLength, message, occupantCount, parkingSelected, validateOccupancyStep])
 
   const finalizeBooking = useCallback(
     async (paymentIntentId: string) => {
@@ -1122,6 +1243,9 @@ export default function Booking() {
             bondAcknowledged: true,
             propertyType: propertyTypeSnapshot,
             rentPaymentMethod,
+            occupantCount,
+            parkingSelected,
+            ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
             ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           }),
         })
@@ -1173,7 +1297,18 @@ export default function Booking() {
         setSubmittingBooking(false)
       }
     },
-    [property, studentProfile, moveIn, leaseLength, message, rentPaymentMethod, conversationIdFromThread],
+    [
+      property,
+      studentProfile,
+      moveIn,
+      leaseLength,
+      message,
+      rentPaymentMethod,
+      conversationIdFromThread,
+      occupantCount,
+      parkingSelected,
+      buildCoTenantPayload,
+    ],
   )
 
   const tenancyPackage = useMemo(
@@ -1336,7 +1471,7 @@ export default function Booking() {
     property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
       ? Number(property.bond)
       : null
-  const bondWeeksVsRent = bondAmountAud != null && rent > 0 ? bondAmountAud / rent : null
+  const bondWeeksVsRent = bondAmountAud != null && weeklyRent > 0 ? bondAmountAud / weeklyRent : null
 
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
@@ -1371,7 +1506,17 @@ export default function Booking() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mt-1">{property.title}</h1>
           {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
           <p className="text-lg font-semibold text-gray-900 mt-2">
-            ${rent.toLocaleString('en-AU', { maximumFractionDigits: 0 })} / week
+            {listingShowsFromPrice && occupantCount === 1 && !parkingSelected ? (
+              <>
+                From ${baseRentDisplay.toLocaleString('en-AU', { maximumFractionDigits: 0 })} / week
+                <span className="block text-xs font-normal text-gray-500 mt-0.5">
+                  Your total is ${weeklyRent.toLocaleString('en-AU', { maximumFractionDigits: 0 })}/wk based on
+                  selections below
+                </span>
+              </>
+            ) : (
+              <>${weeklyRent.toLocaleString('en-AU', { maximumFractionDigits: 0 })} / week</>
+            )}
           </p>
           {landlord && (
             <p className="text-sm text-gray-700 mt-2">
@@ -1466,6 +1611,32 @@ export default function Booking() {
             </select>
           </div>
 
+          <BookingOccupancySection
+            maxOccupants={maxOccupants}
+            parkingAvailable={Boolean(property.parking_available)}
+            occupantCount={occupantCount}
+            onOccupantCountChange={(n) => {
+              setOccupantCount(n)
+              setOccupancyError(null)
+              if (n === 1) setParkingSelected(false)
+            }}
+            parkingSelected={parkingSelected}
+            onParkingSelectedChange={(v) => {
+              setParkingSelected(v)
+              setOccupancyError(null)
+            }}
+            coTenant={coTenantForm}
+            onCoTenantChange={(patch) => setCoTenantForm((prev) => ({ ...prev, ...patch }))}
+            coTenantEmailWarning={coTenantEmailWarning}
+            studentEmail={studentProfile?.email ?? null}
+            breakdownAud={breakdownAud}
+            weeklyRent={weeklyRent}
+            occupancyError={occupancyError}
+            inputClass={inputClass}
+            labelClass={labelClass}
+            onFieldFocus={scrollEditableIntoView}
+          />
+
           <div className="rounded-2xl border border-gray-100 bg-stone-50/80 overflow-hidden">
             <button
               type="button"
@@ -1494,9 +1665,23 @@ export default function Booking() {
               className={`space-y-2 px-5 pb-5 pt-4 md:pt-2 ${bookingSummaryOpen ? 'block' : 'hidden'} md:block`}
             >
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Weekly rent</span>
-                <span className="font-semibold text-gray-900 tabular-nums">${rent.toLocaleString('en-AU')}</span>
+                <span className="text-gray-600">Weekly rent (your selection)</span>
+                <span className="font-semibold text-gray-900 tabular-nums">
+                  ${weeklyRent.toLocaleString('en-AU')}
+                </span>
               </div>
+              {breakdownAud.couple != null && breakdownAud.couple > 0 && occupantCount === 2 ? (
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Includes second person</span>
+                  <span className="tabular-nums">+${breakdownAud.couple.toLocaleString('en-AU')}</span>
+                </div>
+              ) : null}
+              {breakdownAud.parking != null && breakdownAud.parking > 0 && parkingSelected ? (
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Includes carpark</span>
+                  <span className="tabular-nums">+${breakdownAud.parking.toLocaleString('en-AU')}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Booking deposit</span>
                 <span className="font-semibold text-gray-900 tabular-nums">
@@ -1568,10 +1753,16 @@ export default function Booking() {
                   )
                   return
                 }
+                const occErr = validateOccupancyStep()
+                if (occErr) {
+                  setOccupancyError(occErr)
+                  return
+                }
+                setOccupancyError(null)
                 setSubmitError(null)
                 setStep(2)
               }}
-              disabled={step1DateBlock !== null}
+              disabled={step1DateBlock !== null || (rentResolution != null && 'error' in rentResolution)}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
             >
               Continue
@@ -1682,7 +1873,7 @@ export default function Booking() {
                   {bondWeeksVsRent != null ? (
                     <>
                       {' '}
-                      (<span className="tabular-nums">{bondWeeksAtRentPhrase(bondWeeksVsRent, rent)}</span>)
+                      (<span className="tabular-nums">{bondWeeksAtRentPhrase(bondWeeksVsRent, weeklyRent)}</span>)
                     </>
                   ) : null}
                   , payable directly to them before or on your move-in date.
@@ -1798,6 +1989,11 @@ export default function Booking() {
                 bookingConflict.kind === 'date_overlap' ? chooseDifferentDatesAfterOverlap : undefined
               }
             />
+          )}
+          {occupancyError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+              {occupancyError}
+            </div>
           )}
           {piError &&
             (piError === '__payment_user__' ? (
