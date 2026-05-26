@@ -1568,7 +1568,7 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col overflow-x-hidden bg-[#d4e9e2] pb-16">
+    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-[#d4e9e2] pb-16">
       <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 py-4 sm:px-6 sm:py-8">
         <div className="mb-3 min-w-0">
           <Link
@@ -1623,7 +1623,7 @@ export default function LandlordPropertyFormPage() {
 
         <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
           <nav
-            className="sticky top-16 z-10 sm:-mx-6 bg-[#d4e9e2] px-2 py-2 sm:px-6"
+            className="listing-form-section-nav px-2 py-2 sm:-mx-6 sm:px-6"
             aria-label="Jump to section"
           >
             <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
@@ -1645,6 +1645,8 @@ export default function LandlordPropertyFormPage() {
               })}
             </div>
           </nav>
+          {/* Reserve space while section pills are position:fixed on mobile */}
+          <div className="h-12 max-md:block md:hidden" aria-hidden />
 
           {submitError && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

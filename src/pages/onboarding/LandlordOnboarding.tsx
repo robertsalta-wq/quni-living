@@ -807,7 +807,7 @@ export default function LandlordOnboarding() {
   const firstNameDisplay = firstName.trim() || profile.first_name?.trim() || 'there'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col overflow-x-hidden bg-stone-50 pb-16">
+    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-stone-50 pb-16">
       <PageHeroBand
         title="Welcome to Quni Living"
         subtitle={step < 5 ? `Step ${step} of 5` : undefined}

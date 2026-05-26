@@ -17,6 +17,14 @@
   /* Logo panel + main nav bar (warm cream; not sage #8FB9AB) */
   --brand-header-bg: #fef9e4;
   --brand-header-border: #e8e0cc;
+  /* Fixed mobile header block height (logo row + padding + safe area). */
+  --quni-fixed-header-offset: calc(
+    5rem + max(
+      env(safe-area-inset-top, 0px),
+      var(--safe-area-inset-top, 0px),
+      var(--quni-status-bar-fallback, 0px)
+    )
+  );
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -42,7 +50,6 @@
 
 html {
   color-scheme: light only;
-  overflow-x: hidden;
   max-width: 100%;
 }
 
@@ -57,7 +64,6 @@ html {
   box-sizing: border-box;
   text-align: left;
   color-scheme: light only;
-  overflow-x: hidden;
 }
 
 body {
@@ -65,7 +71,6 @@ body {
   color-scheme: light only;
   color: var(--text);
   background: var(--bg);
-  overflow-x: hidden;
   max-width: 100%;
 }
 
@@ -192,23 +197,40 @@ code {
 
   /** Matches fixed mobile header height (~5rem) plus the same combined top inset as `.pt-safe-top`. */
   .pt-main-below-fixed-header {
-    padding-top: calc(
-      5rem + max(
-        env(safe-area-inset-top, 0px),
-        var(--safe-area-inset-top, 0px),
-        var(--quni-status-bar-fallback, 0px)
-      )
-    );
+    padding-top: var(--quni-fixed-header-offset);
+  }
+
+  /** Sticky / fixed sub-nav directly under the site header on mobile. */
+  .top-below-fixed-header {
+    top: var(--quni-fixed-header-offset);
   }
 
   /** scrollIntoView target under the fixed mobile header (see useScrollToTopOnChange). */
   .scroll-mt-below-header {
-    scroll-margin-top: calc(
-      5rem + max(
-        env(safe-area-inset-top, 0px),
-        var(--safe-area-inset-top, 0px),
-        var(--quni-status-bar-fallback, 0px)
-      )
-    );
+    scroll-margin-top: var(--quni-fixed-header-offset);
+  }
+
+  /** Section jump nav on listing form — fixed on mobile (overflow-x breaks sticky). */
+  .listing-form-section-nav {
+    z-index: 40;
+    background-color: #d4e9e2;
+  }
+
+  @media (max-width: 767px) {
+    .listing-form-section-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--quni-fixed-header-offset);
+      border-bottom: 1px solid rgb(0 0 0 / 0.06);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .listing-form-section-nav {
+      position: sticky;
+      top: var(--quni-fixed-header-offset);
+    }
   }
 }
