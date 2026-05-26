@@ -13,64 +13,6 @@ const SUBJECT_OPTIONS = [
   { value: 'partnership', label: 'Partnership' },
 ] as const
 
-function IconEnvelope({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
-  )
-}
-
-function IconPhone({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <path d="M22 16.92v2a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h2a2 2 0 0 1 2 1.72c.12.9.33 1.78.63 2.63a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.45-1.2a2 2 0 0 1 2.11-.45c.85.3 1.73.51 2.63.63A2 2 0 0 1 22 16.92z" />
-    </svg>
-  )
-}
-
-function IconClock({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
-    </svg>
-  )
-}
-
-const iconWrap = 'w-10 h-10 shrink-0 text-[#FF6F61]'
-
 export default function Contact() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -156,42 +98,7 @@ export default function Contact() {
       />
 
       <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          <div>
-            <h2 className="font-display text-lg font-bold text-gray-900 mb-6">Contact details</h2>
-            <ul className="space-y-6 text-gray-700">
-              <li className="flex gap-4 items-start">
-                <span className={`${iconWrap} flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm`}>
-                  <IconEnvelope className="w-5 h-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Email</p>
-                  <a href="mailto:hello@quni.com.au" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                    hello@quni.com.au
-                  </a>
-                </div>
-              </li>
-              <li className="flex gap-4 items-start">
-                <span className={`${iconWrap} flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm`}>
-                  <IconPhone className="w-5 h-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Phone</p>
-                  <p className="text-sm text-gray-500">Coming soon</p>
-                </div>
-              </li>
-              <li className="flex gap-4 items-start">
-                <span className={`${iconWrap} flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm`}>
-                  <IconClock className="w-5 h-5" />
-                </span>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-0.5">Hours</p>
-                  <p className="text-sm leading-relaxed">Monday – Friday, 9am – 5pm AEST</p>
-                </div>
-              </li>
-            </ul>
-          </div>
-
+        <div className="max-w-xl mx-auto">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
             <h2 className="font-display text-lg font-bold text-gray-900 mb-6">Send a message</h2>
             {sent ? (
@@ -279,14 +186,14 @@ export default function Contact() {
               </form>
             )}
           </div>
-        </div>
 
-        <section className="mt-14 border-t border-gray-200 pt-8" aria-labelledby="contact-legal-heading">
-          <h2 id="contact-legal-heading" className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-            Legal
-          </h2>
-          <LegalFooter className="text-gray-600" />
-        </section>
+          <section className="mt-14 border-t border-gray-200 pt-8" aria-labelledby="contact-legal-heading">
+            <h2 id="contact-legal-heading" className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+              Legal
+            </h2>
+            <LegalFooter className="text-gray-600" />
+          </section>
+        </div>
       </div>
     </div>
   )
