@@ -1,6 +1,6 @@
 # Peer messaging — implementation plan
 
-**Status:** Chunk 2 (API) ready for review — chunk 1 applied to production. Decisions locked 25 May 2026.  
+**Status:** Chunks 1–6 implemented in repo; apply `20260528120000_peer_messaging_enquiries_freeze.sql` in Supabase for cutover. Decisions locked 25 May 2026.  
 **Stack:** Supabase (Postgres + RLS + Realtime) + Vercel API routes + existing React app.
 
 **Note:** `booking_messages` already exists for post-booking review (`LandlordBookingReviewPage`). This plan adds **pre-booking** `conversations` / `conversation_messages` and **unifies the UX** into one thread through booking; legacy `booking_messages` remain readable, new post-booking chat uses the conversation thread when `booking_id` is set.

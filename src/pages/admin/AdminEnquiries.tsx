@@ -80,7 +80,17 @@ export default function AdminEnquiries() {
 
   return (
     <div>
-      <AdminPageHeader title="Enquiries" subtitle="Property enquiries from students and visitors." />
+      <AdminPageHeader
+        title="Enquiries (legacy)"
+        subtitle="Historical rows from before peer messaging. New contact uses Conversations (admin viewer in a later release)."
+      />
+
+      <div className="mb-4 rounded-admin-md border border-amber-200/80 bg-amber-50 px-3.5 py-2.5 text-[13px] text-amber-950">
+        New tenant messages are not stored here. After the peer messaging migration, threads live in{' '}
+        <code className="text-xs bg-amber-100/80 px-1 rounded">conversations</code> /{' '}
+        <code className="text-xs bg-amber-100/80 px-1 rounded">conversation_messages</code>. Backfilled enquiries
+        appear in participant inboxes when the tenant had a signed-in profile.
+      </div>
 
       {error && (
         <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
