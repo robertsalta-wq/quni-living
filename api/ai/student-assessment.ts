@@ -315,6 +315,8 @@ export default async function handler(request: Request) {
         start_date,
         lease_length,
         weekly_rent,
+        occupant_count,
+        parking_selected,
         ai_assessment,
         ai_assessment_at,
         properties (
@@ -323,6 +325,8 @@ export default async function handler(request: Request) {
           suburb,
           state,
           rent_per_week,
+          max_occupants,
+          parking_available,
           room_type,
           furnished,
           bond,
@@ -474,6 +478,8 @@ export default async function handler(request: Request) {
           move_in_date: booking.move_in_date,
           start_date: booking.start_date,
           lease_length: booking.lease_length,
+          occupant_count: booking.occupant_count,
+          parking_selected: booking.parking_selected,
         },
         student: {
           occupancy_type: sp.occupancy_type,

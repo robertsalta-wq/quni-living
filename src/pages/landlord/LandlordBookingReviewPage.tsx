@@ -12,6 +12,12 @@ import LandlordApplicantReviewHeader from '../../components/landlord/LandlordApp
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
+import LandlordBookingOccupancySummary from '../../components/landlord/LandlordBookingOccupancySummary'
+import {
+  bookingHasOccupancySnapshot,
+  parseCoTenantSnapshot,
+  parseRentBreakdownAud,
+} from '../../lib/pricing/bookingOccupancySnapshot'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
 import { isBoardingLodgerBondContext } from '../../lib/listings'
@@ -726,6 +732,14 @@ export default function LandlordBookingReviewPage() {
           <BookingFitSummaryTable rows={fitRows} />
         </section>
 
+        <LandlordBookingOccupancySummary
+          occupantCount={booking.occupant_count}
+          parkingSelected={booking.parking_selected}
+          weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+          breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
+          coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+        />
+
         <LandlordApplicantVerificationSection student={snapshot} />
 
         {data.student?.verification_type === 'student' && (
@@ -773,14 +787,16 @@ export default function LandlordBookingReviewPage() {
               <dt className="text-gray-500">Deposit authorised</dt>
               <dd className="text-right text-xs text-gray-500">{formatDate(booking.created_at.slice(0, 10))}</dd>
             </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-gray-500">Weekly rent</dt>
-              <dd className="font-medium text-right tabular-nums">
-                {booking.weekly_rent != null
-                  ? `$${Number(booking.weekly_rent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                  : '—'}
-              </dd>
-            </div>
+            {!bookingHasOccupancySnapshot(booking) ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Weekly rent</dt>
+                <dd className="font-medium text-right tabular-nums">
+                  {booking.weekly_rent != null
+                    ? `$${Number(booking.weekly_rent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
+                    : '—'}
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between gap-4">
               <dt className="text-gray-500">Bond (listing)</dt>
               <dd className="font-medium text-right tabular-nums">

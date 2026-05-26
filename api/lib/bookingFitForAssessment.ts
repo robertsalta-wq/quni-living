@@ -77,15 +77,38 @@ function moveInMatch(
   return 'mismatch'
 }
 
+function propertyMaxOccupants(property: { max_occupants?: number | null } | null | undefined): number {
+  const n = Math.floor(Number(property?.max_occupants))
+  if (!Number.isFinite(n) || n < 1) return 1
+  return Math.min(10, n)
+}
+
+function bookingOccupantCount(booking: Pick<BookingRow, 'occupant_count'>): number | null {
+  const n = Math.floor(Number(booking.occupant_count))
+  if (!Number.isFinite(n) || n < 1) return null
+  return Math.min(10, n)
+}
+
 function occupancyMatch(
   occ: string | null | undefined,
   roomType: string | null | undefined,
   listingType: string | null | undefined,
+  maxOccupants: number,
+  bookOcc: number | null,
 ): FitRowStatus {
-  if (!occ) return 'unknown'
+  if (bookOcc === 2) {
+    return maxOccupants >= 2 ? 'match' : 'mismatch'
+  }
+
+  if (!occ) {
+    if (bookOcc === 1) return 'match'
+    return 'unknown'
+  }
+
   const rt = (roomType ?? '').toLowerCase()
   const lt = (listingType ?? '').toLowerCase()
   if (occ === 'couple') {
+    if (maxOccupants >= 2) return 'match'
     if (rt === 'shared' || lt === 'homestay') return 'match'
     if (rt === 'single' || rt === 'studio') return 'mismatch'
     return 'unknown'
@@ -94,6 +117,40 @@ function occupancyMatch(
     if (rt === 'shared') return 'mismatch'
     return 'match'
   }
+  return 'match'
+}
+
+function studentOccupancySide(occ: string | null | undefined, bookOcc: number | null): string {
+  if (bookOcc === 2) return '2 occupants (booking)'
+  if (bookOcc === 1) return '1 occupant (booking)'
+  return occ ? occ.replace(/_/g, ' ') : 'Not specified'
+}
+
+function propertyOccupancySide(property: PropertyRow | null, maxOcc: number): string {
+  const parts: string[] = [maxOcc >= 2 ? `Up to ${maxOcc} occupants` : '1 occupant max']
+  const rt = property?.room_type?.trim()
+  const lt = property?.listing_type?.trim()
+  if (rt) parts.push(rt.replace(/_/g, ' '))
+  if (lt && lt !== rt) parts.push(lt.replace(/_/g, ' '))
+  return parts.join(' · ')
+}
+
+function parkingListingOk(property: PropertyRow | null, featureNames: string[]): boolean {
+  if (property?.parking_available === true) return true
+  return propertyHasParking(featureNames)
+}
+
+function parkingMatch(
+  needsParking: boolean | null | undefined,
+  parkingSelected: boolean | null | undefined,
+  listingOk: boolean,
+): FitRowStatus {
+  if (parkingSelected === true) {
+    return listingOk ? 'match' : 'mismatch'
+  }
+  if (parkingSelected === false) return 'match'
+  if (needsParking == null) return 'unknown'
+  if (needsParking) return listingOk ? 'match' : 'mismatch'
   return 'match'
 }
 
@@ -128,7 +185,10 @@ export type BookingFitStudentInput = Pick<
 >
 
 export function buildBookingFitSummary(args: {
-  booking: Pick<BookingRow, 'move_in_date' | 'start_date' | 'lease_length'>
+  booking: Pick<
+    BookingRow,
+    'move_in_date' | 'start_date' | 'lease_length' | 'occupant_count' | 'parking_selected'
+  >
   student: BookingFitStudentInput
   property: PropertyRow | null
 }): BookingFitRow[] {
@@ -136,7 +196,9 @@ export function buildBookingFitSummary(args: {
   const names = featureNamesFromPropertyRow(property)
   const billsInc = propertyBillsIncluded(names)
   const petsOk = propertyPetsAllowed(names)
-  const parkOk = propertyHasParking(names)
+  const maxOcc = propertyMaxOccupants(property)
+  const bookOcc = bookingOccupantCount(args.booking)
+  const parkOk = parkingListingOk(property, names)
 
   const moveIn = (args.booking.move_in_date || args.booking.start_date || '').slice(0, 10)
   const avail = property?.available_from ? String(property.available_from).slice(0, 10) : ''
@@ -162,11 +224,17 @@ export function buildBookingFitSummary(args: {
   })
 
   const occ = args.student.occupancy_type
-  const occStatus = occupancyMatch(occ, property?.room_type ?? null, property?.listing_type ?? null)
+  const occStatus = occupancyMatch(
+    occ,
+    property?.room_type ?? null,
+    property?.listing_type ?? null,
+    maxOcc,
+    bookOcc,
+  )
   rows.push({
     label: 'Occupancy',
-    studentSide: occ ? occ.replace(/_/g, ' ') : 'Not specified',
-    propertySide: [property?.room_type, property?.listing_type].filter(Boolean).join(' · ') || '—',
+    studentSide: studentOccupancySide(occ, bookOcc),
+    propertySide: propertyOccupancySide(property, maxOcc),
     status: occStatus,
   })
 
@@ -180,13 +248,26 @@ export function buildBookingFitSummary(args: {
     status: petsStatus,
   })
 
-  const needPark = args.student.needs_parking === true
-  const parkStatus: FitRowStatus =
-    args.student.needs_parking == null ? 'unknown' : needPark ? (parkOk ? 'match' : 'mismatch') : 'match'
+  const parkingSelected = args.booking.parking_selected
+  const parkStatus = parkingMatch(args.student.needs_parking, parkingSelected, parkOk)
+  const parkStudentSide =
+    parkingSelected === true
+      ? 'Carpark selected at booking'
+      : parkingSelected === false
+        ? 'No carpark at booking'
+        : args.student.needs_parking == null
+          ? 'Not specified'
+          : args.student.needs_parking
+            ? 'Needs parking (profile)'
+            : 'No parking need (profile)'
   rows.push({
     label: 'Parking',
-    studentSide: args.student.needs_parking == null ? 'Not specified' : needPark ? 'Needs parking' : 'No parking need',
-    propertySide: parkOk ? 'Parking signal on listing' : 'No parking signal on listing',
+    studentSide: parkStudentSide,
+    propertySide: parkOk
+      ? property?.parking_available
+        ? 'Carpark offered on listing'
+        : 'Parking signal on listing'
+      : 'No parking on listing',
     status: parkStatus,
   })
 
