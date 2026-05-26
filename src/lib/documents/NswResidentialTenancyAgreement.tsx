@@ -588,8 +588,16 @@ function PageFooter({ documentId, pageNumber }: { documentId: string; pageNumber
   )
 }
 
+function rtaScheduleTenantNamePopulated(raw: string): boolean {
+  const t = raw.trim()
+  return t.length > 0 && t !== '—'
+}
+
 function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
   const landlordName = props.landlord.fullName
+  const t2 = props.additionalTenantNames[0]?.trim() ?? ''
+  const t3 = props.additionalTenantNames[1]?.trim() ?? ''
+  const t4 = props.additionalTenantNames[2]?.trim() ?? ''
 
   const landlordSignIntro =
     "SIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:"
@@ -598,6 +606,9 @@ function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
     "LANDLORD INFORMATION STATEMENT\nThe landlord acknowledges that, at or before the time of signing this residential tenancy agreement, the landlord has read and understood the contents of the Landlord Information Statement published by NSW Fair Trading that sets out the landlord's rights and obligations.\n\nSignature of landlord:"
 
   const tenant1Banner = '\nSIGNED BY THE TENANT (1)\nName of tenant:'
+  const tenant2Banner = '\nSIGNED BY THE TENANT (2)\nName of tenant:'
+  const tenant3Banner = '\nSIGNED BY THE TENANT (3)\nName of tenant:'
+  const tenant4Banner = '\nSIGNED BY THE TENANT (4)\nName of tenant:'
 
   const tisHeadingAndBody =
     'TENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was given a copy of the Tenant Information Statement published by NSW Fair Trading.\n\nSignature of tenant:'
@@ -646,6 +657,33 @@ function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
           <Text style={styles.sigHint}>{'{{Tenant Sign Date;role=Second Party;type=date}}'}</Text>
         </View>
       </View>
+      {rtaScheduleTenantNamePopulated(t2) ? (
+        <>
+          <Text style={styles.body}>{tenant2Banner}</Text>
+          <Text style={styles.value}>{t2}</Text>
+          <View style={styles.sigBox}>
+            <Text style={styles.body}>Signature of tenant: </Text>
+          </View>
+        </>
+      ) : null}
+      {rtaScheduleTenantNamePopulated(t3) ? (
+        <>
+          <Text style={styles.body}>{tenant3Banner}</Text>
+          <Text style={styles.value}>{t3}</Text>
+          <View style={styles.sigBox}>
+            <Text style={styles.body}>Signature of tenant: </Text>
+          </View>
+        </>
+      ) : null}
+      {rtaScheduleTenantNamePopulated(t4) ? (
+        <>
+          <Text style={styles.body}>{tenant4Banner}</Text>
+          <Text style={styles.value}>{t4}</Text>
+          <View style={styles.sigBox}>
+            <Text style={styles.body}>Signature of tenant: </Text>
+          </View>
+        </>
+      ) : null}
       <Text style={styles.body}>{tisHeadingAndBody}</Text>
       <View style={styles.sigBox}>
         <Text style={styles.sigHint}>{'{{Tenant TIS Signature;role=Second Party;type=signature}}'}</Text>
@@ -719,6 +757,15 @@ export function NswResidentialTenancyAgreement(props: NswResidentialTenancyAgree
       <Field label="Business or residential address of landlord(s) for service of notices:" children={landlord.addressLine} />
 
       <Field label="Tenant Name (1):" children={tenant.fullName} />
+      {props.additionalTenantNames[0]?.trim() ? (
+        <Field label="Tenant Name (2):" children={props.additionalTenantNames[0].trim()} />
+      ) : null}
+      {props.additionalTenantNames[1]?.trim() ? (
+        <Field label="Tenant Name (3):" children={props.additionalTenantNames[1].trim()} />
+      ) : null}
+      {props.additionalTenantNames[2]?.trim() ? (
+        <Field label="Tenant Name (4):" children={props.additionalTenantNames[2].trim()} />
+      ) : null}
       {tenant.addressForServiceLine ? (
         <Field label="Tenant's address for service of notices:" children={tenant.addressForServiceLine} />
       ) : null}

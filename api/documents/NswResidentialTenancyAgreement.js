@@ -925,11 +925,21 @@ function PageFooter({ documentId, pageNumber }) {
     pageNumber
   ] }) });
 }
+function rtaScheduleTenantNamePopulated(raw) {
+  const t = raw.trim();
+  return t.length > 0 && t !== "\u2014";
+}
 function SignaturesBlock(props) {
   const landlordName = props.landlord.fullName;
+  const t2 = props.additionalTenantNames[0]?.trim() ?? "";
+  const t3 = props.additionalTenantNames[1]?.trim() ?? "";
+  const t4 = props.additionalTenantNames[2]?.trim() ?? "";
   const landlordSignIntro = "SIGNED BY THE LANDLORD\nNote: Section 9 of the Electronic Transactions Act 2000 allows for agreements to be signed electronically in NSW if the parties consent. If an electronic signature is used then it must comply with Division 2 of Part 2 of the Electronic Transactions Act 2000.\n\nName of landlord:";
   const lisHeadingAndBody = "LANDLORD INFORMATION STATEMENT\nThe landlord acknowledges that, at or before the time of signing this residential tenancy agreement, the landlord has read and understood the contents of the Landlord Information Statement published by NSW Fair Trading that sets out the landlord's rights and obligations.\n\nSignature of landlord:";
   const tenant1Banner = "\nSIGNED BY THE TENANT (1)\nName of tenant:";
+  const tenant2Banner = "\nSIGNED BY THE TENANT (2)\nName of tenant:";
+  const tenant3Banner = "\nSIGNED BY THE TENANT (3)\nName of tenant:";
+  const tenant4Banner = "\nSIGNED BY THE TENANT (4)\nName of tenant:";
   const tisHeadingAndBody = "TENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was given a copy of the Tenant Information Statement published by NSW Fair Trading.\n\nSignature of tenant:";
   const contactFooter = "For information about your rights and obligations as a landlord or tenant, contact:\n(a) NSW Fair Trading on 13 32 20 or nsw.gov.au/fair-trading or\n(b) Law Access NSW on 1300 888 529 or lawaccess.nsw.gov.au or\n(c) your local Tenants Advice and Advocacy Service at tenants.org.au";
   return /* @__PURE__ */ jsxs(View, { children: [
@@ -960,6 +970,21 @@ function SignaturesBlock(props) {
       /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Tenant Sign Date " }),
       /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant Sign Date;role=Second Party;type=date}}" })
     ] }) }),
+    rtaScheduleTenantNamePopulated(t2) ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant2Banner }),
+      /* @__PURE__ */ jsx(Text, { style: styles.value, children: t2 }),
+      /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }) })
+    ] }) : null,
+    rtaScheduleTenantNamePopulated(t3) ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant3Banner }),
+      /* @__PURE__ */ jsx(Text, { style: styles.value, children: t3 }),
+      /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }) })
+    ] }) : null,
+    rtaScheduleTenantNamePopulated(t4) ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant4Banner }),
+      /* @__PURE__ */ jsx(Text, { style: styles.value, children: t4 }),
+      /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }) })
+    ] }) : null,
     /* @__PURE__ */ jsx(Text, { style: styles.body, children: tisHeadingAndBody }),
     /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant TIS Signature;role=Second Party;type=signature}}" }) }),
     /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
@@ -1017,6 +1042,9 @@ function NswResidentialTenancyAgreement(props) {
       ),
       /* @__PURE__ */ jsx(Field, { label: "Business or residential address of landlord(s) for service of notices:", children: landlord.addressLine }),
       /* @__PURE__ */ jsx(Field, { label: "Tenant Name (1):", children: tenant.fullName }),
+      props.additionalTenantNames[0]?.trim() ? /* @__PURE__ */ jsx(Field, { label: "Tenant Name (2):", children: props.additionalTenantNames[0].trim() }) : null,
+      props.additionalTenantNames[1]?.trim() ? /* @__PURE__ */ jsx(Field, { label: "Tenant Name (3):", children: props.additionalTenantNames[1].trim() }) : null,
+      props.additionalTenantNames[2]?.trim() ? /* @__PURE__ */ jsx(Field, { label: "Tenant Name (4):", children: props.additionalTenantNames[2].trim() }) : null,
       tenant.addressForServiceLine ? /* @__PURE__ */ jsx(Field, { label: "Tenant's address for service of notices:", children: tenant.addressForServiceLine }) : null,
       /* @__PURE__ */ jsx(Field, { label: "Contact details:", children: `Phone: ${tenant.phone} \xB7 Email: ${tenant.email}` }),
       landlordAgent ? /* @__PURE__ */ jsxs(Fragment, { children: [

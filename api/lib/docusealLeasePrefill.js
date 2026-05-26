@@ -20,6 +20,11 @@ const DEFAULT_LANDLORD_KEYS = [
   'landlord_address',
   'landlord_email',
   'landlord_phone',
+  'tenant_2_full_name',
+  'tenant_2_email',
+  'tenant_2_phone',
+  'tenant_2_date_of_birth',
+  'max_occupants_permitted',
   'premises_address',
   'property_type',
   'room_type',
@@ -58,6 +63,11 @@ const DEFAULT_FIELD_NAMES = {
   tenant_email: 'Tenant email',
   tenant_phone: 'Tenant phone',
   tenant_date_of_birth: 'Tenant date of birth',
+  tenant_2_full_name: 'Tenant 2 full name',
+  tenant_2_email: 'Tenant 2 email',
+  tenant_2_phone: 'Tenant 2 phone',
+  tenant_2_date_of_birth: 'Tenant 2 date of birth',
+  max_occupants_permitted: 'Maximum occupants permitted',
   premises_address: 'Premises address',
   property_type: 'Property type',
   room_type: 'Room type',
@@ -127,6 +137,13 @@ function formatAud(n) {
 export function buildLeasePrefillValues(props) {
   const landlord = props.landlord && typeof props.landlord === 'object' ? props.landlord : {}
   const tenant = props.tenant && typeof props.tenant === 'object' ? props.tenant : {}
+  const coTenant =
+    props.coTenant && typeof props.coTenant === 'object' && !Array.isArray(props.coTenant)
+      ? props.coTenant
+      : null
+  const additionalTenantNames = Array.isArray(props.additionalTenantNames)
+    ? props.additionalTenantNames.filter((x) => typeof x === 'string' && x.trim())
+    : []
   const premises = props.premises && typeof props.premises === 'object' ? props.premises : {}
   const term = props.term && typeof props.term === 'object' ? props.term : {}
   const rent = props.rent && typeof props.rent === 'object' ? props.rent : {}
@@ -157,6 +174,19 @@ export function buildLeasePrefillValues(props) {
     tenant_date_of_birth:
       tenant.dateOfBirth != null && String(tenant.dateOfBirth).trim()
         ? formatAuDate(String(tenant.dateOfBirth))
+        : '',
+    tenant_2_full_name:
+      (coTenant && typeof coTenant.full_name === 'string' && coTenant.full_name.trim()) ||
+      (additionalTenantNames[0] ? String(additionalTenantNames[0]).trim() : ''),
+    tenant_2_email: coTenant && typeof coTenant.email === 'string' ? coTenant.email.trim() : '',
+    tenant_2_phone: coTenant && typeof coTenant.phone === 'string' ? coTenant.phone.trim() : '',
+    tenant_2_date_of_birth:
+      coTenant && coTenant.date_of_birth != null && String(coTenant.date_of_birth).trim()
+        ? formatAuDate(String(coTenant.date_of_birth))
+        : '',
+    max_occupants_permitted:
+      props.maxOccupantsPermitted != null && Number.isFinite(Number(props.maxOccupantsPermitted))
+        ? String(props.maxOccupantsPermitted)
         : '',
     premises_address: typeof premises.addressLine === 'string' ? premises.addressLine : '',
     property_type: premises.propertyType != null ? String(premises.propertyType) : '',

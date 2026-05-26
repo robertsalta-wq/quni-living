@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { OccupancyAgreement } from './OccupancyAgreement.js'
 import type { OccupancyAgreementProps } from './rtaTypes'
+import { occupancyLeaseFieldsFromBooking } from '../lib/booking/occupancyLeaseContext.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
@@ -116,6 +117,8 @@ export default async function handler(req: any, res: any) {
       end_date,
       lease_length,
       notes,
+      occupant_count,
+      co_tenant,
       properties (
         title,
         address,
@@ -123,6 +126,7 @@ export default async function handler(req: any, res: any) {
         state,
         postcode,
         rent_per_week,
+        max_occupants,
         room_type,
         property_type,
         is_registered_rooming_house,
@@ -278,6 +282,7 @@ export default async function handler(req: any, res: any) {
   const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
 
   const lpRec = lp as Record<string, unknown>
+  const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
   const pdfProps: OccupancyAgreementProps = {
     documentId,
@@ -328,6 +333,7 @@ export default async function handler(req: any, res: any) {
       'This agreement is facilitated through the Quni Living platform (quni.com.au).',
       'Bond handling is the responsibility of the landlord. Quni Living does not hold or manage bond payments.',
       "Rent payments are processed through Quni Living's secure payment system powered by Stripe.",
+      ...coTenantSpecialConditions,
     ],
     houseRules: prop.house_rules ?? null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,

@@ -21,6 +21,7 @@ import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
+import { occupancyLeaseFieldsFromBooking } from '../lib/booking/occupancyLeaseContext.js'
 import {
   buildRtaRentPaymentMethodLine,
   fetchBankDetailsForRta,
@@ -140,6 +141,8 @@ export default async function handler(req: any, res: any) {
       lease_length,
       notes,
       housemates_count,
+      occupant_count,
+      co_tenant,
       rent_payment_method,
       properties (
         title,
@@ -148,6 +151,7 @@ export default async function handler(req: any, res: any) {
         state,
         postcode,
         rent_per_week,
+        max_occupants,
         room_type,
         property_type,
         is_registered_rooming_house,
@@ -354,8 +358,9 @@ export default async function handler(req: any, res: any) {
       ? `${landlordFullName} — ${landlordPhoneRaw}`
       : landlordFullName
 
-  const housematesRaw = booking.housemates_count
-  const maxOccupantsPermitted = (housematesRaw ?? 1) + 1
+  const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
+  const { additionalTenantNames, maxOccupantsPermitted, specialConditions: coTenantSpecialConditions } =
+    occupancyLease
 
   const generatedAt = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })
 
@@ -418,7 +423,7 @@ export default async function handler(req: any, res: any) {
     generatedAt,
     landlord: sharedLandlord,
     tenant: sharedTenant,
-    additionalTenantNames: [],
+    additionalTenantNames,
     premises: sharedPremises,
     premisesPartDescription: null,
     additionalPremisesInclusions: [],
@@ -442,7 +447,7 @@ export default async function handler(req: any, res: any) {
       landlordConsentsToEmailService: true,
       tenantConsentsToEmailService: true,
     },
-    specialConditions: [],
+    specialConditions: coTenantSpecialConditions,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
 

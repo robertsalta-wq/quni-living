@@ -1,6 +1,6 @@
 # Occupancy pricing & co-tenant on lease — implementation plan
 
-**Status:** Chunk 5 landed on `main` (landlord booking review + fit assessment). Remaining: lease/PDF co-tenant (chunk 6), QA pass (chunk 7).  
+**Status:** Chunk 6 landed on `main` (lease PDFs + DocuSeal prefill for co-tenant). Remaining: QA pass (chunk 7); DocuSeal co-tenant signer (v1.1).  
 **Last updated:** 26 May 2026  
 **Stack:** Supabase (Postgres + RLS) + Vercel API routes + React app + existing PDF/DocuSeal pipeline
 
