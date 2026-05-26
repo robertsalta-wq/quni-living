@@ -2,6 +2,7 @@
 
 import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
+import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID =
@@ -30,11 +31,13 @@ function cancellationTolerated(err) {
  * @param {object} params
  * @param {import('stripe').default} params.stripe
  * @param {import('@supabase/supabase-js').SupabaseClient} params.admin
- * @param {{ id: string; stripe_customer_id?: string | null }} params.landlord
+ * @param {{ id: string; stripe_customer_id?: string | null; user_id?: string | null }} params.landlord
  * @param {string} params.bookingId
  */
 export async function runListingConfirmBooking(params) {
   const { stripe, admin, landlord, bookingId, origin: _origin } = params
+  const landlordUserId =
+    typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
 
   const { data: booking, error: bErr } = await admin
     .from('bookings')
@@ -234,6 +237,11 @@ export async function runListingConfirmBooking(params) {
       .eq('id', booking.id)
       .maybeSingle()
     if (again?.status === 'bond_pending') {
+      try {
+        await unlockConversationOnBookingConfirmed(admin, booking.id, { landlordUserId })
+      } catch (e) {
+        console.error('[confirm-listing] conversation unlock (idempotent)', e)
+      }
       return {
         ok: true,
         idempotent: true,
@@ -289,6 +297,12 @@ export async function runListingConfirmBooking(params) {
       })
     } catch (e) {
       console.error('[confirm-listing] preview document generation', e)
+    }
+
+    try {
+      await unlockConversationOnBookingConfirmed(admin, booking.id, { landlordUserId })
+    } catch (e) {
+      console.error('[confirm-listing] conversation unlock', e)
     }
   }
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import type { Stripe } from '@stripe/stripe-js'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -510,6 +510,8 @@ function DepositPaymentInner({
 export default function Booking() {
   const { propertyId: propertyIdParam } = useParams<{ propertyId: string }>()
   const propertyId = propertyIdParam?.trim() ?? ''
+  const [searchParams] = useSearchParams()
+  const conversationIdFromThread = searchParams.get('conversationId')?.trim() ?? ''
   const { user, profile, role, loading: authLoading } = useAuthContext()
 
   const [property, setProperty] = useState<PropertyForBooking | null>(null)
@@ -1117,6 +1119,7 @@ export default function Booking() {
             bondAcknowledged: true,
             propertyType: propertyTypeSnapshot,
             rentPaymentMethod,
+            ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           }),
         })
 
@@ -1167,7 +1170,7 @@ export default function Booking() {
         setSubmittingBooking(false)
       }
     },
-    [property, studentProfile, moveIn, leaseLength, message, rentPaymentMethod],
+    [property, studentProfile, moveIn, leaseLength, message, rentPaymentMethod, conversationIdFromThread],
   )
 
   const tenancyPackage = useMemo(

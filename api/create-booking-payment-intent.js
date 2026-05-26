@@ -2,7 +2,7 @@
  * Student booking deposit — PaymentIntent (manual capture) + optional commit (insert booking via service role).
  *
  * POST JSON (create PI): { propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged }
- * POST JSON (commit): { commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform' }
+ * POST JSON (commit): { commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform', conversationId? }
  *
  * Authorization: Bearer <Supabase access_token>
  */
@@ -15,6 +15,7 @@ import {
 } from './lib/pricing/index.js'
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
+import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
 
 export const config = { runtime: 'edge' }
 
@@ -273,6 +274,8 @@ async function handlePaymentIntentCommit(request, origin, body) {
     rentPaymentMethodRaw === 'bank_transfer' || rentPaymentMethodRaw === 'quni_platform'
       ? rentPaymentMethodRaw
       : null
+  const conversationIdHint =
+    typeof body.conversationId === 'string' ? body.conversationId.trim() : ''
 
   if (!paymentIntentId || !propertyId || !moveInDate || !leaseLength) {
     return json({ error: 'paymentIntentId, propertyId, moveInDate, and leaseLength are required' }, 400, origin)
@@ -455,6 +458,17 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()
 
   if (!insErr && inserted?.id) {
+    try {
+      await attachBookingToConversationOnCreate(admin, {
+        bookingId: inserted.id,
+        propertyId: property.id,
+        tenantUserId: student.user_id,
+        tenantProfileId: student.id,
+        conversationIdHint: conversationIdHint || null,
+      })
+    } catch (e) {
+      console.error('[booking] attach conversation', e)
+    }
     return json({ ok: true, bookingId: inserted.id }, 200, origin)
   }
 

@@ -81,7 +81,7 @@ export default async function handler(req, res) {
 
     const { data: landlord, error: llErr } = await admin
       .from('landlord_profiles')
-      .select('id, stripe_connect_account_id, stripe_charges_enabled, stripe_customer_id')
+      .select('id, user_id, stripe_connect_account_id, stripe_charges_enabled, stripe_customer_id')
       .eq('user_id', user.id)
       .maybeSingle()
 

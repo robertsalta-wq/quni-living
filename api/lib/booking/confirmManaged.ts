@@ -18,6 +18,7 @@ import {
   tenancyGeneratorToApiPath,
 } from '../../lib/resolveTenancyPackage.js'
 import { getActivePricingSnapshotForProperty } from '../../lib/pricing/index.js'
+import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 
 function jsonFail(status, body) {
   return { ok: false, status, body }
@@ -327,6 +328,16 @@ export async function runManagedConfirmBooking(params) {
     if (upErr) {
       console.error('booking update after subscription', upErr)
       return jsonFail(500, { error: 'Could not save booking after subscription' })
+    }
+
+    const landlordUserId =
+      typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
+    try {
+      await unlockConversationOnBookingConfirmed(admin, booking.id, {
+        landlordUserId,
+      })
+    } catch (unlockEx) {
+      console.error('[confirm-managed] conversation unlock', unlockEx)
     }
 
     const propertyWasListing =
