@@ -1,27 +1,50 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { ConversationRow } from '../lib/messaging/conversationTypes'
-import type { InboxProperty } from '../hooks/useConversationInbox'
+import {
+  CONVERSATION_WITH_PROPERTY_SELECT,
+  type ConversationThreadNavigationState,
+  type ConversationWithProperty,
+} from '../lib/messaging/conversationsApi'
 import ConversationThread from '../components/messaging/ConversationThread'
 import Seo from '../components/Seo'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 
+function preloadedForRoute(
+  state: unknown,
+  conversationId: string,
+): ConversationWithProperty | null {
+  const s = state as ConversationThreadNavigationState | null
+  if (s?.preloadedConversation?.id === conversationId) {
+    return s.preloadedConversation
+  }
+  return null
+}
+
 export default function ConversationThreadPage() {
   const { conversationId } = useParams<{ conversationId: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuthContext()
-  const [conversation, setConversation] = useState<
-    (ConversationRow & { property: InboxProperty | null }) | null
-  >(null)
-  const [loading, setLoading] = useState(true)
+  const initialPreload =
+    conversationId != null ? preloadedForRoute(location.state, conversationId) : null
+  const [conversation, setConversation] = useState<ConversationWithProperty | null>(initialPreload)
+  const [loading, setLoading] = useState(initialPreload == null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const uid = user?.id
     if (!conversationId || !uid) return
     const convId = conversationId
+    const cached = preloadedForRoute(location.state, convId)
+    if (cached) {
+      setConversation(cached)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     let cancelled = false
 
     async function load() {
@@ -29,19 +52,7 @@ export default function ConversationThreadPage() {
       setError(null)
       const { data, error: qErr } = await supabase
         .from('conversations')
-        .select(
-          `
-          *,
-          property:properties (
-            id,
-            title,
-            suburb,
-            rent_per_week,
-            slug,
-            images
-          )
-        `,
-        )
+        .select(CONVERSATION_WITH_PROPERTY_SELECT)
         .eq('id', convId)
         .maybeSingle()
 
@@ -50,7 +61,7 @@ export default function ConversationThreadPage() {
         setError(qErr?.message ?? 'Conversation not found')
         setConversation(null)
       } else {
-        const row = data as ConversationRow & { property: InboxProperty | null }
+        const row = data as ConversationWithProperty
         if (row.landlord_user_id !== uid && row.tenant_user_id !== uid) {
           setError('You do not have access to this conversation')
           setConversation(null)
@@ -65,7 +76,7 @@ export default function ConversationThreadPage() {
     return () => {
       cancelled = true
     }
-  }, [conversationId, user?.id])
+  }, [conversationId, user?.id, location.state])
 
   if (!user) {
     return null

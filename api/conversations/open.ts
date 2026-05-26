@@ -56,13 +56,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   const { user, admin } = auth.data
-  const maskingEnabled = await fetchContactMaskingEnabled(admin)
 
-  const { data: property, error: propErr } = await admin
-    .from('properties')
-    .select('id, status, landlord_id')
-    .eq('id', propertyId)
-    .maybeSingle()
+  const [maskingEnabled, propertyResult] = await Promise.all([
+    fetchContactMaskingEnabled(admin),
+    admin.from('properties').select('id, status, landlord_id').eq('id', propertyId).maybeSingle(),
+  ])
+
+  const { data: property, error: propErr } = propertyResult
 
   if (propErr) {
     return corsJson(res, { error: propErr.message }, 500, origin)

@@ -5,6 +5,7 @@ import { useAuthContext } from '../context/AuthContext'
 import {
   openConversation,
   PENDING_MESSAGE_PROPERTY_KEY,
+  type ConversationThreadNavigationState,
 } from '../lib/messaging/conversationsApi'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
@@ -255,7 +256,7 @@ export default function PropertyDetail() {
     [setSearchParams],
   )
 
-  const { user, profile, role, refreshProfile, loading: authLoading } = useAuthContext()
+  const { user, profile, role, session, refreshProfile, loading: authLoading } = useAuthContext()
   const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference()
   const uniNameById = useMemo(() => {
     const m = new Map<string, string>()
@@ -291,19 +292,27 @@ export default function PropertyDetail() {
   const encodedRedirect = encodeURIComponent(listingPath)
 
   const openMessageThread = useCallback(async () => {
-    if (!property?.id) return
+    if (!property?.id || !user?.id) return
     setMessageError(null)
     setMessageOpening(true)
     try {
-      const result = await openConversation(property.id)
+      const result = await openConversation(property.id, {
+        accessToken: session?.access_token,
+        userId: user.id,
+        preferClient: role === 'student',
+        propertyStatus: property.status,
+      })
       sessionStorage.removeItem(PENDING_MESSAGE_PROPERTY_KEY)
-      navigate(`/messages/${result.conversationId}`)
+      const navState: ConversationThreadNavigationState | undefined = result.conversation
+        ? { preloadedConversation: result.conversation }
+        : undefined
+      navigate(`/messages/${result.conversationId}`, { state: navState })
     } catch (e) {
       setMessageError(e instanceof Error ? e.message : 'Could not open messages')
     } finally {
       setMessageOpening(false)
     }
-  }, [property?.id, navigate])
+  }, [property?.id, property?.status, user?.id, role, session?.access_token, navigate])
 
   const handleMessageLandlord = useCallback(() => {
     if (!property?.id) return
@@ -407,6 +416,12 @@ export default function PropertyDetail() {
     if (pending !== property.id) return
     void openMessageThread()
   }, [user, property?.id, role, studentListingActionsOk, openMessageThread])
+
+  useEffect(() => {
+    if (user && role === 'student') {
+      void import('./ConversationThreadPage')
+    }
+  }, [user, role])
 
   const [activePipelineBookingId, setActivePipelineBookingId] = useState<string | null>(null)
 
