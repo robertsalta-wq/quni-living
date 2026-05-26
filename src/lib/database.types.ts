@@ -1106,6 +1106,7 @@ export interface Database {
           cancelled_by: string | null
           cancellation_reason: string | null
           housemates_count: number | null
+          conversation_id: string | null
           created_at: string
           updated_at: string
         }
@@ -1160,6 +1161,7 @@ export interface Database {
           cancelled_by?: string | null
           cancellation_reason?: string | null
           housemates_count?: number | null
+          conversation_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1214,6 +1216,7 @@ export interface Database {
           cancelled_by?: string | null
           cancellation_reason?: string | null
           housemates_count?: number | null
+          conversation_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1237,6 +1240,13 @@ export interface Database {
             columns: ['student_id']
             isOneToOne: false
             referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'bookings_conversation_id_fkey'
+            columns: ['conversation_id']
+            isOneToOne: false
+            referencedRelation: 'conversations'
             referencedColumns: ['id']
           },
         ]
@@ -1272,6 +1282,175 @@ export interface Database {
             columns: ['booking_id']
             isOneToOne: false
             referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          id: string
+          property_id: string
+          landlord_profile_id: string
+          landlord_user_id: string
+          tenant_user_id: string
+          tenant_profile_id: string | null
+          booking_id: string | null
+          status: 'open' | 'archived'
+          contact_unlocked_at: string | null
+          last_message_at: string
+          last_message_preview: string
+          landlord_last_read_at: string | null
+          tenant_last_read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          landlord_profile_id?: string
+          landlord_user_id?: string
+          tenant_user_id: string
+          tenant_profile_id?: string | null
+          booking_id?: string | null
+          status?: 'open' | 'archived'
+          contact_unlocked_at?: string | null
+          last_message_at?: string
+          last_message_preview?: string
+          landlord_last_read_at?: string | null
+          tenant_last_read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          landlord_profile_id?: string
+          landlord_user_id?: string
+          tenant_user_id?: string
+          tenant_profile_id?: string | null
+          booking_id?: string | null
+          status?: 'open' | 'archived'
+          contact_unlocked_at?: string | null
+          last_message_at?: string
+          last_message_preview?: string
+          landlord_last_read_at?: string | null
+          tenant_last_read_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conversations_landlord_profile_id_fkey'
+            columns: ['landlord_profile_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conversations_tenant_profile_id_fkey'
+            columns: ['tenant_profile_id']
+            isOneToOne: false
+            referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conversations_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      conversation_messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_user_id: string | null
+          sender_role: 'tenant' | 'landlord' | 'system'
+          kind: 'user' | 'system'
+          body: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_user_id?: string | null
+          sender_role: 'tenant' | 'landlord' | 'system'
+          kind: 'user' | 'system'
+          body: string
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          sender_user_id?: string | null
+          sender_role?: 'tenant' | 'landlord' | 'system'
+          kind?: 'user' | 'system'
+          body?: string
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_messages_conversation_id_fkey'
+            columns: ['conversation_id']
+            isOneToOne: false
+            referencedRelation: 'conversations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      message_contact_mask_events: {
+        Row: {
+          id: string
+          conversation_id: string
+          message_id: string
+          sender_user_id: string | null
+          mask_type: 'phone' | 'email' | 'url' | 'social'
+          match_count: number
+          content_dedup_hash: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          message_id: string
+          sender_user_id?: string | null
+          mask_type: 'phone' | 'email' | 'url' | 'social'
+          match_count: number
+          content_dedup_hash: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          message_id?: string
+          sender_user_id?: string | null
+          mask_type?: 'phone' | 'email' | 'url' | 'social'
+          match_count?: number
+          content_dedup_hash?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'message_contact_mask_events_conversation_id_fkey'
+            columns: ['conversation_id']
+            isOneToOne: false
+            referencedRelation: 'conversations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'message_contact_mask_events_message_id_fkey'
+            columns: ['message_id']
+            isOneToOne: false
+            referencedRelation: 'conversation_messages'
             referencedColumns: ['id']
           },
         ]
@@ -1854,6 +2033,10 @@ export interface Database {
       duplicate_property_listing: {
         Args: { p_source_id: string }
         Returns: string
+      }
+      is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
       }
       admin_update_property_fee_snapshots: {
         Args: {
