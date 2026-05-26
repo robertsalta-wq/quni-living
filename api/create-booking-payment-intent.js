@@ -28,6 +28,7 @@ import {
   assertPiMetadataMatchesOccupancy,
   OCCUPANCY_PROPERTY_COLUMNS,
   parseOccupancyScalarsFromBody,
+  housematesCountFromOccupantCount,
   resolveCoTenantForCommit,
   resolveWeeklyRentForBooking,
 } from './lib/booking/occupancyBooking.js'
@@ -508,7 +509,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     parking_selected: parkingSelected,
     rent_breakdown: breakdownAud,
     co_tenant: coTenant,
-    housemates_count: Math.max(0, occupantCount - 1),
+    housemates_count: housematesCountFromOccupantCount(occupantCount),
     ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   assertPiMetadataMatchesOccupancy,
+  housematesCountFromOccupantCount,
   occupancyFromPaymentIntentMetadata,
   parseCoTenantFromBody,
   parseOccupancyScalarsFromBody,
@@ -111,6 +112,13 @@ describe('assertPiMetadataMatchesOccupancy', () => {
         },
       ).ok,
     ).toBe(false)
+  })
+})
+
+describe('housematesCountFromOccupantCount', () => {
+  it('maps two occupants to one housemate', () => {
+    expect(housematesCountFromOccupantCount(2)).toBe(1)
+    expect(housematesCountFromOccupantCount(1)).toBe(0)
   })
 })
 

@@ -1,6 +1,6 @@
 # Occupancy pricing & co-tenant on lease — implementation plan
 
-**Status:** Chunk 6 landed on `main` (lease PDFs + DocuSeal prefill for co-tenant). Remaining: QA pass (chunk 7); DocuSeal co-tenant signer (v1.1).  
+**Status:** Chunks 1–7 complete on `main`. Acceptance: `docs/occupancy-pricing-chunk7-review.md` + `api/lib/booking/occupancyAcceptance.test.ts`. Optional v1.1: DocuSeal co-tenant signer.  
 **Last updated:** 26 May 2026  
 **Stack:** Supabase (Postgres + RLS) + Vercel API routes + React app + existing PDF/DocuSeal pipeline
 
@@ -299,28 +299,30 @@ One full-stack dev, includes QA. **~4–6 days** total.
 
 ### Pricing
 
-- [ ] Listing with no surcharges: booking unchanged ($400 → $400 deposit)
-- [ ] Couple surcharge: 2 occupants → $500/wk on booking, PI, `weekly_rent`
-- [ ] Parking: +$50 only when selected and `parking_available`
-- [ ] Couple + parking: $550/wk
-- [ ] API rejects `occupantCount: 2` when `max_occupants = 1`
-- [ ] API rejects `parkingSelected: true` when parking not offered
-- [ ] Client tamper (wrong total) → server uses resolved rent
+- [x] Listing with no surcharges: booking unchanged ($400 → $400 deposit) — automated
+- [x] Couple surcharge: 2 occupants → $500/wk on booking, PI, `weekly_rent` — automated
+- [x] Parking: +$50 only when selected and `parking_available` — automated
+- [x] Couple + parking: $550/wk — automated
+- [x] API rejects `occupantCount: 2` when `max_occupants = 1` — automated
+- [x] API rejects `parkingSelected: true` when parking not offered — automated
+- [x] Client tamper (wrong total) → server uses resolved rent — automated (`assertPiMetadataMatchesOccupancy`)
 
 ### Co-tenant
 
-- [ ] 1 occupant: no `co_tenant` required
-- [ ] 2 occupants: commit blocked without valid `co_tenant`
-- [ ] Landlord review shows co-tenant details
-- [ ] NSW/QLD PDF includes second name where implemented
-- [ ] `maxOccupantsPermitted` matches property `max_occupants`
-- [ ] `housemates_count` = 1 when 2 occupants
+- [x] 1 occupant: no `co_tenant` required — automated
+- [x] 2 occupants: commit blocked without valid `co_tenant` — automated
+- [ ] Landlord review shows co-tenant details — manual (chunk 5 UI)
+- [x] NSW/QLD PDF includes second name where implemented — automated + manual PDF visual
+- [x] `maxOccupantsPermitted` matches property `max_occupants` — automated
+- [x] `housemates_count` = 1 when 2 occupants — automated
 
 ### Regression
 
-- [ ] Existing active listings (null surcharges) book as today
-- [ ] Sole student profile + 1 occupant booking
-- [ ] Listing E2E: accept → deposit → sign (primary tenant only in v1)
+- [x] Existing active listings (null surcharges) book as today — automated
+- [ ] Sole student profile + 1 occupant booking — manual
+- [ ] Listing E2E: accept → deposit → sign (primary tenant only in v1) — manual
+
+See `docs/occupancy-pricing-chunk7-review.md` for smoke steps.
 
 ---
 
