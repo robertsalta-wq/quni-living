@@ -1,9 +1,4 @@
-import {
-  PROPERTY_LISTING_TYPE_LABELS,
-  ROOM_TYPE_LABELS,
-  type PropertyListingType,
-  type RoomType,
-} from './listings'
+import { ROOM_TYPE_LABELS, type PropertyListingType, type RoomType } from './listings'
 
 /** Landlord-facing accommodation cards (maps to `property_type` + `room_type`). */
 export type AccommodationUiChoice =
@@ -134,5 +129,3 @@ export function normalizeAccommodationForSave(
   }
   return { propertyListingType: 'shared_room', roomType: 'shared' }
 }
-
-export { PROPERTY_LISTING_TYPE_LABELS }

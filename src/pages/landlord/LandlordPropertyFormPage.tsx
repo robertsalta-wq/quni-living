@@ -10,7 +10,6 @@ import {
   accommodationChoiceFromFields,
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
-  PROPERTY_LISTING_TYPE_LABELS as ACCOMMODATION_PROPERTY_TYPE_LABELS,
   roomForRentOptions,
   showRoomForRentSelect,
   type AccommodationUiChoice,
@@ -233,8 +232,6 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.serviceTier === 'listing'
   )
 }
-
-const PROPERTY_TYPE_ENTRIES = Object.entries(ACCOMMODATION_PROPERTY_TYPE_LABELS) as [PropertyListingType, string][]
 
 const MAX_IMAGES = 10
 const MAX_FILE_BYTES = 5 * 1024 * 1024
@@ -1783,24 +1780,6 @@ export default function LandlordPropertyFormPage() {
                   )}
                 </div>
               )}
-              <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm">
-                <summary className="cursor-pointer font-medium text-gray-700">Advanced: change listing type wording</summary>
-                <p className="text-xs text-gray-500 mt-2 mb-2">
-                  Only use if the options above do not match your situation (affects bond and agreement type).
-                </p>
-                <select
-                  id="pf-property-type"
-                  value={propertyListingType}
-                  onChange={(e) => setPropertyListingType(e.target.value as PropertyListingType)}
-                  className={inputClass}
-                >
-                  {PROPERTY_TYPE_ENTRIES.map(([v, lab]) => (
-                    <option key={v} value={v}>
-                      {lab}
-                    </option>
-                  ))}
-                </select>
-              </details>
               <div>
                 <label htmlFor="pf-rooming-house" className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
                   <span className="inline-flex items-center gap-2">
