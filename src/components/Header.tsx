@@ -12,6 +12,7 @@ function finishSetupHref(r: UserRole): string {
 import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
+import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 
 const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
@@ -87,6 +88,8 @@ export default function Header() {
           : '/onboarding'
 
   const showDashboardInAuth = Boolean(user) && (role === 'student' || role === 'landlord')
+  const showMessagesNav = Boolean(user) && (role === 'student' || role === 'landlord')
+  const unreadMessageCount = useUnreadMessageCount(showMessagesNav ? user?.id : undefined)
 
   async function handleSignOut() {
     setMenuOpen(false)
@@ -128,6 +131,19 @@ export default function Header() {
                   className="md:hidden text-sm font-medium text-indigo-600 hover:text-indigo-800 shrink-0"
                 >
                   Admin
+                </Link>
+              )}
+              {showMessagesNav && (
+                <Link
+                  to="/messages"
+                  className="hidden sm:inline-flex sm:items-center sm:gap-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  Messages
+                  {unreadMessageCount > 0 && (
+                    <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums">
+                      {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                    </span>
+                  )}
                 </Link>
               )}
               {showDashboardInAuth && (
@@ -306,6 +322,20 @@ export default function Header() {
               <div className="border-t border-gray-100 p-4 space-y-3">
                 {user ? (
                   <>
+                    {showMessagesNav && (
+                      <Link
+                        to="/messages"
+                        className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                        onClick={closeMobileNav}
+                      >
+                        Messages
+                        {unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                     {showDashboardInAuth && (
                       <Link
                         to={dashboardHref}

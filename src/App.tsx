@@ -53,6 +53,8 @@ import HowItWorks from './pages/HowItWorks'
 import Refunds from './pages/Refunds'
 import Pricing from './pages/Pricing'
 import Contact from './pages/Contact'
+import MessagesInboxPage from './pages/MessagesInboxPage'
+import ConversationThreadPage from './pages/ConversationThreadPage'
 import Services from './pages/Services'
 import ServiceStudentAccommodation from './pages/services/StudentAccommodation'
 import ServicePropertyManagement from './pages/services/PropertyManagement'
@@ -150,6 +152,22 @@ function App() {
           <Route path="/student-signup" element={<StudentSignup />} />
           <Route path="/landlord-signup" element={<LandlordSignup />} />
 
+          <Route
+            path="/messages"
+            element={
+              <RequireUser>
+                <MessagesInboxPage />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/messages/:conversationId"
+            element={
+              <RequireUser>
+                <ConversationThreadPage />
+              </RequireUser>
+            }
+          />
           <Route
             path="/onboarding"
             element={

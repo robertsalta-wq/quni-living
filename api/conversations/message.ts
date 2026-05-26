@@ -112,6 +112,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         createdAt: result.createdAt,
         maskEventCount: result.maskEventCount,
         contactUnlocked: loaded.conversation.contact_unlocked_at != null,
+        maskingEnabled,
         ...(notifyWarning ? { notifyWarning } : {}),
       },
       200,

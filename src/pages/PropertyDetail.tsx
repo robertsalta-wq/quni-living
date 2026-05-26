@@ -1,8 +1,12 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
+import {
+  openConversation,
+  PENDING_MESSAGE_PROPERTY_KEY,
+} from '../lib/messaging/conversationsApi'
+import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import type { Database, LandlordProfileRow } from '../lib/database.types'
 import type { Property } from '../lib/listings'
@@ -155,25 +159,38 @@ function PropertyThumbnail({
   )
 }
 
-function PreviewGateOverlay({ encodedRedirect }: { encodedRedirect: string }) {
+function PreviewGateOverlay({
+  encodedRedirect,
+  propertyId,
+}: {
+  encodedRedirect: string
+  propertyId: string
+}) {
+  function rememberMessageIntent() {
+    sessionStorage.setItem(PENDING_MESSAGE_PROPERTY_KEY, propertyId)
+    setPostAuthRedirect(decodeURIComponent(encodedRedirect))
+  }
+
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#FFF8F0]/80 backdrop-blur-[2px] px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white border border-[#FF6F61]/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
         <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance">
-          Create a free account to view this listing
+          Sign in to message the landlord
         </h2>
         <p className="text-sm text-stone-600 leading-relaxed">
-          Join thousands of students finding their perfect home near campus
+          Create a free account to view this listing and start a secure conversation on Quni.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
           <Link
             to={`/signup?redirect=${encodedRedirect}`}
+            onClick={rememberMessageIntent}
             className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
           >
             Sign up free
           </Link>
           <Link
             to={`/login?redirect=${encodedRedirect}`}
+            onClick={rememberMessageIntent}
             className="inline-flex items-center justify-center rounded-xl border-2 border-[#FF6F61] text-[#FF6F61] bg-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#FFF8F0] transition-colors"
           >
             Log in
@@ -255,9 +272,10 @@ export default function PropertyDetail() {
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
-  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false)
   const [amenitiesHouseTab, setAmenitiesHouseTab] = useState<'amenities' | 'house_rules'>('amenities')
-  const enquirySuccessCloseTimerRef = useRef<number | null>(null)
+  const [messageOpening, setMessageOpening] = useState(false)
+  const [messageError, setMessageError] = useState<string | null>(null)
+  const navigate = useNavigate()
   const thumbsScrollRef = useRef<HTMLDivElement>(null)
   const bookingCardRef = useRef<HTMLDivElement>(null)
 
@@ -265,42 +283,31 @@ export default function PropertyDetail() {
   const listingPath = `${location.pathname}${location.search}`
   const encodedRedirect = encodeURIComponent(listingPath)
 
-  const closeEnquiryModal = useCallback(() => {
-    if (enquirySuccessCloseTimerRef.current) {
-      clearTimeout(enquirySuccessCloseTimerRef.current)
-      enquirySuccessCloseTimerRef.current = null
+  const openMessageThread = useCallback(async () => {
+    if (!property?.id) return
+    setMessageError(null)
+    setMessageOpening(true)
+    try {
+      const result = await openConversation(property.id)
+      sessionStorage.removeItem(PENDING_MESSAGE_PROPERTY_KEY)
+      navigate(`/messages/${result.conversationId}`)
+    } catch (e) {
+      setMessageError(e instanceof Error ? e.message : 'Could not open messages')
+    } finally {
+      setMessageOpening(false)
     }
-    setEnquiryModalOpen(false)
-  }, [])
+  }, [property?.id, navigate])
 
-  const openEnquiryModal = useCallback(() => {
-    if (enquirySuccessCloseTimerRef.current) {
-      clearTimeout(enquirySuccessCloseTimerRef.current)
-      enquirySuccessCloseTimerRef.current = null
+  const handleMessageLandlord = useCallback(() => {
+    if (!property?.id) return
+    if (!user) {
+      sessionStorage.setItem(PENDING_MESSAGE_PROPERTY_KEY, property.id)
+      setPostAuthRedirect(listingPath)
+      navigate(`/login?redirect=${encodedRedirect}`)
+      return
     }
-    setEnquiryModalOpen(true)
-  }, [])
-
-  const handleEnquirySuccess = useCallback(() => {
-    enquirySuccessCloseTimerRef.current = window.setTimeout(() => {
-      enquirySuccessCloseTimerRef.current = null
-      closeEnquiryModal()
-    }, 2000)
-  }, [closeEnquiryModal])
-
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeEnquiryModal()
-    }
-    if (enquiryModalOpen) {
-      document.addEventListener('keydown', onKeyDown)
-      document.body.style.overflow = 'hidden'
-    }
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = ''
-    }
-  }, [enquiryModalOpen, closeEnquiryModal])
+    void openMessageThread()
+  }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
     if (!shouldFetch || authLoading) return
@@ -385,6 +392,13 @@ export default function PropertyDetail() {
 
   const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null
   const studentListingActionsOk = !user || role !== 'student' || isStudentListingActionsUnlocked(studentProfile)
+
+  useEffect(() => {
+    if (!user || !property?.id || role !== 'student' || !studentListingActionsOk) return
+    const pending = sessionStorage.getItem(PENDING_MESSAGE_PROPERTY_KEY)
+    if (pending !== property.id) return
+    void openMessageThread()
+  }, [user, property?.id, role, studentListingActionsOk, openMessageThread])
 
   const [activePipelineBookingId, setActivePipelineBookingId] = useState<string | null>(null)
 
@@ -1214,7 +1228,7 @@ export default function PropertyDetail() {
               </div>
               <div className="h-32 rounded-2xl bg-stone-300/70" />
             </div>
-            <PreviewGateOverlay encodedRedirect={encodedRedirect} />
+            <PreviewGateOverlay encodedRedirect={encodedRedirect} propertyId={property.id} />
           </div>
 
           <div className="mt-6">
@@ -1554,7 +1568,7 @@ export default function PropertyDetail() {
                     {role === 'student' && !studentListingActionsOk ? (
                       <div className="rounded-xl border border-[#FF6F61]/25 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
-                          Complete your profile to send enquiries and request bookings
+                          Complete your profile to message landlords and request bookings
                         </p>
                         <Link
                           to="/onboarding/student"
@@ -1590,11 +1604,17 @@ export default function PropertyDetail() {
                         </Link>
                         <button
                           type="button"
-                          onClick={openEnquiryModal}
-                          className="flex w-full items-center justify-center rounded-xl border-2 border-[#FF6F61] bg-white text-[#FF6F61] py-3.5 text-sm font-semibold tracking-wide hover:bg-[#FF6F61]/10 hover:border-[#e85d52] hover:text-[#e85d52] transition-colors"
+                          onClick={handleMessageLandlord}
+                          disabled={messageOpening}
+                          className="flex w-full items-center justify-center rounded-xl border-2 border-[#FF6F61] bg-white text-[#FF6F61] py-3.5 text-sm font-semibold tracking-wide hover:bg-[#FF6F61]/10 hover:border-[#e85d52] hover:text-[#e85d52] transition-colors disabled:opacity-60"
                         >
-                          Enquire
+                          {messageOpening ? 'Opening…' : user ? 'Message landlord' : 'Sign in to message'}
                         </button>
+                        {messageError && (
+                          <p className="text-xs text-red-700 text-center" role="alert">
+                            {messageError}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
@@ -1673,58 +1693,6 @@ export default function PropertyDetail() {
         </div>
       )}
 
-      {enquiryModalOpen && user && studentListingActionsOk && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={closeEnquiryModal}
-          role="presentation"
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="enquiry-modal-title"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 id="enquiry-modal-title" className="font-display text-xl font-bold text-gray-900">
-                Send an enquiry
-              </h2>
-              <button
-                type="button"
-                onClick={closeEnquiryModal}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="px-6 pt-4 pb-2 bg-gray-50 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-900">{property.title}</p>
-              <p className="text-sm text-gray-500">
-                {property.suburb ?? '—'} · $
-                {Number(property.rent_per_week).toLocaleString(undefined, { maximumFractionDigits: 0 })}/wk
-              </p>
-            </div>
-
-            <div className="p-6">
-              <PropertyEnquiryForm
-                propertyId={property.id}
-                landlordId={property.landlord_id}
-                propertyTitle={property.title}
-                user={user}
-                profile={profile}
-                role={role}
-                showIntro={false}
-                onSuccess={handleEnquirySuccess}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

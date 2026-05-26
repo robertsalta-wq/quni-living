@@ -11,6 +11,7 @@ import {
   readMessagingEnv,
 } from '../lib/messaging/auth.js'
 import { corsJson, handleOptions } from '../lib/messaging/cors.js'
+import { fetchContactMaskingEnabled } from '../lib/messaging/insertPeerMessage.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 30 }
 
@@ -55,6 +56,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   const { user, admin } = auth.data
+  const maskingEnabled = await fetchContactMaskingEnabled(admin)
 
   const { data: property, error: propErr } = await admin
     .from('properties')
@@ -86,6 +88,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         ok: true,
         conversationId: existing.id,
         contactUnlocked: existing.contact_unlocked_at != null,
+        maskingEnabled,
         created: false,
       },
       200,
@@ -108,6 +111,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         ok: true,
         conversationId: landlordConv.id,
         contactUnlocked: landlordConv.contact_unlocked_at != null,
+        maskingEnabled,
         created: false,
       },
       200,
@@ -155,6 +159,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
             ok: true,
             conversationId: race.id,
             contactUnlocked: race.contact_unlocked_at != null,
+            maskingEnabled,
             created: false,
           },
           200,
@@ -172,6 +177,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       ok: true,
       conversationId: created.id,
       contactUnlocked: created.contact_unlocked_at != null,
+      maskingEnabled,
       created: true,
     },
     200,
