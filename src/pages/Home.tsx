@@ -20,6 +20,8 @@ import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
+import { geocodeQuery } from '../lib/geocodeClient'
+import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -154,6 +156,7 @@ export default function Home() {
   const [nonStudentBannerDismissed, setNonStudentBannerDismissed] = useState<boolean>(
     () => localStorage.getItem('quni_nonstu_banner_dismissed') === 'true',
   )
+  const [locationSearchBusy, setLocationSearchBusy] = useState(false)
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const [dynamicListingFeeText, setDynamicListingFeeText] = useState('$99')
   const [dynamicManagedFeeText, setDynamicManagedFeeText] = useState('7%')
@@ -249,7 +252,7 @@ export default function Home() {
     setCampusId('')
   }, [isProfessionalRenter])
 
-  function handleSearch(e: FormEvent) {
+  async function handleSearch(e: FormEvent) {
     e.preventDefault()
     const params = new URLSearchParams()
     const q = locationInput.trim()
@@ -257,7 +260,29 @@ export default function Home() {
     if (showUniversityCampusFilters) {
       if (universityId) params.set('university_id', universityId)
       if (campusId) params.set('campus_id', campusId)
+      const qs = params.toString()
+      navigate(qs ? `/listings?${qs}` : '/listings')
+      return
     }
+
+    if (q.length >= 3) {
+      setLocationSearchBusy(true)
+      try {
+        const pt = await geocodeQuery(`${q}, Australia`)
+        if (pt) {
+          for (const [key, value] of nearSearchParams({
+            lat: pt.lat,
+            lon: pt.lon,
+            radiusKm: DEFAULT_NEAR_RADIUS_KM,
+          })) {
+            params.set(key, value)
+          }
+        }
+      } finally {
+        setLocationSearchBusy(false)
+      }
+    }
+
     const qs = params.toString()
     navigate(qs ? `/listings?${qs}` : '/listings')
   }
@@ -384,9 +409,10 @@ export default function Home() {
                 )}
                 <button
                   type="submit"
-                  className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
+                  disabled={locationSearchBusy}
+                  className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors disabled:opacity-70"
                 >
-                  Search
+                  {locationSearchBusy ? 'Searching…' : 'Search'}
                 </button>
               </form>
 

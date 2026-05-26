@@ -5,6 +5,28 @@ import { propertyListingVisibleOnDate } from './propertyListingDateWindow'
 export type PropertiesNearCampusRow = { id: string; distance_km: number }
 
 /** Call DB Haversine RPC (approximate straight-line distance). */
+export async function rpcPropertiesNearPoint(
+  supabase: SupabaseClient,
+  originLat: number,
+  originLon: number,
+  radiusKm: number,
+): Promise<{ data: PropertiesNearCampusRow[] | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('properties_near_point', {
+    origin_lat: originLat,
+    origin_lon: originLon,
+    radius_km: radiusKm,
+  })
+  if (error) return { data: null, error: new Error(error.message) }
+  const rows = (data ?? []) as { id: string; distance_km: number | string }[]
+  return {
+    data: rows.map((r) => ({
+      id: r.id,
+      distance_km: typeof r.distance_km === 'number' ? r.distance_km : Number(r.distance_km),
+    })),
+    error: null,
+  }
+}
+
 export async function rpcPropertiesNearCampus(
   supabase: SupabaseClient,
   campusLat: number,

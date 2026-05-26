@@ -476,6 +476,14 @@ export interface Database {
           furnishing_preference: 'furnished' | 'unfurnished' | 'either' | null
           has_guarantor: boolean | null
           guarantor_name: string | null
+          workplace_label: string | null
+          workplace_address: string | null
+          workplace_suburb: string | null
+          workplace_state: string | null
+          workplace_postcode: string | null
+          workplace_latitude: number | null
+          workplace_longitude: number | null
+          workplace_geocoded_at: string | null
           created_at: string
         }
         Insert: {
@@ -532,6 +540,14 @@ export interface Database {
           furnishing_preference?: 'furnished' | 'unfurnished' | 'either' | null
           has_guarantor?: boolean | null
           guarantor_name?: string | null
+          workplace_label?: string | null
+          workplace_address?: string | null
+          workplace_suburb?: string | null
+          workplace_state?: string | null
+          workplace_postcode?: string | null
+          workplace_latitude?: number | null
+          workplace_longitude?: number | null
+          workplace_geocoded_at?: string | null
           created_at?: string
         }
         Update: {
@@ -588,6 +604,14 @@ export interface Database {
           furnishing_preference?: 'furnished' | 'unfurnished' | 'either' | null
           has_guarantor?: boolean | null
           guarantor_name?: string | null
+          workplace_label?: string | null
+          workplace_address?: string | null
+          workplace_suburb?: string | null
+          workplace_state?: string | null
+          workplace_postcode?: string | null
+          workplace_latitude?: number | null
+          workplace_longitude?: number | null
+          workplace_geocoded_at?: string | null
           created_at?: string
         }
         Relationships: [
@@ -2117,6 +2141,17 @@ export interface Database {
       admin_reset_property_fee_snapshots_from_template: {
         Args: { p_property_id: string; p_change_reason: string }
         Returns: undefined
+      }
+      properties_near_point: {
+        Args: {
+          origin_lat: number
+          origin_lon: number
+          radius_km?: number
+        }
+        Returns: {
+          id: string
+          distance_km: number
+        }[]
       }
     }
     Enums: Record<string, never>

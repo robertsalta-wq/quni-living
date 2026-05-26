@@ -2,12 +2,17 @@ import { Link } from 'react-router-dom'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { formatDistanceKm } from '../lib/workplaceLocation'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
   property: Property
   /** When set, appended to `/properties/:slug` (e.g. `?move_in=…`). */
   linkSearch?: string
+  /** Straight-line km from viewer search anchor (work or geocoded location). */
+  distanceKm?: number
+  /** e.g. "your work" or "this location" */
+  distanceLabel?: string
   /** Dim card when the property conflicts with the viewer's selected dates. */
   unavailableForSelectedDates?: boolean
   unavailableBadgeLabel?: string
@@ -16,6 +21,8 @@ type Props = {
 export function PropertyCard({
   property,
   linkSearch,
+  distanceKm,
+  distanceLabel,
   unavailableForSelectedDates,
   unavailableBadgeLabel,
 }: Props) {
@@ -115,6 +122,12 @@ export function PropertyCard({
           </svg>
           {property.suburb ?? property.address ?? 'Location TBC'}
         </p>
+
+        {distanceKm != null && Number.isFinite(distanceKm) && distanceLabel && (
+          <p className="text-xs font-medium text-[#FF6F61] mb-2">
+            {formatDistanceKm(distanceKm)} km from {distanceLabel}
+          </p>
+        )}
 
         <div className="flex items-center gap-3 text-xs text-gray-600 mb-3 flex-wrap">
           <span className="flex items-center gap-1">

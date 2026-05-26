@@ -6,6 +6,7 @@ import {
 } from '../lib/listingAvailabilityDates'
 import { campusUrlSlug } from '../lib/slug'
 import { resolveUniversitySlugParam } from '../lib/universitySlugAliases'
+import { parseNearRadiusKm, parseNearSearchAnchor } from '../lib/workplaceLocation'
 
 const KEYS = [
   'q',
@@ -21,6 +22,9 @@ const KEYS = [
   'move_in',
   'move_out',
   'lease',
+  'near_lat',
+  'near_lon',
+  'near_radius',
 ] as const
 
 type UniversityRef = { id: string; slug: string; name: string }
@@ -37,7 +41,8 @@ function looksLikeUuid(value: string): boolean {
 
 /**
  * Listings URL contract (shareable):
- * `q`, `uni` (or `university_id`), `campus` (or `campus_id`), `suburb`, `type`, `price`, `furnished`, `sort`
+ * `q`, `uni`, `campus`, `suburb`, `type`, `price`, `furnished`, `sort`,
+ * `near_lat`, `near_lon`, `near_radius` (workplace distance search)
  */
 export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -88,6 +93,16 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
   const priceFilter = searchParams.get('price') ?? ''
   const furnished = searchParams.get('furnished') === 'true'
   const sort = searchParams.get('sort') ?? 'newest'
+
+  const nearAnchor = useMemo(
+    () =>
+      parseNearSearchAnchor(
+        searchParams.get('near_lat'),
+        searchParams.get('near_lon'),
+        searchParams.get('near_radius'),
+      ),
+    [searchParams],
+  )
 
   const moveInRaw = searchParams.get('move_in')?.trim() ?? ''
   const moveIn = isIsoDateString(moveInRaw) ? moveInRaw : ''
@@ -201,6 +216,35 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     [patch],
   )
 
+  const setNearRadiusKm = useCallback(
+    (km: number) => {
+      if (!nearAnchor) return
+      patch({ near_radius: String(km) })
+    },
+    [nearAnchor, patch],
+  )
+
+  const setNearAnchor = useCallback(
+    (lat: number, lon: number, radiusKm: number, opts?: { sortDistance?: boolean }) => {
+      patch({
+        near_lat: String(lat),
+        near_lon: String(lon),
+        near_radius: String(radiusKm),
+        sort: opts?.sortDistance === false ? null : 'distance',
+      })
+    },
+    [patch],
+  )
+
+  const clearNearAnchor = useCallback(() => {
+    patch({
+      near_lat: null,
+      near_lon: null,
+      near_radius: null,
+      sort: sort === 'distance' ? null : sort,
+    })
+  }, [patch, sort])
+
   const setMoveIn = useCallback(
     (v: string) => {
       const t = v.trim()
@@ -240,7 +284,6 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     }, { replace: true })
   }, [setSearchParams])
 
-  /** Filters that users typically “clear” (sort is separate UX, like your original) */
   const hasActiveFilters = useMemo(() => {
     return (
       Boolean(qFromUrl) ||
@@ -252,9 +295,10 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
       furnished ||
       Boolean(moveIn) ||
       Boolean(moveOut) ||
-      Boolean(lease)
+      Boolean(lease) ||
+      Boolean(nearAnchor)
     )
-  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished, moveIn, moveOut, lease])
+  }, [qFromUrl, university, campus, suburb, roomType, priceFilter, furnished, moveIn, moveOut, lease, nearAnchor])
 
   const querySignature = useMemo(() => searchParams.toString(), [searchParams])
 
@@ -275,6 +319,11 @@ export function useListingsFilters(options: UseListingsFiltersOptions = {}) {
     setFurnished,
     sort,
     setSort,
+    nearAnchor,
+    nearRadiusKm: nearAnchor?.radiusKm ?? parseNearRadiusKm(searchParams.get('near_radius')),
+    setNearRadiusKm,
+    setNearAnchor,
+    clearNearAnchor,
     clearAll,
     hasActiveFilters,
     querySignature,

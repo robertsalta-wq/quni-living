@@ -1,6 +1,6 @@
 # Professional / workplace location search — scope
 
-**Status:** Phase 1 (R1) **implemented** · Phase 2 **scoped**, build after R1 ships and early professional usage informs details  
+**Status:** Phase 1 (R1) **implemented** · Phase 2 (R2) **implemented** (apply migration `20260602120000_workplace_location_and_near_point.sql` in Supabase)  
 **Context:** Hero and strategy copy promise *“near your university or workplace”*, but search/onboarding remain campus-first. Non-students (`accommodation_verification_route = 'non_student'`) have no workplace anchor and cannot sort by distance to work.  
 **Related:** [dual-tier-service-model.md](./dual-tier-service-model.md) (persona expansion), prior decision in hero thread: messaging updated first, search UX deferred.
 
@@ -293,7 +293,7 @@ R2 may add **0.5–1 d** for listing coordinate backfill if needed.
 | Item | Status |
 |------|--------|
 | Phase 1 standalone (R1) | **Approved** |
-| Phase 2 (R2) after feedback | **Scoped, not started** |
+| Phase 2 (R2) workplace + distance | **Implemented** |
 | Locked decisions § top | **Confirmed 2026-05-26** |
 | Workplace on profile only | **Locked** |
 | Uni filters hidden for professionals | **Locked** |

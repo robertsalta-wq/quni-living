@@ -17,6 +17,8 @@ import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../lib/studentOccupancyOptions'
+import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
+import { StudentWorkLocationSection } from '../components/student/StudentWorkLocationSection'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -1229,30 +1231,42 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <UniversityCampusSelect
-              universityId={universityId || null}
-              campusId={campusId || null}
-              onUniversityChange={(id) => {
-                setUniversityId(id)
-                setCampusId('')
-              }}
-              onCampusChange={setCampusId}
-              referenceScope="full"
-              showState
-              variant="responsiveGrid"
-              labelClassName={labelClass}
-              universitySelectClassName={inputClass}
-              campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
-              universityIdAttr="st-uni"
-              campusIdAttr="st-campus"
-            />
-            {refDataError && (
-              <p className="text-xs text-red-600 mt-2" role="alert">
-                Could not load universities: {refDataError}
-              </p>
-            )}
-            {refUniversities.length === 0 && !refDataLoading && !refDataError && (
-              <p className="text-xs text-gray-500">No universities in the database yet.</p>
+            {user &&
+            profile &&
+            isNonStudentAccommodationRoute(profile.accommodation_verification_route) ? (
+              <StudentWorkLocationSection
+                profile={profile}
+                userId={user.id}
+                onSaved={refreshProfileData}
+              />
+            ) : (
+              <>
+                <UniversityCampusSelect
+                  universityId={universityId || null}
+                  campusId={campusId || null}
+                  onUniversityChange={(id) => {
+                    setUniversityId(id)
+                    setCampusId('')
+                  }}
+                  onCampusChange={setCampusId}
+                  referenceScope="full"
+                  showState
+                  variant="responsiveGrid"
+                  labelClassName={labelClass}
+                  universitySelectClassName={inputClass}
+                  campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+                  universityIdAttr="st-uni"
+                  campusIdAttr="st-campus"
+                />
+                {refDataError && (
+                  <p className="text-xs text-red-600 mt-2" role="alert">
+                    Could not load universities: {refDataError}
+                  </p>
+                )}
+                {refUniversities.length === 0 && !refDataLoading && !refDataError && (
+                  <p className="text-xs text-gray-500">No universities in the database yet.</p>
+                )}
+              </>
             )}
 
             <div>

@@ -42,6 +42,7 @@ export type Property = Database['public']['Tables']['properties']['Row'] & {
 }
 
 export const LISTINGS_SORT_OPTIONS = [
+  { value: 'distance', label: 'Nearest first' },
   { value: 'rent_asc', label: 'Price: Low to High' },
   { value: 'rent_desc', label: 'Price: High to Low' },
   { value: 'newest', label: 'Newest First' },

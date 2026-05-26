@@ -23,6 +23,12 @@ import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
+import {
+  DEFAULT_NEAR_RADIUS_KM,
+  NEAR_RADIUS_OPTIONS_KM,
+  STRAIGHT_LINE_DISTANCE_NOTE,
+  hasSavedWorkplaceCoordinates,
+} from '../lib/workplaceLocation'
 
 function buildListingsHeading(
   search: string,
@@ -88,6 +94,7 @@ export default function Listings() {
       priceFilter: filters.priceFilter,
       furnished: filters.furnished,
       sort: filters.sort,
+      nearAnchor: filters.nearAnchor,
       availabilityMoveIn: filters.moveIn || null,
       availabilityMoveOut: filters.effectiveAvailabilityMoveOut,
     }),
@@ -101,32 +108,50 @@ export default function Listings() {
       filters.priceFilter,
       filters.furnished,
       filters.sort,
+      filters.nearAnchor,
       filters.moveIn,
       filters.effectiveAvailabilityMoveOut,
     ],
   )
 
-  const availabilityLinkSearch = useMemo(
-    () =>
-      buildAvailabilitySearchString(
-        filters.moveIn || null,
-        filters.moveOut || null,
-        filters.lease || null,
-      ),
-    [filters.moveIn, filters.moveOut, filters.lease],
-  )
+  const availabilityLinkSearch = useMemo(() => {
+    const base = buildAvailabilitySearchString(
+      filters.moveIn || null,
+      filters.moveOut || null,
+      filters.lease || null,
+    )
+    if (!filters.nearAnchor) return base
+    const p = new URLSearchParams(base.startsWith('?') ? base.slice(1) : base)
+    p.set('near_lat', String(filters.nearAnchor.lat))
+    p.set('near_lon', String(filters.nearAnchor.lon))
+    p.set('near_radius', String(filters.nearAnchor.radiusKm))
+    if (filters.sort === 'distance') p.set('sort', 'distance')
+    const qs = p.toString()
+    return qs ? `?${qs}` : ''
+  }, [filters.moveIn, filters.moveOut, filters.lease, filters.nearAnchor, filters.sort])
+
+  const sortOptions = useMemo(() => {
+    if (filters.nearAnchor) return LISTINGS_SORT_OPTIONS
+    return LISTINGS_SORT_OPTIONS.filter((o) => o.value !== 'distance')
+  }, [filters.nearAnchor])
+
+  const distanceLabel = isProfessionalRenter ? 'your work' : 'this location'
 
   const viewerStudentProfileId =
     role === 'student' && profile && 'id' in (profile as StudentRow)
       ? (profile as StudentRow).id
       : null
 
-  const { properties, total, loading, error, refetch, unavailableForSelectedDatesIds } = useListingsQuery(
-    queryFilters,
-    isSupabaseConfigured,
-    filters.querySignature,
-    viewerStudentProfileId,
-  )
+  const studentProfile =
+    role === 'student' && profile && 'id' in profile ? (profile as StudentRow) : null
+
+  const { properties, total, loading, error, refetch, unavailableForSelectedDatesIds, distanceKmByPropertyId } =
+    useListingsQuery(
+      queryFilters,
+      isSupabaseConfigured,
+      filters.querySignature,
+      viewerStudentProfileId,
+    )
 
   const aiListingContext = useMemo(() => {
     return {
@@ -226,6 +251,44 @@ export default function Listings() {
           </div>
         )}
 
+        {isProfessionalRenter &&
+          studentProfile &&
+          !hasSavedWorkplaceCoordinates(studentProfile) &&
+          !filters.nearAnchor && (
+            <div
+              className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-950"
+              role="status"
+            >
+              <span className="font-semibold">Set your work location</span> to sort listings by distance from where you
+              work.{' '}
+              <Link
+                to="/student-profile"
+                className="font-semibold text-[#FF6F61] underline underline-offset-2"
+              >
+                Add work location
+              </Link>
+            </div>
+          )}
+
+        {filters.nearAnchor && (
+          <div
+            className="mb-4 flex flex-wrap items-center gap-2 text-sm text-stone-700"
+            role="status"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 text-indigo-900 px-3 py-1 font-medium">
+              Within {filters.nearAnchor.radiusKm} km · {STRAIGHT_LINE_DISTANCE_NOTE}
+              <button
+                type="button"
+                onClick={filters.clearNearAnchor}
+                className="ml-1 text-indigo-700 hover:text-indigo-950 underline text-xs font-semibold"
+                aria-label="Clear distance filter"
+              >
+                Clear
+              </button>
+            </span>
+          </div>
+        )}
+
         <div className="mb-6 w-full">
           <ChatEmbed variant="listings" listingContext={aiListingContext} />
         </div>
@@ -274,6 +337,45 @@ export default function Listings() {
                   />
                 </div>
               </div>
+
+              {isProfessionalRenter &&
+                studentProfile &&
+                hasSavedWorkplaceCoordinates(studentProfile) && (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lat = studentProfile.workplace_latitude!
+                        const lon = studentProfile.workplace_longitude!
+                        filters.setNearAnchor(lat, lon, filters.nearRadiusKm || DEFAULT_NEAR_RADIUS_KM, {
+                          sortDistance: true,
+                        })
+                      }}
+                      className="w-full text-left text-xs font-semibold text-[#FF6F61] hover:underline"
+                    >
+                      Use my saved work location
+                    </button>
+                  </div>
+                )}
+              {filters.nearAnchor && (
+                <div className="mb-4">
+                  <label htmlFor="listings-near-radius" className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Radius from location
+                  </label>
+                  <select
+                    id="listings-near-radius"
+                    value={String(filters.nearAnchor.radiusKm)}
+                    onChange={(e) => filters.setNearRadiusKm(Number(e.target.value))}
+                    className="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg bg-white"
+                  >
+                    {NEAR_RADIUS_OPTIONS_KM.map((km) => (
+                      <option key={km} value={km}>
+                        {km} km
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {showUniversityCampusFilters && (
                 <div className="mb-4">
@@ -417,7 +519,7 @@ export default function Listings() {
                 onChange={(e) => filters.setSort(e.target.value)}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
               >
-                {LISTINGS_SORT_OPTIONS.map((o) => (
+                {sortOptions.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
@@ -484,6 +586,8 @@ export default function Listings() {
                       key={p.id}
                       property={p}
                       linkSearch={availabilityLinkSearch}
+                      distanceKm={distanceKmByPropertyId.get(p.id)}
+                      distanceLabel={distanceKmByPropertyId.has(p.id) ? distanceLabel : undefined}
                       unavailableForSelectedDates={blocked}
                       unavailableBadgeLabel={
                         blocked && filters.moveIn

@@ -37,6 +37,23 @@ import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
+import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
+import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
+import {
+  formatDistanceKm,
+  hasSavedWorkplaceCoordinates,
+  parseNearSearchAnchor,
+  STRAIGHT_LINE_DISTANCE_NOTE,
+} from '../lib/workplaceLocation'
+
+function haversineKm(a: GeoPoint, b: GeoPoint): number {
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180
+  const sLat1 = (a.lat * Math.PI) / 180
+  const sLat2 = (b.lat * Math.PI) / 180
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(sLat1) * Math.cos(sLat2)
+  return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
 
 type GeoPoint = { lat: number; lon: number }
 type PublicPropertyStatus = Database['public']['Tables']['properties']['Row']['status'] | 'suspended'
@@ -257,6 +274,7 @@ export default function PropertyDetail() {
   )
 
   const { user, profile, role, session, refreshProfile, loading: authLoading } = useAuthContext()
+  const { isProfessionalRenter } = useRenterSearchPersona()
   const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference()
   const uniNameById = useMemo(() => {
     const m = new Map<string, string>()
@@ -667,6 +685,34 @@ export default function PropertyDetail() {
 
     setNearbyCampuses(top)
   }, [listingGeoPoint, campusRefRows, uniRefRows, uniNameById])
+
+  const viewerSearchAnchor = useMemo((): GeoPoint | null => {
+    const fromUrl = parseNearSearchAnchor(
+      searchParams.get('near_lat'),
+      searchParams.get('near_lon'),
+      searchParams.get('near_radius'),
+    )
+    if (fromUrl) return { lat: fromUrl.lat, lon: fromUrl.lon }
+
+    if (
+      role === 'student' &&
+      profile &&
+      'accommodation_verification_route' in profile &&
+      isNonStudentAccommodationRoute((profile as StudentProfileRow).accommodation_verification_route) &&
+      hasSavedWorkplaceCoordinates(profile as StudentProfileRow)
+    ) {
+      const sp = profile as StudentProfileRow
+      return { lat: sp.workplace_latitude!, lon: sp.workplace_longitude! }
+    }
+    return null
+  }, [searchParams, role, profile])
+
+  const distanceFromViewerAnchorKm = useMemo(() => {
+    if (!viewerSearchAnchor || !listingGeoPoint) return null
+    return haversineKm(viewerSearchAnchor, listingGeoPoint)
+  }, [viewerSearchAnchor, listingGeoPoint])
+
+  const viewerDistanceLabel = isProfessionalRenter ? 'your work' : 'this location'
 
   useEffect(() => {
     if (!property?.id || !listingGeoPoint || !isSupabaseConfigured) {
@@ -1115,6 +1161,17 @@ export default function PropertyDetail() {
         <div className={`${SITE_CONTENT_MAX_CLASS} mb-3 sm:mb-4`} role="status">
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
             <p className="font-semibold text-emerald-900">Available from {formatAuShortDate(filterMoveIn)}</p>
+          </div>
+        </div>
+      )}
+
+      {distanceFromViewerAnchorKm != null && (
+        <div className={`${SITE_CONTENT_MAX_CLASS} mb-3 sm:mb-4`} role="status">
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/90 px-4 py-3 text-sm text-indigo-950 shadow-sm">
+            <p className="font-semibold text-indigo-950">
+              {formatDistanceKm(distanceFromViewerAnchorKm)} km from {viewerDistanceLabel}
+            </p>
+            <p className="mt-1 text-indigo-900/85 text-xs">{STRAIGHT_LINE_DISTANCE_NOTE}</p>
           </div>
         </div>
       )}
