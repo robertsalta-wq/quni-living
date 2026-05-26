@@ -102,6 +102,31 @@ describe('deriveLeaseDocState', () => {
     })
     expect(state).toBe('ready_to_sign')
   })
+
+  it('does not yield fully_signed when co-tenant signature is required but missing', () => {
+    const state = deriveLeaseDocState({
+      ...baseRow,
+      documentStatus: 'signed',
+      landlordSignedAt: '2026-05-09T00:00:00Z',
+      studentSignedAt: '2026-05-09T01:00:00Z',
+      coTenantSigningRequired: true,
+      coTenantSignedAt: null,
+      viewerRole: 'landlord',
+    })
+    expect(state).toBe('awaiting_other')
+  })
+
+  it('yields fully_signed when co-tenant has also signed', () => {
+    const state = deriveLeaseDocState({
+      ...baseRow,
+      documentStatus: 'signed',
+      landlordSignedAt: '2026-05-09T00:00:00Z',
+      studentSignedAt: '2026-05-09T01:00:00Z',
+      coTenantSigningRequired: true,
+      coTenantSignedAt: '2026-05-09T02:00:00Z',
+    })
+    expect(state).toBe('fully_signed')
+  })
 })
 
 describe('leaseDocStateCtaLabel', () => {

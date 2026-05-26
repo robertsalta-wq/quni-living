@@ -33,6 +33,8 @@ export function validateBookingOccupancy(opts: {
   parkingSelected: boolean
   parkingAvailable: boolean
   coTenant: CoTenantFormState
+  /** Primary tenant email — co-tenant must differ for separate DocuSeal signatures. */
+  primaryTenantEmail?: string | null
 }): string | null {
   if (opts.occupantCount > opts.maxOccupants) {
     return opts.maxOccupants === 1
@@ -46,6 +48,10 @@ export function validateBookingOccupancy(opts: {
     if (opts.coTenant.fullName.trim().length < 2) return 'Please enter your co-tenant’s full name.'
     const email = opts.coTenant.email.trim()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Please enter a valid email for your co-tenant.'
+    const primary = (opts.primaryTenantEmail ?? '').trim().toLowerCase()
+    if (primary && email.toLowerCase() === primary) {
+      return 'Your co-tenant must use a different email from yours so each of you can sign the lease separately.'
+    }
     if (opts.coTenant.phone.trim().length < 6) return 'Please enter a phone number for your co-tenant.'
     if (!/^\d{4}-\d{2}-\d{2}$/.test(opts.coTenant.dateOfBirth.trim())) {
       return 'Please enter your co-tenant’s date of birth (YYYY-MM-DD).'

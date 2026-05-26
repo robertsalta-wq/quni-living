@@ -23,6 +23,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 import { deriveLeaseDocState } from '../lib/leaseState.js'
+import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
 
   const { data: booking, error: bErr } = await admin
     .from('bookings')
-    .select('id, landlord_id, student_id, status, service_tier_final')
+    .select('id, landlord_id, student_id, status, service_tier_final, occupant_count, co_tenant')
     .eq('id', bookingId)
     .maybeSingle()
 
@@ -128,7 +129,7 @@ export default async function handler(req, res) {
   const { data: docRows, error: dErr } = await admin
     .from('tenancy_documents')
     .select(
-      'id, file_path, document_type, status, metadata, landlord_signed_at, student_signed_at, docuseal_submission_id',
+      'id, file_path, document_type, status, metadata, landlord_signed_at, student_signed_at, co_tenant_signed_at, docuseal_submission_id',
     )
     .eq('tenancy_id', tenancy.id)
     .in('document_type', ['lease', 'residential_tenancy'])
@@ -152,6 +153,8 @@ export default async function handler(req, res) {
     })
   }
 
+  const coTenantSigningRequired = bookingRequiresCoTenantSignature(booking)
+
   const state = deriveLeaseDocState({
     bookingStatus: booking.status,
     serviceTierFinal: booking.service_tier_final,
@@ -159,20 +162,26 @@ export default async function handler(req, res) {
     documentStatus: doc.status,
     landlordSignedAt: doc.landlord_signed_at,
     studentSignedAt: doc.student_signed_at,
+    coTenantSigningRequired,
+    coTenantSignedAt: doc.co_tenant_signed_at,
     viewerRole,
   })
+
+  const renterSideSigned =
+    Boolean(doc.student_signed_at) &&
+    (!coTenantSigningRequired || Boolean(doc.co_tenant_signed_at))
 
   const result = {
     state,
     viewer_role: viewerRole,
+    co_tenant_signing_required: coTenantSigningRequired,
+    co_tenant_signed: Boolean(doc.co_tenant_signed_at),
     viewer_signed:
       viewerRole === 'landlord'
         ? Boolean(doc.landlord_signed_at)
         : Boolean(doc.student_signed_at),
     counterparty_signed:
-      viewerRole === 'landlord'
-        ? Boolean(doc.student_signed_at)
-        : Boolean(doc.landlord_signed_at),
+      viewerRole === 'landlord' ? renterSideSigned : Boolean(doc.landlord_signed_at),
   }
 
   const meta =

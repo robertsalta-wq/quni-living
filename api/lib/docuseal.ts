@@ -17,6 +17,11 @@ import {
   isLandlordFeeExempt,
   resolveManagedApplicationFeePercent,
 } from './pricing/resolvePlatformFee.js'
+import {
+  coTenantEmailDistinctFromPrimary,
+  fetchCoTenantSignerForTenancy,
+  fetchCoTenantSignerForBooking,
+} from './booking/coTenantSigning.js'
 
 export function getDocusealSubmissionsUrl(): string {
   return getDocusealSubmissionsUrlImpl()
@@ -357,11 +362,21 @@ export async function sendForSigning(documentId: string): Promise<void> {
   const buf = Buffer.from(await fileBlob.arrayBuffer())
   const pdfBase64 = buf.toString('base64')
 
+  let coTenantSigner: { name: string; email: string } | null = null
+  try {
+    coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
+  } catch (e) {
+    throw e instanceof Error ? e : new Error(String(e))
+  }
+
   const submission = await createDocusealSubmissionFromPdf({
-    name: `Lease — ${landlordName} / ${tenantName}`,
+    name: coTenantSigner
+      ? `Lease — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+      : `Lease — ${landlordName} / ${tenantName}`,
     pdfBase64,
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
+    coTenant: coTenantSigner,
   })
 
   const submissionId = submission.id != null ? String(submission.id) : null
@@ -398,6 +413,10 @@ export async function sendForSigning(documentId: string): Promise<void> {
     <p>— Quni Living (quni.com.au)</p>
   `
 
+  const coTenantLink =
+    coTenantSigner &&
+    submitters.find((s) => (s.role || '').toLowerCase().includes('co-tenant'))?.embed_src
+
   await Promise.all([
     landlordLink
       ? sendEmail({
@@ -413,7 +432,29 @@ export async function sendForSigning(documentId: string): Promise<void> {
           html: signHtml(tenantName, tenantLink),
         })
       : Promise.resolve(),
+    coTenantSigner && coTenantLink
+      ? sendEmail({
+          to: coTenantSigner.email,
+          subject: 'Your Quni Living lease is ready to sign (co-tenant)',
+          html: signHtml(coTenantSigner.name, coTenantLink),
+        })
+      : Promise.resolve(),
   ])
+}
+
+async function resolveCoTenantSignerForSubmission(
+  tenancyId: string,
+  primaryTenantEmail: string,
+): Promise<{ name: string; email: string } | null> {
+  const admin = adminClient()
+  const co = await fetchCoTenantSignerForTenancy(admin, tenancyId)
+  if (!co) return null
+  if (!coTenantEmailDistinctFromPrimary(primaryTenantEmail, co.email)) {
+    throw new Error(
+      'Co-tenant must use a different email from the primary tenant so each party can sign the lease.',
+    )
+  }
+  return co
 }
 
 /** NSW RTA package (FT6600 + Quni addendum): two draft PDFs in Storage, one DocuSeal submission. */
@@ -505,10 +546,16 @@ export async function sendResidentialTenancyPackageForSigning(
   const rtaBase64 = Buffer.from(await rtaBlob.arrayBuffer()).toString('base64')
   const addendumBase64 = Buffer.from(await addBlob.arrayBuffer()).toString('base64')
 
+  const coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
+
   const submission = await createDocusealSubmissionFromPdf({
     name: isQldResidential
-      ? `QLD Form 18a — ${landlordName} / ${tenantName}`
-      : `NSW RTA — ${landlordName} / ${tenantName}`,
+      ? coTenantSigner
+        ? `QLD Form 18a — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+        : `QLD Form 18a — ${landlordName} / ${tenantName}`
+      : coTenantSigner
+        ? `NSW RTA — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+        : `NSW RTA — ${landlordName} / ${tenantName}`,
     documents: [
       {
         name: isQldResidential
@@ -520,6 +567,7 @@ export async function sendResidentialTenancyPackageForSigning(
     ],
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
+    coTenant: coTenantSigner,
     ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
   })
 
@@ -575,6 +623,10 @@ export async function sendResidentialTenancyPackageForSigning(
     ? 'Your QLD Form 18a tenancy agreement is ready to sign'
     : 'Your NSW residential tenancy agreement is ready to sign'
 
+  const coTenantLink =
+    coTenantSigner &&
+    submitters.find((s) => (s.role || '').toLowerCase().includes('co-tenant'))?.embed_src
+
   await Promise.all([
     landlordLink
       ? sendEmail({
@@ -588,6 +640,15 @@ export async function sendResidentialTenancyPackageForSigning(
           to: tenantEmail,
           subject: readySubject,
           html: signHtml(tenantName, tenantLink),
+        })
+      : Promise.resolve(),
+    coTenantSigner && coTenantLink
+      ? sendEmail({
+          to: coTenantSigner.email,
+          subject: isQldResidential
+            ? 'Your QLD tenancy agreement is ready to sign (co-tenant)'
+            : 'Your NSW tenancy agreement is ready to sign (co-tenant)',
+          html: signHtml(coTenantSigner.name, coTenantLink),
         })
       : Promise.resolve(),
   ])
@@ -612,7 +673,9 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   const { data: docRow, error: findErr } = await admin
     .from('tenancy_documents')
-    .select('id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at')
+    .select(
+      'id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at',
+    )
     .eq('docuseal_submission_id', submissionId)
     .maybeSingle()
 
@@ -695,14 +758,26 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     typeof docRow.student_signed_at === 'string' && docRow.student_signed_at.trim()
       ? docRow.student_signed_at
       : null
+  const existingCoTenantAt =
+    typeof docRow.co_tenant_signed_at === 'string' && docRow.co_tenant_signed_at.trim()
+      ? docRow.co_tenant_signed_at
+      : null
+
+  const coTenantRequired = Boolean(await fetchCoTenantSignerForTenancy(admin, docRow.tenancy_id))
 
   const incomingLandlordAt = extractCompletedAt(payload, 'landlord')
   const incomingStudentAt = extractCompletedAt(payload, 'tenant')
+  const incomingCoTenantAt = extractCompletedAt(payload, 'co_tenant')
   const submissionCompletedAt = extractSubmissionCompletedAt(payload)
 
   const nextLandlordAt = existingLandlordAt ?? incomingLandlordAt ?? submissionCompletedAt
   const nextStudentAt = existingStudentAt ?? incomingStudentAt ?? submissionCompletedAt
-  const fullySigned = Boolean(nextLandlordAt) && Boolean(nextStudentAt)
+  const nextCoTenantAt =
+    existingCoTenantAt ?? incomingCoTenantAt ?? (coTenantRequired ? null : submissionCompletedAt)
+  const fullySigned =
+    Boolean(nextLandlordAt) &&
+    Boolean(nextStudentAt) &&
+    (!coTenantRequired || Boolean(nextCoTenantAt))
 
   const previousStatus = typeof docRow.status === 'string' ? docRow.status : 'sent_for_signing'
   const nextStatus = fullySigned ? 'signed' : previousStatus === 'signed' ? 'signed' : 'sent_for_signing'
@@ -714,6 +789,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
       file_path: signedPath,
       landlord_signed_at: nextLandlordAt,
       student_signed_at: nextStudentAt,
+      co_tenant_signed_at: coTenantRequired ? nextCoTenantAt : null,
       metadata: { ...nextMetadata, last_webhook: payload as unknown as Json } as Json,
     })
     .eq('id', docRow.id)
@@ -774,6 +850,22 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   if (le && link) await sendEmail({ to: le, subject: signedSubject, html: doneHtml(String(ln)) })
   if (se && link) await sendEmail({ to: se, subject: signedSubject, html: doneHtml(String(sn)) })
 
+  const { data: tenancyRow } = await admin
+    .from('tenancies')
+    .select('booking_id')
+    .eq('id', docRow.tenancy_id)
+    .maybeSingle()
+  if (tenancyRow?.booking_id) {
+    const coDone = await fetchCoTenantSignerForBooking(admin, tenancyRow.booking_id)
+    if (coDone?.email && link) {
+      await sendEmail({
+        to: coDone.email,
+        subject: signedSubject,
+        html: doneHtml(coDone.name),
+      })
+    }
+  }
+
   return { ok: true }
 }
 
@@ -791,19 +883,34 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
  * for the Download button needs accurate per-party timestamps, so we now return null when
  * the payload does not actually carry a per-role completion time.
  */
-export function extractCompletedAt(payload: unknown, role: 'landlord' | 'tenant'): string | null {
+function submitterRoleMatches(roleStr: string, role: 'landlord' | 'tenant' | 'co_tenant'): boolean {
+  if (role === 'co_tenant') {
+    return roleStr.includes('co-tenant') || roleStr.includes('co tenant')
+  }
+  if (roleStr.includes('co-tenant') || roleStr.includes('co tenant')) return false
+  if (role === 'landlord') return roleStr.includes('landlord') || roleStr.includes('first party')
+  return (
+    roleStr.includes('tenant') ||
+    roleStr.includes('second party') ||
+    roleStr.includes('renter')
+  )
+}
+
+export function extractCompletedAt(
+  payload: unknown,
+  role: 'landlord' | 'tenant' | 'co_tenant',
+): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const submitters = root.submitters
   if (!Array.isArray(submitters)) return null
-  const needle = role === 'landlord' ? 'landlord' : 'tenant'
   for (const s of submitters) {
     if (!s || typeof s !== 'object') continue
     const r = (s as Record<string, unknown>).role
     const roleStr = typeof r === 'string' ? r.toLowerCase() : ''
-    if (!roleStr.includes(needle)) continue
+    if (!submitterRoleMatches(roleStr, role)) continue
     const c = (s as Record<string, unknown>).completed_at
     if (typeof c === 'string' && c.trim()) return c
     return null

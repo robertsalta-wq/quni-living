@@ -1982,6 +1982,7 @@ export interface Database {
           generated_by: string | null
           landlord_signed_at: string | null
           student_signed_at: string | null
+          co_tenant_signed_at: string | null
           metadata: Json | null
           created_at: string
           updated_at: string
@@ -2012,6 +2013,7 @@ export interface Database {
           generated_by?: string | null
           landlord_signed_at?: string | null
           student_signed_at?: string | null
+          co_tenant_signed_at?: string | null
           metadata?: Json | null
           created_at?: string
           updated_at?: string
@@ -2042,6 +2044,7 @@ export interface Database {
           generated_by?: string | null
           landlord_signed_at?: string | null
           student_signed_at?: string | null
+          co_tenant_signed_at?: string | null
           metadata?: Json | null
           created_at?: string
           updated_at?: string

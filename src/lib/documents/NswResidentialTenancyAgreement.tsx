@@ -662,7 +662,16 @@ function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
           <Text style={styles.body}>{tenant2Banner}</Text>
           <Text style={styles.value}>{t2}</Text>
           <View style={styles.sigBox}>
-            <Text style={styles.body}>Signature of tenant: </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.body}>Signature of tenant: </Text>
+              <Text style={styles.sigHint}>{'{{Tenant 2 Signature;role=Co-tenant;type=signature}}'}</Text>
+            </View>
+          </View>
+          <View style={{ ...styles.sigBox, minHeight: 28 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.sigHint}>Tenant 2 sign date </Text>
+              <Text style={styles.sigHint}>{'{{Tenant 2 Sign Date;role=Co-tenant;type=date}}'}</Text>
+            </View>
           </View>
         </>
       ) : null}

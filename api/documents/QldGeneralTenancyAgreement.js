@@ -1344,8 +1344,8 @@ function Form18aSignaturesBlock(props) {
         /* @__PURE__ */ jsx2(Text2, { style: styles.labelBold, children: "Print name: " }),
         tenant2
       ] }),
-      /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Tenant 2 Signature;role=Second Party;type=signature}}" }) }),
-      /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Tenant 2 Sign Date;role=Second Party;type=date}}" }) })
+      /* @__PURE__ */ jsx2(View2, { style: styles.sigBox, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Tenant 2 Signature;role=Co-tenant;type=signature}}" }) }),
+      /* @__PURE__ */ jsx2(View2, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsx2(Text2, { style: styles.sigHint, children: "{{Tenant 2 Sign Date;role=Co-tenant;type=date}}" }) })
     ] }) : null,
     tenant3 ? /* @__PURE__ */ jsxs2(Fragment, { children: [
       /* @__PURE__ */ jsx2(Text2, { style: { ...styles.subHeading, marginTop: 8 }, children: "Signature of tenant 3" }),

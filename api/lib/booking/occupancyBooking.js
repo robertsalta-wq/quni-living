@@ -95,9 +95,10 @@ export function parseCoTenantFromBody(raw) {
 /**
  * @param {number} occupantCount
  * @param {unknown} coTenantRaw
+ * @param {{ primaryTenantEmail?: string | null }} [opts]
  * @returns {{ ok: true, coTenant: object | null } | { ok: false, status: number, body: Record<string, unknown> }}
  */
-export function resolveCoTenantForCommit(occupantCount, coTenantRaw) {
+export function resolveCoTenantForCommit(occupantCount, coTenantRaw, opts = {}) {
   if (occupantCount === 1) {
     if (coTenantRaw != null) {
       return {
@@ -114,6 +115,22 @@ export function resolveCoTenantForCommit(occupantCount, coTenantRaw) {
 
   const parsed = parseCoTenantFromBody(coTenantRaw)
   if (!parsed.ok) return parsed
+
+  const primaryEmail =
+    typeof opts.primaryTenantEmail === 'string' ? opts.primaryTenantEmail.trim().toLowerCase() : ''
+  const coEmail = parsed.coTenant.email.trim().toLowerCase()
+  if (primaryEmail && coEmail === primaryEmail) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        error: 'co_tenant_email_must_differ',
+        message:
+          'Co-tenant must use a different email from your account so they can sign the lease separately.',
+      },
+    }
+  }
+
   return { ok: true, coTenant: parsed.coTenant }
 }
 

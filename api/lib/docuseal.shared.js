@@ -76,6 +76,7 @@ async function readErrorBody(res) {
  *   documents?: Array<{ name: string, file: string }>,
  *   landlord: {name: string, email: string},
  *   tenant: {name: string, email: string},
+ *   coTenant?: {name: string, email: string} | null,
  *   submitterSignReason?: boolean
  * }} params
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
@@ -112,15 +113,21 @@ export async function createDocusealSubmissionFromPdf(params) {
     ...(signReasonOff ? { sign_reason: false } : {}),
   })
 
+  const submitters = [
+    submitterFields(params.landlord.email, params.landlord.name, 'Landlord'),
+    submitterFields(params.tenant.email, params.tenant.name, 'Tenant'),
+  ]
+  const co = params.coTenant
+  if (co && typeof co.email === 'string' && co.email.trim() && typeof co.name === 'string' && co.name.trim()) {
+    submitters.push(submitterFields(co.email.trim(), co.name.trim(), 'Co-tenant'))
+  }
+
   const body = {
     name: params.name,
     order: 'preserved',
     send_email: asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
     documents,
-    submitters: [
-      submitterFields(params.landlord.email, params.landlord.name, 'Landlord'),
-      submitterFields(params.tenant.email, params.tenant.name, 'Tenant'),
-    ],
+    submitters,
   }
 
   console.log('[DocuSeal] create submission request', {

@@ -645,8 +645,17 @@ export default function Booking() {
       parkingSelected,
       parkingAvailable: Boolean(property?.parking_available),
       coTenant: coTenantForm,
+      primaryTenantEmail: studentProfile?.email ?? null,
     })
-  }, [rentResolution, maxOccupants, occupantCount, parkingSelected, property?.parking_available, coTenantForm])
+  }, [
+    rentResolution,
+    maxOccupants,
+    occupantCount,
+    parkingSelected,
+    property?.parking_available,
+    coTenantForm,
+    studentProfile?.email,
+  ])
 
   const conflictMoveOutDate = useMemo(() => {
     if (explicitMoveOutFromUrl && isIsoDateString(explicitMoveOutFromUrl)) return explicitMoveOutFromUrl

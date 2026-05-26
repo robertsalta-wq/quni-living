@@ -11,11 +11,10 @@
  *                           the draft but cannot sign yet.
  *   - 'ready_to_sign'     — DocuSeal session is live and the viewer has not yet signed.
  *   - 'awaiting_other'    — DocuSeal session is live, viewer has signed but counterparty has not.
- *   - 'fully_signed'      — Both parties have signed; the executed PDF is downloadable.
+ *   - 'fully_signed'      — All required parties have signed; the executed PDF is downloadable.
  *
- * Decision: the "Download signed agreement" button is gated on `fully_signed` (both
- * landlord_signed_at AND student_signed_at populated), not just on `tenancy_documents.status`.
- * This fixes the backlog item where the button could appear after a single party signed.
+ * When the booking has a co-tenant (occupant_count >= 2 with co_tenant details), a third
+ * DocuSeal signature is required before `fully_signed`.
  */
 
 export type LeaseDocState = 'none' | 'preview' | 'ready_to_sign' | 'awaiting_other' | 'fully_signed'
@@ -29,16 +28,26 @@ export type LeaseStateInput = {
   documentStatus: string | null | undefined
   landlordSignedAt: string | null | undefined
   studentSignedAt: string | null | undefined
+  /** When true, co_tenant_signed_at must be set for fully_signed. */
+  coTenantSigningRequired?: boolean
+  coTenantSignedAt?: string | null | undefined
   viewerRole: 'landlord' | 'tenant'
+}
+
+function timestampSet(v: string | null | undefined): boolean {
+  return Boolean(v && String(v).trim())
+}
+
+function allRequiredPartiesSigned(input: LeaseStateInput): boolean {
+  const landlordOk = timestampSet(input.landlordSignedAt)
+  const studentOk = timestampSet(input.studentSignedAt)
+  const coOk = !input.coTenantSigningRequired || timestampSet(input.coTenantSignedAt)
+  return landlordOk && studentOk && coOk
 }
 
 /** Purely derive the conceptual lease state for the viewer. No I/O. */
 export function deriveLeaseDocState(input: LeaseStateInput): LeaseDocState {
-  const fullySigned = Boolean(
-    input.landlordSignedAt && String(input.landlordSignedAt).trim() &&
-      input.studentSignedAt && String(input.studentSignedAt).trim(),
-  )
-  if (fullySigned) return 'fully_signed'
+  if (allRequiredPartiesSigned(input)) return 'fully_signed'
 
   if (!input.documentExists) return 'none'
 
@@ -47,28 +56,20 @@ export function deriveLeaseDocState(input: LeaseStateInput): LeaseDocState {
   if (status === 'sent_for_signing') {
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
-    if (viewerSignedAt && String(viewerSignedAt).trim()) {
+    if (timestampSet(viewerSignedAt)) {
       return 'awaiting_other'
     }
     return 'ready_to_sign'
   }
 
   if (status === 'draft') {
-    /**
-     * Preview-only mode is only meaningful while the booking is still gating signing.
-     * For Listing this is `bond_pending`; once the booking moves to confirmed/active we
-     * still show "preview" (rather than "none") so the viewer sees something between the
-     * server creating the row and DocuSeal accepting the submission. Real "ready_to_sign"
-     * arrives when status flips to sent_for_signing.
-     */
     return 'preview'
   }
 
   if (status === 'signed') {
-    /** Status flag is on but timestamps are not — treat as awaiting completion. */
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
-    if (viewerSignedAt && String(viewerSignedAt).trim()) return 'awaiting_other'
+    if (timestampSet(viewerSignedAt)) return 'awaiting_other'
     return 'ready_to_sign'
   }
 

@@ -55,4 +55,23 @@ describe('extractCompletedAt (Phase 3 / Task J)', () => {
     }
     expect(extractCompletedAt(payload, 'landlord')).toBe('2026-05-09T10:00:00Z')
   })
+
+  it('extracts co-tenant completed_at without matching primary tenant', () => {
+    const payload = {
+      submitters: [
+        { role: 'Second Party', completed_at: '2026-05-09T11:00:00Z' },
+        { role: 'Co-tenant', completed_at: '2026-05-09T12:00:00Z' },
+      ],
+    }
+    expect(extractCompletedAt(payload, 'co_tenant')).toBe('2026-05-09T12:00:00Z')
+    expect(extractCompletedAt(payload, 'tenant')).toBe('2026-05-09T11:00:00Z')
+  })
+
+  it('does not treat Co-tenant role as primary tenant', () => {
+    const payload = {
+      submitters: [{ role: 'Co-tenant', completed_at: '2026-05-09T12:00:00Z' }],
+    }
+    expect(extractCompletedAt(payload, 'tenant')).toBeNull()
+    expect(extractCompletedAt(payload, 'co_tenant')).toBe('2026-05-09T12:00:00Z')
+  })
 })

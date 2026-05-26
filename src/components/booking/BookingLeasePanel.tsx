@@ -25,6 +25,8 @@ type LeaseStateApiResult = {
   viewer_role: 'landlord' | 'tenant'
   viewer_signed: boolean
   counterparty_signed: boolean
+  co_tenant_signing_required?: boolean
+  co_tenant_signed?: boolean
   preview_url?: string
   signing_url?: string
   signed_url?: string
@@ -107,7 +109,21 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
 
   if (!data || data.state === 'none') return null
 
-  const { state, viewer_role, preview_url, signing_url, signed_url, signed_url_rta, signed_url_addendum } = data
+  const {
+    state,
+    viewer_role,
+    co_tenant_signing_required,
+    co_tenant_signed,
+    preview_url,
+    signing_url,
+    signed_url,
+    signed_url_rta,
+    signed_url_addendum,
+  } = data
+
+  const signingPartyNote = co_tenant_signing_required
+    ? 'The host, you, and your co-tenant must each sign before the agreement is binding.'
+    : 'Both parties must sign before the agreement becomes binding.'
 
   return (
     <div
@@ -136,7 +152,7 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
         <>
           <p className="font-semibold leading-snug">Sign your tenancy agreement</p>
           <p className="text-xs leading-relaxed text-indigo-900/90">
-            Your tenancy agreement is ready to sign. Both parties must sign before the agreement becomes binding.
+            Your tenancy agreement is ready to sign. {signingPartyNote}
           </p>
           {signing_url ? (
             <a
@@ -167,9 +183,18 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
 
       {state === 'awaiting_other' && (
         <>
-          <p className="font-semibold leading-snug">Awaiting {counterpartyLabel(viewer_role)} signature</p>
+          <p className="font-semibold leading-snug">
+            {co_tenant_signing_required && !co_tenant_signed && viewer_role === 'landlord'
+              ? 'Awaiting renter and co-tenant signatures'
+              : co_tenant_signing_required && !co_tenant_signed && viewer_role === 'tenant'
+                ? 'Awaiting host and co-tenant signatures'
+                : `Awaiting ${counterpartyLabel(viewer_role)} signature`}
+          </p>
           <p className="text-xs leading-relaxed text-indigo-900/90">
-            You&apos;ve signed your tenancy agreement. The signed PDF will appear here once the {counterpartyLabel(viewer_role)} has also signed.
+            You&apos;ve signed your tenancy agreement.{' '}
+            {co_tenant_signing_required && !co_tenant_signed
+              ? 'The signed PDF will appear here once your host and co-tenant have also signed (your co-tenant receives a separate signing link by email).'
+              : `The signed PDF will appear here once the ${counterpartyLabel(viewer_role)} has also signed.`}
           </p>
           {preview_url && (
             <a
@@ -188,7 +213,8 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
         <>
           <p className="font-semibold leading-snug">Tenancy agreement signed</p>
           <p className="text-xs leading-relaxed text-indigo-900/90">
-            Your residential tenancy agreement is fully executed by both parties.
+            Your residential tenancy agreement is fully executed
+            {co_tenant_signing_required ? ' by all parties' : ' by both parties'}.
           </p>
           {signed_url_rta && signed_url_addendum ? (
             <div className="flex flex-wrap gap-2">

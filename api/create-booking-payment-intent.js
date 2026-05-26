@@ -293,12 +293,6 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   const { occupantCount, parkingSelected } = occupancyParsed
 
-  const coTenantResolved = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant)
-  if (!coTenantResolved.ok) {
-    return json(coTenantResolved.body, coTenantResolved.status, origin)
-  }
-  const coTenant = coTenantResolved.coTenant
-
   if (!paymentIntentId || !propertyId || !moveInDate || !leaseLength) {
     return json({ error: 'paymentIntentId, propertyId, moveInDate, and leaseLength are required' }, 400, origin)
   }
@@ -350,6 +344,14 @@ async function handlePaymentIntentCommit(request, origin, body) {
   if (stErr || !student) {
     return json({ error: 'Student profile not found' }, 404, origin)
   }
+
+  const coTenantResolved = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant, {
+    primaryTenantEmail: student.email,
+  })
+  if (!coTenantResolved.ok) {
+    return json(coTenantResolved.body, coTenantResolved.status, origin)
+  }
+  const coTenant = coTenantResolved.coTenant
 
   const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
   if (block1) {

@@ -362,10 +362,10 @@ function Form18aSignaturesBlock(props: QldGeneralTenancyAgreementProps) {
             {tenant2}
           </Text>
           <View style={styles.sigBox}>
-            <Text style={styles.sigHint}>{'{{Tenant 2 Signature;role=Second Party;type=signature}}'}</Text>
+            <Text style={styles.sigHint}>{'{{Tenant 2 Signature;role=Co-tenant;type=signature}}'}</Text>
           </View>
           <View style={{ ...styles.sigBox, minHeight: 28 }}>
-            <Text style={styles.sigHint}>{'{{Tenant 2 Sign Date;role=Second Party;type=date}}'}</Text>
+            <Text style={styles.sigHint}>{'{{Tenant 2 Sign Date;role=Co-tenant;type=date}}'}</Text>
           </View>
         </>
       ) : null}

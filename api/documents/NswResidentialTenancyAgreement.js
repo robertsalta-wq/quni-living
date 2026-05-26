@@ -973,7 +973,14 @@ function SignaturesBlock(props) {
     rtaScheduleTenantNamePopulated(t2) ? /* @__PURE__ */ jsxs(Fragment, { children: [
       /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant2Banner }),
       /* @__PURE__ */ jsx(Text, { style: styles.value, children: t2 }),
-      /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }) })
+      /* @__PURE__ */ jsx(View, { style: styles.sigBox, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx(Text, { style: styles.body, children: "Signature of tenant: " }),
+        /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant 2 Signature;role=Co-tenant;type=signature}}" })
+      ] }) }),
+      /* @__PURE__ */ jsx(View, { style: { ...styles.sigBox, minHeight: 28 }, children: /* @__PURE__ */ jsxs(View, { style: { flexDirection: "row", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "Tenant 2 sign date " }),
+        /* @__PURE__ */ jsx(Text, { style: styles.sigHint, children: "{{Tenant 2 Sign Date;role=Co-tenant;type=date}}" })
+      ] }) })
     ] }) : null,
     rtaScheduleTenantNamePopulated(t3) ? /* @__PURE__ */ jsxs(Fragment, { children: [
       /* @__PURE__ */ jsx(Text, { style: styles.body, children: tenant3Banner }),

@@ -7,12 +7,19 @@
  * `src/lib/leaseState.test.ts` lock the contract; this file stays in lockstep.
  */
 
+function timestampSet(v) {
+  return Boolean(v && String(v).trim())
+}
+
+function allRequiredPartiesSigned(input) {
+  const landlordOk = timestampSet(input.landlordSignedAt)
+  const studentOk = timestampSet(input.studentSignedAt)
+  const coOk = !input.coTenantSigningRequired || timestampSet(input.coTenantSignedAt)
+  return landlordOk && studentOk && coOk
+}
+
 export function deriveLeaseDocState(input) {
-  const fullySigned = Boolean(
-    input.landlordSignedAt && String(input.landlordSignedAt).trim() &&
-      input.studentSignedAt && String(input.studentSignedAt).trim(),
-  )
-  if (fullySigned) return 'fully_signed'
+  if (allRequiredPartiesSigned(input)) return 'fully_signed'
 
   if (!input.documentExists) return 'none'
 
@@ -21,7 +28,7 @@ export function deriveLeaseDocState(input) {
   if (status === 'sent_for_signing') {
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
-    if (viewerSignedAt && String(viewerSignedAt).trim()) {
+    if (timestampSet(viewerSignedAt)) {
       return 'awaiting_other'
     }
     return 'ready_to_sign'
@@ -32,7 +39,7 @@ export function deriveLeaseDocState(input) {
   if (status === 'signed') {
     const viewerSignedAt =
       input.viewerRole === 'landlord' ? input.landlordSignedAt : input.studentSignedAt
-    if (viewerSignedAt && String(viewerSignedAt).trim()) return 'awaiting_other'
+    if (timestampSet(viewerSignedAt)) return 'awaiting_other'
     return 'ready_to_sign'
   }
 
