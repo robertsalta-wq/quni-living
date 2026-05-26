@@ -1,3 +1,7 @@
+/**
+ * @deprecated New landlord replies use `POST /api/conversations/message`.
+ * Kept for historical enquiry rows and admin tooling; do not call from product UI.
+ */
 import { createClient } from '@supabase/supabase-js'
 
 export const config = {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
@@ -13,34 +13,22 @@ import { isBoardingLodgerBondContext } from '../lib/listings'
 import NswTenancyAgreementExplainer from '../components/NswTenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
+import { useConversationInbox } from '../hooks/useConversationInbox'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
-type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
 type BookingStatus = BookingRow['status']
-type EnquiryStatus = EnquiryRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
   'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'listing_type'
 >
 
-type PropertyEnquiryEmbed = Pick<
-  Database['public']['Tables']['properties']['Row'],
-  'title' | 'slug' | 'images'
->
-
 type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
 }
 
-type EnquiryWithProperty = EnquiryRow & {
-  properties: PropertyEnquiryEmbed | null
-}
-
-type TabId = 'bookings' | 'enquiries' | 'saved'
-
-const ENQUIRY_TRUNC = 100
+type TabId = 'bookings' | 'saved'
 
 const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'
 
@@ -67,12 +55,6 @@ function bookingStatusClass(s: BookingStatus) {
   if (s === 'confirmed' || s === 'active') return 'bg-green-100 text-green-800'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
-  return 'bg-gray-100 text-gray-600'
-}
-
-function enquiryStatusClass(s: EnquiryStatus) {
-  if (s === 'new') return 'bg-blue-100 text-blue-800'
-  if (s === 'replied') return 'bg-green-100 text-green-800'
   return 'bg-gray-100 text-gray-600'
 }
 
@@ -104,14 +86,14 @@ function PropertyThumbPlaceholder() {
 
 export default function StudentDashboard() {
   const { user } = useAuthContext()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { items: conversations } = useConversationInbox(user?.id)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentRow | null>(null)
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
-  const [enquiries, setEnquiries] = useState<EnquiryWithProperty[]>([])
   const [tab, setTab] = useState<TabId>('bookings')
-  const [expandedEnquiryIds, setExpandedEnquiryIds] = useState<Record<string, boolean>>({})
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
   const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
   const [qaseOpen, setQaseOpen] = useState(false)
@@ -133,7 +115,6 @@ export default function StudentDashboard() {
       if (pErr) {
         setProfile(null)
         setBookings([])
-        setEnquiries([])
         setError(pErr.message || 'Could not load your profile.')
         return
       }
@@ -142,45 +123,28 @@ export default function StudentDashboard() {
       if (!prof) {
         setProfile(null)
         setBookings([])
-        setEnquiries([])
         setError('We couldn’t find your student profile yet. If you just signed up, try completing onboarding or your profile.')
         return
       }
 
       setProfile(prof)
 
-      const [bookRes, enqRes] = await Promise.all([
-        supabase
-          .from('bookings')
-          .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, listing_type )')
-          .eq('student_id', prof.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('enquiries')
-          .select('*, properties ( title, slug, images )')
-          .eq('student_id', prof.id)
-          .order('created_at', { ascending: false }),
-      ])
+      const bookRes = await supabase
+        .from('bookings')
+        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, listing_type )')
+        .eq('student_id', prof.id)
+        .order('created_at', { ascending: false })
 
       if (bookRes.error) {
         setBookings([])
-        setEnquiries([])
         setError(bookRes.error.message || 'Could not load bookings.')
-        return
-      }
-      if (enqRes.error) {
-        setBookings((bookRes.data ?? []) as BookingWithProperty[])
-        setEnquiries([])
-        setError(enqRes.error.message || 'Could not load enquiries.')
         return
       }
 
       setBookings((bookRes.data ?? []) as BookingWithProperty[])
-      setEnquiries((enqRes.data ?? []) as EnquiryWithProperty[])
     } catch (e: unknown) {
       setProfile(null)
       setBookings([])
-      setEnquiries([])
       setError(e instanceof Error ? e.message : 'Something went wrong loading your dashboard.')
     } finally {
       setLoading(false)
@@ -224,8 +188,12 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const t = searchParams.get('tab')
-    if (t === 'bookings' || t === 'enquiries' || t === 'saved') setTab(t)
-  }, [searchParams])
+    if (t === 'enquiries') {
+      navigate('/messages', { replace: true })
+      return
+    }
+    if (t === 'bookings' || t === 'saved') setTab(t)
+  }, [searchParams, navigate])
 
   const pendingBookings = bookings.filter(
     (b) =>
@@ -299,7 +267,7 @@ export default function StudentDashboard() {
             Welcome back, {welcomeName}
           </h1>
           <p className="text-gray-500 mt-2 text-base max-w-2xl">
-            Here’s a quick look at your bookings and enquiries — everything in one place.
+            Here’s a quick look at your bookings and messages — everything in one place.
           </p>
         </div>
         <Link to="/listings" className={primaryBtnClass}>
@@ -322,11 +290,11 @@ export default function StudentDashboard() {
           )}
         </div>
 
-        <div className={cardClass}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Enquiries</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{enquiries.length}</p>
-          <p className="text-sm text-gray-500 mt-2">Messages you’ve sent about listings</p>
-        </div>
+        <Link to="/messages" className={`${cardClass} block hover:border-indigo-200 hover:shadow-md transition-all`}>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Messages</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{conversations.length}</p>
+          <p className="text-sm text-gray-500 mt-2">Conversations with landlords</p>
+        </Link>
 
         <div className={cardClass}>
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your profile</p>
@@ -368,31 +336,38 @@ export default function StudentDashboard() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Dashboard sections">
-        {(
-          [
-            ['bookings', 'Bookings'],
-            ['enquiries', 'Enquiries'],
-            ['saved', 'Saved'],
-          ] as const
-        ).map(([id, label]) => {
-          const active = tab === id
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTab(id)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                active
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {label}
-            </button>
-          )
-        })}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'bookings'}
+          onClick={() => setTab('bookings')}
+          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+            tab === 'bookings'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          Bookings
+        </button>
+        <Link
+          to="/messages"
+          className="rounded-full px-4 py-2 text-sm font-semibold transition-colors bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+        >
+          Messages
+        </Link>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'saved'}
+          onClick={() => setTab('saved')}
+          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+            tab === 'saved'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          Saved
+        </button>
       </div>
 
       {tab === 'bookings' && (
@@ -495,82 +470,6 @@ export default function StudentDashboard() {
                           </button>
                         </div>
                       )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {tab === 'enquiries' && (
-        <section aria-labelledby="enquiries-heading">
-          <h2 id="enquiries-heading" className="sr-only">
-            Your enquiries
-          </h2>
-          {enquiries.length === 0 ? (
-            <div className={`${cardClass} text-center py-12`}>
-              <p className="text-gray-800 font-medium">You haven&apos;t sent any enquiries yet</p>
-              <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
-                Found a place you like? Send a message from the listing page — we&apos;ll list it here.
-              </p>
-              <Link to="/listings" className={`${primaryBtnClass} mt-6`}>
-                Browse listings
-              </Link>
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {enquiries.map((enq) => {
-                const prop = enq.properties
-                const slug = prop?.slug
-                const img = firstPropertyImage(prop?.images ?? null)
-                const msg = enq.message ?? ''
-                const expanded = expandedEnquiryIds[enq.id]
-                const long = msg.length > ENQUIRY_TRUNC
-                const shown = expanded || !long ? msg : `${msg.slice(0, ENQUIRY_TRUNC).trim()}…`
-                return (
-                  <li key={enq.id} className={cardClass}>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="shrink-0 w-full sm:w-32 aspect-[4/3] rounded-xl overflow-hidden border border-gray-100 bg-gray-100">
-                        {img ? (
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <PropertyThumbPlaceholder />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          {slug ? (
-                            <Link
-                              to={`/properties/${slug}`}
-                              className="font-bold text-gray-900 hover:text-indigo-700 line-clamp-2"
-                            >
-                              {prop?.title ?? 'Property'}
-                            </Link>
-                          ) : (
-                            <span className="font-bold text-gray-900">{prop?.title ?? 'Property'}</span>
-                          )}
-                          <span
-                            className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${enquiryStatusClass(enq.status)}`}
-                          >
-                            {enq.status}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">Sent {formatDate(enq.created_at)}</p>
-                        <p className="text-sm text-gray-700 mt-3 whitespace-pre-wrap">{shown}</p>
-                        {long && (
-                          <button
-                            type="button"
-                            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 mt-2"
-                            onClick={() =>
-                              setExpandedEnquiryIds((prev) => ({ ...prev, [enq.id]: !prev[enq.id] }))
-                            }
-                          >
-                            {expanded ? 'Show less' : 'Show more'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </li>
                 )
               })}

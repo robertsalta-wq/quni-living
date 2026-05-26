@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
@@ -10,7 +10,6 @@ import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripe
 import {
   buildLandlordVerificationFromProfile,
   LandlordApplicantVerificationBadges,
-  LandlordApplicantVerificationDetail,
 } from '../components/landlord/LandlordApplicantVerificationBadges'
 import LandlordStudentProfileModal, {
   type LandlordSafeStudentSnapshot,
@@ -25,6 +24,8 @@ import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplic
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
+import { useConversationInbox } from '../hooks/useConversationInbox'
+import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
 import {
   fetchLandlordListingBillingSnapshot,
@@ -38,9 +39,7 @@ import {
 } from '../lib/landlordServiceTier'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
-type EnquiryRow = Database['public']['Tables']['enquiries']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
-type EnquiryStatus = EnquiryRow['status']
 type BookingStatus = BookingRow['status']
 
 type PropertySummary = Pick<
@@ -57,10 +56,6 @@ type PropertySummary = Pick<
   | 'created_at'
   | 'service_tier'
 >
-
-type EnquiryWithProperty = EnquiryRow & {
-  properties: { title: string; slug: string } | null
-}
 
 /** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
 type LandlordAgreementSignedPaths =
@@ -197,7 +192,7 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
   return out
 }
 
-type TabId = 'listings' | 'enquiries' | 'bookings'
+type TabId = 'listings' | 'bookings'
 
 /** Loaded for landlord dashboard — safe fields only (see LandlordSafeStudentSnapshot). */
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
@@ -228,12 +223,6 @@ function firstNameFromLandlord(p: LandlordRow): string {
   return local ? formatDisplayName(local) : 'there'
 }
 
-function enquiryStatusClass(s: EnquiryStatus) {
-  if (s === 'new') return 'bg-blue-100 text-blue-800'
-  if (s === 'replied') return 'bg-emerald-100 text-emerald-800'
-  return 'bg-gray-100 text-gray-600'
-}
-
 function bookingStatusClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-800'
   if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
@@ -258,8 +247,6 @@ function studentDisplayFromBooking(b: BookingWithRelations): string {
 function applicantSessionKeyFromBooking(b: BookingWithRelations): string {
   return b.id
 }
-
-const ENQUIRY_TRUNC = 100
 
 function ExpiresIn({ expiresAt }: { expiresAt: string | null | undefined }) {
   const [txt, setTxt] = useState('—')
@@ -333,14 +320,10 @@ export default function LandlordDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<LandlordRow | null>(null)
   const [properties, setProperties] = useState<PropertySummary[]>([])
-  const [enquiries, setEnquiries] = useState<EnquiryWithProperty[]>([])
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
   const [tab, setTab] = useState<TabId>('listings')
-  const [selectedEnquiryId, setSelectedEnquiryId] = useState<string | null>(null)
-  const [draftReplies, setDraftReplies] = useState<Record<string, string>>({})
-  const [draftingReplyIds, setDraftingReplyIds] = useState<Record<string, boolean>>({})
-  const [sendingReplyIds, setSendingReplyIds] = useState<Record<string, boolean>>({})
-  const [enquiryInlineErrors, setEnquiryInlineErrors] = useState<Record<string, string | null>>({})
+  const { items: conversations } = useConversationInbox(user?.id)
+  const unreadMessageCount = useUnreadMessageCount(user?.id)
   const [connectLoading, setConnectLoading] = useState(false)
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
   const [qaseOpen, setQaseOpen] = useState(false)
@@ -361,9 +344,6 @@ export default function LandlordDashboard() {
     () => new Set(),
   )
   const [landlordBookingPaymentError, setLandlordBookingPaymentError] = useState(false)
-  const [landlordStudentByProfileId, setLandlordStudentByProfileId] = useState<
-    Record<string, LandlordLoadedStudentRow>
-  >({})
   const [leaseDownloadErrorId, setLeaseDownloadErrorId] = useState<string | null>(null)
   const [agreementActionBusyId, setAgreementActionBusyId] = useState<string | null>(null)
 
@@ -512,45 +492,29 @@ export default function LandlordDashboard() {
       if (!profRaw) {
         setProfile(null)
         setProperties([])
-        setEnquiries([])
         setBookings([])
-        setLandlordStudentByProfileId({})
         setListingBilling(null)
         return
       }
       const prof = profRaw as LandlordRow
       setProfile(prof)
 
-      const [propRes, enqRes, bookRes] = await Promise.all([
+      const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
           .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier')
-          .eq('landlord_id', prof.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('enquiries')
-          .select('*, properties ( title, slug )')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
       ])
 
       if (propRes.error) throw propRes.error
-      if (enqRes.error) throw enqRes.error
       if (bookRes.error) throw bookRes.error
 
       type BookingPropertyDbRow = { id: string; title: string; slug: string; suburb: string | null }
 
       const bookingRows = (bookRes.data ?? []) as BookingRow[]
-      const enquiryRows = (enqRes.data ?? []) as EnquiryWithProperty[]
-      const studentIds = [
-        ...new Set(
-          [
-            ...bookingRows.map((b) => b.student_id).filter(Boolean),
-            ...enquiryRows.map((e) => e.student_id).filter(Boolean),
-          ] as string[],
-        ),
-      ]
+      const studentIds = [...new Set(bookingRows.map((b) => b.student_id).filter(Boolean))] as string[]
       const bookingPropertyIds = [...new Set(bookingRows.map((b) => b.property_id).filter(Boolean))] as string[]
       const bookingIds = bookingRows.map((b) => b.id)
 
@@ -640,16 +604,11 @@ export default function LandlordDashboard() {
         : buildSignedAgreementPathsByBookingId(tenancyRows)
 
       const studentById = new Map<string, LandlordLoadedStudentRow>()
-      const studentRecord: Record<string, LandlordLoadedStudentRow> = {}
       if (!studRes.error && studRes.data) {
         for (const row of studRes.data as LandlordLoadedStudentRow[]) {
-          if (row?.id) {
-            studentById.set(row.id, row)
-            studentRecord[row.id] = row
-          }
+          if (row?.id) studentById.set(row.id, row)
         }
       }
-      setLandlordStudentByProfileId(studentRecord)
 
       const propertyById = new Map<string, { title: string; slug: string; suburb: string | null }>()
       for (const row of (bookingPropsRes.data ?? []) as BookingPropertyDbRow[]) {
@@ -671,7 +630,6 @@ export default function LandlordDashboard() {
       })
 
       setProperties((propRes.data ?? []) as PropertySummary[])
-      setEnquiries(enquiryRows)
       setBookings(mergedBookings)
 
       void fetchLandlordListingBillingSnapshot().then(setListingBilling)
@@ -679,9 +637,7 @@ export default function LandlordDashboard() {
       setError(messageFromSupabaseError(e))
       setProfile(null)
       setProperties([])
-      setEnquiries([])
       setBookings([])
-      setLandlordStudentByProfileId({})
       setListingBilling(null)
     } finally {
       setLoading(false)
@@ -733,159 +689,12 @@ export default function LandlordDashboard() {
 
   useEffect(() => {
     const t = searchParams.get('tab')
-    if (t === 'bookings' || t === 'enquiries' || t === 'listings') setTab(t)
-  }, [searchParams])
-
-  const markEnquiryRead = useCallback(async (id: string, current: EnquiryStatus) => {
-    if (current !== 'new') return
-    const { error: upErr } = await supabase.from('enquiries').update({ status: 'read' }).eq('id', id)
-    if (!upErr) {
-      setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'read' } : e)))
-    }
-  }, [])
-
-  const toggleEnquiryRow = useCallback(
-    (row: EnquiryWithProperty) => {
-      if (row.status === 'new') void markEnquiryRead(row.id, row.status)
-      setSelectedEnquiryId((prev) => (prev === row.id ? null : row.id))
-    },
-    [markEnquiryRead],
-  )
-
-  const onViewPropertyFromEnquiry = useCallback(
-    (row: EnquiryWithProperty) => {
-      if (row.status === 'new') void markEnquiryRead(row.id, row.status)
-    },
-    [markEnquiryRead],
-  )
-
-  const draftEnquiryReply = useCallback(
-    async (row: EnquiryWithProperty) => {
-      const studentName = row.name?.trim() || ''
-      const studentMessage = row.message?.trim() || ''
-      if (!studentName || !studentMessage) {
-        setEnquiryInlineErrors((prev) => ({ ...prev, [row.id]: 'Student name and message are required.' }))
-        return
-      }
-
-      setEnquiryInlineErrors((prev) => ({ ...prev, [row.id]: null }))
-      setDraftingReplyIds((prev) => ({ ...prev, [row.id]: true }))
-      try {
-        let propertyTitle = row.properties?.title?.trim() || undefined
-        let propertySuburb: string | undefined
-        if (row.property_id) {
-          const { data: propData, error: propErr } = await supabase
-            .from('properties')
-            .select('title, suburb')
-            .eq('id', row.property_id)
-            .maybeSingle()
-          if (propErr) throw propErr
-          propertyTitle = (propData?.title ?? propertyTitle)?.trim() || undefined
-          propertySuburb = propData?.suburb?.trim() || undefined
-        }
-
-        const landlordName =
-          profile?.full_name?.trim() ||
-          [profile?.first_name?.trim(), profile?.last_name?.trim()].filter(Boolean).join(' ').trim() ||
-          undefined
-
-        const res = await fetch('/api/ai/draft-enquiry-reply', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentName,
-            studentMessage,
-            propertyTitle,
-            propertySuburb,
-            landlordName,
-          }),
-        })
-        const payload = (await res.json().catch(() => ({}))) as { reply?: string; error?: string }
-        if (!res.ok) throw new Error(payload.error || 'Could not draft reply.')
-        const reply = typeof payload.reply === 'string' ? payload.reply.trim() : ''
-        if (!reply) throw new Error('AI returned an empty reply.')
-
-        setDraftReplies((prev) => ({ ...prev, [row.id]: reply }))
-      } catch (e) {
-        setEnquiryInlineErrors((prev) => ({
-          ...prev,
-          [row.id]: e instanceof Error ? e.message : 'Could not draft reply.',
-        }))
-      } finally {
-        setDraftingReplyIds((prev) => ({ ...prev, [row.id]: false }))
-      }
-    },
-    [profile],
-  )
-
-  const cancelDraftReply = useCallback((enquiryId: string) => {
-    setDraftReplies((prev) => {
-      const next = { ...prev }
-      delete next[enquiryId]
-      return next
-    })
-    setEnquiryInlineErrors((prev) => ({ ...prev, [enquiryId]: null }))
-  }, [])
-
-  const sendEnquiryReply = useCallback(async (enquiryId: string) => {
-    const replyText = (draftReplies[enquiryId] ?? '').trim()
-    if (!replyText) {
-      setEnquiryInlineErrors((prev) => ({ ...prev, [enquiryId]: 'Reply cannot be empty.' }))
+    if (t === 'enquiries') {
+      navigate('/messages', { replace: true })
       return
     }
-
-    setEnquiryInlineErrors((prev) => ({ ...prev, [enquiryId]: null }))
-    setSendingReplyIds((prev) => ({ ...prev, [enquiryId]: true }))
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-      if (!token) {
-        setEnquiryInlineErrors((prev) => ({
-          ...prev,
-          [enquiryId]: 'Session expired — please refresh the page and try again.',
-        }))
-        return
-      }
-
-      const res = await fetch('/api/enquiries/reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ enquiryId, reply: replyText }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string }
-      if (!res.ok || payload.success !== true) {
-        throw new Error(payload.error || 'Could not send reply.')
-      }
-
-      setEnquiries((prev) =>
-        prev.map((row) =>
-          row.id === enquiryId
-            ? {
-                ...row,
-                reply: replyText,
-                replied_at: new Date().toISOString(),
-                status: 'replied',
-              }
-            : row,
-        ),
-      )
-      setDraftReplies((prev) => {
-        const next = { ...prev }
-        delete next[enquiryId]
-        return next
-      })
-    } catch (e) {
-      setEnquiryInlineErrors((prev) => ({
-        ...prev,
-        [enquiryId]: e instanceof Error ? e.message : 'Could not send reply.',
-      }))
-    } finally {
-      setSendingReplyIds((prev) => ({ ...prev, [enquiryId]: false }))
-    }
-  }, [draftReplies])
+    if (t === 'bookings' || t === 'listings') setTab(t)
+  }, [searchParams, navigate])
 
   const startStripeConnect = useCallback(async () => {
     setError(null)
@@ -936,7 +745,6 @@ export default function LandlordDashboard() {
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
   const hasManagedWork = managedTierProperties > 0 || bookings.some((b) => bookingServiceTier(b) === 'managed')
-  const newEnquiries = enquiries.filter((e) => e.status === 'new').length
   const pendingBookings = bookings.filter(
     (b) =>
       b.status === 'pending' ||
@@ -1042,7 +850,7 @@ export default function LandlordDashboard() {
               Welcome back, {welcomeName}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Here’s what’s happening with your listings, enquiries, and booking requests.
+              Here’s what’s happening with your listings, messages, and booking requests.
             </p>
           </div>
           {listingUnlocked ? (
@@ -1087,17 +895,22 @@ export default function LandlordDashboard() {
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
             <p className="text-xs text-gray-500 mt-1">Published as active</p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Enquiries</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{enquiries.length}</p>
+          <Link
+            to="/messages"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm block hover:border-indigo-200 hover:shadow-md transition-all"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
+            <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{conversations.length}</p>
             <p className="text-xs mt-1">
-              {newEnquiries > 0 ? (
-                <span className="font-semibold text-amber-700">{newEnquiries} new</span>
+              {unreadMessageCount > 0 ? (
+                <span className="font-semibold text-amber-700">
+                  {unreadMessageCount} unread
+                </span>
               ) : (
-                <span className="text-gray-500">No new messages</span>
+                <span className="text-gray-500">All caught up</span>
               )}
             </p>
-          </div>
+          </Link>
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
@@ -1188,36 +1001,46 @@ export default function LandlordDashboard() {
 
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex gap-1 -mb-px" aria-label="Dashboard sections">
-            {(
-              [
-                ['listings', 'Listings', null] as const,
-                ['enquiries', 'Enquiries', enquiries.length > 0 ? enquiries.length : null] as const,
-                [
-                  'bookings',
-                  'Bookings',
-                  pendingBookings > 0 ? pendingBookings : bookings.length > 0 ? bookings.length : null,
-                ] as const,
-              ] as const
-            ).map(([id, label, badge]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={[
-                  'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
-                  tab === id
-                    ? 'border-indigo-600 text-indigo-700 bg-white'
-                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
-                ].join(' ')}
-              >
-                {label}
-                {badge != null && (
-                  <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                    {badge}
-                  </span>
-                )}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => setTab('listings')}
+              className={[
+                'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+                tab === 'listings'
+                  ? 'border-indigo-600 text-indigo-700 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+              ].join(' ')}
+            >
+              Listings
+            </button>
+            <Link
+              to="/messages"
+              className="px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80 transition-colors inline-flex items-center gap-2"
+            >
+              Messages
+              {unreadMessageCount > 0 && (
+                <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setTab('bookings')}
+              className={[
+                'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+                tab === 'bookings'
+                  ? 'border-indigo-600 text-indigo-700 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+              ].join(' ')}
+            >
+              Bookings
+              {(pendingBookings > 0 ? pendingBookings : bookings.length > 0 ? bookings.length : null) != null && (
+                <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                  {pendingBookings > 0 ? pendingBookings : bookings.length}
+                </span>
+              )}
+            </button>
           </nav>
         </div>
 
@@ -1322,267 +1145,6 @@ export default function LandlordDashboard() {
                     </div>
                   )
                 })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === 'enquiries' && (
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-            {enquiries.length === 0 ? (
-              <p className="p-10 text-center text-sm text-gray-500">No enquiries yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      <th className="px-4 py-3">Student</th>
-                      <th className="px-4 py-3">Verification</th>
-                      <th className="px-4 py-3">Property</th>
-                      <th className="px-4 py-3">Message</th>
-                      <th className="px-4 py-3">Received</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3" aria-label="Expand row" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enquiries.map((row) => {
-                      const msg = row.message ?? ''
-                      const shown = msg.length > ENQUIRY_TRUNC ? `${msg.slice(0, ENQUIRY_TRUNC)}…` : msg
-                      const isExpanded = selectedEnquiryId === row.id
-                      const slug = row.properties?.slug
-                      const hasReply = Boolean(row.reply?.trim())
-                      const canDraft = !hasReply && row.status !== 'replied'
-                      const isDrafting = Boolean(draftingReplyIds[row.id])
-                      const isSending = Boolean(sendingReplyIds[row.id])
-                      const draftReply = draftReplies[row.id] ?? ''
-                      const inlineError = enquiryInlineErrors[row.id]
-                      return (
-                        <Fragment key={row.id}>
-                          <tr
-                            className="border-b border-gray-100 align-top cursor-pointer hover:bg-gray-50/60"
-                            onClick={() => toggleEnquiryRow(row)}
-                          >
-                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                              {row.student_id ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setStudentProfileModal({
-                                      student: landlordStudentByProfileId[row.student_id!] ?? null,
-                                      fallbackName: row.name?.trim() || row.email?.trim() || 'Student',
-                                      scrollToVerification: false,
-                                      scrollToAiAssessment: false,
-                                      sessionKey: row.student_id ?? row.id,
-                                      assessmentBookingId: null,
-                                    })
-                                  }
-                                  className="text-left font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
-                                >
-                                  {row.name?.trim() || '—'}
-                                </button>
-                              ) : (
-                                <span className="font-medium text-gray-900">{row.name?.trim() || '—'}</span>
-                              )}
-                              <span className="block text-xs text-gray-500">{row.email?.trim() || '—'}</span>
-                            </td>
-                            <td className="px-4 py-3 max-w-[11rem]">
-                              {row.student_id ? (
-                                <LandlordApplicantVerificationBadges
-                                  verification={buildLandlordVerificationFromProfile(
-                                    landlordStudentByProfileId[row.student_id] ?? null,
-                                  )}
-                                />
-                              ) : (
-                                <span className="text-[11px] text-gray-400">—</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              {slug ? (
-                                <Link
-                                  to={`/properties/${slug}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onViewPropertyFromEnquiry(row)
-                                  }}
-                                  className="font-medium text-indigo-600 hover:text-indigo-800"
-                                >
-                                  {row.properties?.title ?? 'Listing'}
-                                </Link>
-                              ) : (
-                                <span className="text-gray-700">{row.properties?.title ?? '—'}</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 max-w-xs">
-                              <p className="text-gray-800 whitespace-pre-wrap break-words">{shown}</p>
-                            </td>
-                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(row.created_at)}</td>
-                            <td className="px-4 py-3">
-                              <span
-                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${enquiryStatusClass(row.status)}`}
-                              >
-                                {row.status}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-right text-gray-400">
-                              <svg
-                                className={`ml-auto h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.16l3.71-3.93a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </td>
-                          </tr>
-                          {isExpanded && (
-                            <tr className="border-b border-gray-100">
-                              <td
-                                colSpan={7}
-                                className="px-4 py-4"
-                                style={{ backgroundColor: 'var(--color-background-secondary)' }}
-                              >
-                                <div className="space-y-3">
-                                  <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Message</p>
-                                    <p className="mt-1 text-sm text-gray-800 whitespace-pre-wrap break-words">{msg}</p>
-                                  </div>
-                                  <p className="text-xs text-gray-600">Received: {formatDate(row.created_at)}</p>
-                                  {row.student_id ? (
-                                    <div className="rounded-xl border border-gray-100 bg-white/90 px-4 py-3">
-                                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                          Student profile
-                                        </p>
-                                        <div className="flex flex-wrap gap-x-3 gap-y-1 shrink-0">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              setStudentProfileModal({
-                                                student: landlordStudentByProfileId[row.student_id!] ?? null,
-                                                fallbackName:
-                                                  row.name?.trim() || row.email?.trim() || 'Student',
-                                                scrollToVerification: false,
-                                                scrollToAiAssessment: false,
-                                                sessionKey: row.student_id ?? row.id,
-                                                assessmentBookingId: null,
-                                              })
-                                            }
-                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
-                                          >
-                                            View profile
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              setStudentProfileModal({
-                                                student: landlordStudentByProfileId[row.student_id!] ?? null,
-                                                fallbackName:
-                                                  row.name?.trim() || row.email?.trim() || 'Student',
-                                                scrollToVerification: true,
-                                                scrollToAiAssessment: false,
-                                                sessionKey: row.student_id ?? row.id,
-                                                assessmentBookingId: null,
-                                              })
-                                            }
-                                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
-                                          >
-                                            Verification details
-                                          </button>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2">
-                                        <LandlordApplicantVerificationDetail
-                                          verification={buildLandlordVerificationFromProfile(
-                                            landlordStudentByProfileId[row.student_id] ?? null,
-                                          )}
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs text-gray-500">
-                                      This enquiry was not linked to a signed-in student account, so verification status
-                                      is unavailable.
-                                    </p>
-                                  )}
-                                  {canDraft && !draftReply && (
-                                    <button
-                                      type="button"
-                                      onClick={() => void draftEnquiryReply(row)}
-                                      disabled={isDrafting}
-                                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#FF6F61] bg-white px-3 py-1.5 text-xs font-semibold text-[#FF6F61] hover:bg-[#fff4f3] disabled:opacity-60"
-                                    >
-                                      {isDrafting ? (
-                                        <>
-                                          <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[#FF6F61] border-t-transparent" />
-                                          Drafting...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
-                                          Draft a reply with AI
-                                        </>
-                                      )}
-                                    </button>
-                                  )}
-                                  {!hasReply && !!draftReply && (
-                                    <div className="space-y-2">
-                                      <textarea
-                                        value={draftReply}
-                                        onChange={(e) =>
-                                          setDraftReplies((prev) => ({
-                                            ...prev,
-                                            [row.id]: e.target.value,
-                                          }))
-                                        }
-                                        rows={4}
-                                        className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 focus:border-[#FF6F61]"
-                                        placeholder="Write your reply..."
-                                      />
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => void sendEnquiryReply(row.id)}
-                                          disabled={isSending}
-                                          className="rounded-lg bg-[#FF6F61] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e85d52] disabled:opacity-60"
-                                        >
-                                          {isSending ? 'Sending...' : 'Send reply'}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => cancelDraftReply(row.id)}
-                                          disabled={isSending}
-                                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
-                                        >
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {hasReply && (
-                                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-                                      <div className="mb-1">
-                                        <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                          Replied
-                                        </span>
-                                      </div>
-                                      <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{row.reply}</p>
-                                    </div>
-                                  )}
-                                  {inlineError && <p className="text-xs text-red-600">{inlineError}</p>}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      )
-                    })}
-                  </tbody>
-                </table>
               </div>
             )}
           </div>
