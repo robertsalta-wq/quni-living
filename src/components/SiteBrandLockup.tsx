@@ -26,7 +26,7 @@ function QuniLogoImg({ variant }: { variant: LogoVariant }) {
 export default function SiteBrandLockup({ variant = 'default' }: { variant?: LogoVariant }) {
   const isAi = variant === 'ai'
   return (
-    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 shrink-0">
+    <div className="flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2">
       <Link
         to="/"
         className={`flex min-w-0 items-center shrink-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${

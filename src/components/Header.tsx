@@ -102,10 +102,12 @@ export default function Header() {
   }
 
   return (
-    <header className="pt-safe-top w-full shrink-0 bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
+    <header className="pt-safe-top w-full max-w-full shrink-0 overflow-x-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
       <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
-        <div className="flex items-center justify-between gap-3">
-        <SiteBrandLockup />
+        <div className="flex min-w-0 w-full max-w-full items-center justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <SiteBrandLockup />
+        </div>
 
         <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-center min-w-0">
           {MAIN_NAV.map((item) => (

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
@@ -46,8 +46,97 @@ const AU_STATE_OPTIONS = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] a
 const BIO_PLACEHOLDER =
   'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
 
+const LANDLORD_ONBOARDING_DRAFT_KEY = 'landlord_onboarding_draft' as const
+const LANDLORD_ONBOARDING_DRAFT_VERSION = 1 as const
+
+const LANDLORD_TYPE_VALUE_SET = new Set(LANDLORD_TYPE_OPTIONS.map((o) => o.value).filter(Boolean))
+const AU_STATE_VALUE_SET = new Set<string>(AU_STATE_OPTIONS)
+
+/** Local draft — terms checkboxes are never persisted. */
+type LandlordOnboardingDraftV1 = {
+  v: typeof LANDLORD_ONBOARDING_DRAFT_VERSION
+  step: LandlordWizardStep
+  firstName: string
+  lastName: string
+  phone: string
+  landlordType: string
+  companyName: string
+  abn: string
+  address: string
+  suburb: string
+  postcode: string
+  state: string
+  bio: string
+  avatarUrl: string | null
+  hasInsurance: boolean
+  stripeSkippedForNow: boolean
+}
+
+function landlordOnboardingDraftFromState(
+  s: Omit<LandlordOnboardingDraftV1, 'v'>,
+): LandlordOnboardingDraftV1 {
+  return { v: LANDLORD_ONBOARDING_DRAFT_VERSION, ...s }
+}
+
+function parseLandlordOnboardingDraft(raw: string | null): LandlordOnboardingDraftV1 | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as unknown
+    if (!o || typeof o !== 'object') return null
+    const d = o as Record<string, unknown>
+    if (d.v !== LANDLORD_ONBOARDING_DRAFT_VERSION) return null
+    const step = d.step === 1 || d.step === 2 || d.step === 3 || d.step === 4 || d.step === 5 ? d.step : 1
+    const landlordType =
+      typeof d.landlordType === 'string' &&
+      (d.landlordType === '' || LANDLORD_TYPE_VALUE_SET.has(d.landlordType))
+        ? d.landlordType
+        : ''
+    const state =
+      typeof d.state === 'string' && (d.state === '' || AU_STATE_VALUE_SET.has(d.state)) ? d.state : 'NSW'
+    return {
+      v: LANDLORD_ONBOARDING_DRAFT_VERSION,
+      step,
+      firstName: typeof d.firstName === 'string' ? d.firstName : '',
+      lastName: typeof d.lastName === 'string' ? d.lastName : '',
+      phone: typeof d.phone === 'string' ? d.phone : '',
+      landlordType,
+      companyName: typeof d.companyName === 'string' ? d.companyName : '',
+      abn: typeof d.abn === 'string' ? d.abn : '',
+      address: typeof d.address === 'string' ? d.address : '',
+      suburb: typeof d.suburb === 'string' ? d.suburb : '',
+      postcode: typeof d.postcode === 'string' ? d.postcode : '',
+      state,
+      bio: typeof d.bio === 'string' ? d.bio : '',
+      avatarUrl: typeof d.avatarUrl === 'string' && d.avatarUrl.trim() !== '' ? d.avatarUrl : null,
+      hasInsurance: Boolean(d.hasInsurance),
+      stripeSkippedForNow: Boolean(d.stripeSkippedForNow),
+    }
+  } catch {
+    return null
+  }
+}
+
+function isLandlordOnboardingDraftMeaningful(d: LandlordOnboardingDraftV1): boolean {
+  return (
+    d.step > 1 ||
+    d.firstName.trim() !== '' ||
+    d.lastName.trim() !== '' ||
+    d.phone.trim() !== '' ||
+    d.landlordType !== '' ||
+    d.companyName.trim() !== '' ||
+    d.abn.trim() !== '' ||
+    d.address.trim() !== '' ||
+    d.suburb.trim() !== '' ||
+    d.postcode.trim() !== '' ||
+    d.bio.trim() !== '' ||
+    (d.avatarUrl != null && d.avatarUrl.trim() !== '') ||
+    d.hasInsurance ||
+    d.stripeSkippedForNow
+  )
+}
+
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
+  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
 const selectClass = inputClass
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 const errClass = 'text-red-600 text-xs mt-1'
@@ -60,6 +149,7 @@ const INSURANCE_PROVIDERS = [
 
 export default function LandlordOnboarding() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, role, refreshProfile } = useAuthContext()
   const { managedTierEnabled } = usePlatformFeatures()
@@ -107,6 +197,165 @@ export default function LandlordOnboarding() {
   const [hasInsurance, setHasInsurance] = useState(false)
   const [insuranceWarning, setInsuranceWarning] = useState(false)
 
+  const landlordOnboardingDraftSnapshot = useMemo(
+    () =>
+      landlordOnboardingDraftFromState({
+        step,
+        firstName,
+        lastName,
+        phone,
+        landlordType,
+        companyName,
+        abn,
+        address,
+        suburb,
+        postcode,
+        state,
+        bio,
+        avatarUrl,
+        hasInsurance,
+        stripeSkippedForNow,
+      }),
+    [
+      step,
+      firstName,
+      lastName,
+      phone,
+      landlordType,
+      companyName,
+      abn,
+      address,
+      suburb,
+      postcode,
+      state,
+      bio,
+      avatarUrl,
+      hasInsurance,
+      stripeSkippedForNow,
+    ],
+  )
+
+  const restoredLocationKeyRef = useRef<string | null>(null)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+  const formHydratedFromServerRef = useRef(false)
+
+  const persistLandlordOnboardingDraft = useCallback(() => {
+    try {
+      localStorage.setItem(LANDLORD_ONBOARDING_DRAFT_KEY, JSON.stringify(landlordOnboardingDraftSnapshot))
+    } catch {
+      /* quota / private mode */
+    }
+  }, [landlordOnboardingDraftSnapshot])
+
+  const hydrateFromProfile = useCallback(
+    (row: LandlordRow, tier: LandlordServiceTier) => {
+      setFirstName(row.first_name?.trim() ?? '')
+      setLastName(row.last_name?.trim() ?? '')
+      setPhone(row.phone?.trim() ?? '')
+      setLandlordType(row.landlord_type?.trim() ?? '')
+      setCompanyName(row.company_name?.trim() ?? '')
+      setAbn(row.abn?.trim() ?? '')
+      setAddress(row.address?.trim() ?? '')
+      setSuburb(row.suburb?.trim() ?? '')
+      setPostcode(row.postcode?.trim() ?? '')
+      setState(row.state?.trim() || 'NSW')
+      setBio(row.bio?.trim() ?? '')
+      setAvatarUrl(row.avatar_url?.trim() ?? null)
+      setHasInsurance(row.has_landlord_insurance === true)
+      if (!initialStepSet.current) {
+        initialStepSet.current = true
+        setStep(inferLandlordWizardStep(row, tier))
+      }
+    },
+    [],
+  )
+
+  const applyLandlordOnboardingDraft = useCallback((parsed: LandlordOnboardingDraftV1) => {
+    setStep(parsed.step)
+    setFirstName(parsed.firstName)
+    setLastName(parsed.lastName)
+    setPhone(parsed.phone)
+    setLandlordType(parsed.landlordType)
+    setCompanyName(parsed.companyName)
+    setAbn(parsed.abn)
+    setAddress(parsed.address)
+    setSuburb(parsed.suburb)
+    setPostcode(parsed.postcode)
+    setState(parsed.state)
+    setBio(parsed.bio)
+    setAvatarUrl(parsed.avatarUrl)
+    setHasInsurance(parsed.hasInsurance)
+    setStripeSkippedForNow(parsed.stripeSkippedForNow)
+    setTermsPrivacy(false)
+    setLandlordAgreement(false)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (draftSavedHideTimerRef.current) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (loading) restoredLocationKeyRef.current = null
+  }, [loading])
+
+  useEffect(() => {
+    if (loading || !profile) {
+      setDraftSaveEnabled(false)
+      return
+    }
+
+    if (restoredLocationKeyRef.current === location.key) {
+      setDraftSaveEnabled(true)
+      return
+    }
+    restoredLocationKeyRef.current = location.key
+
+    const parsed = parseLandlordOnboardingDraft(localStorage.getItem(LANDLORD_ONBOARDING_DRAFT_KEY))
+    if (parsed && isLandlordOnboardingDraftMeaningful(parsed)) {
+      applyLandlordOnboardingDraft(parsed)
+    }
+    setDraftSaveEnabled(true)
+  }, [loading, profile?.id, location.key, applyLandlordOnboardingDraft])
+
+  useEffect(() => {
+    if (!draftSaveEnabled || loading || !profile) return
+    const id = window.setTimeout(() => {
+      persistLandlordOnboardingDraft()
+      setDraftSavedVisible(true)
+      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = window.setTimeout(() => {
+        setDraftSavedVisible(false)
+        draftSavedHideTimerRef.current = null
+      }, 2200)
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [persistLandlordOnboardingDraft, draftSaveEnabled, loading, profile?.id])
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== 'hidden' || !draftSaveEnabled || loading || !profile) return
+      persistLandlordOnboardingDraft()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [persistLandlordOnboardingDraft, draftSaveEnabled, loading, profile?.id])
+
+  useEffect(() => {
+    const onPageHide = () => {
+      if (!draftSaveEnabled || loading || !profile) return
+      persistLandlordOnboardingDraft()
+    }
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [persistLandlordOnboardingDraft, draftSaveEnabled, loading, profile?.id])
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(INTENDED_LANDLORD_SERVICE_TIER_KEY)
@@ -130,28 +379,18 @@ export default function LandlordOnboarding() {
       if (error) throw error
       const row = data as LandlordRow
       if (row.onboarding_complete === true) {
+        try {
+          localStorage.removeItem(LANDLORD_ONBOARDING_DRAFT_KEY)
+        } catch {
+          /* ignore */
+        }
         navigate('/landlord/dashboard', { replace: true })
         return
       }
       setProfile(row)
-      setFirstName(row.first_name?.trim() ?? '')
-      setLastName(row.last_name?.trim() ?? '')
-      setPhone(row.phone?.trim() ?? '')
-      setLandlordType(row.landlord_type?.trim() ?? '')
-      setCompanyName(row.company_name?.trim() ?? '')
-      setAbn(row.abn?.trim() ?? '')
-      setAddress(row.address?.trim() ?? '')
-      setSuburb(row.suburb?.trim() ?? '')
-      setPostcode(row.postcode?.trim() ?? '')
-      setState(row.state?.trim() || 'NSW')
-      setBio(row.bio?.trim() ?? '')
-      setAvatarUrl(row.avatar_url?.trim() ?? null)
-      setHasInsurance(row.has_landlord_insurance === true)
-
-      if (!initialStepSet.current) {
-        initialStepSet.current = true
-        const tier = effectiveIntendedTier
-        setStep(inferLandlordWizardStep(row, tier))
+      if (!formHydratedFromServerRef.current) {
+        formHydratedFromServerRef.current = true
+        hydrateFromProfile(row, effectiveIntendedTier)
       }
     } catch (e) {
       setLoadError(messageFromSupabaseError(e))
@@ -159,7 +398,7 @@ export default function LandlordOnboarding() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, navigate, effectiveIntendedTier])
+  }, [user?.id, navigate, effectiveIntendedTier, hydrateFromProfile])
 
   useEffect(() => {
     void loadProfile()
@@ -235,6 +474,11 @@ export default function LandlordOnboarding() {
         return
       }
       setLandlordWizardCompleteLocalStorage()
+      try {
+        localStorage.removeItem(LANDLORD_ONBOARDING_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
       await refreshProfile()
       setProfile((p) => (p ? { ...p, onboarding_complete: true, onboarding_completed_at: now } : p))
     })()
@@ -559,14 +803,19 @@ export default function LandlordOnboarding() {
   const firstNameDisplay = firstName.trim() || profile.first_name?.trim() || 'there'
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-16">
+    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col overflow-x-hidden bg-stone-50 pb-16">
       <PageHeroBand
         title="Welcome to Quni Living"
         subtitle={step < 5 ? `Step ${step} of 5` : undefined}
         subtitleClassName="text-white/85 text-sm sm:text-base mt-2 font-semibold tracking-wide"
       />
 
-      <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-8">
+      <div className="max-w-2xl mx-auto w-full min-w-0 px-4 sm:px-6 pt-8">
+        {draftSavedVisible && step < 5 && (
+          <p className="text-xs text-stone-400 text-right mb-2 tabular-nums" aria-live="polite">
+            Draft saved
+          </p>
+        )}
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10">
           {step < 5 && (
             <div className="flex gap-2 mb-8">
