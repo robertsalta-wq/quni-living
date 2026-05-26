@@ -1,8 +1,16 @@
 /**
  * Student booking deposit — PaymentIntent (manual capture) + optional commit (insert booking via service role).
  *
- * POST JSON (create PI): { propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged }
- * POST JSON (commit): { commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform', conversationId? }
+ * POST JSON (create PI): {
+ *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   occupantCount?: 1|2, parkingSelected?: boolean
+ * }
+ * POST JSON (commit): {
+ *   commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform', conversationId?,
+ *   occupantCount?: 1|2, parkingSelected?: boolean,
+ *   coTenant?: { full_name, email, phone, date_of_birth }  // required when occupantCount === 2
+ * }
  *
  * Authorization: Bearer <Supabase access_token>
  */
@@ -16,6 +24,13 @@ import {
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
+import {
+  assertPiMetadataMatchesOccupancy,
+  OCCUPANCY_PROPERTY_COLUMNS,
+  parseOccupancyScalarsFromBody,
+  resolveCoTenantForCommit,
+  resolveWeeklyRentForBooking,
+} from './lib/booking/occupancyBooking.js'
 
 export const config = { runtime: 'edge' }
 
@@ -40,12 +55,6 @@ function json(body, status = 200, origin) {
       'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     },
   })
-}
-
-function weeklyRentCents(rentPerWeek) {
-  const n = Number(rentPerWeek)
-  if (!Number.isFinite(n) || n <= 0) return null
-  return Math.round(n * 100)
 }
 
 function addDaysIso(isoDate, days) {
@@ -277,6 +286,18 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const conversationIdHint =
     typeof body.conversationId === 'string' ? body.conversationId.trim() : ''
 
+  const occupancyParsed = parseOccupancyScalarsFromBody(body)
+  if (!occupancyParsed.ok) {
+    return json(occupancyParsed.body, occupancyParsed.status, origin)
+  }
+  const { occupantCount, parkingSelected } = occupancyParsed
+
+  const coTenantResolved = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant)
+  if (!coTenantResolved.ok) {
+    return json(coTenantResolved.body, coTenantResolved.status, origin)
+  }
+  const coTenant = coTenantResolved.coTenant
+
   if (!paymentIntentId || !propertyId || !moveInDate || !leaseLength) {
     return json({ error: 'paymentIntentId, propertyId, moveInDate, and leaseLength are required' }, 400, origin)
   }
@@ -353,7 +374,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      'id, title, landlord_id, rent_per_week, status, suburb, state, property_type, is_registered_rooming_house, service_tier',
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, ${OCCUPANCY_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -373,6 +394,14 @@ async function handlePaymentIntentCommit(request, origin, body) {
       origin,
     )
   }
+
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  if (!rentResolved.ok) {
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'invalid_rent_commit')
+    return json(rentResolved.body, rentResolved.status, origin)
+  }
+  const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
+  const depositCents = weeklyRentCents
 
   let pi
   try {
@@ -401,10 +430,17 @@ async function handlePaymentIntentCommit(request, origin, body) {
     return json({ error: `Payment is not authorised (status: ${pi.status})` }, 400, origin)
   }
 
-  const depositCents = weeklyRentCents(property.rent_per_week)
-  if (depositCents == null) {
-    return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
+  const metaMatch = assertPiMetadataMatchesOccupancy(meta, {
+    occupantCount,
+    parkingSelected,
+    weeklyRentCents,
+    depositCents,
+  })
+  if (!metaMatch.ok) {
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'pi_occupancy_mismatch')
+    return json(metaMatch.body, 400, origin)
   }
+
   let pricingCell
   try {
     pricingCell = await getActivePricingSnapshotForProperty(
@@ -419,6 +455,19 @@ async function handlePaymentIntentCommit(request, origin, body) {
     admin,
     landlordProfileId: property.landlord_id,
   })
+
+  const expectedAmountCents = bookingFeeCents > 0 ? depositCents + bookingFeeCents : depositCents
+  if (pi.amount !== expectedAmountCents) {
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'pi_amount_mismatch')
+    return json(
+      {
+        error: 'payment_amount_mismatch',
+        message: 'Payment amount does not match resolved weekly rent for this booking',
+      },
+      400,
+      origin,
+    )
+  }
 
   const tierContext = await fetchServiceTierResolverContext(admin)
 
@@ -442,7 +491,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     start_date: moveInDate,
     move_in_date: moveInDate,
     end_date: endDate,
-    weekly_rent: property.rent_per_week,
+    weekly_rent: weeklyRent,
     status: 'pending_confirmation',
     notes: null,
     student_message: studentMessage.trim() || null,
@@ -455,6 +504,11 @@ async function handlePaymentIntentCommit(request, origin, body) {
     property_type: propertyType,
     rent_payment_method: rentPaymentMethod,
     expires_at: expiresAt,
+    occupant_count: occupantCount,
+    parking_selected: parkingSelected,
+    rent_breakdown: breakdownAud,
+    co_tenant: coTenant,
+    housemates_count: Math.max(0, occupantCount - 1),
     ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),
   }
 
@@ -588,6 +642,12 @@ export default async function handler(request) {
     return json({ error: 'Move-in date must be at least 7 days from today' }, 400, origin)
   }
 
+  const occupancyParsed = parseOccupancyScalarsFromBody(body)
+  if (!occupancyParsed.ok) {
+    return json(occupancyParsed.body, occupancyParsed.status, origin)
+  }
+  const { occupantCount, parkingSelected } = occupancyParsed
+
   const supabaseAuth = createClient(supabaseUrl, anonKey)
   const {
     data: { user },
@@ -637,13 +697,13 @@ export default async function handler(request) {
       id,
       title,
       landlord_id,
-      rent_per_week,
       status,
       suburb,
       state,
       property_type,
       is_registered_rooming_house,
       service_tier,
+      ${OCCUPANCY_PROPERTY_COLUMNS},
       landlord_profiles (
         id,
         stripe_connect_account_id,
@@ -686,10 +746,13 @@ export default async function handler(request) {
     )
   }
 
-  const depositCents = weeklyRentCents(property.rent_per_week)
-  if (depositCents == null) {
-    return json({ error: 'Invalid weekly rent on listing' }, 400, origin)
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  if (!rentResolved.ok) {
+    return json(rentResolved.body, rentResolved.status, origin)
   }
+  const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
+  const depositCents = weeklyRentCents
+
   let pricingCell
   try {
     pricingCell = await getActivePricingSnapshotForProperty(property.id, propertyServiceTier)
@@ -742,6 +805,9 @@ export default async function handler(request) {
       landlordProfileId: property.landlord_id,
       moveInDate,
       leaseLength,
+      occupantCount: String(occupantCount),
+      parkingSelected: parkingSelected ? 'true' : 'false',
+      weeklyRentCents: String(weeklyRentCents),
       depositCents: String(depositCents),
       bookingFeeCents: String(bookingFeeCents),
       studentMessage: studentMessage ? studentMessage.slice(0, 500) : '',
@@ -755,6 +821,11 @@ export default async function handler(request) {
       amountCents,
       depositCents,
       bookingFeeCents,
+      weeklyRent,
+      weeklyRentCents,
+      breakdownAud,
+      occupantCount,
+      parkingSelected,
     },
     200,
     origin,
