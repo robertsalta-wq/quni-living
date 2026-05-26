@@ -13,6 +13,10 @@ import {
   getDocusealSubmissionsUrl as getDocusealSubmissionsUrlImpl,
 } from './docuseal.shared.js'
 import { getActivePricingSnapshotForProperty } from './pricing/index.js'
+import {
+  isLandlordFeeExempt,
+  resolveManagedApplicationFeePercent,
+} from './pricing/resolvePlatformFee.js'
 
 export function getDocusealSubmissionsUrl(): string {
   return getDocusealSubmissionsUrlImpl()
@@ -821,7 +825,17 @@ function extractSubmissionCompletedAt(payload: unknown): string | null {
 }
 
 export async function getManagedLandlordFeePercentForProperty(propertyId: string): Promise<number> {
+  const admin = adminClient()
+
+  const { data: property, error: propErr } = await admin
+    .from('properties')
+    .select('landlord_id')
+    .eq('id', propertyId)
+    .maybeSingle()
+  if (propErr) throw propErr
+
   const pricingCell = await getActivePricingSnapshotForProperty(propertyId, 'managed')
-  if (pricingCell.fee_mode !== 'percent') return 0
-  return Number(pricingCell.fee_percent || 0)
+  const feeExempt =
+    property?.landlord_id != null ? await isLandlordFeeExempt(admin, property.landlord_id) : false
+  return resolveManagedApplicationFeePercent(feeExempt, pricingCell)
 }

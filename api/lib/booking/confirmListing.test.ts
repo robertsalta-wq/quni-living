@@ -28,12 +28,23 @@ function mockAdmin(opts: {
   booking?: typeof baseBooking
   updateRows?: unknown[] | null
   eventError?: Error | null
+  feeExempt?: boolean
 }) {
   const booking = opts.booking ?? baseBooking
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
   const eventError = opts.eventError ?? null
+  const feeExempt = opts.feeExempt ?? false
 
   const from = vi.fn((table: string) => {
+    if (table === 'landlord_profiles') {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { fee_exempt: feeExempt }, error: null }),
+          }),
+        }),
+      }
+    }
     if (table === 'bookings') {
       return {
         select: () => ({
@@ -126,6 +137,25 @@ describe('runListingConfirmBooking', () => {
       { idempotencyKey: `confirm-listing-${baseBooking.id}` },
     )
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+  })
+
+  it('fee-exempt landlord: skips listing fee charge', async () => {
+    const stripe = stripeHappy()
+    const admin = mockAdmin({ feeExempt: true })
+
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.listing_fee_payment_intent_id).toBeNull()
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
+    expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
   })
 
   it('Phase 3 / Task J: confirm Listing triggers document generation in PREVIEW (defer_signing=true)', async () => {
@@ -234,6 +264,15 @@ describe('runListingConfirmBooking', () => {
     let maybeSingleCalls = 0
     const admin = {
       from: vi.fn((table: string) => {
+        if (table === 'landlord_profiles') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: { fee_exempt: false }, error: null }),
+              }),
+            }),
+          }
+        }
         if (table === 'bookings') {
           return {
             select: () => ({

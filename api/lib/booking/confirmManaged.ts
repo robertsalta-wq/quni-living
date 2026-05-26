@@ -18,6 +18,10 @@ import {
   tenancyGeneratorToApiPath,
 } from '../../lib/resolveTenancyPackage.js'
 import { getActivePricingSnapshotForProperty } from '../../lib/pricing/index.js'
+import {
+  isLandlordFeeExempt,
+  resolveManagedApplicationFeePercent,
+} from '../../lib/pricing/resolvePlatformFee.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 
 function jsonFail(status, body) {
@@ -308,8 +312,11 @@ export async function runManagedConfirmBooking(params) {
     }
 
     const managedPricing = await getActivePricingSnapshotForProperty(booking.property_id, 'managed')
-    subscriptionBody.application_fee_percent =
-      managedPricing.fee_mode === 'percent' ? Number(managedPricing.fee_percent || 0) : 0
+    const feeExempt = await isLandlordFeeExempt(admin, landlord.id)
+    subscriptionBody.application_fee_percent = resolveManagedApplicationFeePercent(
+      feeExempt,
+      managedPricing,
+    )
 
     const subscription = await stripe.subscriptions.create(subscriptionBody)
 

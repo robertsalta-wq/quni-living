@@ -5,7 +5,14 @@ import { formatLogValue } from '../../lib/adminPricingSupabase'
 import type { PlatformConfigRow } from '../../lib/platformConfig'
 import { PLATFORM_CONFIG_KEYS, parseBooleanConfig } from '../../lib/platformConfig'
 import { Check, ExternalLink, Pencil, Trash2, X } from 'lucide-react'
+import {
+  addFeeExemptAccount,
+  fetchFeeExemptAccounts,
+  removeFeeExemptAccount,
+  type FeeExemptAccount,
+} from '../../lib/adminFeeExempt'
 import { adminCardClass, adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
+import { FeeExemptAccountsSection } from './FeeExemptAccountsSection'
 
 const CHANGELOG_REDACTED = '[redacted]'
 
@@ -328,6 +335,186 @@ function Subheading({ children }: { children: ReactNode }) {
 
 function Note({ children }: { children: ReactNode }) {
   return <p className="text-[13px] leading-relaxed text-gray-600">{children}</p>
+}
+
+function FeeExemptAccountsSection() {
+  const [accounts, setAccounts] = useState<FeeExemptAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [sectionError, setSectionError] = useState<string | null>(null)
+  const [newEmail, setNewEmail] = useState('')
+  const [newNotes, setNewNotes] = useState('')
+
+  const authHeader = useCallback(async (): Promise<string | null> => {
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    return token ? `Bearer ${token}` : null
+  }, [])
+
+  const load = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setSectionError('Supabase is not configured.')
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    setSectionError(null)
+    const h = await authHeader()
+    if (!h) {
+      setSectionError('You need to be signed in.')
+      setLoading(false)
+      return
+    }
+    try {
+      setAccounts(await fetchFeeExemptAccounts(h))
+    } catch (e) {
+      setSectionError(e instanceof Error ? e.message : 'Could not load fee-exempt accounts')
+      setAccounts([])
+    } finally {
+      setLoading(false)
+    }
+  }, [authHeader])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault()
+    const email = newEmail.trim()
+    if (!email.includes('@')) {
+      setSectionError('Enter a valid email address.')
+      return
+    }
+    const h = await authHeader()
+    if (!h) {
+      setSectionError('You need to be signed in.')
+      return
+    }
+    setSaving(true)
+    setSectionError(null)
+    try {
+      await addFeeExemptAccount(h, email, newNotes.trim() || undefined)
+      setNewEmail('')
+      setNewNotes('')
+      await load()
+    } catch (err) {
+      setSectionError(err instanceof Error ? err.message : 'Could not add account')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleRemove(email: string) {
+    if (!window.confirm(`Remove ${email} from the fee-exempt list? Platform fees will apply to their listings again.`)) {
+      return
+    }
+    const h = await authHeader()
+    if (!h) {
+      setSectionError('You need to be signed in.')
+      return
+    }
+    setSaving(true)
+    setSectionError(null)
+    try {
+      await removeFeeExemptAccount(h, email)
+      await load()
+    } catch (err) {
+      setSectionError(err instanceof Error ? err.message : 'Could not remove account')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-8 border-t border-gray-100 pt-8">
+      <Subheading>Fee-exempt accounts</Subheading>
+      <Note>
+        Internal landlord emails on this list pay no platform fees (listing acceptance fee, managed
+        application fee, and student booking fee). Changes sync to matching landlord profiles
+        automatically.
+      </Note>
+      {sectionError ? (
+        <p className="mt-3 text-sm text-red-700">{sectionError}</p>
+      ) : null}
+      <form onSubmit={(e) => void handleAdd(e)} className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[14rem] flex-1 space-y-1">
+          <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+            Email
+          </label>
+          <input
+            type="email"
+            autoComplete="off"
+            required
+            className="w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="landlord@example.com"
+          />
+        </div>
+        <div className="min-w-[12rem] flex-1 space-y-1">
+          <label className="block text-[11px] font-medium uppercase tracking-wide text-gray-500">
+            Notes (optional)
+          </label>
+          <input
+            type="text"
+            autoComplete="off"
+            className="w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+            value={newNotes}
+            onChange={(e) => setNewNotes(e.target.value)}
+            placeholder="e.g. internal demo account"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+        >
+          Add email
+        </button>
+      </form>
+      {loading ? (
+        <p className="mt-4 text-sm text-gray-500">Loading fee-exempt accounts…</p>
+      ) : accounts.length === 0 ? (
+        <p className="mt-4 text-sm text-gray-500">No fee-exempt accounts yet.</p>
+      ) : (
+        <div className={`${adminTableWrapClass} mt-4`}>
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr>
+                <th className={adminThClass}>Email</th>
+                <th className={adminThClass}>Notes</th>
+                <th className={adminThClass}>Added</th>
+                <th className={adminThClass}>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((row) => (
+                <tr key={row.id} className="border-t border-gray-100">
+                  <td className={adminTdClass}>{row.email}</td>
+                  <td className={adminTdClass}>{row.notes || '—'}</td>
+                  <td className={adminTdClass}>{new Date(row.created_at).toLocaleDateString('en-AU')}</td>
+                  <td className={adminTdClass}>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void handleRemove(row.email)}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-red-700 hover:underline disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminSettings() {
@@ -670,6 +857,7 @@ export default function AdminSettings() {
                 </div>
               )
             })}
+            <FeeExemptAccountsSection />
           </div>
         </div>
       )}

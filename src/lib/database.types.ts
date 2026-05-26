@@ -115,6 +115,30 @@ export interface Database {
         }
         Relationships: []
       }
+      fee_exempt_accounts: {
+        Row: {
+          id: string
+          email: string
+          notes: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          notes?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          notes?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
       platform_staff: {
         Row: {
           id: string
@@ -328,6 +352,7 @@ export interface Database {
           insurance_acknowledged_at: string | null
           onboarding_complete: boolean
           onboarding_completed_at: string | null
+          fee_exempt: boolean
           created_at: string
         }
         Insert: {
@@ -359,6 +384,7 @@ export interface Database {
           insurance_acknowledged_at?: string | null
           onboarding_complete?: boolean
           onboarding_completed_at?: string | null
+          fee_exempt?: boolean
           created_at?: string
         }
         Update: {
@@ -390,6 +416,7 @@ export interface Database {
           insurance_acknowledged_at?: string | null
           onboarding_complete?: boolean
           onboarding_completed_at?: string | null
+          fee_exempt?: boolean
           created_at?: string
         }
         Relationships: []

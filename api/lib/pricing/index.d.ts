@@ -38,8 +38,12 @@ export function formatFeeForDisplay(cell: PricingCell): {
 export function calculateBookingFeeCents(
   cell: PricingCell,
   weeklyRentCents: number,
-  leaseWeeks: number,
-): number
+  leaseWeeks?: number,
+  options?: {
+    admin?: import('@supabase/supabase-js').SupabaseClient
+    landlordProfileId?: string
+  },
+): Promise<number>
 
 export function resolvePropertyTierFromListing(
   propertyType: string,

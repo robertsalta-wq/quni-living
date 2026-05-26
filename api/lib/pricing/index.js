@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { isLandlordFeeExempt } from './resolvePlatformFee.js'
 
 const VALID_PROPERTY_TIERS = new Set(['t1', 't2', 't3'])
 const VALID_SERVICE_TIERS = new Set(['listing', 'managed'])
@@ -137,8 +138,18 @@ export function formatFeeForDisplay(cell) {
   }
 }
 
-export function calculateBookingFeeCents(cell, weeklyRentCents, leaseWeeks) {
+/**
+ * @param {object} cell
+ * @param {number} weeklyRentCents
+ * @param {number} [leaseWeeks]
+ * @param {{ admin?: import('@supabase/supabase-js').SupabaseClient; landlordProfileId?: string }} [options]
+ */
+export async function calculateBookingFeeCents(cell, weeklyRentCents, leaseWeeks, options = {}) {
   void leaseWeeks
+  const { admin, landlordProfileId } = options
+  if (admin && landlordProfileId) {
+    if (await isLandlordFeeExempt(admin, landlordProfileId)) return 0
+  }
   if (cell.student_fee_mode === 'percent') {
     const pct = Number(cell.student_fee_percent || 0)
     if (!Number.isFinite(pct) || pct <= 0) return 0
