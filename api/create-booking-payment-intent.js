@@ -415,7 +415,10 @@ async function handlePaymentIntentCommit(request, origin, body) {
     console.error('load pricing for booking commit', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
   }
-  const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
+  const bookingFeeCents = await calculateBookingFeeCents(pricingCell, depositCents, 1, {
+    admin,
+    landlordProfileId: property.landlord_id,
+  })
 
   const tierContext = await fetchServiceTierResolverContext(admin)
 
@@ -694,7 +697,10 @@ export default async function handler(request) {
     console.error('load pricing for booking PI', e)
     return json({ error: 'Could not resolve pricing for booking' }, 500, origin)
   }
-  const bookingFeeCents = calculateBookingFeeCents(pricingCell, depositCents, 1)
+  const bookingFeeCents = await calculateBookingFeeCents(pricingCell, depositCents, 1, {
+    admin,
+    landlordProfileId: property.landlord_id,
+  })
   const amountCents = bookingFeeCents > 0 ? depositCents + bookingFeeCents : depositCents
 
   const stripe = new Stripe(stripeSecret)
