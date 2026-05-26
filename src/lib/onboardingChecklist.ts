@@ -112,15 +112,17 @@ export function isLandlordStripePayoutsComplete(p: LandlordProfileRow | null | u
   return p?.stripe_charges_enabled === true && p?.stripe_payouts_enabled === true
 }
 
-/** All landlord checklist steps (excl. account) for listing creation. */
-export function isLandlordListingUnlocked(p: LandlordProfileRow | null | undefined): boolean {
+/** Terms + profile basics — enough to create and edit property listings. */
+export function canLandlordCreateListing(p: LandlordProfileRow | null | undefined): boolean {
   if (!p) return false
   return Boolean(
-    p.terms_accepted_at &&
-      p.landlord_terms_accepted_at &&
-      isLandlordProfileBasicsComplete(p) &&
-      isLandlordStripePayoutsComplete(p),
+    p.terms_accepted_at && p.landlord_terms_accepted_at && isLandlordProfileBasicsComplete(p),
   )
+}
+
+/** Full operational unlock (payouts ready). Paid booking acceptance still checks Stripe in API. */
+export function isLandlordListingUnlocked(p: LandlordProfileRow | null | undefined): boolean {
+  return canLandlordCreateListing(p) && isLandlordStripePayoutsComplete(p)
 }
 
 export type ChecklistStep = {

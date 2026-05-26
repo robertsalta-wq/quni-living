@@ -16,7 +16,11 @@ import LandlordStudentProfileModal, {
 } from '../components/landlord/LandlordStudentProfileModal'
 import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
-import { isLandlordListingUnlocked, landlordDisplayNameComplete } from '../lib/onboardingChecklist'
+import {
+  canLandlordCreateListing,
+  isLandlordStripePayoutsComplete,
+  landlordDisplayNameComplete,
+} from '../lib/onboardingChecklist'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
@@ -793,7 +797,8 @@ export default function LandlordDashboard() {
     if (!stripeChargesOk) return 'Connect bank account →'
     return null
   })()
-  const listingUnlocked = isLandlordListingUnlocked(profile)
+  const canCreateListing = canLandlordCreateListing(profile)
+  const stripePayoutsReady = isLandlordStripePayoutsComplete(profile)
 
   if (!isSupabaseConfigured) {
     return (
@@ -854,7 +859,7 @@ export default function LandlordDashboard() {
               Here’s what’s happening with your listings, messages, and booking requests.
             </p>
           </div>
-          {listingUnlocked ? (
+          {canCreateListing ? (
             <Link
               to="/landlord/property/new"
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm shrink-0"
@@ -862,16 +867,24 @@ export default function LandlordDashboard() {
               Add new listing
             </Link>
           ) : (
-            <span
-              title="Complete your account setup to add listings"
-              className="inline-flex items-center justify-center rounded-xl bg-gray-300 text-gray-500 px-5 py-2.5 text-sm font-medium cursor-not-allowed shadow-sm shrink-0 select-none"
+            <Link
+              to={firstIncomplete?.includes('terms') ? '/landlord-profile#account-agreements' : '/landlord/profile'}
+              className="inline-flex items-center justify-center rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-700 px-5 py-2.5 text-sm font-medium hover:bg-stone-50 shadow-sm shrink-0"
+              title={firstIncomplete ?? 'Complete your account setup to add listings'}
             >
               Add new listing
-            </span>
+            </Link>
           )}
         </div>
 
         <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
+
+        {canCreateListing && !stripePayoutsReady && (
+          <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            You can create listings now. Connect your bank below before you accept paid bookings on Quni Listing
+            properties.
+          </p>
+        )}
 
         {properties.length > 0 && (
           <div className="mb-6 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
@@ -1050,7 +1063,7 @@ export default function LandlordDashboard() {
             {properties.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
                 <p className="text-gray-600 text-sm mb-4">You haven&apos;t listed any properties yet.</p>
-                {listingUnlocked ? (
+                {canCreateListing ? (
                   <Link
                     to="/landlord/property/new"
                     className="inline-flex rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52]"
@@ -1058,12 +1071,12 @@ export default function LandlordDashboard() {
                     Add new listing
                   </Link>
                 ) : (
-                  <span
-                    title="Complete your account setup to add listings"
-                    className="inline-flex rounded-xl bg-gray-300 text-gray-500 px-5 py-2.5 text-sm font-medium cursor-not-allowed select-none"
+                  <Link
+                    to={firstIncomplete?.includes('terms') ? '/landlord-profile#account-agreements' : '/landlord/profile'}
+                    className="inline-flex rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-800 px-5 py-2.5 text-sm font-medium hover:bg-stone-50"
                   >
-                    Add new listing
-                  </span>
+                    Complete setup to add a listing
+                  </Link>
                 )}
               </div>
             ) : (

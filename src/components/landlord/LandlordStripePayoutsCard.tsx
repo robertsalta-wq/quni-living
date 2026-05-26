@@ -182,7 +182,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
           <p className="text-sm text-gray-500 mt-1 max-w-xl">
             {stripePayoutsReady
               ? 'Your payouts are enabled ✓'
-              : 'Connect Stripe to receive rent payouts to your bank. You&apos;ll complete a short Stripe Express onboarding flow — we never see your full bank details.'}
+              : "Connect Stripe to receive rent payouts to your bank. You'll complete a short Stripe Express onboarding flow — we never see your full bank details."}
           </p>
           {connectError && (
             <p className="text-sm text-red-600 mt-2" role="alert">
