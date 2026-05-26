@@ -15,11 +15,12 @@ export default function MessageComposer({ disabled, onSend }: Props) {
     const text = body.trim()
     if (!text || sending || disabled) return
     setError(null)
+    setBody('')
     setSending(true)
     try {
       await onSend(text)
-      setBody('')
     } catch (err) {
+      setBody(text)
       setError(err instanceof Error ? err.message : 'Could not send')
     } finally {
       setSending(false)
@@ -42,7 +43,7 @@ export default function MessageComposer({ disabled, onSend }: Props) {
           onChange={(e) => setBody(e.target.value)}
           rows={2}
           placeholder="Write a message…"
-          disabled={disabled || sending}
+          disabled={disabled}
           className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 min-h-[44px] max-h-32"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
