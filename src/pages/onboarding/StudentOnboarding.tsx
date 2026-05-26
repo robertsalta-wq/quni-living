@@ -5,6 +5,7 @@ import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
 import PageHeroBand from '../../components/PageHeroBand'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
+import { StudentUniEmailVerification } from '../../components/student/StudentUniEmailVerification'
 import {
   BUDGET_RANGE_OPTIONS,
   GENDER_OPTIONS,
@@ -20,6 +21,7 @@ import {
   type BudgetRangeValue,
   type StudentProfileRow,
 } from '../../lib/studentOnboarding'
+import { needsStudentUniEmailVerification } from '../../lib/studentUniEmailVerification'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
@@ -194,6 +196,18 @@ const selectClass = inputClass
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 const errClass = 'text-red-600 text-xs mt-1'
 
+function RequiredMark() {
+  return <span className="text-red-500"> *</span>
+}
+
+function RequiredFieldsNote() {
+  return (
+    <p className="text-xs text-stone-500">
+      Fields marked with <span className="text-red-500">*</span> are required.
+    </p>
+  )
+}
+
 export default function StudentOnboarding() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -342,6 +356,19 @@ export default function StudentOnboarding() {
     setGuarantorName(p.guarantor_name?.trim() ?? '')
     setStep(inferStudentOnboardingStep(p, p.accommodation_verification_route))
   }, [])
+
+  const reloadProfileRow = useCallback(async () => {
+    if (!user?.id) return
+    const profRes = await withSentryMonitoring('StudentOnboarding/fetch-profile-after-verify', () =>
+      supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
+    )
+    if (profRes.data) {
+      const row = profRes.data as StudentProfileRow
+      setProfile(row)
+      hydrateFromProfile(row)
+    }
+    await refreshProfile()
+  }, [user?.id, refreshProfile, hydrateFromProfile])
 
   const handleDraftStartFresh = useCallback(() => {
     try {
@@ -528,6 +555,7 @@ export default function StudentOnboarding() {
   }
 
   const isIdentityPath = isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
+  const needsUniEmail = needsStudentUniEmailVerification(profile)
 
   function validateStep1(): boolean {
     const e: Record<string, string> = {}
@@ -883,7 +911,11 @@ export default function StudentOnboarding() {
     return <Navigate to="/listings" replace />
   }
 
-  const stepLabel = welcome ? 'Done' : `Step ${step} of 3`
+  const stepLabel = welcome
+    ? 'Done'
+    : needsUniEmail
+      ? 'Verify university email'
+      : `Step ${step} of 3`
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-16">
@@ -951,16 +983,37 @@ export default function StudentOnboarding() {
             </div>
           ) : (
             <>
-              <div className="flex gap-2 mb-8">
-                {([1, 2, 3] as const).map((n) => (
-                  <div
-                    key={n}
-                    className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#FF6F61]' : 'bg-stone-200'}`}
-                    aria-hidden
-                  />
-                ))}
-              </div>
+              {needsUniEmail ? (
+                <div className="h-1.5 rounded-full bg-[#FF6F61] mb-8" aria-hidden />
+              ) : (
+                <div className="flex gap-2 mb-8">
+                  {([1, 2, 3] as const).map((n) => (
+                    <div
+                      key={n}
+                      className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#FF6F61]' : 'bg-stone-200'}`}
+                      aria-hidden
+                    />
+                  ))}
+                </div>
+              )}
 
+              {needsUniEmail ? (
+                <div className="space-y-5">
+                  <h2 className="text-lg font-bold text-stone-900">Verify your university email</h2>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    Before we collect your profile details, confirm you have access to your official student email.
+                    We send a one-time code — it is separate from the email you used to create your Quni account.
+                  </p>
+                  <RequiredFieldsNote />
+                  <StudentUniEmailVerification
+                    profile={profile}
+                    onVerified={reloadProfileRow}
+                    variant="onboarding"
+                    showAdminResendHint={false}
+                  />
+                </div>
+              ) : (
+                <>
               {formError && (
                 <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
                   {formError}
@@ -981,6 +1034,7 @@ export default function StudentOnboarding() {
                       ? 'Tell us a bit about yourself so we can match you with homes listed as open to non-students.'
                       : 'Tell us a bit about yourself so we can match you with the right homes.'}
                   </p>
+                  <RequiredFieldsNote />
 
                   <div className="flex flex-col items-center gap-3 pb-2">
                     <div className="h-24 w-24 rounded-full bg-stone-100 overflow-hidden ring-2 ring-stone-200 flex items-center justify-center text-stone-400 text-2xl font-semibold">
@@ -1005,6 +1059,7 @@ export default function StudentOnboarding() {
                     <div>
                       <label htmlFor="so-fn" className={labelClass}>
                         First name
+                        <RequiredMark />
                       </label>
                       <input
                         id="so-fn"
@@ -1018,6 +1073,7 @@ export default function StudentOnboarding() {
                     <div>
                       <label htmlFor="so-ln" className={labelClass}>
                         Last name
+                        <RequiredMark />
                       </label>
                       <input
                         id="so-ln"
@@ -1056,6 +1112,7 @@ export default function StudentOnboarding() {
                       <div>
                         <label htmlFor="so-course" className={labelClass}>
                           Course / degree
+                          <RequiredMark />
                         </label>
                         <input
                           id="so-course"
@@ -1070,6 +1127,7 @@ export default function StudentOnboarding() {
                       <div>
                         <label htmlFor="so-year" className={labelClass}>
                           Year of study
+                          <RequiredMark />
                         </label>
                         <select
                           id="so-year"
@@ -1092,6 +1150,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-gender" className={labelClass}>
                       Gender
+                      <RequiredMark />
                     </label>
                     <select
                       id="so-gender"
@@ -1112,6 +1171,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-phone" className={labelClass}>
                       Phone number
+                      <RequiredMark />
                     </label>
                     <input
                       id="so-phone"
@@ -1127,6 +1187,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-budget" className={labelClass}>
                       Weekly budget
+                      <RequiredMark />
                     </label>
                     <select
                       id="so-budget"
@@ -1147,6 +1208,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-movein" className={labelClass}>
                       Preferred move-in date
+                      <RequiredMark />
                     </label>
                     <input
                       id="so-movein"
@@ -1161,6 +1223,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-lease" className={labelClass}>
                       Preferred lease length
+                      <RequiredMark />
                     </label>
                     <select
                       id="so-lease"
@@ -1197,10 +1260,12 @@ export default function StudentOnboarding() {
                     This information is only shared with your landlord after a booking is confirmed. It helps ensure your
                     safety and wellbeing during your tenancy.
                   </p>
+                  <RequiredFieldsNote />
 
                   <div>
                     <label htmlFor="so-en-name" className={labelClass}>
                       Emergency contact name
+                      <RequiredMark />
                     </label>
                     <input
                       id="so-en-name"
@@ -1214,6 +1279,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-en-rel" className={labelClass}>
                       Relationship
+                      <RequiredMark />
                     </label>
                     <input
                       id="so-en-rel"
@@ -1228,6 +1294,7 @@ export default function StudentOnboarding() {
                   <div>
                     <label htmlFor="so-en-phone" className={labelClass}>
                       Emergency contact phone
+                      <RequiredMark />
                     </label>
                     <input
                       id="so-en-phone"
@@ -1427,6 +1494,9 @@ export default function StudentOnboarding() {
                       />
                     </span>
                     <span className="pt-2.5 min-w-0">
+                      <span className="text-red-500 font-medium" aria-hidden>
+                        *{' '}
+                      </span>
                       I agree to the{' '}
                       <a
                         href="/terms"
@@ -1468,6 +1538,8 @@ export default function StudentOnboarding() {
                     </button>
                   </div>
                 </form>
+              )}
+                </>
               )}
             </>
           )}

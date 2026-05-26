@@ -8,6 +8,7 @@ import {
   type UserRole,
 } from '../lib/authProfile'
 import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
+import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 
 export type AuthState = {
@@ -38,19 +39,21 @@ export function useProvideAuth(): AuthState {
       setRole(null)
       return
     }
-    // Session user from storage/JWT can omit `email`. Replace context `user` with getUser() result so
-    // isAdminUser(user), Header, and onboarding checks see the same email Supabase verified.
-    const { data, error } = await supabase.auth.getUser()
-    if (error && isStaleOrInvalidJwtUserError(error.message)) {
-      clearOnboardingDismissed()
-      await supabase.auth.signOut()
-      setUser(null)
-      setSession(null)
-      setProfile(null)
-      setRole(null)
-      return
+    // Session user from storage/JWT can omit `email`. Refresh via getUser() only when needed.
+    let resolved = u
+    if (!authUserEmail(u)) {
+      const { data, error } = await supabase.auth.getUser()
+      if (error && isStaleOrInvalidJwtUserError(error.message)) {
+        clearOnboardingDismissed()
+        await supabase.auth.signOut()
+        setUser(null)
+        setSession(null)
+        setProfile(null)
+        setRole(null)
+        return
+      }
+      resolved = data.user ?? u
     }
-    const resolved = data.user ?? u
     setUser(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
     setRole(r)

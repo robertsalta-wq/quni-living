@@ -6,11 +6,7 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import {
-  fetchRoleAndProfile,
-  getPostLoginRedirectDestination,
-  needsOnboarding,
-} from '../lib/authProfile'
+import { getPostLoginRedirectDestination, needsOnboarding } from '../lib/authProfile'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import {
   isSafeInternalPath,
@@ -135,28 +131,7 @@ export default function Login() {
       if (!data.user) throw new Error('No user returned')
 
       clearQuniAccommodationVerificationRoute()
-
-      const { data: verified } = await supabase.auth.getUser()
-      const u = verified.user ?? data.user
-      const { role: r, profile: p } = await fetchRoleAndProfile(u)
-      if (r === 'admin') {
-        const next = resolvePostLoginDestination(searchParams, location.state)
-        navigate(next && next !== '/login' ? next : '/admin', { replace: true })
-        return
-      }
-      if (r === null) {
-        navigate('/onboarding', { replace: true })
-        return
-      }
-      if (p === null || needsOnboarding(r, p)) {
-        navigate(r === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
-        return
-      }
-      const next = resolvePostLoginDestination(searchParams, location.state)
-      navigate(
-        next && next !== '/login' ? next : getPostLoginRedirectDestination(u, r, p),
-        { replace: true },
-      )
+      // Redirect once AuthContext finishes hydrating (avoids duplicate profile fetches here).
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Invalid email or password.'
       setError(msg)

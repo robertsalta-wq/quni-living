@@ -19,7 +19,10 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
-  if (user.user_metadata?.role === 'admin' || (await fetchIsPlatformAdmin())) {
+  const meta = user.user_metadata?.role
+  const metaIsKnownRole = meta === 'student' || meta === 'landlord'
+  const mayBePlatformAdmin = meta === 'admin' || !metaIsKnownRole
+  if (mayBePlatformAdmin && (meta === 'admin' || (await fetchIsPlatformAdmin()))) {
     await linkPlatformStaffUserIfNeeded(user)
     return { role: 'admin', profile: null }
   }
@@ -32,7 +35,6 @@ export async function fetchRoleAndProfile(user: User): Promise<{
   const sp = spRaw as StudentProfileRow | null
   const lp = lpRaw as LandlordProfileRow | null
 
-  const meta = user.user_metadata?.role
   if (meta === 'student' || meta === 'landlord') {
     if (meta === 'student' && sp) return { role: 'student', profile: sp }
     if (meta === 'landlord' && lp) return { role: 'landlord', profile: lp }

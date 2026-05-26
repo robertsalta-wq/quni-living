@@ -1,4 +1,6 @@
 import type { Database } from './database.types'
+import { isStudentUniEmailVerified } from './studentUniEmailVerification'
+import { isNonStudentAccommodationRoute } from './studentOnboarding'
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -140,9 +142,22 @@ export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefi
   const termsOk = Boolean(profile?.terms_accepted_at)
   const coreOk = isStudentCoreProfileComplete(profile)
   const photoOk = Boolean(profile?.avatar_url?.trim())
+  const studentRoute = !isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
+  const uniEmailOk = !studentRoute || isStudentUniEmailVerified(profile)
 
   return [
     { id: 'account', label: 'Account created', complete: true },
+    ...(studentRoute
+      ? [
+          {
+            id: 'uni_email',
+            label: 'Verify your university email',
+            complete: uniEmailOk,
+            href: '/onboarding/student',
+            actionLabel: 'Verify →',
+          } satisfies ChecklistStep,
+        ]
+      : []),
     {
       id: 'terms',
       label: 'Accept Terms of Service and Privacy Policy',

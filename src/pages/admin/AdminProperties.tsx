@@ -156,6 +156,7 @@ export default function AdminProperties() {
                 <th className={adminThClass}>Status</th>
                 <th className={adminThClass}>Featured</th>
                 <th className={adminThClass}>Fees</th>
+                <th className={adminThClass}>View</th>
                 <th className={adminThClass}>Edit</th>
               </tr>
             </thead>
@@ -224,6 +225,20 @@ export default function AdminProperties() {
                         >
                           Fees
                         </button>
+                      </td>
+                      <td className={adminTdClass}>
+                        {row.slug?.trim() ? (
+                          <a
+                            href={`/properties/${encodeURIComponent(row.slug.trim())}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </td>
                       <td className={adminTdClass}>
                         <Link
