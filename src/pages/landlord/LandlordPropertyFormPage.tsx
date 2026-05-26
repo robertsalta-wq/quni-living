@@ -4,14 +4,17 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
 import { generatePropertySlug } from '../../lib/generatePropertySlug'
+import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import {
-  PROPERTY_LISTING_TYPE_LABELS,
-  ROOM_TYPE_LABELS,
-  isPropertyListingType,
-  isRoomType,
-  type PropertyListingType,
-  type RoomType,
-} from '../../lib/listings'
+  ACCOMMODATION_UI_OPTIONS,
+  accommodationChoiceFromFields,
+  fieldsFromAccommodationChoice,
+  normalizeAccommodationForSave,
+  PROPERTY_LISTING_TYPE_LABELS as ACCOMMODATION_PROPERTY_TYPE_LABELS,
+  roomForRentOptions,
+  showRoomForRentSelect,
+  type AccommodationUiChoice,
+} from '../../lib/landlordAccommodationChoice'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
@@ -56,33 +59,6 @@ const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-description', label: 'Description' },
   { id: 'section-pricing-availability', label: 'Pricing' },
   { id: 'section-photos', label: 'Photos' },
-]
-
-const ACCOMMODATION_WIZARD_OPTIONS: {
-  value: PropertyListingType
-  title: string
-  description: string
-}[] = [
-  {
-    value: 'private_room_landlord_off_site',
-    title: 'One private room',
-    description: 'A bedroom in a shared house — you do not live on site.',
-  },
-  {
-    value: 'entire_property',
-    title: 'Whole home or apartment',
-    description: 'The tenant rents the entire property.',
-  },
-  {
-    value: 'private_room_landlord_on_site',
-    title: 'A room in my home',
-    description: 'You live on site (boarder or lodger style).',
-  },
-  {
-    value: 'shared_room',
-    title: 'A shared bedroom',
-    description: 'Tenant shares a bedroom with other residents.',
-  },
 ]
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -247,7 +223,7 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.listingType !== 'rent' ||
     d.bedrooms !== '1' ||
     d.bathrooms !== '1' ||
-    d.roomType !== 'single' ||
+    d.roomType !== 'apartment' ||
     d.propertyListingType !== 'entire_property' ||
     d.furnished ||
     d.linenSupplied ||
@@ -258,8 +234,7 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
   )
 }
 
-const ROOM_ENTRIES = Object.entries(ROOM_TYPE_LABELS) as [RoomType, string][]
-const PROPERTY_TYPE_ENTRIES = Object.entries(PROPERTY_LISTING_TYPE_LABELS) as [PropertyListingType, string][]
+const PROPERTY_TYPE_ENTRIES = Object.entries(ACCOMMODATION_PROPERTY_TYPE_LABELS) as [PropertyListingType, string][]
 
 const MAX_IMAGES = 10
 const MAX_FILE_BYTES = 5 * 1024 * 1024
@@ -321,8 +296,19 @@ export default function LandlordPropertyFormPage() {
 
   const [bedrooms, setBedrooms] = useState('1')
   const [bathrooms, setBathrooms] = useState('1')
-  const [roomType, setRoomType] = useState<RoomType | ''>('single')
+  const [roomType, setRoomType] = useState<RoomType | ''>('apartment')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
+
+  const accommodationChoice = useMemo(
+    () => accommodationChoiceFromFields(propertyListingType, roomType),
+    [propertyListingType, roomType],
+  )
+
+  const selectAccommodationChoice = useCallback((choice: AccommodationUiChoice) => {
+    const next = fieldsFromAccommodationChoice(choice)
+    setPropertyListingType(next.propertyListingType)
+    setRoomType(next.roomType)
+  }, [])
   const [serviceTier, setServiceTier] = useState<LandlordServiceTier>('listing')
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
@@ -583,7 +569,7 @@ export default function LandlordPropertyFormPage() {
     setListingType('rent')
     setBedrooms('1')
     setBathrooms('1')
-    setRoomType('single')
+    setRoomType('apartment')
     setPropertyListingType('entire_property')
     setServiceTier('listing')
     setInitialServiceTier('listing')
@@ -1422,14 +1408,16 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
+    const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
       description: description.trim() || null,
       listing_type: listingType || null,
       bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
       bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
-      room_type: roomType || null,
-      property_type: propertyListingType,
+      room_type: accommodation.roomType,
+      property_type: accommodation.propertyListingType,
       furnished,
       linen_supplied: linenSupplied,
       weekly_cleaning_service: weeklyCleaning,
@@ -1717,19 +1705,19 @@ export default function LandlordPropertyFormPage() {
             'Property details',
             <div className="space-y-4">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-800">What are you advertising on this listing?</p>
+                <p className="text-sm font-medium text-gray-800">What is the tenant renting?</p>
                 <p className="text-xs text-gray-500">
-                  Choose what the tenant is renting. Use the totals below for the whole property (e.g. 4 bedrooms in the
-                  house when you are only advertising one room).
+                  Choose the arrangement that matches your listing. For a room in a share house, enter total bedrooms and
+                  bathrooms for the whole property, not just the room you are advertising.
                 </p>
                 <div className="grid grid-cols-1 gap-2">
-                  {ACCOMMODATION_WIZARD_OPTIONS.map((opt) => {
-                    const selected = propertyListingType === opt.value
+                  {ACCOMMODATION_UI_OPTIONS.map((opt) => {
+                    const selected = accommodationChoice === opt.value
                     return (
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() => setPropertyListingType(opt.value)}
+                        onClick={() => selectAccommodationChoice(opt.value)}
                         className={`rounded-xl border-2 p-4 text-left transition-colors ${
                           selected
                             ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
@@ -1771,23 +1759,30 @@ export default function LandlordPropertyFormPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label htmlFor="pf-room" className={labelClass}>
-                  Room type
-                </label>
-                <select
-                  id="pf-room"
-                  value={roomType}
-                  onChange={(e) => setRoomType(e.target.value as RoomType)}
-                  className={inputClass}
-                >
-                  {ROOM_ENTRIES.map(([v, lab]) => (
-                    <option key={v} value={v}>
-                      {lab}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {showRoomForRentSelect(accommodationChoice) && (
+                <div>
+                  <label htmlFor="pf-room" className={labelClass}>
+                    Room for rent
+                  </label>
+                  <select
+                    id="pf-room"
+                    value={roomType}
+                    onChange={(e) => setRoomType(e.target.value as RoomType)}
+                    className={inputClass}
+                  >
+                    {roomForRentOptions(accommodationChoice).map(([v, lab]) => (
+                      <option key={v} value={v}>
+                        {lab}
+                      </option>
+                    ))}
+                  </select>
+                  {accommodationChoice === 'private_room_landlord_off_site' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Choose Studio only if you are listing a self-contained studio room (uncommon for share houses).
+                    </p>
+                  )}
+                </div>
+              )}
               <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm">
                 <summary className="cursor-pointer font-medium text-gray-700">Advanced: change listing type wording</summary>
                 <p className="text-xs text-gray-500 mt-2 mb-2">
