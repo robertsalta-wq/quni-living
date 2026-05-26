@@ -1,4 +1,5 @@
 import type { Property } from './listings'
+import { getListingRentDisplay } from './pricing/listingRentDisplay'
 import { normalizePropertyImages } from './propertyImages'
 import { absoluteUrl } from './site'
 
@@ -6,8 +7,11 @@ export function buildPropertyMetaDescription(
   p: Property,
   opts: { campusDisplay: string | null; roomLabel: string | null },
 ): string {
-  const rent = Number(p.rent_per_week)
-  const bits: string[] = [p.title.trim(), `From $${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}/week`]
+  const listingRent = getListingRentDisplay(p)
+  const bits: string[] = [
+    p.title.trim(),
+    `${listingRent.showFromPrefix ? 'From ' : ''}$${listingRent.primaryAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}/week`,
+  ]
   if (opts.roomLabel) bits.push(opts.roomLabel)
   if (p.suburb?.trim()) bits.push(p.suburb.trim())
   if (opts.campusDisplay) bits.push(`Near ${opts.campusDisplay}`)
@@ -22,7 +26,7 @@ export function propertyListingJsonLd(
   slug: string,
   opts: { campusDisplay: string | null; roomLabel: string | null },
 ): Record<string, unknown>[] {
-  const rent = Number(p.rent_per_week)
+  const listingRent = getListingRentDisplay(p)
   const url = absoluteUrl(`/listings/${slug}`)
   const imgs = normalizePropertyImages(p.images)
     .map((img) => img.url)
@@ -60,12 +64,12 @@ export function propertyListingJsonLd(
   accommodation.offers = {
     '@type': 'Offer',
     url,
-    price: rent,
+    price: listingRent.primaryAmount,
     priceCurrency: 'AUD',
     availability: 'https://schema.org/InStock',
     priceSpecification: {
       '@type': 'UnitPriceSpecification',
-      price: rent,
+      price: listingRent.primaryAmount,
       priceCurrency: 'AUD',
       unitText: 'WEEK',
     },

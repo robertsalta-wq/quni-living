@@ -37,6 +37,7 @@ import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
+import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
@@ -1011,7 +1012,8 @@ export default function PropertyDetail() {
     return null
   })()
 
-  const rent = Number(property.rent_per_week)
+  const listingRent = getListingRentDisplay(property)
+  const rent = listingRent.primaryAmount
   const beds = property.bedrooms ?? 1
   const baths = property.bathrooms ?? 1
 
@@ -1036,7 +1038,9 @@ export default function PropertyDetail() {
 
   const previewSubtitleParts: string[] = []
   if (property.suburb?.trim()) previewSubtitleParts.push(property.suburb.trim())
-  previewSubtitleParts.push(`$${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}/wk`)
+  previewSubtitleParts.push(
+    `${listingRent.showFromPrefix ? 'From ' : ''}$${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}/wk`,
+  )
   if (campusDisplay) previewSubtitleParts.push(campusDisplay)
   const previewSubtitleLine = previewSubtitleParts.join(' · ')
 
@@ -1301,11 +1305,14 @@ export default function PropertyDetail() {
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
               <div className="rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                 <div className="pb-4 border-b border-stone-100">
-                  <p className={`${sectionLabelClass} mb-1.5`}>From</p>
+                  <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
                   <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[#FF6F61] tracking-tight">
                     ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
                   </p>
+                  {listingRent.breakdownLine ? (
+                    <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
+                  ) : null}
                 </div>
                 <div className="py-4 space-y-2.5 border-b border-stone-100">
                   {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
@@ -1563,11 +1570,14 @@ export default function PropertyDetail() {
               <div ref={bookingCardRef} className="lg:sticky lg:top-28">
                 <div className="hidden md:block rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                   <div className="pb-4 border-b border-stone-100">
-                    <p className={`${sectionLabelClass} mb-1.5`}>From</p>
+                    <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
                     <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[#FF6F61] tracking-tight">
                       ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
                     </p>
+                    {listingRent.breakdownLine ? (
+                      <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
+                    ) : null}
                   </div>
 
                   <div className="py-4 space-y-2.5 border-b border-stone-100">
@@ -1774,6 +1784,9 @@ export default function PropertyDetail() {
           aria-label="Book this listing"
         >
           <p className="font-display text-lg font-bold text-[#FF6F61] tabular-nums shrink-0">
+            {listingRent.showFromPrefix ? (
+              <span className="text-sm font-semibold text-stone-500 font-sans">From </span>
+            ) : null}
             ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             <span className="text-sm font-semibold text-stone-500 font-sans"> / week</span>
           </p>

@@ -3,6 +3,7 @@ import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { formatDistanceKm } from '../lib/workplaceLocation'
+import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
@@ -27,6 +28,7 @@ export function PropertyCard({
   unavailableBadgeLabel,
 }: Props) {
   const image = firstPropertyImageUrl(property.images)
+  const listingRent = getListingRentDisplay(property)
   const landlordName = property.landlord_profiles?.full_name ?? 'Private landlord'
   const isVerified = property.landlord_profiles?.verified ?? false
   const roomLabel =
@@ -91,7 +93,10 @@ export function PropertyCard({
       <div className="p-4">
         <div className="flex items-baseline justify-between mb-1 gap-2">
           <span className="text-xl font-bold text-gray-900">
-            ${Number(property.rent_per_week).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {listingRent.showFromPrefix ? (
+              <span className="text-sm font-normal text-gray-500">From </span>
+            ) : null}
+            ${listingRent.primaryAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             <span className="text-sm font-normal text-gray-500"> /wk</span>
           </span>
           {roomLabel && (
@@ -100,6 +105,10 @@ export function PropertyCard({
             </span>
           )}
         </div>
+
+        {listingRent.breakdownLine ? (
+          <p className="text-[11px] text-gray-500 leading-snug mb-1 line-clamp-2">{listingRent.breakdownLine}</p>
+        ) : null}
 
         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-1">
           {property.title}

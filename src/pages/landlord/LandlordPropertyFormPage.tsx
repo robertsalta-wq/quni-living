@@ -25,6 +25,8 @@ import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
+import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
+import { findParkingFeatureId } from '../../lib/pricing/parkingFeature'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { campusLatLonFromRow } from '../../lib/universityCampusReference'
@@ -126,6 +128,10 @@ type LandlordPropertyDraftV1 = {
   longitude: number | null
   showAddAnotherUniversity: boolean
   rentPerWeek: string
+  maxOccupants: string
+  coupleSurchargePerWeek: string
+  parkingSurchargePerWeek: string
+  parkingAvailable: boolean
   bond: string
   leaseLength: string
   availableFrom: string
@@ -197,6 +203,12 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       longitude: typeof d.longitude === 'number' && Number.isFinite(d.longitude) ? d.longitude : null,
       showAddAnotherUniversity: Boolean(d.showAddAnotherUniversity),
       rentPerWeek: typeof d.rentPerWeek === 'string' ? d.rentPerWeek : '',
+      maxOccupants: typeof d.maxOccupants === 'string' ? d.maxOccupants : '1',
+      coupleSurchargePerWeek:
+        typeof d.coupleSurchargePerWeek === 'string' ? d.coupleSurchargePerWeek : '',
+      parkingSurchargePerWeek:
+        typeof d.parkingSurchargePerWeek === 'string' ? d.parkingSurchargePerWeek : '',
+      parkingAvailable: Boolean(d.parkingAvailable),
       bond: typeof d.bond === 'string' ? d.bond : '',
       leaseLength: parseDraftLeaseLength(d.leaseLength),
       availableFrom: typeof d.availableFrom === 'string' ? d.availableFrom : '',
@@ -371,6 +383,10 @@ export default function LandlordPropertyFormPage() {
   const campusIdRef = useRef<string>(campusId)
 
   const [rentPerWeek, setRentPerWeek] = useState('')
+  const [maxOccupants, setMaxOccupants] = useState('1')
+  const [coupleSurchargePerWeek, setCoupleSurchargePerWeek] = useState('')
+  const [parkingSurchargePerWeek, setParkingSurchargePerWeek] = useState('')
+  const [parkingAvailable, setParkingAvailable] = useState(false)
   const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('section-basic-info')
   const weeklyRentNum = useMemo(() => {
@@ -379,6 +395,24 @@ export default function LandlordPropertyFormPage() {
     const n = Number(t)
     return Number.isFinite(n) ? n : undefined
   }, [rentPerWeek])
+
+  const parkingFeatureId = useMemo(() => findParkingFeatureId(features), [features])
+
+  const bondSuggestedMaxWeeklyRent = useMemo(() => {
+    const rent = Number(rentPerWeek)
+    if (!Number.isFinite(rent) || rent <= 0) return null
+    try {
+      return maxWeeklyRentForProperty({
+        rent_per_week: rent,
+        max_occupants: Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1)),
+        couple_surcharge_per_week: coupleSurchargePerWeek.trim() || null,
+        parking_surcharge_per_week: parkingSurchargePerWeek.trim() || null,
+        parking_available: parkingAvailable,
+      })
+    } catch {
+      return null
+    }
+  }, [rentPerWeek, maxOccupants, coupleSurchargePerWeek, parkingSurchargePerWeek, parkingAvailable])
 
   const resolvedPropertyTier = useMemo(
     () => resolvePropertyTierFromListing(propertyListingType, isRegisteredRoomingHouse),
@@ -481,6 +515,10 @@ export default function LandlordPropertyFormPage() {
         longitude,
         showAddAnotherUniversity,
         rentPerWeek,
+        maxOccupants,
+        coupleSurchargePerWeek,
+        parkingSurchargePerWeek,
+        parkingAvailable,
         bond,
         leaseLength,
         availableFrom,
@@ -514,6 +552,10 @@ export default function LandlordPropertyFormPage() {
       longitude,
       showAddAnotherUniversity,
       rentPerWeek,
+      maxOccupants,
+      coupleSurchargePerWeek,
+      parkingSurchargePerWeek,
+      parkingAvailable,
       bond,
       leaseLength,
       availableFrom,
@@ -530,14 +572,32 @@ export default function LandlordPropertyFormPage() {
   const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
 
+  const setParkingAvailableWithFeature = useCallback(
+    (next: boolean) => {
+      setParkingAvailable(next)
+      if (!parkingFeatureId) return
+      setSelectedFeatureIds((prev) => {
+        const ids = new Set(prev)
+        if (next) ids.add(parkingFeatureId)
+        else ids.delete(parkingFeatureId)
+        return ids
+      })
+    },
+    [parkingFeatureId],
+  )
+
   const toggleFeature = useCallback((id: string) => {
     setSelectedFeatureIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
+      const had = next.has(id)
+      if (had) next.delete(id)
       else next.add(id)
+      if (parkingFeatureId && id === parkingFeatureId) {
+        setParkingAvailable(!had)
+      }
       return next
     })
-  }, [])
+  }, [parkingFeatureId])
 
   const setRulePermitted = useCallback((ruleId: string, raw: string) => {
     setSelectedRules((prev) => {
@@ -753,6 +813,14 @@ export default function LandlordPropertyFormPage() {
           .toLowerCase()
         editDeferNearbyAutoFillRef.current = !prop.university_id && !prop.campus_id
         setRentPerWeek(String(prop.rent_per_week ?? ''))
+        setMaxOccupants(String(prop.max_occupants ?? 1))
+        setCoupleSurchargePerWeek(
+          prop.couple_surcharge_per_week != null ? String(prop.couple_surcharge_per_week) : '',
+        )
+        setParkingSurchargePerWeek(
+          prop.parking_surcharge_per_week != null ? String(prop.parking_surcharge_per_week) : '',
+        )
+        setParkingAvailable(Boolean(prop.parking_available))
         setBond(prop.bond != null ? String(prop.bond) : '')
         setLeaseLength(prop.lease_length ?? 'Flexible')
         setAvailableFrom(prop.available_from ? prop.available_from.slice(0, 10) : '')
@@ -851,6 +919,10 @@ export default function LandlordPropertyFormPage() {
       skipNearbyAutoFillOverwriteRef.current = hasUni
       setShowAddAnotherUniversity(parsed.showAddAnotherUniversity)
       setRentPerWeek(parsed.rentPerWeek)
+      setMaxOccupants(parsed.maxOccupants)
+      setCoupleSurchargePerWeek(parsed.coupleSurchargePerWeek)
+      setParkingSurchargePerWeek(parsed.parkingSurchargePerWeek)
+      setParkingAvailable(parsed.parkingAvailable)
       setBond(parsed.bond)
       setLeaseLength(parsed.leaseLength)
       setAvailableFrom(parsed.availableFrom)
@@ -1348,6 +1420,20 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    const maxOcc = Math.min(10, Math.max(1, parseInt(maxOccupants, 10) || 1))
+    const coupleRaw = coupleSurchargePerWeek.trim()
+    const coupleAmt = coupleRaw ? Number(coupleRaw) : null
+    if (coupleAmt != null && (!Number.isFinite(coupleAmt) || coupleAmt < 0)) {
+      setSubmitError('Couple surcharge must be zero or a positive amount.')
+      return
+    }
+    const parkingRaw = parkingSurchargePerWeek.trim()
+    const parkingAmt = parkingAvailable && parkingRaw ? Number(parkingRaw) : null
+    if (parkingAmt != null && (!Number.isFinite(parkingAmt) || parkingAmt < 0)) {
+      setSubmitError('Carpark surcharge must be zero or a positive amount.')
+      return
+    }
+
     let landlordId: string | null = landlordProfile?.id ?? null
     if (role === 'admin') {
       if (isEdit && propertyId) {
@@ -1380,7 +1466,14 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
-    const featureIds = [...selectedFeatureIds]
+    let featureIds = [...selectedFeatureIds]
+    if (parkingFeatureId) {
+      if (parkingAvailable) {
+        if (!featureIds.includes(parkingFeatureId)) featureIds.push(parkingFeatureId)
+      } else {
+        featureIds = featureIds.filter((id) => id !== parkingFeatureId)
+      }
+    }
 
     const topSuggest = nearbyCampusSuggestions[0]
     const uniFromForm = universityId.trim()
@@ -1441,6 +1534,11 @@ export default function LandlordPropertyFormPage() {
           ? roomingHouseRegistrationNumber.trim()
           : null,
       rent_per_week: rent,
+      max_occupants: maxOcc,
+      couple_surcharge_per_week: maxOcc >= 2 && coupleAmt != null && coupleAmt > 0 ? coupleAmt : null,
+      parking_surcharge_per_week:
+        parkingAvailable && parkingAmt != null && parkingAmt > 0 ? parkingAmt : null,
+      parking_available: parkingAvailable,
       bond: bond.trim() ? Number(bond) : null,
       lease_length: leaseLength || null,
       available_from: availableFrom.trim() || null,
@@ -2367,6 +2465,84 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 ) : null}
               </div>
+              <div className="rounded-xl border border-gray-200/90 bg-stone-50/60 p-4 space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Occupancy &amp; optional extras</p>
+                  <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                    Base rent above is for one person. Add surcharges if rent is higher for a couple or optional
+                    carpark at booking.
+                  </p>
+                </div>
+                <div>
+                  <label htmlFor="pf-max-occupants" className={labelClass}>
+                    Max people in this room
+                  </label>
+                  <select
+                    id="pf-max-occupants"
+                    value={maxOccupants}
+                    onChange={(e) => {
+                      setMaxOccupants(e.target.value)
+                      if (e.target.value === '1') setCoupleSurchargePerWeek('')
+                    }}
+                    className={inputClass}
+                  >
+                    <option value="1">1 person</option>
+                    <option value="2">2 people (e.g. couple)</option>
+                  </select>
+                </div>
+                {maxOccupants !== '1' ? (
+                  <div>
+                    <label htmlFor="pf-couple-surcharge" className={labelClass}>
+                      Extra per week for 2 people ($)
+                    </label>
+                    <input
+                      id="pf-couple-surcharge"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={coupleSurchargePerWeek}
+                      onChange={(e) => setCoupleSurchargePerWeek(e.target.value)}
+                      placeholder="e.g. 100"
+                      className={inputClass}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Added to base rent when a student books for two occupants.
+                    </p>
+                  </div>
+                ) : null}
+                <div className="flex items-start gap-2">
+                  <input
+                    id="pf-parking-available"
+                    type="checkbox"
+                    checked={parkingAvailable}
+                    onChange={(e) => setParkingAvailableWithFeature(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]/40"
+                  />
+                  <label htmlFor="pf-parking-available" className="text-sm text-gray-700 leading-snug">
+                    <span className="font-medium text-gray-900">Carpark available</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">
+                      Students can add carpark at booking. Also ticks Parking in amenities when saved.
+                    </span>
+                  </label>
+                </div>
+                {parkingAvailable ? (
+                  <div>
+                    <label htmlFor="pf-parking-surcharge" className={labelClass}>
+                      Carpark surcharge per week ($)
+                    </label>
+                    <input
+                      id="pf-parking-surcharge"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={parkingSurchargePerWeek}
+                      onChange={(e) => setParkingSurchargePerWeek(e.target.value)}
+                      placeholder="e.g. 50"
+                      className={inputClass}
+                    />
+                  </div>
+                ) : null}
+              </div>
               <div>
                 <label htmlFor="pf-bond" className={labelClass}>
                   Bond ($)
@@ -2380,6 +2556,17 @@ export default function LandlordPropertyFormPage() {
                   onChange={(e) => setBond(e.target.value)}
                   className={inputClass}
                 />
+                {bondSuggestedMaxWeeklyRent != null ? (
+                  <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+                    NSW residential bonds are often up to 4 weeks&apos; rent. At maximum occupancy and extras, that
+                    could be up to{' '}
+                    <span className="tabular-nums font-medium text-gray-700">
+                      ${(bondSuggestedMaxWeeklyRent * 4).toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                    </span>{' '}
+                    (4 × ${bondSuggestedMaxWeeklyRent.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                    /week).
+                  </p>
+                ) : null}
               </div>
               <div>
                 <label htmlFor="pf-lease" className={labelClass}>
