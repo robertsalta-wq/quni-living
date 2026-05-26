@@ -15,6 +15,7 @@ import {
   type AccommodationUiChoice,
 } from '../../lib/landlordAccommodationChoice'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
+import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
 import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
@@ -2410,7 +2411,7 @@ export default function LandlordPropertyFormPage() {
           {sectionClass(
             'Property photos',
             <div className="space-y-4">
-              <p className="text-xs text-gray-500">Up to {MAX_IMAGES} images, max 5MB each. Public bucket: {BUCKET}</p>
+              <p className="text-xs text-gray-500">Up to {MAX_IMAGES} images, max 5MB each.</p>
               <input
                 type="file"
                 accept="image/*"
@@ -2420,21 +2421,12 @@ export default function LandlordPropertyFormPage() {
                 className="block text-sm text-gray-600"
               />
               {uploadingImage && <p className="text-xs text-gray-500">Uploading…</p>}
-              <div className="flex flex-wrap gap-3">
-                {images.map((url) => (
-                  <div key={url} className="relative h-24 w-24 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => void removeImage(url)}
-                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-sm leading-none text-white hover:bg-black/85 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      aria-label="Remove photo"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <PropertyPhotoReorderGrid
+                images={images}
+                onChange={setImages}
+                onRemove={(url) => void removeImage(url)}
+                disabled={uploadingImage}
+              />
             </div>,
             'section-photos',
           )}
