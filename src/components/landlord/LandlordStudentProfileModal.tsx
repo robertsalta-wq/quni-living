@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { isRoomType, ROOM_TYPE_LABELS } from '../../lib/listings'
+import { formatStudentOccupancyType } from '../../lib/studentOccupancyOptions'
 import { buildLandlordVerificationFromProfile } from './LandlordApplicantVerificationBadges'
 import LandlordApplicantVerificationSection from './LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from './LandlordApplicantAIAssessmentPanel'
@@ -341,10 +342,12 @@ export default function LandlordStudentProfileModal({
                     <dd className="font-medium text-gray-900">{budget}</dd>
                   </div>
                 )}
-                {student?.occupancy_type?.trim() && (
+                {formatStudentOccupancyType(student?.occupancy_type) && (
                   <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Occupancy</dt>
-                    <dd className="font-medium text-gray-900">{student.occupancy_type.replace(/_/g, ' ')}</dd>
+                    <dt className="text-gray-500 shrink-0 sm:w-36">Who will live there</dt>
+                    <dd className="font-medium text-gray-900">
+                      {formatStudentOccupancyType(student?.occupancy_type)}
+                    </dd>
                   </div>
                 )}
                 {student?.move_in_flexibility?.trim() && (

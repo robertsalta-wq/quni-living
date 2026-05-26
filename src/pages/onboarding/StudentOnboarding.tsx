@@ -22,6 +22,7 @@ import {
   type StudentProfileRow,
 } from '../../lib/studentOnboarding'
 import { needsStudentUniEmailVerification } from '../../lib/studentUniEmailVerification'
+import { STUDENT_OCCUPANCY_OPTIONS } from '../../lib/studentOccupancyOptions'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
@@ -1340,19 +1341,29 @@ export default function StudentOnboarding() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="so-occ" className={labelClass}>
-                          Occupancy
+                          Who will be living in the home?
                         </label>
+                        <p className="text-xs text-stone-500 mb-1.5">
+                          Helps landlords see if a listing suits you (e.g. private room vs shared, space for two).
+                        </p>
                         <select
                           id="so-occ"
                           value={occupancyType}
                           onChange={(ev) => setOccupancyType(ev.target.value)}
                           className={selectClass}
                         >
-                          <option value="">Select</option>
-                          <option value="sole">Sole occupant</option>
-                          <option value="couple">Couple</option>
-                          <option value="open">Flexible</option>
+                          <option value="">No preference</option>
+                          {STUDENT_OCCUPANCY_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
                         </select>
+                        {occupancyType && (
+                          <p className="text-xs text-stone-500 mt-1.5">
+                            {STUDENT_OCCUPANCY_OPTIONS.find((o) => o.value === occupancyType)?.description}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor="so-mflex" className={labelClass}>

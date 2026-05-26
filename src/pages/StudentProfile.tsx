@@ -16,6 +16,7 @@ import { useUniversityCampusReference } from '../hooks/useUniversityCampusRefere
 import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { STUDENT_OCCUPANCY_OPTIONS } from '../lib/studentOccupancyOptions'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -98,10 +99,8 @@ const ROOM_PREF_OPTIONS: { value: string; label: string }[] = [
 ]
 
 const OCCUPANCY_OPTIONS: { value: string; label: string }[] = [
-  { value: '', label: 'Select' },
-  { value: 'sole', label: 'Sole occupant' },
-  { value: 'couple', label: 'Couple' },
-  { value: 'open', label: 'Flexible' },
+  { value: '', label: 'No preference' },
+  ...STUDENT_OCCUPANCY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
 ]
 
 const MOVE_IN_FLEX_OPTIONS: { value: string; label: string }[] = [
@@ -1326,8 +1325,11 @@ export default function StudentProfile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="st-occ" className={labelClass}>
-                    Occupancy
+                    Who will be living in the home?
                   </label>
+                  <p className="text-xs text-gray-500 mb-1.5">
+                    Helps landlords see if a listing suits you (e.g. private room vs shared, space for two).
+                  </p>
                   <select
                     id="st-occ"
                     value={occupancyType}
@@ -1340,6 +1342,11 @@ export default function StudentProfile() {
                       </option>
                     ))}
                   </select>
+                  {occupancyType && (
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      {STUDENT_OCCUPANCY_OPTIONS.find((o) => o.value === occupancyType)?.description}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="st-mflex" className={labelClass}>
