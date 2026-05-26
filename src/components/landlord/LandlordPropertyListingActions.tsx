@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import ShareListingButton from '../ShareListingButton'
 import type { LandlordPropertyForListingActions } from '../../hooks/useLandlordPropertyListingActions'
 
 type Props = {
@@ -36,6 +37,13 @@ export default function LandlordPropertyListingActions({
           View
         </Link>
       </div>
+      <ShareListingButton
+        slug={p.slug}
+        title={p.title}
+        className="w-full py-2"
+        disabled={p.status === 'draft'}
+        disabledTitle="Publish your listing to get a shareable link"
+      />
       <div className="flex gap-2 flex-wrap">
         {p.status === 'draft' && (
           <button

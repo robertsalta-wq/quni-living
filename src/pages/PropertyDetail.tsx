@@ -29,6 +29,7 @@ import {
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
 import { PropertyCard } from '../components/PropertyCard'
+import ShareListingButton from '../components/ShareListingButton'
 import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
@@ -1182,9 +1183,17 @@ export default function PropertyDetail() {
         <div className={`${SITE_CONTENT_MAX_CLASS} mt-5 sm:mt-6`}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             <div className="lg:col-span-7 xl:col-span-8 space-y-3 order-2 lg:order-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#FF6F61] tracking-tight text-balance">
-                {property.title}
-              </h1>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#FF6F61] tracking-tight text-balance min-w-0 flex-1">
+                  {property.title}
+                </h1>
+                <ShareListingButton
+                  slug={slug}
+                  title={property.title}
+                  subtitle={previewSubtitleLine}
+                  className="shrink-0"
+                />
+              </div>
               <p className="text-base text-stone-700">{previewSubtitleLine}</p>
               {previewSpecsLine ? <p className="text-sm text-stone-600">{previewSpecsLine}</p> : null}
               <p className="text-sm text-stone-500 pt-1">
@@ -1244,9 +1253,17 @@ export default function PropertyDetail() {
         <div className={`${SITE_CONTENT_MAX_CLASS} mt-5 sm:mt-6`}>
           <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-6 lg:gap-9 xl:gap-10 items-start">
             <div className="space-y-5 sm:space-y-6 order-2 lg:order-1 min-w-0">
-              <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] tracking-tight text-balance">
-                {property.title}
-              </h1>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] tracking-tight text-balance min-w-0 flex-1">
+                  {property.title}
+                </h1>
+                <ShareListingButton
+                  slug={slug}
+                  title={property.title}
+                  subtitle={previewSubtitleLine}
+                  className="shrink-0"
+                />
+              </div>
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
                 {quickInfoItems.map((item, i) => (
