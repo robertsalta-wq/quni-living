@@ -13,6 +13,8 @@ import {
   type RoomType,
 } from '../../lib/listings'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
+import FieldHelpHint from '../../components/FieldHelpHint'
+import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
 import AiSparkleIcon from '../../components/AiSparkleIcon'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
@@ -48,11 +50,39 @@ const LANDLORD_FORM_CHECKBOX_CLASS =
 const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-basic-info', label: 'Basic info' },
   { id: 'section-property-details', label: 'Property details' },
-  { id: 'section-inclusions-features', label: 'Inclusions & features' },
-  { id: 'section-house-rules', label: 'House rules' },
+  { id: 'section-inclusions-features', label: 'Inclusions' },
+  { id: 'section-house-rules', label: 'Rules' },
   { id: 'section-location', label: 'Location' },
-  { id: 'section-pricing-availability', label: 'Pricing & availability' },
+  { id: 'section-description', label: 'Description' },
+  { id: 'section-pricing-availability', label: 'Pricing' },
   { id: 'section-photos', label: 'Photos' },
+]
+
+const ACCOMMODATION_WIZARD_OPTIONS: {
+  value: PropertyListingType
+  title: string
+  description: string
+}[] = [
+  {
+    value: 'private_room_landlord_off_site',
+    title: 'One private room',
+    description: 'A bedroom in a shared house — you do not live on site.',
+  },
+  {
+    value: 'entire_property',
+    title: 'Whole home or apartment',
+    description: 'The tenant rents the entire property.',
+  },
+  {
+    value: 'private_room_landlord_on_site',
+    title: 'A room in my home',
+    description: 'You live on site (boarder or lodger style).',
+  },
+  {
+    value: 'shared_room',
+    title: 'A shared bedroom',
+    description: 'Tenant shares a bedroom with other residents.',
+  },
 ]
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -1026,6 +1056,21 @@ export default function LandlordPropertyFormPage() {
     return pt
   }
 
+  async function geocodeAddressWithFallbacks(
+    addr: string,
+    sub: string,
+    st: string,
+    pc: string,
+    signal?: AbortSignal,
+  ): Promise<GeoPoint | null> {
+    const candidates = buildGeocodeQueryCandidates(addr, sub, st, pc)
+    for (const q of candidates) {
+      const pt = await geocodeCached(q, signal)
+      if (pt) return pt
+    }
+    return null
+  }
+
   useEffect(() => {
     const campusCount = campusRefRows.length
     const uniCount = uniRefRows.length
@@ -1060,13 +1105,13 @@ export default function LandlordPropertyFormPage() {
         setNearbyCampusError(null)
         setNearbyCampusSuggestions([])
 
-        const fullAddressQuery = [addr, sub, st, pc, 'Australia'].join(', ')
-
         const ac = new AbortController()
         try {
-          const propertyPoint = await geocodeCached(fullAddressQuery, ac.signal)
+          const propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
           if (!propertyPoint) {
-            setNearbyCampusError('We could not find your address. Please check it and try again.')
+            setNearbyCampusError(
+              'We could not find that address. Check suburb, state and postcode, or try Unit 401, 311 Hume Highway instead of 401/311.',
+            )
             setNearbyCampusLoading(false)
             return
           }
@@ -1368,8 +1413,7 @@ export default function LandlordPropertyFormPage() {
     let resolvedLat = latitude
     let resolvedLon = longitude
     if (canGeocode && (resolvedLat == null || resolvedLon == null)) {
-      const fullAddressQuery = [addr, sub, st, pc, 'Australia'].join(', ')
-      const pt = await geocodeCached(fullAddressQuery)
+      const pt = await geocodeAddressWithFallbacks(addr, sub, st, pc)
       if (pt) {
         resolvedLat = pt.lat
         resolvedLon = pt.lon
@@ -1524,9 +1568,9 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-x-clip bg-[#d4e9e2] pb-16">
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-0 py-4 sm:px-6 sm:py-8">
-        <div className="px-3 mb-3">
+    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col overflow-x-hidden bg-[#d4e9e2] pb-16">
+      <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 py-4 sm:px-6 sm:py-8">
+        <div className="mb-3 min-w-0">
           <Link
             to="/landlord-dashboard"
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2 inline-block"
@@ -1582,7 +1626,7 @@ export default function LandlordPropertyFormPage() {
             className="sticky top-16 z-10 sm:-mx-6 bg-[#d4e9e2] px-2 py-2 sm:px-6"
             aria-label="Jump to section"
           >
-            <div className="grid w-full grid-cols-4 gap-1 sm:flex sm:w-auto sm:flex-nowrap sm:gap-2 sm:overflow-x-auto sm:px-0">
+            <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
               {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
                 const isActive = activeSection === id
                 return (
@@ -1591,11 +1635,11 @@ export default function LandlordPropertyFormPage() {
                     href={`#${id}`}
                     className={
                       isActive
-                        ? 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-md border-0 bg-[#D85A30] px-1 py-0.5 text-center text-xs font-medium leading-snug text-white outline outline-1 outline-[#D85A30] transition-colors break-words sm:rounded-full sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
-                        : 'flex min-h-0 h-auto min-w-0 w-full items-center justify-center rounded-md border-0 bg-white px-1 py-0.5 text-center text-xs font-medium leading-snug text-[#D85A30] outline outline-1 outline-[#D85A30] transition-colors break-words hover:bg-[#D85A30] hover:text-white sm:rounded-full sm:w-auto sm:flex-none sm:basis-auto sm:border sm:border-[#D85A30] sm:outline-none sm:px-3 sm:py-1.5 sm:text-sm'
+                        ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
+                        : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 text-center text-xs font-medium text-[#D85A30] hover:bg-[#D85A30] hover:text-white sm:text-sm'
                     }
                   >
-                    <span className="block min-w-0 w-full text-center">{label}</span>
+                    {label}
                   </a>
                 )
               })}
@@ -1663,28 +1707,6 @@ export default function LandlordPropertyFormPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="pf-desc" className={labelClass}>
-                  Description
-                </label>
-                <textarea
-                  id="pf-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className={inputClass}
-                />
-                <AIDescriptionGenerator
-                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
-                  weeklyRent={weeklyRentNum}
-                  suburb={suburb}
-                  nearbyUniversities={nearbyUniversitiesForAi}
-                  amenities={amenitiesForAi}
-                  furnished={furnished}
-                  existingDescription={description}
-                  onGenerated={setDescription}
-                />
-              </div>
             </div>,
             'section-basic-info',
           )}
@@ -1692,10 +1714,37 @@ export default function LandlordPropertyFormPage() {
           {sectionClass(
             'Property details',
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-gray-800">What are you advertising on this listing?</p>
+                <p className="text-xs text-gray-500">
+                  Choose what the tenant is renting. Use the totals below for the whole property (e.g. 4 bedrooms in the
+                  house when you are only advertising one room).
+                </p>
+                <div className="grid grid-cols-1 gap-2">
+                  {ACCOMMODATION_WIZARD_OPTIONS.map((opt) => {
+                    const selected = propertyListingType === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setPropertyListingType(opt.value)}
+                        className={`rounded-xl border-2 p-4 text-left transition-colors ${
+                          selected
+                            ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
+                        }`}
+                      >
+                        <span className="block font-semibold text-gray-900 text-sm">{opt.title}</span>
+                        <span className="block text-xs text-gray-600 mt-1">{opt.description}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="pf-bed" className={labelClass}>
-                    Bedrooms
+                    Total bedrooms in the property
                   </label>
                   <input
                     id="pf-bed"
@@ -1708,7 +1757,7 @@ export default function LandlordPropertyFormPage() {
                 </div>
                 <div>
                   <label htmlFor="pf-bath" className={labelClass}>
-                    Bathrooms
+                    Total bathrooms in the property
                   </label>
                   <input
                     id="pf-bath"
@@ -1737,12 +1786,10 @@ export default function LandlordPropertyFormPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="pf-property-type" className={labelClass}>
-                  Property type
-                </label>
-                <p className="text-xs text-gray-500 mb-2">
-                  Used for student booking and bond guidance. This is separate from the room layout above.
+              <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2 text-sm">
+                <summary className="cursor-pointer font-medium text-gray-700">Advanced: change listing type wording</summary>
+                <p className="text-xs text-gray-500 mt-2 mb-2">
+                  Only use if the options above do not match your situation (affects bond and agreement type).
                 </p>
                 <select
                   id="pf-property-type"
@@ -1756,21 +1803,29 @@ export default function LandlordPropertyFormPage() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </details>
               <div>
-                <label htmlFor="pf-rooming-house" className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    id="pf-rooming-house"
-                    type="checkbox"
-                    checked={isRegisteredRoomingHouse}
-                    onChange={(e) => {
-                      const on = e.target.checked
-                      setIsRegisteredRoomingHouse(on)
-                      if (!on) setRoomingHouseRegistrationNumber('')
-                    }}
-                    className={LANDLORD_FORM_CHECKBOX_CLASS}
-                  />
-                  <span className="text-sm text-gray-700">This property is a registered rooming house</span>
+                <label htmlFor="pf-rooming-house" className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
+                  <span className="inline-flex items-center gap-2">
+                    <input
+                      id="pf-rooming-house"
+                      type="checkbox"
+                      checked={isRegisteredRoomingHouse}
+                      onChange={(e) => {
+                        const on = e.target.checked
+                        setIsRegisteredRoomingHouse(on)
+                        if (!on) setRoomingHouseRegistrationNumber('')
+                      }}
+                      className={LANDLORD_FORM_CHECKBOX_CLASS}
+                    />
+                    <span className="text-sm text-gray-700">This property is a registered rooming house</span>
+                  </span>
+                  <FieldHelpHint label="What is a registered rooming house?">
+                    A <strong>registered rooming house</strong> is a specific legal category (e.g. under the NSW
+                    Boarding Houses Act) for properties with multiple residents and shared facilities — not simply a
+                    share house. Most single-room listings should leave this <strong>unchecked</strong>. Only tick if
+                    you have a council registration number.
+                  </FieldHelpHint>
                 </label>
                 {isRegisteredRoomingHouse ? (
                   <div className="mt-3 pl-6">
@@ -1939,9 +1994,14 @@ export default function LandlordPropertyFormPage() {
           {sectionClass(
             'Location',
             <div className="space-y-4">
+              <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
+                This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
+                show <strong>suburb and state</strong> until a booking is confirmed — never the full street line to
+                casual browsers.
+              </p>
               <div>
                 <label htmlFor="pf-addr" className={labelClass}>
-                  Address
+                  Street address
                 </label>
                 <input
                   id="pf-addr"
@@ -1951,10 +2011,16 @@ export default function LandlordPropertyFormPage() {
                     setAddress(e.target.value)
                   }}
                   className={inputClass}
+                  placeholder="e.g. Unit 401, 311 Hume Highway"
+                  autoComplete="street-address"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  For units, use <span className="font-medium">Unit 401, 311 Hume Highway</span> if{' '}
+                  <span className="font-medium">401/311</span> is not found.
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 sm:col-span-1">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
                   <label htmlFor="pf-suburb" className={labelClass}>
                     Suburb
                   </label>
@@ -1982,7 +2048,7 @@ export default function LandlordPropertyFormPage() {
                     className={inputClass}
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 max-sm:col-span-1">
                   <label htmlFor="pf-pc" className={labelClass}>
                     Postcode
                   </label>
@@ -2113,6 +2179,36 @@ export default function LandlordPropertyFormPage() {
               </div>
             </div>,
             'section-location',
+          )}
+
+          {sectionClass(
+            'Description',
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="pf-desc" className={labelClass}>
+                  Listing description
+                </label>
+                <textarea
+                  id="pf-desc"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={5}
+                  className={inputClass}
+                  placeholder="Describe the room or home the tenant will rent — not only the whole building."
+                />
+                <AIDescriptionGenerator
+                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
+                  weeklyRent={weeklyRentNum}
+                  suburb={suburb}
+                  nearbyUniversities={nearbyUniversitiesForAi}
+                  amenities={amenitiesForAi}
+                  furnished={furnished}
+                  existingDescription={description}
+                  onGenerated={setDescription}
+                />
+              </div>
+            </div>,
+            'section-description',
           )}
 
           {sectionClass(

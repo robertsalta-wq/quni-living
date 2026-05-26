@@ -1174,7 +1174,8 @@ export default function PropertyDetail() {
               <p className="text-base text-stone-700">{previewSubtitleLine}</p>
               {previewSpecsLine ? <p className="text-sm text-stone-600">{previewSpecsLine}</p> : null}
               <p className="text-sm text-stone-500 pt-1">
-                Sign in to see the full address, description, amenities, availability, and landlord contact details.
+                Sign in to see the full description, amenities, availability, and landlord contact details. Listing
+                locations show suburb only — not the street address.
               </p>
             </div>
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">

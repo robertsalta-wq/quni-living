@@ -715,6 +715,18 @@ export default function LandlordOnboarding() {
                 </div>
               )}
 
+              <div
+                className="rounded-lg border border-emerald-200/90 bg-emerald-50/90 px-3 py-2.5 text-sm text-emerald-950"
+                role="note"
+              >
+                <p className="font-medium">Your address stays private</p>
+                <p className="mt-1 text-emerald-900/90 leading-relaxed">
+                  We need your home or business address for legal agreements and account verification. It is{' '}
+                  <strong>never</strong> shown on your public listings — students and visitors only see each
+                  property&apos;s <strong>suburb</strong>, not this personal address.
+                </p>
+              </div>
+
               <div>
                 <label htmlFor="lo-address" className={labelClass}>
                   Street address
