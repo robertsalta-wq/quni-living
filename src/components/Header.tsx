@@ -104,25 +104,27 @@ export default function Header() {
   return (
     <header className="pt-safe-top w-full max-w-full shrink-0 overflow-x-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
       <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
-        <div className="flex min-w-0 w-full max-w-full items-center justify-between gap-2 sm:gap-3">
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
+        <div className="min-w-0 shrink-0">
           <SiteBrandLockup />
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 flex-1 justify-center min-w-0">
+        <nav
+          className="hidden md:flex min-w-0 items-center justify-center gap-3 lg:gap-5 xl:gap-6"
+          aria-label="Main"
+        >
           {MAIN_NAV.map((item) => (
-            <Link key={item.to} to={item.to} className="text-gray-600 hover:text-gray-900 text-sm shrink-0">
+            <Link
+              key={item.to}
+              to={item.to}
+              className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900"
+            >
               {item.label}
             </Link>
           ))}
-          {role === 'admin' && (
-            <Link to="/admin" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 shrink-0">
-              Admin dashboard
-            </Link>
-          )}
         </nav>
 
-        <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {loading ? (
             <div className="h-9 w-9 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
@@ -130,9 +132,10 @@ export default function Header() {
               {role === 'admin' && (
                 <Link
                   to="/admin"
-                  className="md:hidden text-sm font-medium text-indigo-600 hover:text-indigo-800 shrink-0"
+                  className="whitespace-nowrap text-sm font-medium text-indigo-600 hover:text-indigo-800"
                 >
-                  Admin
+                  <span className="lg:hidden">Admin</span>
+                  <span className="hidden lg:inline">Admin dashboard</span>
                 </Link>
               )}
               {showMessagesNav && (
