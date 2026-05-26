@@ -96,6 +96,26 @@ export default function ConversationThread({ conversation, currentUserId, viewer
     (row: ConversationMessageRow) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === row.id)) return prev
+
+        // Realtime often beats the send API response; merge into the pending bubble
+        // instead of appending a second copy with the real id.
+        const pendingIdx = prev.findIndex(
+          (m) =>
+            m.pending &&
+            m.sender_user_id === row.sender_user_id &&
+            m.body.trim() === row.body.trim(),
+        )
+        if (pendingIdx >= 0) {
+          return prev.map((m, i) =>
+            i === pendingIdx
+              ? {
+                  ...row,
+                  displayBody: mapDisplay(row, contactUnlocked, maskingEnabled),
+                }
+              : m,
+          )
+        }
+
         return [
           ...prev,
           {
@@ -178,8 +198,11 @@ export default function ConversationThread({ conversation, currentUserId, viewer
     try {
       const result = await sendConversationMessage(conversation.id, body)
       setMaskingEnabled(result.maskingEnabled)
-      setMessages((prev) =>
-        prev.map((m) =>
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === result.messageId)) {
+          return prev.filter((m) => m.id !== tempId)
+        }
+        return prev.map((m) =>
           m.id === tempId
             ? {
                 id: result.messageId,
@@ -193,8 +216,8 @@ export default function ConversationThread({ conversation, currentUserId, viewer
                 displayBody: result.displayBody,
               }
             : m,
-        ),
-      )
+        )
+      })
     } catch (err) {
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...m, pending: false, failed: true } : m)),
