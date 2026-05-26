@@ -140,6 +140,25 @@ type LandlordPropertyDraftV1 = {
   isRegisteredRoomingHouse: boolean
   roomingHouseRegistrationNumber: string
   serviceTier: LandlordServiceTier
+  houseRules: string
+  selectedRules: Partial<Record<string, RulePermitted>>
+}
+
+function parseDraftSelectedRules(raw: unknown): Partial<Record<string, RulePermitted>> {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: Partial<Record<string, RulePermitted>> = {}
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof k === 'string' && (v === 'yes' || v === 'no' || v === 'approval')) out[k] = v
+  }
+  return out
+}
+
+function persistLandlordPropertyDraftToStorage(draft: LandlordPropertyDraftV1): void {
+  try {
+    localStorage.setItem(LANDLORD_PROPERTY_DRAFT_KEY, JSON.stringify(draft))
+  } catch {
+    /* quota / private mode */
+  }
 }
 
 function landlordPropertyDraftFromState(
@@ -217,6 +236,8 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       roomingHouseRegistrationNumber:
         typeof d.roomingHouseRegistrationNumber === 'string' ? d.roomingHouseRegistrationNumber : '',
       serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'listing',
+      houseRules: typeof d.houseRules === 'string' ? d.houseRules : '',
+      selectedRules: parseDraftSelectedRules(d.selectedRules),
     }
     return draft
   } catch {
@@ -248,7 +269,9 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.weeklyCleaning ||
     d.openToNonStudents ||
     d.showAddAnotherUniversity ||
-    d.serviceTier === 'listing'
+    d.serviceTier !== 'listing' ||
+    d.houseRules.trim() !== '' ||
+    Object.keys(d.selectedRules).length > 0
   )
 }
 
@@ -526,6 +549,8 @@ export default function LandlordPropertyFormPage() {
         isRegisteredRoomingHouse,
         roomingHouseRegistrationNumber,
         serviceTier,
+        houseRules,
+        selectedRules: { ...selectedRules },
       }),
     [
       title,
@@ -561,9 +586,22 @@ export default function LandlordPropertyFormPage() {
       availableFrom,
       images,
       serviceTier,
+      houseRules,
+      selectedRules,
     ],
   )
 
+  const landlordPropertyDraftSnapshotRef = useRef(landlordPropertyDraftSnapshot)
+  useEffect(() => {
+    landlordPropertyDraftSnapshotRef.current = landlordPropertyDraftSnapshot
+  }, [landlordPropertyDraftSnapshot])
+
+  const persistLandlordPropertyDraft = useCallback(() => {
+    if (isEdit) return
+    persistLandlordPropertyDraftToStorage(landlordPropertyDraftSnapshotRef.current)
+  }, [isEdit])
+
+  const propertyFormModeRef = useRef<'new' | 'edit' | null>(null)
   const restoredLocationKeyRef = useRef<string | null>(null)
   /** When set to `location.key`, do not show the resume banner again after re-fetch/re-load on the same navigation. */
   const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
@@ -702,15 +740,19 @@ export default function LandlordPropertyFormPage() {
       if (hrErr) throw hrErr
       setHouseRulesRef((hrData ?? []) as HouseRulesRefRow[])
 
-      if (!isEdit || !propertyId) {
+      const formMode: 'new' | 'edit' = isEdit && propertyId ? 'edit' : 'new'
+      const switchedFromEditToNew =
+        formMode === 'new' && propertyFormModeRef.current === 'edit'
+      propertyFormModeRef.current = formMode
+
+      if (switchedFromEditToNew) {
         skipNearbyAutoFillOverwriteRef.current = false
         manualUniCampusSelectionRef.current = false
         editDeferNearbyAutoFillRef.current = false
         editModeGeocodeFiredRef.current = false
         loadedPropertyAddressSigRef.current = ''
         setShowAddAnotherUniversity(false)
-        // If the user navigated here from an edit route without unmounting,
-        // ensure we don't carry over stale university/campus selections.
+        // Navigated from edit → new without unmounting — clear stale edit state.
         setUniversityId('')
         setCampusId('')
         universityIdRef.current = ''
@@ -927,6 +969,8 @@ export default function LandlordPropertyFormPage() {
       setLeaseLength(parsed.leaseLength)
       setAvailableFrom(parsed.availableFrom)
       setImages(normalizePropertyImages(parsed.images))
+      setHouseRules(parsed.houseRules)
+      setSelectedRules({ ...parsed.selectedRules })
 
       const addrDirty =
         Boolean(parsed.address.trim()) ||
@@ -960,11 +1004,7 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     if (isEdit || !draftSaveEnabled || loadingPage) return
     const id = window.setTimeout(() => {
-      try {
-        localStorage.setItem(LANDLORD_PROPERTY_DRAFT_KEY, JSON.stringify(landlordPropertyDraftSnapshot))
-      } catch {
-        /* quota / private mode */
-      }
+      persistLandlordPropertyDraft()
       setDraftSavedVisible(true)
       if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
       draftSavedHideTimerRef.current = window.setTimeout(() => {
@@ -973,7 +1013,25 @@ export default function LandlordPropertyFormPage() {
       }, 2200)
     }, 500)
     return () => window.clearTimeout(id)
-  }, [landlordPropertyDraftSnapshot, isEdit, draftSaveEnabled, loadingPage])
+  }, [landlordPropertyDraftSnapshot, isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== 'hidden' || isEdit || !draftSaveEnabled || loadingPage) return
+      persistLandlordPropertyDraft()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
+
+  useEffect(() => {
+    const onPageHide = () => {
+      if (isEdit || !draftSaveEnabled || loadingPage) return
+      persistLandlordPropertyDraft()
+    }
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
     if (!isEdit || loadingPage) return
