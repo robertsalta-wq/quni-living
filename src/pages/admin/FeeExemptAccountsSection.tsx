@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useAuthContext } from '../../context/AuthContext'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import type { Database } from '../../lib/database.types'
+import {
+  addFeeExemptAccount,
+  fetchFeeExemptAccounts,
+  removeFeeExemptAccount,
+  type FeeExemptAccount,
+} from '../../lib/adminFeeExempt'
 import { adminTableWrapClass, adminTdClass, adminThClass } from './adminUi'
 import { EmptyState, LoadingState } from '../../components/admin/primitives'
-
-type FeeExemptRow = Database['public']['Tables']['fee_exempt_accounts']['Row']
 
 function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase()
@@ -16,30 +18,38 @@ function isValidEmail(email: string): boolean {
 }
 
 export function FeeExemptAccountsSection() {
-  const { user } = useAuthContext()
-  const [rows, setRows] = useState<FeeExemptRow[]>([])
+  const [rows, setRows] = useState<FeeExemptAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [email, setEmail] = useState('')
   const [notes, setNotes] = useState('')
 
+  const authHeader = useCallback(async (): Promise<string | null> => {
+    const { data } = await supabase.auth.getSession()
+    const token = data.session?.access_token
+    return token ? `Bearer ${token}` : null
+  }, [])
+
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return
     setLoading(true)
     setError(null)
-    const { data, error: fetchError } = await supabase
-      .from('fee_exempt_accounts')
-      .select('*')
-      .order('created_at', { ascending: true })
-    if (fetchError) {
-      setError(fetchError.message)
+    const h = await authHeader()
+    if (!h) {
+      setError('You need to be signed in.')
       setRows([])
-    } else {
-      setRows((data ?? []) as FeeExemptRow[])
+      setLoading(false)
+      return
+    }
+    try {
+      setRows(await fetchFeeExemptAccounts(h))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load fee-exempt accounts')
+      setRows([])
     }
     setLoading(false)
-  }, [])
+  }, [authHeader])
 
   useEffect(() => {
     void load()
@@ -52,34 +62,40 @@ export function FeeExemptAccountsSection() {
       setError('Enter a valid email address.')
       return
     }
+    const h = await authHeader()
+    if (!h) {
+      setError('You need to be signed in.')
+      return
+    }
     setSaving(true)
     setError(null)
-    const { error: insertError } = await supabase.from('fee_exempt_accounts').insert({
-      email: normalized,
-      notes: notes.trim() || null,
-      created_by: user?.id ?? null,
-    })
-    if (insertError) {
-      setError(insertError.message)
-    } else {
+    try {
+      await addFeeExemptAccount(h, normalized, notes.trim() || undefined)
       setEmail('')
       setNotes('')
       await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add account')
     }
     setSaving(false)
   }
 
-  async function handleRemove(row: FeeExemptRow) {
+  async function handleRemove(row: FeeExemptAccount) {
     if (!window.confirm(`Remove fee exemption for ${row.email}? They will be charged normal platform fees again.`)) {
       return
     }
-    setError(null)
-    const { error: deleteError } = await supabase.from('fee_exempt_accounts').delete().eq('id', row.id)
-    if (deleteError) {
-      setError(deleteError.message)
+    const h = await authHeader()
+    if (!h) {
+      setError('You need to be signed in.')
       return
     }
-    await load()
+    setError(null)
+    try {
+      await removeFeeExemptAccount(h, row.email)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove account')
+    }
   }
 
   if (!isSupabaseConfigured) return null
