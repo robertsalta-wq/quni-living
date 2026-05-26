@@ -3,6 +3,8 @@ import {
   AU_STATE_ORDER,
   fetchCampusesForUniversityId,
   groupUniversitiesByState,
+  normUuid,
+  peekUniversityCampusReference,
   type CampusReferenceRow,
   type UniversityCampusReferenceScope,
 } from '../lib/universityCampusReference'
@@ -91,6 +93,15 @@ export default function UniversityCampusSelect({
       return
     }
     let cancelled = false
+    const uid = normUuid(uniKey)
+    const fromRef = peekUniversityCampusReference(referenceScope)?.campuses.filter(
+      (c) => normUuid(c.university_id) === uid,
+    )
+    if (fromRef && fromRef.length > 0) {
+      setCampusRows([...fromRef].sort((a, b) => a.name.localeCompare(b.name)))
+      setLoadingCampuses(false)
+      return
+    }
     setLoadingCampuses(true)
     void fetchCampusesForUniversityId(uniKey, slugForUni, {
       onlyWithActiveListings: campusListingFilter,
@@ -103,7 +114,7 @@ export default function UniversityCampusSelect({
     return () => {
       cancelled = true
     }
-  }, [uniKey, slugForUni, campusListingFilter])
+  }, [uniKey, slugForUni, campusListingFilter, referenceScope, universities])
 
   const grouped = useMemo(() => {
     if (!showState) return null

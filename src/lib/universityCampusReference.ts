@@ -132,6 +132,8 @@ export type UniversityCampusReferenceData = {
   campuses: CampusReferenceRow[]
 }
 
+export type UniversityCampusReferenceScope = 'withListings' | 'full'
+
 type ActivePropertyLocationRow = {
   university_id: string | null
   campus_id: string | null
@@ -143,9 +145,108 @@ type ActivePropertyLocationIndex = {
   campusIdsByUniversity: Map<string, Set<string>>
 }
 
-let cacheWithListings: Promise<UniversityCampusReferenceData> | null = null
-let cacheFull: Promise<UniversityCampusReferenceData> | null = null
+const REFERENCE_CACHE_TTL_MS = 5 * 60 * 1000
+const REFERENCE_STORAGE_TTL_MS = 60 * 60 * 1000
+const REFERENCE_STORAGE_PREFIX = 'quni-uni-campus-ref:v1:'
+
+type ReferenceCacheEntry = {
+  data: UniversityCampusReferenceData | null
+  loadedAt: number
+  inflight: Promise<UniversityCampusReferenceData> | null
+}
+
+const referenceCaches: Record<UniversityCampusReferenceScope, ReferenceCacheEntry> = {
+  withListings: { data: null, loadedAt: 0, inflight: null },
+  full: { data: null, loadedAt: 0, inflight: null },
+}
+
 let activePropertyLocationCache: Promise<ActivePropertyLocationIndex> | null = null
+let activePropertyLocationLoadedAt = 0
+
+const campusByUniversityCache = new Map<string, CampusReferenceRow[]>()
+
+function referenceStorageKey(scope: UniversityCampusReferenceScope): string {
+  return `${REFERENCE_STORAGE_PREFIX}${scope}`
+}
+
+function readReferenceFromSessionStorage(
+  scope: UniversityCampusReferenceScope,
+): UniversityCampusReferenceData | null {
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(referenceStorageKey(scope))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { at?: number; data?: UniversityCampusReferenceData }
+    if (!parsed.at || !parsed.data) return null
+    if (Date.now() - parsed.at > REFERENCE_STORAGE_TTL_MS) return null
+    if (!Array.isArray(parsed.data.universities) || !Array.isArray(parsed.data.campuses)) return null
+    return parsed.data
+  } catch {
+    return null
+  }
+}
+
+function writeReferenceToSessionStorage(
+  scope: UniversityCampusReferenceScope,
+  data: UniversityCampusReferenceData,
+): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.setItem(
+      referenceStorageKey(scope),
+      JSON.stringify({ at: Date.now(), data }),
+    )
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function referenceEntry(scope: UniversityCampusReferenceScope): ReferenceCacheEntry {
+  return referenceCaches[scope]
+}
+
+function isReferenceFresh(entry: ReferenceCacheEntry): boolean {
+  return entry.data != null && Date.now() - entry.loadedAt < REFERENCE_CACHE_TTL_MS
+}
+
+function commitReferenceCache(
+  scope: UniversityCampusReferenceScope,
+  data: UniversityCampusReferenceData,
+): void {
+  const entry = referenceEntry(scope)
+  entry.data = data
+  entry.loadedAt = Date.now()
+  writeReferenceToSessionStorage(scope, data)
+}
+
+function hydrateReferenceFromSessionStorage(scope: UniversityCampusReferenceScope): boolean {
+  const entry = referenceEntry(scope)
+  if (entry.data != null) return true
+  const stored = readReferenceFromSessionStorage(scope)
+  if (!stored) return false
+  entry.data = stored
+  entry.loadedAt = Date.now()
+  return true
+}
+
+/** Synchronous read of cached university/campus reference (memory or sessionStorage). */
+export function peekUniversityCampusReference(
+  scope: UniversityCampusReferenceScope = 'withListings',
+): UniversityCampusReferenceData | null {
+  if (!isSupabaseConfigured) return { universities: [], campuses: [] }
+  const entry = referenceEntry(scope)
+  if (entry.data != null) return entry.data
+  hydrateReferenceFromSessionStorage(scope)
+  return entry.data
+}
+
+function campusLookupCacheKey(
+  universityId: string,
+  universitySlug: string | null | undefined,
+  onlyWithActiveListings: boolean,
+): string {
+  return `${normUuid(universityId)}|${(universitySlug ?? '').trim().toLowerCase()}|${onlyWithActiveListings ? 'listed' : 'all'}`
+}
 
 /** Normalise UUID strings for comparison (PostgREST often returns lowercase; DOM values may not). */
 export function normUuid(s: string | null | undefined): string {
@@ -248,13 +349,19 @@ function getActivePropertyLocationIndexCached(): Promise<ActivePropertyLocationI
       campusIdsByUniversity: new Map<string, Set<string>>(),
     })
   }
-  if (!activePropertyLocationCache) {
-    const p = loadActivePropertyLocationIndex()
-    activePropertyLocationCache = p
-    p.catch(() => {
-      activePropertyLocationCache = null
-    })
+  const fresh =
+    activePropertyLocationCache != null &&
+    Date.now() - activePropertyLocationLoadedAt < REFERENCE_CACHE_TTL_MS
+  if (fresh && activePropertyLocationCache) {
+    return activePropertyLocationCache
   }
+  const p = loadActivePropertyLocationIndex()
+  activePropertyLocationCache = p
+  activePropertyLocationLoadedAt = Date.now()
+  p.catch(() => {
+    activePropertyLocationCache = null
+    activePropertyLocationLoadedAt = 0
+  })
   return activePropertyLocationCache
 }
 
@@ -439,19 +546,28 @@ export async function fetchCampusesForUniversityId(
 ): Promise<CampusReferenceRow[]> {
   if (!isSupabaseConfigured || !universityId.trim()) return []
   const onlyWithActiveListings = options?.onlyWithActiveListings !== false
+  const cacheKey = campusLookupCacheKey(universityId, universitySlug, onlyWithActiveListings)
+  const cached = campusByUniversityCache.get(cacheKey)
+  if (cached) return cached
+
   const uid = normUuid(universityId)
   const slug = universitySlug?.trim() ?? null
   const activeLocations = onlyWithActiveListings ? await getActivePropertyLocationIndexCached() : null
   const activeCampusIdsForUniversity =
     activeLocations != null ? (activeLocations.campusIdsByUniversity.get(uid) ?? new Set<string>()) : null
-  if (onlyWithActiveListings && activeCampusIdsForUniversity!.size === 0) return []
+  if (onlyWithActiveListings && activeCampusIdsForUniversity!.size === 0) {
+    campusByUniversityCache.set(cacheKey, [])
+    return []
+  }
 
   const direct = await fetchCampusesDirectByUniversityId(universityId)
   if (direct.length > 0) {
     const list = onlyWithActiveListings
       ? direct.filter((c) => activeCampusIdsForUniversity!.has(normUuid(c.id)))
       : direct
-    return list.sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = list.sort((a, b) => a.name.localeCompare(b.name))
+    campusByUniversityCache.set(cacheKey, sorted)
+    return sorted
   }
 
   const rows = await getAllCampusesJoinedCached()
@@ -486,10 +602,10 @@ export async function fetchCampusesForUniversityId(
   const filtered = onlyWithActiveListings
     ? mapped.filter((c) => activeCampusIdsForUniversity!.has(normUuid(c.id)))
     : mapped
-  return filtered.sort((a, b) => a.name.localeCompare(b.name))
+  const sorted = filtered.sort((a, b) => a.name.localeCompare(b.name))
+  campusByUniversityCache.set(cacheKey, sorted)
+  return sorted
 }
-
-export type UniversityCampusReferenceScope = 'withListings' | 'full'
 
 /**
  * Loads universities and campuses once per page session; re-used by all pickers.
@@ -499,36 +615,65 @@ export type UniversityCampusReferenceScope = 'withListings' | 'full'
  * - `withListings` (default): only universities/campuses that appear on at least one active property.
  * - `full`: entire reference tables (better for search/discovery when listing index is empty or unavailable).
  */
-export function loadUniversityCampusReference(scope: UniversityCampusReferenceScope = 'withListings'): Promise<UniversityCampusReferenceData> {
+function loadReferenceFresh(scope: UniversityCampusReferenceScope): Promise<UniversityCampusReferenceData> {
+  return scope === 'full' ? loadFreshFull() : loadFresh()
+}
+
+export function loadUniversityCampusReference(
+  scope: UniversityCampusReferenceScope = 'withListings',
+): Promise<UniversityCampusReferenceData> {
   if (!isSupabaseConfigured) {
     return Promise.resolve({ universities: [], campuses: [] })
   }
-  if (scope === 'full') {
-    if (!cacheFull) {
-      const p = loadFreshFull()
-      cacheFull = p
-      p.catch(() => {
-        cacheFull = null
-      })
-    }
-    return cacheFull
+
+  hydrateReferenceFromSessionStorage(scope)
+  const entry = referenceEntry(scope)
+
+  if (isReferenceFresh(entry) && entry.data) {
+    return Promise.resolve(entry.data)
   }
-  if (!cacheWithListings) {
-    const p = loadFresh()
-    cacheWithListings = p
-    p.catch(() => {
-      cacheWithListings = null
+
+  if (entry.inflight) {
+    return entry.inflight
+  }
+
+  const p = loadReferenceFresh(scope)
+    .then((data) => {
+      commitReferenceCache(scope, data)
+      return data
     })
-  }
-  return cacheWithListings
+    .catch((err) => {
+      entry.inflight = null
+      throw err
+    })
+
+  entry.inflight = p
+  p.finally(() => {
+    if (entry.inflight === p) entry.inflight = null
+  })
+
+  return p
 }
 
 /** For tests or after re-seeding reference data. */
 export function clearUniversityCampusReferenceCache(): void {
-  cacheWithListings = null
-  cacheFull = null
+  for (const scope of ['withListings', 'full'] as const) {
+    const entry = referenceEntry(scope)
+    entry.data = null
+    entry.loadedAt = 0
+    entry.inflight = null
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(referenceStorageKey(scope))
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  campusByUniversityCache.clear()
   allCampusesJoinedCache = null
   activePropertyLocationCache = null
+  activePropertyLocationLoadedAt = 0
 }
 
 /** Australian states / territories for <optgroup> ordering. */

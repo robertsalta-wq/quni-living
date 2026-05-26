@@ -1,32 +1,38 @@
 import { useEffect, useState } from 'react'
 import {
   loadUniversityCampusReference,
+  peekUniversityCampusReference,
   type UniversityCampusReferenceData,
   type UniversityCampusReferenceScope,
 } from '../lib/universityCampusReference'
 
-export function useUniversityCampusReference(scope: UniversityCampusReferenceScope = 'withListings'): UniversityCampusReferenceData & {
+const EMPTY_REFERENCE: UniversityCampusReferenceData = { universities: [], campuses: [] }
+
+export function useUniversityCampusReference(
+  scope: UniversityCampusReferenceScope = 'withListings',
+): UniversityCampusReferenceData & {
   loading: boolean
   error: string | null
 } {
-  const [data, setData] = useState<UniversityCampusReferenceData>({
-    universities: [],
-    campuses: [],
-  })
-  const [loading, setLoading] = useState(true)
+  const cached = peekUniversityCampusReference(scope)
+  const [data, setData] = useState<UniversityCampusReferenceData>(cached ?? EMPTY_REFERENCE)
+  const [loading, setLoading] = useState(cached == null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
+    const hadCache = peekUniversityCampusReference(scope) != null
+    if (!hadCache) {
+      setLoading(true)
+      setError(null)
+    }
     loadUniversityCampusReference(scope)
       .then((d) => {
         if (!cancelled) setData(d)
       })
       .catch((e: unknown) => {
         if (!cancelled) {
-          setData({ universities: [], campuses: [] })
+          if (!hadCache) setData(EMPTY_REFERENCE)
           setError(e instanceof Error ? e.message : 'Could not load universities.')
         }
       })
