@@ -1093,7 +1093,7 @@ export default function LandlordPropertyFormPage() {
           const propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
           if (!propertyPoint) {
             setNearbyCampusError(
-              'We could not find that address. Check suburb, state and postcode, or try Unit 401, 311 Hume Highway instead of 401/311.',
+              'We could not find that street in this suburb. Check the street line, suburb, state and postcode — unit numbers are optional for campus suggestions.',
             )
             setNearbyCampusLoading(false)
             return
@@ -1991,8 +1991,8 @@ export default function LandlordPropertyFormPage() {
                   autoComplete="street-address"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  For units, use <span className="font-medium">Unit 401, 311 Hume Highway</span> if{' '}
-                  <span className="font-medium">401/311</span> is not found.
+                  Include your unit if you have one (e.g. Unit 406, 311 Hume Highway). Nearby campuses use the
+                  street address; the unit is still saved on your listing.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
