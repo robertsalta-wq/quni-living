@@ -19,6 +19,7 @@ import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -141,6 +142,8 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
 export default function Home() {
   const navigate = useNavigate()
   const { managedTierEnabled } = usePlatformFeatures()
+  const { showUniversityCampusFilters, locationPlaceholder, isProfessionalRenter } =
+    useRenterSearchPersona()
   const [locationInput, setLocationInput] = useState('')
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
@@ -240,13 +243,21 @@ export default function Home() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isProfessionalRenter) return
+    setUniversityId('')
+    setCampusId('')
+  }, [isProfessionalRenter])
+
   function handleSearch(e: FormEvent) {
     e.preventDefault()
     const params = new URLSearchParams()
     const q = locationInput.trim()
     if (q) params.set('q', q)
-    if (universityId) params.set('university_id', universityId)
-    if (campusId) params.set('campus_id', campusId)
+    if (showUniversityCampusFilters) {
+      if (universityId) params.set('university_id', universityId)
+      if (campusId) params.set('campus_id', campusId)
+    }
     const qs = params.toString()
     navigate(qs ? `/listings?${qs}` : '/listings')
   }
@@ -330,43 +341,47 @@ export default function Home() {
                 className="flex flex-col gap-3 w-full min-w-0 max-w-xl"
               >
                 <label className="sr-only" htmlFor="home-search-location">
-                  Suburb or university
+                  {isProfessionalRenter ? 'Suburb or area near work' : 'Suburb or university'}
                 </label>
                 <input
                   id="home-search-location"
                   type="search"
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
-                  placeholder="Suburb or university…"
+                  placeholder={locationPlaceholder}
                   autoComplete="off"
                   className="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
                 />
-                <label className="sr-only" htmlFor="home-search-uni">
-                  University
-                </label>
-                <label className="sr-only" htmlFor="home-search-campus">
-                  Campus
-                </label>
-                <UniversityCampusSelect
-                  universityId={universityId || null}
-                  campusId={campusId || null}
-                  onUniversityChange={(id) => {
-                    setUniversityId(id)
-                    setCampusId('')
-                  }}
-                  onCampusChange={setCampusId}
-                  referenceScope="full"
-                  showState
-                  showLabels={false}
-                  variant="stack"
-                  className="w-full min-w-0 flex flex-col gap-3"
-                  campusPlaceholderNoUniversity="Select campus"
-                  campusPlaceholderWithUniversity="All campuses"
-                  universitySelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
-                  campusSelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
-                  universityIdAttr="home-search-uni"
-                  campusIdAttr="home-search-campus"
-                />
+                {showUniversityCampusFilters && (
+                  <>
+                    <label className="sr-only" htmlFor="home-search-uni">
+                      University
+                    </label>
+                    <label className="sr-only" htmlFor="home-search-campus">
+                      Campus
+                    </label>
+                    <UniversityCampusSelect
+                      universityId={universityId || null}
+                      campusId={campusId || null}
+                      onUniversityChange={(id) => {
+                        setUniversityId(id)
+                        setCampusId('')
+                      }}
+                      onCampusChange={setCampusId}
+                      referenceScope="full"
+                      showState
+                      showLabels={false}
+                      variant="stack"
+                      className="w-full min-w-0 flex flex-col gap-3"
+                      campusPlaceholderNoUniversity="Select campus"
+                      campusPlaceholderWithUniversity="All campuses"
+                      universitySelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                      campusSelectClassName="w-full max-w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 disabled:bg-white/80 disabled:text-gray-500"
+                      universityIdAttr="home-search-uni"
+                      campusIdAttr="home-search-campus"
+                    />
+                  </>
+                )}
                 <button
                   type="submit"
                   className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"

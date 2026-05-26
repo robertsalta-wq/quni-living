@@ -22,6 +22,7 @@ import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
+import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 
 function buildListingsHeading(
   search: string,
@@ -73,13 +74,15 @@ export default function Listings() {
   const { user, profile, role } = useAuthContext()
   const { universities, campuses } = useUniversityCampusReference()
   const filters = useListingsFilters({ universities, campuses })
+  const { showUniversityCampusFilters, listingsSearchPlaceholder, isProfessionalRenter } =
+    useRenterSearchPersona()
   const [studentOnboardingWelcome, setStudentOnboardingWelcome] = useState(false)
 
   const queryFilters = useMemo(
     () => ({
       q: filters.qApplied,
-      university: filters.university,
-      campus: filters.campus,
+      university: isProfessionalRenter ? '' : filters.university,
+      campus: isProfessionalRenter ? '' : filters.campus,
       suburb: filters.suburb,
       roomType: filters.roomType,
       priceFilter: filters.priceFilter,
@@ -92,6 +95,7 @@ export default function Listings() {
       filters.qApplied,
       filters.university,
       filters.campus,
+      isProfessionalRenter,
       filters.suburb,
       filters.roomType,
       filters.priceFilter,
@@ -144,6 +148,13 @@ export default function Listings() {
       navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: {} })
     }
   }, [location.pathname, location.search, location.state, navigate])
+
+  useEffect(() => {
+    if (!isProfessionalRenter) return
+    if (!filters.university && !filters.campus) return
+    filters.setUniversity('')
+    filters.setCampus('')
+  }, [isProfessionalRenter, filters.university, filters.campus, filters.setUniversity, filters.setCampus])
 
   if (!isSupabaseConfigured) {
     return (
@@ -258,25 +269,27 @@ export default function Listings() {
                     type="search"
                     value={filters.qInput}
                     onChange={(e) => filters.setQInput(e.target.value)}
-                    placeholder="Suburb or keyword…"
+                    placeholder={listingsSearchPlaceholder}
                     className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400"
                   />
                 </div>
               </div>
 
-              <div className="mb-4">
-                <UniversityCampusSelect
-                  universityId={filters.university || null}
-                  campusId={filters.campus || null}
-                  onUniversityChange={filters.setUniversity}
-                  onCampusChange={filters.setCampus}
-                  showState
-                  universitySelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
-                  campusSelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                  universityIdAttr="listings-uni"
-                  campusIdAttr="listings-campus"
-                />
-              </div>
+              {showUniversityCampusFilters && (
+                <div className="mb-4">
+                  <UniversityCampusSelect
+                    universityId={filters.university || null}
+                    campusId={filters.campus || null}
+                    onUniversityChange={filters.setUniversity}
+                    onCampusChange={filters.setCampus}
+                    showState
+                    universitySelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+                    campusSelectClassName="w-full py-2 pl-3 pr-8 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                    universityIdAttr="listings-uni"
+                    campusIdAttr="listings-campus"
+                  />
+                </div>
+              )}
 
               <div className="mb-4">
                 <label htmlFor="listings-room" className="block text-xs font-medium text-gray-700 mb-1.5">
