@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   supabase,
@@ -136,6 +137,9 @@ export default function Signup() {
   const [step, setStep] = useState<SignupStep>(() =>
     roleFromUrl === 'student' || roleFromUrl === 'non_student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
   )
+  const formTopRef = useRef<HTMLDivElement>(null)
+
+  useScrollToTopOnChange(step, { anchorRef: formTopRef })
   const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
     roleFromUrl === 'landlord'
       ? 'landlord'
@@ -448,7 +452,9 @@ export default function Signup() {
         description="Sign up for Quni Living — find student accommodation near university or list your property for verified student tenants."
         canonicalPath="/signup"
       />
-      <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
+      <h1 ref={formTopRef} className="scroll-mt-below-header text-2xl font-bold text-gray-900">
+        Create an account
+      </h1>
       <p className="text-sm text-gray-600 mt-1 mb-8">
         Already have an account?{' '}
         <Link to={loginHref} className="text-indigo-600 font-medium hover:text-indigo-800">

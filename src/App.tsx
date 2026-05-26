@@ -71,6 +71,7 @@ import CampusAccommodation from './pages/seo/CampusAccommodation'
 import LandlordAIFeaturePage from './pages/LandlordAIFeaturePage'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
+import { isFocusFormFlowPath } from './lib/site'
 
 function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -83,6 +84,7 @@ function App() {
   const adminShell = location.pathname.startsWith('/admin')
   const aiLandingShell = location.pathname === '/landlords/ai'
   const showPublicChrome = !adminShell && !aiLandingShell
+  const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
 
   return (
     <Sentry.ErrorBoundary
@@ -313,7 +315,7 @@ function App() {
           </Route>
           </Routes>
         </main>
-        {showPublicChrome && <Footer />}
+        {showPublicChrome && !hideFooterForFormFlow && <Footer />}
         <FeedbackButton />
         <AIChatWidget />
         </>

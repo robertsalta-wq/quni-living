@@ -24,6 +24,7 @@ import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
+import { useScrollToTopOnChange } from '../../hooks/useScrollToTopOnChange'
 
 const PROFILE_PHOTO_BUCKET = 'student-avatars'
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024
@@ -203,6 +204,9 @@ export default function StudentOnboarding() {
   const [profile, setProfile] = useState<StudentProfileRow | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [welcome, setWelcome] = useState(false)
+  const formTopRef = useRef<HTMLDivElement>(null)
+
+  useScrollToTopOnChange(welcome ? 'welcome' : step, { anchorRef: formTopRef })
 
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -923,7 +927,10 @@ export default function StudentOnboarding() {
             Draft saved
           </p>
         )}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10">
+        <div
+          ref={formTopRef}
+          className="scroll-mt-below-header bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10"
+        >
           {welcome ? (
             <div className="text-center space-y-6">
               {partialSaveHint && (

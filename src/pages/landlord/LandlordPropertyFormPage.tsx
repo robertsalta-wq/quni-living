@@ -276,7 +276,7 @@ function sectionClass(title: string, children: ReactNode, sectionId?: string) {
   return (
     <section
       id={sectionId}
-      className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm scroll-mt-24"
+      className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm scroll-mt-below-header"
     >
       <div className="bg-[#FF6F61] px-4 py-3 sm:px-6 lg:px-8">
         <h2 className="text-base font-medium text-white">{title}</h2>

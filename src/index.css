@@ -200,4 +200,15 @@ code {
       )
     );
   }
+
+  /** scrollIntoView target under the fixed mobile header (see useScrollToTopOnChange). */
+  .scroll-mt-below-header {
+    scroll-margin-top: calc(
+      5rem + max(
+        env(safe-area-inset-top, 0px),
+        var(--safe-area-inset-top, 0px),
+        var(--quni-status-bar-fallback, 0px)
+      )
+    );
+  }
 }

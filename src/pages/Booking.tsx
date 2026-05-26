@@ -23,6 +23,8 @@ import {
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
 import { apiUrl } from '../lib/apiUrl'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
+import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
+import { scrollWindowToTop } from '../lib/scrollToTop'
 import {
   formatIsoDateAuNumeric,
   isIsoDateString,
@@ -534,6 +536,9 @@ export default function Booking() {
   const [myLandlordId, setMyLandlordId] = useState<string | null>(null)
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const formTopRef = useRef<HTMLDivElement>(null)
+
+  useScrollToTopOnChange(step, { anchorRef: formTopRef })
   const [moveIn, setMoveIn] = useState(() => minMoveInIso())
   const [leaseLength, setLeaseLength] = useState<LeaseOption>('6 months')
   const [message, setMessage] = useState('')
@@ -835,10 +840,7 @@ export default function Booking() {
     }
 
     if (restoredDraft) {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-      setTimeout(() => {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-      }, 100)
+      scrollWindowToTop('auto')
     }
 
     queueMicrotask(() => setDraftPersistReady(true))
@@ -910,9 +912,9 @@ export default function Booking() {
 
   useEffect(() => {
     if (!success) return
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    scrollWindowToTop('auto')
     const t = window.setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      scrollWindowToTop('auto')
       document.getElementById('booking-success-heading')?.scrollIntoView({ block: 'start', behavior: 'auto' })
     }, 100)
     return () => window.clearTimeout(t)
@@ -1381,7 +1383,10 @@ export default function Booking() {
         </div>
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-gray-500">
+      <div
+        ref={formTopRef}
+        className="scroll-mt-below-header mt-8 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-gray-500"
+      >
         <span className={step >= 1 ? 'text-[#FF6F61]' : ''}>1. Details</span>
         <span aria-hidden>→</span>
         <span className={step >= 2 ? 'text-[#FF6F61]' : ''}>2. Rent payment</span>

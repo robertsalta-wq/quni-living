@@ -58,6 +58,22 @@ export function isSeoPrivatePath(pathname: string): boolean {
   return PRIVATE_PREFIXES.some((prefix) => p === prefix || p.startsWith(`${prefix}/`))
 }
 
+const FOCUS_FORM_FLOW_PREFIXES = [
+  '/onboarding',
+  '/booking/',
+  '/signup',
+  '/student-signup',
+  '/landlord-signup',
+  '/landlord/property/new',
+  '/landlord/property/edit/',
+] as const
+
+/** Multi-step signup, onboarding, booking, and listing forms — hide marketing footer for a cleaner flow. */
+export function isFocusFormFlowPath(pathname: string): boolean {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  return FOCUS_FORM_FLOW_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix))
+}
+
 export function absoluteUrl(path: string): string {
   const q = path.startsWith('/') ? path : `/${path}`
   return `${SITE_URL}${q}`

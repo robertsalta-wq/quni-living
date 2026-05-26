@@ -24,6 +24,7 @@ import {
   parseLandlordServiceTier,
   type LandlordServiceTier,
 } from '../../lib/landlordServiceTier'
+import { useScrollToTopOnChange } from '../../hooks/useScrollToTopOnChange'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -160,6 +161,9 @@ export default function LandlordOnboarding() {
   const [step, setStep] = useState<LandlordWizardStep>(1)
   const initialStepSet = useRef(false)
   const completionWritten = useRef(false)
+  const formTopRef = useRef<HTMLDivElement>(null)
+
+  useScrollToTopOnChange(step, { anchorRef: formTopRef })
 
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -816,7 +820,10 @@ export default function LandlordOnboarding() {
             Draft saved
           </p>
         )}
-        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10">
+        <div
+          ref={formTopRef}
+          className="scroll-mt-below-header bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 px-5 py-8 sm:px-8 sm:py-10"
+        >
           {step < 5 && (
             <div className="flex gap-2 mb-8">
               {([1, 2, 3, 4, 5] as const).map((n) => (
