@@ -166,3 +166,10 @@ export function resolvePropertyTierFromListing(propertyType, isRegisteredRooming
   if (pt === 'private_room_landlord_off_site' && Boolean(isRegisteredRoomingHouse)) return 't3'
   return 't2'
 }
+
+export {
+  ResolveWeeklyRentError,
+  maxWeeklyRentForProperty,
+  propertyHasVariableOccupancyPricing,
+  resolveWeeklyRent,
+} from './resolveWeeklyRent.js'

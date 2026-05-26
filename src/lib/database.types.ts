@@ -915,6 +915,10 @@ export interface Database {
           updated_at: string
           property_group_id: string | null
           service_tier: 'listing' | 'managed'
+          max_occupants: number
+          couple_surcharge_per_week: number | null
+          parking_surcharge_per_week: number | null
+          parking_available: boolean
         }
         Insert: {
           id?: string
@@ -954,6 +958,10 @@ export interface Database {
           updated_at?: string
           property_group_id?: string | null
           service_tier?: 'listing' | 'managed'
+          max_occupants?: number
+          couple_surcharge_per_week?: number | null
+          parking_surcharge_per_week?: number | null
+          parking_available?: boolean
         }
         Update: {
           id?: string
@@ -993,6 +1001,10 @@ export interface Database {
           updated_at?: string
           property_group_id?: string | null
           service_tier?: 'listing' | 'managed'
+          max_occupants?: number
+          couple_surcharge_per_week?: number | null
+          parking_surcharge_per_week?: number | null
+          parking_available?: boolean
         }
         Relationships: [
           {
@@ -1134,6 +1146,10 @@ export interface Database {
           cancellation_reason: string | null
           housemates_count: number | null
           conversation_id: string | null
+          occupant_count: number
+          parking_selected: boolean
+          rent_breakdown: Json | null
+          co_tenant: Json | null
           created_at: string
           updated_at: string
         }
@@ -1189,6 +1205,10 @@ export interface Database {
           cancellation_reason?: string | null
           housemates_count?: number | null
           conversation_id?: string | null
+          occupant_count?: number
+          parking_selected?: boolean
+          rent_breakdown?: Json | null
+          co_tenant?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -1244,6 +1264,10 @@ export interface Database {
           cancellation_reason?: string | null
           housemates_count?: number | null
           conversation_id?: string | null
+          occupant_count?: number
+          parking_selected?: boolean
+          rent_breakdown?: Json | null
+          co_tenant?: Json | null
           created_at?: string
           updated_at?: string
         }

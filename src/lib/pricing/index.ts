@@ -18,6 +18,19 @@ export type PricingCell = {
 
 export type PropertyFeeSnapshotRow = Database['public']['Tables']['property_fee_snapshots']['Row']
 
+export {
+  ResolveWeeklyRentError,
+  maxWeeklyRentForProperty,
+  propertyHasVariableOccupancyPricing,
+  resolveWeeklyRent,
+  type OccupancyPricingProperty,
+  type RentBreakdownAud,
+  type RentBreakdownCents,
+  type ResolveWeeklyRentErrorCode,
+  type ResolveWeeklyRentInput,
+  type ResolveWeeklyRentResult,
+} from './resolveWeeklyRent'
+
 /** Maps an active snapshot row to PricingCell (same shape as `/api/pricing` tier responses). */
 export function pricingSnapshotRowToCell(row: PropertyFeeSnapshotRow): PricingCell {
   const pt = String(row.source_property_tier || '').trim().toLowerCase()
