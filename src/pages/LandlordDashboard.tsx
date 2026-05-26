@@ -27,6 +27,7 @@ import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyL
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
@@ -1068,7 +1069,7 @@ export default function LandlordDashboard() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {properties.map((p) => {
-                  const image = p.images?.[0]
+                  const image = firstPropertyImageUrl(p.images)
                   const roomLabel =
                     p.room_type && isRoomType(p.room_type) ? ROOM_TYPE_LABELS[p.room_type] : null
                   return (

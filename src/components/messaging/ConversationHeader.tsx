@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { InboxProperty } from '../../hooks/useConversationInbox'
+import { firstPropertyImageUrl } from '../../lib/propertyImages'
 
 type Props = {
   property: InboxProperty | null
@@ -15,7 +16,7 @@ export default function ConversationHeader({ property, contactUnlocked }: Props)
     )
   }
 
-  const thumb = property.images?.[0]
+  const thumb = firstPropertyImageUrl(property.images)
   const listingHref = property.slug ? `/listings/${property.slug}` : '/listings'
   const rent =
     property.rent_per_week != null

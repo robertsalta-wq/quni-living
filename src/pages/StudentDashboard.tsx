@@ -14,6 +14,7 @@ import NswTenancyAgreementExplainer from '../components/NswTenancyAgreementExpla
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
 import { useConversationInbox } from '../hooks/useConversationInbox'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -42,11 +43,6 @@ function firstNameFromStudent(p: StudentRow): string {
   }
   const local = p.email?.split('@')[0]
   return local ? formatDisplayName(local) : 'there'
-}
-
-function firstPropertyImage(images: string[] | null | undefined): string | null {
-  const found = (images ?? []).find((src) => Boolean(src?.trim()))
-  return found?.trim() ?? null
 }
 
 function bookingStatusClass(s: BookingStatus) {
@@ -390,7 +386,7 @@ export default function StudentDashboard() {
               {bookings.map((b) => {
                 const prop = b.properties
                 const slug = prop?.slug
-                const img = firstPropertyImage(prop?.images ?? null)
+                const img = firstPropertyImageUrl(prop?.images ?? null)
                 const rent = b.weekly_rent ?? prop?.rent_per_week ?? null
                 return (
                   <li

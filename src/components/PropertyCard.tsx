@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
@@ -18,7 +19,7 @@ export function PropertyCard({
   unavailableForSelectedDates,
   unavailableBadgeLabel,
 }: Props) {
-  const image = property.images?.[0]
+  const image = firstPropertyImageUrl(property.images)
   const landlordName = property.landlord_profiles?.full_name ?? 'Private landlord'
   const isVerified = property.landlord_profiles?.verified ?? false
   const roomLabel =

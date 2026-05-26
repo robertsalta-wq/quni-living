@@ -16,6 +16,11 @@ import {
 } from '../../lib/landlordAccommodationChoice'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
+import {
+  normalizePropertyImages,
+  serializePropertyImages,
+  type PropertyImage,
+} from '../../lib/propertyImages'
 import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
@@ -124,6 +129,7 @@ type LandlordPropertyDraftV1 = {
   bond: string
   leaseLength: string
   availableFrom: string
+  /** Serialized via `serializePropertyImages` when persisted to localStorage. */
   images: string[]
   isRegisteredRoomingHouse: boolean
   roomingHouseRegistrationNumber: string
@@ -447,7 +453,7 @@ export default function LandlordPropertyFormPage() {
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
 
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<PropertyImage[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
 
   const landlordPropertyDraftSnapshot = useMemo(
@@ -478,7 +484,7 @@ export default function LandlordPropertyFormPage() {
         bond,
         leaseLength,
         availableFrom,
-        images,
+        images: serializePropertyImages(images),
         isRegisteredRoomingHouse,
         roomingHouseRegistrationNumber,
         serviceTier,
@@ -750,7 +756,7 @@ export default function LandlordPropertyFormPage() {
         setBond(prop.bond != null ? String(prop.bond) : '')
         setLeaseLength(prop.lease_length ?? 'Flexible')
         setAvailableFrom(prop.available_from ? prop.available_from.slice(0, 10) : '')
-        setImages(Array.isArray(prop.images) ? [...prop.images] : [])
+        setImages(normalizePropertyImages(prop.images))
         const pf = prop.property_features
         setSelectedFeatureIds(new Set((pf ?? []).map((x) => x.feature_id)))
         const phr = prop.property_house_rules
@@ -848,7 +854,7 @@ export default function LandlordPropertyFormPage() {
       setBond(parsed.bond)
       setLeaseLength(parsed.leaseLength)
       setAvailableFrom(parsed.availableFrom)
-      setImages([...parsed.images])
+      setImages(normalizePropertyImages(parsed.images))
 
       const addrDirty =
         Boolean(parsed.address.trim()) ||
@@ -1227,7 +1233,7 @@ export default function LandlordPropertyFormPage() {
 
   const removeImage = useCallback(
     async (url: string) => {
-      setImages((prev) => prev.filter((u) => u !== url))
+      setImages((prev) => prev.filter((img) => img.url !== url))
       if (user?.id) {
         const path = pathFromPropertyImageUrl(url)
         if (path && path.startsWith(`${user.id}/`)) {
@@ -1262,7 +1268,7 @@ export default function LandlordPropertyFormPage() {
           })
           if (upErr) throw upErr
           const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(objectPath)
-          next.push(pub.publicUrl)
+          next.push({ url: pub.publicUrl })
         }
         setImages(next)
       } catch (e) {
@@ -1438,7 +1444,7 @@ export default function LandlordPropertyFormPage() {
       bond: bond.trim() ? Number(bond) : null,
       lease_length: leaseLength || null,
       available_from: availableFrom.trim() || null,
-      images: images.length ? images : null,
+      images: images.length ? serializePropertyImages(images) : null,
       house_rules: houseRules.trim() || null,
       service_tier: serviceTier,
     }

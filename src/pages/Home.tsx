@@ -18,6 +18,7 @@ import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../lib/proper
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures } from '../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT, MANAGED_LISTING_DUAL_INTRO } from '../lib/managedComingSoonCopy'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -260,8 +261,8 @@ export default function Home() {
     return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
   })()
 
-  const heroCollageTopSrc = featured[0]?.images?.[0] ?? HERO_COLLAGE_TOP_FALLBACK
-  const heroCollageBottomSrc = featured[1]?.images?.[0] ?? HERO_COLLAGE_BOTTOM_FALLBACK
+  const heroCollageTopSrc = firstPropertyImageUrl(featured[0]?.images ?? null) ?? HERO_COLLAGE_TOP_FALLBACK
+  const heroCollageBottomSrc = firstPropertyImageUrl(featured[1]?.images ?? null) ?? HERO_COLLAGE_BOTTOM_FALLBACK
 
   const homeOgImage =
     heroCollageTopSrc && /^https?:\/\//i.test(heroCollageTopSrc) ? heroCollageTopSrc : undefined

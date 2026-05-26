@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { InboxConversation } from '../../hooks/useConversationInbox'
 import { formatMessageTime } from '../../lib/messaging/formatMessageTime'
+import { firstPropertyImageUrl } from '../../lib/propertyImages'
 
 type Props = {
   items: InboxConversation[]
@@ -10,7 +11,7 @@ export default function ConversationList({ items }: Props) {
   return (
     <ul className="divide-y divide-gray-100">
       {items.map((item) => {
-        const thumb = item.property?.images?.[0]
+        const thumb = firstPropertyImageUrl(item.property?.images ?? null)
         const title = item.property?.title ?? 'Listing'
         const preview = item.last_message_preview?.trim() || 'No messages yet'
         return (

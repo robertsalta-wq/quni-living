@@ -34,6 +34,7 @@ import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 
 type GeoPoint = { lat: number; lon: number }
@@ -129,20 +130,25 @@ function PropertyThumbnail({
   total,
   isActive,
   onSelect,
+  caption,
 }: {
   src: string
+  caption?: string
   index: number
   total: number
   isActive: boolean
   onSelect: () => void
 }) {
   const [failed, setFailed] = useState(false)
+  const captionLabel = caption?.trim()
   if (failed) return null
   return (
     <button
       type="button"
       data-thumb-index={index}
-      aria-label={`Photo ${index + 1} of ${total}`}
+      aria-label={
+        captionLabel ? `Photo ${index + 1} of ${total}: ${captionLabel}` : `Photo ${index + 1} of ${total}`
+      }
       aria-pressed={isActive}
       onClick={onSelect}
       className={`snap-start shrink-0 w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden ring-2 transition-all duration-200 ${
@@ -151,7 +157,7 @@ function PropertyThumbnail({
     >
       <img
         src={src}
-        alt=""
+        alt={captionLabel ?? ''}
         className="w-full h-full object-cover pointer-events-none"
         draggable={false}
         onError={() => setFailed(true)}
@@ -905,8 +911,10 @@ export default function PropertyDetail() {
   const showActiveBookingLink =
     role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
-  const images = (property.images ?? []).filter(Boolean)
-  const mainImage = images[imageIndex] ?? images[0] ?? null
+  const propertyImages = normalizePropertyImages(property.images)
+  const activeImage = propertyImages[imageIndex] ?? propertyImages[0] ?? null
+  const mainImage = activeImage?.url ?? null
+  const mainImageCaption = activeImage?.description?.trim() || null
   const landlord = property.landlord_profiles
   const roomLabel =
     property.room_type && isRoomType(property.room_type)
@@ -969,8 +977,10 @@ export default function PropertyDetail() {
     .join(' · ')
 
   const listingMetaDesc = buildPropertyMetaDescription(property, { campusDisplay, roomLabel })
-  const listingOg =
-    images[0] && /^https?:\/\//i.test(images[0].trim()) ? images[0].trim() : DEFAULT_OG_IMAGE
+  const listingOg = (() => {
+    const og = firstPropertyImageUrl(property.images)
+    return og && /^https?:\/\//i.test(og) ? og : DEFAULT_OG_IMAGE
+  })()
 
   const quickLocation = [property.suburb?.trim(), property.state?.trim()].filter(Boolean).join(', ') || '—'
   const typeLabelForQuickBar = roomLabel ?? '—'
@@ -1013,9 +1023,9 @@ export default function PropertyDetail() {
     showOnMobile ? 'inline-flex' : 'hidden md:inline-flex'
 
   const goPrevImage = () =>
-    setImageIndex((i) => (images.length ? (i > 0 ? i - 1 : images.length - 1) : 0))
+    setImageIndex((i) => (propertyImages.length ? (i > 0 ? i - 1 : propertyImages.length - 1) : 0))
   const goNextImage = () =>
-    setImageIndex((i) => (images.length ? (i < images.length - 1 ? i + 1 : 0) : 0))
+    setImageIndex((i) => (propertyImages.length ? (i < propertyImages.length - 1 ? i + 1 : 0) : 0))
 
   return (
     <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#FEF9E4] pb-20 md:pb-16">
@@ -1087,7 +1097,7 @@ export default function PropertyDetail() {
       <div className={SITE_CONTENT_MAX_CLASS}>
         <div className="relative w-full min-w-0 aspect-[4/3] md:aspect-video bg-stone-200 overflow-hidden rounded-xl shadow-sm ring-1 ring-stone-900/5">
         {mainImage ? (
-          <img src={mainImage} alt="" className="w-full h-full object-cover" />
+          <img src={mainImage} alt={mainImageCaption ?? ''} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-stone-400 min-h-[200px]">
             <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -1128,7 +1138,7 @@ export default function PropertyDetail() {
             </span>
           )}
         </div>
-        {images.length > 1 && (
+        {propertyImages.length > 1 && (
           <>
             <button
               type="button"
@@ -1153,24 +1163,28 @@ export default function PropertyDetail() {
           </>
         )}
         </div>
+        {mainImageCaption ? (
+          <p className="mt-2 text-sm text-stone-700 leading-snug px-0.5">{mainImageCaption}</p>
+        ) : null}
       </div>
 
-      {images.length > 1 && (
+      {propertyImages.length > 1 && (
         <div className={`${SITE_CONTENT_MAX_CLASS} mt-2 sm:mt-3`}>
           <p className="sr-only" id="property-gallery-thumbs-hint">
-            {images.length} photos. Click a thumbnail to view.
+            {propertyImages.length} photos. Click a thumbnail to view.
           </p>
           <div
             ref={thumbsScrollRef}
             className="flex w-full min-w-0 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain py-1 pb-1 scroll-smooth snap-x snap-mandatory touch-pan-x [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]"
             aria-describedby="property-gallery-thumbs-hint"
           >
-            {images.map((src, i) => (
+            {propertyImages.map((img, i) => (
               <PropertyThumbnail
-                key={`${src}-${i}`}
-                src={src}
+                key={`${img.url}-${i}`}
+                src={img.url}
+                caption={img.description}
                 index={i}
-                total={images.length}
+                total={propertyImages.length}
                 isActive={i === imageIndex}
                 onSelect={() => setImageIndex(i)}
               />

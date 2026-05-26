@@ -7,6 +7,7 @@ import { ROOM_TYPE_LABELS, type RoomType } from '../../lib/listings'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatMoney } from './adminUi'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
+import { firstPropertyImageUrl } from '../../lib/propertyImages'
 
 type PropertyStatus = Database['public']['Tables']['properties']['Row']['status']
 type AdminPropertyStatus = PropertyStatus | 'suspended'
@@ -160,7 +161,7 @@ export default function AdminProperties() {
             </thead>
             <tbody>
               {rows.map((row) => {
-                  const thumb = row.images?.[0]?.trim()
+                  const thumb = firstPropertyImageUrl(row.images)?.trim()
                   return (
                     <tr key={row.id}>
                       <td className={adminTdClass}>

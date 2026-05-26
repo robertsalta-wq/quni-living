@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   isBoardingLodgerBondContext,
   isPropertyListingType,
@@ -1323,7 +1324,7 @@ export default function Booking() {
     )
   }
 
-  const mainPhoto = (property.images ?? []).find((src) => Boolean(src?.trim())) ?? null
+  const mainPhoto = firstPropertyImageUrl(property.images)
   const landlord = property.landlord_profiles
 
   const listingTypeLabel =

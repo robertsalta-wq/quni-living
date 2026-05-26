@@ -12,6 +12,7 @@ import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplic
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   fetchLandlordListingBillingSnapshot,
   formatStripeCardOnFile,
@@ -1021,7 +1022,7 @@ export default function LandlordProfile() {
         ) : (
           <ul className="space-y-4">
             {listings.map((p) => {
-              const thumb = p.images?.[0]
+              const thumb = firstPropertyImageUrl(p.images)
               const rent = Number(p.rent_per_week)
               return (
                 <li

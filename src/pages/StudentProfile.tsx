@@ -15,6 +15,7 @@ import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
+import { firstPropertyImageUrl } from '../lib/propertyImages'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -1576,7 +1577,7 @@ export default function StudentProfile() {
             <ul className="space-y-4">
               {bookings.map((b) => {
                 const p = b.property
-                const thumb = p?.images?.[0]
+                const thumb = firstPropertyImageUrl(p?.images ?? null)
                 const rent = b.weekly_rent ?? p?.rent_per_week
                 return (
                   <li

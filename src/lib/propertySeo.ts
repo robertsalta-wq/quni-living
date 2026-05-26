@@ -1,4 +1,5 @@
 import type { Property } from './listings'
+import { normalizePropertyImages } from './propertyImages'
 import { absoluteUrl } from './site'
 
 export function buildPropertyMetaDescription(
@@ -23,7 +24,9 @@ export function propertyListingJsonLd(
 ): Record<string, unknown>[] {
   const rent = Number(p.rent_per_week)
   const url = absoluteUrl(`/listings/${slug}`)
-  const imgs = (p.images ?? []).filter(Boolean).slice(0, 8)
+  const imgs = normalizePropertyImages(p.images)
+    .map((img) => img.url)
+    .slice(0, 8)
 
   const accommodation: Record<string, unknown> = {
     '@context': 'https://schema.org',
