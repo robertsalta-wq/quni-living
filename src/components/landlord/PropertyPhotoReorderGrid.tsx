@@ -25,10 +25,26 @@ export default function PropertyPhotoReorderGrid({ images, onChange, onRemove, d
 
   const updateDescription = useCallback(
     (index: number, description: string) => {
-      const trimmed = description.slice(0, MAX_PROPERTY_IMAGE_DESCRIPTION_LENGTH)
+      const limited = description.slice(0, MAX_PROPERTY_IMAGE_DESCRIPTION_LENGTH)
       onChange(
         images.map((img, i) =>
-          i === index ? { ...img, description: trimmed.trim() || undefined } : img,
+          i === index ? { ...img, description: limited === '' ? undefined : limited } : img,
+        ),
+      )
+    },
+    [images, onChange],
+  )
+
+  /** Trim leading/trailing space when the field loses focus; save still trims on serialize. */
+  const finalizeDescription = useCallback(
+    (index: number) => {
+      const current = images[index]?.description
+      if (current == null) return
+      const trimmed = current.trim().slice(0, MAX_PROPERTY_IMAGE_DESCRIPTION_LENGTH)
+      if (trimmed === current) return
+      onChange(
+        images.map((img, i) =>
+          i === index ? { ...img, description: trimmed || undefined } : img,
         ),
       )
     },
@@ -110,6 +126,7 @@ export default function PropertyPhotoReorderGrid({ images, onChange, onRemove, d
                 type="text"
                 value={image.description ?? ''}
                 onChange={(e) => updateDescription(index, e.target.value)}
+                onBlur={() => finalizeDescription(index)}
                 disabled={disabled}
                 placeholder="Caption (optional)"
                 maxLength={MAX_PROPERTY_IMAGE_DESCRIPTION_LENGTH}
