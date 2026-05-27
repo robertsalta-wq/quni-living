@@ -16,6 +16,10 @@ import {
   buildPlatformIdentificationLine,
   resolvePlatformLegalEntityName,
 } from '../platformIdentity.js'
+import {
+  AddendumCoTenantSignatureBlock,
+  coTenantNameFromAddendumProps,
+} from './addendumCoTenantExecution.js'
 
 /** Asserted in PDF tests (extracted text via pdf-parse). */
 export const QLD_PLATFORM_ADDENDUM_PDF_MARKERS = [
@@ -88,6 +92,11 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
 
   if (tenant.dateOfBirth) {
     rows.push({ label: 'Tenant date of birth:', value: formatAuDate(tenant.dateOfBirth) })
+  }
+
+  const coTenantName = coTenantNameFromAddendumProps(props.additionalTenantNames)
+  if (coTenantName) {
+    rows.push({ label: 'Co-tenant:', value: coTenantName })
   }
 
   rows.push(
@@ -749,6 +758,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
   const landlordDisplay = props.landlord.companyName
     ? `${props.landlord.fullName} (${props.landlord.companyName})`
     : props.landlord.fullName
+  const coTenantName = coTenantNameFromAddendumProps(props.additionalTenantNames)
 
   return (
     <View>
@@ -806,6 +816,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
             </View>
           </View>
         </View>
+        <AddendumCoTenantSignatureBlock coTenantName={coTenantName} />
       </View>
       <Text style={[occupancyMatchPdf.noteItalicMuted, { marginTop: 8 }]}>
         Signatures and dates are collected using DocuSeal (https://sign.quni.com.au). DocuSeal is a third-party e-signing

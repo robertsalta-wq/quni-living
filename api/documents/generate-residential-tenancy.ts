@@ -537,6 +537,7 @@ export default async function handler(req: any, res: any) {
     platformAbn: platformIdentity.abn || undefined,
     platformAcn: platformIdentity.acn || undefined,
     platformDirectorName: platformIdentity.directorName || undefined,
+    additionalTenantNames,
   }
 
   const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)

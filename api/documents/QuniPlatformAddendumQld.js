@@ -1,5 +1,5 @@
 // src/lib/documents/QuniPlatformAddendumQld.tsx
-import { Document, Page, Text as Text2, View as View2 } from "@react-pdf/renderer";
+import { Document, Page, Text as Text3, View as View3 } from "@react-pdf/renderer";
 
 // src/lib/documents/quniDocumentPdfTheme.tsx
 import { StyleSheet, Text, View } from "@react-pdf/renderer";
@@ -583,8 +583,41 @@ function resolvePlatformLegalEntityName(legalName) {
   return t || DEFAULT_PLATFORM_LEGAL_NAME;
 }
 
-// src/lib/documents/QuniPlatformAddendumQld.tsx
+// src/lib/documents/addendumCoTenantExecution.tsx
+import { Text as Text2, View as View2 } from "@react-pdf/renderer";
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+function coTenantNameFromAddendumProps(additionalTenantNames) {
+  return additionalTenantNames?.[0]?.trim() ?? "";
+}
+function AddendumCoTenantSignatureBlock({ coTenantName }) {
+  if (!coTenantName) return null;
+  return /* @__PURE__ */ jsxs2(
+    View2,
+    {
+      style: {
+        marginTop: 10,
+        paddingTop: 8,
+        borderTopWidth: 0.5,
+        borderTopColor: "#C4B8A8"
+      },
+      children: [
+        /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.thText, { marginBottom: 4 }], children: "Co-tenant" }),
+        /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: coTenantName }),
+        /* @__PURE__ */ jsx2(View2, { style: [occupancyMatchPdf.docusealSignatureFieldBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Co-tenant Signature;role=Co-tenant;type=signature}}" })
+        ] }) }),
+        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Co-tenant Date;role=Co-tenant;type=date}}" })
+        ] }) })
+      ]
+    }
+  );
+}
+
+// src/lib/documents/QuniPlatformAddendumQld.tsx
+import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 var QLD_PLATFORM_ADDENDUM_PDF_MARKERS = [
   "Queensland Civil and Administrative Tribunal",
   "QCAT",
@@ -640,6 +673,10 @@ function Section1TenancySummary(props) {
   if (tenant.dateOfBirth) {
     rows.push({ label: "Tenant date of birth:", value: formatAuDate(tenant.dateOfBirth) });
   }
+  const coTenantName = coTenantNameFromAddendumProps(props.additionalTenantNames);
+  if (coTenantName) {
+    rows.push({ label: "Co-tenant:", value: coTenantName });
+  }
   rows.push(
     { label: "Tenancy start date:", value: formatAuDate(term.startDate) },
     { label: "Tenancy end date:", value: endDateText },
@@ -655,9 +692,9 @@ function Section1TenancySummary(props) {
       value: utilitiesDescription.trim() || "\u2014"
     }
   );
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginTop: 4, marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Tenancy summary" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows })
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginTop: 4, marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 1, title: "Tenancy summary" }),
+    /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows })
   ] });
 }
 function Section2QuniPlatformAndFee(props) {
@@ -681,21 +718,21 @@ function Section2QuniPlatformAndFee(props) {
   const cardDomestic = `${props.cardSurchargeDomesticText ?? "1.7% + $0.30"} per transaction (domestic cards)`;
   const cardInternational = `${props.cardSurchargeInternationalText ?? "3.5% + $0.30"} per transaction (international cards)`;
   const landlordServiceFeeText = props.landlordServiceFeeText ?? "10%";
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Quni platform & service fee" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 2, title: "Quni platform & service fee" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       entityName,
       ' (the "Platform") operates an online marketplace and payment facilitation service. The Platform is not the landlord, property manager, or agent for the residential premises unless separately appointed in writing. The landlord remains responsible for managing the tenancy and the premises in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a).'
     ] }),
-    identificationLine ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }], children: identificationLine }) : null,
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    identificationLine ? /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 4 }], children: identificationLine }) : null,
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "A service fee of ",
       landlordServiceFeeText,
       " of the gross weekly rent is deducted from amounts payable to the landlord through the Platform before payout to the landlord, as disclosed in the landlord service agreement and listing terms. The tenant's agreed weekly rent is not increased by this fee."
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "Rent is payable by direct bank transfer using the following account details (reference your name and the property address when transferring):" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: bankRows.map((r) => ({ label: r.label, value: r.value })) }),
-    rentPaymentMethod === "quni_platform" ? /* @__PURE__ */ jsx2(View2, { style: [occupancyMatchPdf.noteBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.noteItalicMuted, children: [
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "Rent is payable by direct bank transfer using the following account details (reference your name and the property address when transferring):" }),
+    /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows: bankRows.map((r) => ({ label: r.label, value: r.value })) }),
+    rentPaymentMethod === "quni_platform" ? /* @__PURE__ */ jsx3(View3, { style: [occupancyMatchPdf.noteBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.noteItalicMuted, children: [
       "The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card payments incur a payment processing surcharge passed through at Stripe's actual cost \u2014 typically",
       " ",
       cardDomestic,
@@ -703,8 +740,8 @@ function Section2QuniPlatformAndFee(props) {
       cardInternational,
       ". The agreed rent amount is unchanged; the surcharge is shown separately at checkout."
     ] }) }) : null,
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "A fee-free bank transfer option remains available at all times for recurring rent in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (including provisions about how rent is to be paid, for example sections 83 and 84A where applicable)." }),
-    /* @__PURE__ */ jsxs2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: [
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "A fee-free bank transfer option remains available at all times for recurring rent in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (including provisions about how rent is to be paid, for example sections 83 and 84A where applicable)." }),
+    /* @__PURE__ */ jsxs3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: [
       "The payment method summary in the tenancy agreement (Section 1 above) remains part of the agreed rent arrangements: ",
       rent.paymentMethod
     ] })
@@ -720,85 +757,85 @@ function Section3CommunicationChannels(props) {
     { label: "General enquiries:", value: generalEnquiriesEmail.trim() || "\u2014" },
     { label: "House communications:", value: houseCommunicationsChannel.trim() || "\u2014" }
   ];
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: "Communication channels" }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginBottom: 6 }], children: "The tenant should use the channels below for requests, notices and day-to-day communication. Urgent safety issues should be directed to the emergency contact immediately." }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: rows.map((r) => ({ label: r.label, value: r.value })) })
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 3, title: "Communication channels" }),
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginBottom: 6 }], children: "The tenant should use the channels below for requests, notices and day-to-day communication. Urgent safety issues should be directed to the emergency contact immediately." }),
+    /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows: rows.map((r) => ({ label: r.label, value: r.value })) })
   ] });
 }
 function Section4MaintenanceAndRepairs(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 4, title: "Maintenance & repairs" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning issues) must be lodged through the maintenance portal listed in Section 3. The tenant should include a clear description, photos where helpful, and safe access notes." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Urgent repairs that affect health, safety, or security \u2014 including burst pipes, electrical hazards, gas smells, serious leaks, or a failure of essential services \u2014 must be reported immediately using the emergency contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons or property, the tenant should also follow any emergency services guidance (including 000 where appropriate)." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items without undue delay. Response times for non-urgent items depend on severity, parts availability, and access; the parties agree to communicate promptly through the portal where additional information is required." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for damage caused by the tenant, their guests, or invitees (including through misuse, negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant caused, the landlord may seek reimbursement in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a), including via bond claim processes where applicable." })
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 4, title: "Maintenance & repairs" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning issues) must be lodged through the maintenance portal listed in Section 3. The tenant should include a clear description, photos where helpful, and safe access notes." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Urgent repairs that affect health, safety, or security \u2014 including burst pipes, electrical hazards, gas smells, serious leaks, or a failure of essential services \u2014 must be reported immediately using the emergency contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons or property, the tenant should also follow any emergency services guidance (including 000 where appropriate)." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items without undue delay. Response times for non-urgent items depend on severity, parts availability, and access; the parties agree to communicate promptly through the portal where additional information is required." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for damage caused by the tenant, their guests, or invitees (including through misuse, negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant caused, the landlord may seek reimbursement in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a), including via bond claim processes where applicable." })
   ] });
 }
 function Section5UtilitiesAndBills(props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 5, title: "Utilities & bills" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 5, title: "Utilities & bills" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Rent is calculated on an all-inclusive basis covering ",
       props.utilitiesDescription.toLowerCase(),
       "."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "A utilities allowance of ",
       formatMoney(props.utilitiesCap),
       " per quarter applies. Usage within this allowance is included in rent."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as otherwise agreed in writing). This is the tenant's payment timing for excess-usage amounts invoiced through the platform \u2014 it is separate from the landlord's obligation under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of relevant supplier account documents within ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "4 weeks" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "4 weeks" }),
       " of the property manager/owner receiving them, where the tenant is required to pay for a utility service by reference to the supplier's account."
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must not deliberately waste utilities or circumvent metering. Where excessive usage is clearly tenant-caused, the landlord may request reimbursement in addition to any excess-usage amount, acting reasonably and with supporting information where practicable." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Where internet is included, connection or resumption of service may depend on supplier processes. The tenant must not reconfigure network equipment in a way that could impair other occupants or security devices. Personal streaming, gaming, or study use within ordinary household norms is expected; commercial server hosting or resale of bandwidth is not permitted unless agreed in writing." })
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must not deliberately waste utilities or circumvent metering. Where excessive usage is clearly tenant-caused, the landlord may request reimbursement in addition to any excess-usage amount, acting reasonably and with supporting information where practicable." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Where internet is included, connection or resumption of service may depend on supplier processes. The tenant must not reconfigure network equipment in a way that could impair other occupants or security devices. Personal streaming, gaming, or study use within ordinary household norms is expected; commercial server hosting or resale of bandwidth is not permitted unless agreed in writing." })
   ] });
 }
 function Section6HouseRules(props) {
   const text = (props.houseRules ?? "").trim();
   if (!text) return null;
   const blocks = text.split(/\n{2,}/);
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: "House rules" }),
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 6, title: "House rules" }),
     blocks.map((block, i) => {
       const lines = block.split("\n");
       const first = (lines[0] ?? "").trim();
       const looksLikeCapsHeading = first.length > 0 && first.length <= 72 && first === first.toUpperCase() && /^[A-Z0-9][A-Z0-9 &,.()/\-]+$/.test(first);
       const rest = looksLikeCapsHeading ? lines.slice(1).join("\n").trim() : block.trim();
-      return /* @__PURE__ */ jsxs2(View2, { wrap: false, style: { marginBottom: 6 }, children: [
-        looksLikeCapsHeading ? /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.clauseSectionCaps, children: first }) : null,
-        rest ? /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: rest }) : looksLikeCapsHeading ? null : /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: block.trim() })
+      return /* @__PURE__ */ jsxs3(View3, { wrap: false, style: { marginBottom: 6 }, children: [
+        looksLikeCapsHeading ? /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.clauseSectionCaps, children: first }) : null,
+        rest ? /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: rest }) : looksLikeCapsHeading ? null : /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: block.trim() })
       ] }, i);
     })
   ] });
 }
 function Section7MouldPrevention(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 7, title: "Mould prevention" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must keep the premises reasonably ventilated, including by using exhaust fans or opening windows when cooking, showering, or drying laundry indoors, where safe and consistent with security." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Condensation on windows or walls should be wiped dry promptly. The tenant must not block fixed ventilation grilles, subfloor vents, or weep holes, and must not store belongings or materials in a way that traps moisture against walls, floors, or joinery." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported through the maintenance portal without delay. Early reporting helps limit damage and repair cost." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for day-to-day cleaning of surfaces they use (including bathrooms and kitchen areas) in line with ordinary household standards. Where mould arises from lack of ventilation or cleaning that a reasonable tenant would undertake, the tenant may be responsible for remediation costs acting reasonably and in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld)." })
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 7, title: "Mould prevention" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must keep the premises reasonably ventilated, including by using exhaust fans or opening windows when cooking, showering, or drying laundry indoors, where safe and consistent with security." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Condensation on windows or walls should be wiped dry promptly. The tenant must not block fixed ventilation grilles, subfloor vents, or weep holes, and must not store belongings or materials in a way that traps moisture against walls, floors, or joinery." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Any visible mould, persistent damp smell, water ingress, or bubbling paint or plaster must be reported through the maintenance portal without delay. Early reporting helps limit damage and repair cost." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant is responsible for day-to-day cleaning of surfaces they use (including bathrooms and kitchen areas) in line with ordinary household standards. Where mould arises from lack of ventilation or cleaning that a reasonable tenant would undertake, the tenant may be responsible for remediation costs acting reasonably and in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld)." })
   ] });
 }
 function Section8ConditionReport(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 8, title: "Condition report" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 8, title: "Condition report" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "For general tenancies in Queensland, the Residential Tenancies Authority publishes approved forms including the Entry condition report (Form 1a) at the start of the tenancy and the Exit condition report (Form 14a) when the tenancy ends. Under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld),",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "section 65" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "section 65" }),
       " deals with the condition report at the start of a tenancy and ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "section 66" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "section 66" }),
       " deals with the condition report at the end of a tenancy (including timeframes for completing and returning copies)."
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or agent) should prepare and give the tenant an entry condition report as required by law; the tenant should complete any tenant-response steps within the statutory timeframe (typically within 7 days of occupying or receiving the report, whichever is later). The landlord must return a signed copy to the tenant within the period required after receiving the tenant's completed report. The parties may attach photographs or short videos where appropriate, consistent with RTA guidance." }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or agent) should prepare and give the tenant an entry condition report as required by law; the tenant should complete any tenant-response steps within the statutory timeframe (typically within 7 days of occupying or receiving the report, whichever is later). The landlord must return a signed copy to the tenant within the period required after receiving the tenant's completed report. The parties may attach photographs or short videos where appropriate, consistent with RTA guidance." }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "At the end of the tenancy, the exit process should follow ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "section 66" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "section 66" }),
       " ",
       "and the approved exit report form (Form 14a), comparing the state of the premises with the entry report (fair wear and tear excepted). The tenant should attend any scheduled inspection where practicable and should lodge final meter readings or other handover items through the move-out workflow when requested."
     ] })
@@ -834,29 +871,29 @@ function Section9MoveOutProcedures(props) {
       value: `${internationalTransferFeeText} flat fee`
     }
   ];
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 9, title: "Move-out procedures" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 9, title: "Move-out procedures" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "To end the tenancy, the tenant must give notice in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld), the general tenancy agreement (Form 18a), and any agreed notice period. Where the platform collects a move-out notice, the tenant should complete the move-out notice form at ",
       QUNI_MOVE_OUT_FORM_URL,
       " ",
       "and keep a copy of any confirmation received."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Unless otherwise agreed in writing, the tenant must vacate and return possession by",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "10:00am" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "10:00am" }),
       " on the agreed vacate date. If the tenant remains after 10:00am, a ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: lateCheckoutFeeText }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: lateCheckoutFeeText }),
       " late checkout flat fee applies. If the tenant is still occupying the room after midnight on the vacate date, the tenant agrees that",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "full day rent" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "full day rent" }),
       " applies for that day, calculated as one day's rent (one-seventh of the agreed weekly rent), currently ",
       formatMoney(dailyRent),
       " per day, in addition to any other amounts lawfully payable."
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Cleaning checklist \u2014 the tenant must leave the room in the following condition:" }),
-    /* @__PURE__ */ jsx2(View2, { style: { marginBottom: 6, paddingLeft: 4 }, children: /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Cleaning checklist \u2014 the tenant must leave the room in the following condition:" }),
+    /* @__PURE__ */ jsx3(View3, { style: { marginBottom: 6, paddingLeft: 4 }, children: /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "\u2022 Vacuum and mop all floors including under bed and furniture",
       "\n",
       "\u2022 Wipe walls, skirting boards, windowsills, and windows",
@@ -875,24 +912,24 @@ function Section9MoveOutProcedures(props) {
       "\n",
       "\u2022 Return all keys as directed"
     ] }) }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: "The dollar amounts in the schedule below are commercial terms presented through the platform. They may only be enforced to the extent permitted by law; nothing in this schedule is intended to displace mandatory provisions of the Residential Tenancies and Rooming Accommodation Act 2008 (Qld)." }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Fee schedule (indicative \u2014 charged only where applicable and lawfully recoverable):" }),
-    /* @__PURE__ */ jsx2(OccupancyMatchScheduleTable, { rows: feeRows.map((r) => ({ label: r.label, value: r.value })) }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: "The tenant should supply a forwarding address and contact details for bond and correspondence. Bond release (if applicable) will follow Residential Tenancies Authority (RTA Queensland) requirements and any instructions given through the signing or bond workflow. The parties agree to cooperate promptly with reasonable requests for information needed to finalise the tenancy." })
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: "The dollar amounts in the schedule below are commercial terms presented through the platform. They may only be enforced to the extent permitted by law; nothing in this schedule is intended to displace mandatory provisions of the Residential Tenancies and Rooming Accommodation Act 2008 (Qld)." }),
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Fee schedule (indicative \u2014 charged only where applicable and lawfully recoverable):" }),
+    /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows: feeRows.map((r) => ({ label: r.label, value: r.value })) }),
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: "The tenant should supply a forwarding address and contact details for bond and correspondence. Bond release (if applicable) will follow Residential Tenancies Authority (RTA Queensland) requirements and any instructions given through the signing or bond workflow. The parties agree to cooperate promptly with reasonable requests for information needed to finalise the tenancy." })
   ] });
 }
 function Section10Bond(props) {
   const bond = props.bond.amount;
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 10, title: "Bond" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Any bond paid or held for this tenancy is dealt with in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld), the general tenancy agreement (Form 18a), and Residential Tenancies Authority (RTA Queensland) requirements (including bond lodgement and claim processes under Queensland law)." }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 10, title: "Bond" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Any bond paid or held for this tenancy is dealt with in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld), the general tenancy agreement (Form 18a), and Residential Tenancies Authority (RTA Queensland) requirements (including bond lodgement and claim processes under Queensland law)." }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "The bond amount recorded in the tenancy agreement is",
       " ",
       bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney(bond) : "as stated in the tenancy agreement",
       ". The parties agree to complete any bond lodgement, variation, or claim steps notified through the platform or the landlord's agent, and to provide accurate bank details for refunds where required."
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Where an international bank transfer administration fee applies to a bond refund (as set out in the move-out fee schedule), that fee is separate from the bond amount and is payable only where applicable and lawfully recoverable." })
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Where an international bank transfer administration fee applies to a bond refund (as set out in the move-out fee schedule), that fee is separate from the bond amount and is payable only where applicable and lawfully recoverable." })
   ] });
 }
 function Section11InspectionsAndAccess(_props) {
@@ -912,130 +949,130 @@ function Section11InspectionsAndAccess(_props) {
       notice: "7 days (Form 9) (or as the RTRA Act requires for the entry purpose)"
     }
   ];
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: "Inspections & access" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised agent) may enter the premises to carry out inspections, repairs, maintenance, or compliance activities in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a), using an Entry notice (Form 9) where required and observing notice, frequency, and timing rules under Queensland law." }),
-    /* @__PURE__ */ jsxs2(View2, { style: [occupancyMatchPdf.tableWrap, { marginTop: 6, marginBottom: 8 }], children: [
-      /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.thRow, children: [
-        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.thCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Purpose" }) }),
-        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.thCellLast, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Minimum notice required" }) })
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 11, title: "Inspections & access" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised agent) may enter the premises to carry out inspections, repairs, maintenance, or compliance activities in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and the general tenancy agreement (Form 18a), using an Entry notice (Form 9) where required and observing notice, frequency, and timing rules under Queensland law." }),
+    /* @__PURE__ */ jsxs3(View3, { style: [occupancyMatchPdf.tableWrap, { marginTop: 6, marginBottom: 8 }], children: [
+      /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.thRow, children: [
+        /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.thCell, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.thText, children: "Purpose" }) }),
+        /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.thCellLast, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.thText, children: "Minimum notice required" }) })
       ] }),
-      noticeRows.map((r, i) => /* @__PURE__ */ jsxs2(
-        View2,
+      noticeRows.map((r, i) => /* @__PURE__ */ jsxs3(
+        View3,
         {
           style: [
             occupancyMatchPdf.dataRow,
             i % 2 === 0 ? occupancyMatchPdf.dataRowA : occupancyMatchPdf.dataRowB
           ],
           children: [
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.dataLabelCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataLabel, children: r.purpose }) }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.dataValueCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.dataValueBold, children: r.notice }) })
+            /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.dataLabelCell, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.dataLabel, children: r.purpose }) }),
+            /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.dataValueCell, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.dataValueBold, children: r.notice }) })
           ]
         },
         i
       ))
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Unless an emergency applies, entry should be arranged with reasonable written notice (or as otherwise required by law) and at a reasonable time. The tenant should not unreasonably withhold access where entry is lawful. Where the tenant cannot attend, they may propose an alternative reasonable time within the constraints of tradespeople or scheduled works." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Photographs or short videos taken during lawful inspections or maintenance visits must not capture unrelated private areas of the tenant's room beyond what is reasonably necessary for the stated purpose. Marketing or listing photography should not be taken in the tenant's private room without prior agreement consistent with the RTRA Act and any house rules." }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must not change locks or security devices without consent except where permitted by law. Any keys, fobs, or access devices issued must be returned at the end of the tenancy as directed." })
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Unless an emergency applies, entry should be arranged with reasonable written notice (or as otherwise required by law) and at a reasonable time. The tenant should not unreasonably withhold access where entry is lawful. Where the tenant cannot attend, they may propose an alternative reasonable time within the constraints of tradespeople or scheduled works." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Photographs or short videos taken during lawful inspections or maintenance visits must not capture unrelated private areas of the tenant's room beyond what is reasonably necessary for the stated purpose. Marketing or listing photography should not be taken in the tenant's private room without prior agreement consistent with the RTRA Act and any house rules." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The tenant must not change locks or security devices without consent except where permitted by law. Any keys, fobs, or access devices issued must be returned at the end of the tenancy as directed." })
   ] });
 }
 function Section12Termination(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 12, title: "Termination" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "This addendum does not override the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) or the prescribed general tenancy agreement (Form 18a)." }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Tenant pathways (summary):" }),
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 12, title: "Termination" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "This addendum does not override the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) or the prescribed general tenancy agreement (Form 18a)." }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Tenant pathways (summary):" }),
       " end a periodic tenancy by giving notice in the form and for the period required by the RTRA Act and agreement; end a fixed-term tenancy at expiry by vacating in accordance with notice rules; leave early where permitted (for example mutual consent or an order of the Queensland Civil and Administrative Tribunal (QCAT), or where other lawful pathways apply)."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Landlord pathways (summary):" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Landlord pathways (summary):" }),
       " end a tenancy only on grounds and by procedures permitted by the RTRA Act (including prescribed termination notices, breach processes where applicable, and tribunal orders). Mutual agreement to end can be recorded in writing at any time where the parties choose that path."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: [
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Leaving a fixed-term agreement early (reletting costs)" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: [
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Leaving a fixed-term agreement early (reletting costs)" }),
       " \u2014 ",
       "If a tenant ends a fixed-term general tenancy agreement early without lawful grounds, liability for costs must be worked out under Queensland law. ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Section 357A" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Section 357A" }),
       " of the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) sets limits on how reletting costs may be agreed and calculated. ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Section 362" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Section 362" }),
       " requires the lessor to take all reasonable steps to mitigate loss or expense. The amounts and rules that apply depend on the circumstances of the tenancy (including the agreement start date and legislative reforms). This addendum does not set out a prescribed stepped-cap table; parties must refer to the current Act and official guidance."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Up-to-date calculation guidance is published by the Residential Tenancies Authority (Queensland) at",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "https://www.rta.qld.gov.au/ending-a-tenancy/ending-a-tenancy-agreement/reletting-costs" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "https://www.rta.qld.gov.au/ending-a-tenancy/ending-a-tenancy-agreement/reletting-costs" }),
       " ",
       "(reletting costs and mitigation)."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "If anything in this addendum is inconsistent with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) or the prescribed general tenancy agreement (Form 18a), the",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Act and prescribed agreement prevail" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Act and prescribed agreement prevail" }),
       "."
     ] })
   ] });
 }
 function Section13Disputes(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 13, title: "Disputes" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "The parties should attempt to resolve disagreements about this tenancy or the use of the Quni platform directly, promptly, and in good faith before escalating matters." }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 13, title: "Disputes" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The parties should attempt to resolve disagreements about this tenancy or the use of the Quni platform directly, promptly, and in good faith before escalating matters." }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Quni Living may assist with facilitation or information exchange where appropriate and where all parties agree. For facilitation enquiries, contact ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "info@quni.com.au" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "info@quni.com.au" }),
       ". Quni Living does not provide legal advice and is not a substitute for independent legal advice where needed."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Either party may apply to the Queensland Civil and Administrative Tribunal (QCAT) for orders in accordance with the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) and tribunal rules. Quni Living is",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "not a party" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "not a party" }),
       " to QCAT proceedings between the landlord and tenant and ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "cannot represent" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "cannot represent" }),
       " either party before QCAT."
     ] })
   ] });
 }
 function Section14Privacy(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 14, title: "Privacy" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 14, title: "Privacy" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Quni Living handles personal information in accordance with the",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Privacy Act 1988 (Cth)" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Privacy Act 1988 (Cth)" }),
       " and applicable Australian privacy principles, including information collected to facilitate this tenancy and to operate the Quni platform (for example identity, contact, tenancy, and payment-related details where relevant)."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "You may request access to, or correction of, personal information Quni Living holds about you by writing to",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "info@quni.com.au" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "info@quni.com.au" }),
       ". Further detail is set out in the privacy policy at ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "https://quni.com.au/privacy" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "https://quni.com.au/privacy" }),
       "."
     ] })
   ] });
 }
 function Section15ElectronicExecution(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 15, title: "Electronic execution" }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 15, title: "Electronic execution" }),
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "The parties agree that this addendum may be signed electronically where permitted by the",
       " ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "Electronic Transactions (Queensland) Act 2001" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "Electronic Transactions (Queensland) Act 2001" }),
       " and other applicable laws. Electronic signatures have the same effect as handwritten signatures when applied through an agreed signing workflow."
     ] }),
-    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: [
+    /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "Each party consents to electronic signing, including the use of signature and date fields completed through the DocuSeal workflow at ",
-      /* @__PURE__ */ jsx2(Text2, { style: { fontFamily: "Helvetica-Bold" }, children: "https://sign.quni.com.au" }),
+      /* @__PURE__ */ jsx3(Text3, { style: { fontFamily: "Helvetica-Bold" }, children: "https://sign.quni.com.au" }),
       "."
     ] })
   ] });
 }
 function Section16SpecialConditions(_props) {
-  return /* @__PURE__ */ jsxs2(View2, { style: { marginBottom: 10 }, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 16, title: "Special conditions" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "No special conditions apply unless recorded below or in an attachment signed by both parties." }),
-    /* @__PURE__ */ jsx2(
-      View2,
+  return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 16, title: "Special conditions" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "No special conditions apply unless recorded below or in an attachment signed by both parties." }),
+    /* @__PURE__ */ jsx3(
+      View3,
       {
         style: {
           marginTop: 8,
@@ -1047,89 +1084,91 @@ function Section16SpecialConditions(_props) {
           paddingVertical: 8,
           backgroundColor: "#FFFFFF"
         },
-        children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.noteItalicMuted, children: "Space for typed or handwritten special conditions (if any)." })
+        children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.noteItalicMuted, children: "Space for typed or handwritten special conditions (if any)." })
       }
     )
   ] });
 }
 function Section17Execution(props) {
   const landlordDisplay = props.landlord.companyName ? `${props.landlord.fullName} (${props.landlord.companyName})` : props.landlord.fullName;
-  return /* @__PURE__ */ jsxs2(View2, { children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 17, title: "Execution" }),
-    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "Signed electronically where permitted. Each party's signature and date fields below are completed through the signing workflow." }),
-    /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigTable, children: [
-      /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigHeaderRow, children: [
-        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Landlord" }) }),
-        /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCellLast, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Tenant" }) })
+  const coTenantName = coTenantNameFromAddendumProps(props.additionalTenantNames);
+  return /* @__PURE__ */ jsxs3(View3, { children: [
+    /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 17, title: "Execution" }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Signed electronically where permitted. Each party's signature and date fields below are completed through the signing workflow." }),
+    /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigTable, children: [
+      /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigHeaderRow, children: [
+        /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.thText, children: "Landlord" }) }),
+        /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.sigHeaderCellLast, children: /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.thText, children: "Tenant" }) })
       ] }),
-      /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigBodyRow, children: [
-        /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigCol, children: [
-          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: landlordDisplay }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Signature;role=First Party;type=signature}}" })
+      /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigBodyRow, children: [
+        /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigCol, children: [
+          /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigNameBold, children: landlordDisplay }),
+          /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigLabelRow, children: [
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Signature;role=First Party;type=signature}}" })
           ] }) }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Date;role=First Party;type=date}}" })
+          /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigLabelRow, children: [
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Landlord Date;role=First Party;type=date}}" })
           ] }) })
         ] }),
-        /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
-          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: props.tenant.fullName }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Signature;role=Second Party;type=signature}}" })
+        /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigColLast, children: [
+          /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigNameBold, children: props.tenant.fullName }),
+          /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigLabelRow, children: [
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Signature;role=Second Party;type=signature}}" })
           ] }) }),
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-            /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Date;role=Second Party;type=date}}" })
+          /* @__PURE__ */ jsx3(View3, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs3(View3, { style: occupancyMatchPdf.sigLabelRow, children: [
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
+            /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Tenant Date;role=Second Party;type=date}}" })
           ] }) })
         ] })
-      ] })
+      ] }),
+      /* @__PURE__ */ jsx3(AddendumCoTenantSignatureBlock, { coTenantName })
     ] }),
-    /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 8 }], children: "Signatures and dates are collected using DocuSeal (https://sign.quni.com.au). DocuSeal is a third-party e-signing service; Quni Living does not control DocuSeal's infrastructure beyond selecting it as the signing provider for this package." })
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.noteItalicMuted, { marginTop: 8 }], children: "Signatures and dates are collected using DocuSeal (https://sign.quni.com.au). DocuSeal is a third-party e-signing service; Quni Living does not control DocuSeal's infrastructure beyond selecting it as the signing provider for this package." })
   ] });
 }
 function QuniPlatformAddendumQld(props) {
   const { documentId, generatedAt } = props;
-  return /* @__PURE__ */ jsxs2(Document, { children: [
-    /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
+  return /* @__PURE__ */ jsxs3(Document, { children: [
+    /* @__PURE__ */ jsxs3(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
+      /* @__PURE__ */ jsx3(
         OccupancyMatchFixedHeader,
         {
           documentTitle: "Platform Addendum",
           subtitle: "Supplementary to the General Tenancy Agreement (Form 18a)"
         }
       ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "addendum" }),
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children: "This addendum records how the Quni platform is used for the tenancy described below. It is intended to be signed together with the prescribed general tenancy agreement (Form 18a) in the same package." }),
-      /* @__PURE__ */ jsx2(Section1TenancySummary, { ...props }),
-      /* @__PURE__ */ jsx2(Section2QuniPlatformAndFee, { ...props }),
-      /* @__PURE__ */ jsx2(Section3CommunicationChannels, { ...props }),
-      /* @__PURE__ */ jsx2(Section4MaintenanceAndRepairs, { ...props })
+      /* @__PURE__ */ jsx3(OccupancyMatchFooter, { documentId, generatedAt, variant: "addendum" }),
+      /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "This addendum records how the Quni platform is used for the tenancy described below. It is intended to be signed together with the prescribed general tenancy agreement (Form 18a) in the same package." }),
+      /* @__PURE__ */ jsx3(Section1TenancySummary, { ...props }),
+      /* @__PURE__ */ jsx3(Section2QuniPlatformAndFee, { ...props }),
+      /* @__PURE__ */ jsx3(Section3CommunicationChannels, { ...props }),
+      /* @__PURE__ */ jsx3(Section4MaintenanceAndRepairs, { ...props })
     ] }),
-    /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-      /* @__PURE__ */ jsx2(
+    /* @__PURE__ */ jsxs3(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
+      /* @__PURE__ */ jsx3(
         OccupancyMatchFixedHeader,
         {
           documentTitle: "Platform Addendum",
           subtitle: "Supplementary to the General Tenancy Agreement (Form 18a)"
         }
       ),
-      /* @__PURE__ */ jsx2(OccupancyMatchFooter, { documentId, generatedAt, variant: "addendum" }),
-      /* @__PURE__ */ jsx2(Section5UtilitiesAndBills, { ...props }),
-      /* @__PURE__ */ jsx2(Section6HouseRules, { ...props }),
-      /* @__PURE__ */ jsx2(Section7MouldPrevention, { ...props }),
-      /* @__PURE__ */ jsx2(Section8ConditionReport, { ...props }),
-      /* @__PURE__ */ jsx2(Section9MoveOutProcedures, { ...props }),
-      /* @__PURE__ */ jsx2(Section10Bond, { ...props }),
-      /* @__PURE__ */ jsx2(Section11InspectionsAndAccess, { ...props }),
-      /* @__PURE__ */ jsx2(Section12Termination, { ...props }),
-      /* @__PURE__ */ jsx2(Section13Disputes, { ...props }),
-      /* @__PURE__ */ jsx2(Section14Privacy, { ...props }),
-      /* @__PURE__ */ jsx2(Section15ElectronicExecution, { ...props }),
-      /* @__PURE__ */ jsx2(Section16SpecialConditions, { ...props }),
-      /* @__PURE__ */ jsx2(Section17Execution, { ...props })
+      /* @__PURE__ */ jsx3(OccupancyMatchFooter, { documentId, generatedAt, variant: "addendum" }),
+      /* @__PURE__ */ jsx3(Section5UtilitiesAndBills, { ...props }),
+      /* @__PURE__ */ jsx3(Section6HouseRules, { ...props }),
+      /* @__PURE__ */ jsx3(Section7MouldPrevention, { ...props }),
+      /* @__PURE__ */ jsx3(Section8ConditionReport, { ...props }),
+      /* @__PURE__ */ jsx3(Section9MoveOutProcedures, { ...props }),
+      /* @__PURE__ */ jsx3(Section10Bond, { ...props }),
+      /* @__PURE__ */ jsx3(Section11InspectionsAndAccess, { ...props }),
+      /* @__PURE__ */ jsx3(Section12Termination, { ...props }),
+      /* @__PURE__ */ jsx3(Section13Disputes, { ...props }),
+      /* @__PURE__ */ jsx3(Section14Privacy, { ...props }),
+      /* @__PURE__ */ jsx3(Section15ElectronicExecution, { ...props }),
+      /* @__PURE__ */ jsx3(Section16SpecialConditions, { ...props }),
+      /* @__PURE__ */ jsx3(Section17Execution, { ...props })
     ] })
   ] });
 }

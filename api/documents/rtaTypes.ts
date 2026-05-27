@@ -215,4 +215,6 @@ export type QuniPlatformAddendumProps = {
   platformAcn?: string | null
   /** From `platform_config` (`business.director_name`). Shown on identification line when set. */
   platformDirectorName?: string | null
+  /** Additional named tenants (e.g. co-tenant from booking snapshot). */
+  additionalTenantNames?: string[]
 }
