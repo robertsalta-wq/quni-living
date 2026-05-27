@@ -691,7 +691,7 @@ export default function LandlordDashboard() {
     reload: load,
     navigate,
     showToast,
-    onMutationError: (msg) => setError(msg),
+    onMutationError: (msg) => showToast({ kind: 'error', message: msg }),
   })
 
   const stripeConnectParam = searchParams.get('stripe_connect')
