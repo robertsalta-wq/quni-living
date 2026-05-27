@@ -15,6 +15,8 @@ type AnthropicContentBlock = { type: string; text?: string }
 type AnthropicMessagesResponse = {
   content?: AnthropicContentBlock[]
   error?: { type?: string; message?: string }
+  stop_reason?: string
+  usage?: { output_tokens?: number; input_tokens?: number }
 }
 
 type SuggestedPricing = {
@@ -47,9 +49,10 @@ function buildPrompt(input: SuggestPricingBody): string {
     'You are a rental market pricing assistant for Australian student accommodation.',
     '',
     'Task:',
-    '1) Search Flatmates.com.au for current listings matching the specified room type and suburb to determine realistic market rates.',
-    '2) Search for current Scape and Iglu pricing near the specified universities as the premium ceiling.',
-    '3) Return only strict JSON with this exact shape and keys:',
+    '1) Use web search to gather current signals: Flatmates.com.au listings for the room type and suburb, and Scape/Iglu (or similar) weekly rates near the universities when provided — use these as a premium ceiling.',
+    '2) After research, output your answer as pricing only.',
+    '',
+    'Output shape (exact keys, weekly AUD, whole numbers):',
     '{',
     '  "low": 280,',
     '  "high": 320,',
@@ -57,10 +60,10 @@ function buildPrompt(input: SuggestPricingBody): string {
     '}',
     '',
     'Rules:',
-    '- No markdown, no code fences, no extra keys, no additional text before/after JSON.',
-    '- low and high must be whole-number weekly AUD values.',
+    '- low and high must be whole-number weekly AUD values (numbers, not words).',
     '- high must be greater than or equal to low.',
     '- reasoning must be 2-3 sentences in plain English.',
+    '- Your final assistant message must be a single JSON object only: the object with keys low, high, reasoning. No markdown fences, no keys other than low, high, reasoning, and no text before or after that JSON.',
     '',
     `Room type: ${input.roomType}`,
     `Suburb: ${input.suburb}`,
@@ -85,32 +88,51 @@ function buildPrompt(input: SuggestPricingBody): string {
   return lines.join('\n')
 }
 
-function extractFirstJsonObject(text: string): string | null {
-  const trimmed = text.trim()
-  if (!trimmed) return null
-  if (trimmed.startsWith('{') && trimmed.endsWith('}')) return trimmed
-
-  let depth = 0
-  let start = -1
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i]
-    if (ch === '{') {
-      if (depth === 0) start = i
-      depth++
-    } else if (ch === '}') {
-      if (depth > 0) depth--
-      if (depth === 0 && start !== -1) {
-        return trimmed.slice(start, i + 1)
-      }
-    }
+/** Accept JSON numbers or numeric strings (and light currency formatting). */
+function parseWeeklyAud(v: unknown): number {
+  if (typeof v === 'number' && Number.isFinite(v)) return Math.round(v)
+  if (typeof v === 'string') {
+    const cleaned = v.replace(/[^0-9.-]/g, '')
+    if (!cleaned) return NaN
+    const n = Number(cleaned)
+    if (Number.isFinite(n)) return Math.round(n)
   }
-  return null
+  return NaN
 }
 
-function parseSuggestion(rawText: string): SuggestedPricing | null {
-  const rawJson = extractFirstJsonObject(rawText)
-  if (!rawJson) return null
+/** Every top-level balanced `{ ... }` substring in document order. */
+function extractAllJsonObjects(text: string): string[] {
+  const results: string[] = []
+  let i = 0
+  while (i < text.length) {
+    if (text[i] !== '{') {
+      i++
+      continue
+    }
+    const start = i
+    let depth = 0
+    let j = start
+    while (j < text.length) {
+      const ch = text[j]
+      if (ch === '{') depth++
+      else if (ch === '}') {
+        depth--
+        if (depth === 0) {
+          results.push(text.slice(start, j + 1))
+          i = j + 1
+          break
+        }
+      }
+      j++
+    }
+    if (j >= text.length && depth > 0) {
+      i = start + 1
+    }
+  }
+  return results
+}
 
+function tryParsePricingObject(rawJson: string): SuggestedPricing | null {
   let parsed: unknown
   try {
     parsed = JSON.parse(rawJson)
@@ -120,8 +142,8 @@ function parseSuggestion(rawText: string): SuggestedPricing | null {
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
   const obj = parsed as Record<string, unknown>
-  const low = typeof obj.low === 'number' ? Math.round(obj.low) : NaN
-  const high = typeof obj.high === 'number' ? Math.round(obj.high) : NaN
+  const low = parseWeeklyAud(obj.low)
+  const high = parseWeeklyAud(obj.high)
   const reasoning = typeof obj.reasoning === 'string' ? obj.reasoning.trim() : ''
 
   if (!Number.isFinite(low) || !Number.isFinite(high) || low <= 0 || high <= 0 || high < low || !reasoning) {
@@ -129,6 +151,24 @@ function parseSuggestion(rawText: string): SuggestedPricing | null {
   }
 
   return { low, high, reasoning }
+}
+
+/** Prefer the last JSON object in the reply (final answer after web-search preamble). */
+function parseSuggestion(rawText: string): SuggestedPricing | null {
+  const trimmed = rawText.trim()
+  if (!trimmed) return null
+
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    const single = tryParsePricingObject(trimmed)
+    if (single) return single
+  }
+
+  const candidates = extractAllJsonObjects(trimmed)
+  for (let c = candidates.length - 1; c >= 0; c--) {
+    const parsed = tryParsePricingObject(candidates[c]!)
+    if (parsed) return parsed
+  }
+  return null
 }
 
 export default async function handler(request: Request) {
@@ -201,8 +241,8 @@ export default async function handler(request: Request) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        max_tokens: 2048,
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
         messages: [{ role: 'user', content: prompt }],
       }),
     })
@@ -226,6 +266,24 @@ export default async function handler(request: Request) {
 
   const parsed = parseSuggestion(text)
   if (!parsed) {
+    const stopReason = anthropicData.stop_reason
+    const outputTokens = anthropicData.usage?.output_tokens
+    console.error('suggest-pricing: parse failed', {
+      stop_reason: stopReason,
+      output_tokens: outputTokens,
+      textLength: text.length,
+      contentBlockTypes: (anthropicData.content ?? []).map((b) => b.type),
+    })
+    if (stopReason === 'max_tokens') {
+      return json(
+        {
+          error:
+            'AI response was cut off before a complete price range was produced. Please try again.',
+        },
+        502,
+        origin,
+      )
+    }
     return json({ error: 'AI returned an invalid pricing suggestion format' }, 502, origin)
   }
 
