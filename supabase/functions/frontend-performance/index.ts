@@ -125,8 +125,16 @@ async function querySentryDiscover(args: {
     const text = await res.text()
     throw new Error(`Sentry API ${res.status}: ${text.slice(0, 240)}`)
   }
-  const data = (await res.json()) as unknown
-  return Array.isArray(data) ? (data as SentryDiscoverRow[]) : []
+  const payload = (await res.json()) as unknown
+  if (Array.isArray(payload)) return payload as SentryDiscoverRow[]
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    return (payload as { data: SentryDiscoverRow[] }).data
+  }
+  return []
 }
 
 async function buildRoutePerformanceRow(args: {
