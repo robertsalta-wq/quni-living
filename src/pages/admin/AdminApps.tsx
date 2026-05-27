@@ -29,6 +29,33 @@ type HealthResult = {
   message: string
 }
 
+type FrontendPerformanceRow = {
+  label: string
+  query: string
+  transactionCount: number
+  p75Lcp: number | null
+  p75Inp: number | null
+  p75Cls: number | null
+  lcpSampleCount: number
+  inpSampleCount: number
+  clsSampleCount: number
+  lcpExceeded: boolean
+  inpExceeded: boolean
+  clsExceeded: boolean
+}
+
+type FrontendPerformanceResponse = {
+  statsPeriod: string
+  cwvThresholds: {
+    lcpMs: number
+    inpMs: number
+    cls: number
+  }
+  rows: FrontendPerformanceRow[]
+  failingRoutes: string[]
+  checkedAt: string
+}
+
 type VendorHealthRow = Pick<Database['public']['Tables']['admin_vendor_subscriptions']['Row'], 'title' | 'href'>
 
 /** Maps vendor rows to operational_status.service_name / health check keys (title + dashboard href). */
@@ -185,7 +212,7 @@ const SERVICE_DISPLAY_LABEL: Record<(typeof MONITORED_SERVICE_NAMES)[number], st
   vercel: 'Vercel',
 }
 
-type AppsPageTab = 'services' | 'status' | 'incidents'
+type AppsPageTab = 'services' | 'status' | 'performance' | 'incidents'
 
 const OPS_POLL_MS = 60_000
 
@@ -966,6 +993,12 @@ export default function AdminApps() {
   const toastClearRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [credentialsPopoverId, setCredentialsPopoverId] = useState<string | null>(null)
   const credentialsPopoverRef = useRef<HTMLDivElement | null>(null)
+  const [perfRows, setPerfRows] = useState<FrontendPerformanceRow[]>([])
+  const [perfLoading, setPerfLoading] = useState(false)
+  const [perfError, setPerfError] = useState<string | null>(null)
+  const [perfStatsPeriod, setPerfStatsPeriod] = useState('7d')
+  const [perfThresholds, setPerfThresholds] = useState({ lcpMs: 2500, inpMs: 200, cls: 0.1 })
+  const [perfCheckedAt, setPerfCheckedAt] = useState<string | null>(null)
 
   const showToast = useCallback((msg: string) => {
     setToast(msg)
@@ -1070,6 +1103,39 @@ export default function AdminApps() {
     void loadIncidents()
   }, [loadIncidents])
 
+  const loadFrontendPerformance = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setPerfLoading(true)
+    setPerfError(null)
+    const auth = await getValidAccessTokenForFunctions()
+    if ('error' in auth) {
+      setPerfError(auth.error)
+      setPerfLoading(false)
+      return
+    }
+    const { data, error: fnError } = await supabase.functions.invoke<FrontendPerformanceResponse>('frontend-performance', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+    setPerfLoading(false)
+    if (fnError) {
+      setPerfError(await readSupabaseFunctionInvokeError(data, fnError))
+      return
+    }
+    if (data && typeof data === 'object' && 'error' in data && typeof (data as { error?: string }).error === 'string') {
+      setPerfError((data as { error: string }).error)
+      return
+    }
+    setPerfRows(Array.isArray(data?.rows) ? data.rows : [])
+    if (typeof data?.statsPeriod === 'string' && data.statsPeriod.trim()) {
+      setPerfStatsPeriod(data.statsPeriod)
+    }
+    if (data?.cwvThresholds) {
+      setPerfThresholds(data.cwvThresholds)
+    }
+    setPerfCheckedAt(typeof data?.checkedAt === 'string' ? data.checkedAt : null)
+  }, [])
+
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) {
       setRows([])
@@ -1102,6 +1168,12 @@ export default function AdminApps() {
     const id = window.setInterval(() => void loadHealth(), HEALTH_POLL_MS)
     return () => window.clearInterval(id)
   }, [loadHealth])
+
+  useEffect(() => {
+    void loadFrontendPerformance()
+    const id = window.setInterval(() => void loadFrontendPerformance(), HEALTH_POLL_MS)
+    return () => window.clearInterval(id)
+  }, [loadFrontendPerformance])
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -1218,6 +1290,17 @@ export default function AdminApps() {
             onClick={() => setAppsTab('status')}
           >
             Status
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={appsTab === 'performance'}
+            id="apps-tab-performance"
+            aria-controls="apps-panel-performance"
+            className={appsTab === 'performance' ? tabBtnActive : tabBtnInactive}
+            onClick={() => setAppsTab('performance')}
+          >
+            Frontend Performance
           </button>
           <button
             type="button"
@@ -1491,6 +1574,96 @@ export default function AdminApps() {
                     </tr>
                   )
                 })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
+      {appsTab === 'performance' ? (
+        <div id="apps-panel-performance" role="tabpanel" aria-labelledby="apps-tab-performance">
+          <div className={`${adminCardClass} mb-4 border-indigo-100 bg-indigo-50/40`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Core Web Vitals ({perfStatsPeriod}, production)</p>
+                <p className="mt-1 text-xs text-gray-600">
+                  Thresholds: LCP ≤ {perfThresholds.lcpMs}ms, INP ≤ {perfThresholds.inpMs}ms, CLS ≤ {perfThresholds.cls}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadFrontendPerformance()}
+                disabled={perfLoading}
+                className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-white px-3 py-1.5 text-[12px] font-semibold text-admin-ink-3 hover:bg-admin-surface-2 disabled:opacity-60"
+              >
+                {perfLoading ? 'Refreshing…' : 'Refresh metrics'}
+              </button>
+            </div>
+            {perfCheckedAt ? (
+              <p className="mt-2 text-[11px] text-gray-500">
+                Last checked:{' '}
+                {new Date(perfCheckedAt).toLocaleString('en-AU', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                })}
+              </p>
+            ) : null}
+          </div>
+
+          {perfRows.some((r) => r.lcpExceeded || r.inpExceeded || r.clsExceeded) ? (
+            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+              🔴 One or more routes are above CWV thresholds.
+            </p>
+          ) : null}
+
+          {perfError ? (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{perfError}</p>
+          ) : null}
+
+          <div className={adminTableWrapClass}>
+            <table className="min-w-full border-collapse text-left">
+              <thead>
+                <tr>
+                  <th className={adminThClass}>Route Pattern</th>
+                  <th className={adminThClass}>Transactions</th>
+                  <th className={adminThClass}>P75 LCP (ms)</th>
+                  <th className={adminThClass}>P75 INP (ms)</th>
+                  <th className={adminThClass}>P75 CLS</th>
+                  <th className={adminThClass}>LCP samples</th>
+                  <th className={adminThClass}>INP samples</th>
+                  <th className={adminThClass}>CLS samples</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perfRows.map((row) => (
+                  <tr key={row.label}>
+                    <td className={`${adminTdClass} font-medium text-gray-900`}>{row.label}</td>
+                    <td className={`${adminTdClass} tabular-nums`}>{row.transactionCount}</td>
+                    <td className={`${adminTdClass} tabular-nums ${row.lcpExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
+                      {row.p75Lcp == null ? '—' : Math.round(row.p75Lcp)}
+                    </td>
+                    <td className={`${adminTdClass} tabular-nums ${row.inpExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
+                      {row.p75Inp == null ? '—' : Math.round(row.p75Inp)}
+                    </td>
+                    <td className={`${adminTdClass} tabular-nums ${row.clsExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
+                      {row.p75Cls == null ? '—' : row.p75Cls.toFixed(3)}
+                    </td>
+                    <td className={`${adminTdClass} tabular-nums`}>{row.lcpSampleCount}</td>
+                    <td className={`${adminTdClass} tabular-nums`}>{row.inpSampleCount}</td>
+                    <td className={`${adminTdClass} tabular-nums`}>{row.clsSampleCount}</td>
+                  </tr>
+                ))}
+                {!perfLoading && perfRows.length === 0 ? (
+                  <tr>
+                    <td className={adminTdClass} colSpan={8}>
+                      No frontend performance rows returned.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
