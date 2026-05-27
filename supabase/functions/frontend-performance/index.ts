@@ -8,7 +8,7 @@
  * - SENTRY_AUTH_TOKEN
  * Optional (defaults shown below):
  * - SENTRY_ORG_SLUG=quni
- * - SENTRY_PROJECT_SLUG=javascript-react
+ * - SENTRY_PROJECT_ID=4511102942183424
  * - SENTRY_REGION_URL=https://us.sentry.io
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
@@ -100,7 +100,7 @@ function asNullableNumber(v: unknown): number | null {
 async function querySentryDiscover(args: {
   baseUrl: string
   orgSlug: string
-  projectSlug: string
+  projectId: string
   token: string
   query: string
   fields: string[]
@@ -108,7 +108,7 @@ async function querySentryDiscover(args: {
 }): Promise<SentryDiscoverRow[]> {
   const url = new URL(`/api/0/organizations/${args.orgSlug}/events/`, args.baseUrl)
   url.searchParams.set('dataset', 'spans')
-  url.searchParams.set('project', args.projectSlug)
+  url.searchParams.set('project', args.projectId)
   url.searchParams.set('query', args.query)
   url.searchParams.set('statsPeriod', args.statsPeriod ?? STATS_PERIOD)
   url.searchParams.set('referrer', 'admin-apps-frontend-performance')
@@ -132,7 +132,7 @@ async function querySentryDiscover(args: {
 async function buildRoutePerformanceRow(args: {
   baseUrl: string
   orgSlug: string
-  projectSlug: string
+  projectId: string
   token: string
   pattern: RoutePattern
 }): Promise<RoutePerformanceRow> {
@@ -140,7 +140,7 @@ async function buildRoutePerformanceRow(args: {
   const aggregateRows = await querySentryDiscover({
     baseUrl: args.baseUrl,
     orgSlug: args.orgSlug,
-    projectSlug: args.projectSlug,
+    projectId: args.projectId,
     token: args.token,
     query: baseQuery,
     fields: [
@@ -156,7 +156,7 @@ async function buildRoutePerformanceRow(args: {
     querySentryDiscover({
       baseUrl: args.baseUrl,
       orgSlug: args.orgSlug,
-      projectSlug: args.projectSlug,
+      projectId: args.projectId,
       token: args.token,
       query: `${baseQuery} has:measurements.lcp`,
       fields: ['count()'],
@@ -164,7 +164,7 @@ async function buildRoutePerformanceRow(args: {
     querySentryDiscover({
       baseUrl: args.baseUrl,
       orgSlug: args.orgSlug,
-      projectSlug: args.projectSlug,
+      projectId: args.projectId,
       token: args.token,
       query: `${baseQuery} has:measurements.inp`,
       fields: ['count()'],
@@ -172,7 +172,7 @@ async function buildRoutePerformanceRow(args: {
     querySentryDiscover({
       baseUrl: args.baseUrl,
       orgSlug: args.orgSlug,
-      projectSlug: args.projectSlug,
+      projectId: args.projectId,
       token: args.token,
       query: `${baseQuery} has:measurements.cls`,
       fields: ['count()'],
@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
   }
 
   const sentryOrg = (Deno.env.get('SENTRY_ORG_SLUG') ?? 'quni').trim()
-  const sentryProject = (Deno.env.get('SENTRY_PROJECT_SLUG') ?? 'javascript-react').trim()
+  const sentryProjectId = (Deno.env.get('SENTRY_PROJECT_ID') ?? '4511102942183424').trim()
   const sentryRegionUrl = (Deno.env.get('SENTRY_REGION_URL') ?? 'https://us.sentry.io').trim()
 
   try {
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
         buildRoutePerformanceRow({
           baseUrl: sentryRegionUrl,
           orgSlug: sentryOrg,
-          projectSlug: sentryProject,
+          projectId: sentryProjectId,
           token: sentryToken,
           pattern,
         }),
