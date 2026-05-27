@@ -21,7 +21,6 @@ import { ListingsGridSkeleton } from '../components/listings/ListingsGridSkeleto
 import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
-import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
   DEFAULT_NEAR_RADIUS_KM,
@@ -153,13 +152,6 @@ export default function Listings() {
       viewerStudentProfileId,
     )
 
-  const aiListingContext = useMemo(() => {
-    return {
-      listingIds: properties.slice(0, 8).map((p) => p.id),
-      sourcePage: 'listings' as const,
-    }
-  }, [properties])
-
   const showNonStudentListingHint =
     Boolean(user) &&
     role === 'student' &&
@@ -289,9 +281,6 @@ export default function Listings() {
           </div>
         )}
 
-        <div className="mb-6 w-full">
-          <ChatEmbed variant="listings" listingContext={aiListingContext} />
-        </div>
         <div className="grid w-full grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start justify-items-stretch">
           <aside className="w-full min-w-0 md:w-auto md:max-w-[16rem]">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky md:top-24">

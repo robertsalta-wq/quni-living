@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import type { ChatMessage, ListingContext } from '../../lib/aiChat/chatTypes'
 import { fetchListingContextBlockForChat } from '../../lib/aiChat/fetchListingContextBlock'
 import { useAuthContext } from '../../context/AuthContext'
@@ -8,7 +7,7 @@ import { useChatStream } from '../../hooks/aiChat/useChatStream'
 import { usePersona } from '../../hooks/aiChat/usePersona'
 import { useVisitorSessionId } from '../../hooks/aiChat/useVisitorSessionId'
 import AiSparkleIcon from '../AiSparkleIcon'
-import ChatAiChrome, { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './ChatAiChrome'
+import { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './chatAiLabels'
 import ChatMessageBubble from './ChatMessageBubble'
 import ChatPromptChips from './ChatPromptChips'
 import TurnstileGate from './TurnstileGate'
@@ -52,7 +51,6 @@ function useIsMobileBreakpoint(maxWidthPx: number): boolean {
 }
 
 export default function ChatPanel({ variant, listingContext, onClose }: Props) {
-  const location = useLocation()
   const { session } = useAuthContext()
   const { personaKey, firstName } = usePersona()
   const visitorSessionId = useVisitorSessionId()
@@ -98,17 +96,17 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
     if (personaKey !== 'visitor') setStoredVisitorTurnstileToken(null)
   }, [personaKey])
 
-  const hasListingContext = Boolean(
-    listingContext?.listingIds?.length || listingContext?.propertyId,
-  )
-
-  const loginRedirect = `${location.pathname}${location.search}`
+  const title = useMemo(() => {
+    if (personaKey === 'landlord') return 'AI for landlords'
+    if (personaKey === 'student_renter') return 'AI for renters'
+    return 'Quni AI'
+  }, [personaKey])
 
   const placeholder = useMemo(() => {
-    if (isCompactInline && personaKey === 'visitor') {
-      return 'Ask about Quni (sign in for help with these listings)…'
+    if (isCompactInline && personaKey === 'student_renter') {
+      return 'Ask about these listings…'
     }
-    if (isCompactInline) return 'Ask Quni AI about these listings…'
+    if (isCompactInline) return 'Ask about Quni…'
     if (personaKey === 'landlord') return 'Ask for help drafting…'
     if (personaKey === 'student_renter') return 'Ask about listings, suburbs, or fit…'
     return 'Ask a question about Quni…'
@@ -300,42 +298,42 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   return (
     <div className={panelCardClass}>
       <div className={cardInnerClass}>
-        <ChatAiChrome
-          personaKey={personaKey}
-          hasListingContext={hasListingContext}
-          compact={isCompactInline}
-          loginRedirect={loginRedirect}
-        />
-
         {!isCompactInline ? (
           <div
             className={[
-              'flex shrink-0 items-center justify-end gap-2 px-4 py-2 border-b border-gray-100 bg-white',
+              'flex shrink-0 items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 bg-white',
               isMobile && !isListingsInline ? 'sticky top-0' : '',
             ]
               .filter(Boolean)
               .join(' ')}
           >
-            {firstName ? (
-              <p className="mr-auto text-xs text-gray-500">Hi {firstName}</p>
-            ) : null}
-            <button
-              type="button"
-              onClick={clearChat}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              {messages.length === 0 ? 'Reset' : 'New chat'}
-            </button>
-            {showClose ? (
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
+              {firstName ? (
+                <p className="text-xs text-gray-500">Hi {firstName}</p>
+              ) : (
+                <p className="text-xs text-gray-500">Ask me anything.</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={clearChat}
                 className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                aria-label="Close chat"
               >
-                Close
+                {messages.length === 0 ? 'Reset' : 'New chat'}
               </button>
-            ) : null}
+              {showClose ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                  aria-label="Close chat"
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : null}
 

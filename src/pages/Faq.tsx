@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import ChatEmbed from '../components/aiChat/ChatEmbed'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
 import { ALL_FAQ_ITEMS, FAQ_SECTIONS } from '../lib/faqContent'
@@ -20,6 +21,10 @@ export default function Faq() {
       />
 
       <div className="max-w-site mx-auto w-full px-6 py-10 md:py-14">
+        <div className="mb-10 w-full">
+          <ChatEmbed variant="listings" />
+        </div>
+
         <nav
           className="mb-10 flex flex-wrap gap-2"
           aria-label="FAQ sections"

@@ -3,7 +3,7 @@ import { chatDebug } from '../../lib/aiChat/chatDebug'
 import { isTurnstileSiteKeyConfigured } from '../../lib/verifyTurnstile'
 import AiSparkleIcon from '../AiSparkleIcon'
 import TurnstileCaptcha from '../TurnstileCaptcha'
-import { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './ChatAiChrome'
+import { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './chatAiLabels'
 
 function AskAiButtonContent({ sending, label }: { sending: boolean; label: string }) {
   return (
