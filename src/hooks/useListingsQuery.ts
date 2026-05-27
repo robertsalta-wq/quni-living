@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js'
 import { supabase } from '../lib/supabase'
 import {
@@ -36,6 +36,25 @@ type Result = {
   refetch: () => void
   unavailableForSelectedDatesIds: Set<string>
   distanceKmByPropertyId: Map<string, number>
+}
+
+/** Fail fast enough to retry; prod listings fetch is typically ~2s. */
+const LISTINGS_FETCH_TIMEOUT_MS = 10_000
+const AVAILABILITY_RPC_CHUNK_SIZE = 80
+
+function withListingsFetchTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error(`${label} timed out. Check your connection and tap Retry.`),
+          ),
+        LISTINGS_FETCH_TIMEOUT_MS,
+      )
+    }),
+  ])
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,6 +187,14 @@ export function useListingsQuery(
   const filtersRef = useRef(filters)
   filtersRef.current = filters
 
+  const viewerStudentProfileIdRef = useRef(viewerStudentProfileId)
+  viewerStudentProfileIdRef.current = viewerStudentProfileId
+
+  const propertyIdsKey = useMemo(
+    () => properties.map((p) => p.id).join(','),
+    [properties],
+  )
+
   const refetch = useCallback(() => setTick((t) => t + 1), [])
 
   useEffect(() => {
@@ -196,7 +223,10 @@ export function useListingsQuery(
         let totalCount = 0
 
         if (f.nearAnchor) {
-          const near = await fetchNearAnchorListings(f, listingDay)
+          const near = await withListingsFetchTimeout(
+            fetchNearAnchorListings(f, listingDay),
+            'Listings search',
+          )
           rows = near.rows
           distanceById = near.distanceById
           totalCount = rows.length
@@ -209,7 +239,10 @@ export function useListingsQuery(
           query = applyListingsFiltersToQuery(query, f)
           query = orderListingsQuery(query, sort)
 
-          const { data, error: fetchError, count } = await query
+          const { data, error: fetchError, count } = await withListingsFetchTimeout(
+            query,
+            'Listings search',
+          )
           if (fetchError) throw fetchError
           rows = (data ?? []) as Property[]
           totalCount = count ?? 0
@@ -220,19 +253,6 @@ export function useListingsQuery(
         setProperties(rows)
         setTotal(totalCount)
         setDistanceKmByPropertyId(distanceById)
-
-        const moveIn = f.availabilityMoveIn?.trim() ?? ''
-        if (rows.length > 0 && moveIn) {
-          const ids = rows.map((p) => p.id).filter(Boolean)
-          const blocked = await fetchUnavailablePropertyIdsForDateRange(
-            supabase,
-            ids,
-            moveIn,
-            f.availabilityMoveOut,
-            viewerStudentProfileId ?? null,
-          )
-          if (!cancelled) setUnavailableForSelectedDatesIds(blocked)
-        }
       } catch (e) {
         if (!cancelled) {
           console.error(e)
@@ -262,7 +282,48 @@ export function useListingsQuery(
     return () => {
       cancelled = true
     }
-  }, [enabled, queryKey, tick, viewerStudentProfileId])
+  }, [enabled, queryKey, tick])
+
+  // Date badges load after cards render — do not block the listings grid on this RPC.
+  useEffect(() => {
+    if (!enabled) return
+
+    const f = filtersRef.current
+    const moveIn = f.availabilityMoveIn?.trim() ?? ''
+    if (!moveIn || !propertyIdsKey) {
+      setUnavailableForSelectedDatesIds(new Set())
+      return
+    }
+
+    const ids = propertyIdsKey.split(',').filter(Boolean)
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const blocked = new Set<string>()
+        for (let i = 0; i < ids.length; i += AVAILABILITY_RPC_CHUNK_SIZE) {
+          const chunk = ids.slice(i, i + AVAILABILITY_RPC_CHUNK_SIZE)
+          const part = await fetchUnavailablePropertyIdsForDateRange(
+            supabase,
+            chunk,
+            moveIn,
+            f.availabilityMoveOut,
+            viewerStudentProfileIdRef.current ?? null,
+          )
+          for (const id of part) blocked.add(id)
+          if (cancelled) return
+        }
+        if (!cancelled) setUnavailableForSelectedDatesIds(blocked)
+      } catch (e) {
+        console.warn('[useListingsQuery] availability check failed', e)
+        if (!cancelled) setUnavailableForSelectedDatesIds(new Set())
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [enabled, propertyIdsKey, queryKey, tick])
 
   return { properties, total, loading, error, refetch, unavailableForSelectedDatesIds, distanceKmByPropertyId }
 }
