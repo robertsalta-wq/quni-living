@@ -91,6 +91,63 @@ export function geoPointFromPropertyRow(p: {
   return { lat, lon }
 }
 
+/** Max straight-line distance (km) for “near campus” on university index cards. */
+export const UNIVERSITY_INDEX_NEAR_CAMPUS_KM = 10
+
+/**
+ * Campuses in the university’s home city for index cards (card subtitle uses `u.city`).
+ * Excludes satellite campuses — e.g. UoW Liverpool when the card says “Wollongong, NSW”.
+ */
+export function campusesForHomeCityIndex(
+  u: Pick<UniversityReferenceRow, 'city'>,
+  campuses: CampusReferenceRow[],
+): CampusReferenceRow[] {
+  const city = u.city?.trim().toLowerCase()
+  if (!city || !campuses.length) return campuses
+  const matched = campuses.filter((c) => {
+    const sub = c.suburb?.trim().toLowerCase() ?? ''
+    const name = c.name?.trim().toLowerCase() ?? ''
+    return sub === city || sub.includes(city) || name.includes(city)
+  })
+  return matched.length > 0 ? matched : campuses
+}
+
+/**
+ * Whether an active listing counts toward “N listings near this university” on the index.
+ * Uses home-city campuses only; `university_id` alone is not enough (avoids Liverpool → Wollongong).
+ */
+export function propertyMatchesUniversityForIndexCount(
+  p: {
+    university_id: string | null
+    campus_id?: string | null
+    suburb?: string | null
+    latitude?: number | null
+    longitude?: number | null
+  },
+  u: UniversityReferenceRow,
+  allCampuses: CampusReferenceRow[],
+): boolean {
+  const campuses = campusesForHomeCityIndex(u, allCampuses)
+  const pt = geoPointFromPropertyRow(p)
+
+  if (pt && campuses.length > 0) {
+    const d = minDistanceKmToCampuses(pt, campuses)
+    if (d != null && d <= UNIVERSITY_INDEX_NEAR_CAMPUS_KM) return true
+  }
+
+  const sub = p.suburb?.trim().toLowerCase()
+  if (sub) {
+    for (const c of campuses) {
+      if ((c.suburb?.trim().toLowerCase() ?? '') === sub) return true
+    }
+  }
+
+  const pCampus = normUuid(p.campus_id ?? '')
+  if (pCampus && campuses.some((c) => normUuid(c.id) === pCampus)) return true
+
+  return false
+}
+
 /** Union of per-campus bounding boxes (±`padKm`) for a coarse PostgREST filter before Haversine. */
 export function unionBoundingBoxKmForCampuses(
   campuses: CampusReferenceRow[],

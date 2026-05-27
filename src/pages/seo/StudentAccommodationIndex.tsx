@@ -6,46 +6,13 @@ import PageHeroBand from '../../components/PageHeroBand'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import {
   AU_STATE_ORDER,
-  geoPointFromPropertyRow,
   groupUniversitiesByState,
-  minDistanceKmToCampuses,
   normUuid,
+  propertyMatchesUniversityForIndexCount,
   type CampusReferenceRow,
-  type UniversityReferenceRow,
 } from '../../lib/universityCampusReference'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../../lib/propertyListingDateWindow'
-
-function propertyMatchesUniversityForCount(
-  p: {
-    university_id: string | null
-    suburb?: string | null
-    latitude?: number | null
-    longitude?: number | null
-  },
-  u: UniversityReferenceRow,
-  uCampuses: CampusReferenceRow[],
-): boolean {
-  const uid = normUuid(u.id)
-  const pUni = normUuid(p.university_id ?? '')
-  if (pUni && pUni === uid) return true
-
-  const pt = geoPointFromPropertyRow(p)
-  if (pt && uCampuses.length > 0) {
-    const d = minDistanceKmToCampuses(pt, uCampuses)
-    if (d != null && d <= 10) return true
-  }
-
-  if (!p.university_id) {
-    const sub = p.suburb?.trim().toLowerCase()
-    if (sub) {
-      for (const c of uCampuses) {
-        if ((c.suburb?.trim().toLowerCase() ?? '') === sub) return true
-      }
-    }
-  }
-  return false
-}
 
 export default function StudentAccommodationIndex() {
   const navigate = useNavigate()
@@ -63,7 +30,7 @@ export default function StudentAccommodationIndex() {
     ;(async () => {
       setCountsLoading(true)
       const { data, error } = await applyPropertyListingDateWindow(
-        supabase.from('properties').select('university_id, suburb, latitude, longitude'),
+        supabase.from('properties').select('university_id, campus_id, suburb, latitude, longitude'),
         listingIsoDateUtc(),
       ).eq('status', 'active')
       if (cancelled) return
@@ -81,6 +48,7 @@ export default function StudentAccommodationIndex() {
 
         const rows = (data ?? []) as {
           university_id: string | null
+          campus_id?: string | null
           suburb?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -93,7 +61,7 @@ export default function StudentAccommodationIndex() {
           const uCampuses = campusesByUni.get(key) ?? []
           let n = 0
           for (const p of rows) {
-            if (propertyMatchesUniversityForCount(p, u, uCampuses)) n++
+            if (propertyMatchesUniversityForIndexCount(p, u, uCampuses)) n++
           }
           map[key] = n
         }
