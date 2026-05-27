@@ -39,6 +39,10 @@ if (typeof dsn === 'string' && dsn.trim() !== '') {
         if (msg.includes('lock:sb-') && msg.includes('another request stole it')) {
           return null
         }
+        // Cloudflare Turnstile / WebSocket noise on contact + FAQ (0 users; often bots or widget init race).
+        if (/send was called before connect/i.test(msg)) {
+          return null
+        }
         // Normal form validation copy — never noise in Sentry (defense in depth if captured elsewhere).
         if (
           msg.includes('Please accept the Terms of Service and Privacy Policy to continue') ||
