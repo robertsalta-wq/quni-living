@@ -244,6 +244,55 @@ function OpsStatusBadge({ status }: { status: OperationalStatusRow['status'] | n
   return <span className={`${base} bg-gray-100 text-gray-600`}>—</span>
 }
 
+type RoutePerfHealth = 'good' | 'watch' | 'issue' | 'no_data'
+
+function routePerfHealth(row: FrontendPerformanceRow): RoutePerfHealth {
+  if (row.lcpExceeded || row.inpExceeded || row.clsExceeded) return 'issue'
+  if (row.transactionCount === 0) return 'no_data'
+  if (row.lcpSampleCount === 0) return 'watch'
+  return 'good'
+}
+
+function routePerfHealthLabel(health: RoutePerfHealth): string {
+  switch (health) {
+    case 'good':
+      return 'Good'
+    case 'watch':
+      return 'Low data'
+    case 'issue':
+      return 'Over threshold'
+    case 'no_data':
+      return 'No traffic'
+  }
+}
+
+function PerfTrafficDot({ health, title }: { health: RoutePerfHealth; title?: string }) {
+  const base = 'inline-block h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white shadow-sm'
+  const color =
+    health === 'good'
+      ? 'bg-green-500'
+      : health === 'watch'
+        ? 'bg-amber-500'
+        : health === 'issue'
+          ? 'bg-red-500'
+          : 'bg-gray-400'
+  return <span className={`${base} ${color}`} title={title} aria-hidden />
+}
+
+function PerfHealthBadge({ health }: { health: RoutePerfHealth }) {
+  const base = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold'
+  switch (health) {
+    case 'good':
+      return <span className={`${base} bg-green-100 text-green-800`}>{routePerfHealthLabel(health)}</span>
+    case 'watch':
+      return <span className={`${base} bg-amber-100 text-amber-800`}>{routePerfHealthLabel(health)}</span>
+    case 'issue':
+      return <span className={`${base} bg-red-100 text-red-800`}>{routePerfHealthLabel(health)}</span>
+    case 'no_data':
+      return <span className={`${base} bg-gray-100 text-gray-700`}>{routePerfHealthLabel(health)}</span>
+  }
+}
+
 /** Placeholder FX for rough AUD rollup (replace with a live rate when you care about accuracy). */
 const USD_TO_AUD_PLACEHOLDER = 1.55
 
@@ -1230,6 +1279,31 @@ export default function AdminApps() {
 
   const downHealth = useMemo(() => healthResults.filter((r) => r.status === 'down'), [healthResults])
 
+  const perfRouteHealth = useMemo(
+    () => perfRows.map((row) => ({ row, health: routePerfHealth(row) })),
+    [perfRows],
+  )
+
+  const perfSummary = useMemo(() => {
+    let good = 0
+    let watch = 0
+    let issue = 0
+    let noData = 0
+    for (const { health } of perfRouteHealth) {
+      if (health === 'good') good += 1
+      else if (health === 'watch') watch += 1
+      else if (health === 'issue') issue += 1
+      else noData += 1
+    }
+    let overall: 'good' | 'watch' | 'issue' | 'unknown' = 'unknown'
+    if (perfError) overall = 'unknown'
+    else if (issue > 0) overall = 'issue'
+    else if (watch > 0) overall = 'watch'
+    else if (noData === perfRouteHealth.length && perfRouteHealth.length > 0) overall = 'watch'
+    else overall = 'good'
+    return { good, watch, issue, noData, overall }
+  }, [perfRouteHealth, perfError])
+
   const tabBtnBase =
     'border-b-2 pb-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF6F61] rounded-t'
   const tabBtnInactive = `${tabBtnBase} border-transparent text-gray-500 hover:text-gray-800`
@@ -1582,13 +1656,85 @@ export default function AdminApps() {
 
       {appsTab === 'performance' ? (
         <div id="apps-panel-performance" role="tabpanel" aria-labelledby="apps-tab-performance">
+          <div className={`${adminCardClass} mb-4 border-gray-100`}>
+            <h2 className="text-sm font-semibold text-gray-900">How to use this page</h2>
+            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+              This tab pulls real-user performance from Sentry for key route patterns on{' '}
+              <span className="font-medium text-gray-800">production</span> over the last {perfStatsPeriod}. It
+              helps you see whether important pages are fast enough against Google&apos;s Core Web Vitals (CWV)
+              before users complain or SEO traffic grows.
+            </p>
+            <ul className="mt-3 space-y-2 text-sm text-gray-600 list-disc list-inside">
+              <li>
+                <span className="font-medium text-gray-800">Transactions</span> — how many page loads Sentry saw
+                for that route pattern.
+              </li>
+              <li>
+                <span className="font-medium text-gray-800">P75</span> — 75th percentile (most users experience
+                this or better). LCP = load speed; INP = responsiveness; CLS = visual stability.
+              </li>
+              <li>
+                <span className="font-medium text-gray-800">Samples</span> — how many visits included that
+                measurement. Low samples mean the P75 may be blank until more traffic arrives.
+              </li>
+            </ul>
+            <p className="mt-3 text-sm text-gray-600">
+              Use <span className="font-medium">Refresh metrics</span> after a deploy, or wait — data refreshes
+              automatically every few minutes. For deeper investigation, open Sentry Performance and filter{' '}
+              <span className="font-medium">environment:production</span>.
+            </p>
+            <p className="mt-2">
+              <a
+                href="https://quni.sentry.io/explore/traces/?environment=production&statsPeriod=7d"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                Open Sentry Performance →
+              </a>
+            </p>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <PerfTrafficDot health="good" /> Good — within thresholds with enough vitals data
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <PerfTrafficDot health="watch" /> Low data — visits but few/no Web Vitals samples yet
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <PerfTrafficDot health="no_data" /> No traffic — no production visits in this window
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <PerfTrafficDot health="issue" /> Over threshold — above Google CWV limits
+            </span>
+          </div>
+
           <div className={`${adminCardClass} mb-4 border-indigo-100 bg-indigo-50/40`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="flex items-start gap-3">
+                {!perfLoading && !perfError && perfRouteHealth.length > 0 ? (
+                  <span className="mt-0.5 flex h-4 w-4 items-center justify-center" aria-hidden>
+                    <span
+                      className={`inline-block h-3.5 w-3.5 rounded-full ${
+                        perfSummary.overall === 'issue'
+                          ? 'bg-red-500'
+                          : perfSummary.overall === 'watch'
+                            ? 'bg-amber-500'
+                            : perfSummary.overall === 'good'
+                              ? 'bg-green-500'
+                              : 'bg-gray-400'
+                      }`}
+                    />
+                  </span>
+                ) : null}
+                <div>
                 <p className="text-sm font-semibold text-gray-900">Core Web Vitals ({perfStatsPeriod}, production)</p>
                 <p className="mt-1 text-xs text-gray-600">
-                  Thresholds: LCP ≤ {perfThresholds.lcpMs}ms, INP ≤ {perfThresholds.inpMs}ms, CLS ≤ {perfThresholds.cls}
+                  Thresholds: LCP ≤ {perfThresholds.lcpMs}ms, INP ≤ {perfThresholds.inpMs}ms, CLS ≤{' '}
+                  {perfThresholds.cls}
                 </p>
+                </div>
               </div>
               <button
                 type="button"
@@ -1614,9 +1760,30 @@ export default function AdminApps() {
             ) : null}
           </div>
 
-          {perfRows.some((r) => r.lcpExceeded || r.inpExceeded || r.clsExceeded) ? (
-            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
-              🔴 One or more routes are above CWV thresholds.
+          {!perfLoading && !perfError && perfRouteHealth.length > 0 ? (
+            <p
+              className={`mb-4 text-sm font-medium ${
+                perfSummary.overall === 'issue'
+                  ? 'text-red-800'
+                  : perfSummary.overall === 'watch'
+                    ? 'text-amber-800'
+                    : 'text-green-800'
+              }`}
+            >
+              {perfSummary.overall === 'issue' ? (
+                <>
+                  🔴 {perfSummary.issue} route{perfSummary.issue === 1 ? '' : 's'} over CWV thresholds — investigate
+                  in Sentry or optimise those pages.
+                </>
+              ) : perfSummary.overall === 'watch' ? (
+                <>
+                  ⚠️ {perfSummary.noData === perfRouteHealth.length
+                    ? 'No production visits on monitored routes yet — normal before GTM/SEO traffic.'
+                    : `${perfSummary.watch} route${perfSummary.watch === 1 ? '' : 's'} have visits but not enough Web Vitals samples for a reliable P75.`}
+                </>
+              ) : (
+                <>✅ All monitored routes with traffic are within CWV thresholds.</>
+              )}
             </p>
           ) : null}
 
@@ -1628,6 +1795,7 @@ export default function AdminApps() {
             <table className="min-w-full border-collapse text-left">
               <thead>
                 <tr>
+                  <th className={adminThClass}>Status</th>
                   <th className={adminThClass}>Route Pattern</th>
                   <th className={adminThClass}>Transactions</th>
                   <th className={adminThClass}>P75 LCP (ms)</th>
@@ -1639,8 +1807,14 @@ export default function AdminApps() {
                 </tr>
               </thead>
               <tbody>
-                {perfRows.map((row) => (
+                {perfRouteHealth.map(({ row, health }) => (
                   <tr key={row.label}>
+                    <td className={adminTdClass}>
+                      <div className="flex items-center gap-2">
+                        <PerfTrafficDot health={health} title={routePerfHealthLabel(health)} />
+                        <PerfHealthBadge health={health} />
+                      </div>
+                    </td>
                     <td className={`${adminTdClass} font-medium text-gray-900`}>{row.label}</td>
                     <td className={`${adminTdClass} tabular-nums`}>{row.transactionCount}</td>
                     <td className={`${adminTdClass} tabular-nums ${row.lcpExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
@@ -1659,7 +1833,7 @@ export default function AdminApps() {
                 ))}
                 {!perfLoading && perfRows.length === 0 ? (
                   <tr>
-                    <td className={adminTdClass} colSpan={8}>
+                    <td className={adminTdClass} colSpan={9}>
                       No frontend performance rows returned.
                     </td>
                   </tr>
