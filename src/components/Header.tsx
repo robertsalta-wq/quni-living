@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
@@ -26,26 +27,87 @@ const MAIN_NAV = [
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
+const ACCOUNT_MENU_WIDTH_PX = 208
+
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const menuPanelRef = useRef<HTMLDivElement>(null)
   const mobileNavRootRef = useRef<HTMLDivElement>(null)
 
+  function syncMenuAnchor() {
+    const rect = menuButtonRef.current?.getBoundingClientRect()
+    if (rect) setMenuAnchor(rect)
+  }
+
+  function closeAccountMenu() {
+    setMenuOpen(false)
+    setMenuAnchor(null)
+  }
+
+  function toggleAccountMenu() {
+    if (menuOpen) {
+      closeAccountMenu()
+      return
+    }
+    syncMenuAnchor()
+    setMenuOpen(true)
+  }
+
   useEffect(() => {
-    function close(e: MouseEvent) {
+    if (!menuOpen) return
+    syncMenuAnchor()
+    function onLayout() {
+      syncMenuAnchor()
+    }
+    window.addEventListener('resize', onLayout)
+    window.addEventListener('scroll', onLayout, true)
+    return () => {
+      window.removeEventListener('resize', onLayout)
+      window.removeEventListener('scroll', onLayout, true)
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeAccountMenu()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function closeMenu(e: MouseEvent) {
       const t = e.target as Node
-      if (menuRef.current && !menuRef.current.contains(t)) {
-        setMenuOpen(false)
-      }
+      if (menuButtonRef.current?.contains(t)) return
+      if (menuPanelRef.current?.contains(t)) return
+      closeAccountMenu()
+    }
+    const id = window.setTimeout(() => {
+      document.addEventListener('click', closeMenu)
+    }, 0)
+    return () => {
+      window.clearTimeout(id)
+      document.removeEventListener('click', closeMenu)
+    }
+  }, [menuOpen])
+
+  useEffect(() => {
+    if (!mobileNavOpen) return
+    function closeMobile(e: MouseEvent) {
+      const t = e.target as Node
       if (mobileNavRootRef.current && !mobileNavRootRef.current.contains(t)) {
         setMobileNavOpen(false)
       }
     }
-    document.addEventListener('click', close)
-    return () => document.removeEventListener('click', close)
-  }, [])
+    document.addEventListener('click', closeMobile)
+    return () => document.removeEventListener('click', closeMobile)
+  }, [mobileNavOpen])
 
   const displayName = (() => {
     let raw: string | undefined
@@ -92,7 +154,7 @@ export default function Header() {
   const unreadMessageCount = useUnreadMessageCount(showMessagesNav ? user?.id : undefined)
 
   async function handleSignOut() {
-    setMenuOpen(false)
+    closeAccountMenu()
     setMobileNavOpen(false)
     await signOut()
   }
@@ -102,7 +164,7 @@ export default function Header() {
   }
 
   return (
-    <header className="pt-safe-top w-full max-w-full shrink-0 overflow-x-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
+    <header className="pt-safe-top w-full max-w-full shrink-0 bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
       <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
         <div className="min-w-0 shrink-0">
@@ -110,7 +172,7 @@ export default function Header() {
         </div>
 
         <nav
-          className="hidden md:flex min-w-0 items-center justify-center gap-3 lg:gap-5 xl:gap-6"
+          className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-5 xl:gap-6"
           aria-label="Main"
         >
           {MAIN_NAV.map((item) => (
@@ -159,13 +221,14 @@ export default function Header() {
                   Dashboard
                 </Link>
               )}
-              <div className="relative" ref={menuRef}>
+              <div className="relative">
                 <button
+                  ref={menuButtonRef}
                   type="button"
-                  onClick={() => setMenuOpen((o) => !o)}
+                  onClick={toggleAccountMenu}
                   className="flex items-center gap-1 overflow-hidden rounded-full border border-gray-200 p-1 hover:bg-gray-50"
                   aria-expanded={menuOpen}
-                  aria-haspopup="true"
+                  aria-haspopup="menu"
                   aria-label="Account menu"
                 >
                   {profilePhotoUrl ? (
@@ -189,51 +252,67 @@ export default function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-gray-100 bg-white py-1 shadow-lg z-50">
-                    {showDashboardInAuth ? (
-                      <Link
-                        to={getNavDashboardPath(role, profile)}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                    ) : null}
-                    {role === 'admin' ? (
-                      <Link
-                        to="/admin"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Admin dashboard
-                      </Link>
-                    ) : needsOnboarding(role, profile) ? (
-                      <Link
-                        to={finishSetupHref(role)}
-                        className="block px-4 py-2 text-sm text-amber-700 hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Finish setup
-                      </Link>
-                    ) : (
-                      <Link
-                        to={profileHref}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                {menuOpen &&
+                  menuAnchor &&
+                  createPortal(
+                    <div
+                      ref={menuPanelRef}
+                      role="menu"
+                      className="fixed z-[200] w-52 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+                      style={{
+                        top: menuAnchor.bottom + 8,
+                        left: Math.max(8, menuAnchor.right - ACCOUNT_MENU_WIDTH_PX),
+                      }}
                     >
-                      Sign out
-                    </button>
-                  </div>
-                )}
+                      {showDashboardInAuth ? (
+                        <Link
+                          to={getNavDashboardPath(role, profile)}
+                          role="menuitem"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden"
+                          onClick={closeAccountMenu}
+                        >
+                          Dashboard
+                        </Link>
+                      ) : null}
+                      {role === 'admin' ? (
+                        <Link
+                          to="/admin"
+                          role="menuitem"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={closeAccountMenu}
+                        >
+                          Admin dashboard
+                        </Link>
+                      ) : needsOnboarding(role, profile) ? (
+                        <Link
+                          to={finishSetupHref(role)}
+                          role="menuitem"
+                          className="block px-4 py-2 text-sm text-amber-700 hover:bg-gray-50"
+                          onClick={closeAccountMenu}
+                        >
+                          Finish setup
+                        </Link>
+                      ) : (
+                        <Link
+                          to={profileHref}
+                          role="menuitem"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={closeAccountMenu}
+                        >
+                          Profile
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => void handleSignOut()}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                      >
+                        Sign out
+                      </button>
+                    </div>,
+                    document.body,
+                  )}
               </div>
             </>
           ) : (
