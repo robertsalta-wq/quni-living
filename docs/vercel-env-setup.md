@@ -43,6 +43,11 @@ vercel env add VITE_TURNSTILE_SITE_KEY production
 vercel env add VITE_TURNSTILE_VERIFY_URL production
 vercel env add VITE_STRIPE_PUBLISHABLE_KEY production
 vercel env add VITE_SENTRY_DSN production
+# Source map upload at build time (@sentry/vite-plugin) — scopes: project:releases, org:read
+vercel env add SENTRY_AUTH_TOKEN production
+# Optional overrides (defaults in vite.config.ts: quni / javascript-react)
+vercel env add SENTRY_ORG production
+vercel env add SENTRY_PROJECT production
 
 # --- Serverless / API (never VITE_ prefix) ---
 vercel env add TURNSTILE_SECRET_KEY production

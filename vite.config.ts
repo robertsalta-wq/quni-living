@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 import fs from 'node:fs'
 import path from 'node:path'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -22,9 +23,26 @@ export default defineConfig(({ mode }) => {
     }
   }
 
+  const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim() ?? ''
+  const uploadSourceMaps = sentryAuthToken.length > 0
+
   return {
     base: process.env.CAPACITOR_BUILD === 'true' ? './' : '/',
-    plugins: [react()],
+    build: {
+      sourcemap: uploadSourceMaps ? 'hidden' : false,
+    },
+    plugins: [
+      react(),
+      sentryVitePlugin({
+        org: process.env.SENTRY_ORG ?? 'quni',
+        project: process.env.SENTRY_PROJECT ?? 'javascript-react',
+        authToken: sentryAuthToken,
+        disable: !uploadSourceMaps,
+        sourcemaps: {
+          filesToDeleteAfterUpload: ['./dist/**/*.map'],
+        },
+      }),
+    ],
     define,
     server: {
       port: 5173,
