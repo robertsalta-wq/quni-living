@@ -163,7 +163,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="flex items-center gap-1 rounded-full border border-gray-200 p-1 hover:bg-gray-50"
+                  className="flex items-center gap-1 overflow-hidden rounded-full border border-gray-200 p-1 hover:bg-gray-50"
                   aria-expanded={menuOpen}
                   aria-haspopup="true"
                   aria-label="Account menu"
@@ -172,7 +172,7 @@ export default function Header() {
                     <img
                       src={profilePhotoUrl}
                       alt=""
-                      className="h-8 w-8 rounded-full object-cover border border-gray-200 bg-gray-100"
+                      className="h-8 w-8 rounded-full object-cover bg-gray-100"
                     />
                   ) : (
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-800">
@@ -275,12 +275,12 @@ export default function Header() {
         {mobileNavOpen && (
           <>
             <div
-              className="fixed inset-0 z-[55] bg-black/25 md:hidden"
+              className="fixed inset-0 z-[80] bg-black/25 md:hidden"
               aria-hidden
               onClick={() => setMobileNavOpen(false)}
             />
-            <div className="fixed inset-y-0 right-0 z-[60] flex w-[min(100%,20rem)] flex-col border-l border-gray-100 bg-white pt-safe-top shadow-xl md:hidden">
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <div className="fixed inset-y-0 right-0 z-[85] flex w-[min(100%,20rem)] flex-col border-l border-gray-100 bg-white pt-safe-top shadow-xl md:hidden">
+              <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
                 <span className="text-sm font-semibold text-gray-900">Menu</span>
                 <button
                   type="button"
@@ -293,7 +293,10 @@ export default function Header() {
                   </svg>
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto py-2">
+              <nav
+                className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-2 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
+                aria-label="Mobile"
+              >
                 {MAIN_NAV.map((item) => (
                   <Link
                     key={item.to}
@@ -322,69 +325,69 @@ export default function Header() {
                     Admin dashboard
                   </Link>
                 )}
-              </nav>
-
-              <div className="border-t border-gray-100 p-4 space-y-3">
-                {user ? (
-                  <>
-                    {showMessagesNav && (
-                      <Link
-                        to="/messages"
-                        className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700"
-                        onClick={closeMobileNav}
+                <div className="border-t border-gray-100 my-2" />
+                <div className="space-y-3 px-4 pb-2">
+                  {user ? (
+                    <>
+                      {showMessagesNav && (
+                        <Link
+                          to="/messages"
+                          className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                          onClick={closeMobileNav}
+                        >
+                          Messages
+                          {unreadMessageCount > 0 && (
+                            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                              {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                            </span>
+                          )}
+                        </Link>
+                      )}
+                      {showDashboardInAuth && (
+                        <Link
+                          to={dashboardHref}
+                          className="block text-sm font-medium text-gray-900 hover:text-gray-700"
+                          onClick={closeMobileNav}
+                        >
+                          Dashboard
+                        </Link>
+                      )}
+                      {needsOnboarding(role, profile) ? (
+                        <Link
+                          to={finishSetupHref(role)}
+                          className="block text-sm text-amber-700"
+                          onClick={closeMobileNav}
+                        >
+                          Finish setup
+                        </Link>
+                      ) : role !== 'admin' ? (
+                        <Link
+                          to={profileHref}
+                          className="block text-sm text-gray-600 hover:text-gray-900"
+                          onClick={closeMobileNav}
+                        >
+                          Profile
+                        </Link>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="text-sm text-red-600 hover:text-red-700"
                       >
-                        Messages
-                        {unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                          </span>
-                        )}
-                      </Link>
-                    )}
-                    {showDashboardInAuth && (
-                      <Link
-                        to={dashboardHref}
-                        className="block text-sm font-medium text-gray-900 hover:text-gray-700"
-                        onClick={closeMobileNav}
-                      >
-                        Dashboard
-                      </Link>
-                    )}
-                    {needsOnboarding(role, profile) ? (
-                      <Link
-                        to={finishSetupHref(role)}
-                        className="block text-sm text-amber-700"
-                        onClick={closeMobileNav}
-                      >
-                        Finish setup
-                      </Link>
-                    ) : role !== 'admin' ? (
-                      <Link
-                        to={profileHref}
-                        className="block text-sm text-gray-600 hover:text-gray-900"
-                        onClick={closeMobileNav}
-                      >
-                        Profile
-                      </Link>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="text-sm text-red-600 hover:text-red-700"
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="block text-sm text-gray-600 hover:text-gray-900"
+                      onClick={closeMobileNav}
                     >
-                      Sign out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="block text-sm text-gray-600 hover:text-gray-900"
-                    onClick={closeMobileNav}
-                  >
-                    Log in
-                  </Link>
-                )}
-              </div>
+                      Log in
+                    </Link>
+                  )}
+                </div>
+              </nav>
             </div>
           </>
         )}
