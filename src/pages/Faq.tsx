@@ -26,7 +26,7 @@ export default function Faq() {
         </div>
 
         <nav
-          className="mb-10 flex flex-wrap gap-2"
+          className="sticky top-below-fixed-header z-20 -mx-6 mb-10 flex flex-wrap gap-2 bg-gray-50/95 px-6 py-3 backdrop-blur-sm md:top-24"
           aria-label="FAQ sections"
         >
           {FAQ_SECTIONS.map((section) => (
@@ -42,7 +42,7 @@ export default function Faq() {
 
         <div className="space-y-12">
           {FAQ_SECTIONS.map((section) => (
-            <section key={section.id} id={`faq-${section.id}`} className="scroll-mt-24">
+            <section key={section.id} id={`faq-${section.id}`} className="scroll-mt-32 md:scroll-mt-36">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">{section.label}</h2>
               <div className="mt-4 rounded-2xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-100">
                 {section.items.map((item) => {

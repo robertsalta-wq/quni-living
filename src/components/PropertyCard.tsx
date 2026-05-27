@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
@@ -27,10 +28,17 @@ export function PropertyCard({
   unavailableForSelectedDates,
   unavailableBadgeLabel,
 }: Props) {
+  const { user } = useAuthContext()
   const image = firstPropertyImageUrl(property.images)
   const listingRent = getListingRentDisplay(property)
-  const landlordName = property.landlord_profiles?.full_name ?? 'Private landlord'
   const isVerified = property.landlord_profiles?.verified ?? false
+  const showLandlordName = Boolean(user)
+  const landlordName = showLandlordName
+    ? property.landlord_profiles?.full_name?.trim() || 'Private landlord'
+    : isVerified
+      ? 'Verified host'
+      : 'Private landlord'
+  const landlordInitial = showLandlordName ? landlordName.charAt(0).toUpperCase() : null
   const roomLabel =
     property.room_type && isRoomType(property.room_type)
       ? ROOM_TYPE_LABELS[property.room_type]
@@ -178,8 +186,19 @@ export function PropertyCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 border-t border-gray-50 pt-3">
-          <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] font-semibold shrink-0">
-            {landlordName.charAt(0).toUpperCase()}
+          <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0" aria-hidden>
+            {landlordInitial ? (
+              <span className="text-[10px] font-semibold">{landlordInitial}</span>
+            ) : (
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                />
+              </svg>
+            )}
           </div>
           <span className="truncate min-w-0">{landlordName}</span>
           {isVerified ? <VerifiedLandlordBadge className="shrink-0" /> : null}
