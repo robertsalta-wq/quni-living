@@ -326,6 +326,9 @@ export default function LandlordPropertyFormPage() {
   const [features, setFeatures] = useState<FeatureRow[]>([])
   const [landlordOptions, setLandlordOptions] = useState<{ id: string; label: string }[]>([])
   const [existingSlug, setExistingSlug] = useState<string | null>(null)
+  const [existingListingStatus, setExistingListingStatus] = useState<
+    Database['public']['Tables']['properties']['Row']['status'] | null
+  >(null)
 
   const [adminLandlordId, setAdminLandlordId] = useState('')
 
@@ -810,6 +813,7 @@ export default function LandlordPropertyFormPage() {
         }
 
         setExistingSlug(prop.slug)
+        setExistingListingStatus(prop.status)
         setTitle(prop.title)
         setDescription(prop.description ?? '')
         setListingType(prop.listing_type ?? 'rent')
@@ -1631,7 +1635,11 @@ export default function LandlordPropertyFormPage() {
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
         const slug = existingSlug ?? generatePropertySlug(t)
-        navigate(`/properties/${slug}`, { replace: true })
+        if (existingListingStatus === 'draft') {
+          navigate('/landlord-dashboard', { replace: true })
+        } else {
+          navigate(`/properties/${slug}`, { replace: true })
+        }
       } else {
         const slug = generatePropertySlug(t)
         const { data: inserted, error: insErr } = await supabase

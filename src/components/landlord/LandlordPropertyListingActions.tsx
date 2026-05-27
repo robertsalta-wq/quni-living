@@ -31,10 +31,10 @@ export default function LandlordPropertyListingActions({
           Edit
         </Link>
         <Link
-          to={`/properties/${p.slug}`}
+          to={p.status === 'draft' ? `/landlord/property/edit/${p.id}` : `/properties/${p.slug}`}
           className="flex-1 text-center rounded-lg bg-[#FF6F61] py-2 text-sm font-medium text-white hover:bg-[#e85d52]"
         >
-          View
+          {p.status === 'draft' ? 'Continue' : 'View'}
         </Link>
       </div>
       <ShareListingButton

@@ -948,8 +948,8 @@ export default function PropertyDetail() {
     ? ('visible' as const)
     : propertyListingDateWindowStatus(property, listingDay)
   const showListingEndedWall =
-    propertyStatus !== 'active' ||
-    (!viewerOwnsListing && listingDateWindowStatus === 'after_end')
+    !viewerOwnsListing &&
+    (propertyStatus !== 'active' || listingDateWindowStatus === 'after_end')
   const showNotYetAvailableBanner =
     propertyStatus === 'active' && listingDateWindowStatus === 'before_start'
 
