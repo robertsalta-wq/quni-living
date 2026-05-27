@@ -19,6 +19,7 @@ const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
   { to: '/student-accommodation', label: 'Accommodation' },
   { to: '/pricing', label: 'Pricing' },
+  { to: '/faq', label: 'FAQ' },
   { to: '/for-landlords', label: 'For landlords' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
