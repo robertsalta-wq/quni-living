@@ -1,7 +1,18 @@
 import { useCallback, useMemo, useState } from 'react'
 import { chatDebug } from '../../lib/aiChat/chatDebug'
 import { isTurnstileSiteKeyConfigured } from '../../lib/verifyTurnstile'
+import AiSparkleIcon from '../AiSparkleIcon'
 import TurnstileCaptcha from '../TurnstileCaptcha'
+import { ASK_AI_BUTTON_LABEL, ASK_AI_STREAMING_LABEL } from './ChatAiChrome'
+
+function AskAiButtonContent({ sending, label }: { sending: boolean; label: string }) {
+  return (
+    <>
+      <AiSparkleIcon className="h-4 w-4 shrink-0" />
+      {sending ? ASK_AI_STREAMING_LABEL : label}
+    </>
+  )
+}
 
 type Props = {
   onSend: (turnstileToken: string | null) => Promise<void> | void
@@ -53,22 +64,13 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
   const isDisabled = Boolean(disabled || sending)
 
   const sendButtonClass = compactInline
-    ? 'shrink-0 rounded-xl bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
-    : 'w-full rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
+    ? 'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
+    : 'inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
 
   if (verified) {
     return (
-      <button
-        type="button"
-        onClick={() => void verifyAndSend()}
-        disabled={isDisabled}
-        className={
-          compactInline
-            ? 'shrink-0 rounded-xl bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
-            : 'rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
-        }
-      >
-        {sending ? 'Sending…' : buttonLabel ?? 'Send'}
+      <button type="button" onClick={() => void verifyAndSend()} disabled={isDisabled} className={sendButtonClass}>
+        <AskAiButtonContent sending={Boolean(sending)} label={buttonLabel ?? ASK_AI_BUTTON_LABEL} />
       </button>
     )
   }
@@ -94,7 +96,7 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
             disabled={isDisabled || !captchaToken || !turnstileConfigured}
             className={sendButtonClass}
           >
-            {sending ? 'Sending…' : buttonLabel ?? 'Send message'}
+            <AskAiButtonContent sending={Boolean(sending)} label={buttonLabel ?? ASK_AI_BUTTON_LABEL} />
           </button>
         </div>
         {error ? (
@@ -121,7 +123,7 @@ export default function TurnstileGate({ onSend, disabled, sending, buttonLabel, 
         disabled={isDisabled || !captchaToken || !turnstileConfigured}
         className={sendButtonClass}
       >
-        {sending ? 'Sending…' : buttonLabel ?? 'Send message'}
+        <AskAiButtonContent sending={Boolean(sending)} label={buttonLabel ?? ASK_AI_BUTTON_LABEL} />
       </button>
 
       {error ? (
