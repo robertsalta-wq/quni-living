@@ -37,7 +37,9 @@ export default function SiteBrandLockup({ variant = 'default' }: { variant?: Log
       </Link>
       <Link
         to="/landlords/ai"
-        className="inline-flex items-center justify-center rounded-xl border border-[#FF6F61]/25 bg-[#FF6F61]/[0.08] p-2 text-[#FF6F61] hover:bg-[#FF6F61]/15 hover:border-[#FF6F61]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] transition-colors"
+        className={`items-center justify-center rounded-xl border border-[#FF6F61]/25 bg-[#FF6F61]/[0.08] p-2 text-[#FF6F61] hover:bg-[#FF6F61]/15 hover:border-[#FF6F61]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] transition-colors ${
+          isAi ? 'inline-flex' : 'hidden md:inline-flex'
+        }`}
         aria-label="Landlord AI features"
         title="Landlord AI features"
       >
