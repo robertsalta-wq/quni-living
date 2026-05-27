@@ -99,6 +99,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/faq" className={linkClass}>
+                  FAQ
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className={linkClass}>
                   Contact
                 </Link>

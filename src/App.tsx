@@ -83,6 +83,7 @@ function App() {
           <Route path="/refunds" element={<Lazy.Refunds />} />
           <Route path="/pricing" element={<Lazy.Pricing />} />
           <Route path="/contact" element={<Lazy.Contact />} />
+          <Route path="/faq" element={<Lazy.Faq />} />
           <Route path="/services" element={<Lazy.Services />} />
           <Route path="/services/student-accommodation" element={<Lazy.ServiceStudentAccommodation />} />
           <Route path="/services/property-management" element={<Lazy.ServicePropertyManagement />} />
