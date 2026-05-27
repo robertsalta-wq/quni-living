@@ -1,6 +1,7 @@
 import type { Integration } from '@sentry/core'
 import * as Sentry from '@sentry/react'
 import { Capacitor } from '@capacitor/core'
+import { isStaleChunkLoadError } from './chunkLoadRecovery'
 
 const dsn = import.meta.env.VITE_SENTRY_DSN
 if (typeof dsn === 'string' && dsn.trim() !== '') {
@@ -26,6 +27,15 @@ if (typeof dsn === 'string' && dsn.trim() !== '') {
           (hint.originalException instanceof Error ? hint.originalException.message : undefined) ||
           event.message ||
           ''
+        if (isStaleChunkLoadError(hint.originalException ?? msg)) {
+          return null
+        }
+        if (
+          msg.includes("'steal' option") ||
+          (msg.includes('Lock broken') && /abort/i.test(msg))
+        ) {
+          return null
+        }
         if (msg.includes('lock:sb-') && msg.includes('another request stole it')) {
           return null
         }

@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ReactNode } from 'react'
+import { isStaleChunkLoadError, recoverFromStaleChunkLoad } from '../lib/chunkLoadRecovery'
 
 type Props = {
   children: ReactNode
@@ -15,6 +16,9 @@ export class AppErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, errorMessage: '' }
 
   static getDerivedStateFromError(error: unknown): State {
+    if (isStaleChunkLoadError(error)) {
+      return { hasError: false, errorMessage: '' }
+    }
     if (error instanceof Error) {
       return {
         hasError: true,
@@ -30,6 +34,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown, info: unknown) {
+    if (recoverFromStaleChunkLoad(error)) return
     // eslint-disable-next-line no-console
     console.error('[AppErrorBoundary]', error, info)
   }
