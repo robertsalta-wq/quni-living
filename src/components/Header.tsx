@@ -25,6 +25,12 @@ const MAIN_NAV = [
   { to: '/contact', label: 'Contact' },
 ] as const
 
+/** Always visible in the mobile header bar (full menu stays in the drawer). */
+const MOBILE_QUICK_NAV = [
+  { to: '/listings', label: 'Listings' },
+  { to: '/faq', label: 'FAQ' },
+] as const
+
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
@@ -172,20 +178,36 @@ export default function Header() {
           <SiteBrandLockup />
         </div>
 
-        <nav
-          className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-5 xl:gap-6"
-          aria-label="Main"
-        >
-          {MAIN_NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex min-w-0 items-center justify-center">
+          <nav
+            className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-5 xl:gap-6"
+            aria-label="Main"
+          >
+            {MAIN_NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <nav
+            className="flex md:hidden min-w-0 items-center justify-center gap-3 overflow-x-hidden"
+            aria-label="Main"
+          >
+            {MOBILE_QUICK_NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 sm:text-sm"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {loading ? (
