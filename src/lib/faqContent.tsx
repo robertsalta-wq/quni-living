@@ -47,7 +47,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'about-states',
         question: 'Which states does Quni operate in?',
         answer:
-          'Core support is focused on Queensland, New South Wales, and Victoria for typical private-room listings. Availability of Listing vs Managed, digital signing, and rent flows can vary by state and property type — see Pricing and How it works for details.',
+          'Quni Listing is available nationwide. Quni Managed is currently live in Queensland, with New South Wales and Victoria coming as we complete state-specific compliance work. See Pricing and How it works for what is available in your state and for your property type.',
       },
     ],
   },
@@ -83,7 +83,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-lease-length',
         question: 'Is there a minimum lease length?',
         answer:
-          'No — Quni supports flexible, short-term and long-term stays where landlords offer them. Lease length is agreed between you and your landlord.',
+          'Lease length is agreed between you and your landlord. Most student stays on Quni run a semester (around 26 weeks) or longer, but shorter and longer stays are supported where landlords offer them.',
       },
       {
         id: 'students-declined',
@@ -107,7 +107,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'verification-time',
         question: 'How long does verification take?',
         answer:
-          "Usually within 1 business day. You'll get an email when your Verified Identity badge has been applied to your profile.",
+          "Typically within 1–2 business days. You'll get an email when your Verified Identity badge has been applied to your profile.",
       },
       {
         id: 'verification-cost',
@@ -164,7 +164,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-rent',
         question: 'How do I receive rent payments?',
         answer:
-          'On Quni Managed, rent is collected via Stripe Connect to your bank account with fee transparency in your landlord dashboard. On Quni Listing, bond and rent are arranged directly between you and the renter unless your tenancy uses supported platform flows.',
+          'On Quni Listing, bond and weekly rent flow directly between landlord and renter — Quni is not in the payment chain after a booking is accepted. On Quni Managed, weekly rent is collected through Stripe Connect and the service fee is deducted before payout to your bank account.',
       },
       {
         id: 'landlords-campus',
@@ -236,7 +236,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'bond-handled',
         question: 'How is bond handled?',
         answer:
-          'Bond is held by the landlord or lodged with the relevant state or territory bond authority, depending on your tenancy type. Quni does not hold bond money for every tenancy. On Quni Listing, bond is typically between landlord and renter. On Quni Managed, lodgement may be coordinated where your tenancy requires a statutory scheme.',
+          'Bond is held by the landlord (for hosted rooms / boarder-lodger arrangements) or lodged with the relevant state or territory bond authority (for standard residential tenancies), depending on your listing and agreement. Quni is not the custodian of bond money. Where a statutory scheme applies, lodgement follows the rules in your state or territory.',
       },
       {
         id: 'bond-refunds',
@@ -254,15 +254,15 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'tier-difference',
         question: 'What is the difference between Quni Listing and Quni Managed?',
         answer:
-          'Listing: landlord pays a flat fee per accepted booking and runs bond and rent directly with the renter. Managed: landlord pays a percentage of weekly rent while active; tenancy money may pass through supported platform flows before Stripe Connect payout; availability varies by state.',
+          'Listing: landlord pays a flat fee per accepted booking and runs bond and rent directly with the renter. Managed: landlord pays a percentage of weekly rent while active; weekly rent is collected via Stripe Connect with fee deduction before payout; availability varies by state and property type.',
       },
       {
         id: 'tier-availability',
         question: 'Where is each tier available?',
         answer: (
           <>
-            See availability on {pricingLink} — typically Queensland, New South Wales, and Victoria for common
-            private-room listings, with variations by property type.
+            Quni Listing is available nationwide. Quni Managed is currently live in Queensland. See availability on{' '}
+            {pricingLink} for the latest state-by-state coverage and any property-type constraints.
           </>
         ),
       },
@@ -293,6 +293,18 @@ export const FAQ_SECTIONS: FaqSection[] = [
         question: 'Are property enquiry forms still used?',
         answer:
           'Property enquiry forms are retired. Use Messages to chat with the landlord on-platform before you book.',
+      },
+    ],
+  },
+  {
+    id: 'room-types',
+    label: 'Hosted rooms vs private rentals',
+    items: [
+      {
+        id: 'room-types-hosted-vs-private',
+        question: "What's the difference between a hosted room and a private room?",
+        answer:
+          "Hosted rooms are typically where the owner lives on-site (a boarder/lodger-style arrangement) and you sign an occupancy-style agreement; bond (if any) is usually held directly by the landlord. Private rooms are standard residential tenancies where you sign a tenancy agreement and bond (if required) is lodged with your state's bond authority under the relevant rules.",
       },
     ],
   },
