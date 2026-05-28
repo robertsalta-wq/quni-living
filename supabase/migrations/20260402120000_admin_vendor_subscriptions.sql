@@ -14,7 +14,7 @@ end;
 $$;
 
 create table if not exists public.admin_vendor_subscriptions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   title text not null,
   subtitle text,
   href text not null,

@@ -2,7 +2,7 @@
 -- Creates `public.chat_messages` for streaming chat assistant.
 
 create table if not exists public.chat_messages (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
 
   -- Authenticated users (student/landlord/admin) can be logged here.
   user_id uuid references auth.users(id) on delete cascade,
