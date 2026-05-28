@@ -10,6 +10,7 @@ import {
 import { PROPERTY_CARD_LIST_SELECT } from './propertyCardSelect'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from './propertyListingDateWindow'
 import { rpcPropertiesNearPoint } from './propertiesNearCampusRpc'
+import { fetchListingsBrowseViaEdge } from './listingsBrowseApi'
 import type { ListingsQueryFilters } from './listingsBrowseTypes'
 import type { NearSearchAnchor } from './workplaceLocation'
 
@@ -128,13 +129,26 @@ async function fetchNearAnchorListings(
   return { properties: rows, total: rows.length, distanceKmByPropertyId }
 }
 
-/** Single Supabase round-trip for the default browse query (no `count: exact`). */
+/** Single round-trip for browse (Edge-cached API when in browser, else PostgREST). */
 export async function fetchListingsBrowse(
   f: ListingsQueryFilters,
   listingDay = listingIsoDateUtc(),
 ): Promise<ListingsBrowseResult> {
   if (f.nearAnchor) {
     return fetchNearAnchorListings(f, listingDay)
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      return await fetchListingsBrowseViaEdge(f, listingDay)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      if (msg === 'NEAR_ANCHOR_EDGE_UNSUPPORTED') {
+        /* fall through */
+      } else {
+        console.warn('[fetchListingsBrowse] edge API failed, using direct Supabase', e)
+      }
+    }
   }
 
   const sort = f.sort as ListingsSort
