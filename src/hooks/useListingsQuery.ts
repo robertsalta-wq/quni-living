@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Property } from '../lib/listings'
 import { fetchListingsBrowse } from '../lib/fetchListingsBrowse'
-import { peekListingsBrowseCache, writeListingsBrowseCache } from '../lib/listingsBrowseCache'
+import {
+  peekListingsBrowseCache,
+  rememberListingsPrefetch,
+  writeListingsBrowseCache,
+} from '../lib/listingsBrowseCache'
 import type { ListingsQueryFilters } from '../lib/listingsBrowseTypes'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 
@@ -106,6 +110,7 @@ export function useListingsQuery(
         setTotal(result.total)
         setDistanceKmByPropertyId(result.distanceKmByPropertyId)
         writeListingsBrowseCache(queryKey, result)
+        rememberListingsPrefetch(queryKey, f)
       } catch (e) {
         if (!cancelled) {
           console.error(e)

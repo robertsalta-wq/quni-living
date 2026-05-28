@@ -77,7 +77,7 @@ export default function Listings() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, profile, role } = useAuthContext()
-  const { universities, campuses } = useUniversityCampusReference('full')
+  const { universities, campuses } = useUniversityCampusReference('full', { deferLoad: true })
   const filters = useListingsFilters({ universities, campuses })
   const { showUniversityCampusFilters, listingsSearchPlaceholder, isProfessionalRenter } =
     useRenterSearchPersona()

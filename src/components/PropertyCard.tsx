@@ -61,6 +61,9 @@ export function PropertyCard({
           <img
             src={image}
             alt=""
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (

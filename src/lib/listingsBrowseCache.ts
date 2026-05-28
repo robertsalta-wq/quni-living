@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from './supabase'
 const MEMORY_TTL_MS = 5 * 60 * 1000
 const STORAGE_TTL_MS = 30 * 60 * 1000
 const STORAGE_PREFIX = 'quni-listings-browse:v1:'
+const LAST_PREFETCH_KEY = 'quni-listings-last-prefetch:v1'
 
 type CacheEntry = {
   at: number
@@ -68,22 +69,65 @@ export function writeListingsBrowseCache(
   writeStorage(key, entry)
 }
 
-let warmInflight: Promise<void> | null = null
+const warmInflightByKey = new Map<string, Promise<void>>()
 
-/** Start the default listings query early (nav hover / app idle) so /listings can paint from cache. */
-export function warmListingsBrowseCache(filters: ListingsQueryFilters = DEFAULT_LISTINGS_BROWSE_FILTERS): void {
+function startWarm(queryKey: string, filters: ListingsQueryFilters): void {
   if (!isSupabaseConfigured) return
-  const key = cacheKey('')
-  if (memory.get(key) && Date.now() - memory.get(key)!.at < MEMORY_TTL_MS) return
-  if (warmInflight) return
-  warmInflight = fetchListingsBrowse(filters)
+  const key = cacheKey(queryKey)
+  const mem = memory.get(key)
+  if (mem && Date.now() - mem.at < MEMORY_TTL_MS) return
+  if (warmInflightByKey.has(key)) return
+
+  const inflight = fetchListingsBrowse(filters)
     .then((result) => {
-      writeListingsBrowseCache('', result)
+      writeListingsBrowseCache(queryKey, result)
+      rememberListingsPrefetch(queryKey, filters)
     })
     .catch(() => {
       /* ignore — page will retry */
     })
     .finally(() => {
-      warmInflight = null
+      warmInflightByKey.delete(key)
     })
+  warmInflightByKey.set(key, inflight)
+}
+
+/** Remember last successful listings URL so header prefetch can match date filters, etc. */
+export function rememberListingsPrefetch(queryKey: string, filters: ListingsQueryFilters): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.setItem(
+      LAST_PREFETCH_KEY,
+      JSON.stringify({ queryKey, filters, at: Date.now() }),
+    )
+  } catch {
+    /* quota */
+  }
+}
+
+/** Prefetch the user's last listings search (e.g. with move-in dates) from a prior visit. */
+export function warmRememberedListingsBrowseCache(): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    const raw = sessionStorage.getItem(LAST_PREFETCH_KEY)
+    if (!raw) return
+    const parsed = JSON.parse(raw) as {
+      queryKey?: string
+      filters?: ListingsQueryFilters
+      at?: number
+    }
+    if (!parsed.filters || !parsed.at || Date.now() - parsed.at > STORAGE_TTL_MS) return
+    startWarm(parsed.queryKey ?? '', parsed.filters)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Start listings query early (nav hover / app idle) so /listings can paint from cache. */
+export function warmListingsBrowseCache(
+  filters: ListingsQueryFilters = DEFAULT_LISTINGS_BROWSE_FILTERS,
+  queryKey = '',
+): void {
+  startWarm(queryKey, filters)
+  warmRememberedListingsBrowseCache()
 }
