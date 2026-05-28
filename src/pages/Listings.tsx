@@ -77,7 +77,7 @@ export default function Listings() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, profile, role } = useAuthContext()
-  const { universities, campuses } = useUniversityCampusReference()
+  const { universities, campuses } = useUniversityCampusReference('full')
   const filters = useListingsFilters({ universities, campuses })
   const { showUniversityCampusFilters, listingsSearchPlaceholder, isProfessionalRenter } =
     useRenterSearchPersona()
@@ -144,8 +144,16 @@ export default function Listings() {
   const studentProfile =
     role === 'student' && profile && 'id' in profile ? (profile as StudentRow) : null
 
-  const { properties, total, loading, error, refetch, unavailableForSelectedDatesIds, distanceKmByPropertyId } =
-    useListingsQuery(
+  const {
+    properties,
+    total,
+    loading,
+    refreshing,
+    error,
+    refetch,
+    unavailableForSelectedDatesIds,
+    distanceKmByPropertyId,
+  } = useListingsQuery(
       queryFilters,
       isSupabaseConfigured,
       filters.querySignature,
@@ -214,7 +222,11 @@ export default function Listings() {
       <Seo title={listingsSeoTitle} description={listingsSeoDescription} />
       <PageHeroBand
         title={listingsSeoTitle}
-        subtitle={loading ? 'Searching…' : `${total} listing${total !== 1 ? 's' : ''} available`}
+        subtitle={
+          loading && properties.length === 0
+            ? 'Searching…'
+            : `${total} listing${total !== 1 ? 's' : ''} available`
+        }
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
@@ -493,7 +505,7 @@ export default function Listings() {
           <div className="w-full min-w-0 text-left">
             <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
               <p className="text-sm text-gray-500">
-                {loading
+                {loading && properties.length === 0
                   ? 'Loading…'
                   : total === 0
                     ? 'No listings found'
@@ -525,7 +537,7 @@ export default function Listings() {
               </div>
             )}
 
-            {loading && <ListingsGridSkeleton count={6} />}
+            {loading && properties.length === 0 && <ListingsGridSkeleton count={3} />}
 
             {!loading && !error && properties.length === 0 && (
               <section
@@ -566,8 +578,12 @@ export default function Listings() {
               </section>
             )}
 
-            {!loading && properties.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {properties.length > 0 && (
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 transition-opacity duration-150 ${
+                  refreshing ? 'opacity-70' : 'opacity-100'
+                }`}
+              >
                 {properties.map((p) => {
                   const blocked = filters.moveIn ? unavailableForSelectedDatesIds.has(p.id) : false
                   return (

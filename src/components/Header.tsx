@@ -14,6 +14,7 @@ import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
+import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
@@ -35,6 +36,10 @@ const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
 const ACCOUNT_MENU_WIDTH_PX = 208
+
+function warmListingsNav() {
+  warmListingsBrowseCache()
+}
 
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
@@ -116,6 +121,12 @@ export default function Header() {
     return () => document.removeEventListener('click', closeMobile)
   }, [mobileNavOpen])
 
+  useEffect(() => {
+    warmListingsBrowseCache()
+  }, [])
+
+  const listingsNavWarm = { onMouseEnter: warmListingsNav, onFocus: warmListingsNav, onTouchStart: warmListingsNav }
+
   const displayName = (() => {
     let raw: string | undefined
     if (profile && (role === 'student' || role === 'landlord')) {
@@ -188,6 +199,7 @@ export default function Header() {
                 key={item.to}
                 to={item.to}
                 className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900"
+                {...(item.to === '/listings' ? listingsNavWarm : {})}
               >
                 {item.label}
               </Link>
@@ -202,6 +214,7 @@ export default function Header() {
                 key={item.to}
                 to={item.to}
                 className="whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 sm:text-sm"
+                {...(item.to === '/listings' ? listingsNavWarm : {})}
               >
                 {item.label}
               </Link>
