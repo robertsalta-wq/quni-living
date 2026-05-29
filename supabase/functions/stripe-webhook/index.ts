@@ -74,14 +74,24 @@ Deno.serve(async (req) => {
       case 'account.updated': {
         const account = event.data.object as Stripe.Account
         if (account?.id) {
-          await admin
+          const { data: rows } = await admin
             .from('landlord_profiles')
-            .update({
-              stripe_charges_enabled: account.charges_enabled ?? false,
-              stripe_payouts_enabled: account.payouts_enabled ?? false,
-              stripe_connect_details_submitted: account.details_submitted ?? false,
-            })
+            .select('id, admin_override_verified')
             .eq('stripe_connect_account_id', account.id)
+
+          const stripeFields = {
+            stripe_charges_enabled: account.charges_enabled ?? false,
+            stripe_payouts_enabled: account.payouts_enabled ?? false,
+            stripe_connect_details_submitted: account.details_submitted ?? false,
+          }
+
+          for (const row of rows ?? []) {
+            const payload =
+              row.admin_override_verified === true
+                ? stripeFields
+                : { ...stripeFields, verified: account.charges_enabled === true }
+            await admin.from('landlord_profiles').update(payload).eq('id', row.id)
+          }
         }
         break
       }

@@ -74,7 +74,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-2',
     q: 'How do I know the landlord is legitimate?',
-    a: 'Every landlord on Quni goes through our verification process before listing. Verified landlords display a Verified Landlord badge on their profile and listing.',
+    a: 'Hosts complete Stripe identity verification before they can accept a booking. When approved, they show a Verified host badge on their profile and listing. You can still browse, message, and request to book before that step.',
   },
   {
     id: 'faq-s-3',

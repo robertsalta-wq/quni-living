@@ -129,7 +129,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   },
   7: {
     id: 7,
-    label: 'Verified Landlord badge on listing cards and profiles',
+    label: 'Verified host badge on listing cards and profiles',
     description: 'Cursor task: deploy badge component to all listing cards and landlord profiles.',
   },
   8: {
@@ -206,7 +206,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   },
   22: {
     id: 22,
-    label: 'Confirm each listing has Verified Landlord badge, real photos, and accurate dates',
+    label: 'Confirm each listing has Verified host badge when Stripe-approved, real photos, and accurate dates',
     description: 'Check every live listing card before calling it done.',
   },
   23: {

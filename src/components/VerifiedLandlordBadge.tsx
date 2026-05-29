@@ -1,4 +1,4 @@
-/** Small trust pill for hosts who have `landlord_profiles.verified`. */
+/** Small trust pill for hosts who have `landlord_profiles.verified` (Stripe Connect identity). */
 export function VerifiedLandlordBadge({ className = '' }: { className?: string }) {
   return (
     <span
@@ -11,7 +11,7 @@ export function VerifiedLandlordBadge({ className = '' }: { className?: string }
           clipRule="evenodd"
         />
       </svg>
-      Verified Landlord
+      Verified host
     </span>
   )
 }

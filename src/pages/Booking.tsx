@@ -83,6 +83,7 @@ type LandlordForBooking = NonNullable<Property['landlord_profiles']> & {
 type PropertyForBooking = Omit<Property, 'landlord_profiles'> & {
   landlord_profiles: LandlordForBooking | null
   property_type?: string | null
+  service_tier?: string | null
 }
 
 const LEASE_OPTIONS = ['3 months', '6 months', '12 months', 'Flexible'] as const
@@ -1419,14 +1420,15 @@ export default function Booking() {
     )
   }
 
-  const stripeReady = property.landlord_profiles?.stripe_charges_enabled === true
-  if (!stripeReady) {
+  const hostStripeChargesReady = property.landlord_profiles?.stripe_charges_enabled === true
+  const isListingProperty = property.service_tier === 'listing'
+  if (!isListingProperty && !hostStripeChargesReady) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
         <h1 className="text-2xl font-bold text-gray-900">Bookings not available yet</h1>
         <p className="text-gray-600 text-sm mt-3 leading-relaxed">
-          This host has not finished connecting their bank account for payouts. Online booking and deposit payments will
-          be available once they complete Stripe Connect from their landlord dashboard.
+          This host has not finished Stripe payout setup for Quni Managed bookings. Online booking and deposit payments
+          will be available once they complete Stripe Connect from their landlord dashboard.
         </p>
         <Link
           to={property.slug ? `/properties/${property.slug}` : '/listings'}

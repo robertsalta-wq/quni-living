@@ -19,7 +19,7 @@ export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-3 sm
 
 /** Default share / meta description (homepage, fallbacks). */
 export const DEFAULT_DESCRIPTION =
-  'Browse verified rooms near Australian universities. Free for students. ID-verified landlords, RTA-compliant agreements, direct payouts.'
+  'Browse verified rooms near Australian universities. Free for students. Stripe-verified hosts, RTA-compliant agreements, direct payouts.'
 
 /** Default document title and Open Graph / Twitter title when not route-specific. */
 export const DEFAULT_OG_TITLE = 'Quni Living — verified rooms near Australian universities'

@@ -76,6 +76,13 @@ export async function runListingConfirmBooking(params) {
     })
   }
 
+  if (landlord.stripe_charges_enabled !== true) {
+    return jsonFail(400, {
+      error: 'host_identity_not_ready',
+      message: 'Complete Stripe identity verification before accepting bookings.',
+    })
+  }
+
   const feeExempt = await isLandlordFeeExempt(admin, landlord.id)
   const listingFeeCents = resolveListingPlatformFeeCents(feeExempt, LISTING_FEE_CENTS)
 

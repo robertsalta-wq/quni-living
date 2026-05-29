@@ -196,6 +196,18 @@ export default async function handler(req, res) {
     const stripe = new Stripe(stripeSecret)
 
     if (useListing) {
+      if (landlord.stripe_charges_enabled !== true) {
+        return corsJson(
+          res,
+          {
+            error: 'host_identity_not_ready',
+            message: 'Complete Stripe identity verification before accepting bookings.',
+          },
+          400,
+          origin,
+        )
+      }
+
       const listingResult = await runListingConfirmBooking({
         stripe,
         admin,

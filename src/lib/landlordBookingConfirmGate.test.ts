@@ -70,6 +70,16 @@ describe('landlordBookingConfirmAllowed', () => {
         listingBilling: readyListing,
         landlordStripeReady: false,
       }),
+    ).toBe(false)
+
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        landlordStripeReady: true,
+      }),
     ).toBe(true)
   })
 
@@ -99,7 +109,7 @@ describe('landlordBookingConfirmAllowed', () => {
 describe('landlordBookingConfirmBlockedBanner', () => {
   const pipeline = 'pending_confirmation' as const
 
-  it('managed without Connect shows connect banner', () => {
+  it('managed without Stripe identity shows host identity banner', () => {
     expect(
       landlordBookingConfirmBlockedBanner({
         bookingStatus: pipeline,
@@ -108,7 +118,19 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         listingBilling: readyListing,
         landlordStripeReady: false,
       }),
-    ).toBe('managed_connect_required')
+    ).toBe('host_identity_required')
+  })
+
+  it('listing without Stripe identity shows host identity banner before billing checks', () => {
+    expect(
+      landlordBookingConfirmBlockedBanner({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
+        landlordStripeReady: false,
+      }),
+    ).toBe('host_identity_required')
   })
 
   it('listing module off shows module banner', () => {

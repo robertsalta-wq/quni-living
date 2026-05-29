@@ -140,6 +140,13 @@
     "content": "Renters who are not students may use a separate identity verification tier appropriate to their profile. The goal is consistent trust and safety on the marketplace. See onboarding prompts for the exact documents and steps."
   },
   {
+    "id": "6fad4b80-001b-4000-8000-00000000001b",
+    "title": "Quni host verification (Verified host badge)",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Landlords (hosts) on Quni complete Stripe Connect identity verification before they can accept a booking request. When Stripe enables charges on their Connect account, they may show a \"Verified host\" badge on their profile and listings. Quni does not manually review landlord profiles, verify government IDs for hosts, or check property titles. Listing and Managed acceptance both require this Stripe step; Quni Listing also charges a saved card for the platform fee on accept. Students can still browse, message, and submit booking requests before a host completes verification."
+  },
+  {
     "id": "6fad4b80-0015-4000-8000-000000000015",
     "title": "Quni payouts via Stripe Connect",
     "category": "platform_policy",

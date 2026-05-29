@@ -341,6 +341,7 @@ export interface Database {
           bio: string | null
           avatar_url: string | null
           verified: boolean | null
+          admin_override_verified: boolean
           stripe_connect_account_id: string | null
           stripe_connect_details_submitted: boolean | null
           stripe_charges_enabled: boolean | null
@@ -373,6 +374,7 @@ export interface Database {
           bio?: string | null
           avatar_url?: string | null
           verified?: boolean | null
+          admin_override_verified?: boolean
           stripe_connect_account_id?: string | null
           stripe_connect_details_submitted?: boolean | null
           stripe_charges_enabled?: boolean | null
@@ -405,6 +407,7 @@ export interface Database {
           bio?: string | null
           avatar_url?: string | null
           verified?: boolean | null
+          admin_override_verified?: boolean
           stripe_connect_account_id?: string | null
           stripe_connect_details_submitted?: boolean | null
           stripe_charges_enabled?: boolean | null

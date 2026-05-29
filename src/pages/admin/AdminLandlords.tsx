@@ -53,14 +53,32 @@ export default function AdminLandlords() {
   }, [highlightProfileId, loading, rows])
 
   async function setVerified(id: string, verified: boolean) {
-    const prev = rows.find((r) => r.id === id)?.verified ?? false
-    setRows((r) => r.map((row) => (row.id === id ? { ...row, verified } : row)))
+    const prev = rows.find((r) => r.id === id)
+    const prevVerified = prev?.verified ?? false
+    const prevOverride = prev?.admin_override_verified ?? false
+    setRows((r) =>
+      r.map((row) =>
+        row.id === id ? { ...row, verified, admin_override_verified: verified } : row,
+      ),
+    )
     setUpdatingId(id)
     setError(null)
-    const { error: upErr } = await supabase.from('landlord_profiles').update({ verified }).eq('id', id)
+    const { error: upErr } = await supabase
+      .from('landlord_profiles')
+      .update({
+        verified,
+        admin_override_verified: verified,
+      })
+      .eq('id', id)
     if (upErr) {
       setError(upErr.message)
-      setRows((r) => r.map((row) => (row.id === id ? { ...row, verified: prev } : row)))
+      setRows((r) =>
+        r.map((row) =>
+          row.id === id
+            ? { ...row, verified: prevVerified, admin_override_verified: prevOverride }
+            : row,
+        ),
+      )
     }
     setUpdatingId(null)
   }
@@ -113,13 +131,18 @@ export default function AdminLandlords() {
                       <div className="flex flex-wrap items-center gap-2">
                         {row.verified ? (
                           <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                            Verified
+                            Verified host
                           </span>
                         ) : (
                           <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">
                             Unverified
                           </span>
                         )}
+                        {row.admin_override_verified ? (
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-amber-700">
+                            Admin override
+                          </span>
+                        ) : null}
                         <label className="inline-flex cursor-pointer items-center gap-1.5">
                           <input
                             type="checkbox"

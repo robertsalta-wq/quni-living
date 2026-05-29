@@ -5,7 +5,7 @@ export type ConfirmBlockedBanner =
   | 'listing_billing_unavailable'
   | 'listing_module_disabled'
   | 'listing_no_payment_method'
-  | 'managed_connect_required'
+  | 'host_identity_required'
 
 export function landlordBookingConfirmAllowed(args: {
   bookingStatus: string
@@ -18,6 +18,8 @@ export function landlordBookingConfirmAllowed(args: {
   const st = args.bookingStatus
   if (st !== 'pending_confirmation' && st !== 'awaiting_info') return false
 
+  if (!args.landlordStripeReady) return false
+
   if (args.selectedConfirmTier === 'listing') {
     if (!args.listingBillingLoaded) return false
     const lb = args.listingBilling
@@ -25,7 +27,7 @@ export function landlordBookingConfirmAllowed(args: {
     return lb.moduleEnabled === true && lb.hasPaymentMethod === true
   }
 
-  return args.landlordStripeReady
+  return true
 }
 
 export function landlordBookingConfirmBlockedBanner(args: {
@@ -39,8 +41,12 @@ export function landlordBookingConfirmBlockedBanner(args: {
     return null
   }
 
+  if (!args.landlordStripeReady) {
+    return 'host_identity_required'
+  }
+
   if (args.selectedConfirmTier !== 'listing') {
-    return args.landlordStripeReady ? null : 'managed_connect_required'
+    return null
   }
 
   if (!args.listingBillingLoaded) return null

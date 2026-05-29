@@ -164,7 +164,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         property: prop,
       })
 
-      const stripeReady = lp.stripe_charges_enabled === true && Boolean(lp.stripe_connect_account_id?.trim())
+      const stripeReady = lp.stripe_charges_enabled === true
 
       let otherPendingPipelineCount = 0
       if (booking.property_id) {

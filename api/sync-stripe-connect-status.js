@@ -4,6 +4,7 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { mergeVerifiedIntoLandlordUpdate } from './lib/landlordVerifiedSync.js'
 
 export const config = {
   runtime: 'edge',
@@ -74,7 +75,7 @@ export default async function handler(request) {
     const admin = createClient(supabaseUrl, serviceRole)
     const { data: profile, error: profErr } = await admin
       .from('landlord_profiles')
-      .select('id, stripe_connect_account_id')
+      .select('id, stripe_connect_account_id, admin_override_verified')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -85,15 +86,13 @@ export default async function handler(request) {
     const stripe = new Stripe(stripeSecret)
     const account = await stripe.accounts.retrieve(profile.stripe_connect_account_id)
 
+    const profileUpdate = mergeVerifiedIntoLandlordUpdate(account, profile)
+
     const { data: saved, error: upErr } = await admin
       .from('landlord_profiles')
-      .update({
-        stripe_charges_enabled: account.charges_enabled ?? false,
-        stripe_payouts_enabled: account.payouts_enabled ?? false,
-        stripe_connect_details_submitted: account.details_submitted ?? false,
-      })
+      .update(profileUpdate)
       .eq('id', profile.id)
-      .select('stripe_charges_enabled')
+      .select('stripe_charges_enabled, verified')
       .maybeSingle()
 
     if (upErr) {

@@ -76,7 +76,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-landlord-trust',
         question: 'How do I know the landlord is legitimate?',
         answer:
-          'Landlords go through verification before listing. Verified landlords display a Verified Landlord badge on their profile and listing.',
+          'Hosts complete Stripe identity verification before they can accept a booking. When approved, they show a Verified host badge on their profile and listing. You can still browse, message, and request to book beforehand.',
       },
       {
         id: 'students-agreements',

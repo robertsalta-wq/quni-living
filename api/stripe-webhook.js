@@ -28,6 +28,8 @@ import Stripe from 'stripe'
 
 import { createClient } from '@supabase/supabase-js'
 
+import { syncLandlordProfilesFromStripeAccount } from './lib/syncLandlordConnectFromStripeAccount.js'
+
 
 
 export const config = {
@@ -199,21 +201,7 @@ export default async function handler(req, res) {
 
         if (account?.id) {
 
-          await admin
-
-            .from('landlord_profiles')
-
-            .update({
-
-              stripe_charges_enabled: account.charges_enabled ?? false,
-
-              stripe_payouts_enabled: account.payouts_enabled ?? false,
-
-              stripe_connect_details_submitted: account.details_submitted ?? false,
-
-            })
-
-            .eq('stripe_connect_account_id', account.id)
+          await syncLandlordProfilesFromStripeAccount(admin, account, account.id)
 
         }
 

@@ -668,17 +668,18 @@ export default function LandlordBookingReviewPage() {
           </div>
         )}
 
-        {confirmBlockedBanner === 'managed_connect_required' && (
+        {confirmBlockedBanner === 'host_identity_required' && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p className="font-medium">Set up your payout account before confirming</p>
+            <p className="font-medium">Verify your identity before confirming</p>
             <p className="mt-1 text-amber-900/90">
-              Students can pay a holding deposit, but you need Stripe Connect to capture it when you confirm.
+              Students can place booking requests and pay a holding deposit, but you must complete Stripe identity
+              verification before you can accept. This also unlocks your Verified host badge when approved.
             </p>
             <Link
               to="/landlord/dashboard"
               className="inline-block mt-2 text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
             >
-              Open dashboard &amp; connect Stripe →
+              Open dashboard &amp; verify with Stripe →
             </Link>
           </div>
         )}

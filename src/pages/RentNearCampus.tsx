@@ -34,7 +34,7 @@ const WHO_CARDS = [
   },
   {
     title: 'New to the city',
-    body: 'New job, new postcode? Land with a real address, real photos, and a verified landlord — not a vague gumtree thread and a weekend at IKEA.',
+    body: 'New job, new postcode? Land with a real address, real photos, and hosts who verify with Stripe before accepting bookings — not a vague gumtree thread and a weekend at IKEA.',
   },
 ] as const
 
@@ -98,7 +98,7 @@ export default function RentNearCampus() {
       </style>
       <Seo
         title="Furnished rentals near Australian universities | Quni Living"
-        description="Modern furnished rooms in uni precincts across Australia — verified listings, bills sorted, ID-verified renters welcome."
+        description="Modern furnished rooms in uni precincts across Australia — verified listings, bills sorted, identity-verified renters welcome."
         canonicalPath="/rent-near-campus"
       />
 
