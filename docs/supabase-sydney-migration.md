@@ -70,6 +70,7 @@ Use this filter for every “while we’re here” idea:
 - [ ] Universities/campuses seed: `supabase/universities_campuses_seed.sql`.
 - [ ] Confirm **Stripe** production path is **Vercel** `/api/stripe-webhook` only; do not duplicate secrets on Supabase `stripe-webhook` unless that endpoint is actually used.
 - [ ] Copy **auth email templates** (e.g. `supabase/templates/confirmation.html` → Dashboard).
+- [ ] **Confirm email** enabled: Authentication → Providers → Email → turn on **Confirm email** (otherwise sign-ups skip verification and go straight to onboarding).
 - [ ] Auth allowlist: `com.quni.living://auth/callback` for Capacitor if testing native.
 - [ ] Run `node scripts/check-supabase-listings-latency.mjs` against **new** URL after cutover.
 - [ ] Listings partial index only if EXPLAIN shows seq scans (see [listings-browse-performance.md](./listings-browse-performance.md)).

@@ -10,6 +10,7 @@ import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
+import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 /**
  * Auth redirect handler (email confirm, magic link, OAuth). Uses implicit flow: tokens in the URL
  * fragment are consumed during client init (`detectSessionInUrl` on this path). Optional `?code=`
@@ -91,6 +92,20 @@ export default function AuthCallback() {
 
         const { role, profile } = await fetchRoleAndProfile(user)
         if (cancelled) return
+
+        if (userNeedsEmailAddressVerification(user)) {
+          const onboardingPath =
+            role === 'student'
+              ? '/onboarding/student'
+              : role === 'landlord'
+                ? '/onboarding/landlord'
+                : '/onboarding'
+          navigate('/verify-email', {
+            replace: true,
+            state: { from: { pathname: onboardingPath } },
+          })
+          return
+        }
 
         if (role === 'admin') {
           navigate('/admin', { replace: true })

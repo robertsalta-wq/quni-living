@@ -15,6 +15,7 @@ import {
 } from '../lib/postAuthRedirect'
 import Seo from '../components/Seo'
 import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
+import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -92,6 +93,10 @@ export default function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return
+    if (userNeedsEmailAddressVerification(user)) {
+      navigate('/verify-email', { replace: true, state: location.state ?? { from: location } })
+      return
+    }
     if (role === 'admin') {
       const next = resolvePostLoginDestination(searchParams, location.state)
       navigate(next && next !== '/login' ? next : '/admin', { replace: true })

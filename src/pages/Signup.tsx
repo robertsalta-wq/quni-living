@@ -15,6 +15,7 @@ import {
   setQuniAccommodationVerificationRoute,
 } from '../lib/quniAccommodationRoute'
 import Seo from '../components/Seo'
+import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 /** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
 type SignupAccountKind = 'student' | 'non_student' | 'landlord'
@@ -307,10 +308,16 @@ export default function Signup() {
       }
       if (data.session) {
         const signupRole = accountKind === 'landlord' ? 'landlord' : 'student'
-        navigate(
-          signupRole === 'landlord' ? '/onboarding/landlord' : '/onboarding/student',
-          { replace: true },
-        )
+        const onboardingPath =
+          signupRole === 'landlord' ? '/onboarding/landlord' : '/onboarding/student'
+        if (userNeedsEmailAddressVerification(created)) {
+          navigate('/verify-email', {
+            replace: true,
+            state: { from: { pathname: onboardingPath } },
+          })
+          return
+        }
+        navigate(onboardingPath, { replace: true })
         return
       }
       setCheckEmail(true)
