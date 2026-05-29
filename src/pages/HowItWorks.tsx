@@ -53,7 +53,7 @@ const LISTING_LANDLORD: Step[] = [
   {
     title: '2. Accept a booking',
     description:
-      'Review the renter and confirm. The flat Listing acceptance fee is charged to your saved card at the moment you accept (see Pricing).',
+      'Complete Stripe identity verification, then review the renter and confirm. The flat Listing acceptance fee is charged to your saved card when you accept (see Pricing). A Verified host badge appears once Stripe approves your account.',
   },
   {
     title: '3. Run the tenancy',
@@ -86,7 +86,7 @@ const MANAGED_LANDLORD: Step[] = [
   {
     title: '2. Confirm the booking',
     description:
-      'When you accept, the deposit is captured and weekly rent is set up on Connect (timing aligns with move-in where Stripe requires it).',
+      'Complete Stripe identity verification, then accept. The deposit is captured and weekly rent is set up on Connect (timing aligns with move-in where Stripe requires it).',
   },
   {
     title: '3. Receive rent weekly',

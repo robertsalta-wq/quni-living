@@ -106,6 +106,11 @@ const LANDLORD_FAQ = [
     a: 'Students verify via university email OTP. Enhanced verification includes photo ID and enrolment documents, displayed as a Student Verified badge.',
   },
   {
+    id: 'faq-l-2b',
+    q: 'How does Quni verify landlords?',
+    a: 'You complete Stripe identity verification before you can accept a booking. When approved, a Verified host badge appears on your profile and listings. You can list and receive booking requests before that step.',
+  },
+  {
     id: 'faq-l-3',
     q: 'How do I receive rent payments?',
     a: 'Via Stripe Connect direct to your bank account. You see exactly what Quni earns and what you receive in your landlord dashboard.',

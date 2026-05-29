@@ -176,6 +176,12 @@ export const FAQ_SECTIONS: FaqSection[] = [
           'Students verify with identity documents and badges shown on their profile. Landlords can review verification status before accepting a booking request.',
       },
       {
+        id: 'landlords-host-verify',
+        question: 'How does Quni verify landlords?',
+        answer:
+          'Before you can accept a booking (Listing or Managed), you complete Stripe Connect identity verification. When Stripe enables charges on your account, you may show a Verified host badge on your profile and listings. Quni does not manually review profiles or check property titles. Quni Listing also requires a saved card for the acceptance fee when you confirm.',
+      },
+      {
         id: 'landlords-rent',
         question: 'How do I receive rent payments?',
         answer:
