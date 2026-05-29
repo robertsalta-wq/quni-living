@@ -276,7 +276,7 @@ export default function PropertyDetail() {
 
   const { user, profile, role, session, refreshProfile, loading: authLoading } = useAuthContext()
   const { isProfessionalRenter } = useRenterSearchPersona()
-  const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference()
+  const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference('full')
   const uniNameById = useMemo(() => {
     const m = new Map<string, string>()
     for (const u of uniRefRows) m.set(normUuid(u.id), u.name)
@@ -679,7 +679,12 @@ export default function PropertyDetail() {
       distanceKm: number
     }[]
 
-    const top = candidates
+    const closestByUniversity = new Map<string, (typeof candidates)[number]>()
+    for (const c of candidates) {
+      const prev = closestByUniversity.get(c.universitySlug)
+      if (!prev || c.distanceKm < prev.distanceKm) closestByUniversity.set(c.universitySlug, c)
+    }
+    const top = [...closestByUniversity.values()]
       .filter((c) => c.distanceKm <= 15)
       .sort((a, b) => a.distanceKm - b.distanceKm)
       .slice(0, 5)
