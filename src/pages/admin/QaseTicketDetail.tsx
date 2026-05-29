@@ -1,6 +1,6 @@
 import { type ChangeEvent, type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { getSupabaseEdgeFunctionUrl, supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type {
   QaseField,
@@ -37,12 +37,11 @@ const ALLOWED_MIME = new Set([
 
 const IMAGE_MIME_PREFIX = 'image/'
 
-const NOTIFY_URL = 'https://flegysnshryzvkwzfclc.supabase.co/functions/v1/qase-notify'
-
 function fireNotify(messageId: string): void {
+  const notifyUrl = getSupabaseEdgeFunctionUrl('qase-notify')
   const secret = import.meta.env.VITE_QASE_INTERNAL_SECRET
-  if (typeof secret !== 'string' || !secret.trim()) return
-  void fetch(NOTIFY_URL, {
+  if (!notifyUrl || typeof secret !== 'string' || !secret.trim()) return
+  void fetch(notifyUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,18 +1,17 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { getSupabaseEdgeFunctionUrl, supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { QaseField, QasePriority, QaseSubmitterType } from '../../types/qase'
-
-const TRIAGE_URL = 'https://flegysnshryzvkwzfclc.supabase.co/functions/v1/qase-triage'
 
 const PRIORITIES: QasePriority[] = ['urgent', 'high', 'normal', 'low']
 
 const SUBMITTER_DEBOUNCE_MS = 400
 
 function fireTriage(ticketId: string): void {
+  const triageUrl = getSupabaseEdgeFunctionUrl('qase-triage')
   const secret = import.meta.env.VITE_QASE_INTERNAL_SECRET
-  if (typeof secret !== 'string' || !secret.trim()) return
-  void fetch(TRIAGE_URL, {
+  if (!triageUrl || typeof secret !== 'string' || !secret.trim()) return
+  void fetch(triageUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

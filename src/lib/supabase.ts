@@ -55,6 +55,13 @@ if (typeof window !== 'undefined' && envKey) {
 /** True when real credentials are in `.env.local` */
 export const isSupabaseConfigured = Boolean(envUrl && envKey)
 
+/** Edge function URL from `VITE_SUPABASE_URL` (e.g. `qase-triage`). */
+export function getSupabaseEdgeFunctionUrl(functionName: string): string | null {
+  const base = envUrl.replace(/\/$/, '')
+  if (!base) return null
+  return `${base}/functions/v1/${functionName}`
+}
+
 /**
  * Supabase throws if url/key are empty at import time — that blanked the whole app.
  * Use placeholders when env is missing so React can render; gated features use

@@ -7,10 +7,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { getSupabaseEdgeFunctionUrl, supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { QaseField } from '../../types/qase'
-
-const TRIAGE_URL = 'https://flegysnshryzvkwzfclc.supabase.co/functions/v1/qase-triage'
 
 const MAX_ATTACHMENT_FILES = 10
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
@@ -36,9 +34,10 @@ function asField(row: unknown): QaseField {
 }
 
 function fireTriage(ticketId: string): void {
+  const triageUrl = getSupabaseEdgeFunctionUrl('qase-triage')
   const secret = import.meta.env.VITE_QASE_INTERNAL_SECRET
-  if (typeof secret !== 'string' || !secret.trim()) return
-  void fetch(TRIAGE_URL, {
+  if (!triageUrl || typeof secret !== 'string' || !secret.trim()) return
+  void fetch(triageUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
