@@ -271,6 +271,7 @@ export default function Signup() {
       return
     }
     const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
+    setQuniSelectedRole(authRole)
     const userData: Record<string, string> = {
       role: authRole,
       full_name: fullName.trim(),

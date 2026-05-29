@@ -9,21 +9,25 @@ export type SignupRoleChoice = 'student' | 'landlord'
  */
 export async function resolveSignupRoleChoice(user: User): Promise<{
   role: SignupRoleChoice
-  usedLocalStorageFallback: boolean
+  /** True only when neither server nor localStorage had a role — we default to student. */
+  missingRoleChoice: boolean
 }> {
   const { role: resolved } = await fetchRoleAndProfile(user)
   if (resolved === 'landlord') {
-    return { role: 'landlord', usedLocalStorageFallback: false }
+    return { role: 'landlord', missingRoleChoice: false }
   }
   if (resolved === 'student') {
-    return { role: 'student', usedLocalStorageFallback: false }
+    return { role: 'student', missingRoleChoice: false }
   }
 
   const stored = getQuniSelectedRole()
   if (stored === 'landlord') {
-    return { role: 'landlord', usedLocalStorageFallback: true }
+    return { role: 'landlord', missingRoleChoice: false }
   }
-  return { role: 'student', usedLocalStorageFallback: stored === null }
+  if (stored === 'student') {
+    return { role: 'student', missingRoleChoice: false }
+  }
+  return { role: 'student', missingRoleChoice: true }
 }
 
 export function signupRoleChoiceFromUserRole(role: UserRole): SignupRoleChoice | null {

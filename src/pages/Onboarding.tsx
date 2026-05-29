@@ -101,7 +101,7 @@ export default function Onboarding() {
   const [agreementError, setAgreementError] = useState(false)
 
   const [resolvedRole, setResolvedRole] = useState<Choice>('student')
-  const [usedRoleFallback, setUsedRoleFallback] = useState(false)
+  const [missingRoleChoice, setMissingRoleChoice] = useState(false)
   const [roleReady, setRoleReady] = useState(false)
 
   const isLandlord = resolvedRole === 'landlord'
@@ -129,10 +129,10 @@ export default function Onboarding() {
       }
       const u = data.user ?? user
       await applyPendingSignupRole(u)
-      const { role: choice, usedLocalStorageFallback } = await resolveSignupRoleChoice(u)
+      const { role: choice, missingRoleChoice: noRoleDetected } = await resolveSignupRoleChoice(u)
       if (cancelled) return
       setResolvedRole(choice)
-      setUsedRoleFallback(usedLocalStorageFallback)
+      setMissingRoleChoice(noRoleDetected)
       setRoleReady(true)
 
       const { role, profile } = await fetchRoleAndProfile(u)
@@ -296,7 +296,7 @@ export default function Onboarding() {
         )}
       </p>
 
-      {usedRoleFallback && (
+      {missingRoleChoice && (
         <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-4">
           We couldn&apos;t detect your earlier role choice, so we&apos;re continuing as a <strong>student</strong>. If
           you need a landlord account, contact{' '}

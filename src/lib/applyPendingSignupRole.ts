@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { clearQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
+import { clearQuniAccommodationVerificationRoute, getQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
 
 const RECENT_SIGNUP_MS = 30 * 60 * 1000
@@ -37,6 +37,24 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
     supabase.from('student_profiles').select('user_id, full_name, email').eq('user_id', user.id).maybeSingle(),
     supabase.from('landlord_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
   ])
+
+  // Google OAuth cannot attach signup role on first redirect — persist it once the session exists.
+  if (!sp && !lp) {
+    const metaRole = user.user_metadata?.role
+    if (metaRole !== selected) {
+      const data: Record<string, string> = { role: selected }
+      if (selected === 'student') {
+        const metaRoute = user.user_metadata?.accommodation_verification_route
+        const route =
+          metaRoute === 'non_student' || metaRoute === 'student'
+            ? metaRoute
+            : getQuniAccommodationVerificationRoute()
+        if (route) data.accommodation_verification_route = route
+      }
+      await supabase.auth.updateUser({ data })
+    }
+    return
+  }
 
   const fullName = sp?.full_name?.trim() || displayNameFromUser(user)
   const email = sp?.email?.trim() || user.email || ''
