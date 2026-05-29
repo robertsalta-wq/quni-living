@@ -8,6 +8,7 @@ import {
   MANAGED_COMING_SOON_SUBLINE,
   MANAGED_LISTING_DUAL_INTRO,
 } from '../lib/managedComingSoonCopy'
+import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
 type Step = { title: string; description: string }
 
@@ -132,6 +133,10 @@ export default function HowItWorks() {
                 <>{MANAGED_LISTING_DUAL_INTRO}</>
               )}
             </p>
+          </div>
+
+          <div className="mx-auto mt-12 max-w-3xl">
+            <WhyQuniTrustBlock />
           </div>
 
           <section className="mx-auto mt-14 max-w-[1180px]">

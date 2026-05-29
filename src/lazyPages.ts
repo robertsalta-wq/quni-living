@@ -29,6 +29,7 @@ export const ConversationThreadPage = lazy(() => import('./pages/ConversationThr
 
 // Marketing & SEO (secondary traffic)
 export const RentNearCampus = lazy(() => import('./pages/RentNearCampus'))
+export const InternationalStudents = lazy(() => import('./pages/InternationalStudents'))
 export const About = lazy(() => import('./pages/About'))
 export const HowItWorks = lazy(() => import('./pages/HowItWorks'))
 export const Refunds = lazy(() => import('./pages/Refunds'))

@@ -13,6 +13,7 @@ import {
 } from '../../lib/universityCampusReference'
 import { useUniversityCampusReference } from '../../hooks/useUniversityCampusReference'
 import { applyPropertyListingDateWindow, listingIsoDateUtc } from '../../lib/propertyListingDateWindow'
+import { INTERNATIONAL_STUDENTS } from '../../lib/dataResidencyCopy'
 
 export default function StudentAccommodationIndex() {
   const navigate = useNavigate()
@@ -116,6 +117,21 @@ export default function StudentAccommodationIndex() {
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        <aside className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
+          <h2 className="font-display text-lg font-bold text-gray-900 sm:text-xl !mt-0 !mb-3">
+            {INTERNATIONAL_STUDENTS.title}
+          </h2>
+          <p className="text-sm leading-relaxed text-gray-600 sm:text-base">{INTERNATIONAL_STUDENTS.body}</p>
+          <p className="mt-4">
+            <Link
+              to="/international"
+              className="text-sm font-semibold text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+            >
+              Read more for international students
+            </Link>
+          </p>
+        </aside>
+
         <form
           onSubmit={onSearchSubmit}
           className="max-w-2xl mx-auto mb-10 flex flex-col sm:flex-row gap-3"

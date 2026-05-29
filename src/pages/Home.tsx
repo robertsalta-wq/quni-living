@@ -22,6 +22,7 @@ import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import { geocodeQuery } from '../lib/geocodeClient'
 import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocation'
+import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
 const HERO_COLLAGE_TOP_FALLBACK =
   'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
@@ -84,6 +85,12 @@ const STUDENT_FAQ = [
     id: 'faq-s-4',
     q: 'What if something goes wrong with my tenancy?',
     a: 'Contact us at hello@quni.com.au. We have a dispute resolution process and will work with both parties to resolve issues fairly.',
+  },
+  {
+    id: 'faq-s-5',
+    q: 'Where is my data stored if I am an international student?',
+    a: 'On Australian infrastructure in Sydney. See our guide for international students for how account, verification, and tenancy data is handled under Australian law.',
+    linkTo: '/international',
   },
 ] as const
 
@@ -519,6 +526,12 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-b border-[#E3EEE9] bg-white py-14 sm:py-16" aria-labelledby="why-quni-trust">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
+          <WhyQuniTrustBlock />
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="border-b border-gray-100 bg-white py-14 sm:py-16">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
@@ -530,7 +543,20 @@ export default function Home() {
             <div className="divide-y divide-gray-200 border-b border-gray-200">
               {STUDENT_FAQ.map((item) => {
                 const open = openFaqId === item.id
-                const answer = item.a
+                const answer =
+                  'linkTo' in item && item.linkTo ? (
+                    <>
+                      {item.a}{' '}
+                      <Link
+                        to={item.linkTo}
+                        className="font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+                      >
+                        For international students
+                      </Link>
+                    </>
+                  ) : (
+                    item.a
+                  )
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
                     <button

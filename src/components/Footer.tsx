@@ -72,6 +72,11 @@ export default function Footer() {
                   Accommodation guides →
                 </Link>
               </li>
+              <li>
+                <Link to="/international" className={linkClass}>
+                  International students →
+                </Link>
+              </li>
             </ul>
           </div>
 

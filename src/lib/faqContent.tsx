@@ -24,6 +24,11 @@ const partnershipsLink = (
     landlord partnerships
   </Link>
 )
+const internationalStudentsLink = (
+  <Link to="/international" className="font-medium text-[#FF6F61] hover:underline">
+    international students
+  </Link>
+)
 
 /** Comprehensive FAQ sections for /faq — consolidated from marketing pages. */
 export const FAQ_SECTIONS: FaqSection[] = [
@@ -90,6 +95,16 @@ export const FAQ_SECTIONS: FaqSection[] = [
         question: 'What if my booking request is declined?',
         answer:
           'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows — typically 5–7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
+      },
+      {
+        id: 'students-data-residency',
+        question: 'Where is my data stored if I am studying in Australia from overseas?',
+        answer: (
+          <>
+            Your account, verification documents, and tenancy records are stored on Australian infrastructure in
+            Sydney. See our page for {internationalStudentsLink} for how Australian law applies.
+          </>
+        ),
       },
     ],
   },

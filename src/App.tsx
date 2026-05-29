@@ -69,6 +69,7 @@ function App() {
           <Route path="/properties" element={<Navigate to="/listings" replace />} />
           <Route path="/properties/:slug" element={<PropertyDetail />} />
           <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
+          <Route path="/international" element={<Lazy.InternationalStudents />} />
           <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
           <Route path="/student-accommodation/:universitySlug" element={<Lazy.UniversityAccommodation />} />
           <Route
