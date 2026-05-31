@@ -21,6 +21,7 @@ import {
   type BudgetRangeValue,
   type StudentProfileRow,
 } from '../../lib/studentOnboarding'
+import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { needsStudentUniEmailVerification } from '../../lib/studentUniEmailVerification'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../../lib/studentOccupancyOptions'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
@@ -489,6 +490,11 @@ export default function StudentOnboarding() {
       setLoading(true)
       setLoadError(null)
       try {
+        await applyPendingAccommodationRouteToStudentProfile(
+          user.id,
+          user.created_at,
+          user.user_metadata?.accommodation_verification_route,
+        )
         const profRes = await withSentryMonitoring('StudentOnboarding/fetch-profile', () =>
           supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
         )

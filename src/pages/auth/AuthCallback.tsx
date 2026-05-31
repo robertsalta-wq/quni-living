@@ -87,7 +87,11 @@ export default function AuthCallback() {
           return
         }
 
-        await applyPendingAccommodationRouteToStudentProfile(user.id, user.created_at)
+        await applyPendingAccommodationRouteToStudentProfile(
+          user.id,
+          user.created_at,
+          user.user_metadata?.accommodation_verification_route,
+        )
         await applyPendingSignupRole(user)
 
         const { role, profile } = await fetchRoleAndProfile(user)

@@ -1,5 +1,8 @@
 import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
+import {
+  applyPendingAccommodationRouteToStudentProfile,
+} from './applyPendingAccommodationRoute'
 import { clearQuniAccommodationVerificationRoute, getQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
 
@@ -34,9 +37,21 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
   }
 
   const [{ data: sp }, { data: lp }] = await Promise.all([
-    supabase.from('student_profiles').select('user_id, full_name, email').eq('user_id', user.id).maybeSingle(),
+    supabase
+      .from('student_profiles')
+      .select('user_id, full_name, email, accommodation_verification_route')
+      .eq('user_id', user.id)
+      .maybeSingle(),
     supabase.from('landlord_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
   ])
+
+  if (selected === 'student' && sp?.accommodation_verification_route == null) {
+    await applyPendingAccommodationRouteToStudentProfile(
+      user.id,
+      user.created_at,
+      user.user_metadata?.accommodation_verification_route,
+    )
+  }
 
   // Google OAuth cannot attach signup role on first redirect — persist it once the session exists.
   if (!sp && !lp) {
