@@ -70,7 +70,7 @@ Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inve
 - **AI chat** widget (persona: student renter vs landlord); host verification honesty rules + knowledge-base chunk
 - Auth: signup, login, Google OAuth, email verification, sign out
 - Legal/info: Terms, Privacy, Refunds, How it works, FAQ, Contact
-- Global **site feedback** button
+- Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) — no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
 
 ---
 

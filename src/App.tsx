@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/react'
 import { Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
-import FeedbackButton from './components/FeedbackButton'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
@@ -265,7 +264,6 @@ function App() {
           </Suspense>
         </main>
         {showPublicChrome && !hideFooterForFormFlow && <Footer />}
-        <FeedbackButton />
         <AIChatWidget />
         </>
       </BookingFlowChromeProvider>

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 
 type BookingFlowChromeContextValue = {
-  /** When true, global floating UI (feedback, AI) sits higher so it clears the Stripe payment step. */
+  /** When true, the AI chat FAB sits higher so it clears the Stripe payment step. */
   elevateFloatingChrome: boolean
   setElevateFloatingChrome: (value: boolean) => void
 }
