@@ -10,6 +10,7 @@ import {
   formatListingCardBathIconLabel,
   formatListingCardContextLine,
 } from '../lib/listingAccommodationDisplay'
+import { buildListingHighlightLabels } from '../lib/listingDisplayHighlights'
 import {
   buildListingCardImageBadges,
   listingCardBadgeVisibleOnMobile,
@@ -55,6 +56,7 @@ export function PropertyCard({
   const bedIconLabel = formatListingCardBedIconLabel(property)
   const bathIconLabel = formatListingCardBathIconLabel(property)
   const imageBadges = buildListingCardImageBadges(property)
+  const highlightLabels = buildListingHighlightLabels(property)
 
   const to =
     linkSearch && linkSearch.length > 0
@@ -146,6 +148,19 @@ export function PropertyCard({
 
         {accommodationContextLine ? (
           <p className="text-xs text-gray-600 leading-snug mb-2 line-clamp-2">{accommodationContextLine}</p>
+        ) : null}
+
+        {highlightLabels.length > 0 ? (
+          <div className="flex flex-wrap gap-1 mb-2" aria-label="What's included">
+            {highlightLabels.map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center rounded-md bg-[#8FB9AB]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#5a8f7f]"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         ) : null}
 
         <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">

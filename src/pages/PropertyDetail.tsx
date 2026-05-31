@@ -42,11 +42,11 @@ import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import {
   formatListingDetailAccommodation,
 } from '../lib/listingAccommodationDisplay'
-import { buildListingCardImageBadges } from '../lib/listingCardImageBadges'
 import {
-  listingInclusionSummaryLabels,
-  resolvePropertyInclusionSignals,
-} from '../lib/propertyInclusionSignals'
+  buildListingHighlightLabels,
+  buildListingPhotoBadges,
+  listingHighlightSignals,
+} from '../lib/listingDisplayHighlights'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
@@ -305,7 +305,6 @@ export default function PropertyDetail() {
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
-  const [amenitiesHouseTab, setAmenitiesHouseTab] = useState<'amenities' | 'house_rules'>('amenities')
   const [messageOpening, setMessageOpening] = useState(false)
   const [messageError, setMessageError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -422,10 +421,6 @@ export default function PropertyDetail() {
   }, [slug, shouldFetch, user, role, authLoading])
 
   useEffect(() => {
-    setAmenitiesHouseTab('amenities')
-  }, [property?.id])
-
-  useEffect(() => {
     const root = thumbsScrollRef.current
     if (!root) return
     const btn = root.querySelector<HTMLElement>(`[data-thumb-index="${imageIndex}"]`)
@@ -521,17 +516,17 @@ export default function PropertyDetail() {
   }, [property?.property_features])
 
   const inclusionSignals = useMemo(
-    () => (property ? resolvePropertyInclusionSignals(property) : null),
+    () => (property ? listingHighlightSignals(property) : null),
     [property],
   )
 
-  const inclusionSummaryLabels = useMemo(
-    () => (inclusionSignals ? listingInclusionSummaryLabels(inclusionSignals) : []),
-    [inclusionSignals],
+  const highlightLabels = useMemo(
+    () => (property ? buildListingHighlightLabels(property) : []),
+    [property],
   )
 
   const imageBadges = useMemo(
-    () => (property ? buildListingCardImageBadges(property) : []),
+    () => (property ? buildListingPhotoBadges(property) : []),
     [property],
   )
 
@@ -1093,9 +1088,6 @@ export default function PropertyDetail() {
   const houseRuleRows = property.property_house_rules ?? []
   const hasHouseRuleBadges = houseRuleRows.length > 0
   const hasWrittenHouseRules = Boolean(property.house_rules?.trim())
-  const showAmenitiesHouseRulesSection =
-    amenityGrid.length > 0 || hasHouseRuleBadges || hasWrittenHouseRules
-
   const quickInfoItems: { icon: string; text: string }[] = (() => {
     const items: { icon: string; text: string }[] = [{ icon: '📍', text: quickLocation }]
     if (universityForQuickBar) items.push({ icon: '🏫', text: `Near ${universityForQuickBar}` })
@@ -1369,20 +1361,20 @@ export default function PropertyDetail() {
                 />
               </div>
 
-              {inclusionSummaryLabels.length > 0 && (
-                <div
-                  className="flex flex-wrap gap-2"
-                  aria-label="What's included"
-                >
-                  {inclusionSummaryLabels.map((label) => (
-                    <span
-                      key={label}
-                      className="inline-flex items-center rounded-lg bg-[#8FB9AB] px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
+              {highlightLabels.length > 0 && (
+                <section className="space-y-2" aria-label="What's included">
+                  <h2 className={sectionLabelClass}>What&apos;s included</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {highlightLabels.map((label) => (
+                      <span
+                        key={label}
+                        className="inline-flex items-center rounded-lg bg-[#8FB9AB] px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </section>
               )}
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
@@ -1415,54 +1407,29 @@ export default function PropertyDetail() {
                 </section>
               ) : null}
 
-              {showAmenitiesHouseRulesSection && (
-                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="Amenities and house rules">
-                  <div className="flex flex-wrap gap-1 border-b border-stone-200" role="tablist">
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={amenitiesHouseTab === 'amenities'}
-                      onClick={() => setAmenitiesHouseTab('amenities')}
-                      className={`border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
-                        amenitiesHouseTab === 'amenities'
-                          ? 'border-[#FF6F61] text-[#FF6F61]'
-                          : 'border-transparent text-stone-500 hover:text-stone-700'
-                      }`}
-                    >
-                      Amenities
-                    </button>
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={amenitiesHouseTab === 'house_rules'}
-                      onClick={() => setAmenitiesHouseTab('house_rules')}
-                      className={`border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
-                        amenitiesHouseTab === 'house_rules'
-                          ? 'border-[#FF6F61] text-[#FF6F61]'
-                          : 'border-transparent text-stone-500 hover:text-stone-700'
-                      }`}
-                    >
-                      House rules
-                    </button>
-                  </div>
-                  {amenitiesHouseTab === 'amenities' ? (
-                    amenityGrid.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-2xl">
-                        {amenityGrid.map((a) => (
-                          <div
-                            key={a.key}
-                            className="flex items-center gap-2.5 rounded-xl border border-stone-200/80 bg-stone-100/50 px-3 py-2 text-sm text-stone-800 shadow-sm"
-                          >
-                            <span className="text-lg shrink-0" aria-hidden>
-                              {a.icon}
-                            </span>
-                            <span className="leading-snug">{a.label}</span>
-                          </div>
-                        ))}
+              {amenityGrid.length > 0 && (
+                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="Amenities">
+                  <h2 className={sectionLabelClass}>Amenities</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-2xl">
+                    {amenityGrid.map((a) => (
+                      <div
+                        key={a.key}
+                        className="flex items-center gap-2.5 rounded-xl border border-stone-200/80 bg-stone-100/50 px-3 py-2 text-sm text-stone-800 shadow-sm"
+                      >
+                        <span className="text-lg shrink-0" aria-hidden>
+                          {a.icon}
+                        </span>
+                        <span className="leading-snug">{a.label}</span>
                       </div>
-                    ) : null
-                  ) : (
-                    <div className="space-y-4 max-w-2xl">
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {(hasHouseRuleBadges || hasWrittenHouseRules) && (
+                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="House rules">
+                  <h2 className={sectionLabelClass}>House rules</h2>
+                  <div className="space-y-4 max-w-2xl">
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         {houseRuleRows.length === 0 ? (
                           <p className="text-sm text-stone-600 col-span-full">
@@ -1506,8 +1473,7 @@ export default function PropertyDetail() {
                           })}
                         </div>
                       ) : null}
-                    </div>
-                  )}
+                  </div>
                 </section>
               )}
 

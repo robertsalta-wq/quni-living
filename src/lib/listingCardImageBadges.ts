@@ -1,7 +1,4 @@
-import {
-  listingInclusionSummaryLabels,
-  resolvePropertyInclusionSignals,
-} from './propertyInclusionSignals'
+import { buildListingPhotoBadges, type ListingHighlightSource } from './listingDisplayHighlights'
 
 export type ListingCardImageBadge = {
   id: string
@@ -9,30 +6,9 @@ export type ListingCardImageBadge = {
   variant: 'featured' | 'inclusion'
 }
 
-type BadgeSource = {
-  featured?: boolean | null
-  furnished?: boolean | null
-  linen_supplied?: boolean | null
-  weekly_cleaning_service?: boolean | null
-  parking_available?: boolean | null
-  property_features?: { features?: { name?: string | null } | null }[] | null
-}
-
-/** Photo overlay badges — aligned with PropertyDetail hero (Featured, Furnished, Linen, Weekly, Bills). */
-export function buildListingCardImageBadges(property: BadgeSource): ListingCardImageBadge[] {
-  const badges: ListingCardImageBadge[] = []
-  if (property.featured) {
-    badges.push({ id: 'featured', label: 'Featured', variant: 'featured' })
-  }
-  const signals = resolvePropertyInclusionSignals(property)
-  for (const label of listingInclusionSummaryLabels(signals)) {
-    badges.push({
-      id: label.toLowerCase().replace(/\s+/g, '-'),
-      label,
-      variant: 'inclusion',
-    })
-  }
-  return badges
+/** Photo overlay badges (capped); use buildListingHighlightLabels for full list in card body. */
+export function buildListingCardImageBadges(property: ListingHighlightSource): ListingCardImageBadge[] {
+  return buildListingPhotoBadges(property)
 }
 
 /** Same mobile cap as listing detail: Featured + up to two inclusion badges on small screens. */

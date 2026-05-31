@@ -1,42 +1,7 @@
 /**
  * PostgREST URL builder for public listings browse (Edge / no Supabase JS client).
  */
-
-const PROPERTY_CARD_LIST_SELECT = [
-  'id',
-  'title',
-  'slug',
-  'rent_per_week',
-  'room_type',
-  'images',
-  'bedrooms',
-  'bathrooms',
-  'furnished',
-  'bond',
-  'lease_length',
-  'listing_type',
-  'featured',
-  'address',
-  'suburb',
-  'state',
-  'postcode',
-  'latitude',
-  'longitude',
-  'landlord_id',
-  'university_id',
-  'campus_id',
-  'available_from',
-  'available_to',
-  'status',
-  'max_occupants',
-  'couple_surcharge_per_week',
-  'parking_surcharge_per_week',
-  'parking_available',
-  'created_at',
-  'landlord_profiles(id,full_name,avatar_url,verified)',
-  'universities(id,name,slug)',
-  'campuses(id,name,slug)',
-].join(',')
+import { PROPERTY_CARD_LIST_SELECT_POSTGREST } from '../../src/lib/propertyCardSelectPostgrest.js'
 
 export type ListingsBrowseEdgeFilters = {
   q: string
@@ -106,7 +71,7 @@ export function buildListingsBrowsePostgrestUrl(
 ): string {
   const base = supabaseUrl.replace(/\/$/, '')
   const params = new URLSearchParams()
-  params.set('select', PROPERTY_CARD_LIST_SELECT)
+  params.set('select', PROPERTY_CARD_LIST_SELECT_POSTGREST)
   params.set('status', 'eq.active')
 
   const dateOr = `or(available_to.is.null,available_to.gte.${listingDay})`
