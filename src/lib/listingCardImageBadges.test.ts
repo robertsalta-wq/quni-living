@@ -1,41 +1,47 @@
 import { describe, expect, it } from 'vitest'
 import {
+  LISTING_CARD_PHOTO_BADGE_MAX,
+  buildListingCardBadgeDisplay,
   buildListingCardImageBadges,
-  listingCardBadgeVisibleOnMobile,
 } from './listingCardImageBadges'
 
-describe('buildListingCardImageBadges', () => {
-  it('includes inclusion badges only, not amenity features', () => {
-    const badges = buildListingCardImageBadges({
+describe('buildListingCardBadgeDisplay', () => {
+  it('caps photo badges and puts remaining inclusions in card body', () => {
+    const { photoBadges, extraInclusionLabels } = buildListingCardBadgeDisplay({
       featured: true,
       furnished: true,
       linen_supplied: true,
-      weekly_cleaning_service: false,
+      weekly_cleaning_service: true,
+      property_features: [{ features: { name: 'Bills included' } }],
+    })
+    expect(photoBadges.length).toBe(LISTING_CARD_PHOTO_BADGE_MAX)
+    expect(photoBadges.map((b) => b.label)).toEqual(['Featured', 'Furnished'])
+    expect(extraInclusionLabels).toEqual(['Linen supplied', 'Weekly cleaning', 'Bills included'])
+  })
+
+  it('never puts amenity features on the photo', () => {
+    const { photoBadges, extraInclusionLabels } = buildListingCardBadgeDisplay({
+      furnished: true,
       property_features: [
         { features: { name: 'Bills included' } },
         { features: { name: 'WiFi' } },
         { features: { name: 'Dishwasher' } },
       ],
     })
-    expect(badges.map((b) => b.label)).toEqual([
-      'Featured',
-      'Furnished',
-      'Linen supplied',
-      'Bills included',
-    ])
-    expect(badges.some((b) => b.label === 'WiFi')).toBe(false)
+    expect(photoBadges.map((b) => b.label)).toEqual(['Furnished', 'Bills included'])
+    expect(extraInclusionLabels).toEqual([])
+    expect(photoBadges.some((b) => b.label === 'WiFi')).toBe(false)
   })
+})
 
-  it('limits mobile inclusion badges when featured is set', () => {
+describe('buildListingCardImageBadges', () => {
+  it('returns capped photo badges only', () => {
     const badges = buildListingCardImageBadges({
-      featured: true,
       furnished: true,
       linen_supplied: true,
       weekly_cleaning_service: true,
     })
-    expect(listingCardBadgeVisibleOnMobile(badges, 'featured')).toBe(true)
-    expect(listingCardBadgeVisibleOnMobile(badges, 'furnished')).toBe(true)
-    expect(listingCardBadgeVisibleOnMobile(badges, 'linen-supplied')).toBe(true)
-    expect(listingCardBadgeVisibleOnMobile(badges, 'weekly-cleaning')).toBe(false)
+    expect(badges.length).toBe(LISTING_CARD_PHOTO_BADGE_MAX)
+    expect(badges.map((b) => b.label)).toEqual(['Furnished', 'Linen supplied'])
   })
 })

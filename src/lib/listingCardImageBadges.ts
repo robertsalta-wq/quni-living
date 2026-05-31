@@ -1,4 +1,8 @@
-import { buildListingPhotoBadges, type ListingHighlightSource } from './listingDisplayHighlights'
+import {
+  buildListingInclusionLabels,
+  buildListingPhotoBadges,
+  type ListingHighlightSource,
+} from './listingDisplayHighlights'
 
 export type ListingCardImageBadge = {
   id: string
@@ -6,20 +10,30 @@ export type ListingCardImageBadge = {
   variant: 'featured' | 'inclusion'
 }
 
-/** Photo overlay badges: featured + inclusions only. */
-export function buildListingCardImageBadges(property: ListingHighlightSource): ListingCardImageBadge[] {
-  return buildListingPhotoBadges(property)
+/** Max badges on listing grid photos (Featured counts toward this). Detail page is uncapped. */
+export const LISTING_CARD_PHOTO_BADGE_MAX = 2
+
+export type ListingCardBadgeDisplay = {
+  photoBadges: ListingCardImageBadge[]
+  /** Inclusions that did not fit on the photo — show in card body. */
+  extraInclusionLabels: string[]
 }
 
-/** Same mobile cap as listing detail: Featured + up to two inclusion badges on small screens. */
-export function listingCardBadgeVisibleOnMobile(
-  badges: ListingCardImageBadge[],
-  badgeId: string,
-): boolean {
-  const badge = badges.find((b) => b.id === badgeId)
-  if (!badge) return false
-  if (badge.variant === 'featured') return true
-  const inclusions = badges.filter((b) => b.variant === 'inclusion')
-  const idx = inclusions.findIndex((b) => b.id === badgeId)
-  return idx >= 0 && idx < 2
+export function buildListingCardBadgeDisplay(
+  property: ListingHighlightSource,
+): ListingCardBadgeDisplay {
+  const all = buildListingPhotoBadges(property)
+  const photoBadges = all.slice(0, LISTING_CARD_PHOTO_BADGE_MAX)
+  const onPhoto = new Set(
+    photoBadges.filter((b) => b.variant === 'inclusion').map((b) => b.label.trim().toLowerCase()),
+  )
+  const extraInclusionLabels = buildListingInclusionLabels(property).filter(
+    (label) => !onPhoto.has(label.trim().toLowerCase()),
+  )
+  return { photoBadges, extraInclusionLabels }
+}
+
+/** @deprecated Prefer buildListingCardBadgeDisplay */
+export function buildListingCardImageBadges(property: ListingHighlightSource): ListingCardImageBadge[] {
+  return buildListingCardBadgeDisplay(property).photoBadges
 }

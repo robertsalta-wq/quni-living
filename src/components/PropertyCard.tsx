@@ -10,10 +10,7 @@ import {
   formatListingCardBathIconLabel,
   formatListingCardContextLine,
 } from '../lib/listingAccommodationDisplay'
-import {
-  buildListingCardImageBadges,
-  listingCardBadgeVisibleOnMobile,
-} from '../lib/listingCardImageBadges'
+import { buildListingCardBadgeDisplay } from '../lib/listingCardImageBadges'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
@@ -54,7 +51,7 @@ export function PropertyCard({
   const accommodationContextLine = formatListingCardContextLine(property)
   const bedIconLabel = formatListingCardBedIconLabel(property)
   const bathIconLabel = formatListingCardBathIconLabel(property)
-  const imageBadges = buildListingCardImageBadges(property)
+  const { photoBadges, extraInclusionLabels } = buildListingCardBadgeDisplay(property)
 
   const to =
     linkSearch && linkSearch.length > 0
@@ -96,15 +93,13 @@ export function PropertyCard({
             </svg>
           </div>
         )}
-        {imageBadges.length > 0 && (
+        {photoBadges.length > 0 && (
           <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
-            {imageBadges.map((badge) => {
-              const showOnMobile = listingCardBadgeVisibleOnMobile(imageBadges, badge.id)
-              const visibility = showOnMobile ? 'inline-flex' : 'hidden sm:inline-flex'
+            {photoBadges.map((badge) => {
               const className =
                 badge.variant === 'featured'
-                  ? `${visibility} items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#FF6F61] text-white shadow-sm`
-                  : `${visibility} items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#8FB9AB] text-white shadow-sm`
+                  ? 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#FF6F61] text-white shadow-sm'
+                  : 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#8FB9AB] text-white shadow-sm'
               return (
                 <span key={badge.id} className={className}>
                   {badge.label}
@@ -146,6 +141,19 @@ export function PropertyCard({
 
         {accommodationContextLine ? (
           <p className="text-xs text-gray-600 leading-snug mb-2 line-clamp-2">{accommodationContextLine}</p>
+        ) : null}
+
+        {extraInclusionLabels.length > 0 ? (
+          <div className="flex flex-wrap gap-1 mb-2" aria-label="More included">
+            {extraInclusionLabels.map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center rounded-md bg-[#8FB9AB]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#5a8f7f]"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
         ) : null}
 
         <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
