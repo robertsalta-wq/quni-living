@@ -10,6 +10,10 @@ import {
   formatListingCardBathIconLabel,
   formatListingCardContextLine,
 } from '../lib/listingAccommodationDisplay'
+import {
+  buildListingCardImageBadges,
+  listingCardBadgeVisibleOnMobile,
+} from '../lib/listingCardImageBadges'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
@@ -50,6 +54,7 @@ export function PropertyCard({
   const accommodationContextLine = formatListingCardContextLine(property)
   const bedIconLabel = formatListingCardBedIconLabel(property)
   const bathIconLabel = formatListingCardBathIconLabel(property)
+  const imageBadges = buildListingCardImageBadges(property)
 
   const to =
     linkSearch && linkSearch.length > 0
@@ -91,15 +96,22 @@ export function PropertyCard({
             </svg>
           </div>
         )}
-        {property.featured && (
-          <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-medium px-2 py-1 rounded-full">
-            Featured
-          </span>
-        )}
-        {property.furnished && (
-          <span className="absolute top-3 right-3 bg-white/90 text-gray-700 text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm">
-            Furnished
-          </span>
+        {imageBadges.length > 0 && (
+          <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-1.5 z-10 pointer-events-none">
+            {imageBadges.map((badge) => {
+              const showOnMobile = listingCardBadgeVisibleOnMobile(imageBadges, badge.id)
+              const visibility = showOnMobile ? 'inline-flex' : 'hidden sm:inline-flex'
+              const className =
+                badge.variant === 'featured'
+                  ? `${visibility} items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#FF6F61] text-white shadow-sm`
+                  : `${visibility} items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#8FB9AB] text-white shadow-sm`
+              return (
+                <span key={badge.id} className={className}>
+                  {badge.label}
+                </span>
+              )
+            })}
+          </div>
         )}
         {unavailableForSelectedDates && unavailableBadgeLabel && (
           <span className="absolute bottom-3 left-3 bg-stone-800/95 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm shadow-sm max-w-[calc(100%-1.5rem)] line-clamp-2 leading-snug">

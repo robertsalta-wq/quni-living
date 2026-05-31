@@ -10,6 +10,9 @@ export const PROPERTY_CARD_LIST_SELECT = `
   bedrooms,
   bathrooms,
   furnished,
+  linen_supplied,
+  weekly_cleaning_service,
+  parking_available,
   bond,
   lease_length,
   listing_type,
@@ -33,5 +36,6 @@ export const PROPERTY_CARD_LIST_SELECT = `
   created_at,
   landlord_profiles ( id, full_name, avatar_url, verified ),
   universities ( id, name, slug ),
-  campuses ( id, name, slug )
+  campuses ( id, name, slug ),
+  property_features ( features ( name ) )
 `
