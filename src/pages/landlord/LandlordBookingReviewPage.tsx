@@ -32,7 +32,7 @@ import LandlordListingPaymentModal from '../../components/landlord/LandlordListi
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 import { useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
-import NswTenancyAgreementExplainer from '../../components/NswTenancyAgreementExplainer'
+import TenancyAgreementExplainer from '../../components/TenancyAgreementExplainer'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
@@ -841,12 +841,17 @@ export default function LandlordBookingReviewPage() {
 
         {(booking.status === 'bond_pending' ||
           booking.status === 'confirmed' ||
-          booking.status === 'active') && (
+          booking.status === 'active') &&
+          property && (
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
               Tenancy agreement
             </h2>
-            <NswTenancyAgreementExplainer />
+            <TenancyAgreementExplainer
+              state={property.state ?? ''}
+              propertyType={property.property_type ?? ''}
+              isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+            />
             <BookingLeasePanel bookingId={booking.id} refreshKey={leasePanelRefreshKey} />
           </section>
         )}

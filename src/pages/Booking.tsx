@@ -38,6 +38,7 @@ import {
   fallbackSchemeLodgementDeadlineBold,
 } from '../lib/tenancy/bondCopy'
 import { resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
+import { statutoryRentBankTransferCopy, normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
 import {
   listingIsoDateUtc,
   normalizeListingBound,
@@ -1324,7 +1325,7 @@ export default function Booking() {
   const tenancyPackage = useMemo(
     () =>
       resolveTenancyPackage({
-        state: property?.state ?? 'NSW',
+        state: property?.state ?? '',
         property_type: property?.property_type ?? '',
         is_registered_rooming_house: Boolean(property?.is_registered_rooming_house),
         date: moveIn || undefined,
@@ -1493,9 +1494,9 @@ export default function Booking() {
       ? { paddingBottom: `max(12rem, ${keyboardInsetPx + 48}px)` }
       : undefined
 
-  const stateAu = property?.state?.trim().toUpperCase() ?? ''
+  const stateAu = normalizeAuStateCode(property?.state)
   const rtaExemptArrangement = isBoardingLodgerBondContext(property?.property_type)
-  const showNswResidentialTenancyRentCopy = stateAu === 'NSW' && !rtaExemptArrangement
+  const statutoryRentCopy = statutoryRentBankTransferCopy(property?.state, rtaExemptArrangement)
 
   return (
     <div
@@ -1800,12 +1801,8 @@ export default function Booking() {
               can also pay rent by bank transfer. There is no legal requirement to offer bank transfer for this listing type,
               but both options are available for consistency.
             </p>
-          ) : showNswResidentialTenancyRentCopy ? (
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Under NSW residential tenancy rules, your landlord must offer you a free bank transfer option for rent (s.35{' '}
-              <span className="whitespace-nowrap">Residential Tenancies Act 2010</span>). You may still choose to pay by
-              card through Quni if you prefer.
-            </p>
+          ) : statutoryRentCopy ? (
+            <p className="text-sm text-gray-600 leading-relaxed">{statutoryRentCopy}</p>
           ) : (
             <p className="text-sm text-gray-600 leading-relaxed">
               Bank transfer and card payment through Quni are available. Card surcharges apply at actual cost.
@@ -1928,7 +1925,7 @@ export default function Booking() {
                 </p>
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {(property.state ?? 'NSW').toUpperCase()} — state bond authority
+                    {(stateAu || 'Your state')} — state bond authority
                   </p>
                   <p className="mt-1">{fallbackBondAuthorityPublicLine(property.state)}</p>
                   <NswRentalBondOnlineLink when={(property.state ?? '').toUpperCase() === 'NSW'} />

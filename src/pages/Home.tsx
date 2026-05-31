@@ -89,7 +89,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-5',
     q: 'Where is my data stored if I am an international student?',
-    a: 'On Australian infrastructure in Sydney. See our guide for international students for how account, verification, and tenancy data is handled under Australian law.',
+    a: 'On Australian infrastructure. See our guide for international students for how account, verification, and tenancy data is handled under Australian law.',
     linkTo: '/international',
   },
 ] as const

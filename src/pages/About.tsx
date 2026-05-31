@@ -39,7 +39,7 @@ export default function About() {
                 Quni Living is her answer to that gap. A platform built not just for listings, but for compatibility,
                 reliability, and outcomes. Students find verified homes that suit how they actually live. Landlords
                 access a targeted, trustworthy tenant pool without the friction of traditional property management.
-                Every part of the platform, from AI-assisted tools to NSW-compliant tenancy agreements, reflects
+                Every part of the platform, from AI-assisted tools to state-compliant tenancy agreements where supported, reflects
                 Quinn&apos;s belief that the rental experience should be seamless, intentional, and fair for both sides.
               </p>
               <p>

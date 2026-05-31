@@ -101,8 +101,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
         question: 'Where is my data stored if I am studying in Australia from overseas?',
         answer: (
           <>
-            Your account, verification documents, and tenancy records are stored on Australian infrastructure in
-            Sydney. See our page for {internationalStudentsLink} for how Australian law applies.
+            Your account, verification documents, and tenancy records are stored on Australian infrastructure.
+            See our page for {internationalStudentsLink} for how Australian law applies.
           </>
         ),
       },

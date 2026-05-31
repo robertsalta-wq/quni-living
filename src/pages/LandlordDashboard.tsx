@@ -43,6 +43,7 @@ import {
   landlordServiceTierTitle,
   parseLandlordServiceTier,
 } from '../lib/landlordServiceTier'
+import { signedTenancyAgreementDownloadFilename } from '../lib/tenancy/jurisdictionCopy'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -69,7 +70,7 @@ type LandlordAgreementSignedPaths =
   | { kind: 'single'; path: string }
 
 type BookingWithRelations = BookingRow & {
-  properties: { title: string; slug: string; suburb: string | null } | null
+  properties: { title: string; slug: string; suburb: string | null; state: string | null } | null
   student_profiles: LandlordSafeStudentSnapshot | null
   /** DocuSeal signer embed — only while signing is pending (not after `status === 'signed'`). */
   landlord_agreement_signing_url: string | null
@@ -356,7 +357,7 @@ export default function LandlordDashboard() {
   const [agreementActionBusyId, setAgreementActionBusyId] = useState<string | null>(null)
 
   const downloadAgreementFromSignedUrls = useCallback(
-    async (signedRta: string, signedAddendum: string | null) => {
+    async (signedRta: string, signedAddendum: string | null, state: string | null | undefined) => {
       const openUrl = (url: string) => {
         window.open(url, '_blank', 'noopener,noreferrer')
       }
@@ -379,7 +380,7 @@ export default function LandlordDashboard() {
         }
       }
       if (signedAddendum) {
-        await trySaveAs(signedRta, 'NSW-Residential-Tenancy-Agreement.pdf')
+        await trySaveAs(signedRta, signedTenancyAgreementDownloadFilename(state))
         await new Promise((r) => setTimeout(r, 900))
         await trySaveAs(signedAddendum, 'Quni-Platform-Addendum.pdf')
       } else {
@@ -426,12 +427,12 @@ export default function LandlordDashboard() {
             bucket.createSignedUrl(signed.addendum, expirySec),
           ])
           if (!r1.error && !r2.error && r1.data?.signedUrl && r2.data?.signedUrl) {
-            await downloadAgreementFromSignedUrls(r1.data.signedUrl, r2.data.signedUrl)
+            await downloadAgreementFromSignedUrls(r1.data.signedUrl, r2.data.signedUrl, b.properties?.state)
             return
           }
           const api = await fetchLeaseSignedUrlsViaApi(b.id)
           if (api?.signed_url_rta && api.signed_url_addendum) {
-            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum)
+            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum, b.properties?.state)
             return
           }
           setLeaseDownloadErrorId(b.id)
@@ -441,16 +442,16 @@ export default function LandlordDashboard() {
         if (signed?.kind === 'single') {
           const r = await bucket.createSignedUrl(signed.path, expirySec)
           if (!r.error && r.data?.signedUrl) {
-            await downloadAgreementFromSignedUrls(r.data.signedUrl, null)
+            await downloadAgreementFromSignedUrls(r.data.signedUrl, null, b.properties?.state)
             return
           }
           const api = await fetchLeaseSignedUrlsViaApi(b.id)
           if (api?.signed_url_rta && api.signed_url_addendum) {
-            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum)
+            await downloadAgreementFromSignedUrls(api.signed_url_rta, api.signed_url_addendum, b.properties?.state)
             return
           }
           if (api?.signed_url) {
-            await downloadAgreementFromSignedUrls(api.signed_url, null)
+            await downloadAgreementFromSignedUrls(api.signed_url, null, b.properties?.state)
             return
           }
           setLeaseDownloadErrorId(b.id)
@@ -465,11 +466,11 @@ export default function LandlordDashboard() {
 
         const apiOnly = await fetchLeaseSignedUrlsViaApi(b.id)
         if (apiOnly?.signed_url_rta && apiOnly.signed_url_addendum) {
-          await downloadAgreementFromSignedUrls(apiOnly.signed_url_rta, apiOnly.signed_url_addendum)
+          await downloadAgreementFromSignedUrls(apiOnly.signed_url_rta, apiOnly.signed_url_addendum, b.properties?.state)
           return
         }
         if (apiOnly?.signed_url) {
-          await downloadAgreementFromSignedUrls(apiOnly.signed_url, null)
+          await downloadAgreementFromSignedUrls(apiOnly.signed_url, null, b.properties?.state)
           return
         }
 
@@ -522,7 +523,7 @@ export default function LandlordDashboard() {
       if (propRes.error) throw propRes.error
       if (bookRes.error) throw bookRes.error
 
-      type BookingPropertyDbRow = { id: string; title: string; slug: string; suburb: string | null }
+      type BookingPropertyDbRow = { id: string; title: string; slug: string; suburb: string | null; state: string | null }
 
       const bookingRows = (bookRes.data ?? []) as BookingRow[]
       const studentIds = [...new Set(bookingRows.map((b) => b.student_id).filter(Boolean))] as string[]
@@ -593,7 +594,7 @@ export default function LandlordDashboard() {
             })()
           : Promise.resolve({ data: [] as LandlordLoadedStudentRow[], error: null }),
         bookingPropertyIds.length > 0
-          ? supabase.from('properties').select('id, title, slug, suburb').in('id', bookingPropertyIds)
+          ? supabase.from('properties').select('id, title, slug, suburb, state').in('id', bookingPropertyIds)
           : Promise.resolve({ data: [] as BookingPropertyDbRow[], error: null }),
         bookingIds.length > 0
           ? supabase
@@ -621,10 +622,15 @@ export default function LandlordDashboard() {
         }
       }
 
-      const propertyById = new Map<string, { title: string; slug: string; suburb: string | null }>()
+      const propertyById = new Map<string, { title: string; slug: string; suburb: string | null; state: string | null }>()
       for (const row of (bookingPropsRes.data ?? []) as BookingPropertyDbRow[]) {
         if (row?.id) {
-          propertyById.set(row.id, { title: row.title, slug: row.slug, suburb: row.suburb ?? null })
+          propertyById.set(row.id, {
+            title: row.title,
+            slug: row.slug,
+            suburb: row.suburb ?? null,
+            state: row.state ?? null,
+          })
         }
       }
 
@@ -633,7 +639,9 @@ export default function LandlordDashboard() {
         const pr = b.property_id ? propertyById.get(b.property_id) : undefined
         return {
           ...b,
-          properties: pr ? { title: pr.title, slug: pr.slug, suburb: pr.suburb } : null,
+          properties: pr
+            ? { title: pr.title, slug: pr.slug, suburb: pr.suburb, state: pr.state }
+            : null,
           student_profiles: sp ? { ...sp } : null,
           landlord_agreement_signing_url: signingUrlByBookingId.get(b.id) ?? null,
           landlord_agreement_signed_paths: signedPathsByBookingId.get(b.id) ?? null,

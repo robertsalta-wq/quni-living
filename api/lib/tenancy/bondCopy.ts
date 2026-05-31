@@ -3,6 +3,7 @@
  * Paragraphs live here, not on TenancyBondRules.
  */
 import type { TenancyBondRules } from './rules/types.js'
+import { landlordHeldBondIntroParagraph, normalizeAuStateCode } from './jurisdictionCopy.js'
 
 export interface BondRegulatoryCopy {
   mode: 'landlord_held' | 'scheme'
@@ -31,14 +32,14 @@ export function bondStepRegulatoryCopy(
   bond: TenancyBondRules,
   stateCode: string | null | undefined,
 ): BondRegulatoryCopy {
-  const st = (stateCode || 'NSW').toUpperCase()
+  const st = normalizeAuStateCode(stateCode) || 'NSW'
 
   if (!bond.schemeApplies) {
     return {
       mode: 'landlord_held',
       bondCapFragment: bondCapFragmentFromBond(bond),
       landlordHeldParagraphs: [
-        'As this is a boarding/lodger arrangement, the Residential Tenancies Act does not apply. Your bond is held directly by your landlord and is not required to be lodged with NSW Fair Trading.',
+        landlordHeldBondIntroParagraph(stateCode, bond.landlordAckAuthorityName),
         'We strongly recommend getting a written receipt when you pay your bond, and keeping a copy for your records.',
         'Your landlord can generate an official bond receipt through their Quni Living dashboard.',
       ],
@@ -49,7 +50,7 @@ export function bondStepRegulatoryCopy(
       authorityPublicLine: '',
       amberTitle: '',
       amberBody: '',
-      acknowledgementCheckbox: `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'NSW Fair Trading'}.`,
+      acknowledgementCheckbox: `I understand the bond is paid directly to my landlord and will not be lodged with ${bond.landlordAckAuthorityName ?? 'the relevant state regulator'}.`,
     }
   }
 

@@ -11,7 +11,7 @@ import { StudentStripePaymentsCard } from '../components/student/StudentStripePa
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
 import { isBoardingLodgerBondContext } from '../lib/listings'
-import NswTenancyAgreementExplainer from '../components/NswTenancyAgreementExplainer'
+import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
 import { useConversationInbox } from '../hooks/useConversationInbox'
@@ -23,7 +23,7 @@ type BookingStatus = BookingRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type'
+  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'state' | 'is_registered_rooming_house'
 >
 
 type BookingWithProperty = BookingRow & {
@@ -133,7 +133,7 @@ export default function StudentDashboard() {
 
       const bookRes = await supabase
         .from('bookings')
-        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type )')
+        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, state, is_registered_rooming_house )')
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
 
@@ -448,7 +448,11 @@ export default function StudentDashboard() {
                       b.status === 'confirmed' ||
                       b.status === 'active') && (
                       <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
-                        <NswTenancyAgreementExplainer />
+                        <TenancyAgreementExplainer
+                          state={prop?.state ?? ''}
+                          propertyType={prop?.property_type ?? ''}
+                          isRegisteredRoomingHouse={Boolean(prop?.is_registered_rooming_house)}
+                        />
                         <BookingLeasePanel bookingId={b.id} />
                       </div>
                     )}
