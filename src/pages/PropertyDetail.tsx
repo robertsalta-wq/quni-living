@@ -201,11 +201,8 @@ function PreviewGateOverlay({
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#FFF8F0]/80 backdrop-blur-[2px] px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white border border-[#FF6F61]/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
-        <h2 className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance">
-          Sign in to message the landlord
-        </h2>
-        <p className="text-sm text-stone-600 leading-relaxed">
-          Create a free account to view this listing and start a secure conversation on Quni.
+        <p className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance leading-snug">
+          Create a free account to see the full listing and send an enquiry.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
           <Link
@@ -1303,10 +1300,6 @@ export default function PropertyDetail() {
               </div>
               <p className="text-base text-stone-700">{previewSubtitleLine}</p>
               {previewSpecsLine ? <p className="text-sm text-stone-600">{previewSpecsLine}</p> : null}
-              <p className="text-sm text-stone-500 pt-1">
-                Sign in to see the full description, amenities, availability, and landlord contact details. Listing
-                locations show suburb only — not the street address.
-              </p>
             </div>
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
               <div className="rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
