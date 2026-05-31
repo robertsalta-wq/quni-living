@@ -17,11 +17,7 @@ import { BondReceiptPdf } from './BondReceiptPdf.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
 /** Mirrors `src/lib/listings.ts` — kept local so Vercel’s API TS compile graph stays self-contained. */
-function isBoardingLodgerBondContext(
-  propertyType: string | null | undefined,
-  listingType: string | null | undefined,
-): boolean {
-  if (listingType === 'homestay') return true
+function isBoardingLodgerBondContext(propertyType: string | null | undefined): boolean {
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
   if (!pt) return false
   return ['private_room_landlord_on_site', 'boarding', 'lodger', 'homestay'].includes(pt)
@@ -227,7 +223,7 @@ export default async function handler(req: any, res: any) {
 
   const { data: prop, error: pErr } = await admin
     .from('properties')
-    .select('address, suburb, state, postcode, property_type, listing_type, bond')
+    .select('address, suburb, state, postcode, property_type, bond')
     .eq('id', tenancy.property_id)
     .maybeSingle()
 
@@ -236,7 +232,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const propRec = prop as Record<string, unknown>
-  if (!isBoardingLodgerBondContext(prop.property_type, prop.listing_type)) {
+  if (!isBoardingLodgerBondContext(prop.property_type)) {
     return res.status(400).json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' })
   }
 

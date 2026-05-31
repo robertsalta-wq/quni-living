@@ -92,7 +92,7 @@ function bookingOccupantCount(booking: Pick<BookingRow, 'occupant_count'>): numb
 function occupancyMatch(
   occ: string | null | undefined,
   roomType: string | null | undefined,
-  listingType: string | null | undefined,
+  propertyType: string | null | undefined,
   maxOccupants: number,
   bookOcc: number | null,
 ): FitRowStatus {
@@ -106,10 +106,10 @@ function occupancyMatch(
   }
 
   const rt = (roomType ?? '').toLowerCase()
-  const lt = (listingType ?? '').toLowerCase()
+  const pt = (propertyType ?? '').toLowerCase()
   if (occ === 'couple') {
     if (maxOccupants >= 2) return 'match'
-    if (rt === 'shared' || lt === 'homestay') return 'match'
+    if (rt === 'shared' || pt === 'private_room_landlord_on_site') return 'match'
     if (rt === 'single' || rt === 'studio') return 'mismatch'
     return 'unknown'
   }
@@ -129,9 +129,7 @@ function studentOccupancySide(occ: string | null | undefined, bookOcc: number | 
 function propertyOccupancySide(property: PropertyRow | null, maxOcc: number): string {
   const parts: string[] = [maxOcc >= 2 ? `Up to ${maxOcc} occupants` : '1 occupant max']
   const rt = property?.room_type?.trim()
-  const lt = property?.listing_type?.trim()
   if (rt) parts.push(rt.replace(/_/g, ' '))
-  if (lt && lt !== rt) parts.push(lt.replace(/_/g, ' '))
   return parts.join(' · ')
 }
 
@@ -227,7 +225,7 @@ export function buildBookingFitSummary(args: {
   const occStatus = occupancyMatch(
     occ,
     property?.room_type ?? null,
-    property?.listing_type ?? null,
+    property?.property_type ?? null,
     maxOcc,
     bookOcc,
   )

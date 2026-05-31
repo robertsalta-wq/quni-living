@@ -17,9 +17,6 @@ export async function fetchRelatedListings(mode: RelatedListingsMode): Promise<P
     listingIsoDateUtc(),
   ).eq('status', 'active')
 
-  if (mode === 'rent') {
-    query = query.eq('listing_type', 'rent')
-  }
   if (mode === 'furnished') {
     query = query.eq('furnished', true)
   }

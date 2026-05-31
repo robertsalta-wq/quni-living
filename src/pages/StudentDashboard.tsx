@@ -23,7 +23,7 @@ type BookingStatus = BookingRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'listing_type'
+  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type'
 >
 
 type BookingWithProperty = BookingRow & {
@@ -133,7 +133,7 @@ export default function StudentDashboard() {
 
       const bookRes = await supabase
         .from('bookings')
-        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, listing_type )')
+        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type )')
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
 
@@ -454,7 +454,7 @@ export default function StudentDashboard() {
                     )}
                     {(b.status === 'confirmed' || b.status === 'active') &&
                       prop &&
-                      isBoardingLodgerBondContext(prop.property_type, prop.listing_type) && (
+                      isBoardingLodgerBondContext(prop.property_type) && (
                         <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
                           {bondDownloadErrorId === b.id ? (
                             <p className="text-amber-900 text-xs leading-relaxed">

@@ -560,7 +560,7 @@ export default function LandlordBookingReviewPage() {
     Boolean(tenancy) &&
     !tenancy?.bond_lodged_at &&
     property &&
-    isBoardingLodgerBondContext(property.property_type, property.listing_type) &&
+    isBoardingLodgerBondContext(property.property_type) &&
     (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
 
   const flowLabel =

@@ -3,6 +3,7 @@ import {
   accommodationChoiceFromFields,
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
+  roomingHouseFieldErrors,
 } from './landlordAccommodationChoice'
 
 describe('landlordAccommodationChoice', () => {
@@ -27,6 +28,21 @@ describe('landlordAccommodationChoice', () => {
     ).toEqual({
       propertyListingType: 'private_room_landlord_off_site',
       roomType: 'studio',
+    })
+  })
+
+  it('flags rooming house conflicts and missing registration', () => {
+    expect(
+      roomingHouseFieldErrors('private_room_landlord_on_site', true, 'REG-123'),
+    ).toEqual({
+      onSiteConflict: expect.stringContaining("can't have the landlord living on site"),
+      missingRegistration: null,
+    })
+    expect(
+      roomingHouseFieldErrors('private_room_landlord_off_site', true, ''),
+    ).toEqual({
+      onSiteConflict: null,
+      missingRegistration: expect.stringContaining('registration number'),
     })
   })
 })

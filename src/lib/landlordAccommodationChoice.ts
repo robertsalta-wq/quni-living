@@ -110,6 +110,28 @@ export function roomForRentOptions(choice: AccommodationUiChoice): [RoomType, st
 }
 
 /** Coerce stored/partial values before save. */
+export const ROOMING_HOUSE_ON_SITE_ERROR =
+  "A registered rooming house can't have the landlord living on site. Either untick the rooming house checkbox or change the accommodation type."
+
+export const ROOMING_HOUSE_REGISTRATION_REQUIRED_ERROR =
+  "Enter your rooming house registration number, or untick registered rooming house if this doesn't apply."
+
+export function roomingHouseFieldErrors(
+  propertyListingType: PropertyListingType,
+  isRegisteredRoomingHouse: boolean,
+  roomingHouseRegistrationNumber: string,
+): { onSiteConflict: string | null; missingRegistration: string | null } {
+  const onSiteConflict =
+    isRegisteredRoomingHouse && propertyListingType === 'private_room_landlord_on_site'
+      ? ROOMING_HOUSE_ON_SITE_ERROR
+      : null
+  const missingRegistration =
+    isRegisteredRoomingHouse && !roomingHouseRegistrationNumber.trim()
+      ? ROOMING_HOUSE_REGISTRATION_REQUIRED_ERROR
+      : null
+  return { onSiteConflict, missingRegistration }
+}
+
 export function normalizeAccommodationForSave(
   propertyListingType: PropertyListingType,
   roomType: RoomType | '',

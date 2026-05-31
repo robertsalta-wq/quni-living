@@ -332,7 +332,7 @@ export default async function handler(request: Request) {
           bond,
           lease_length,
           available_from,
-          listing_type,
+          property_type,
           universities ( name ),
           campuses ( name, address ),
           property_features ( features ( name ) )
@@ -457,7 +457,7 @@ export default async function handler(request: Request) {
       if (prop.bond != null) propParts.push(`Bond (weeks/value on file): ${String(prop.bond)}`)
       if (prop.lease_length) propParts.push(`Typical lease on listing: ${String(prop.lease_length)}`)
       if (prop.available_from) propParts.push(`Available from: ${String(prop.available_from).slice(0, 10)}`)
-      if (prop.listing_type) propParts.push(`Listing category: ${String(prop.listing_type)}`)
+      if (prop.property_type) propParts.push(`Accommodation type: ${String(prop.property_type)}`)
       const featLine = propertyFeaturesLine(prop.property_features)
       if (featLine) propParts.push(featLine)
     }

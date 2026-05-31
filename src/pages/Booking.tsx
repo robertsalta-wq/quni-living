@@ -1494,7 +1494,7 @@ export default function Booking() {
       : undefined
 
   const stateAu = property?.state?.trim().toUpperCase() ?? ''
-  const rtaExemptArrangement = isBoardingLodgerBondContext(property?.property_type, property?.listing_type)
+  const rtaExemptArrangement = isBoardingLodgerBondContext(property?.property_type)
   const showNswResidentialTenancyRentCopy = stateAu === 'NSW' && !rtaExemptArrangement
 
   return (

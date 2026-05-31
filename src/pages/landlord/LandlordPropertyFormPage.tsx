@@ -11,6 +11,7 @@ import {
   fieldsFromAccommodationChoice,
   normalizeAccommodationForSave,
   roomForRentOptions,
+  roomingHouseFieldErrors,
   showRoomForRentSelect,
   type AccommodationUiChoice,
 } from '../../lib/landlordAccommodationChoice'
@@ -92,12 +93,6 @@ type NearbyCampusSuggestion = {
   distanceKm: number
 }
 
-const LISTING_OPTIONS = [
-  { value: 'rent' as const, label: 'Rent' },
-  { value: 'homestay' as const, label: 'Homestay' },
-  { value: 'student_house' as const, label: 'Student House' },
-]
-
 const LEASE_OPTIONS = ['Flexible', '6 months', '12 months', '2 years'] as const
 
 const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft' as const
@@ -108,7 +103,6 @@ type LandlordPropertyDraftV1 = {
   v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
   title: string
   description: string
-  listingType: 'rent' | 'homestay' | 'student_house' | ''
   bedrooms: string
   bathrooms: string
   roomType: RoomType | ''
@@ -167,11 +161,6 @@ function landlordPropertyDraftFromState(
   return { v: LANDLORD_PROPERTY_DRAFT_VERSION, ...s }
 }
 
-function parseDraftListingType(raw: unknown): LandlordPropertyDraftV1['listingType'] {
-  if (raw === 'rent' || raw === 'homestay' || raw === 'student_house' || raw === '') return raw
-  return 'rent'
-}
-
 function parseDraftRoomType(raw: unknown): RoomType | '' {
   if (raw === '') return ''
   if (typeof raw === 'string' && isRoomType(raw)) return raw
@@ -200,7 +189,6 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       v: LANDLORD_PROPERTY_DRAFT_VERSION,
       title: typeof d.title === 'string' ? d.title : '',
       description: typeof d.description === 'string' ? d.description : '',
-      listingType: parseDraftListingType(d.listingType),
       bedrooms: typeof d.bedrooms === 'string' ? d.bedrooms : '1',
       bathrooms: typeof d.bathrooms === 'string' ? d.bathrooms : '1',
       roomType: parseDraftRoomType(d.roomType),
@@ -259,7 +247,6 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.selectedFeatureIds.length > 0 ||
     d.universityId.trim() !== '' ||
     d.campusId.trim() !== '' ||
-    d.listingType !== 'rent' ||
     d.bedrooms !== '1' ||
     d.bathrooms !== '1' ||
     d.roomType !== 'apartment' ||
@@ -334,7 +321,7 @@ export default function LandlordPropertyFormPage() {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [listingType, setListingType] = useState<'rent' | 'homestay' | 'student_house' | ''>('rent')
+  const [showRoomingHouseValidation, setShowRoomingHouseValidation] = useState(false)
 
   const [bedrooms, setBedrooms] = useState('1')
   const [bathrooms, setBathrooms] = useState('1')
@@ -355,6 +342,16 @@ export default function LandlordPropertyFormPage() {
   const [initialServiceTier, setInitialServiceTier] = useState<LandlordServiceTier>('listing')
   const [isRegisteredRoomingHouse, setIsRegisteredRoomingHouse] = useState(false)
   const [roomingHouseRegistrationNumber, setRoomingHouseRegistrationNumber] = useState('')
+  const roomingHouseErrors = useMemo(
+    () => roomingHouseFieldErrors(propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber),
+    [propertyListingType, isRegisteredRoomingHouse, roomingHouseRegistrationNumber],
+  )
+
+  useEffect(() => {
+    if (!roomingHouseErrors.onSiteConflict && !roomingHouseErrors.missingRegistration) {
+      setShowRoomingHouseValidation(false)
+    }
+  }, [roomingHouseErrors.onSiteConflict, roomingHouseErrors.missingRegistration])
   const [furnished, setFurnished] = useState(false)
   const [linenSupplied, setLinenSupplied] = useState(false)
   const [weeklyCleaning, setWeeklyCleaning] = useState(false)
@@ -521,7 +518,6 @@ export default function LandlordPropertyFormPage() {
       landlordPropertyDraftFromState({
         title,
         description,
-        listingType,
         bedrooms,
         bathrooms,
         roomType,
@@ -558,7 +554,6 @@ export default function LandlordPropertyFormPage() {
     [
       title,
       description,
-      listingType,
       bedrooms,
       bathrooms,
       roomType,
@@ -671,7 +666,7 @@ export default function LandlordPropertyFormPage() {
     resumeDraftBannerDismissedKeyRef.current = location.key
     setTitle('')
     setDescription('')
-    setListingType('rent')
+    setShowRoomingHouseValidation(false)
     setBedrooms('1')
     setBathrooms('1')
     setRoomType('apartment')
@@ -816,7 +811,6 @@ export default function LandlordPropertyFormPage() {
         setExistingListingStatus(prop.status)
         setTitle(prop.title)
         setDescription(prop.description ?? '')
-        setListingType(prop.listing_type ?? 'rent')
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
         setBathrooms(prop.bathrooms != null ? String(prop.bathrooms) : '1')
         setRoomType(prop.room_type ?? 'single')
@@ -937,7 +931,6 @@ export default function LandlordPropertyFormPage() {
 
       setTitle(parsed.title)
       setDescription(parsed.description)
-      setListingType(parsed.listingType)
       setBedrooms(parsed.bedrooms)
       setBathrooms(parsed.bathrooms)
       setRoomType(parsed.roomType)
@@ -1523,6 +1516,12 @@ export default function LandlordPropertyFormPage() {
       setSubmitError(managedTierUnavailableReason)
       return
     }
+
+    if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
+      setShowRoomingHouseValidation(true)
+      return
+    }
+
     if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
       setSubmitError('Managed properties cannot be changed back to Quni Listing.')
       return
@@ -1572,7 +1571,7 @@ export default function LandlordPropertyFormPage() {
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
       description: description.trim() || null,
-      listing_type: listingType || null,
+      listing_type: null,
       bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
       bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
       room_type: accommodation.roomType,
@@ -1848,23 +1847,6 @@ export default function LandlordPropertyFormPage() {
                   className={inputClass}
                 />
               </div>
-              <div>
-                <label htmlFor="pf-listing" className={labelClass}>
-                  Listing type
-                </label>
-                <select
-                  id="pf-listing"
-                  value={listingType}
-                  onChange={(e) => setListingType(e.target.value as typeof listingType)}
-                  className={inputClass}
-                >
-                  {LISTING_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>,
             'section-basic-info',
           )}
@@ -1968,12 +1950,17 @@ export default function LandlordPropertyFormPage() {
                     <span className="text-sm text-gray-700">This property is a registered rooming house</span>
                   </span>
                   <FieldHelpHint label="What is a registered rooming house?">
-                    A <strong>registered rooming house</strong> is a specific legal category (e.g. under the NSW
-                    Boarding Houses Act) for properties with multiple residents and shared facilities — not simply a
-                    share house. Most single-room listings should leave this <strong>unchecked</strong>. Only tick if
-                    you have a council registration number.
+                    A <strong>registered rooming/boarding house</strong> is a regulated category — not a normal share
+                    house. Rules and registration differ by state (e.g. NSW boarding houses, VIC rooming houses, QLD
+                    rooming accommodation). Most single-room listings should leave this <strong>unchecked</strong>. Only
+                    tick if you have the relevant registration number.
                   </FieldHelpHint>
                 </label>
+                {showRoomingHouseValidation && roomingHouseErrors.onSiteConflict ? (
+                  <p className="mt-2 text-sm text-red-600" role="alert">
+                    {roomingHouseErrors.onSiteConflict}
+                  </p>
+                ) : null}
                 {isRegisteredRoomingHouse ? (
                   <div className="mt-3 pl-6">
                     <label htmlFor="pf-rooming-reg" className={labelClass}>
@@ -1987,6 +1974,11 @@ export default function LandlordPropertyFormPage() {
                       className={inputClass}
                       autoComplete="off"
                     />
+                    {showRoomingHouseValidation && roomingHouseErrors.missingRegistration ? (
+                      <p className="mt-2 text-sm text-red-600" role="alert">
+                        {roomingHouseErrors.missingRegistration}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
