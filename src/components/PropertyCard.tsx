@@ -5,6 +5,11 @@ import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { formatDistanceKm } from '../lib/workplaceLocation'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
+import {
+  formatListingCardBedIconLabel,
+  formatListingCardBathIconLabel,
+  formatListingCardContextLine,
+} from '../lib/listingAccommodationDisplay'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
 
 type Props = {
@@ -43,6 +48,9 @@ export function PropertyCard({
     property.room_type && isRoomType(property.room_type)
       ? ROOM_TYPE_LABELS[property.room_type]
       : null
+  const accommodationContextLine = formatListingCardContextLine(property)
+  const bedIconLabel = formatListingCardBedIconLabel(property)
+  const bathIconLabel = formatListingCardBathIconLabel(property)
 
   const to =
     linkSearch && linkSearch.length > 0
@@ -103,7 +111,7 @@ export function PropertyCard({
 
       <div className="p-4">
         <div className="flex items-baseline justify-between mb-1 gap-2">
-          <span className="text-xl font-bold text-gray-900">
+          <span className="text-xl font-bold text-gray-900 whitespace-nowrap">
             {listingRent.showFromPrefix ? (
               <span className="text-sm font-normal text-gray-500">From </span>
             ) : null}
@@ -117,13 +125,17 @@ export function PropertyCard({
           )}
         </div>
 
+        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-1">
+          {property.title}
+        </h3>
+
         {listingRent.breakdownLine ? (
           <p className="text-[11px] text-gray-500 leading-snug mb-1 line-clamp-2">{listingRent.breakdownLine}</p>
         ) : null}
 
-        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-1">
-          {property.title}
-        </h3>
+        {accommodationContextLine ? (
+          <p className="text-xs text-gray-600 leading-snug mb-2 line-clamp-2">{accommodationContextLine}</p>
+        ) : null}
 
         <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
           <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -150,28 +162,32 @@ export function PropertyCard({
         )}
 
         <div className="flex items-center gap-3 text-xs text-gray-600 mb-3 flex-wrap">
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-              />
-            </svg>
-            {property.bedrooms ?? 1} bed
-          </span>
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-              />
-            </svg>
-            {property.bathrooms ?? 1} bath
-          </span>
+          {bedIconLabel ? (
+            <span className="flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              {bedIconLabel}
+            </span>
+          ) : null}
+          {bathIconLabel ? (
+            <span className="flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                />
+              </svg>
+              {bathIconLabel}
+            </span>
+          ) : null}
           {property.universities && (
             <span className="flex items-center gap-1 min-w-0">
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>

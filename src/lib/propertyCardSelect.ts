@@ -5,6 +5,7 @@ export const PROPERTY_CARD_LIST_SELECT = `
   slug,
   rent_per_week,
   room_type,
+  property_type,
   images,
   bedrooms,
   bathrooms,

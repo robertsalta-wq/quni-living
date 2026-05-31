@@ -39,6 +39,9 @@ import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
+import {
+  formatListingDetailAccommodation,
+} from '../lib/listingAccommodationDisplay'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
@@ -1019,6 +1022,7 @@ export default function PropertyDetail() {
   const rent = listingRent.primaryAmount
   const beds = property.bedrooms ?? 1
   const baths = property.bathrooms ?? 1
+  const detailAccommodation = formatListingDetailAccommodation(property)
 
   const availableFormatted = (() => {
     const raw = (property.available_from ?? '').trim().slice(0, 10)
@@ -1047,13 +1051,11 @@ export default function PropertyDetail() {
   if (campusDisplay) previewSubtitleParts.push(campusDisplay)
   const previewSubtitleLine = previewSubtitleParts.join(' · ')
 
-  const previewSpecsLine = [
-    roomLabel,
-    `${beds} bed${beds !== 1 ? 's' : ''}`,
-    `${baths} bath${baths !== 1 ? 's' : ''}`,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const previewSpecsLine = detailAccommodation
+    ? [roomLabel, detailAccommodation].filter(Boolean).join(' · ')
+    : [roomLabel, `${beds} bed${beds !== 1 ? 's' : ''}`, `${baths} bath${baths !== 1 ? 's' : ''}`]
+        .filter(Boolean)
+        .join(' · ')
 
   const listingMetaDesc = buildPropertyMetaDescription(property, { campusDisplay, roomLabel })
   const listingOg = (() => {
@@ -1315,8 +1317,14 @@ export default function PropertyDetail() {
                 </div>
                 <div className="py-4 space-y-2.5 border-b border-stone-100">
                   {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
-                  <SidebarRow label="Bedrooms">{beds}</SidebarRow>
-                  <SidebarRow label="Bathrooms">{baths}</SidebarRow>
+                  {detailAccommodation ? (
+                    <SidebarRow label="Accommodation">{detailAccommodation}</SidebarRow>
+                  ) : (
+                    <>
+                      <SidebarRow label="Bedrooms">{beds}</SidebarRow>
+                      <SidebarRow label="Bathrooms">{baths}</SidebarRow>
+                    </>
+                  )}
                 </div>
               </div>
             </aside>
