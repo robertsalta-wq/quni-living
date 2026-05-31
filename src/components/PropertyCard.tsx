@@ -223,27 +223,32 @@ export function PropertyCard({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 border-t border-gray-50 pt-3">
+        <div className="flex items-center justify-between gap-2 text-xs text-gray-400 border-t border-gray-50 pt-3">
           {guestVerifiedBadgeOnly ? (
             <VerifiedLandlordBadge className="shrink-0" />
           ) : (
             <>
-              <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0" aria-hidden>
-                {landlordInitial ? (
-                  <span className="text-[10px] font-semibold">{landlordInitial}</span>
-                ) : (
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                )}
+              {isVerified ? <VerifiedLandlordBadge className="shrink-0" /> : <span className="shrink-0" aria-hidden />}
+              <div className="flex items-center gap-1.5 min-w-0 ml-auto">
+                <div
+                  className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"
+                  aria-hidden
+                >
+                  {landlordInitial ? (
+                    <span className="text-[10px] font-semibold">{landlordInitial}</span>
+                  ) : (
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <span className="truncate min-w-0">{landlordName}</span>
               </div>
-              <span className="truncate min-w-0">{landlordName}</span>
-              {isVerified ? <VerifiedLandlordBadge className="shrink-0" /> : null}
             </>
           )}
         </div>
