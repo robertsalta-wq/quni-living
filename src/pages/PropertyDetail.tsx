@@ -43,7 +43,7 @@ import {
   formatListingDetailAccommodation,
 } from '../lib/listingAccommodationDisplay'
 import {
-  buildListingHighlightLabels,
+  buildListingInclusionLabels,
   buildListingPhotoBadges,
   listingHighlightSignals,
 } from '../lib/listingDisplayHighlights'
@@ -520,8 +520,8 @@ export default function PropertyDetail() {
     [property],
   )
 
-  const highlightLabels = useMemo(
-    () => (property ? buildListingHighlightLabels(property) : []),
+  const inclusionLabels = useMemo(
+    () => (property ? buildListingInclusionLabels(property) : []),
     [property],
   )
 
@@ -1361,11 +1361,11 @@ export default function PropertyDetail() {
                 />
               </div>
 
-              {highlightLabels.length > 0 && (
+              {inclusionLabels.length > 0 && (
                 <section className="space-y-2" aria-label="What's included">
                   <h2 className={sectionLabelClass}>What&apos;s included</h2>
                   <div className="flex flex-wrap gap-2">
-                    {highlightLabels.map((label) => (
+                    {inclusionLabels.map((label) => (
                       <span
                         key={label}
                         className="inline-flex items-center rounded-lg bg-[#8FB9AB] px-2.5 py-1 text-xs font-semibold text-white shadow-sm"

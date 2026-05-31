@@ -1,3 +1,9 @@
+import {
+  listingInclusionSummaryLabels,
+  resolvePropertyInclusionSignals,
+  type PropertyInclusionSignals,
+} from './propertyInclusionSignals'
+
 function featureDisplayNamesFromPropertyRow(property: ListingHighlightSource): string[] {
   const raw = property.property_features
   if (!Array.isArray(raw)) return []
@@ -8,11 +14,6 @@ function featureDisplayNamesFromPropertyRow(property: ListingHighlightSource): s
     })
     .filter(Boolean)
 }
-import {
-  listingInclusionSummaryLabels,
-  resolvePropertyInclusionSignals,
-  type PropertyInclusionSignals,
-} from './propertyInclusionSignals'
 
 export type ListingHighlightSource = {
   featured?: boolean | null
@@ -27,7 +28,12 @@ function normLabel(label: string): string {
   return label.trim().toLowerCase()
 }
 
-/** All inclusion + feature labels for chips (deduped, stable order). */
+/** Inclusion-only labels (furnished, linen, cleaning, bills, parking). */
+export function buildListingInclusionLabels(property: ListingHighlightSource): string[] {
+  return listingInclusionSummaryLabels(resolvePropertyInclusionSignals(property))
+}
+
+/** All inclusion + feature labels for detail amenities (deduped, stable order). */
 export function buildListingHighlightLabels(property: ListingHighlightSource): string[] {
   const signals = resolvePropertyInclusionSignals(property)
   const out: string[] = []
@@ -57,9 +63,7 @@ export function listingHighlightSignals(property: ListingHighlightSource): Prope
   return resolvePropertyInclusionSignals(property)
 }
 
-/** Cap overlay badges on photos so galleries stay readable. */
-export const LISTING_PHOTO_BADGE_MAX = 8
-
+/** Photo overlays: featured + inclusions only (never amenity features). */
 export function buildListingPhotoBadges(
   property: ListingHighlightSource,
 ): { id: string; label: string; variant: 'featured' | 'inclusion' }[] {
@@ -67,12 +71,12 @@ export function buildListingPhotoBadges(
   if (property.featured) {
     badges.push({ id: 'featured', label: 'Featured', variant: 'featured' })
   }
-  for (const label of buildListingHighlightLabels(property)) {
+  for (const label of buildListingInclusionLabels(property)) {
     badges.push({
       id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       label,
       variant: 'inclusion',
     })
   }
-  return badges.slice(0, LISTING_PHOTO_BADGE_MAX)
+  return badges
 }

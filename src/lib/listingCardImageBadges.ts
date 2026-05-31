@@ -6,7 +6,7 @@ export type ListingCardImageBadge = {
   variant: 'featured' | 'inclusion'
 }
 
-/** Photo overlay badges (capped); use buildListingHighlightLabels for full list in card body. */
+/** Photo overlay badges: featured + inclusions only. */
 export function buildListingCardImageBadges(property: ListingHighlightSource): ListingCardImageBadge[] {
   return buildListingPhotoBadges(property)
 }

@@ -5,13 +5,17 @@ import {
 } from './listingCardImageBadges'
 
 describe('buildListingCardImageBadges', () => {
-  it('includes inclusion badges from property fields and features', () => {
+  it('includes inclusion badges only, not amenity features', () => {
     const badges = buildListingCardImageBadges({
       featured: true,
       furnished: true,
       linen_supplied: true,
       weekly_cleaning_service: false,
-      property_features: [{ features: { name: 'Bills included' } }],
+      property_features: [
+        { features: { name: 'Bills included' } },
+        { features: { name: 'WiFi' } },
+        { features: { name: 'Dishwasher' } },
+      ],
     })
     expect(badges.map((b) => b.label)).toEqual([
       'Featured',
@@ -19,7 +23,7 @@ describe('buildListingCardImageBadges', () => {
       'Linen supplied',
       'Bills included',
     ])
-    expect(badges.some((b) => b.id === 'linen-supplied')).toBe(true)
+    expect(badges.some((b) => b.label === 'WiFi')).toBe(false)
   })
 
   it('limits mobile inclusion badges when featured is set', () => {
