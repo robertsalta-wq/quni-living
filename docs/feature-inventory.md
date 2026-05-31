@@ -86,7 +86,7 @@ Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inve
 
 ### Onboarding (`/onboarding/student`) — Live
 
-- **University email OTP** (student route) or **work email OTP** (non-student route)
+- **University email OTP** (student route only at onboarding); non-students skip uni email and verify later on Profile → Verification
 - Steps: about you → emergency contact + living prefs → accept Terms/Privacy
 - Profile photo; uni/campus/course/year; phone; budget; move-in; lease length; gender
 - **Draft saved** in browser (resume / start fresh); back between steps

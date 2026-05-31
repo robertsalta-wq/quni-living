@@ -9,7 +9,7 @@ import { formatDate } from './admin/adminUi'
 import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
-import { isStudentCoreProfileComplete } from '../lib/onboardingChecklist'
+import { isTenantCoreProfileComplete } from '../lib/studentOnboarding'
 import { isBoardingLodgerBondContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
@@ -204,7 +204,7 @@ export default function StudentDashboard() {
       b.status === 'pending_payment' ||
       b.status === 'awaiting_info',
   ).length
-  const profileComplete = isStudentCoreProfileComplete(profile)
+  const profileComplete = isTenantCoreProfileComplete(profile)
 
   const primaryBtnClass =
     'inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2'

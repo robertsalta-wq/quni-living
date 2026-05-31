@@ -1,6 +1,10 @@
 import type { Database } from './database.types'
 import { isStudentUniEmailVerified } from './studentUniEmailVerification'
-import { isNonStudentAccommodationRoute } from './studentOnboarding'
+import {
+  isIdentityVerificationComplete,
+  isNonStudentAccommodationRoute,
+  isTenantCoreProfileComplete,
+} from './studentOnboarding'
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -91,9 +95,9 @@ export function isStudentCoreProfileComplete(p: StudentProfileRow | null | undef
   )
 }
 
-/** Student can send enquiries and booking requests. */
+/** Tenant can send enquiries and booking requests (student or non-student route). */
 export function isStudentListingActionsUnlocked(p: StudentProfileRow | null | undefined): boolean {
-  return isStudentCoreProfileComplete(p)
+  return isTenantCoreProfileComplete(p)
 }
 
 export function landlordDisplayNameComplete(p: LandlordProfileRow | null | undefined): boolean {
@@ -142,10 +146,11 @@ export type ChecklistStep = {
 export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefined): ChecklistStep[] {
   const profile = p ?? null
   const termsOk = Boolean(profile?.terms_accepted_at)
-  const coreOk = isStudentCoreProfileComplete(profile)
+  const coreOk = isTenantCoreProfileComplete(profile)
   const photoOk = Boolean(profile?.avatar_url?.trim())
   const studentRoute = !isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
   const uniEmailOk = !studentRoute || isStudentUniEmailVerified(profile)
+  const identityOk = isIdentityVerificationComplete(profile)
 
   return [
     { id: 'account', label: 'Account created', complete: true },
@@ -159,7 +164,15 @@ export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefi
             actionLabel: 'Verify →',
           } satisfies ChecklistStep,
         ]
-      : []),
+      : [
+          {
+            id: 'identity_verify',
+            label: 'Verify your identity (photo ID + supporting document)',
+            complete: identityOk,
+            href: '/student-profile?tab=verification',
+            actionLabel: 'Verify →',
+          } satisfies ChecklistStep,
+        ]),
     {
       id: 'terms',
       label: 'Accept Terms of Service and Privacy Policy',

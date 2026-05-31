@@ -120,6 +120,27 @@ export function hasClientStudentOnboardingComplete(userId: string): boolean {
   }
 }
 
+/** Core profile fields required before messaging/booking (route-aware). */
+export function isTenantCoreProfileComplete(p: StudentProfileRow | null | undefined): boolean {
+  if (!p) return false
+  if (isNonStudentAccommodationRoute(p.accommodation_verification_route)) {
+    return isStep1SavedIdentityPath(p)
+  }
+  const hasBudget =
+    p.budget_min_per_week != null &&
+    p.budget_max_per_week != null &&
+    !Number.isNaN(Number(p.budget_min_per_week)) &&
+    !Number.isNaN(Number(p.budget_max_per_week))
+  return Boolean(
+    p.university_id && p.course?.trim() && p.phone?.trim() && hasBudget,
+  )
+}
+
+/** Non-student tier complete (photo ID + supporting document on file). */
+export function isIdentityVerificationComplete(p: StudentProfileRow | null | undefined): boolean {
+  return p?.verification_type === 'identity'
+}
+
 /** True when the student must complete /onboarding/student before the rest of the app. */
 export function needsStudentDetailedOnboarding(
   profile: StudentProfileRow | null | undefined,

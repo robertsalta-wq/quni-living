@@ -36,6 +36,7 @@ function buildListingsHeading(
   roomType: string,
   universities: { id: string; name: string; slug: string }[],
   campuses: { id: string; name: string; university_id: string | null }[],
+  pageTitleBase: string,
 ): string {
   const parts: string[] = []
 
@@ -49,7 +50,7 @@ function buildListingsHeading(
     }
     parts.push(labels[roomType] ?? 'Properties')
   } else {
-    parts.push('Student accommodation')
+    parts.push(pageTitleBase)
   }
 
   if (campusId) {
@@ -160,11 +161,19 @@ export default function Listings() {
       viewerStudentProfileId,
     )
 
-  const showNonStudentListingHint =
+  const verificationType = studentProfile?.verification_type ?? 'none'
+  const showProfessionalVerificationHint =
     Boolean(user) &&
     role === 'student' &&
-    profile &&
-    (profile as StudentRow).verification_type !== 'student'
+    isProfessionalRenter &&
+    verificationType !== 'identity'
+  const showStudentVerificationHint =
+    Boolean(user) &&
+    role === 'student' &&
+    !isProfessionalRenter &&
+    verificationType !== 'student'
+
+  const listingsPageTitleBase = isProfessionalRenter ? 'Professional rentals' : 'Student accommodation'
 
   useEffect(() => {
     const st = location.state as { studentOnboardingWelcome?: boolean } | null
@@ -211,11 +220,12 @@ export default function Listings() {
     filters.roomType,
     universities,
     campuses,
+    listingsPageTitleBase,
   )
   const listingsSeoDescription =
     total > 0
-      ? `${total} listing${total !== 1 ? 's' : ''} · ${listingsSeoTitle}. Verified student accommodation in Australia on Quni Living.`
-      : `No exact matches for ${listingsSeoTitle}. Adjust filters or browse all student accommodation on Quni Living.`
+      ? `${total} listing${total !== 1 ? 's' : ''} · ${listingsSeoTitle}. Verified accommodation in Australia on Quni Living.`
+      : `No exact matches for ${listingsSeoTitle}. Adjust filters or browse listings on Quni Living.`
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
@@ -239,19 +249,35 @@ export default function Listings() {
             Your profile is ready — explore listings matched to what you told us.
           </div>
         )}
-        {showNonStudentListingHint && (
+        {showProfessionalVerificationHint && (
           <div
             className="mb-6 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-800"
             role="status"
           >
-            You&apos;re viewing listings that are open to non-students. Complete{' '}
+            You&apos;re browsing homes landlords have opened to professionals.{' '}
+            <Link
+              to="/student-profile?tab=verification"
+              className="font-semibold text-[#FF6F61] underline underline-offset-2"
+            >
+              Complete identity verification
+            </Link>{' '}
+            (photo ID and a supporting document) to earn a Verified Identity badge on your applications. Listings marked
+            students-only are for verified student accounts.
+          </div>
+        )}
+        {showStudentVerificationHint && (
+          <div
+            className="mb-6 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-800"
+            role="status"
+          >
+            Complete{' '}
             <Link
               to="/student-profile?tab=verification"
               className="font-semibold text-[#FF6F61] underline underline-offset-2"
             >
               student verification
             </Link>{' '}
-            to unlock every active listing, or stay on this view if you&apos;re on the identity verification path.
+            (university email, photo ID, and enrolment proof) to unlock every active listing.
           </div>
         )}
 
