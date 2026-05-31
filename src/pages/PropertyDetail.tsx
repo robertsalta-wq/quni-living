@@ -43,7 +43,6 @@ import {
   formatListingDetailAccommodation,
 } from '../lib/listingAccommodationDisplay'
 import {
-  buildListingInclusionLabels,
   buildListingPhotoBadges,
   listingHighlightSignals,
 } from '../lib/listingDisplayHighlights'
@@ -517,11 +516,6 @@ export default function PropertyDetail() {
 
   const inclusionSignals = useMemo(
     () => (property ? listingHighlightSignals(property) : null),
-    [property],
-  )
-
-  const inclusionLabels = useMemo(
-    () => (property ? buildListingInclusionLabels(property) : []),
     [property],
   )
 
@@ -1360,22 +1354,6 @@ export default function PropertyDetail() {
                   className="shrink-0"
                 />
               </div>
-
-              {inclusionLabels.length > 0 && (
-                <section className="space-y-2" aria-label="What's included">
-                  <h2 className={sectionLabelClass}>What&apos;s included</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {inclusionLabels.map((label) => (
-                      <span
-                        key={label}
-                        className="inline-flex items-center rounded-lg bg-[#8FB9AB] px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
                 {quickInfoItems.map((item, i) => (
