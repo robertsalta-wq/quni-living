@@ -56,3 +56,6 @@ claude-design-bundle/*
 
 # Supabase CLI local linked-project metadata (machine-local)
 supabase/.temp/
+
+# Tokyo migration reference dumps (local only; Sydney is production)
+supabase/tokyo_*.sql
