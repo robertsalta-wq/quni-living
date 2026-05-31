@@ -1355,6 +1355,10 @@ export default function PropertyDetail() {
                 />
               </div>
 
+              {previewSpecsLine ? (
+                <p className="text-sm sm:text-base text-stone-600 -mt-2">{previewSpecsLine}</p>
+              ) : null}
+
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
                 {quickInfoItems.map((item, i) => (
                   <Fragment key={`${item.text}-${i}`}>
@@ -1621,6 +1625,14 @@ export default function PropertyDetail() {
                       </div>
                     )}
                     {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
+                    {detailAccommodation ? (
+                      <SidebarRow label="Accommodation">{detailAccommodation}</SidebarRow>
+                    ) : (
+                      <>
+                        <SidebarRow label="Bedrooms">{beds}</SidebarRow>
+                        <SidebarRow label="Bathrooms">{baths}</SidebarRow>
+                      </>
+                    )}
                   </div>
 
                   <div className="pt-4 pb-4 border-b border-stone-100">
