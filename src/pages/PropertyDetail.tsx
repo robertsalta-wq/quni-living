@@ -41,7 +41,9 @@ import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/prop
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import {
   formatListingDetailAccommodation,
+  isRoomListingProperty,
 } from '../lib/listingAccommodationDisplay'
+import { ListingAccommodationStats } from '../components/ListingAccommodationStats'
 import {
   buildListingPhotoBadges,
   listingHighlightSignals,
@@ -1055,12 +1057,6 @@ export default function PropertyDetail() {
   if (campusDisplay) previewSubtitleParts.push(campusDisplay)
   const previewSubtitleLine = previewSubtitleParts.join(' · ')
 
-  const previewSpecsLine = detailAccommodation
-    ? [roomLabel, detailAccommodation].filter(Boolean).join(' · ')
-    : [roomLabel, `${beds} bed${beds !== 1 ? 's' : ''}`, `${baths} bath${baths !== 1 ? 's' : ''}`]
-        .filter(Boolean)
-        .join(' · ')
-
   const listingMetaDesc = buildPropertyMetaDescription(property, { campusDisplay, roomLabel })
   const listingOg = (() => {
     const og = firstPropertyImageUrl(property.images)
@@ -1068,7 +1064,6 @@ export default function PropertyDetail() {
   })()
 
   const quickLocation = [property.suburb?.trim(), property.state?.trim()].filter(Boolean).join(', ') || '—'
-  const typeLabelForQuickBar = roomLabel ?? '—'
   const amenityNamesForGrid = [
     ...(inclusionSignals?.linenSupplied ? ['Linen supplied'] : []),
     ...(inclusionSignals?.weeklyCleaning ? ['Weekly cleaning service'] : []),
@@ -1090,7 +1085,7 @@ export default function PropertyDetail() {
     if (inclusionSignals?.weeklyCleaning) items.push({ icon: '🧹', text: 'Weekly cleaning' })
     if (inclusionSignals?.billsIncluded) items.push({ icon: '💡', text: 'Bills included' })
     if (inclusionSignals?.parkingAvailable) items.push({ icon: '🚗', text: 'Parking' })
-    items.push({ icon: '🛌', text: typeLabelForQuickBar })
+    if (!isRoomListingProperty(property) && roomLabel) items.push({ icon: '🛌', text: roomLabel })
     return items
   })()
 
@@ -1280,7 +1275,7 @@ export default function PropertyDetail() {
                 />
               </div>
               <p className="text-base text-stone-700">{previewSubtitleLine}</p>
-              {previewSpecsLine ? <p className="text-sm text-stone-600">{previewSpecsLine}</p> : null}
+              <ListingAccommodationStats property={property} roomLabel={roomLabel} />
             </div>
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
               <div className="rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
@@ -1294,16 +1289,8 @@ export default function PropertyDetail() {
                     <p className="mt-2 text-xs text-stone-600 leading-relaxed">{listingRent.breakdownLine}</p>
                   ) : null}
                 </div>
-                <div className="py-4 space-y-2.5 border-b border-stone-100">
-                  {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
-                  {detailAccommodation ? (
-                    <SidebarRow label="Accommodation">{detailAccommodation}</SidebarRow>
-                  ) : (
-                    <>
-                      <SidebarRow label="Bedrooms">{beds}</SidebarRow>
-                      <SidebarRow label="Bathrooms">{baths}</SidebarRow>
-                    </>
-                  )}
+                <div className="py-4 space-y-3 border-b border-stone-100">
+                  <ListingAccommodationStats property={property} roomLabel={roomLabel} variant="compact" />
                 </div>
               </div>
             </aside>
@@ -1355,9 +1342,7 @@ export default function PropertyDetail() {
                 />
               </div>
 
-              {previewSpecsLine ? (
-                <p className="text-sm sm:text-base text-stone-600 -mt-2">{previewSpecsLine}</p>
-              ) : null}
+              <ListingAccommodationStats property={property} roomLabel={roomLabel} />
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
                 {quickInfoItems.map((item, i) => (
