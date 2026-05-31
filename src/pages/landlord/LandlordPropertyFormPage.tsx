@@ -22,6 +22,7 @@ import {
   serializePropertyImages,
   type PropertyImage,
 } from '../../lib/propertyImages'
+import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 import FieldHelpHint from '../../components/FieldHelpHint'
 import { buildGeocodeQueryCandidates } from '../../lib/normalizeAustralianAddressForGeocode'
 import AIPricingSuggestionModal from '../../components/AIPricingSuggestionModal'
@@ -265,6 +266,34 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
 const MAX_IMAGES = 10
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const BUCKET = 'property-images'
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'])
+
+function imageExtensionFromFilename(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (IMAGE_EXTENSIONS.has(ext)) return ext === 'jpeg' ? 'jpg' : ext
+  return 'jpg'
+}
+
+/** Mobile browsers often leave `file.type` empty for camera-roll photos. */
+function isLikelyImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
+  return IMAGE_EXTENSIONS.has(ext)
+}
+
+function fileForImageUpload(file: File): File {
+  if (file.type.startsWith('image/')) return file
+  const ext = imageExtensionFromFilename(file.name)
+  const mime =
+    ext === 'png'
+      ? 'image/png'
+      : ext === 'gif'
+        ? 'image/gif'
+        : ext === 'webp'
+          ? 'image/webp'
+          : 'image/jpeg'
+  return new File([file], file.name, { type: mime })
+}
 
 function pathFromPropertyImageUrl(url: string): string | null {
   const marker = `/${BUCKET}/`
@@ -512,6 +541,10 @@ export default function LandlordPropertyFormPage() {
 
   const [images, setImages] = useState<PropertyImage[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null)
+  const photoFileInputRef = useRef<HTMLInputElement>(null)
+  const imagesRef = useRef<PropertyImage[]>([])
+  imagesRef.current = images
 
   const landlordPropertyDraftSnapshot = useMemo(
     () =>
@@ -1420,36 +1453,80 @@ export default function LandlordPropertyFormPage() {
     async (files: FileList | null) => {
       if (!files?.length || !user?.id) return
       setUploadingImage(true)
+      setPhotoUploadError(null)
       setSubmitError(null)
+      const errors: string[] = []
+      const next = [...imagesRef.current]
       try {
-        const next = [...images]
         for (let i = 0; i < files.length; i++) {
-          if (next.length >= MAX_IMAGES) break
+          if (next.length >= MAX_IMAGES) {
+            errors.push(`You can add up to ${MAX_IMAGES} photos per listing.`)
+            break
+          }
           const file = files[i]
-          if (file.size > MAX_FILE_BYTES) {
-            setSubmitError(`Each image must be at most 5MB (${file.name} is too large).`)
+          if (!isLikelyImageFile(file)) {
+            errors.push(`${file.name} is not a supported image file.`)
             continue
           }
-          if (!file.type.startsWith('image/')) continue
-          const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-          const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? ext : 'jpg'
-          const objectPath = `${user.id}/${crypto.randomUUID()}.${safeExt}`
-          const { error: upErr } = await supabase.storage.from(BUCKET).upload(objectPath, file, {
+
+          let uploadBlob: Blob = file
+          let uploadExt = imageExtensionFromFilename(file.name)
+          const normalizedFile = fileForImageUpload(file)
+          const needsCompression =
+            file.size > MAX_FILE_BYTES || uploadExt === 'heic' || uploadExt === 'heif'
+
+          if (needsCompression) {
+            try {
+              const prepared = await prepareProfilePhotoForUpload(normalizedFile, MAX_FILE_BYTES)
+              uploadBlob = prepared.blob
+              uploadExt = prepared.ext === 'jpeg' ? 'jpg' : prepared.ext
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : 'Could not prepare image.'
+              errors.push(`${file.name}: ${msg}`)
+              continue
+            }
+          }
+
+          const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(uploadExt) ? uploadExt : 'jpg'
+          const objectPath = `${user.id}/${crypto.randomUUID()}.${safeExt === 'jpeg' ? 'jpg' : safeExt}`
+          const contentType =
+            uploadBlob instanceof File && uploadBlob.type.startsWith('image/')
+              ? uploadBlob.type
+              : safeExt === 'png'
+                ? 'image/png'
+                : safeExt === 'gif'
+                  ? 'image/gif'
+                  : safeExt === 'webp'
+                    ? 'image/webp'
+                    : 'image/jpeg'
+
+          const { error: upErr } = await supabase.storage.from(BUCKET).upload(objectPath, uploadBlob, {
             cacheControl: '3600',
             upsert: false,
+            contentType,
           })
-          if (upErr) throw upErr
+          if (upErr) {
+            errors.push(`${file.name}: ${upErr.message}`)
+            continue
+          }
           const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(objectPath)
           next.push({ url: pub.publicUrl })
         }
         setImages(next)
+        if (errors.length > 0) {
+          setPhotoUploadError(errors.join(' '))
+        }
       } catch (e) {
-        setSubmitError(e instanceof Error ? e.message : 'Upload failed.')
+        setImages(next)
+        const msg = e instanceof Error ? e.message : 'Upload failed.'
+        errors.push(msg)
+        setPhotoUploadError(errors.join(' '))
       } finally {
         setUploadingImage(false)
+        if (photoFileInputRef.current) photoFileInputRef.current.value = ''
       }
     },
-    [user?.id, images],
+    [user?.id],
   )
 
   async function savePropertyFeatures(pid: string, ids: string[]) {
@@ -2709,6 +2786,7 @@ export default function LandlordPropertyFormPage() {
             <div className="space-y-4">
               <p className="text-xs text-gray-500">Up to {MAX_IMAGES} images, max 5MB each.</p>
               <input
+                ref={photoFileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
@@ -2716,7 +2794,15 @@ export default function LandlordPropertyFormPage() {
                 onChange={(e) => void onPickImages(e.target.files)}
                 className="block text-sm text-gray-600"
               />
+              {images.length >= MAX_IMAGES ? (
+                <p className="text-xs text-gray-500">Maximum of {MAX_IMAGES} photos reached.</p>
+              ) : null}
               {uploadingImage && <p className="text-xs text-gray-500">Uploading…</p>}
+              {photoUploadError ? (
+                <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+                  {photoUploadError}
+                </p>
+              ) : null}
               <PropertyPhotoReorderGrid
                 images={images}
                 onChange={setImages}
