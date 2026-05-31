@@ -39,10 +39,7 @@ import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
-import {
-  formatListingDetailAccommodation,
-  isRoomListingProperty,
-} from '../lib/listingAccommodationDisplay'
+import { isRoomListingProperty } from '../lib/listingAccommodationDisplay'
 import { ListingAccommodationStats } from '../components/ListingAccommodationStats'
 import {
   buildListingPhotoBadges,
@@ -1026,9 +1023,6 @@ export default function PropertyDetail() {
 
   const listingRent = getListingRentDisplay(property)
   const rent = listingRent.primaryAmount
-  const beds = property.bedrooms ?? 1
-  const baths = property.bathrooms ?? 1
-  const detailAccommodation = formatListingDetailAccommodation(property)
 
   const availableFormatted = (() => {
     const raw = (property.available_from ?? '').trim().slice(0, 10)
@@ -1608,15 +1602,6 @@ export default function PropertyDetail() {
                           Available from {formatAuShortDate(filterMoveIn)}
                         </span>
                       </div>
-                    )}
-                    {roomLabel && <SidebarRow label="Type">{roomLabel}</SidebarRow>}
-                    {detailAccommodation ? (
-                      <SidebarRow label="Accommodation">{detailAccommodation}</SidebarRow>
-                    ) : (
-                      <>
-                        <SidebarRow label="Bedrooms">{beds}</SidebarRow>
-                        <SidebarRow label="Bathrooms">{baths}</SidebarRow>
-                      </>
                     )}
                   </div>
 

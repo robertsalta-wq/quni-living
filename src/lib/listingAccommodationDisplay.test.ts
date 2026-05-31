@@ -4,6 +4,7 @@ import {
   formatListingCardContextLine,
   formatListingDetailAccommodation,
   hasWholePropertyBedCount,
+  resolveListingAccommodationStats,
 } from './listingAccommodationDisplay'
 
 describe('listingAccommodationDisplay', () => {
@@ -40,5 +41,25 @@ describe('listingAccommodationDisplay', () => {
     }
     expect(formatListingCardContextLine(entire)).toBeNull()
     expect(formatListingCardBedIconLabel(entire)).toBe('3 bed')
+  })
+
+  it('resolves room-in-house stats model', () => {
+    expect(resolveListingAccommodationStats(shareHouseRoom, 'Private room')).toEqual({
+      kind: 'room_in_house',
+      roomTitle: 'Private room',
+      roomSubtitle: 'Your space',
+      beds: 5,
+      baths: 2,
+      houseLabel: 'share house',
+    })
+  })
+
+  it('resolves entire-property stats model', () => {
+    expect(
+      resolveListingAccommodationStats(
+        { property_type: 'entire_property', room_type: 'house', bedrooms: 3, bathrooms: 2 },
+        'House',
+      ),
+    ).toEqual({ kind: 'entire', beds: 3, baths: 2 })
   })
 })
