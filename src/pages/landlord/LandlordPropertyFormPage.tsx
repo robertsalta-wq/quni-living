@@ -852,6 +852,21 @@ export default function LandlordPropertyFormPage() {
           .join('|')
           .toLowerCase()
         editDeferNearbyAutoFillRef.current = !prop.university_id && !prop.campus_id
+        const loadedHasCoords =
+          prop.latitude != null &&
+          prop.longitude != null &&
+          Number.isFinite(Number(prop.latitude)) &&
+          Number.isFinite(Number(prop.longitude))
+        const loadedHasUniCampus = Boolean(prop.university_id?.trim() || prop.campus_id?.trim())
+        if (loadedPropertyAddressSigRef.current && loadedHasCoords && loadedHasUniCampus) {
+          addressDirtyRef.current = false
+          lastNearbySigRef.current = loadedPropertyAddressSigRef.current
+          editModeGeocodeFiredRef.current = true
+        } else {
+          addressDirtyRef.current = false
+          lastNearbySigRef.current = ''
+          editModeGeocodeFiredRef.current = false
+        }
         setRentPerWeek(String(prop.rent_per_week ?? ''))
         setMaxOccupants(String(prop.max_occupants ?? 1))
         setCoupleSurchargePerWeek(
@@ -1033,11 +1048,30 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     if (!isEdit || loadingPage) return
     if (editModeGeocodeFiredRef.current) return
+
     const addr = address.trim()
     const sub = suburb.trim()
     const st = state.trim()
     const pc = postcode.trim()
     if (!addr || !sub || !st || !pc) return
+
+    const sig = [addr, sub, st, pc].join('|').toLowerCase()
+    const addressUnchanged =
+      loadedPropertyAddressSigRef.current !== '' && sig === loadedPropertyAddressSigRef.current
+    const hasCoords =
+      latitude != null &&
+      longitude != null &&
+      Number.isFinite(Number(latitude)) &&
+      Number.isFinite(Number(longitude))
+    const hasUniCampus = Boolean(universityId.trim() || campusId.trim())
+
+    if (addressUnchanged && hasCoords && hasUniCampus) {
+      editModeGeocodeFiredRef.current = true
+      addressDirtyRef.current = false
+      lastNearbySigRef.current = sig
+      return
+    }
+
     const t = window.setTimeout(() => {
       if (editModeGeocodeFiredRef.current) return
       editModeGeocodeFiredRef.current = true
@@ -1046,7 +1080,18 @@ export default function LandlordPropertyFormPage() {
       setNearbyLookupNonce((n) => n + 1)
     }, 500)
     return () => window.clearTimeout(t)
-  }, [isEdit, loadingPage, address, suburb, state, postcode])
+  }, [
+    isEdit,
+    loadingPage,
+    address,
+    suburb,
+    state,
+    postcode,
+    latitude,
+    longitude,
+    universityId,
+    campusId,
+  ])
 
   useEffect(() => {
     if (!addAnotherUniversityHelpOpen) return
