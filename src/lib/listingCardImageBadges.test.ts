@@ -19,6 +19,7 @@ describe('buildListingCardImageBadges', () => {
       'Linen supplied',
       'Bills included',
     ])
+    expect(badges.some((b) => b.id === 'linen-supplied')).toBe(true)
   })
 
   it('limits mobile inclusion badges when featured is set', () => {
@@ -30,7 +31,7 @@ describe('buildListingCardImageBadges', () => {
     })
     expect(listingCardBadgeVisibleOnMobile(badges, 'featured')).toBe(true)
     expect(listingCardBadgeVisibleOnMobile(badges, 'furnished')).toBe(true)
-    expect(listingCardBadgeVisibleOnMobile(badges, 'linen')).toBe(true)
-    expect(listingCardBadgeVisibleOnMobile(badges, 'weekly')).toBe(false)
+    expect(listingCardBadgeVisibleOnMobile(badges, 'linen-supplied')).toBe(true)
+    expect(listingCardBadgeVisibleOnMobile(badges, 'weekly-cleaning')).toBe(false)
   })
 })

@@ -42,6 +42,11 @@ import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import {
   formatListingDetailAccommodation,
 } from '../lib/listingAccommodationDisplay'
+import { buildListingCardImageBadges } from '../lib/listingCardImageBadges'
+import {
+  listingInclusionSummaryLabels,
+  resolvePropertyInclusionSignals,
+} from '../lib/propertyInclusionSignals'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
@@ -515,9 +520,19 @@ export default function PropertyDetail() {
     return [...new Set(names)].sort((a, b) => a.localeCompare(b))
   }, [property?.property_features])
 
-  const billsIncluded = useMemo(
-    () => amenityNames.some((n) => /bills?\s*included/i.test(n) || /^utilities$/i.test(n.trim())),
-    [amenityNames],
+  const inclusionSignals = useMemo(
+    () => (property ? resolvePropertyInclusionSignals(property) : null),
+    [property],
+  )
+
+  const inclusionSummaryLabels = useMemo(
+    () => (inclusionSignals ? listingInclusionSummaryLabels(inclusionSignals) : []),
+    [inclusionSignals],
+  )
+
+  const imageBadges = useMemo(
+    () => (property ? buildListingCardImageBadges(property) : []),
+    [property],
   )
 
   const universityForQuickBar = useMemo(() => {
@@ -1066,11 +1081,14 @@ export default function PropertyDetail() {
   const quickLocation = [property.suburb?.trim(), property.state?.trim()].filter(Boolean).join(', ') || '—'
   const typeLabelForQuickBar = roomLabel ?? '—'
   const amenityNamesForGrid = [
-    ...(property.linen_supplied ? ['Linen supplied'] : []),
-    ...(property.weekly_cleaning_service ? ['Weekly cleaning service'] : []),
+    ...(inclusionSignals?.linenSupplied ? ['Linen supplied'] : []),
+    ...(inclusionSignals?.weeklyCleaning ? ['Weekly cleaning service'] : []),
     ...amenityNames,
   ]
-  const amenityGrid = amenityGridItems(amenityNamesForGrid, Boolean(property.furnished))
+  const amenityGrid = amenityGridItems(
+    amenityNamesForGrid,
+    Boolean(inclusionSignals?.furnished),
+  )
 
   const houseRuleRows = property.property_house_rules ?? []
   const hasHouseRuleBadges = houseRuleRows.length > 0
@@ -1081,27 +1099,14 @@ export default function PropertyDetail() {
   const quickInfoItems: { icon: string; text: string }[] = (() => {
     const items: { icon: string; text: string }[] = [{ icon: '📍', text: quickLocation }]
     if (universityForQuickBar) items.push({ icon: '🏫', text: `Near ${universityForQuickBar}` })
-    if (billsIncluded) items.push({ icon: '💡', text: 'Bills included' })
-    items.push({ icon: '🛏', text: typeLabelForQuickBar })
+    if (inclusionSignals?.furnished) items.push({ icon: '🛋️', text: 'Furnished' })
+    if (inclusionSignals?.linenSupplied) items.push({ icon: '🛏️', text: 'Linen supplied' })
+    if (inclusionSignals?.weeklyCleaning) items.push({ icon: '🧹', text: 'Weekly cleaning' })
+    if (inclusionSignals?.billsIncluded) items.push({ icon: '💡', text: 'Bills included' })
+    if (inclusionSignals?.parkingAvailable) items.push({ icon: '🚗', text: 'Parking' })
+    items.push({ icon: '🛌', text: typeLabelForQuickBar })
     return items
   })()
-
-  /** Hero badges: mobile max 2 — Featured if set, else first two of Furnished → Linen → Weekly. Desktop: all (Tailwind md:). */
-  const nonFeaturedHeroBadges: ('furnished' | 'linen' | 'weekly')[] = []
-  if (property.furnished) nonFeaturedHeroBadges.push('furnished')
-  if (property.linen_supplied) nonFeaturedHeroBadges.push('linen')
-  if (property.weekly_cleaning_service) nonFeaturedHeroBadges.push('weekly')
-  const mobileShowFurnished = property.featured
-    ? nonFeaturedHeroBadges[0] === 'furnished'
-    : nonFeaturedHeroBadges[0] === 'furnished' || nonFeaturedHeroBadges[1] === 'furnished'
-  const mobileShowLinen = property.featured
-    ? nonFeaturedHeroBadges[0] === 'linen'
-    : nonFeaturedHeroBadges[0] === 'linen' || nonFeaturedHeroBadges[1] === 'linen'
-  const mobileShowWeekly = property.featured
-    ? nonFeaturedHeroBadges[0] === 'weekly'
-    : nonFeaturedHeroBadges[0] === 'weekly' || nonFeaturedHeroBadges[1] === 'weekly'
-  const heroExtraBadgeMd = (showOnMobile: boolean) =>
-    showOnMobile ? 'inline-flex' : 'hidden md:inline-flex'
 
   const goPrevImage = () =>
     setImageIndex((i) => (propertyImages.length ? (i > 0 ? i - 1 : propertyImages.length - 1) : 0))
@@ -1202,34 +1207,22 @@ export default function PropertyDetail() {
             </svg>
           </div>
         )}
-        <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2 z-10">
-          {property.featured && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#FF6F61] text-white shadow-sm">
-              Featured
-            </span>
-          )}
-          {property.furnished && (
-            <span
-              className={`${heroExtraBadgeMd(mobileShowFurnished)} items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm`}
-            >
-              Furnished
-            </span>
-          )}
-          {property.linen_supplied && (
-            <span
-              className={`${heroExtraBadgeMd(mobileShowLinen)} items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm`}
-            >
-              Linen supplied
-            </span>
-          )}
-          {property.weekly_cleaning_service && (
-            <span
-              className={`${heroExtraBadgeMd(mobileShowWeekly)} items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm`}
-            >
-              Weekly cleaning
-            </span>
-          )}
-        </div>
+        {imageBadges.length > 0 && (
+          <div className="absolute top-4 left-4 right-4 flex flex-wrap gap-2 z-10 pointer-events-none">
+            {imageBadges.map((badge) => (
+              <span
+                key={badge.id}
+                className={
+                  badge.variant === 'featured'
+                    ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#FF6F61] text-white shadow-sm'
+                    : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm'
+                }
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+        )}
         {propertyImages.length > 1 && (
           <>
             <button
@@ -1375,6 +1368,22 @@ export default function PropertyDetail() {
                   className="shrink-0"
                 />
               </div>
+
+              {inclusionSummaryLabels.length > 0 && (
+                <div
+                  className="flex flex-wrap gap-2"
+                  aria-label="What's included"
+                >
+                  {inclusionSummaryLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="inline-flex items-center rounded-lg bg-[#8FB9AB] px-2.5 py-1 text-xs font-semibold text-white shadow-sm"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
                 {quickInfoItems.map((item, i) => (

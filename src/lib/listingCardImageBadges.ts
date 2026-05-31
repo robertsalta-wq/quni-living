@@ -1,4 +1,7 @@
-import { featureNamesFromPropertyRow, propertyBillsIncluded } from './propertyFeatureSignals'
+import {
+  listingInclusionSummaryLabels,
+  resolvePropertyInclusionSignals,
+} from './propertyInclusionSignals'
 
 export type ListingCardImageBadge = {
   id: string
@@ -21,21 +24,13 @@ export function buildListingCardImageBadges(property: BadgeSource): ListingCardI
   if (property.featured) {
     badges.push({ id: 'featured', label: 'Featured', variant: 'featured' })
   }
-  if (property.furnished) {
-    badges.push({ id: 'furnished', label: 'Furnished', variant: 'inclusion' })
-  }
-  if (property.linen_supplied) {
-    badges.push({ id: 'linen', label: 'Linen supplied', variant: 'inclusion' })
-  }
-  if (property.weekly_cleaning_service) {
-    badges.push({ id: 'weekly', label: 'Weekly cleaning', variant: 'inclusion' })
-  }
-  const featureNames = featureNamesFromPropertyRow(property)
-  if (propertyBillsIncluded(featureNames)) {
-    badges.push({ id: 'bills', label: 'Bills included', variant: 'inclusion' })
-  }
-  if (property.parking_available) {
-    badges.push({ id: 'parking', label: 'Parking', variant: 'inclusion' })
+  const signals = resolvePropertyInclusionSignals(property)
+  for (const label of listingInclusionSummaryLabels(signals)) {
+    badges.push({
+      id: label.toLowerCase().replace(/\s+/g, '-'),
+      label,
+      variant: 'inclusion',
+    })
   }
   return badges
 }

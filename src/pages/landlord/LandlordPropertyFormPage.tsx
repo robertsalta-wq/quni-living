@@ -1737,9 +1737,24 @@ export default function LandlordPropertyFormPage() {
           .from('properties')
           .update(baseFields)
           .eq('id', propertyId)
-          .select('university_id, campus_id')
+          .select('university_id, campus_id, furnished, linen_supplied, weekly_cleaning_service, slug')
           .single()
         if (upErr) throw upErr
+        const persisted = updatedRow as {
+          furnished?: boolean | null
+          linen_supplied?: boolean | null
+          weekly_cleaning_service?: boolean | null
+        } | null
+        if (
+          persisted &&
+          (Boolean(persisted.furnished) !== furnished ||
+            Boolean(persisted.linen_supplied) !== linenSupplied ||
+            Boolean(persisted.weekly_cleaning_service) !== weeklyCleaning)
+        ) {
+          throw new Error(
+            'Inclusion settings did not persist (linen_supplied / weekly_cleaning_service columns may be missing in Supabase). Run supabase/property_form_extend.sql in the SQL editor, then save again.',
+          )
+        }
         const uRow = updatedRow as { university_id: string | null; campus_id: string | null } | null
         if (
           uRow &&
