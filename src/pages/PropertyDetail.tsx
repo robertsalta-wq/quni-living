@@ -30,6 +30,7 @@ import {
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
 import { PropertyCard } from '../components/PropertyCard'
+import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import ShareListingButton from '../components/ShareListingButton'
 import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
@@ -1683,12 +1684,12 @@ export default function PropertyDetail() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <span className="font-medium text-gray-900 capitalize">
-                          {(property.landlord_profiles?.full_name ?? 'Private landlord').toLowerCase()}
-                        </span>
-                        {landlord?.verified && (
-                          <p className="text-xs font-medium text-emerald-700 mt-0.5">Verified host</p>
-                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-gray-900 capitalize">
+                            {(property.landlord_profiles?.full_name ?? 'Private landlord').toLowerCase()}
+                          </span>
+                          {landlord?.verified ? <VerifiedLandlordBadge className="shrink-0" /> : null}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -26,7 +26,7 @@ export default function NswTenancyAgreementExplainer({ className = '' }: Props) 
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-semibold text-sky-950 leading-snug">Legally binding NSW-compliant tenancy agreement</p>
           <p className="text-[11px] leading-relaxed text-sky-900/90">
-            This agreement is generated in accordance with the Residential Tenancies Act 2010 (NSW) and signed digitally via
+            NSW-compliant agreement generated under the Residential Tenancies Act 2010 (NSW) and signed in-platform via
             DocuSeal.
           </p>
         </div>

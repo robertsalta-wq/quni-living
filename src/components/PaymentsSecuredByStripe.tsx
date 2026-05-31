@@ -25,7 +25,7 @@ export default function PaymentsSecuredByStripe({ align = 'start', className = '
         <path d="M7 11V7a5 5 0 0110 0v4" />
       </svg>
       <span>Payments secured by</span>
-      <span className="font-semibold text-[#635BFF]">Stripe</span>
+      <img src="/stripe-logo.svg" alt="Stripe" className="h-3.5 w-auto shrink-0" width={42} height={18} />
     </p>
   )
 }
