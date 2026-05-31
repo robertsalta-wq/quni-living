@@ -131,7 +131,10 @@ export function PropertyCard({
           )}
         </div>
 
-        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-1">
+        <h3
+          className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2"
+          title={property.title}
+        >
           {property.title}
         </h3>
 
