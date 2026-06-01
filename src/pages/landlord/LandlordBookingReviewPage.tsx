@@ -634,30 +634,17 @@ export default function LandlordBookingReviewPage() {
             <BookingFitSummaryTable rows={fitRows} />
           </section>
 
-          {data.student?.verification_type === 'student' ? (
-            <LandlordApplicantAIAssessmentPanel
-              assessment={aiAssessment}
-              assessmentAt={aiAssessmentAt}
-              loading={aiLoading}
-              error={aiError}
-              onGenerate={() => void callAssessmentApi({ refresh: false })}
-              onRefresh={() => void callAssessmentApi({ refresh: true })}
-              refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
-              refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
-              showGenerate={!aiAssessment}
-            />
-          ) : (
-            <section
-              id="landlord-ai-assessment"
-              className="scroll-mt-4 rounded-xl border border-gray-100 bg-white px-4 py-4"
-            >
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">AI assessment</h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-                Available once the applicant completes full student verification. Check the Verification section below
-                for their current status.
-              </p>
-            </section>
-          )}
+          <LandlordApplicantAIAssessmentPanel
+            assessment={aiAssessment}
+            assessmentAt={aiAssessmentAt}
+            loading={aiLoading}
+            error={aiError}
+            onGenerate={() => void callAssessmentApi({ refresh: false })}
+            onRefresh={() => void callAssessmentApi({ refresh: true })}
+            refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
+            refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
+            showGenerate={!aiAssessment}
+          />
 
           <LandlordBookingOccupancySummary
             occupantCount={booking.occupant_count}

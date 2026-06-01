@@ -172,7 +172,7 @@ export default function LandlordStudentProfileModal({
 
     const landlordFn = landlordFirstName?.trim()
     const bookingId = assessmentBookingId?.trim() ?? ''
-    if (!bookingId && (!student?.id || student.verification_type !== 'student')) {
+    if (!bookingId && !student?.id) {
       setAiError(true)
       setAiLoading(false)
       return
@@ -195,6 +195,7 @@ export default function LandlordStudentProfileModal({
           workEmailVerified: verification?.work_email_verified === true,
           idProvided: Boolean(verification?.id_provided),
           enrolmentProvided: Boolean(verification?.enrolment_provided),
+          identitySupportingProvided: Boolean(verification?.identity_supporting_provided),
           roomTypePreference: roomPrefStr,
           budgetMin: student?.budget_min_per_week ?? null,
           budgetMax: student?.budget_max_per_week ?? null,
@@ -402,19 +403,17 @@ export default function LandlordStudentProfileModal({
 
             <LandlordApplicantVerificationSection student={student} verificationAnchorId={verificationAnchorId} />
 
-            {student?.verification_type === 'student' && (
-              <LandlordApplicantAIAssessmentPanel
-                anchorId={aiAssessmentAnchorId}
-                assessment={aiAssessment}
-                assessmentAt={null}
-                loading={aiLoading}
-                error={aiError}
-                onGenerate={() => void requestAiAssessment()}
-                onRefresh={() => void requestAiAssessment()}
-                refreshDisabled={false}
-                showGenerate
-              />
-            )}
+            <LandlordApplicantAIAssessmentPanel
+              anchorId={aiAssessmentAnchorId}
+              assessment={aiAssessment}
+              assessmentAt={null}
+              loading={aiLoading}
+              error={aiError}
+              onGenerate={() => void requestAiAssessment()}
+              onRefresh={() => void requestAiAssessment()}
+              refreshDisabled={false}
+              showGenerate
+            />
           </div>
         </div>
 

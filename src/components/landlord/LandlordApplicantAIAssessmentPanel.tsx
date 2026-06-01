@@ -91,7 +91,7 @@ export default function LandlordApplicantAIAssessmentPanel({
       {error && <p className="mt-2 text-center text-xs text-gray-500">Assessment unavailable. Please try again.</p>}
 
       <p className="mt-3 text-[11px] leading-snug text-gray-500">
-        This assessment is AI-generated and assistive only. It does not constitute verification of the student&apos;s
+        This assessment is AI-generated and assistive only. It does not constitute verification of the applicant&apos;s
         identity or credentials.
       </p>
     </section>

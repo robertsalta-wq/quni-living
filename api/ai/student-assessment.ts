@@ -24,20 +24,22 @@ export const config = {
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
-const SYSTEM_PROMPT = `You are a helpful assistant on Quni Living, an Australian student accommodation marketplace. You are helping a landlord review a student who has applied for their property.
+const SYSTEM_PROMPT = `You are a helpful assistant on Quni Living, an Australian student accommodation marketplace. You are helping a landlord review an applicant who has requested their property.
 
-Address the landlord by their first name naturally once at the opening of the assessment. Use the student's first name throughout — never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all — repeat the first name instead — so gender is never assumed incorrectly.
+Address the landlord by their first name naturally once at the opening of the assessment. Use the applicant's first name throughout — never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all — repeat the first name instead — so gender is never assumed incorrectly.
 
-Based on the student profile data provided, write a short, warm, and balanced 3-4 sentence assessment to help the landlord make an informed decision.
+Based on the applicant profile data provided, write a short, warm, and balanced 3-4 sentence assessment to help the landlord make an informed decision.
 
 Rules:
 - Open naturally addressing the landlord by first name (e.g. "Hi Rob," or just start with their name in context)
-- Use the student's first name throughout the assessment; never use he/she/they pronouns
+- Use the applicant's first name throughout the assessment; never use he/she/they pronouns
 - Be factual and balanced — do not make the decision for the landlord
 - Do not reference nationality, gender, or any protected characteristics in your assessment
-- When a "Listing fit summary" block is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap — do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing — say what to verify. You may still praise verification credentials separately from preference/listing fit.
-- If there is no listing fit summary block, do not claim strong preference alignment with the listing; summarise what the student asked for and note what to check on the listing.
-- Focus on: verification completeness, student status, university and course credibility, housing preference alignment (including occupancy, move-in flexibility, pets, parking, bills, furnishing preferences when provided), budget fit, smoking status, and fit vs the listing/booking context when that block is present
+- Applicant verification tier (in profile): "student" = full student verification (uni email, ID, enrolment); "identity" = non-student identity path complete (ID + supporting doc; work email may apply); "none" = incomplete. State the tier plainly when it is not "student". For "none", say what verification steps are still missing and do not describe them as fully verified. For "identity", note they are a verified non-student tenant, not a verified student.
+- For non-student applicants (identity or none tiers), do not assume university enrollment or praise course credentials unless provided; focus on identity/work-email verification, housing preferences, and listing fit.
+- When a "Listing fit summary" block is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap — do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing — say what to verify. You may still comment on verification credentials separately from preference/listing fit.
+- If there is no listing fit summary block, do not claim strong preference alignment with the listing; summarise what the applicant asked for and note what to check on the listing.
+- Focus on: verification completeness and tier, student status (when applicable), university and course (when applicable), housing preference alignment (including occupancy, move-in flexibility, pets, parking, bills, furnishing preferences when provided), budget fit, smoking status, and fit vs the listing/booking context when that block is present
 - Location and commute: Do not claim the listing is near a specific university, campus, or landmark, and do not discuss commute length, unless those facts appear explicitly in the listing/booking context (e.g. linked campus or university on the listing, or address/suburb lines in that block). You may state the student's university from the profile as a fact; if listing context does not tie the property to a campus/university, do not invent a geographic mismatch or "wrong uni" narrative.
 - Rent: Never invent dollar amounts. Only mention weekly rent if a figure appears in the listing/booking context (listing rent and/or booking weekly rent when provided). If no rent is in the context, do not guess.
 - End with one practical suggestion for what the landlord might want to ask or consider before confirming
@@ -99,8 +101,17 @@ function formatSmoker(v: boolean | null | undefined): string {
   return 'Not specified'
 }
 
+function verificationTierLabel(tier: string | null | undefined): string {
+  const t = (tier || 'none').trim().toLowerCase()
+  if (t === 'student') return 'student (fully verified student tenant)'
+  if (t === 'identity') return 'identity (verified non-student tenant)'
+  return 'none (verification incomplete)'
+}
+
 function buildUserMessage(input: {
   landlordFirstName: string
+  verificationTier: string | null
+  accommodationRoute: string | null
   firstName: string
   lastName: string
   university: string
@@ -111,6 +122,7 @@ function buildUserMessage(input: {
   workEmailVerified: boolean
   idProvided: boolean
   enrolmentProvided: boolean
+  identitySupportingProvided: boolean
   roomTypePreference: string
   budgetMin: number | null
   budgetMax: number | null
@@ -130,9 +142,17 @@ function buildUserMessage(input: {
   const studentFirst = input.firstName.trim() || 'Not specified'
   const studentLast = input.lastName.trim() || 'Not specified'
   const landlordLine = input.landlordFirstName.trim() || 'Not specified'
+  const route =
+    input.accommodationRoute?.trim() === 'non_student'
+      ? 'non-student (identity verification path)'
+      : input.accommodationRoute?.trim() === 'student'
+        ? 'student'
+        : 'Not specified'
   const lines = [
     `Landlord name: ${landlordLine}`,
-    'Student profile:',
+    'Applicant profile:',
+    `- Verification tier: ${verificationTierLabel(input.verificationTier)}`,
+    `- Accommodation route: ${route}`,
     `- First name: ${studentFirst}`,
     `- Last name: ${studentLast}`,
     `- University: ${input.university.trim() || 'Not specified'}`,
@@ -140,7 +160,7 @@ function buildUserMessage(input: {
     `- Course: ${input.course.trim() || 'Not specified'}`,
     `- Year of study: ${input.yearOfStudy != null && Number.isFinite(input.yearOfStudy) ? String(input.yearOfStudy) : 'Not specified'}`,
     `- Student type: ${input.studentType.trim() || 'Not specified'}`,
-    `- Verification: Uni email verified: ${input.uniEmailVerified ? 'yes' : 'no'}, Work email verified: ${input.workEmailVerified ? 'yes' : 'no'}, ID provided: ${input.idProvided ? 'yes' : 'no'}, Enrolment provided: ${input.enrolmentProvided ? 'yes' : 'no'}`,
+    `- Verification steps: Uni email verified: ${input.uniEmailVerified ? 'yes' : 'no'}, Work email verified: ${input.workEmailVerified ? 'yes' : 'no'}, ID provided: ${input.idProvided ? 'yes' : 'no'}, Enrolment provided: ${input.enrolmentProvided ? 'yes' : 'no'}, Identity supporting doc: ${input.identitySupportingProvided ? 'yes' : 'no'}`,
     `- Room type preference: ${input.roomTypePreference.trim() || 'Not specified'}`,
     `- Budget: ${formatBudgetLine(input.budgetMin, input.budgetMax)}`,
     `- Smoker: ${formatSmoker(input.isSmoker)}`,
@@ -171,6 +191,7 @@ function buildUserMessage(input: {
 type StudentProfileDb = {
   id: string
   verification_type: string | null
+  accommodation_verification_route: string | null
   first_name: string | null
   last_name: string | null
   full_name: string | null
@@ -185,6 +206,7 @@ type StudentProfileDb = {
   work_email_verified: boolean | null
   id_submitted_at: string | null
   enrolment_submitted_at: string | null
+  identity_supporting_submitted_at: string | null
   occupancy_type: string | null
   move_in_flexibility: string | null
   has_pets: boolean | null
@@ -340,6 +362,7 @@ export default async function handler(request: Request) {
         student_profiles (
           id,
           verification_type,
+          accommodation_verification_route,
           first_name,
           last_name,
           full_name,
@@ -354,6 +377,7 @@ export default async function handler(request: Request) {
           work_email_verified,
           id_submitted_at,
           enrolment_submitted_at,
+          identity_supporting_submitted_at,
           occupancy_type,
           move_in_flexibility,
           has_pets,
@@ -413,8 +437,8 @@ export default async function handler(request: Request) {
     }
 
     const sp = studentProfileFromBookingJoin(booking.student_profiles)
-    if (!sp || sp.verification_type !== 'student') {
-      return json({ error: 'AI assessment is only available for fully verified student tenants.' }, 403, origin)
+    if (!sp) {
+      return json({ error: 'Applicant profile not found for this booking.' }, 404, origin)
     }
 
     const uni = sp.universities && typeof sp.universities === 'object' ? sp.universities.name?.trim() ?? '' : ''
@@ -495,6 +519,8 @@ export default async function handler(request: Request) {
 
     userMessage = buildUserMessage({
       landlordFirstName,
+      verificationTier: sp.verification_type,
+      accommodationRoute: sp.accommodation_verification_route,
       firstName,
       lastName,
       university: uni,
@@ -505,6 +531,7 @@ export default async function handler(request: Request) {
       workEmailVerified: sp.work_email_verified === true,
       idProvided: Boolean(sp.id_submitted_at),
       enrolmentProvided: Boolean(sp.enrolment_submitted_at),
+      identitySupportingProvided: Boolean(sp.identity_supporting_submitted_at),
       roomTypePreference: sp.room_type_preference?.trim() ?? '',
       budgetMin: sp.budget_min_per_week ?? null,
       budgetMax: sp.budget_max_per_week ?? null,
@@ -531,12 +558,12 @@ export default async function handler(request: Request) {
 
     const { data: applicantRow, error: applicantErr } = await admin
       .from('student_profiles')
-      .select('verification_type')
+      .select('id, verification_type, accommodation_verification_route')
       .eq('id', applicantProfileId)
       .maybeSingle()
 
-    if (applicantErr || !applicantRow || applicantRow.verification_type !== 'student') {
-      return json({ error: 'AI assessment is only available for fully verified student tenants.' }, 403, origin)
+    if (applicantErr || !applicantRow) {
+      return json({ error: 'Applicant profile not found.' }, 404, origin)
     }
 
     const firstName = typeof body.firstName === 'string' ? body.firstName : ''
@@ -561,6 +588,7 @@ export default async function handler(request: Request) {
     const workEmailVerified = body.workEmailVerified === true
     const idProvided = body.idProvided === true
     const enrolmentProvided = body.enrolmentProvided === true
+    const identitySupportingProvided = body.identitySupportingProvided === true
 
     if (typeof body.uniEmailVerified !== 'boolean') {
       return json({ error: 'uniEmailVerified must be a boolean' }, 400, origin)
@@ -570,6 +598,9 @@ export default async function handler(request: Request) {
     }
     if (typeof body.enrolmentProvided !== 'boolean') {
       return json({ error: 'enrolmentProvided must be a boolean' }, 400, origin)
+    }
+    if (typeof body.identitySupportingProvided !== 'boolean') {
+      return json({ error: 'identitySupportingProvided must be a boolean' }, 400, origin)
     }
 
     const budgetMinRaw = body.budgetMin
@@ -612,6 +643,8 @@ export default async function handler(request: Request) {
 
     userMessage = buildUserMessage({
       landlordFirstName,
+      verificationTier: applicantRow.verification_type,
+      accommodationRoute: applicantRow.accommodation_verification_route,
       firstName,
       lastName,
       university,
@@ -622,6 +655,7 @@ export default async function handler(request: Request) {
       workEmailVerified,
       idProvided,
       enrolmentProvided,
+      identitySupportingProvided,
       roomTypePreference,
       budgetMin,
       budgetMax,
