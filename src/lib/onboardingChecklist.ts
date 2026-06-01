@@ -204,10 +204,17 @@ export type LandlordOnboardingListingBillingOpts = {
   onAddListingPaymentMethod: () => void
 }
 
+export type LandlordOnboardingChecklistOpts = {
+  listingBilling?: LandlordOnboardingListingBillingOpts | null
+  /** Starts Stripe Connect Express onboarding (not just scroll to payouts). */
+  onStripeConnect?: () => void
+}
+
 export function buildLandlordOnboardingSteps(
   p: LandlordProfileRow | null | undefined,
-  listingBilling?: LandlordOnboardingListingBillingOpts | null,
+  opts?: LandlordOnboardingChecklistOpts | null,
 ): ChecklistStep[] {
+  const listingBilling = opts?.listingBilling ?? null
   const profile = p ?? null
   const termsOk = Boolean(profile?.terms_accepted_at)
   const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
@@ -249,8 +256,13 @@ export function buildLandlordOnboardingSteps(
       id: 'stripe',
       label: 'Bank account connected — charges enabled',
       complete: bankChargesOk,
-      href: '/landlord-dashboard#rent-payouts',
-      actionLabel: 'Connect →',
+      ...(bankChargesOk || !opts?.onStripeConnect
+        ? {}
+        : {
+            actionKind: 'button' as const,
+            actionLabel: 'Connect →',
+            onAction: opts.onStripeConnect,
+          }),
     },
   ]
 

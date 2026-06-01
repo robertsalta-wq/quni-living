@@ -15,6 +15,7 @@ import Login from './pages/Login'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
+import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import * as Lazy from './lazyPages'
 
 function AdminPropertyFeesDeepLinkRedirect() {
@@ -167,7 +168,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/landlord-dashboard" element={<Navigate to="/landlord/dashboard" replace />} />
+          <Route path="/landlord-dashboard" element={<LandlordDashboardRedirect />} />
           <Route
             path="/landlord/dashboard"
             element={

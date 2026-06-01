@@ -14,7 +14,7 @@ import {
   writeOnboardingCompleteLocal,
   writeOnboardingDismissed,
   type ChecklistStep,
-  type LandlordOnboardingListingBillingOpts,
+  type LandlordOnboardingChecklistOpts,
   type LandlordProfileRow,
   type StudentProfileRow,
 } from '../lib/onboardingChecklist'
@@ -26,8 +26,8 @@ type Props = {
   userId: string
   studentProfile: StudentProfileRow | null
   landlordProfile: LandlordProfileRow | null
-  /** When set, may add the Listing payment-method checklist row (module flag + Stripe status from API). */
-  landlordListingBilling?: LandlordOnboardingListingBillingOpts | null
+  /** Listing billing row + Stripe Connect action for the checklist. */
+  landlordChecklistOpts?: LandlordOnboardingChecklistOpts | null
   onRefresh: () => void | Promise<void>
 }
 
@@ -76,13 +76,13 @@ export default function OnboardingChecklistBanner({
   userId,
   studentProfile,
   landlordProfile,
-  landlordListingBilling,
+  landlordChecklistOpts,
   onRefresh,
 }: Props) {
   const steps: ChecklistStep[] =
     role === 'student'
       ? buildStudentOnboardingSteps(studentProfile)
-      : buildLandlordOnboardingSteps(landlordProfile, landlordListingBilling ?? undefined)
+      : buildLandlordOnboardingSteps(landlordProfile, landlordChecklistOpts ?? undefined)
 
   const isFullyComplete =
     role === 'student' ? isStudentChecklistFullyComplete(steps) : isLandlordChecklistFullyComplete(steps)

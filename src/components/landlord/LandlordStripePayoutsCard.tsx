@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { apiUrl } from '../../lib/apiUrl'
+import { openStripeHostedUrl } from '../../lib/stripeConnectOpen'
 import type { Database } from '../../lib/database.types'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -35,7 +37,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         setConnectError('You need to be signed in.')
         return
       }
-      const res = await fetch('/api/sync-stripe-connect-status', {
+      const res = await fetch(apiUrl('/api/sync-stripe-connect-status'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       })
@@ -76,12 +78,13 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         setConnectError('You need to be signed in.')
         return
       }
-      const res = await fetch('/api/create-connect-account-link', {
+      const res = await fetch(apiUrl('/api/create-connect-account-link'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ returnContext: 'landlord_dashboard' }),
       })
       const raw = await res.text()
       let body: {
@@ -105,12 +108,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         return
       }
       if (body.url) {
-        // Open Stripe hosted URL in a new tab (do not reuse this window).
-        const a = document.createElement('a')
-        a.href = body.url
-        a.target = '_blank'
-        a.rel = 'noopener noreferrer'
-        a.click()
+        openStripeHostedUrl(body.url)
         return
       }
       setConnectError('No onboarding URL returned.')
@@ -134,12 +132,13 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         return
       }
 
-      const res = await fetch('/api/create-connect-account-link', {
+      const res = await fetch(apiUrl('/api/create-connect-account-link'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ returnContext: 'landlord_dashboard' }),
       })
       const raw = await res.text()
       let body: { url?: string; error?: string } = {}
@@ -154,12 +153,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
       }
 
       if (body.url) {
-        // Open Stripe hosted URL in a new tab (do not reuse this window).
-        const a = document.createElement('a')
-        a.href = body.url
-        a.target = '_blank'
-        a.rel = 'noopener noreferrer'
-        a.click()
+        openStripeHostedUrl(body.url)
         return
       }
 

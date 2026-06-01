@@ -23,6 +23,7 @@ import {
 } from '../lib/onboardingChecklist'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
+import { openStripeHostedUrl } from '../lib/stripeConnectOpen'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
@@ -333,6 +334,7 @@ export default function LandlordDashboard() {
   const { items: conversations } = useConversationInbox(user?.id)
   const unreadMessageCount = useUnreadMessageCount(user?.id)
   const [connectLoading, setConnectLoading] = useState(false)
+  const [connectSetupError, setConnectSetupError] = useState<string | null>(null)
   const [stripeRequiredModalOpen, setStripeRequiredModalOpen] = useState(false)
   const [qaseOpen, setQaseOpen] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
@@ -718,8 +720,15 @@ export default function LandlordDashboard() {
     if (t === 'bookings' || t === 'listings') setTab(t)
   }, [searchParams, navigate])
 
+  useEffect(() => {
+    if (!profile || window.location.hash.replace(/^#/, '') !== 'rent-payouts') return
+    requestAnimationFrame(() => {
+      document.getElementById('rent-payouts')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [profile?.id])
+
   const startStripeConnect = useCallback(async () => {
-    setError(null)
+    setConnectSetupError(null)
     setConnectLoading(true)
     try {
       const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
@@ -727,7 +736,7 @@ export default function LandlordDashboard() {
       const accessToken = sessionData.session?.access_token
       if (!accessToken) throw new Error('You need to be signed in.')
 
-      const res = await fetch('/api/create-connect-account-link', {
+      const res = await fetch(apiUrl('/api/create-connect-account-link'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -750,14 +759,10 @@ export default function LandlordDashboard() {
       }
       if (!body.url) throw new Error('No onboarding URL returned.')
 
-      const a = document.createElement('a')
-      a.href = body.url
-      a.target = '_blank'
-      a.rel = 'noopener noreferrer'
-      a.click()
+      openStripeHostedUrl(body.url)
       setStripeRequiredModalOpen(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start Stripe setup.')
+      setConnectSetupError(e instanceof Error ? e.message : 'Could not start Stripe setup.')
     } finally {
       setConnectLoading(false)
     }
@@ -850,15 +855,16 @@ export default function LandlordDashboard() {
             userId={user.id}
             studentProfile={null}
             landlordProfile={profile}
-            landlordListingBilling={
-              listingBilling
+            landlordChecklistOpts={{
+              onStripeConnect: () => void startStripeConnect(),
+              listingBilling: listingBilling
                 ? {
                     listingModuleEnabled: listingBilling.moduleEnabled,
                     hasListingPaymentMethod: listingBilling.hasPaymentMethod,
                     onAddListingPaymentMethod: () => setListingPaymentModalOpen(true),
                   }
-                : null
-            }
+                : null,
+            }}
             onRefresh={load}
           />
         )}
@@ -888,6 +894,15 @@ export default function LandlordDashboard() {
             </Link>
           )}
         </div>
+
+        {connectSetupError && (
+          <div
+            className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            role="alert"
+          >
+            {connectSetupError}
+          </div>
+        )}
 
         <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
 
