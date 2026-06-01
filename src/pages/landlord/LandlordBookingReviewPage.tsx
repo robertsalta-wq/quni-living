@@ -842,7 +842,7 @@ export default function LandlordBookingReviewPage() {
               </button>
               <p className="mt-2 text-xs text-gray-500 leading-relaxed">
                 For boarding/lodger or homestay stays, record when you receive the bond and we&apos;ll email a PDF receipt
-                to you and the student.
+                to you and the renter.
               </p>
             </div>
           )}
@@ -1025,7 +1025,7 @@ export default function LandlordBookingReviewPage() {
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900">Decline this booking?</h3>
             <p className="mt-2 text-sm text-gray-600">
-              The student&apos;s deposit authorisation will be cancelled or refunded. You can optionally leave a short note
+              The renter&apos;s deposit authorisation will be cancelled or refunded. You can optionally leave a short note
               for your records.
             </p>
             <label className="block mt-4 text-sm font-medium text-gray-700">Reason (optional)</label>
@@ -1034,7 +1034,7 @@ export default function LandlordBookingReviewPage() {
               onChange={(e) => setDeclineReason(e.target.value)}
               rows={3}
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              placeholder="Optional — not shown to the student"
+              placeholder="Optional — not shown to the renter"
             />
             <div className="mt-5 flex flex-wrap gap-3">
               <button
@@ -1069,7 +1069,7 @@ export default function LandlordBookingReviewPage() {
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900">Mark bond as received</h3>
             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-              We&apos;ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the student.
+              We&apos;ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the renter.
             </p>
             {bondFormError && (
               <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{bondFormError}</p>
@@ -1175,7 +1175,7 @@ export default function LandlordBookingReviewPage() {
           <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900">Request more information</h3>
             <p className="mt-2 text-sm text-gray-600">
-              We&apos;ll email the student and set this booking to &quot;awaiting info&quot; until they reply from their
+              We&apos;ll email the renter and set this booking to &quot;awaiting info&quot; until they reply from their
               dashboard.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">

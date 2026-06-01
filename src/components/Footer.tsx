@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { MARKETPLACE_TAGLINE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import AiSparkleIcon from './AiSparkleIcon'
 import LegalFooter from './LegalFooter'
 
@@ -59,13 +59,11 @@ export default function Footer() {
                 className="h-8 w-auto max-w-full object-contain object-left"
               />
             </Link>
-            <p className="mt-4 text-sm leading-relaxed max-w-xs">
-              Verified rooms near Australian universities — for students, graduates, and young professionals.
-            </p>
+            <p className="mt-4 text-sm leading-relaxed max-w-xs">{MARKETPLACE_TAGLINE}</p>
           </div>
 
           <div>
-            <h2 className="font-display font-bold text-lg text-white mb-4">For Students</h2>
+            <h2 className="font-display font-bold text-lg text-white mb-4">For renters</h2>
             <ul className="space-y-2.5">
               <li>
                 <Link to="/student-accommodation" className={linkClass}>

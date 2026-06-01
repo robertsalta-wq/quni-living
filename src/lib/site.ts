@@ -17,12 +17,25 @@ export const SITE_NAME = 'Quni Living'
  */
 export const SITE_CONTENT_MAX_CLASS = 'max-w-site mx-auto w-full min-w-0 px-3 sm:px-6'
 
+/** One-line positioning (footer, hero sublines). */
+export const MARKETPLACE_TAGLINE =
+  'Verified rooms near Australian universities and workplaces — for students, graduates, and professionals.'
+
 /** Default share / meta description (homepage, fallbacks). */
 export const DEFAULT_DESCRIPTION =
-  'Browse verified rooms near Australian universities. Free for students. Stripe-verified hosts, RTA-compliant agreements, direct payouts.'
+  'Browse verified rooms near campus and work. Free for renters. Stripe-verified hosts, RTA-compliant agreements, direct payouts.'
 
 /** Default document title and Open Graph / Twitter title when not route-specific. */
-export const DEFAULT_OG_TITLE = 'Quni Living — verified rooms near Australian universities'
+export const DEFAULT_OG_TITLE = 'Quni Living — verified accommodation near campus & work'
+
+/** Property/listing meta description suffix. */
+export const LISTING_SEO_SUFFIX = 'Verified accommodation on Quni Living, Australia.'
+
+/** Fallback listing page title when property title is missing. */
+export const LISTING_TITLE_FALLBACK = 'Accommodation listing'
+
+/** Browse page title segment (listings index, non–professional-renter persona). */
+export const RENTERS_BROWSE_SEO_TITLE = 'Rooms & rentals near campus'
 
 /** Canonical marketing origin for static HTML OG tags (production domain). */
 export const DEFAULT_OG_URL = 'https://quni.com.au'
@@ -33,7 +46,7 @@ const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.tri
 export const DEFAULT_OG_IMAGE =
   ogFromEnv || 'https://quni-living.vercel.app/og-default.png'
 
-export const DEFAULT_OG_IMAGE_ALT = 'Quni — verified rooms near Australian universities'
+export const DEFAULT_OG_IMAGE_ALT = 'Quni — verified accommodation near campus and work'
 
 export const ORGANIZATION_EMAIL = 'hello@quni.com.au'
 

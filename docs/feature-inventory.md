@@ -243,7 +243,7 @@ Per listing:
 ### Booking review (`/landlord/bookings/:bookingId/review`) — Live
 
 - Fit summary; occupancy/rent; verification badges; read-only thread
-- **AI assessment** (generate / refresh, cooldown)
+- **AI assessment** (generate / refresh, cooldown; all applicant tiers — student, identity, incomplete)
 - **Accept as Listing** / **Accept as Managed** / **Upgrade and accept as Managed**
 - **Decline** (optional reason); **Request more information** (suggested chips + message)
 - **Bond received from renter** (Listing); **Cancel booking**

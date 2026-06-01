@@ -173,7 +173,7 @@ export default function Listings() {
     !isProfessionalRenter &&
     verificationType !== 'student'
 
-  const listingsPageTitleBase = isProfessionalRenter ? 'Professional rentals' : 'Student accommodation'
+  const listingsPageTitleBase = isProfessionalRenter ? 'Professional rentals' : 'Rooms near campus'
 
   useEffect(() => {
     const st = location.state as { studentOnboardingWelcome?: boolean } | null
@@ -194,8 +194,8 @@ export default function Listings() {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
         <Seo
-          title="Student accommodation listings"
-          description="Browse verified student accommodation near Australian universities on Quni Living."
+          title="Accommodation listings"
+          description="Browse verified rooms near Australian universities and workplaces on Quni Living."
           canonicalPath="/listings"
         />
         <div className="max-w-3xl mx-auto px-4 py-16">
@@ -275,9 +275,9 @@ export default function Listings() {
               to="/student-profile?tab=verification"
               className="font-semibold text-[#FF6F61] underline underline-offset-2"
             >
-              student verification
+              Verified Student verification
             </Link>{' '}
-            (university email, photo ID, and enrolment proof) to unlock every active listing.
+            (university email, photo ID, and enrolment proof) to unlock student-only listings.
           </div>
         )}
 

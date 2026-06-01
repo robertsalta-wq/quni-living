@@ -13,7 +13,7 @@ export default function LandlordCtaBand({ universityName }: Props) {
         Are you a landlord near {universityName}?
       </h2>
       <p className="mt-2 text-sm sm:text-base text-stone-800/90 max-w-xl mx-auto">
-        List your property and connect with verified students
+        List your property and connect with verified renters
       </p>
       <Link
         to="/landlord-signup"

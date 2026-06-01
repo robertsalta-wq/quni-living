@@ -29,7 +29,7 @@ function buildUserPrompt(body: Record<string, unknown>): string {
   const roomType = String(body.roomType ?? '').trim()
   const suburb = String(body.suburb ?? '').trim()
   const lines: string[] = [
-    'Write a property listing description for students in Australia.',
+    'Write a property listing description for renters in Australia (students, graduates, and young professionals near campus or work).',
     '',
     'Use only the facts below. Do not invent rooms, facilities, distances, prices, or any other details not listed.',
     '',

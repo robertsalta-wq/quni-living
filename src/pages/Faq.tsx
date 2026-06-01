@@ -12,7 +12,7 @@ export default function Faq() {
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <Seo
         title="FAQ"
-        description="Answers about student accommodation, landlord listings, fees, verification, bookings, bond, and support on Quni Living."
+        description="Answers about accommodation for renters and landlords, fees, verification, bookings, bond, and support on Quni Living."
         canonicalPath="/faq"
       />
       <PageHeroBand

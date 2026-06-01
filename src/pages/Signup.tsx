@@ -363,7 +363,7 @@ export default function Signup() {
       <div className="max-w-md mx-auto px-6 py-12 text-center">
         <Seo
           title="Confirm your email"
-          description="Finish creating your Quni Living account — student accommodation and landlord listings in Australia."
+          description="Finish creating your Quni Living account — verified accommodation and landlord listings in Australia."
           canonicalPath="/signup"
         />
         <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
@@ -444,7 +444,7 @@ export default function Signup() {
     <div className="max-w-2xl mx-auto px-6 py-12">
       <Seo
         title="Create an account"
-        description="Sign up for Quni Living — find student accommodation near university or list your property for verified student tenants."
+        description="Sign up for Quni Living — find verified accommodation near campus or work, or list your property for verified renters."
         canonicalPath="/signup"
       />
       <h1 ref={formTopRef} className="scroll-mt-below-header text-2xl font-bold text-gray-900">

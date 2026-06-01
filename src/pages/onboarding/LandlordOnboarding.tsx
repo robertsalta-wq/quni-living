@@ -545,7 +545,7 @@ export default function LandlordOnboarding() {
     if (!postcode.trim()) e.postcode = 'Enter postcode.'
     else if (!/^\d{4}$/.test(postcode.trim())) e.postcode = 'Use a 4-digit postcode.'
     if (!state) e.state = 'Select state.'
-    if (!bio.trim()) e.bio = 'Add a short bio for students.'
+    if (!bio.trim()) e.bio = 'Add a short bio for renters.'
     setFieldErrors(e)
     return Object.keys(e).length === 0
   }

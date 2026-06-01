@@ -35,7 +35,7 @@ import ShareListingButton from '../components/ShareListingButton'
 import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
-import { DEFAULT_OG_IMAGE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { DEFAULT_OG_IMAGE, LISTING_SEO_SUFFIX, LISTING_TITLE_FALLBACK, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
@@ -830,7 +830,7 @@ export default function PropertyDetail() {
   if (!isSupabaseConfigured) {
     return (
       <>
-        <Seo title="Property listing" description="View student accommodation listings on Quni Living." />
+        <Seo title="Property listing" description={`View verified accommodation listings on Quni Living. ${LISTING_SEO_SUFFIX}`} />
         <div className="max-w-3xl mx-auto px-6 py-12">
           <p className="text-gray-600 text-sm">Configure Supabase in <code className="bg-gray-100 px-1 rounded">.env.local</code>.</p>
         </div>
@@ -862,8 +862,8 @@ export default function PropertyDetail() {
     return (
       <>
         <Seo
-          title={loadingTitle || 'Student accommodation'}
-          description="Loading verified student accommodation on Quni Living."
+          title={loadingTitle || LISTING_TITLE_FALLBACK}
+          description={`Loading verified accommodation on Quni Living. ${LISTING_SEO_SUFFIX}`}
           canonicalPath={`/listings/${slug}`}
         />
         <div className="max-w-site mx-auto px-4 sm:px-6 py-8 bg-stone-50 min-h-[50vh]" aria-busy="true">
@@ -903,7 +903,7 @@ export default function PropertyDetail() {
         <Seo
           title="Student tenants only"
           noindex
-          description="This listing is available to verified student tenants on Quni Living."
+          description="This listing accepts verified student tenants only on Quni Living."
           canonicalPath={`/properties/${slug}`}
         />
         <div className="max-w-3xl mx-auto px-6 py-12">
@@ -928,7 +928,7 @@ export default function PropertyDetail() {
         <Seo
           title="Listing not found"
           noindex
-          description="This student accommodation listing is no longer available on Quni Living."
+          description="This accommodation listing is no longer available on Quni Living."
           canonicalPath="/listings"
         />
         <div className="max-w-3xl mx-auto px-6 py-12">
@@ -973,7 +973,7 @@ export default function PropertyDetail() {
         <Seo
           title="Listing unavailable"
           noindex
-          description="This student accommodation listing is no longer available on Quni Living."
+          description="This accommodation listing is no longer available on Quni Living."
           canonicalPath="/properties"
         />
         <div className="max-w-3xl mx-auto px-6 py-12">

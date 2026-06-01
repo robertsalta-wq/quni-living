@@ -56,7 +56,7 @@ const LANDLORD_HOW_STEPS = [
   {
     n: 2,
     title: 'Review applicants',
-    desc: 'See verified student profiles and AI fit summaries',
+    desc: 'See verified applicant profiles and AI fit summaries',
   },
   {
     n: 3,
@@ -68,7 +68,7 @@ const LANDLORD_HOW_STEPS = [
 const STUDENT_FAQ = [
   {
     id: 'faq-s-1',
-    q: 'Is Quni Living free for students?',
+    q: 'Is Quni Living free for renters?',
     a: 'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
   },
   {
@@ -349,7 +349,7 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full">
       <Seo
-        title="Verified rooms near Australian universities"
+        title="Verified accommodation near campus & work"
         description={DEFAULT_DESCRIPTION}
         canonicalPath="/"
         image={homeOgImage}
@@ -688,9 +688,9 @@ export default function Home() {
                 More income. Less vacancy. Predictable returns.
               </h2>
               <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
-                Student accommodation is one of Australia&apos;s most resilient rental markets. Quni Living connects
-                verified landlords with quality students — giving you consistent occupancy, structured leases, and a
-                platform that handles enquiries and bookings for you.
+                Campus-area rentals are one of Australia&apos;s most resilient markets. Quni Living connects verified
+                landlords with verified renters — students, graduates, and professionals — giving you consistent occupancy,
+                structured leases, and a platform that handles enquiries and bookings for you.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link

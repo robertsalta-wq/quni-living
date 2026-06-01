@@ -1,7 +1,7 @@
 import type { Property } from './listings'
 import { getListingRentDisplay } from './pricing/listingRentDisplay'
 import { normalizePropertyImages } from './propertyImages'
-import { absoluteUrl } from './site'
+import { absoluteUrl, LISTING_SEO_SUFFIX } from './site'
 
 export function buildPropertyMetaDescription(
   p: Property,
@@ -15,7 +15,7 @@ export function buildPropertyMetaDescription(
   if (opts.roomLabel) bits.push(opts.roomLabel)
   if (p.suburb?.trim()) bits.push(p.suburb.trim())
   if (opts.campusDisplay) bits.push(`Near ${opts.campusDisplay}`)
-  bits.push('Verified student accommodation on Quni Living, Australia.')
+  bits.push(LISTING_SEO_SUFFIX)
   let out = bits.filter(Boolean).join('. ')
   if (out.length > 158) out = `${out.slice(0, 155)}…`
   return out

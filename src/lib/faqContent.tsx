@@ -40,7 +40,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'about-what',
         question: 'What is Quni Living?',
         answer:
-          'Quni is a marketplace for verified rooms and homes near Australian university campuses. Students and young professionals can browse, message landlords, and book where supported; landlords can list with Quni Listing or Quni Managed depending on state and property type.',
+          'Quni is a verified accommodation marketplace near Australian university campuses and workplaces. Students, graduates, and professionals can browse, message landlords, and book where supported; landlords can list with Quni Listing or Quni Managed depending on state and property type.',
       },
       {
         id: 'about-who',
@@ -62,7 +62,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     items: [
       {
         id: 'students-free',
-        question: 'Is Quni free for students?',
+        question: 'Is Quni free for renters?',
         answer:
           'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money between you and your landlord, not Quni fees.',
       },
@@ -70,7 +70,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-student-only',
         question: 'Do I need to be a student?',
         answer:
-          'No. Quni is primarily a student marketplace, but landlords can opt in to accepting professional renters. Once verified, you can see and book every listing available to your account type.',
+          'No. You can sign up as a student or as a non-student renter (identity verification). Landlords choose per listing whether to accept verified students only or also verified non-student renters. Once verified, you can see and book every listing available to your account type.',
       },
       {
         id: 'students-landlord-trust',

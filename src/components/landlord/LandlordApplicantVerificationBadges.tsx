@@ -100,7 +100,7 @@ export function LandlordApplicantVerificationBadges({
   }
 
   return (
-    <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Student verification">
+    <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Applicant verification">
       {uni && (
         <span className={pillClass} title="University email verified">
           <span aria-hidden>✅</span> Uni Email Verified

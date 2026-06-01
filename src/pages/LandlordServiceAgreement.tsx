@@ -22,7 +22,7 @@ export default function LandlordServiceAgreement() {
     <>
       <Seo
         title="Landlord Service Agreement"
-        description="Agreement for landlords listing student accommodation on Quni Living — listings, bookings, fees, and obligations."
+        description="Agreement for landlords listing accommodation on Quni Living — listings, bookings, fees, and obligations."
         canonicalPath="/landlord-service-agreement"
       />
     <LegalPageShell

@@ -35,7 +35,7 @@ function LandlordLeadCaptureBand() {
             Ready to list your property?
           </h2>
           <p className="mt-3 text-base sm:text-lg text-white/95 leading-relaxed">
-            Join Quni Living and connect with verified student tenants. It takes less than 5 minutes to get started.
+            Join Quni Living and connect with verified renters. It takes less than 5 minutes to get started.
           </p>
         </div>
         <LandlordPartnershipLeadForm />
@@ -49,12 +49,12 @@ export default function LandlordPartnerships() {
     <>
       <Seo
         title="Landlord partnerships"
-        description="Partner with Quni Living for student accommodation near Australian campuses. Structured leases, placement support, and predictable returns."
+        description="Partner with Quni Living for accommodation near Australian campuses and workplaces. Structured leases, placement support, and predictable returns."
         canonicalPath="/services/landlord-partnerships"
       />
       <ServicePageLayout
       title="Landlord Partnerships"
-      subtitle="More income. Less vacancy. Predictable returns — student accommodation with a structured, numbers-driven approach."
+      subtitle="More income. Less vacancy. Predictable returns — verified accommodation with a structured, numbers-driven approach."
       relatedMode="newest"
       contentVariant="fullBleed"
       heroCta={{ label: 'List your property free →', to: SIGNUP_LANDLORD, variant: 'coralProminentOnCoral' }}
@@ -66,7 +66,7 @@ export default function LandlordPartnerships() {
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 py-10 md:py-12 text-center">
           <p className="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
-            Partner with Quni Living to reach serious student tenants across Australia. We help you keep occupancy steadier near
+            Partner with Quni Living to reach serious verified renters across Australia. We help you keep occupancy steadier near
             campuses and run proper leases — not short-stay chaos — whether you list a whole home or individual rooms.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function LandlordPartnerships() {
               Powered by AI
             </p>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-              The smartest tools in student accommodation — built for landlords like you.
+              The smartest tools in campus-area rentals — built for landlords like you.
             </h2>
             <p className="mt-3 text-gray-700 leading-relaxed max-w-3xl">
               Write listings in one click, price with live market data, and reply to enquiries instantly. No other

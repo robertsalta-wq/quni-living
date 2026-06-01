@@ -60,7 +60,7 @@ const FAQ_ITEMS = [
   {
     question: 'Do I need to be a student?',
     answer:
-      "No. Quni Living is primarily a student marketplace, but landlords can opt in to accepting professional renters. Once verified, you'll see every listing available to you.",
+      "No. You can rent as a student (Verified Student) or as a professional (Verified Identity). Landlords choose per listing whether to accept students only or also non-student renters. Once verified, you'll see every listing available to your account type.",
   },
   {
     question: 'What documents do I need?',

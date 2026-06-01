@@ -176,7 +176,7 @@ export default function Login() {
     <div className="max-w-md mx-auto px-6 py-12">
       <Seo
         title="Log in"
-        description="Log in to Quni Living to browse student accommodation, message landlords, and manage bookings."
+        description="Log in to Quni Living to browse verified accommodation, message landlords, and manage bookings."
         canonicalPath="/login"
       />
       <h1 className="text-2xl font-bold text-gray-900">Log in</h1>

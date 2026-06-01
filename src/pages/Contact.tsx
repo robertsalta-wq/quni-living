@@ -88,7 +88,7 @@ function LandlordPartnershipAd() {
       <h3 className="font-display mt-2 text-lg font-bold text-gray-900">Portfolio or many properties?</h3>
       <p className="mt-3 text-sm leading-relaxed text-gray-600">
         If you own several rentals near campus — or want to place a block of rooms with a university — Quni can help you
-        list individually or run a managed portfolio with structured leases, verified student demand, and clearer
+        list individually or run a managed portfolio with structured leases, verified renter demand, and clearer
         placement support than a generic listing site.
       </p>
       <p className="mt-3 text-sm leading-relaxed text-gray-600">
@@ -230,7 +230,7 @@ export default function Contact() {
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <Seo
         title="Contact"
-        description="Contact Quni Living for student accommodation enquiries, landlord listings, or partnerships. Serving Australian universities nationwide."
+        description="Contact Quni Living for accommodation enquiries, landlord listings, or partnerships. Serving Australian universities and professional renters nationwide."
         canonicalPath="/contact"
       />
       <PageHeroBand

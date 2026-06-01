@@ -26,7 +26,7 @@ function wrapContent(innerHtml) {
     ${innerHtml}
   </div>
   <div style="text-align: center; padding: 20px; color: #888888; font-size: 12px;">
-    <p>Quni Living — Australia's student accommodation marketplace</p>
+    <p>Quni Living — verified accommodation for students, graduates &amp; professionals</p>
     <p><a href="mailto:hello@quni.com.au" style="color: #FF6F61;">hello@quni.com.au</a> | quni.com.au</p>
   </div>
 </div>`
@@ -189,7 +189,7 @@ export function bookingAutoDeclinedPropertyTakenStudent(data) {
 <p>Thank you for your interest in <strong>${propertyAddress}</strong> through Quni Living.</p>
 <p>Another student has been selected for this property, so we are unable to proceed with your request.</p>
 <p>Your booking deposit will be refunded to your original payment method within <strong>5–7 business days</strong>. You will not be charged for this listing.</p>
-<p>There are many other great homes for students on Quni Living — we encourage you to keep browsing and find the right place for you.</p>
+<p>There are many other great homes on Quni Living — we encourage you to keep browsing and find the right place for you.</p>
 <a href="${listingsUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse listings →</a>
 <p style="margin-top: 24px; font-size: 14px; color: #666;">Warm regards,<br><strong>Quni Living</strong></p>`
 

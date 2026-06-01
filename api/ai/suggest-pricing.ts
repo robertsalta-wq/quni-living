@@ -46,7 +46,7 @@ function isStringArray(v: unknown): v is string[] {
 
 function buildPrompt(input: SuggestPricingBody): string {
   const lines: string[] = [
-    'You are a rental market pricing assistant for Australian student accommodation.',
+    'You are a rental market pricing assistant for Australian accommodation near universities and workplaces.',
     '',
     'Task:',
     '1) Use web search to gather current signals: Flatmates.com.au listings for the room type and suburb, and Scape/Iglu (or similar) weekly rates near the universities when provided — use these as a premium ceiling.',

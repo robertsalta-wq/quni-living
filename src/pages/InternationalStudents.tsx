@@ -9,7 +9,7 @@ export default function InternationalStudents() {
     <>
       <Seo
         title="International students — Quni Living"
-        description="Quni Living is an Australian student accommodation platform. Your account, verification documents, and tenancy data are stored in Australia."
+        description="Quni Living is an Australian verified accommodation marketplace. Your account, verification documents, and tenancy data are stored in Australia."
         canonicalPath="/international"
       />
       <div className="flex min-h-0 w-full flex-1 flex-col bg-gray-50">

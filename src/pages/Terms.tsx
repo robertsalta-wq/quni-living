@@ -22,7 +22,7 @@ export default function Terms() {
     <>
       <Seo
         title="Terms of Service"
-        description="Terms of Service for the Quni Living student accommodation platform — accounts, listings, bookings, and acceptable use."
+        description="Terms of Service for the Quni Living accommodation marketplace — accounts, listings, bookings, and acceptable use."
         canonicalPath="/terms"
       />
     <LegalPageShell

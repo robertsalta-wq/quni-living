@@ -1,7 +1,8 @@
 import { resolvePublicSiteUrl } from './messaging/siteUrl.js'
 
 const SITE_NAME = 'Quni Living'
-const DEFAULT_OG_IMAGE_ALT = 'Quni — verified rooms near Australian universities'
+const DEFAULT_OG_IMAGE_ALT = 'Quni — verified accommodation near campus and work'
+const LISTING_SEO_SUFFIX = 'Verified accommodation on Quni Living, Australia.'
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
   single: 'Single room',
@@ -94,7 +95,7 @@ function hasVariableOccupancyPricing(row: PropertyOgRow): boolean {
 }
 
 function buildDescription(row: PropertyOgRow): string {
-  const title = (row.title ?? '').trim() || 'Student accommodation'
+  const title = (row.title ?? '').trim() || 'Accommodation listing'
   const rent = parseAud(row.rent_per_week)
   const showFromPrefix = hasVariableOccupancyPricing(row)
   const rtLabel = roomLabel(row.room_type)
@@ -107,7 +108,7 @@ function buildDescription(row: PropertyOgRow): string {
   if (rtLabel) bits.push(rtLabel)
   if (row.suburb?.trim()) bits.push(row.suburb.trim())
   if (campus) bits.push(`Near ${campus}`)
-  bits.push('Verified student accommodation on Quni Living, Australia.')
+  bits.push(LISTING_SEO_SUFFIX)
 
   let out = bits.filter(Boolean).join('. ')
   if (out.length > 158) out = `${out.slice(0, 155)}…`
@@ -183,7 +184,7 @@ export async function fetchListingOgMeta(
   const row = rows[0]
   if (!row) return null
 
-  const title = (row.title ?? '').trim() || 'Student accommodation'
+  const title = (row.title ?? '').trim() || 'Accommodation listing'
   const image = firstPropertyImageUrl(row.images)
   const ogImage = image && /^https?:\/\//i.test(image) ? image : defaultOgImage(siteUrl)
   const path = canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`

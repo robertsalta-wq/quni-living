@@ -21,7 +21,7 @@ export default function Privacy() {
     <>
       <Seo
         title="Privacy Policy"
-        description="How Quni Living collects, uses, and protects your personal information when you use our student accommodation platform."
+        description="How Quni Living collects, uses, and protects your personal information when you use our verified accommodation marketplace."
         canonicalPath="/privacy"
       />
     <LegalPageShell bandTitle="Privacy Policy" pageTitle="Privacy Policy" toc={TOC}>

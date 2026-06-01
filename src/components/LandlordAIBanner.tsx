@@ -75,7 +75,7 @@ export default function LandlordAIBanner() {
               <span className="block italic text-[#E8583A]">Filled by AI.</span>
             </h2>
             <p className="mt-4 text-white/50 text-base sm:text-lg leading-relaxed max-w-xl">
-              The only student accommodation platform where AI writes your listing, prices it with live market data,
+              A verified accommodation platform where AI writes your listing, prices it with live market data,
               and drafts your replies - all built into your dashboard.
             </p>
             <div className="mt-6">

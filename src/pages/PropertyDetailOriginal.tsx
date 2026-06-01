@@ -409,7 +409,7 @@ export default function PropertyDetail() {
   if (!isSupabaseConfigured) {
     return (
       <>
-        <Seo title="Property listing" description="View student accommodation listings on Quni Living." />
+        <Seo title="Property listing" description="View verified accommodation listings on Quni Living." />
         <div className="max-w-3xl mx-auto px-6 py-12">
           <p className="text-gray-600 text-sm">Configure Supabase in <code className="bg-gray-100 px-1 rounded">.env.local</code>.</p>
         </div>
@@ -441,8 +441,8 @@ export default function PropertyDetail() {
     return (
       <>
         <Seo
-          title={loadingTitle || 'Student accommodation'}
-          description="Loading verified student accommodation on Quni Living."
+          title={loadingTitle || 'Accommodation listing'}
+          description="Loading verified accommodation on Quni Living."
           canonicalPath={`/listings/${slug}`}
         />
         <div className="min-h-[50vh] flex items-center justify-center bg-stone-50">
@@ -472,7 +472,7 @@ export default function PropertyDetail() {
         <Seo
           title="Listing not found"
           noindex
-          description="This student accommodation listing is no longer available on Quni Living."
+          description="This accommodation listing is no longer available on Quni Living."
           canonicalPath="/listings"
         />
         <div className="max-w-3xl mx-auto px-6 py-12">
