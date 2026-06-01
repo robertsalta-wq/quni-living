@@ -171,18 +171,36 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
     }
   }, [])
 
+  if (stripePayoutsReady) {
+    return (
+      <div
+        id={anchorId}
+        className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 scroll-mt-24"
+      >
+        <p className="text-sm font-medium text-emerald-900">Rent payouts enabled</p>
+        <button
+          type="button"
+          disabled={manageLoading || syncLoading}
+          onClick={() => void manageBankAccount()}
+          className="inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 disabled:opacity-50 shrink-0"
+        >
+          {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       id={anchorId}
-      className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm mb-8 scroll-mt-24"
+      className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm mb-6 scroll-mt-24"
     >
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Rent payouts</h2>
           <p className="text-sm text-gray-500 mt-1 max-w-xl">
-            {stripePayoutsReady
-              ? 'Your payouts are enabled ✓'
-              : "Connect Stripe to receive rent payouts to your bank. You'll complete a short Stripe Express onboarding flow — we never see your full bank details."}
+            Connect Stripe to receive rent to your bank — a short Express onboarding flow; we never see your full bank
+            details. You can publish listings first; connect before you accept paid bookings.
           </p>
           {connectError && (
             <p className="text-sm text-red-600 mt-2" role="alert">
@@ -202,7 +220,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
                   type="button"
                   disabled={connectLoading || syncLoading}
                   onClick={() => void startStripeConnect()}
-                  className="inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-medium hover:bg-indigo-700 shadow-sm disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
                 >
                   {connectLoading ? 'Opening Stripe…' : 'Continue Stripe setup'}
                 </button>
@@ -216,23 +234,14 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
                 </button>
               </div>
             </>
-          ) : stripePayoutsReady ? (
-            <button
-              type="button"
-              disabled={manageLoading || syncLoading}
-              onClick={() => void manageBankAccount()}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
-            >
-              {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
-            </button>
           ) : (
             <button
               type="button"
               disabled={connectLoading}
               onClick={() => void startStripeConnect()}
-              className="inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white px-5 py-2.5 text-sm font-medium hover:bg-indigo-700 shadow-sm disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
             >
-              {connectLoading ? 'Opening Stripe…' : 'Connect your bank account'}
+              {connectLoading ? 'Opening Stripe…' : 'Connect bank account →'}
             </button>
           )}
         </div>

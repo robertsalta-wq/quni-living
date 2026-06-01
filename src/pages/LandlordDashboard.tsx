@@ -19,7 +19,6 @@ import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import {
   canLandlordCreateListing,
-  isLandlordStripePayoutsComplete,
   landlordDisplayNameComplete,
 } from '../lib/onboardingChecklist'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
@@ -767,7 +766,6 @@ export default function LandlordDashboard() {
   const activeListings = properties.filter((p) => p.status === 'active').length
   const listingTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) === 'listing').length
   const managedTierProperties = properties.filter((p) => parseLandlordServiceTier(p.service_tier) !== 'listing').length
-  const hasManagedWork = managedTierProperties > 0 || bookings.some((b) => bookingServiceTier(b) === 'managed')
   const pendingBookings = bookings.filter(
     (b) =>
       b.status === 'pending' ||
@@ -792,31 +790,27 @@ export default function LandlordDashboard() {
       ),
     [bookings],
   )
-  const checklistTotal = 7
+  const checklistTotal = 6
   const nameOk = landlordDisplayNameComplete(profile)
   const phoneOk = Boolean(profile?.phone?.trim())
   const bioOk = Boolean(profile?.bio?.trim() && profile.bio.trim().length > 20)
   const avatarOk = Boolean(profile?.avatar_url?.trim())
   const termsOk = Boolean(profile?.terms_accepted_at)
   const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
-  const stripeChargesOk = profile?.stripe_charges_enabled === true
 
-  const checklistDone = [termsOk, landlordTermsOk, nameOk, phoneOk, bioOk, avatarOk, stripeChargesOk].filter(Boolean)
-    .length
+  const checklistDone = [termsOk, landlordTermsOk, nameOk, phoneOk, bioOk, avatarOk].filter(Boolean).length
   const checklistPct = Math.round((checklistDone / checklistTotal) * 100)
 
   const firstIncomplete = (() => {
-    if (!termsOk) return 'Accept terms of service →'
-    if (!landlordTermsOk) return 'Accept landlord service agreement →'
-    if (!nameOk) return 'Add your name →'
-    if (!phoneOk) return 'Add your phone →'
-    if (!bioOk) return 'Add a bio →'
-    if (!avatarOk) return 'Add a profile photo →'
-    if (!stripeChargesOk) return 'Connect bank account →'
+    if (!termsOk) return { label: 'Accept terms of service →', href: '/landlord-profile#account-agreements' }
+    if (!landlordTermsOk) return { label: 'Accept landlord service agreement →', href: '/landlord-profile#account-agreements' }
+    if (!nameOk) return { label: 'Add your name →', href: '/landlord/profile' }
+    if (!phoneOk) return { label: 'Add your phone →', href: '/landlord/profile' }
+    if (!bioOk) return { label: 'Add a bio →', href: '/landlord/profile' }
+    if (!avatarOk) return { label: 'Add a profile photo →', href: '/landlord/profile' }
     return null
   })()
   const canCreateListing = canLandlordCreateListing(profile)
-  const stripePayoutsReady = isLandlordStripePayoutsComplete(profile)
 
   if (!isSupabaseConfigured) {
     return (
@@ -886,9 +880,9 @@ export default function LandlordDashboard() {
             </Link>
           ) : (
             <Link
-              to={firstIncomplete?.includes('terms') ? '/landlord-profile#account-agreements' : '/landlord/profile'}
+              to={firstIncomplete?.href ?? '/landlord/profile'}
               className="inline-flex items-center justify-center rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-700 px-5 py-2.5 text-sm font-medium hover:bg-stone-50 shadow-sm shrink-0"
-              title={firstIncomplete ?? 'Complete your account setup to add listings'}
+              title={firstIncomplete?.label ?? 'Complete your account setup to add listings'}
             >
               Add new listing
             </Link>
@@ -897,28 +891,12 @@ export default function LandlordDashboard() {
 
         <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
 
-        {canCreateListing && !stripePayoutsReady && (
-          <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            You can create listings now. Connect your bank below before you accept paid bookings on Quni Listing
-            properties.
+        {listingTierProperties > 0 && managedTierProperties > 0 && (
+          <p className="mb-6 text-sm text-gray-600">
+            <span className="font-medium text-gray-900">Mixed service models:</span>{' '}
+            {listingTierProperties} self-managed and {managedTierProperties} Quni Managed — each property keeps its own
+            tier.
           </p>
-        )}
-
-        {properties.length > 0 && (
-          <div className="mb-6 rounded-2xl border border-gray-100 bg-white px-5 py-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your service model</p>
-            <p className="mt-1 text-sm font-semibold text-gray-900">
-              {listingTierProperties > 0 && managedTierProperties > 0
-                ? `${listingTierProperties} self-managed and ${managedTierProperties} Quni Managed properties`
-                : listingTierProperties > 0
-                  ? 'Self-managed with Quni Listing'
-                  : 'Quni Managed'}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-gray-600">
-              Each property keeps its own service model. Quni Listing properties can be upgraded to Managed, while
-              Managed properties stay Managed.
-            </p>
-          </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
@@ -957,25 +935,15 @@ export default function LandlordDashboard() {
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
             <div className="mt-3">
-              <div className="flex items-baseline justify-between gap-3">
-                {checklistDone === checklistTotal ? (
+              {checklistDone === checklistTotal ? (
+                <>
                   <p className="text-sm font-semibold text-emerald-700">Profile complete ✓</p>
-                ) : (
+                  <p className="text-xs text-gray-500 mt-2">Students can trust your listing with confidence.</p>
+                </>
+              ) : (
+                <>
                   <p className="text-sm font-semibold text-gray-900">{checklistPct}% complete</p>
-                )}
-                {checklistDone !== checklistTotal && (
-                  <Link
-                    to="/landlord-profile"
-                    className="shrink-0 text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
-                  >
-                    {firstIncomplete}
-                  </Link>
-                )}
-              </div>
-
-              {checklistDone !== checklistTotal && (
-                <div className="mt-3">
-                  <div className="h-2 rounded-full bg-stone-200/80 overflow-hidden">
+                  <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-300"
                       style={{ width: `${checklistPct}%`, backgroundColor: '#FF6F61' }}
@@ -986,16 +954,15 @@ export default function LandlordDashboard() {
                       aria-valuemax={100}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Complete these items to increase trust for students.
-                  </p>
-                </div>
-              )}
-
-              {checklistDone === checklistTotal && (
-                <div className="mt-3">
-                  <p className="text-xs text-gray-500">Students can now trust your listing with confidence.</p>
-                </div>
+                  {firstIncomplete && (
+                    <Link
+                      to={firstIncomplete.href}
+                      className="mt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                    >
+                      {firstIncomplete.label}
+                    </Link>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1011,25 +978,6 @@ export default function LandlordDashboard() {
             <span className="text-sm font-semibold text-[#FF6F61] mt-3 inline-block">Contact support →</span>
           </button>
         </div>
-
-        {hasManagedWork && profile.stripe_charges_enabled !== true && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="text-sm font-medium text-amber-900">
-                Connect your bank account to accept Quni Managed bookings. Listing-only properties can still use a saved
-                card for the one-off Listing fee.
-              </p>
-              <button
-                type="button"
-                onClick={() => void startStripeConnect()}
-                disabled={connectLoading}
-                className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-200 disabled:opacity-60"
-              >
-                {connectLoading ? 'Opening Stripe…' : 'Connect now →'}
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex gap-1 -mb-px" aria-label="Dashboard sections">
@@ -1090,7 +1038,7 @@ export default function LandlordDashboard() {
                   </Link>
                 ) : (
                   <Link
-                    to={firstIncomplete?.includes('terms') ? '/landlord-profile#account-agreements' : '/landlord/profile'}
+                    to={firstIncomplete?.href ?? '/landlord/profile'}
                     className="inline-flex rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-800 px-5 py-2.5 text-sm font-medium hover:bg-stone-50"
                   >
                     Complete setup to add a listing
