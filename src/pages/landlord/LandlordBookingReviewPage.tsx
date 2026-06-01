@@ -25,6 +25,7 @@ import { apiUrl } from '../../lib/apiUrl'
 import {
   landlordBookingConfirmAllowed,
   landlordBookingConfirmBlockedBanner,
+  landlordBookingConfirmBlockedUserMessage,
 } from '../../lib/landlordBookingConfirmGate'
 import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
@@ -562,6 +563,11 @@ export default function LandlordBookingReviewPage() {
     listingBilling,
     landlordStripeReady,
   })
+  const confirmBlockedMessage =
+    landlordBookingConfirmBlockedUserMessage(confirmBlockedBanner, booking.status) ??
+    (!canConfirm && (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
+      ? 'Complete the steps above before you can accept this booking.'
+      : null)
   const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
   const depositCents = booking.deposit_amount ?? null
   const feeCents = booking.platform_fee_amount ?? null
@@ -712,14 +718,17 @@ export default function LandlordBookingReviewPage() {
         )}
 
         {confirmBlockedBanner === 'host_identity_required' && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div
+            id="confirm-requirements"
+            className="scroll-mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          >
             <p className="font-medium">Verify your identity before confirming</p>
             <p className="mt-1 text-amber-900/90">
-              Students can place booking requests and pay a holding deposit, but you must complete Stripe identity
+              Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
               verification before you can accept. This also unlocks your Verified host badge when approved.
             </p>
             <Link
-              to="/landlord/dashboard"
+              to="/landlord/dashboard#rent-payouts"
               className="inline-block mt-2 text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
             >
               Open dashboard &amp; verify with Stripe →
@@ -736,7 +745,10 @@ export default function LandlordBookingReviewPage() {
         )}
 
         {confirmBlockedBanner === 'listing_no_payment_method' && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div
+            id="confirm-requirements"
+            className="scroll-mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          >
             <p className="font-medium">Add a payment method to confirm</p>
             <p className="mt-1 text-amber-900/90">
               You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
@@ -891,7 +903,33 @@ export default function LandlordBookingReviewPage() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-md px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:static md:border-0 md:bg-transparent md:backdrop-blur-none md:px-0 md:py-0">
-        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="max-w-2xl mx-auto flex flex-col gap-2 sm:gap-3">
+          {!showBondReceivedPrimary && !canConfirm && confirmBlockedMessage && (
+            <p
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950"
+              role="status"
+            >
+              {confirmBlockedMessage}{' '}
+              {confirmBlockedBanner === 'host_identity_required' && (
+                <Link
+                  to="/landlord/dashboard#rent-payouts"
+                  className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                >
+                  Verify with Stripe →
+                </Link>
+              )}
+              {confirmBlockedBanner === 'listing_no_payment_method' && (
+                <button
+                  type="button"
+                  onClick={() => setListingPaymentModalOpen(true)}
+                  className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                >
+                  Add a card →
+                </button>
+              )}
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           {showBondReceivedPrimary ? (
             <div className="w-full space-y-2">
               <button
@@ -932,8 +970,20 @@ export default function LandlordBookingReviewPage() {
               <button
                 type="button"
                 disabled={!canConfirm || actionBusy}
-                onClick={() => void onConfirm()}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 shadow-sm min-h-[3rem]"
+                aria-disabled={!canConfirm || actionBusy}
+                title={!canConfirm ? confirmBlockedMessage ?? 'Accept is not available yet' : undefined}
+                onClick={() => {
+                  if (!canConfirm) {
+                    document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    return
+                  }
+                  void onConfirm()
+                }}
+                className={`flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm min-h-[3rem] ${
+                  canConfirm && !actionBusy
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                    : 'cursor-not-allowed bg-gray-300 text-gray-600'
+                }`}
               >
                 {actionBusy ? (
                   <>
@@ -966,6 +1016,7 @@ export default function LandlordBookingReviewPage() {
               </button>
             </>
           )}
+          </div>
         </div>
       </div>
 

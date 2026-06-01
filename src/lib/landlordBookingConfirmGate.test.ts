@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   landlordBookingConfirmAllowed,
   landlordBookingConfirmBlockedBanner,
+  landlordBookingConfirmBlockedUserMessage,
 } from './landlordBookingConfirmGate'
 
 const readyListing = { moduleEnabled: true, hasPaymentMethod: true, card: null }
@@ -167,5 +168,16 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         landlordStripeReady: true,
       }),
     ).toBe('listing_no_payment_method')
+  })
+})
+
+describe('landlordBookingConfirmBlockedUserMessage', () => {
+  it('returns copy for each banner type', () => {
+    expect(landlordBookingConfirmBlockedUserMessage('host_identity_required', 'pending_confirmation')).toMatch(
+      /Stripe identity/i,
+    )
+    expect(landlordBookingConfirmBlockedUserMessage('listing_no_payment_method', 'pending_confirmation')).toMatch(
+      /saved card/i,
+    )
   })
 })

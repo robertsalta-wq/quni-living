@@ -57,3 +57,25 @@ export function landlordBookingConfirmBlockedBanner(args: {
   if (!lb.hasPaymentMethod) return 'listing_no_payment_method'
   return null
 }
+
+/** Short explanation for the review-page action bar when Accept is disabled. */
+export function landlordBookingConfirmBlockedUserMessage(
+  banner: ConfirmBlockedBanner,
+  bookingStatus: string,
+): string | null {
+  switch (banner) {
+    case 'host_identity_required':
+      return 'Complete Stripe identity verification on your dashboard before you can accept.'
+    case 'listing_no_payment_method':
+      return 'Add a saved card for the Listing acceptance fee before you can accept.'
+    case 'listing_module_disabled':
+      return 'Listing bookings are temporarily paused. Try again in a few minutes.'
+    case 'listing_billing_unavailable':
+      return 'Could not verify Listing billing. Refresh this page and try again.'
+    default:
+      if (bookingStatus !== 'pending_confirmation' && bookingStatus !== 'awaiting_info') {
+        return 'This booking is no longer waiting for your confirmation.'
+      }
+      return null
+  }
+}
