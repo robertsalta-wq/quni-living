@@ -213,6 +213,15 @@ export default function LandlordBookingReviewPage() {
     setSelectedConfirmTier(tierModel.defaultTier)
   }, [tierModel?.defaultTier, tierModel?.showListing, tierModel?.showManaged, tierModel?.showManagedUpgrade])
 
+  useEffect(() => {
+    if (loading || !data) return
+    const hash = window.location.hash.replace(/^#/, '')
+    if (hash !== 'applicant-review' && hash !== 'landlord-ai-assessment') return
+    requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [loading, data])
+
   const refreshCooldownRemainingSec = useMemo(() => {
     if (!aiAssessmentAt) return 0
     const t = new Date(aiAssessmentAt).getTime()
@@ -615,6 +624,52 @@ export default function LandlordBookingReviewPage() {
           </div>
         </header>
 
+        <div id="applicant-review" className="scroll-mt-4 space-y-6">
+          <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
+
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Fit summary
+            </h2>
+            <BookingFitSummaryTable rows={fitRows} />
+          </section>
+
+          {data.student?.verification_type === 'student' ? (
+            <LandlordApplicantAIAssessmentPanel
+              assessment={aiAssessment}
+              assessmentAt={aiAssessmentAt}
+              loading={aiLoading}
+              error={aiError}
+              onGenerate={() => void callAssessmentApi({ refresh: false })}
+              onRefresh={() => void callAssessmentApi({ refresh: true })}
+              refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
+              refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
+              showGenerate={!aiAssessment}
+            />
+          ) : (
+            <section
+              id="landlord-ai-assessment"
+              className="scroll-mt-4 rounded-xl border border-gray-100 bg-white px-4 py-4"
+            >
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">AI assessment</h3>
+              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                Available once the applicant completes full student verification. Check the Verification section below
+                for their current status.
+              </p>
+            </section>
+          )}
+
+          <LandlordBookingOccupancySummary
+            occupantCount={booking.occupant_count}
+            parkingSelected={booking.parking_selected}
+            weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+            breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
+            coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+          />
+
+          <LandlordApplicantVerificationSection student={snapshot} />
+        </div>
+
         {tierModel?.showManagedUpgrade && (
           <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
             <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
@@ -723,39 +778,6 @@ export default function LandlordBookingReviewPage() {
 
         {bondReceivedError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{bondReceivedError}</div>
-        )}
-
-        <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
-
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-            Fit summary
-          </h2>
-          <BookingFitSummaryTable rows={fitRows} />
-        </section>
-
-        <LandlordBookingOccupancySummary
-          occupantCount={booking.occupant_count}
-          parkingSelected={booking.parking_selected}
-          weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-          breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
-          coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-        />
-
-        <LandlordApplicantVerificationSection student={snapshot} />
-
-        {data.student?.verification_type === 'student' && (
-          <LandlordApplicantAIAssessmentPanel
-            assessment={aiAssessment}
-            assessmentAt={aiAssessmentAt}
-            loading={aiLoading}
-            error={aiError}
-            onGenerate={() => void callAssessmentApi({ refresh: false })}
-            onRefresh={() => void callAssessmentApi({ refresh: true })}
-            refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
-            refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
-            showGenerate={!aiAssessment}
-          />
         )}
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
