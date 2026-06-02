@@ -771,6 +771,14 @@ export default function LandlordDashboard() {
       ),
     [bookings],
   )
+
+  const bookingsLinkTo = useMemo(() => {
+    if (pendingConfirmation.length === 1) {
+      return `/landlord/bookings/${pendingConfirmation[0].id}/review`
+    }
+    return '/landlord/dashboard?tab=bookings'
+  }, [pendingConfirmation])
+
   const checklistTotal = 6
   const nameOk = landlordDisplayNameComplete(profile)
   const phoneOk = Boolean(profile?.phone?.trim())
@@ -912,7 +920,10 @@ export default function LandlordDashboard() {
               )}
             </p>
           </Link>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <Link
+            to={bookingsLinkTo}
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm block hover:border-indigo-200 hover:shadow-md transition-all"
+          >
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
             <p className="text-xs mt-1">
@@ -922,7 +933,7 @@ export default function LandlordDashboard() {
                 <span className="text-gray-500">Nothing pending</span>
               )}
             </p>
-          </div>
+          </Link>
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
             <div className="mt-3">
@@ -995,9 +1006,8 @@ export default function LandlordDashboard() {
                 </span>
               )}
             </Link>
-            <button
-              type="button"
-              onClick={() => setTab('bookings')}
+            <Link
+              to={bookingsLinkTo}
               className={[
                 'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
                 tab === 'bookings'
@@ -1011,7 +1021,7 @@ export default function LandlordDashboard() {
                   {pendingBookings > 0 ? pendingBookings : bookings.length}
                 </span>
               )}
-            </button>
+            </Link>
           </nav>
         </div>
 
