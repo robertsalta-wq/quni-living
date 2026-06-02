@@ -35,6 +35,10 @@ const MOBILE_QUICK_NAV = [
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
+/** Mobile header bar — Listings stands out as the primary browse action. */
+const mobileListingsPillClass =
+  'inline-flex items-center whitespace-nowrap rounded-full bg-[#FF6F61] px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3.5 sm:py-1.5 sm:text-sm'
+
 const ACCOUNT_MENU_WIDTH_PX = 208
 
 function warmListingsNav() {
@@ -213,7 +217,11 @@ export default function Header() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 sm:text-sm"
+                className={
+                  item.to === '/listings'
+                    ? mobileListingsPillClass
+                    : 'whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 sm:text-sm'
+                }
                 {...(item.to === '/listings' ? listingsNavWarm : {})}
               >
                 {item.label}
