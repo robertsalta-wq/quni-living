@@ -35,6 +35,8 @@ export type RtaPremisesPdf = {
   furnished: boolean | null
   linenSupplied: boolean | null
   weeklyCleaningService: boolean | null
+  /** QLD on-site: rooms occupied/available for residents (s 43 declaration). */
+  roomsRentedToResidents?: number | null
 }
 
 export type RtaTermPdf = {

@@ -113,6 +113,14 @@ function ScheduleSummary({
   const rows: { label: string; value: ReactNode }[] = [
     { label: 'Property address:', value: premises.addressLine },
     { label: 'Allocated room:', value: premises.roomType?.trim() || 'Bedroom as described on listing' },
+    ...(premises.roomsRentedToResidents != null && premises.roomsRentedToResidents >= 1
+      ? [
+          {
+            label: 'Rooms for residents in premises:',
+            value: String(premises.roomsRentedToResidents),
+          },
+        ]
+      : []),
     { label: 'Owner:', value: ownerDisplay },
     { label: 'Owner email:', value: landlord.email },
     { label: 'Owner phone:', value: landlord.phone },
