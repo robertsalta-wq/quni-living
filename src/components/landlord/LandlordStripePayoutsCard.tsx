@@ -152,15 +152,59 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
     )
   }
 
+  const payoutActions = stripeNeedsOnboarding ? (
+    <>
+      <button
+        type="button"
+        disabled={connectLoading || syncLoading}
+        onClick={() => void startStripeConnect()}
+        className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50 whitespace-nowrap"
+      >
+        {connectLoading ? 'Opening Stripe…' : 'Continue Stripe setup'}
+      </button>
+      <button
+        type="button"
+        disabled={manageLoading || connectLoading || syncLoading}
+        onClick={() => void manageBankAccount()}
+        className="inline-flex items-center justify-center rounded-xl border border-[#FF6F61]/40 bg-white text-[#FF6F61] px-5 py-2.5 text-sm font-medium hover:bg-[#FFF5F4] shadow-sm disabled:opacity-50 whitespace-nowrap"
+      >
+        {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
+      </button>
+      <button
+        type="button"
+        disabled={syncLoading || connectLoading || manageLoading}
+        onClick={() => void refreshFromStripe()}
+        className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+      >
+        {syncLoading ? 'Refreshing…' : 'Refresh status'}
+      </button>
+    </>
+  ) : (
+    <button
+      type="button"
+      disabled={connectLoading}
+      onClick={() => void startStripeConnect()}
+      className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50 whitespace-nowrap"
+    >
+      {connectLoading ? 'Opening Stripe…' : 'Connect bank account →'}
+    </button>
+  )
+
   return (
     <div
       id={anchorId}
       className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm mb-6 scroll-mt-24"
     >
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
+      {stripeNeedsOnboarding && (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
+          Stripe account linked. We show “connected” when Stripe reports charges and payouts enabled (usually right
+          after you finish onboarding — we sync automatically once, or use Refresh status).
+        </p>
+      )}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-gray-900">Rent payouts</h2>
-          <p className="text-sm text-gray-500 mt-1 max-w-xl">
+          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
             Connect Stripe to receive rent to your bank — a short Express onboarding flow; we never see your full bank
             details. You can publish listings first; connect before you accept paid bookings.
           </p>
@@ -170,43 +214,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
             </p>
           )}
         </div>
-        <div className="shrink-0 flex flex-col items-stretch sm:items-end gap-2">
-          {stripeNeedsOnboarding ? (
-            <>
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 sm:text-right">
-                Stripe account linked. We show “connected” when Stripe reports charges and payouts enabled
-                (usually right after you finish onboarding — we sync automatically once, or use Refresh).
-              </p>
-              <div className="flex flex-col sm:items-end gap-2">
-                <button
-                  type="button"
-                  disabled={connectLoading || syncLoading}
-                  onClick={() => void startStripeConnect()}
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
-                >
-                  {connectLoading ? 'Opening Stripe…' : 'Continue Stripe setup'}
-                </button>
-                <button
-                  type="button"
-                  disabled={manageLoading || connectLoading || syncLoading}
-                  onClick={() => void manageBankAccount()}
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
-                >
-                  {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <button
-              type="button"
-              disabled={connectLoading}
-              onClick={() => void startStripeConnect()}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50"
-            >
-              {connectLoading ? 'Opening Stripe…' : 'Connect bank account →'}
-            </button>
-          )}
-        </div>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 shrink-0 lg:max-w-none">{payoutActions}</div>
       </div>
     </div>
   )
