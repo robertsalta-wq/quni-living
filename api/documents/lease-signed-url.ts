@@ -149,13 +149,18 @@ export default async function handler(req: any, res: any) {
   const spkg = rowMeta.signing_package
   const refreshFromDocuseal =
     doc.document_type === 'residential_tenancy' &&
-    (spkg === 'residential_tenancy' || spkg === 'residential_tenancy_qld') &&
+    (spkg === 'residential_tenancy' ||
+      spkg === 'residential_tenancy_qld' ||
+      spkg === 'residential_tenancy_vic') &&
     Boolean(submissionId)
 
   const isQldPackage = spkg === 'residential_tenancy_qld'
-  const rtaStoragePath = isQldPackage
-    ? `${tenancy.id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
-    : `${tenancy.id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
+  const isVicPackage = spkg === 'residential_tenancy_vic'
+  const rtaStoragePath = isVicPackage
+    ? `${tenancy.id}/residential_tenancy/vic_residential_rental_agreement_signed.pdf`
+    : isQldPackage
+      ? `${tenancy.id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
+      : `${tenancy.id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
   const addendumStoragePath = `${tenancy.id}/residential_tenancy/quni_platform_addendum_signed.pdf`
   const legacyCombinedPath = `${tenancy.id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
 

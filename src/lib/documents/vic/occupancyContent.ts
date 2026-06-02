@@ -1,6 +1,5 @@
 /**
- * VIC on-site licence to occupy — narrative copy (lawyer-review draft).
- * Bond-rule wiring will align with vic.ts when T1 resolver is connected.
+ * VIC on-site licence to occupy — narrative copy (T1 boarder/lodger).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
 

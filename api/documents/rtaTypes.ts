@@ -187,8 +187,8 @@ export type QuniPlatformAddendumProps = {
   rent: RtaRentPdf
   bond: RtaBondPdf
   utilitiesDescription: string
-  /** NSW FT6600 package vs QLD Form 18a + Quni QLD addendum. */
-  signingPackage: 'residential_tenancy' | 'residential_tenancy_qld'
+  /** NSW FT6600 package vs QLD Form 18a vs VIC Form 1 + Quni addendum. */
+  signingPackage: 'residential_tenancy' | 'residential_tenancy_qld' | 'residential_tenancy_vic'
   rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null
   bankDetails: {
     bsb: string

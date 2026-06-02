@@ -2,7 +2,7 @@
  * VIC Form 1 — Residential rental agreement (≤5 years).
  *
  * Part A scope: T2 residential only (off-site room, entire property, shared room).
- * T1 on-site boarder/lodger is out of scope pending legal sign-off — do not use this generator for T1.
+ * T1 on-site boarder/lodger uses `occupancyGenerator.tsx` (licence to occupy).
  *
  * Prescribed clause text: `form1Content.ts` (Schedule 1, Residential Tenancies Regulations 2021 (Vic)).
  */

@@ -44,6 +44,18 @@ const bundleJobs = [
     inFile: 'src/lib/documents/qld/occupancyGenerator.tsx',
     outFile: 'api/documents/QldOccupancyAgreement.js',
   },
+  {
+    inFile: 'src/lib/documents/vic/form1Generator.tsx',
+    outFile: 'api/documents/VicForm1Agreement.js',
+  },
+  {
+    inFile: 'src/lib/documents/vic/addendumGenerator.tsx',
+    outFile: 'api/documents/QuniPlatformAddendumVic.js',
+  },
+  {
+    inFile: 'src/lib/documents/vic/occupancyGenerator.tsx',
+    outFile: 'api/documents/VicOccupancyAgreement.js',
+  },
 ]
 
 for (const { inFile, outFile } of bundleJobs) {

@@ -87,7 +87,7 @@ describe('resolveTenancyPackage', () => {
   })
 
   describe('truth table — VIC', () => {
-    it('T1 on_site → vic-form1, bond scheme on', () => {
+    it('T1 on_site → vic-occupancy, owner-held security deposit', () => {
       const r = pkg({
         state: 'VIC',
         property_type: 'private_room_landlord_on_site',
@@ -95,10 +95,12 @@ describe('resolveTenancyPackage', () => {
       })
       expect(r.supported).toBe(true)
       expect(r.tier).toBe('T1')
-      expect(r.generator).toBe('vic-form1')
-      expect(r.rules.bond.schemeApplies).toBe(true)
-      expect(r.rules.bond.authority).toBe('RTBA')
-      expect(r.storagePaths?.draft).toBe('vic_residential_rental_agreement_draft.pdf')
+      expect(r.generator).toBe('vic-occupancy')
+      expect(r.pdfKind).toBe('occupancy_agreement')
+      expect(r.rules.bond.schemeApplies).toBe(false)
+      expect(r.rules.bond.authority).toBeNull()
+      expect(r.storagePaths?.draft).toBe('vic_occupancy_agreement_draft.pdf')
+      expect(r.storagePaths?.signed).toBe('vic_occupancy_agreement_signed.pdf')
     })
 
     it('T2 off_site → vic-form1', () => {
@@ -253,7 +255,8 @@ describe('tenancyGeneratorToApiPath', () => {
   it('maps NSW generators', () => {
     expect(tenancyGeneratorToApiPath('nsw-ft6600')).toBe('/api/documents/generate-residential-tenancy')
     expect(tenancyGeneratorToApiPath('nsw-occupancy')).toBe('/api/documents/generate-lease')
-    expect(tenancyGeneratorToApiPath('vic-form1')).toBeNull()
+    expect(tenancyGeneratorToApiPath('vic-form1')).toBe('/api/documents/generate-vic-residential-rental')
+    expect(tenancyGeneratorToApiPath('vic-occupancy')).toBe('/api/documents/generate-vic-occupancy')
     expect(tenancyGeneratorToApiPath('qld-occupancy')).toBe('/api/documents/generate-qld-occupancy')
     expect(tenancyGeneratorToApiPath('qld-form18a')).toBe('/api/documents/generate-qld-residential-tenancy')
     expect(tenancyGeneratorToApiPath(null)).toBeNull()

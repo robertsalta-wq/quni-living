@@ -484,10 +484,17 @@ export async function sendResidentialTenancyPackageForSigning(
     throw new Error('Residential tenancy package missing metadata.addendum_file_path')
   }
   const signingPkg = meta.signing_package
-  if (signingPkg !== 'residential_tenancy' && signingPkg !== 'residential_tenancy_qld') {
-    throw new Error('Tenancy document is not a residential tenancy signing package (FT6600 or Form 18a)')
+  if (
+    signingPkg !== 'residential_tenancy' &&
+    signingPkg !== 'residential_tenancy_qld' &&
+    signingPkg !== 'residential_tenancy_vic'
+  ) {
+    throw new Error(
+      'Tenancy document is not a residential tenancy signing package (FT6600, Form 18a, or Form 1)',
+    )
   }
   const isQldResidential = signingPkg === 'residential_tenancy_qld'
+  const isVicResidential = signingPkg === 'residential_tenancy_vic'
 
   const { data: tenancy, error: tErr } = await admin
     .from('tenancies')
@@ -549,18 +556,24 @@ export async function sendResidentialTenancyPackageForSigning(
   const coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
 
   const submission = await createDocusealSubmissionFromPdf({
-    name: isQldResidential
+    name: isVicResidential
       ? coTenantSigner
-        ? `QLD Form 18a — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-        : `QLD Form 18a — ${landlordName} / ${tenantName}`
-      : coTenantSigner
-        ? `NSW RTA — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-        : `NSW RTA — ${landlordName} / ${tenantName}`,
+        ? `VIC Form 1 — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+        : `VIC Form 1 — ${landlordName} / ${tenantName}`
+      : isQldResidential
+        ? coTenantSigner
+          ? `QLD Form 18a — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+          : `QLD Form 18a — ${landlordName} / ${tenantName}`
+        : coTenantSigner
+          ? `NSW RTA — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+          : `NSW RTA — ${landlordName} / ${tenantName}`,
     documents: [
       {
-        name: isQldResidential
-          ? 'QLD Form 18a General Tenancy Agreement.pdf'
-          : 'NSW Residential Tenancy Agreement.pdf',
+        name: isVicResidential
+          ? 'VIC Form 1 Residential Rental Agreement.pdf'
+          : isQldResidential
+            ? 'QLD Form 18a General Tenancy Agreement.pdf'
+            : 'NSW Residential Tenancy Agreement.pdf',
         file: rtaBase64,
       },
       { name: 'Quni Platform Addendum.pdf', file: addendumBase64 },
@@ -603,15 +616,23 @@ export async function sendResidentialTenancyPackageForSigning(
     ''
 
   const signHtml = (who: string, link: string) =>
-    isQldResidential
+    isVicResidential
       ? `
+    <p>Hi ${escapeHtml(who)},</p>
+    <p>Your Victoria Form 1 residential rental agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
+    <p><a href="${escapeHtml(link)}">Open signing page</a></p>
+    <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
+    <p>— Quni Living (quni.com.au)</p>
+  `
+      : isQldResidential
+        ? `
     <p>Hi ${escapeHtml(who)},</p>
     <p>Your Queensland Form 18a general tenancy agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
     <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
     <p>— Quni Living (quni.com.au)</p>
   `
-      : `
+        : `
     <p>Hi ${escapeHtml(who)},</p>
     <p>Your NSW residential tenancy agreement package is ready to sign (standard form plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
@@ -619,9 +640,11 @@ export async function sendResidentialTenancyPackageForSigning(
     <p>— Quni Living (quni.com.au)</p>
   `
 
-  const readySubject = isQldResidential
-    ? 'Your QLD Form 18a tenancy agreement is ready to sign'
-    : 'Your NSW residential tenancy agreement is ready to sign'
+  const readySubject = isVicResidential
+    ? 'Your VIC Form 1 tenancy agreement is ready to sign'
+    : isQldResidential
+      ? 'Your QLD Form 18a tenancy agreement is ready to sign'
+      : 'Your NSW residential tenancy agreement is ready to sign'
 
   const coTenantLink =
     coTenantSigner &&
@@ -645,9 +668,11 @@ export async function sendResidentialTenancyPackageForSigning(
     coTenantSigner && coTenantLink
       ? sendEmail({
           to: coTenantSigner.email,
-          subject: isQldResidential
-            ? 'Your QLD tenancy agreement is ready to sign (co-tenant)'
-            : 'Your NSW tenancy agreement is ready to sign (co-tenant)',
+          subject: isVicResidential
+            ? 'Your VIC tenancy agreement is ready to sign (co-tenant)'
+            : isQldResidential
+              ? 'Your QLD tenancy agreement is ready to sign (co-tenant)'
+              : 'Your NSW tenancy agreement is ready to sign (co-tenant)',
           html: signHtml(coTenantSigner.name, coTenantLink),
         })
       : Promise.resolve(),
@@ -690,8 +715,11 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
       : {}
   const signingPkgEarly = rowMetaEarly.signing_package
   const isResidentialTenancyPackage =
-    signingPkgEarly === 'residential_tenancy' || signingPkgEarly === 'residential_tenancy_qld'
+    signingPkgEarly === 'residential_tenancy' ||
+    signingPkgEarly === 'residential_tenancy_qld' ||
+    signingPkgEarly === 'residential_tenancy_vic'
   const isQldResidentialPackage = signingPkgEarly === 'residential_tenancy_qld'
+  const isVicResidentialPackage = signingPkgEarly === 'residential_tenancy_vic'
 
   const rowMeta = rowMetaEarly
 
@@ -700,9 +728,11 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
 
   if (isResidentialTenancyPackage) {
     const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
-    const rtaPath = isQldResidentialPackage
-      ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
-      : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
+    const rtaPath = isVicResidentialPackage
+      ? `${docRow.tenancy_id}/residential_tenancy/vic_residential_rental_agreement_signed.pdf`
+      : isQldResidentialPackage
+        ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
+        : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
     const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
 
     if (dual) {
@@ -836,9 +866,11 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
   const signedSubject = isResidentialTenancyPackage
-    ? isQldResidentialPackage
-      ? 'Your QLD tenancy agreement is signed — Quni Living'
-      : 'Your NSW tenancy agreement is signed — Quni Living'
+    ? isVicResidentialPackage
+      ? 'Your VIC tenancy agreement is signed — Quni Living'
+      : isQldResidentialPackage
+        ? 'Your QLD tenancy agreement is signed — Quni Living'
+        : 'Your NSW tenancy agreement is signed — Quni Living'
     : 'Your lease is signed — Quni Living'
   const doneHtml = (name: string) => `
     <p>Hi ${escapeHtml(name)},</p>

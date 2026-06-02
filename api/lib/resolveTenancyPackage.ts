@@ -84,6 +84,13 @@ function vicForm1Paths(): TenancyPackageStoragePaths {
   }
 }
 
+function vicOccupancyPaths(): TenancyPackageStoragePaths {
+  return {
+    draft: 'vic_occupancy_agreement_draft.pdf',
+    signed: 'vic_occupancy_agreement_signed.pdf',
+  }
+}
+
 function qldOccupancyPaths(): TenancyPackageStoragePaths {
   return {
     draft: 'qld_occupancy_agreement_draft.pdf',
@@ -186,11 +193,11 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
     return {
       tier: 'T1',
       supported: true,
-      generator: 'vic-form1',
-      pdfKind: 'residential_rental_agreement',
+      generator: 'vic-occupancy',
+      pdfKind: 'occupancy_agreement',
       rules,
-      signingPackageName: 'VIC Form 1 — Residential rental agreement',
-      storagePaths: vicForm1Paths(),
+      signingPackageName: 'VIC Licence to Occupy',
+      storagePaths: vicOccupancyPaths(),
       ragState,
       unsupportedReason: null,
     }
@@ -253,5 +260,7 @@ export function tenancyGeneratorToApiPath(generator: string | null): string | nu
   if (generator === 'nsw-occupancy') return '/api/documents/generate-lease'
   if (generator === 'qld-occupancy') return '/api/documents/generate-qld-occupancy'
   if (generator === 'qld-form18a') return '/api/documents/generate-qld-residential-tenancy'
+  if (generator === 'vic-form1') return '/api/documents/generate-vic-residential-rental'
+  if (generator === 'vic-occupancy') return '/api/documents/generate-vic-occupancy'
   return null
 }

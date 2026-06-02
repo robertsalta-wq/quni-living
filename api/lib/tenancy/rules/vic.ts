@@ -1,9 +1,22 @@
 /**
- * VIC tenancy rules — bond facts match current resolver bondRulesVicStatutory() for supported tiers.
+ * VIC tenancy rules — T1 on-site licence (owner-held security deposit) vs T2 Form 1 (RTBA bond).
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'
 
-const VIC_SUPPORTED_BOND: TenancyBondRules = {
+const VIC_T1_BOND: TenancyBondRules = {
+  schemeApplies: false,
+  maxBondCopy: null,
+  authority: null,
+  authorityUrl: null,
+  maxBondMonths: null,
+  lodgementDays: null,
+  lodgementDaysUnit: null,
+  receiptDays: null,
+  authorityPublicLabel: null,
+  landlordAckAuthorityName: 'Residential Tenancies Bond Authority (RTBA)',
+}
+
+const VIC_T2_BOND: TenancyBondRules = {
   schemeApplies: true,
   maxBondCopy: null,
   authority: 'RTBA',
@@ -16,9 +29,8 @@ const VIC_SUPPORTED_BOND: TenancyBondRules = {
   landlordAckAuthorityName: null,
 }
 
-/** Resolver emits vic-form1 for VIC T1 and T2 (non-rooming); bond rules are the same today. */
-export function vicTenancyRules(_tier: 'T1' | 'T2'): TenancyRules {
+export function vicTenancyRules(tier: 'T1' | 'T2'): TenancyRules {
   return {
-    bond: VIC_SUPPORTED_BOND,
+    bond: tier === 'T1' ? VIC_T1_BOND : VIC_T2_BOND,
   }
 }

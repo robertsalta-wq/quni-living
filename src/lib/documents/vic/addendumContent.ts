@@ -8,7 +8,7 @@ export const VIC_ADDENDUM_LEGISLATION = 'Residential Tenancies Act 1997 (Vic)'
 export const VIC_ADDENDUM_FORM_LABEL = 'Form 1 — Residential rental agreement'
 export const VIC_ADDENDUM_SUBTITLE = 'Supplementary to the Residential Rental Agreement (Form 1)'
 
-/** T2 residential bond rules — do not use for T1 (out of scope). */
+/** T2 residential bond rules (Form 1 package). */
 export const VIC_T2_BOND_RULES = vicTenancyRules('T2').bond
 
 export function vicBondLodgementDeadlinePhrase(): string {

@@ -100,7 +100,7 @@ const addendumProps = {
   bond: form1Props.bond,
   utilitiesDescription:
     'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
-  signingPackage: 'residential_tenancy',
+  signingPackage: 'residential_tenancy_vic',
   rentPaymentMethod: 'quni_platform',
   bankDetails: form1Props.rentPaymentBankDetails,
   emergencyContact: 'Sam Renter — 0411333444',
