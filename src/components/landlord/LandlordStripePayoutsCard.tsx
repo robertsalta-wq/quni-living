@@ -3,6 +3,9 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { openStripeHostedUrl } from '../../lib/stripeConnectOpen'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
+import { resetLandlordStripeConnect } from '../../lib/resetLandlordStripeConnect'
+import { stripeConnectLandlordTypeHint } from '../../lib/stripeConnectLandlordTypeHint'
+import { Link } from 'react-router-dom'
 import type { Database } from '../../lib/database.types'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -19,7 +22,11 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
   const [syncLoading, setSyncLoading] = useState(false)
   const [manageLoading, setManageLoading] = useState(false)
   const [connectError, setConnectError] = useState<string | null>(null)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
   const autoSyncOnce = useRef(false)
+
+  const landlordTypeHint = stripeConnectLandlordTypeHint(profile.landlord_type)
 
   const stripePayoutsReady =
     profile.stripe_charges_enabled === true && profile.stripe_payouts_enabled === true
@@ -133,6 +140,29 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
     }
   }, [])
 
+  const resetStripeSetup = useCallback(async () => {
+    if (!isSupabaseConfigured) return
+    setConnectError(null)
+    setResetLoading(true)
+    try {
+      const result = await resetLandlordStripeConnect()
+      if (!result.ok) {
+        setConnectError(result.error)
+        return
+      }
+      setResetConfirmOpen(false)
+      autoSyncOnce.current = false
+      if (result.stripeDeleteWarning) {
+        setConnectError(result.stripeDeleteWarning)
+      }
+      await onRefresh()
+    } catch (e) {
+      setConnectError(e instanceof Error ? e.message : 'Could not reset Stripe setup.')
+    } finally {
+      setResetLoading(false)
+    }
+  }, [onRefresh])
+
   if (stripePayoutsReady) {
     return (
       <div
@@ -201,6 +231,14 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
           after you finish onboarding — we sync automatically once, or use Refresh status).
         </p>
       )}
+      {landlordTypeHint && (
+        <p className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
+          {landlordTypeHint}{' '}
+          <Link to="/landlord/profile" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+            Update profile type
+          </Link>
+        </p>
+      )}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-gray-900">Rent payouts</h2>
@@ -216,6 +254,47 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         </div>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 shrink-0 lg:max-w-none">{payoutActions}</div>
       </div>
+      {stripeNeedsOnboarding && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          {!resetConfirmOpen ? (
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Chose the wrong option in Stripe (e.g. Company instead of Individual)?{' '}
+              <button
+                type="button"
+                onClick={() => setResetConfirmOpen(true)}
+                className="font-semibold text-[#FF6F61] underline underline-offset-2"
+              >
+                Start Stripe setup over
+              </button>
+            </p>
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 space-y-3">
+              <p className="text-sm text-gray-800 leading-relaxed">
+                This clears your in-progress Stripe link so you can connect again. Use this if Stripe is asking for the
+                wrong details (ABN vs personal ID). Your listings are not affected.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={resetLoading}
+                  onClick={() => void resetStripeSetup()}
+                  className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                >
+                  {resetLoading ? 'Resetting…' : 'Yes, start over'}
+                </button>
+                <button
+                  type="button"
+                  disabled={resetLoading}
+                  onClick={() => setResetConfirmOpen(false)}
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

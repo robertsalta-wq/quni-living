@@ -11,6 +11,7 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { buildStripeExpressAccountCreateParams } from './lib/stripeConnectLandlordAccount.js'
 
 export const config = {
   runtime: 'edge',
@@ -111,7 +112,7 @@ export default async function handler(request) {
     const { data: profile, error: profErr } = await admin
       .from('landlord_profiles')
       .select(
-        'id, user_id, email, stripe_connect_account_id, stripe_charges_enabled, stripe_payouts_enabled',
+        'id, user_id, email, landlord_type, first_name, last_name, full_name, company_name, abn, address, suburb, state, postcode, stripe_connect_account_id, stripe_charges_enabled, stripe_payouts_enabled',
       )
       .eq('user_id', user.id)
       .maybeSingle()
@@ -140,16 +141,8 @@ export default async function handler(request) {
     let accountId = profile.stripe_connect_account_id
 
     if (!accountId) {
-      const email =
-        typeof profile.email === 'string' && profile.email.includes('@') ? profile.email : undefined
       const account = await stripe.accounts.create({
-        type: 'express',
-        country: 'AU',
-        email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
+        ...buildStripeExpressAccountCreateParams(profile),
         metadata: {
           landlord_profile_id: profile.id,
           supabase_user_id: user.id,
