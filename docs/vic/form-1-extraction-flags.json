@@ -1,0 +1,106 @@
+[
+  {
+    "section": "mammoth",
+    "issue": "warning: An unrecognised element was ignored: v:line"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: An unrecognised element was ignored: w:tblPrEx"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: unexpected non-row element in table, cell merging may be incorrect"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Title' (Style ID: Title)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Body Text' (Style ID: BodyText)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised run style: 'Emphasis' (Style ID: Emphasis)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'spacer' (Style ID: spacer)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Question' (Style ID: Question)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'List Paragraph' (Style ID: ListParagraph)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Text fill' (Style ID: Textfill)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Caption 2' (Style ID: Caption2)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Heading 1 no space above' (Style ID: Heading1nospaceabove)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'Question sub' (Style ID: Questionsub)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'spacer 2' (Style ID: spacer2)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'BulletList1' (Style ID: BulletList1)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'List Number Parentheses' (Style ID: ListNumberParentheses)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'List Bullet' (Style ID: ListBullet)"
+  },
+  {
+    "section": "mammoth",
+    "issue": "warning: Unrecognised paragraph style: 'List paragraph text' (Style ID: Listparagraphtext)"
+  },
+  {
+    "section": "Part A item 5 (Length of agreement)",
+    "issue": "Stray \"z\" character from Word form field — removed from extract; verify against CAV PDF."
+  },
+  {
+    "section": "Part A fields 1–7",
+    "issue": "Address/postcode/phone/email and tick-box rows are table cells in the .docx; mammoth emits labels on separate lines. Populated values are rendered in the PDF schedule (form1Generator.tsx), not by filling [insert] tokens in this extract."
+  },
+  {
+    "section": "Part B item 8 (payment methods)",
+    "issue": "Checkbox list (direct debit, bank deposit, cash, etc.) extracts as separate lines; PDF schedule ticks bank deposit + electronic payment explicitly."
+  },
+  {
+    "section": "Part B items 9.1 / 9.2 (electronic service)",
+    "issue": "Per-renter Yes/No checkbox grids are multi-column tables; extract has sequential Yes/No lines — schedule uses consolidated Yes/No with emails."
+  },
+  {
+    "section": "Part C item 16",
+    "issue": "Official Nov 2025 form states \"16 [Clause revoked by law]\" — smoke alarm obligations moved to Part D heading \"Smoke Alarms\" (not a numbered Part C clause)."
+  },
+  {
+    "section": "Part D",
+    "issue": "Rights summary uses section titles (Use of the premises, Rent, etc.) in source; numbered clauses 20–30 from older AustLII Form 1 are NOT in this CAV revision."
+  },
+  {
+    "section": "Part E item 21",
+    "issue": "Free-text \"Further details\" area is a large empty table cell — not extracted as fillable lines."
+  },
+  {
+    "section": "Help or further information + interpreter pages",
+    "issue": "Excluded from FORM1_PART_B_THROUGH_E (not prescribed agreement terms)."
+  }
+]
