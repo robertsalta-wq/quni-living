@@ -291,7 +291,7 @@ export function listingBookingAcceptedLandlord(data) {
   const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
 <p>Hi ${landlordName},</p>
 <p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation.</p>
+<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation. This includes your tenancy agreement draft — the renter can preview it now; both parties sign after you confirm bond receipt on Quni.</p>
 <p><strong>Bond:</strong> Collect the bond <strong>directly from the renter</strong> off-platform. When you&apos;ve received it, please confirm on Quni before <strong>${bondDeadline}</strong>.</p>
 <a href="${markBondUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Mark bond received →</a>`
 

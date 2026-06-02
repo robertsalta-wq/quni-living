@@ -37,6 +37,7 @@ export type LandlordBookingReviewData = {
   otherPendingPipelineCount: number
   /** Present once a tenancy row exists for this booking (e.g. after confirmation / lease flow). */
   tenancy: LandlordBookingReviewTenancy | null
+  landlordFeeExempt: boolean
 }
 
 function formatReceivedAgo(iso: string): string {
@@ -74,7 +75,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
     try {
       const { data: lp, error: lpErr } = await supabase
         .from('landlord_profiles')
-        .select('id, stripe_charges_enabled, stripe_connect_account_id')
+        .select('id, stripe_charges_enabled, stripe_connect_account_id, fee_exempt')
         .eq('user_id', landlordUserId)
         .maybeSingle()
 
@@ -189,6 +190,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         fitRows,
         otherPendingPipelineCount,
         tenancy: (tenancyRow as LandlordBookingReviewTenancy | null) ?? null,
+        landlordFeeExempt: lp.fee_exempt === true,
       })
       setReceivedAgo(formatReceivedAgo(booking.created_at))
     } catch (e) {

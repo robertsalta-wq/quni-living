@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
@@ -34,6 +34,7 @@ import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
 import { useServiceTierResolverOptions } from '../../context/PlatformFeaturesContext'
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
 import TenancyAgreementExplainer from '../../components/TenancyAgreementExplainer'
+import LandlordListingAcceptedSummary from '../../components/landlord/LandlordListingAcceptedSummary'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
@@ -136,8 +137,11 @@ export default function LandlordBookingReviewPage() {
   const serviceTierResolverOptions = useServiceTierResolverOptions()
   const { bookingId } = useParams<{ bookingId: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuthContext()
   const { data, loading, error, reload, receivedAgo } = useLandlordBookingReview(bookingId, user?.id)
+
+  const [listingAcceptCelebration, setListingAcceptCelebration] = useState(false)
 
   const [aiAssessment, setAiAssessment] = useState<string | null>(null)
   const [aiAssessmentAt, setAiAssessmentAt] = useState<string | null>(null)
@@ -204,6 +208,15 @@ export default function LandlordBookingReviewPage() {
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [loading, reload, data?.landlordStripeReady])
+
+  useEffect(() => {
+    if (searchParams.get('accepted') !== 'listing') return
+    setListingAcceptCelebration(true)
+    setSearchParams({}, { replace: true })
+    requestAnimationFrame(() => {
+      document.getElementById('listing-accepted-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (!data?.booking) return
@@ -345,6 +358,14 @@ export default function LandlordBookingReviewPage() {
         },
       )
       if (!result.ok) throw new Error(result.error)
+      if (selectedConfirmTier === 'listing') {
+        await reload()
+        setListingAcceptCelebration(true)
+        requestAnimationFrame(() => {
+          document.getElementById('listing-accepted-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        })
+        return
+      }
       navigate('/landlord/dashboard?tab=bookings')
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Could not confirm.')
@@ -352,7 +373,7 @@ export default function LandlordBookingReviewPage() {
       setConfirmPhase('idle')
       setActionBusy(false)
     }
-  }, [bookingId, navigate, selectedConfirmTier])
+  }, [bookingId, navigate, reload, selectedConfirmTier])
 
   const onDecline = useCallback(async () => {
     if (!bookingId) return
@@ -576,7 +597,19 @@ export default function LandlordBookingReviewPage() {
     listingBilling,
     otherPendingPipelineCount,
     tenancy,
+    landlordFeeExempt,
   } = data
+
+  const isListingBondPending =
+    booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
+
+  const listingFeeDisplay = landlordFeeExempt ? '$0.00' : '$99.00'
+
+  const propertyAddressLine = property
+    ? [property.address, property.suburb, property.state, property.postcode].filter(Boolean).join(', ') ||
+      property.title?.trim() ||
+      ''
+    : ''
 
   const showBondReceivedPrimary = landlordListingBondReceivedPrimaryVisible({
     bookingStatus: booking.status,
@@ -634,7 +667,7 @@ export default function LandlordBookingReviewPage() {
             className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            Review booking request
+            {isListingBondPending ? 'Booking confirmed' : 'Review booking request'}
           </h1>
           <p className="text-sm text-gray-600">
             Reference{' '}
@@ -651,7 +684,7 @@ export default function LandlordBookingReviewPage() {
               {booking.status.replace(/_/g, ' ')}
             </span>
             <span className="text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full px-3 py-1">
-              {landlordServiceTierTitle(selectedConfirmTier)}
+              {landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
             </span>
             {flowLabel && (
               <span className="text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
@@ -660,6 +693,19 @@ export default function LandlordBookingReviewPage() {
             )}
           </div>
         </header>
+
+        {isListingBondPending && (
+          <LandlordListingAcceptedSummary
+            bookingReference={bookingReferenceLabel(booking.id)}
+            propertyTitle={property?.title?.trim() ?? ''}
+            propertyAddress={propertyAddressLine}
+            bondAmountAud={property?.bond != null ? Number(property.bond) : null}
+            bondDeadlineIso={booking.bond_window_expires_at}
+            listingFeeDisplay={listingFeeDisplay}
+            justAccepted={listingAcceptCelebration}
+            onDismissCelebration={() => setListingAcceptCelebration(false)}
+          />
+        )}
 
         <div id="applicant-review" className="scroll-mt-4 space-y-6">
           <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
@@ -905,7 +951,7 @@ export default function LandlordBookingReviewPage() {
           booking.status === 'confirmed' ||
           booking.status === 'active') &&
           property && (
-          <section className="space-y-2">
+          <section id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
             <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
               Tenancy agreement
             </h2>
