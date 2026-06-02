@@ -80,10 +80,7 @@ export function qldOccupancySampleProps() {
     generatedAt: SAMPLE_GENERATED_AT,
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, West End, QLD, 4101' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
-    premises: {
-      ...premisesFor('QLD', 'West End', '4101', 'private_room_landlord_on_site', 'Rear bedroom'),
-      roomsRentedToResidents: 1,
-    },
+    premises: premisesFor('QLD', 'West End', '4101', 'private_room_landlord_on_site', 'Rear bedroom'),
     term: { ...SHARED_TERM },
     rent: {
       weeklyRent: 380,

@@ -7,8 +7,18 @@ type Props = {
 }
 
 const CHIPS: Record<PersonaKey, string[]> = {
-  student_renter: ['Find rooms near UNSW', "What's included in rent?", 'How does verification work?'],
-  landlord: ['Help me complete my listing', 'Draft a reply to an enquiry', 'How do payouts work?'],
+  student_renter: [
+    'Find rooms near UNSW',
+    "What's included in rent?",
+    'How does verification work?',
+    'Where can I preview sample agreements?',
+  ],
+  landlord: [
+    'Where can I see sample agreements?',
+    'Help me complete my listing',
+    'Draft a reply to an enquiry',
+    'How do payouts work?',
+  ],
   visitor: ['How does Quni work?', 'Is it free to list?', 'How are renters verified?'],
 }
 

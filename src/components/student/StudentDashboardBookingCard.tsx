@@ -8,6 +8,7 @@ import BookingLeasePanel from '../booking/BookingLeasePanel'
 import ListingBondPaymentGuidance from '../booking/ListingBondPaymentGuidance'
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../../lib/tenancy/listingBondPaymentCopy'
+import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../../lib/tenantBookingStatus'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type BookingStatus = BookingRow['status']
@@ -45,6 +46,7 @@ function PropertyThumbPlaceholder() {
 function bookingStatusClass(s: BookingStatus) {
   if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-900'
   if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
+  if (s === 'bond_pending') return 'bg-emerald-100 text-emerald-900'
   if (s === 'confirmed' || s === 'active') return 'bg-green-100 text-green-800'
   if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
   if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
@@ -128,9 +130,9 @@ export default function StudentDashboardBookingCard({
               <span className="text-lg font-bold text-gray-900">{prop?.title ?? 'Property'}</span>
             )}
             <span
-              className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${bookingStatusClass(b.status)}`}
+              className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
             >
-              {b.status}
+              {tenantBookingStatusLabel(b.status)}
             </span>
           </div>
           {prop?.suburb && <p className="text-sm text-gray-500 mt-0.5">{prop.suburb}</p>}
@@ -141,16 +143,10 @@ export default function StudentDashboardBookingCard({
           <p className="text-base font-bold text-gray-900 mt-1">{formatWeeklyRent(rent)}</p>
         </div>
       </div>
-      {b.status === 'pending' && (
-        <div className="border-t border-amber-100 bg-amber-50 px-5 py-3 text-sm text-amber-900">
-          Awaiting landlord confirmation
-        </div>
-      )}
-      {(b.status === 'confirmed' || b.status === 'active') && (
-        <div className="border-t border-green-100 bg-green-50 px-5 py-3 text-sm text-green-800">
-          Your booking is confirmed
-        </div>
-      )}
+      {(() => {
+        const banner = tenantBookingCardBanner(b.status)
+        return banner ? <div className={banner.panelClass}>{banner.text}</div> : null
+      })()}
       {(b.status === 'bond_pending' || b.status === 'confirmed' || b.status === 'active') && (
         <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
           {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (

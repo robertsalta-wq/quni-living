@@ -195,6 +195,8 @@ function buildStudentListingContextBlock(props: Array<Record<string, unknown>>):
 
 const VERIFICATION_HONESTY_RULE = `- Verification honesty: Only describe user or host verification exactly as stated in this system message or in RELEVANT KNOWLEDGE BASE below. Quni does not verify government IDs for hosts, check property titles, or manually review landlord profiles. Hosts complete Stripe Connect identity verification before accepting bookings; approved hosts may show a "Verified host" badge. Do not invent verification steps not explicitly listed.`
 
+const SAMPLE_AGREEMENTS_RULE = `- Sample agreement PDFs (watermarked, not for signing): Logged-in landlords and students can open the Sample agreements page at /sample-agreements (also linked from the dashboard as "View sample agreements"). It shows clickable thumbnail previews of live-generated templates by state (NSW, QLD, VIC) and tier (T1 occupancy/licence, T2 residential with Quni addendum where applicable). Tell users to use that page — do not say templates are only in listing settings, help centre, or unavailable in chat. You cannot display PDFs inside this chat. Admins reviewing all templates use /admin/agreement-previews. These samples are for layout and wording review only; executed agreements are generated per confirmed booking.`
+
 const SYSTEM_PROMPTS: Record<PersonaKey, string> = {
   visitor: `You are Quni Living’s AI assistant for visitors who are not logged in. Quni is a verified accommodation marketplace for students, graduates, and professionals; some listings accept only verified students, others also accept verified non-student renters.
 
@@ -206,8 +208,9 @@ Rules:
 - Encourage next steps with clear, short guidance and links if appropriate (plain guidance is acceptable).
 - Use Australian English.
 ${VERIFICATION_HONESTY_RULE}
+${SAMPLE_AGREEMENTS_RULE}
 
-No listing context block is available for visitors.`,
+No listing context block is available for visitors. Landlords and students must sign in to use /sample-agreements for watermarked PDF previews.`,
 
   student_renter: `You are Quni Living’s AI assistant for helping students, graduates, and verified professional renters make better accommodation decisions on an Australian verified accommodation marketplace.
 
@@ -224,6 +227,7 @@ You MUST follow these rules:
 7) If the user asks for a comparison, compare only across the provided listings.
 8) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}
 9) If LISTING CONTEXT shows a host as verified, you may mention the Verified host badge; do not claim verification if it is not shown.
+10) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
@@ -244,7 +248,8 @@ Rules:
 9) Do not invent facts about a renter or a listing. Ask clarifying questions if needed.
 10) Prefer actionable checklists and message drafts, but do not output markdown headings or labels.
 11) Use Australian English.
-12) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}`,
+12) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}
+13) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}`,
 }
 
 async function verifyTurnstileOrThrow(token: string): Promise<void> {

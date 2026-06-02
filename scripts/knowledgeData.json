@@ -187,5 +187,19 @@
     "category": "tenancy_law",
     "state": "NSW",
     "content": "Whether a tenant pays water usage depends on whether the property meets efficiency standards and what the lease says. Electricity and internet are commonly tenant accounts unless otherwise agreed. Read your lease and any disclosure materials; dispute unclear charges in writing."
+  },
+  {
+    "id": "6fad4b80-001b-4000-8000-00000000001b",
+    "title": "Quni sample agreement previews (landlords and students)",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Quni publishes watermarked sample PDFs of its live agreement templates so hosts and renters can see layout and wording before a booking is confirmed. While logged in, open Sample agreements from the dashboard link or go directly to /sample-agreements. You can browse by state (NSW, QLD, VIC) and tier: T1 occupancy or licence-style documents, and T2 residential agreements plus the Quni platform addendum where applicable (for example NSW FT6600, QLD Form 18a, VIC Form 1). Click a thumbnail to open a full preview or download the PDF. These files are marked SAMPLE — not for execution; they are not your signed lease. After a booking is confirmed, Quni generates the real agreement package for that listing. To refresh samples after template changes, the team runs npm run generate:agreement-samples."
+  },
+  {
+    "id": "6fad4b80-001c-4000-8000-00000000001c",
+    "title": "Quni tenancy documents by property type and state",
+    "category": "platform_policy",
+    "state": null,
+    "content": "The agreement type depends on listing property type and state. On-site room with landlord living on premises is often T1 (occupancy or licence-style). Off-site room, entire property, or shared room without rooming-house registration is often T2 (formal residential tenancy). NSW T2 uses the FT6600-style residential agreement plus a Quni addendum; QLD T2 uses Form 18a plus addendum; VIC T2 uses Form 1 plus a VIC addendum. VIC T1 uses a licence to occupy. Preview all current samples on /sample-agreements when logged in, or the full matrix on /admin/agreement-previews for internal review."
   }
 ]

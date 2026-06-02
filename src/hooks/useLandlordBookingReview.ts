@@ -53,9 +53,7 @@ function formatReceivedAgo(iso: string): string {
   return `Received ${d} day${d === 1 ? '' : 's'} ago`
 }
 
-export function bookingReferenceLabel(bookingId: string): string {
-  return bookingId.replace(/-/g, '').slice(0, 8).toUpperCase()
-}
+export { bookingReferenceLabel } from '../lib/bookingReference'
 
 export function useLandlordBookingReview(bookingId: string | undefined, landlordUserId: string | undefined) {
   const [data, setData] = useState<LandlordBookingReviewData | null>(null)

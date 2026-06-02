@@ -47,6 +47,7 @@ import {
 import { AUDateField } from '../components/AUDateField'
 import NswRentalBondOnlineLink from '../components/bond/NswRentalBondOnlineLink'
 import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
+import TenantBookingRequestSubmittedSummary from '../components/student/TenantBookingRequestSubmittedSummary'
 import {
   BookingOccupancySection,
   validateBookingOccupancy,
@@ -585,6 +586,7 @@ export default function Booking() {
     })
   }, [])
   const [success, setSuccess] = useState(false)
+  const [successBookingId, setSuccessBookingId] = useState<string | null>(null)
   const [managedPricingCell, setManagedPricingCell] = useState<PricingCell | null>(null)
 
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0)
@@ -1301,6 +1303,7 @@ export default function Booking() {
         }
 
         clearBookingDraft(property.id)
+        setSuccessBookingId(j.bookingId)
         setSuccess(true)
       } catch (e) {
         setSubmitError(e instanceof Error ? e.message : 'Could not save booking.')
@@ -1442,31 +1445,27 @@ export default function Booking() {
   }
 
   if (success) {
+    if (successBookingId && property) {
+      return (
+        <TenantBookingRequestSubmittedSummary
+          bookingId={successBookingId}
+          propertyTitle={property.title ?? 'Property'}
+          propertySuburb={property.suburb ?? null}
+          moveInDate={moveIn}
+          leaseLength={leaseLength}
+        />
+      )
+    }
     return (
       <div className="max-w-lg mx-auto px-6 py-16 text-center">
-        <h1 id="booking-success-heading" className="text-2xl font-bold text-gray-900">
-          Request sent
-        </h1>
-        <p className="text-gray-600 text-sm mt-3 leading-relaxed">
-          Your booking deposit is held securely until your host responds. They have <strong>48 hours</strong> to confirm
-          or decline. You can track status under <strong className="text-gray-800">Student profile → Bookings</strong> or
-          your dashboard.
-        </p>
-        <PaymentsSecuredByStripe align="center" className="mt-5 max-w-sm mx-auto" />
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            to="/student-dashboard"
-            className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
-          >
-            Go to dashboard
-          </Link>
-          <Link
-            to="/listings"
-            className="inline-flex justify-center rounded-xl border border-gray-200 text-gray-800 px-5 py-3 text-sm font-medium hover:bg-gray-50"
-          >
-            Browse more listings
-          </Link>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Your booking request was sent</h1>
+        <p className="text-gray-600 text-sm mt-3">Track status on your dashboard.</p>
+        <Link
+          to="/student-dashboard?tab=bookings"
+          className="inline-flex justify-center mt-8 rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+        >
+          Go to dashboard
+        </Link>
       </div>
     )
   }

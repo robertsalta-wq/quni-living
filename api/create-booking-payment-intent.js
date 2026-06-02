@@ -32,11 +32,15 @@ import {
   resolveCoTenantForCommit,
   resolveWeeklyRentForBooking,
 } from './lib/booking/occupancyBooking.js'
+import {
+  TENANT_BOOKING_CONFIRMED_STATUSES,
+  TENANT_BOOKING_PIPELINE_STATUSES,
+} from './lib/booking/tenantBookingPipelineStatuses.js'
 
 export const config = { runtime: 'edge' }
 
-const PROPERTY_PIPELINE_STATUSES = ['pending_confirmation', 'awaiting_info', 'confirmed', 'active']
-const PROPERTY_CONFIRMED_STATUSES = ['confirmed', 'active']
+const PROPERTY_PIPELINE_STATUSES = TENANT_BOOKING_PIPELINE_STATUSES
+const PROPERTY_CONFIRMED_STATUSES = TENANT_BOOKING_CONFIRMED_STATUSES
 
 const VALID_PROPERTY_TYPES = new Set([
   'entire_property',
