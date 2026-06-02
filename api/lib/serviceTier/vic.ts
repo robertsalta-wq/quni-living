@@ -1,6 +1,8 @@
 import type { PropertyTier, ServiceTierAvailability } from './types.js'
 
-const VIC_MANAGED_GATED_NOTES = 'Managed unavailable until trust account setup is complete'
+/** Managed stays off until trust accounts and Victorian licensing / legal clearance are in place. */
+const VIC_MANAGED_GATED_NOTES =
+  'Managed unavailable until trust accounts are operational and Victorian licensing requirements are satisfied'
 
 export function vicServiceTierAvailability(propertyTier: PropertyTier): ServiceTierAvailability {
   if (propertyTier === 't1' || propertyTier === 't2') {
