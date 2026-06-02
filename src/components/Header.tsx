@@ -35,9 +35,9 @@ const MOBILE_QUICK_NAV = [
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
-/** Mobile header bar — Listings stands out as the primary browse action. */
+/** Mobile header bar — compact pill so the bar still fits beside auth + menu on narrow phones. */
 const mobileListingsPillClass =
-  'inline-flex items-center whitespace-nowrap rounded-full bg-[#FF6F61] px-3 py-1 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3.5 sm:py-1.5 sm:text-sm'
+  'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#FF6F61] bg-[#FF6F61] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3 sm:py-1 sm:text-xs'
 
 const ACCOUNT_MENU_WIDTH_PX = 208
 
@@ -186,7 +186,7 @@ export default function Header() {
   }
 
   return (
-    <header className="pt-safe-top w-full max-w-full shrink-0 bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
+    <header className="pt-safe-top w-full max-w-full shrink-0 overflow-x-clip bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
       <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
         <div className="min-w-0 shrink-0">
@@ -220,7 +220,7 @@ export default function Header() {
                 className={
                   item.to === '/listings'
                     ? mobileListingsPillClass
-                    : 'whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 sm:text-sm'
+                    : 'hidden whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 min-[400px]:inline sm:text-sm'
                 }
                 {...(item.to === '/listings' ? listingsNavWarm : {})}
               >

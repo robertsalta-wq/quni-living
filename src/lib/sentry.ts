@@ -6,9 +6,11 @@ import { isStaleChunkLoadError } from './chunkLoadRecovery'
 const dsn = import.meta.env.VITE_SENTRY_DSN
 if (typeof dsn === 'string' && dsn.trim() !== '') {
   const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform()
-  // Session Replay patches the DOM aggressively; it often breaks or blanks Capacitor WebViews.
+  const isMobileWeb =
+    typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  // Session Replay patches the DOM aggressively; it can blank Capacitor WebViews and mobile browsers.
   const integrations: Integration[] = [Sentry.browserTracingIntegration()]
-  if (!isNative) {
+  if (!isNative && !isMobileWeb) {
     integrations.push(Sentry.replayIntegration())
   }
 
