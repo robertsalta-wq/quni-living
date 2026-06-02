@@ -14,6 +14,9 @@ import { isBoardingLodgerBondContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
+import ListingBondPaymentGuidance from '../components/booking/ListingBondPaymentGuidance'
+import { resolveTenancyPackage } from '../../api/lib/resolveTenancyPackage'
+import { listingBondPaymentTenantGuidance } from '../lib/tenancy/listingBondPaymentCopy'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
@@ -36,6 +39,33 @@ type BookingWithProperty = BookingRow & {
 type TabId = 'bookings' | 'saved'
 
 const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'
+
+function ListingBondGuidanceForBooking({
+  booking,
+  property,
+}: {
+  booking: BookingRow
+  property: PropertyBookingEmbed
+}) {
+  const moveIn =
+    (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
+    (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
+    undefined
+  const pkg = resolveTenancyPackage({
+    state: property.state ?? 'NSW',
+    property_type: property.property_type ?? '',
+    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    date: moveIn,
+  })
+  if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
+  const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state)
+  if (!guidance) return null
+  const bondAud =
+    typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
+      ? Math.round(property.rent_per_week * 4 * 100) / 100
+      : null
+  return <ListingBondPaymentGuidance guidance={guidance} bondAmountAud={bondAud} />
+}
 
 function firstNameFromStudent(p: StudentRow): string {
   const fn = p.first_name?.trim()
@@ -430,6 +460,9 @@ export default function StudentDashboard() {
                       b.status === 'confirmed' ||
                       b.status === 'active') && (
                       <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
+                        {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
+                          <ListingBondGuidanceForBooking booking={b} property={prop} />
+                        )}
                         <TenancyAgreementExplainer
                           state={prop?.state ?? ''}
                           propertyType={prop?.property_type ?? ''}

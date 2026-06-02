@@ -260,17 +260,21 @@ export function listingBookingAcceptedRenter(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
   const bookingRef = escapeHtml(data.booking_reference || '—')
   const bondDeadline = escapeHtml(data.bond_deadline_display || '—')
-  const leasePreviewUrl = escapeHtml(data.lease_preview_url || data.student_dashboard_url || '#')
+  const signUrl = escapeHtml(data.sign_agreement_url || data.lease_preview_url || data.student_dashboard_url || '#')
   const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+  const bondPaymentBlock =
+    typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim()
+      ? data.bond_payment_html
+      : `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
 
-  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed — next: bond payment</h2>
+  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed — sign your agreement &amp; pay bond</h2>
 <p>Hi ${studentName},</p>
 <p>Good news — your host has accepted your booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your landlord</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>
+<p><strong>Tenancy agreement:</strong> Your agreement is ready to sign electronically. You should receive a separate DocuSeal email, or use the button below.</p>
+<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>
+${bondPaymentBlock}
 <p><strong>Deadline:</strong> Please arrange bond payment before <strong>${bondDeadline}</strong>. If bond isn&apos;t received in time, this booking may lapse.</p>
-<p><strong>Agreement:</strong> You can review your tenancy agreement (preview) anytime — once bond is confirmed by your host, it becomes ready to sign.</p>
-<a href="${leasePreviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open lease preview →</a>
-<p style="margin-top:20px;font-size:14px;color:#555;">After bond is received, your host will confirm receipt on Quni and you&apos;ll receive another email when your agreement is ready to sign.</p>
+<p style="margin-top:12px;font-size:14px;color:#555;">Your host will confirm bond receipt on Quni when they have received it (this does not block signing).</p>
 <a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
 
   return {
@@ -287,13 +291,20 @@ export function listingBookingAcceptedLandlord(data) {
   const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
   const bondDeadline = escapeHtml(data.bond_deadline_display || '—')
   const markBondUrl = escapeHtml(data.mark_bond_received_url || data.dashboard_url || '#')
+  const reviewUrl = escapeHtml(data.review_url || markBondUrl)
+  const bondObligationsBlock =
+    typeof data.bond_obligations_html === 'string' && data.bond_obligations_html.trim()
+      ? data.bond_obligations_html
+      : `<p><strong>Bond:</strong> Collect the bond <strong>directly from the renter</strong> off-platform. When you&apos;ve received it, please confirm on Quni before <strong>${bondDeadline}</strong>.</p>`
 
   const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
 <p>Hi ${landlordName},</p>
 <p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation. This includes your tenancy agreement draft — the renter can preview it now; both parties sign after you confirm bond receipt on Quni.</p>
-<p><strong>Bond:</strong> Collect the bond <strong>directly from the renter</strong> off-platform. When you&apos;ve received it, please confirm on Quni before <strong>${bondDeadline}</strong>.</p>
-<a href="${markBondUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Mark bond received →</a>`
+<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation. This includes your state-appropriate tenancy agreement — both parties can sign now via DocuSeal (check your email or open the booking on Quni).</p>
+${bondObligationsBlock}
+<p>When bond is received (by you or lodged with the authority), confirm on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
+<a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>
+<a href="${markBondUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Mark bond received →</a>`
 
   return {
     subject: `Listing booking confirmed — ${data.property_address || data.property_title || 'your listing'}`,

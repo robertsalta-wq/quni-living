@@ -158,7 +158,7 @@ describe('runListingConfirmBooking', () => {
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
   })
 
-  it('Phase 3 / Task J: confirm Listing triggers document generation in PREVIEW (defer_signing=true)', async () => {
+  it('confirm Listing triggers document generation with signing at accept (defer_signing=false)', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
 
@@ -173,7 +173,7 @@ describe('runListingConfirmBooking', () => {
     expect(triggerListingDocumentGeneration).toHaveBeenCalledWith(
       expect.objectContaining({
         bookingId: baseBooking.id,
-        deferSigning: true,
+        deferSigning: false,
       }),
     )
   })

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatDate } from '../../pages/admin/adminUi'
+import LandlordListingBondObligations from './LandlordListingBondObligations'
+import type { ListingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 
 type Props = {
   bookingReference: string
@@ -8,6 +10,7 @@ type Props = {
   bondAmountAud: number | null
   bondDeadlineIso: string | null
   listingFeeDisplay: string
+  bondObligations?: ListingBondPaymentLandlordObligations | null
   justAccepted?: boolean
   onDismissCelebration?: () => void
 }
@@ -25,6 +28,7 @@ export default function LandlordListingAcceptedSummary({
   bondAmountAud,
   bondDeadlineIso,
   listingFeeDisplay,
+  bondObligations = null,
   justAccepted = false,
   onDismissCelebration,
 }: Props) {
@@ -82,8 +86,8 @@ export default function LandlordListingAcceptedSummary({
           <span>
             <span className="font-semibold">Listing fee ({listingFeeDisplay}):</span> Charged to your saved card. This
             includes your state-appropriate{' '}
-            <span className="font-semibold">tenancy agreement draft</span> — the renter can preview it now; both of you
-            sign electronically after you confirm bond receipt.
+            <span className="font-semibold">tenancy agreement</span> — both parties should receive DocuSeal signing
+            emails now (or use the signing link on this page).
           </span>
         </li>
         <li className="flex gap-2">
@@ -91,8 +95,10 @@ export default function LandlordListingAcceptedSummary({
             ✓
           </span>
           <span>
-            <span className="font-semibold">Bond ({bondLine}):</span> Collect directly from the renter off-platform (bank
-            transfer, cash, or as agreed). Quni does not hold bond on Listing stays.
+            <span className="font-semibold">Bond ({bondLine}):</span>{' '}
+            {bondObligations
+              ? `Offer the renter the state bond authority route first, or accept payment to you — see obligations below. Quni does not hold bond.`
+              : `Collect directly from the renter off-platform (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.`}
           </span>
         </li>
         <li className="flex gap-2">
@@ -115,10 +121,12 @@ export default function LandlordListingAcceptedSummary({
         </li>
       </ul>
 
+      {bondObligations && <LandlordListingBondObligations obligations={bondObligations} />}
+
       <p className="text-sm text-gray-700 leading-relaxed pt-1 border-t border-emerald-200/80">
-        When bond is in your account, use{' '}
-        <span className="font-semibold">Bond received from renter</span> at the bottom of this page. The agreement then
-        becomes ready to sign. You can also review the draft in{' '}
+        When bond is received (paid to you or lodged with the authority), use{' '}
+        <span className="font-semibold">Bond received from renter</span> at the bottom of this page. You can review or sign
+        the agreement in{' '}
         <a href="#tenancy-agreement-preview" className="font-semibold text-[#FF6F61] underline underline-offset-2">
           Tenancy agreement
         </a>{' '}

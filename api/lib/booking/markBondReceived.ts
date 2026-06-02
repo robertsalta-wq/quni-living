@@ -25,6 +25,23 @@ function warn(logger: Pick<Console, 'warn'> | undefined, msg: string, err?: unkn
   else fn(msg)
 }
 
+async function listingLeaseSigningAlreadyInitiated(
+  admin: SupabaseClient,
+  bookingId: string,
+): Promise<boolean> {
+  const { data: tenancy } = await admin.from('tenancies').select('id').eq('booking_id', bookingId).maybeSingle()
+  if (!tenancy?.id) return false
+  const { data: docs } = await admin
+    .from('tenancy_documents')
+    .select('status')
+    .eq('tenancy_id', tenancy.id)
+  if (!Array.isArray(docs) || docs.length === 0) return false
+  return docs.some((d) => {
+    const st = typeof d.status === 'string' ? d.status : ''
+    return st === 'sent_for_signing' || st === 'signed'
+  })
+}
+
 /**
  * Landlord self-report: bond received off-platform → `confirmed` + telemetry.
  * Does not modify `confirmed_at` (set at landlord-accept / listing fee step).
@@ -171,19 +188,17 @@ export async function runMarkBondReceivedLandlord(args: {
       warn(logger, '[mark-bond-received] listing bond-received emails', e)
     }
 
-    /**
-     * Phase 3 / Task J: bond received unlocks DocuSeal signing for the Listing lease.
-     * The generator detects the existing draft (created at landlord-confirm with
-     * `defer_signing: true`) and now initiates the DocuSeal signing session for both parties.
-     * Failures are non-fatal — landlord can retrigger via existing dashboard mechanisms.
-     */
+    /** If signing was not sent at accept (legacy booking or generator failure), retry now. */
     try {
-      await triggerListingDocumentGeneration({
-        admin,
-        bookingId,
-        deferSigning: false,
-        logger: { warn: (msg, err) => warn(logger, msg, err), error: (msg, err) => warn(logger, msg, err) },
-      })
+      const signingAlreadySent = await listingLeaseSigningAlreadyInitiated(admin, bookingId)
+      if (!signingAlreadySent) {
+        await triggerListingDocumentGeneration({
+          admin,
+          bookingId,
+          deferSigning: false,
+          logger: { warn: (msg, err) => warn(logger, msg, err), error: (msg, err) => warn(logger, msg, err) },
+        })
+      }
     } catch (e) {
       warn(logger, '[mark-bond-received] listing signing trigger', e)
     }

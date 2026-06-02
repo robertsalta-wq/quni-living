@@ -2,16 +2,9 @@
 /**
  * Listing-tier document generation trigger.
  *
- * For Listing bookings the lease document goes through two phases:
- *   1. At landlord-confirm (status -> bond_pending): generate the PDF as a "preview" only,
- *      with `defer_signing: true`. No DocuSeal signing session is initiated yet.
- *   2. At mark-bond-received (status -> confirmed): re-trigger the same generator with
- *      `defer_signing: false`. The generator picks up the existing draft tenancy_document
- *      (status === 'draft', not yet sent_for_signing) and initiates DocuSeal signing.
- *
- * Consumer protection rationale (decision §4 of docs/phase-3-landlord-listing.md):
- * a renter must not be legally bound by a lease before they have paid bond direct to
- * the landlord. Preview-then-signable enforces that gate.
+ * For Listing bookings the lease is generated at landlord-confirm (bond_pending) with
+ * `defer_signing: false` by default so both parties receive DocuSeal signing promptly.
+ * Mark-bond-received only re-triggers generation if signing was never sent (legacy rows).
  */
 import { resolveTenancyPackage, tenancyGeneratorToApiPath } from '../resolveTenancyPackage.js'
 

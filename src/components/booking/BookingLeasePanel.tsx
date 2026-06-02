@@ -133,7 +133,10 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
         <>
           <p className="font-semibold leading-snug">Lease preview (draft)</p>
           <p className="text-xs leading-relaxed text-indigo-900/90">
-            Your residential tenancy agreement has been drafted. {viewer_role === 'tenant' ? 'Pay your bond directly to your host first — they will confirm receipt and the lease will unlock for signing.' : 'Confirm bond received from the renter to unlock the lease for signing.'}
+            Your residential tenancy agreement has been drafted.{' '}
+            {viewer_role === 'tenant'
+              ? 'Check your email for DocuSeal signing, or use the button below when ready. Bond payment is separate — see bond guidance on your dashboard.'
+              : 'Check your email for DocuSeal signing, or use the button below. Record bond receipt on Quni when the renter has paid (this does not block signing).'}
           </p>
           {preview_url && (
             <a

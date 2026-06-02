@@ -2,6 +2,11 @@
  * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort.
  */
 import { sendEmail } from '../sendEmail.js'
+import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import {
+  listingBondPaymentEmailHtmlForLandlord,
+  listingBondPaymentEmailHtmlForTenant,
+} from '../tenancy/listingBondPaymentCopy.js'
 import {
   listingBookingAcceptedLandlord,
   listingBookingAcceptedRenter,
@@ -55,7 +60,7 @@ async function loadListingEmailContext(admin, bookingId) {
       start_date,
       lease_length,
       bond_window_expires_at,
-      properties ( title, address, suburb, state, postcode ),
+      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house ),
       student_profiles ( email, full_name, first_name, last_name ),
       landlord_profiles ( email, full_name, phone )
     `,
@@ -90,12 +95,32 @@ async function loadListingEmailContext(admin, bookingId) {
   const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
   const landlordName = typeof lp.full_name === 'string' && lp.full_name.trim() ? lp.full_name.trim() : 'Host'
 
-  const moveIn =
+  const moveInRaw =
     (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
     (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
-    '—'
+    ''
+  const moveInDate = moveInRaw || '—'
   const leaseLength =
     typeof booking.lease_length === 'string' && booking.lease_length.trim() ? booking.lease_length.trim() : '—'
+
+  const propState = typeof prop.state === 'string' && prop.state.trim() ? prop.state.trim() : 'NSW'
+  const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
+  const isRooming = Boolean(prop.is_registered_rooming_house)
+  const tenancyPackage = resolveTenancyPackage({
+    state: propState,
+    property_type: propertyType,
+    is_registered_rooming_house: isRooming,
+    date: moveInRaw || undefined,
+  })
+  const bondRules = tenancyPackage.supported ? tenancyPackage.rules.bond : null
+  const bondPaymentTenantHtml =
+    bondRules && bondRules.schemeApplies
+      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState)
+      : null
+  const bondPaymentLandlordHtml =
+    bondRules && bondRules.schemeApplies
+      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState)
+      : null
 
   return {
     bookingId,
@@ -105,10 +130,13 @@ async function loadListingEmailContext(admin, bookingId) {
     landlordName,
     propertyAddress: addr || title,
     propertyTitle: title,
-    moveInDate: moveIn,
+    moveInDate,
     leaseLength,
     bondWindowExpiresAt: booking.bond_window_expires_at,
     weeklyRent: booking.weekly_rent,
+    bondPaymentTenantHtml,
+    bondPaymentLandlordHtml,
+    bondSchemeApplies: Boolean(bondRules?.schemeApplies),
   }
 }
 
@@ -140,6 +168,8 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         bond_deadline_display: bondDeadline,
         lease_preview_url: leasePreview,
         student_dashboard_url: studentDash,
+        bond_payment_html: ctx.bondPaymentTenantHtml,
+        sign_agreement_url: studentDash,
       })
       await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
     }
@@ -155,6 +185,8 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         bond_deadline_display: bondDeadline,
         mark_bond_received_url: markBond,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
+        bond_obligations_html: ctx.bondPaymentLandlordHtml,
+        review_url: markBond,
       })
       await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })
     }

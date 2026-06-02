@@ -71,7 +71,7 @@ describe('triggerListingDocumentGeneration', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('NSW T2 entire_property → posts to /api/documents/generate-residential-tenancy with defer_signing', async () => {
+  it('NSW T2 entire_property → posts to generate-residential-tenancy (defer_signing param honoured)', async () => {
     fetchMock.mockResolvedValueOnce({ ok: true, status: 200, text: async () => '{}' })
     const admin = mockAdmin(baseBooking)
     const r = await triggerListingDocumentGeneration({

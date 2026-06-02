@@ -31,6 +31,8 @@ function mockAdmin(opts: {
   updateError?: unknown
   againRow?: Record<string, unknown> | null
   eventError?: unknown
+  /** When set, listingLeaseSigningAlreadyInitiated sees these doc statuses */
+  tenancyDocStatuses?: string[]
 }) {
   const booking = opts.booking ?? bookingBase
   const loadError = opts.loadError ?? null
@@ -92,6 +94,26 @@ function mockAdmin(opts: {
         insert: async () => ({ error: eventError }),
       }
     }
+    if (table === 'tenancies') {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: { id: 'ten1' }, error: null }),
+          }),
+        }),
+      }
+    }
+    if (table === 'tenancy_documents') {
+      const statuses = opts.tenancyDocStatuses ?? []
+      return {
+        select: () => ({
+          eq: async () => ({
+            data: statuses.map((status) => ({ status })),
+            error: null,
+          }),
+        }),
+      }
+    }
     return {}
   })
 
@@ -119,7 +141,7 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
   })
 
-  it('Phase 3 / Task J: bond received unlocks signing — triggers document generation with deferSigning=false', async () => {
+  it('bond received retries document generation when signing was never sent', async () => {
     const admin = mockAdmin({})
     await runMarkBondReceivedLandlord({
       admin: admin as never,
@@ -135,7 +157,18 @@ describe('runMarkBondReceivedLandlord', () => {
     )
   })
 
-  it('Phase 3 / Task J: idempotent re-call does NOT trigger document generation again', async () => {
+  it('skips document generation when signing was already sent at accept', async () => {
+    const admin = mockAdmin({ tenancyDocStatuses: ['sent_for_signing'] })
+    await runMarkBondReceivedLandlord({
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId: bookingBase.id,
+    })
+
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
+  })
+
+  it('idempotent re-call does NOT trigger document generation again', async () => {
     const admin = mockAdmin({
       booking: {
         ...bookingBase,

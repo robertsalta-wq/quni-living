@@ -300,16 +300,15 @@ export async function runListingConfirmBooking(params) {
     }
 
     /**
-     * Phase 3 / Task J: generate the lease as a preview-only document at landlord-confirm.
-     * DocuSeal signing flow is deferred until the landlord ticks "Bond received".
-     * Failures are non-fatal — booking is already in `bond_pending` and the lease can be
-     * regenerated when the bond-received action runs.
+     * Generate the lease and send DocuSeal signing to both parties at accept.
+     * Bond receipt on Quni is tracked separately (booking state) and is not a legal
+     * prerequisite for issuing the agreement.
      */
     try {
       await triggerListingDocumentGeneration({
         admin,
         bookingId: booking.id,
-        deferSigning: true,
+        deferSigning: false,
       })
     } catch (e) {
       console.error('[confirm-listing] preview document generation', e)

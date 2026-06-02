@@ -39,6 +39,8 @@ import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
+import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
+import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -611,6 +613,22 @@ export default function LandlordBookingReviewPage() {
       ''
     : ''
 
+  const listingBondObligations = useMemo(() => {
+    if (!property || !isListingBondPending) return null
+    const moveIn =
+      (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
+      (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
+      undefined
+    const pkg = resolveTenancyPackage({
+      state: property.state ?? 'NSW',
+      property_type: property.property_type ?? '',
+      is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+      date: moveIn,
+    })
+    if (!pkg.supported) return null
+    return listingBondPaymentLandlordObligations(pkg.rules.bond, property.state)
+  }, [property, isListingBondPending, booking.move_in_date, booking.start_date])
+
   const showBondReceivedPrimary = landlordListingBondReceivedPrimaryVisible({
     bookingStatus: booking.status,
     serviceTierFinal: booking.service_tier_final,
@@ -702,6 +720,7 @@ export default function LandlordBookingReviewPage() {
             bondAmountAud={property?.bond != null ? Number(property.bond) : null}
             bondDeadlineIso={booking.bond_window_expires_at}
             listingFeeDisplay={listingFeeDisplay}
+            bondObligations={listingBondObligations}
             justAccepted={listingAcceptCelebration}
             onDismissCelebration={() => setListingAcceptCelebration(false)}
           />
