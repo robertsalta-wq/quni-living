@@ -9,17 +9,24 @@ type Props = {
 const CHIPS: Record<PersonaKey, string[]> = {
   student_renter: [
     'Find rooms near UNSW',
-    "What's included in rent?",
+    'How do I know the landlord is verified?',
+    'What do I pay when I book?',
     'How does verification work?',
     'Where can I preview sample agreements?',
   ],
   landlord: [
+    'Why do I need Stripe to accept bookings?',
     'Where can I see sample agreements?',
     'Help me complete my listing',
-    'Draft a reply to an enquiry',
+    'Listing vs Managed payments',
     'How do payouts work?',
   ],
-  visitor: ['How does Quni work?', 'Is it free to list?', 'How are renters verified?'],
+  visitor: [
+    'How does Quni work?',
+    'How are landlords verified?',
+    'Is it free for students to book?',
+    'How are renters verified?',
+  ],
 }
 
 export default function ChatPromptChips({ personaKey, onPick, disabled }: Props) {

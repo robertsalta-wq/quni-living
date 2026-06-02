@@ -24,6 +24,19 @@ Other AI endpoints have their own prompts and are **not** updated automatically:
 
 Each chat message embeds the user question and retrieves the top matching chunks (similarity ≥ 0.7). Good for tenancy law, platform fees, verification policy, and “where do I click?” style answers.
 
+### Feature inventory → AI (recommended for “whole product” coverage)
+
+**Living doc:** [`docs/feature-inventory.md`](./feature-inventory.md) — student/landlord capability list with routes and Live vs UI-only status.
+
+When you update that file, sync four large `platform_policy` chunks into the seed JSON, then re-embed:
+
+```bash
+npx tsx scripts/syncFeatureInventoryKnowledge.ts
+npm run seed:knowledge
+```
+
+The script copies **Shared**, **Students**, **Landlords**, and **Quick route map** sections into `knowledgeData.json` (stable IDs `…0020`–`…0023`). Keep the inventory accurate when you ship UX; run the two commands so chat RAG stays aligned.
+
 **After editing `knowledgeData.json` or adding rows in admin:**
 
 ```bash
@@ -62,11 +75,23 @@ Update when you want one-click suggestions to reflect new features.
 
 ## Checklist when shipping a user-visible feature
 
-1. Would users ask the chat about it? → Add or update a `knowledgeData.json` entry + re-seed.
-2. Should the assistant always mention a URL or rule? → Add to `SYSTEM_PROMPTS` in `api/chat.ts`.
-3. Is it persona-specific behaviour? → Update the right persona block only.
-4. Optional: add a prompt chip in `ChatPromptChips.tsx`.
-5. Deploy API + frontend; run `seedKnowledge` if knowledge JSON changed.
+1. Update [`docs/feature-inventory.md`](./feature-inventory.md) (bullet under the right persona; mark Live / UI only).
+2. Run `npx tsx scripts/syncFeatureInventoryKnowledge.ts` then `npm run seed:knowledge`.
+3. Would users ask the chat about it in ways the inventory does not cover? → Add a focused `knowledgeData.json` entry + re-seed.
+4. Should the assistant always mention a URL or rule? → Add to `SYSTEM_PROMPTS` in `api/chat.ts`.
+5. Is it persona-specific behaviour? → Update the right persona block only.
+6. Optional: add a prompt chip in `ChatPromptChips.tsx`.
+7. Deploy API + frontend; run `seed:knowledge` if knowledge JSON changed.
+
+## Priority topics (keep explicit articles)
+
+Some flows deserve dedicated `knowledgeData.json` entries **in addition to** the feature inventory sync — especially when you want the model to explain *why* (not just *where*):
+
+- **Verified host / Stripe identity** — `Quni host verification (Verified host badge)`
+- **Student payments** — `Quni student payments and Stripe`
+- **Landlord payments (Listing vs Managed)** — `Quni landlord payments and Stripe`
+
+Pair these with `TRUST_STRIPE_PAYMENTS_RULE` in `api/chat.ts` so chat always prioritises trust and payment honesty.
 
 ## Related: agreement sample PDFs
 

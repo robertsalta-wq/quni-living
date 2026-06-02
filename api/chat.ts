@@ -195,6 +195,10 @@ function buildStudentListingContextBlock(props: Array<Record<string, unknown>>):
 
 const VERIFICATION_HONESTY_RULE = `- Verification honesty: Only describe user or host verification exactly as stated in this system message or in RELEVANT KNOWLEDGE BASE below. Quni does not verify government IDs for hosts, check property titles, or manually review landlord profiles. Hosts complete Stripe Connect identity verification before accepting bookings; approved hosts may show a "Verified host" badge. Do not invent verification steps not explicitly listed.`
 
+const TRUST_STRIPE_PAYMENTS_RULE = `- Trust & Stripe payments (priority topic): Quni's main trust feature for students is the Verified host badge — landlords must complete Stripe Connect identity verification (Stripe's regulated KYC, not manual Quni review) before they can accept a booking. When Stripe enables charges on their account, the badge appears on listings so renters know the host passed identity checks. Students can still browse, message, and submit booking requests before that step; only acceptance is blocked. Explain why this matters for peace of mind when users ask if a landlord is legitimate, safe, or verified. For payment flows, use RELEVANT KNOWLEDGE BASE articles on student payments, landlord payments, and host verification — do not conflate bond/rent (tenancy money) with Quni platform fees. Students pay no Quni booking/platform/service fees; Listing landlords receive bond/rent directly after accept; Managed landlords use Connect for rent collection and payouts.`
+
+const PRODUCT_INVENTORY_RULE = `- Product capabilities and routes: For "where do I…", "can I…", or whether a feature exists, prefer RELEVANT KNOWLEDGE BASE entries titled "Quni … product features" or "Quni route map" (synced from docs/feature-inventory.md). Do not claim features not listed there. Saved listings is UI only (coming soon) — do not say users can save favourites yet. If the knowledge base does not cover the question, suggest the relevant dashboard tab or hello@quni.com.au rather than inventing flows.`
+
 const SAMPLE_AGREEMENTS_RULE = `- Sample agreement PDFs (watermarked, not for signing): Logged-in landlords and students can open the Sample agreements page at /sample-agreements (also linked from the dashboard as "View sample agreements"). It shows clickable thumbnail previews of live-generated templates by state (NSW, QLD, VIC) and tier (T1 occupancy/licence, T2 residential with Quni addendum where applicable). Tell users to use that page — do not say templates are only in listing settings, help centre, or unavailable in chat. You cannot display PDFs inside this chat. Admins reviewing all templates use /admin/agreement-previews. These samples are for layout and wording review only; executed agreements are generated per confirmed booking.`
 
 const SYSTEM_PROMPTS: Record<PersonaKey, string> = {
@@ -208,6 +212,8 @@ Rules:
 - Encourage next steps with clear, short guidance and links if appropriate (plain guidance is acceptable).
 - Use Australian English.
 ${VERIFICATION_HONESTY_RULE}
+${TRUST_STRIPE_PAYMENTS_RULE}
+${PRODUCT_INVENTORY_RULE}
 ${SAMPLE_AGREEMENTS_RULE}
 
 No listing context block is available for visitors. Landlords and students must sign in to use /sample-agreements for watermarked PDF previews.`,
@@ -227,7 +233,9 @@ You MUST follow these rules:
 7) If the user asks for a comparison, compare only across the provided listings.
 8) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}
 9) If LISTING CONTEXT shows a host as verified, you may mention the Verified host badge; do not claim verification if it is not shown.
-10) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
+10) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
+11) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
+12) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
@@ -240,7 +248,7 @@ Rules:
 1) Be warm, concise, and practical.
 2) Address the landlord naturally once using "{{FIRST_NAME}}" if provided.
 3) Help landlords complete listing setup by explaining what to include and how to phrase key details to attract the right renters.
-4) Explain Stripe Connect payouts at a high level: what the payout is for, what “charges enabled” means, and how payout timing works in general terms (no guarantees).
+4) Explain Stripe Connect and payments clearly: identity verification via Stripe (why students see Verified host), “charges enabled”, Listing saved-card acceptance fee vs Managed rent payouts, and payout timing in general terms (no guarantees). Frame verification as building renter trust, not just a technical hurdle.
 5) Explain the non-student tenant opt-in (“open to non-students”) and what it changes for which renters can see/book the listing.
 6) Draft replies to renter enquiries: write warm, professional messages and suggest follow-up questions that clarify fit.
 7) Understand and reference Verified Student vs Verified Identity badges in guidance: encourage renters to complete the right verification path, and help landlords interpret badge meaning without making assumptions about protected characteristics.
@@ -249,7 +257,9 @@ Rules:
 10) Prefer actionable checklists and message drafts, but do not output markdown headings or labels.
 11) Use Australian English.
 12) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}
-13) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}`,
+13) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
+14) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
+15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}`,
 }
 
 async function verifyTurnstileOrThrow(token: string): Promise<void> {

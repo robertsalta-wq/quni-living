@@ -1,6 +1,6 @@
 # Quni feature inventory (living document)
 
-**Last reviewed:** 2026-05-29  
+**Last reviewed:** 2026-06-02  
 **Source of truth:** codebase (`src/`, `api/`, Supabase functions). If this doc disagrees with the app, the app wins until someone updates this file.
 
 Granular list of student and landlord capabilities — including small actions (e.g. **duplicate listing**, **request more information** on a booking). Admin-only tools are out of scope.
@@ -58,6 +58,15 @@ Update this file when you ship or remove **user-visible** behaviour:
 
 Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inventory.md` if needed.”*
 
+### 8. Keep the AI assistant in sync
+
+After you change this file:
+
+1. Run `npx tsx scripts/syncFeatureInventoryKnowledge.ts` (writes four `platform_policy` rows into `scripts/knowledgeData.json`).
+2. Run `npm run seed:knowledge` (re-embeds into Supabase for chat RAG).
+
+See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and other AI surfaces.
+
 ---
 
 ## Shared (both students and landlords)
@@ -68,7 +77,17 @@ Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inve
 - Public **listings browse** and property detail (`/listings`, `/properties/:slug`) with role-specific gates
 - **Verified host** badge on listing cards and property detail when `landlord_profiles.verified` (Stripe-driven)
 - **AI chat** widget (persona: student renter vs landlord); host verification honesty rules + knowledge-base chunk
+- **Sample agreement previews** (`/sample-agreements`) — watermarked PDF templates by state/tier; dashboard link for students and landlords
 - Auth: signup, login, Google OAuth, email verification, sign out
+
+### Trust, Stripe & payments — Live
+
+- **Verified host** (core trust feature): landlords complete **Stripe Connect identity verification** (regulated KYC by Stripe, not manual Quni ID review) before they can **accept** any booking; when Stripe enables charges, a **Verified host** badge shows on profile and listings so students get peace of mind
+- Students may **browse, message, and submit booking requests** before a host finishes Stripe — only **acceptance** is gated on verification
+- **Students**: no Quni booking/platform/service fees; booking **deposit** via Stripe (card hold/charge at application); ongoing rent via **Quni card** (Stripe Customer) or **bank transfer**; bond is tenancy money between parties (Quni is not the bond custodian)
+- **Landlords — Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
+- **Landlords — Quni Managed**: **Stripe Connect** for identity + **weekly rent collection**; service fee deducted before payout to bank (~2–3 business days typical)
+- Declined bookings: deposit hold **released/refunded** via automated Stripe flows (often 5–7 business days)
 - Legal/info: Terms, Privacy, Refunds, How it works, FAQ, Contact
 - Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) — no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
 
@@ -114,6 +133,7 @@ Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inve
 - **Get support** (Qase modal)
 - Stripe payments card; NSW tenancy copy + lease panel when applicable
 - **Download bond receipt** (where listing type supports it)
+- **View sample agreements** → `/sample-agreements`
 - Legacy `?tab=enquiries` → `/messages`
 
 ### Saved listings — UI only
@@ -212,6 +232,7 @@ Optional PR habit: *“Touches student/landlord UX → update `docs/feature-inve
 - **Rent payouts** (Connect): connect / continue / manage
 - Stats: listings, messages (unread), bookings (pending), profile %
 - **Get support** (Qase); Managed Connect banner when needed
+- **View sample agreements** → `/sample-agreements`
 - Tabs: **Listings** | **Messages** | **Bookings**
 
 ### Listings (dashboard & profile Properties tab) — Live
@@ -319,6 +340,7 @@ Per listing:
 - [`dual-tier-service-model.md`](./dual-tier-service-model.md) — Listing vs Managed product rules  
 - [`mobile-testing-checklist.md`](./mobile-testing-checklist.md) — device QA  
 - [`professional-workplace-search-scope.md`](./professional-workplace-search-scope.md) — non-student search behaviour  
+- [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) — how chat AI stays aligned with this inventory  
 
 ---
 
@@ -326,5 +348,6 @@ Per listing:
 
 | Date | Change |
 |------|--------|
+| 2026-06-02 | Trust/Stripe/payments section for AI; sample agreements; knowledge sync script |
 | 2026-05-29 | **Verified host** (Stripe-driven): accept gated on identity; Listing deposits without host Connect; FAQ/How it works/AI guardrails aligned |
 | 2026-05-27 | Initial inventory from codebase review |
