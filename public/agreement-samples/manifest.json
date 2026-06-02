@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-06-02T06:52:49.713Z",
+  "watermark": "SAMPLE - not for execution",
+  "samples": [
+    {
+      "state": "NSW",
+      "tier": "T1",
+      "document": "Occupancy licence",
+      "fileName": "nsw-t1-occupancy-licence.pdf",
+      "href": "/agreement-samples/nsw-t1-occupancy-licence.pdf"
+    },
+    {
+      "state": "NSW",
+      "tier": "T2",
+      "document": "FT6600 tenancy agreement",
+      "fileName": "nsw-t2-ft6600-tenancy-agreement.pdf",
+      "href": "/agreement-samples/nsw-t2-ft6600-tenancy-agreement.pdf"
+    },
+    {
+      "state": "NSW",
+      "tier": "T2",
+      "document": "Quni addendum",
+      "fileName": "nsw-t2-quni-addendum.pdf",
+      "href": "/agreement-samples/nsw-t2-quni-addendum.pdf"
+    },
+    {
+      "state": "QLD",
+      "tier": "T1",
+      "document": "Occupancy agreement",
+      "fileName": "qld-t1-occupancy-agreement.pdf",
+      "href": "/agreement-samples/qld-t1-occupancy-agreement.pdf"
+    },
+    {
+      "state": "QLD",
+      "tier": "T2",
+      "document": "General tenancy agreement (Form 18a)",
+      "fileName": "qld-t2-general-tenancy-agreement-form-18a.pdf",
+      "href": "/agreement-samples/qld-t2-general-tenancy-agreement-form-18a.pdf"
+    },
+    {
+      "state": "QLD",
+      "tier": "T2",
+      "document": "Quni addendum",
+      "fileName": "qld-t2-quni-addendum.pdf",
+      "href": "/agreement-samples/qld-t2-quni-addendum.pdf"
+    },
+    {
+      "state": "VIC",
+      "tier": "T1",
+      "document": "Licence to occupy",
+      "fileName": "vic-t1-licence-to-occupy.pdf",
+      "href": "/agreement-samples/vic-t1-licence-to-occupy.pdf"
+    },
+    {
+      "state": "VIC",
+      "tier": "T2",
+      "document": "Form 1",
+      "fileName": "vic-t2-form-1.pdf",
+      "href": "/agreement-samples/vic-t2-form-1.pdf"
+    },
+    {
+      "state": "VIC",
+      "tier": "T2",
+      "document": "Quni addendum",
+      "fileName": "vic-t2-quni-addendum.pdf",
+      "href": "/agreement-samples/vic-t2-quni-addendum.pdf"
+    }
+  ]
+}

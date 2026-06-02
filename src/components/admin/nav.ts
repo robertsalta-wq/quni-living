@@ -90,6 +90,7 @@ export const ADMIN_NAV_ZONES: readonly AdminNavZone[] = [
     items: [
       { id: 'trust-checklist', label: 'Trust checklist', icon: 'shield-check', to: '/admin/trust-checklist' },
       { id: 'state-workflows', label: 'State workflows', icon: 'workflow', to: '/admin/state-workflows' },
+      { id: 'agreement-previews', label: 'Agreement previews', icon: 'file-text', to: '/admin/agreement-previews' },
       { id: 'documents', label: 'Documents', icon: 'file-text', to: '/admin/documents' },
     ],
   },
