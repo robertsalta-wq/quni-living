@@ -37,8 +37,12 @@ const bundleJobs = [
     outFile: 'api/documents/QuniPlatformAddendumQld.js',
   },
   {
-    inFile: 'src/lib/documents/QuniOccupancyAgreementQld.tsx',
-    outFile: 'api/documents/QuniOccupancyAgreementQld.js',
+    inFile: 'src/lib/documents/nsw/occupancyGenerator.tsx',
+    outFile: 'api/documents/NswOccupancyAgreement.js',
+  },
+  {
+    inFile: 'src/lib/documents/qld/occupancyGenerator.tsx',
+    outFile: 'api/documents/QldOccupancyAgreement.js',
   },
 ]
 

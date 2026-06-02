@@ -1,38 +1,39 @@
 /**
- * NSW on-site licence to occupy — narrative copy (lawyer-review draft).
- * Boarder/lodger; owner-held security deposit (no NSW Fair Trading lodgement for T1).
+ * Queensland on-site licence to occupy — narrative copy (lawyer-review draft).
+ * Boarder/lodger; bond must be lodged with RTA Queensland (T1 product rule).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
 
-export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
+export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
-  docSubtitle: 'New South Wales — Licence to occupy (on-site accommodation)',
+  docSubtitle: 'Queensland — Licence to occupy (on-site accommodation)',
   draftFooter: 'Draft for legal review — not for execution',
   ownerServiceFeeDefault: '10%',
   natureParagraphs: [
-    'This document is a common-law licence to occupy a specified room within residential premises in New South Wales. It is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW).',
+    'This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a general tenancy agreement under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (RTRA Act).',
     'The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.',
     'The resident is granted permission to occupy only the allocated room described in the schedule and to use the shared areas on the terms below. The resident is not granted exclusive possession of the premises or any part of the premises.',
-    'The Residential Tenancies Act 2010 (NSW) does not apply to this boarder/lodger arrangement. Any security deposit is held directly by the owner and is not lodged with NSW Fair Trading or Rental Bonds Online.',
+    'Although the RTRA Act does not generally apply to this boarder/lodger arrangement, any bond paid by the resident must be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt, in accordance with Queensland bond lodgement requirements.',
   ],
   roomSharedIntro:
     'The resident is licensed to occupy the allocated bedroom at the property address in the schedule. Unless otherwise agreed in writing, the kitchen, bathroom, laundry and living areas are shared with the owner and any other occupants the owner permits on the premises.',
   entryParagraphs: [
-    'Because the resident does not have exclusive possession, the owner may enter the allocated room at reasonable times for cleaning, maintenance, inspection or to fulfil the owner\'s obligations under this licence, without the notice requirements that apply to residential tenancies.',
+    'Because the resident does not have exclusive possession, the owner may enter the allocated room at reasonable times for cleaning, maintenance, inspection or to fulfil the owner\'s obligations under this licence, without the notice requirements that apply to general tenancy agreements.',
     'The owner retains keys or other means of access to the allocated room. The resident must not change locks or security devices without the owner\'s prior written consent.',
     'The resident must not represent that they have sole or exclusive occupation of the premises or exclude the owner from the allocated room or shared areas.',
   ],
   utilitiesDefault:
     'Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water, internet and waste services for the premises are as described on the property listing or in move-in information. Shared utilities are allocated fairly between occupants as the owner directs.',
   bond: {
-    scheduleLabel: 'Security deposit',
-    sectionTitle: 'Security deposit',
+    scheduleLabel: 'Bond',
+    sectionTitle: 'Bond (RTA lodgement)',
     intro:
-      'Where a security deposit is agreed, it is held directly by the owner and is not lodged with NSW Fair Trading or any statutory bond service.',
+      'This is a boarder/lodger licence. The RTRA Act 2008 (Qld) does not generally apply to the occupation arrangement, but bond paid by the resident must be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt. The owner cannot hold bond directly.',
     bullets: [
-      'The owner must give the resident a written receipt when the security deposit is paid.',
-      'The security deposit may be applied against amounts owing under this licence, damage beyond fair wear and tear, or cleaning required to restore the allocated room and the resident\'s share of shared areas, subject to any agreement between the parties.',
-      'Unused amounts of the security deposit must be returned to the resident within a reasonable time after the licence ends and the resident has vacated, less lawful deductions.',
+      'The owner or their agent must lodge the bond with RTA Queensland using the approved process. RTA Queensland will issue confirmation to the parties.',
+      'The resident should retain evidence of bond payment and official RTA lodgement confirmation.',
+      'Bond cannot exceed four weeks rent unless otherwise permitted by Queensland law.',
+      'Bond claims and refunds are handled through RTA Queensland in accordance with applicable Queensland law.',
     ],
   },
   terminationIntro:
@@ -44,9 +45,9 @@ export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'Where the owner requires the premises for genuine change of circumstances, subject to the agreed notice period.',
   ],
   terminationNoStatutory:
-    'This licence is not governed by the Residential Tenancies Act 2010 (NSW). The parties do not rely on prescribed residential tenancy notice periods or NCAT pathways under that Act.',
+    'Termination of this licence is governed by this agreement and general law. The parties do not treat this arrangement as a general tenancy under the RTRA Act 2008 (Qld), except where Queensland law requires bond to be lodged with RTA Queensland.',
   aclParagraph:
-    'Although the Residential Tenancies Act 2010 (NSW) does not apply, this licence is a consumer contract for the purposes of the Australian Consumer Law (Cth) as applied in New South Wales. Terms that are unfair within the meaning of that law may be void. Neither party may engage in misleading or deceptive conduct in connection with this licence.',
+    'This licence is a consumer contract for the purposes of the Australian Consumer Law (Cth) as applied in Queensland. Terms that are unfair within the meaning of that law may be void. Neither party may engage in misleading or deceptive conduct in connection with this licence.',
   defaultHouseRules: [
     'Guests and overnight visitors: reasonable notice to the owner; no guest may stay more than 7 consecutive nights without the owner\'s written consent.',
     'Noise: respect quiet hours (typically 10:00 pm – 7:00 am) and other occupants.',
@@ -62,7 +63,7 @@ export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'Must not intentionally or negligently damage the premises or cause nuisance to the owner or other occupants.',
   ],
   disputesParagraph:
-    'The parties will attempt to resolve any dispute about this licence in good faith. If the dispute is not resolved within 14 days, either party may refer the matter to a court of New South Wales with jurisdiction. Nothing in this clause requires application to NCAT under the Residential Tenancies Act 2010 (NSW).',
+    'The parties will attempt to resolve any dispute about this licence in good faith. If the dispute is not resolved within 14 days, either party may refer the matter to a court or tribunal of Queensland with jurisdiction. Bond disputes may be handled through RTA Queensland where applicable.',
   conditionReportIntro:
     'The parties acknowledge that an ingoing condition report may be prepared for the allocated room and shared areas. The resident will be given a reasonable opportunity to review and comment on the report and to attach photographs where appropriate.',
   conditionReportReturn:
@@ -80,15 +81,15 @@ export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   platformResidentCarveout:
     'The resident pays no Quni platform fee, booking fee or resident service fee. The agreed weekly licence fee shown in the schedule is not increased by the owner-side service fee.',
   executionIntro:
-    'The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow.',
+    'The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions (Queensland) Act 2001 and related law. Signature and date fields may be completed through the signing workflow.',
 }
 
 /** PDF generation tests search for these strings in the rendered buffer. */
-export const NSW_OCCUPANCY_PDF_MARKERS = [
+export const QLD_OCCUPANCY_PDF_MARKERS = [
   'Licence to Occupy',
   'Weekly licence fee',
-  'Security deposit',
-  'Residential Tenancies Act 2010',
-  'not lodged with NSW Fair Trading',
+  'Residential Tenancies Authority',
+  'RTA Queensland',
+  '10 calendar days',
   'The resident pays no Quni platform fee',
 ] as const

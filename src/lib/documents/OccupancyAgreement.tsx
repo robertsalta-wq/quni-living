@@ -1,6 +1,5 @@
 /**
- * Re-export — PDF is built server-side in `api/documents/OccupancyAgreement.js`
- * (@react-pdf/renderer + Node on Vercel). Do not import this from client routes.
+ * Re-export — NSW T1 licence PDF is bundled to `api/documents/NswOccupancyAgreement.js`.
  */
-export { OccupancyAgreement } from '../../../api/documents/OccupancyAgreement.js'
+export { NswLicenceToOccupyOnSite, OccupancyAgreement } from './nsw/occupancyGenerator.js'
 export type { OccupancyAgreementProps } from '../../../api/documents/rtaTypes.js'

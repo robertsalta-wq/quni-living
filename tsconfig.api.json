@@ -12,7 +12,8 @@
   "include": [
     "api/**/*.ts",
     "api/**/*.tsx",
-    "api/documents/OccupancyAgreement.js",
+    "api/documents/NswOccupancyAgreement.js",
+    "api/documents/QldOccupancyAgreement.js",
     "src/lib/database.types.ts",
     "src/lib/documents/OccupancyAgreement.tsx",
     "src/lib/documents/NswResidentialTenancyAgreement.tsx",
