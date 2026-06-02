@@ -7,7 +7,7 @@ import { QLD_RTRA_ACT_SHORT, QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS } from '../.
 export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
   docSubtitle: 'Queensland — Licence to occupy (on-site accommodation)',
-  draftFooter: 'Draft for legal review — not for execution',
+  draftFooter: 'Draft — not for execution until signed',
   ownerServiceFeeDefault: '10%',
   natureParagraphs: [
     `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,

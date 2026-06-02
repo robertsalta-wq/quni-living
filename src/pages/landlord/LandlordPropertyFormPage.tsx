@@ -15,6 +15,12 @@ import {
   showRoomForRentSelect,
   type AccommodationUiChoice,
 } from '../../lib/landlordAccommodationChoice'
+import {
+  isQldOnSiteBoarderLodgerListing,
+  parseRoomsRentedToResidents,
+  qldOnSiteListingCallout,
+  qldRoomsRentedFieldError,
+} from '../../lib/tenancy/qldBoarderLodger'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
 import {
@@ -108,6 +114,7 @@ type LandlordPropertyDraftV1 = {
   description: string
   bedrooms: string
   bathrooms: string
+  roomsRentedToResidents: string
   roomType: RoomType | ''
   propertyListingType: PropertyListingType
   furnished: boolean
@@ -194,6 +201,8 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       description: typeof d.description === 'string' ? d.description : '',
       bedrooms: typeof d.bedrooms === 'string' ? d.bedrooms : '1',
       bathrooms: typeof d.bathrooms === 'string' ? d.bathrooms : '1',
+      roomsRentedToResidents:
+        typeof d.roomsRentedToResidents === 'string' ? d.roomsRentedToResidents : '1',
       roomType: parseDraftRoomType(d.roomType),
       propertyListingType,
       furnished: Boolean(d.furnished),
@@ -356,6 +365,7 @@ export default function LandlordPropertyFormPage() {
 
   const [bedrooms, setBedrooms] = useState('1')
   const [bathrooms, setBathrooms] = useState('1')
+  const [roomsRentedToResidents, setRoomsRentedToResidents] = useState('1')
   const [roomType, setRoomType] = useState<RoomType | ''>('apartment')
   const [propertyListingType, setPropertyListingType] = useState<PropertyListingType>('entire_property')
 
@@ -398,6 +408,20 @@ export default function LandlordPropertyFormPage() {
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('NSW')
   const [postcode, setPostcode] = useState('')
+
+  const qldOnSiteBoarderLodger = useMemo(
+    () => isQldOnSiteBoarderLodgerListing(state, propertyListingType),
+    [state, propertyListingType],
+  )
+
+  const qldRoomsRentedError = useMemo(
+    () =>
+      qldOnSiteBoarderLodger
+        ? qldRoomsRentedFieldError(parseRoomsRentedToResidents(roomsRentedToResidents))
+        : null,
+    [qldOnSiteBoarderLodger, roomsRentedToResidents],
+  )
+
   const [universityId, setUniversityId] = useState('')
   const [campusId, setCampusId] = useState('')
 
@@ -555,6 +579,7 @@ export default function LandlordPropertyFormPage() {
         description,
         bedrooms,
         bathrooms,
+        roomsRentedToResidents,
         roomType,
         propertyListingType,
         furnished,
@@ -591,6 +616,7 @@ export default function LandlordPropertyFormPage() {
       description,
       bedrooms,
       bathrooms,
+      roomsRentedToResidents,
       roomType,
       propertyListingType,
       isRegisteredRoomingHouse,
@@ -848,6 +874,9 @@ export default function LandlordPropertyFormPage() {
         setDescription(prop.description ?? '')
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
         setBathrooms(prop.bathrooms != null ? String(prop.bathrooms) : '1')
+        setRoomsRentedToResidents(
+          prop.rooms_rented_to_residents != null ? String(prop.rooms_rented_to_residents) : '1',
+        )
         setRoomType(prop.room_type ?? 'single')
         setPropertyListingType(
           prop.property_type && isPropertyListingType(prop.property_type) ? prop.property_type : 'entire_property',
@@ -983,6 +1012,7 @@ export default function LandlordPropertyFormPage() {
       setDescription(parsed.description)
       setBedrooms(parsed.bedrooms)
       setBathrooms(parsed.bathrooms)
+      setRoomsRentedToResidents(parsed.roomsRentedToResidents)
       setRoomType(parsed.roomType)
       setPropertyListingType(parsed.propertyListingType)
       setServiceTier(parsed.serviceTier)
@@ -1641,6 +1671,11 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (qldRoomsRentedError) {
+      setSubmitError(qldRoomsRentedError)
+      return
+    }
+
     if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
       setShowRoomingHouseValidation(true)
       return
@@ -1691,6 +1726,7 @@ export default function LandlordPropertyFormPage() {
     }
 
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
+    const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
@@ -1698,6 +1734,9 @@ export default function LandlordPropertyFormPage() {
       listing_type: null,
       bedrooms: Math.max(0, parseInt(bedrooms, 10) || 0),
       bathrooms: Math.max(0, parseInt(bathrooms, 10) || 0),
+      rooms_rented_to_residents: qldOnSiteSave
+        ? parseRoomsRentedToResidents(roomsRentedToResidents)
+        : null,
       room_type: accommodation.roomType,
       property_type: accommodation.propertyListingType,
       furnished,
@@ -2020,6 +2059,35 @@ export default function LandlordPropertyFormPage() {
                   })}
                 </div>
               </div>
+              {qldOnSiteBoarderLodger ? (
+                <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 space-y-3">
+                  <p className="text-sm text-sky-950 leading-relaxed">{qldOnSiteListingCallout()}</p>
+                  <div>
+                    <label htmlFor="pf-qld-rooms-rented" className={labelClass}>
+                      Rooms you rent to residents in this home
+                    </label>
+                    <p className="text-xs text-gray-600 mt-0.5 mb-1">
+                      Include this listing and any other bedrooms you rent to residents while you live on site (max 3
+                      for the usual boarder/lodger exemption under s 43).
+                    </p>
+                    <input
+                      id="pf-qld-rooms-rented"
+                      type="number"
+                      min={1}
+                      max={99}
+                      required
+                      value={roomsRentedToResidents}
+                      onChange={(e) => setRoomsRentedToResidents(e.target.value)}
+                      className={inputClass}
+                    />
+                    {qldRoomsRentedError ? (
+                      <p className="mt-2 text-sm text-amber-800" role="alert">
+                        {qldRoomsRentedError}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="pf-bed" className={labelClass}>

@@ -19,6 +19,11 @@ import type { OccupancyAgreementProps } from './rtaTypes'
 import { occupancyLeaseFieldsFromBooking } from '../lib/booking/occupancyLeaseContext.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
+import {
+  isQldOnSiteBoarderLodgerListing,
+  parseRoomsRentedToResidents,
+  qldSection43PdfAcknowledgement,
+} from '../../src/lib/tenancy/qldBoarderLodger.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -134,7 +139,8 @@ export default async function handler(req: any, res: any) {
         bond,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        rooms_rented_to_residents
       )
     `,
     )
@@ -283,6 +289,11 @@ export default async function handler(req: any, res: any) {
   const lpRec = lp as Record<string, unknown>
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
+  const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
+  const qldOnSite = isQldOnSiteBoarderLodgerListing(stateRaw, propertyType)
+  const roomsForResidents =
+    parseRoomsRentedToResidents(prop.rooms_rented_to_residents) ?? (qldOnSite ? 1 : null)
+
   const pdfProps: OccupancyAgreementProps = {
     documentId,
     generatedAt: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' }),
@@ -314,6 +325,7 @@ export default async function handler(req: any, res: any) {
       linenSupplied: typeof prop.linen_supplied === 'boolean' ? prop.linen_supplied : null,
       weeklyCleaningService:
         typeof prop.weekly_cleaning_service === 'boolean' ? prop.weekly_cleaning_service : null,
+      roomsRentedToResidents: roomsForResidents,
     },
     term: {
       startDate: moveIn,
@@ -329,9 +341,10 @@ export default async function handler(req: any, res: any) {
     },
     bond: { amount: bondNum },
     specialConditions: [
-      'This agreement is facilitated through the Quni Living platform (quni.com.au).',
-      'Any bond must be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt under s.116 of the Residential Tenancies and Rooming Accommodation Act 2008 (Qld). The landlord cannot hold the bond as a private deposit; Quni Living does not hold or manage bond payments.',
-      "Rent payments are processed through Quni Living's secure payment system powered by Stripe.",
+      'This licence is facilitated through the Quni Living platform (quni.com.au).',
+      'Any bond must be lodged with RTA Queensland within 10 calendar days of receipt (RTRA Act 2008 (Qld) s 27(2)). The owner cannot hold bond as a private deposit; Quni Living does not hold or manage bond payments.',
+      ...(roomsForResidents != null ? [qldSection43PdfAcknowledgement(roomsForResidents)] : []),
+      "Licence fee payments are processed through Quni Living's secure payment system powered by Stripe.",
       ...coTenantSpecialConditions,
     ],
     houseRules: prop.house_rules ?? null,

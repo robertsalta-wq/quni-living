@@ -632,6 +632,12 @@ function ScheduleSummary({
   const rows = [
     { label: "Property address:", value: premises.addressLine },
     { label: "Allocated room:", value: premises.roomType?.trim() || "Bedroom as described on listing" },
+    ...premises.roomsRentedToResidents != null && premises.roomsRentedToResidents >= 1 ? [
+      {
+        label: "Rooms for residents in premises:",
+        value: String(premises.roomsRentedToResidents)
+      }
+    ] : [],
     { label: "Owner:", value: ownerDisplay },
     { label: "Owner email:", value: landlord.email },
     { label: "Owner phone:", value: landlord.phone },
@@ -765,17 +771,22 @@ function LicenceOccupyDocument({
   ] });
 }
 
+// src/lib/tenancy/qldBoarderLodger.ts
+var QLD_RTRA_ACT_SHORT = "Residential Tenancies and Rooming Accommodation Act 2008 (Qld)";
+var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
+
 // src/lib/documents/qld/occupancyContent.ts
 var QLD_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
   docSubtitle: "Queensland \u2014 Licence to occupy (on-site accommodation)",
-  draftFooter: "Draft for legal review \u2014 not for execution",
+  draftFooter: "Draft \u2014 not for execution until signed",
   ownerServiceFeeDefault: "10%",
   natureParagraphs: [
-    "This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a general tenancy agreement under the Residential Tenancies and Rooming Accommodation Act 2008 (Qld) (RTRA Act).",
-    "The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
+    `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,
+    "Under s 27(1) of the RTRA Act, the Act does not apply to a residential tenancy agreement if the person is a boarder or lodger. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities.",
+    `The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room. Where the owner lives on site and no more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms are occupied or available for occupation by residents, the rooming accommodation provisions of the RTRA Act (including s 43) generally do not apply to this arrangement.`,
     "The resident is granted permission to occupy only the allocated room described in the schedule and to use the shared areas on the terms below. The resident is not granted exclusive possession of the premises or any part of the premises.",
-    "Although the RTRA Act does not generally apply to this boarder/lodger arrangement, any bond paid by the resident must be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt, in accordance with Queensland bond lodgement requirements."
+    "Although the RTRA Act does not generally apply to this boarder/lodger arrangement, s 27(2) requires that any bond taken from a boarder or lodger must still be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt. Failure to lodge bond is an offence under the Act."
   ],
   roomSharedIntro: "The resident is licensed to occupy the allocated bedroom at the property address in the schedule. Unless otherwise agreed in writing, the kitchen, bathroom, laundry and living areas are shared with the owner and any other occupants the owner permits on the premises.",
   entryParagraphs: [
@@ -818,7 +829,7 @@ var QLD_LICENCE_OCCUPY_CONTENT = {
     "Report damage, maintenance needs or safety concerns to the owner promptly.",
     "Must not intentionally or negligently damage the premises or cause nuisance to the owner or other occupants."
   ],
-  disputesParagraph: "The parties will attempt to resolve any dispute about this licence in good faith. If the dispute is not resolved within 14 days, either party may refer the matter to a court or tribunal of Queensland with jurisdiction. Bond disputes may be handled through RTA Queensland where applicable.",
+  disputesParagraph: "The parties will attempt to resolve any dispute about this licence in good faith. If the dispute is not resolved within 14 days, either party may refer the matter to a court or tribunal of Queensland with jurisdiction (including QCAT where applicable). RTA Queensland can assist with bond-related matters; other disputes are not mediated by RTA as for a standard tenancy.",
   conditionReportIntro: "The parties acknowledge that an ingoing condition report may be prepared for the allocated room and shared areas. The resident will be given a reasonable opportunity to review and comment on the report and to attach photographs where appropriate.",
   conditionReportReturn: "The resident should return a signed copy or written comments within the timeframe notified by the owner or the platform, failing which the report may be taken as accepted except for manifest errors or items the resident could not reasonably have inspected.",
   conditionReportOutgoing: "At the end of the licence, an outgoing condition report may be used to compare the state of the allocated room and shared areas with the ingoing report, fair wear and tear excepted.",
@@ -835,7 +846,11 @@ var QLD_OCCUPANCY_PDF_MARKERS = [
   "Residential Tenancies Authority",
   "RTA Queensland",
   "10 calendar days",
-  "The resident pays no Quni platform fee"
+  "The resident pays no Quni platform fee",
+  "s 27",
+  "s 43",
+  "Form R18",
+  "boarder or lodger"
 ];
 
 // src/lib/documents/qld/occupancyGenerator.tsx

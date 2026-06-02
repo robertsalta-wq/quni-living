@@ -914,6 +914,7 @@ export interface Database {
           images: string[] | null
           bedrooms: number | null
           bathrooms: number | null
+          rooms_rented_to_residents: number | null
           furnished: boolean | null
           bond: number | null
           lease_length: string | null
@@ -957,6 +958,7 @@ export interface Database {
           images?: string[] | null
           bedrooms?: number | null
           bathrooms?: number | null
+          rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
           lease_length?: string | null
@@ -1000,6 +1002,7 @@ export interface Database {
           images?: string[] | null
           bedrooms?: number | null
           bathrooms?: number | null
+          rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
           lease_length?: string | null
