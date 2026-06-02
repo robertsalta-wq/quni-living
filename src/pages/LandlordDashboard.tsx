@@ -898,7 +898,7 @@ export default function LandlordDashboard() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10 items-start">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
@@ -974,10 +974,13 @@ export default function LandlordDashboard() {
             onClick={() => setQaseOpen(true)}
             className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
           >
-            <p className="text-xs font-semibold text-[#FF6F61] uppercase tracking-wide">Need help?</p>
-            <p className="text-lg font-bold text-gray-900 mt-2">Get support</p>
-            <p className="text-sm text-gray-500 mt-1">Submit a support request and we&apos;ll get back to you.</p>
-            <span className="text-sm font-semibold text-[#FF6F61] mt-3 inline-block">Contact support →</span>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help</p>
+            <p className="text-xs text-gray-500 mt-1 leading-snug">
+              Submit a support request and we&apos;ll get back to you.
+            </p>
+            <span className="text-xs font-semibold text-[#FF6F61] mt-2 inline-block group-hover:text-[#e85d52]">
+              Contact support →
+            </span>
           </button>
         </div>
 
