@@ -882,6 +882,11 @@ export default function LandlordDashboard() {
             </Link>
           )}
         </div>
+        <div className="mb-6">
+          <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+            View sample agreements →
+          </Link>
+        </div>
 
         {connectSetupError && (
           <div

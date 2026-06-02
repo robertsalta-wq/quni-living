@@ -230,6 +230,14 @@ function App() {
             }
           />
           <Route
+            path="/sample-agreements"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'landlord', 'admin']}>
+                <Lazy.SampleAgreementsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={['admin']}>

@@ -315,6 +315,11 @@ export default function StudentDashboard() {
           Browse listings
         </Link>
       </div>
+      <div className="mb-6">
+        <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+          View sample agreements →
+        </Link>
+      </div>
 
       {profile && <StudentStripePaymentsCard profile={profile} onRefresh={load} />}
 

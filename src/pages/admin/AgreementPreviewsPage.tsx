@@ -1,18 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AdminPageHeader } from '../../components/admin/primitives'
-
-type SampleEntry = {
-  state: 'NSW' | 'QLD' | 'VIC'
-  tier: 'T1' | 'T2'
-  document: string
-  fileName: string
-  href: string
-}
+import { AgreementSampleGallery, type AgreementSampleEntry } from '../../components/documents/AgreementSampleGallery'
 
 type AgreementSamplesManifest = {
   generatedAt: string
   watermark: string
-  samples: SampleEntry[]
+  samples: AgreementSampleEntry[]
 }
 
 export default function AgreementPreviewsPage() {
@@ -42,15 +35,7 @@ export default function AgreementPreviewsPage() {
     void load()
   }, [])
 
-  const grouped = useMemo(() => {
-    const root: Record<string, Record<string, SampleEntry[]>> = {}
-    for (const s of manifest?.samples ?? []) {
-      if (!root[s.state]) root[s.state] = {}
-      if (!root[s.state][s.tier]) root[s.state][s.tier] = []
-      root[s.state][s.tier].push(s)
-    }
-    return root
-  }, [manifest])
+  const samples = useMemo(() => manifest?.samples ?? [], [manifest])
 
   return (
     <div className="space-y-6">
@@ -81,51 +66,7 @@ export default function AgreementPreviewsPage() {
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{error}</div>
       ) : null}
 
-      {!loading &&
-        !error &&
-        Object.entries(grouped).map(([state, tiers]) => (
-          <section key={state} className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">{state}</h2>
-            {Object.entries(tiers).map(([tier, docs]) => (
-              <div key={`${state}-${tier}`} className="rounded-xl border border-gray-200 bg-white p-4">
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">{tier}</h3>
-                <div className="space-y-6">
-                  {docs.map((doc) => (
-                    <article key={doc.fileName} className="rounded-lg border border-gray-100 p-3">
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <h4 className="text-sm font-semibold text-gray-900">{doc.document}</h4>
-                        <div className="flex gap-2">
-                          <a
-                            href={doc.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Open
-                          </a>
-                          <a
-                            href={doc.href}
-                            download={doc.fileName}
-                            className="rounded-md bg-[#FF6F61] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      </div>
-                      <div className="overflow-hidden rounded-md border border-gray-200">
-                        <iframe
-                          title={`${state} ${tier} ${doc.document}`}
-                          src={doc.href}
-                          className="h-[560px] w-full"
-                        />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
-        ))}
+      {!loading && !error && <AgreementSampleGallery samples={samples} showGrouping />}
     </div>
   )
 }
