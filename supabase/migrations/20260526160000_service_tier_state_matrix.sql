@@ -27,13 +27,13 @@ create trigger service_tier_state_matrix_set_updated_at
 insert into public.service_tier_state_matrix (state_code, property_tier, managed_status, notes)
 values
   ('NSW', 't1', 'available', null),
-  ('NSW', 't2', 'gated', 'Managed gated pending Jenny legal clearance'),
+  ('NSW', 't2', 'gated', 'Managed currently unavailable in NSW Tier 2'),
   ('NSW', 't3', 'unsupported', null),
   ('QLD', 't1', 'available', null),
   ('QLD', 't2', 'available', null),
   ('QLD', 't3', 'unsupported', null),
-  ('VIC', 't1', 'gated', 'Managed parked pending VIC lawyer'),
-  ('VIC', 't2', 'gated', 'Managed gated pending VIC lawyer'),
+  ('VIC', 't1', 'gated', 'Managed unavailable until trust accounts are operational and Victorian licensing requirements are satisfied'),
+  ('VIC', 't2', 'gated', 'Managed unavailable until trust accounts are operational and Victorian licensing requirements are satisfied'),
   ('VIC', 't3', 'unsupported', null),
   ('DEFAULT', 't1', 'unsupported', null),
   ('DEFAULT', 't2', 'unsupported', null),

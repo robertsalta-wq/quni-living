@@ -44,6 +44,13 @@ const MANAGED_STATUS_OPTIONS: { value: ServiceTierAvailabilityStatus; label: str
   { value: 'unsupported', label: 'Unsupported' },
 ]
 
+function shouldRenderManagedNote(note: string | null | undefined): note is string {
+  const raw = typeof note === 'string' ? note.trim() : ''
+  if (!raw) return false
+  // Hide legacy admin notes that reference lawyers / legal clearance.
+  return !/(lawyer|legal\s+clearance|legal\s+opinion|pending\s+.*lawyer)/i.test(raw)
+}
+
 type CanonicalScenario = {
   id: string
   columnLabel: string
@@ -446,7 +453,7 @@ export default function AdminStateWorkflows() {
                               </option>
                             ))}
                           </select>
-                          {row?.notes ? (
+                          {shouldRenderManagedNote(row?.notes) ? (
                             <p className="mt-1 text-[11px] text-gray-500 line-clamp-2">{row.notes}</p>
                           ) : null}
                         </td>

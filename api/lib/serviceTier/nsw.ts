@@ -13,7 +13,7 @@ export function nswServiceTierAvailability(propertyTier: PropertyTier): ServiceT
     return { listing: 'available', managed: 'available' }
   }
   if (propertyTier === 't2') {
-    return { listing: 'available', managed: 'gated', notes: 'Managed gated pending Jenny legal clearance' }
+    return { listing: 'available', managed: 'gated', notes: 'Managed currently unavailable in NSW Tier 2' }
   }
   return { listing: 'unsupported', managed: 'unsupported' }
 }
