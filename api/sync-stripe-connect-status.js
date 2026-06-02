@@ -5,6 +5,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { mergeVerifiedIntoLandlordUpdate } from './lib/landlordVerifiedSync.js'
+import { summarizeStripeConnectRequirements } from './lib/stripeConnectRequirements.js'
 
 export const config = {
   runtime: 'edge',
@@ -117,6 +118,7 @@ export default async function handler(request) {
         stripe_charges_enabled: account.charges_enabled ?? false,
         stripe_payouts_enabled: account.payouts_enabled ?? false,
         stripe_connect_details_submitted: account.details_submitted ?? false,
+        requirementsSummary: summarizeStripeConnectRequirements(account),
       },
       200,
       origin,

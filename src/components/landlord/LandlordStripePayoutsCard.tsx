@@ -5,6 +5,7 @@ import { openStripeHostedUrl } from '../../lib/stripeConnectOpen'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import { resetLandlordStripeConnect } from '../../lib/resetLandlordStripeConnect'
 import { stripeConnectLandlordTypeHint } from '../../lib/stripeConnectLandlordTypeHint'
+import type { StripeConnectRequirementsSummary } from '../../lib/stripeConnectRequirements'
 import { Link } from 'react-router-dom'
 import type { Database } from '../../lib/database.types'
 
@@ -24,6 +25,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
   const [connectError, setConnectError] = useState<string | null>(null)
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
+  const [requirementsSummary, setRequirementsSummary] = useState<StripeConnectRequirementsSummary | null>(null)
   const autoSyncOnce = useRef(false)
 
   const landlordTypeHint = stripeConnectLandlordTypeHint(profile.landlord_type)
@@ -50,7 +52,11 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       const raw = await res.text()
-      let body: { ok?: boolean; error?: string } = {}
+      let body: {
+        ok?: boolean
+        error?: string
+        requirementsSummary?: StripeConnectRequirementsSummary
+      } = {}
       try {
         body = raw ? (JSON.parse(raw) as typeof body) : {}
       } catch {
@@ -60,6 +66,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         setConnectError(body.error ?? `Request failed (${res.status})`)
         return
       }
+      setRequirementsSummary(body.requirementsSummary ?? null)
       await onRefresh()
     } catch (e) {
       setConnectError(e instanceof Error ? e.message : 'Could not refresh payout status.')
@@ -152,6 +159,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
       }
       setResetConfirmOpen(false)
       autoSyncOnce.current = false
+      setRequirementsSummary(null)
       if (result.stripeDeleteWarning) {
         setConnectError(result.stripeDeleteWarning)
       }
@@ -227,9 +235,29 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
     >
       {stripeNeedsOnboarding && (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
-          Stripe account linked. We show “connected” when Stripe reports charges and payouts enabled (usually right
-          after you finish onboarding — we sync automatically once, or use Refresh status).
+          Stripe account linked. Finish every section in Stripe (business info, personal ID, bank) before you can
+          submit. We sync status automatically once, or use Refresh status.
         </p>
+      )}
+      {stripeNeedsOnboarding && requirementsSummary && requirementsSummary.pendingCount > 0 && (
+        <div className="text-xs text-gray-800 bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 mb-4 leading-relaxed space-y-2">
+          <p className="font-semibold text-sky-950">Stripe still needs you to complete:</p>
+          <ul className="list-disc pl-4 space-y-1">
+            {requirementsSummary.items.map((item) => (
+              <li key={`${item.kind}:${item.label}:${item.detail ?? ''}`}>
+                <span className="font-medium">{item.label}</span>
+                {item.detail ? ` — ${item.detail}` : null}
+              </li>
+            ))}
+          </ul>
+          {requirementsSummary.hasErrors && (
+            <p>
+              If <span className="font-medium">Personal details</span> shows Invalid in Stripe, tap{' '}
+              <span className="font-medium">Edit</span> there, check your legal name matches your photo ID, and complete
+              ID verification again.
+            </p>
+          )}
+        </div>
       )}
       {landlordTypeHint && (
         <p className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">

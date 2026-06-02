@@ -11,7 +11,10 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { buildStripeExpressAccountCreateParams } from './lib/stripeConnectLandlordAccount.js'
+import {
+  buildStripeConnectAccountUpdateParams,
+  buildStripeExpressAccountCreateParams,
+} from './lib/stripeConnectLandlordAccount.js'
 
 export const config = {
   runtime: 'edge',
@@ -112,7 +115,7 @@ export default async function handler(request) {
     const { data: profile, error: profErr } = await admin
       .from('landlord_profiles')
       .select(
-        'id, user_id, email, landlord_type, first_name, last_name, full_name, company_name, abn, address, suburb, state, postcode, stripe_connect_account_id, stripe_charges_enabled, stripe_payouts_enabled',
+        'id, user_id, email, phone, landlord_type, first_name, last_name, full_name, company_name, abn, address, suburb, state, postcode, stripe_connect_account_id, stripe_charges_enabled, stripe_payouts_enabled',
       )
       .eq('user_id', user.id)
       .maybeSingle()
@@ -136,13 +139,20 @@ export default async function handler(request) {
 
     const alreadyConnected = profile.stripe_charges_enabled === true && profile.stripe_payouts_enabled === true
 
+    const reqUrl = new URL(request.url)
+    const siteOrigin = (
+      process.env.SITE_URL ||
+      process.env.PUBLIC_SITE_URL ||
+      `${reqUrl.protocol}//${reqUrl.host}`
+    ).replace(/\/$/, '')
+
     const stripe = new Stripe(stripeSecret)
 
     let accountId = profile.stripe_connect_account_id
 
     if (!accountId) {
       const account = await stripe.accounts.create({
-        ...buildStripeExpressAccountCreateParams(profile),
+        ...buildStripeExpressAccountCreateParams(profile, siteOrigin),
         metadata: {
           landlord_profile_id: profile.id,
           supabase_user_id: user.id,
@@ -185,12 +195,11 @@ export default async function handler(request) {
       }
     }
 
-    const reqUrl = new URL(request.url)
-    const siteOrigin = (
-      process.env.SITE_URL ||
-      process.env.PUBLIC_SITE_URL ||
-      `${reqUrl.protocol}//${reqUrl.host}`
-    ).replace(/\/$/, '')
+    try {
+      await stripe.accounts.update(accountId, buildStripeConnectAccountUpdateParams(profile, siteOrigin))
+    } catch (patchErr) {
+      console.warn('create-connect-account-link business_profile patch', patchErr)
+    }
 
     const desiredType = alreadyConnected ? 'account_update' : 'account_onboarding'
 
