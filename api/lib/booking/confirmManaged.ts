@@ -477,7 +477,6 @@ export async function runManagedConfirmBooking(params) {
     const bondState = typeof propForBond.state === 'string' && propForBond.state.trim() ? propForBond.state.trim() : 'NSW'
     const bondAuthority = bondAuthorityForState(bondState)
     const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
-    const landlordUserId = typeof lp.user_id === 'string' && lp.user_id.trim() ? lp.user_id.trim() : null
 
     if (studentUserId && landlordUserId && booking.property_id) {
       const bondCents = weeklyCents * 4

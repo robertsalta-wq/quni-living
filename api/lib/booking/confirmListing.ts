@@ -235,7 +235,7 @@ export async function runListingConfirmBooking(params) {
       listing_fee_stripe_payment_intent_id: chargePi?.id ?? null,
     })
     .eq('id', booking.id)
-    .eq('status', 'pending_confirmation')
+    .in('status', ['pending_confirmation', 'awaiting_info'])
     .select('id, status, bond_window_expires_at, service_tier_final, confirmed_at')
 
   if (upErr) {
