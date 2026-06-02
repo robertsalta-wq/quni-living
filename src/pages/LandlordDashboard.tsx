@@ -898,19 +898,19 @@ export default function LandlordDashboard() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10 items-start">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
-            <p className="text-xs text-gray-500 mt-1">Published as active</p>
+            <p className="text-xs text-gray-500 mt-auto pt-1">Published as active</p>
           </div>
           <Link
             to="/messages"
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm block hover:border-indigo-200 hover:shadow-md transition-all"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{conversations.length}</p>
-            <p className="text-xs mt-1">
+            <p className="text-xs mt-auto pt-1">
               {unreadMessageCount > 0 ? (
                 <span className="font-semibold text-amber-700">
                   {unreadMessageCount} unread
@@ -922,11 +922,11 @@ export default function LandlordDashboard() {
           </Link>
           <Link
             to={bookingsLinkTo}
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm block hover:border-indigo-200 hover:shadow-md transition-all"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
             <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
-            <p className="text-xs mt-1">
+            <p className="text-xs mt-auto pt-1">
               {pendingBookings > 0 ? (
                 <span className="font-semibold text-amber-700">{pendingBookings} pending</span>
               ) : (
@@ -934,13 +934,15 @@ export default function LandlordDashboard() {
               )}
             </p>
           </Link>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
-            <div className="mt-3">
+            <div className="mt-2 flex flex-col flex-1 min-h-0">
               {checklistDone === checklistTotal ? (
                 <>
                   <p className="text-sm font-semibold text-emerald-700">Profile complete ✓</p>
-                  <p className="text-xs text-gray-500 mt-2">Students can trust your listing with confidence.</p>
+                  <p className="text-xs text-gray-500 mt-auto pt-2 leading-snug">
+                    Students can trust your listing with confidence.
+                  </p>
                 </>
               ) : (
                 <>
@@ -956,14 +958,14 @@ export default function LandlordDashboard() {
                       aria-valuemax={100}
                     />
                   </div>
-                  {firstIncomplete && (
+                  {firstIncomplete ? (
                     <Link
                       to={firstIncomplete.href}
-                      className="mt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                      className="mt-auto pt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
                     >
                       {firstIncomplete.label}
                     </Link>
-                  )}
+                  ) : null}
                 </>
               )}
             </div>
@@ -972,13 +974,13 @@ export default function LandlordDashboard() {
           <button
             type="button"
             onClick={() => setQaseOpen(true)}
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
+            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help</p>
             <p className="text-xs text-gray-500 mt-1 leading-snug">
               Submit a support request and we&apos;ll get back to you.
             </p>
-            <span className="text-xs font-semibold text-[#FF6F61] mt-2 inline-block group-hover:text-[#e85d52]">
+            <span className="text-xs font-semibold text-[#FF6F61] mt-auto pt-2 inline-block group-hover:text-[#e85d52]">
               Contact support →
             </span>
           </button>
