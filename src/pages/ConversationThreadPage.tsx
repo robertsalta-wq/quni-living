@@ -9,7 +9,8 @@ import {
 } from '../lib/messaging/conversationsApi'
 import ConversationThread from '../components/messaging/ConversationThread'
 import Seo from '../components/Seo'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import UserDashboardShell from '../components/dashboard/UserDashboardShell'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 
 function preloadedForRoute(
   state: unknown,
@@ -26,12 +27,14 @@ export default function ConversationThreadPage() {
   const { conversationId } = useParams<{ conversationId: string }>()
   const location = useLocation()
   const navigate = useNavigate()
-  const { user } = useAuthContext()
+  const { user, role } = useAuthContext()
   const initialPreload =
     conversationId != null ? preloadedForRoute(location.state, conversationId) : null
   const [conversation, setConversation] = useState<ConversationWithProperty | null>(initialPreload)
   const [loading, setLoading] = useState(initialPreload == null)
   const [error, setError] = useState<string | null>(null)
+
+  const dashboardRole = role === 'landlord' ? 'landlord' : 'student'
 
   useEffect(() => {
     const uid = user?.id
@@ -84,44 +87,75 @@ export default function ConversationThreadPage() {
 
   if (loading) {
     return (
-      <div className={`${SITE_CONTENT_MAX_CLASS} py-12 text-center text-sm text-gray-500`}>
-        Loading conversation…
-      </div>
+      <UserDashboardShell
+        role={dashboardRole}
+        breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: '…' })}
+        showSectionNav
+        activeSection="messages"
+        onSectionSelect={(section) => {
+          if (dashboardRole === 'landlord') {
+            navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
+            return
+          }
+          navigate(`/student-dashboard?tab=${section}`)
+        }}
+      >
+        <p className="text-sm text-gray-500">Loading conversation…</p>
+      </UserDashboardShell>
     )
   }
 
   if (error || !conversation) {
     return (
-      <div className={`${SITE_CONTENT_MAX_CLASS} py-12 text-center px-6`}>
+      <UserDashboardShell
+        role={dashboardRole}
+        breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: 'Not found' })}
+        showSectionNav
+        activeSection="messages"
+        onSectionSelect={(section) => {
+          if (dashboardRole === 'landlord') {
+            navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
+            return
+          }
+          navigate(`/student-dashboard?tab=${section}`)
+        }}
+      >
         <p className="text-sm text-red-700">{error ?? 'Conversation not found'}</p>
         <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[#FF6F61] hover:underline">
           Back to messages
         </Link>
-      </div>
+      </UserDashboardShell>
     )
   }
 
   const viewerRole = conversation.tenant_user_id === user.id ? 'tenant' : 'landlord'
+  const threadLabel = conversation.property?.title?.trim() || 'Conversation'
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full">
+    <UserDashboardShell
+      role={dashboardRole}
+      breadcrumbs={userDashboardBreadcrumbs(
+        dashboardRole,
+        { label: 'Messages', to: '/messages' },
+        { label: threadLabel },
+      )}
+      showSectionNav
+      activeSection="messages"
+      onSectionSelect={(section) => {
+        if (dashboardRole === 'landlord') {
+          navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
+          return
+        }
+        navigate(`/student-dashboard?tab=${section}`)
+      }}
+      contentClassName="py-4 md:py-6"
+    >
       <Seo title="Conversation" canonicalPath={`/messages/${conversation.id}`} />
-      <div className={`${SITE_CONTENT_MAX_CLASS} w-full flex-1 py-4 md:py-6`}>
-        <div className="hidden md:block mb-3">
-          <button
-            type="button"
-            onClick={() => navigate('/messages')}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            ← All messages
-          </button>
-        </div>
-        <ConversationThread
-          conversation={conversation}
-          currentUserId={user.id}
-          viewerRole={viewerRole}
-        />
-      </div>
-    </div>
+      <ConversationThread
+        conversation={conversation}
+        currentUserId={user.id}
+        viewerRole={viewerRole}
+      />
+    </UserDashboardShell>
   )
 }

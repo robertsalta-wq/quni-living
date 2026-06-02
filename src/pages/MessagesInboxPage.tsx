@@ -1,30 +1,57 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import MessagesInbox from '../components/messaging/MessagesInbox'
 import Seo from '../components/Seo'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import UserDashboardShell from '../components/dashboard/UserDashboardShell'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 
 export default function MessagesInboxPage() {
-  const { user } = useAuthContext()
+  const { user, role } = useAuthContext()
+  const navigate = useNavigate()
   const { items, loading, error, reload } = useConversationInbox(user?.id)
 
+  const dashboardRole = role === 'landlord' ? 'landlord' : 'student'
+  const viewerRole = role === 'landlord' ? 'landlord' : 'tenant'
+
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 min-h-0">
+    <UserDashboardShell
+      role={dashboardRole}
+      breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages' })}
+      showSectionNav
+      activeSection="messages"
+      onSectionSelect={(section) => {
+        if (dashboardRole === 'landlord') {
+          navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
+          return
+        }
+        navigate(`/student-dashboard?tab=${section}`)
+      }}
+    >
       <Seo title="Messages" canonicalPath="/messages" />
-      <div className={`${SITE_CONTENT_MAX_CLASS} py-6 md:py-10 w-full flex-1`}>
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between gap-4 mb-4 px-4 md:px-0">
-            <h1 className="font-display text-2xl font-bold text-gray-900">Messages</h1>
-            <Link to="/listings" className="text-sm font-medium text-[#FF6F61] hover:underline shrink-0">
+      <div className="max-w-2xl">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <h1 className="font-display text-2xl font-bold text-gray-900">Messages</h1>
+          {dashboardRole === 'student' ? (
+            <button
+              type="button"
+              onClick={() => navigate('/listings')}
+              className="text-sm font-medium text-[#FF6F61] hover:underline shrink-0"
+            >
               Browse listings
-            </Link>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <MessagesInbox items={items} loading={loading} error={error} onRetry={reload} />
-          </div>
+            </button>
+          ) : null}
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <MessagesInbox
+            items={items}
+            loading={loading}
+            error={error}
+            onRetry={reload}
+            viewerRole={viewerRole}
+          />
         </div>
       </div>
-    </div>
+    </UserDashboardShell>
   )
 }

@@ -6,6 +6,8 @@ import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
 import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripePayoutsCard'
 import PageHeroBand from '../components/PageHeroBand'
+import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
@@ -548,6 +550,11 @@ export default function LandlordProfile() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+      <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <UserDashboardBreadcrumb
+          segments={userDashboardBreadcrumbs('landlord', { label: 'Profile' })}
+        />
+      </div>
       <PageHeroBand
         title="Landlord Profile"
         subtitle="Manage your details and connect with students"

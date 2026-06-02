@@ -11,6 +11,8 @@ import { StudentStripePaymentsCard } from '../components/student/StudentStripePa
 import { StudentVerificationPanel } from '../components/student/StudentVerificationPanel'
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import PageHeroBand from '../components/PageHeroBand'
+import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
@@ -897,6 +899,9 @@ export default function StudentProfile() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+      <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
+        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('student', { label: 'Profile' })} />
+      </div>
       <PageHeroBand
         title="My Profile"
         subtitle="Keep your details up to date for landlords"

@@ -54,6 +54,8 @@ import {
   parseLandlordServiceTier,
   type LandlordServiceTier,
 } from '../../lib/landlordServiceTier'
+import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
+import { userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -1863,12 +1865,12 @@ export default function LandlordPropertyFormPage() {
     <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-[#d4e9e2] pb-16">
       <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 py-4 sm:px-6 sm:py-8">
         <div className="mb-3 min-w-0">
-          <Link
-            to="/landlord-dashboard"
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2 inline-block"
-          >
-            ← Landlord dashboard
-          </Link>
+          <UserDashboardBreadcrumb
+            segments={userDashboardBreadcrumbs('landlord', {
+              label: isEdit ? 'Edit listing' : 'New listing',
+            })}
+            className="mb-2"
+          />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">

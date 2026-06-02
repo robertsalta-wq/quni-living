@@ -36,6 +36,8 @@ import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
 import TenancyAgreementExplainer from '../../components/TenancyAgreementExplainer'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
+import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
+import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -617,16 +619,15 @@ export default function LandlordBookingReviewPage() {
         : null
 
   return (
-    <div className="min-h-full bg-[#FEF9E4]/25 pb-36 md:pb-10">
+    <div className="min-h-full bg-gray-50 pb-36 md:pb-10">
       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10 space-y-6">
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <Link
-            to="/landlord/dashboard?tab=bookings"
-            className="font-medium text-gray-600 hover:text-gray-900 underline-offset-2"
-          >
-            ← Bookings
-          </Link>
-        </div>
+        <UserDashboardBreadcrumb
+          segments={userDashboardBreadcrumbs(
+            'landlord',
+            { label: 'Bookings', to: landlordBookingsPath() },
+            { label: 'Review request' },
+          )}
+        />
 
         <header className="space-y-2">
           <h1

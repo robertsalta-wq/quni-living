@@ -16,6 +16,9 @@ import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
+import UserDashboardSectionNav from '../components/dashboard/UserDashboardSectionNav'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -225,7 +228,11 @@ export default function StudentDashboard() {
   }, [authStudent])
 
   if (dataLoading && !profile) {
-    return <DashboardPageSkeleton />
+    return (
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+        <DashboardPageSkeleton />
+      </div>
+    )
   }
 
   if (error && !profile) {
@@ -244,7 +251,9 @@ export default function StudentDashboard() {
   const welcomeName = profile ? firstNameFromStudent(profile) : 'there'
 
   return (
-    <div className="max-w-site mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
+    <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('student')} className="mb-4" />
       {profile && user?.id && (
         <OnboardingChecklistBanner
           role="student"
@@ -337,40 +346,13 @@ export default function StudentDashboard() {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Dashboard sections">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'bookings'}
-          onClick={() => setTab('bookings')}
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-            tab === 'bookings'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          Bookings
-        </button>
-        <Link
-          to="/messages"
-          className="rounded-full px-4 py-2 text-sm font-semibold transition-colors bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
-        >
-          Messages
-        </Link>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'saved'}
-          onClick={() => setTab('saved')}
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-            tab === 'saved'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          Saved
-        </button>
-      </div>
+      <UserDashboardSectionNav
+        role="student"
+        active={tab}
+        onSelect={(section) => {
+          if (section === 'bookings' || section === 'saved') setTab(section)
+        }}
+      />
 
       {tab === 'bookings' && (
         <section aria-labelledby="bookings-heading">
@@ -504,6 +486,7 @@ export default function StudentDashboard() {
           submitterId={profile.id}
         />
       )}
+    </div>
     </div>
   )
 }

@@ -32,6 +32,9 @@ import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyL
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
+import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
+import UserDashboardSectionNav from '../components/dashboard/UserDashboardSectionNav'
+import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   fetchLandlordListingBillingSnapshot,
@@ -833,6 +836,7 @@ export default function LandlordDashboard() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
       <div className="max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('landlord')} className="mb-4" />
         {user?.id && (
           <OnboardingChecklistBanner
             role="landlord"
@@ -986,49 +990,13 @@ export default function LandlordDashboard() {
           </button>
         </div>
 
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex gap-1 -mb-px" aria-label="Dashboard sections">
-            <button
-              type="button"
-              onClick={() => setTab('listings')}
-              className={[
-                'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
-                tab === 'listings'
-                  ? 'border-indigo-600 text-indigo-700 bg-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
-              ].join(' ')}
-            >
-              Listings
-            </button>
-            <Link
-              to="/messages"
-              className="px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80 transition-colors inline-flex items-center gap-2"
-            >
-              Messages
-              {unreadMessageCount > 0 && (
-                <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              to={bookingsLinkTo}
-              className={[
-                'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
-                tab === 'bookings'
-                  ? 'border-indigo-600 text-indigo-700 bg-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
-              ].join(' ')}
-            >
-              Bookings
-              {(pendingBookings > 0 ? pendingBookings : bookings.length > 0 ? bookings.length : null) != null && (
-                <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                  {pendingBookings > 0 ? pendingBookings : bookings.length}
-                </span>
-              )}
-            </Link>
-          </nav>
-        </div>
+        <UserDashboardSectionNav
+          role="landlord"
+          active={tab}
+          pendingBookings={pendingBookings}
+          totalBookings={bookings.length}
+          onSelect={(section) => setTab(section === 'bookings' ? 'bookings' : 'listings')}
+        />
 
         {tab === 'listings' && (
           <div>

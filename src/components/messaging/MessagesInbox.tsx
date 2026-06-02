@@ -6,9 +6,10 @@ type Props = {
   loading: boolean
   error: string | null
   onRetry: () => void
+  viewerRole?: 'tenant' | 'landlord'
 }
 
-export default function MessagesInbox({ items, loading, error, onRetry }: Props) {
+export default function MessagesInbox({ items, loading, error, onRetry, viewerRole = 'tenant' }: Props) {
   if (loading) {
     return (
       <div className="px-4 py-8 space-y-4" aria-busy="true">
@@ -45,7 +46,9 @@ export default function MessagesInbox({ items, loading, error, onRetry }: Props)
       <div className="px-6 py-16 text-center">
         <p className="font-display text-lg font-bold text-gray-900">No messages yet</p>
         <p className="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
-          When you message a landlord from a listing, your conversations will appear here.
+          {viewerRole === 'landlord'
+            ? 'When a student messages you about a listing, your conversations will appear here.'
+            : 'When you message a landlord from a listing, your conversations will appear here.'}
         </p>
       </div>
     )
