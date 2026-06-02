@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { openStripeHostedUrl } from '../../lib/stripeConnectOpen'
+import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 import type { Database } from '../../lib/database.types'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -71,47 +72,14 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
     setConnectError(null)
     setConnectLoading(true)
     try {
-      const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
-      if (sessErr) throw sessErr
-      const accessToken = sessionData.session?.access_token
-      if (!accessToken) {
-        setConnectError('You need to be signed in.')
+      const result = await startLandlordStripeConnect('landlord_dashboard')
+      if (!result.ok) {
+        setConnectError(result.error)
         return
       }
-      const res = await fetch(apiUrl('/api/create-connect-account-link'), {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ returnContext: 'landlord_dashboard' }),
-      })
-      const raw = await res.text()
-      let body: {
-        url?: string
-        error?: string
-        hint?: string
-        alreadyConnected?: boolean
-      } = {}
-      try {
-        body = raw ? (JSON.parse(raw) as typeof body) : {}
-      } catch {
-        body = { error: raw.trim().slice(0, 280) || `Request failed (${res.status})` }
-      }
-      if (!res.ok) {
-        const hint = body.hint ? ` ${body.hint}` : ''
-        setConnectError((body.error ?? `Request failed (${res.status})`) + hint)
-        return
-      }
-      if (body.alreadyConnected) {
+      if (result.alreadyConnected) {
         await onRefresh()
-        return
       }
-      if (body.url) {
-        openStripeHostedUrl(body.url)
-        return
-      }
-      setConnectError('No onboarding URL returned.')
     } catch (e) {
       setConnectError(e instanceof Error ? e.message : 'Could not start Stripe setup.')
     } finally {

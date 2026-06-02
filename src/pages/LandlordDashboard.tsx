@@ -23,7 +23,7 @@ import {
 } from '../lib/onboardingChecklist'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
-import { openStripeHostedUrl } from '../lib/stripeConnectOpen'
+import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
@@ -731,35 +731,11 @@ export default function LandlordDashboard() {
     setConnectSetupError(null)
     setConnectLoading(true)
     try {
-      const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
-      if (sessErr) throw sessErr
-      const accessToken = sessionData.session?.access_token
-      if (!accessToken) throw new Error('You need to be signed in.')
-
-      const res = await fetch(apiUrl('/api/create-connect-account-link'), {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ returnContext: 'landlord_dashboard' }),
-      })
-      const raw = await res.text()
-      let body: { url?: string; error?: string; alreadyConnected?: boolean } = {}
-      try {
-        body = raw ? (JSON.parse(raw) as typeof body) : {}
-      } catch {
-        body = { error: raw.trim().slice(0, 280) || `Request failed (${res.status})` }
-      }
-      if (!res.ok) throw new Error(body.error || `Request failed (${res.status})`)
-      if (body.alreadyConnected) {
+      const result = await startLandlordStripeConnect('landlord_dashboard')
+      if (!result.ok) throw new Error(result.error)
+      if (result.alreadyConnected) {
         await load()
-        setStripeRequiredModalOpen(false)
-        return
       }
-      if (!body.url) throw new Error('No onboarding URL returned.')
-
-      openStripeHostedUrl(body.url)
       setStripeRequiredModalOpen(false)
     } catch (e) {
       setConnectSetupError(e instanceof Error ? e.message : 'Could not start Stripe setup.')

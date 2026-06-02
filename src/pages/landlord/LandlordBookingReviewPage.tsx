@@ -35,6 +35,7 @@ import { useServiceTierResolverOptions } from '../../context/PlatformFeaturesCon
 import BookingLeasePanel from '../../components/booking/BookingLeasePanel'
 import TenancyAgreementExplainer from '../../components/TenancyAgreementExplainer'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
+import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -172,6 +173,35 @@ export default function LandlordBookingReviewPage() {
   const [listingCancelReason, setListingCancelReason] = useState('')
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
+
+  const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
+  const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
+
+  const onVerifyWithStripe = useCallback(async () => {
+    setStripeConnectError(null)
+    setStripeConnectLoading(true)
+    try {
+      const result = await startLandlordStripeConnect('landlord_dashboard')
+      if (!result.ok) {
+        setStripeConnectError(result.error)
+        return
+      }
+      if (result.alreadyConnected) {
+        await reload()
+      }
+    } finally {
+      setStripeConnectLoading(false)
+    }
+  }, [reload])
+
+  useEffect(() => {
+    if (loading || data?.landlordStripeReady) return
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void reload()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [loading, reload, data?.landlordStripeReady])
 
   useEffect(() => {
     if (!data?.booking) return
@@ -727,12 +757,22 @@ export default function LandlordBookingReviewPage() {
               Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
               verification before you can accept. This also unlocks your Verified host badge when approved.
             </p>
-            <Link
-              to="/landlord/dashboard#rent-payouts"
-              className="inline-block mt-2 text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
+            {stripeConnectError && (
+              <p className="mt-2 text-sm text-red-800" role="alert">
+                {stripeConnectError}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={stripeConnectLoading}
+              onClick={() => void onVerifyWithStripe()}
+              className="inline-block mt-2 text-sm font-semibold text-[#FF6F61] underline underline-offset-2 disabled:opacity-60"
             >
-              Open dashboard &amp; verify with Stripe →
-            </Link>
+              {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
+            </button>
+            <p className="mt-2 text-xs text-amber-900/80">
+              Complete verification in Stripe, then return here — we refresh when you switch back to this tab.
+            </p>
           </div>
         )}
 
@@ -911,12 +951,14 @@ export default function LandlordBookingReviewPage() {
             >
               {confirmBlockedMessage}{' '}
               {confirmBlockedBanner === 'host_identity_required' && (
-                <Link
-                  to="/landlord/dashboard#rent-payouts"
-                  className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                <button
+                  type="button"
+                  disabled={stripeConnectLoading}
+                  onClick={() => void onVerifyWithStripe()}
+                  className="font-semibold text-[#FF6F61] underline underline-offset-2 disabled:opacity-60"
                 >
-                  Verify with Stripe →
-                </Link>
+                  {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
+                </button>
               )}
               {confirmBlockedBanner === 'listing_no_payment_method' && (
                 <button
