@@ -94,10 +94,9 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 | AcroForm | Fair Trading hint | Schedule label | Platform source | Default / GAP |
 |----------|-------------------|----------------|-----------------|---------------|
 | `Text field 2.1`–`2.3` | Suburb / state / postcode | Tenant service address (suburb block) | Parsed from `tenant.addressForServiceLine` | Omit when null |
-| `Text field 18.4` | Tenant 1 name (widget y≈668) | Tenant Name (1) | `tenant.fullName` | **Do not use `2.4`** — that widget sits on the corporation state column (y≈680) |
-| `Text field 2.6` | Tenant 3 name (widget y≈622) | Tenant Name (2) | `additionalTenantNames[0]` | Tooltip says “tenant 3”; position matches second name row |
-| `Text field 2.7` | All other tenants | Tenant Name (3) / others | `additionalTenantNames[1+]` joined | Empty if none |
-| `Text field 2.4` / `2.5` | Tooltips say tenant 1/2 | Corporation suburb/state/postcode | — | **Leave blank** |
+| `Text field 2.6` | Tenant 3 name (w≈419) | Tenant Name (1) | `tenant.fullName` | Wide row; do not use `18.4` (36px) or `2.4`/`2.5` (corporation columns) |
+| `Text field 2.7` | All other tenants (w≈419) | Tenant Name (2)+ | `additionalTenantNames[]` joined | Empty if none |
+| `Text field 18.4` / `2.4` / `2.5` | Misplaced / narrow widgets | — | — | **Leave blank** |
 | `Text field 2.7` | All other tenants | Other tenants | — | Blank |
 | `Text field 2.8`–`2.11` | Tenant service address | Address for service of notices | `tenant.addressForServiceLine` | Omit lines if null |
 | `Text field 2.12` | Contact details | Contact details | `tenant.phone`, `tenant.email` | — |
@@ -123,7 +122,7 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 | `Text field 3.7` | Paid weekly | Weekly rent amount | `rent.weeklyRent` when `rentFrequency === 'weekly'` | — |
 | `Text field 3.9` | Paid fortnightly | Fortnightly rent amount | `rent.weeklyRent` when fortnightly | — |
 | `Text field 3.10` | Paid other frequency | Other frequency amount | `rent.weeklyRent` when monthly/other | — |
-| `Text field 3.11`–`3.13` | Bank transfer / Centrepay / Other | Payment method + due day + first payment | `rent.paymentMethod` + weekday + `term.startDate` | Concatenated in one line |
+| `Text field 3.11` / `3.12` | Bank transfer / Centrepay (w≈527) | Payment method + due day + first payment | `rent.paymentMethod` + weekday + `term.startDate` | Use `3.11` for bank/other; **not `3.13`** (98px, wraps badly) |
 | `Text field 3.17` | Max occupants | Maximum occupants | `maxOccupantsPermitted` | — |
 | `Text field 3.18` / `3.19` | Electrical repairer name / phone | Urgent repairs — electrical | `urgentRepairsTradespeople.electrician` | Split on phone pattern |
 | `Text field 3.23` / `4.0` | Plumbing repairer name / phone | Urgent repairs — plumbing | `urgentRepairsTradespeople.plumber` | Split on phone pattern |

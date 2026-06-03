@@ -154,16 +154,6 @@ function termCheckState(
   }
 }
 
-function setTextSafe(form: ReturnType<PDFDocument['getForm']>, name: string, value: string | null | undefined) {
-  const v = typeof value === 'string' ? value.trim() : ''
-  if (!v) return
-  try {
-    form.getTextField(name).setText(v)
-  } catch {
-    /* field absent on revision */
-  }
-}
-
 function setCheckSafe(form: ReturnType<PDFDocument['getForm']>, name: string, checked: boolean) {
   try {
     const box = form.getCheckBox(name)
@@ -186,21 +176,15 @@ export type OfficialNswFt6600ScheduleFillResult = {
 }
 
 /**
- * Prepare filled schedule: set AcroForm values, update appearances, burn text into page content.
- * Call before flatten in the signing pipeline.
+ * Prepare filled schedule: checkboxes via AcroForm; schedule text burned into page content only.
+ * Avoids duplicate/misaligned text from setText + updateFieldAppearances + burn-in.
  */
 export async function prepareOfficialNswFt6600ScheduleForFlatten(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600ScheduleFillResult> {
   const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
-  const form = doc.getForm()
   const font = await doc.embedFont(StandardFonts.Helvetica)
-  try {
-    form.updateFieldAppearances(font)
-  } catch {
-    /* some revisions omit default appearances */
-  }
   burnInOfficialNswFt6600ScheduleFields(doc, assignments, font)
   return { filledFieldNames, assignments }
 }
@@ -247,11 +231,10 @@ export function applyOfficialNswFt6600ScheduleFill(
   if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
   if (landlord.companyName) pushText('Text field 1.14', landlord.companyName)
 
-  // § Tenants — 2.4/2.5 at y≈680 are corporation suburb/state/postcode on the Dec 2025 PDF, not tenant names.
-  pushText('Text field 18.4', tenant.fullName)
-  pushText('Text field 2.6', props.additionalTenantNames[0])
-  const extraTenants = props.additionalTenantNames.slice(1).map((s) => s?.trim()).filter(Boolean)
-  if (extraTenants.length > 0) pushText('Text field 2.7', extraTenants.join('; '))
+  // § Tenants — 2.4/2.5/18.4 are narrow/wrong rows; 2.6/2.7 are full-width name rows (w≈419).
+  pushText('Text field 2.6', tenant.fullName)
+  const coTenants = props.additionalTenantNames.map((s) => s?.trim()).filter(Boolean)
+  if (coTenants.length > 0) pushText('Text field 2.7', coTenants.join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
@@ -260,8 +243,10 @@ export function applyOfficialNswFt6600ScheduleFill(
     if (tenantService.suburb) pushText('Text field 2.9', tenantService.suburb)
     if (tenantService.state) pushText('Text field 2.10', tenantService.state)
     if (tenantService.postcode) pushText('Text field 2.11', tenantService.postcode)
+    pushText('Text field 2.12', tenant.phone)
+  } else {
+    pushText('Text field 2.8', `Phone: ${tenant.phone} · Email: ${tenant.email}`)
   }
-  pushText('Text field 2.12', `Phone: ${tenant.phone} · Email: ${tenant.email}`)
 
   if (landlordAgent) {
     const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
@@ -304,12 +289,11 @@ export function applyOfficialNswFt6600ScheduleFill(
   ]
     .filter(Boolean)
     .join(' · ')
+  // 3.13 is ~98px wide (wraps badly); 3.11/3.12 are full-width payment detail lines.
   if (/\bcentrepay\b/.test(paymentLower)) {
     pushText('Text field 3.12', paymentLine)
-  } else if (/\b(bpay|bank transfer|direct debit|electronic)\b/.test(paymentLower)) {
-    pushText('Text field 3.11', paymentLine)
   } else {
-    pushText('Text field 3.13', paymentLine)
+    pushText('Text field 3.11', paymentLine)
   }
 
   if (maxOcc) pushText('Text field 3.17', maxOcc)
@@ -375,9 +359,7 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheckSafe(form, 'Check Box 4.23', electronicService.tenantConsentsToEmailService)
   setCheckSafe(form, 'Check Box 5.1', electronicService.tenantConsentsToEmailService)
 
-  for (const [name, value] of assignments) {
-    setTextSafe(form, name, value)
-  }
+  // Text is burned into page content in prepareOfficialNswFt6600ScheduleForFlatten (not setText here).
 
   const filledFieldNames = assignments.map(([n]) => n)
   return { filledFieldNames, assignments }

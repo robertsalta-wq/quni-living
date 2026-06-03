@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  applyOfficialNswFt6600ScheduleFill,
-  loadOfficialNswFt6600Template,
-  prepareOfficialNswFt6600ScheduleForFlatten,
-} from './officialNswFt6600Fill.js'
+import { StandardFonts } from 'pdf-lib'
+import { burnInOfficialNswFt6600ScheduleFields } from './officialNswFt6600BurnIn.js'
+import { applyOfficialNswFt6600ScheduleFill, loadOfficialNswFt6600Template } from './officialNswFt6600Fill.js'
 
 // Sample shape matches scripts/agreement-sample-fixtures.mjs nswT2AgreementSampleProps
 const SAMPLE_PROPS = {
@@ -68,43 +66,32 @@ const SAMPLE_PROPS = {
   bookingNotes: null,
 }
 
-function readTextField(form: ReturnType<import('pdf-lib').PDFDocument['getForm']>, name: string): string {
-  try {
-    return form.getTextField(name).getText() ?? ''
-  } catch {
-    return ''
-  }
-}
-
 describe('applyOfficialNswFt6600ScheduleFill', () => {
-  it('maps header and parties per field-desc-pairs (not legacy spike names)', async () => {
-    const doc = await loadOfficialNswFt6600Template()
-    applyOfficialNswFt6600ScheduleFill(doc, SAMPLE_PROPS)
-    const form = doc.getForm()
+  it('assigns schedule fields to correct AcroForm names (wide tenant rows, not 2.4/18.4)', () => {
+    const doc = loadOfficialNswFt6600Template()
+    return doc.then((d) => {
+      const { assignments } = applyOfficialNswFt6600ScheduleFill(d, SAMPLE_PROPS)
+      const byField = Object.fromEntries(assignments)
 
-    expect(readTextField(form, 'Text field 1.1')).toBe('02/06/2026')
-    expect(readTextField(form, 'Text field 1.2')).toBe('Newtown')
-    expect(readTextField(form, 'Text field 1.3')).toBe('Alex Rental Provider')
-    expect(readTextField(form, 'Text field 1.1')).not.toBe(SAMPLE_PROPS.landlord.fullName)
-
-    expect(readTextField(form, 'Text field 18.4')).toBe('Jordan Tenant')
-    expect(readTextField(form, 'Text field 2.6')).toBe('Casey Co-Renter')
-    expect(readTextField(form, 'Text field 2.4')).toBe('')
-    expect(readTextField(form, 'Text field 2.5')).toBe('')
-
-    expect(readTextField(form, 'Text field 2.26')).toContain('Brunswick Street')
-    expect(readTextField(form, 'Text field 3.9')).toBe('')
-    expect(readTextField(form, 'Text field 3.7')).toContain('420')
+      expect(byField['Text field 1.1']).toBe('02/06/2026')
+      expect(byField['Text field 1.3']).toBe('Alex Rental Provider')
+      expect(byField['Text field 2.6']).toBe('Jordan Tenant')
+      expect(byField['Text field 2.7']).toBe('Casey Co-Renter')
+      expect(byField['Text field 18.4']).toBeUndefined()
+      expect(byField['Text field 2.4']).toBeUndefined()
+      expect(byField['Text field 3.11']).toContain('Direct deposit')
+      expect(byField['Text field 3.13']).toBeUndefined()
+    })
   })
 
-  it('burn-in leaves schedule text in PDF bytes after flatten', async () => {
+  it('burn-in draws every assignment before flatten', async () => {
     const doc = await loadOfficialNswFt6600Template()
-    await prepareOfficialNswFt6600ScheduleForFlatten(doc, SAMPLE_PROPS)
-    doc.getForm().flatten()
-    const bytes = Buffer.from(await doc.save({ useObjectStreams: false }))
-    const latin = bytes.toString('latin1')
-    expect(latin).toContain('Alex Rental Provider')
-    expect(latin).toContain('Jordan Tenant')
-    expect(latin).toContain('Brunswick Street')
+    const { assignments } = applyOfficialNswFt6600ScheduleFill(doc, SAMPLE_PROPS)
+    const font = await doc.embedFont(StandardFonts.Helvetica)
+    const burned = burnInOfficialNswFt6600ScheduleFields(doc, assignments, font)
+    expect(burned).toContain('Text field 1.3')
+    expect(burned).toContain('Text field 2.6')
+    expect(burned).toContain('Text field 3.11')
+    expect(burned.length).toBe(assignments.length)
   })
 })
