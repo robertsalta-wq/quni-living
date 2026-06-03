@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { StandardFonts } from 'pdf-lib'
-import { burnInOfficialNswFt6600ScheduleFields } from './officialNswFt6600BurnIn.js'
-import { applyOfficialNswFt6600ScheduleFill, loadOfficialNswFt6600Template } from './officialNswFt6600Fill.js'
+import {
+  applyOfficialNswFt6600ScheduleFill,
+  loadOfficialNswFt6600Template,
+  prepareOfficialNswFt6600ScheduleForFlatten,
+} from './officialNswFt6600Fill.js'
 
 // Sample shape matches scripts/agreement-sample-fixtures.mjs nswT2AgreementSampleProps
 const SAMPLE_PROPS = {
@@ -84,14 +86,13 @@ describe('applyOfficialNswFt6600ScheduleFill', () => {
     })
   })
 
-  it('burn-in draws every assignment before flatten', async () => {
+  it('setText fills AcroForm widgets before flatten', async () => {
     const doc = await loadOfficialNswFt6600Template()
-    const { assignments } = applyOfficialNswFt6600ScheduleFill(doc, SAMPLE_PROPS)
-    const font = await doc.embedFont(StandardFonts.Helvetica)
-    const burned = burnInOfficialNswFt6600ScheduleFields(doc, assignments, font)
-    expect(burned).toContain('Text field 1.3')
-    expect(burned).toContain('Text field 2.6')
-    expect(burned).toContain('Text field 3.11')
-    expect(burned.length).toBe(assignments.length)
+    await prepareOfficialNswFt6600ScheduleForFlatten(doc, SAMPLE_PROPS)
+    const form = doc.getForm()
+    expect(form.getTextField('Text field 1.1').getText()).toBe('02/06/2026')
+    expect(form.getTextField('Text field 1.3').getText()).toBe('Alex Rental Provider')
+    expect(form.getTextField('Text field 2.6').getText()).toBe('Jordan Tenant')
+    expect(form.getTextField('Text field 4.7').getText()).toContain('1,680')
   })
 })

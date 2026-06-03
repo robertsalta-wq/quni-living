@@ -9,7 +9,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
-import { burnInOfficialNswFt6600ScheduleFields } from './officialNswFt6600BurnIn.js'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 
 export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join(
@@ -176,16 +175,30 @@ export type OfficialNswFt6600ScheduleFillResult = {
 }
 
 /**
- * Prepare filled schedule: checkboxes via AcroForm; schedule text burned into page content only.
- * Avoids duplicate/misaligned text from setText + updateFieldAppearances + burn-in.
+ * Prepare filled schedule: text via AcroForm setText (flatten bakes into boxes).
+ * Do not burn-in before flatten — flatten paints empty widget backgrounds over pre-flatten drawText.
  */
 export async function prepareOfficialNswFt6600ScheduleForFlatten(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600ScheduleFillResult> {
+  const form = doc.getForm()
   const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
+  for (const [name, value] of assignments) {
+    const v = value.trim()
+    if (!v) continue
+    try {
+      form.getTextField(name).setText(v)
+    } catch {
+      /* field absent on revision */
+    }
+  }
   const font = await doc.embedFont(StandardFonts.Helvetica)
-  burnInOfficialNswFt6600ScheduleFields(doc, assignments, font)
+  try {
+    form.updateFieldAppearances(font)
+  } catch {
+    /* some revisions omit appearance streams */
+  }
   return { filledFieldNames, assignments }
 }
 
@@ -368,7 +381,7 @@ export function applyOfficialNswFt6600ScheduleFill(
     pushText('Text field 5.8', electronicService.tenantEmail)
   }
 
-  // Text is burned into page content in prepareOfficialNswFt6600ScheduleForFlatten (not setText here).
+  // Text is set on AcroForm fields in prepareOfficialNswFt6600ScheduleForFlatten (then flatten bakes values).
 
   const filledFieldNames = assignments.map(([n]) => n)
   return { filledFieldNames, assignments }

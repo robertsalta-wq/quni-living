@@ -15,7 +15,7 @@ Prescribed form: **Residential Tenancy Agreement (FT6600)** — Fair Trading sta
 
 Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (`scripts/test-official-form-spike/field-desc-pairs.json`). **AcroForm names/tooltips do not match where widgets sit on the printed form** — burning text at widget rectangles still misplaces values (phone in “Landlord Name (2)”, tenant in corporation “State”, etc.).
 
-**Production default:** prescribed Fair Trading PDF (`officialNswFt6600Fill.ts` + `officialNswFt6600BurnIn.ts`). Schedule widgets span **PDF pages 0–4** (landlord → tenant → rent → bond/repairs → e-service); burn-in must resolve each widget’s page via `/Annots` (never default to page 0). React-pdf rebuild: `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` only.
+**Production default:** prescribed Fair Trading PDF (`officialNswFt6600Fill.ts`). Schedule text uses AcroForm `setText` + `updateFieldAppearances`, then `flatten()` (do **not** `drawText` before flatten — flatten paints empty field backgrounds over pre-flatten burn-in). `officialNswFt6600BurnIn.ts` is a post-flatten fallback only. React-pdf rebuild: `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` only.
 
 ---
 

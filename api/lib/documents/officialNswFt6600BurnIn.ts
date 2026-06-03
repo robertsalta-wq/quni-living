@@ -103,7 +103,7 @@ function layoutWrappedInField(
 
 const WRAP_ACRO_FIELDS = new Set(['Text field 3.11', 'Text field 3.12', 'Text field 3.23'])
 
-/** Draw filled values on the correct PDF page before flatten. */
+/** Draw filled values on the correct PDF page (use after flatten if setText is unavailable). */
 export function burnInOfficialNswFt6600ScheduleFields(
   doc: PDFDocument,
   assignments: Array<[string, string]>,

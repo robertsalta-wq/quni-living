@@ -40,7 +40,8 @@
       "maxDuration": 60
     },
     "api/documents/generate-residential-tenancy.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "docs/nsw/residential-tenancy-agreement-form-2025-12.pdf"
     },
     "api/documents/generate-qld-residential-tenancy.ts": {
       "maxDuration": 60
