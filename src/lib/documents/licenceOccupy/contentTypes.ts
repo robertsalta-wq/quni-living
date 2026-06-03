@@ -3,7 +3,6 @@ export type LicenceOccupyContent = {
   docTitle: string
   docSubtitle: string
   draftFooter: string
-  ownerServiceFeeDefault: string
   natureParagraphs: readonly string[]
   roomSharedIntro: string
   entryParagraphs: readonly string[]
@@ -27,7 +26,5 @@ export type LicenceOccupyContent = {
   feeFreeBankTransfer: string
   bankDetailsTemplate: string
   platformIntroPrefix: string
-  platformOwnerFeeTemplate: string
-  platformResidentCarveout: string
   executionIntro: string
 }

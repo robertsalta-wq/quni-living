@@ -282,9 +282,15 @@ export default async function handler(req: any, res: any) {
     documentId = insD.id
   }
 
-  const platformFeePercent = await getManagedLandlordFeePercentForProperty(booking.property_id)
-  const platformFee = Math.round(weeklyRent * (platformFeePercent / 100) * 100) / 100
-  const totalWeekly = Math.round((weeklyRent + platformFee) * 100) / 100
+  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
+  const platformFeePercent =
+    serviceTier === 'managed'
+      ? await getManagedLandlordFeePercentForProperty(booking.property_id)
+      : 0
+  const paymentMethod =
+    serviceTier === 'listing'
+      ? 'Direct credit to owner account (fee-free). Reference: resident name and property address.'
+      : 'Via Quni Living platform (quni.com.au)'
 
   const lpRec = lp as Record<string, unknown>
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
@@ -297,6 +303,7 @@ export default async function handler(req: any, res: any) {
   const pdfProps: OccupancyAgreementProps = {
     documentId,
     generatedAt: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' }),
+    serviceTier,
     landlord: {
       fullName:
         [lp.first_name, lp.last_name].filter(Boolean).join(' ').trim() ||
@@ -336,8 +343,8 @@ export default async function handler(req: any, res: any) {
     rent: {
       weeklyRent,
       platformFeePercent,
-      totalWeekly,
-      paymentMethod: 'Via Quni Living platform (quni.com.au)',
+      totalWeekly: weeklyRent,
+      paymentMethod,
     },
     bond: { amount: bondNum },
     specialConditions: [

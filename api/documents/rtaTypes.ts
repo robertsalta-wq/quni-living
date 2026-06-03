@@ -60,6 +60,8 @@ export type RtaBondPdf = {
 export type OccupancyAgreementProps = {
   documentId: string
   generatedAt: string
+  /** Listing (default) or Managed — drives Clause 11 owner-side fee wording. */
+  serviceTier?: 'listing' | 'managed'
   landlord: RtaLandlordPdf
   tenant: RtaTenantPdf
   premises: RtaPremisesPdf

@@ -559,8 +559,18 @@ function licenceTerminationNoticePhrase(paymentMethod) {
   }
   return "where the licence fee is payable weekly, at least one week's written notice;";
 }
-function ownerServiceFeeParagraph(template, feePercent) {
-  return template.replace("{feePercent}", feePercent);
+var LISTING_TIER_ACCEPTANCE_FEE_DISPLAY = "$99";
+function formatManagedFeePercent(percent) {
+  const n = Number(percent);
+  if (!Number.isFinite(n) || n <= 0) return "7%";
+  return `${n.toLocaleString("en-AU", { maximumFractionDigits: 2 })}%`;
+}
+function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY) {
+  if (tier === "managed") {
+    const pct = formatManagedFeePercent(managedFeePercent);
+    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`;
+  }
+  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted \u2014 it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
 }
 
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
@@ -574,7 +584,7 @@ function formatAuDate(iso) {
   if (parts.length !== 3) return iso;
   const [y, m, day] = parts;
   if (!y || !m || !day) return iso;
-  return `${day}/${m}/${day}`;
+  return `${day}/${m}/${y}`;
 }
 function yn(v) {
   if (v === true) return "Yes";
@@ -673,6 +683,11 @@ function LicenceOccupyDocument({
     ...specialConditions.filter((c) => c.trim()),
     ...bookingNotes?.trim() ? [bookingNotes.trim()] : []
   ];
+  const serviceTier = props.serviceTier === "managed" ? "managed" : "listing";
+  const hasExtraTerms = extraLines.length > 0;
+  const conditionReportClauseNum = 12;
+  const additionalTermsClauseNum = 13;
+  const executionClauseNum = hasExtraTerms ? 14 : 13;
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
       /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }),
@@ -722,20 +737,20 @@ function LicenceOccupyDocument({
         ' (the "Platform") ',
         content.platformIntroPrefix
       ] }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraph(content.platformOwnerFeeTemplate, content.ownerServiceFeeDefault) }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.platformResidentCarveout }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(serviceTier, rent.platformFeePercent) }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.feeFreeBankTransfer }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bankDetailsTemplate }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing })
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bankDetailsTemplate })
     ] }),
     /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      extraLines.length > 0 ? /* @__PURE__ */ jsxs2(Fragment, { children: [
-        /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 12, title: "Additional terms" }),
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: conditionReportClauseNum, title: "Condition report" }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing }),
+      hasExtraTerms ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: additionalTermsClauseNum, title: "Additional terms" }),
         extraLines.map((line, i) => /* @__PURE__ */ jsx2(Bullet, { children: line }, `x-${i}`))
       ] }) : null,
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 13, title: "Execution" }),
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: executionClauseNum, title: "Execution" }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.executionIntro }),
       /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigTable, children: [
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigHeaderRow, children: [
@@ -776,7 +791,6 @@ var NSW_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
   docSubtitle: "New South Wales \u2014 Licence to occupy (on-site accommodation)",
   draftFooter: "Draft for legal review \u2014 not for execution",
-  ownerServiceFeeDefault: "10%",
   natureParagraphs: [
     "This document is a common-law licence to occupy a specified room within residential premises in New South Wales. It is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW).",
     "The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
@@ -830,8 +844,6 @@ var NSW_LICENCE_OCCUPY_CONTENT = {
   feeFreeBankTransfer: "A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the owner-side service fee described below.",
   bankDetailsTemplate: "Direct credit details for payment of the weekly licence fee will be provided by the owner (account name, BSB and account number). Use your name and the property address as the payment reference.",
   platformIntroPrefix: "operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The owner remains responsible for the allocated room, shared areas and this licence.",
-  platformOwnerFeeTemplate: "A service fee of {feePercent} of the gross weekly licence fee is deducted from amounts payable to the owner through the Platform before payout to the owner, as disclosed in the owner service agreement and listing terms.",
-  platformResidentCarveout: "The resident pays no Quni platform fee, booking fee or resident service fee. The agreed weekly licence fee shown in the schedule is not increased by the owner-side service fee.",
   executionIntro: "The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow."
 };
 var NSW_OCCUPANCY_PDF_MARKERS = [

@@ -9,6 +9,7 @@ function minimalProps(): OccupancyAgreementProps {
   return {
     documentId: 'test-qld-licence',
     generatedAt: '1 Jan 2026, 12:00:00 pm',
+    serviceTier: 'listing',
     landlord: {
       fullName: 'Jane Owner',
       companyName: null,
@@ -33,15 +34,15 @@ function minimalProps(): OccupancyAgreementProps {
       weeklyCleaningService: false,
     },
     term: {
-      startDate: '2026-02-01',
-      endDate: '2027-01-31',
+      startDate: '2025-07-15',
+      endDate: '2026-01-15',
       periodic: false,
       leaseLengthDescription: '52 weeks',
     },
     rent: {
       weeklyRent: 300,
-      platformFeePercent: 10,
-      totalWeekly: 330,
+      platformFeePercent: 0,
+      totalWeekly: 300,
       paymentMethod: 'Direct credit to owner account (fee-free)',
     },
     bond: { amount: 1200 },
@@ -67,5 +68,8 @@ describe('QldLicenceToOccupyOnSite', () => {
     expect(text).not.toMatch(/Platform fee \(/i)
     expect(text).not.toMatch(/Platform fee component/i)
     expect(text).not.toMatch(/total weekly payment/i)
+    expect(text).toContain('15/07/2025')
+    expect(text).toContain('12 Condition report')
+    expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
   })
 })

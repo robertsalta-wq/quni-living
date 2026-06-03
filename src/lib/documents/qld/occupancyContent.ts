@@ -8,7 +8,6 @@ export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
   docSubtitle: 'Queensland — Licence to occupy (on-site accommodation)',
   draftFooter: 'Draft — not for execution until signed',
-  ownerServiceFeeDefault: '10%',
   natureParagraphs: [
     `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,
     'Under s 27(1) of the RTRA Act, the Act does not apply to a residential tenancy agreement if the person is a boarder or lodger. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities.',
@@ -77,10 +76,6 @@ export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     'Direct credit details for payment of the weekly licence fee will be provided by the owner (account name, BSB and account number). Use your name and the property address as the payment reference.',
   platformIntroPrefix:
     'operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The owner remains responsible for the allocated room, shared areas and this licence.',
-  platformOwnerFeeTemplate:
-    'A service fee of {feePercent} of the gross weekly licence fee is deducted from amounts payable to the owner through the Platform before payout to the owner, as disclosed in the owner service agreement and listing terms.',
-  platformResidentCarveout:
-    'The resident pays no Quni platform fee, booking fee or resident service fee. The agreed weekly licence fee shown in the schedule is not increased by the owner-side service fee.',
   executionIntro:
     'The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions (Queensland) Act 2001 and related law. Signature and date fields may be completed through the signing workflow.',
 }
@@ -92,7 +87,7 @@ export const QLD_OCCUPANCY_PDF_MARKERS = [
   'Residential Tenancies Authority',
   'RTA Queensland',
   '10 calendar days',
-  'The resident pays no Quni platform fee',
+  'The resident is not required to pay Quni platform fees',
   's 27',
   's 43',
   'Form R18',

@@ -12,7 +12,11 @@ import {
 } from '../quniDocumentPdfTheme.js'
 import { resolvePlatformLegalEntityName } from '../../platformIdentity.js'
 import type { LicenceOccupyContent } from './contentTypes.js'
-import { licenceTerminationNoticePhrase, ownerServiceFeeParagraph } from './utils.js'
+import {
+  licenceTerminationNoticePhrase,
+  ownerServiceFeeParagraphForTier,
+  type LicenceOccupyServiceTier,
+} from './utils.js'
 
 function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
@@ -24,7 +28,7 @@ function formatAuDate(iso: string) {
   if (parts.length !== 3) return iso
   const [y, m, day] = parts
   if (!y || !m || !day) return iso
-  return `${day}/${m}/${day}`
+  return `${day}/${m}/${y}`
 }
 
 function yn(v: boolean | null) {
@@ -177,6 +181,12 @@ export function LicenceOccupyDocument({
     ...(bookingNotes?.trim() ? [bookingNotes.trim()] : []),
   ]
 
+  const serviceTier: LicenceOccupyServiceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
+  const hasExtraTerms = extraLines.length > 0
+  const conditionReportClauseNum = 12
+  const additionalTermsClauseNum = 13
+  const executionClauseNum = hasExtraTerms ? 14 : 13
+
   return (
     <Document>
       <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
@@ -242,26 +252,26 @@ export function LicenceOccupyDocument({
           {entityName} (the &quot;Platform&quot;) {content.platformIntroPrefix}
         </BodyParagraph>
         <BodyParagraph>
-          {ownerServiceFeeParagraph(content.platformOwnerFeeTemplate, content.ownerServiceFeeDefault)}
+          {ownerServiceFeeParagraphForTier(serviceTier, rent.platformFeePercent)}
         </BodyParagraph>
-        <BodyParagraph>{content.platformResidentCarveout}</BodyParagraph>
         <BodyParagraph>{content.feeFreeBankTransfer}</BodyParagraph>
         <BodyParagraph>{content.bankDetailsTemplate}</BodyParagraph>
-        <BodyParagraph>{content.conditionReportIntro}</BodyParagraph>
-        <BodyParagraph>{content.conditionReportReturn}</BodyParagraph>
-        <BodyParagraph>{content.conditionReportOutgoing}</BodyParagraph>
       </PageShell>
 
       <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
-        {extraLines.length > 0 ? (
+        <OccupancyMatchSectionHeading num={conditionReportClauseNum} title="Condition report" />
+        <BodyParagraph>{content.conditionReportIntro}</BodyParagraph>
+        <BodyParagraph>{content.conditionReportReturn}</BodyParagraph>
+        <BodyParagraph>{content.conditionReportOutgoing}</BodyParagraph>
+        {hasExtraTerms ? (
           <>
-            <OccupancyMatchSectionHeading num={12} title="Additional terms" />
+            <OccupancyMatchSectionHeading num={additionalTermsClauseNum} title="Additional terms" />
             {extraLines.map((line, i) => (
               <Bullet key={`x-${i}`}>{line}</Bullet>
             ))}
           </>
         ) : null}
-        <OccupancyMatchSectionHeading num={13} title="Execution" />
+        <OccupancyMatchSectionHeading num={executionClauseNum} title="Execution" />
         <BodyParagraph>{content.executionIntro}</BodyParagraph>
         <View style={occupancyMatchPdf.sigTable}>
           <View style={occupancyMatchPdf.sigHeaderRow}>

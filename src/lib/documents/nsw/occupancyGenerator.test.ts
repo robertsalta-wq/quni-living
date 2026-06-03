@@ -9,6 +9,7 @@ function minimalProps(): OccupancyAgreementProps {
   return {
     documentId: 'test-nsw-licence',
     generatedAt: '1 Jan 2026, 12:00:00 pm',
+    serviceTier: 'listing',
     landlord: {
       fullName: 'Jane Owner',
       companyName: null,
@@ -33,15 +34,15 @@ function minimalProps(): OccupancyAgreementProps {
       weeklyCleaningService: false,
     },
     term: {
-      startDate: '2026-02-01',
-      endDate: '2027-01-31',
+      startDate: '2025-07-15',
+      endDate: '2026-01-15',
       periodic: false,
       leaseLengthDescription: '52 weeks',
     },
     rent: {
       weeklyRent: 300,
-      platformFeePercent: 10,
-      totalWeekly: 330,
+      platformFeePercent: 0,
+      totalWeekly: 300,
       paymentMethod: 'Direct credit to owner account (fee-free)',
     },
     bond: { amount: 1200 },
@@ -69,5 +70,10 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).not.toMatch(/total weekly payment/i)
     expect(text).toContain('not lodged with NSW Fair Trading')
     expect(text).not.toMatch(/must be lodged with NSW Fair Trading/i)
+    expect(text).toContain('15/07/2025')
+    expect(text).toContain('15/01/2026')
+    expect(text).toContain('12 Condition report')
+    expect(text).toContain('one-off platform fee of $99')
+    expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
   })
 })

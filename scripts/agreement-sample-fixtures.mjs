@@ -19,8 +19,8 @@ const TENANT = {
 }
 
 const SHARED_TERM = {
-  startDate: '2026-07-20',
-  endDate: '2027-01-20',
+  startDate: '2025-07-15',
+  endDate: '2026-01-15',
   periodic: false,
   leaseLengthDescription: '6 months',
 }
@@ -57,14 +57,15 @@ export function nswOccupancySampleProps() {
   return {
     documentId: 'nsw-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
+    serviceTier: 'listing',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, Newtown, NSW, 2042' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('NSW', 'Newtown', '2042', 'private_room_landlord_on_site', 'Front bedroom'),
     term: { ...SHARED_TERM },
     rent: {
       weeklyRent: 420,
-      platformFeePercent: 10,
-      totalWeekly: 462,
+      platformFeePercent: 0,
+      totalWeekly: 420,
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 840 },
@@ -78,14 +79,15 @@ export function qldOccupancySampleProps() {
   return {
     documentId: 'qld-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
+    serviceTier: 'listing',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, West End, QLD, 4101' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('QLD', 'West End', '4101', 'private_room_landlord_on_site', 'Rear bedroom'),
     term: { ...SHARED_TERM },
     rent: {
       weeklyRent: 380,
-      platformFeePercent: 10,
-      totalWeekly: 418,
+      platformFeePercent: 0,
+      totalWeekly: 380,
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 760 },
@@ -99,14 +101,15 @@ export function vicOccupancySampleProps() {
   return {
     documentId: 'vic-occupancy-review-001',
     generatedAt: SAMPLE_GENERATED_AT,
+    serviceTier: 'listing',
     landlord: { ...LANDLORD, addressLine: '12 Owner Street, Carlton, VIC, 3053' },
     tenant: { ...TENANT, fullName: 'Jordan Resident', email: 'jordan.resident@example.com' },
     premises: premisesFor('VIC', 'Carlton', '3053', 'private_room_landlord_on_site', 'Bedroom 2 (rear)'),
     term: { ...SHARED_TERM },
     rent: {
       weeklyRent: 380,
-      platformFeePercent: 10,
-      totalWeekly: 418,
+      platformFeePercent: 0,
+      totalWeekly: 380,
       paymentMethod: 'Direct credit to owner account (fee-free). Reference: resident name and property address.',
     },
     bond: { amount: 760 },
