@@ -1,15 +1,21 @@
 /**
  * Fill the official NSW FT6600 AcroForm PDF (schedule only), then flatten.
- * Signing tags are applied in a separate module after the tag-literal micro-spike.
- *
- * Template: docs/nsw/residential-tenancy-agreement-form-2025-12.pdf
- * Field map: docs/nsw/ft6600-acroform-mapping.md
- * Authoritative hints: scripts/test-official-form-spike/field-desc-pairs.json
+ * Field binding uses position-derived semantic slots (officialNswFt6600SlotMap.ts), not tooltips.
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
+import {
+  acroNameForSlot,
+  FT6600_ACRO_TO_SLOT,
+  FT6600_RENT_FREQUENCY_CHECKBOX_SLOTS,
+  FT6600_SLOT_TO_ACRO,
+  FT6600_TERM_CHECKBOX_SLOTS,
+  type Ft6600SlotId,
+} from './officialNswFt6600SlotMap.js'
+
+export { FT6600_ACRO_TO_SLOT, FT6600_SLOT_TO_ACRO }
 
 export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join(
   'docs',
@@ -25,12 +31,10 @@ export async function loadOfficialNswFt6600Template(): Promise<PDFDocument> {
   return PDFDocument.load(templateBytes, { ignoreEncryption: true })
 }
 
-/** Narrow rent/bond boxes on the official PDF (no currency symbol). */
 function formatPlainMoney(n: number): string {
   return n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-/** Strip em/en dashes and placeholder dashes from values shown on the prescribed form. */
 export function sanitizeDisplayText(value: string | null | undefined): string {
   if (typeof value !== 'string') return ''
   return value
@@ -49,7 +53,6 @@ function formatAuDate(iso: string): string {
   return `${day}/${m}/${y}`
 }
 
-/** Matches react-pdf `agreementMadeOnFromGeneratedAt`. */
 function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
   const idx = generatedAt.indexOf(',')
   if (idx > 0) return generatedAt.slice(0, idx).trim()
@@ -103,78 +106,118 @@ function rentDueWeekdayFromCommencement(isoDate: string): string {
   return dt.toLocaleDateString('en-AU', { weekday: 'long', timeZone: 'UTC' })
 }
 
-type TermChecks = {
-  m6: boolean
-  m12: boolean
-  y2: boolean
-  y3: boolean
-  y5: boolean
-  periodic: boolean
-  other: boolean
-  otherText: string | null
-}
+type TermSlot =
+  | 'term_6_months_cb'
+  | 'term_12_months_cb'
+  | 'term_2_years_cb'
+  | 'term_5_years_cb'
+  | 'term_other_cb'
+  | 'term_periodic_cb'
 
-function termCheckState(
+function resolveTermSlot(
   periodic: boolean,
   leaseLengthDescription: string,
   startDate: string,
   endDate: string | null,
-): TermChecks {
-  if (periodic) {
-    return { m6: false, m12: false, y2: false, y3: false, y5: false, periodic: true, other: false, otherText: null }
-  }
+): TermSlot {
+  if (periodic) return 'term_periodic_cb'
   const d = leaseLengthDescription.trim().toLowerCase()
-  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d)) {
-    return { m6: false, m12: false, y2: false, y3: false, y5: false, periodic: true, other: false, otherText: null }
+  if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d) || /\bflexible\b/i.test(d)) {
+    return 'term_periodic_cb'
   }
-  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) {
-    return { m6: false, m12: false, y2: false, y3: false, y5: true, periodic: false, other: false, otherText: null }
-  }
-  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) {
-    return { m6: false, m12: false, y2: true, y3: true, y5: false, periodic: false, other: false, otherText: null }
-  }
-  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) {
-    return { m6: false, m12: false, y2: true, y3: false, y5: false, periodic: false, other: false, otherText: null }
-  }
-  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) {
-    return { m6: false, m12: true, y2: false, y3: false, y5: false, periodic: false, other: false, otherText: null }
-  }
-  if (/\b6\s*months?\b/.test(d)) {
-    return { m6: true, m12: false, y2: false, y3: false, y5: false, periodic: false, other: false, otherText: null }
-  }
-  if (/\bflexible\b/i.test(d)) {
-    return { m6: false, m12: false, y2: false, y3: false, y5: false, periodic: true, other: false, otherText: null }
-  }
+  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return 'term_5_years_cb'
+  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return 'term_2_years_cb'
+  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return 'term_2_years_cb'
+  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return 'term_12_months_cb'
+  if (/\b6\s*months?\b/.test(d)) return 'term_6_months_cb'
   if (endDate && startDate) {
     const start = new Date(startDate.slice(0, 10))
     const end = new Date(endDate.slice(0, 10))
     const months = Math.round((end.getTime() - start.getTime()) / (30.44 * 86400000))
-    if (months <= 8) return { m6: true, m12: false, y2: false, y3: false, y5: false, periodic: false, other: false, otherText: null }
-    if (months <= 15) return { m6: false, m12: true, y2: false, y3: false, y5: false, periodic: false, other: false, otherText: null }
-    if (months <= 27) return { m6: false, m12: false, y2: true, y3: false, y5: false, periodic: false, other: false, otherText: null }
-    if (months <= 45) return { m6: false, m12: false, y2: false, y3: true, y5: false, periodic: false, other: false, otherText: null }
-    return { m6: false, m12: false, y2: false, y3: false, y5: true, periodic: false, other: false, otherText: null }
+    if (months <= 8) return 'term_6_months_cb'
+    if (months <= 15) return 'term_12_months_cb'
+    if (months <= 27) return 'term_2_years_cb'
+    if (months <= 45) return 'term_2_years_cb'
+    return 'term_5_years_cb'
   }
-  return {
-    m6: false,
-    m12: false,
-    y2: false,
-    y3: false,
-    y5: false,
-    periodic: false,
-    other: true,
-    otherText: leaseLengthDescription.trim() || null,
-  }
+  return 'term_other_cb'
 }
 
-function setCheckSafe(form: ReturnType<PDFDocument['getForm']>, name: string, checked: boolean) {
+function setCheckboxWidgetStates(form: PDFForm, acroName: string, onIndices: Set<number>): void {
   try {
-    const box = form.getCheckBox(name)
-    if (checked) box.check()
-    else box.uncheck()
+    const field = form.getCheckBox(acroName)
+    const widgets = field.acroField.getWidgets()
+    widgets.forEach((widget, i) => {
+      widget.setAppearanceState(PDFName.of(onIndices.has(i) ? 'On' : 'Off'))
+    })
+    if (onIndices.size === 0) field.uncheck()
+    else if (onIndices.size === widgets.length) field.check()
+    else if (onIndices.size === 1 && widgets.length === 1) onIndices.has(0) ? field.check() : field.uncheck()
+    else field.uncheck()
   } catch {
     /* field absent on revision */
   }
+}
+
+function uncheckAllWidgets(form: PDFForm, acroName: string): void {
+  setCheckboxWidgetStates(form, acroName, new Set())
+}
+
+function setCheckInGroup(form: PDFForm, slots: Ft6600SlotId[], active: Ft6600SlotId | null): void {
+  const seen = new Set<string>()
+  for (const slot of slots) {
+    const acro = acroNameForSlot(slot)
+    if (seen.has(acro)) continue
+    seen.add(acro)
+    uncheckAllWidgets(form, acro)
+  }
+  if (!active) return
+  const acro = acroNameForSlot(active)
+  try {
+    form.getCheckBox(acro).check()
+  } catch {
+    /* absent */
+  }
+}
+
+type FillState = {
+  textBySlot: Partial<Record<Ft6600SlotId, string>>
+  checkSlots: Set<Ft6600SlotId>
+}
+
+function pushText(state: FillState, slot: Ft6600SlotId, value: string | null | undefined): void {
+  const v = sanitizeDisplayText(value)
+  if (!v) return
+  state.textBySlot[slot] = v
+}
+
+function pushCheck(state: FillState, slot: Ft6600SlotId): void {
+  state.checkSlots.add(slot)
+}
+
+function applyFillStateToForm(form: PDFForm, state: FillState): Array<[string, string]> {
+  const assignments: Array<[string, string]> = []
+
+  for (const [slot, value] of Object.entries(state.textBySlot) as Array<[Ft6600SlotId, string]>) {
+    const name = acroNameForSlot(slot)
+    assignments.push([name, value])
+    try {
+      form.getTextField(name).setText(value)
+    } catch {
+      /* absent */
+    }
+  }
+
+  for (const slot of state.checkSlots) {
+    const name = acroNameForSlot(slot)
+    try {
+      form.getCheckBox(name).check()
+    } catch {
+      /* absent */
+    }
+  }
+
+  return assignments
 }
 
 export type OfficialNswFt6600FillResult = {
@@ -188,25 +231,12 @@ export type OfficialNswFt6600ScheduleFillResult = {
   assignments: Array<[string, string]>
 }
 
-/**
- * Prepare filled schedule: text via AcroForm setText (flatten bakes into boxes).
- * Do not burn-in before flatten — flatten paints empty widget backgrounds over pre-flatten drawText.
- */
 export async function prepareOfficialNswFt6600ScheduleForFlatten(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600ScheduleFillResult> {
   const form = doc.getForm()
   const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
-  for (const [name, value] of assignments) {
-    const v = value.trim()
-    if (!v) continue
-    try {
-      form.getTextField(name).setText(v)
-    } catch {
-      /* field absent on revision */
-    }
-  }
   const font = await doc.embedFont(StandardFonts.Helvetica)
   try {
     form.updateFieldAppearances(font)
@@ -216,19 +246,92 @@ export async function prepareOfficialNswFt6600ScheduleForFlatten(
   return { filledFieldNames, assignments }
 }
 
-/** Fill schedule AcroForm fields only (caller flattens / tags). */
 export function applyOfficialNswFt6600ScheduleFill(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
 ): OfficialNswFt6600ScheduleFillResult {
   const form = doc.getForm()
+  const state = buildFt6600FillState(props)
+
+  for (const slot of FT6600_TERM_CHECKBOX_SLOTS) {
+    const acro = acroNameForSlot(slot)
+    uncheckAllWidgets(form, acro)
+  }
+  const termSlot = resolveTermSlot(
+    props.term.periodic,
+    props.term.leaseLengthDescription,
+    props.term.startDate,
+    props.term.endDate,
+  )
+  setCheckInGroup(form, FT6600_TERM_CHECKBOX_SLOTS, termSlot)
+
+  for (const slot of FT6600_RENT_FREQUENCY_CHECKBOX_SLOTS) {
+    uncheckAllWidgets(form, acroNameForSlot(slot))
+  }
+  uncheckAllWidgets(form, acroNameForSlot('rent_paid_bank_cb'))
+
+  const assignments = applyFillStateToForm(form, state)
+
+  const freq = props.rent.rentFrequency ?? 'weekly'
+  if (freq === 'weekly') {
+    try {
+      form.getCheckBox(acroNameForSlot('rent_paid_week_cb')).check()
+    } catch {
+      /* absent */
+    }
+  }
+
+  const paymentLower = sanitizeDisplayText(props.rent.paymentMethod).toLowerCase()
+  if (/\bcentrepay\b/.test(paymentLower)) {
+    /* centrepay line only */
+  } else {
+    try {
+      form.getCheckBox(acroNameForSlot('rent_paid_bank_cb')).check()
+    } catch {
+      /* absent */
+    }
+  }
+
+  uncheckAllWidgets(form, acroNameForSlot('strata_owners_corp_yes_cb'))
+  try {
+    form.getCheckBox(acroNameForSlot('strata_owners_corp_no_cb')).check()
+  } catch {
+    /* absent */
+  }
+
+  setCheckboxWidgetStates(form, acroNameForSlot('strata_bylaws_yes_cb'), new Set([1]))
+
+  uncheckAllWidgets(form, acroNameForSlot('smoke_hardwired_cb'))
+  uncheckAllWidgets(form, acroNameForSlot('smoke_battery_cb'))
+  uncheckAllWidgets(form, acroNameForSlot('smoke_battery_replaceable_yes_cb'))
+  uncheckAllWidgets(form, acroNameForSlot('smoke_hardwired_backup_yes_cb'))
+
+  uncheckAllWidgets(form, acroNameForSlot('landlord_eservice_yes_cb'))
+  uncheckAllWidgets(form, acroNameForSlot('landlord_eservice_no_cb'))
+  if (props.electronicService.landlordConsentsToEmailService) {
+    setCheckboxWidgetStates(form, acroNameForSlot('landlord_eservice_yes_cb'), new Set([0]))
+  }
+
+  uncheckAllWidgets(form, acroNameForSlot('tenant_eservice_yes_cb'))
+  uncheckAllWidgets(form, acroNameForSlot('tenant_eservice_no_cb'))
+  if (props.electronicService.tenantConsentsToEmailService) {
+    setCheckboxWidgetStates(form, acroNameForSlot('tenant_eservice_yes_cb'), new Set([0]))
+  }
+
+  uncheckAllWidgets(form, acroNameForSlot('gas_embedded_no_cb'))
+
+  const filledFieldNames = [...new Set(assignments.map(([n]) => n))]
+  return { filledFieldNames, assignments }
+}
+
+function buildFt6600FillState(props: NswResidentialTenancyAgreementProps): FillState {
+  const state: FillState = { textBySlot: {}, checkSlots: new Set() }
 
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
     props
   const madeOn = agreementMadeOnFromGeneratedAt(props.generatedAt)
   const atSuburb = suburbFromAddressLine(premises.addressLine)
   const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
-  const checks = termCheckState(term.periodic, term.leaseLengthDescription, term.startDate, term.endDate)
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
   const inclusions = props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean).join('; ')
   const maxOcc =
@@ -236,45 +339,39 @@ export function applyOfficialNswFt6600ScheduleFill(
       ? String(props.maxOccupantsPermitted)
       : null
 
-  const assignments: Array<[string, string]> = []
-
-  const pushText = (field: string, value: string | null | undefined) => {
-    const v = sanitizeDisplayText(value)
-    if (!v) return
-    assignments.push([field, v])
-  }
-
   const landlordName = sanitizeDisplayText(landlord.fullName)
   const landlordPhone = sanitizeDisplayText(landlord.phone)
 
-  // § Agreement header (PDF page 0) — field-desc-pairs.json
-  pushText('Text field 1.1', madeOn)
-  pushText('Text field 1.2', atSuburb)
-  pushText('Text field 1.3', landlordName)
-  pushText('Text field 1.5', landlordPhone)
+  pushText(state, 'agreement_made_on', madeOn)
+  pushText(state, 'agreement_at', atSuburb)
+  pushText(state, 'landlord_name_1', landlordName)
+  pushText(state, 'landlord_contact', landlordPhone)
   if (!landlordAgent && landlordPhone) {
-    pushText('Text field 1.7', landlordPhone)
+    pushText(state, 'landlord_phone_no_agent', landlordPhone)
   }
-  if (landlordAddr.street) pushText('Text field 1.8', landlordAddr.street)
-  else pushText('Text field 1.8', sanitizeDisplayText(landlord.addressLine))
-  if (landlordAddr.suburb) pushText('Text field 1.11', landlordAddr.suburb)
-  if (landlordAddr.state) pushText('Text field 1.12', landlordAddr.state)
-  if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
-  if (landlord.companyName) pushText('Text field 1.14', sanitizeDisplayText(landlord.addressLine))
+  if (landlordAddr.street) pushText(state, 'landlord_service_street', landlordAddr.street)
+  if (landlordAddr.suburb) pushText(state, 'landlord_service_suburb', landlordAddr.suburb)
+  if (landlordAddr.state) pushText(state, 'landlord_service_state', landlordAddr.state)
+  if (landlordAddr.postcode) pushText(state, 'landlord_service_postcode', landlordAddr.postcode)
 
-  // § Tenants (PDF page 1) — 2.4/2.5 tenant names; 2.6/2.7 are tenant 3 / other tenants.
-  pushText('Text field 2.4', sanitizeDisplayText(tenant.fullName))
+  if (landlord.companyName) {
+    pushText(state, 'corp_name', sanitizeDisplayText(landlord.companyName))
+    pushText(state, 'corp_suburb', landlordAddr.suburb)
+    pushText(state, 'corp_state', landlordAddr.state)
+    pushText(state, 'corp_postcode', landlordAddr.postcode)
+  }
+
+  pushText(state, 'tenant_name_1', sanitizeDisplayText(tenant.fullName))
   const coTenants = props.additionalTenantNames.map((s) => sanitizeDisplayText(s)).filter(Boolean)
-  if (coTenants[0]) pushText('Text field 2.5', coTenants[0])
-  if (coTenants.length > 1) pushText('Text field 2.7', coTenants.slice(1).join('; '))
+  if (coTenants[0]) pushText(state, 'tenant_name_2', coTenants[0])
+  if (coTenants.length > 1) pushText(state, 'tenant_name_3_or_other', coTenants.slice(1).join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
-    if (tenantService.street) pushText('Text field 2.8', tenantService.street)
-    else pushText('Text field 2.8', sanitizeDisplayText(tenant.addressForServiceLine))
-    if (tenantService.suburb) pushText('Text field 2.9', tenantService.suburb)
-    if (tenantService.state) pushText('Text field 2.10', tenantService.state)
-    if (tenantService.postcode) pushText('Text field 2.11', tenantService.postcode)
+    if (tenantService.street) pushText(state, 'tenant_service_street', tenantService.street)
+    if (tenantService.suburb) pushText(state, 'tenant_service_suburb', tenantService.suburb)
+    if (tenantService.state) pushText(state, 'tenant_service_state', tenantService.state)
+    if (tenantService.postcode) pushText(state, 'tenant_service_postcode', tenantService.postcode)
   }
 
   const tenantContact = [
@@ -283,129 +380,107 @@ export function applyOfficialNswFt6600ScheduleFill(
   ]
     .filter(Boolean)
     .join(' · ')
-  if (tenantContact) pushText('Text field 2.12', tenantContact)
+  if (tenantContact) pushText(state, 'tenant_contact', tenantContact)
 
   if (landlordAgent) {
     const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
-    pushText('Text field 2.13', sanitizeDisplayText(landlordAgent.name))
-    pushText('Text field 2.14', sanitizeDisplayText(landlordAgent.businessAddress))
-    if (agentAddr.suburb) pushText('Text field 2.15', agentAddr.suburb)
-    if (agentAddr.state) pushText('Text field 2.16', agentAddr.state)
-    if (agentAddr.postcode) pushText('Text field 2.17', agentAddr.postcode)
+    pushText(state, 'landlord_agent_name', sanitizeDisplayText(landlordAgent.name))
     const agentContact = [
       sanitizeDisplayText(landlordAgent.phone),
       landlordAgent.email ? `Email: ${sanitizeDisplayText(landlordAgent.email)}` : '',
     ]
       .filter(Boolean)
       .join(' · ')
-    pushText('Text field 2.18', agentContact)
+    const agentAddressLine = sanitizeDisplayText(landlordAgent.businessAddress)
+    pushText(
+      state,
+      'landlord_agent_address',
+      agentContact ? `${agentAddressLine} · ${agentContact}` : agentAddressLine,
+    )
+    if (agentAddr.suburb) pushText(state, 'landlord_agent_suburb', agentAddr.suburb)
+    if (agentAddr.state) pushText(state, 'landlord_agent_state', agentAddr.state)
+    if (agentAddr.postcode) pushText(state, 'landlord_agent_postcode', agentAddr.postcode)
   }
 
-  pushText('Text field 2.23', formatAuDate(term.startDate))
+  pushText(state, 'term_start_date', formatAuDate(term.startDate))
+  pushText(state, 'rent_first_payment_date', formatAuDate(term.startDate))
   if (!term.periodic && term.endDate) {
-    pushText('Text field 2.25', formatAuDate(term.endDate))
+    pushText(state, 'term_end_date', formatAuDate(term.endDate))
   }
 
-  pushText('Text field 2.26', sanitizeDisplayText(premises.addressLine))
+  pushText(state, 'premises_address', sanitizeDisplayText(premises.addressLine))
+  if (inclusions) pushCheck(state, 'premises_inclusions_cb')
 
-  // § Rent (PDF page 2)
-  const freq = rent.rentFrequency ?? 'weekly'
   const rentAmountPlain = formatPlainMoney(rent.weeklyRent)
+  const freq = rent.rentFrequency ?? 'weekly'
   if (freq === 'weekly') {
-    pushText('Text field 3.7', rentAmountPlain)
-    setCheckSafe(form, 'Check Box 3.3', true)
+    pushText(state, 'rent_weekly_amount', rentAmountPlain)
   } else if (freq === 'fortnightly') {
-    pushText('Text field 3.9', rentAmountPlain)
-  } else if (checks.other && checks.otherText) {
-    pushText('Text field 3.10', checks.otherText)
+    pushText(state, 'rent_fortnightly_amount', rentAmountPlain)
   } else {
-    pushText('Text field 3.10', rentAmountPlain)
+    pushText(state, 'rent_other_frequency_amount', rentAmountPlain)
   }
 
   const paymentMethod = sanitizeDisplayText(rent.paymentMethod)
   const paymentLower = paymentMethod.toLowerCase()
   if (/\bcentrepay\b/.test(paymentLower)) {
-    pushText('Text field 3.12', paymentMethod)
+    pushText(state, 'rent_centrepay_details', paymentMethod)
   } else {
-    pushText('Text field 3.11', paymentMethod)
-    setCheckSafe(form, 'Check Box 3.6', true)
+    pushText(state, 'rent_payment_details', paymentMethod)
   }
 
-  pushText(
-    'Text field 3.13',
-    `Day due: ${rentWeekday}; First payment: ${formatAuDate(term.startDate)}`,
-  )
+  pushText(state, 'rent_due_day_text', rentWeekday)
 
-  if (maxOcc) pushText('Text field 3.17', maxOcc)
+  if (maxOcc) pushText(state, 'max_occupants', maxOcc)
 
-  const tradeName = sanitizeDisplayText(urgentRepairsTradespeople.electrician ?? landlordName)
-  const tradePhone = landlordPhone
-  pushText('Text field 3.18', tradeName)
-  if (tradePhone) pushText('Text field 3.19', tradePhone)
-  pushText('Text field 3.23', tradeName)
-  if (tradePhone) pushText('Text field 4.0', tradePhone)
+  const electrician = sanitizeDisplayText(urgentRepairsTradespeople.electrician ?? '')
+  if (electrician) {
+    const phoneMatch = electrician.match(/(\+?\d[\d\s-]{7,}\d)/)
+    if (phoneMatch) {
+      pushText(state, 'urgent_electrician_name', electrician.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText(state, 'urgent_electrician_phone', phoneMatch[0].trim())
+    } else {
+      pushText(state, 'urgent_electrician_name', electrician)
+    }
+  }
+
+  const plumber = sanitizeDisplayText(urgentRepairsTradespeople.plumber ?? '')
+  if (plumber) {
+    const phoneMatch = plumber.match(/(\+?\d[\d\s-]{7,}\d)/)
+    if (phoneMatch) {
+      pushText(state, 'urgent_plumber_name', plumber.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText(state, 'urgent_plumber_phone', phoneMatch[0].trim())
+    } else {
+      pushText(state, 'urgent_plumber_name', plumber)
+    }
+  }
 
   if (urgentRepairsTradespeople.other) {
     const other = sanitizeDisplayText(urgentRepairsTradespeople.other)
     const phoneMatch = other.match(/(\+?\d[\d\s-]{7,}\d)/)
     if (phoneMatch) {
-      pushText('Text field 4.4', other.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText('Text field 4.5', phoneMatch[0].trim())
+      pushText(state, 'urgent_other_name', other.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText(state, 'urgent_other_phone', phoneMatch[0].trim())
     } else {
-      pushText('Text field 4.4', other)
+      pushText(state, 'urgent_other_name', other)
     }
-  } else if (inclusions) {
-    pushText('Text field 4.4', `Premises include: ${inclusions}`)
   }
 
-  // § Bond (PDF page 3) — 4.7 amount, 4.8 paid to landlord.
   if (bond.amount != null && Number.isFinite(bond.amount)) {
-    pushText('Text field 4.7', formatPlainMoney(bond.amount))
-    pushText('Text field 4.8', landlordName)
+    pushText(state, 'bond_amount', formatPlainMoney(bond.amount))
+    pushText(state, 'bond_paid_to_rbo_text', 'X')
   }
 
   const billsIncluded = props.billsIncluded === true
-  pushText('Text field 4.18', billsIncluded ? 'No' : 'Yes')
+  pushText(state, 'water_usage_separate_text', billsIncluded ? 'No' : 'Yes')
+  pushText(state, 'electricity_embedded_text', 'No')
 
-  setCheckSafe(form, 'Check Box 3.8', checks.m6)
-  setCheckSafe(form, 'Check Box 3.14', checks.m12)
-  setCheckSafe(form, 'Check Box 3.15', checks.y2)
-  setCheckSafe(form, 'Check Box 3.16', checks.y3)
-  setCheckSafe(form, 'Check Box 3.20', checks.y5)
-  setCheckSafe(form, 'Check Box 3.21', checks.other)
-  setCheckSafe(form, 'Check Box 3.22', checks.periodic)
+  pushText(state, 'landlord_email_for_service', sanitizeDisplayText(electronicService.landlordEmail))
+  pushText(state, 'tenant_email_for_service', sanitizeDisplayText(electronicService.tenantEmail))
 
-  setCheckSafe(form, 'Check Box 4.1', false)
-  setCheckSafe(form, 'Check Box 4.2', false)
-  setCheckSafe(form, 'Check Box 4.3', true)
-  setCheckSafe(form, 'Check Box 4.8', false)
-  setCheckSafe(form, 'Check Box 4.9', false)
-  setCheckSafe(form, 'Check Box 4.10', false)
-  setCheckSafe(form, 'Check Box 4.11', false)
-  setCheckSafe(form, 'Check Box 4.12', false)
-  setCheckSafe(form, 'Check Box 4.13', false)
-  setCheckSafe(form, 'Check Box 4.19', false)
-  setCheckSafe(form, 'Check Box 4.20', electronicService.landlordConsentsToEmailService)
-  setCheckSafe(form, 'Check Box 4.22', electronicService.landlordConsentsToEmailService)
-  setCheckSafe(form, 'Check Box 4.23', electronicService.tenantConsentsToEmailService)
-  setCheckSafe(form, 'Check Box 5.1', electronicService.tenantConsentsToEmailService)
-
-  if (electronicService.landlordConsentsToEmailService) {
-    pushText('Text field 5.5', sanitizeDisplayText(electronicService.landlordEmail))
-  }
-  if (electronicService.tenantConsentsToEmailService) {
-    pushText('Text field 5.8', sanitizeDisplayText(electronicService.tenantEmail))
-  }
-
-  // Text is set on AcroForm fields in prepareOfficialNswFt6600ScheduleForFlatten (then flatten bakes values).
-
-  const filledFieldNames = assignments.map(([n]) => n)
-  return { filledFieldNames, assignments }
+  return state
 }
 
-/**
- * Load official FT6600 template, fill schedule fields from platform props, flatten AcroForm (no signing tags).
- */
 export async function fillOfficialNswFt6600Pdf(
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600FillResult> {

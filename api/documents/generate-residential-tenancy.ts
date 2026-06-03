@@ -438,8 +438,8 @@ export default async function handler(req: any, res: any) {
   const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : ''
 
   const urgentRepairsLandlord = {
-    electrician: landlordFullName,
-    plumber: landlordFullName,
+    electrician: null as string | null,
+    plumber: null as string | null,
     other: null as string | null,
   }
 
@@ -466,8 +466,8 @@ export default async function handler(req: any, res: any) {
     electronicService: {
       landlordEmail: landlordEmailForService,
       tenantEmail: tenantEmailForService,
-      landlordConsentsToEmailService: true,
-      tenantConsentsToEmailService: true,
+      landlordConsentsToEmailService: false,
+      tenantConsentsToEmailService: false,
     },
     specialConditions: coTenantSpecialConditions,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
