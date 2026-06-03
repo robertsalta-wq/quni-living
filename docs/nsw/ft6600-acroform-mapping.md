@@ -42,7 +42,9 @@ DocuSeal **deduplicates** by field name: duplicate landlord/tenant signature tag
 2. `form.flatten()` — baked values, **0** residual AcroForm.
 3. Overlay **production** DocuSeal tags at pre-flatten signature widget rects (see § Signature widgets): **7pt**, `rgb(0.42, 0.45, 0.5)` / `#6b7280` (refined-b-v2 extraction; same strings as `NswResidentialTenancyAgreement.tsx` `SignaturesBlock`).
 4. On page **16**, draw **parser anchors** (table above) — duplicate names intentional; see `TECH_DEBT.md`.
-5. `createDocusealSubmissionFromPdf` (`api/lib/docuseal.shared.js`).
+5. **Phase 1:** `save({ useObjectStreams: false })` after widget tags only.
+6. **Phase 2:** reload bytes → draw margin anchors only (14pt black at (12,18)/(12,34); co-tenant at (12,50) when needed) → save again. Single-pass anchor draw does not unlock DocuSeal on full schedule fill.
+7. `createDocusealSubmissionFromPdf` (`api/lib/docuseal.shared.js`).
 
 **Do not use:** raw AcroForm upload to DocuSeal; 1pt white tags; invisible anchors.
 
