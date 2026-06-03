@@ -18,6 +18,7 @@ import type { Database, Json } from '../../src/lib/database.types'
 import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement.js'
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
+import { fillOfficialNswFt6600Pdf } from '../lib/documents/officialNswFt6600Fill.js'
 import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
@@ -540,10 +541,26 @@ export default async function handler(req: any, res: any) {
     additionalTenantNames,
   }
 
-  const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)
   const addendumEl = React.createElement(QuniPlatformAddendum, addendumProps)
 
-  const rtaBuffer = await renderToBuffer(rtaEl as Parameters<typeof renderToBuffer>[0])
+  /** Official Fair Trading PDF fill (no DocuSeal tags). Revert with NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1. */
+  const useOfficialFt6600Fill =
+    (process.env.NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK || '').trim() !== '1'
+
+  let rtaBuffer: Buffer
+  if (useOfficialFt6600Fill) {
+    const filled = await fillOfficialNswFt6600Pdf(rtaProps)
+    if (filled.acroFormFieldCountAfterFlatten !== 0) {
+      console.warn('[generate-residential-tenancy] official FT6600 flatten left AcroForm fields', {
+        count: filled.acroFormFieldCountAfterFlatten,
+      })
+    }
+    rtaBuffer = Buffer.from(filled.pdfBytes)
+  } else {
+    const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)
+    rtaBuffer = await renderToBuffer(rtaEl as Parameters<typeof renderToBuffer>[0])
+  }
+
   const addendumBuffer = await renderToBuffer(addendumEl as Parameters<typeof renderToBuffer>[0])
 
   const rtaStoragePath = `${tenancyId}/residential_tenancy/nsw_residential_tenancy_agreement_draft.pdf`
@@ -601,7 +618,10 @@ export default async function handler(req: any, res: any) {
   const hasDocuseal =
     (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
 
-  if (hasDocuseal && !deferSigning) {
+  /** Official body has no DocuSeal tags until signing module lands (see docs/nsw/ft6600-acroform-mapping.md). */
+  const skipDocusealForUntaggedOfficialBody = useOfficialFt6600Fill
+
+  if (hasDocuseal && !deferSigning && !skipDocusealForUntaggedOfficialBody) {
     try {
       await sendResidentialTenancyPackageForSigning(documentId, { submitterSignReason: false })
     } catch (e) {
@@ -616,7 +636,14 @@ export default async function handler(req: any, res: any) {
     document_id: documentId,
     file_path: rtaStoragePath,
     addendum_file_path: addendumStoragePath,
-    deferred_signing: deferSigning,
+    deferred_signing: deferSigning || skipDocusealForUntaggedOfficialBody,
+    official_ft6600_fill: useOfficialFt6600Fill,
     ...(docusealError ? { docuseal_error: docusealError } : {}),
+    ...(skipDocusealForUntaggedOfficialBody && hasDocuseal && !deferSigning
+      ? {
+          docuseal_skipped_reason:
+            'Official FT6600 fill has no signing tags yet; DocuSeal deferred until signing module.',
+        }
+      : {}),
   })
 }
