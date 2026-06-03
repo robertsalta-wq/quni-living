@@ -547,12 +547,9 @@ export default async function handler(req: any, res: any) {
 
   const addendumEl = React.createElement(QuniPlatformAddendum, addendumProps)
 
-  /**
-   * Official Fair Trading PDF AcroForm fill is opt-in only: internal field widgets do not align
-   * with printed schedule boxes (see docs/nsw/ft6600-acroform-mapping.md). Default react-pdf
-   * matches layout and has proven DocuSeal signing. Set NSW_USE_OFFICIAL_FT6600_PDF=1 to retry official.
-   */
-  const useOfficialFt6600Fill = (process.env.NSW_USE_OFFICIAL_FT6600_PDF || '').trim() === '1'
+  /** Prescribed NSW Fair Trading FT6600 PDF (legally required). React-pdf rebuild: NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1. */
+  const useOfficialFt6600Fill =
+    (process.env.NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK || '').trim() !== '1'
 
   let rtaBuffer: Buffer
   let officialBodyHasDocusealTags = false

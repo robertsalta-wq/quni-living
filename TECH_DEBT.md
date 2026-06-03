@@ -43,15 +43,13 @@ Re-run: `node scripts/test-ft6600-executed-tag-spike.mjs` after DocuSeal upgrade
 
 The Dec 2025 Fair Trading PDF attaches almost all widgets to page 0, but **widget rectangles do not line up with the visible “Landlord Name (1)”, tenant rows, etc.** Mapping by AcroForm name (`Text field 1.3`, `2.4`, …) or by widget rect still produces scrambled output in DocuSeal and downloads.
 
+### Fix shipped (2026-06-03)
+
+Burn-in now resolves the correct PDF page per widget (`findTextFieldWidgetPageIndex` — do not default to page 0). Re-run `node scripts/export-ft6600-widget-placements.mjs` after template updates.
+
 ### Production default
 
-`generate-residential-tenancy.ts` uses **react-pdf** (`NswResidentialTenancyAgreement.tsx`) unless `NSW_USE_OFFICIAL_FT6600_PDF=1`.
-
-### To ship official PDF fill
-
-1. Build a **semantic → fixed (page, x, y, w, h)** overlay map from visual calibration (not tooltips).
-2. Burn schedule text only at those coordinates; ignore misleading AcroForm names.
-3. Re-run Quinn/Robert booking E2E: schedule pages readable, DocuSeal 2–3 submitters unchanged.
+Prescribed Fair Trading PDF via `officialNswFt6600Fill.ts` + `officialNswFt6600BurnIn.ts`. React-pdf only when `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1`.
 
 ### Follow-up (when implementing NSW signing module)
 

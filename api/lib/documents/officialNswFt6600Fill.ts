@@ -231,7 +231,7 @@ export function applyOfficialNswFt6600ScheduleFill(
   if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
   if (landlord.companyName) pushText('Text field 1.14', landlord.companyName)
 
-  // § Tenants — 2.4/2.5/18.4 are narrow/wrong rows; 2.6/2.7 are full-width name rows (w≈419).
+  // § Tenants (PDF page 1) — 2.3–2.5 are corporation suburb/state/postcode; names use 2.6/2.7.
   pushText('Text field 2.6', tenant.fullName)
   const coTenants = props.additionalTenantNames.map((s) => s?.trim()).filter(Boolean)
   if (coTenants.length > 0) pushText('Text field 2.7', coTenants.join('; '))
@@ -244,6 +244,7 @@ export function applyOfficialNswFt6600ScheduleFill(
     if (tenantService.state) pushText('Text field 2.10', tenantService.state)
     if (tenantService.postcode) pushText('Text field 2.11', tenantService.postcode)
     pushText('Text field 2.12', tenant.phone)
+    if (tenant.email) pushText('Text field 2.13', tenant.email)
   } else {
     pushText('Text field 2.8', `Phone: ${tenant.phone} · Email: ${tenant.email}`)
   }
@@ -336,8 +337,9 @@ export function applyOfficialNswFt6600ScheduleFill(
     pushText('Text field 4.4', `Premises include: ${inclusions}`)
   }
 
-  // § Bond recipient lines (amount has no text AcroForm — same as react-pdf narrative GAP on official PDF).
+  // § Bond (PDF page 3) — amount in wide 4.7; recipient name in 4.8.
   if (bondDisplay) {
+    pushText('Text field 4.7', bondDisplay)
     pushText('Text field 4.8', landlord.fullName)
   }
 
@@ -358,6 +360,13 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheckSafe(form, 'Check Box 4.22', electronicService.landlordConsentsToEmailService)
   setCheckSafe(form, 'Check Box 4.23', electronicService.tenantConsentsToEmailService)
   setCheckSafe(form, 'Check Box 5.1', electronicService.tenantConsentsToEmailService)
+
+  if (electronicService.landlordConsentsToEmailService) {
+    pushText('Text field 5.5', electronicService.landlordEmail)
+  }
+  if (electronicService.tenantConsentsToEmailService) {
+    pushText('Text field 5.8', electronicService.tenantEmail)
+  }
 
   // Text is burned into page content in prepareOfficialNswFt6600ScheduleForFlatten (not setText here).
 

@@ -15,7 +15,7 @@ Prescribed form: **Residential Tenancy Agreement (FT6600)** — Fair Trading sta
 
 Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (`scripts/test-official-form-spike/field-desc-pairs.json`). **AcroForm names/tooltips do not match where widgets sit on the printed form** — burning text at widget rectangles still misplaces values (phone in “Landlord Name (2)”, tenant in corporation “State”, etc.).
 
-**Production default (2026-06):** `NswResidentialTenancyAgreement.tsx` (react-pdf) — correct schedule layout and proven DocuSeal signing. Official PDF fill (`officialNswFt6600Fill.ts` + burn-in) is **opt-in** via `NSW_USE_OFFICIAL_FT6600_PDF=1` until a fixed coordinate overlay map is calibrated.
+**Production default:** prescribed Fair Trading PDF (`officialNswFt6600Fill.ts` + `officialNswFt6600BurnIn.ts`). Schedule widgets span **PDF pages 0–4** (landlord → tenant → rent → bond/repairs → e-service); burn-in must resolve each widget’s page via `/Annots` (never default to page 0). React-pdf rebuild: `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` only.
 
 ---
 
@@ -96,9 +96,10 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 | AcroForm | Fair Trading hint | Schedule label | Platform source | Default / GAP |
 |----------|-------------------|----------------|-----------------|---------------|
 | `Text field 2.1`–`2.3` | Suburb / state / postcode | Tenant service address (suburb block) | Parsed from `tenant.addressForServiceLine` | Omit when null |
-| `Text field 2.6` | Tenant 3 name (w≈419) | Tenant Name (1) | `tenant.fullName` | Wide row; do not use `18.4` (36px) or `2.4`/`2.5` (corporation columns) |
-| `Text field 2.7` | All other tenants (w≈419) | Tenant Name (2)+ | `additionalTenantNames[]` joined | Empty if none |
-| `Text field 18.4` / `2.4` / `2.5` | Misplaced / narrow widgets | — | — | **Leave blank** |
+| `Text field 2.6` | Tenant 3 name (PDF **page 1**, w≈419) | Tenant Name (1) | `tenant.fullName` | Do not use `2.4`/`2.5` (corporation columns on page 1) |
+| `Text field 2.7` | All other tenants | Tenant Name (2)+ | `additionalTenantNames[]` joined | PDF page 1 |
+| `Text field 2.12` / `2.13` | Contact (narrow) | Phone / email | `tenant.phone`, `tenant.email` | When address lines used |
+| `Text field 2.4` / `2.5` / `18.4` | Corporation / signature slots | — | — | **Leave blank** |
 | `Text field 2.7` | All other tenants | Other tenants | — | Blank |
 | `Text field 2.8`–`2.11` | Tenant service address | Address for service of notices | `tenant.addressForServiceLine` | Omit lines if null |
 | `Text field 2.12` | Contact details | Contact details | `tenant.phone`, `tenant.email` | — |
@@ -197,7 +198,7 @@ Path: `{tenancy_id}/residential_tenancy/` in `tenancy-documents` bucket.
 1. **This doc** — schedule fill mapping.
 2. **`officialNswFt6600Fill.ts`** — pdf-lib fill + flatten.
 3. **`officialNswFt6600Signing.ts`** — tag overlay + margin anchors; `pdfBufferHasDocusealTags` send guard.
-4. **`generate-residential-tenancy.ts`** — react-pdf default; `NSW_USE_OFFICIAL_FT6600_PDF=1` for official PDF experiments.
+4. **`generate-residential-tenancy.ts`** — official PDF default; `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` for non-prescribed experiments.
 5. Retain react-pdf sample under `public/agreement-samples/` for regression only.
 
 ---
