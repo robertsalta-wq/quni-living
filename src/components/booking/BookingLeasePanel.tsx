@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { type LeaseDocState } from '../../lib/leaseState'
@@ -38,6 +38,8 @@ export type BookingLeasePanelProps = {
   bookingId: string
   /** Caller-controlled key — change to trigger refetch (e.g. after mark-bond-received). */
   refreshKey?: number
+  /** Listing bond_pending: show prepare/retry when accept-time generation failed. */
+  allowPrepareRetry?: boolean
   className?: string
 }
 
@@ -45,10 +47,18 @@ function counterpartyLabel(viewer: 'landlord' | 'tenant'): string {
   return viewer === 'landlord' ? 'renter' : 'host'
 }
 
-export default function BookingLeasePanel({ bookingId, refreshKey, className }: BookingLeasePanelProps) {
+export default function BookingLeasePanel({
+  bookingId,
+  refreshKey,
+  allowPrepareRetry = false,
+  className,
+}: BookingLeasePanelProps) {
   const [data, setData] = useState<LeaseStateApiResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [prepareBusy, setPrepareBusy] = useState(false)
+  const [prepareError, setPrepareError] = useState<string | null>(null)
+  const autoPrepareAttempted = useRef(false)
 
   const fetchState = useCallback(async () => {
     if (!bookingId) return
@@ -86,6 +96,45 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
     void fetchState()
   }, [fetchState, refreshKey])
 
+  const prepareAgreement = useCallback(async () => {
+    if (!bookingId || !allowPrepareRetry) return
+    setPrepareBusy(true)
+    setPrepareError(null)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setPrepareError('Sign in to prepare the tenancy agreement.')
+        return
+      }
+      const res = await fetch(apiUrl('/api/booking-prepare-listing-agreement'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId }),
+      })
+      const j = (await res.json()) as { error?: string; ok?: boolean }
+      if (!res.ok) {
+        setPrepareError(typeof j.error === 'string' ? j.error : 'Could not prepare tenancy agreement.')
+        return
+      }
+      await fetchState()
+    } catch {
+      setPrepareError('Could not prepare tenancy agreement.')
+    } finally {
+      setPrepareBusy(false)
+    }
+  }, [allowPrepareRetry, bookingId, fetchState])
+
+  useEffect(() => {
+    if (!allowPrepareRetry || loading || prepareBusy || autoPrepareAttempted.current) return
+    if (data?.state !== 'none') return
+    autoPrepareAttempted.current = true
+    void prepareAgreement()
+  }, [allowPrepareRetry, data?.state, loading, prepareBusy, prepareAgreement])
+
   if (loading && !data) {
     return (
       <div
@@ -107,7 +156,31 @@ export default function BookingLeasePanel({ bookingId, refreshKey, className }: 
     )
   }
 
-  if (!data || data.state === 'none') return null
+  if (!data || data.state === 'none') {
+    if (!allowPrepareRetry) return null
+    return (
+      <div
+        className={`rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-3 ${className ?? ''}`.trim()}
+        role="status"
+      >
+        <p className="font-semibold leading-snug">Tenancy agreement</p>
+        <p className="text-xs leading-relaxed">
+          {prepareBusy
+            ? 'Preparing your agreement and signing links…'
+            : 'Your agreement is not ready yet. Use the button below to generate it now, or check your email for DocuSeal.'}
+        </p>
+        {prepareError && <p className="text-xs text-red-800">{prepareError}</p>}
+        <button
+          type="button"
+          disabled={prepareBusy}
+          onClick={() => void prepareAgreement()}
+          className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700 disabled:opacity-60"
+        >
+          {prepareBusy ? 'Preparing…' : 'Prepare tenancy agreement'}
+        </button>
+      </div>
+    )
+  }
 
   const {
     state,

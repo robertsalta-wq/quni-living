@@ -20,6 +20,10 @@ import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { buildOfficialNswFt6600PdfWithSigning } from '../lib/documents/officialNswFt6600Signing.js'
 import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
+import {
+  bookingAllowsTenancyDocumentGeneration,
+  isListingPreviewGeneration,
+} from '../lib/booking/listingDocumentGenerationEligibility.js'
 import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
@@ -182,9 +186,8 @@ export default async function handler(req: any, res: any) {
    * `defer_signing=true` while in `bond_pending`; signing is initiated later when
    * mark-bond-received transitions the booking to `confirmed` and re-triggers this endpoint.
    */
-  const isListingPreview =
-    deferSigning && booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
-  if (booking.status !== 'confirmed' && !isListingPreview) {
+  const isListingPreview = isListingPreviewGeneration(deferSigning, booking)
+  if (!bookingAllowsTenancyDocumentGeneration(booking)) {
     return res.status(400).json({ error: 'Booking must be confirmed' })
   }
 

@@ -737,6 +737,27 @@ export default function LandlordBookingReviewPage() {
           />
         )}
 
+        {(booking.status === 'bond_pending' ||
+          booking.status === 'confirmed' ||
+          booking.status === 'active') &&
+          property && (
+          <section id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
+            <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              Tenancy agreement
+            </h2>
+            <TenancyAgreementExplainer
+              state={property.state ?? ''}
+              propertyType={property.property_type ?? ''}
+              isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+            />
+            <BookingLeasePanel
+              bookingId={booking.id}
+              refreshKey={leasePanelRefreshKey}
+              allowPrepareRetry={booking.service_tier_final === 'listing' && booking.status === 'bond_pending'}
+            />
+          </section>
+        )}
+
         <div id="applicant-review" className="scroll-mt-4 space-y-6">
           <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
 
@@ -977,23 +998,6 @@ export default function LandlordBookingReviewPage() {
           )}
         </section>
 
-        {(booking.status === 'bond_pending' ||
-          booking.status === 'confirmed' ||
-          booking.status === 'active') &&
-          property && (
-          <section id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
-            <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Tenancy agreement
-            </h2>
-            <TenancyAgreementExplainer
-              state={property.state ?? ''}
-              propertyType={property.property_type ?? ''}
-              isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
-            />
-            <BookingLeasePanel bookingId={booking.id} refreshKey={leasePanelRefreshKey} />
-          </section>
-        )}
-
         {messages.length > 0 && (
           <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
             <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
@@ -1067,8 +1071,11 @@ export default function LandlordBookingReviewPage() {
                 )}
               </button>
               <p className="text-xs text-gray-600 leading-relaxed px-0.5">
-                Confirms you&apos;ve received bond directly from the renter. The renter&apos;s lease will become signable
-                once you confirm. This is a self-report — Quni does not hold bond on Listing tenancies.
+                Confirms you&apos;ve received bond directly from the renter. Signing links are in{' '}
+                <a href="#tenancy-agreement-preview" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+                  Tenancy agreement
+                </a>{' '}
+                above and in your DocuSeal email. This is a self-report — Quni does not hold bond on Listing tenancies.
               </p>
               {canCancelListingBondPending && (
                 <button

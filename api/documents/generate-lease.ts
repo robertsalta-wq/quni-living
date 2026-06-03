@@ -17,6 +17,10 @@ import type { Database } from '../../src/lib/database.types'
 import { OccupancyAgreement } from './NswOccupancyAgreement.js'
 import type { OccupancyAgreementProps } from './rtaTypes'
 import { occupancyLeaseFieldsFromBooking } from '../lib/booking/occupancyLeaseContext.js'
+import {
+  bookingAllowsTenancyDocumentGeneration,
+  isListingPreviewGeneration,
+} from '../lib/booking/listingDocumentGenerationEligibility.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../lib/docuseal.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
@@ -157,9 +161,8 @@ export default async function handler(req: any, res: any) {
    * "Bond received" (which transitions status -> confirmed and re-triggers this endpoint
    * with `defer_signing=false`).
    */
-  const isListingPreview =
-    deferSigning && booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
-  if (booking.status !== 'confirmed' && !isListingPreview) {
+  const isListingPreview = isListingPreviewGeneration(deferSigning, booking)
+  if (!bookingAllowsTenancyDocumentGeneration(booking)) {
     return res.status(400).json({ error: 'Booking must be confirmed' })
   }
 
