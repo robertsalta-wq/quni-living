@@ -82,7 +82,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     const form = doc.getForm()
 
     expect(form.getTextField(F.agreement_made_on).getText()).toBe('03/06/2026')
-    expect(form.getTextField(F.agreement_at).getText()).toBe('Liverpool')
+    expect(form.getTextField(F.agreement_at).getText()).toBe('Ryde')
     expect(form.getTextField(F.landlord_name_1).getText()).toBe('Quinn Lee')
     expect(form.getTextField(F.landlord_contact).getText()).toBe('+61410025719')
     expect(form.getTextField(F.landlord_service_street).getText()).toBe('18 Malvina Street')
@@ -98,14 +98,14 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getTextField(F.term_end_date).getText()).toBe('10/12/2026')
     expect(form.getTextField(F.premises_address).getText()).toContain('Hume Highway')
 
-    expect(form.getTextField(F.rent_weekly_amount).getText()).toBe('400.00')
+    expect(form.getTextField(F.rent_amount).getText()).toBe('400.00')
     expect(form.getTextField(F.rent_due_day_text).getText()).toBe('Wednesday')
     expect(form.getTextField(F.rent_payment_details).getText()).toContain('939-200')
 
     expect(form.getTextField(F.max_occupants).getText()).toBe('2')
     expect(form.getTextField(F.bond_amount).getText()).toBe('800.00')
-    expect(form.getTextField(F.bond_paid_to_rbo_text).getText()).toBe('X')
-    expect(form.getTextField(F.water_usage_separate_text).getText()).toBe('No')
+    expect(form.getCheckBox(F.bond_paid_to_rbo_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
 
     expect(form.getCheckBox(F.term_6_months_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.term_2_years_cb).isChecked()).toBe(false)
@@ -114,6 +114,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.rent_paid_week_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.rent_paid_bank_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.smoke_battery_cb).isChecked()).toBe(false)
+    expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
   })
 
   it('applyOfficialNswFt6600ScheduleFill uses semantic field names only', () => {
@@ -124,6 +125,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
         expect(name).not.toMatch(/^Text field /)
         expect(name).not.toMatch(/^Check Box /)
         expect(name).not.toMatch(/^Signature Field /)
+        expect(name).not.toBe(F.made_on_spare_unused)
       }
     })
   })

@@ -23,6 +23,15 @@ export type BuildNswFt6600AgreementPropsInput = {
   property: Record<string, unknown>
   bankDetails: Ft6600BankDetails
   managedPlatformFeePercent?: number
+  serviceTier?: 'listing' | 'managed'
+  /** Managed tier: Quni as landlord's agent (registered address + contact). */
+  platformAgentForManaged?: {
+    name: string
+    businessAddress: string
+    suburb: string
+    phone: string
+    email: string
+  } | null
 }
 
 function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
@@ -108,9 +117,23 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
   )
   const billsIncluded = propertyBillsIncluded(featureNames)
 
+  const serviceTier = input.serviceTier === 'managed' ? 'managed' : 'listing'
+  const platformAgent = input.platformAgentForManaged
+  const landlordAgent =
+    serviceTier === 'managed' && platformAgent
+      ? {
+          name: platformAgent.name,
+          licenseNumber: null as string | null,
+          businessAddress: platformAgent.businessAddress,
+          phone: platformAgent.phone,
+          email: platformAgent.email || null,
+        }
+      : null
+
   return {
     documentId,
     generatedAt,
+    serviceTier,
     landlord: {
       fullName: landlordFullName,
       companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
@@ -164,7 +187,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
       paymentTimingDescription: 'Payable in advance each week.',
     },
     bond: { amount: bondNum },
-    landlordAgent: null,
+    landlordAgent,
     urgentRepairsTradespeople: {
       electrician: null,
       plumber: null,

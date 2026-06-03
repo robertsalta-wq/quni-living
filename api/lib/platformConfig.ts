@@ -101,6 +101,23 @@ export type PlatformBusinessIdentity = {
   directorName: string
 }
 
+export type PlatformRegisteredContactForDocuments = {
+  registeredAddressLine: string
+  suburb: string
+  phone: string
+  email: string
+}
+
+const REGISTERED_ADDRESS_KEYS_FOR_DOCUMENTS = [
+  'contact.registered_address_line1',
+  'contact.registered_address_line2',
+  'contact.registered_suburb',
+  'contact.registered_state',
+  'contact.registered_postcode',
+  PLATFORM_CONFIG_KEYS.CONTACT_PHONE,
+  PLATFORM_CONFIG_KEYS.CONTACT_EMAIL,
+] as const
+
 /** Loads legal entity line items for tenancy package PDFs from `platform_config`. */
 export async function fetchPlatformBusinessIdentityForDocuments(
   client: SupabaseClient<Database>,
@@ -111,6 +128,28 @@ export async function fetchPlatformBusinessIdentityForDocuments(
     abn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ABN] ?? '').trim(),
     acn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ACN] ?? '').trim(),
     directorName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_DIRECTOR_NAME] ?? '').trim(),
+  }
+}
+
+/** Quni registered business address + contact lines for managed-tier FT6600 agent block. */
+export async function fetchPlatformRegisteredContactForDocuments(
+  client: SupabaseClient<Database>,
+): Promise<PlatformRegisteredContactForDocuments> {
+  const map = await fetchPlatformConfigValueMap(client, [...REGISTERED_ADDRESS_KEYS_FOR_DOCUMENTS])
+  const lineParts = [
+    (map['contact.registered_address_line1'] ?? '').trim(),
+    (map['contact.registered_address_line2'] ?? '').trim(),
+  ].filter(Boolean)
+  const suburb = (map['contact.registered_suburb'] ?? '').trim()
+  const state = (map['contact.registered_state'] ?? '').trim()
+  const postcode = (map['contact.registered_postcode'] ?? '').trim()
+  const locality = [suburb, state, postcode].filter(Boolean).join(' ')
+  const registeredAddressLine = [...lineParts, locality].filter(Boolean).join(', ')
+  return {
+    registeredAddressLine,
+    suburb,
+    phone: (map[PLATFORM_CONFIG_KEYS.CONTACT_PHONE] ?? '').trim(),
+    email: (map[PLATFORM_CONFIG_KEYS.CONTACT_EMAIL] ?? '').trim(),
   }
 }
 

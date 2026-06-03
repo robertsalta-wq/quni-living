@@ -1,0 +1,1574 @@
+[
+ {
+  "page": 1,
+  "rect": [
+   205.9,
+   372.1,
+   290.3,
+   391.2
+  ],
+  "type": "Text",
+  "current_name": "agreement_made_on",
+  "correct_name": "agreement_made_on"
+ },
+ {
+  "page": 1,
+  "rect": [
+   315.2,
+   372.1,
+   560.9,
+   391.2
+  ],
+  "type": "Text",
+  "current_name": "agreement_at",
+  "correct_name": "agreement_at"
+ },
+ {
+  "page": 1,
+  "rect": [
+   34.0,
+   398.4,
+   561.3,
+   417.5
+  ],
+  "type": "Text",
+  "current_name": "landlord_name_1",
+  "correct_name": "made_on_spare_unused"
+ },
+ {
+  "page": 1,
+  "rect": [
+   125.0,
+   439.8,
+   561.3,
+   458.9
+  ],
+  "type": "Text",
+  "current_name": "landlord_name_2",
+  "correct_name": "landlord_name_1"
+ },
+ {
+  "page": 1,
+  "rect": [
+   125.0,
+   466.2,
+   561.3,
+   485.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_contact",
+  "correct_name": "landlord_name_2"
+ },
+ {
+  "page": 1,
+  "rect": [
+   286.4,
+   492.6,
+   561.3,
+   511.7
+  ],
+  "type": "Text",
+  "current_name": "landlord_overseas",
+  "correct_name": "landlord_contact"
+ },
+ {
+  "page": 1,
+  "rect": [
+   34.0,
+   540.3,
+   561.3,
+   559.4
+  ],
+  "type": "Text",
+  "current_name": "landlord_phone_no_agent",
+  "correct_name": "landlord_overseas"
+ },
+ {
+  "page": 1,
+  "rect": [
+   295.7,
+   617.8,
+   561.3,
+   636.9
+  ],
+  "type": "Text",
+  "current_name": "landlord_service_supplement",
+  "correct_name": "landlord_phone_no_agent"
+ },
+ {
+  "page": 1,
+  "rect": [
+   34.0,
+   666.5,
+   561.3,
+   685.6
+  ],
+  "type": "Text",
+  "current_name": "landlord_service_street",
+  "correct_name": "landlord_service_street"
+ },
+ {
+  "page": 1,
+  "rect": [
+   75.1,
+   692.2,
+   324.1,
+   711.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_service_suburb",
+  "correct_name": "landlord_service_suburb"
+ },
+ {
+  "page": 1,
+  "rect": [
+   363.3,
+   692.2,
+   451.4,
+   711.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_service_state",
+  "correct_name": "landlord_service_state"
+ },
+ {
+  "page": 1,
+  "rect": [
+   508.9,
+   692.2,
+   561.0,
+   711.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_service_postcode",
+  "correct_name": "landlord_service_postcode"
+ },
+ {
+  "page": 2,
+  "rect": [
+   142.0,
+   200.5,
+   561.3,
+   219.6
+  ],
+  "type": "Text",
+  "current_name": "tenant_name_1",
+  "correct_name": "tenant_name_1"
+ },
+ {
+  "page": 2,
+  "rect": [
+   142.0,
+   226.9,
+   561.3,
+   245.9
+  ],
+  "type": "Text",
+  "current_name": "tenant_name_2",
+  "correct_name": "tenant_name_2"
+ },
+ {
+  "page": 2,
+  "rect": [
+   142.0,
+   253.2,
+   561.3,
+   272.3
+  ],
+  "type": "Text",
+  "current_name": "tenant_name_3_or_other",
+  "correct_name": "tenant_name_3"
+ },
+ {
+  "page": 2,
+  "rect": [
+   142.0,
+   279.6,
+   561.3,
+   298.7
+  ],
+  "type": "Text",
+  "current_name": "tenant_extra_row",
+  "correct_name": "tenant_all_others"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   327.3,
+   561.3,
+   346.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_service_street",
+  "correct_name": "tenant_service_street"
+ },
+ {
+  "page": 2,
+  "rect": [
+   75.1,
+   353.1,
+   324.1,
+   372.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_service_suburb",
+  "correct_name": "tenant_service_suburb"
+ },
+ {
+  "page": 2,
+  "rect": [
+   363.3,
+   353.1,
+   451.4,
+   372.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_service_state",
+  "correct_name": "tenant_service_state"
+ },
+ {
+  "page": 2,
+  "rect": [
+   508.9,
+   353.1,
+   561.0,
+   372.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_service_postcode",
+  "correct_name": "tenant_service_postcode"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   395.1,
+   561.3,
+   414.2
+  ],
+  "type": "Text",
+  "current_name": "tenant_contact",
+  "correct_name": "tenant_contact"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   474.2,
+   561.3,
+   493.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_agent_name",
+  "correct_name": "landlord_agent_name"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   518.5,
+   561.3,
+   537.6
+  ],
+  "type": "Text",
+  "current_name": "landlord_agent_address",
+  "correct_name": "landlord_agent_address"
+ },
+ {
+  "page": 2,
+  "rect": [
+   75.1,
+   544.2,
+   324.1,
+   563.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_agent_suburb",
+  "correct_name": "landlord_agent_suburb"
+ },
+ {
+  "page": 2,
+  "rect": [
+   363.3,
+   544.2,
+   451.4,
+   563.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_agent_state",
+  "correct_name": "landlord_agent_state"
+ },
+ {
+  "page": 2,
+  "rect": [
+   508.9,
+   544.2,
+   561.0,
+   563.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_agent_postcode",
+  "correct_name": "landlord_agent_postcode"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   586.3,
+   561.3,
+   605.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_agent_name",
+  "correct_name": "landlord_agent_contact"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   665.4,
+   561.3,
+   684.5
+  ],
+  "type": "Text",
+  "current_name": "tenant_agent_address",
+  "correct_name": "tenant_agent_name"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   709.6,
+   561.3,
+   728.7
+  ],
+  "type": "Text",
+  "current_name": "tenant_agent_contact",
+  "correct_name": "tenant_agent_address"
+ },
+ {
+  "page": 2,
+  "rect": [
+   75.1,
+   735.3,
+   324.1,
+   754.4
+  ],
+  "type": "Text",
+  "current_name": "term_start_date",
+  "correct_name": "tenant_agent_suburb"
+ },
+ {
+  "page": 2,
+  "rect": [
+   363.3,
+   735.3,
+   451.4,
+   754.4
+  ],
+  "type": "Text",
+  "current_name": "rent_first_payment_date",
+  "correct_name": "tenant_agent_state"
+ },
+ {
+  "page": 2,
+  "rect": [
+   508.9,
+   735.3,
+   561.0,
+   754.4
+  ],
+  "type": "Text",
+  "current_name": "term_end_date",
+  "correct_name": "tenant_agent_postcode"
+ },
+ {
+  "page": 2,
+  "rect": [
+   75.1,
+   142.9,
+   324.1,
+   162.0
+  ],
+  "type": "Text",
+  "current_name": "corp_suburb",
+  "correct_name": "corp_suburb"
+ },
+ {
+  "page": 2,
+  "rect": [
+   363.3,
+   142.9,
+   451.4,
+   162.0
+  ],
+  "type": "Text",
+  "current_name": "corp_state",
+  "correct_name": "corp_state"
+ },
+ {
+  "page": 2,
+  "rect": [
+   508.9,
+   142.9,
+   561.0,
+   162.0
+  ],
+  "type": "Text",
+  "current_name": "corp_postcode",
+  "correct_name": "corp_postcode"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   117.2,
+   561.3,
+   136.3
+  ],
+  "type": "Text",
+  "current_name": "corp_name",
+  "correct_name": "corp_address"
+ },
+ {
+  "page": 2,
+  "rect": [
+   34.0,
+   777.4,
+   561.3,
+   796.5
+  ],
+  "type": "Text",
+  "current_name": "premises_address",
+  "correct_name": "tenant_agent_contact"
+ },
+ {
+  "page": 2,
+  "rect": [
+   128.6,
+   71.3,
+   561.3,
+   90.4
+  ],
+  "type": "Text",
+  "current_name": "corp_header",
+  "correct_name": "corp_name"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   222.7,
+   561.3,
+   241.8
+  ],
+  "type": "Text",
+  "current_name": "rent_payment_details",
+  "correct_name": "premises_address"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   264.1,
+   561.3,
+   283.2
+  ],
+  "type": "Text",
+  "current_name": "rent_centrepay_details",
+  "correct_name": "premises_inclusions"
+ },
+ {
+  "page": 3,
+  "rect": [
+   98.2,
+   325.6,
+   196.5,
+   344.7
+  ],
+  "type": "Text",
+  "current_name": "rent_due_day_text",
+  "correct_name": "rent_amount"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   368.6,
+   50.9,
+   388.6
+  ],
+  "type": "CheckBox",
+  "current_name": "term_6_months_cb",
+  "correct_name": "rent_paid_week_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   115.0,
+   368.6,
+   131.9,
+   388.6
+  ],
+  "type": "CheckBox",
+  "current_name": "term_12_months_cb",
+  "correct_name": "rent_paid_fortnight_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   211.0,
+   368.6,
+   227.9,
+   388.6
+  ],
+  "type": "CheckBox",
+  "current_name": "term_2_years_cb",
+  "correct_name": "rent_paid_other_freq_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   458.5,
+   368.8,
+   561.3,
+   387.9
+  ],
+  "type": "Text",
+  "current_name": "max_occupants",
+  "correct_name": "rent_other_frequency_text"
+ },
+ {
+  "page": 3,
+  "rect": [
+   143.0,
+   396.2,
+   231.1,
+   415.3
+  ],
+  "type": "Text",
+  "current_name": "urgent_electrician_name",
+  "correct_name": "rent_due_day_text"
+ },
+ {
+  "page": 3,
+  "rect": [
+   397.5,
+   396.2,
+   485.6,
+   415.3
+  ],
+  "type": "Text",
+  "current_name": "urgent_electrician_phone",
+  "correct_name": "rent_first_payment_date"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   466.5,
+   50.9,
+   486.4
+  ],
+  "type": "CheckBox",
+  "current_name": "term_5_years_cb",
+  "correct_name": "rent_paid_bank_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   487.2,
+   50.9,
+   507.1
+  ],
+  "type": "CheckBox",
+  "current_name": "term_other_cb",
+  "correct_name": "rent_paid_centrepay_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   507.9,
+   50.9,
+   527.8
+  ],
+  "type": "CheckBox",
+  "current_name": "term_periodic_cb",
+  "correct_name": "rent_paid_other_method_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   633.0,
+   561.3,
+   671.6
+  ],
+  "type": "Text",
+  "current_name": "urgent_plumber_name",
+  "correct_name": "rent_payment_details"
+ },
+ {
+  "page": 3,
+  "rect": [
+   88.7,
+   127.1,
+   173.1,
+   146.1
+  ],
+  "type": "Text",
+  "current_name": "rent_fortnightly_amount",
+  "correct_name": "term_start_date"
+ },
+ {
+  "page": 3,
+  "rect": [
+   247.9,
+   127.1,
+   332.3,
+   146.1
+  ],
+  "type": "Text",
+  "current_name": "rent_other_frequency_amount",
+  "correct_name": "term_end_date"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   101.1,
+   50.9,
+   121.1
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_paid_bank_cb",
+  "correct_name": "term_other_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   163.6,
+   101.4,
+   215.4,
+   120.4
+  ],
+  "type": "Text",
+  "current_name": "rent_weekly_amount",
+  "correct_name": "term_other_specify_text"
+ },
+ {
+  "page": 3,
+  "rect": [
+   267.0,
+   101.1,
+   283.9,
+   121.1
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_other_period_cb",
+  "correct_name": "term_periodic_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   34.0,
+   77.6,
+   50.9,
+   97.5
+  ],
+  "type": "CheckBox",
+  "current_name": "premises_inclusions_cb",
+  "correct_name": "term_6_months_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   150.0,
+   77.6,
+   166.9,
+   97.5
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_amount_cb",
+  "correct_name": "term_12_months_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   267.0,
+   77.6,
+   283.9,
+   97.5
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_paid_week_cb",
+  "correct_name": "term_2_years_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   369.0,
+   77.6,
+   385.9,
+   97.5
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_due_day_cb",
+  "correct_name": "term_3_years_cb"
+ },
+ {
+  "page": 3,
+  "rect": [
+   465.0,
+   77.6,
+   481.9,
+   97.5
+  ],
+  "type": "CheckBox",
+  "current_name": "rent_first_payment_cb",
+  "correct_name": "term_5_years_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   101.1,
+   314.9,
+   154.0,
+   334.0
+  ],
+  "type": "Text",
+  "current_name": "urgent_other_name",
+  "correct_name": "max_occupants"
+ },
+ {
+  "page": 4,
+  "rect": [
+   119.0,
+   377.0,
+   398.9,
+   396.1
+  ],
+  "type": "Text",
+  "current_name": "urgent_other_phone",
+  "correct_name": "urgent_electrician_name"
+ },
+ {
+  "page": 4,
+  "rect": [
+   456.3,
+   376.0,
+   561.3,
+   395.1
+  ],
+  "type": "Text",
+  "current_name": "smoke_battery_type_text",
+  "correct_name": "urgent_electrician_phone"
+ },
+ {
+  "page": 4,
+  "rect": [
+   119.2,
+   400.5,
+   399.1,
+   419.6
+  ],
+  "type": "Text",
+  "current_name": "bond_amount",
+  "correct_name": "urgent_plumber_name"
+ },
+ {
+  "page": 4,
+  "rect": [
+   456.3,
+   399.5,
+   561.3,
+   418.6
+  ],
+  "type": "Text",
+  "current_name": "bond_paid_to_landlord_text",
+  "correct_name": "urgent_plumber_phone"
+ },
+ {
+  "page": 4,
+  "rect": [
+   119.0,
+   424.1,
+   399.0,
+   443.1
+  ],
+  "type": "Text",
+  "current_name": "bond_paid_to_agent_text",
+  "correct_name": "urgent_other_name"
+ },
+ {
+  "page": 4,
+  "rect": [
+   456.3,
+   423.1,
+   561.3,
+   442.1
+  ],
+  "type": "Text",
+  "current_name": "bond_paid_to_rbo_text",
+  "correct_name": "urgent_other_phone"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   484.9,
+   50.9,
+   504.9
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_battery_replaceable_yes_cb",
+  "correct_name": "water_usage_yes_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   83.0,
+   484.9,
+   99.9,
+   504.9
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_battery_replaceable_no_cb",
+  "correct_name": "water_usage_no_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   567.8,
+   50.9,
+   587.7
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_hardwired_backup_yes_cb",
+  "correct_name": "electricity_embedded_yes_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   83.0,
+   567.8,
+   99.9,
+   587.7
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_hardwired_backup_no_cb",
+  "correct_name": "electricity_embedded_no_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   609.2,
+   50.9,
+   629.1
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_hardwired_backup_replaceable_yes_cb",
+  "correct_name": "gas_embedded_yes_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   83.0,
+   609.2,
+   99.9,
+   629.1
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_hardwired_backup_replaceable_no_cb",
+  "correct_name": "gas_embedded_no_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   704.2,
+   50.9,
+   724.1
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_owners_corp_yes_cb",
+  "correct_name": "smoke_hardwired_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   727.7,
+   50.9,
+   747.7
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_owners_corp_no_cb",
+  "correct_name": "smoke_battery_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   153.5,
+   50.9,
+   173.5
+  ],
+  "type": "CheckBox",
+  "current_name": "gas_embedded_no_cb",
+  "correct_name": "bond_paid_to_landlord_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   174.2,
+   50.9,
+   194.2
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_hardwired_cb",
+  "correct_name": "bond_paid_to_agent_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   195.0,
+   50.9,
+   214.9
+  ],
+  "type": "CheckBox",
+  "current_name": "smoke_battery_cb",
+  "correct_name": "bond_paid_to_rbo_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   124.1,
+   97.2,
+   222.4,
+   116.3
+  ],
+  "type": "Text",
+  "current_name": "urgent_plumber_phone",
+  "correct_name": "bond_amount"
+ },
+ {
+  "page": 4,
+  "rect": [
+   34.0,
+   769.1,
+   50.9,
+   789.1
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_bylaws_yes_cb",
+  "correct_name": "smoke_battery_replaceable_yes_cb"
+ },
+ {
+  "page": 4,
+  "rect": [
+   83.0,
+   769.1,
+   99.9,
+   789.1
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_bylaws_no_cb",
+  "correct_name": "smoke_battery_replaceable_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   285.9,
+   50.9,
+   305.9
+  ],
+  "type": "CheckBox",
+  "current_name": "tenant_eservice_yes_cb",
+  "correct_name": "strata_bylaws_yes_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   83.0,
+   285.9,
+   99.9,
+   305.9
+  ],
+  "type": "CheckBox",
+  "current_name": "tenant_eservice_no_cb",
+  "correct_name": "strata_bylaws_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   476.8,
+   50.9,
+   496.8
+  ],
+  "type": "CheckBox",
+  "current_name": "additional_terms_yes_cb",
+  "correct_name": "landlord_eservice_yes_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   83.0,
+   476.8,
+   99.9,
+   496.8
+  ],
+  "type": "CheckBox",
+  "current_name": "additional_terms_no_cb",
+  "correct_name": "landlord_eservice_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   538.0,
+   561.3,
+   557.1
+  ],
+  "type": "Text",
+  "current_name": "landlord_email_for_service",
+  "correct_name": "landlord_email_for_service"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   172.1,
+   561.3,
+   191.2
+  ],
+  "type": "Text",
+  "current_name": "electricity_embedded_text",
+  "correct_name": "smoke_hardwired_backup_type_text"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   226.7,
+   50.9,
+   246.6
+  ],
+  "type": "CheckBox",
+  "current_name": "landlord_eservice_yes_cb",
+  "correct_name": "smoke_owners_corp_responsible_yes_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   83.0,
+   226.7,
+   99.9,
+   246.6
+  ],
+  "type": "CheckBox",
+  "current_name": "landlord_eservice_no_cb",
+  "correct_name": "smoke_owners_corp_responsible_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   116.6,
+   50.9,
+   136.6
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_scheme_bylaws_yes_cb",
+  "correct_name": "smoke_hardwired_backup_replaceable_yes_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   83.0,
+   116.6,
+   99.9,
+   136.6
+  ],
+  "type": "CheckBox",
+  "current_name": "strata_scheme_bylaws_no_cb",
+  "correct_name": "smoke_hardwired_backup_replaceable_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   601.1,
+   50.9,
+   621.0
+  ],
+  "type": "CheckBox",
+  "current_name": "pets_clause_yes_cb",
+  "correct_name": "tenant_eservice_yes_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   83.0,
+   601.1,
+   99.9,
+   621.0
+  ],
+  "type": "CheckBox",
+  "current_name": "pets_clause_no_cb",
+  "correct_name": "tenant_eservice_no_cb"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   662.2,
+   561.3,
+   681.3
+  ],
+  "type": "Text",
+  "current_name": "tenant_email_for_service",
+  "correct_name": "tenant_email_for_service"
+ },
+ {
+  "page": 5,
+  "rect": [
+   34.0,
+   74.3,
+   561.3,
+   93.4
+  ],
+  "type": "Text",
+  "current_name": "water_usage_separate_text",
+  "correct_name": "smoke_battery_type_text"
+ },
+ {
+  "page": 15,
+  "rect": [
+   306.1,
+   254.0,
+   561.3,
+   443.1
+  ],
+  "type": "Text",
+  "current_name": "landlord_sign_block_printed_name",
+  "correct_name": "additional_terms_text"
+ },
+ {
+  "page": 15,
+  "rect": [
+   306.1,
+   589.0,
+   561.3,
+   643.1
+  ],
+  "type": "Text",
+  "current_name": "landlord_sign_block_extra",
+  "correct_name": "pets_animal_description"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   189.1,
+   561.3,
+   208.2
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_section_header",
+  "correct_name": "landlord_printed_name"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   232.8,
+   215.4,
+   269.5
+  ],
+  "type": "Signature",
+  "current_name": "sig_landlord",
+  "correct_name": "sig_landlord"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   458.2,
+   561.3,
+   477.3
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_section_header",
+  "correct_name": "tenant_1_printed_name"
+ },
+ {
+  "page": 17,
+  "rect": [
+   251.9,
+   250.4,
+   287.4,
+   269.4
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_day_1",
+  "correct_name": "landlord_sig_day"
+ },
+ {
+  "page": 17,
+  "rect": [
+   325.6,
+   250.4,
+   427.9,
+   269.4
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_month_1",
+  "correct_name": "landlord_sig_month"
+ },
+ {
+  "page": 17,
+  "rect": [
+   446.7,
+   250.4,
+   482.2,
+   269.4
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_year_1",
+  "correct_name": "landlord_sig_year"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   368.1,
+   215.4,
+   404.9
+  ],
+  "type": "Signature",
+  "current_name": "sig_landlord_date",
+  "correct_name": "sig_landlord_lis"
+ },
+ {
+  "page": 17,
+  "rect": [
+   251.9,
+   385.7,
+   287.4,
+   404.8
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_day_2",
+  "correct_name": "landlord_lis_sig_day"
+ },
+ {
+  "page": 17,
+  "rect": [
+   325.6,
+   385.7,
+   427.9,
+   404.8
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_month_2",
+  "correct_name": "landlord_lis_sig_month"
+ },
+ {
+  "page": 17,
+  "rect": [
+   446.7,
+   385.7,
+   482.2,
+   404.8
+  ],
+  "type": "Text",
+  "current_name": "landlord_sig_year_2",
+  "correct_name": "landlord_lis_sig_year"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   501.8,
+   215.4,
+   538.6
+  ],
+  "type": "Signature",
+  "current_name": "sig_landlord_lis",
+  "correct_name": "sig_tenant_1"
+ },
+ {
+  "page": 17,
+  "rect": [
+   251.9,
+   519.4,
+   287.4,
+   538.5
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_sig_day",
+  "correct_name": "tenant_1_sig_day"
+ },
+ {
+  "page": 17,
+  "rect": [
+   325.6,
+   519.4,
+   427.9,
+   538.5
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_sig_month",
+  "correct_name": "tenant_1_sig_month"
+ },
+ {
+  "page": 17,
+  "rect": [
+   446.7,
+   519.4,
+   482.2,
+   538.5
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_sig_year",
+  "correct_name": "tenant_1_sig_year"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   591.8,
+   561.3,
+   610.9
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_printed_name",
+  "correct_name": "tenant_2_printed_name"
+ },
+ {
+  "page": 17,
+  "rect": [
+   34.0,
+   635.5,
+   215.4,
+   672.3
+  ],
+  "type": "Signature",
+  "current_name": "sig_landlord_lis_date",
+  "correct_name": "sig_tenant_2"
+ },
+ {
+  "page": 17,
+  "rect": [
+   251.9,
+   653.1,
+   287.4,
+   672.2
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_day_2",
+  "correct_name": "tenant_2_sig_day"
+ },
+ {
+  "page": 17,
+  "rect": [
+   325.6,
+   653.1,
+   427.9,
+   672.2
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_month_2",
+  "correct_name": "tenant_2_sig_month"
+ },
+ {
+  "page": 17,
+  "rect": [
+   446.7,
+   653.1,
+   482.2,
+   672.2
+  ],
+  "type": "Text",
+  "current_name": "landlord_lis_year_2",
+  "correct_name": "tenant_2_sig_year"
+ },
+ {
+  "page": 18,
+  "rect": [
+   34.0,
+   94.0,
+   561.3,
+   113.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_section_header",
+  "correct_name": "tenant_3_printed_name"
+ },
+ {
+  "page": 18,
+  "rect": [
+   34.0,
+   137.7,
+   215.4,
+   174.5
+  ],
+  "type": "Signature",
+  "current_name": "sig_tenant_1",
+  "correct_name": "sig_tenant_3"
+ },
+ {
+  "page": 18,
+  "rect": [
+   251.9,
+   155.3,
+   287.4,
+   174.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_day_1",
+  "correct_name": "tenant_3_sig_day"
+ },
+ {
+  "page": 18,
+  "rect": [
+   325.6,
+   155.3,
+   427.9,
+   174.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_month_1",
+  "correct_name": "tenant_3_sig_month"
+ },
+ {
+  "page": 18,
+  "rect": [
+   446.7,
+   155.3,
+   482.2,
+   174.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_year_1",
+  "correct_name": "tenant_3_sig_year"
+ },
+ {
+  "page": 18,
+  "rect": [
+   34.0,
+   225.7,
+   561.3,
+   244.8
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_printed_name_1",
+  "correct_name": "tenant_4_printed_name"
+ },
+ {
+  "page": 18,
+  "rect": [
+   34.0,
+   269.4,
+   215.4,
+   306.2
+  ],
+  "type": "Signature",
+  "current_name": "sig_tenant_1_date",
+  "correct_name": "sig_tenant_4"
+ },
+ {
+  "page": 18,
+  "rect": [
+   251.9,
+   287.0,
+   287.4,
+   306.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_day_2",
+  "correct_name": "tenant_4_sig_day"
+ },
+ {
+  "page": 18,
+  "rect": [
+   325.6,
+   287.0,
+   427.9,
+   306.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_month_2",
+  "correct_name": "tenant_4_sig_month"
+ },
+ {
+  "page": 18,
+  "rect": [
+   446.7,
+   287.0,
+   482.2,
+   306.1
+  ],
+  "type": "Text",
+  "current_name": "tenant_sig_year_2",
+  "correct_name": "tenant_4_sig_year"
+ },
+ {
+  "page": 18,
+  "rect": [
+   34.0,
+   389.7,
+   215.4,
+   426.5
+  ],
+  "type": "Signature",
+  "current_name": "sig_tenant_tis",
+  "correct_name": "sig_tenant_tis"
+ },
+ {
+  "page": 18,
+  "rect": [
+   251.9,
+   407.3,
+   287.4,
+   426.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_tis_sig_day",
+  "correct_name": "tenant_tis_sig_day"
+ },
+ {
+  "page": 18,
+  "rect": [
+   325.6,
+   407.3,
+   427.9,
+   426.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_tis_sig_month",
+  "correct_name": "tenant_tis_sig_month"
+ },
+ {
+  "page": 18,
+  "rect": [
+   446.7,
+   407.3,
+   482.2,
+   426.4
+  ],
+  "type": "Text",
+  "current_name": "tenant_tis_sig_year",
+  "correct_name": "tenant_tis_sig_year"
+ }
+]

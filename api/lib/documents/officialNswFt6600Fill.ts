@@ -3,9 +3,13 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { PDFDocument, StandardFonts, type PDFForm } from 'pdf-lib'
+import { PDFDict, PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
+import {
+  flattenAndCleanForm,
+  saveNormalizedPdf,
+} from './officialNswFt6600PdfNormalize.js'
 
 export { FT6600_RENAMED_FIELDS } from './ft6600RenamedFields.js'
 
@@ -17,9 +21,22 @@ const TERM_CHECKBOXES = [
   F.term_6_months_cb,
   F.term_12_months_cb,
   F.term_2_years_cb,
+  F.term_3_years_cb,
   F.term_5_years_cb,
   F.term_other_cb,
   F.term_periodic_cb,
+] as const
+
+const RENT_FREQ_CHECKBOXES = [
+  F.rent_paid_week_cb,
+  F.rent_paid_fortnight_cb,
+  F.rent_paid_other_freq_cb,
+] as const
+
+const RENT_METHOD_CHECKBOXES = [
+  F.rent_paid_bank_cb,
+  F.rent_paid_centrepay_cb,
+  F.rent_paid_other_method_cb,
 ] as const
 
 export async function loadOfficialNswFt6600Template(): Promise<PDFDocument> {
@@ -116,7 +133,7 @@ function resolveTermCheckbox(
     return F.term_periodic_cb
   }
   if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return F.term_5_years_cb
-  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return F.term_2_years_cb
+  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return F.term_3_years_cb
   if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return F.term_2_years_cb
   if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return F.term_12_months_cb
   if (/\b6\s*months?\b/.test(d)) return F.term_6_months_cb
@@ -127,6 +144,7 @@ function resolveTermCheckbox(
     if (months <= 8) return F.term_6_months_cb
     if (months <= 15) return F.term_12_months_cb
     if (months <= 27) return F.term_2_years_cb
+    if (months <= 39) return F.term_3_years_cb
     return F.term_5_years_cb
   }
   return F.term_other_cb
@@ -189,10 +207,11 @@ export async function prepareOfficialNswFt6600ScheduleForFlatten(
 ): Promise<OfficialNswFt6600ScheduleFillResult> {
   const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
   const font = await doc.embedFont(StandardFonts.Helvetica)
-  try {
-    doc.getForm().updateFieldAppearances(font)
-  } catch {
-    /* optional */
+  doc.getForm().updateFieldAppearances(font)
+  const acroFormRef = doc.catalog.get(PDFName.of('AcroForm'))
+  if (acroFormRef) {
+    const acroForm = doc.context.lookup(acroFormRef, PDFDict)
+    acroForm.delete(PDFName.of('NeedAppearances'))
   }
   return { filledFieldNames, assignments }
 }
@@ -213,26 +232,33 @@ export function applyOfficialNswFt6600ScheduleFill(
   )
   setCheck(form, termCb, true)
 
-  uncheckAll(form, [F.rent_paid_week_cb, F.rent_paid_bank_cb])
+  uncheckAll(form, RENT_FREQ_CHECKBOXES)
+  uncheckAll(form, RENT_METHOD_CHECKBOXES)
   const freq = props.rent.rentFrequency ?? 'weekly'
   if (freq === 'weekly') setCheck(form, F.rent_paid_week_cb, true)
+  else if (freq === 'fortnightly') setCheck(form, F.rent_paid_fortnight_cb, true)
+  else setCheck(form, F.rent_paid_other_freq_cb, true)
+
   const paymentLower = sanitizeDisplayText(props.rent.paymentMethod).toLowerCase()
-  if (!/\bcentrepay\b/.test(paymentLower)) setCheck(form, F.rent_paid_bank_cb, true)
+  if (/\bcentrepay\b/.test(paymentLower)) setCheck(form, F.rent_paid_centrepay_cb, true)
+  else setCheck(form, F.rent_paid_bank_cb, true)
 
-  setCheck(form, F.strata_owners_corp_no_cb, true)
-  setCheck(form, F.strata_bylaws_no_cb, true)
-  setCheck(form, F.strata_scheme_bylaws_no_cb, true)
-
+  uncheckAll(form, [F.water_usage_yes_cb, F.water_usage_no_cb])
+  uncheckAll(form, [F.electricity_embedded_yes_cb, F.electricity_embedded_no_cb])
+  uncheckAll(form, [F.gas_embedded_yes_cb, F.gas_embedded_no_cb])
+  uncheckAll(form, [F.bond_paid_to_landlord_cb, F.bond_paid_to_agent_cb, F.bond_paid_to_rbo_cb])
+  uncheckAll(form, [F.smoke_hardwired_cb, F.smoke_battery_cb])
   uncheckAll(form, [
-    F.smoke_hardwired_cb,
-    F.smoke_battery_cb,
     F.smoke_battery_replaceable_yes_cb,
     F.smoke_battery_replaceable_no_cb,
-    F.smoke_hardwired_backup_yes_cb,
-    F.smoke_hardwired_backup_no_cb,
     F.smoke_hardwired_backup_replaceable_yes_cb,
     F.smoke_hardwired_backup_replaceable_no_cb,
   ])
+  uncheckAll(form, [F.smoke_owners_corp_responsible_yes_cb, F.smoke_owners_corp_responsible_no_cb])
+  uncheckAll(form, [F.strata_bylaws_yes_cb, F.strata_bylaws_no_cb])
+
+  setCheck(form, F.smoke_owners_corp_responsible_no_cb, true)
+  setCheck(form, F.strata_bylaws_no_cb, true)
 
   uncheckAll(form, [F.landlord_eservice_yes_cb, F.landlord_eservice_no_cb])
   if (props.electronicService.landlordConsentsToEmailService) {
@@ -254,7 +280,11 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
     props
   const madeOn = agreementMadeOnFromGeneratedAt(props.generatedAt)
-  const atSuburb = suburbFromAddressLine(premises.addressLine)
+  const serviceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
+  const atSuburb =
+    serviceTier === 'managed' && props.landlordAgent
+      ? suburbFromAddressLine(props.landlordAgent.businessAddress)
+      : suburbFromAddressLine(landlord.addressLine)
   const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
   const inclusions = props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean).join('; ')
@@ -277,6 +307,7 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
 
   if (landlord.companyName) {
     pushText(text, F.corp_name, landlord.companyName)
+    if (landlordAddr.street) pushText(text, F.corp_address, landlordAddr.street)
     pushText(text, F.corp_suburb, landlordAddr.suburb)
     pushText(text, F.corp_state, landlordAddr.state)
     pushText(text, F.corp_postcode, landlordAddr.postcode)
@@ -285,7 +316,8 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
   pushText(text, F.tenant_name_1, tenant.fullName)
   const coTenants = props.additionalTenantNames.map((s) => sanitizeDisplayText(s)).filter(Boolean)
   if (coTenants[0]) pushText(text, F.tenant_name_2, coTenants[0])
-  if (coTenants.length > 1) pushText(text, F.tenant_name_3_or_other, coTenants.slice(1).join('; '))
+  if (coTenants[1]) pushText(text, F.tenant_name_3, coTenants[1])
+  if (coTenants.length > 2) pushText(text, F.tenant_all_others, coTenants.slice(2).join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
@@ -317,26 +349,25 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
     if (agentAddr.suburb) pushText(text, F.landlord_agent_suburb, agentAddr.suburb)
     if (agentAddr.state) pushText(text, F.landlord_agent_state, agentAddr.state)
     if (agentAddr.postcode) pushText(text, F.landlord_agent_postcode, agentAddr.postcode)
+    if (agentContact) pushText(text, F.landlord_agent_contact, agentContact)
   }
 
   pushText(text, F.term_start_date, formatAuDate(term.startDate))
   pushText(text, F.rent_first_payment_date, formatAuDate(term.startDate))
   if (!term.periodic && term.endDate) pushText(text, F.term_end_date, formatAuDate(term.endDate))
   pushText(text, F.premises_address, premises.addressLine)
-  if (inclusions) checks.add(F.premises_inclusions_cb)
+  if (inclusions) pushText(text, F.premises_inclusions, inclusions)
 
   const rentAmountPlain = formatPlainMoney(rent.weeklyRent)
+  pushText(text, F.rent_amount, rentAmountPlain)
+
   const freq = rent.rentFrequency ?? 'weekly'
-  if (freq === 'weekly') pushText(text, F.rent_weekly_amount, rentAmountPlain)
-  else if (freq === 'fortnightly') pushText(text, F.rent_fortnightly_amount, rentAmountPlain)
-  else pushText(text, F.rent_other_frequency_amount, rentAmountPlain)
+  if (freq !== 'weekly' && freq !== 'fortnightly') {
+    pushText(text, F.rent_other_frequency_text, freq)
+  }
 
   const paymentMethod = sanitizeDisplayText(rent.paymentMethod)
-  if (/\bcentrepay\b/.test(paymentMethod.toLowerCase())) {
-    pushText(text, F.rent_centrepay_details, paymentMethod)
-  } else {
-    pushText(text, F.rent_payment_details, paymentMethod)
-  }
+  pushText(text, F.rent_payment_details, paymentMethod)
   pushText(text, F.rent_due_day_text, rentWeekday)
   if (maxOcc) pushText(text, F.max_occupants, maxOcc)
 
@@ -357,12 +388,14 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
 
   if (bond.amount != null && Number.isFinite(bond.amount)) {
     pushText(text, F.bond_amount, formatPlainMoney(bond.amount))
-    pushText(text, F.bond_paid_to_rbo_text, 'X')
+    checks.add(F.bond_paid_to_rbo_cb)
   }
 
   const billsIncluded = props.billsIncluded === true
-  pushText(text, F.water_usage_separate_text, billsIncluded ? 'No' : 'Yes')
-  pushText(text, F.electricity_embedded_text, 'No')
+  checks.add(billsIncluded ? F.water_usage_no_cb : F.water_usage_yes_cb)
+  checks.add(F.electricity_embedded_no_cb)
+  checks.add(F.gas_embedded_no_cb)
+
   pushText(text, F.landlord_email_for_service, electronicService.landlordEmail)
   pushText(text, F.tenant_email_for_service, electronicService.tenantEmail)
 
@@ -374,13 +407,8 @@ export async function fillOfficialNswFt6600Pdf(
 ): Promise<OfficialNswFt6600FillResult> {
   const doc = await loadOfficialNswFt6600Template()
   const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
-  doc.getForm().flatten()
-  let acroFormFieldCountAfterFlatten = 0
-  try {
-    acroFormFieldCountAfterFlatten = doc.getForm().getFields().length
-  } catch {
-    acroFormFieldCountAfterFlatten = 0
-  }
-  const pdfBytes = await doc.save({ useObjectStreams: false })
+  flattenAndCleanForm(doc)
+  const acroFormFieldCountAfterFlatten = 0
+  const pdfBytes = await saveNormalizedPdf(doc)
   return { pdfBytes, filledFieldNames, acroFormFieldCountAfterFlatten }
 }

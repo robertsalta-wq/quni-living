@@ -34,6 +34,7 @@ import {
   fetchBankDetailsForRta,
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
+  fetchPlatformRegisteredContactForDocuments,
 } from '../lib/platformConfig.js'
 import {
   formatFeeForDisplay,
@@ -378,6 +379,37 @@ export default async function handler(req: any, res: any) {
 
   const generatedAt = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })
 
+  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
+
+  let platformAgentForManaged: {
+    name: string
+    businessAddress: string
+    suburb: string
+    phone: string
+    email: string
+  } | null = null
+  if (serviceTier === 'managed') {
+    try {
+      const [platformIdentity, platformContact] = await Promise.all([
+        fetchPlatformBusinessIdentityForDocuments(admin),
+        fetchPlatformRegisteredContactForDocuments(admin),
+      ])
+      platformAgentForManaged = {
+        name: platformIdentity.legalName || 'Quni Living Pty Ltd',
+        businessAddress: platformContact.registeredAddressLine,
+        suburb: platformContact.suburb,
+        phone: platformContact.phone,
+        email: platformContact.email,
+      }
+    } catch (e) {
+      console.error('[generate-residential-tenancy] platform_config managed agent contact', e)
+      await captureSentryMessageEdge(
+        'Residential tenancy: failed to load platform registered address for managed FT6600',
+        { booking_id: bookingId, error: e instanceof Error ? e.message : String(e) },
+      )
+    }
+  }
+
   const sharedLandlord = {
     fullName: landlordFullName,
     companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
@@ -438,6 +470,8 @@ export default async function handler(req: any, res: any) {
     property: prop,
     bankDetails,
     managedPlatformFeePercent: platformFeePercent,
+    serviceTier,
+    platformAgentForManaged,
   })
 
   const rpm = booking.rent_payment_method

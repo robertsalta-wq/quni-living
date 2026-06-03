@@ -115,6 +115,8 @@ export type NswRtaElectronicService = {
 export type NswResidentialTenancyAgreementProps = {
   documentId: string
   generatedAt: string
+  /** Resolved from `bookings.service_tier_final` at generation time. */
+  serviceTier?: 'listing' | 'managed'
   landlord: RtaLandlordPdf
   /** Primary tenant (tenant 1); co-tenant rows use `additionalTenantNames`. */
   tenant: RtaTenantPdf

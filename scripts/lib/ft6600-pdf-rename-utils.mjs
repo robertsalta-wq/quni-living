@@ -244,6 +244,200 @@ export function applyFt6600FieldRenames(doc, acroToSemantic, splits) {
 }
 
 /**
+ * @param {import('pdf-lib').PDFDocument} doc
+ * @param {import('pdf-lib').PDFWidgetAnnotation} widget
+ */
+export function widgetPageIndex(doc, widget) {
+  const pages = doc.getPages()
+  try {
+    const p = widget.P?.()
+    if (p) {
+      for (let i = 0; i < pages.length; i++) {
+        if (pages[i].ref === p || pages[i].node === p) return i
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  const widgetRef = widget.ref
+  for (let i = 0; i < pages.length; i++) {
+    const annots = pages[i].node.Annots?.()
+    if (!annots) continue
+    for (let j = 0; j < annots.size(); j++) {
+      if (widgetRef != null && annots.get(j) === widgetRef) return i
+    }
+  }
+  return -1
+}
+
+/**
+ * @param {number[]} a
+ * @param {number[]} b
+ * @param {number} [tol]
+ */
+export function rectsNear(a, b, tol = 1.5) {
+  if (a.length !== 4 || b.length !== 4) return false
+  return a.every((v, i) => Math.abs(v - b[i]) <= tol)
+}
+
+/**
+ * @param {import('pdf-lib').PDFPage} page
+ * @param {import('pdf-lib').PDFWidgetAnnotation} widget
+ */
+export function widgetRectTopOrigin(page, widget) {
+  const r = widget.getRectangle()
+  const pageHeight = page.getHeight()
+  const x0 = Math.round(r.x * 10) / 10
+  const x1 = Math.round((r.x + r.width) * 10) / 10
+  const yTop0 = Math.round((pageHeight - (r.y + r.height)) * 10) / 10
+  const yTop1 = Math.round((pageHeight - r.y) * 10) / 10
+  return [x0, yTop0, x1, yTop1]
+}
+
+/**
+ * @param {import('pdf-lib').PDFWidgetAnnotation} widget
+ */
+function widgetRectPdfLib(widget) {
+  const r = widget.getRectangle()
+  return [
+    Math.round(r.x * 10) / 10,
+    Math.round(r.y * 10) / 10,
+    Math.round((r.x + r.width) * 10) / 10,
+    Math.round((r.y + r.height) * 10) / 10,
+  ]
+}
+
+/**
+ * @param {PDFDocument} doc
+ */
+export function collectAllFieldWidgets(doc) {
+  const form = doc.getForm()
+  const pages = doc.getPages()
+  const rows = []
+  for (const field of form.getFields()) {
+    const widgets = field.acroField.getWidgets()
+    for (const widget of widgets) {
+      const page = widgetPageIndex(doc, widget)
+      if (page < 0) continue
+      rows.push({
+        field,
+        widget,
+        page,
+        rect: widgetRectTopOrigin(pages[page], widget),
+        rectPdf: widgetRectPdfLib(widget),
+        parentKey: field.acroField.dict.toString(),
+      })
+    }
+  }
+  return rows
+}
+
+/**
+ * Split a multi-widget field into one root field per widget (each with a single /Kids entry).
+ * @param {PDFDocument} doc
+ * @param {import('pdf-lib').PDFForm} form
+ * @param {import('pdf-lib').PDFField} field
+ * @param {Array<{ widget: import('pdf-lib').PDFWidgetAnnotation, semanticName: string }>} parts
+ */
+export function splitFieldByWidgets(doc, form, field, parts) {
+  if (parts.length < 2) throw new Error('splitFieldByWidgets needs >= 2 parts')
+  const dict = field.acroField.dict
+  const ctx = doc.context
+  const kids = dict.lookup(PDFName.of('Kids'), PDFArray)
+  if (kids.size() !== parts.length) {
+    throw new Error(`${field.getName()}: expected ${parts.length} widget kids, got ${kids.size()}`)
+  }
+
+  /** @type {Array<{ ref: PDFRef, semanticName: string }>} */
+  const matched = []
+  for (const part of parts) {
+    const partRect = widgetRectPdfLib(part.widget)
+    let found = null
+    for (let i = 0; i < kids.size(); i++) {
+      const ref = kids.get(i)
+      const w = ctx.lookup(ref, PDFDict)
+      const arr = w.lookup(PDFName.of('Rect'), PDFArray)
+      const wr = [
+        Math.round(arr.get(0).asNumber() * 10) / 10,
+        Math.round(arr.get(1).asNumber() * 10) / 10,
+        Math.round(arr.get(2).asNumber() * 10) / 10,
+        Math.round(arr.get(3).asNumber() * 10) / 10,
+      ]
+      if (rectsNear(wr, partRect)) {
+        found = ref
+        break
+      }
+    }
+    if (!found) throw new Error(`no kid rect match for ${part.semanticName}`)
+    matched.push({ ref: found, semanticName: part.semanticName })
+  }
+
+  const firstMatch = matched[0]
+  const firstKids = PDFArray.withContext(ctx)
+  firstKids.push(firstMatch.ref)
+  dict.set(PDFName.of('Kids'), firstKids)
+  dict.set(PDFName.of('T'), PDFString.of(firstMatch.semanticName))
+  ctx.lookup(firstMatch.ref, PDFDict).set(PDFName.of('Parent'), dictRef(dict, ctx))
+  detachFromParentFolder(doc, field.acroField)
+
+  for (let i = 1; i < matched.length; i++) {
+    const m = matched[i]
+    const partDict = PDFDict.withContext(ctx)
+    for (const key of ['FT', 'Ff', 'F', 'V', 'Opt']) {
+      const v = dict.get(PDFName.of(key))
+      if (v !== undefined) partDict.set(PDFName.of(key), v)
+    }
+    partDict.set(PDFName.of('T'), PDFString.of(m.semanticName))
+    const partKids = PDFArray.withContext(ctx)
+    partKids.push(m.ref)
+    partDict.set(PDFName.of('Kids'), partKids)
+    const partRef = ctx.register(partDict)
+    ctx.lookup(m.ref, PDFDict).set(PDFName.of('Parent'), partRef)
+    hoistToRootFieldsArray(doc, partRef)
+  }
+}
+
+/**
+ * Rename AcroForm /T by authoritative page+rect map (only /T and parent structure change).
+ * @param {PDFDocument} doc
+ * @param {Array<{ page: number, rect: number[], correct_name: string }>} correctedMap
+ */
+export function applyFt6600CorrectedRenames(doc, correctedMap) {
+  const form = doc.getForm()
+  const widgets = collectAllFieldWidgets(doc)
+  /** @type {Map<string, Array<{ widget: import('pdf-lib').PDFWidgetAnnotation, semanticName: string, rect: number[] }>>} */
+  const byParent = new Map()
+
+  for (const w of widgets) {
+    const entry = correctedMap.find((m) => m.page - 1 === w.page && rectsNear(m.rect, w.rect))
+    if (!entry) {
+      throw new Error(`no corrected-map entry for ${w.field.getName()} page ${w.page + 1} rect ${w.rect.join(',')}`)
+    }
+    const list = byParent.get(w.parentKey) ?? []
+    list.push({ widget: w.widget, semanticName: entry.correct_name, rect: w.rect })
+    byParent.set(w.parentKey, list)
+  }
+
+  if (widgets.length !== correctedMap.length) {
+    throw new Error(`widget count ${widgets.length} != corrected map ${correctedMap.length}`)
+  }
+
+  const processed = new Set()
+  for (const w of widgets) {
+    if (processed.has(w.parentKey)) continue
+    processed.add(w.parentKey)
+    const parts = byParent.get(w.parentKey) ?? []
+    if (parts.length === 1) {
+      setTerminalFieldName(doc, w.field.acroField, parts[0].semanticName)
+    } else {
+      splitFieldByWidgets(doc, form, w.field, parts)
+    }
+  }
+
+  rebuildAcroFormRootFields(doc)
+}
+
+/**
  * List unique /T names from AcroForm /Fields (pdf-lib getFields() duplicates names on this template).
  * @param {PDFDocument} doc
  */
