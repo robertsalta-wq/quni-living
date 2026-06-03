@@ -10,7 +10,19 @@ import { join } from 'node:path'
 import { PDFDocument } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 
-const TEMPLATE_REL = join('docs', 'nsw', 'residential-tenancy-agreement-form-2025-12.pdf')
+export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join(
+  'docs',
+  'nsw',
+  'residential-tenancy-agreement-form-2025-12.pdf',
+)
+
+const TEMPLATE_REL = OFFICIAL_NSW_FT6600_TEMPLATE_REL
+
+export async function loadOfficialNswFt6600Template(): Promise<PDFDocument> {
+  const templatePath = join(process.cwd(), TEMPLATE_REL)
+  const templateBytes = readFileSync(templatePath)
+  return PDFDocument.load(templateBytes, { ignoreEncryption: true })
+}
 
 function formatMoney(n: number): string {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
@@ -130,15 +142,11 @@ export type OfficialNswFt6600FillResult = {
   acroFormFieldCountAfterFlatten: number
 }
 
-/**
- * Load official FT6600 template, fill schedule fields from platform props, flatten AcroForm.
- */
-export async function fillOfficialNswFt6600Pdf(
+/** Fill schedule AcroForm fields only (caller flattens / tags). */
+export function applyOfficialNswFt6600ScheduleFill(
+  doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
-): Promise<OfficialNswFt6600FillResult> {
-  const templatePath = join(process.cwd(), TEMPLATE_REL)
-  const templateBytes = readFileSync(templatePath)
-  const doc = await PDFDocument.load(templateBytes, { ignoreEncryption: true })
+): { filledFieldNames: string[] } {
   const form = doc.getForm()
 
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
@@ -239,8 +247,19 @@ export async function fillOfficialNswFt6600Pdf(
   }
 
   const filledFieldNames = assignments.map(([n]) => n)
+  return { filledFieldNames }
+}
 
-  form.flatten()
+/**
+ * Load official FT6600 template, fill schedule fields from platform props, flatten AcroForm (no signing tags).
+ */
+export async function fillOfficialNswFt6600Pdf(
+  props: NswResidentialTenancyAgreementProps,
+): Promise<OfficialNswFt6600FillResult> {
+  const doc = await loadOfficialNswFt6600Template()
+  const { filledFieldNames } = applyOfficialNswFt6600ScheduleFill(doc, props)
+
+  doc.getForm().flatten()
 
   let acroFormFieldCountAfterFlatten = 0
   try {

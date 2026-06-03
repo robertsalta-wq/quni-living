@@ -17,9 +17,9 @@ Fair Trading field hints below are taken from DocuSeal’s import of the raw Acr
 
 ---
 
-## Signing (DocuSeal) — ready to implement (tag literal spike done)
+## Signing (DocuSeal) — implemented
 
-**Fill module:** `api/lib/documents/officialNswFt6600Fill.ts` (wired in `generate-residential-tenancy.ts`; DocuSeal auto-send deferred until signing module lands).
+**Modules:** `officialNswFt6600Fill.ts` (schedule fill + flatten) → `officialNswFt6600Signing.ts` (widget tags + margin anchors). Wired in `generate-residential-tenancy.ts`; DocuSeal send when `pdfBufferHasDocusealTags` is true (not gated on fill-only flag). Co-tenant uses same `bookingRequiresCoTenantSignature` + `resolveCoTenantSignerForSubmission` as react-pdf (`Co-tenant` role, distinct email).
 
 **Executed-PDF check (2026-06-03):** `{{...}}` literals on the uploaded PDF are **not** present in the completed download (0 curly braces after both parties signed via API). Source-only cosmetic — margin-anchor recipe ships. Report: `scripts/test-official-form-spike/executed-tag-spike-report.json`.
 
@@ -40,7 +40,7 @@ DocuSeal **deduplicates** by field name: duplicate landlord/tenant signature tag
 
 1. Load official template; `pdf-lib` fill schedule fields (this doc § Schedule tables).
 2. `form.flatten()` — baked values, **0** residual AcroForm.
-3. Overlay **production** DocuSeal tags at pre-flatten signature widget rects (see § Signature widgets): **≥12pt**, color `#6b7280` (same tag strings as `NswResidentialTenancyAgreement.tsx` `SignaturesBlock`).
+3. Overlay **production** DocuSeal tags at pre-flatten signature widget rects (see § Signature widgets): **7pt**, `rgb(0.42, 0.45, 0.5)` / `#6b7280` (refined-b-v2 extraction; same strings as `NswResidentialTenancyAgreement.tsx` `SignaturesBlock`).
 4. On page **16**, draw **parser anchors** (table above) — duplicate names intentional; see `TECH_DEBT.md`.
 5. `createDocusealSubmissionFromPdf` (`api/lib/docuseal.shared.js`).
 
@@ -64,7 +64,7 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 
 `{{Tenant TIS Date;role=Second Party;type=date}}` — overlay on Field 7 rect offset or next line (spike: 7 fields without separate TIS date; confirm in DocuSeal UI when implementing).
 
-Co-tenant blocks (tenants 2–4) — **GAP** on official PDF unless Fair Trading rows are filled and separate DocuSeal roles are added later.
+**Co-tenant (one):** `{{Tenant 2 Signature;role=Co-tenant;type=signature}}` + date at manual coords on page 16 between primary tenant and TIS when `includeCoTenantSignatureTags`. Tenants 3–4 remain schedule-only (no DocuSeal tags).
 
 ---
 
@@ -201,10 +201,10 @@ Path: `{tenancy_id}/residential_tenancy/` in `tenancy-documents` bucket.
 
 ## Implementation sequence
 
-1. **This doc** — schedule fill mapping (in progress).
-2. **`officialNswFt6600Fill.ts`** (or similar) — pdf-lib fill + flatten only.
-3. **Signing module** — tag overlay + margin anchors; gate on DocuSeal smoke test (`TECH_DEBT.md`).
-4. Wire `generate-residential-tenancy.ts` to official PDF instead of react-pdf FT6600 body.
+1. **This doc** — schedule fill mapping.
+2. **`officialNswFt6600Fill.ts`** — pdf-lib fill + flatten.
+3. **`officialNswFt6600Signing.ts`** — tag overlay + margin anchors; `pdfBufferHasDocusealTags` send guard.
+4. **`generate-residential-tenancy.ts`** — official PDF default; `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` escape hatch.
 5. Retain react-pdf sample under `public/agreement-samples/` for regression only.
 
 ---

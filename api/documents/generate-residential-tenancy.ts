@@ -18,7 +18,8 @@ import type { Database, Json } from '../../src/lib/database.types'
 import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement.js'
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
-import { fillOfficialNswFt6600Pdf } from '../lib/documents/officialNswFt6600Fill.js'
+import { buildOfficialNswFt6600PdfWithSigning } from '../lib/documents/officialNswFt6600Signing.js'
+import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
 import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
@@ -543,19 +544,25 @@ export default async function handler(req: any, res: any) {
 
   const addendumEl = React.createElement(QuniPlatformAddendum, addendumProps)
 
-  /** Official Fair Trading PDF fill (no DocuSeal tags). Revert with NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1. */
+  /** Official Fair Trading PDF fill + DocuSeal tags. Revert with NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1. */
   const useOfficialFt6600Fill =
     (process.env.NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK || '').trim() !== '1'
 
   let rtaBuffer: Buffer
+  let officialBodyHasDocusealTags = false
   if (useOfficialFt6600Fill) {
-    const filled = await fillOfficialNswFt6600Pdf(rtaProps)
-    if (filled.acroFormFieldCountAfterFlatten !== 0) {
+    const includeCoTenantSignatureTags = bookingRequiresCoTenantSignature(booking)
+    const built = await buildOfficialNswFt6600PdfWithSigning(rtaProps, { includeCoTenantSignatureTags })
+    if (built.acroFormFieldCountAfterFlatten !== 0) {
       console.warn('[generate-residential-tenancy] official FT6600 flatten left AcroForm fields', {
-        count: filled.acroFormFieldCountAfterFlatten,
+        count: built.acroFormFieldCountAfterFlatten,
       })
     }
-    rtaBuffer = Buffer.from(filled.pdfBytes)
+    if (!built.hasDocusealTags) {
+      console.warn('[generate-residential-tenancy] official FT6600 PDF missing DocuSeal tags after overlay')
+    }
+    rtaBuffer = Buffer.from(built.pdfBytes)
+    officialBodyHasDocusealTags = built.hasDocusealTags
   } else {
     const rtaEl = React.createElement(NswResidentialTenancyAgreement, rtaProps)
     rtaBuffer = await renderToBuffer(rtaEl as Parameters<typeof renderToBuffer>[0])
@@ -618,10 +625,9 @@ export default async function handler(req: any, res: any) {
   const hasDocuseal =
     (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
 
-  /** Official body has no DocuSeal tags until signing module lands (see docs/nsw/ft6600-acroform-mapping.md). */
-  const skipDocusealForUntaggedOfficialBody = useOfficialFt6600Fill
+  const skipDocusealNoTags = useOfficialFt6600Fill && !officialBodyHasDocusealTags
 
-  if (hasDocuseal && !deferSigning && !skipDocusealForUntaggedOfficialBody) {
+  if (hasDocuseal && !deferSigning && !skipDocusealNoTags) {
     try {
       await sendResidentialTenancyPackageForSigning(documentId, { submitterSignReason: false })
     } catch (e) {
@@ -636,13 +642,14 @@ export default async function handler(req: any, res: any) {
     document_id: documentId,
     file_path: rtaStoragePath,
     addendum_file_path: addendumStoragePath,
-    deferred_signing: deferSigning || skipDocusealForUntaggedOfficialBody,
+    deferred_signing: deferSigning || skipDocusealNoTags,
     official_ft6600_fill: useOfficialFt6600Fill,
+    official_ft6600_has_docuseal_tags: useOfficialFt6600Fill ? officialBodyHasDocusealTags : undefined,
     ...(docusealError ? { docuseal_error: docusealError } : {}),
-    ...(skipDocusealForUntaggedOfficialBody && hasDocuseal && !deferSigning
+    ...(skipDocusealNoTags && hasDocuseal && !deferSigning
       ? {
           docuseal_skipped_reason:
-            'Official FT6600 fill has no signing tags yet; DocuSeal deferred until signing module.',
+            'Official FT6600 PDF has no parseable DocuSeal tags; submission not created.',
         }
       : {}),
   })
