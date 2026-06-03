@@ -33,6 +33,26 @@ Completed submission **87** (deleted after test): source upload had **9** `{{` o
 
 Re-run: `node scripts/test-ft6600-executed-tag-spike.mjs` after DocuSeal upgrades.
 
+## Official FT6600 — schedule AcroForm misaligned with printed boxes
+
+**Added:** 2026-06-03  
+**Area:** `api/lib/documents/officialNswFt6600Fill.ts`, `officialNswFt6600BurnIn.ts`  
+**Risk:** High — schedule text lands in wrong rows if enabled without calibration.
+
+### Problem
+
+The Dec 2025 Fair Trading PDF attaches almost all widgets to page 0, but **widget rectangles do not line up with the visible “Landlord Name (1)”, tenant rows, etc.** Mapping by AcroForm name (`Text field 1.3`, `2.4`, …) or by widget rect still produces scrambled output in DocuSeal and downloads.
+
+### Production default
+
+`generate-residential-tenancy.ts` uses **react-pdf** (`NswResidentialTenancyAgreement.tsx`) unless `NSW_USE_OFFICIAL_FT6600_PDF=1`.
+
+### To ship official PDF fill
+
+1. Build a **semantic → fixed (page, x, y, w, h)** overlay map from visual calibration (not tooltips).
+2. Burn schedule text only at those coordinates; ignore misleading AcroForm names.
+3. Re-run Quinn/Robert booking E2E: schedule pages readable, DocuSeal 2–3 submitters unchanged.
+
 ### Follow-up (when implementing NSW signing module)
 
 - Use approved margin anchors on page 16 (not body `(40,600)`).

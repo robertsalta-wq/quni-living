@@ -13,7 +13,9 @@ Prescribed form: **Residential Tenancy Agreement (FT6600)** — Fair Trading sta
 | **Types / handler** | `api/documents/rtaTypes.ts` (`NswResidentialTenancyAgreementProps`), `api/documents/generate-residential-tenancy.ts` |
 | **Current PDF (to retire for prescribed body)** | `src/lib/documents/NswResidentialTenancyAgreement.tsx` (react-pdf rebuild) |
 
-Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (`scripts/test-official-form-spike/field-desc-pairs.json`). **Do not trust legacy spike “pdf-parse found text on page” checks** — they only proved bytes were written, not that values landed in the correct schedule boxes. Production fill is implemented in `officialNswFt6600Fill.ts` and covered by `officialNswFt6600Fill.test.ts`.
+Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (`scripts/test-official-form-spike/field-desc-pairs.json`). **AcroForm names/tooltips do not match where widgets sit on the printed form** — burning text at widget rectangles still misplaces values (phone in “Landlord Name (2)”, tenant in corporation “State”, etc.).
+
+**Production default (2026-06):** `NswResidentialTenancyAgreement.tsx` (react-pdf) — correct schedule layout and proven DocuSeal signing. Official PDF fill (`officialNswFt6600Fill.ts` + burn-in) is **opt-in** via `NSW_USE_OFFICIAL_FT6600_PDF=1` until a fixed coordinate overlay map is calibrated.
 
 ---
 
@@ -195,7 +197,7 @@ Path: `{tenancy_id}/residential_tenancy/` in `tenancy-documents` bucket.
 1. **This doc** — schedule fill mapping.
 2. **`officialNswFt6600Fill.ts`** — pdf-lib fill + flatten.
 3. **`officialNswFt6600Signing.ts`** — tag overlay + margin anchors; `pdfBufferHasDocusealTags` send guard.
-4. **`generate-residential-tenancy.ts`** — official PDF default; `NSW_USE_OFFICIAL_FT6600_REACT_PDF_FALLBACK=1` escape hatch.
+4. **`generate-residential-tenancy.ts`** — react-pdf default; `NSW_USE_OFFICIAL_FT6600_PDF=1` for official PDF experiments.
 5. Retain react-pdf sample under `public/agreement-samples/` for regression only.
 
 ---
