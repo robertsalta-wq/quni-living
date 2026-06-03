@@ -279,6 +279,33 @@ export default function LandlordBookingReviewPage() {
     return left > 0 ? Math.ceil(left / 1000) : 0
   }, [aiAssessmentAt, aiLoading])
 
+  const listingBondObligations = useMemo(() => {
+    if (!data?.property || !data.booking) return null
+    const isListingBondPending =
+      data.booking.status === 'bond_pending' && data.booking.service_tier_final === 'listing'
+    if (!isListingBondPending) return null
+    const moveIn =
+      (typeof data.booking.move_in_date === 'string' && data.booking.move_in_date.trim()) ||
+      (typeof data.booking.start_date === 'string' && data.booking.start_date.trim()) ||
+      undefined
+    const pkg = resolveTenancyPackage({
+      state: data.property.state ?? 'NSW',
+      property_type: data.property.property_type ?? '',
+      is_registered_rooming_house: Boolean(data.property.is_registered_rooming_house),
+      date: moveIn,
+    })
+    if (!pkg.supported) return null
+    return listingBondPaymentLandlordObligations(pkg.rules.bond, data.property.state)
+  }, [
+    data?.booking?.status,
+    data?.booking?.service_tier_final,
+    data?.booking?.move_in_date,
+    data?.booking?.start_date,
+    data?.property?.state,
+    data?.property?.property_type,
+    data?.property?.is_registered_rooming_house,
+  ])
+
   const canConfirm =
     !!data &&
     !!tierModel &&
@@ -612,22 +639,6 @@ export default function LandlordBookingReviewPage() {
       property.title?.trim() ||
       ''
     : ''
-
-  const listingBondObligations = useMemo(() => {
-    if (!property || !isListingBondPending) return null
-    const moveIn =
-      (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
-      (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
-      undefined
-    const pkg = resolveTenancyPackage({
-      state: property.state ?? 'NSW',
-      property_type: property.property_type ?? '',
-      is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-      date: moveIn,
-    })
-    if (!pkg.supported) return null
-    return listingBondPaymentLandlordObligations(pkg.rules.bond, property.state)
-  }, [property, isListingBondPending, booking.move_in_date, booking.start_date])
 
   const showBondReceivedPrimary = landlordListingBondReceivedPrimaryVisible({
     bookingStatus: booking.status,
