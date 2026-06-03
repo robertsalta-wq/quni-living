@@ -1,0 +1,19 @@
+{
+  "sourcePdf": "docs/nsw/residential-tenancy-agreement-form-2025-12.pdf",
+  "sourceSha256": "593261c67e3a36605b8f6cbc0f9ac3bc05a67e95bed915f1f2c542ac3393e749",
+  "renamedPdf": "docs/nsw/ft6600-renamed.pdf",
+  "renamedSha256": "6d9ad4577b25e9da54dc848c9c2b7ddd7dafaa3d8e56e1a993359fff6022fe6e",
+  "pageCount": 18,
+  "fieldCount": 131,
+  "pageContentsByteIdentical": true,
+  "renderDiff": {
+    "attempted": true,
+    "ok": true,
+    "reason": null,
+    "maxDiffPixels": 0,
+    "pagesCompared": 18,
+    "scale": 2
+  },
+  "renameScript": "scripts/rename-ft6600-fields.mjs",
+  "generatedAt": "2026-06-03T09:02:19.635Z"
+}

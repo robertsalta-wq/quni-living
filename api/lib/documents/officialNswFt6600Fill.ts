@@ -1,34 +1,30 @@
 /**
- * Fill the official NSW FT6600 AcroForm PDF (schedule only), then flatten.
- * Field binding uses position-derived semantic slots (officialNswFt6600SlotMap.ts), not tooltips.
+ * Fill NSW FT6600 schedule via unique semantic AcroForm names (docs/nsw/ft6600-renamed.pdf).
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
+import { PDFDocument, StandardFonts, type PDFForm } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
-import {
-  acroNameForSlot,
-  FT6600_ACRO_TO_SLOT,
-  FT6600_RENT_FREQUENCY_CHECKBOX_SLOTS,
-  FT6600_SLOT_TO_ACRO,
-  FT6600_TERM_CHECKBOX_SLOTS,
-  type Ft6600SlotId,
-} from './officialNswFt6600SlotMap.js'
+import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
 
-export { FT6600_ACRO_TO_SLOT, FT6600_SLOT_TO_ACRO }
+export { FT6600_RENAMED_FIELDS } from './ft6600RenamedFields.js'
 
-export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join(
-  'docs',
-  'nsw',
-  'residential-tenancy-agreement-form-2025-12.pdf',
-)
+export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join('docs', 'nsw', 'ft6600-renamed.pdf')
 
 const TEMPLATE_REL = OFFICIAL_NSW_FT6600_TEMPLATE_REL
 
+const TERM_CHECKBOXES = [
+  F.term_6_months_cb,
+  F.term_12_months_cb,
+  F.term_2_years_cb,
+  F.term_5_years_cb,
+  F.term_other_cb,
+  F.term_periodic_cb,
+] as const
+
 export async function loadOfficialNswFt6600Template(): Promise<PDFDocument> {
   const templatePath = join(process.cwd(), TEMPLATE_REL)
-  const templateBytes = readFileSync(templatePath)
-  return PDFDocument.load(templateBytes, { ignoreEncryption: true })
+  return PDFDocument.load(readFileSync(templatePath), { ignoreEncryption: true })
 }
 
 function formatPlainMoney(n: number): string {
@@ -106,100 +102,63 @@ function rentDueWeekdayFromCommencement(isoDate: string): string {
   return dt.toLocaleDateString('en-AU', { weekday: 'long', timeZone: 'UTC' })
 }
 
-type TermSlot =
-  | 'term_6_months_cb'
-  | 'term_12_months_cb'
-  | 'term_2_years_cb'
-  | 'term_5_years_cb'
-  | 'term_other_cb'
-  | 'term_periodic_cb'
+type TermCheckbox = (typeof TERM_CHECKBOXES)[number]
 
-function resolveTermSlot(
+function resolveTermCheckbox(
   periodic: boolean,
   leaseLengthDescription: string,
   startDate: string,
   endDate: string | null,
-): TermSlot {
-  if (periodic) return 'term_periodic_cb'
+): TermCheckbox {
+  if (periodic) return F.term_periodic_cb
   const d = leaseLengthDescription.trim().toLowerCase()
   if (/\bperiodic\b/.test(d) || /\bmonth[\s-]*to[\s-]*month\b/.test(d) || /\bflexible\b/i.test(d)) {
-    return 'term_periodic_cb'
+    return F.term_periodic_cb
   }
-  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return 'term_5_years_cb'
-  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return 'term_2_years_cb'
-  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return 'term_2_years_cb'
-  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return 'term_12_months_cb'
-  if (/\b6\s*months?\b/.test(d)) return 'term_6_months_cb'
+  if (/\b5\s*years?\b|\b60\s*months?\b/.test(d)) return F.term_5_years_cb
+  if (/\b3\s*years?\b|\b36\s*months?\b/.test(d)) return F.term_2_years_cb
+  if (/\b2\s*years?\b|\b24\s*months?\b/.test(d)) return F.term_2_years_cb
+  if (/\b12\s*months?\b|\b1\s*year\b/.test(d)) return F.term_12_months_cb
+  if (/\b6\s*months?\b/.test(d)) return F.term_6_months_cb
   if (endDate && startDate) {
     const start = new Date(startDate.slice(0, 10))
     const end = new Date(endDate.slice(0, 10))
     const months = Math.round((end.getTime() - start.getTime()) / (30.44 * 86400000))
-    if (months <= 8) return 'term_6_months_cb'
-    if (months <= 15) return 'term_12_months_cb'
-    if (months <= 27) return 'term_2_years_cb'
-    if (months <= 45) return 'term_2_years_cb'
-    return 'term_5_years_cb'
+    if (months <= 8) return F.term_6_months_cb
+    if (months <= 15) return F.term_12_months_cb
+    if (months <= 27) return F.term_2_years_cb
+    return F.term_5_years_cb
   }
-  return 'term_other_cb'
+  return F.term_other_cb
 }
 
-function setCheckboxWidgetStates(form: PDFForm, acroName: string, onIndices: Set<number>): void {
+function setCheck(form: PDFForm, name: string, checked: boolean) {
   try {
-    const field = form.getCheckBox(acroName)
-    const widgets = field.acroField.getWidgets()
-    widgets.forEach((widget, i) => {
-      widget.setAppearanceState(PDFName.of(onIndices.has(i) ? 'On' : 'Off'))
-    })
-    if (onIndices.size === 0) field.uncheck()
-    else if (onIndices.size === widgets.length) field.check()
-    else if (onIndices.size === 1 && widgets.length === 1) onIndices.has(0) ? field.check() : field.uncheck()
-    else field.uncheck()
+    const box = form.getCheckBox(name)
+    if (checked) box.check()
+    else box.uncheck()
   } catch {
-    /* field absent on revision */
+    /* absent on revision */
   }
 }
 
-function uncheckAllWidgets(form: PDFForm, acroName: string): void {
-  setCheckboxWidgetStates(form, acroName, new Set())
+function uncheckAll(form: PDFForm, names: readonly string[]) {
+  for (const name of names) setCheck(form, name, false)
 }
 
-function setCheckInGroup(form: PDFForm, slots: Ft6600SlotId[], active: Ft6600SlotId | null): void {
-  const seen = new Set<string>()
-  for (const slot of slots) {
-    const acro = acroNameForSlot(slot)
-    if (seen.has(acro)) continue
-    seen.add(acro)
-    uncheckAllWidgets(form, acro)
-  }
-  if (!active) return
-  const acro = acroNameForSlot(active)
-  try {
-    form.getCheckBox(acro).check()
-  } catch {
-    /* absent */
-  }
+type FillAssignments = {
+  text: Map<string, string>
+  checks: Set<string>
 }
 
-type FillState = {
-  textBySlot: Partial<Record<Ft6600SlotId, string>>
-  checkSlots: Set<Ft6600SlotId>
-}
-
-function pushText(state: FillState, slot: Ft6600SlotId, value: string | null | undefined): void {
+function pushText(map: Map<string, string>, field: string, value: string | null | undefined) {
   const v = sanitizeDisplayText(value)
-  if (!v) return
-  state.textBySlot[slot] = v
+  if (v) map.set(field, v)
 }
 
-function pushCheck(state: FillState, slot: Ft6600SlotId): void {
-  state.checkSlots.add(slot)
-}
-
-function applyFillStateToForm(form: PDFForm, state: FillState): Array<[string, string]> {
+function applyAssignments(form: PDFForm, state: FillAssignments): Array<[string, string]> {
   const assignments: Array<[string, string]> = []
-
-  for (const [slot, value] of Object.entries(state.textBySlot) as Array<[Ft6600SlotId, string]>) {
-    const name = acroNameForSlot(slot)
+  for (const [name, value] of state.text) {
     assignments.push([name, value])
     try {
       form.getTextField(name).setText(value)
@@ -207,16 +166,9 @@ function applyFillStateToForm(form: PDFForm, state: FillState): Array<[string, s
       /* absent */
     }
   }
-
-  for (const slot of state.checkSlots) {
-    const name = acroNameForSlot(slot)
-    try {
-      form.getCheckBox(name).check()
-    } catch {
-      /* absent */
-    }
+  for (const name of state.checks) {
+    setCheck(form, name, true)
   }
-
   return assignments
 }
 
@@ -235,13 +187,12 @@ export async function prepareOfficialNswFt6600ScheduleForFlatten(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600ScheduleFillResult> {
-  const form = doc.getForm()
   const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
   const font = await doc.embedFont(StandardFonts.Helvetica)
   try {
-    form.updateFieldAppearances(font)
+    doc.getForm().updateFieldAppearances(font)
   } catch {
-    /* some revisions omit appearance streams */
+    /* optional */
   }
   return { filledFieldNames, assignments }
 }
@@ -251,81 +202,54 @@ export function applyOfficialNswFt6600ScheduleFill(
   props: NswResidentialTenancyAgreementProps,
 ): OfficialNswFt6600ScheduleFillResult {
   const form = doc.getForm()
-  const state = buildFt6600FillState(props)
+  const state = buildFillAssignments(props)
 
-  for (const slot of FT6600_TERM_CHECKBOX_SLOTS) {
-    const acro = acroNameForSlot(slot)
-    uncheckAllWidgets(form, acro)
-  }
-  const termSlot = resolveTermSlot(
+  uncheckAll(form, TERM_CHECKBOXES)
+  const termCb = resolveTermCheckbox(
     props.term.periodic,
     props.term.leaseLengthDescription,
     props.term.startDate,
     props.term.endDate,
   )
-  setCheckInGroup(form, FT6600_TERM_CHECKBOX_SLOTS, termSlot)
+  setCheck(form, termCb, true)
 
-  for (const slot of FT6600_RENT_FREQUENCY_CHECKBOX_SLOTS) {
-    uncheckAllWidgets(form, acroNameForSlot(slot))
-  }
-  uncheckAllWidgets(form, acroNameForSlot('rent_paid_bank_cb'))
-
-  const assignments = applyFillStateToForm(form, state)
-
+  uncheckAll(form, [F.rent_paid_week_cb, F.rent_paid_bank_cb])
   const freq = props.rent.rentFrequency ?? 'weekly'
-  if (freq === 'weekly') {
-    try {
-      form.getCheckBox(acroNameForSlot('rent_paid_week_cb')).check()
-    } catch {
-      /* absent */
-    }
-  }
-
+  if (freq === 'weekly') setCheck(form, F.rent_paid_week_cb, true)
   const paymentLower = sanitizeDisplayText(props.rent.paymentMethod).toLowerCase()
-  if (/\bcentrepay\b/.test(paymentLower)) {
-    /* centrepay line only */
-  } else {
-    try {
-      form.getCheckBox(acroNameForSlot('rent_paid_bank_cb')).check()
-    } catch {
-      /* absent */
-    }
-  }
+  if (!/\bcentrepay\b/.test(paymentLower)) setCheck(form, F.rent_paid_bank_cb, true)
 
-  uncheckAllWidgets(form, acroNameForSlot('strata_owners_corp_yes_cb'))
-  try {
-    form.getCheckBox(acroNameForSlot('strata_owners_corp_no_cb')).check()
-  } catch {
-    /* absent */
-  }
+  setCheck(form, F.strata_owners_corp_no_cb, true)
+  setCheck(form, F.strata_bylaws_no_cb, true)
+  setCheck(form, F.strata_scheme_bylaws_no_cb, true)
 
-  setCheckboxWidgetStates(form, acroNameForSlot('strata_bylaws_yes_cb'), new Set([1]))
+  uncheckAll(form, [
+    F.smoke_hardwired_cb,
+    F.smoke_battery_cb,
+    F.smoke_battery_replaceable_yes_cb,
+    F.smoke_battery_replaceable_no_cb,
+    F.smoke_hardwired_backup_yes_cb,
+    F.smoke_hardwired_backup_no_cb,
+    F.smoke_hardwired_backup_replaceable_yes_cb,
+    F.smoke_hardwired_backup_replaceable_no_cb,
+  ])
 
-  uncheckAllWidgets(form, acroNameForSlot('smoke_hardwired_cb'))
-  uncheckAllWidgets(form, acroNameForSlot('smoke_battery_cb'))
-  uncheckAllWidgets(form, acroNameForSlot('smoke_battery_replaceable_yes_cb'))
-  uncheckAllWidgets(form, acroNameForSlot('smoke_hardwired_backup_yes_cb'))
-
-  uncheckAllWidgets(form, acroNameForSlot('landlord_eservice_yes_cb'))
-  uncheckAllWidgets(form, acroNameForSlot('landlord_eservice_no_cb'))
+  uncheckAll(form, [F.landlord_eservice_yes_cb, F.landlord_eservice_no_cb])
   if (props.electronicService.landlordConsentsToEmailService) {
-    setCheckboxWidgetStates(form, acroNameForSlot('landlord_eservice_yes_cb'), new Set([0]))
+    setCheck(form, F.landlord_eservice_yes_cb, true)
   }
-
-  uncheckAllWidgets(form, acroNameForSlot('tenant_eservice_yes_cb'))
-  uncheckAllWidgets(form, acroNameForSlot('tenant_eservice_no_cb'))
+  uncheckAll(form, [F.tenant_eservice_yes_cb, F.tenant_eservice_no_cb])
   if (props.electronicService.tenantConsentsToEmailService) {
-    setCheckboxWidgetStates(form, acroNameForSlot('tenant_eservice_yes_cb'), new Set([0]))
+    setCheck(form, F.tenant_eservice_yes_cb, true)
   }
 
-  uncheckAllWidgets(form, acroNameForSlot('gas_embedded_no_cb'))
-
-  const filledFieldNames = [...new Set(assignments.map(([n]) => n))]
-  return { filledFieldNames, assignments }
+  const assignments = applyAssignments(form, state)
+  return { filledFieldNames: [...new Set(assignments.map(([n]) => n))], assignments }
 }
 
-function buildFt6600FillState(props: NswResidentialTenancyAgreementProps): FillState {
-  const state: FillState = { textBySlot: {}, checkSlots: new Set() }
+function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillAssignments {
+  const text = new Map<string, string>()
+  const checks = new Set<string>()
 
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
     props
@@ -339,39 +263,36 @@ function buildFt6600FillState(props: NswResidentialTenancyAgreementProps): FillS
       ? String(props.maxOccupantsPermitted)
       : null
 
-  const landlordName = sanitizeDisplayText(landlord.fullName)
   const landlordPhone = sanitizeDisplayText(landlord.phone)
 
-  pushText(state, 'agreement_made_on', madeOn)
-  pushText(state, 'agreement_at', atSuburb)
-  pushText(state, 'landlord_name_1', landlordName)
-  pushText(state, 'landlord_contact', landlordPhone)
-  if (!landlordAgent && landlordPhone) {
-    pushText(state, 'landlord_phone_no_agent', landlordPhone)
-  }
-  if (landlordAddr.street) pushText(state, 'landlord_service_street', landlordAddr.street)
-  if (landlordAddr.suburb) pushText(state, 'landlord_service_suburb', landlordAddr.suburb)
-  if (landlordAddr.state) pushText(state, 'landlord_service_state', landlordAddr.state)
-  if (landlordAddr.postcode) pushText(state, 'landlord_service_postcode', landlordAddr.postcode)
+  pushText(text, F.agreement_made_on, madeOn)
+  pushText(text, F.agreement_at, atSuburb)
+  pushText(text, F.landlord_name_1, landlord.fullName)
+  pushText(text, F.landlord_contact, landlordPhone)
+  if (!landlordAgent && landlordPhone) pushText(text, F.landlord_phone_no_agent, landlordPhone)
+  if (landlordAddr.street) pushText(text, F.landlord_service_street, landlordAddr.street)
+  if (landlordAddr.suburb) pushText(text, F.landlord_service_suburb, landlordAddr.suburb)
+  if (landlordAddr.state) pushText(text, F.landlord_service_state, landlordAddr.state)
+  if (landlordAddr.postcode) pushText(text, F.landlord_service_postcode, landlordAddr.postcode)
 
   if (landlord.companyName) {
-    pushText(state, 'corp_name', sanitizeDisplayText(landlord.companyName))
-    pushText(state, 'corp_suburb', landlordAddr.suburb)
-    pushText(state, 'corp_state', landlordAddr.state)
-    pushText(state, 'corp_postcode', landlordAddr.postcode)
+    pushText(text, F.corp_name, landlord.companyName)
+    pushText(text, F.corp_suburb, landlordAddr.suburb)
+    pushText(text, F.corp_state, landlordAddr.state)
+    pushText(text, F.corp_postcode, landlordAddr.postcode)
   }
 
-  pushText(state, 'tenant_name_1', sanitizeDisplayText(tenant.fullName))
+  pushText(text, F.tenant_name_1, tenant.fullName)
   const coTenants = props.additionalTenantNames.map((s) => sanitizeDisplayText(s)).filter(Boolean)
-  if (coTenants[0]) pushText(state, 'tenant_name_2', coTenants[0])
-  if (coTenants.length > 1) pushText(state, 'tenant_name_3_or_other', coTenants.slice(1).join('; '))
+  if (coTenants[0]) pushText(text, F.tenant_name_2, coTenants[0])
+  if (coTenants.length > 1) pushText(text, F.tenant_name_3_or_other, coTenants.slice(1).join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
-    if (tenantService.street) pushText(state, 'tenant_service_street', tenantService.street)
-    if (tenantService.suburb) pushText(state, 'tenant_service_suburb', tenantService.suburb)
-    if (tenantService.state) pushText(state, 'tenant_service_state', tenantService.state)
-    if (tenantService.postcode) pushText(state, 'tenant_service_postcode', tenantService.postcode)
+    if (tenantService.street) pushText(text, F.tenant_service_street, tenantService.street)
+    if (tenantService.suburb) pushText(text, F.tenant_service_suburb, tenantService.suburb)
+    if (tenantService.state) pushText(text, F.tenant_service_state, tenantService.state)
+    if (tenantService.postcode) pushText(text, F.tenant_service_postcode, tenantService.postcode)
   }
 
   const tenantContact = [
@@ -380,11 +301,11 @@ function buildFt6600FillState(props: NswResidentialTenancyAgreementProps): FillS
   ]
     .filter(Boolean)
     .join(' · ')
-  if (tenantContact) pushText(state, 'tenant_contact', tenantContact)
+  if (tenantContact) pushText(text, F.tenant_contact, tenantContact)
 
   if (landlordAgent) {
     const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
-    pushText(state, 'landlord_agent_name', sanitizeDisplayText(landlordAgent.name))
+    pushText(text, F.landlord_agent_name, landlordAgent.name)
     const agentContact = [
       sanitizeDisplayText(landlordAgent.phone),
       landlordAgent.email ? `Email: ${sanitizeDisplayText(landlordAgent.email)}` : '',
@@ -392,93 +313,60 @@ function buildFt6600FillState(props: NswResidentialTenancyAgreementProps): FillS
       .filter(Boolean)
       .join(' · ')
     const agentAddressLine = sanitizeDisplayText(landlordAgent.businessAddress)
-    pushText(
-      state,
-      'landlord_agent_address',
-      agentContact ? `${agentAddressLine} · ${agentContact}` : agentAddressLine,
-    )
-    if (agentAddr.suburb) pushText(state, 'landlord_agent_suburb', agentAddr.suburb)
-    if (agentAddr.state) pushText(state, 'landlord_agent_state', agentAddr.state)
-    if (agentAddr.postcode) pushText(state, 'landlord_agent_postcode', agentAddr.postcode)
+    pushText(text, F.landlord_agent_address, agentContact ? `${agentAddressLine} · ${agentContact}` : agentAddressLine)
+    if (agentAddr.suburb) pushText(text, F.landlord_agent_suburb, agentAddr.suburb)
+    if (agentAddr.state) pushText(text, F.landlord_agent_state, agentAddr.state)
+    if (agentAddr.postcode) pushText(text, F.landlord_agent_postcode, agentAddr.postcode)
   }
 
-  pushText(state, 'term_start_date', formatAuDate(term.startDate))
-  pushText(state, 'rent_first_payment_date', formatAuDate(term.startDate))
-  if (!term.periodic && term.endDate) {
-    pushText(state, 'term_end_date', formatAuDate(term.endDate))
-  }
-
-  pushText(state, 'premises_address', sanitizeDisplayText(premises.addressLine))
-  if (inclusions) pushCheck(state, 'premises_inclusions_cb')
+  pushText(text, F.term_start_date, formatAuDate(term.startDate))
+  pushText(text, F.rent_first_payment_date, formatAuDate(term.startDate))
+  if (!term.periodic && term.endDate) pushText(text, F.term_end_date, formatAuDate(term.endDate))
+  pushText(text, F.premises_address, premises.addressLine)
+  if (inclusions) checks.add(F.premises_inclusions_cb)
 
   const rentAmountPlain = formatPlainMoney(rent.weeklyRent)
   const freq = rent.rentFrequency ?? 'weekly'
-  if (freq === 'weekly') {
-    pushText(state, 'rent_weekly_amount', rentAmountPlain)
-  } else if (freq === 'fortnightly') {
-    pushText(state, 'rent_fortnightly_amount', rentAmountPlain)
-  } else {
-    pushText(state, 'rent_other_frequency_amount', rentAmountPlain)
-  }
+  if (freq === 'weekly') pushText(text, F.rent_weekly_amount, rentAmountPlain)
+  else if (freq === 'fortnightly') pushText(text, F.rent_fortnightly_amount, rentAmountPlain)
+  else pushText(text, F.rent_other_frequency_amount, rentAmountPlain)
 
   const paymentMethod = sanitizeDisplayText(rent.paymentMethod)
-  const paymentLower = paymentMethod.toLowerCase()
-  if (/\bcentrepay\b/.test(paymentLower)) {
-    pushText(state, 'rent_centrepay_details', paymentMethod)
+  if (/\bcentrepay\b/.test(paymentMethod.toLowerCase())) {
+    pushText(text, F.rent_centrepay_details, paymentMethod)
   } else {
-    pushText(state, 'rent_payment_details', paymentMethod)
+    pushText(text, F.rent_payment_details, paymentMethod)
   }
+  pushText(text, F.rent_due_day_text, rentWeekday)
+  if (maxOcc) pushText(text, F.max_occupants, maxOcc)
 
-  pushText(state, 'rent_due_day_text', rentWeekday)
-
-  if (maxOcc) pushText(state, 'max_occupants', maxOcc)
-
-  const electrician = sanitizeDisplayText(urgentRepairsTradespeople.electrician ?? '')
-  if (electrician) {
-    const phoneMatch = electrician.match(/(\+?\d[\d\s-]{7,}\d)/)
+  const splitTrade = (raw: string | null, nameKey: string, phoneKey: string) => {
+    const line = sanitizeDisplayText(raw ?? '')
+    if (!line) return
+    const phoneMatch = line.match(/(\+?\d[\d\s-]{7,}\d)/)
     if (phoneMatch) {
-      pushText(state, 'urgent_electrician_name', electrician.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText(state, 'urgent_electrician_phone', phoneMatch[0].trim())
+      pushText(text, nameKey, line.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText(text, phoneKey, phoneMatch[0].trim())
     } else {
-      pushText(state, 'urgent_electrician_name', electrician)
+      pushText(text, nameKey, line)
     }
   }
-
-  const plumber = sanitizeDisplayText(urgentRepairsTradespeople.plumber ?? '')
-  if (plumber) {
-    const phoneMatch = plumber.match(/(\+?\d[\d\s-]{7,}\d)/)
-    if (phoneMatch) {
-      pushText(state, 'urgent_plumber_name', plumber.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText(state, 'urgent_plumber_phone', phoneMatch[0].trim())
-    } else {
-      pushText(state, 'urgent_plumber_name', plumber)
-    }
-  }
-
-  if (urgentRepairsTradespeople.other) {
-    const other = sanitizeDisplayText(urgentRepairsTradespeople.other)
-    const phoneMatch = other.match(/(\+?\d[\d\s-]{7,}\d)/)
-    if (phoneMatch) {
-      pushText(state, 'urgent_other_name', other.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText(state, 'urgent_other_phone', phoneMatch[0].trim())
-    } else {
-      pushText(state, 'urgent_other_name', other)
-    }
-  }
+  splitTrade(urgentRepairsTradespeople.electrician, F.urgent_electrician_name, F.urgent_electrician_phone)
+  splitTrade(urgentRepairsTradespeople.plumber, F.urgent_plumber_name, F.urgent_plumber_phone)
+  splitTrade(urgentRepairsTradespeople.other, F.urgent_other_name, F.urgent_other_phone)
 
   if (bond.amount != null && Number.isFinite(bond.amount)) {
-    pushText(state, 'bond_amount', formatPlainMoney(bond.amount))
-    pushText(state, 'bond_paid_to_rbo_text', 'X')
+    pushText(text, F.bond_amount, formatPlainMoney(bond.amount))
+    pushText(text, F.bond_paid_to_rbo_text, 'X')
   }
 
   const billsIncluded = props.billsIncluded === true
-  pushText(state, 'water_usage_separate_text', billsIncluded ? 'No' : 'Yes')
-  pushText(state, 'electricity_embedded_text', 'No')
+  pushText(text, F.water_usage_separate_text, billsIncluded ? 'No' : 'Yes')
+  pushText(text, F.electricity_embedded_text, 'No')
+  pushText(text, F.landlord_email_for_service, electronicService.landlordEmail)
+  pushText(text, F.tenant_email_for_service, electronicService.tenantEmail)
 
-  pushText(state, 'landlord_email_for_service', sanitizeDisplayText(electronicService.landlordEmail))
-  pushText(state, 'tenant_email_for_service', sanitizeDisplayText(electronicService.tenantEmail))
-
-  return state
+  return { text, checks }
 }
 
 export async function fillOfficialNswFt6600Pdf(
@@ -486,16 +374,13 @@ export async function fillOfficialNswFt6600Pdf(
 ): Promise<OfficialNswFt6600FillResult> {
   const doc = await loadOfficialNswFt6600Template()
   const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
-
   doc.getForm().flatten()
-
   let acroFormFieldCountAfterFlatten = 0
   try {
     acroFormFieldCountAfterFlatten = doc.getForm().getFields().length
   } catch {
     acroFormFieldCountAfterFlatten = 0
   }
-
   const pdfBytes = await doc.save({ useObjectStreams: false })
   return { pdfBytes, filledFieldNames, acroFormFieldCountAfterFlatten }
 }

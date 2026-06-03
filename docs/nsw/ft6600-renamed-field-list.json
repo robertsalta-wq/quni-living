@@ -1,0 +1,398 @@
+{
+  "count": 131,
+  "fields": [
+    {
+      "name": "additional_terms_no_cb"
+    },
+    {
+      "name": "additional_terms_yes_cb"
+    },
+    {
+      "name": "agreement_at"
+    },
+    {
+      "name": "agreement_made_on"
+    },
+    {
+      "name": "bond_amount"
+    },
+    {
+      "name": "bond_paid_to_agent_text"
+    },
+    {
+      "name": "bond_paid_to_landlord_text"
+    },
+    {
+      "name": "bond_paid_to_rbo_text"
+    },
+    {
+      "name": "corp_header"
+    },
+    {
+      "name": "corp_name"
+    },
+    {
+      "name": "corp_postcode"
+    },
+    {
+      "name": "corp_state"
+    },
+    {
+      "name": "corp_suburb"
+    },
+    {
+      "name": "electricity_embedded_text"
+    },
+    {
+      "name": "gas_embedded_no_cb"
+    },
+    {
+      "name": "landlord_agent_address"
+    },
+    {
+      "name": "landlord_agent_name"
+    },
+    {
+      "name": "landlord_agent_postcode"
+    },
+    {
+      "name": "landlord_agent_state"
+    },
+    {
+      "name": "landlord_agent_suburb"
+    },
+    {
+      "name": "landlord_contact"
+    },
+    {
+      "name": "landlord_email_for_service"
+    },
+    {
+      "name": "landlord_eservice_no_cb"
+    },
+    {
+      "name": "landlord_eservice_yes_cb"
+    },
+    {
+      "name": "landlord_lis_day_2"
+    },
+    {
+      "name": "landlord_lis_month_2"
+    },
+    {
+      "name": "landlord_lis_printed_name"
+    },
+    {
+      "name": "landlord_lis_section_header"
+    },
+    {
+      "name": "landlord_lis_sig_day"
+    },
+    {
+      "name": "landlord_lis_sig_month"
+    },
+    {
+      "name": "landlord_lis_sig_year"
+    },
+    {
+      "name": "landlord_lis_year_2"
+    },
+    {
+      "name": "landlord_name_1"
+    },
+    {
+      "name": "landlord_name_2"
+    },
+    {
+      "name": "landlord_overseas"
+    },
+    {
+      "name": "landlord_phone_no_agent"
+    },
+    {
+      "name": "landlord_service_postcode"
+    },
+    {
+      "name": "landlord_service_state"
+    },
+    {
+      "name": "landlord_service_street"
+    },
+    {
+      "name": "landlord_service_suburb"
+    },
+    {
+      "name": "landlord_service_supplement"
+    },
+    {
+      "name": "landlord_sig_day_1"
+    },
+    {
+      "name": "landlord_sig_day_2"
+    },
+    {
+      "name": "landlord_sig_month_1"
+    },
+    {
+      "name": "landlord_sig_month_2"
+    },
+    {
+      "name": "landlord_sig_section_header"
+    },
+    {
+      "name": "landlord_sig_year_1"
+    },
+    {
+      "name": "landlord_sig_year_2"
+    },
+    {
+      "name": "landlord_sign_block_extra"
+    },
+    {
+      "name": "landlord_sign_block_printed_name"
+    },
+    {
+      "name": "max_occupants"
+    },
+    {
+      "name": "pets_clause_no_cb"
+    },
+    {
+      "name": "pets_clause_yes_cb"
+    },
+    {
+      "name": "premises_address"
+    },
+    {
+      "name": "premises_inclusions_cb"
+    },
+    {
+      "name": "rent_amount_cb"
+    },
+    {
+      "name": "rent_centrepay_details"
+    },
+    {
+      "name": "rent_due_day_cb"
+    },
+    {
+      "name": "rent_due_day_text"
+    },
+    {
+      "name": "rent_first_payment_cb"
+    },
+    {
+      "name": "rent_first_payment_date"
+    },
+    {
+      "name": "rent_fortnightly_amount"
+    },
+    {
+      "name": "rent_other_frequency_amount"
+    },
+    {
+      "name": "rent_other_period_cb"
+    },
+    {
+      "name": "rent_paid_bank_cb"
+    },
+    {
+      "name": "rent_paid_week_cb"
+    },
+    {
+      "name": "rent_payment_details"
+    },
+    {
+      "name": "rent_weekly_amount"
+    },
+    {
+      "name": "sig_landlord"
+    },
+    {
+      "name": "sig_landlord_date"
+    },
+    {
+      "name": "sig_landlord_lis"
+    },
+    {
+      "name": "sig_landlord_lis_date"
+    },
+    {
+      "name": "sig_tenant_1"
+    },
+    {
+      "name": "sig_tenant_1_date"
+    },
+    {
+      "name": "sig_tenant_tis"
+    },
+    {
+      "name": "smoke_battery_cb"
+    },
+    {
+      "name": "smoke_battery_replaceable_no_cb"
+    },
+    {
+      "name": "smoke_battery_replaceable_yes_cb"
+    },
+    {
+      "name": "smoke_battery_type_text"
+    },
+    {
+      "name": "smoke_hardwired_backup_no_cb"
+    },
+    {
+      "name": "smoke_hardwired_backup_replaceable_no_cb"
+    },
+    {
+      "name": "smoke_hardwired_backup_replaceable_yes_cb"
+    },
+    {
+      "name": "smoke_hardwired_backup_yes_cb"
+    },
+    {
+      "name": "smoke_hardwired_cb"
+    },
+    {
+      "name": "strata_bylaws_no_cb"
+    },
+    {
+      "name": "strata_bylaws_yes_cb"
+    },
+    {
+      "name": "strata_owners_corp_no_cb"
+    },
+    {
+      "name": "strata_owners_corp_yes_cb"
+    },
+    {
+      "name": "strata_scheme_bylaws_no_cb"
+    },
+    {
+      "name": "strata_scheme_bylaws_yes_cb"
+    },
+    {
+      "name": "tenant_agent_address"
+    },
+    {
+      "name": "tenant_agent_contact"
+    },
+    {
+      "name": "tenant_agent_name"
+    },
+    {
+      "name": "tenant_contact"
+    },
+    {
+      "name": "tenant_email_for_service"
+    },
+    {
+      "name": "tenant_eservice_no_cb"
+    },
+    {
+      "name": "tenant_eservice_yes_cb"
+    },
+    {
+      "name": "tenant_extra_row"
+    },
+    {
+      "name": "tenant_name_1"
+    },
+    {
+      "name": "tenant_name_2"
+    },
+    {
+      "name": "tenant_name_3_or_other"
+    },
+    {
+      "name": "tenant_service_postcode"
+    },
+    {
+      "name": "tenant_service_state"
+    },
+    {
+      "name": "tenant_service_street"
+    },
+    {
+      "name": "tenant_service_suburb"
+    },
+    {
+      "name": "tenant_sig_day_1"
+    },
+    {
+      "name": "tenant_sig_day_2"
+    },
+    {
+      "name": "tenant_sig_month_1"
+    },
+    {
+      "name": "tenant_sig_month_2"
+    },
+    {
+      "name": "tenant_sig_printed_name_1"
+    },
+    {
+      "name": "tenant_sig_section_header"
+    },
+    {
+      "name": "tenant_sig_year_1"
+    },
+    {
+      "name": "tenant_sig_year_2"
+    },
+    {
+      "name": "tenant_tis_sig_day"
+    },
+    {
+      "name": "tenant_tis_sig_month"
+    },
+    {
+      "name": "tenant_tis_sig_year"
+    },
+    {
+      "name": "term_12_months_cb"
+    },
+    {
+      "name": "term_2_years_cb"
+    },
+    {
+      "name": "term_5_years_cb"
+    },
+    {
+      "name": "term_6_months_cb"
+    },
+    {
+      "name": "term_end_date"
+    },
+    {
+      "name": "term_other_cb"
+    },
+    {
+      "name": "term_periodic_cb"
+    },
+    {
+      "name": "term_start_date"
+    },
+    {
+      "name": "urgent_electrician_name"
+    },
+    {
+      "name": "urgent_electrician_phone"
+    },
+    {
+      "name": "urgent_other_name"
+    },
+    {
+      "name": "urgent_other_phone"
+    },
+    {
+      "name": "urgent_plumber_name"
+    },
+    {
+      "name": "urgent_plumber_phone"
+    },
+    {
+      "name": "water_usage_separate_text"
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import type { Database, Json } from '../../src/lib/database.types'
 import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement.js'
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
+import { buildNswResidentialTenancyAgreementPropsFromBooking } from '../lib/documents/buildNswFt6600AgreementProps.js'
 import { buildOfficialNswFt6600PdfWithSigning } from '../lib/documents/officialNswFt6600Signing.js'
 import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
 import {
@@ -34,7 +35,6 @@ import {
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../lib/platformConfig.js'
-import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../src/lib/propertyFeatureSignals.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -374,9 +374,7 @@ export default async function handler(req: any, res: any) {
     (typeof lp.full_name === 'string' ? lp.full_name : 'Landlord')
   const landlordPhoneRaw = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : ''
 
-  const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
-  const { additionalTenantNames, maxOccupantsPermitted, specialConditions: coTenantSpecialConditions } =
-    occupancyLease
+  const { additionalTenantNames } = occupancyLeaseFieldsFromBooking(booking, prop)
 
   const generatedAt = new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })
 
@@ -407,9 +405,6 @@ export default async function handler(req: any, res: any) {
     addressForServiceLine: studentAddressForServiceLine(spRec),
   }
 
-  const featureNames = featureNamesFromPropertyRow(prop as { property_features?: unknown })
-  const billsIncluded = propertyBillsIncluded(featureNames)
-
   const sharedPremises = {
     addressLine: propertyAddressLine(prop),
     propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
@@ -434,44 +429,16 @@ export default async function handler(req: any, res: any) {
     paymentMethod: rentPaymentMethodLine,
   }
 
-  const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : ''
-  const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : ''
-
-  const urgentRepairsLandlord = {
-    electrician: null as string | null,
-    plumber: null as string | null,
-    other: null as string | null,
-  }
-
-  const rtaProps: NswResidentialTenancyAgreementProps = {
+  const rtaProps: NswResidentialTenancyAgreementProps = buildNswResidentialTenancyAgreementPropsFromBooking({
     documentId,
     generatedAt,
-    landlord: sharedLandlord,
-    tenant: sharedTenant,
-    additionalTenantNames,
-    premises: sharedPremises,
-    premisesPartDescription: null,
-    additionalPremisesInclusions: [],
-    maxOccupantsPermitted,
-    term: sharedTerm,
-    rent: {
-      ...sharedRent,
-      rentFrequency: 'weekly',
-      paymentTimingDescription: 'Payable in advance each week.',
-    },
-    bond: { amount: bondNum },
-    landlordAgent: null,
-    urgentRepairsTradespeople: urgentRepairsLandlord,
-    billsIncluded,
-    electronicService: {
-      landlordEmail: landlordEmailForService,
-      tenantEmail: tenantEmailForService,
-      landlordConsentsToEmailService: false,
-      tenantConsentsToEmailService: false,
-    },
-    specialConditions: coTenantSpecialConditions,
-    bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
-  }
+    booking: booking as unknown as Record<string, unknown>,
+    landlordProfile: lpRec,
+    studentProfile: spRec,
+    property: prop,
+    bankDetails,
+    managedPlatformFeePercent: platformFeePercent,
+  })
 
   const rpm = booking.rent_payment_method
   const rentPaymentMethod: 'bank_transfer' | 'quni_platform' | null =

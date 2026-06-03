@@ -10,6 +10,12 @@
   "pageCount": 18,
   "acroFormFieldCount": 127,
   "storedAs": "docs/nsw/residential-tenancy-agreement-form-2025-12.pdf",
+  "renamedWorkingTemplate": "docs/nsw/ft6600-renamed.pdf",
+  "renamedWorkingTemplateSha256": "6d9ad4577b25e9da54dc848c9c2b7ddd7dafaa3d8e56e1a993359fff6022fe6e",
+  "renamedFieldCount": 131,
+  "renamedPageContentsByteIdentical": true,
+  "renamedRenderDiffMaxPixels": 0,
+  "renameScript": "scripts/rename-ft6600-fields.mjs",
   "textVerification": {
     "referenceFile": "docs/ft6600-2025-12-17.txt",
     "phraseCoveragePct": 100,

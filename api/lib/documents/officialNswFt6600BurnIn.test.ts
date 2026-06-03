@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { StandardFonts } from 'pdf-lib'
 import { PDFDocument } from 'pdf-lib'
 import { findTextFieldWidgetPageIndex, layoutSingleLineInField } from './officialNswFt6600BurnIn.js'
+import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
 import { loadOfficialNswFt6600Template } from './officialNswFt6600Fill.js'
 
 describe('officialNswFt6600BurnIn', () => {
@@ -18,10 +19,10 @@ describe('officialNswFt6600BurnIn', () => {
 
   it('resolves tenant name field on PDF page 1 (not page 0)', async () => {
     const doc = await loadOfficialNswFt6600Template()
-    const field = doc.getForm().getTextField('Text field 2.6')
+    const field = doc.getForm().getTextField(F.tenant_name_1)
     const widget = field.acroField.getWidgets()[0]
     expect(findTextFieldWidgetPageIndex(doc, widget)).toBe(1)
-    const landlordField = doc.getForm().getTextField('Text field 1.3')
+    const landlordField = doc.getForm().getTextField(F.landlord_name_1)
     expect(findTextFieldWidgetPageIndex(doc, landlordField.acroField.getWidgets()[0])).toBe(0)
   })
 })
