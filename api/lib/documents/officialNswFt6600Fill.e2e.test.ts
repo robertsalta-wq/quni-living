@@ -107,6 +107,11 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.bond_paid_to_rbo_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
 
+    expect(form.getCheckBox(F.landlord_eservice_yes_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.tenant_eservice_yes_cb).isChecked()).toBe(true)
+    expect(form.getTextField(F.landlord_email_for_service).getText()).toBe('quinniele90@gmail.com')
+    expect(form.getTextField(F.tenant_email_for_service).getText()).toBe('rob@3thingsatonce.com.au')
+
     expect(form.getCheckBox(F.term_6_months_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.term_2_years_cb).isChecked()).toBe(false)
     expect(form.getCheckBox(F.term_other_cb).isChecked()).toBe(false)

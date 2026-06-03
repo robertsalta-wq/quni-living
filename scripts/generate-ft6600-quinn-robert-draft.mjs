@@ -1,27 +1,35 @@
 /**
- * Regenerate FT6600 drafts: listing + managed tier, widget tag report, optional DocuSeal smoke.
+ * Regenerate Quinn/Robert Listing FT6600 draft (flattened PDF QA artifact).
  * Run: npx tsx scripts/generate-ft6600-quinn-robert-draft.mjs
+ *
+ * DocuSeal completion smoke (0 {{ after sign) is blocked until sign.quni.com.au DNS is wired.
  */
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PDFParse } from 'pdf-parse'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const spikeDir = path.join(root, 'scripts', 'test-official-form-spike')
-const reportPath = path.join(spikeDir, 'quinn-robert-ft6600-draft-report.json')
 
 const { buildNswResidentialTenancyAgreementPropsFromBooking } = await import(
   '../api/lib/documents/buildNswFt6600AgreementProps.ts'
 )
-const { buildOfficialNswFt6600PdfWithSigning, collectOfficialNswFt6600SignatureWidgets } =
-  await import('../api/lib/documents/officialNswFt6600Signing.ts')
-const { loadOfficialNswFt6600Template } = await import('../api/lib/documents/officialNswFt6600Fill.ts')
+const {
+  buildOfficialNswFt6600PdfWithSigning,
+  OFFICIAL_FT6600_TIS_PAGE_INDEX,
+  OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR,
+  OFFICIAL_FT6600_TIS_DATE_ANCHOR,
+} = await import('../api/lib/documents/officialNswFt6600Signing.ts')
+const { loadOfficialNswFt6600Template, applyOfficialNswFt6600ScheduleFill } = await import(
+  '../api/lib/documents/officialNswFt6600Fill.ts'
+)
 const { FT6600_RENAMED_FIELDS: F } = await import('../api/lib/documents/ft6600RenamedFields.ts')
-const { PDFDocument, PDFDict, PDFName } = await import('pdf-lib')
 
-const QUINN_ROBERT_BOOKING_ROWS = {
-  documentId: 'nsw-ft6600-quinn-robert',
+const QUINN_ROBERT_LISTING = {
+  documentId: 'nsw-ft6600-quinn-robert-listing',
   generatedAt: '03/06/2026, 10:00:00 am',
+  serviceTier: 'listing',
   booking: {
     move_in_date: '2026-06-10',
     end_date: '2026-12-10',
@@ -74,125 +82,81 @@ const QUINN_ROBERT_BOOKING_ROWS = {
   },
 }
 
-const MANAGED_PLATFORM_AGENT = {
-  name: 'Quni Living Pty Ltd',
-  businessAddress: 'Level 1, 100 Example Street, Sydney, NSW, 2000',
-  suburb: 'Sydney',
-  phone: '1300 000 000',
-  email: 'hello@quni.com.au',
+/** p18 TIS target from docs/nsw/ft6600-corrected-field-map.json (no AcroForm on page 18 in template). */
+const P18_TIS_FIELD_MAP = {
+  note: 'pdfjs lists zero AcroForm fields on page 18; sig_tenant_tis AcroForm widget is wrongly on page 17',
+  sig_tenant_tis: { pageHuman: 18, rect: [34.0, 389.7, 215.4, 426.5] },
+  tenant_tis_sig_day: { pageHuman: 18, rect: [251.9, 407.3, 287.4, 426.4] },
+  wrongP17Acroform: {
+    sig_tenant_tis: { pageHuman: 17, rect: [34.0157, 415.377, 215.433, 452.161] },
+    tenant_tis_sig_day: { pageHuman: 17, rect: [251.868, 415.471, 287.432, 434.562] },
+  },
 }
 
-function countWidgets(doc) {
-  const ctx = doc.context
-  let w = 0
-  let dangling = 0
-  for (const page of doc.getPages()) {
-    const annots = page.node.Annots?.()
-    if (!annots) continue
-    for (let i = 0; i < annots.size(); i++) {
-      try {
-        const d = ctx.lookup(annots.get(i), PDFDict)
-        if (d.get(PDFName.of('Subtype'))?.toString() === '/Widget') w++
-      } catch {
-        dangling++
-      }
-    }
-  }
-  return { widgets: w, danglingAnnotRefs: dangling }
-}
-
-async function buildTierDraft(tier) {
-  const props = buildNswResidentialTenancyAgreementPropsFromBooking({
-    ...QUINN_ROBERT_BOOKING_ROWS,
-    serviceTier: tier,
-    platformAgentForManaged: tier === 'managed' ? MANAGED_PLATFORM_AGENT : null,
-  })
-  const built = await buildOfficialNswFt6600PdfWithSigning(props, { includeCoTenantSignatureTags: false })
-  return { props, built }
-}
-
-async function readScheduleSpotCheck(pdfBytes, props) {
+async function readScheduleSpotCheck(props) {
   const doc = await loadOfficialNswFt6600Template()
-  // Re-fill unflattened to read agreement_at / agent fields (flatten removes AcroForm)
-  const { applyOfficialNswFt6600ScheduleFill } = await import('../api/lib/documents/officialNswFt6600Fill.ts')
   applyOfficialNswFt6600ScheduleFill(doc, props)
   const form = doc.getForm()
   return {
     agreementAt: form.getTextField(F.agreement_at).getText(),
-    landlordAgentName: (() => {
-      try {
-        return form.getTextField(F.landlord_agent_name).getText()
-      } catch {
-        return ''
-      }
-    })(),
-    landlordAgentAddress: (() => {
-      try {
-        return form.getTextField(F.landlord_agent_address).getText()
-      } catch {
-        return ''
-      }
-    })(),
+    landlordEserviceYes: form.getCheckBox(F.landlord_eservice_yes_cb).isChecked(),
+    tenantEserviceYes: form.getCheckBox(F.tenant_eservice_yes_cb).isChecked(),
+    landlordEmail: form.getTextField(F.landlord_email_for_service).getText(),
+    tenantEmail: form.getTextField(F.tenant_email_for_service).getText(),
   }
 }
 
-const templateDoc = await loadOfficialNswFt6600Template()
-const signatureWidgets = collectOfficialNswFt6600SignatureWidgets(templateDoc)
-
-const listing = await buildTierDraft('listing')
-const managed = await buildTierDraft('managed')
-
-const listingSpot = await readScheduleSpotCheck(listing.built.pdfBytes, listing.props)
-const managedSpot = await readScheduleSpotCheck(managed.built.pdfBytes, managed.props)
-
-fs.mkdirSync(spikeDir, { recursive: true })
-
-const listingPath = path.join(spikeDir, 'quinn-robert-ft6600-filled-listing.pdf')
-const managedPath = path.join(spikeDir, 'quinn-robert-ft6600-filled-managed.pdf')
-const legacyPath = path.join(spikeDir, 'quinn-robert-ft6600-filled.pdf')
-
-fs.writeFileSync(listingPath, listing.built.pdfBytes)
-fs.writeFileSync(managedPath, managed.built.pdfBytes)
-try {
-  fs.writeFileSync(legacyPath, listing.built.pdfBytes)
-} catch {
-  fs.writeFileSync(path.join(spikeDir, 'quinn-robert-ft6600-filled-new.pdf'), listing.built.pdfBytes)
+async function scanTags(buf) {
+  const parser = new PDFParse({ data: buf })
+  const text = (await parser.getText()).text || ''
+  await parser.destroy()
+  const curlyCount = (text.match(/\{\{/g) || []).length
+  const marginLandlordSig = text.includes('{{Landlord Signature;role=First Party;type=signature}}') &&
+    text.indexOf('{{Landlord Signature') < text.indexOf('SIGNED BY THE LANDLORD')
+  return { curlyCount, tagLiteralCount: curlyCount }
 }
 
-const blank = await PDFDocument.load(
-  fs.readFileSync(path.join(root, 'docs/nsw/ft6600-renamed.pdf')),
-  { ignoreEncryption: true },
+const props = buildNswResidentialTenancyAgreementPropsFromBooking(QUINN_ROBERT_LISTING)
+const built = await buildOfficialNswFt6600PdfWithSigning(props, { includeCoTenantSignatureTags: false })
+const schedule = await readScheduleSpotCheck(props)
+
+const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+const outName = `quinn-robert-ft6600-filled-listing-new-${stamp}.pdf`
+const outPath = path.join(spikeDir, outName)
+fs.mkdirSync(spikeDir, { recursive: true })
+fs.writeFileSync(outPath, built.pdfBytes)
+
+const tagScan = await scanTags(built.pdfBytes)
+const tisPlacements = built.widgetTagPlacements.filter((p) =>
+  /tis/i.test(p.fieldName) || /TIS/.test(p.tag),
 )
-const filledDoc = await PDFDocument.load(listing.built.pdfBytes, { ignoreEncryption: true })
+const p17Tis = tisPlacements.filter((p) => p.pageIndex === 16)
+const p18Tis = tisPlacements.filter((p) => p.pageIndex === OFFICIAL_FT6600_TIS_PAGE_INDEX)
 
 const report = {
-  signatureWidgetsOnTemplate: signatureWidgets.map((w) => ({
-    fieldName: w.fieldName,
-    pageIndex: w.pageIndex,
-    x: w.x,
-    y: w.y,
-    width: w.width,
-    height: w.height,
-  })),
-  listing: {
-    output: path.relative(root, listingPath),
-    hasDocusealTags: listing.built.hasDocusealTags,
-    tagCount: listing.built.tagCount,
-    widgetTagCount: listing.built.widgetTagCount,
-    widgetTagFieldNames: listing.built.widgetTagFieldNames,
-    schedule: listingSpot,
+  generatedAt: new Date().toISOString(),
+  output: path.relative(root, outPath),
+  bytes: fs.statSync(outPath).size,
+  p18TisFieldMap: P18_TIS_FIELD_MAP,
+  tisCoordinateAnchorsUsed: {
+    sig_tenant_tis: OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR,
+    tenant_tis_sig_day: OFFICIAL_FT6600_TIS_DATE_ANCHOR,
   },
-  managed: {
-    output: path.relative(root, managedPath),
-    hasDocusealTags: managed.built.hasDocusealTags,
-    tagCount: managed.built.tagCount,
-    widgetTagCount: managed.built.widgetTagCount,
-    widgetTagFieldNames: managed.built.widgetTagFieldNames,
-    schedule: managedSpot,
+  verification: {
+    hasDocusealTags: built.hasDocusealTags,
+    tagCount: built.tagCount,
+    noMarginAnchors: built.tagCount === 8,
+    tisOnPage18Only: p18Tis.length === 2 && p17Tis.length === 0,
+    landlordEserviceYes: schedule.landlordEserviceYes,
+    tenantEserviceYes: schedule.tenantEserviceYes,
+    agreementAt: schedule.agreementAt,
   },
-  flattenedDraftWidgetAnnots: countWidgets(filledDoc).widgets,
-  blankTemplateWidgetAnnots: countWidgets(blank).widgets,
+  widgetTagPlacements: built.widgetTagPlacements,
+  widgetTagFieldNames: built.widgetTagFieldNames,
+  tagScan,
+  docusealCompletionSmoke: 'BLOCKED — sign.quni.com.au DNS not wired; do not verify 0 {{ via live /s/... submission',
 }
 
+const reportPath = path.join(spikeDir, 'quinn-robert-ft6600-draft-report.json')
 fs.writeFileSync(reportPath, JSON.stringify(report, null, 2))
 console.log(JSON.stringify(report, null, 2))

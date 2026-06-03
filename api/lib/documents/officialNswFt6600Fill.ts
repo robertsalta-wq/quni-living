@@ -261,11 +261,17 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheck(form, F.strata_bylaws_no_cb, true)
 
   uncheckAll(form, [F.landlord_eservice_yes_cb, F.landlord_eservice_no_cb])
-  if (props.electronicService.landlordConsentsToEmailService) {
+  if (
+    props.electronicService.landlordConsentsToEmailService ||
+    sanitizeDisplayText(props.electronicService.landlordEmail)
+  ) {
     setCheck(form, F.landlord_eservice_yes_cb, true)
   }
   uncheckAll(form, [F.tenant_eservice_yes_cb, F.tenant_eservice_no_cb])
-  if (props.electronicService.tenantConsentsToEmailService) {
+  if (
+    props.electronicService.tenantConsentsToEmailService ||
+    sanitizeDisplayText(props.electronicService.tenantEmail)
+  ) {
     setCheck(form, F.tenant_eservice_yes_cb, true)
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST,
+  OFFICIAL_FT6600_TIS_PAGE_INDEX,
   OFFICIAL_FT6600_WIDGET_TAG_STYLE,
   buildWidgetTagPlacements,
   collectOfficialNswFt6600SignatureWidgets,
@@ -14,7 +15,8 @@ describe('collectOfficialNswFt6600SignatureWidgets', () => {
     const doc = await loadOfficialNswFt6600Template()
     const widgets = collectOfficialNswFt6600SignatureWidgets(doc)
     expect(widgets.map((w) => w.fieldName).sort()).toEqual([...OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST].sort())
-    expect(widgets.every((w) => w.pageIndex >= 16)).toBe(true)
+    expect(widgets.find((w) => w.fieldName === 'sig_tenant_tis')?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
+    expect(widgets.filter((w) => w.fieldName !== 'sig_tenant_tis').every((w) => w.pageIndex === 16)).toBe(true)
   })
 })
 
@@ -43,6 +45,16 @@ describe('buildWidgetTagPlacements', () => {
       'tenant_tis_sig_day',
     ])
     expect(placements.every((p) => p.tag.includes('{{'))).toBe(true)
+  })
+
+  it('places TIS signature and date on page 18 coordinate anchors', () => {
+    const placements = buildWidgetTagPlacements([], false)
+    const tisSig = placements.find((p) => p.fieldName === 'sig_tenant_tis')
+    const tisDate = placements.find((p) => p.fieldName === 'tenant_tis_sig_day')
+    expect(tisSig?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
+    expect(tisDate?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
+    expect(tisSig?.y).toBeGreaterThan(400)
+    expect(tisSig?.y).toBeLessThan(420)
   })
 })
 
