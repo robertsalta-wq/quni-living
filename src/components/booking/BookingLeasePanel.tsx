@@ -40,6 +40,8 @@ export type BookingLeasePanelProps = {
   refreshKey?: number
   /** Listing bond_pending: show prepare/retry when accept-time generation failed. */
   allowPrepareRetry?: boolean
+  /** Listing landlord: reset DocuSeal round and regenerate PDF when draft/signing is wrong. */
+  allowRegenerateAgreement?: boolean
   className?: string
 }
 
@@ -51,6 +53,7 @@ export default function BookingLeasePanel({
   bookingId,
   refreshKey,
   allowPrepareRetry = false,
+  allowRegenerateAgreement = false,
   className,
 }: BookingLeasePanelProps) {
   const [data, setData] = useState<LeaseStateApiResult | null>(null)
@@ -58,6 +61,8 @@ export default function BookingLeasePanel({
   const [error, setError] = useState<string | null>(null)
   const [prepareBusy, setPrepareBusy] = useState(false)
   const [prepareError, setPrepareError] = useState<string | null>(null)
+  const [regenerateBusy, setRegenerateBusy] = useState(false)
+  const [regenerateError, setRegenerateError] = useState<string | null>(null)
   const autoPrepareAttempted = useRef(false)
 
   const fetchState = useCallback(async () => {
@@ -127,6 +132,69 @@ export default function BookingLeasePanel({
       setPrepareBusy(false)
     }
   }, [allowPrepareRetry, bookingId, fetchState])
+
+  const regenerateAgreement = useCallback(async () => {
+    if (!bookingId || !allowRegenerateAgreement) return
+    const confirmed = window.confirm(
+      'Regenerate the tenancy agreement?\n\nThis creates a new PDF and new DocuSeal signing links. Any previous signing links (including emails already sent) will no longer apply. Only use this if the current agreement is wrong or was generated before a fix.\n\nContinue?',
+    )
+    if (!confirmed) return
+
+    setRegenerateBusy(true)
+    setRegenerateError(null)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setRegenerateError('Sign in to regenerate the tenancy agreement.')
+        return
+      }
+      const res = await fetch(apiUrl('/api/booking-regenerate-listing-agreement'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId }),
+      })
+      const j = (await res.json()) as { error?: string; ok?: boolean }
+      if (!res.ok) {
+        setRegenerateError(
+          typeof j.error === 'string' ? j.error : 'Could not regenerate tenancy agreement.',
+        )
+        return
+      }
+      await fetchState()
+    } catch {
+      setRegenerateError('Could not regenerate tenancy agreement.')
+    } finally {
+      setRegenerateBusy(false)
+    }
+  }, [allowRegenerateAgreement, bookingId, fetchState])
+
+  const showRegenerateControl =
+    allowRegenerateAgreement &&
+    data?.viewer_role === 'landlord' &&
+    data.state !== 'none' &&
+    data.state !== 'fully_signed'
+
+  const regenerateButton = showRegenerateControl ? (
+    <div className="pt-2 border-t border-indigo-200/80 space-y-2">
+      <p className="text-xs text-indigo-900/80 leading-relaxed">
+        Wrong or blank agreement? Regenerate to issue a new PDF and signing links. Tell renters to use the new
+        links only.
+      </p>
+      {regenerateError && <p className="text-xs text-red-800">{regenerateError}</p>}
+      <button
+        type="button"
+        disabled={regenerateBusy || prepareBusy}
+        onClick={() => void regenerateAgreement()}
+        className="inline-flex items-center rounded-lg border border-amber-300 bg-white text-sm font-semibold text-amber-950 px-4 py-2 hover:bg-amber-50 disabled:opacity-60"
+      >
+        {regenerateBusy ? 'Regenerating…' : 'Regenerate agreement'}
+      </button>
+    </div>
+  ) : null
 
   useEffect(() => {
     if (!allowPrepareRetry || loading || prepareBusy || autoPrepareAttempted.current) return
@@ -323,6 +391,8 @@ export default function BookingLeasePanel({
           ) : null}
         </>
       )}
+
+      {regenerateButton}
     </div>
   )
 }
