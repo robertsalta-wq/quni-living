@@ -49,6 +49,8 @@ android/key.properties
 
 scripts/test-output.pdf
 scripts/*.pdf
+scripts/test-official-form-spike/
+scripts/test-official-form-docuseal-spike.mjs
 
 # One-off design-system snapshot for Claude Design (not live source)
 claude-design-bundle/*

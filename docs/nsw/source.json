@@ -1,0 +1,30 @@
+{
+  "form": "NSW FT6600 — Residential Tenancy Agreement",
+  "sourcePageUrl": "https://www.nsw.gov.au/housing-and-construction/rental-forms-surveys-and-data/resources/standard-residential-tenancy-agreement",
+  "downloadUrl": "https://www.nsw.gov.au/sites/default/files/noindex/2025-06/residential-tenancy-agreement-form.pdf",
+  "downloadDate": "2026-06-03",
+  "fairTradingLastUpdated": "18 December 2025",
+  "publicationDate": "19 May 2025",
+  "sha256": "593261c67e3a36605b8f6cbc0f9ac3bc05a67e95bed915f1f2c542ac3393e749",
+  "fileSizeBytes": 439794,
+  "pageCount": 18,
+  "acroFormFieldCount": 127,
+  "storedAs": "docs/nsw/residential-tenancy-agreement-form-2025-12.pdf",
+  "textVerification": {
+    "referenceFile": "docs/ft6600-2025-12-17.txt",
+    "phraseCoveragePct": 100,
+    "phrasesFound": [
+      "RIGHT TO OCCUPY THE PREMISES",
+      "Residential Tenancies Act 2010",
+      "COPY OF AGREEMENT",
+      "RENT INCREASES",
+      "IMPORTANT INFORMATION",
+      "Tenant Information Statement",
+      "FT6600",
+      "Standard form from 19 May 2025"
+    ],
+    "phrasesMissing": [],
+    "pdfContainsFt6600": true,
+    "pdfContainsDec2025": true
+  }
+}

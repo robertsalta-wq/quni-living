@@ -1,0 +1,24 @@
+{
+  "form": "QLD RTA Form 18a — General Tenancy Agreement",
+  "sourceUrl": "https://www.rta.qld.gov.au/sites/default/files/2021-06/Form-18a-General-tenancy-agreement.pdf",
+  "rtaVersionString": "v23 Sep25",
+  "downloadDate": "2026-06-03",
+  "sha256": "27bced98156ebcedfb021d2c7dd803e085afa1983fdccd38b66ad87a2700b015",
+  "fileSizeBytes": 422240,
+  "pageCount": 12,
+  "acroFormFieldCount": 135,
+  "storedAs": "docs/qld/form-18a-general-tenancy-agreement-v23-sep25.pdf",
+  "textVerification": {
+    "referenceFile": "docs/form18a-v23-sep25-extracted.txt",
+    "phraseCoveragePct": 100,
+    "phrasesFound": [
+      "Part 2 Standard Terms",
+      "Part 1 Tenancy information",
+      "General tenancy agreement (Form 18a)",
+      "Residential Tenancies and Rooming Accommodation Act 2008",
+      "Entry condition report",
+      "v23 Sep25"
+    ],
+    "phrasesMissing": []
+  }
+}
