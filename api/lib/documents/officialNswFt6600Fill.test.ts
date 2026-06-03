@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyOfficialNswFt6600ScheduleFill,
   loadOfficialNswFt6600Template,
+  prepareOfficialNswFt6600ScheduleForFlatten,
 } from './officialNswFt6600Fill.js'
 
 // Sample shape matches scripts/agreement-sample-fixtures.mjs nswT2AgreementSampleProps
@@ -86,12 +87,24 @@ describe('applyOfficialNswFt6600ScheduleFill', () => {
     expect(readTextField(form, 'Text field 1.3')).toBe('Alex Rental Provider')
     expect(readTextField(form, 'Text field 1.1')).not.toBe(SAMPLE_PROPS.landlord.fullName)
 
-    expect(readTextField(form, 'Text field 2.4')).toBe('Jordan Tenant')
-    expect(readTextField(form, 'Text field 2.5')).toBe('Casey Co-Renter')
-    expect(readTextField(form, 'Text field 2.1')).toBe('')
+    expect(readTextField(form, 'Text field 18.4')).toBe('Jordan Tenant')
+    expect(readTextField(form, 'Text field 2.6')).toBe('Casey Co-Renter')
+    expect(readTextField(form, 'Text field 2.4')).toBe('')
+    expect(readTextField(form, 'Text field 2.5')).toBe('')
 
     expect(readTextField(form, 'Text field 2.26')).toContain('Brunswick Street')
     expect(readTextField(form, 'Text field 3.9')).toBe('')
     expect(readTextField(form, 'Text field 3.7')).toContain('420')
+  })
+
+  it('burn-in leaves schedule text in PDF bytes after flatten', async () => {
+    const doc = await loadOfficialNswFt6600Template()
+    await prepareOfficialNswFt6600ScheduleForFlatten(doc, SAMPLE_PROPS)
+    doc.getForm().flatten()
+    const bytes = Buffer.from(await doc.save({ useObjectStreams: false }))
+    const latin = bytes.toString('latin1')
+    expect(latin).toContain('Alex Rental Provider')
+    expect(latin).toContain('Jordan Tenant')
+    expect(latin).toContain('Brunswick Street')
   })
 })

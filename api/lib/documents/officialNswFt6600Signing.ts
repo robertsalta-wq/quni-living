@@ -5,8 +5,8 @@
 import { PDFDocument, StandardFonts, rgb, type PDFDocument as PDFDoc, type PDFFont, type RGB } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import {
-  applyOfficialNswFt6600ScheduleFill,
   loadOfficialNswFt6600Template,
+  prepareOfficialNswFt6600ScheduleForFlatten,
   type OfficialNswFt6600FillResult,
 } from './officialNswFt6600Fill.js'
 
@@ -239,8 +239,8 @@ export async function buildOfficialNswFt6600PdfWithSigning(
   options: { includeCoTenantSignatureTags: boolean },
 ): Promise<OfficialNswFt6600WithSigningResult> {
   const doc = await loadOfficialNswFt6600Template()
-  const { filledFieldNames } = applyOfficialNswFt6600ScheduleFill(doc, props)
   const signatureWidgetsBeforeFlatten = collectOfficialNswFt6600SignatureWidgets(doc)
+  const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
 
   doc.getForm().flatten()
 

@@ -8,7 +8,8 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { burnInOfficialNswFt6600ScheduleFields } from './officialNswFt6600BurnIn.js'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 
 export const OFFICIAL_NSW_FT6600_TEMPLATE_REL = join(
@@ -179,11 +180,36 @@ export type OfficialNswFt6600FillResult = {
   acroFormFieldCountAfterFlatten: number
 }
 
+export type OfficialNswFt6600ScheduleFillResult = {
+  filledFieldNames: string[]
+  assignments: Array<[string, string]>
+}
+
+/**
+ * Prepare filled schedule: set AcroForm values, update appearances, burn text into page content.
+ * Call before flatten in the signing pipeline.
+ */
+export async function prepareOfficialNswFt6600ScheduleForFlatten(
+  doc: PDFDocument,
+  props: NswResidentialTenancyAgreementProps,
+): Promise<OfficialNswFt6600ScheduleFillResult> {
+  const { filledFieldNames, assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
+  const form = doc.getForm()
+  const font = await doc.embedFont(StandardFonts.Helvetica)
+  try {
+    form.updateFieldAppearances(font)
+  } catch {
+    /* some revisions omit default appearances */
+  }
+  burnInOfficialNswFt6600ScheduleFields(doc, assignments, font)
+  return { filledFieldNames, assignments }
+}
+
 /** Fill schedule AcroForm fields only (caller flattens / tags). */
 export function applyOfficialNswFt6600ScheduleFill(
   doc: PDFDocument,
   props: NswResidentialTenancyAgreementProps,
-): { filledFieldNames: string[] } {
+): OfficialNswFt6600ScheduleFillResult {
   const form = doc.getForm()
 
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
@@ -221,12 +247,11 @@ export function applyOfficialNswFt6600ScheduleFill(
   if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
   if (landlord.companyName) pushText('Text field 1.14', landlord.companyName)
 
-  // § Tenants
-  pushText('Text field 2.4', tenant.fullName)
-  pushText('Text field 2.5', props.additionalTenantNames[0])
-  pushText('Text field 2.6', props.additionalTenantNames[1])
-  const otherTenants = props.additionalTenantNames.slice(2).map((s) => s?.trim()).filter(Boolean)
-  if (otherTenants.length > 0) pushText('Text field 2.7', otherTenants.join('; '))
+  // § Tenants — 2.4/2.5 at y≈680 are corporation suburb/state/postcode on the Dec 2025 PDF, not tenant names.
+  pushText('Text field 18.4', tenant.fullName)
+  pushText('Text field 2.6', props.additionalTenantNames[0])
+  const extraTenants = props.additionalTenantNames.slice(1).map((s) => s?.trim()).filter(Boolean)
+  if (extraTenants.length > 0) pushText('Text field 2.7', extraTenants.join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
@@ -355,7 +380,7 @@ export function applyOfficialNswFt6600ScheduleFill(
   }
 
   const filledFieldNames = assignments.map(([n]) => n)
-  return { filledFieldNames }
+  return { filledFieldNames, assignments }
 }
 
 /**
@@ -365,7 +390,7 @@ export async function fillOfficialNswFt6600Pdf(
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600FillResult> {
   const doc = await loadOfficialNswFt6600Template()
-  const { filledFieldNames } = applyOfficialNswFt6600ScheduleFill(doc, props)
+  const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
 
   doc.getForm().flatten()
 
