@@ -25,8 +25,19 @@ export async function loadOfficialNswFt6600Template(): Promise<PDFDocument> {
   return PDFDocument.load(templateBytes, { ignoreEncryption: true })
 }
 
-function formatMoney(n: number): string {
-  return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
+/** Narrow rent/bond boxes on the official PDF (no currency symbol). */
+function formatPlainMoney(n: number): string {
+  return n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+/** Strip em/en dashes and placeholder dashes from values shown on the prescribed form. */
+export function sanitizeDisplayText(value: string | null | undefined): string {
+  if (typeof value !== 'string') return ''
+  return value
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\s*—\s*/g, ' ')
+    .trim()
 }
 
 function formatAuDate(iso: string): string {
@@ -131,6 +142,9 @@ function termCheckState(
   if (/\b6\s*months?\b/.test(d)) {
     return { m6: true, m12: false, y2: false, y3: false, y5: false, periodic: false, other: false, otherText: null }
   }
+  if (/\bflexible\b/i.test(d)) {
+    return { m6: false, m12: false, y2: false, y3: false, y5: false, periodic: true, other: false, otherText: null }
+  }
   if (endDate && startDate) {
     const start = new Date(startDate.slice(0, 10))
     const end = new Date(endDate.slice(0, 10))
@@ -216,9 +230,6 @@ export function applyOfficialNswFt6600ScheduleFill(
   const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
   const checks = termCheckState(term.periodic, term.leaseLengthDescription, term.startDate, term.endDate)
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
-  const weeklyRentDisplay = formatMoney(rent.weeklyRent)
-  const bondDisplay =
-    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : null
   const inclusions = props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean).join('; ')
   const maxOcc =
     props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted)
@@ -228,114 +239,114 @@ export function applyOfficialNswFt6600ScheduleFill(
   const assignments: Array<[string, string]> = []
 
   const pushText = (field: string, value: string | null | undefined) => {
-    const v = typeof value === 'string' ? value.trim() : ''
+    const v = sanitizeDisplayText(value)
     if (!v) return
     assignments.push([field, v])
   }
 
-  // § Agreement header — first slot is “made on” date in the printed form; tooltips call it address line 1.
+  const landlordName = sanitizeDisplayText(landlord.fullName)
+  const landlordPhone = sanitizeDisplayText(landlord.phone)
+
+  // § Agreement header (PDF page 0) — field-desc-pairs.json
   pushText('Text field 1.1', madeOn)
   pushText('Text field 1.2', atSuburb)
-  pushText('Text field 1.3', landlord.fullName)
-  pushText('Text field 1.5', landlord.phone)
-  pushText('Text field 1.8', landlord.addressLine)
+  pushText('Text field 1.3', landlordName)
+  pushText('Text field 1.5', landlordPhone)
+  if (!landlordAgent && landlordPhone) {
+    pushText('Text field 1.7', landlordPhone)
+  }
+  if (landlordAddr.street) pushText('Text field 1.8', landlordAddr.street)
+  else pushText('Text field 1.8', sanitizeDisplayText(landlord.addressLine))
   if (landlordAddr.suburb) pushText('Text field 1.11', landlordAddr.suburb)
   if (landlordAddr.state) pushText('Text field 1.12', landlordAddr.state)
   if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
-  if (landlord.companyName) pushText('Text field 1.14', landlord.companyName)
+  if (landlord.companyName) pushText('Text field 1.14', sanitizeDisplayText(landlord.addressLine))
 
-  // § Tenants (PDF page 1) — 2.3–2.5 are corporation suburb/state/postcode; names use 2.6/2.7.
-  pushText('Text field 2.6', tenant.fullName)
-  const coTenants = props.additionalTenantNames.map((s) => s?.trim()).filter(Boolean)
-  if (coTenants.length > 0) pushText('Text field 2.7', coTenants.join('; '))
+  // § Tenants (PDF page 1) — 2.4/2.5 tenant names; 2.6/2.7 are tenant 3 / other tenants.
+  pushText('Text field 2.4', sanitizeDisplayText(tenant.fullName))
+  const coTenants = props.additionalTenantNames.map((s) => sanitizeDisplayText(s)).filter(Boolean)
+  if (coTenants[0]) pushText('Text field 2.5', coTenants[0])
+  if (coTenants.length > 1) pushText('Text field 2.7', coTenants.slice(1).join('; '))
 
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
     if (tenantService.street) pushText('Text field 2.8', tenantService.street)
-    else pushText('Text field 2.8', tenant.addressForServiceLine)
+    else pushText('Text field 2.8', sanitizeDisplayText(tenant.addressForServiceLine))
     if (tenantService.suburb) pushText('Text field 2.9', tenantService.suburb)
     if (tenantService.state) pushText('Text field 2.10', tenantService.state)
     if (tenantService.postcode) pushText('Text field 2.11', tenantService.postcode)
-    pushText('Text field 2.12', tenant.phone)
-    if (tenant.email) pushText('Text field 2.13', tenant.email)
-  } else {
-    pushText('Text field 2.8', `Phone: ${tenant.phone} · Email: ${tenant.email}`)
   }
+
+  const tenantContact = [
+    tenant.phone ? `Phone: ${sanitizeDisplayText(tenant.phone)}` : '',
+    tenant.email ? `Email: ${sanitizeDisplayText(tenant.email)}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  if (tenantContact) pushText('Text field 2.12', tenantContact)
 
   if (landlordAgent) {
     const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
-    pushText('Text field 2.13', landlordAgent.name)
-    pushText('Text field 2.14', landlordAgent.businessAddress)
+    pushText('Text field 2.13', sanitizeDisplayText(landlordAgent.name))
+    pushText('Text field 2.14', sanitizeDisplayText(landlordAgent.businessAddress))
     if (agentAddr.suburb) pushText('Text field 2.15', agentAddr.suburb)
     if (agentAddr.state) pushText('Text field 2.16', agentAddr.state)
     if (agentAddr.postcode) pushText('Text field 2.17', agentAddr.postcode)
     const agentContact = [
-      landlordAgent.phone,
-      landlordAgent.email ? `Email: ${landlordAgent.email}` : '',
+      sanitizeDisplayText(landlordAgent.phone),
+      landlordAgent.email ? `Email: ${sanitizeDisplayText(landlordAgent.email)}` : '',
     ]
       .filter(Boolean)
       .join(' · ')
     pushText('Text field 2.18', agentContact)
   }
 
+  pushText('Text field 2.23', formatAuDate(term.startDate))
   if (!term.periodic && term.endDate) {
     pushText('Text field 2.25', formatAuDate(term.endDate))
   }
 
-  pushText('Text field 2.26', premises.addressLine)
+  pushText('Text field 2.26', sanitizeDisplayText(premises.addressLine))
 
-  // § Rent — frequency text fields sit beside “Paid weekly/fortnightly”; amount uses 3.7 when weekly.
+  // § Rent (PDF page 2)
   const freq = rent.rentFrequency ?? 'weekly'
+  const rentAmountPlain = formatPlainMoney(rent.weeklyRent)
   if (freq === 'weekly') {
-    pushText('Text field 3.7', weeklyRentDisplay)
+    pushText('Text field 3.7', rentAmountPlain)
+    setCheckSafe(form, 'Check Box 3.3', true)
   } else if (freq === 'fortnightly') {
-    pushText('Text field 3.9', weeklyRentDisplay)
+    pushText('Text field 3.9', rentAmountPlain)
+  } else if (checks.other && checks.otherText) {
+    pushText('Text field 3.10', checks.otherText)
   } else {
-    pushText('Text field 3.10', weeklyRentDisplay)
+    pushText('Text field 3.10', rentAmountPlain)
   }
 
-  const paymentMethod = rent.paymentMethod.trim()
+  const paymentMethod = sanitizeDisplayText(rent.paymentMethod)
   const paymentLower = paymentMethod.toLowerCase()
-  const paymentLine = [
-    paymentMethod,
-    `Day rent due: ${rentWeekday}`,
-    `First payment: ${formatAuDate(term.startDate)}`,
-  ]
-    .filter(Boolean)
-    .join(' · ')
-  // 3.13 is ~98px wide (wraps badly); 3.11/3.12 are full-width payment detail lines.
   if (/\bcentrepay\b/.test(paymentLower)) {
-    pushText('Text field 3.12', paymentLine)
+    pushText('Text field 3.12', paymentMethod)
   } else {
-    pushText('Text field 3.11', paymentLine)
+    pushText('Text field 3.11', paymentMethod)
+    setCheckSafe(form, 'Check Box 3.6', true)
   }
+
+  pushText(
+    'Text field 3.13',
+    `Day due: ${rentWeekday}; First payment: ${formatAuDate(term.startDate)}`,
+  )
 
   if (maxOcc) pushText('Text field 3.17', maxOcc)
 
-  const electrician = urgentRepairsTradespeople.electrician?.trim()
-  if (electrician) {
-    const phoneMatch = electrician.match(/(\+?\d[\d\s-]{7,}\d)/)
-    if (phoneMatch) {
-      pushText('Text field 3.18', electrician.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText('Text field 3.19', phoneMatch[0].trim())
-    } else {
-      pushText('Text field 3.18', electrician)
-    }
-  }
-
-  const plumber = urgentRepairsTradespeople.plumber?.trim()
-  if (plumber) {
-    const phoneMatch = plumber.match(/(\+?\d[\d\s-]{7,}\d)/)
-    if (phoneMatch) {
-      pushText('Text field 3.23', plumber.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
-      pushText('Text field 4.0', phoneMatch[0].trim())
-    } else {
-      pushText('Text field 3.23', plumber)
-    }
-  }
+  const tradeName = sanitizeDisplayText(urgentRepairsTradespeople.electrician ?? landlordName)
+  const tradePhone = landlordPhone
+  pushText('Text field 3.18', tradeName)
+  if (tradePhone) pushText('Text field 3.19', tradePhone)
+  pushText('Text field 3.23', tradeName)
+  if (tradePhone) pushText('Text field 4.0', tradePhone)
 
   if (urgentRepairsTradespeople.other) {
-    const other = urgentRepairsTradespeople.other.trim()
+    const other = sanitizeDisplayText(urgentRepairsTradespeople.other)
     const phoneMatch = other.match(/(\+?\d[\d\s-]{7,}\d)/)
     if (phoneMatch) {
       pushText('Text field 4.4', other.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
@@ -343,18 +354,18 @@ export function applyOfficialNswFt6600ScheduleFill(
     } else {
       pushText('Text field 4.4', other)
     }
-  }
-
-  // Inclusions (Check Box 3.1 is Btn-only); note in “other repairs” area only when no other repairs text.
-  if (inclusions && !urgentRepairsTradespeople.other) {
+  } else if (inclusions) {
     pushText('Text field 4.4', `Premises include: ${inclusions}`)
   }
 
-  // § Bond (PDF page 3) — amount in wide 4.7; recipient name in 4.8.
-  if (bondDisplay) {
-    pushText('Text field 4.7', bondDisplay)
-    pushText('Text field 4.8', landlord.fullName)
+  // § Bond (PDF page 3) — 4.7 amount, 4.8 paid to landlord.
+  if (bond.amount != null && Number.isFinite(bond.amount)) {
+    pushText('Text field 4.7', formatPlainMoney(bond.amount))
+    pushText('Text field 4.8', landlordName)
   }
+
+  const billsIncluded = props.billsIncluded === true
+  pushText('Text field 4.18', billsIncluded ? 'No' : 'Yes')
 
   setCheckSafe(form, 'Check Box 3.8', checks.m6)
   setCheckSafe(form, 'Check Box 3.14', checks.m12)
@@ -367,6 +378,11 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheckSafe(form, 'Check Box 4.1', false)
   setCheckSafe(form, 'Check Box 4.2', false)
   setCheckSafe(form, 'Check Box 4.3', true)
+  setCheckSafe(form, 'Check Box 4.8', false)
+  setCheckSafe(form, 'Check Box 4.9', false)
+  setCheckSafe(form, 'Check Box 4.10', false)
+  setCheckSafe(form, 'Check Box 4.11', false)
+  setCheckSafe(form, 'Check Box 4.12', false)
   setCheckSafe(form, 'Check Box 4.13', false)
   setCheckSafe(form, 'Check Box 4.19', false)
   setCheckSafe(form, 'Check Box 4.20', electronicService.landlordConsentsToEmailService)
@@ -375,10 +391,10 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheckSafe(form, 'Check Box 5.1', electronicService.tenantConsentsToEmailService)
 
   if (electronicService.landlordConsentsToEmailService) {
-    pushText('Text field 5.5', electronicService.landlordEmail)
+    pushText('Text field 5.5', sanitizeDisplayText(electronicService.landlordEmail))
   }
   if (electronicService.tenantConsentsToEmailService) {
-    pushText('Text field 5.8', electronicService.tenantEmail)
+    pushText('Text field 5.8', sanitizeDisplayText(electronicService.tenantEmail))
   }
 
   // Text is set on AcroForm fields in prepareOfficialNswFt6600ScheduleForFlatten (then flatten bakes values).

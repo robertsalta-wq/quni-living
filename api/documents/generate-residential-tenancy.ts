@@ -34,6 +34,7 @@ import {
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../lib/platformConfig.js'
+import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../src/lib/propertyFeatureSignals.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -76,7 +77,18 @@ function landlordAddressLine(lp: Record<string, unknown>): string {
     typeof lp.state === 'string' ? lp.state.trim() : '',
     typeof lp.postcode === 'string' ? lp.postcode.trim() : '',
   ].filter(Boolean)
-  return parts.join(', ') || '—'
+  return parts.join(', ')
+}
+
+function studentAddressForServiceLine(sp: Record<string, unknown>): string | null {
+  const parts = [
+    typeof sp.workplace_address === 'string' ? sp.workplace_address.trim() : '',
+    typeof sp.workplace_suburb === 'string' ? sp.workplace_suburb.trim() : '',
+    typeof sp.workplace_state === 'string' ? sp.workplace_state.trim() : '',
+    typeof sp.workplace_postcode === 'string' ? sp.workplace_postcode.trim() : '',
+  ].filter(Boolean)
+  if (parts.length === 0) return null
+  return parts.join(', ')
 }
 
 export default async function handler(req: any, res: any) {
@@ -165,7 +177,10 @@ export default async function handler(req: any, res: any) {
         bond,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        property_features (
+          features ( name )
+        )
       )
     `,
     )
@@ -206,7 +221,7 @@ export default async function handler(req: any, res: any) {
   const { data: sp, error: spErr } = await admin
     .from('student_profiles')
     .select(
-      'id, user_id, full_name, first_name, last_name, email, phone, date_of_birth, emergency_contact_name, emergency_contact_phone',
+      'id, user_id, full_name, first_name, last_name, email, phone, date_of_birth, emergency_contact_name, emergency_contact_phone, workplace_address, workplace_suburb, workplace_state, workplace_postcode',
     )
     .eq('id', booking.student_id)
     .maybeSingle()
@@ -357,11 +372,7 @@ export default async function handler(req: any, res: any) {
   const landlordFullName =
     [lp.first_name, lp.last_name].filter(Boolean).join(' ').trim() ||
     (typeof lp.full_name === 'string' ? lp.full_name : 'Landlord')
-  const landlordPhoneRaw = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '—'
-  const urgentTradeLine =
-    landlordPhoneRaw && landlordPhoneRaw !== '—'
-      ? `${landlordFullName} — ${landlordPhoneRaw}`
-      : landlordFullName
+  const landlordPhoneRaw = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : ''
 
   const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
   const { additionalTenantNames, maxOccupantsPermitted, specialConditions: coTenantSpecialConditions } =
@@ -373,7 +384,7 @@ export default async function handler(req: any, res: any) {
     fullName: landlordFullName,
     companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
     addressLine: landlordAddressLine(lpRec),
-    email: typeof lp.email === 'string' ? lp.email : '—',
+    email: typeof lp.email === 'string' ? lp.email.trim() : '',
     phone: landlordPhoneRaw,
   }
 
@@ -387,17 +398,20 @@ export default async function handler(req: any, res: any) {
     fullName:
       [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
       (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
-    email: typeof sp.email === 'string' ? sp.email : '—',
-    phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '—',
+    email: typeof sp.email === 'string' ? sp.email.trim() : '',
+    phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '',
     dateOfBirth:
       typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
     emergencyContactName: emergencyContactNameRaw ? emergencyContactNameRaw : null,
     emergencyContactPhone: emergencyContactPhoneRaw ? emergencyContactPhoneRaw : null,
-    addressForServiceLine: null,
+    addressForServiceLine: studentAddressForServiceLine(spRec),
   }
 
+  const featureNames = featureNamesFromPropertyRow(prop as { property_features?: unknown })
+  const billsIncluded = propertyBillsIncluded(featureNames)
+
   const sharedPremises = {
-    addressLine: propertyAddressLine(prop) || '—',
+    addressLine: propertyAddressLine(prop),
     propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
     roomType: typeof prop.room_type === 'string' ? prop.room_type : null,
     furnished: typeof prop.furnished === 'boolean' ? prop.furnished : null,
@@ -420,8 +434,14 @@ export default async function handler(req: any, res: any) {
     paymentMethod: rentPaymentMethodLine,
   }
 
-  const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '—'
-  const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '—'
+  const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : ''
+  const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : ''
+
+  const urgentRepairsLandlord = {
+    electrician: landlordFullName,
+    plumber: landlordFullName,
+    other: null as string | null,
+  }
 
   const rtaProps: NswResidentialTenancyAgreementProps = {
     documentId,
@@ -441,11 +461,8 @@ export default async function handler(req: any, res: any) {
     },
     bond: { amount: bondNum },
     landlordAgent: null,
-    urgentRepairsTradespeople: {
-      electrician: urgentTradeLine,
-      plumber: urgentTradeLine,
-      other: null,
-    },
+    urgentRepairsTradespeople: urgentRepairsLandlord,
+    billsIncluded,
     electronicService: {
       landlordEmail: landlordEmailForService,
       tenantEmail: tenantEmailForService,

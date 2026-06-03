@@ -133,6 +133,8 @@ export type NswResidentialTenancyAgreementProps = {
   landlordAgent: NswRtaLandlordAgent | null
   urgentRepairsTradespeople: NswRtaUrgentRepairsContacts
   electronicService: NswRtaElectronicService
+  /** Listing has bills/utilities included — FT6600 water usage schedule. */
+  billsIncluded?: boolean | null
   specialConditions: string[]
   bookingNotes: string | null
 }

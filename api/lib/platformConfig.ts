@@ -197,7 +197,7 @@ export async function fetchBankDetailsForRta(
 export function buildRtaRentPaymentMethodLine(details: BankDetailsForRta): string {
   const bsb = formatBsbDisplay(details.bsb)
   return (
-    `Direct deposit — Account name: ${details.accountName}; BSB: ${bsb}; Account number: ${details.accountNumber}. ` +
+    `Direct deposit - Account name: ${details.accountName}; BSB: ${bsb}; Account number: ${details.accountNumber}. ` +
     'Tenants may also pay recurring rent via the Quni Living platform (quni.com.au).'
   )
 }

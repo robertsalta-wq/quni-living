@@ -64,6 +64,7 @@ const SAMPLE_PROPS = {
     landlordConsentsToEmailService: true,
     tenantConsentsToEmailService: true,
   },
+  billsIncluded: true,
   specialConditions: [],
   bookingNotes: null,
 }
@@ -77,12 +78,13 @@ describe('applyOfficialNswFt6600ScheduleFill', () => {
 
       expect(byField['Text field 1.1']).toBe('02/06/2026')
       expect(byField['Text field 1.3']).toBe('Alex Rental Provider')
-      expect(byField['Text field 2.6']).toBe('Jordan Tenant')
-      expect(byField['Text field 2.7']).toBe('Casey Co-Renter')
-      expect(byField['Text field 4.7']).toContain('1,680')
+      expect(byField['Text field 2.4']).toBe('Jordan Tenant')
+      expect(byField['Text field 2.5']).toBe('Casey Co-Renter')
+      expect(byField['Text field 4.7']).toBe('1,680.00')
       expect(byField['Text field 5.8']).toBe('jordan.tenant@example.com')
       expect(byField['Text field 3.11']).toContain('Direct deposit')
-      expect(byField['Text field 3.13']).toBeUndefined()
+      expect(byField['Text field 3.13']).toContain('Day due:')
+      expect(byField['Text field 4.18']).toBe('No')
     })
   })
 
@@ -92,7 +94,7 @@ describe('applyOfficialNswFt6600ScheduleFill', () => {
     const form = doc.getForm()
     expect(form.getTextField('Text field 1.1').getText()).toBe('02/06/2026')
     expect(form.getTextField('Text field 1.3').getText()).toBe('Alex Rental Provider')
-    expect(form.getTextField('Text field 2.6').getText()).toBe('Jordan Tenant')
-    expect(form.getTextField('Text field 4.7').getText()).toContain('1,680')
+    expect(form.getTextField('Text field 2.4').getText()).toBe('Jordan Tenant')
+    expect(form.getTextField('Text field 4.7').getText()).toBe('1,680.00')
   })
 })
