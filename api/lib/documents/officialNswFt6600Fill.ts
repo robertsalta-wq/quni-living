@@ -4,6 +4,7 @@
  *
  * Template: docs/nsw/residential-tenancy-agreement-form-2025-12.pdf
  * Field map: docs/nsw/ft6600-acroform-mapping.md
+ * Authoritative hints: scripts/test-official-form-spike/field-desc-pairs.json
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -37,6 +38,13 @@ function formatAuDate(iso: string): string {
   return `${day}/${m}/${y}`
 }
 
+/** Matches react-pdf `agreementMadeOnFromGeneratedAt`. */
+function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
+  const idx = generatedAt.indexOf(',')
+  if (idx > 0) return generatedAt.slice(0, idx).trim()
+  return generatedAt.trim()
+}
+
 function suburbFromAddressLine(addressLine: string): string {
   const t = addressLine.trim()
   if (!t || t === '—') return ''
@@ -45,6 +53,35 @@ function suburbFromAddressLine(addressLine: string): string {
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? ''
   if (parts.length >= 2) return parts[parts.length - 2] ?? ''
   return parts[0] ?? ''
+}
+
+type AuAddressParts = {
+  street: string
+  suburb: string
+  state: string
+  postcode: string
+}
+
+function parseAustralianAddressLine(addressLine: string): AuAddressParts {
+  const t = addressLine.trim()
+  if (!t) return { street: '', suburb: '', state: '', postcode: '' }
+  const parts = t.split(',').map((s) => s.trim()).filter(Boolean)
+  const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p))
+  if (stateIdx >= 0) {
+    const state = parts[stateIdx] ?? ''
+    const suburb = stateIdx > 0 ? (parts[stateIdx - 1] ?? '') : ''
+    const after = parts[stateIdx + 1]
+    const postcode = after && /^\d{4}$/.test(after) ? after : ''
+    const street = parts.slice(0, Math.max(0, stateIdx - 1)).join(', ')
+    return { street, suburb, state, postcode }
+  }
+  if (parts.length >= 3) {
+    const postcode = /^\d{4}$/.test(parts[parts.length - 1] ?? '') ? parts[parts.length - 1]! : ''
+    const suburb = parts[parts.length - 2] ?? ''
+    const street = parts.slice(0, postcode ? -2 : -1).join(', ')
+    return { street, suburb, state: postcode ? '' : (parts[parts.length - 1] ?? ''), postcode }
+  }
+  return { street: t, suburb: '', state: '', postcode: '' }
 }
 
 function rentDueWeekdayFromCommencement(isoDate: string): string {
@@ -151,7 +188,9 @@ export function applyOfficialNswFt6600ScheduleFill(
 
   const { landlord, tenant, premises, term, rent, bond, landlordAgent, urgentRepairsTradespeople, electronicService } =
     props
+  const madeOn = agreementMadeOnFromGeneratedAt(props.generatedAt)
   const atSuburb = suburbFromAddressLine(premises.addressLine)
+  const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
   const checks = termCheckState(term.periodic, term.leaseLengthDescription, term.startDate, term.endDate)
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
   const weeklyRentDisplay = formatMoney(rent.weeklyRent)
@@ -171,23 +210,41 @@ export function applyOfficialNswFt6600ScheduleFill(
     assignments.push([field, v])
   }
 
-  pushText('Text field 1.1', landlord.fullName)
+  // § Agreement header — first slot is “made on” date in the printed form; tooltips call it address line 1.
+  pushText('Text field 1.1', madeOn)
   pushText('Text field 1.2', atSuburb)
+  pushText('Text field 1.3', landlord.fullName)
   pushText('Text field 1.5', landlord.phone)
   pushText('Text field 1.8', landlord.addressLine)
+  if (landlordAddr.suburb) pushText('Text field 1.11', landlordAddr.suburb)
+  if (landlordAddr.state) pushText('Text field 1.12', landlordAddr.state)
+  if (landlordAddr.postcode) pushText('Text field 1.13', landlordAddr.postcode)
+  if (landlord.companyName) pushText('Text field 1.14', landlord.companyName)
 
-  pushText('Text field 2.1', tenant.fullName)
-  pushText('Text field 2.4', props.additionalTenantNames[0])
-  pushText('Text field 2.5', props.additionalTenantNames[1])
-  pushText('Text field 2.6', props.additionalTenantNames[2])
+  // § Tenants
+  pushText('Text field 2.4', tenant.fullName)
+  pushText('Text field 2.5', props.additionalTenantNames[0])
+  pushText('Text field 2.6', props.additionalTenantNames[1])
+  const otherTenants = props.additionalTenantNames.slice(2).map((s) => s?.trim()).filter(Boolean)
+  if (otherTenants.length > 0) pushText('Text field 2.7', otherTenants.join('; '))
+
   if (tenant.addressForServiceLine) {
-    pushText('Text field 2.8', tenant.addressForServiceLine)
+    const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
+    if (tenantService.street) pushText('Text field 2.8', tenantService.street)
+    else pushText('Text field 2.8', tenant.addressForServiceLine)
+    if (tenantService.suburb) pushText('Text field 2.9', tenantService.suburb)
+    if (tenantService.state) pushText('Text field 2.10', tenantService.state)
+    if (tenantService.postcode) pushText('Text field 2.11', tenantService.postcode)
   }
   pushText('Text field 2.12', `Phone: ${tenant.phone} · Email: ${tenant.email}`)
 
   if (landlordAgent) {
+    const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
     pushText('Text field 2.13', landlordAgent.name)
     pushText('Text field 2.14', landlordAgent.businessAddress)
+    if (agentAddr.suburb) pushText('Text field 2.15', agentAddr.suburb)
+    if (agentAddr.state) pushText('Text field 2.16', agentAddr.state)
+    if (agentAddr.postcode) pushText('Text field 2.17', agentAddr.postcode)
     const agentContact = [
       landlordAgent.phone,
       landlordAgent.email ? `Email: ${landlordAgent.email}` : '',
@@ -202,21 +259,78 @@ export function applyOfficialNswFt6600ScheduleFill(
   }
 
   pushText('Text field 2.26', premises.addressLine)
-  pushText('Text field 3.9', premises.addressLine)
-  if (inclusions) pushText('Text field 4.0', inclusions)
-  else pushText('Text field 4.0', premises.addressLine)
 
-  pushText('Text field 3.7', weeklyRentDisplay)
-  pushText('Text field 3.11', rentWeekday)
-  pushText('Text field 3.12', formatAuDate(term.startDate))
-  pushText('Text field 3.13', rent.paymentMethod)
+  // § Rent — frequency text fields sit beside “Paid weekly/fortnightly”; amount uses 3.7 when weekly.
+  const freq = rent.rentFrequency ?? 'weekly'
+  if (freq === 'weekly') {
+    pushText('Text field 3.7', weeklyRentDisplay)
+  } else if (freq === 'fortnightly') {
+    pushText('Text field 3.9', weeklyRentDisplay)
+  } else {
+    pushText('Text field 3.10', weeklyRentDisplay)
+  }
+
+  const paymentMethod = rent.paymentMethod.trim()
+  const paymentLower = paymentMethod.toLowerCase()
+  const paymentLine = [
+    paymentMethod,
+    `Day rent due: ${rentWeekday}`,
+    `First payment: ${formatAuDate(term.startDate)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  if (/\bcentrepay\b/.test(paymentLower)) {
+    pushText('Text field 3.12', paymentLine)
+  } else if (/\b(bpay|bank transfer|direct debit|electronic)\b/.test(paymentLower)) {
+    pushText('Text field 3.11', paymentLine)
+  } else {
+    pushText('Text field 3.13', paymentLine)
+  }
 
   if (maxOcc) pushText('Text field 3.17', maxOcc)
-  if (urgentRepairsTradespeople.electrician) pushText('Text field 3.18', urgentRepairsTradespeople.electrician)
-  if (urgentRepairsTradespeople.plumber) pushText('Text field 3.23', urgentRepairsTradespeople.plumber)
-  if (urgentRepairsTradespeople.other) pushText('Text field 4.4', urgentRepairsTradespeople.other)
 
-  if (bondDisplay) pushText('Text field 4.8', bondDisplay)
+  const electrician = urgentRepairsTradespeople.electrician?.trim()
+  if (electrician) {
+    const phoneMatch = electrician.match(/(\+?\d[\d\s-]{7,}\d)/)
+    if (phoneMatch) {
+      pushText('Text field 3.18', electrician.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText('Text field 3.19', phoneMatch[0].trim())
+    } else {
+      pushText('Text field 3.18', electrician)
+    }
+  }
+
+  const plumber = urgentRepairsTradespeople.plumber?.trim()
+  if (plumber) {
+    const phoneMatch = plumber.match(/(\+?\d[\d\s-]{7,}\d)/)
+    if (phoneMatch) {
+      pushText('Text field 3.23', plumber.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText('Text field 4.0', phoneMatch[0].trim())
+    } else {
+      pushText('Text field 3.23', plumber)
+    }
+  }
+
+  if (urgentRepairsTradespeople.other) {
+    const other = urgentRepairsTradespeople.other.trim()
+    const phoneMatch = other.match(/(\+?\d[\d\s-]{7,}\d)/)
+    if (phoneMatch) {
+      pushText('Text field 4.4', other.replace(phoneMatch[0], '').replace(/[-–]\s*$/, '').trim())
+      pushText('Text field 4.5', phoneMatch[0].trim())
+    } else {
+      pushText('Text field 4.4', other)
+    }
+  }
+
+  // Inclusions (Check Box 3.1 is Btn-only); note in “other repairs” area only when no other repairs text.
+  if (inclusions && !urgentRepairsTradespeople.other) {
+    pushText('Text field 4.4', `Premises include: ${inclusions}`)
+  }
+
+  // § Bond recipient lines (amount has no text AcroForm — same as react-pdf narrative GAP on official PDF).
+  if (bondDisplay) {
+    pushText('Text field 4.8', landlord.fullName)
+  }
 
   setCheckSafe(form, 'Check Box 3.8', checks.m6)
   setCheckSafe(form, 'Check Box 3.14', checks.m12)
@@ -226,21 +340,15 @@ export function applyOfficialNswFt6600ScheduleFill(
   setCheckSafe(form, 'Check Box 3.21', checks.other)
   setCheckSafe(form, 'Check Box 3.22', checks.periodic)
 
-  setCheckSafe(form, 'Check Box 4.3', true)
   setCheckSafe(form, 'Check Box 4.1', false)
+  setCheckSafe(form, 'Check Box 4.2', false)
+  setCheckSafe(form, 'Check Box 4.3', true)
   setCheckSafe(form, 'Check Box 4.13', false)
   setCheckSafe(form, 'Check Box 4.19', false)
   setCheckSafe(form, 'Check Box 4.20', electronicService.landlordConsentsToEmailService)
   setCheckSafe(form, 'Check Box 4.22', electronicService.landlordConsentsToEmailService)
   setCheckSafe(form, 'Check Box 4.23', electronicService.tenantConsentsToEmailService)
   setCheckSafe(form, 'Check Box 5.1', electronicService.tenantConsentsToEmailService)
-
-  if (electronicService.landlordConsentsToEmailService) {
-    pushText('Text field 5.5', electronicService.landlordEmail)
-  }
-  if (electronicService.tenantConsentsToEmailService) {
-    pushText('Text field 5.8', electronicService.tenantEmail)
-  }
 
   for (const [name, value] of assignments) {
     setTextSafe(form, name, value)

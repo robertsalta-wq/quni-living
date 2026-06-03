@@ -13,7 +13,7 @@ Prescribed form: **Residential Tenancy Agreement (FT6600)** — Fair Trading sta
 | **Types / handler** | `api/documents/rtaTypes.ts` (`NswResidentialTenancyAgreementProps`), `api/documents/generate-residential-tenancy.ts` |
 | **Current PDF (to retire for prescribed body)** | `src/lib/documents/NswResidentialTenancyAgreement.tsx` (react-pdf rebuild) |
 
-Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (spike submission 32). **AcroForm internal names (`Text field X.Y`) do not always match tooltip order** — five fields are **spike-verified** on the Dec 2025 PDF; implement the rest with single-field fill tests before production.
+Fair Trading field hints below are taken from DocuSeal’s import of the raw AcroForm (`scripts/test-official-form-spike/field-desc-pairs.json`). **Do not trust legacy spike “pdf-parse found text on page” checks** — they only proved bytes were written, not that values landed in the correct schedule boxes. Production fill is implemented in `officialNswFt6600Fill.ts` and covered by `officialNswFt6600Fill.test.ts`.
 
 ---
 
@@ -70,25 +70,13 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 
 ---
 
-## Spike-verified fill fields
-
-| AcroForm name | Fair Trading hint (DocuSeal) | Schedule label | Platform source | Notes |
-|---------------|------------------------------|----------------|-----------------|-------|
-| `Text field 1.1` | Landlord 1 name (tooltip order may differ) | Landlord Name (1) | `landlord_profiles` → `fullName` | **Verified** spike fill |
-| `Text field 2.1` | Tenant 1 name | Tenant Name (1) | `student_profiles` → `fullName` | **Verified** spike fill |
-| `Text field 3.9` | (premises line) | The residential premises are | `properties` address line | **Verified** spike fill |
-| `Text field 4.0` | (premises / related line) | Premises (continuation) | Same as `3.9` or part description | **Verified** spike fill |
-| `Text field 3.7` | Rent amount / frequency area | The rent is | `bookings.weekly_rent` (formatted AUD) | **Verified** spike fill |
-
----
-
 ## Schedule — agreement header & landlord (section 1.x)
 
 | AcroForm | Fair Trading hint | Schedule label | Platform source | Default / GAP |
 |----------|-------------------|----------------|-----------------|---------------|
-| `Text field 1.1` | Landlord 1 name | Landlord Name (1) | `landlord.fullName` | — |
-| `Text field 1.2` | Agreement made — address line 1 | AT (suburb/address) | Suburb from `premises.addressLine` | — |
-| `Text field 1.3` | Agreement made — address line 2 | AT (continuation) | — | Often blank |
+| `Text field 1.1` | Address where agreement was made line 1 | **THIS AGREEMENT WAS MADE ON** (date) | `agreementMadeOnFromGeneratedAt(generatedAt)` | Printed label says “made on”; tooltip is address line 1 |
+| `Text field 1.2` | Address where agreement was made line 2 | **AT** (suburb) | Suburb from `premises.addressLine` | — |
+| `Text field 1.3` | Landlord 1 name | Landlord Name (1) | `landlord.fullName` | — |
 | `Text field 1.4` | Landlord 2 name | Second landlord | — | **GAP** — leave blank |
 | `Text field 1.5` | Landlord telephone / contact | Landlord telephone | `landlord.phone` | — |
 | `Text field 1.6` | Overseas residential address | Overseas address | — | **GAP** — blank unless captured |
@@ -105,11 +93,11 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 
 | AcroForm | Fair Trading hint | Schedule label | Platform source | Default / GAP |
 |----------|-------------------|----------------|-----------------|---------------|
-| `Text field 2.1` | Tenant 1 name | Tenant Name (1) | `tenant.fullName` | — |
-| `Text field 2.2`–`2.3` | Suburb / state / postcode | Tenant service address parts | `tenant.addressForServiceLine` | **GAP** — split or omit |
-| `Text field 2.4` | Tenant 2 name | Tenant Name (2) | `additionalTenantNames[0]` | Empty if none |
-| `Text field 2.5` | Tenant 3 name | Tenant Name (3) | `additionalTenantNames[1]` | Empty if none |
-| `Text field 2.6` | Tenant 4 / other tenants | Tenant Name (4) | `additionalTenantNames[2]` | Empty if none |
+| `Text field 2.1`–`2.3` | Suburb / state / postcode | Tenant service address (suburb block) | Parsed from `tenant.addressForServiceLine` | Omit when null |
+| `Text field 2.4` | Tenant 1 name | Tenant Name (1) | `tenant.fullName` | — |
+| `Text field 2.5` | Tenant 2 name | Tenant Name (2) | `additionalTenantNames[0]` | Empty if none |
+| `Text field 2.6` | Tenant 3 name | Tenant Name (3) | `additionalTenantNames[1]` | Empty if none |
+| `Text field 2.7` | All other tenants | Other tenants | `additionalTenantNames[2+]` joined | Empty if none |
 | `Text field 2.7` | All other tenants | Other tenants | — | Blank |
 | `Text field 2.8`–`2.11` | Tenant service address | Address for service of notices | `tenant.addressForServiceLine` | Omit lines if null |
 | `Text field 2.12` | Contact details | Contact details | `tenant.phone`, `tenant.email` | — |
@@ -131,16 +119,18 @@ Collected before flatten (pages **16–17**). Map **top-to-bottom** per page to 
 | `Check Box 3.20` | 5 years | Term: 5 years | — | — |
 | `Check Box 3.21` | Other | Term: other | `term.leaseLengthDescription` | When not standard length |
 | `Check Box 3.22` | Periodic | Periodic (no end date) | `term.periodic` | — |
-| `Check Box 3.1`–`3.6` | Inclusions / rent / due date / method | Various schedule lines | See react-pdf p2 | Map in implementation pass |
-| `Text field 3.7` | Rent amount | The rent is | `rent.weeklyRent` | **Verified** |
-| `Text field 3.9` | Premises / inclusions | Premises / include | `premises` + `additionalPremisesInclusions` | **Verified** (premises) |
-| `Text field 3.10`–`3.13` | Rent frequency & payment method | Rent per week / payment | `rent.rentFrequency`, `rent.paymentMethod` | Checkboxes + details |
+| `Check Box 3.1`–`3.6` | Inclusions / rent amount / due day / due date / method | Btn-only on Dec 2025 PDF | — | **GAP** — pdf-lib cannot `setText`; inclusions noted in `4.4` when empty |
+| `Text field 3.7` | Paid weekly | Weekly rent amount | `rent.weeklyRent` when `rentFrequency === 'weekly'` | — |
+| `Text field 3.9` | Paid fortnightly | Fortnightly rent amount | `rent.weeklyRent` when fortnightly | — |
+| `Text field 3.10` | Paid other frequency | Other frequency amount | `rent.weeklyRent` when monthly/other | — |
+| `Text field 3.11`–`3.13` | Bank transfer / Centrepay / Other | Payment method + due day + first payment | `rent.paymentMethod` + weekday + `term.startDate` | Concatenated in one line |
 | `Text field 3.17` | Max occupants | Maximum occupants | `maxOccupantsPermitted` | — |
-| `Text field 3.18`–`3.19` | Electrical repairer | Urgent repairs — electrical | `urgentRepairsTradespeople.electrician` | — |
-| `Text field 3.23` | Plumbing repairer | Urgent repairs — plumbing | `urgentRepairsTradespeople.plumber` | — |
-| `Text field 4.0`–`4.5` | Other repairs / phones | Urgent repairs — other | `urgentRepairsTradespeople.other` | **Verified** `4.0` in spike |
+| `Text field 3.18` / `3.19` | Electrical repairer name / phone | Urgent repairs — electrical | `urgentRepairsTradespeople.electrician` | Split on phone pattern |
+| `Text field 3.23` / `4.0` | Plumbing repairer name / phone | Urgent repairs — plumbing | `urgentRepairsTradespeople.plumber` | Split on phone pattern |
+| `Text field 4.4` / `4.5` | Other repairs name / phone | Urgent repairs — other | `urgentRepairsTradespeople.other` | — |
 | `Text field 4.6`–`4.7` | Smoke alarm battery type | Smoke alarms | Static: battery operated | Match react-pdf |
-| `Text field 4.8`–`4.10` | Rental bond paid to | Rental bond recipient | Static checkboxes | Match react-pdf (landlord, not RBO) |
+| `Text field 4.8` | Landlord or another person | Bond paid to (name) | `landlord.fullName` when bond set | **GAP** — bond dollar amount has no text AcroForm |
+| `Text field 4.9` / `4.10` | Landlord's agent / RBO | Bond recipient alternatives | Blank (landlord path) | Match react-pdf |
 | `Text field 4.18` | Water usage charges | Water usage | Static: No | — |
 | `Text field 4.21` | Embedded electricity | Embedded network (elec) | Static: No | — |
 
