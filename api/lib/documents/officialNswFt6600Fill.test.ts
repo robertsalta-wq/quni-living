@@ -10,12 +10,14 @@ import {
 const SAMPLE_PROPS = {
   documentId: 'nsw-ft6600-fill-test',
   generatedAt: '02/06/2026, 10:00:00 am',
+  serviceTier: 'listing' as const,
   landlord: {
     fullName: 'Alex Rental Provider',
     companyName: null,
     addressLine: '12 Owner Street, Newtown, NSW, 2042',
     email: 'alex.provider@example.com',
     phone: '0400111222',
+    residenceLocation: null,
   },
   tenant: {
     fullName: 'Jordan Tenant',

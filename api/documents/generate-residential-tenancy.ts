@@ -20,6 +20,12 @@ import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { buildNswResidentialTenancyAgreementPropsFromBooking } from '../lib/documents/buildNswFt6600AgreementProps.js'
 import {
+  missingFt6600LandlordScheduleFields,
+  nswFt6600LandlordScheduleBlockedMessage,
+  nswManagedFt6600LeaseGenerationBlocked,
+  NSW_MANAGED_FT6600_GENERATION_BLOCKED_MESSAGE,
+} from '../lib/documents/ft6600LandlordSchedule.js'
+import {
   missingNswFt6600ComplianceFieldLabels,
   nswFt6600ComplianceBlockedMessage,
 } from '../lib/documents/propertyFt6600Compliance.js'
@@ -229,7 +235,7 @@ export default async function handler(req: any, res: any) {
   const { data: lp, error: lpErr } = await admin
     .from('landlord_profiles')
     .select(
-      'id, user_id, full_name, first_name, last_name, email, phone, address, suburb, state, postcode, company_name',
+      'id, user_id, full_name, first_name, last_name, email, phone, address, suburb, state, postcode, company_name, residence_location',
     )
     .eq('id', booking.landlord_id)
     .maybeSingle()
@@ -251,13 +257,40 @@ export default async function handler(req: any, res: any) {
       ? (booking.properties as Record<string, unknown>)
       : {}
 
+  const serviceTierForGate =
+    booking.service_tier_final === 'managed' ? 'managed' : 'listing'
+
   if (bookingUsesNswFt6600Generator(booking as unknown as Record<string, unknown>, prop)) {
+    if (
+      nswManagedFt6600LeaseGenerationBlocked({
+        propertyState: typeof prop.state === 'string' ? prop.state : null,
+        propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
+        isRegisteredRoomingHouse:
+          typeof prop.is_registered_rooming_house === 'boolean' ? prop.is_registered_rooming_house : null,
+        serviceTier: serviceTierForGate,
+      })
+    ) {
+      return res.status(400).json({
+        error: 'nsw_managed_ft6600_gated',
+        message: NSW_MANAGED_FT6600_GENERATION_BLOCKED_MESSAGE,
+      })
+    }
+
     const missingCompliance = missingNswFt6600ComplianceFieldLabels(prop)
     if (missingCompliance.length > 0) {
       return res.status(400).json({
         error: 'ft6600_compliance_incomplete',
         message: nswFt6600ComplianceBlockedMessage(missingCompliance),
         missingFields: missingCompliance,
+      })
+    }
+
+    const missingLandlord = missingFt6600LandlordScheduleFields(lp as Record<string, unknown>, serviceTierForGate)
+    if (missingLandlord.length > 0) {
+      return res.status(400).json({
+        error: 'ft6600_landlord_profile_incomplete',
+        message: nswFt6600LandlordScheduleBlockedMessage(missingLandlord),
+        missingFields: missingLandlord,
       })
     }
   }

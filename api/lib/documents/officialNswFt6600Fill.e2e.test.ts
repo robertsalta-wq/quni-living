@@ -35,7 +35,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     const form = doc.getForm()
 
     expect(form.getTextField(F.agreement_made_on).getText()).toBe('03/06/2026')
-    expect(form.getTextField(F.agreement_at).getText()).toBe('Ryde')
+    expect(form.getTextField(F.agreement_at).getText()).toBe('Liverpool')
     expect(form.getTextField(F.landlord_name_1).getText()).toBe('Quinn Lee')
     expect(form.getTextField(F.landlord_contact).getText()).toBe('+61410025719')
     expect(form.getTextField(F.landlord_service_street).getText()).toBe('18 Malvina Street')
@@ -78,6 +78,28 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.electricity_embedded_no_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.gas_embedded_no_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
+  })
+
+  it('managed tier omits landlord service address and fills agent from platform', async () => {
+    const props = buildNswResidentialTenancyAgreementPropsFromBooking({
+      ...QUINN_ROBERT_BOOKING_ROWS,
+      serviceTier: 'managed',
+      platformAgentForManaged: {
+        name: 'Quinnvestments Pty Ltd',
+        businessAddress: '100 Agent Street, Sydney, NSW, 2000',
+        suburb: 'Sydney',
+        phone: '1300 000 000',
+        email: 'managed@quni.example',
+      },
+    })
+    const doc = await loadOfficialNswFt6600Template()
+    await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
+    const form = doc.getForm()
+
+    expect(form.getTextField(F.landlord_service_street).getText() ?? '').toBe('')
+    expect(form.getTextField(F.landlord_agent_name).getText()).toBe('Quinnvestments Pty Ltd')
+    expect(form.getTextField(F.landlord_agent_address).getText()).toContain('100 Agent Street')
+    expect(props.landlordAgent?.name).toBe('Quinnvestments Pty Ltd')
   })
 
   it('applyOfficialNswFt6600ScheduleFill uses semantic field names only', () => {

@@ -336,6 +336,7 @@ export interface Database {
           suburb: string | null
           state: string | null
           postcode: string | null
+          residence_location: string | null
           email: string | null
           phone: string | null
           bio: string | null
@@ -369,6 +370,7 @@ export interface Database {
           suburb?: string | null
           state?: string | null
           postcode?: string | null
+          residence_location?: string | null
           email?: string | null
           phone?: string | null
           bio?: string | null
@@ -402,6 +404,7 @@ export interface Database {
           suburb?: string | null
           state?: string | null
           postcode?: string | null
+          residence_location?: string | null
           email?: string | null
           phone?: string | null
           bio?: string | null

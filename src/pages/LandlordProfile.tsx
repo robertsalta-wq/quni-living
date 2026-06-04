@@ -240,6 +240,7 @@ export default function LandlordProfile() {
   const [suburb, setSuburb] = useState('')
   const [addressState, setAddressState] = useState('NSW')
   const [postcode, setPostcode] = useState('')
+  const [residenceLocation, setResidenceLocation] = useState('')
   const [landlordType, setLandlordType] = useState('')
   const [bio, setBio] = useState('')
 
@@ -307,6 +308,7 @@ export default function LandlordProfile() {
       setSuburb(prof.suburb ?? '')
       setAddressState(prof.state?.trim() || 'NSW')
       setPostcode(prof.postcode ?? '')
+      setResidenceLocation(prof.residence_location?.trim() ?? '')
       setLandlordType(prof.landlord_type ?? '')
       setBio(prof.bio ?? '')
 
@@ -488,6 +490,7 @@ export default function LandlordProfile() {
           suburb: suburb.trim() || null,
           state: addressState.trim() || null,
           postcode: postcode.trim() || null,
+          residence_location: residenceLocation.trim() || null,
           landlord_type: landlordType.trim() || null,
           bio: bio.trim() || null,
         })
@@ -885,20 +888,40 @@ export default function LandlordProfile() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="ll-state" className={llLabelClass}>
-                  State
+                  State / Territory
                 </label>
-                <select
+                <input
                   id="ll-state"
+                  type="text"
+                  list="ll-state-suggestions"
+                  autoComplete="address-level1"
+                  placeholder="e.g. NSW, VIC, or overseas country"
                   value={addressState}
                   onChange={(e) => setAddressState(e.target.value)}
                   className={llInputClass}
-                >
+                />
+                <datalist id="ll-state-suggestions">
                   {AU_STATE_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
+                    <option key={s.value} value={s.value} />
                   ))}
-                </select>
+                </datalist>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="ll-residence" className={llLabelClass}>
+                  State/Territory or country of residence (if not NSW)
+                </label>
+                <input
+                  id="ll-residence"
+                  type="text"
+                  placeholder="Required on NSW leases when you do not ordinarily reside in NSW"
+                  value={residenceLocation}
+                  onChange={(e) => setResidenceLocation(e.target.value)}
+                  className={llInputClass}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Used on your tenancy agreement when you are not ordinarily resident in NSW. Leave blank if you live in
+                  NSW.
+                </p>
               </div>
               {needsBiz ? (
                 <div>

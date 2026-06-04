@@ -15,6 +15,8 @@ export type RtaLandlordPdf = {
   addressLine: string
   email: string
   phone: string
+  /** FT6600 overseas / non-NSW residence line; omit when landlord ordinarily resides in NSW. */
+  residenceLocation: string | null
 }
 
 export type RtaTenantPdf = {

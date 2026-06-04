@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { PDFDict, PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
 import type { NswFt6600PropertyCompliance, NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
+import { hasManagingAgentForFt6600 } from './ft6600LandlordSchedule.js'
 import { resolveWaterUsageChargedSeparately } from './propertyFt6600Compliance.js'
 import {
   flattenAndCleanForm,
@@ -328,10 +329,8 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
     props
   const madeOn = agreementMadeOnFromGeneratedAt(props.generatedAt)
   const serviceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
-  const atSuburb =
-    serviceTier === 'managed' && props.landlordAgent
-      ? suburbFromAddressLine(props.landlordAgent.businessAddress)
-      : suburbFromAddressLine(landlord.addressLine)
+  const hasManagingAgent = hasManagingAgentForFt6600(serviceTier) && !!landlordAgent
+  const atSuburb = suburbFromAddressLine(premises.addressLine)
   const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
   const rentWeekday = rentDueWeekdayFromCommencement(term.startDate)
   const inclusions = props.additionalPremisesInclusions.map((s) => s.trim()).filter(Boolean).join('; ')
@@ -346,13 +345,17 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
   pushText(text, F.agreement_at, atSuburb)
   pushText(text, F.landlord_name_1, landlord.fullName)
   pushText(text, F.landlord_contact, landlordPhone)
-  if (!landlordAgent && landlordPhone) pushText(text, F.landlord_phone_no_agent, landlordPhone)
-  if (landlordAddr.street) pushText(text, F.landlord_service_street, landlordAddr.street)
-  if (landlordAddr.suburb) pushText(text, F.landlord_service_suburb, landlordAddr.suburb)
-  if (landlordAddr.state) pushText(text, F.landlord_service_state, landlordAddr.state)
-  if (landlordAddr.postcode) pushText(text, F.landlord_service_postcode, landlordAddr.postcode)
+  const residenceLine = sanitizeDisplayText(landlord.residenceLocation)
+  if (residenceLine) pushText(text, F.landlord_overseas, residenceLine)
+  if (!hasManagingAgent && landlordPhone) pushText(text, F.landlord_phone_no_agent, landlordPhone)
+  if (!hasManagingAgent) {
+    if (landlordAddr.street) pushText(text, F.landlord_service_street, landlordAddr.street)
+    if (landlordAddr.suburb) pushText(text, F.landlord_service_suburb, landlordAddr.suburb)
+    if (landlordAddr.state) pushText(text, F.landlord_service_state, landlordAddr.state)
+    if (landlordAddr.postcode) pushText(text, F.landlord_service_postcode, landlordAddr.postcode)
+  }
 
-  if (landlord.companyName) {
+  if (landlord.companyName && !hasManagingAgent) {
     pushText(text, F.corp_name, landlord.companyName)
     if (landlordAddr.street) pushText(text, F.corp_address, landlordAddr.street)
     pushText(text, F.corp_suburb, landlordAddr.suburb)
@@ -382,7 +385,7 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
     .join(' · ')
   if (tenantContact) pushText(text, F.tenant_contact, tenantContact)
 
-  if (landlordAgent) {
+  if (hasManagingAgent && landlordAgent) {
     const agentAddr = parseAustralianAddressLine(landlordAgent.businessAddress)
     pushText(text, F.landlord_agent_name, landlordAgent.name)
     const agentContact = [

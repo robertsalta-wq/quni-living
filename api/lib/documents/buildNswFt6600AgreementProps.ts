@@ -7,6 +7,10 @@ import { occupancyLeaseFieldsFromBooking } from '../booking/occupancyLeaseContex
 import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
 import {
+  ft6600LandlordResidenceLine,
+  hasManagingAgentForFt6600,
+} from './ft6600LandlordSchedule.js'
+import {
   nswFt6600ComplianceFromPropertyRow,
   nswFt6600PremisesInclusionsFromPropertyRow,
 } from './propertyFt6600Compliance.js'
@@ -122,9 +126,10 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
   const billsIncluded = propertyBillsIncluded(featureNames)
 
   const serviceTier = input.serviceTier === 'managed' ? 'managed' : 'listing'
+  const hasManagingAgent = hasManagingAgentForFt6600(serviceTier)
   const platformAgent = input.platformAgentForManaged
   const landlordAgent =
-    serviceTier === 'managed' && platformAgent
+    hasManagingAgent && platformAgent
       ? {
           name: platformAgent.name,
           licenseNumber: null as string | null,
@@ -133,6 +138,8 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
           email: platformAgent.email || null,
         }
       : null
+  const residenceLine = ft6600LandlordResidenceLine(lpRec)
+  const listingServiceAddressLine = landlordAddressLine(lpRec)
 
   return {
     documentId,
@@ -141,9 +148,10 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
     landlord: {
       fullName: landlordFullName,
       companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
-      addressLine: landlordAddressLine(lpRec),
+      addressLine: hasManagingAgent ? '' : listingServiceAddressLine,
       email: typeof lp.email === 'string' ? lp.email.trim() : '',
       phone: typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '',
+      residenceLocation: residenceLine || null,
     },
     tenant: {
       fullName:

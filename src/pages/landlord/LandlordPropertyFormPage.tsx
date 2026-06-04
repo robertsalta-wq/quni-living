@@ -53,6 +53,7 @@ import {
   MANAGED_COMING_SOON_SHORT,
   MANAGED_LANDLORD_PROPERTY_FORM_HINT,
 } from '../../lib/managedComingSoonCopy'
+import { LISTING_TIER_ADDRESS_ON_LEASE_NOTICE } from '../../lib/listingTierAddressNotice'
 import {
   canSwitchPropertyServiceTier,
   INTENDED_LANDLORD_SERVICE_TIER_KEY,
@@ -2789,6 +2790,11 @@ export default function LandlordPropertyFormPage() {
                     )
                   })}
                 </div>
+                {serviceTier === 'listing' ? (
+                  <p className="mt-3 rounded-lg border border-[#E8EFE3] bg-[#F7FAF5] px-3 py-2.5 text-xs leading-relaxed text-gray-700">
+                    {LISTING_TIER_ADDRESS_ON_LEASE_NOTICE}
+                  </p>
+                ) : null}
                 {serviceTier === 'managed' && initialServiceTier === 'listing' && isEdit ? (
                   <p className="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     Saving will permanently switch this property to Quni Managed for this and future booking requests.
