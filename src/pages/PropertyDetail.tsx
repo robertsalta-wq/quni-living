@@ -31,6 +31,7 @@ import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAva
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
+import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import ShareListingButton from '../components/ShareListingButton'
 import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
@@ -389,7 +390,7 @@ export default function PropertyDetail() {
         .select(
           `
             *,
-            landlord_profiles ( id, full_name, avatar_url, verified ),
+            landlord_profiles ( id, full_name, avatar_url, verified, languages_spoken ),
             universities ( id, name, slug ),
             campuses ( id, name ),
             property_features ( features ( id, name, icon ) ),
@@ -1626,6 +1627,10 @@ export default function PropertyDetail() {
                           </span>
                           {landlord?.verified ? <VerifiedLandlordBadge className="shrink-0" /> : null}
                         </div>
+                        <LanguagesSpokenDisplay
+                          languages={property.landlord_profiles?.languages_spoken}
+                          className="mt-2"
+                        />
                       </div>
                     </div>
                   </div>

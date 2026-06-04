@@ -29,7 +29,7 @@ type HouseRulesRefPick = Pick<Database['public']['Tables']['house_rules_ref']['R
 export type Property = Database['public']['Tables']['properties']['Row'] & {
   landlord_profiles: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
-    'id' | 'full_name' | 'avatar_url' | 'verified'
+    'id' | 'full_name' | 'avatar_url' | 'verified' | 'languages_spoken'
   > | null
   universities: Pick<Database['public']['Tables']['universities']['Row'], 'id' | 'name' | 'slug'> | null
   campuses: Pick<Database['public']['Tables']['campuses']['Row'], 'id' | 'name' | 'slug'> | null

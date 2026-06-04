@@ -337,6 +337,7 @@ export interface Database {
           state: string | null
           postcode: string | null
           residence_location: string | null
+          languages_spoken: string[]
           email: string | null
           phone: string | null
           bio: string | null
@@ -371,6 +372,7 @@ export interface Database {
           state?: string | null
           postcode?: string | null
           residence_location?: string | null
+          languages_spoken?: string[]
           email?: string | null
           phone?: string | null
           bio?: string | null
@@ -405,6 +407,7 @@ export interface Database {
           state?: string | null
           postcode?: string | null
           residence_location?: string | null
+          languages_spoken?: string[]
           email?: string | null
           phone?: string | null
           bio?: string | null
@@ -438,6 +441,7 @@ export interface Database {
           phone: string | null
           gender: string | null
           nationality: string | null
+          languages_spoken: string[]
           university_id: string | null
           campus_id: string | null
           course: string | null
@@ -502,6 +506,7 @@ export interface Database {
           phone?: string | null
           gender?: string | null
           nationality?: string | null
+          languages_spoken?: string[]
           university_id?: string | null
           campus_id?: string | null
           course?: string | null
@@ -566,6 +571,7 @@ export interface Database {
           phone?: string | null
           gender?: string | null
           nationality?: string | null
+          languages_spoken?: string[]
           university_id?: string | null
           campus_id?: string | null
           course?: string | null

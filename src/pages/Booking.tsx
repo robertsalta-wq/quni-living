@@ -48,6 +48,7 @@ import { AUDateField } from '../components/AUDateField'
 import NswRentalBondOnlineLink from '../components/bond/NswRentalBondOnlineLink'
 import PaymentsSecuredByStripe from '../components/PaymentsSecuredByStripe'
 import TenantBookingRequestSubmittedSummary from '../components/student/TenantBookingRequestSubmittedSummary'
+import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import {
   BookingOccupancySection,
   validateBookingOccupancy,
@@ -733,7 +734,7 @@ export default function Booking() {
           .select(
             `
             *,
-            landlord_profiles ( id, full_name, avatar_url, verified, stripe_charges_enabled, email ),
+            landlord_profiles ( id, full_name, avatar_url, verified, stripe_charges_enabled, email, languages_spoken ),
             universities ( id, name, slug ),
             campuses ( id, name )
           `,
@@ -1530,12 +1531,20 @@ export default function Booking() {
             )}
           </p>
           {landlord && (
-            <p className="text-sm text-gray-700 mt-2">
-              <span className="font-medium capitalize">{(landlord.full_name ?? 'Host').toLowerCase()}</span>
-              {landlord.verified ? (
-                <span className="ml-2 text-xs font-semibold text-emerald-700">Verified host</span>
-              ) : null}
-            </p>
+            <div className="mt-2">
+              <p className="text-sm text-gray-700">
+                <span className="font-medium capitalize">{(landlord.full_name ?? 'Host').toLowerCase()}</span>
+                {landlord.verified ? (
+                  <span className="ml-2 text-xs font-semibold text-emerald-700">Verified host</span>
+                ) : null}
+              </p>
+              <LanguagesSpokenDisplay
+                languages={landlord.languages_spoken}
+                inline
+                label="Host speaks"
+                className="mt-1"
+              />
+            </div>
           )}
         </div>
       </div>

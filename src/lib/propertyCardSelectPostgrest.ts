@@ -35,7 +35,7 @@ export const PROPERTY_CARD_LIST_SELECT_POSTGREST = [
   'couple_surcharge_per_week',
   'parking_surcharge_per_week',
   'created_at',
-  'landlord_profiles(id,full_name,avatar_url,verified)',
+  'landlord_profiles(id,full_name,avatar_url,verified,languages_spoken)',
   'universities(id,name,slug)',
   'campuses(id,name,slug)',
   'property_features(features(name))',

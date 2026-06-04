@@ -1,5 +1,6 @@
 import type { LandlordSafeStudentSnapshot } from './LandlordStudentProfileModal'
 import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
+import LanguagesSpokenDisplay from '../profile/LanguagesSpokenDisplay'
 
 type Props = {
   student: LandlordSafeStudentSnapshot | null
@@ -43,6 +44,7 @@ export default function LandlordApplicantReviewHeader({ student, displayName, bi
               <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{bio.trim()}</p>
             </div>
           )}
+          <LanguagesSpokenDisplay languages={student?.languages_spoken} className="mt-4 text-left" />
         </div>
       </div>
     </section>

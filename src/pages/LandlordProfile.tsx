@@ -20,6 +20,8 @@ import {
   formatStripeCardOnFile,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
+import LanguagesSpokenSelector from '../components/profile/LanguagesSpokenSelector'
+import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../lib/languagesSpoken'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
@@ -243,6 +245,7 @@ export default function LandlordProfile() {
   const [residenceLocation, setResidenceLocation] = useState('')
   const [landlordType, setLandlordType] = useState('')
   const [bio, setBio] = useState('')
+  const [languagesSpoken, setLanguagesSpoken] = useState<SpokenLanguageCode[]>([])
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -311,6 +314,7 @@ export default function LandlordProfile() {
       setResidenceLocation(prof.residence_location?.trim() ?? '')
       setLandlordType(prof.landlord_type ?? '')
       setBio(prof.bio ?? '')
+      setLanguagesSpoken(normalizeLanguagesSpoken(prof.languages_spoken))
 
       const { data: props, error: lErr } = await supabase
         .from('properties')
@@ -493,6 +497,7 @@ export default function LandlordProfile() {
           residence_location: residenceLocation.trim() || null,
           landlord_type: landlordType.trim() || null,
           bio: bio.trim() || null,
+          languages_spoken: languagesSpoken,
         })
         .eq('user_id', user.id)
 
@@ -945,6 +950,18 @@ export default function LandlordProfile() {
                 <div className="hidden sm:block min-h-[1px]" aria-hidden />
               )}
             </div>
+          </div>
+
+          <div>
+            <span className={llLabelClass}>Languages spoken</span>
+            <p className="text-xs text-gray-500 mb-2">
+              Optional — shown on your listings and when renters view your booking requests.
+            </p>
+            <LanguagesSpokenSelector
+              value={languagesSpoken}
+              onChange={setLanguagesSpoken}
+              disabled={saving}
+            />
           </div>
 
           <div>

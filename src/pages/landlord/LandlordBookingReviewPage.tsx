@@ -101,6 +101,7 @@ function studentToSnapshot(row: LandlordBookingReviewStudent | null | undefined)
     study_level: row.study_level,
     student_type: row.student_type,
     nationality: row.nationality,
+    languages_spoken: row.languages_spoken ?? [],
     room_type_preference: row.room_type_preference,
     budget_min_per_week: row.budget_min_per_week,
     budget_max_per_week: row.budget_max_per_week,

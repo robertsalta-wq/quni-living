@@ -25,6 +25,7 @@ import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
 import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
+import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -33,7 +34,12 @@ type BookingStatus = BookingRow['status']
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
   'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'state' | 'is_registered_rooming_house'
->
+> & {
+  landlord_profiles: Pick<
+    Database['public']['Tables']['landlord_profiles']['Row'],
+    'full_name' | 'avatar_url' | 'verified' | 'languages_spoken'
+  > | null
+}
 
 type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
@@ -170,7 +176,9 @@ export default function StudentDashboard() {
 
       const bookRes = await supabase
         .from('bookings')
-        .select('*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, state, is_registered_rooming_house )')
+        .select(
+          '*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+        )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
 
@@ -476,6 +484,18 @@ export default function StudentDashboard() {
                           {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
                         </p>
                         <p className="text-base font-bold text-gray-900 mt-1">{formatWeeklyRent(rent)}</p>
+                        {prop?.landlord_profiles && (
+                          <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2.5">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your host</p>
+                            <p className="text-sm font-medium text-gray-900 mt-0.5 capitalize">
+                              {(prop.landlord_profiles.full_name ?? 'Host').toLowerCase()}
+                            </p>
+                            <LanguagesSpokenDisplay
+                              languages={prop.landlord_profiles.languages_spoken}
+                              className="mt-2"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                     {(() => {

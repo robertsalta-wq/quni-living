@@ -21,6 +21,8 @@ import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../lib/studentOccupancyOptions'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { StudentWorkLocationSection } from '../components/student/StudentWorkLocationSection'
+import LanguagesSpokenSelector from '../components/profile/LanguagesSpokenSelector'
+import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../lib/languagesSpoken'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -148,6 +150,7 @@ type StudentProfileDraftV1 = {
   phone: string
   gender: string
   nationality: string
+  languagesSpoken: SpokenLanguageCode[]
   yearOfStudy: string
   course: string
   emergencyName: string
@@ -218,6 +221,7 @@ function parseStudentProfileDraft(raw: string | null): StudentProfileDraftV1 | n
       phone: typeof d.phone === 'string' ? d.phone : '',
       gender,
       nationality: nat,
+      languagesSpoken: normalizeLanguagesSpoken(d.languagesSpoken),
       yearOfStudy: year,
       course: typeof d.course === 'string' ? d.course : '',
       emergencyName: typeof d.emergencyName === 'string' ? d.emergencyName : '',
@@ -252,6 +256,7 @@ function isStudentProfileDraftMeaningful(d: StudentProfileDraftV1): boolean {
     d.phone.trim() !== '' ||
     d.gender !== '' ||
     d.nationality !== '' ||
+    d.languagesSpoken.length > 0 ||
     d.yearOfStudy !== '' ||
     d.course.trim() !== '' ||
     d.emergencyName.trim() !== '' ||
@@ -357,6 +362,7 @@ export default function StudentProfile() {
   const [phone, setPhone] = useState('')
   const [gender, setGender] = useState('')
   const [nationality, setNationality] = useState('')
+  const [languagesSpoken, setLanguagesSpoken] = useState<SpokenLanguageCode[]>([])
   const [yearOfStudy, setYearOfStudy] = useState('')
   const [course, setCourse] = useState('')
   const [emergencyName, setEmergencyName] = useState('')
@@ -402,6 +408,7 @@ export default function StudentProfile() {
     setPhone(prof.phone ?? '')
     setGender(prof.gender ?? '')
     setNationality(prof.nationality ?? '')
+    setLanguagesSpoken(normalizeLanguagesSpoken(prof.languages_spoken))
     setYearOfStudy(prof.year_of_study != null ? String(prof.year_of_study) : '')
     setCourse(prof.course ?? '')
     setEmergencyName(prof.emergency_contact_name ?? '')
@@ -433,6 +440,7 @@ export default function StudentProfile() {
         phone,
         gender,
         nationality,
+        languagesSpoken,
         yearOfStudy,
         course,
         emergencyName,
@@ -461,6 +469,7 @@ export default function StudentProfile() {
       phone,
       gender,
       nationality,
+      languagesSpoken,
       yearOfStudy,
       course,
       emergencyName,
@@ -590,6 +599,7 @@ export default function StudentProfile() {
       setPhone(parsed.phone)
       setGender(parsed.gender)
       setNationality(parsed.nationality)
+      setLanguagesSpoken(parsed.languagesSpoken)
       setYearOfStudy(parsed.yearOfStudy)
       setCourse(parsed.course)
       setEmergencyName(parsed.emergencyName)
@@ -811,6 +821,7 @@ export default function StudentProfile() {
           phone: phone.trim() || null,
           gender: gender.trim() || null,
           nationality: nationality.trim() || null,
+          languages_spoken: languagesSpoken,
           year_of_study: yearNum,
           course: course.trim() || null,
           emergency_contact_name: emergencyName.trim() || null,
@@ -1103,6 +1114,21 @@ export default function StudentProfile() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div>
+              <span id="st-languages-label" className={labelClass}>
+                Languages spoken
+              </span>
+              <p className="text-xs text-gray-500 mb-2">
+                Optional — shown on your profile and when hosts review your booking request.
+              </p>
+              <LanguagesSpokenSelector
+                id="st-languages"
+                value={languagesSpoken}
+                onChange={setLanguagesSpoken}
+                disabled={saving}
+              />
             </div>
 
             <div>

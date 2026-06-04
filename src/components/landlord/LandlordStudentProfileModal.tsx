@@ -6,6 +6,7 @@ import LandlordApplicantVerificationSection from './LandlordApplicantVerificatio
 import LandlordApplicantAIAssessmentPanel from './LandlordApplicantAIAssessmentPanel'
 import { supabase } from '../../lib/supabase'
 import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
+import LanguagesSpokenDisplay from '../profile/LanguagesSpokenDisplay'
 
 /** Fields landlords may load for applicants (no email, phone, DOB, emergency, document URLs). */
 export type LandlordSafeStudentSnapshot = {
@@ -19,6 +20,7 @@ export type LandlordSafeStudentSnapshot = {
   study_level: string | null
   student_type: string | null
   nationality: string | null
+  languages_spoken: string[] | null
   room_type_preference: string | null
   budget_min_per_week: number | null
   budget_max_per_week: number | null
@@ -327,6 +329,8 @@ export default function LandlordStudentProfileModal({
                 )}
               </dl>
             </section>
+
+            <LanguagesSpokenDisplay languages={student?.languages_spoken} className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3" />
 
             <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Housing preferences</h3>
