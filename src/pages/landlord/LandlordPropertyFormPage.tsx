@@ -66,8 +66,10 @@ import LandlordPropertyFt6600ComplianceFields, {
   emptyLandlordFt6600ComplianceFormState,
   ft6600ComplianceColumnsFromFormState,
   ft6600ComplianceFormStateFromProperty,
+  missingFt6600ComplianceFieldLabelsFromForm,
   type LandlordFt6600ComplianceFormState,
 } from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
+import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -1634,7 +1636,10 @@ export default function LandlordPropertyFormPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitError(null)
-    if (!user?.id) return
+    if (!user?.id) {
+      setSubmitError('You must be signed in to save this listing.')
+      return
+    }
     // If the nearby-campus lookup overlay is up, it can intercept clicks and make the
     // submit button feel unresponsive. Always close it on submit.
     setNearbyCampusLoading(false)
@@ -1705,6 +1710,15 @@ export default function LandlordPropertyFormPage() {
     if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
       setSubmitError('Managed properties cannot be changed back to Quni Listing.')
       return
+    }
+
+    if (showNswFt6600ComplianceSection) {
+      const missingCompliance = missingFt6600ComplianceFieldLabelsFromForm(ft6600Compliance)
+      if (missingCompliance.length > 0) {
+        setSubmitError(nswFt6600ComplianceBlockedMessage(missingCompliance))
+        document.getElementById('section-ft6600-compliance')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
     }
 
     let featureIds = [...selectedFeatureIds]
@@ -1887,7 +1901,14 @@ export default function LandlordPropertyFormPage() {
         navigate('/landlord-dashboard', { replace: true })
       }
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Save failed.')
+      const msg = err instanceof Error ? err.message : 'Save failed.'
+      if (/smoke_alarm|strata_oc|ft6600|schema cache/i.test(msg)) {
+        setSubmitError(
+          `${msg} The NSW compliance columns may not be applied in Supabase yet — run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the SQL editor, then save again.`,
+        )
+      } else {
+        setSubmitError(msg)
+      }
     } finally {
       setSubmitting(false)
     }

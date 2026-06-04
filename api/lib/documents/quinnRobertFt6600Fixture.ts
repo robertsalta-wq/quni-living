@@ -19,7 +19,7 @@ export const QUINN_ROBERT_FT6600_PROPERTY = {
   electricity_embedded_network: false,
   gas_embedded_network: false,
   strata_bylaws_applicable: false,
-  strata_oc_responsible_for_alarms: false,
+  strata_oc_responsible_for_alarms: null,
 } as const
 
 export const QUINN_ROBERT_FT6600_BOOKING = {

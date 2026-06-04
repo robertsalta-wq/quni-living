@@ -23,7 +23,7 @@ const completeBattery = {
   electricity_embedded_network: false,
   gas_embedded_network: false,
   strata_bylaws_applicable: false,
-  strata_oc_responsible_for_alarms: false,
+  strata_oc_responsible_for_alarms: null,
 }
 
 describe('propertyUsesNswFt6600T2FromRow', () => {
@@ -117,6 +117,15 @@ describe('missingNswFt6600ComplianceFieldLabels', () => {
       strata_bylaws_applicable: true,
       strata_oc_responsible_for_alarms: true,
     })).toBe(true)
+  })
+
+  it('OC answered no still counts as strata for accept-gate', () => {
+    const missing = missingNswFt6600ComplianceFieldLabels({
+      ...completeBattery,
+      strata_bylaws_applicable: false,
+      strata_oc_responsible_for_alarms: false,
+    })
+    expect(missing).not.toContain('Owners corporation responsible for smoke alarms')
   })
 })
 

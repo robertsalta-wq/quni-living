@@ -1,4 +1,10 @@
+import {
+  missingNswFt6600ComplianceFieldLabels,
+} from '../../../api/lib/documents/propertyFt6600Compliance.js'
+
 export type TriState = 'yes' | 'no' | ''
+
+const STRATA_SCHEME_FIELD_LABEL = 'Property in strata or community scheme'
 
 export type LandlordFt6600ComplianceFormState = {
   smokeAlarmType: '' | 'hardwired' | 'battery'
@@ -58,14 +64,16 @@ export function ft6600ComplianceFormStateFromProperty(prop: {
     prop.smoke_alarm_type === 'hardwired' || prop.smoke_alarm_type === 'battery'
       ? prop.smoke_alarm_type
       : ''
+  // OC is only asked when the property is in a strata scheme: false = strata + OC not responsible;
+  // null = not in a strata scheme (or legacy row before this encoding).
   const isStrataScheme: TriState =
-    prop.strata_bylaws_applicable === true || prop.strata_oc_responsible_for_alarms === true
+    prop.strata_oc_responsible_for_alarms === true || prop.strata_oc_responsible_for_alarms === false
       ? 'yes'
-      : prop.strata_bylaws_applicable === false &&
-          prop.strata_oc_responsible_for_alarms === false &&
-          smokeType
-        ? 'no'
-        : ''
+      : prop.strata_bylaws_applicable === true
+        ? 'yes'
+        : prop.strata_bylaws_applicable === false && smokeType
+          ? 'no'
+          : ''
 
   return {
     smokeAlarmType: smokeType,
@@ -124,16 +132,25 @@ export function ft6600ComplianceColumnsFromFormState(
         ? form.smokeAlarmBackupBatteryType.trim()
         : null,
     strata_oc_responsible_for_alarms:
-      form.isStrataScheme === 'yes'
-        ? triToBool(form.strataOcResponsibleForAlarms)
-        : form.isStrataScheme === 'no'
-          ? false
-          : null,
+      form.isStrataScheme === 'yes' ? triToBool(form.strataOcResponsibleForAlarms) : null,
     water_usage_charged_separately: triToBool(form.waterUsageChargedSeparately),
     electricity_embedded_network: triToBool(form.electricityEmbeddedNetwork),
     gas_embedded_network: triToBool(form.gasEmbeddedNetwork),
     strata_bylaws_applicable: triToBool(form.strataBylawsApplicable),
   }
+}
+
+export function missingFt6600ComplianceFieldLabelsFromForm(
+  form: LandlordFt6600ComplianceFormState,
+): string[] {
+  const cols = ft6600ComplianceColumnsFromFormState(form)
+  const isStrataScheme =
+    form.isStrataScheme === 'yes' ? true : form.isStrataScheme === 'no' ? false : null
+  const missing = missingNswFt6600ComplianceFieldLabels(cols, { isStrataScheme })
+  if (form.isStrataScheme === '') {
+    missing.unshift(STRATA_SCHEME_FIELD_LABEL)
+  }
+  return missing
 }
 
 type Props = {

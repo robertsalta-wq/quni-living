@@ -123,7 +123,7 @@ export function missingNswFt6600ComplianceFieldLabels(
 
   const isStrata =
     opts?.isStrataScheme ??
-    (compliance.strataOcResponsibleForAlarms === true || compliance.strataBylawsApplicable === true)
+    (compliance.strataOcResponsibleForAlarms != null || compliance.strataBylawsApplicable === true)
   const ocSkipsTenantReplaceability =
     isStrata && compliance.strataOcResponsibleForAlarms === true
 
