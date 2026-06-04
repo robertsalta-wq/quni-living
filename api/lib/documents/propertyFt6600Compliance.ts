@@ -121,31 +121,36 @@ export function missingNswFt6600ComplianceFieldLabels(
     missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_type)
   }
 
-  if (compliance.smokeAlarmType === 'battery') {
-    if (compliance.smokeAlarmBatteryTenantReplaceable == null) {
-      missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_tenant_replaceable)
-    } else if (
-      compliance.smokeAlarmBatteryTenantReplaceable === true &&
-      !compliance.smokeAlarmBatteryType
-    ) {
-      missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_type)
-    }
-  }
-
-  if (compliance.smokeAlarmType === 'hardwired') {
-    if (compliance.smokeAlarmBackupTenantReplaceable == null) {
-      missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_tenant_replaceable)
-    } else if (
-      compliance.smokeAlarmBackupTenantReplaceable === true &&
-      !compliance.smokeAlarmBackupBatteryType
-    ) {
-      missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_battery_type)
-    }
-  }
-
   const isStrata =
     opts?.isStrataScheme ??
     (compliance.strataOcResponsibleForAlarms === true || compliance.strataBylawsApplicable === true)
+  const ocSkipsTenantReplaceability =
+    isStrata && compliance.strataOcResponsibleForAlarms === true
+
+  if (!ocSkipsTenantReplaceability) {
+    if (compliance.smokeAlarmType === 'battery') {
+      if (compliance.smokeAlarmBatteryTenantReplaceable == null) {
+        missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_tenant_replaceable)
+      } else if (
+        compliance.smokeAlarmBatteryTenantReplaceable === true &&
+        !compliance.smokeAlarmBatteryType
+      ) {
+        missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_battery_type)
+      }
+    }
+
+    if (compliance.smokeAlarmType === 'hardwired') {
+      if (compliance.smokeAlarmBackupTenantReplaceable == null) {
+        missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_tenant_replaceable)
+      } else if (
+        compliance.smokeAlarmBackupTenantReplaceable === true &&
+        !compliance.smokeAlarmBackupBatteryType
+      ) {
+        missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.smoke_alarm_backup_battery_type)
+      }
+    }
+  }
+
   if (isStrata && compliance.strataOcResponsibleForAlarms == null) {
     missing.push(NSW_FT6600_COMPLIANCE_FIELD_LABELS.strata_oc_responsible_for_alarms)
   }

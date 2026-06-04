@@ -102,6 +102,22 @@ describe('missingNswFt6600ComplianceFieldLabels', () => {
     )
     expect(missing).toContain('Owners corporation responsible for smoke alarms')
   })
+
+  it('strata with OC responsible skips tenant replaceability fields', () => {
+    const missing = missingNswFt6600ComplianceFieldLabels({
+      ...completeBattery,
+      smoke_alarm_battery_tenant_replaceable: null,
+      strata_bylaws_applicable: true,
+      strata_oc_responsible_for_alarms: true,
+    })
+    expect(missing).not.toContain('Tenant may replace smoke alarm batteries')
+    expect(nswFt6600ComplianceCompleteForProperty({
+      ...completeBattery,
+      smoke_alarm_battery_tenant_replaceable: null,
+      strata_bylaws_applicable: true,
+      strata_oc_responsible_for_alarms: true,
+    })).toBe(true)
+  })
 })
 
 describe('nswFt6600PremisesInclusionsFromPropertyRow', () => {

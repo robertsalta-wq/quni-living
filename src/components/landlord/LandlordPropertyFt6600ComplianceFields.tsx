@@ -97,20 +97,28 @@ export function ft6600ComplianceColumnsFromFormState(
   strata_bylaws_applicable: boolean | null
 } {
   const smokeType = form.smokeAlarmType || null
+  const ocResponsibleForAlarms =
+    form.isStrataScheme === 'yes' && form.strataOcResponsibleForAlarms === 'yes'
   return {
     smoke_alarm_type: smokeType,
     smoke_alarm_battery_tenant_replaceable:
-      smokeType === 'battery' ? triToBool(form.smokeAlarmBatteryTenantReplaceable) : null,
+      smokeType === 'battery' && !ocResponsibleForAlarms
+        ? triToBool(form.smokeAlarmBatteryTenantReplaceable)
+        : null,
     smoke_alarm_battery_type:
       smokeType === 'battery' &&
+      !ocResponsibleForAlarms &&
       form.smokeAlarmBatteryTenantReplaceable === 'yes' &&
       form.smokeAlarmBatteryType.trim()
         ? form.smokeAlarmBatteryType.trim()
         : null,
     smoke_alarm_backup_tenant_replaceable:
-      smokeType === 'hardwired' ? triToBool(form.smokeAlarmBackupTenantReplaceable) : null,
+      smokeType === 'hardwired' && !ocResponsibleForAlarms
+        ? triToBool(form.smokeAlarmBackupTenantReplaceable)
+        : null,
     smoke_alarm_backup_battery_type:
       smokeType === 'hardwired' &&
+      !ocResponsibleForAlarms &&
       form.smokeAlarmBackupTenantReplaceable === 'yes' &&
       form.smokeAlarmBackupBatteryType.trim()
         ? form.smokeAlarmBackupBatteryType.trim()
@@ -190,6 +198,10 @@ export default function LandlordPropertyFt6600ComplianceFields({
   inputClass,
   labelClass,
 }: Props) {
+  const ocResponsibleForAlarms =
+    form.isStrataScheme === 'yes' && form.strataOcResponsibleForAlarms === 'yes'
+  const showSmokeAlarmReplaceability = !ocResponsibleForAlarms
+
   return (
     <div className="space-y-6">
       <p className="text-sm text-gray-500 leading-relaxed">
@@ -233,7 +245,44 @@ export default function LandlordPropertyFt6600ComplianceFields({
         </div>
       </fieldset>
 
-      {form.smokeAlarmType === 'battery' ? (
+      <YesNoField
+        id="ft6600-strata-scheme"
+        label="Is the property in a strata or community scheme?"
+        helperText="Yes for apartments, units and townhouses with shared common property and an owners corporation; usually No for a free-standing house on its own title. This decides who's responsible for smoke alarms."
+        value={form.isStrataScheme}
+        onChange={(v) =>
+          onChange({
+            isStrataScheme: v,
+            strataOcResponsibleForAlarms: v === 'yes' ? form.strataOcResponsibleForAlarms : '',
+          })
+        }
+        labelClass={labelClass}
+      />
+
+      {form.isStrataScheme === 'yes' ? (
+        <YesNoField
+          id="ft6600-strata-oc"
+          label="Is the owners corporation responsible for smoke alarm repair and replacement?"
+          helperText="In some schemes the owners corporation maintains alarms in each lot. Check your by-laws or strata manager — if Yes, those duties sit with the OC, not you."
+          value={form.strataOcResponsibleForAlarms}
+          onChange={(v) =>
+            onChange({
+              strataOcResponsibleForAlarms: v,
+              ...(v === 'yes'
+                ? {
+                    smokeAlarmBatteryTenantReplaceable: '',
+                    smokeAlarmBatteryType: '',
+                    smokeAlarmBackupTenantReplaceable: '',
+                    smokeAlarmBackupBatteryType: '',
+                  }
+                : {}),
+            })
+          }
+          labelClass={labelClass}
+        />
+      ) : null}
+
+      {showSmokeAlarmReplaceability && form.smokeAlarmType === 'battery' ? (
         <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
           <YesNoField
             id="ft6600-battery-replaceable"
@@ -267,7 +316,7 @@ export default function LandlordPropertyFt6600ComplianceFields({
         </div>
       ) : null}
 
-      {form.smokeAlarmType === 'hardwired' ? (
+      {showSmokeAlarmReplaceability && form.smokeAlarmType === 'hardwired' ? (
         <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
           <YesNoField
             id="ft6600-backup-replaceable"
@@ -299,31 +348,6 @@ export default function LandlordPropertyFt6600ComplianceFields({
             </div>
           ) : null}
         </div>
-      ) : null}
-
-      <YesNoField
-        id="ft6600-strata-scheme"
-        label="Is the property in a strata or community scheme?"
-        helperText="Yes for apartments, units and townhouses with shared common property and an owners corporation; usually No for a free-standing house on its own title. This decides who's responsible for smoke alarms."
-        value={form.isStrataScheme}
-        onChange={(v) =>
-          onChange({
-            isStrataScheme: v,
-            strataOcResponsibleForAlarms: v === 'yes' ? form.strataOcResponsibleForAlarms : '',
-          })
-        }
-        labelClass={labelClass}
-      />
-
-      {form.isStrataScheme === 'yes' ? (
-        <YesNoField
-          id="ft6600-strata-oc"
-          label="Is the owners corporation responsible for smoke alarm repair and replacement?"
-          helperText="In some schemes the owners corporation maintains alarms in each lot. Check your by-laws or strata manager — if Yes, those duties sit with the OC, not you."
-          value={form.strataOcResponsibleForAlarms}
-          onChange={(v) => onChange({ strataOcResponsibleForAlarms: v })}
-          labelClass={labelClass}
-        />
       ) : null}
 
       <YesNoField
