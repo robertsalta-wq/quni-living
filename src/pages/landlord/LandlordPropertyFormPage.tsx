@@ -357,6 +357,7 @@ export default function LandlordPropertyFormPage() {
   const [pageError, setPageError] = useState<string | null>(null)
   const [loadingPage, setLoadingPage] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [features, setFeatures] = useState<FeatureRow[]>([])
@@ -1321,6 +1322,33 @@ export default function LandlordPropertyFormPage() {
     return null
   }
 
+  async function geocodeAddressForSave(
+    addr: string,
+    sub: string,
+    st: string,
+    pc: string,
+  ): Promise<GeoPoint | null> {
+    const ac = new AbortController()
+    const timeout = window.setTimeout(() => ac.abort(), 8000)
+    try {
+      return await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
+    } finally {
+      window.clearTimeout(timeout)
+    }
+  }
+
+  function scrollToFormFeedback(anchorId: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
+    document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  function reportSubmitError(message: string, anchorId?: 'listing-form-feedback-top' | 'listing-form-feedback-bottom') {
+    setSubmitSuccessMessage(null)
+    setSubmitError(message)
+    window.requestAnimationFrame(() => {
+      scrollToFormFeedback(anchorId ?? 'listing-form-feedback-bottom')
+    })
+  }
+
   useEffect(() => {
     const campusCount = campusRefRows.length
     const uniCount = uniRefRows.length
@@ -1636,8 +1664,9 @@ export default function LandlordPropertyFormPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitError(null)
+    setSubmitSuccessMessage(null)
     if (!user?.id) {
-      setSubmitError('You must be signed in to save this listing.')
+      reportSubmitError('You must be signed in to save this listing.')
       return
     }
     // If the nearby-campus lookup overlay is up, it can intercept clicks and make the
@@ -1670,6 +1699,44 @@ export default function LandlordPropertyFormPage() {
     }
 
     let landlordId: string | null = landlordProfile?.id ?? null
+
+    if (serviceTier === 'listing' && !listingTierAvailable) {
+      reportSubmitError('Quni Listing is not available for this property.')
+      return
+    }
+    if (serviceTier === 'managed' && !managedTierAvailable) {
+      reportSubmitError(managedTierUnavailableReason)
+      return
+    }
+
+    if (qldRoomsRentedError) {
+      reportSubmitError(qldRoomsRentedError)
+      return
+    }
+
+    if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
+      setShowRoomingHouseValidation(true)
+      reportSubmitError('Fix rooming house registration details before saving.')
+      document.getElementById('section-accommodation')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
+    if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
+      reportSubmitError('Managed properties cannot be changed back to Quni Listing.')
+      return
+    }
+
+    if (showNswFt6600ComplianceSection) {
+      const missingCompliance = missingFt6600ComplianceFieldLabelsFromForm(ft6600Compliance)
+      if (missingCompliance.length > 0) {
+        reportSubmitError(nswFt6600ComplianceBlockedMessage(missingCompliance))
+        document.getElementById('section-ft6600-compliance')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+
+    setSubmitting(true)
+    try {
     if (role === 'admin') {
       if (isEdit && propertyId) {
         const { data: existing } = await supabase.from('properties').select('landlord_id').eq('id', propertyId).single()
@@ -1677,48 +1744,15 @@ export default function LandlordPropertyFormPage() {
       } else {
         landlordId = adminLandlordId.trim() || null
         if (!landlordId) {
-          setSubmitError('Select a landlord for this listing.')
+          reportSubmitError('Select a landlord for this listing.')
           return
         }
       }
     }
 
     if (!landlordId) {
-      setSubmitError('Landlord profile is missing. Complete landlord onboarding first.')
+      reportSubmitError('Landlord profile is missing. Complete landlord onboarding first.')
       return
-    }
-
-    if (serviceTier === 'listing' && !listingTierAvailable) {
-      setSubmitError('Quni Listing is not available for this property.')
-      return
-    }
-    if (serviceTier === 'managed' && !managedTierAvailable) {
-      setSubmitError(managedTierUnavailableReason)
-      return
-    }
-
-    if (qldRoomsRentedError) {
-      setSubmitError(qldRoomsRentedError)
-      return
-    }
-
-    if (roomingHouseErrors.onSiteConflict || roomingHouseErrors.missingRegistration) {
-      setShowRoomingHouseValidation(true)
-      return
-    }
-
-    if (isEdit && !canSwitchPropertyServiceTier(initialServiceTier, serviceTier)) {
-      setSubmitError('Managed properties cannot be changed back to Quni Listing.')
-      return
-    }
-
-    if (showNswFt6600ComplianceSection) {
-      const missingCompliance = missingFt6600ComplianceFieldLabelsFromForm(ft6600Compliance)
-      if (missingCompliance.length > 0) {
-        setSubmitError(nswFt6600ComplianceBlockedMessage(missingCompliance))
-        document.getElementById('section-ft6600-compliance')?.scrollIntoView({ behavior: 'smooth' })
-        return
-      }
     }
 
     let featureIds = [...selectedFeatureIds]
@@ -1751,7 +1785,7 @@ export default function LandlordPropertyFormPage() {
     let resolvedLat = latitude
     let resolvedLon = longitude
     if (canGeocode && (resolvedLat == null || resolvedLon == null)) {
-      const pt = await geocodeAddressWithFallbacks(addr, sub, st, pc)
+      const pt = await geocodeAddressForSave(addr, sub, st, pc)
       if (pt) {
         resolvedLat = pt.lat
         resolvedLon = pt.lon
@@ -1762,6 +1796,9 @@ export default function LandlordPropertyFormPage() {
 
     const accommodation = normalizeAccommodationForSave(propertyListingType, roomType)
     const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
+    const complianceColumns = showNswFt6600ComplianceSection
+      ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
+      : null
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
@@ -1804,9 +1841,7 @@ export default function LandlordPropertyFormPage() {
       images: images.length ? serializePropertyImages(images) : null,
       house_rules: houseRules.trim() || null,
       service_tier: serviceTier,
-      ...(showNswFt6600ComplianceSection
-        ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
-        : {
+      ...(complianceColumns ?? {
             smoke_alarm_type: null,
             smoke_alarm_battery_tenant_replaceable: null,
             smoke_alarm_battery_type: null,
@@ -1820,21 +1855,22 @@ export default function LandlordPropertyFormPage() {
           }),
     }
 
-    setSubmitting(true)
-    try {
+    const complianceSelect =
+      'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable'
+
       if (isEdit && propertyId) {
         const { data: updatedRow, error: upErr } = await supabase
           .from('properties')
           .update(baseFields)
           .eq('id', propertyId)
-          .select('university_id, campus_id, furnished, linen_supplied, weekly_cleaning_service, slug')
+          .select(`university_id, campus_id, furnished, linen_supplied, weekly_cleaning_service, slug, ${complianceSelect}`)
           .single()
         if (upErr) throw upErr
         const persisted = updatedRow as {
           furnished?: boolean | null
           linen_supplied?: boolean | null
           weekly_cleaning_service?: boolean | null
-        } | null
+        } & Record<string, unknown> | null
         if (
           persisted &&
           (Boolean(persisted.furnished) !== furnished ||
@@ -1843,6 +1879,21 @@ export default function LandlordPropertyFormPage() {
         ) {
           throw new Error(
             'Inclusion settings did not persist (linen_supplied / weekly_cleaning_service columns may be missing in Supabase). Run supabase/property_form_extend.sql in the SQL editor, then save again.',
+          )
+        }
+        if (complianceColumns && persisted) {
+          for (const [key, expected] of Object.entries(complianceColumns)) {
+            const actual = persisted[key] ?? null
+            if (expected !== actual) {
+              throw new Error(
+                `NSW compliance did not persist (${key}). The database columns may not be applied yet — run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the Supabase SQL editor, then save again.`,
+              )
+            }
+          }
+          setFt6600Compliance(
+            ft6600ComplianceFormStateFromProperty(
+              persisted as Parameters<typeof ft6600ComplianceFormStateFromProperty>[0],
+            ),
           )
         }
         const uRow = updatedRow as { university_id: string | null; campus_id: string | null } | null
@@ -1860,11 +1911,17 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
-        const slug = existingSlug ?? generatePropertySlug(t)
         if (existingListingStatus === 'draft') {
           navigate('/landlord-dashboard', { replace: true })
         } else {
-          navigate(`/properties/${slug}`, { replace: true })
+          setSubmitSuccessMessage(
+            existingSlug
+              ? 'Listing saved, including NSW compliance details. You can keep editing or view the public listing from your dashboard.'
+              : 'Listing saved, including NSW compliance details.',
+          )
+          window.requestAnimationFrame(() => {
+            scrollToFormFeedback('listing-form-feedback-bottom')
+          })
         }
       } else {
         const slug = generatePropertySlug(t)
@@ -1903,11 +1960,11 @@ export default function LandlordPropertyFormPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Save failed.'
       if (/smoke_alarm|strata_oc|ft6600|schema cache/i.test(msg)) {
-        setSubmitError(
+        reportSubmitError(
           `${msg} The NSW compliance columns may not be applied in Supabase yet — run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the SQL editor, then save again.`,
         )
       } else {
-        setSubmitError(msg)
+        reportSubmitError(msg)
       }
     } finally {
       setSubmitting(false)
@@ -2010,7 +2067,7 @@ export default function LandlordPropertyFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="min-w-0 max-w-full space-y-8">
+        <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full space-y-8">
           <nav
             className="listing-form-section-nav px-2 py-2 sm:-mx-6 sm:px-6"
             aria-label="Jump to section"
@@ -2038,8 +2095,22 @@ export default function LandlordPropertyFormPage() {
           <div className="h-12 max-md:block md:hidden" aria-hidden />
 
           {submitError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <div
+              id="listing-form-feedback-top"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              role="alert"
+            >
               {submitError}
+            </div>
+          )}
+
+          {submitSuccessMessage && (
+            <div
+              id="listing-form-feedback-top-success"
+              className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+              role="status"
+            >
+              {submitSuccessMessage}
             </div>
           )}
 
@@ -2967,7 +3038,20 @@ export default function LandlordPropertyFormPage() {
             'section-photos',
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
+            <div id="listing-form-feedback-bottom" className="space-y-3">
+              {submitError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+                  {submitError}
+                </div>
+              ) : null}
+              {submitSuccessMessage ? (
+                <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+                  {submitSuccessMessage}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex gap-3">
             <button
               type="submit"
               disabled={submitting}
@@ -2981,6 +3065,7 @@ export default function LandlordPropertyFormPage() {
             >
               Cancel
             </Link>
+            </div>
           </div>
         </form>
       </div>
