@@ -62,12 +62,14 @@ export function nswFt6600ComplianceFromPropertyRow(
  * Bills-included listings imply water is not charged separately.
  */
 export function resolveWaterUsageChargedSeparately(
-  compliance: NswFt6600PropertyCompliance,
+  compliance: NswFt6600PropertyCompliance | null | undefined,
   billsIncluded: boolean | null | undefined,
-): boolean {
+): boolean | null {
+  if (!compliance) return null
   if (compliance.waterUsageChargedSeparately != null) {
     return compliance.waterUsageChargedSeparately
   }
+  if (billsIncluded == null) return null
   return billsIncluded !== true
 }
 

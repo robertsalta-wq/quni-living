@@ -3,6 +3,7 @@ import {
   missingNswFt6600ComplianceFieldLabels,
   nswFt6600ComplianceCompleteForProperty,
   nswFt6600PremisesInclusionsFromPropertyRow,
+  resolveWaterUsageChargedSeparately,
 } from './propertyFt6600Compliance.js'
 import {
   bookingUsesNswFt6600Generator,
@@ -126,6 +127,31 @@ describe('missingNswFt6600ComplianceFieldLabels', () => {
       strata_oc_responsible_for_alarms: false,
     })
     expect(missing).not.toContain('Owners corporation responsible for smoke alarms')
+  })
+})
+
+describe('resolveWaterUsageChargedSeparately', () => {
+  it('returns null when compliance is missing (leave FT6600 water checkboxes blank)', () => {
+    expect(resolveWaterUsageChargedSeparately(undefined, true)).toBeNull()
+    expect(resolveWaterUsageChargedSeparately(null, false)).toBeNull()
+  })
+
+  it('uses property column when set', () => {
+    expect(
+      resolveWaterUsageChargedSeparately(
+        { waterUsageChargedSeparately: true } as Parameters<typeof resolveWaterUsageChargedSeparately>[0],
+        true,
+      ),
+    ).toBe(true)
+  })
+
+  it('falls back from bills-included when water column unset', () => {
+    const unsetWater = {
+      waterUsageChargedSeparately: null,
+    } as Parameters<typeof resolveWaterUsageChargedSeparately>[0]
+    expect(resolveWaterUsageChargedSeparately(unsetWater, true)).toBe(false)
+    expect(resolveWaterUsageChargedSeparately(unsetWater, false)).toBe(true)
+    expect(resolveWaterUsageChargedSeparately(unsetWater, null)).toBeNull()
   })
 })
 

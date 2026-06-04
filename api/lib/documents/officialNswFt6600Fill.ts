@@ -281,11 +281,15 @@ export function applyOfficialNswFt6600ScheduleFill(
 function applyPropertyComplianceFill(
   text: Map<string, string>,
   checks: Set<string>,
-  compliance: NswFt6600PropertyCompliance,
+  compliance: NswFt6600PropertyCompliance | null | undefined,
   billsIncluded: boolean | null | undefined,
 ): void {
+  if (!compliance) return
+
   const waterSeparate = resolveWaterUsageChargedSeparately(compliance, billsIncluded)
-  checks.add(waterSeparate ? F.water_usage_yes_cb : F.water_usage_no_cb)
+  if (waterSeparate != null) {
+    checks.add(waterSeparate ? F.water_usage_yes_cb : F.water_usage_no_cb)
+  }
 
   if (compliance.electricityEmbeddedNetwork === true) checks.add(F.electricity_embedded_yes_cb)
   else checks.add(F.electricity_embedded_no_cb)
