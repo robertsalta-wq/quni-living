@@ -1,4 +1,12 @@
 import type { LandlordListingBillingSnapshot } from './landlordListingBilling'
+import type { Database } from './database.types'
+import {
+  missingNswFt6600ComplianceFieldLabels,
+  nswFt6600ComplianceBlockedMessage,
+} from '../../api/lib/documents/propertyFt6600Compliance.js'
+import { bookingUsesNswFt6600Generator } from '../../api/lib/resolveTenancyPackage.js'
+
+export type LandlordBookingReviewProperty = Database['public']['Tables']['properties']['Row']
 
 export type ConfirmBlockedBanner =
   | null
@@ -6,6 +14,7 @@ export type ConfirmBlockedBanner =
   | 'listing_module_disabled'
   | 'listing_no_payment_method'
   | 'host_identity_required'
+  | 'ft6600_compliance_incomplete'
 
 export function landlordBookingConfirmAllowed(args: {
   bookingStatus: string
@@ -14,11 +23,24 @@ export function landlordBookingConfirmAllowed(args: {
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
   landlordStripeReady: boolean
+  property?: LandlordBookingReviewProperty | null
+  booking?: Pick<
+    Database['public']['Tables']['bookings']['Row'],
+    'move_in_date' | 'start_date'
+  > | null
 }): boolean {
   const st = args.bookingStatus
   if (st !== 'pending_confirmation' && st !== 'awaiting_info') return false
 
   if (!args.landlordStripeReady) return false
+
+  if (
+    args.property &&
+    bookingUsesNswFt6600Generator(args.booking ?? null, args.property) &&
+    missingNswFt6600ComplianceFieldLabels(args.property).length > 0
+  ) {
+    return false
+  }
 
   if (args.selectedConfirmTier === 'listing') {
     if (!args.listingBillingLoaded) return false
@@ -36,6 +58,11 @@ export function landlordBookingConfirmBlockedBanner(args: {
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
   landlordStripeReady: boolean
+  property?: LandlordBookingReviewProperty | null
+  booking?: Pick<
+    Database['public']['Tables']['bookings']['Row'],
+    'move_in_date' | 'start_date'
+  > | null
 }): ConfirmBlockedBanner {
   if (args.bookingStatus !== 'pending_confirmation' && args.bookingStatus !== 'awaiting_info') {
     return null
@@ -43,6 +70,14 @@ export function landlordBookingConfirmBlockedBanner(args: {
 
   if (!args.landlordStripeReady) {
     return 'host_identity_required'
+  }
+
+  if (
+    args.property &&
+    bookingUsesNswFt6600Generator(args.booking ?? null, args.property) &&
+    missingNswFt6600ComplianceFieldLabels(args.property).length > 0
+  ) {
+    return 'ft6600_compliance_incomplete'
   }
 
   if (args.selectedConfirmTier !== 'listing') {
@@ -62,6 +97,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
 export function landlordBookingConfirmBlockedUserMessage(
   banner: ConfirmBlockedBanner,
   bookingStatus: string,
+  property?: LandlordBookingReviewProperty | null,
 ): string | null {
   switch (banner) {
     case 'host_identity_required':
@@ -72,6 +108,12 @@ export function landlordBookingConfirmBlockedUserMessage(
       return 'Listing bookings are temporarily paused. Try again in a few minutes.'
     case 'listing_billing_unavailable':
       return 'Could not verify Listing billing. Refresh this page and try again.'
+    case 'ft6600_compliance_incomplete':
+      if (property) {
+        const missing = missingNswFt6600ComplianceFieldLabels(property)
+        return nswFt6600ComplianceBlockedMessage(missing)
+      }
+      return nswFt6600ComplianceBlockedMessage([])
     default:
       if (bookingStatus !== 'pending_confirmation' && bookingStatus !== 'awaiting_info') {
         return 'This booking is no longer waiting for your confirmation.'

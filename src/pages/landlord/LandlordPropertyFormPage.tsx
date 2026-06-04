@@ -62,6 +62,12 @@ import {
 } from '../../lib/landlordServiceTier'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
+import LandlordPropertyFt6600ComplianceFields, {
+  emptyLandlordFt6600ComplianceFormState,
+  ft6600ComplianceColumnsFromFormState,
+  ft6600ComplianceFormStateFromProperty,
+  type LandlordFt6600ComplianceFormState,
+} from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -71,6 +77,7 @@ const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-basic-info', label: 'Basic info' },
   { id: 'section-property-details', label: 'Property details' },
   { id: 'section-inclusions-features', label: 'Inclusions' },
+  { id: 'section-ft6600-compliance', label: 'Compliance' },
   { id: 'section-house-rules', label: 'Rules' },
   { id: 'section-location', label: 'Location' },
   { id: 'section-description', label: 'Description' },
@@ -414,6 +421,16 @@ export default function LandlordPropertyFormPage() {
     [state, propertyListingType],
   )
 
+  const showNswFt6600ComplianceSection = state.trim().toUpperCase() === 'NSW'
+
+  const formNavSections = useMemo(
+    () =>
+      showNswFt6600ComplianceSection
+        ? LANDLORD_FORM_NAV_SECTIONS
+        : LANDLORD_FORM_NAV_SECTIONS.filter((s) => s.id !== 'section-ft6600-compliance'),
+    [showNswFt6600ComplianceSection],
+  )
+
   const qldRoomsRentedError = useMemo(
     () =>
       qldOnSiteBoarderLodger
@@ -465,6 +482,9 @@ export default function LandlordPropertyFormPage() {
   const [coupleSurchargePerWeek, setCoupleSurchargePerWeek] = useState('')
   const [parkingSurchargePerWeek, setParkingSurchargePerWeek] = useState('')
   const [parkingAvailable, setParkingAvailable] = useState(false)
+  const [ft6600Compliance, setFt6600Compliance] = useState<LandlordFt6600ComplianceFormState>(
+    emptyLandlordFt6600ComplianceFormState,
+  )
   const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('section-basic-info')
   const weeklyRentNum = useMemo(() => {
@@ -954,6 +974,7 @@ export default function LandlordPropertyFormPage() {
         }
         setSelectedRules(nextRules)
         setHouseRules(typeof prop.house_rules === 'string' ? prop.house_rules : '')
+        setFt6600Compliance(ft6600ComplianceFormStateFromProperty(prop))
       }
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Could not load form.')
@@ -1769,6 +1790,20 @@ export default function LandlordPropertyFormPage() {
       images: images.length ? serializePropertyImages(images) : null,
       house_rules: houseRules.trim() || null,
       service_tier: serviceTier,
+      ...(showNswFt6600ComplianceSection
+        ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
+        : {
+            smoke_alarm_type: null,
+            smoke_alarm_battery_tenant_replaceable: null,
+            smoke_alarm_battery_type: null,
+            smoke_alarm_backup_tenant_replaceable: null,
+            smoke_alarm_backup_battery_type: null,
+            strata_oc_responsible_for_alarms: null,
+            water_usage_charged_separately: null,
+            electricity_embedded_network: null,
+            gas_embedded_network: null,
+            strata_bylaws_applicable: null,
+          }),
     }
 
     setSubmitting(true)
@@ -1960,7 +1995,7 @@ export default function LandlordPropertyFormPage() {
             aria-label="Jump to section"
           >
             <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-              {LANDLORD_FORM_NAV_SECTIONS.map(({ id, label }) => {
+              {formNavSections.map(({ id, label }) => {
                 const isActive = activeSection === id
                 return (
                   <a
@@ -2267,6 +2302,19 @@ export default function LandlordPropertyFormPage() {
             </div>,
             'section-inclusions-features',
           )}
+
+          {showNswFt6600ComplianceSection
+            ? sectionClass(
+                'Smoke alarms & compliance (NSW)',
+                <LandlordPropertyFt6600ComplianceFields
+                  form={ft6600Compliance}
+                  onChange={(patch) => setFt6600Compliance((prev) => ({ ...prev, ...patch }))}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
+                />,
+                'section-ft6600-compliance',
+              )
+            : null}
 
           {sectionClass(
             'House rules',

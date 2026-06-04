@@ -9,6 +9,13 @@ import {
   resolveEffectiveConfirmTier,
   validateLandlordConfirmTierChoice,
 } from './lib/booking/serviceTierSnapshot.js'
+import {
+  missingNswFt6600ComplianceFieldLabels,
+  nswFt6600ComplianceBlockedMessage,
+} from './lib/documents/propertyFt6600Compliance.js'
+import {
+  bookingUsesNswFt6600Generator,
+} from './lib/resolveTenancyPackage.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -97,6 +104,8 @@ export default async function handler(req, res) {
         landlord_id,
         property_id,
         status,
+        move_in_date,
+        start_date,
         service_tier_at_request,
         service_tier_final,
         stripe_subscription_id,
@@ -156,7 +165,19 @@ export default async function handler(req, res) {
 
     const { data: propertyLite, error: propLiteErr } = await admin
       .from('properties')
-      .select('state, property_type, is_registered_rooming_house, service_tier')
+      .select(
+        `state, property_type, is_registered_rooming_house, service_tier,
+        smoke_alarm_type,
+        smoke_alarm_battery_tenant_replaceable,
+        smoke_alarm_battery_type,
+        smoke_alarm_backup_tenant_replaceable,
+        smoke_alarm_backup_battery_type,
+        strata_oc_responsible_for_alarms,
+        water_usage_charged_separately,
+        electricity_embedded_network,
+        gas_embedded_network,
+        strata_bylaws_applicable`,
+      )
       .eq('id', bookingLite.property_id)
       .maybeSingle()
 
@@ -189,6 +210,22 @@ export default async function handler(req, res) {
     })
     if (tierErr) {
       return corsJson(res, { error: tierErr.message, code: tierErr.code }, 400, origin)
+    }
+
+    if (bookingUsesNswFt6600Generator(bookingLite, propertyLite)) {
+      const missingCompliance = missingNswFt6600ComplianceFieldLabels(propertyLite)
+      if (missingCompliance.length > 0) {
+        return corsJson(
+          res,
+          {
+            error: 'ft6600_compliance_incomplete',
+            message: nswFt6600ComplianceBlockedMessage(missingCompliance),
+            missingFields: missingCompliance,
+          },
+          400,
+          origin,
+        )
+      }
     }
 
     const useListing = effectiveTier === 'listing'

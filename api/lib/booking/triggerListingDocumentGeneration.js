@@ -6,7 +6,7 @@
  * `defer_signing: false` by default so both parties receive DocuSeal signing promptly.
  * Mark-bond-received only re-triggers generation if signing was never sent (legacy rows).
  */
-import { resolveTenancyPackage, tenancyGeneratorToApiPath } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyGeneratorToApiPath, tenancyPackageInputFromBooking } from '../resolveTenancyPackage.js'
 
 function internalApiOrigin() {
   const explicit = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim().replace(/\/$/, '')
@@ -77,24 +77,13 @@ export async function triggerListingDocumentGeneration(args) {
       ? booking.properties
       : {}
 
-  const tenancyState = typeof prop.state === 'string' && prop.state.trim() ? prop.state.trim() : 'NSW'
-  const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
-  const isRooming = Boolean(prop.is_registered_rooming_house)
-  const moveIn = typeof booking.move_in_date === 'string' ? booking.move_in_date : undefined
-
-  const tenancyPackage = resolveTenancyPackage({
-    state: tenancyState,
-    property_type: propertyType,
-    is_registered_rooming_house: isRooming,
-    date: moveIn,
-  })
+  const tenancyInput = tenancyPackageInputFromBooking(booking, prop)
+  const tenancyPackage = resolveTenancyPackage(tenancyInput)
 
   if (!tenancyPackage.supported) {
     log.warn('[trigger-listing-doc] tenancy package unsupported', {
       reason: tenancyPackage.unsupportedReason,
-      state: tenancyState,
-      propertyType,
-      isRooming,
+      input: tenancyInput,
     })
     return { ok: true, skipped: true, reason: 'tenancy_unsupported' }
   }

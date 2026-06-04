@@ -316,6 +316,8 @@ export default function LandlordBookingReviewPage() {
       listingBillingLoaded: data.listingBillingLoaded,
       listingBilling: data.listingBilling,
       landlordStripeReady: data.landlordStripeReady,
+      property: data.property,
+      booking: data.booking,
     })
 
   const canDeclineOrInfo =
@@ -656,9 +658,11 @@ export default function LandlordBookingReviewPage() {
     listingBillingLoaded,
     listingBilling,
     landlordStripeReady,
+    property: property ?? undefined,
+    booking,
   })
   const confirmBlockedMessage =
-    landlordBookingConfirmBlockedUserMessage(confirmBlockedBanner, booking.status) ??
+    landlordBookingConfirmBlockedUserMessage(confirmBlockedBanner, booking.status, property ?? undefined) ??
     (!canConfirm && (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
       ? 'Complete the steps above before you can accept this booking.'
       : null)

@@ -254,6 +254,60 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
   return unsupportedBase('T2', 'unknown_property_type', ragState)
 }
 
+/** Build resolver input from a properties row (snake_case). */
+export function tenancyPackageInputFromPropertyRow(
+  prop: Record<string, unknown> | null | undefined,
+  opts?: { date?: string | Date },
+): TenancyPackageInput {
+  const p = prop ?? {}
+  return {
+    state: typeof p.state === 'string' ? p.state : '',
+    property_type: typeof p.property_type === 'string' ? p.property_type : '',
+    is_registered_rooming_house: Boolean(p.is_registered_rooming_house),
+    date: opts?.date,
+  }
+}
+
+/** Same fields as triggerListingDocumentGeneration — property row plus booking move-in date. */
+export function tenancyPackageInputFromBooking(
+  booking: Record<string, unknown> | null | undefined,
+  prop: Record<string, unknown> | null | undefined,
+): TenancyPackageInput {
+  const moveIn =
+    typeof booking?.move_in_date === 'string' && booking.move_in_date.trim()
+      ? booking.move_in_date.trim()
+      : typeof booking?.start_date === 'string' && booking.start_date.trim()
+        ? booking.start_date.trim()
+        : undefined
+  return tenancyPackageInputFromPropertyRow(prop, { date: moveIn })
+}
+
+/**
+ * True when resolveTenancyPackage would route to generate-residential-tenancy (NSW FT6600).
+ * Single predicate for document triggers and compliance accept-gates.
+ */
+export function tenancyPackageUsesNswFt6600Generator(pkg: TenancyPackageResult): boolean {
+  return pkg.supported && pkg.generator === 'nsw-ft6600'
+}
+
+export function resolvesToNswFt6600(input: TenancyPackageInput): boolean {
+  return tenancyPackageUsesNswFt6600Generator(resolveTenancyPackage(input))
+}
+
+export function bookingUsesNswFt6600Generator(
+  booking: Record<string, unknown> | null | undefined,
+  prop: Record<string, unknown> | null | undefined,
+): boolean {
+  return resolvesToNswFt6600(tenancyPackageInputFromBooking(booking, prop))
+}
+
+/** Property row only (no booking date) — use bookingUsesNswFt6600Generator when a booking exists. */
+export function propertyUsesNswFt6600T2FromRow(
+  prop: Record<string, unknown> | null | undefined,
+): boolean {
+  return resolvesToNswFt6600(tenancyPackageInputFromPropertyRow(prop))
+}
+
 /** Maps router generator → internal document API path for server-side PDF generation. */
 export function tenancyGeneratorToApiPath(generator: string | null): string | null {
   if (generator === 'nsw-ft6600') return '/api/documents/generate-residential-tenancy'

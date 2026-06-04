@@ -19,6 +19,11 @@ import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
 import { buildNswResidentialTenancyAgreementPropsFromBooking } from '../lib/documents/buildNswFt6600AgreementProps.js'
+import {
+  missingNswFt6600ComplianceFieldLabels,
+  nswFt6600ComplianceBlockedMessage,
+} from '../lib/documents/propertyFt6600Compliance.js'
+import { bookingUsesNswFt6600Generator } from '../lib/resolveTenancyPackage.js'
 import { buildOfficialNswFt6600PdfWithSigning } from '../lib/documents/officialNswFt6600Signing.js'
 import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
 import {
@@ -245,6 +250,17 @@ export default async function handler(req: any, res: any) {
     booking.properties && typeof booking.properties === 'object' && !Array.isArray(booking.properties)
       ? (booking.properties as Record<string, unknown>)
       : {}
+
+  if (bookingUsesNswFt6600Generator(booking as unknown as Record<string, unknown>, prop)) {
+    const missingCompliance = missingNswFt6600ComplianceFieldLabels(prop)
+    if (missingCompliance.length > 0) {
+      return res.status(400).json({
+        error: 'ft6600_compliance_incomplete',
+        message: nswFt6600ComplianceBlockedMessage(missingCompliance),
+        missingFields: missingCompliance,
+      })
+    }
+  }
 
   const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
   if (!moveIn) {

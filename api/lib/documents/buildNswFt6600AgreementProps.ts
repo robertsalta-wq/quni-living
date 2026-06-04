@@ -8,6 +8,7 @@ import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
 import {
   nswFt6600ComplianceFromPropertyRow,
+  nswFt6600PremisesInclusionsFromPropertyRow,
 } from './propertyFt6600Compliance.js'
 
 export type Ft6600BankDetails = {
@@ -173,7 +174,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
         typeof prop.weekly_cleaning_service === 'boolean' ? prop.weekly_cleaning_service : null,
     },
     premisesPartDescription: null,
-    additionalPremisesInclusions: [],
+    additionalPremisesInclusions: nswFt6600PremisesInclusionsFromPropertyRow(prop),
     maxOccupantsPermitted,
     term: {
       startDate: moveIn,
