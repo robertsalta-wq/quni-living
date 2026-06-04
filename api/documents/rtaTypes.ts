@@ -100,6 +100,20 @@ export type NswRtaRentSchedule = RtaRentPdf & {
   paymentTimingDescription: string
 }
 
+/** NSW FT6600 schedule compliance fields sourced from properties.* columns. */
+export type NswFt6600PropertyCompliance = {
+  smokeAlarmType: 'hardwired' | 'battery' | null
+  smokeAlarmBatteryTenantReplaceable: boolean | null
+  smokeAlarmBatteryType: string | null
+  smokeAlarmBackupTenantReplaceable: boolean | null
+  smokeAlarmBackupBatteryType: string | null
+  strataOcResponsibleForAlarms: boolean | null
+  waterUsageChargedSeparately: boolean | null
+  electricityEmbeddedNetwork: boolean | null
+  gasEmbeddedNetwork: boolean | null
+  strataBylawsApplicable: boolean | null
+}
+
 /** Email addresses and consent for electronic service of notices (clause 50). */
 export type NswRtaElectronicService = {
   landlordEmail: string
@@ -135,8 +149,10 @@ export type NswResidentialTenancyAgreementProps = {
   landlordAgent: NswRtaLandlordAgent | null
   urgentRepairsTradespeople: NswRtaUrgentRepairsContacts
   electronicService: NswRtaElectronicService
-  /** Listing has bills/utilities included — FT6600 water usage schedule. */
+  /** Listing has bills/utilities included — legacy fallback for water usage when property column unset. */
   billsIncluded?: boolean | null
+  /** Landlord-entered FT6600 schedule compliance (properties table). */
+  propertyCompliance: NswFt6600PropertyCompliance
   specialConditions: string[]
   bookingNotes: string | null
 }

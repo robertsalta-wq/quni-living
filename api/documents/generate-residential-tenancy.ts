@@ -179,6 +179,16 @@ export default async function handler(req: any, res: any) {
         linen_supplied,
         weekly_cleaning_service,
         house_rules,
+        smoke_alarm_type,
+        smoke_alarm_battery_tenant_replaceable,
+        smoke_alarm_battery_type,
+        smoke_alarm_backup_tenant_replaceable,
+        smoke_alarm_backup_battery_type,
+        strata_oc_responsible_for_alarms,
+        water_usage_charged_separately,
+        electricity_embedded_network,
+        gas_embedded_network,
+        strata_bylaws_applicable,
         property_features (
           features ( name )
         )

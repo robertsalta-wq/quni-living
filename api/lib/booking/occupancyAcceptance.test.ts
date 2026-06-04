@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   additionalTenantNamesFromBooking,
   maxOccupantsPermittedForLease,
+  MissingBookingOccupantCountError,
   occupancyLeaseFieldsFromBooking,
 } from './occupancyLeaseContext.js'
 import {
@@ -126,8 +127,14 @@ describe('§11 Co-tenant acceptance', () => {
     expect(housematesCountFromOccupantCount(1)).toBe(0)
   })
 
-  it('maxOccupantsPermitted prefers property.max_occupants', () => {
-    expect(maxOccupantsPermittedForLease({ occupant_count: 2 }, { max_occupants: 2 })).toBe(2)
+  it('maxOccupantsPermitted comes from booking occupant_count only', () => {
+    expect(maxOccupantsPermittedForLease({ occupant_count: 2 })).toBe(2)
+  })
+
+  it('throws when occupant_count missing for lease cap', () => {
+    expect(() => occupancyLeaseFieldsFromBooking({}, { max_occupants: 2 })).toThrow(
+      MissingBookingOccupantCountError,
+    )
   })
 })
 

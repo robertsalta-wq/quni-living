@@ -947,6 +947,16 @@ export interface Database {
           couple_surcharge_per_week: number | null
           parking_surcharge_per_week: number | null
           parking_available: boolean
+          smoke_alarm_type: 'hardwired' | 'battery' | null
+          smoke_alarm_battery_tenant_replaceable: boolean | null
+          smoke_alarm_battery_type: string | null
+          smoke_alarm_backup_tenant_replaceable: boolean | null
+          smoke_alarm_backup_battery_type: string | null
+          strata_oc_responsible_for_alarms: boolean | null
+          water_usage_charged_separately: boolean | null
+          electricity_embedded_network: boolean | null
+          gas_embedded_network: boolean | null
+          strata_bylaws_applicable: boolean | null
         }
         Insert: {
           id?: string
@@ -991,6 +1001,16 @@ export interface Database {
           couple_surcharge_per_week?: number | null
           parking_surcharge_per_week?: number | null
           parking_available?: boolean
+          smoke_alarm_type?: 'hardwired' | 'battery' | null
+          smoke_alarm_battery_tenant_replaceable?: boolean | null
+          smoke_alarm_battery_type?: string | null
+          smoke_alarm_backup_tenant_replaceable?: boolean | null
+          smoke_alarm_backup_battery_type?: string | null
+          strata_oc_responsible_for_alarms?: boolean | null
+          water_usage_charged_separately?: boolean | null
+          electricity_embedded_network?: boolean | null
+          gas_embedded_network?: boolean | null
+          strata_bylaws_applicable?: boolean | null
         }
         Update: {
           id?: string
@@ -1035,6 +1055,16 @@ export interface Database {
           couple_surcharge_per_week?: number | null
           parking_surcharge_per_week?: number | null
           parking_available?: boolean
+          smoke_alarm_type?: 'hardwired' | 'battery' | null
+          smoke_alarm_battery_tenant_replaceable?: boolean | null
+          smoke_alarm_battery_type?: string | null
+          smoke_alarm_backup_tenant_replaceable?: boolean | null
+          smoke_alarm_backup_battery_type?: string | null
+          strata_oc_responsible_for_alarms?: boolean | null
+          water_usage_charged_separately?: boolean | null
+          electricity_embedded_network?: boolean | null
+          gas_embedded_network?: boolean | null
+          strata_bylaws_applicable?: boolean | null
         }
         Relationships: [
           {

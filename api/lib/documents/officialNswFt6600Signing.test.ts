@@ -24,25 +24,25 @@ describe('buildWidgetTagPlacements', () => {
   it('maps landlord, tenant 1, and TIS widgets to three roles without co-tenant', () => {
     const widgets = [
       { fieldName: 'sig_landlord', pageIndex: 16, x: 10, y: 700, width: 100, height: 30 },
-      { fieldName: 'landlord_sig_day', pageIndex: 16, x: 120, y: 700, width: 20, height: 12 },
+      { fieldName: 'landlord_sig_month', pageIndex: 16, x: 325.552, y: 700, width: 102, height: 12 },
       { fieldName: 'sig_landlord_lis', pageIndex: 16, x: 10, y: 650, width: 100, height: 30 },
-      { fieldName: 'landlord_lis_sig_day', pageIndex: 16, x: 120, y: 650, width: 20, height: 12 },
+      { fieldName: 'landlord_lis_sig_month', pageIndex: 16, x: 325.552, y: 650, width: 102, height: 12 },
       { fieldName: 'sig_tenant_1', pageIndex: 16, x: 10, y: 600, width: 100, height: 30 },
-      { fieldName: 'tenant_1_sig_day', pageIndex: 16, x: 120, y: 600, width: 20, height: 12 },
+      { fieldName: 'tenant_1_sig_month', pageIndex: 16, x: 325.552, y: 600, width: 102, height: 12 },
       { fieldName: 'sig_tenant_tis', pageIndex: 17, x: 10, y: 500, width: 100, height: 30 },
-      { fieldName: 'tenant_tis_sig_day', pageIndex: 17, x: 120, y: 500, width: 20, height: 12 },
+      { fieldName: 'tenant_tis_sig_month', pageIndex: 17, x: 325.6, y: 407.3, width: 102, height: 19 },
     ]
     const placements = buildWidgetTagPlacements(widgets, false)
     expect(placements).toHaveLength(8)
     expect(placements.map((p) => p.fieldName)).toEqual([
       'sig_landlord',
-      'landlord_sig_day',
+      'landlord_sig_month',
       'sig_landlord_lis',
-      'landlord_lis_sig_day',
+      'landlord_lis_sig_month',
       'sig_tenant_1',
-      'tenant_1_sig_day',
+      'tenant_1_sig_month',
       'sig_tenant_tis',
-      'tenant_tis_sig_day',
+      'tenant_tis_sig_month',
     ])
     expect(placements.every((p) => p.tag.includes('{{'))).toBe(true)
   })
@@ -50,11 +50,12 @@ describe('buildWidgetTagPlacements', () => {
   it('places TIS signature and date on page 18 coordinate anchors', () => {
     const placements = buildWidgetTagPlacements([], false)
     const tisSig = placements.find((p) => p.fieldName === 'sig_tenant_tis')
-    const tisDate = placements.find((p) => p.fieldName === 'tenant_tis_sig_day')
+    const tisDate = placements.find((p) => p.fieldName === 'tenant_tis_sig_month')
     expect(tisSig?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
     expect(tisDate?.pageIndex).toBe(OFFICIAL_FT6600_TIS_PAGE_INDEX)
     expect(tisSig?.y).toBeGreaterThan(400)
     expect(tisSig?.y).toBeLessThan(420)
+    expect(tisDate?.x).toBeCloseTo(329.6, 0)
   })
 })
 

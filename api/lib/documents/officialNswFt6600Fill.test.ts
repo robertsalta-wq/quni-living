@@ -62,6 +62,18 @@ const SAMPLE_PROPS = {
     tenantConsentsToEmailService: false,
   },
   billsIncluded: true,
+  propertyCompliance: {
+    smokeAlarmType: null,
+    smokeAlarmBatteryTenantReplaceable: null,
+    smokeAlarmBatteryType: null,
+    smokeAlarmBackupTenantReplaceable: null,
+    smokeAlarmBackupBatteryType: null,
+    strataOcResponsibleForAlarms: null,
+    waterUsageChargedSeparately: null,
+    electricityEmbeddedNetwork: null,
+    gasEmbeddedNetwork: null,
+    strataBylawsApplicable: null,
+  },
   specialConditions: [],
   bookingNotes: null,
 }

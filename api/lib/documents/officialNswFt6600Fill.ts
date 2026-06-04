@@ -4,8 +4,9 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PDFDict, PDFDocument, PDFName, StandardFonts, type PDFForm } from 'pdf-lib'
-import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
+import type { NswFt6600PropertyCompliance, NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
+import { resolveWaterUsageChargedSeparately } from './propertyFt6600Compliance.js'
 import {
   flattenAndCleanForm,
   saveNormalizedPdf,
@@ -257,9 +258,6 @@ export function applyOfficialNswFt6600ScheduleFill(
   uncheckAll(form, [F.smoke_owners_corp_responsible_yes_cb, F.smoke_owners_corp_responsible_no_cb])
   uncheckAll(form, [F.strata_bylaws_yes_cb, F.strata_bylaws_no_cb])
 
-  setCheck(form, F.smoke_owners_corp_responsible_no_cb, true)
-  setCheck(form, F.strata_bylaws_no_cb, true)
-
   uncheckAll(form, [F.landlord_eservice_yes_cb, F.landlord_eservice_no_cb])
   if (
     props.electronicService.landlordConsentsToEmailService ||
@@ -277,6 +275,49 @@ export function applyOfficialNswFt6600ScheduleFill(
 
   const assignments = applyAssignments(form, state)
   return { filledFieldNames: [...new Set(assignments.map(([n]) => n))], assignments }
+}
+
+function applyPropertyComplianceFill(
+  text: Map<string, string>,
+  checks: Set<string>,
+  compliance: NswFt6600PropertyCompliance,
+  billsIncluded: boolean | null | undefined,
+): void {
+  const waterSeparate = resolveWaterUsageChargedSeparately(compliance, billsIncluded)
+  checks.add(waterSeparate ? F.water_usage_yes_cb : F.water_usage_no_cb)
+
+  if (compliance.electricityEmbeddedNetwork === true) checks.add(F.electricity_embedded_yes_cb)
+  else checks.add(F.electricity_embedded_no_cb)
+
+  if (compliance.gasEmbeddedNetwork === true) checks.add(F.gas_embedded_yes_cb)
+  else checks.add(F.gas_embedded_no_cb)
+
+  if (compliance.smokeAlarmType === 'battery') {
+    checks.add(F.smoke_battery_cb)
+    if (compliance.smokeAlarmBatteryTenantReplaceable === true) {
+      checks.add(F.smoke_battery_replaceable_yes_cb)
+      pushText(text, F.smoke_battery_type_text, compliance.smokeAlarmBatteryType)
+    } else if (compliance.smokeAlarmBatteryTenantReplaceable === false) {
+      checks.add(F.smoke_battery_replaceable_no_cb)
+    }
+  } else if (compliance.smokeAlarmType === 'hardwired') {
+    checks.add(F.smoke_hardwired_cb)
+    if (compliance.smokeAlarmBackupTenantReplaceable === true) {
+      checks.add(F.smoke_hardwired_backup_replaceable_yes_cb)
+      pushText(text, F.smoke_hardwired_backup_type_text, compliance.smokeAlarmBackupBatteryType)
+    } else if (compliance.smokeAlarmBackupTenantReplaceable === false) {
+      checks.add(F.smoke_hardwired_backup_replaceable_no_cb)
+    }
+  }
+
+  if (compliance.strataOcResponsibleForAlarms === true) {
+    checks.add(F.smoke_owners_corp_responsible_yes_cb)
+  } else {
+    checks.add(F.smoke_owners_corp_responsible_no_cb)
+  }
+
+  if (compliance.strataBylawsApplicable === true) checks.add(F.strata_bylaws_yes_cb)
+  else checks.add(F.strata_bylaws_no_cb)
 }
 
 function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillAssignments {
@@ -397,10 +438,7 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
     checks.add(F.bond_paid_to_rbo_cb)
   }
 
-  const billsIncluded = props.billsIncluded === true
-  checks.add(billsIncluded ? F.water_usage_no_cb : F.water_usage_yes_cb)
-  checks.add(F.electricity_embedded_no_cb)
-  checks.add(F.gas_embedded_no_cb)
+  applyPropertyComplianceFill(text, checks, props.propertyCompliance, props.billsIncluded)
 
   pushText(text, F.landlord_email_for_service, electronicService.landlordEmail)
   pushText(text, F.tenant_email_for_service, electronicService.tenantEmail)

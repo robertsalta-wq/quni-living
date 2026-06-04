@@ -6,61 +6,13 @@ import {
   loadOfficialNswFt6600Template,
   prepareOfficialNswFt6600ScheduleForFlatten,
 } from './officialNswFt6600Fill.js'
+import { QUINN_ROBERT_FT6600_LISTING_INPUT } from './quinnRobertFt6600Fixture.js'
 
-/** Quinn Lee / Robert Saltalamacchia — docs/nsw/ft6600-correct-fill-spec.md */
+export { QUINN_ROBERT_FT6600_LISTING_INPUT, QUINN_ROBERT_FT6600_PROPERTY, QUINN_ROBERT_FT6600_BOOKING } from './quinnRobertFt6600Fixture.js'
+
 const QUINN_ROBERT_BOOKING_ROWS = {
+  ...QUINN_ROBERT_FT6600_LISTING_INPUT,
   documentId: 'e2e-quinn-robert-ft6600',
-  generatedAt: '03/06/2026, 10:00:00 am',
-  booking: {
-    move_in_date: '2026-06-10',
-    end_date: '2026-12-10',
-    lease_length: '6 months',
-    weekly_rent: 400,
-    notes: null,
-  },
-  landlordProfile: {
-    first_name: 'Quinn',
-    last_name: 'Lee',
-    full_name: 'Quinn Lee',
-    email: 'quinniele90@gmail.com',
-    phone: '+61410025719',
-    address: '18 Malvina Street',
-    suburb: 'Ryde',
-    state: 'NSW',
-    postcode: '2112',
-    company_name: null,
-  },
-  studentProfile: {
-    first_name: 'Robert',
-    last_name: 'Saltalamacchia',
-    full_name: 'Robert Saltalamacchia',
-    email: 'rob@3thingsatonce.com.au',
-    phone: '+61425775308',
-    workplace_address: null,
-    workplace_suburb: null,
-    workplace_state: null,
-    workplace_postcode: null,
-  },
-  property: {
-    address: 'Unit 406/311 Hume Highway',
-    suburb: 'Liverpool',
-    state: 'NSW',
-    postcode: '2170',
-    max_occupants: 2,
-    bond: 800,
-    property_type: 'private_room_landlord_off_site',
-    room_type: 'Private room',
-    furnished: true,
-    linen_supplied: true,
-    weekly_cleaning_service: false,
-    property_features: [{ features: { name: 'Bills included' } }],
-  },
-  bankDetails: {
-    bsb: '939200',
-    accountNumber: '823175945',
-    accountName: 'QUINNVESTMENTS PTY LTD',
-    bankName: 'Bank',
-  },
 }
 
 describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
@@ -72,6 +24,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(props.term.leaseLengthDescription).toBe('6 months')
     expect(props.bond.amount).toBe(800)
     expect(props.maxOccupantsPermitted).toBe(2)
+    expect(props.propertyCompliance.smokeAlarmType).toBe('battery')
     expect(props.rent.paymentMethod).toContain('QUINNVESTMENTS')
   })
 
@@ -118,7 +71,12 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.term_periodic_cb).isChecked()).toBe(false)
     expect(form.getCheckBox(F.rent_paid_week_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.rent_paid_bank_cb).isChecked()).toBe(true)
-    expect(form.getCheckBox(F.smoke_battery_cb).isChecked()).toBe(false)
+    expect(form.getCheckBox(F.smoke_battery_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.smoke_battery_replaceable_no_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.smoke_owners_corp_responsible_no_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.strata_bylaws_no_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.electricity_embedded_no_cb).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.gas_embedded_no_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
   })
 

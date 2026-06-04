@@ -3,6 +3,7 @@ import {
   additionalTenantNamesFromBooking,
   coTenantSpecialConditionsLines,
   maxOccupantsPermittedForLease,
+  MissingBookingOccupantCountError,
   parseCoTenantFromBooking,
 } from './occupancyLeaseContext.js'
 
@@ -17,14 +18,21 @@ describe('occupancyLeaseContext', () => {
     expect(ct?.full_name).toBe('Alex Partner')
   })
 
-  it('uses property max_occupants for permitted count', () => {
-    expect(
-      maxOccupantsPermittedForLease({ occupant_count: 2, housemates_count: 1 }, { max_occupants: 2 }),
-    ).toBe(2)
+  it('uses booking occupant_count for permitted count', () => {
+    expect(maxOccupantsPermittedForLease({ occupant_count: 2 })).toBe(2)
   })
 
-  it('falls back to occupant_count when property max is missing', () => {
-    expect(maxOccupantsPermittedForLease({ occupant_count: 2 }, null)).toBe(2)
+  it('throws when occupant_count is missing', () => {
+    expect(() => maxOccupantsPermittedForLease({})).toThrow(MissingBookingOccupantCountError)
+    expect(() => maxOccupantsPermittedForLease({ occupant_count: null })).toThrow(
+      MissingBookingOccupantCountError,
+    )
+  })
+
+  it('does not use property.max_occupants when occupant_count is missing', () => {
+    expect(() =>
+      maxOccupantsPermittedForLease({ housemates_count: 1 } as Record<string, unknown>),
+    ).toThrow(MissingBookingOccupantCountError)
   })
 
   it('builds additional tenant names from booking', () => {

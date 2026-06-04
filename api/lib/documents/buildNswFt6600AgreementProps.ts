@@ -6,6 +6,9 @@ import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTyp
 import { occupancyLeaseFieldsFromBooking } from '../booking/occupancyLeaseContext.js'
 import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
+import {
+  nswFt6600ComplianceFromPropertyRow,
+} from './propertyFt6600Compliance.js'
 
 export type Ft6600BankDetails = {
   bsb: string
@@ -194,6 +197,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
       other: null,
     },
     billsIncluded,
+    propertyCompliance: nswFt6600ComplianceFromPropertyRow(prop),
     electronicService: {
       landlordEmail: typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '',
       tenantEmail: typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '',

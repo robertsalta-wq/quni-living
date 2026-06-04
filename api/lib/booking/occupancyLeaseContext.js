@@ -4,6 +4,15 @@
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export class MissingBookingOccupantCountError extends Error {
+  constructor() {
+    super(
+      'Booking occupant_count is required to set the lease maximum occupants cap (FT6600 / agreement schedule).',
+    )
+    this.name = 'MissingBookingOccupantCountError'
+  }
+}
+
 /**
  * @param {unknown} raw
  * @returns {{ full_name: string, email: string, phone: string, date_of_birth: string } | null}
@@ -29,23 +38,15 @@ export function additionalTenantNamesFromBooking(booking) {
 }
 
 /**
- * @param {{ occupant_count?: unknown, housemates_count?: unknown } | null | undefined} booking
- * @param {{ max_occupants?: unknown } | null | undefined} property
+ * Lease agreement max-occupants cap — booking.occupant_count only (never property.max_occupants).
+ *
+ * @param {{ occupant_count?: unknown } | null | undefined} booking
  * @returns {number}
  */
-export function maxOccupantsPermittedForLease(booking, property) {
-  const propMax = Math.floor(Number(property?.max_occupants))
-  if (Number.isFinite(propMax) && propMax >= 1) return Math.min(10, propMax)
-
+export function maxOccupantsPermittedForLease(booking) {
   const occ = Math.floor(Number(booking?.occupant_count))
   if (Number.isFinite(occ) && occ >= 1) return Math.min(10, occ)
-
-  const hm = booking?.housemates_count
-  if (hm != null && Number.isFinite(Number(hm))) {
-    return Math.max(1, Math.min(10, Math.floor(Number(hm)) + 1))
-  }
-
-  return 1
+  throw new MissingBookingOccupantCountError()
 }
 
 /**
@@ -68,15 +69,16 @@ export function coTenantSpecialConditionsLines(coTenant) {
 }
 
 /**
- * @param {{ co_tenant?: unknown } | null | undefined} booking
+ * @param {{ co_tenant?: unknown, occupant_count?: unknown } | null | undefined} booking
+ * @param {Record<string, unknown> | null | undefined} [_property] Unused; listing capacity stays on property.max_occupants elsewhere.
  * @returns {{ coTenant: object | null, additionalTenantNames: string[], maxOccupantsPermitted: number, specialConditions: string[] }}
  */
-export function occupancyLeaseFieldsFromBooking(booking, property) {
+export function occupancyLeaseFieldsFromBooking(booking, _property) {
   const coTenant = parseCoTenantFromBooking(booking?.co_tenant)
   return {
     coTenant,
     additionalTenantNames: additionalTenantNamesFromBooking(booking),
-    maxOccupantsPermitted: maxOccupantsPermittedForLease(booking, property),
+    maxOccupantsPermitted: maxOccupantsPermittedForLease(booking),
     specialConditions: coTenantSpecialConditionsLines(coTenant),
   }
 }

@@ -15,6 +15,9 @@ const spikeDir = path.join(root, 'scripts', 'test-official-form-spike')
 const { buildNswResidentialTenancyAgreementPropsFromBooking } = await import(
   '../api/lib/documents/buildNswFt6600AgreementProps.ts'
 )
+const { QUINN_ROBERT_FT6600_LISTING_INPUT } = await import(
+  '../api/lib/documents/quinnRobertFt6600Fixture.ts'
+)
 const {
   buildOfficialNswFt6600PdfWithSigning,
   OFFICIAL_FT6600_TIS_PAGE_INDEX,
@@ -26,67 +29,14 @@ const { loadOfficialNswFt6600Template, applyOfficialNswFt6600ScheduleFill } = aw
 )
 const { FT6600_RENAMED_FIELDS: F } = await import('../api/lib/documents/ft6600RenamedFields.ts')
 
-const QUINN_ROBERT_LISTING = {
-  documentId: 'nsw-ft6600-quinn-robert-listing',
-  generatedAt: '03/06/2026, 10:00:00 am',
-  serviceTier: 'listing',
-  booking: {
-    move_in_date: '2026-06-10',
-    end_date: '2026-12-10',
-    lease_length: '6 months',
-    weekly_rent: 400,
-    notes: null,
-  },
-  landlordProfile: {
-    first_name: 'Quinn',
-    last_name: 'Lee',
-    full_name: 'Quinn Lee',
-    email: 'quinniele90@gmail.com',
-    phone: '+61410025719',
-    address: '18 Malvina Street',
-    suburb: 'Ryde',
-    state: 'NSW',
-    postcode: '2112',
-    company_name: null,
-  },
-  studentProfile: {
-    first_name: 'Robert',
-    last_name: 'Saltalamacchia',
-    full_name: 'Robert Saltalamacchia',
-    email: 'rob@3thingsatonce.com.au',
-    phone: '+61425775308',
-    workplace_address: null,
-    workplace_suburb: null,
-    workplace_state: null,
-    workplace_postcode: null,
-  },
-  property: {
-    address: 'Unit 406/311 Hume Highway',
-    suburb: 'Liverpool',
-    state: 'NSW',
-    postcode: '2170',
-    max_occupants: 2,
-    bond: 800,
-    property_type: 'private_room_landlord_off_site',
-    room_type: 'Private room',
-    furnished: true,
-    linen_supplied: true,
-    weekly_cleaning_service: false,
-    property_features: [{ features: { name: 'Bills included' } }],
-  },
-  bankDetails: {
-    bsb: '939200',
-    accountNumber: '823175945',
-    accountName: 'QUINNVESTMENTS PTY LTD',
-    bankName: 'Bank',
-  },
-}
+const QUINN_ROBERT_LISTING = QUINN_ROBERT_FT6600_LISTING_INPUT
 
 /** p18 TIS target from docs/nsw/ft6600-corrected-field-map.json (no AcroForm on page 18 in template). */
 const P18_TIS_FIELD_MAP = {
   note: 'pdfjs lists zero AcroForm fields on page 18; sig_tenant_tis AcroForm widget is wrongly on page 17',
   sig_tenant_tis: { pageHuman: 18, rect: [34.0, 389.7, 215.4, 426.5] },
-  tenant_tis_sig_day: { pageHuman: 18, rect: [251.9, 407.3, 287.4, 426.4] },
+    tenant_tis_sig_day: { pageHuman: 18, rect: [251.9, 407.3, 287.4, 426.4] },
+    tenant_tis_sig_month: { pageHuman: 18, rect: [325.6, 407.3, 427.9, 426.4] },
   wrongP17Acroform: {
     sig_tenant_tis: { pageHuman: 17, rect: [34.0157, 415.377, 215.433, 452.161] },
     tenant_tis_sig_day: { pageHuman: 17, rect: [251.868, 415.471, 287.432, 434.562] },
@@ -140,7 +90,7 @@ const report = {
   p18TisFieldMap: P18_TIS_FIELD_MAP,
   tisCoordinateAnchorsUsed: {
     sig_tenant_tis: OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR,
-    tenant_tis_sig_day: OFFICIAL_FT6600_TIS_DATE_ANCHOR,
+    tenant_tis_sig_month: OFFICIAL_FT6600_TIS_DATE_ANCHOR,
   },
   verification: {
     hasDocusealTags: built.hasDocusealTags,

@@ -42,9 +42,9 @@ export const OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR = {
 
 export const OFFICIAL_FT6600_TIS_DATE_ANCHOR = {
   pageIndex: OFFICIAL_FT6600_TIS_PAGE_INDEX,
-  x: 251.9,
+  x: 325.6,
   y: 407.3,
-  width: 35.5,
+  width: 102.3,
   height: 19.1,
 } as const
 
@@ -76,20 +76,20 @@ type WidgetTagDef = {
 /** Signature + date tags mapped to semantic AcroForm names (three DocuSeal roles). */
 const WIDGET_TAG_DEFS: WidgetTagDef[] = [
   { tag: '{{Landlord Signature;role=First Party;type=signature}}', fieldName: 'sig_landlord' },
-  { tag: '{{Landlord Sign Date;role=First Party;type=date}}', fieldName: 'landlord_sig_day' },
+  { tag: '{{Landlord Sign Date;role=First Party;type=date}}', fieldName: 'landlord_sig_month' },
   { tag: '{{Landlord LIS Signature;role=First Party;type=signature}}', fieldName: 'sig_landlord_lis' },
-  { tag: '{{Landlord LIS Date;role=First Party;type=date}}', fieldName: 'landlord_lis_sig_day' },
+  { tag: '{{Landlord LIS Date;role=First Party;type=date}}', fieldName: 'landlord_lis_sig_month' },
   { tag: '{{Tenant Signature;role=Second Party;type=signature}}', fieldName: 'sig_tenant_1' },
-  { tag: '{{Tenant Sign Date;role=Second Party;type=date}}', fieldName: 'tenant_1_sig_day' },
+  { tag: '{{Tenant Sign Date;role=Second Party;type=date}}', fieldName: 'tenant_1_sig_month' },
   { tag: '{{Tenant 2 Signature;role=Co-tenant;type=signature}}', fieldName: 'sig_tenant_2', coTenantOnly: true },
-  { tag: '{{Tenant 2 Sign Date;role=Co-tenant;type=date}}', fieldName: 'tenant_2_sig_day', coTenantOnly: true },
+  { tag: '{{Tenant 2 Sign Date;role=Co-tenant;type=date}}', fieldName: 'tenant_2_sig_month', coTenantOnly: true },
   { tag: '{{Tenant TIS Signature;role=Second Party;type=signature}}', fieldName: 'sig_tenant_tis' },
-  { tag: '{{Tenant TIS Date;role=Second Party;type=date}}', fieldName: 'tenant_tis_sig_day' },
+  { tag: '{{Tenant TIS Date;role=Second Party;type=date}}', fieldName: 'tenant_tis_sig_month' },
 ]
 
 const FIELD_PLACEMENT_OVERRIDES: Record<string, SignatureWidgetPlacement> = {
   sig_tenant_tis: { fieldName: 'sig_tenant_tis', ...OFFICIAL_FT6600_TIS_SIGNATURE_ANCHOR },
-  tenant_tis_sig_day: { fieldName: 'tenant_tis_sig_day', ...OFFICIAL_FT6600_TIS_DATE_ANCHOR },
+  tenant_tis_sig_month: { fieldName: 'tenant_tis_sig_month', ...OFFICIAL_FT6600_TIS_DATE_ANCHOR },
 }
 
 function resolveWidgetPageIndex(doc: PDFDoc, widget: unknown): number | null {
