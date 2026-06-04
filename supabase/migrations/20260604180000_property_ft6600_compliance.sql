@@ -49,3 +49,5 @@ comment on column public.properties.gas_embedded_network is
 
 comment on column public.properties.strata_bylaws_applicable is
   'NSW FT6600: strata or community scheme by-laws apply to the premises.';
+
+notify pgrst, 'reload schema';

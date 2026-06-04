@@ -73,7 +73,7 @@ import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/pr
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 
 const FT6600_COMPLIANCE_MIGRATION_HINT =
-  'Run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the Supabase SQL editor, then save again.'
+  'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production — check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
 
 function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: boolean): string {
   const msg = messageFromSupabaseError(err)
