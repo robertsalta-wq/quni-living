@@ -70,6 +70,25 @@ import LandlordPropertyFt6600ComplianceFields, {
   type LandlordFt6600ComplianceFormState,
 } from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
 import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
+import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
+
+const FT6600_COMPLIANCE_MIGRATION_HINT =
+  'Run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the Supabase SQL editor, then save again.'
+
+function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: boolean): string {
+  const msg = messageFromSupabaseError(err)
+  if (!looksLikeMissingDbColumn(err)) return msg
+  if (
+    showComplianceSection &&
+    /smoke_alarm|strata_oc|water_usage_charged|electricity_embedded|gas_embedded|strata_bylaws/i.test(msg)
+  ) {
+    return `${msg} ${FT6600_COMPLIANCE_MIGRATION_HINT}`
+  }
+  if (/linen_supplied|weekly_cleaning/i.test(msg)) {
+    return `${msg} Run supabase/property_form_extend.sql in the Supabase SQL editor, then save again.`
+  }
+  return `${msg} A database migration may be missing — check the supabase/migrations folder.`
+}
 
 /** Checkbox styling — single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
@@ -1886,7 +1905,7 @@ export default function LandlordPropertyFormPage() {
             const actual = persisted[key] ?? null
             if (expected !== actual) {
               throw new Error(
-                `NSW compliance did not persist (${key}). The database columns may not be applied yet — run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the Supabase SQL editor, then save again.`,
+                `NSW compliance did not persist (${key}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}). ${FT6600_COMPLIANCE_MIGRATION_HINT}`,
               )
             }
           }
@@ -1958,14 +1977,8 @@ export default function LandlordPropertyFormPage() {
         navigate('/landlord-dashboard', { replace: true })
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Save failed.'
-      if (/smoke_alarm|strata_oc|ft6600|schema cache/i.test(msg)) {
-        reportSubmitError(
-          `${msg} The NSW compliance columns may not be applied in Supabase yet — run supabase/migrations/20260604180000_property_ft6600_compliance.sql in the SQL editor, then save again.`,
-        )
-      } else {
-        reportSubmitError(msg)
-      }
+      console.error('[LandlordPropertyFormPage] save failed', err)
+      reportSubmitError(submitErrorMessageFromUnknown(err, showNswFt6600ComplianceSection))
     } finally {
       setSubmitting(false)
     }
