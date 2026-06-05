@@ -78,6 +78,7 @@ function App() {
           />
           <Route path="/terms" element={<Lazy.Terms />} />
           <Route path="/privacy" element={<Lazy.Privacy />} />
+          <Route path="/non-discrimination" element={<Lazy.NonDiscrimination />} />
           <Route path="/landlord-service-agreement" element={<Lazy.LandlordServiceAgreement />} />
           <Route path="/about" element={<Lazy.About />} />
           <Route path="/how-it-works" element={<Lazy.HowItWorks />} />

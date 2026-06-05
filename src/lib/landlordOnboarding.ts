@@ -1,5 +1,6 @@
 import type { Database } from './database.types'
 import type { LandlordServiceTier } from './landlordServiceTier'
+import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
 
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -25,7 +26,9 @@ export function landlordNeedsOnboardingWizard(p: LandlordProfileRow | null | und
 }
 
 export function landlordTermsComplete(p: LandlordProfileRow): boolean {
-  return Boolean(p.terms_accepted_at && p.landlord_terms_accepted_at)
+  return Boolean(
+    p.terms_accepted_at && p.landlord_terms_accepted_at && landlordNonDiscriminationAccepted(p),
+  )
 }
 
 export function landlordStep1FieldsComplete(p: LandlordProfileRow): boolean {

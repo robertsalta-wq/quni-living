@@ -44,6 +44,7 @@ export const ServiceLandlordPartnerships = lazy(() => import('./pages/services/L
 export const ServiceFullyFurnished = lazy(() => import('./pages/services/FullyFurnished'))
 export const Terms = lazy(() => import('./pages/Terms'))
 export const Privacy = lazy(() => import('./pages/Privacy'))
+export const NonDiscrimination = lazy(() => import('./pages/NonDiscrimination'))
 export const LandlordServiceAgreement = lazy(() => import('./pages/LandlordServiceAgreement'))
 export const LandlordAIFeaturePage = lazy(() => import('./pages/LandlordAIFeaturePage'))
 export const StudentAccommodationIndex = lazy(() => import('./pages/seo/StudentAccommodationIndex'))

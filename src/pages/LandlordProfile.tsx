@@ -22,6 +22,10 @@ import {
 } from '../lib/landlordListingBilling'
 import LanguagesSpokenSelector from '../components/profile/LanguagesSpokenSelector'
 import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../lib/languagesSpoken'
+import {
+  landlordNonDiscriminationAccepted,
+  nonDiscriminationAcceptancePatch,
+} from '../lib/nonDiscriminationPolicy'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
@@ -258,6 +262,7 @@ export default function LandlordProfile() {
 
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreeLandlordTerms, setAgreeLandlordTerms] = useState(false)
+  const [agreeNonDiscrimination, setAgreeNonDiscrimination] = useState(false)
   const [agreementSaveErr, setAgreementSaveErr] = useState<string | null>(null)
   const [agreementSaving, setAgreementSaving] = useState(false)
 
@@ -431,9 +436,17 @@ export default function LandlordProfile() {
     if (!user?.id || !profile) return
     setAgreementSaveErr(null)
     const now = new Date().toISOString()
-    const patch: { terms_accepted_at?: string; landlord_terms_accepted_at?: string } = {}
+    const patch: {
+      terms_accepted_at?: string
+      landlord_terms_accepted_at?: string
+      non_discrimination_policy_accepted_at?: string
+      non_discrimination_policy_version?: string
+    } = {}
     if (!profile.terms_accepted_at && agreeTerms) patch.terms_accepted_at = now
     if (!profile.landlord_terms_accepted_at && agreeLandlordTerms) patch.landlord_terms_accepted_at = now
+    if (!landlordNonDiscriminationAccepted(profile) && agreeNonDiscrimination) {
+      Object.assign(patch, nonDiscriminationAcceptancePatch(now))
+    }
     if (Object.keys(patch).length === 0) {
       setAgreementSaveErr('Tick each agreement you want to record, then save.')
       return
@@ -444,6 +457,7 @@ export default function LandlordProfile() {
       if (error) throw error
       setAgreeTerms(false)
       setAgreeLandlordTerms(false)
+      setAgreeNonDiscrimination(false)
       await load()
       await refreshProfile()
     } catch (e: unknown) {
@@ -454,7 +468,7 @@ export default function LandlordProfile() {
             ? e.message
             : ''
       let msg = raw.trim() || 'Could not save agreements.'
-      if (/terms_accepted_at|landlord_terms_accepted_at|schema cache|PGRST204|column/i.test(msg)) {
+      if (/terms_accepted_at|landlord_terms_accepted_at|non_discrimination_policy|schema cache|PGRST204|column/i.test(msg)) {
         msg +=
           ' If this mentions a missing column, run `supabase/landlord_profile_terms_columns.sql` in the Supabase SQL Editor, then try again.'
       }
@@ -640,7 +654,7 @@ export default function LandlordProfile() {
           <ProfileCompletionSummary profile={profile} onGoToSection={goToProfileSection} />
         </aside>
         <div className="order-2 lg:order-1 lg:col-span-8 min-w-0 space-y-8">
-      {(!profile.terms_accepted_at || !profile.landlord_terms_accepted_at) && (
+      {(!profile.terms_accepted_at || !profile.landlord_terms_accepted_at || !landlordNonDiscriminationAccepted(profile)) && (
         <section
           id="account-agreements"
           className="mb-8 rounded-2xl border border-[#FF6F61]/25 bg-[#FEF9E4] p-6 sm:p-7 w-full shadow-sm"
@@ -703,6 +717,30 @@ export default function LandlordProfile() {
                     className="text-[#FF6F61] font-medium underline underline-offset-2"
                   >
                     Landlord Service Agreement
+                  </a>
+                </span>
+              </label>
+            )}
+            {!landlordNonDiscriminationAccepted(profile) && (
+              <label className="flex gap-3 items-start cursor-pointer text-sm text-stone-800 leading-relaxed">
+                <input
+                  type="checkbox"
+                  checked={agreeNonDiscrimination}
+                  onChange={(e) => {
+                    setAgreeNonDiscrimination(e.target.checked)
+                    setAgreementSaveErr(null)
+                  }}
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61]"
+                />
+                <span>
+                  I have read and agree to Quni&apos;s{' '}
+                  <a
+                    href="/non-discrimination"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                  >
+                    Non-Discrimination Policy
                   </a>
                 </span>
               </label>

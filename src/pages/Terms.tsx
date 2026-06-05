@@ -34,7 +34,11 @@ export default function Terms() {
       <LegalP>
         These Terms of Service (&quot;Terms&quot;) govern your use of the Quni Living platform, website, and services
         (&quot;Platform&quot;), operated by Quni Living Pty Ltd (&quot;Quni Living&quot;, &quot;we&quot;, &quot;us&quot;,
-        &quot;our&quot;). By creating an account or using our Platform, you agree to be bound by these Terms.
+        &quot;our&quot;). By creating an account or using our Platform, you agree to be bound by these Terms and our{' '}
+        <Link to="/non-discrimination" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+          Non-Discrimination Policy
+        </Link>
+        .
       </LegalP>
       <LegalP>
         Please read these Terms carefully. If you do not agree with any part of these Terms, you must not use our
@@ -115,6 +119,16 @@ export default function Terms() {
           'Violates any applicable Australian law or regulation',
         ]}
       />
+      <LegalH3 id="rules-discrimination">3.3 Non-Discrimination</LegalH3>
+      <LegalP>
+        All users must comply with our{' '}
+        <Link to="/non-discrimination" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+          Non-Discrimination Policy
+        </Link>
+        . You must not treat other users unfavourably because of a protected attribute, or use listings, messages, or
+        other Platform content to express a preference for or against users on that basis. Landlords acknowledge this
+        policy when listing a property on the Platform.
+      </LegalP>
 
       <LegalH2 id="landlord-obligations">4. Landlord Obligations</LegalH2>
       <LegalH3 id="landlord-listings">4.1 Property Listings</LegalH3>

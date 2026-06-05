@@ -1096,6 +1096,11 @@ export default function StudentProfile() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                  Optional. We use this only in aggregate to understand our community and improve support for international
+                  students. It&apos;s never shown to landlords and plays no part in your bookings — you can leave it blank
+                  or remove it anytime.
+                </p>
               </div>
               <div>
                 <label htmlFor="st-year" className={labelClass}>

@@ -149,6 +149,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/non-discrimination" className={linkClass}>
+                  Non-Discrimination Policy
+                </Link>
+              </li>
+              <li>
                 <Link to="/landlord-service-agreement" className={linkClass}>
                   Landlord Service Agreement
                 </Link>
@@ -208,6 +213,9 @@ export default function Footer() {
               </Link>
               <Link to="/terms" className={`${linkClass} text-xs sm:text-sm`}>
                 Terms of Service
+              </Link>
+              <Link to="/non-discrimination" className={`${linkClass} text-xs sm:text-sm`}>
+                Non-Discrimination Policy
               </Link>
               <Link to="/refunds" className={`${linkClass} text-xs sm:text-sm`}>
                 Refund Policy

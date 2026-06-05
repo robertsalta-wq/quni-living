@@ -51,6 +51,7 @@ export default async function handler(req, res) {
     { url: '/services/landlord-partnerships', priority: '0.7', changefreq: 'monthly' },
     { url: '/terms', priority: '0.3', changefreq: 'yearly' },
     { url: '/privacy', priority: '0.3', changefreq: 'yearly' },
+    { url: '/non-discrimination', priority: '0.3', changefreq: 'yearly' },
     { url: '/landlord-service-agreement', priority: '0.3', changefreq: 'yearly' },
     { url: '/landlord-signup', priority: '0.8', changefreq: 'monthly' },
   ]

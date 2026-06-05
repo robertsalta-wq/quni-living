@@ -42,14 +42,14 @@ export default function Privacy() {
       <LegalUl
         items={[
           'Create an account (name, email address, password)',
-          'Complete your profile (university, course, phone number, profile photo, gender)',
+          'Complete your profile (university, course, phone number, profile photo, gender, and optionally nationality)',
           'List a property (property address, photos, pricing, landlord details, ABN)',
           'Make or receive a booking (move-in date, lease length, rental history)',
           'Contact us or submit a support request',
           'Complete identity verification through Stripe',
         ]}
       />
-      <LegalH3 id="collect-auto">2.2 Information Collected Automatically</LegalH3>
+      <LegalH3 id="collect-auto">2.2 Information collected automatically</LegalH3>
       <LegalP>When you use our Platform, we may automatically collect:</LegalP>
       <LegalUl
         items={[
@@ -58,7 +58,15 @@ export default function Privacy() {
           'Cookie data (see our Cookie Policy)',
         ]}
       />
-      <LegalH3 id="collect-third">2.3 Information from Third Parties</LegalH3>
+      <LegalH3 id="collect-nationality">2.3 Optional nationality</LegalH3>
+      <LegalP>
+        Students may optionally provide their nationality in their profile. This field is voluntary — we ask for your
+        consent via the in-app notice shown at the field before you provide it. We use nationality information only in
+        aggregate to understand our community and improve support for international students. It is never shown to
+        landlords, plays no part in booking decisions, and is not disclosed to other users. You may leave this field
+        blank or remove it at any time.
+      </LegalP>
+      <LegalH3 id="collect-third">2.4 Information from Third Parties</LegalH3>
       <LegalP>We may receive information about you from third parties including:</LegalP>
       <LegalUl
         items={[

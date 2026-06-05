@@ -5,6 +5,7 @@ import PageHeroBand from '../PageHeroBand'
 const LEGAL_DOC_LINKS = [
   { to: '/terms', label: 'Terms of Service' },
   { to: '/privacy', label: 'Privacy Policy' },
+  { to: '/non-discrimination', label: 'Non-Discrimination Policy' },
   { to: '/landlord-service-agreement', label: 'Landlord Service Agreement' },
 ] as const
 

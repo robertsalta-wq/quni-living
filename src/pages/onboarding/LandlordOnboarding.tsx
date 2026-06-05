@@ -15,6 +15,7 @@ import {
 import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 import { MANAGED_COMING_SOON_SHORT } from '../../lib/managedComingSoonCopy'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
+import { nonDiscriminationAcceptancePatch } from '../../lib/nonDiscriminationPolicy'
 import { reportFormError } from '../../lib/reportFormError'
 import PageHeroBand from '../../components/PageHeroBand'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
@@ -186,6 +187,7 @@ export default function LandlordOnboarding() {
 
   const [termsPrivacy, setTermsPrivacy] = useState(false)
   const [landlordAgreement, setLandlordAgreement] = useState(false)
+  const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
   const [termsSubmitError, setTermsSubmitError] = useState(false)
 
   const [connectLoading, setConnectLoading] = useState(false)
@@ -626,7 +628,7 @@ export default function LandlordOnboarding() {
   async function saveStep2() {
     setTermsSubmitError(false)
     setFormError(null)
-    if (!termsPrivacy || !landlordAgreement) {
+    if (!termsPrivacy || !landlordAgreement || !nonDiscriminationAgreed) {
       setTermsSubmitError(true)
       return
     }
@@ -640,6 +642,7 @@ export default function LandlordOnboarding() {
           .update({
             terms_accepted_at: now,
             landlord_terms_accepted_at: now,
+            ...nonDiscriminationAcceptancePatch(now),
           })
           .eq('user_id', user.id)
           .select('*')
@@ -1053,7 +1056,7 @@ export default function LandlordOnboarding() {
               <p className="text-sm text-stone-600">Please accept the following to list on Quni Living.</p>
 
               {termsSubmitError && (
-                <p className="text-sm text-red-600 font-medium">Please accept both agreements to continue.</p>
+                <p className="text-sm text-red-600 font-medium">Please accept all agreements to continue.</p>
               )}
 
               <label className="flex gap-3 items-start cursor-pointer text-sm text-stone-800 leading-relaxed">
@@ -1097,6 +1100,29 @@ export default function LandlordOnboarding() {
                     className="text-[#FF6F61] font-medium underline underline-offset-2"
                   >
                     Landlord Service Agreement
+                  </a>
+                </span>
+              </label>
+
+              <label className="flex gap-3 items-start cursor-pointer text-sm text-stone-800 leading-relaxed">
+                <input
+                  type="checkbox"
+                  checked={nonDiscriminationAgreed}
+                  onChange={(e) => {
+                    setNonDiscriminationAgreed(e.target.checked)
+                    setTermsSubmitError(false)
+                  }}
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]"
+                />
+                <span>
+                  I have read and agree to Quni&apos;s{' '}
+                  <a
+                    href="/non-discrimination"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                  >
+                    Non-Discrimination Policy
                   </a>
                 </span>
               </label>

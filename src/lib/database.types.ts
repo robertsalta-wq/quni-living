@@ -351,6 +351,8 @@ export interface Database {
           stripe_customer_id: string | null
           terms_accepted_at: string | null
           landlord_terms_accepted_at: string | null
+          non_discrimination_policy_accepted_at: string | null
+          non_discrimination_policy_version: string | null
           has_landlord_insurance: boolean | null
           insurance_acknowledged_at: string | null
           onboarding_complete: boolean
@@ -386,6 +388,8 @@ export interface Database {
           stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           landlord_terms_accepted_at?: string | null
+          non_discrimination_policy_accepted_at?: string | null
+          non_discrimination_policy_version?: string | null
           has_landlord_insurance?: boolean | null
           insurance_acknowledged_at?: string | null
           onboarding_complete?: boolean
@@ -421,6 +425,8 @@ export interface Database {
           stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           landlord_terms_accepted_at?: string | null
+          non_discrimination_policy_accepted_at?: string | null
+          non_discrimination_policy_version?: string | null
           has_landlord_insurance?: boolean | null
           insurance_acknowledged_at?: string | null
           onboarding_complete?: boolean

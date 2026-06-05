@@ -72,6 +72,10 @@ import LandlordPropertyFt6600ComplianceFields, {
 } from '../../components/landlord/LandlordPropertyFt6600ComplianceFields'
 import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
+import {
+  landlordNonDiscriminationAccepted,
+  nonDiscriminationAcceptancePatch,
+} from '../../lib/nonDiscriminationPolicy'
 
 const FT6600_COMPLIANCE_MIGRATION_HINT =
   'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production — check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
@@ -379,6 +383,10 @@ export default function LandlordPropertyFormPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
+
+  const needsNonDiscriminationAcceptance =
+    role === 'landlord' && !landlordNonDiscriminationAccepted(landlordProfile)
 
   const [features, setFeatures] = useState<FeatureRow[]>([])
   const [landlordOptions, setLandlordOptions] = useState<{ id: string; label: string }[]>([])
@@ -1755,6 +1763,11 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
+    if (needsNonDiscriminationAcceptance && !nonDiscriminationAgreed) {
+      reportSubmitError('Please confirm you have read and agree to Quni\'s Non-Discrimination Policy.')
+      return
+    }
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -1773,6 +1786,14 @@ export default function LandlordPropertyFormPage() {
     if (!landlordId) {
       reportSubmitError('Landlord profile is missing. Complete landlord onboarding first.')
       return
+    }
+
+    if (needsNonDiscriminationAcceptance && user.id) {
+      const { error: policyErr } = await supabase
+        .from('landlord_profiles')
+        .update(nonDiscriminationAcceptancePatch())
+        .eq('user_id', user.id)
+      if (policyErr) throw policyErr
     }
 
     let featureIds = [...selectedFeatureIds]
@@ -3058,6 +3079,30 @@ export default function LandlordPropertyFormPage() {
           )}
 
           <div className="flex flex-col gap-3">
+            {needsNonDiscriminationAcceptance ? (
+              <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={nonDiscriminationAgreed}
+                  onChange={(e) => {
+                    setNonDiscriminationAgreed(e.target.checked)
+                    if (submitError?.includes('Non-Discrimination Policy')) setSubmitError(null)
+                  }}
+                  className={LANDLORD_FORM_CHECKBOX_CLASS}
+                />
+                <span>
+                  I have read and agree to Quni&apos;s{' '}
+                  <a
+                    href="/non-discrimination"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                  >
+                    Non-Discrimination Policy
+                  </a>
+                </span>
+              </label>
+            ) : null}
             <div id="listing-form-feedback-bottom" className="space-y-3">
               {submitError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">

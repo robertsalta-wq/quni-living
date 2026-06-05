@@ -21,6 +21,7 @@ import {
   canLandlordCreateListing,
   landlordDisplayNameComplete,
 } from '../lib/onboardingChecklist'
+import { landlordNonDiscriminationAccepted } from '../lib/nonDiscriminationPolicy'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
 import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
@@ -782,20 +783,24 @@ export default function LandlordDashboard() {
     return '/landlord/dashboard?tab=bookings'
   }, [pendingConfirmation])
 
-  const checklistTotal = 6
+  const checklistTotal = 7
   const nameOk = landlordDisplayNameComplete(profile)
   const phoneOk = Boolean(profile?.phone?.trim())
   const bioOk = Boolean(profile?.bio?.trim() && profile.bio.trim().length > 20)
   const avatarOk = Boolean(profile?.avatar_url?.trim())
   const termsOk = Boolean(profile?.terms_accepted_at)
   const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
+  const nonDiscriminationOk = landlordNonDiscriminationAccepted(profile)
 
-  const checklistDone = [termsOk, landlordTermsOk, nameOk, phoneOk, bioOk, avatarOk].filter(Boolean).length
+  const checklistDone = [termsOk, landlordTermsOk, nonDiscriminationOk, nameOk, phoneOk, bioOk, avatarOk].filter(
+    Boolean,
+  ).length
   const checklistPct = Math.round((checklistDone / checklistTotal) * 100)
 
   const firstIncomplete = (() => {
     if (!termsOk) return { label: 'Accept terms of service →', href: '/landlord-profile#account-agreements' }
     if (!landlordTermsOk) return { label: 'Accept landlord service agreement →', href: '/landlord-profile#account-agreements' }
+    if (!nonDiscriminationOk) return { label: 'Accept non-discrimination policy →', href: '/landlord-profile#account-agreements' }
     if (!nameOk) return { label: 'Add your name →', href: '/landlord/profile' }
     if (!phoneOk) return { label: 'Add your phone →', href: '/landlord/profile' }
     if (!bioOk) return { label: 'Add a bio →', href: '/landlord/profile' }

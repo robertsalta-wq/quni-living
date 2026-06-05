@@ -1,4 +1,5 @@
 import type { Database } from './database.types'
+import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
 import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
   isIdentityVerificationComplete,
@@ -120,7 +121,10 @@ export function isLandlordStripePayoutsComplete(p: LandlordProfileRow | null | u
 export function canLandlordCreateListing(p: LandlordProfileRow | null | undefined): boolean {
   if (!p) return false
   return Boolean(
-    p.terms_accepted_at && p.landlord_terms_accepted_at && isLandlordProfileBasicsComplete(p),
+    p.terms_accepted_at &&
+      p.landlord_terms_accepted_at &&
+      landlordNonDiscriminationAccepted(p) &&
+      isLandlordProfileBasicsComplete(p),
   )
 }
 
@@ -218,6 +222,7 @@ export function buildLandlordOnboardingSteps(
   const profile = p ?? null
   const termsOk = Boolean(profile?.terms_accepted_at)
   const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
+  const nonDiscriminationOk = landlordNonDiscriminationAccepted(profile)
   const nameOk = landlordDisplayNameComplete(profile)
   const phoneOk = Boolean(profile?.phone?.trim())
   const bioOk = Boolean(profile?.bio?.trim() && profile.bio.trim().length > 20)
@@ -242,6 +247,13 @@ export function buildLandlordOnboardingSteps(
       id: 'landlord_terms',
       label: 'Accept Landlord Service Agreement',
       complete: landlordTermsOk,
+      href: '/landlord-profile#account-agreements',
+      actionLabel: 'Accept →',
+    },
+    {
+      id: 'non_discrimination',
+      label: "Accept Quni's Non-Discrimination Policy",
+      complete: nonDiscriminationOk,
       href: '/landlord-profile#account-agreements',
       actionLabel: 'Accept →',
     },
