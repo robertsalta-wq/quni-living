@@ -1,5 +1,5 @@
 /**
- * Student booking deposit — PaymentIntent (manual capture) + optional commit (insert booking via service role).
+ * Student booking deposit - PaymentIntent (manual capture) + optional commit (insert booking via service role).
  *
  * POST JSON (create PI): {
  *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,

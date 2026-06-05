@@ -1,7 +1,7 @@
 import type { IconName } from './Icon'
 
 /**
- * Admin sidebar IA — "The Living Console".
+ * Admin sidebar IA - "The Living Console".
  *
  * Six zone groups + a permanent "The Living Console" home item above them.
  * Sub-items keep the existing flat `/admin/*` URLs so bookmarks and external
@@ -17,11 +17,11 @@ export interface AdminNavSubItem {
   id: string
   label: string
   icon: IconName
-  /** Flat `/admin/*` URL — bookmarks stay stable across IA changes. */
+  /** Flat `/admin/*` URL - bookmarks stay stable across IA changes. */
   to: string
   /**
    * True when the page doesn't exist yet (Tenancies sub-items per Decision B2
-   * — Active tenancies will compute from confirmed bookings in a later PR;
+   * - Active tenancies will compute from confirmed bookings in a later PR;
    * Condition reports stays a stub until a `condition_reports` table exists).
    */
   comingSoon?: boolean

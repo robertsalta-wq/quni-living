@@ -54,7 +54,7 @@ function bookingStatusClass(s: BookingStatus) {
 }
 
 function formatWeeklyRent(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(Number(n))) return '—'
+  if (n == null || Number.isNaN(Number(n))) return '-'
   return `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })} /wk`
 }
 

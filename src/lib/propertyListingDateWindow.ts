@@ -53,7 +53,7 @@ export function propertyListingVisibleOnDate(
 
 type QueryWithOr = { or: (filter: string) => QueryWithOr }
 
-/** PostgREST: keep rows not past listing end — (no upper bound OR to >= d). */
+/** PostgREST: keep rows not past listing end - (no upper bound OR to >= d). */
 export function applyPropertyListingDateWindow<Q extends QueryWithOr>(query: Q, isoDate: string): Q {
   const d = normalizeListingDay(isoDate) ?? listingIsoDateUtc()
   return query.or(`available_to.is.null,available_to.gte.${d}`) as Q

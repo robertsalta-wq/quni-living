@@ -5,9 +5,9 @@
 
 This document covers:
 
-1. **Three data domains** — tenant profile, landlord profile, and listing/property data (plus booking-level refinements).
-2. **Three matching layers** — browse/search filters, booking fit table, and AI landlord assessment.
-3. **Cross-reference matrices** — which tenant fields map to which listing/landlord fields, and whether matching is automated today.
+1. **Three data domains** - tenant profile, landlord profile, and listing/property data (plus booking-level refinements).
+2. **Three matching layers** - browse/search filters, booking fit table, and AI landlord assessment.
+3. **Cross-reference matrices** - which tenant fields map to which listing/landlord fields, and whether matching is automated today.
 
 ---
 
@@ -115,7 +115,7 @@ flowchart TB
 ## 3. Matching layer 2: Booking fit table
 
 **Purpose:** Give landlords a structured match/mismatch view when reviewing a booking request.  
-**Implementation:** `src/lib/bookingFitSummary.ts` (UI), `api/lib/bookingFitForAssessment.ts` (API duplicate — keep in sync)  
+**Implementation:** `src/lib/bookingFitSummary.ts` (UI), `api/lib/bookingFitForAssessment.ts` (API duplicate - keep in sync)  
 **Consumer:** Landlord booking review page, AI assessment prompt.
 
 ### Fit row statuses
@@ -249,11 +249,11 @@ flowchart TB
 | Field | Type | Values / notes | Matching role |
 |-------|------|----------------|---------------|
 | `id` | uuid | Primary key | Booking FK |
-| `user_id` | uuid | Auth user | — |
-| `first_name`, `last_name`, `full_name` | text | — | Display / AI |
-| `email`, `phone` | text | — | Contact only |
-| `date_of_birth` | date | — | Age/eligibility (not auto-matched) |
-| `avatar_url` | text | — | Display only |
+| `user_id` | uuid | Auth user | - |
+| `first_name`, `last_name`, `full_name` | text | - | Display / AI |
+| `email`, `phone` | text | - | Contact only |
+| `date_of_birth` | date | - | Age/eligibility (not auto-matched) |
+| `avatar_url` | text | - | Display only |
 | `bio` | text | Free text | AI context only |
 
 ### 5.2 Demographics (stored, restricted use)
@@ -273,9 +273,9 @@ flowchart TB
 | `year_of_study` | integer | 1–5+ | AI assessment |
 | `study_level` | text | `year_1` … `year_4`, `postgraduate`, `phd` | AI assessment |
 | `student_type` | text | `domestic`, `international` | AI assessment |
-| `uni_email` | text | — | Verification |
-| `uni_email_verified` | boolean | — | Trust signal |
-| `enrolment_doc_url` | text | — | Verification |
+| `uni_email` | text | - | Verification |
+| `uni_email_verified` | boolean | - | Trust signal |
+| `enrolment_doc_url` | text | - | Verification |
 | `accommodation_verification_route` | text | `student`, `non_student` | vs `open_to_non_students` |
 
 ### 5.4 Professional renter / workplace
@@ -295,15 +295,15 @@ flowchart TB
 | `room_type_preference` | text | `single`, `shared`, `studio`, `apartment`, `house` | `properties.room_type` |
 | `budget_min_per_week` | numeric | Derived from budget range | `properties.rent_per_week` |
 | `budget_max_per_week` | numeric | Derived from budget range | `properties.rent_per_week` |
-| `preferred_move_in_date` | date | — | `properties.available_from` |
+| `preferred_move_in_date` | date | - | `properties.available_from` |
 | `preferred_lease_length` | text | `3_months`, `6_months`, `12_months`, `flexible` | `properties.lease_length` |
 | `occupancy_type` | text | `sole`, `couple`, `open` | `max_occupants`, `room_type`, `property_type` |
 | `move_in_flexibility` | text | `exact`, `one_week`, `two_weeks` | Move-in fit slack |
 | `furnishing_preference` | text | `furnished`, `unfurnished`, `either` | `properties.furnished` |
 | `bills_preference` | text | `included`, `separate`, `either` | Bills feature signal |
-| `has_pets` | boolean | — | Pet-friendly feature / house rules |
-| `needs_parking` | boolean | — | `parking_available`, parking features |
-| `is_smoker` | boolean | — | “No smoking” house rule (not automated) |
+| `has_pets` | boolean | - | Pet-friendly feature / house rules |
+| `needs_parking` | boolean | - | `parking_available`, parking features |
+| `is_smoker` | boolean | - | “No smoking” house rule (not automated) |
 
 **Budget ranges** (`src/lib/studentOnboarding.ts`):
 
@@ -326,21 +326,21 @@ flowchart TB
 | Field | Type | Values | Matching role |
 |-------|------|--------|---------------|
 | `verification_type` | text | `student`, `identity`, `none` | Eligibility / AI tier label |
-| `id_document_url`, `id_submitted_at` | text / timestamptz | — | Trust |
-| `identity_supporting_doc_url` | text | — | Non-student verification |
-| `has_guarantor` | boolean | — | AI signal |
-| `guarantor_name` | text | — | AI signal |
-| `onboarding_complete` | boolean | — | Gate to book |
-| `terms_accepted_at` | timestamptz | — | Legal |
+| `id_document_url`, `id_submitted_at` | text / timestamptz | - | Trust |
+| `identity_supporting_doc_url` | text | - | Non-student verification |
+| `has_guarantor` | boolean | - | AI signal |
+| `guarantor_name` | text | - | AI signal |
+| `onboarding_complete` | boolean | - | Gate to book |
+| `terms_accepted_at` | timestamptz | - | Legal |
 
 ### 5.8 Emergency contact
 
 | Field | Type | Matching role |
 |-------|------|---------------|
 | `emergency_contact_name` | text | Lease docs / display |
-| `emergency_contact_relationship` | text | — |
-| `emergency_contact_phone` | text | — |
-| `emergency_contact_email` | text | — |
+| `emergency_contact_relationship` | text | - |
+| `emergency_contact_phone` | text | - |
+| `emergency_contact_email` | text | - |
 
 ---
 
@@ -353,15 +353,15 @@ flowchart TB
 
 | Field | Type | Values | Matching role |
 |-------|------|--------|---------------|
-| `id` | uuid | — | Listing FK |
-| `user_id` | uuid | Auth user | — |
-| `first_name`, `last_name`, `full_name` | text | — | Display / AI |
-| `company_name` | text | — | Company/trust landlords |
-| `abn` | text | — | Compliance |
+| `id` | uuid | - | Listing FK |
+| `user_id` | uuid | Auth user | - |
+| `first_name`, `last_name`, `full_name` | text | - | Display / AI |
+| `company_name` | text | - | Company/trust landlords |
+| `abn` | text | - | Compliance |
 | `landlord_type` | text | `individual`, `company`, `trust`, `other` | Operational |
-| `email`, `phone` | text | — | Contact |
-| `bio` | text | — | Profile display |
-| `avatar_url` | text | — | Display |
+| `email`, `phone` | text | - | Contact |
+| `bio` | text | - | Profile display |
+| `avatar_url` | text | - | Display |
 
 ### 6.2 Location
 
@@ -408,27 +408,27 @@ Landlord fields do not participate in browse filters or the booking fit table di
 
 | Field | Type | Values | Tenant match |
 |-------|------|--------|--------------|
-| `title`, `slug`, `description` | text | — | Text search |
+| `title`, `slug`, `description` | text | - | Text search |
 | `rent_per_week` | numeric | AUD/week | Budget |
-| `bond` | numeric | — | Indirect budget |
+| `bond` | numeric | - | Indirect budget |
 | `room_type` | text | `single`, `shared`, `studio`, `apartment`, `house` | `room_type_preference` |
 | `property_type` | text | See §7.2 | Occupancy fit |
 | `listing_type` | text | `rent`, `homestay`, `student_house` (legacy) | Category |
-| `bedrooms`, `bathrooms` | integer | — | Capacity context |
-| `rooms_rented_to_residents` | integer | — | Shared-house / rooming-house context |
-| `furnished` | boolean | — | `furnishing_preference` |
+| `bedrooms`, `bathrooms` | integer | - | Capacity context |
+| `rooms_rented_to_residents` | integer | - | Shared-house / rooming-house context |
+| `furnished` | boolean | - | `furnishing_preference` |
 | `lease_length` | text | `3_months`, `6_months`, `12_months`, `flexible` | Lease fit |
-| `available_from`, `available_to` | date | — | Move-in / availability |
+| `available_from`, `available_to` | date | - | Move-in / availability |
 | `status` | text | `active`, `inactive`, `pending`, `suspended`, `draft` | Browse gate (`active` only) |
-| `featured` | boolean | — | Sort order |
-| `images` | text[] | — | Display |
-| `open_to_non_students` | boolean | — | Non-student route |
+| `featured` | boolean | - | Sort order |
+| `images` | text[] | - | Display |
+| `open_to_non_students` | boolean | - | Non-student route |
 
 ### 7.2 Property type (arrangement)
 
 | Value | Label | Matching notes |
 |-------|-------|----------------|
-| `entire_property` | Entire property — landlord off site | Suitable for sole/couple |
+| `entire_property` | Entire property - landlord off site | Suitable for sole/couple |
 | `private_room_landlord_off_site` | Private room, landlord elsewhere | Standard room rental |
 | `private_room_landlord_on_site` | Private room, landlord on site (boarder/lodger) | Couple fit exception; different bond rules |
 | `shared_room` | Shared bedroom | Conflicts with `occupancy_type === 'sole'` |
@@ -488,8 +488,8 @@ Feature inference helpers: `src/lib/propertyFeatureSignals.ts`
 
 | Rule | `permitted` values | Matching relevance |
 |------|-------------------|-------------------|
-| No smoking | `yes`, `no`, `approval` | vs `is_smoker` — **not automated** |
-| Pets | `yes`, `no`, `approval` | vs `has_pets` — partial (features used instead) |
+| No smoking | `yes`, `no`, `approval` | vs `is_smoker` - **not automated** |
+| Pets | `yes`, `no`, `approval` | vs `has_pets` - partial (features used instead) |
 | Overnight guests | `yes`, `no`, `approval` | Not matched |
 | Parties/events | `yes`, `no`, `approval` | Not matched |
 | Quiet hours | `yes`, `no`, `approval` | Not matched |
@@ -580,31 +580,31 @@ Canonical rule labels with icons; linked via `property_house_rules` with `permit
 
 | Tenant field | Listing / landlord field | Layer 1 browse | Layer 2 fit | Layer 3 AI | Notes |
 |--------------|--------------------------|:--------------:|:-----------:|:----------:|-------|
-| `budget_min/max_per_week` | `rent_per_week` + surcharges | Manual bucket only | — | Yes | Not auto-filtered from profile |
-| `room_type_preference` | `room_type` | If user selects filter | — | Yes | Profile not auto-applied |
+| `budget_min/max_per_week` | `rent_per_week` + surcharges | Manual bucket only | - | Yes | Not auto-filtered from profile |
+| `room_type_preference` | `room_type` | If user selects filter | - | Yes | Profile not auto-applied |
 | `preferred_move_in_date` | `available_from` | Date filter | Yes | Yes | Booking date overrides |
-| `preferred_lease_length` | `lease_length` | — | Yes | Yes | Booking lease overrides |
-| `occupancy_type` | `max_occupants`, `room_type`, `property_type` | — | Yes | Yes | Booking `occupant_count` overrides |
-| `move_in_flexibility` | `available_from` | — | Yes | Yes | Slack days logic |
+| `preferred_lease_length` | `lease_length` | - | Yes | Yes | Booking lease overrides |
+| `occupancy_type` | `max_occupants`, `room_type`, `property_type` | - | Yes | Yes | Booking `occupant_count` overrides |
+| `move_in_flexibility` | `available_from` | - | Yes | Yes | Slack days logic |
 | `furnishing_preference` | `furnished` | Furnished filter | Yes | Yes | |
-| `bills_preference` | bills feature signal | — | Yes | Yes | |
-| `has_pets` | pet feature / house rules | — | Yes | Yes | Features used, not house rules junction |
-| `needs_parking` | `parking_available`, parking features | — | Yes | Yes | `parking_selected` overrides |
-| `is_smoker` | “No smoking” house rule | — | — | Yes | Not in fit table |
-| `university_id` | `university_id` | Yes | — | Yes | AI: fact only, no invented mismatch |
-| `campus_id` | `campus_id` | Yes | — | Yes | |
-| `workplace_lat/lon` | `latitude/longitude` | Yes (near work) | — | — | Professional renters |
-| `accommodation_verification_route` | `open_to_non_students` | — | — | Yes | Eligibility |
-| `languages_spoken` | landlord `languages_spoken` | — | — | — | Display only |
-| `verification_type` | — | — | — | Yes | Trust tier |
-| `course`, `study_level`, `student_type` | — | — | — | Yes | Context only |
-| `gender`, `nationality` | — | — | — | **Excluded** | Protected |
-| `has_guarantor` | — | — | — | Yes | Signal only |
-| `linen_supplied` expectation | `linen_supplied` | — | — | — | Not wired |
-| `weekly_cleaning` expectation | `weekly_cleaning_service` | — | — | — | Not wired |
-| Landlord `verified` | — | Display on card | — | — | Trust badge |
-| Listing features (general) | — | — | Partial | — | Only bills/pets/parking inferred |
-| House rules (structured) | — | — | — | — | Not in fit table |
+| `bills_preference` | bills feature signal | - | Yes | Yes | |
+| `has_pets` | pet feature / house rules | - | Yes | Yes | Features used, not house rules junction |
+| `needs_parking` | `parking_available`, parking features | - | Yes | Yes | `parking_selected` overrides |
+| `is_smoker` | “No smoking” house rule | - | - | Yes | Not in fit table |
+| `university_id` | `university_id` | Yes | - | Yes | AI: fact only, no invented mismatch |
+| `campus_id` | `campus_id` | Yes | - | Yes | |
+| `workplace_lat/lon` | `latitude/longitude` | Yes (near work) | - | - | Professional renters |
+| `accommodation_verification_route` | `open_to_non_students` | - | - | Yes | Eligibility |
+| `languages_spoken` | landlord `languages_spoken` | - | - | - | Display only |
+| `verification_type` | - | - | - | Yes | Trust tier |
+| `course`, `study_level`, `student_type` | - | - | - | Yes | Context only |
+| `gender`, `nationality` | - | - | - | **Excluded** | Protected |
+| `has_guarantor` | - | - | - | Yes | Signal only |
+| `linen_supplied` expectation | `linen_supplied` | - | - | - | Not wired |
+| `weekly_cleaning` expectation | `weekly_cleaning_service` | - | - | - | Not wired |
+| Landlord `verified` | - | Display on card | - | - | Trust badge |
+| Listing features (general) | - | - | Partial | - | Only bills/pets/parking inferred |
+| House rules (structured) | - | - | - | - | Not in fit table |
 
 ---
 
@@ -614,7 +614,7 @@ The platform stores some demographic fields (`gender`, `nationality`, `date_of_b
 
 For the **full criteria inventory** (every stored field marked as Use / Exclude / Facts only / Not matching / Not wired), see **[ai-matching-criteria-policy.md](./ai-matching-criteria-policy.md)**. That document lists all possible criteria first, then works back to exclusions.
 
-**Excluded from matching (❌):** `gender`, `nationality`, `date_of_birth`, `student_type` (domestic/international — national-origin proxy), plus all protected attributes in the Non-Discrimination Policy that are not stored and must not be inferred.
+**Excluded from matching (❌):** `gender`, `nationality`, `date_of_birth`, `student_type` (domestic/international - national-origin proxy), plus all protected attributes in the Non-Discrimination Policy that are not stored and must not be inferred.
 
 **Enforced in AI assessment** (`api/ai/student-assessment.ts` system prompt):
 

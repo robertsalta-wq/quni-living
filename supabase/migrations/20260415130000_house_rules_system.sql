@@ -3,7 +3,7 @@
 -- Platform admin ALL on junction (mirrors admin_rls_policies.sql for property_features).
 
 -- ---------------------------------------------------------------------------
--- house_rules_ref (reference — mirrors features; icon required for seeds)
+-- house_rules_ref (reference - mirrors features; icon required for seeds)
 -- ---------------------------------------------------------------------------
 create table if not exists public.house_rules_ref (
   id uuid primary key default gen_random_uuid(),
@@ -17,7 +17,7 @@ comment on table public.house_rules_ref is
   'Canonical house rule labels; icon is the display glyph (e.g. emoji).';
 
 -- ---------------------------------------------------------------------------
--- property_house_rules (junction — mirrors property_features + permitted flag)
+-- property_house_rules (junction - mirrors property_features + permitted flag)
 -- ---------------------------------------------------------------------------
 create table if not exists public.property_house_rules (
   property_id uuid not null references public.properties (id) on delete cascade,
@@ -47,7 +47,7 @@ create policy "Public can read property house rules"
   on public.property_house_rules for select
   using (true);
 
--- Junction table: landlord write (ALL) — same shape as property_features
+-- Junction table: landlord write (ALL) - same shape as property_features
 create policy "Landlords manage property_house_rules for own listings"
   on public.property_house_rules for all
   to authenticated

@@ -1,5 +1,5 @@
 /**
- * Qase — inbound email (Resend webhook → ticket + first message + triage).
+ * Qase - inbound email (Resend webhook → ticket + first message + triage).
  *
  * Edge cases:
  * - This handler sets submitted_by_id to student_profiles.id / landlord_profiles.id (profile PK).

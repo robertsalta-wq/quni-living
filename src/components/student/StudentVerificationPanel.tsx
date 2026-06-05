@@ -63,7 +63,7 @@ function UploadReceivedBanner({ fileName }: { fileName: string }) {
       <div className="min-w-0">
         <p className="font-semibold text-emerald-950">Document received</p>
         <p className="text-emerald-900/90 mt-1">
-          Saved securely — <span className="font-medium break-all">{fileName}</span>
+          Saved securely - <span className="font-medium break-all">{fileName}</span>
         </p>
       </div>
     </div>
@@ -399,7 +399,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             Identity verification
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {completeCount} of 3 complete — work email (optional), government ID plus one supporting document (payslip,
+            {completeCount} of 3 complete - work email (optional), government ID plus one supporting document (payslip,
             employment letter, or bank statement).
           </p>
           <div className="mt-4 h-2.5 rounded-full bg-stone-200 overflow-hidden">
@@ -523,7 +523,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
                         Check <strong>Spam</strong> and search your inbox for <strong>Quni</strong>.
                       </li>
                       <li>
-                        Avoid tapping <strong>Resend</strong> too often — each send creates a <strong>new</strong> code.
+                        Avoid tapping <strong>Resend</strong> too often - each send creates a <strong>new</strong> code.
                       </li>
                     </ul>
                   </div>
@@ -685,7 +685,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           Profile verification
         </h2>
         <p className="text-sm text-gray-600 mt-1">
-          {completeCount} of 3 complete — help landlords trust your application.
+          {completeCount} of 3 complete - help landlords trust your application.
         </p>
         <div className="mt-4 h-2.5 rounded-full bg-stone-200 overflow-hidden">
           <div

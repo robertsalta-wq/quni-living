@@ -8,7 +8,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-/* Hook lives next to provider — consumers import from here */
+/* Hook lives next to provider - consumers import from here */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuthContext(): AuthState {
   const ctx = useContext(AuthContext)

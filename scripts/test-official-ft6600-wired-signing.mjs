@@ -73,8 +73,8 @@ async function main() {
     bond: { amount: 1800 },
     landlordAgent: null,
     urgentRepairsTradespeople: {
-      electrician: 'Wired Test Landlord — 0400000001',
-      plumber: 'Wired Test Landlord — 0400000001',
+      electrician: 'Wired Test Landlord - 0400000001',
+      plumber: 'Wired Test Landlord - 0400000001',
       other: null,
     },
     electronicService: {

@@ -1,4 +1,4 @@
-# Build prompt — VIC on-site licence to occupy (Part A)
+# Build prompt - VIC on-site licence to occupy (Part A)
 
 **Status:** Ready for implementation (lawyer-review draft PDF only).  
 **Audience:** Cursor / Claude agent implementing React-PDF.  
@@ -15,7 +15,7 @@ Build the **Victoria on-site / boarder–lodger** arrangement as a **single revi
 - Change `vic.ts`, `tenancyGeneratorToApiPath`, `resolveTenancyPackage`, or the confirm flow
 - Wire DocuSeal or any live document generation path
 - Change NSW/QLD templates
-- Copy legal text from `api/documents/OccupancyAgreement.js` (NSW) or `QuniOccupancyAgreementQld.tsx` (QLD) — both are framed as RTA tenancies, lodge bond with an authority, and charge a **resident-facing platform fee**. That frame and fee posture are **wrong** for this document
+- Copy legal text from `api/documents/OccupancyAgreement.js` (NSW) or `QuniOccupancyAgreementQld.tsx` (QLD) - both are framed as RTA tenancies, lodge bond with an authority, and charge a **resident-facing platform fee**. That frame and fee posture are **wrong** for this document
 
 **Sequencing (do not skip):** A separate **publish gate** must land before VIC goes live and **before** `vic.ts` T1 is aligned to landlord-held security deposit and the resolver points at this generator. Building this PDF now is safe; wiring is later.
 
@@ -38,16 +38,16 @@ Mirror the **VIC T2 Form 1 Part A** pattern:
 
 **Technical choices:**
 
-- Sample data: `OccupancyAgreementProps` from `api/documents/rtaTypes.ts` only — **do not** extend `rtaTypes.ts` for Part A
+- Sample data: `OccupancyAgreementProps` from `api/documents/rtaTypes.ts` only - **do not** extend `rtaTypes.ts` for Part A
 - Styling: `quniDocumentPdfTheme` **OccupancyMatch** components (`OccupancyMatchFixedHeader`, `OccupancyMatchFooter`, `OccupancyMatchSectionHeading`, `occupancyMatchPdf`, etc.) for consistency with `addendumGenerator.tsx`
 - Checkboxes: **`X`** not ✓ (`@react-pdf/renderer` + Helvetica)
 - `globalThis.React = React` in the test script before dynamic imports (same as `test-vic-form1.mjs`)
 - Prefer typed TSX (no `@ts-nocheck`) so `tsc` passes
 
 **Document header (OccupancyMatch subtitle example):**  
-`Victoria — Licence to occupy (on-site accommodation)`
+`Victoria - Licence to occupy (on-site accommodation)`
 
-Optional footer on every page: `Draft for legal review — not for execution` (small, muted).
+Optional footer on every page: `Draft for legal review - not for execution` (small, muted).
 
 ---
 
@@ -64,7 +64,7 @@ Use **licence vocabulary throughout the PDF body**. This protects the licence ch
 | licence period, duration | lease length, lease |
 
 - **Do not** print the label **“Tier 1”** (or T1/T2) anywhere in the document body.
-- Props may still use `landlord`, `tenant`, `rent`, `bond` in TypeScript — **map labels only in the PDF** (e.g. `props.tenant.fullName` → “Resident”).
+- Props may still use `landlord`, `tenant`, `rent`, `bond` in TypeScript - **map labels only in the PDF** (e.g. `props.tenant.fullName` → “Resident”).
 
 ---
 
@@ -90,13 +90,13 @@ Use **licence vocabulary throughout the PDF body**. This protects the licence ch
 
 ## Platform & service fee block
 
-Same **compliance posture** as `addendumGenerator.tsx` / VIC addendum — **wording policy**, not a full `QuniPlatformAddendumProps` port for Part A:
+Same **compliance posture** as `addendumGenerator.tsx` / VIC addendum - **wording policy**, not a full `QuniPlatformAddendumProps` port for Part A:
 
-- **Owner-side** service fee only (e.g. “10% of gross weekly licence fee deducted from amounts payable to the owner through the platform”) — never say “landlord-side” in the PDF
+- **Owner-side** service fee only (e.g. “10% of gross weekly licence fee deducted from amounts payable to the owner through the platform”) - never say “landlord-side” in the PDF
 - Explicit **resident carve-out:** no Quni platform fee, booking fee, or resident service fee; the agreed weekly licence fee is **not** increased by the owner-side service fee
 - **Fee-free bank transfer** remains available for recurring licence-fee payments (statutory-style neutral wording for Victoria; no RTA citation required)
-- **Condition report** — short reference (ingoing/outgoing may be prepared; resident opportunity to comment) aligned with VIC addendum tone but adapted to licence / owner / resident labels
-- Sample BSB/account lines: use **static template lines** in `occupancyContent.ts` or generic “direct credit details provided by the owner” unless the test script passes extra strings via `specialConditions` — do not extend `rtaTypes.ts` for bank details in Part A
+- **Condition report** - short reference (ingoing/outgoing may be prepared; resident opportunity to comment) aligned with VIC addendum tone but adapted to licence / owner / resident labels
+- Sample BSB/account lines: use **static template lines** in `occupancyContent.ts` or generic “direct credit details provided by the owner” unless the test script passes extra strings via `specialConditions` - do not extend `rtaTypes.ts` for bank details in Part A
 
 Do **not** include move-out fee schedules (late checkout, international transfer) in this Part A draft unless explicitly added later after lawyer sign-off on the separate addendum-fees question.
 
@@ -123,7 +123,7 @@ Opening clause stating expressly:
 
 ### 3. Owner’s right of entry
 
-- The owner may enter the **allocated room** for cleaning, maintenance or inspection — **without statutory tenancy notice requirements** — to reinforce that exclusive possession is not granted
+- The owner may enter the **allocated room** for cleaning, maintenance or inspection - **without statutory tenancy notice requirements** - to reinforce that exclusive possession is not granted
 - **Avoid** any “resident may lock the room and exclude the owner” or absolute sole-occupancy framing
 - *Legal review flag:* counsel may soften to “reasonable notice except emergency”; keep the draft as written and note in the delivery report
 
@@ -163,7 +163,7 @@ Parties attempt good-faith resolution; unresolved disputes may be referred to **
 
 ### 11. Execution / signatures
 
-Short block: owner and resident names, signature lines, date lines. DocuSeal merge tags optional as static placeholder text for future wiring — **no DocuSeal integration in Part A**.
+Short block: owner and resident names, signature lines, date lines. DocuSeal merge tags optional as static placeholder text for future wiring - **no DocuSeal integration in Part A**.
 
 Render `specialConditions` and `bookingNotes` when non-empty (before signatures).
 
@@ -190,6 +190,6 @@ When the task completes, report:
 |-----|---------|
 | `api/documents/OccupancyAgreement.js` | NSW RTA 2010 tenancy; Fair Trading bond; resident platform fee |
 | `src/lib/documents/QuniOccupancyAgreementQld.tsx` | QLD RTA bond lodgement; resident platform fee |
-| `src/lib/documents/vic/form1Content.ts` | Prescribed Form 1 — wrong instrument for on-site licence |
+| `src/lib/documents/vic/form1Content.ts` | Prescribed Form 1 - wrong instrument for on-site licence |
 
 **Do mirror:** `src/lib/documents/vic/form1Generator.tsx` + `scripts/test-vic-form1.mjs` (structure), `src/lib/documents/vic/addendumGenerator.tsx` (fee posture).

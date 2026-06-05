@@ -55,7 +55,7 @@ export function sanitizeDisplayText(value: string | null | undefined): string {
   return value
     .replace(/\u2014/g, '-')
     .replace(/\u2013/g, '-')
-    .replace(/\s*—\s*/g, ' ')
+    .replace(/\s*-\s*/g, ' ')
     .trim()
 }
 
@@ -76,7 +76,7 @@ function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
 
 function suburbFromAddressLine(addressLine: string): string {
   const t = addressLine.trim()
-  if (!t || t === '—') return ''
+  if (!t || t === '-') return ''
   const parts = t.split(',').map((s) => s.trim()).filter(Boolean)
   const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p))
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? ''

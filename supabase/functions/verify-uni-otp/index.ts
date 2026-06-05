@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid JSON' }, 400)
   }
 
-  // PostgREST can return numeric-looking text as numbers; JSON may send otp as number — normalize.
+  // PostgREST can return numeric-looking text as numbers; JSON may send otp as number - normalize.
   const inputOtp = String(body.otp ?? '')
     .replace(/\D/g, '')
     .slice(0, 6)

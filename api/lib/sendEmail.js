@@ -1,11 +1,11 @@
 /**
- * Resend — shared by booking-related API routes (Edge).
+ * Resend - shared by booking-related API routes (Edge).
  * Env: RESEND_API_KEY (Vercel)
  * @param {object} args
  * @param {string|string[]} args.to
  * @param {string} args.subject
  * @param {string} args.html
- * @param {string} [args.replyTo] — shown as Reply-To on the outbound message
+ * @param {string} [args.replyTo] - shown as Reply-To on the outbound message
  */
 export async function sendEmail({ to, subject, html, replyTo }) {
   const key = (process.env.RESEND_API_KEY || '').trim()

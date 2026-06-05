@@ -87,18 +87,18 @@ export type PropertyListingType =
   | 'shared_room'
 
 export const PROPERTY_LISTING_TYPE_LABELS: Record<PropertyListingType, string> = {
-  entire_property: 'Entire property — House, apartment or unit (landlord does not live on site)',
-  private_room_landlord_off_site: 'Private room — landlord not on site — Room in a property, landlord lives elsewhere',
+  entire_property: 'Entire property - House, apartment or unit (landlord does not live on site)',
+  private_room_landlord_off_site: 'Private room - landlord not on site - Room in a property, landlord lives elsewhere',
   private_room_landlord_on_site:
-    'Private room — landlord lives on site — Room in landlord\'s own home (boarder/lodger arrangement)',
-  shared_room: 'Shared room — Shared bedroom with other tenants',
+    'Private room - landlord lives on site - Room in landlord\'s own home (boarder/lodger arrangement)',
+  shared_room: 'Shared room - Shared bedroom with other tenants',
 }
 
 export function isPropertyListingType(value: string): value is PropertyListingType {
   return Object.prototype.hasOwnProperty.call(PROPERTY_LISTING_TYPE_LABELS, value)
 }
 
-/** Bond / RTA copy: landlord on-site (boarder/lodger) — bond is not lodged as an RTA bond in NSW. */
+/** Bond / RTA copy: landlord on-site (boarder/lodger) - bond is not lodged as an RTA bond in NSW. */
 const BOARDING_LODGER_PROPERTY_TYPE_VALUES = new Set<string>([
   'private_room_landlord_on_site',
   'boarding',

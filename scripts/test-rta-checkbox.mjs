@@ -32,8 +32,8 @@ const testProps = {
   bond: { amount: 1600 },
   landlordAgent: null,
   urgentRepairsTradespeople: {
-    electrician: 'Test Landlord — 0400000000',
-    plumber: 'Test Landlord — 0400000000',
+    electrician: 'Test Landlord - 0400000000',
+    plumber: 'Test Landlord - 0400000000',
     other: null,
   },
   electronicService: {

@@ -2,7 +2,7 @@
  * Build src/lib/documents/vic/form1Content.ts from the official CAV Form 1 Word document.
  *
  * Source: docs/vic/form-1-residential-rental-agreement.docx
- * (Consumer Affairs Victoria — in-force prescribed form, updated 25 Nov 2025 reforms)
+ * (Consumer Affairs Victoria - in-force prescribed form, updated 25 Nov 2025 reforms)
  *
  * Run: node scripts/build-vic-form1-content.mjs [path-to.docx]
  */
@@ -37,7 +37,7 @@ function markdownToPlain(md) {
   if (/\n\s*z\s*\n/.test(t)) {
     extractionFlags.push({
       section: 'Part A item 5 (Length of agreement)',
-      issue: 'Stray "z" character from Word form field — removed from extract; verify against CAV PDF.',
+      issue: 'Stray "z" character from Word form field - removed from extract; verify against CAV PDF.',
     })
     t = t.replace(/\n\s*z\s*\n/g, '\n')
   }
@@ -66,7 +66,7 @@ const idxHelp = plain.indexOf(MARKER_HELP)
 
 if (idxPartA < 0) extractionFlags.push({ section: MARKER_PART_A, issue: 'Start marker not found' })
 if (idxPartB < 0) extractionFlags.push({ section: MARKER_PART_B, issue: 'Start marker not found' })
-if (idxHelp < 0) extractionFlags.push({ section: MARKER_HELP, issue: 'End marker not found — using full tail after Part B' })
+if (idxHelp < 0) extractionFlags.push({ section: MARKER_HELP, issue: 'End marker not found - using full tail after Part B' })
 
 const intro = idxPartA >= 0 ? plain.slice(0, idxPartA).trim() : ''
 const partAStatic =
@@ -89,12 +89,12 @@ extractionFlags.push({
 extractionFlags.push({
   section: 'Part B items 9.1 / 9.2 (electronic service)',
   issue:
-    'Per-renter Yes/No checkbox grids are multi-column tables; extract has sequential Yes/No lines — schedule uses consolidated Yes/No with emails.',
+    'Per-renter Yes/No checkbox grids are multi-column tables; extract has sequential Yes/No lines - schedule uses consolidated Yes/No with emails.',
 })
 extractionFlags.push({
   section: 'Part C item 16',
   issue:
-    'Official Nov 2025 form states "16 [Clause revoked by law]" — smoke alarm obligations moved to Part D heading "Smoke Alarms" (not a numbered Part C clause).',
+    'Official Nov 2025 form states "16 [Clause revoked by law]" - smoke alarm obligations moved to Part D heading "Smoke Alarms" (not a numbered Part C clause).',
 })
 extractionFlags.push({
   section: 'Part D',
@@ -103,7 +103,7 @@ extractionFlags.push({
 })
 extractionFlags.push({
   section: 'Part E item 21',
-  issue: 'Free-text "Further details" area is a large empty table cell — not extracted as fillable lines.',
+  issue: 'Free-text "Further details" area is a large empty table cell - not extracted as fillable lines.',
 })
 extractionFlags.push({
   section: 'Help or further information + interpreter pages',
@@ -114,15 +114,15 @@ const reportPath = join(root, 'docs/vic/form-1-extraction-flags.json')
 writeFileSync(reportPath, JSON.stringify(extractionFlags, null, 2))
 
 const out = `/**
- * VIC Form 1 (Residential rental agreement of no more than 5 years) — prescribed text.
+ * VIC Form 1 (Residential rental agreement of no more than 5 years) - prescribed text.
  * Source: Consumer Affairs Victoria Form 1 (.docx), in-force from 25 Nov 2025 (Victorian rental reforms).
  * Regenerate: node scripts/build-vic-form1-content.mjs
  * Extraction flags: docs/vic/form-1-extraction-flags.json
- * Do not paraphrase — update only from the official CAV .docx when the form changes.
+ * Do not paraphrase - update only from the official CAV .docx when the form changes.
  */
 
 export const FORM1_FORM_REFERENCE =
-  'Form 1 — Residential rental agreement (CAV prescribed form; in-force 25 Nov 2025, Residential Tenancies Regulations 2021 (Vic) Reg 10(1))'
+  'Form 1 - Residential rental agreement (CAV prescribed form; in-force 25 Nov 2025, Residential Tenancies Regulations 2021 (Vic) Reg 10(1))'
 
 /** Cover / explanatory pages before Part A (verbatim from CAV .docx). */
 export const FORM1_INTRO = ${tsStringLiteral(intro)}

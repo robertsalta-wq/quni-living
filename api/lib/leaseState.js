@@ -3,7 +3,7 @@
  * Server-side mirror of `src/lib/leaseState.ts` (pure derivation; no I/O).
  *
  * Kept duplicated so the Vercel API bundle (`api/*`) does not import from `src/` at
- * runtime — the project convention is types-only from `src/`. Tests in
+ * runtime - the project convention is types-only from `src/`. Tests in
  * `src/lib/leaseState.test.ts` lock the contract; this file stays in lockstep.
  */
 

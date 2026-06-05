@@ -104,7 +104,7 @@ const report = {
   widgetTagPlacements: built.widgetTagPlacements,
   widgetTagFieldNames: built.widgetTagFieldNames,
   tagScan,
-  docusealCompletionSmoke: 'BLOCKED — sign.quni.com.au DNS not wired; do not verify 0 {{ via live /s/... submission',
+  docusealCompletionSmoke: 'BLOCKED - sign.quni.com.au DNS not wired; do not verify 0 {{ via live /s/... submission',
 }
 
 const reportPath = path.join(spikeDir, 'quinn-robert-ft6600-draft-report.json')

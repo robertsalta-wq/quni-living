@@ -1,13 +1,13 @@
-# Peer messaging — chunk 6 review
+# Peer messaging - chunk 6 review
 
-**Scope:** Cutover polish — freeze legacy enquiries path; document backfill.
+**Scope:** Cutover polish - freeze legacy enquiries path; document backfill.
 
 ## Database
 
 | Item | Notes |
 |------|--------|
 | `20260527120000_peer_messaging.sql` (M11) | One-time backfill `enquiries` → `conversations` + messages; link `bookings.conversation_id` |
-| `20260528120000_peer_messaging_enquiries_freeze.sql` | **Apply in Supabase** — revokes `INSERT` on `enquiries`; drops insert policies |
+| `20260528120000_peer_messaging_enquiries_freeze.sql` | **Apply in Supabase** - revokes `INSERT` on `enquiries`; drops insert policies |
 
 ## App / API
 

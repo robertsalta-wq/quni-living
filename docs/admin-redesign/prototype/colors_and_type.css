@@ -1,5 +1,5 @@
 /* =============================================================================
-   Quni Living — Foundations
+   Quni Living - Foundations
    Colour, type, spacing, radius, shadow, motion tokens.
    Light-only by design (color-scheme: light).
    ============================================================================= */
@@ -9,7 +9,7 @@
 
   /* ---------------------------------------------------------------- COLOURS */
 
-  /* Brand — coral (primary), cream (panel), navy (text/secondary).
+  /* Brand - coral (primary), cream (panel), navy (text/secondary).
      #FF6F61 is canonical. The footer #FF7261 in src/components is a known drift
      and should be migrated to --quni-coral. */
   --quni-coral:           #FF6F61;
@@ -26,13 +26,13 @@
   --quni-navy-hover:      #161E33;
   --quni-navy-tint:       rgba(31, 42, 68, 0.08);
 
-  /* AI accent — reserved exclusively for AI/Sparkle moments
+  /* AI accent - reserved exclusively for AI/Sparkle moments
      (SiteBrandLockup AI entry, AI-generated content callouts). */
   --quni-ai:              #AA3BFF;
   --quni-ai-tint:         rgba(170, 59, 255, 0.10);
   --quni-ai-border:       rgba(170, 59, 255, 0.50);
 
-  /* Neutral ramp — warm, derived from cream. NOT cool slate.
+  /* Neutral ramp - warm, derived from cream. NOT cool slate.
      Use these instead of Tailwind's `gray-*` going forward. */
   --quni-ink:             #08060D;   /* === --text-h, page headings */
   --quni-ink-2:           #2A2433;   /* body strong */
@@ -45,7 +45,7 @@
   --quni-surface-3:       #F4F3EC;   /* === --code-bg */
   --quni-surface-1:       #FFFFFF;   /* === --bg, default surface */
 
-  /* Semantic — STATUS ONLY. Never primary action / never brand-substitute. */
+  /* Semantic - STATUS ONLY. Never primary action / never brand-substitute. */
   --quni-success:         #1D9E75;   /* mid green (CTA on pricing) */
   --quni-success-strong:  #0F6E56;   /* dark green for emphasis */
   --quni-success-bg:      #E6F4EE;   /* emerald-50/100 equivalent */
@@ -77,18 +77,18 @@
   --surface-2: var(--quni-surface-2); /* subtle elevated */
   --surface-3: var(--quni-surface-3); /* code / chip background */
 
-  /* Chart / data-viz tokens (gap-fill — codebase has none yet)
+  /* Chart / data-viz tokens (gap-fill - codebase has none yet)
      Categorical ramp: coral first, navy second, then desaturated supporting. */
   --chart-grid:        rgba(8, 6, 13, 0.06);
   --chart-axis:        var(--quni-ink-5);
   --chart-tooltip-bg:  #1F1A28;
   --chart-tooltip-fg:  #FFFFFF;
-  --chart-1: #FF6F61;   /* coral — primary series */
-  --chart-2: #1F2A44;   /* navy — secondary series */
+  --chart-1: #FF6F61;   /* coral - primary series */
+  --chart-2: #1F2A44;   /* navy - secondary series */
   --chart-3: #1D9E75;   /* green */
   --chart-4: #B7791F;   /* mustard */
   --chart-5: #6B6375;   /* warm grey */
-  --chart-6: #AA3BFF;   /* AI purple — only when AI-related */
+  --chart-6: #AA3BFF;   /* AI purple - only when AI-related */
 
   /* ----------------------------------------------------------- TYPOGRAPHY */
 
@@ -98,7 +98,7 @@
   --font-footer:  'Open Sans', system-ui, sans-serif; /* footer body only */
   --font-mono:    ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', monospace;
 
-  /* Type scale — single intentional scale.
+  /* Type scale - single intentional scale.
      Display = Playfair, body/UI = Inter, semantic = Lora for pricing/editorial.
      Pixel sizes assume 16px root; use rem in component classes. */
   --text-display-xl-size:   clamp(56px, 6.4vw, 72px);
@@ -179,7 +179,7 @@
   --radius-pill: 999px;  /* pills, badges, avatars */
 
   /* ----------------------------------------------------------- ELEVATION (3-step) */
-  /* Soft, low-contrast. Calm/editorial vibe — never harsh drop shadows. */
+  /* Soft, low-contrast. Calm/editorial vibe - never harsh drop shadows. */
   --shadow-1: 0 1px 2px rgba(8, 6, 13, 0.05), 0 1px 1px rgba(8, 6, 13, 0.03);   /* card resting */
   --shadow-2: 0 4px 12px rgba(8, 6, 13, 0.06), 0 2px 4px rgba(8, 6, 13, 0.04);  /* card hover */
   --shadow-3: 0 16px 32px rgba(8, 6, 13, 0.10), 0 4px 8px rgba(8, 6, 13, 0.05); /* modal / popover */
@@ -243,7 +243,7 @@ html, body {
   letter-spacing: var(--text-display-lg-track);
 }
 
-/* Default h1/h2/h3 — Inter for in-app pages (admin, dashboards) */
+/* Default h1/h2/h3 - Inter for in-app pages (admin, dashboards) */
 h1 {
   font-family: var(--font-sans);
   font-size: var(--text-h1-size);
@@ -282,7 +282,7 @@ p { margin: 0; }
 }
 
 .price {
-  font-family: var(--font-serif);     /* Lora — pricing & long-form */
+  font-family: var(--font-serif);     /* Lora - pricing & long-form */
   font-weight: var(--weight-semibold);
   font-size: var(--text-price-size);
   letter-spacing: var(--text-price-track);

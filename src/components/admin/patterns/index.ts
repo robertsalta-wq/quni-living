@@ -1,7 +1,7 @@
 /**
  * Composite admin UI patterns barrel.
  *
- * One level above primitives — these are tuned to a specific layout role
+ * One level above primitives - these are tuned to a specific layout role
  * (Living Console zone cards, attention strip, Marketplace Pulse cells, etc.)
  * and shouldn't be reused outside the admin redesign without justification.
  */

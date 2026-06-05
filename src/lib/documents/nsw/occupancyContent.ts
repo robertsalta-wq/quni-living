@@ -1,13 +1,13 @@
 /**
- * NSW on-site licence to occupy — narrative copy (lawyer-review draft).
+ * NSW on-site licence to occupy - narrative copy (lawyer-review draft).
  * Boarder/lodger; owner-held security deposit (no NSW Fair Trading lodgement for T1).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
 
 export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
-  docSubtitle: 'New South Wales — Licence to occupy (on-site accommodation)',
-  draftFooter: 'Draft for legal review — not for execution',
+  docSubtitle: 'New South Wales - Licence to occupy (on-site accommodation)',
+  draftFooter: 'Draft for legal review - not for execution',
   natureParagraphs: [
     'This document is a common-law licence to occupy a specified room within residential premises in New South Wales. It is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW).',
     'The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.',

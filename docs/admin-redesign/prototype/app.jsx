@@ -1,4 +1,4 @@
-// App — routes between Overview, Bookings, Pricing, and state stubs.
+// App - routes between Overview, Bookings, Pricing, and state stubs.
 
 function App() {
   const [active, setActive] = useState('home');

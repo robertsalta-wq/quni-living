@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Canonical site URL (https, no trailing slash) — used for SEO meta, JSON-LD, and Open Graph. */
+  /** Canonical site URL (https, no trailing slash) - used for SEO meta, JSON-LD, and Open Graph. */
   readonly VITE_SITE_URL?: string
   /** Optional absolute URL to default Open Graph image (e.g. 1200×630 JPG on your domain). */
   readonly VITE_OG_IMAGE_URL?: string
@@ -11,7 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_TURNSTILE_SITE_KEY?: string
   /** Optional: full URL to verify endpoint when using `vite` without `/api` (e.g. https://app.vercel.app/api/verify-turnstile) */
   readonly VITE_TURNSTILE_VERIFY_URL?: string
-  /** Stripe.js / Payment Element — publishable key only (pk_test_… / pk_live_…) */
+  /** Stripe.js / Payment Element - publishable key only (pk_test_… / pk_live_…) */
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string
   /** Sentry browser SDK DSN (optional in dev) */
   readonly VITE_SENTRY_DSN?: string

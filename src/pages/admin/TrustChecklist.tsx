@@ -37,23 +37,23 @@ const PHASES: PhaseDef[] = [
   {
     tone: 'coral',
     badgeLabel: 'Phase 1',
-    title: 'Before go-live — non-negotiables',
+    title: 'Before go-live - non-negotiables',
     subtitle: 'Blockers to clear before you take real money or public traffic.',
     taskIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   },
   {
     tone: 'amber',
     badgeLabel: 'Phase 2',
-    title: 'Pre-launch compliance — legal and bond readiness',
+    title: 'Pre-launch compliance - legal and bond readiness',
     subtitle: 'Resolve regulatory and payment-flow risk before real volume.',
     taskIds: [48, 49, 50, 51],
     taskGroups: [
       {
-        label: 'Priority — resolve before first real booking',
+        label: 'Priority - resolve before first real booking',
         taskIds: [48, 49, 50],
       },
       {
-        label: 'Lower priority — resolve before scale',
+        label: 'Lower priority - resolve before scale',
         taskIds: [51],
       },
     ],
@@ -89,7 +89,7 @@ const PHASES: PhaseDef[] = [
   {
     tone: 'gray',
     badgeLabel: 'Phase 7',
-    title: 'Communications — inbox and messaging',
+    title: 'Communications - inbox and messaging',
     subtitle: 'Channels and admin tooling for enquiries and replies.',
     taskIds: [52],
   },
@@ -98,7 +98,7 @@ const PHASES: PhaseDef[] = [
 const TASKS_BY_ID: Record<number, TaskDef> = {
   1: {
     id: 1,
-    label: 'DNS cutover — quni.com.au live',
+    label: 'DNS cutover - quni.com.au live',
     description:
       'Switch from quni-living.vercel.app to quni.com.au. Submit updated sitemap to Google Search Console immediately after.',
   },
@@ -146,11 +146,11 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
     id: 10,
     label: 'Lease signing explainer near DocuSeal step',
     description:
-      'Cursor task: add callout — "Legally binding NSW-compliant tenancy agreement, signed in-platform."',
+      'Cursor task: add callout - "Legally binding NSW-compliant tenancy agreement, signed in-platform."',
   },
   11: {
     id: 11,
-    label: 'List Casa Malvina on Quni — listing #1',
+    label: 'List Casa Malvina on Quni - listing #1',
     description: 'Your own property. Zero outreach needed. Gets the platform to one real verified listing immediately.',
   },
   12: {
@@ -162,7 +162,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   13: {
     id: 13,
     label: 'Search Flatmates.com.au near USYD (Newtown, Glebe, Camperdown)',
-    description: 'Note landlord contacts for all private listings — not via agent.',
+    description: 'Note landlord contacts for all private listings - not via agent.',
   },
   14: {
     id: 14,
@@ -246,7 +246,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   },
   30: {
     id: 30,
-    label: 'Mobile performance audit — Lighthouse score 85+',
+    label: 'Mobile performance audit - Lighthouse score 85+',
     description: 'Run Lighthouse in Chrome DevTools and fix anything flagged below 85 on mobile.',
   },
   31: {
@@ -266,12 +266,12 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   },
   34: {
     id: 34,
-    label: 'Contact UNSW Arc student union — housing resources',
+    label: 'Contact UNSW Arc student union - housing resources',
     description: 'Ask to be listed on their off-campus housing resources page.',
   },
   35: {
     id: 35,
-    label: 'Contact USyd SRC student union — housing resources',
+    label: 'Contact USyd SRC student union - housing resources',
     description: 'Frame it as a free resource for students.',
   },
   36: {
@@ -282,7 +282,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
   37: {
     id: 37,
     label: 'Email international student offices at USYD, UNSW, Macquarie',
-    description: 'They constantly field housing questions — Quni is a natural referral.',
+    description: 'They constantly field housing questions - Quni is a natural referral.',
   },
   38: {
     id: 38,
@@ -416,7 +416,7 @@ function phaseAccentBar(tone: PhaseTone): string {
 
 /** Short label for phase tabs (matches e.g. "Before go-live 3/12"). */
 function phaseTabLabel(phase: PhaseDef): string {
-  const i = phase.title.indexOf(' — ')
+  const i = phase.title.indexOf(' - ')
   return i >= 0 ? phase.title.slice(0, i) : phase.title
 }
 

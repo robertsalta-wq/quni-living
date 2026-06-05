@@ -104,7 +104,7 @@ export const FT6600_ACRO_TO_SLOT: Record<string, Ft6600SlotId> = (() => {
   return map
 })()
 
-/** Term length checkboxes — exactly one may be checked. */
+/** Term length checkboxes - exactly one may be checked. */
 export const FT6600_TERM_CHECKBOX_SLOTS: Ft6600SlotId[] = [
   'term_6_months_cb',
   'term_12_months_cb',
@@ -114,7 +114,7 @@ export const FT6600_TERM_CHECKBOX_SLOTS: Ft6600SlotId[] = [
   'term_periodic_cb',
 ]
 
-/** Rent payment frequency — exactly one. */
+/** Rent payment frequency - exactly one. */
 export const FT6600_RENT_FREQUENCY_CHECKBOX_SLOTS: Ft6600SlotId[] = [
   'rent_paid_week_cb',
   'rent_amount_cb',

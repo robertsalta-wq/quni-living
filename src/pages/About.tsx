@@ -11,7 +11,7 @@ export default function About() {
     <>
       <Seo
         title="About Quni Living"
-        description="Quni Living is a rental platform built for compatibility, reliability, and fair outcomes for landlords and tenants — founded by Quinn Lee in Australia."
+        description="Quni Living is a rental platform built for compatibility, reliability, and fair outcomes for landlords and tenants - founded by Quinn Lee in Australia."
         canonicalPath="/about"
       />
       <div className="flex min-h-0 w-full flex-1 flex-col bg-white">

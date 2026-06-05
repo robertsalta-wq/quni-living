@@ -81,7 +81,7 @@ function Sidebar({ active, onNavigate }) {
 
   const onHeaderClick = (z) => {
     if (openZone === z.id) {
-      // Already open — collapse it. Don't reroute.
+      // Already open - collapse it. Don't reroute.
       setOpenZone(null);
     } else {
       setOpenZone(z.id);
@@ -105,7 +105,7 @@ function Sidebar({ active, onNavigate }) {
       </div>
 
       <nav style={{ flex: 1, overflowY: 'auto', padding: '10px 8px 6px' }}>
-        {/* Home — The Living Console */}
+        {/* Home - The Living Console */}
         {(() => {
           const isActive = active === 'home';
           return (
@@ -270,13 +270,13 @@ function House({ x, y, w, h, roof, pitch, pool, garden = true }) {
 }
 
 function HomeBackdrop() {
-  // Overhead aerial of a suburb — parkland, streets, rooftops, pools.
+  // Overhead aerial of a suburb - parkland, streets, rooftops, pools.
   // Painted as one SVG tile (560×460) repeated across the page so the texture
   // reads as a real neighbourhood from above. Muted earth + foliage palette
   // keyed to the cream/coral/navy system; sits behind cream and navy washes.
   return (
     <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      {/* Single full-canvas aerial of a suburb — not tiled. Rotated to mimic the off-axis aerial angle. */}
+      {/* Single full-canvas aerial of a suburb - not tiled. Rotated to mimic the off-axis aerial angle. */}
       <svg width="100%" height="100%" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice"
         style={{ position: 'absolute', inset: 0, opacity: 0.32 }}>
         <rect width="1920" height="1200" fill="#FDF7DF"/>
@@ -289,7 +289,7 @@ function HomeBackdrop() {
           <path d="M820 700 C 940 680, 1050 720, 1090 820 C 1060 920, 940 940, 850 890 Z" fill="#DDE7C2"/>
           <path d="M1380 940 C 1620 900, 1900 980, 2120 1120 L 2120 1500 L 1300 1500 Z" fill="#DDE7C2"/>
 
-          {/* Lake — soft kidney shape in the lower-right park, with shoreline highlight */}
+          {/* Lake - soft kidney shape in the lower-right park, with shoreline highlight */}
           <path d="M1560 1020 C 1680 990, 1830 1010, 1900 1080 C 1940 1150, 1860 1210, 1740 1210 C 1620 1210, 1500 1170, 1500 1100 C 1500 1050, 1520 1030, 1560 1020 Z"
                 fill="#7BB5D2"/>
           <path d="M1580 1030 C 1690 1010, 1820 1030, 1880 1090"
@@ -346,7 +346,7 @@ function HomeBackdrop() {
           <line x1="1052" y1="-200" x2="1052" y2="1400" stroke="#C9BEA1" strokeWidth="1" strokeDasharray="10 10" opacity="0.7"/>
           <line x1="1473" y1="-200" x2="1473" y2="1400" stroke="#C9BEA1" strokeWidth="1" strokeDasharray="10 10" opacity="0.7"/>
 
-          {/* Houses — each placed by hand, varied size + roof colour */}
+          {/* Houses - each placed by hand, varied size + roof colour */}
           <House x={600}  y={20}  w={70} h={100} roof="#D08469" pitch/>
           <House x={690}  y={14}  w={80} h={110} roof="#B26553"/>
           <House x={790}  y={20}  w={74} h={100} roof="#DD9376" pitch pool/>
@@ -445,7 +445,7 @@ function HomeBackdrop() {
           <House x={900}  y={1016} w={74} h={100} roof="#8B98A4"/>
           <House x={994}  y={1010} w={56} h={106} roof="#E0A581" pitch/>
 
-          {/* Street trees — along both arterials and side streets */}
+          {/* Street trees - along both arterials and side streets */}
           {[
             [560,330],[560,395],[560,460],[560,525],[560,590],
             [560,670],[560,735],[560,800],[560,865],[560,925],
@@ -471,7 +471,7 @@ function HomeBackdrop() {
         </g>
       </svg>
 
-      {/* Cream wash, top-left — keeps copy area legible */}
+      {/* Cream wash, top-left - keeps copy area legible */}
       <div style={{
         position: 'absolute', inset: '-20% -10% 40% -10%',
         background: 'radial-gradient(ellipse 70% 50% at 20% 0%, rgba(254,249,228,.55), rgba(254,249,228,0) 70%)',

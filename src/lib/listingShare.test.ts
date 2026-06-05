@@ -12,7 +12,7 @@ describe('listingShare', () => {
 
   it('combines title and subtitle for share text', () => {
     expect(listingShareText('Studio near campus', 'Liverpool · $350/wk')).toBe(
-      'Studio near campus — Liverpool · $350/wk',
+      'Studio near campus - Liverpool · $350/wk',
     )
   })
 

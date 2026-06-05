@@ -44,7 +44,7 @@ export function AdminShell({ children }: AdminShellProps) {
          * Standard admin page frame.
          *
          * Left-aligned (no `mx-auto`, no `max-w-*`) so content sits flush
-         * against the sidebar — Bookings table, Pricing tabs, etc. expand to
+         * against the sidebar - Bookings table, Pricing tabs, etc. expand to
          * fill the viewport rather than getting centred inside a 1600px column.
          * The Living Console home variant above keeps its own centred layout.
          */}

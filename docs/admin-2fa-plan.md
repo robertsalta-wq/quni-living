@@ -1,4 +1,4 @@
-# Admin 2FA (TOTP) — implementation plan
+# Admin 2FA (TOTP) - implementation plan
 
 Plan for adding TOTP two-factor authentication to the Quni admin dashboard (platform staff only). Uses Supabase Auth's built-in MFA. Does **not** touch student or landlord auth.
 
@@ -44,7 +44,7 @@ as $$
 $$;
 ```
 
-The “stop if admin is client-only” check **passes** — a server-side admin predicate already exists.
+The “stop if admin is client-only” check **passes** - a server-side admin predicate already exists.
 
 ### Admin checks are centralized
 
@@ -59,7 +59,7 @@ The “stop if admin is client-only” check **passes** — a server-side admin 
 ### Natural integration points
 
 - **Enrolment UI:** `/admin/settings` exists (`AdminSettings.tsx`), or a dedicated `/admin/security` route.
-- **Challenge gate:** `AdminLayout` wraps every `/admin/*` route — better than per-page checks.
+- **Challenge gate:** `AdminLayout` wraps every `/admin/*` route - better than per-page checks.
 
 ---
 
@@ -77,11 +77,11 @@ Add a **Security** section in the admin area where platform staff can set up 2FA
 4. Accept a 6-digit code; call `mfa.challenge()` + `mfa.verify()` to activate the factor.
 5. Use `mfa.listFactors()` to show enrolled factors.
 6. Use `mfa.unenroll()` to remove a factor (confirm first; call `refreshSession()` after so AAL downgrades immediately).
-7. Support enrolling more than one factor — surface clearly as **“Add a backup authenticator.”**
+7. Support enrolling more than one factor - surface clearly as **“Add a backup authenticator.”**
 
 **Recommendations:**
 
-- Prefer a dedicated **`/admin/security`** route (exempt from challenge gate) over burying enrolment inside full Settings — Settings loads a lot of RLS-protected config that will fail at AAL1 once enforcement is on.
+- Prefer a dedicated **`/admin/security`** route (exempt from challenge gate) over burying enrolment inside full Settings - Settings loads a lot of RLS-protected config that will fail at AAL1 once enforcement is on.
 - Show enrolled factors with friendly labels (“Primary phone”, “Backup iPad”).
 - After verify, call `refreshSession()` so the JWT picks up AAL2 immediately.
 - Copy should say “Required for all platform staff” if enforcing.
@@ -96,16 +96,16 @@ Wrap the admin section so that on entry it calls `mfa.getAuthenticatorAssuranceL
 
 **Implement in `AdminLayout`** (after role check), with route exceptions:
 
-- `/admin/security` — enrolment + challenge
+- `/admin/security` - enrolment + challenge
 - Optionally a minimal locked shell with sidebar link to Security only
 
-**Do not** put the gate in `ProtectedRoute` — that component is shared with non-admin routes.
+**Do not** put the gate in `ProtectedRoute` - that component is shared with non-admin routes.
 
 #### Three MFA states (not just two)
 
 | State | UX |
 |--------|-----|
-| No factors enrolled | “Set up 2FA” — cannot use admin data once enforcement is on |
+| No factors enrolled | “Set up 2FA” - cannot use admin data once enforcement is on |
 | Factors enrolled, session AAL1 | TOTP challenge screen |
 | Session AAL2 | Normal admin console |
 
@@ -132,9 +132,9 @@ as $$
 $$;
 ```
 
-**Admin-only RLS policies** — replace `is_platform_admin()` with `is_platform_admin_mfa()`.
+**Admin-only RLS policies** - replace `is_platform_admin()` with `is_platform_admin_mfa()`.
 
-**Combined policies** (e.g. “owner OR admin”) — only tighten the admin branch:
+**Combined policies** (e.g. “owner OR admin”) - only tighten the admin branch:
 
 ```sql
 (user_id = auth.uid()) OR (is_platform_admin() AND coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2')
@@ -146,8 +146,8 @@ Do **not** blindly apply `(aal = 'aal2' OR NOT admin)` to every policy.
 
 - Admin **storage** policies (e.g. `student-documents` admin read)
 - Admin **RPCs** (`SECURITY DEFINER` functions that guard with `is_platform_admin()` only, e.g. `admin_update_property_fee_snapshots`)
-- **`requireAdminUser`** in `api/lib/adminAuth.js` — decode/check `aal` on the JWT
-- **Edge functions** using `isPlatformAdminUser()` — same AAL2 rule
+- **`requireAdminUser`** in `api/lib/adminAuth.js` - decode/check `aal` on the JWT
+- **Edge functions** using `isPlatformAdminUser()` - same AAL2 rule
 
 Students and landlords use separate RLS policies and are unaffected.
 
@@ -185,8 +185,8 @@ A stolen password-only session (AAL1) could still hit those APIs unless **`requi
 
 ### Admin pages use hybrid data access
 
-- **Direct Supabase client** (bookings, payments, properties, Qase, …) — subject to RLS.
-- **Vercel API + service role** (Living Console snapshot, payments admin actions, …) — needs JWT AAL2 check before service role use.
+- **Direct Supabase client** (bookings, payments, properties, Qase, …) - subject to RLS.
+- **Vercel API + service role** (Living Console snapshot, payments admin actions, …) - needs JWT AAL2 check before service role use.
 
 ### Legacy `user_metadata.role === 'admin'`
 
@@ -204,9 +204,9 @@ Deploying strict RLS before anyone has enrolled MFA locks staff out of admin tab
 
 | Phase | What ships | Enforcement |
 |--------|------------|-------------|
-| **A** | `/admin/security` enrolment UI + client gate | Soft — warn or block UI only |
+| **A** | `/admin/security` enrolment UI + client gate | Soft - warn or block UI only |
 | **B** | Confirm every `platform_staff` member has ≥1 factor | Manual checklist |
-| **C** | RLS helper + policy/RPC migration + `requireAdminUser` + edge functions | Hard — AAL2 required |
+| **C** | RLS helper + policy/RPC migration + `requireAdminUser` + edge functions | Hard - AAL2 required |
 
 Optional: `platform_staff.mfa_enforced_at` or a platform config flag to flip enforcement without redeploying policy text.
 
@@ -222,7 +222,7 @@ Optional: `platform_staff.mfa_enforced_at` or a platform config flag to flip enf
 
 ## Recovery / break-glass
 
-- **Backup authenticator** (second TOTP factor) — supported in enrolment UI.
+- **Backup authenticator** (second TOTP factor) - supported in enrolment UI.
 - Document what happens if someone loses **all** devices:
   - Supabase Dashboard MFA reset, or
   - Another staff member with access, or
@@ -239,7 +239,7 @@ Supabase recovery codes or phone MFA are alternatives if you want more than a se
 - [ ] Fresh login → challenge screen → AAL2 session → admin loads.
 - [ ] Unenroll backup; session refresh; still works with primary.
 - [ ] Unenroll last factor (if allowed); confirm downgrade to enrolment-required state.
-- [ ] Student login unchanged — no MFA prompts.
+- [ ] Student login unchanged - no MFA prompts.
 - [ ] Landlord login unchanged.
 - [ ] Direct Supabase admin query blocked at AAL1 after Phase C.
 - [ ] Vercel admin API returns 403 at AAL1 after Phase C.
@@ -250,7 +250,7 @@ Supabase recovery codes or phone MFA are alternatives if you want more than a se
 ## Implementation order (when ready to code)
 
 1. Decide enforcement timeline (soft vs day-one hard block).
-2. Unify admin identity — deprecate metadata `role: admin` if possible.
+2. Unify admin identity - deprecate metadata `role: admin` if possible.
 3. **Phase A:** `/admin/security` + `AdminLayout` MFA gate (exceptions for security route).
 4. **Phase B:** All staff enrolled (manual verification).
 5. **Phase C:** `is_platform_admin_mfa()` migration + swap admin RLS/RPC policies + extend `requireAdminUser` and edge functions.
@@ -260,10 +260,10 @@ Supabase recovery codes or phone MFA are alternatives if you want more than a se
 
 ## References in repo
 
-- `supabase/migrations/20260526120000_platform_staff.sql` — `platform_staff`, `is_platform_admin()`
-- `supabase/admin_rls_policies.sql` — admin RLS patterns
-- `src/pages/admin/AdminLayout.tsx` — admin route shell
-- `src/pages/admin/AdminSettings.tsx` — existing settings UI
-- `api/lib/adminAuth.js` — `requireAdminUser`, `isPlatformAdminUser`
-- `supabase/functions/_shared/platformStaff.ts` — edge function admin check
-- `src/lib/platformStaff.ts` — client `fetchIsPlatformAdmin()`
+- `supabase/migrations/20260526120000_platform_staff.sql` - `platform_staff`, `is_platform_admin()`
+- `supabase/admin_rls_policies.sql` - admin RLS patterns
+- `src/pages/admin/AdminLayout.tsx` - admin route shell
+- `src/pages/admin/AdminSettings.tsx` - existing settings UI
+- `api/lib/adminAuth.js` - `requireAdminUser`, `isPlatformAdminUser`
+- `supabase/functions/_shared/platformStaff.ts` - edge function admin check
+- `src/lib/platformStaff.ts` - client `fetchIsPlatformAdmin()`

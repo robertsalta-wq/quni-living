@@ -1,5 +1,5 @@
 /**
- * Landlord partnerships lead — POST JSON:
+ * Landlord partnerships lead - POST JSON:
  * { name, email, phone, suburb, propertyCount, message?, turnstileToken }
  * Notifies hello@quni.com.au via Resend with Reply-To set to the lead's email.
  */

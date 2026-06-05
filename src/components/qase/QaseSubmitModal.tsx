@@ -163,7 +163,7 @@ export default function QaseSubmitModal({
   const loadCategories = useCallback(async () => {
     if (!isSupabaseConfigured) {
       setCategories([])
-      setCategoriesError('Support is unavailable — Supabase is not configured.')
+      setCategoriesError('Support is unavailable - Supabase is not configured.')
       return
     }
     setLoadingCategories(true)
@@ -308,7 +308,7 @@ export default function QaseSubmitModal({
     e.preventDefault()
     if (!formValid || submitting || successTicketNumber != null) return
     if (!isSupabaseConfigured) {
-      setSubmitError('Support is unavailable — Supabase is not configured.')
+      setSubmitError('Support is unavailable - Supabase is not configured.')
       return
     }
     setSubmitting(true)

@@ -92,11 +92,11 @@ export default function AdminStudents() {
                     <td className={adminTdClass}>
                       <span className="font-medium text-gray-900">{studentDisplayName(row)}</span>
                     </td>
-                    <td className={adminTdClass}>{row.email?.trim() || '—'}</td>
-                    <td className={adminTdClass}>{row.universities?.name ?? '—'}</td>
-                    <td className={adminTdClass}>{row.course?.trim() || '—'}</td>
+                    <td className={adminTdClass}>{row.email?.trim() || '-'}</td>
+                    <td className={adminTdClass}>{row.universities?.name ?? '-'}</td>
+                    <td className={adminTdClass}>{row.course?.trim() || '-'}</td>
                     <td className={adminTdClass}>
-                      {row.year_of_study != null ? String(row.year_of_study) : '—'}
+                      {row.year_of_study != null ? String(row.year_of_study) : '-'}
                     </td>
                     <td className={adminTdClass}>{formatDate(row.created_at)}</td>
                   </tr>

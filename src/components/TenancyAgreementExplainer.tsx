@@ -10,7 +10,7 @@ type Props = {
   className?: string
 }
 
-/** Trust copy for the in-platform DocuSeal signing flow — keyed to the listing's jurisdiction. */
+/** Trust copy for the in-platform DocuSeal signing flow - keyed to the listing's jurisdiction. */
 export default function TenancyAgreementExplainer({
   state,
   propertyType,

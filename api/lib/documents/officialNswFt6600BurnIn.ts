@@ -38,7 +38,7 @@ export function findTextFieldWidgetPageIndex(doc: PDFDocument, widget: PDFWidget
 
 type Rect = { x: number; y: number; width: number; height: number }
 
-/** Single-line fit: scale font down, then truncate — schedule fields are ~19pt tall. */
+/** Single-line fit: scale font down, then truncate - schedule fields are ~19pt tall. */
 export function layoutSingleLineInField(
   text: string,
   font: PDFFont,

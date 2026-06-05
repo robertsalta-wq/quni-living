@@ -61,7 +61,7 @@ function App() {
         >
           <Suspense fallback={<PageRouteFallback />}>
           <Routes>
-          {/* Public — eager: home, listings funnel, login */}
+          {/* Public - eager: home, listings funnel, login */}
           <Route path="/" element={<Home />} />
           <Route path="/listings" element={<Listings />} />
           <Route path="/listings/:slug" element={<PropertyDetail />} />

@@ -17,13 +17,13 @@ cd "$ROOT"
 if [ ! -d ios ]; then
   npx cap add ios
 else
-  echo "ios/ already exists — skipping npx cap add ios"
+  echo "ios/ already exists - skipping npx cap add ios"
 fi
 
 if [ ! -d android ]; then
   npx cap add android
 else
-  echo "android/ already exists — skipping npx cap add android"
+  echo "android/ already exists - skipping npx cap add android"
 fi
 
 npm run cap:sync

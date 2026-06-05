@@ -56,8 +56,8 @@ function minimalProps(): QldGeneralTenancyAgreementProps {
     bond: { amount: 1600 },
     landlordAgent: null,
     urgentRepairsTradespeople: {
-      electrician: 'Lessor One — 0400 000 000',
-      plumber: 'Lessor One — 0400 000 000',
+      electrician: 'Lessor One - 0400 000 000',
+      plumber: 'Lessor One - 0400 000 000',
       other: null,
     },
     electronicService: {

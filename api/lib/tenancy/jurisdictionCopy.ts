@@ -49,7 +49,7 @@ const AGREEMENT_BY_STATE: Record<
   },
 }
 
-/** Trust callout above DocuSeal signing — null when the listing has no supported package. */
+/** Trust callout above DocuSeal signing - null when the listing has no supported package. */
 export function tenancyAgreementExplainerCopy(input: TenancyPackageInput): TenancyAgreementExplainerCopy | null {
   const pkg = resolveTenancyPackage(input)
   if (!pkg.supported || pkg.tier === 'T3') return null

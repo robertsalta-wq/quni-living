@@ -10,11 +10,11 @@ type TierEventRow = Database['public']['Tables']['service_tier_events']['Row']
 const PAGE_SIZE = 50
 
 function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })
   } catch {
-    return '—'
+    return '-'
   }
 }
 
@@ -239,7 +239,7 @@ export default function AdminServiceTierEvents() {
                     <td className={adminTdClass}>
                       <span className="font-mono text-xs">{row.event_type}</span>
                     </td>
-                    <td className={adminTdClass}>{row.service_tier ?? '—'}</td>
+                    <td className={adminTdClass}>{row.service_tier ?? '-'}</td>
                     <td className={adminTdClass}>
                       {row.booking_id ? (
                         <Link
@@ -249,7 +249,7 @@ export default function AdminServiceTierEvents() {
                           {row.booking_id}
                         </Link>
                       ) : (
-                        '—'
+                        '-'
                       )}
                     </td>
                     <td className={adminTdClass}>

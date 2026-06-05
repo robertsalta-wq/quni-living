@@ -52,7 +52,7 @@ function formatAuDate(iso: string) {
 function furnishedText(v: boolean | null) {
   if (v === true) return 'Yes'
   if (v === false) return 'No'
-  return '—'
+  return '-'
 }
 
 function consentText(v: boolean) {
@@ -73,7 +73,7 @@ function rentAmountForFrequency(weeklyRent: number, freq: 'weekly' | 'fortnightl
 }
 
 function tradeLine(v: string | null) {
-  if (v == null || !v.trim()) return '—'
+  if (v == null || !v.trim()) return '-'
   return v.trim()
 }
 
@@ -95,7 +95,7 @@ function stripLeadingNotesAsciiBanner(s: string): string {
 
 function rtaScheduleTenantNamePopulated(raw: string): boolean {
   const t = raw.trim()
-  return t.length > 0 && t !== '—'
+  return t.length > 0 && t !== '-'
 }
 
 function RtaUnnumberedSectionHeading({ title }: { title: string }) {
@@ -151,14 +151,14 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
   const rentForFrequency = rentAmountForFrequency(rent.weeklyRent, rent.rentFrequency)
 
   const bondText =
-    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '—'
+    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '-'
 
   const t2 = additionalTenantNames[0]?.trim() ?? ''
   const t3 = additionalTenantNames[1]?.trim() ?? ''
   const t4 = additionalTenantNames[2]?.trim() ?? ''
 
   const inclusions =
-    additionalPremisesInclusions.length > 0 ? additionalPremisesInclusions : ['—']
+    additionalPremisesInclusions.length > 0 ? additionalPremisesInclusions : ['-']
 
   const partiesRows: { label: string; value: ReactNode }[] = [
     { label: 'Landlord:', value: landlordDisplay },
@@ -170,10 +170,10 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
   if (landlordAgent) {
     partiesRows.push(
       { label: "Landlord's agent:", value: landlordAgent.name },
-      { label: 'Agent licence number:', value: landlordAgent.licenseNumber?.trim() || '—' },
+      { label: 'Agent licence number:', value: landlordAgent.licenseNumber?.trim() || '-' },
       { label: 'Agent business address:', value: landlordAgent.businessAddress },
       { label: 'Agent phone:', value: landlordAgent.phone },
-      { label: 'Agent email:', value: landlordAgent.email?.trim() || '—' },
+      { label: 'Agent email:', value: landlordAgent.email?.trim() || '-' },
     )
   } else {
     partiesRows.push({ label: "Landlord's agent:", value: 'Not applicable' })
@@ -188,14 +188,14 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
     partiesRows.push({ label: 'Tenant date of birth:', value: formatAuDate(tenant.dateOfBirth) })
   }
   partiesRows.push(
-    { label: 'Tenant (2):', value: t2 || '—' },
-    { label: 'Tenant (3):', value: t3 || '—' },
-    { label: 'Tenant (4):', value: t4 || '—' },
+    { label: 'Tenant (2):', value: t2 || '-' },
+    { label: 'Tenant (3):', value: t3 || '-' },
+    { label: 'Tenant (4):', value: t4 || '-' },
   )
 
   const premisesRows: { label: string; value: ReactNode }[] = [
     { label: 'Residential premises (address):', value: premises.addressLine },
-    { label: 'Part of premises only (if applicable):', value: premisesPartDescription?.trim() || '—' },
+    { label: 'Part of premises only (if applicable):', value: premisesPartDescription?.trim() || '-' },
     {
       label: 'Additional things included with residential premises:',
       value: bulletValue(inclusions),
@@ -205,9 +205,9 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
       value:
         maxOccupantsPermitted != null && Number.isFinite(maxOccupantsPermitted)
           ? String(maxOccupantsPermitted)
-          : '—',
+          : '-',
     },
-    { label: 'Room type:', value: premises.roomType ?? '—' },
+    { label: 'Room type:', value: premises.roomType ?? '-' },
     { label: 'Furnished:', value: furnishedText(premises.furnished) },
     { label: 'Linen supplied:', value: furnishedText(premises.linenSupplied) },
     { label: 'Weekly cleaning service:', value: furnishedText(premises.weeklyCleaningService) },
@@ -235,15 +235,15 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
 
   const otherRows: { label: string; value: ReactNode }[] = [
     {
-      label: 'Urgent repairs — tradesperson (electrician):',
+      label: 'Urgent repairs - tradesperson (electrician):',
       value: tradeLine(urgentRepairsTradespeople.electrician),
     },
     {
-      label: 'Urgent repairs — tradesperson (plumber):',
+      label: 'Urgent repairs - tradesperson (plumber):',
       value: tradeLine(urgentRepairsTradespeople.plumber),
     },
     {
-      label: 'Urgent repairs — tradesperson (other):',
+      label: 'Urgent repairs - tradesperson (other):',
       value: tradeLine(urgentRepairsTradespeople.other),
     },
     {
@@ -268,7 +268,7 @@ function ScheduleBlock(props: NswResidentialTenancyAgreementProps) {
         specialConditions.length > 0 ? (
           bulletValue(specialConditions)
         ) : (
-          <Text style={occupancyMatchPdf.dataValueBold}>—</Text>
+          <Text style={occupancyMatchPdf.dataValueBold}>-</Text>
         ),
     },
   ]

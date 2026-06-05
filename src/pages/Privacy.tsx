@@ -60,7 +60,7 @@ export default function Privacy() {
       />
       <LegalH3 id="collect-nationality">2.3 Optional nationality</LegalH3>
       <LegalP>
-        Students may optionally provide their nationality in their profile. This field is voluntary — we ask for your
+        Students may optionally provide their nationality in their profile. This field is voluntary - we ask for your
         consent via the in-app notice shown at the field before you provide it. We use nationality information only in
         aggregate to understand our community and improve support for international students. It is never shown to
         landlords, plays no part in booking decisions, and is not disclosed to other users. You may leave this field

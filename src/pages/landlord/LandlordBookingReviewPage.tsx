@@ -61,7 +61,7 @@ function statusBadgeClass(s: BookingStatus) {
 }
 
 function formatAudCents(cents: number | null | undefined) {
-  if (cents == null || !Number.isFinite(Number(cents))) return '—'
+  if (cents == null || !Number.isFinite(Number(cents))) return '-'
   return `$${(Number(cents) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
@@ -877,7 +877,7 @@ export default function LandlordBookingReviewPage() {
               {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
             </button>
             <p className="mt-2 text-xs text-amber-900/80">
-              Complete verification in Stripe, then return here — we refresh when you switch back to this tab.
+              Complete verification in Stripe, then return here - we refresh when you switch back to this tab.
             </p>
           </div>
         )}
@@ -936,7 +936,7 @@ export default function LandlordBookingReviewPage() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-gray-500">Lease length</dt>
-              <dd className="font-medium text-gray-900 text-right">{booking.lease_length?.trim() || '—'}</dd>
+              <dd className="font-medium text-gray-900 text-right">{booking.lease_length?.trim() || '-'}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-gray-500">Service model</dt>
@@ -962,7 +962,7 @@ export default function LandlordBookingReviewPage() {
                 <dd className="font-medium text-right tabular-nums">
                   {booking.weekly_rent != null
                     ? `$${Number(booking.weekly_rent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                    : '—'}
+                    : '-'}
                 </dd>
               </div>
             ) : null}
@@ -971,7 +971,7 @@ export default function LandlordBookingReviewPage() {
               <dd className="font-medium text-right tabular-nums">
                 {property?.bond != null
                   ? `$${Number(property.bond).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                  : '—'}
+                  : '-'}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
@@ -1083,7 +1083,7 @@ export default function LandlordBookingReviewPage() {
                 <a href="#tenancy-agreement-preview" className="font-semibold text-[#FF6F61] underline underline-offset-2">
                   Tenancy agreement
                 </a>{' '}
-                above and in your DocuSeal email. This is a self-report — Quni does not hold bond on Listing tenancies.
+                above and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
               </p>
               {canCancelListingBondPending && (
                 <button
@@ -1219,7 +1219,7 @@ export default function LandlordBookingReviewPage() {
               onChange={(e) => setDeclineReason(e.target.value)}
               rows={3}
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              placeholder="Optional — not shown to the renter"
+              placeholder="Optional - not shown to the renter"
             />
             <div className="mt-5 flex flex-wrap gap-3">
               <button

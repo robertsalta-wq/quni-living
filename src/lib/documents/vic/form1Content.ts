@@ -1,13 +1,13 @@
 /**
- * VIC Form 1 (Residential rental agreement of no more than 5 years) — prescribed text.
+ * VIC Form 1 (Residential rental agreement of no more than 5 years) - prescribed text.
  * Source: Consumer Affairs Victoria Form 1 (.docx), in-force from 25 Nov 2025 (Victorian rental reforms).
  * Regenerate: node scripts/build-vic-form1-content.mjs
  * Extraction flags: docs/vic/form-1-extraction-flags.json
- * Do not paraphrase — update only from the official CAV .docx when the form changes.
+ * Do not paraphrase - update only from the official CAV .docx when the form changes.
  */
 
 export const FORM1_FORM_REFERENCE =
-  'Form 1 — Residential rental agreement (CAV prescribed form; in-force 25 Nov 2025, Residential Tenancies Regulations 2021 (Vic) Reg 10(1))'
+  'Form 1 - Residential rental agreement (CAV prescribed form; in-force 25 Nov 2025, Residential Tenancies Regulations 2021 (Vic) Reg 10(1))'
 
 /** Cover / explanatory pages before Part A (verbatim from CAV .docx). */
 export const FORM1_INTRO = "Residential rental agreement   \nno more than 5 years\n\nResidential Tenancies Act 1997 Section 26(1)  \n*Residential Tenancies Regulations 2021* Regulation 10(1)\n\n[EXTRACTION_FLAG: CAV logo/image omitted from prescribed text embed]\n\n- This is your residential rental agreement. It is a binding contract under the *Residential Tenancies Act 1997* (the Act).\n- Parts A, B, C and E are the terms of your agreement. Part D is a summary of your rights and obligations.\n- Do not sign this agreement if there is anything in it that you do not understand. \n- Please refer to *Renters Guide* for details about your rights and responsibility. \n- For further information, visit the renting section of the Consumer Affairs Victoria (CAV) website at www.consumer.vic.gov.au/renting or call 1300 558 181."

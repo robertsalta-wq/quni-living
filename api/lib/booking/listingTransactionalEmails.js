@@ -41,7 +41,7 @@ function bookingReferenceLabel(bookingId) {
 
 function formatAuLongDate(iso) {
   const d = new Date(typeof iso === 'string' ? iso : '')
-  if (!Number.isFinite(d.getTime())) return '—'
+  if (!Number.isFinite(d.getTime())) return '-'
   return d.toLocaleDateString('en-AU', { dateStyle: 'long', timeZone: 'Australia/Sydney' })
 }
 
@@ -99,9 +99,9 @@ async function loadListingEmailContext(admin, bookingId) {
     (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
     (typeof booking.start_date === 'string' && booking.start_date.trim()) ||
     ''
-  const moveInDate = moveInRaw || '—'
+  const moveInDate = moveInRaw || '-'
   const leaseLength =
-    typeof booking.lease_length === 'string' && booking.lease_length.trim() ? booking.lease_length.trim() : '—'
+    typeof booking.lease_length === 'string' && booking.lease_length.trim() ? booking.lease_length.trim() : '-'
 
   const propState = typeof prop.state === 'string' && prop.state.trim() ? prop.state.trim() : 'NSW'
   const propertyType = typeof prop.property_type === 'string' ? prop.property_type.trim() : ''
@@ -242,7 +242,7 @@ export async function sendListingBondReceivedEmails(admin, bookingId) {
 /**
  * Bond window expiry cron (per booking row already loaded with joins).
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
- * @param {object} bookingRow — shape compatible with expire-bookings select
+ * @param {object} bookingRow - shape compatible with expire-bookings select
  * @param {{ refund_id?: string | null; refund_amount_cents?: number | null }} refundMeta
  */
 export async function sendListingBondPendingExpiredEmails(admin, bookingRow, refundMeta) {

@@ -256,7 +256,7 @@ function QaseAttachmentChip({
   attachment: QaseAttachmentRow
   onDeleted: () => void
   onError: (msg: string) => void
-  /** Dark / indigo message bubble — higher-contrast chip chrome */
+  /** Dark / indigo message bubble - higher-contrast chip chrome */
   inverse?: boolean
 }) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
@@ -370,7 +370,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
             </span>
             <span className="text-xs font-medium text-amber-700">Unlinked</span>
           </div>
-          <p className="text-sm text-gray-700">Anonymous submission — no profile linked</p>
+          <p className="text-sm text-gray-700">Anonymous submission - no profile linked</p>
         </>
       )
     case 'admin_ticket':
@@ -442,7 +442,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
                   {emailTrim}
                 </a>
               ) : (
-                '—'
+                '-'
               )}
             </p>
           </div>
@@ -488,7 +488,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
                   {emailTrim}
                 </a>
               ) : (
-                '—'
+                '-'
               )}
             </p>
           </div>
@@ -515,7 +515,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
       )
     }
     default:
-      return <p className="text-sm text-gray-500">—</p>
+      return <p className="text-sm text-gray-500">-</p>
   }
 }
 
@@ -1158,7 +1158,7 @@ export default function QaseTicketDetail() {
                       value={ticket.category ?? ''}
                       onChange={(e) => void onCategoryChange(e.target.value)}
                     >
-                      <option value="">— None —</option>
+                      <option value="">- None -</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.field_key}>
                           {c.label}
@@ -1176,14 +1176,14 @@ export default function QaseTicketDetail() {
                   </div>
                   <div>
                     <span className={labelClass()}>Resolved</span>
-                    <p className="mt-1 text-sm text-gray-800">{ticket.resolved_at ? formatDate(ticket.resolved_at) : '—'}</p>
+                    <p className="mt-1 text-sm text-gray-800">{ticket.resolved_at ? formatDate(ticket.resolved_at) : '-'}</p>
                   </div>
                 </div>
               </section>
 
               <section className={adminCardClass}>
                 <h2 className="text-sm font-semibold text-gray-900 mb-4">Submitter</h2>
-                {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">—</p>}
+                {submitterPanel ? <SubmitterPanelBody state={submitterPanel} /> : <p className="text-sm text-gray-500">-</p>}
               </section>
 
               <section className={adminCardClass}>
@@ -1203,11 +1203,11 @@ export default function QaseTicketDetail() {
                             </div>
                             <div className="flex justify-between gap-2">
                               <dt className="text-gray-500">Landlord</dt>
-                              <dd className="font-mono text-xs break-all">{ticket.booking.landlord_id ?? '—'}</dd>
+                              <dd className="font-mono text-xs break-all">{ticket.booking.landlord_id ?? '-'}</dd>
                             </div>
                             <div className="flex justify-between gap-2">
                               <dt className="text-gray-500">Student</dt>
-                              <dd className="font-mono text-xs break-all">{ticket.booking.student_id ?? '—'}</dd>
+                              <dd className="font-mono text-xs break-all">{ticket.booking.student_id ?? '-'}</dd>
                             </div>
                             <div className="flex justify-between gap-2">
                               <dt className="text-gray-500">Status</dt>
@@ -1233,11 +1233,11 @@ export default function QaseTicketDetail() {
                             </div>
                             <div>
                               <dt className="text-gray-500">Address</dt>
-                              <dd className="mt-0.5">{ticket.property.address ?? '—'}</dd>
+                              <dd className="mt-0.5">{ticket.property.address ?? '-'}</dd>
                             </div>
                             <div className="flex justify-between gap-2">
                               <dt className="text-gray-500">Landlord ID</dt>
-                              <dd className="font-mono text-xs break-all">{ticket.property.landlord_id ?? '—'}</dd>
+                              <dd className="font-mono text-xs break-all">{ticket.property.landlord_id ?? '-'}</dd>
                             </div>
                           </dl>
                         ) : (

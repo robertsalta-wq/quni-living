@@ -12,9 +12,9 @@ Each criterion has a **matching status**:
 | Status | Meaning |
 |--------|---------|
 | **✅ Use** | Safe for matching, fit tables, browse filters, and AI context |
-| **❌ Exclude** | Discriminatory / protected — never use for matching, scoring, or AI fit/reject advice |
+| **❌ Exclude** | Discriminatory / protected - never use for matching, scoring, or AI fit/reject advice |
 | **⚠️ Facts only** | May appear as neutral context; must not drive fit scores or rejection |
-| **➖ Not matching** | Operational, legal, display, or payment data — out of scope for preference matching |
+| **➖ Not matching** | Operational, legal, display, or payment data - out of scope for preference matching |
 | **🔲 Not wired** | Legitimate matching data exists but is not yet used in code or AI |
 
 **Objective:** Train AI to use all **✅ Use** and **🔲 Not wired** criteria, respect **⚠️ Facts only** limits, and never touch **❌ Exclude**.
@@ -53,27 +53,27 @@ Each criterion has a **matching status**:
 | `university_id`, `campus_id` | Listing uni/campus, geo distance | **✅ Use** | Browse filters; campus proximity |
 | `workplace_latitude`, `workplace_longitude` | Listing lat/lon | **✅ Use** | Professional renter near-work search |
 | `workplace_address`, `workplace_suburb`, `workplace_state`, `workplace_postcode` | Listing location | **✅ Use** | Geocoding input for near-work |
-| `workplace_label` | — | **➖ Not matching** | Display label |
+| `workplace_label` | - | **➖ Not matching** | Display label |
 | `languages_spoken` | Landlord `languages_spoken` | **🔲 Not wired** | Communication fit; must not proxy nationality |
 | `accommodation_verification_route` | `open_to_non_students` | **✅ Use** | Eligibility gate (student vs non-student path) |
 | `verification_type` | Platform eligibility | **✅ Use** | Trust tier; not a preference score |
-| `uni_email_verified`, `work_email_verified` | — | **✅ Use** | Verification completeness |
-| `id_submitted_at`, `enrolment_submitted_at`, `identity_supporting_submitted_at` | — | **✅ Use** | Trust signals |
-| `has_guarantor`, `guarantor_name` | — | **✅ Use** | Financial assurance (narrative) |
-| `course`, `year_of_study`, `study_level` | — | **⚠️ Facts only** | Tenancy/verification context; not fit/reject |
-| `student_type` (`domestic` / `international`) | — | **❌ Exclude** | Proxy for national origin; policy forbids “no international students” |
-| `gender` | — | **❌ Exclude** | Protected: sex / gender identity |
-| `nationality` | — | **❌ Exclude** | Protected: race / national or ethnic origin |
-| `date_of_birth` | — | **❌ Exclude** | Protected: age (and indirect age discrimination) |
-| `first_name`, `last_name`, `full_name` | — | **➖ Not matching** | Identity / display; AI uses first name only for tone |
-| `email`, `phone` | — | **➖ Not matching** | Contact |
-| `avatar_url`, `bio` | — | **➖ Not matching** | Display; bio is soft AI context only |
-| `emergency_contact_*` | — | **➖ Not matching** | Safety / lease docs |
-| `uni_email`, `work_email` | — | **➖ Not matching** | Verification process |
-| `id_document_url`, `enrolment_doc_url`, etc. | — | **➖ Not matching** | Document storage |
-| `stripe_customer_id` | — | **➖ Not matching** | Payments |
-| `onboarding_complete`, `terms_accepted_at` | — | **➖ Not matching** | Platform gates |
-| `created_at` | — | **➖ Not matching** | Metadata |
+| `uni_email_verified`, `work_email_verified` | - | **✅ Use** | Verification completeness |
+| `id_submitted_at`, `enrolment_submitted_at`, `identity_supporting_submitted_at` | - | **✅ Use** | Trust signals |
+| `has_guarantor`, `guarantor_name` | - | **✅ Use** | Financial assurance (narrative) |
+| `course`, `year_of_study`, `study_level` | - | **⚠️ Facts only** | Tenancy/verification context; not fit/reject |
+| `student_type` (`domestic` / `international`) | - | **❌ Exclude** | Proxy for national origin; policy forbids “no international students” |
+| `gender` | - | **❌ Exclude** | Protected: sex / gender identity |
+| `nationality` | - | **❌ Exclude** | Protected: race / national or ethnic origin |
+| `date_of_birth` | - | **❌ Exclude** | Protected: age (and indirect age discrimination) |
+| `first_name`, `last_name`, `full_name` | - | **➖ Not matching** | Identity / display; AI uses first name only for tone |
+| `email`, `phone` | - | **➖ Not matching** | Contact |
+| `avatar_url`, `bio` | - | **➖ Not matching** | Display; bio is soft AI context only |
+| `emergency_contact_*` | - | **➖ Not matching** | Safety / lease docs |
+| `uni_email`, `work_email` | - | **➖ Not matching** | Verification process |
+| `id_document_url`, `enrolment_doc_url`, etc. | - | **➖ Not matching** | Document storage |
+| `stripe_customer_id` | - | **➖ Not matching** | Payments |
+| `onboarding_complete`, `terms_accepted_at` | - | **➖ Not matching** | Platform gates |
+| `created_at` | - | **➖ Not matching** | Metadata |
 
 ---
 
@@ -82,18 +82,18 @@ Each criterion has a **matching status**:
 | Field | Could match against | Matching status | Notes |
 |-------|---------------------|-----------------|-------|
 | `languages_spoken` | Tenant `languages_spoken` | **🔲 Not wired** | Communication fit only |
-| `verified`, `admin_override_verified` | — | **✅ Use** | Trust badge on listings |
+| `verified`, `admin_override_verified` | - | **✅ Use** | Trust badge on listings |
 | `suburb`, `state`, `postcode`, `address` | Listing location | **⚠️ Facts only** | Homestay / on-site landlord context |
-| `residence_location` | — | **➖ Not matching** | FT6600 compliance |
-| `landlord_type` | — | **➖ Not matching** | Business structure |
-| `company_name`, `abn` | — | **➖ Not matching** | Legal / compliance |
-| `has_landlord_insurance` | — | **➖ Not matching** | Eligibility signal, not preference fit |
-| `bio` | — | **➖ Not matching** | Profile display |
-| `first_name`, `last_name`, `full_name` | — | **➖ Not matching** | Display |
-| `email`, `phone`, `avatar_url` | — | **➖ Not matching** | Contact / display |
-| `stripe_connect_*`, `stripe_customer_id` | — | **➖ Not matching** | Payments |
-| `onboarding_complete`, `terms_accepted_at`, `non_discrimination_policy_*` | — | **➖ Not matching** | Platform gates |
-| `fee_exempt` | — | **➖ Not matching** | Platform config |
+| `residence_location` | - | **➖ Not matching** | FT6600 compliance |
+| `landlord_type` | - | **➖ Not matching** | Business structure |
+| `company_name`, `abn` | - | **➖ Not matching** | Legal / compliance |
+| `has_landlord_insurance` | - | **➖ Not matching** | Eligibility signal, not preference fit |
+| `bio` | - | **➖ Not matching** | Profile display |
+| `first_name`, `last_name`, `full_name` | - | **➖ Not matching** | Display |
+| `email`, `phone`, `avatar_url` | - | **➖ Not matching** | Contact / display |
+| `stripe_connect_*`, `stripe_customer_id` | - | **➖ Not matching** | Payments |
+| `onboarding_complete`, `terms_accepted_at`, `non_discrimination_policy_*` | - | **➖ Not matching** | Platform gates |
+| `fee_exempt` | - | **➖ Not matching** | Platform config |
 
 Landlords match **through listings**, not as a direct tenant↔landlord pairing.
 
@@ -113,8 +113,8 @@ Landlords match **through listings**, not as a direct tenant↔landlord pairing.
 | `max_occupants` | `occupancy_type`, `occupant_count` | **✅ Use** | Fit table |
 | `couple_surcharge_per_week` | Budget | **✅ Use** | Total rent for couples |
 | `parking_available`, `parking_surcharge_per_week` | `needs_parking` | **✅ Use** | Fit table |
-| `bedrooms`, `bathrooms` | — | **⚠️ Facts only** | Capacity context |
-| `rooms_rented_to_residents` | — | **⚠️ Facts only** | Rooming-house context |
+| `bedrooms`, `bathrooms` | - | **⚠️ Facts only** | Capacity context |
+| `rooms_rented_to_residents` | - | **⚠️ Facts only** | Rooming-house context |
 | `university_id`, `campus_id` | Tenant uni/campus | **✅ Use** | Browse filters |
 | `latitude`, `longitude` | Workplace / campus geo | **✅ Use** | Near-point search |
 | `suburb`, `address`, `state`, `postcode` | Location search | **✅ Use** | Text/suburb browse |
@@ -122,16 +122,16 @@ Landlords match **through listings**, not as a direct tenant↔landlord pairing.
 | `open_to_non_students` | `accommodation_verification_route` | **✅ Use** | Eligibility |
 | `linen_supplied` | Homestay expectation | **🔲 Not wired** | No tenant preference field yet |
 | `weekly_cleaning_service` | Service expectation | **🔲 Not wired** | No tenant preference field yet |
-| `listing_type` | — | **⚠️ Facts only** | Category (rent / homestay / student_house) |
+| `listing_type` | - | **⚠️ Facts only** | Category (rent / homestay / student_house) |
 | `title`, `description`, `slug`, `images` | Text search | **✅ Use** | Browse `q` filter |
-| `featured`, `created_at`, `updated_at` | — | **➖ Not matching** | Sort / display |
-| `status` | — | **➖ Not matching** | Gate (`active` only in browse) |
-| `landlord_id` | — | **➖ Not matching** | FK to landlord |
-| `property_group_id` | — | **➖ Not matching** | Duplicate listings |
-| `service_tier` | — | **➖ Not matching** | Platform model |
-| `house_rules` (free text) | — | **🔲 Not wired** | Narrative rules |
-| `is_registered_rooming_house`, `rooming_house_registration_number` | — | **➖ Not matching** | Legal / tenancy package |
-| `smoke_alarm_*`, `water_usage_charged_separately`, `electricity_embedded_network`, `gas_embedded_network`, `strata_*` | — | **➖ Not matching** | Compliance disclosure |
+| `featured`, `created_at`, `updated_at` | - | **➖ Not matching** | Sort / display |
+| `status` | - | **➖ Not matching** | Gate (`active` only in browse) |
+| `landlord_id` | - | **➖ Not matching** | FK to landlord |
+| `property_group_id` | - | **➖ Not matching** | Duplicate listings |
+| `service_tier` | - | **➖ Not matching** | Platform model |
+| `house_rules` (free text) | - | **🔲 Not wired** | Narrative rules |
+| `is_registered_rooming_house`, `rooming_house_registration_number` | - | **➖ Not matching** | Legal / tenancy package |
+| `smoke_alarm_*`, `water_usage_charged_separately`, `electricity_embedded_network`, `gas_embedded_network`, `strata_*` | - | **➖ Not matching** | Compliance disclosure |
 
 ---
 
@@ -166,9 +166,9 @@ Each rule has `permitted`: `yes` | `no` | `approval`.
 | **No smoking** | `is_smoker` | **✅ Use** | Functional requirement; not yet in fit table |
 | **Pets** | `has_pets` | **✅ Use** | Features used today; junction not wired |
 | **Parking** | `needs_parking` | **✅ Use** | Supplementary to `parking_available` |
-| Overnight guests | — | **🔲 Not wired** | No tenant preference field |
-| Parties/events | — | **🔲 Not wired** | No tenant preference field |
-| Quiet hours | — | **🔲 Not wired** | No tenant preference field |
+| Overnight guests | - | **🔲 Not wired** | No tenant preference field |
+| Parties/events | - | **🔲 Not wired** | No tenant preference field |
+| Quiet hours | - | **🔲 Not wired** | No tenant preference field |
 
 ---
 
@@ -239,7 +239,7 @@ Even if not stored as fields, these **patterns in listings or messages** are exc
 
 Working back from the full inventory, these are the criteria **AI and matching logic should use**:
 
-### Core preference fit (✅ Use — 12 tenant↔listing pairs)
+### Core preference fit (✅ Use - 12 tenant↔listing pairs)
 
 1. Budget ↔ rent (+ surcharges)
 2. Room type preference ↔ room type
@@ -254,14 +254,14 @@ Working back from the full inventory, these are the criteria **AI and matching l
 11. Uni/campus ↔ listing uni/campus + geo
 12. Workplace ↔ listing geo (professional renters)
 
-### Eligibility and trust (✅ Use — not preference scores)
+### Eligibility and trust (✅ Use - not preference scores)
 
 - Verification tier and steps
 - `open_to_non_students` vs accommodation route
 - Landlord verified badge
 - Guarantor presence
 
-### Legitimate but not yet wired (🔲 — safe to add)
+### Legitimate but not yet wired (🔲 - safe to add)
 
 - Language overlap (tenant ↔ landlord)
 - General amenities (WiFi, AC, study desk, etc.)
@@ -276,12 +276,12 @@ Working back from the full inventory, these are the criteria **AI and matching l
 |--------------|--------|
 | `gender` | Protected characteristic |
 | `nationality` | Protected characteristic |
-| `date_of_birth` | Age — protected |
+| `date_of_birth` | Age - protected |
 | `student_type` | National-origin proxy; policy forbids “no international students” |
 
 Plus all non-stored protected attributes (§1.8) and forbidden listing language (§1.9).
 
-### Facts only — never fit/reject (⚠️)
+### Facts only - never fit/reject (⚠️)
 
 - `course`, `year_of_study`, `study_level`
 - `listing_type`, `bedrooms`, `bathrooms`, `rooms_rented_to_residents`
@@ -294,13 +294,13 @@ Plus all non-stored protected attributes (§1.8) and forbidden listing language 
 | Excluded item | Legal / policy basis |
 |---------------|---------------------|
 | `gender` | Sex Discrimination Act 1984 (Cth); state equal opportunity laws |
-| `nationality` | Racial Discrimination Act 1975 (Cth) — nationality, national origin, ethnicity |
+| `nationality` | Racial Discrimination Act 1975 (Cth) - nationality, national origin, ethnicity |
 | `date_of_birth` | Age Discrimination Act 2004 (Cth); using age to exclude tenants |
-| `student_type` (domestic/international) | Quni Non-Discrimination Policy §Listings — explicitly forbids “no international students”; international status is a proxy for national origin |
-| Non-stored protected attributes | Quni Non-Discrimination Policy §What this means — full protected-attribute list |
+| `student_type` (domestic/international) | Quni Non-Discrimination Policy §Listings - explicitly forbids “no international students”; international status is a proxy for national origin |
+| Non-stored protected attributes | Quni Non-Discrimination Policy §What this means - full protected-attribute list |
 | Discriminatory listing wording | Quni Non-Discrimination Policy §Listings and communication |
 
-**What remains legitimate:** Functional tenancy requirements — affordability, non-smoking household, pets policy, parking, lease length, move-in dates, occupancy limits, furnishing, bills arrangement. These are preference and logistics, not protected-attribute exclusion.
+**What remains legitimate:** Functional tenancy requirements - affordability, non-smoking household, pets policy, parking, lease length, move-in dates, occupancy limits, furnishing, bills arrangement. These are preference and logistics, not protected-attribute exclusion.
 
 ---
 
@@ -321,8 +321,8 @@ Plus all non-stored protected attributes (§1.8) and forbidden listing language 
 flowchart LR
   ALL[All stored fields §1] --> FILTER{Status?}
   FILTER -->|✅ Use 🔲 Not wired| CTX[AI context + fit code]
-  FILTER -->|⚠️ Facts only| CTX2[Context — no fit score]
-  FILTER -->|❌ Exclude| DROP[Stripped — never sent]
+  FILTER -->|⚠️ Facts only| CTX2[Context - no fit score]
+  FILTER -->|❌ Exclude| DROP[Stripped - never sent]
   FILTER -->|➖ Not matching| SKIP[Omitted from matching]
   CTX --> FIT[Deterministic fit table]
   CTX --> AI[AI narrative]
@@ -343,27 +343,27 @@ flowchart LR
 
 | Criterion group | Stored | In fit table | In AI | Excluded correctly |
 |-----------------|--------|--------------|-------|-------------------|
-| 7 core fit dimensions | Yes | Yes | Yes | — |
-| Smoking (`is_smoker`) | Yes | No | Yes (narrative) | — |
-| `gender`, `nationality` | Yes | — | Prompt ban | Partial — still in landlord UI |
-| `student_type` | Yes | — | Yes (sent) | **No — should be excluded from fit** |
-| `date_of_birth` | Yes | — | Not sent | Yes |
-| Languages | Yes | No | No | — |
-| Amenities (general) | Yes | No | No | — |
-| House rules junction | Yes | Partial | No | — |
-| Student chat preferences | Yes | — | **Not sent** | — |
-| Central allowlist module | — | — | **Not built** | — |
+| 7 core fit dimensions | Yes | Yes | Yes | - |
+| Smoking (`is_smoker`) | Yes | No | Yes (narrative) | - |
+| `gender`, `nationality` | Yes | - | Prompt ban | Partial - still in landlord UI |
+| `student_type` | Yes | - | Yes (sent) | **No - should be excluded from fit** |
+| `date_of_birth` | Yes | - | Not sent | Yes |
+| Languages | Yes | No | No | - |
+| Amenities (general) | Yes | No | No | - |
+| House rules junction | Yes | Partial | No | - |
+| Student chat preferences | Yes | - | **Not sent** | - |
+| Central allowlist module | - | - | **Not built** | - |
 
 ---
 
 ## 6. Recommended next steps
 
-1. **`src/lib/aiMatchingCriteria.ts`** — encode §1 status column as code (`USE` / `EXCLUDE` / `FACTS_ONLY` / `NOT_MATCHING` / `NOT_WIRED`)
-2. **Student chat** — add `TENANT PREFERENCE CONTEXT` built from **✅ Use** fields only
-3. **Landlord assessment** — stop sending `student_type`; add explicit exclusion rule
-4. **Landlord UI** — remove `nationality` (and `gender` if shown) from `LandlordStudentProfileModal`
-5. **Fit table** — add smoking row; optionally language overlap as informational
-6. **RAG article** — sync this doc to knowledge base for chat consistency
+1. **`src/lib/aiMatchingCriteria.ts`** - encode §1 status column as code (`USE` / `EXCLUDE` / `FACTS_ONLY` / `NOT_MATCHING` / `NOT_WIRED`)
+2. **Student chat** - add `TENANT PREFERENCE CONTEXT` built from **✅ Use** fields only
+3. **Landlord assessment** - stop sending `student_type`; add explicit exclusion rule
+4. **Landlord UI** - remove `nationality` (and `gender` if shown) from `LandlordStudentProfileModal`
+5. **Fit table** - add smoking row; optionally language overlap as informational
+6. **RAG article** - sync this doc to knowledge base for chat consistency
 
 ---
 

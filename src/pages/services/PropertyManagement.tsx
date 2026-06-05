@@ -6,7 +6,7 @@ export default function PropertyManagement() {
     <>
       <Seo
         title="Property management for landlords"
-        description="List and manage accommodation with Quni Living — enquiries, bookings, and your landlord dashboard in one place."
+        description="List and manage accommodation with Quni Living - enquiries, bookings, and your landlord dashboard in one place."
         canonicalPath="/services/property-management"
       />
     <ServicePageLayout
@@ -17,10 +17,10 @@ export default function PropertyManagement() {
     >
       <p>
         Quni Living gives landlords everything they need to manage student properties online. Create listings, receive
-        enquiries, confirm bookings and track your portfolio — all from your landlord dashboard.
+        enquiries, confirm bookings and track your portfolio - all from your landlord dashboard.
       </p>
       <p>
-        Our platform connects you with verified renters — students, graduates, and professionals — looking for
+        Our platform connects you with verified renters - students, graduates, and professionals - looking for
         quality accommodation near their university.
       </p>
     </ServicePageLayout>

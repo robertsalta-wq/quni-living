@@ -1,4 +1,4 @@
-// @ts-nocheck — Landlord: reset in-progress DocuSeal round and regenerate listing tenancy PDF + signing.
+// @ts-nocheck - Landlord: reset in-progress DocuSeal round and regenerate listing tenancy PDF + signing.
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { bookingAllowsTenancyDocumentGeneration } from './lib/booking/listingDocumentGenerationEligibility.js'

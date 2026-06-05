@@ -9,7 +9,7 @@ describe('conversationNotify email', () => {
     expect(buildNewMessageNotificationSubject('Casa Malvina')).toBe('New message about Casa Malvina')
   })
 
-  it('html contains title, first name, and deep link — no message body', () => {
+  it('html contains title, first name, and deep link - no message body', () => {
     const secretBody = '0412 345 678 call me at leak@example.com'
     const html = buildNewMessageNotificationHtml({
       propertyTitle: 'Casa Malvina',

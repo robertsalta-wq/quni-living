@@ -1,7 +1,7 @@
 import { resolvePublicSiteUrl } from './messaging/siteUrl.js'
 
 const SITE_NAME = 'Quni Living'
-const DEFAULT_OG_IMAGE_ALT = 'Quni — verified accommodation near campus and work'
+const DEFAULT_OG_IMAGE_ALT = 'Quni - verified accommodation near campus and work'
 const LISTING_SEO_SUFFIX = 'Verified accommodation on Quni Living, Australia.'
 
 const ROOM_TYPE_LABELS: Record<string, string> = {

@@ -76,7 +76,7 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
   const isStreaming = chatStream.state === 'streaming'
 
   const isListingsInline = variant === 'listings'
-  /** Listings page uses `listings`; property embed uses `embed` — same compact chrome. */
+  /** Listings page uses `listings`; property embed uses `embed` - same compact chrome. */
   const isCompactInline = variant === 'embed' || variant === 'listings'
   /** Inline compact UIs shrink to content; embed on mobile is fullscreen and keeps a scrollable message column. */
   const useCompactAutoLayout = isCompactInline && !(variant === 'embed' && isMobile)

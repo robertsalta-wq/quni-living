@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react'
 
 export type ReportFormErrorOptions = {
-  /** Only true for unexpected / server-side failures worth monitoring — not client-side validation. */
+  /** Only true for unexpected / server-side failures worth monitoring - not client-side validation. */
   sentry?: boolean
 }
 

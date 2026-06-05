@@ -26,7 +26,7 @@ function bondCapFragmentFromBond(bond: TenancyBondRules): string | null {
 }
 
 /**
- * @param stateCode — Australian state, e.g. property.state (uppercased inside)
+ * @param stateCode - Australian state, e.g. property.state (uppercased inside)
  */
 export function bondStepRegulatoryCopy(
   bond: TenancyBondRules,
@@ -65,7 +65,7 @@ export function bondStepRegulatoryCopy(
     schemeLeadBeforeBold: 'Your landlord is legally required to lodge your bond with the relevant state authority within ',
     schemeBoldDeadline,
     schemeLeadAfterBold: '.',
-    authorityStateHeading: `${st} — state bond authority`,
+    authorityStateHeading: `${st} - state bond authority`,
     authorityPublicLine: bond.authorityPublicLabel,
     amberTitle: 'Always get a receipt when you pay your bond.',
     amberBody: 'Never pay a bond without receiving official confirmation of lodgement from the state authority.',

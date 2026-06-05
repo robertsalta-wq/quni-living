@@ -1,5 +1,5 @@
 /**
- * Placeholder — FT6600 React-PDF generator entry (refactor).
+ * Placeholder - FT6600 React-PDF generator entry (refactor).
  * @see Build Task: NSW content separation
  */
 

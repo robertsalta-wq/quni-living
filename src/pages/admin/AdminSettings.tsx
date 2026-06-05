@@ -772,7 +772,7 @@ export default function AdminSettings() {
             <div className="space-y-3 border-t border-gray-100 pt-6">
               <Subheading>Trust account</Subheading>
               <Note>
-                Complete after legal review — required before accepting rent payments under RTA tenancies.
+                Complete after legal review - required before accepting rent payments under RTA tenancies.
               </Note>
               <div className="space-y-4 pt-1">
                 {['compliance.trust_account_bsb', 'compliance.trust_account_number'].map((key) => {
@@ -874,7 +874,7 @@ export default function AdminSettings() {
           <div className="mb-4 border-b border-gray-100 pb-4">
             <Subheading>Social media</Subheading>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-600">
-              Editable list — stored in this browser only (<span className="font-mono text-[11px]">{SOCIAL_STORAGE_KEY}</span>
+              Editable list - stored in this browser only (<span className="font-mono text-[11px]">{SOCIAL_STORAGE_KEY}</span>
               ). Not saved to Supabase.
             </p>
           </div>
@@ -932,7 +932,7 @@ export default function AdminSettings() {
                               ) : null}
                             </div>
                           ) : (
-                            <span className="min-w-0 font-medium text-gray-900">{row.platform || '—'}</span>
+                            <span className="min-w-0 font-medium text-gray-900">{row.platform || '-'}</span>
                           )}
                         </div>
                       </td>
@@ -1005,7 +1005,7 @@ export default function AdminSettings() {
                         ) : (
                           <div className="flex min-w-0 items-center gap-1">
                             <span className="min-w-0 flex-1 truncate text-sm text-gray-800" title={row.url}>
-                              {row.url || '—'}
+                              {row.url || '-'}
                             </span>
                             <button
                               type="button"

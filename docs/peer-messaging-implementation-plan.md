@@ -1,4 +1,4 @@
-# Peer messaging — implementation plan
+# Peer messaging - implementation plan
 
 **Status:** Chunks 1–6 implemented in repo; apply `20260528120000_peer_messaging_enquiries_freeze.sql` in Supabase for cutover. Decisions locked 25 May 2026.  
 **Stack:** Supabase (Postgres + RLS + Realtime) + Vercel API routes + existing React app.
@@ -59,7 +59,7 @@
 | `metadata` | jsonb | System events: `{ "event": "booking_requested", "bookingId": "..." }` |
 | `created_at` | timestamptz | |
 
-**No** duplicate masked body column — mask at read time in app/API for non-admin when `contact_unlocked_at` is null.
+**No** duplicate masked body column - mask at read time in app/API for non-admin when `contact_unlocked_at` is null.
 
 ### 2.3 `message_contact_mask_events`
 
@@ -71,23 +71,23 @@
 | `sender_user_id` | uuid FK | For repeat-offender admin views |
 | `mask_type` | text | `phone` \| `email` \| `url` \| `social` |
 | `match_count` | int | Hits of that type in message |
-| `content_dedup_hash` | text | Dedup stats only — **not** privacy-preserving |
+| `content_dedup_hash` | text | Dedup stats only - **not** privacy-preserving |
 | `created_at` | timestamptz | |
 
 ### 2.4 Optional column on `bookings`
 
-- `conversation_id` uuid FK nullable — links booking pipeline to the same thread.
+- `conversation_id` uuid FK nullable - links booking pipeline to the same thread.
 
 ### 2.5 Relationship to existing `enquiries` / `booking_messages`
 
 | Legacy | v1 strategy |
 |--------|-------------|
-| `enquiries` | **Hard cutover:** one-time backfill → `conversations` + messages; **no dual-write**. New traffic uses conversations API only. Rows with `student_id` null (anonymous) are **not** backfilled — historical only in `enquiries`. |
+| `enquiries` | **Hard cutover:** one-time backfill → `conversations` + messages; **no dual-write**. New traffic uses conversations API only. Rows with `student_id` null (anonymous) are **not** backfilled - historical only in `enquiries`. |
 | `booking_messages` | **Freeze inserts at cutover** (RLS: read-only for participants). Legacy rows readable; new post-booking chat uses `conversation_messages` when `bookings.conversation_id` set |
 
 ---
 
-## 3. Migrations — apply order
+## 3. Migrations - apply order
 
 Apply in Supabase SQL Editor (or single migration file `YYYYMMDDHHMMSS_peer_messaging.sql`) in this order:
 
@@ -134,7 +134,7 @@ Apply in Supabase SQL Editor (or single migration file `YYYYMMDDHHMMSS_peer_mess
 
 **Helper functions (recommended):**
 
-- `public.is_conversation_participant(conv_id uuid)` — landlord or tenant match on `auth.uid()`
+- `public.is_conversation_participant(conv_id uuid)` - landlord or tenant match on `auth.uid()`
 - Reuse `public.current_auth_student_profile_id()` for tenant booking joins
 
 ---
@@ -163,8 +163,8 @@ Prefer **server routes** for sends (mask logging + email without PII). Reads can
 | POST | `/api/conversations/message` | Bearer | `{ conversationId, body }` → validate participant → insert message → mask event rows → update conversation preview/`last_message_at` → queue email notify |
 | POST | `/api/conversations/read` | Bearer | `{ conversationId }` → set `landlord_last_read_at` or `tenant_last_read_at` |
 | POST | `/api/conversations/notify` | Internal/called from message handler | Resend: no peer email in body; deep link `/messages/:id` |
-| — | *(existing)* `POST /api/confirm-booking` | Landlord | **Extend:** on success → `contact_unlocked_at = now()` + system message on linked `conversation_id` |
-| — | *(existing)* `POST /api/enquiry-email` | — | **Deprecate** for new flows; keep for backward compat during transition or remove caller |
+| - | *(existing)* `POST /api/confirm-booking` | Landlord | **Extend:** on success → `contact_unlocked_at = now()` + system message on linked `conversation_id` |
+| - | *(existing)* `POST /api/enquiry-email` | - | **Deprecate** for new flows; keep for backward compat during transition or remove caller |
 
 **Optional v1.1**
 
@@ -184,7 +184,7 @@ Prefer **server routes** for sends (mask logging + email without PII). Reads can
 
 | Route | Guard | Page component |
 |-------|-------|----------------|
-| `/messages` | `RequireUser` | `MessagesInboxPage` — role-aware list |
+| `/messages` | `RequireUser` | `MessagesInboxPage` - role-aware list |
 | `/messages/:conversationId` | `RequireUser` + participant RLS | `ConversationThreadPage` |
 
 Redirects:
@@ -219,7 +219,7 @@ Redirects:
 | Screen | Change |
 |--------|--------|
 | **`Header.tsx`** | Logged-in student/landlord: **Messages** link + unread badge (count from conversations where `last_message_at > last_read`) |
-| **`PropertyDetail.tsx`** | “Message landlord” → **lightest signup** if needed → `POST open` → navigate `/messages/:id`. **Sign-in UX (locked):** single screen, OTP-first (email magic link / SMS OTP per existing auth stack) — no multi-step profile wizard before first message. Replace/supersede `PropertyEnquiryForm` for logged-in users. **Product note:** anonymous enquire-with-email goes away; Quinn should sanity-check student acceptance of signup-to-message friction. |
+| **`PropertyDetail.tsx`** | “Message landlord” → **lightest signup** if needed → `POST open` → navigate `/messages/:id`. **Sign-in UX (locked):** single screen, OTP-first (email magic link / SMS OTP per existing auth stack) - no multi-step profile wizard before first message. Replace/supersede `PropertyEnquiryForm` for logged-in users. **Product note:** anonymous enquire-with-email goes away; Quinn should sanity-check student acceptance of signup-to-message friction. |
 | **`PropertyEnquiryForm.tsx`** | Deprecate for new sends OR thin wrapper that calls `/api/conversations/open` + first message |
 | **`StudentDashboard.tsx`** | Enquiries tab → “Open conversation” links to `/messages/:id` (or replace tab with link to `/messages`) |
 | **`LandlordDashboard.tsx`** | Replace enquiries reply UI with link to thread; remove `/api/enquiries/reply` usage for new replies |
@@ -231,19 +231,19 @@ Redirects:
 
 | Route | Component |
 |-------|-------------|
-| `/admin/conversations/:id` | `AdminConversationViewer` — read-only transcript, full `body`, mask events count optional |
+| `/admin/conversations/:id` | `AdminConversationViewer` - read-only transcript, full `body`, mask events count optional |
 
 Defer admin inbox list to v1.1; schema/RLS ready day one.
 
 ### 7.6 Email templates (Resend)
 
-**Hard rule (all peer-message notifications):** email body contains **only** (1) property title, (2) sender first name, (3) deep link button to `/messages/:conversationId`. **No message body** — not masked, not unmasked, not a one-line preview. Preview leakage is the same circumvention vector as full text.
+**Hard rule (all peer-message notifications):** email body contains **only** (1) property title, (2) sender first name, (3) deep link button to `/messages/:conversationId`. **No message body** - not masked, not unmasked, not a one-line preview. Preview leakage is the same circumvention vector as full text.
 
 | Trigger | Recipient | Content rules |
 |---------|-----------|----------------|
-| New message | Other party | Property title + sender first name + **Open conversation** → `/messages/:id` — **no** message text, **no** email addresses |
+| New message | Other party | Property title + sender first name + **Open conversation** → `/messages/:id` - **no** message text, **no** email addresses |
 | Booking requested | Landlord | Same PII rule; system-style subject line; link to thread only |
-| Booking accepted / unlocked | Both | “Contact details unlocked” (or equivalent) + link to thread — **no** contact details in email |
+| Booking accepted / unlocked | Both | “Contact details unlocked” (or equivalent) + link to thread - **no** contact details in email |
 
 `platform_config.contact_masking_enabled`: when `false`, **display** masking is off in app/API; **`message_contact_mask_events` logging always runs** on detected PII in submitted bodies.
 
@@ -257,7 +257,7 @@ In `api/lib/booking/confirmListing.js` (and managed path after accept):
 2. On successful confirm (+ listing charge success):
    - `UPDATE conversations SET contact_unlocked_at = now() WHERE id = ?`
    - Insert `conversation_messages` system: `booking_accepted` / `contact_unlocked`
-3. On payment failure: do **not** unlock; system message optional: “Payment failed — contact still hidden”
+3. On payment failure: do **not** unlock; system message optional: “Payment failed - contact still hidden”
 
 ---
 
@@ -275,7 +275,7 @@ Assumes **one strong full-stack dev**, includes QA on iPhone. Adjust if part-tim
 | **5. Booking + unlock** | 1.0 | `conversation_id` on booking create; `confirm-booking` unlock + system messages |
 | **6. Backfill & cutover** | 0.5 | Enquiry backfill; feature flag if needed; hide old enquiry form |
 | **7. QA & polish** | 1.0 | Mobile Safari, unread counts, edge cases (duplicate thread, archived) |
-| **8. Admin viewer** *(same release)* | 1.0 | Read-only `/admin/conversations/:id` — dispute resolution without SQL |
+| **8. Admin viewer** *(same release)* | 1.0 | Read-only `/admin/conversations/:id` - dispute resolution without SQL |
 
 **Total:** ~**8–9 days**.
 
@@ -318,7 +318,7 @@ Assumes **one strong full-stack dev**, includes QA on iPhone. Adjust if part-tim
 | 3 | **Admin viewer:** Same release as peer messaging |
 | 4 | **`contact_masking_enabled`:** Display-only kill switch; **always** log mask events |
 | 5 | **PropertyDetail sign-in:** Single-screen OTP-ready flow before first message (see §7.4) |
-| 6 | **Notification email:** Property title + first name + deep link only — no message body (see §7.6) |
+| 6 | **Notification email:** Property title + first name + deep link only - no message body (see §7.6) |
 | 7 | **Masking tests:** Dedicated adversarial unit test file (~20 cases) in chunk 0 / before API |
 | 8 | **`sender_user_id`:** Nullable when `kind = 'system'` |
 
@@ -326,5 +326,5 @@ Assumes **one strong full-stack dev**, includes QA on iPhone. Adjust if part-tim
 
 ## Related docs
 
-- `docs/dual-tier-service-model.md` — Listing fee + contact masking intent
-- `docs/listing-only-go-live-plan.md` — broader go-live context
+- `docs/dual-tier-service-model.md` - Listing fee + contact masking intent
+- `docs/listing-only-go-live-plan.md` - broader go-live context

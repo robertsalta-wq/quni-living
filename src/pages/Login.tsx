@@ -102,7 +102,7 @@ export default function Login() {
       navigate(next && next !== '/login' ? next : '/admin', { replace: true })
       return
     }
-    // Use resolved role from DB + metadata (AuthContext), not only JWT metadata — older accounts may
+    // Use resolved role from DB + metadata (AuthContext), not only JWT metadata - older accounts may
     // have student_profiles but missing user_metadata.role; they must not be sent to role-pick terms.
     if (role === null) {
       navigate('/onboarding', { replace: true })
@@ -168,7 +168,7 @@ export default function Login() {
   const errLower = (error ?? '').toLowerCase()
   const secretKeyError =
     errLower.includes('forbidden') && errLower.includes('secret')
-  /** Amber banner already explains bad key — hide duplicate red box for same email-login error. */
+  /** Amber banner already explains bad key - hide duplicate red box for same email-login error. */
   const redundantSecretBanner =
     Boolean(keyMisuse && secretKeyError && !errorMessage && !urlDetailSecondary)
 
@@ -295,7 +295,7 @@ export default function Login() {
           {resendSuccess && (
             <p className="text-sm text-emerald-700" role="status">
               Request accepted. Unconfirmed signups get another email (check spam). Already-confirmed accounts receive
-              nothing — use Log in.
+              nothing - use Log in.
             </p>
           )}
         </div>

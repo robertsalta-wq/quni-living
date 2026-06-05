@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 
-/** Stable IDs — do not change (upsert keys in Supabase). */
+/** Stable IDs - do not change (upsert keys in Supabase). */
 export const INVENTORY_KNOWLEDGE_IDS = {
   shared: '6fad4b80-0020-4000-8000-000000000020',
   students: '6fad4b80-0021-4000-8000-000000000021',
@@ -29,7 +29,7 @@ type KnowledgeSeed = {
 }
 
 const PREAMBLE =
-  'Source: docs/feature-inventory.md (living product inventory). Live = shipped end-to-end. UI only = shown in the app but not fully backed — say "coming soon" if asked. Deprecated = replaced. Do not invent features or routes not listed here.\n\n'
+  'Source: docs/feature-inventory.md (living product inventory). Live = shipped end-to-end. UI only = shown in the app but not fully backed - say "coming soon" if asked. Deprecated = replaced. Do not invent features or routes not listed here.\n\n'
 
 function extractSection(md: string, startHeading: string, endHeading: string | null): string {
   const startIdx = md.indexOf(startHeading)

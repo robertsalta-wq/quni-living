@@ -2,7 +2,7 @@
 -- Landlord booking review: statuses, AI persistence on bookings, student fit
 -- fields, booking conversation thread (booking_messages).
 --
--- BOOKING STATUS — allowed values (bookings_status_check)
+-- BOOKING STATUS - allowed values (bookings_status_check)
 --   pending, pending_payment, pending_confirmation, awaiting_info, confirmed,
 --   active, completed, cancelled, declined, expired, payment_failed
 --
@@ -107,7 +107,7 @@ alter table public.student_profiles add column if not exists has_guarantor boole
 alter table public.student_profiles add column if not exists guarantor_name text;
 
 -- ---------------------------------------------------------------------------
--- booking_messages — landlord ↔ student thread per booking
+-- booking_messages - landlord ↔ student thread per booking
 -- ---------------------------------------------------------------------------
 create table if not exists public.booking_messages (
   id uuid primary key default gen_random_uuid(),

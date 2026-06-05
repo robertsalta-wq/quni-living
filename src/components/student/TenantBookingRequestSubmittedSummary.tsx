@@ -66,7 +66,7 @@ export default function TenantBookingRequestSubmittedSummary({
             </span>
             <span>
               <span className="font-semibold">Deposit hold:</span> One week&apos;s rent is held securely on Stripe until
-              your host responds — not taken on Quni Listing unless you book a Managed stay that captures it.
+              your host responds - not taken on Quni Listing unless you book a Managed stay that captures it.
             </span>
           </li>
           <li className="flex gap-2">

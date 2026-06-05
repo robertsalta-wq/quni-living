@@ -53,7 +53,7 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
     )
   }
 
-  // Google OAuth cannot attach signup role on first redirect — persist it once the session exists.
+  // Google OAuth cannot attach signup role on first redirect - persist it once the session exists.
   if (!sp && !lp) {
     const metaRole = user.user_metadata?.role
     if (metaRole !== selected) {

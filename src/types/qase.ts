@@ -12,7 +12,7 @@ export type QaseStatus =
 /** `qase_priority` enum */
 export type QasePriority = 'urgent' | 'high' | 'normal' | 'low'
 
-/** `qase_tickets.submitted_by_type` — app / email pipeline values; `admin` = staff-created ticket with no end-user submitter */
+/** `qase_tickets.submitted_by_type` - app / email pipeline values; `admin` = staff-created ticket with no end-user submitter */
 export type QaseSubmitterType = 'student' | 'landlord' | 'anonymous' | 'admin'
 
 /** `qase_messages.author_type` */
@@ -145,9 +145,9 @@ export type QaseTicketContextProperty = {
 
 /**
  * Submitter slice when joined from `student_profiles` or `landlord_profiles`.
- * - `id` — profile row PK (`student_profiles.id` / `landlord_profiles.id`)
- * - `user_id` — same as `auth.users.id` / `auth.uid()` on that profile row
- * - `role` — optional UI label (e.g. `'student' | 'landlord'`); not a DB column on those tables
+ * - `id` - profile row PK (`student_profiles.id` / `landlord_profiles.id`)
+ * - `user_id` - same as `auth.users.id` / `auth.uid()` on that profile row
+ * - `role` - optional UI label (e.g. `'student' | 'landlord'`); not a DB column on those tables
  * Platform admins use `public.is_platform_admin()` (JWT email), not this shape.
  */
 export type QaseTicketContextSubmitter = {

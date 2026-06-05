@@ -87,7 +87,7 @@ async function fetchConversationWithProperty(conversationId: string): Promise<Co
   return data as ConversationWithProperty
 }
 
-/** Tenant open/create via RLS — one round-trip to Supabase instead of Vercel + auth. */
+/** Tenant open/create via RLS - one round-trip to Supabase instead of Vercel + auth. */
 async function openConversationViaSupabase(
   propertyId: string,
   userId: string,

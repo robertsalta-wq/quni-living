@@ -131,11 +131,11 @@ function permittedLabel(permitted: string): string {
   }
 }
 
-/** Entire trimmed line is uppercase ASCII letters, spaces, and — / & ( ) - */
+/** Entire trimmed line is uppercase ASCII letters, spaces, and - / & ( ) - */
 function isHouseRulesHeadingLine(trimmedLine: string): boolean {
   const t = trimmedLine.trim()
   if (!t) return false
-  return /^[A-Z\s—\-/&()]+$/.test(t)
+  return /^[A-Z\s-\-/&()]+$/.test(t)
 }
 
 type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
@@ -298,7 +298,7 @@ export default function PropertyDetail() {
     [property?.available_from],
   )
   const listingToForPicker = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
-  /** Previous route slug can remain in `property` until the next fetch settles — avoid running gates on stale rows. */
+  /** Previous route slug can remain in `property` until the next fetch settles - avoid running gates on stale rows. */
   const listingRowStale = Boolean(slug && property && property.slug !== slug)
   const [loading, setLoading] = useState(shouldFetch)
   const [error, setError] = useState<string | null>(null)
@@ -1018,7 +1018,7 @@ export default function PropertyDetail() {
       if (uniName && campusName) return `${uniName} – ${campusName}`
       return uniName ?? campusName ?? null
     }
-    if (universityId) return `${uniName ?? 'University'} — All campuses`
+    if (universityId) return `${uniName ?? 'University'} - All campuses`
     return null
   })()
 
@@ -1058,7 +1058,7 @@ export default function PropertyDetail() {
     return og && /^https?:\/\//i.test(og) ? og : DEFAULT_OG_IMAGE
   })()
 
-  const quickLocation = [property.suburb?.trim(), property.state?.trim()].filter(Boolean).join(', ') || '—'
+  const quickLocation = [property.suburb?.trim(), property.state?.trim()].filter(Boolean).join(', ') || '-'
   const amenityNamesForGrid = [
     ...(inclusionSignals?.linenSupplied ? ['Linen supplied'] : []),
     ...(inclusionSignals?.weeklyCleaning ? ['Weekly cleaning service'] : []),
@@ -1166,7 +1166,7 @@ export default function PropertyDetail() {
         </div>
       )}
 
-      {/* Gallery width must use SITE_CONTENT_MAX_CLASS (1200px) — do not use viewport-full-bleed here. */}
+      {/* Gallery width must use SITE_CONTENT_MAX_CLASS (1200px) - do not use viewport-full-bleed here. */}
       <div className={SITE_CONTENT_MAX_CLASS}>
         <div className="relative w-full min-w-0 aspect-[4/3] md:aspect-video bg-stone-200 overflow-hidden rounded-xl shadow-sm ring-1 ring-stone-900/5">
         {mainImage ? (
@@ -1411,7 +1411,7 @@ export default function PropertyDetail() {
                                   {icon}
                                 </span>
                                 <span className="leading-snug">
-                                  {name} — {permittedLabel(row.permitted)}
+                                  {name} - {permittedLabel(row.permitted)}
                                 </span>
                               </div>
                             )
@@ -1460,7 +1460,7 @@ export default function PropertyDetail() {
                             </span>
                             <div className="min-w-0 flex-1 space-y-1">
                               <p className="text-sm sm:text-base text-stone-900 leading-snug">
-                                {c.universityName} — {c.campusName}
+                                {c.universityName} - {c.campusName}
                               </p>
                               <p className="text-sm font-medium text-[#FF6F61]">
                                 {c.distanceKm < 10 ? c.distanceKm.toFixed(1) : Math.round(c.distanceKm)} km away
@@ -1479,7 +1479,7 @@ export default function PropertyDetail() {
                   <h2 id="more-nearby-heading" className="font-display text-xl font-bold text-[#FF6F61]">
                     {similarHomesHeading}
                   </h2>
-                  <p className="text-xs text-stone-500">Approximate distances shown — straight-line, not driving time.</p>
+                  <p className="text-xs text-stone-500">Approximate distances shown - straight-line, not driving time.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {nearbyListings.map((p) => (
                       <PropertyCard

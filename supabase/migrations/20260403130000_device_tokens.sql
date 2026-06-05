@@ -1,5 +1,5 @@
 /*
- * device_tokens — Push notification device token storage
+ * device_tokens - Push notification device token storage
  *
  * What it does:
  *   Stores one row per (user, device token, platform) for FCM/APNs tokens registered from

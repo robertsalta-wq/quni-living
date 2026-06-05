@@ -1,5 +1,5 @@
 /**
- * Placeholder — Xero sync (future).
+ * Placeholder - Xero sync (future).
  */
 export const config = { runtime: 'edge' }
 

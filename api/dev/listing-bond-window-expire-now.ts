@@ -1,4 +1,4 @@
-// @ts-nocheck — smoke-test helper: force Listing bond_pending window past due so cron picks it up on next run.
+// @ts-nocheck - smoke-test helper: force Listing bond_pending window past due so cron picks it up on next run.
 // Requires platform admin JWT + ENABLE_DEV_LISTING_BOND_SHORTCUT=true on the deployment.
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'

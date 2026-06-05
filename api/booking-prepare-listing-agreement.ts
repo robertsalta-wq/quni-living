@@ -1,4 +1,4 @@
-// @ts-nocheck — Landlord retry: generate listing tenancy PDF + DocuSeal when accept-time generation failed.
+// @ts-nocheck - Landlord retry: generate listing tenancy PDF + DocuSeal when accept-time generation failed.
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { bookingAllowsTenancyDocumentGeneration } from './lib/booking/listingDocumentGenerationEligibility.js'

@@ -6,10 +6,10 @@
  * English labels; override with env DOCUSEAL_LEASE_FIELD_MAP (JSON object).
  *
  * Optional env:
- *   DOCUSEAL_LEASE_FIELD_MAP — { "internal_key": "Exact DocuSeal field name", ... }
- *   DOCUSEAL_LEASE_LANDLORD_PREFILL_KEYS — comma-separated internal keys for First Party
- *   DOCUSEAL_LEASE_TENANT_PREFILL_KEYS — comma-separated internal keys for Second Party
- *   DOCUSEAL_LEASE_PREFILL — if "0"/"false"/"no", returns empty arrays (caller may skip)
+ *   DOCUSEAL_LEASE_FIELD_MAP - { "internal_key": "Exact DocuSeal field name", ... }
+ *   DOCUSEAL_LEASE_LANDLORD_PREFILL_KEYS - comma-separated internal keys for First Party
+ *   DOCUSEAL_LEASE_TENANT_PREFILL_KEYS - comma-separated internal keys for Second Party
+ *   DOCUSEAL_LEASE_PREFILL - if "0"/"false"/"no", returns empty arrays (caller may skip)
  */
 
 /** @typedef {{ name: string, default_value: string | number | boolean, readonly: boolean }} DocusealPrefillField */
@@ -131,7 +131,7 @@ function formatAud(n) {
 }
 
 /**
- * @param {Record<string, unknown>} props — same structure as OccupancyAgreement props
+ * @param {Record<string, unknown>} props - same structure as OccupancyAgreement props
  * @returns {Record<string, string | number | boolean>}
  */
 export function buildLeasePrefillValues(props) {

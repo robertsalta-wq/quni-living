@@ -203,7 +203,7 @@ export default function StudentAccommodationIndex() {
                           </p>
                           <p className="text-sm font-medium text-indigo-600 mt-3">
                             {n === 0
-                              ? 'No listings yet — see guide'
+                              ? 'No listings yet - see guide'
                               : `${n} listing${n !== 1 ? 's' : ''} near this university`}
                           </p>
                         </Link>
@@ -236,7 +236,7 @@ export default function StudentAccommodationIndex() {
                           </p>
                           <p className="text-sm font-medium text-indigo-600 mt-3">
                             {n === 0
-                              ? 'No listings yet — see guide'
+                              ? 'No listings yet - see guide'
                               : `${n} listing${n !== 1 ? 's' : ''} near this university`}
                           </p>
                         </Link>

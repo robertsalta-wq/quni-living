@@ -68,7 +68,7 @@ async function handleOAuthDeepLink(url: string): Promise<void> {
       })
       return
     }
-    // Use React Router — full `location.replace('/auth/callback')` hits the static server with no
+    // Use React Router - full `location.replace('/auth/callback')` hits the static server with no
     // SPA fallback in Capacitor WebView (404 / blank screen).
     appNavigateTo('/auth/callback', { replace: true })
     return

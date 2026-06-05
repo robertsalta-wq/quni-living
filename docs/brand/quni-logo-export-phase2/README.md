@@ -1,10 +1,10 @@
-# Quni Logo Export — Phase 2
+# Quni Logo Export - Phase 2
 
-Second export pack. All files in this folder are recolors, recrops, or rescales of the Phase 1 masters — no redrawn paths.
+Second export pack. All files in this folder are recolors, recrops, or rescales of the Phase 1 masters - no redrawn paths.
 
 **Masters used (read-only inputs):**
-- `quni-logo-export-phase1/source/quni-logo-master.svg` — every wordmark variant
-- `quni-logo-export-phase1/source/quni-mark-master.svg` — every Q-only mark
+- `quni-logo-export-phase1/source/quni-logo-master.svg` - every wordmark variant
+- `quni-logo-export-phase1/source/quni-mark-master.svg` - every Q-only mark
 
 ## File map
 
@@ -29,13 +29,13 @@ Second export pack. All files in this folder are recolors, recrops, or rescales 
 | `print/quni-logo-black@2x.png` | Black wordmark, 480×218 | Retina print decks |
 | `admin/quni-logo-admin-compact.svg` | Mark only, square viewBox, `width="24" height="24"` | Collapsed admin sidebar |
 
-## Open question — lockup ships AFTER decision
+## Open question - lockup ships AFTER decision
 
 `lockup/quni-logo-living-lockup.svg` is a **working draft**, not signed off.
 
-- Type for "Living": currently drafted as **Fraunces italic 400**, same family as the wordmark, +22 letter-spacing, ~0.45× cap height (matches Phase 1 preview option `01 — Fraunces italic`).
+- Type for "Living": currently drafted as **Fraunces italic 400**, same family as the wordmark, +22 letter-spacing, ~0.45× cap height (matches Phase 1 preview option `01 - Fraunces italic`).
 - Layout: ships with **both** `<symbol id="lockup-h">` and `<symbol id="lockup-stacked">`; the default rendered shape is horizontal.
-- The "Living" text is **not outlined** — depends on Fraunces being available wherever the SVG renders. Outline-to-path is required before final ship to PDF / print.
+- The "Living" text is **not outlined** - depends on Fraunces being available wherever the SVG renders. Outline-to-path is required before final ship to PDF / print.
 
 Block on PM sign-off, then re-export with outlined text.
 
@@ -45,14 +45,14 @@ Open `preview/phase2-exports.html` to see every output rendered on a neutral pag
 
 ## Acceptance check (Phase 2 quality bar)
 
-- ✅ All wordmark variants come from a single `replace(/#FF6F61/g, ...)` pass on the master — letterforms identical to Phase 1
-- ✅ All mark variants come from a single transform on the mark master — Q geometry identical to Phase 1
+- ✅ All wordmark variants come from a single `replace(/#FF6F61/g, ...)` pass on the master - letterforms identical to Phase 1
+- ✅ All mark variants come from a single transform on the mark master - Q geometry identical to Phase 1
 - ✅ Every PNG has a true transparent background unless the spec called for cream/coral
 - ✅ Launcher master optical-lifted 2.5% to compensate for serif Q's bottom-right weight
 - ✅ Foreground mark fits inside Android's 264-unit safe circle (height = 0.92 × 264)
-- ⏳ Lockup type & layout pending PM sign-off — do not deploy
-- ⏳ Lockup "Living" not yet outlined to paths — required before final ship
+- ⏳ Lockup type & layout pending PM sign-off - do not deploy
+- ⏳ Lockup "Living" not yet outlined to paths - required before final ship
 
 ## Out of scope
 
-Same as Phase 2 spec — no animated/Lottie, no email signatures, no merch/large-format vector retracing, no new colourways beyond navy/black/cream/coral/white.
+Same as Phase 2 spec - no animated/Lottie, no email signatures, no merch/large-format vector retracing, no new colourways beyond navy/black/cream/coral/white.

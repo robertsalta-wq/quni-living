@@ -4,7 +4,7 @@
 --   - quni_supabase_schema.sql (or equivalent), and
 --   - at least one row in landlord_profiles
 -- If no landlord exists yet, this inserts nothing (no error).
--- Photos: royalty-free via Unsplash License (https://unsplash.com/license) — demo only.
+-- Photos: royalty-free via Unsplash License (https://unsplash.com/license) - demo only.
 -- ============================================================
 
 insert into public.properties (
@@ -70,7 +70,7 @@ from (
       ]::text[]
     ),
     (
-      'Shared room — student house',
+      'Shared room - student house',
       'demo-shared-kingsford',
       'Friendly share house, large common areas, bills split evenly. 10 min walk to UNSW.',
       220.00,
@@ -91,7 +91,7 @@ from (
       ]::text[]
     ),
     (
-      '1-bed apartment — UTS area',
+      '1-bed apartment - UTS area',
       'demo-apartment-ultimo',
       'Modern building, fully furnished, balcony with city glimpses. Secure intercom.',
       450.00,
@@ -112,7 +112,7 @@ from (
       ]::text[]
     ),
     (
-      'Spacious student house — 5 bedrooms',
+      'Spacious student house - 5 bedrooms',
       'demo-house-camperdown',
       'Whole-house rental ideal for a group. Backyard, laundry, street parking.',
       980.00,

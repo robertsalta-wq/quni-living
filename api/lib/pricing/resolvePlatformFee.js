@@ -2,7 +2,7 @@ const DEFAULT_LISTING_FEE_CENTS = 9900
 
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
- * @param {string} landlordProfileId — `properties.landlord_id` / `landlord_profiles.id`
+ * @param {string} landlordProfileId - `properties.landlord_id` / `landlord_profiles.id`
  */
 export async function isLandlordFeeExempt(admin, landlordProfileId) {
   const id = String(landlordProfileId || '').trim()
@@ -17,7 +17,7 @@ export async function isLandlordFeeExempt(admin, landlordProfileId) {
 }
 
 /**
- * Student booking platform fee (cents). Returns 0 when landlord is fee-exempt — before tier/snapshot math.
+ * Student booking platform fee (cents). Returns 0 when landlord is fee-exempt - before tier/snapshot math.
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {{ landlordProfileId?: string; pricingCell: object; weeklyRentCents: number; leaseWeeks?: number }} opts
  */
@@ -41,7 +41,7 @@ export async function resolvePlatformFeeCents(admin, opts) {
 }
 
 /**
- * Listing-tier platform fee (landlord). Zero when fee-exempt — before pricing/tier logic.
+ * Listing-tier platform fee (landlord). Zero when fee-exempt - before pricing/tier logic.
  * @param {boolean} feeExempt
  * @param {number} [fallbackCents]
  */
@@ -53,7 +53,7 @@ export function resolveListingPlatformFeeCents(feeExempt, fallbackCents = DEFAUL
 }
 
 /**
- * Managed-tier Stripe application_fee_percent. Zero when fee-exempt — before tier logic.
+ * Managed-tier Stripe application_fee_percent. Zero when fee-exempt - before tier logic.
  * @param {boolean} feeExempt
  * @param {{ fee_mode?: string; fee_percent?: number }} pricingCell
  */

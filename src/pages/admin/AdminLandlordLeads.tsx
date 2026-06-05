@@ -82,8 +82,8 @@ export default function AdminLandlordLeads() {
                   return (
                     <tr key={row.id}>
                       <td className={adminTdClass}>
-                        <span className="font-medium text-gray-900">{row.name?.trim() || '—'}</span>
-                        <span className="block text-xs text-gray-500">{row.email?.trim() || '—'}</span>
+                        <span className="font-medium text-gray-900">{row.name?.trim() || '-'}</span>
+                        <span className="block text-xs text-gray-500">{row.email?.trim() || '-'}</span>
                       </td>
                       <td className={adminTdClass}>
                         <a
@@ -94,11 +94,11 @@ export default function AdminLandlordLeads() {
                               : 'text-gray-800 pointer-events-none'
                           }
                         >
-                          {row.phone?.trim() || '—'}
+                          {row.phone?.trim() || '-'}
                         </a>
                       </td>
-                      <td className={adminTdClass}>{row.suburb?.trim() || '—'}</td>
-                      <td className={adminTdClass}>{row.property_count?.trim() || '—'}</td>
+                      <td className={adminTdClass}>{row.suburb?.trim() || '-'}</td>
+                      <td className={adminTdClass}>{row.property_count?.trim() || '-'}</td>
                       <td className={`${adminTdClass} max-w-xs`}>
                         {msg ? (
                           <>
@@ -114,7 +114,7 @@ export default function AdminLandlordLeads() {
                             )}
                           </>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>{formatDate(row.created_at)}</td>

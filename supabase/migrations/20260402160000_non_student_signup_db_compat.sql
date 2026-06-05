@@ -1,5 +1,5 @@
 -- Non-student email sign-up sends raw_user_meta_data.accommodation_verification_route = 'non_student'.
--- If only 20260402140000 ran, the column CHECK allowed ('student','identity') only — INSERT in
+-- If only 20260402140000 ran, the column CHECK allowed ('student','identity') only - INSERT in
 -- handle_new_user() failed, which could prevent the auth user row from completing (no email, no profile).
 -- This migration aligns the constraint and trigger with the app (idempotent if 20260402150000 already ran).
 

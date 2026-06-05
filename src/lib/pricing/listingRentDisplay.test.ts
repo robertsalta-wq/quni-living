@@ -22,7 +22,7 @@ describe('listingRentDisplay', () => {
     expect(formatOccupancyPricingBreakdown(casa)).toContain('second person')
   })
 
-  it('flat listing — no From prefix', () => {
+  it('flat listing - no From prefix', () => {
     const flat = {
       rent_per_week: 400,
       max_occupants: 1,

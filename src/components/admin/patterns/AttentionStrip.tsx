@@ -7,7 +7,7 @@ export interface AttentionItem {
   id: string
   tone: AttentionTone
   text: string
-  /** Where the `Fix →` link sends the user — already-deep-linked w/ query params. */
+  /** Where the `Fix →` link sends the user - already-deep-linked w/ query params. */
   fixHref: string
 }
 
@@ -26,7 +26,7 @@ const DOT_CLASSES: Record<AttentionTone, string> = {
  *
  * Per HANDOFF.md §3 Living Console: the leading label
  * (`{n} active · {n} critical, {n} action, {n} watch`) is computed live from
- * the items array — never hard-coded. When there's nothing to fix the strip
+ * the items array - never hard-coded. When there's nothing to fix the strip
  * is hidden entirely (the caller decides; this component just renders).
  */
 export function AttentionStrip({ items }: AttentionStripProps) {

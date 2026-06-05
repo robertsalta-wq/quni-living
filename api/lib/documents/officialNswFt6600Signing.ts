@@ -11,7 +11,7 @@ import {
 } from './officialNswFt6600Fill.js'
 import { flattenAndCleanForm, saveNormalizedPdf } from './officialNswFt6600PdfNormalize.js'
 
-/** Production NswResidentialTenancyAgreement sigHint — refined-b-v2 spike baseline. */
+/** Production NswResidentialTenancyAgreement sigHint - refined-b-v2 spike baseline. */
 export const OFFICIAL_FT6600_WIDGET_TAG_STYLE = {
   size: 7,
   color: rgb(0.42, 0.45, 0.5),
@@ -27,7 +27,7 @@ export const OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST = [
 ] as const
 
 /**
- * p18 TIS signature box — from docs/nsw/ft6600-corrected-field-map.json.
+ * p18 TIS signature box - from docs/nsw/ft6600-corrected-field-map.json.
  * Renamed template has no AcroForm widgets on page 18; sig_tenant_tis sits on p17 incorrectly.
  */
 export const OFFICIAL_FT6600_TIS_PAGE_INDEX = 17
@@ -165,7 +165,7 @@ function placementFromWidget(w: SignatureWidgetPlacement, style: typeof OFFICIAL
   }
 }
 
-/** Widget-level tags — explicit fieldName → tag map (landlord / tenant 1 / co-tenant roles). */
+/** Widget-level tags - explicit fieldName → tag map (landlord / tenant 1 / co-tenant roles). */
 export function buildWidgetTagPlacements(
   widgets: SignatureWidgetPlacement[],
   includeCoTenantSignatureTags: boolean,

@@ -136,7 +136,7 @@ export function formatListingTierAcceptanceFee(cell: PricingCell): string {
   if (cell.fee_mode === 'percent' && Number(cell.fee_percent) > 0) {
     return `${Number(cell.fee_percent).toLocaleString('en-AU', { maximumFractionDigits: 2 })}%`
   }
-  return '—'
+  return '-'
 }
 
 export function formatFeeForDisplay(cell: PricingCell) {

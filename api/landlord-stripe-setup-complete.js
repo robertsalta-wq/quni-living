@@ -1,5 +1,5 @@
 /**
- * After Stripe.js confirmSetup — attach succeeded SetupIntent payment method as Customer default (off_session).
+ * After Stripe.js confirmSetup - attach succeeded SetupIntent payment method as Customer default (off_session).
  *
  * POST JSON: { setupIntentId: string }
  * Authorization: Bearer <Supabase access_token>

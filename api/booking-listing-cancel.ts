@@ -1,4 +1,4 @@
-// @ts-nocheck — Landlord cancels Listing booking during bond_pending (full fee refund).
+// @ts-nocheck - Landlord cancels Listing booking during bond_pending (full fee refund).
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'

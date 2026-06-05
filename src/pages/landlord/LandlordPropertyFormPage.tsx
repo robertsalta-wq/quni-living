@@ -78,7 +78,7 @@ import {
 } from '../../lib/nonDiscriminationPolicy'
 
 const FT6600_COMPLIANCE_MIGRATION_HINT =
-  'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production — check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
+  'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production - check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
 
 function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: boolean): string {
   const msg = messageFromSupabaseError(err)
@@ -92,10 +92,10 @@ function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: bool
   if (/linen_supplied|weekly_cleaning/i.test(msg)) {
     return `${msg} Run supabase/property_form_extend.sql in the Supabase SQL editor, then save again.`
   }
-  return `${msg} A database migration may be missing — check the supabase/migrations folder.`
+  return `${msg} A database migration may be missing - check the supabase/migrations folder.`
 }
 
-/** Checkbox styling — single pattern for every landlord form checkbox. */
+/** Checkbox styling - single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
   'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[#D85A30] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
 
@@ -140,7 +140,7 @@ const LEASE_OPTIONS = ['Flexible', '6 months', '12 months', '2 years'] as const
 const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft' as const
 const LANDLORD_PROPERTY_DRAFT_VERSION = 1 as const
 
-/** Persisted new-listing draft — property fields only (no admin landlord id or auth). */
+/** Persisted new-listing draft - property fields only (no admin landlord id or auth). */
 type LandlordPropertyDraftV1 = {
   v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
   title: string
@@ -484,7 +484,7 @@ export default function LandlordPropertyFormPage() {
   // When a user manually edits the university/campus dropdown while geocoding is in-flight,
   // we don't want the auto-fill to overwrite their selection.
   const manualUniCampusSelectionRef = useRef(false)
-  /** True after loading an existing listing that already had university/campus in DB — never auto-fill over those. */
+  /** True after loading an existing listing that already had university/campus in DB - never auto-fill over those. */
   const skipNearbyAutoFillOverwriteRef = useRef(false)
 
   const [showAddAnotherUniversity, setShowAddAnotherUniversity] = useState(false)
@@ -492,7 +492,7 @@ export default function LandlordPropertyFormPage() {
   const addAnotherUniversityHelpRef = useRef<HTMLDivElement>(null)
 
   const addressDirtyRef = useRef(false)
-  /** Normalised address at last edit load — used to detect unchanged address vs DB. */
+  /** Normalised address at last edit load - used to detect unchanged address vs DB. */
   const loadedPropertyAddressSigRef = useRef('')
   /**
    * On edit, if the listing had no university/campus in DB, do not auto-fill the nearest match into
@@ -862,7 +862,7 @@ export default function LandlordPropertyFormPage() {
         editModeGeocodeFiredRef.current = false
         loadedPropertyAddressSigRef.current = ''
         setShowAddAnotherUniversity(false)
-        // Navigated from edit → new without unmounting — clear stale edit state.
+        // Navigated from edit → new without unmounting - clear stale edit state.
         setUniversityId('')
         setCampusId('')
         universityIdRef.current = ''
@@ -1416,7 +1416,7 @@ export default function LandlordPropertyFormPage() {
           const propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
           if (!propertyPoint) {
             setNearbyCampusError(
-              'We could not find that street in this suburb. Check the street line, suburb, state and postcode — unit numbers are optional for campus suggestions.',
+              'We could not find that street in this suburb. Check the street line, suburb, state and postcode - unit numbers are optional for campus suggestions.',
             )
             setNearbyCampusLoading(false)
             return
@@ -2319,7 +2319,7 @@ export default function LandlordPropertyFormPage() {
                     <span className="text-sm text-gray-700">This property is a registered rooming house</span>
                   </span>
                   <FieldHelpHint label="What is a registered rooming house?">
-                    A <strong>registered rooming/boarding house</strong> is a regulated category — not a normal share
+                    A <strong>registered rooming/boarding house</strong> is a regulated category - not a normal share
                     house. Rules and registration differ by state (e.g. NSW boarding houses, VIC rooming houses, QLD
                     rooming accommodation). Most single-room listings should leave this <strong>unchecked</strong>. Only
                     tick if you have the relevant registration number.
@@ -2517,7 +2517,7 @@ export default function LandlordPropertyFormPage() {
             <div className="space-y-4">
               <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
                 This is the <strong>property</strong> address (where the tenant will live). On your public listing we only
-                show <strong>suburb and state</strong> until a booking is confirmed — never the full street line to
+                show <strong>suburb and state</strong> until a booking is confirmed - never the full street line to
                 casual browsers.
               </p>
               <div>
@@ -2590,7 +2590,7 @@ export default function LandlordPropertyFormPage() {
                   We list the closest campuses from your address. <span className="font-medium text-gray-700">New</span>{' '}
                   listings save the nearest match automatically unless you override.{' '}
                   <span className="font-medium text-gray-700">Editing</span> a listing that has no campus saved yet: tap a
-                  suggestion to select it (or use Add another university below)—we won’t assume a campus until you choose
+                  suggestion to select it (or use Add another university below)-we won’t assume a campus until you choose
                   one or save after an address change.
                 </p>
 
@@ -2661,7 +2661,7 @@ export default function LandlordPropertyFormPage() {
                       role="tooltip"
                       className="mt-2 max-w-sm rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-md"
                     >
-                      You can choose one additional university and campus for this listing—for example if your property
+                      You can choose one additional university and campus for this listing-for example if your property
                       is a better fit for a campus other than the closest match we suggested above.
                     </div>
                   )}
@@ -2715,7 +2715,7 @@ export default function LandlordPropertyFormPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={5}
                   className={inputClass}
-                  placeholder="Describe the room or home the tenant will rent — not only the whole building."
+                  placeholder="Describe the room or home the tenant will rent - not only the whole building."
                 />
                 <AIDescriptionGenerator
                   roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
@@ -2888,7 +2888,7 @@ export default function LandlordPropertyFormPage() {
                                 <span className="tabular-nums">
                                   ${net.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                                 </span>
-                                /week after {feeDisp} service fee (deducted before payout). All-inclusive for this tier —
+                                /week after {feeDisp} service fee (deducted before payout). All-inclusive for this tier -
                                 no separate acceptance fee.
                               </>
                             ) : (

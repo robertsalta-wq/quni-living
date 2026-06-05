@@ -1,4 +1,4 @@
-// @ts-nocheck — Listing-tier confirm: cancel renter hold + $99 landlord charge + bond_pending.
+// @ts-nocheck - Listing-tier confirm: cancel renter hold + $99 landlord charge + bond_pending.
 
 import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
@@ -154,7 +154,7 @@ export async function runListingConfirmBooking(params) {
           payment_method: defaultPaymentMethodId,
           off_session: true,
           confirm: true,
-          description: `Quni Listing fee — booking ${booking.id.slice(0, 8)}`,
+          description: `Quni Listing fee - booking ${booking.id.slice(0, 8)}`,
           metadata: {
             booking_id: booking.id,
             property_id: booking.property_id ?? '',

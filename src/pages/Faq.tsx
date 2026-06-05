@@ -81,7 +81,7 @@ export default function Faq() {
         <div className="mt-14 rounded-2xl border border-[#FF6F61]/25 bg-[#FF6F61]/5 p-6 md:p-8 text-center">
           <h2 className="font-display text-lg font-bold text-gray-900">Still have a question?</h2>
           <p className="mt-2 text-sm text-gray-600 max-w-lg mx-auto">
-            We are happy to help — send a message and we will usually reply within one business day.
+            We are happy to help - send a message and we will usually reply within one business day.
           </p>
           <Link
             to="/contact"

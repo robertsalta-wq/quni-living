@@ -20,8 +20,8 @@ npm run env:pull:production
 
 Local merge order:
 
-1. **`.env.vercel`** — produced by pull; never commit.
-2. **`.env.local`** — your overrides and secrets-only-local values; gitignored via `*.local`.
+1. **`.env.vercel`** - produced by pull; never commit.
+2. **`.env.local`** - your overrides and secrets-only-local values; gitignored via `*.local`.
 
 `npm run dev` (Vite) merges those for `VITE_*` client vars. For **`npx vercel dev`**, use `npm run dev:vercel`, which loads `.env.vercel` then `.env.local` into the process (plain `vercel dev` does not read `.env.vercel` by name).
 
@@ -43,7 +43,7 @@ vercel env add VITE_TURNSTILE_SITE_KEY production
 vercel env add VITE_TURNSTILE_VERIFY_URL production
 vercel env add VITE_STRIPE_PUBLISHABLE_KEY production
 vercel env add VITE_SENTRY_DSN production
-# Source map upload at build time (@sentry/vite-plugin) — scopes: project:releases, org:read
+# Source map upload at build time (@sentry/vite-plugin) - scopes: project:releases, org:read
 vercel env add SENTRY_AUTH_TOKEN production
 # Optional overrides (defaults in vite.config.ts: quni / javascript-react)
 vercel env add SENTRY_ORG production
@@ -57,7 +57,7 @@ vercel env add STRIPE_LISTING_PRODUCT_ID production
 vercel env add SUPABASE_URL production
 vercel env add SUPABASE_SERVICE_ROLE_KEY production
 vercel env add SUPABASE_ANON_KEY production
-# Resend — all transactional + public form email (contact, listing enquiries, landlord leads, booking notifications, etc.)
+# Resend - all transactional + public form email (contact, listing enquiries, landlord leads, booking notifications, etc.)
 vercel env add RESEND_API_KEY production
 vercel env add DELETE_USER_DOCS_WEBHOOK_SECRET production
 vercel env add SITE_URL production

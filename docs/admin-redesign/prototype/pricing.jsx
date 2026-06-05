@@ -1,4 +1,4 @@
-// Pricing — heavy form with tabs, live preview, change log.
+// Pricing - heavy form with tabs, live preview, change log.
 
 function PricingPage() {
   const [tab, setTab] = useState('listing');
@@ -57,7 +57,7 @@ function PricingPage() {
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
           <div>
             <h2 style={{ fontSize: 18, fontWeight: 600, color: C.ink, margin: 0 }}>Recent changes</h2>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: C.ink4 }}>Last 5 amendments — all changes are immutable and date / time stamped.</p>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: C.ink4 }}>Last 5 amendments - all changes are immutable and date / time stamped.</p>
           </div>
           <a href="#" style={{ fontSize: 13, fontWeight: 600, color: C.coralActive, textDecoration: 'none' }}>View full history →</a>
         </div>
@@ -285,7 +285,7 @@ function ChangeLog() {
     { when: '02 Feb 2026, 14:21', who: 'Sam Admin',   field: 'Fee floor',          old: '$39', neu: '$49' },
     { when: '28 Jan 2026, 09:05', who: 'Mira Patel',  field: 'Effective from',     old: '15 Jan 2026', neu: '01 Feb 2026' },
     { when: '14 Jan 2026, 16:48', who: 'Sam Admin',   field: 'Maximum weekly rent',old: '$880',neu: '$950' },
-    { when: '11 Jan 2026, 11:14', who: 'Mira Patel',  field: 'States — ACT',       old: 'Off',neu: 'On' },
+    { when: '11 Jan 2026, 11:14', who: 'Mira Patel',  field: 'States - ACT',       old: 'Off',neu: 'On' },
   ];
   return (
     <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 12, overflow: 'hidden' }}>

@@ -5,7 +5,7 @@ export type PulseDeltaTone = 'success' | 'danger' | 'neutral'
 
 export interface MarketplacePulseCellProps {
   label: string
-  /** Pre-formatted display value — never format in this component (HANDOFF non-goal 8). */
+  /** Pre-formatted display value - never format in this component (HANDOFF non-goal 8). */
   value: string
   unit?: string | null
   delta: string

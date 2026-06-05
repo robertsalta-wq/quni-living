@@ -22,7 +22,7 @@ function parsePropertyImageEntry(entry: string): PropertyImage | null {
         }
       }
     } catch {
-      /* legacy / malformed — fall through */
+      /* legacy / malformed - fall through */
     }
   }
 
@@ -42,7 +42,7 @@ export function normalizePropertyImages(raw: string[] | null | undefined): Prope
   return out
 }
 
-/** Serialize for Supabase `images` text[] — plain URL when no caption. */
+/** Serialize for Supabase `images` text[] - plain URL when no caption. */
 export function serializePropertyImages(images: readonly PropertyImage[]): string[] {
   return images.map(({ url, description }) => {
     const u = url.trim()

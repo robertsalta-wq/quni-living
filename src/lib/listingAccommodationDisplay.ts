@@ -146,7 +146,7 @@ export function resolveListingAccommodationStats(
   return { kind: 'entire', beds, baths }
 }
 
-/** Detail sidebar — full sentence. */
+/** Detail sidebar - full sentence. */
 export function formatListingDetailAccommodation(property: AccommodationDisplayInput): string | null {
   if (!hasWholePropertyBedCount(property)) return null
 

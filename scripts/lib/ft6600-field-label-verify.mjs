@@ -111,7 +111,7 @@ export async function verifyRenamedFieldLabels(pdfBytes, correctedMap) {
       continue
     }
     if (entry.correct_name === 'made_on_spare_unused') {
-      rows.push({ page: entry.page, correct_name: entry.correct_name, nearestLabel: '(spare/unlabelled — skip)', ok: true })
+      rows.push({ page: entry.page, correct_name: entry.correct_name, nearestLabel: '(spare/unlabelled - skip)', ok: true })
       continue
     }
 

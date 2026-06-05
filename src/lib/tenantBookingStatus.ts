@@ -66,17 +66,17 @@ export function tenantBookingCardBanner(
     case 'pending':
     case 'pending_payment':
       return {
-        text: 'Application submitted — your host will review within 48 hours',
+        text: 'Application submitted - your host will review within 48 hours',
         panelClass: 'border-t border-amber-100 bg-amber-50 px-5 py-3 text-sm text-amber-900',
       }
     case 'awaiting_info':
       return {
-        text: 'Your host asked for more information — check your messages',
+        text: 'Your host asked for more information - check your messages',
         panelClass: 'border-t border-sky-100 bg-sky-50 px-5 py-3 text-sm text-sky-900',
       }
     case 'bond_pending':
       return {
-        text: 'Host accepted your booking — complete bond and agreement steps below',
+        text: 'Host accepted your booking - complete bond and agreement steps below',
         panelClass: 'border-t border-emerald-100 bg-emerald-50 px-5 py-3 text-sm text-emerald-900',
       }
     case 'confirmed':

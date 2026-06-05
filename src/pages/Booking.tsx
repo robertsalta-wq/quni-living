@@ -114,7 +114,7 @@ type BookingConflictState =
 
 function formatAuShortDate(isoDate: string): string {
   const s = isoDate.trim()
-  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return s || '—'
+  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return s || '-'
   const [y, m, d] = s.slice(0, 10).split('-').map(Number)
   const dt = new Date(y, m - 1, d)
   return dt.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -1573,9 +1573,9 @@ export default function Booking() {
                 {step1DateBlock === 'min_lead'
                   ? 'Move-in must be at least 7 days from today.'
                   : step1DateBlock.kind === 'before_from'
-                    ? `This room is available from ${formatIsoDateAuNumeric(step1DateBlock.from)} — please choose a move-in date on or after this date.`
+                    ? `This room is available from ${formatIsoDateAuNumeric(step1DateBlock.from)} - please choose a move-in date on or after this date.`
                     : step1DateBlock.kind === 'after_to'
-                      ? `This listing is available until ${formatIsoDateAuNumeric(step1DateBlock.to)} — please adjust your dates.`
+                      ? `This listing is available until ${formatIsoDateAuNumeric(step1DateBlock.to)} - please adjust your dates.`
                       : 'Sorry, this property is already booked for your selected dates. Please choose different dates.'}
               </span>
               <Link
@@ -1722,7 +1722,7 @@ export default function Booking() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onFocus={(e) => scrollEditableIntoView(e.target)}
-              placeholder="Introduce yourself — tell the landlord a bit about your studies and why you're interested in the property"
+              placeholder="Introduce yourself - tell the landlord a bit about your studies and why you're interested in the property"
               className={`${inputClass} resize-y min-h-[6rem]`}
             />
           </div>
@@ -1757,13 +1757,13 @@ export default function Booking() {
                 }
                 if (listingFromBound && moveIn < listingFromBound) {
                   setSubmitError(
-                    `This room is available from ${formatIsoDateAuNumeric(listingFromBound)} — please choose a move-in date on or after this date.`,
+                    `This room is available from ${formatIsoDateAuNumeric(listingFromBound)} - please choose a move-in date on or after this date.`,
                   )
                   return
                 }
                 if (listingToBound && (moveIn > listingToBound || (conflictMoveOutDate && conflictMoveOutDate > listingToBound))) {
                   setSubmitError(
-                    `This listing is available until ${formatIsoDateAuNumeric(listingToBound)} — please adjust your dates.`,
+                    `This listing is available until ${formatIsoDateAuNumeric(listingToBound)} - please adjust your dates.`,
                   )
                   return
                 }
@@ -1851,7 +1851,7 @@ export default function Booking() {
                   : 'border-stone-200 bg-white hover:border-stone-300'
               }`}
             >
-              <div className="text-sm font-bold text-gray-900">Bank transfer (free — no additional cost)</div>
+              <div className="text-sm font-bold text-gray-900">Bank transfer (free - no additional cost)</div>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">
                 Transfer directly to Quni&apos;s account each week. BSB and account details are provided after booking is
                 confirmed.
@@ -1926,14 +1926,14 @@ export default function Booking() {
               )
             ) : (
               <>
-                {/* Resolver unsupported or T3 deferred — no structured rules; generic scheme-style guidance only */}
+                {/* Resolver unsupported or T3 deferred - no structured rules; generic scheme-style guidance only */}
                 <p>
                   Your landlord is legally required to lodge your bond with the relevant state authority within{' '}
                   <strong>{fallbackSchemeLodgementDeadlineBold(property.state)}</strong>.
                 </p>
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {(stateAu || 'Your state')} — state bond authority
+                    {(stateAu || 'Your state')} - state bond authority
                   </p>
                   <p className="mt-1">{fallbackBondAuthorityPublicLine(property.state)}</p>
                   <NswRentalBondOnlineLink when={(property.state ?? '').toUpperCase() === 'NSW'} />

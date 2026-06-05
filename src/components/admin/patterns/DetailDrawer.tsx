@@ -6,13 +6,13 @@ import { Eyebrow } from '../primitives'
 export interface DetailDrawerProps {
   open: boolean
   onClose: () => void
-  /** Small uppercase eyebrow text — e.g. "Booking · BK-2843". */
+  /** Small uppercase eyebrow text - e.g. "Booking · BK-2843". */
   eyebrow: string
   title: string
   /** Optional status node (typically a `<Pill/>`). Rendered below the title. */
   status?: ReactNode
   children: ReactNode
-  /** Footer action row — primary + secondary buttons typically. */
+  /** Footer action row - primary + secondary buttons typically. */
   actions?: ReactNode
 }
 
@@ -22,7 +22,7 @@ export interface DetailDrawerProps {
  *
  * Per HANDOFF §2 / §3: 380px wide, sticky to the top of the page (top: 88px,
  * matching the topbar offset + breathing room). Renders inline beside the
- * table — no portal, no animation. Escape closes. The caller decides
+ * table - no portal, no animation. Escape closes. The caller decides
  * `open`/`onClose` from URL state so a refresh restores the same selection.
  */
 export function DetailDrawer({

@@ -8,7 +8,7 @@ import { AdminShell } from '../../components/admin/Shell'
  *
  * Guards the admin role check and renders the redesigned `AdminShell`
  * (sidebar + top bar + content slot). The legacy shell + `?redesign=1`
- * feature flag were retired in PR 7 — the Living Console layout is now the
+ * feature flag were retired in PR 7 - the Living Console layout is now the
  * single source of truth.
  */
 export default function AdminLayout() {

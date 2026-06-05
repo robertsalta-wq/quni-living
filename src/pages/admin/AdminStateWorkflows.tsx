@@ -33,9 +33,9 @@ const MATRIX_STATE_ROWS: { code: MatrixStateCode; label: string }[] = [
 ]
 
 const MATRIX_TIERS: { id: PropertyTier; label: string }[] = [
-  { id: 't1', label: 'Tier 1 — Hosted room' },
-  { id: 't2', label: 'Tier 2 — Private room' },
-  { id: 't3', label: 'Tier 3 — Boarding house' },
+  { id: 't1', label: 'Tier 1 - Hosted room' },
+  { id: 't2', label: 'Tier 2 - Private room' },
+  { id: 't3', label: 'Tier 3 - Boarding house' },
 ]
 
 const MANAGED_STATUS_OPTIONS: { value: ServiceTierAvailabilityStatus; label: string }[] = [
@@ -56,13 +56,13 @@ type CanonicalScenario = {
   columnLabel: string
   rowLabel: string
   section: 'supported' | 'other_states'
-  /** Intent label for docs — tier is always derived by the resolver */
+  /** Intent label for docs - tier is always derived by the resolver */
   intent: string
   input: TenancyPackageInput
 }
 
 /**
- * Canonical probes — `date` omitted (v1 resolver ignores it; matches simplified calls).
+ * Canonical probes - `date` omitted (v1 resolver ignores it; matches simplified calls).
  * Tier is never passed in; scenario ids encode intent only.
  */
 const CANONICAL_SCENARIOS: CanonicalScenario[] = [
@@ -131,7 +131,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'VIC',
     section: 'supported',
-    intent: 'Rooming house deferred — expect supported: false',
+    intent: 'Rooming house deferred - expect supported: false',
     input: {
       state: 'VIC',
       property_type: 'private_room_landlord_off_site',
@@ -167,7 +167,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'QLD',
     section: 'supported',
-    intent: 'Registered rooming house — deferred',
+    intent: 'Registered rooming house - deferred',
     input: {
       state: 'QLD',
       property_type: 'private_room_landlord_off_site',
@@ -179,7 +179,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 1',
     rowLabel: 'Other Australian states',
     section: 'other_states',
-    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
+    intent: 'Non-launch states - Listing nationwide; Managed not cleared (WA representative)',
     input: {
       state: 'WA',
       property_type: 'private_room_landlord_on_site',
@@ -191,7 +191,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 2',
     rowLabel: 'Other Australian states',
     section: 'other_states',
-    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
+    intent: 'Non-launch states - Listing nationwide; Managed not cleared (WA representative)',
     input: {
       state: 'WA',
       property_type: 'private_room_landlord_off_site',
@@ -203,7 +203,7 @@ const CANONICAL_SCENARIOS: CanonicalScenario[] = [
     columnLabel: 'Tier 3',
     rowLabel: 'Other Australian states',
     section: 'other_states',
-    intent: 'Non-launch states — Listing nationwide; Managed not cleared (WA representative)',
+    intent: 'Non-launch states - Listing nationwide; Managed not cleared (WA representative)',
     input: {
       state: 'WA',
       property_type: 'private_room_landlord_off_site',
@@ -245,7 +245,7 @@ function resolveAll(resolverOptions?: ResolveServiceTierOptions): ResolvedCell[]
 }
 
 function cellGlance(result: TenancyPackageResult | null): string {
-  if (!result) return '—'
+  if (!result) return '-'
   if (!result.supported) {
     return `Unsupported · ${result.unsupportedReason}`
   }
@@ -401,8 +401,8 @@ export default function AdminStateWorkflows() {
           <h2 className="text-lg font-semibold text-gray-900">Managed tier matrix</h2>
           <p className="mt-1 text-sm text-gray-600">
             {managedTierEnabled
-              ? 'Global Managed is ON — matrix below controls where Managed is bookable.'
-              : 'Global Managed is OFF — Managed stays gated everywhere until you enable it in Admin → Settings → Compliance.'}
+              ? 'Global Managed is ON - matrix below controls where Managed is bookable.'
+              : 'Global Managed is OFF - Managed stays gated everywhere until you enable it in Admin → Settings → Compliance.'}
           </p>
         </div>
         {matrixLoading ? (
@@ -481,13 +481,13 @@ export default function AdminStateWorkflows() {
                   State
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 1 — Hosted Room
+                  Tier 1 - Hosted Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 2 — Private Room
+                  Tier 2 - Private Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 3 — Boarding House
+                  Tier 3 - Boarding House
                 </th>
               </tr>
             </thead>
@@ -525,7 +525,7 @@ export default function AdminStateWorkflows() {
                                   ? cell.result.supported
                                     ? `generator: ${cell.result.generator} · ${cellGlance(cell.result)}`
                                     : cell.result.unsupportedReason
-                                  : '—'}
+                                  : '-'}
                               </p>
                               <p className="mt-1 text-[11px] text-gray-600">
                                 Listing: {cell.serviceTier.listing === 'available' ? '✓' : '✕'} | Managed:{' '}
@@ -552,7 +552,7 @@ export default function AdminStateWorkflows() {
         <h2 className="text-lg font-semibold text-gray-900">Other Australian states</h2>
         <p className="text-sm text-gray-600">
           Non-launch states (WA shown as representative). Tenancy package resolver may still return{' '}
-          <code className="text-xs bg-gray-100 px-1 rounded">unsupported_state</code> — service tier availability is
+          <code className="text-xs bg-gray-100 px-1 rounded">unsupported_state</code> - service tier availability is
           separate: <strong>Listing: available</strong>, <strong>Managed: unsupported</strong>.
         </p>
         <div className={`${adminCardClass} overflow-x-auto`}>
@@ -563,13 +563,13 @@ export default function AdminStateWorkflows() {
                   State
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 1 — Hosted Room
+                  Tier 1 - Hosted Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 2 — Private Room
+                  Tier 2 - Private Room
                 </th>
                 <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tier 3 — Boarding House
+                  Tier 3 - Boarding House
                 </th>
               </tr>
             </thead>
@@ -604,7 +604,7 @@ export default function AdminStateWorkflows() {
                               ? cell.result.supported
                                 ? `generator: ${cell.result.generator} · ${cellGlance(cell.result)}`
                                 : cell.result.unsupportedReason
-                              : '—'}
+                              : '-'}
                           </p>
                           <p className="mt-1 text-[11px] text-gray-600">
                             Listing: {cell.serviceTier.listing === 'available' ? '✓' : '✕'} | Managed:{' '}

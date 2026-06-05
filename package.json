@@ -13,6 +13,7 @@
     "build:api-documents": "node scripts/build-api-documents.mjs",
     "build:capacitor": "node scripts/build-capacitor.mjs",
     "lint": "eslint .",
+    "lint:no-em-dash": "node scripts/replace-em-dashes.mjs --check",
     "test": "vitest run",
     "preview": "vite preview",
     "cap:sync": "npm run build:capacitor && npx cap sync",

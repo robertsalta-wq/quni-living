@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { INTENDED_LANDLORD_SERVICE_TIER_KEY, parseLandlordServiceTier } from '../lib/landlordServiceTier'
 
-/** Legacy URL — same Google-first signup as /signup (role chosen after sign-in on onboarding). */
+/** Legacy URL - same Google-first signup as /signup (role chosen after sign-in on onboarding). */
 export default function LandlordSignup() {
   const location = useLocation()
   const tier = useMemo(

@@ -1,10 +1,10 @@
 // @ts-nocheck
 /**
- * Lease document state for a booking — used by both renter and landlord booking-detail
+ * Lease document state for a booking - used by both renter and landlord booking-detail
  * surfaces (Phase 3 / Task J).
  *
  * POST JSON: { booking_id: string }
- * Authorization: Bearer <Supabase access_token> — must be the landlord OR the student
+ * Authorization: Bearer <Supabase access_token> - must be the landlord OR the student
  * on this booking.
  *
  * Returns:
@@ -16,7 +16,7 @@
  *     preview_url?: string,         // signed URL for the draft (preview/ready/awaiting states)
  *     signing_url?: string,         // DocuSeal embed_src for the viewer (ready_to_sign only)
  *     signed_url?: string,          // legacy single signed PDF (fully_signed)
- *     signed_url_rta?: string,      // residential tenancy package — split signed PDFs
+ *     signed_url_rta?: string,      // residential tenancy package - split signed PDFs
  *     signed_url_addendum?: string,
  *   }
  */

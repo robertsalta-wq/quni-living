@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
   for (const row of atRisk) {
     const n = row.daysUntilExpiry ?? 0
-    const subject = `⚠️ Domain expiry alert — ${row.domain} expires in ${n} days`
+    const subject = `⚠️ Domain expiry alert - ${row.domain} expires in ${n} days`
     const text = [
       `Domain: ${row.domain}`,
       `Days remaining: ${n}`,

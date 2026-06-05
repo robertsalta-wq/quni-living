@@ -46,7 +46,7 @@ const ONBOARD_MOVE_FLEX_SET = new Set(['exact', 'one_week', 'two_weeks'])
 const ONBOARD_BILLS_SET = new Set(['included', 'separate', 'either'])
 const ONBOARD_FURN_SET = new Set(['furnished', 'unfurnished', 'either'])
 
-/** Local draft — profile-style fields only; terms acceptance is never persisted. */
+/** Local draft - profile-style fields only; terms acceptance is never persisted. */
 type StudentOnboardingDraftV1 = {
   v: typeof STUDENT_ONBOARDING_DRAFT_VERSION
   step: 1 | 2 | 3
@@ -688,7 +688,7 @@ export default function StudentOnboarding() {
         error = r.error
         if (!error) {
           setPartialSaveHint(
-            'Your database is missing some student profile columns. We saved the basics — run `supabase/student_profile_extend.sql` and `supabase/student_onboarding.sql`, then update your profile under Student profile.',
+            'Your database is missing some student profile columns. We saved the basics - run `supabase/student_profile_extend.sql` and `supabase/student_onboarding.sql`, then update your profile under Student profile.',
           )
         }
       }
@@ -1009,7 +1009,7 @@ export default function StudentOnboarding() {
                   <h2 className="text-lg font-bold text-stone-900">Verify your university email</h2>
                   <p className="text-sm text-stone-600 leading-relaxed">
                     Before we collect your profile details, confirm you have access to your official student email.
-                    We send a one-time code — it is separate from the email you used to create your Quni account.
+                    We send a one-time code - it is separate from the email you used to create your Quni account.
                   </p>
                   <RequiredFieldsNote />
                   <StudentUniEmailVerification
@@ -1058,7 +1058,7 @@ export default function StudentOnboarding() {
                     {photoUploading && <p className="text-xs text-stone-500">Uploading…</p>}
                     {photoError && <p className={errClass}>{photoError}</p>}
                     <p className="text-xs text-stone-500 text-center max-w-xs">
-                      Optional — skip for now and add a photo anytime in your profile.
+                      Optional - skip for now and add a photo anytime in your profile.
                     </p>
                   </div>
 
@@ -1330,7 +1330,7 @@ export default function StudentOnboarding() {
 
                   <div className="rounded-xl border border-stone-200 bg-[#FEF9E4]/50 px-4 py-4 space-y-4">
                     <h3 className="text-sm font-bold text-stone-900">Living preferences</h3>
-                    <p className="text-xs text-stone-600">Optional — helps landlords see if you&apos;re a good fit.</p>
+                    <p className="text-xs text-stone-600">Optional - helps landlords see if you&apos;re a good fit.</p>
                     <div>
                       <label htmlFor="so-bio" className={labelClass}>
                         Short bio
@@ -1491,7 +1491,7 @@ export default function StudentOnboarding() {
                 <form onSubmit={saveStep3} className="space-y-6">
                   <h2 className="text-lg font-bold text-stone-900">Terms &amp; welcome</h2>
                   <p className="text-sm text-stone-600">
-                    Almost there — confirm you agree to our policies before you start browsing.
+                    Almost there - confirm you agree to our policies before you start browsing.
                   </p>
 
                   <label

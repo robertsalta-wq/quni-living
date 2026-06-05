@@ -11,7 +11,7 @@
 5. **Supabase** → Authentication → URL Configuration:
    - **Site URL**: `https://<your-vercel-domain>`
    - **Redirect URLs**: add `https://<your-vercel-domain>/auth/callback` (keep your local URL for dev if needed).
-6. **Google Cloud Console** → your OAuth client → **Authorized redirect URIs** must include Supabase’s callback, e.g. `https://<project-ref>.supabase.co/auth/v1/callback` (not the Vercel URL — that’s for your app after Supabase redirects).
+6. **Google Cloud Console** → your OAuth client → **Authorized redirect URIs** must include Supabase’s callback, e.g. `https://<project-ref>.supabase.co/auth/v1/callback` (not the Vercel URL - that’s for your app after Supabase redirects).
 
 `vercel.json` rewrites routes to `index.html` so React Router paths like `/auth/callback` work in production.
 

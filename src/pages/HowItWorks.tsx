@@ -36,7 +36,7 @@ const LISTING_STUDENT: Step[] = [
   {
     title: '2. Request to book',
     description:
-      'Authorise a refundable deposit hold only. You pay no booking fee, platform fee, service fee, or surcharge to Quni — ever.',
+      'Authorise a refundable deposit hold only. You pay no booking fee, platform fee, service fee, or surcharge to Quni - ever.',
   },
   {
     title: '3. Complete tenancy directly',
@@ -48,7 +48,7 @@ const LISTING_LANDLORD: Step[] = [
   {
     title: '1. List for free',
     description:
-      'Create your listing with AI-assisted tools — no upfront charge. Quni Listing is self-managed: you run bond, rent, and day-to-day tenancy.',
+      'Create your listing with AI-assisted tools - no upfront charge. Quni Listing is self-managed: you run bond, rent, and day-to-day tenancy.',
   },
   {
     title: '2. Accept a booking',
@@ -101,11 +101,11 @@ export default function HowItWorks() {
   return (
     <>
       <Seo
-        title="How it works — Quni Living"
+        title="How it works - Quni Living"
         description={
           managedTierEnabled
             ? 'Quni Listing vs Quni Managed: parallel flows for renters and landlords.'
-            : 'Quni Listing is live now. Quni Managed — full tenancy operations — coming within the next month.'
+            : 'Quni Listing is live now. Quni Managed - full tenancy operations - coming within the next month.'
         }
         canonicalPath="/how-it-works"
       />
@@ -114,7 +114,7 @@ export default function HowItWorks() {
           title="How it works"
           subtitle={
             managedTierEnabled
-              ? 'The same three-step shape — Listing and Managed, side by side.'
+              ? 'The same three-step shape - Listing and Managed, side by side.'
               : 'Quni Listing is live today. See how Managed will work when it launches within the next month.'
           }
         />
@@ -165,7 +165,7 @@ export default function HowItWorks() {
             <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
               {managedTierEnabled
                 ? 'Quni supports escrow-style rent flows and lease execution where available. Availability varies by state.'
-                : 'Preview the Managed flow — rent collection, bond coordination, and weekly payouts. Launching within the next month.'}
+                : 'Preview the Managed flow - rent collection, bond coordination, and weekly payouts. Launching within the next month.'}
             </p>
             {!managedTierEnabled ? (
               <div

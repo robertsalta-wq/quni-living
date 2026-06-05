@@ -301,7 +301,7 @@ export default function Signup() {
         setError(
           [
             'We could not start a new account with that email.',
-            'It may already be registered — try logging in. If you never confirmed the original sign-up, use “Resend confirmation” on the log-in page.',
+            'It may already be registered - try logging in. If you never confirmed the original sign-up, use “Resend confirmation” on the log-in page.',
           ].join('\n'),
         )
         return
@@ -363,7 +363,7 @@ export default function Signup() {
       <div className="max-w-md mx-auto px-6 py-12 text-center">
         <Seo
           title="Confirm your email"
-          description="Finish creating your Quni Living account — verified accommodation and landlord listings in Australia."
+          description="Finish creating your Quni Living account - verified accommodation and landlord listings in Australia."
           canonicalPath="/signup"
         />
         <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
@@ -373,7 +373,7 @@ export default function Signup() {
         </p>
         <p className="text-gray-500 text-xs mt-3 max-w-sm mx-auto">
           Nothing in your inbox? Check spam. If you already used this email to sign up but didn&apos;t confirm, use the
-          button below — a second sign-up doesn&apos;t always trigger another email automatically.
+          button below - a second sign-up doesn&apos;t always trigger another email automatically.
         </p>
         <button
           type="button"
@@ -408,7 +408,7 @@ export default function Signup() {
         {confirmResendSuccess && (
           <p className="text-xs text-emerald-800 mt-3 max-w-sm mx-auto" role="status">
             Request accepted. If this address has an <strong>unconfirmed</strong> signup, check inbox and spam in a few
-            minutes. Already-confirmed accounts do not get another signup email — use <strong>Log in</strong> instead.
+            minutes. Already-confirmed accounts do not get another signup email - use <strong>Log in</strong> instead.
           </p>
         )}
         <Link to={loginBackHref} className="inline-block mt-8 text-sm font-medium text-indigo-600 hover:text-indigo-800">
@@ -444,7 +444,7 @@ export default function Signup() {
     <div className="max-w-2xl mx-auto px-6 py-12">
       <Seo
         title="Create an account"
-        description="Sign up for Quni Living — find verified accommodation near campus or work, or list your property for verified renters."
+        description="Sign up for Quni Living - find verified accommodation near campus or work, or list your property for verified renters."
         canonicalPath="/signup"
       />
       <h1 ref={formTopRef} className="scroll-mt-below-header text-2xl font-bold text-gray-900">

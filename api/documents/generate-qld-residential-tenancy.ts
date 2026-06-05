@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// @ts-nocheck — Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
+// @ts-nocheck - Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
 /**
  * Generate QLD Form 18a (General Tenancy Agreement) + Quni Platform Addendum (QLD), upload to Storage,
  * create tenancy_documents row, optionally send both to DocuSeal as one submission.
@@ -74,7 +74,7 @@ function landlordAddressLine(lp: Record<string, unknown>): string {
     typeof lp.state === 'string' ? lp.state.trim() : '',
     typeof lp.postcode === 'string' ? lp.postcode.trim() : '',
   ].filter(Boolean)
-  return parts.join(', ') || '—'
+  return parts.join(', ') || '-'
 }
 
 export default async function handler(req: any, res: any) {
@@ -347,10 +347,10 @@ export default async function handler(req: any, res: any) {
   const landlordFullName =
     [lp.first_name, lp.last_name].filter(Boolean).join(' ').trim() ||
     (typeof lp.full_name === 'string' ? lp.full_name : 'Landlord')
-  const landlordPhoneRaw = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '—'
+  const landlordPhoneRaw = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '-'
   const urgentTradeLine =
-    landlordPhoneRaw && landlordPhoneRaw !== '—'
-      ? `${landlordFullName} — ${landlordPhoneRaw}`
+    landlordPhoneRaw && landlordPhoneRaw !== '-'
+      ? `${landlordFullName} - ${landlordPhoneRaw}`
       : landlordFullName
 
   const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
@@ -363,7 +363,7 @@ export default async function handler(req: any, res: any) {
     fullName: landlordFullName,
     companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
     addressLine: landlordAddressLine(lpRec),
-    email: typeof lp.email === 'string' ? lp.email : '—',
+    email: typeof lp.email === 'string' ? lp.email : '-',
     phone: landlordPhoneRaw,
   }
 
@@ -377,8 +377,8 @@ export default async function handler(req: any, res: any) {
     fullName:
       [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
       (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
-    email: typeof sp.email === 'string' ? sp.email : '—',
-    phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '—',
+    email: typeof sp.email === 'string' ? sp.email : '-',
+    phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '-',
     dateOfBirth:
       typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
     emergencyContactName: emergencyContactNameRaw ? emergencyContactNameRaw : null,
@@ -387,7 +387,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const sharedPremises = {
-    addressLine: propertyAddressLine(prop) || '—',
+    addressLine: propertyAddressLine(prop) || '-',
     propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
     roomType: typeof prop.room_type === 'string' ? prop.room_type : null,
     furnished: typeof prop.furnished === 'boolean' ? prop.furnished : null,
@@ -403,9 +403,9 @@ export default async function handler(req: any, res: any) {
   const premisesInclusionsLine = inclusionParts.length > 0 ? inclusionParts.join('; ') : null
 
   const landlordPostcode =
-    typeof lp.postcode === 'string' && lp.postcode.trim() ? lp.postcode.trim() : '—'
+    typeof lp.postcode === 'string' && lp.postcode.trim() ? lp.postcode.trim() : '-'
   const premisesPostcode =
-    typeof prop.postcode === 'string' && prop.postcode.trim() ? prop.postcode.trim() : '—'
+    typeof prop.postcode === 'string' && prop.postcode.trim() ? prop.postcode.trim() : '-'
 
   const sharedTerm = {
     startDate: moveIn,
@@ -425,8 +425,8 @@ export default async function handler(req: any, res: any) {
   const rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null =
     rpm === 'bank_transfer' || rpm === 'quni_platform' ? rpm : null
 
-  const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '—'
-  const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '—'
+  const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '-'
+  const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '-'
 
   const form18aProps: QldGeneralTenancyAgreementProps = {
     documentId,
@@ -495,7 +495,7 @@ export default async function handler(req: any, res: any) {
   const ecName = (sharedTenant.emergencyContactName ?? '').trim()
   const ecPhone = (sharedTenant.emergencyContactPhone ?? '').trim()
   const emergencyContact =
-    ecName && ecPhone ? `${ecName} — ${ecPhone}` : ecPhone || ecName || '—'
+    ecName && ecPhone ? `${ecName} - ${ecPhone}` : ecPhone || ecName || '-'
 
   const rawCap = Number(managedPricingCell.utilities_cap_aud ?? 0)
   const utilitiesCap = Number.isFinite(rawCap) && rawCap >= 0 ? rawCap : 0

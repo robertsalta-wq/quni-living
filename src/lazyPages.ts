@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-/** Heavy / infrequent routes — loaded on demand to shrink the initial bundle. */
+/** Heavy / infrequent routes - loaded on demand to shrink the initial bundle. */
 
 // Auth & onboarding
 export const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'))

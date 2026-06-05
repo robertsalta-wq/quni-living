@@ -16,7 +16,7 @@ const casaRoom = {
 }
 
 describe('resolveWeeklyRent', () => {
-  it('sole occupant — base rent only', () => {
+  it('sole occupant - base rent only', () => {
     expect(resolveWeeklyRent(casaRoom, { occupantCount: 1 })).toEqual({
       weeklyRent: 400,
       weeklyRentCents: 40_000,
@@ -25,7 +25,7 @@ describe('resolveWeeklyRent', () => {
     })
   })
 
-  it('couple — base + couple surcharge', () => {
+  it('couple - base + couple surcharge', () => {
     expect(resolveWeeklyRent(casaRoom, { occupantCount: 2 })).toEqual({
       weeklyRent: 500,
       weeklyRentCents: 50_000,
@@ -43,7 +43,7 @@ describe('resolveWeeklyRent', () => {
     })
   })
 
-  it('couple + parking — full stack', () => {
+  it('couple + parking - full stack', () => {
     expect(
       resolveWeeklyRent(casaRoom, { occupantCount: 2, parkingSelected: true }),
     ).toEqual({
@@ -54,7 +54,7 @@ describe('resolveWeeklyRent', () => {
     })
   })
 
-  it('null surcharges — legacy listing behaves as base rent only', () => {
+  it('null surcharges - legacy listing behaves as base rent only', () => {
     const legacy = {
       rent_per_week: 350,
       max_occupants: 1,
@@ -71,7 +71,7 @@ describe('resolveWeeklyRent', () => {
     ).toThrow(ResolveWeeklyRentError)
   })
 
-  it('max_occupants enforcement — rejects third occupant', () => {
+  it('max_occupants enforcement - rejects third occupant', () => {
     expect(() => resolveWeeklyRent(casaRoom, { occupantCount: 3 })).toThrow(ResolveWeeklyRentError)
     try {
       resolveWeeklyRent(casaRoom, { occupantCount: 3 })
@@ -81,14 +81,14 @@ describe('resolveWeeklyRent', () => {
     }
   })
 
-  it('max_occupants 1 — rejects couple even with surcharge configured', () => {
+  it('max_occupants 1 - rejects couple even with surcharge configured', () => {
     const singleOnly = { ...casaRoom, max_occupants: 1 }
     expect(() => resolveWeeklyRent(singleOnly, { occupantCount: 2 })).toThrow(
       /at most 1 occupant/,
     )
   })
 
-  it('parking not available — rejects parkingSelected', () => {
+  it('parking not available - rejects parkingSelected', () => {
     const noPark = { ...casaRoom, parking_available: false }
     expect(() =>
       resolveWeeklyRent(noPark, { occupantCount: 1, parkingSelected: true }),
@@ -110,7 +110,7 @@ describe('resolveWeeklyRent', () => {
     expect(() => resolveWeeklyRent(casaRoom, { occupantCount: 0 })).toThrow(/at least 1/)
   })
 
-  it('couple with zero surcharge — base only for two occupants', () => {
+  it('couple with zero surcharge - base only for two occupants', () => {
     const noCoupleFee = {
       rent_per_week: 400,
       max_occupants: 2,

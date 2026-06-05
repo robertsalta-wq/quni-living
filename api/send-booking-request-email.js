@@ -167,10 +167,10 @@ export default async function handler(request) {
     property_address: addr || title,
     property_title: title,
     student_name: studentName,
-    student_university: uniName || '—',
-    student_course: typeof sp.course === 'string' ? sp.course : '—',
+    student_university: uniName || '-',
+    student_course: typeof sp.course === 'string' ? sp.course : '-',
     move_in_date: moveIn,
-    lease_length: booking.lease_length || '—',
+    lease_length: booking.lease_length || '-',
     student_message: typeof booking.student_message === 'string' ? booking.student_message : '',
     dashboard_url: `${dashboardBase}/landlord/bookings/${bookingId}/review#applicant-review`,
   })

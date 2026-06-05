@@ -1,5 +1,5 @@
 /**
- * Qase — AI triage after ticket creation (platform or email).
+ * Qase - AI triage after ticket creation (platform or email).
  * Internal only: requires `x-qase-internal` matching `QASE_INTERNAL_SECRET`.
  *
  * Deploy: supabase functions deploy qase-triage --no-verify-jwt
@@ -24,7 +24,7 @@ const ALLOWED_PRIORITIES = ['urgent', 'high', 'normal', 'low'] as const
 const SYSTEM_PROMPT = `You are a support triage assistant for Quni Living, an Australian verified accommodation marketplace (students, graduates, and professional renters). Your job is to analyse support tickets and provide:
 1. A category from this list only: booking_issue, payment_payout, verification, property_listing, lease_document, other
 2. A priority: urgent, high, normal, or low
-3. A draft reply in Quni Living's brand voice — calm, human, outcome-focused, under 150 words
+3. A draft reply in Quni Living's brand voice - calm, human, outcome-focused, under 150 words
 
 Respond ONLY with valid JSON in this exact format (use double quotes for JSON):
 {

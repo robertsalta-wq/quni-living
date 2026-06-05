@@ -1,11 +1,11 @@
 /**
- * VIC platform addendum — jurisdiction-specific copy and bond metadata.
+ * VIC platform addendum - jurisdiction-specific copy and bond metadata.
  * Bond facts are sourced from `api/lib/tenancy/rules/vic.ts` (T2 residential).
  */
 import { vicTenancyRules } from '../../../../api/lib/tenancy/rules/vic.js'
 
 export const VIC_ADDENDUM_LEGISLATION = 'Residential Tenancies Act 1997 (Vic)'
-export const VIC_ADDENDUM_FORM_LABEL = 'Form 1 — Residential rental agreement'
+export const VIC_ADDENDUM_FORM_LABEL = 'Form 1 - Residential rental agreement'
 export const VIC_ADDENDUM_SUBTITLE = 'Supplementary to the Residential Rental Agreement (Form 1)'
 
 /** T2 residential bond rules (Form 1 package). */
@@ -28,7 +28,7 @@ export function vicBondAuthorityUrl(): string {
   return bond.schemeApplies ? bond.authorityUrl : 'https://www.rtba.vic.gov.au/'
 }
 
-/** Statutory fee-free rent payment copy — mirrors NSW addendum posture for Victoria. */
+/** Statutory fee-free rent payment copy - mirrors NSW addendum posture for Victoria. */
 export function vicFeeFreeBankTransferParagraph(): string {
   return (
     'A fee-free bank transfer option remains available at all times for recurring rent in accordance with the ' +
@@ -36,7 +36,7 @@ export function vicFeeFreeBankTransferParagraph(): string {
   )
 }
 
-/** Section 8 — condition report (VIC Form 1 / Act). */
+/** Section 8 - condition report (VIC Form 1 / Act). */
 export const VIC_CONDITION_REPORT_INTRO =
   'The parties acknowledge that an ingoing condition report may be prepared for the premises (or the rented part of ' +
   'the premises) in accordance with the Residential Tenancies Act 1997 (Vic) and Form 1. The renter will be given a ' +

@@ -377,7 +377,7 @@ export default function CampusAccommodation() {
               </h1>
               <p className="text-white/85 text-sm sm:text-base mt-2 max-w-2xl">
                 {suburb}
-                {state ? `, ${state}` : ''} — Properties for {shortLabel} students
+                {state ? `, ${state}` : ''} - Properties for {shortLabel} students
               </p>
             </>
           ) : null
@@ -410,7 +410,7 @@ export default function CampusAccommodation() {
               </div>
               {exactListings.length === 0 && nearbyListings.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center">
-                  <p className="text-gray-700 font-medium">No listings yet — check back soon</p>
+                  <p className="text-gray-700 font-medium">No listings yet - check back soon</p>
                   <p className="text-sm text-gray-500 mt-2">Get notified when properties go live near {campus.name}.</p>
                   <Link
                     to="/contact"

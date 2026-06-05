@@ -20,11 +20,11 @@ export function studentDisplayName(row: {
   const fn = row.first_name?.trim() ?? ''
   const ln = row.last_name?.trim() ?? ''
   if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
-  return row.full_name?.trim() || '—'
+  return row.full_name?.trim() || '-'
 }
 
 export function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const t = iso.trim()
   try {
     const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T12:00:00`) : new Date(t)
@@ -34,12 +34,12 @@ export function formatDate(iso: string | null | undefined): string {
       year: 'numeric',
     })
   } catch {
-    return '—'
+    return '-'
   }
 }
 
 export function formatRelativeTime(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 60) return mins <= 1 ? 'just now' : `${mins} minutes ago`
@@ -51,12 +51,12 @@ export function formatRelativeTime(iso: string | null | undefined): string {
 }
 
 export function formatMoney(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(Number(n))) return '—'
+  if (n == null || Number.isNaN(Number(n))) return '-'
   return `$${Number(n).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
 /** Integer cents → AUD $x.xx */
 export function formatAudCents(cents: number | null | undefined): string {
-  if (cents == null || Number.isNaN(Number(cents))) return '—'
+  if (cents == null || Number.isNaN(Number(cents))) return '-'
   return `$${(Number(cents) / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

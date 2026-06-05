@@ -208,7 +208,7 @@ export function buildBookingFitSummary(args: {
     label: 'Move-in date',
     studentSide: moveIn
       ? `${moveIn}${args.student.move_in_flexibility ? ` (${args.student.move_in_flexibility.replace(/_/g, ' ')})` : ''}`
-      : '—',
+      : '-',
     propertySide: avail ? `From ${avail}` : 'Not specified on listing',
     status: miStatus,
   })
@@ -216,8 +216,8 @@ export function buildBookingFitSummary(args: {
   const leaseSt = leaseMatch(args.booking.lease_length, property?.lease_length ?? null)
   rows.push({
     label: 'Lease length',
-    studentSide: args.booking.lease_length?.trim() || '—',
-    propertySide: property?.lease_length?.trim() || '—',
+    studentSide: args.booking.lease_length?.trim() || '-',
+    propertySide: property?.lease_length?.trim() || '-',
     status: leaseSt,
   })
 
@@ -294,7 +294,7 @@ export function formatBookingFitSummaryForPrompt(rows: BookingFitRow[]): string 
     .map((r) => {
       const statusLabel =
         r.status === 'match' ? 'MATCH' : r.status === 'mismatch' ? 'MISMATCH' : 'UNKNOWN (confirm with listing)'
-      return `${r.label}: ${statusLabel} — student: ${r.studentSide}; listing: ${r.propertySide}`
+      return `${r.label}: ${statusLabel} - student: ${r.studentSide}; listing: ${r.propertySide}`
     })
     .join('\n')
 }

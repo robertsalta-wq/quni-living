@@ -91,7 +91,7 @@ export function ProtectedRoute({
   return <>{children}</>
 }
 
-/** Logged-in only (profile optional) — e.g. onboarding */
+/** Logged-in only (profile optional) - e.g. onboarding */
 export function RequireUser({ children }: { children: React.ReactNode }) {
   const { user, loading, role } = useAuthContext()
   const location = useLocation()

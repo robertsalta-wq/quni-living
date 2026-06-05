@@ -4,7 +4,7 @@ Runbook executed on 2026-05-08 to align Supabase migration files with `supabase_
 
 ## Initial state (`migration list --linked`)
 
-Broken: **seven** rows drifted (above the usual “pause if > 5” threshold). Structural cause was **registry drift only**—later migrations had been executed on the remote database without corresponding registry rows; one migration existed only in the registry until the local file was restored.
+Broken: **seven** rows drifted (above the usual “pause if > 5” threshold). Structural cause was **registry drift only**-later migrations had been executed on the remote database without corresponding registry rows; one migration existed only in the registry until the local file was restored.
 
 ```
 Initialising login role...
@@ -27,7 +27,7 @@ Connecting to remote database...
    20260508120000 |                | 2026-05-08 12:00:00 
 ```
 
-**Remote-only:** `20260415120200` (`qase_rls_fix`) — registered remotely; missing from repo.
+**Remote-only:** `20260415120200` (`qase_rls_fix`) - registered remotely; missing from repo.
 
 **Local-only (files present, not in remote registry):**
 
@@ -46,11 +46,11 @@ Connecting to remote database...
 git log --diff-filter=D --summary -- supabase/migrations/
 ```
 
-No output — **no historically deleted migration files** in this path.
+No output - **no historically deleted migration files** in this path.
 
 ## Remote registry inspection
 
-- Table `supabase_migrations.schema_migrations` includes **`statements`** (`ARRAY`) — SQL recovery was possible for the remote-only row.
+- Table `supabase_migrations.schema_migrations` includes **`statements`** (`ARRAY`) - SQL recovery was possible for the remote-only row.
 - Full remote registry (before repair) ended at **`20260415130000`**; versions after that existed only as local files plus applied schema.
 
 Schema checks confirmed later migrations were already applied on the linked DB (examples: `public.qase_attachments`, knowledge base policy `Knowledge base select authenticated`, `admin_vendor_subscriptions.encrypted_password`, `service_tier_enum`, `public.property_fee_snapshots`, `public.service_tier_events`, `bookings.service_tier_at_request`).
@@ -59,7 +59,7 @@ Schema checks confirmed later migrations were already applied on the linked DB (
 
 ### Reconstructed from registry (`statements`)
 
-- **`20260415120200`** — Name on remote: `qase_rls_fix`. Recovered all statement chunks from:
+- **`20260415120200`** - Name on remote: `qase_rls_fix`. Recovered all statement chunks from:
 
   `SELECT version, name, statements FROM supabase_migrations.schema_migrations WHERE version = '20260415120200';`
 
@@ -70,7 +70,7 @@ No **`migration repair --status reverted`** was required: every remote-only row 
 
 ### Registry alignment (`repair --status applied`)
 
-These versions had already been applied on the database but were missing from the remote registry; marking **applied** only updates history — it does not re-run SQL:
+These versions had already been applied on the database but were missing from the remote registry; marking **applied** only updates history - it does not re-run SQL:
 
 ```bash
 npx supabase migration repair --status applied --linked --yes \
@@ -80,9 +80,9 @@ npx supabase migration repair --status applied --linked --yes \
 
 ## Verification
 
-- **`npx supabase migration list --linked`** — Local and Remote columns match for every version (see below).
-- **`npx supabase db push --linked`** — `Remote database is up to date.`
-- **`npx tsc -b --noEmit`** — Exit code 0.
+- **`npx supabase migration list --linked`** - Local and Remote columns match for every version (see below).
+- **`npx supabase db push --linked`** - `Remote database is up to date.`
+- **`npx tsc -b --noEmit`** - Exit code 0.
 
 ## Final state (`migration list --linked`)
 

@@ -326,7 +326,7 @@ export default function PropertyDetail() {
           campusId: c.id,
           universitySlug,
           campusSlug,
-          label: `${uniNameById.get(uniId) ?? c.university_id ?? 'University'} — ${c.name}`,
+          label: `${uniNameById.get(uniId) ?? c.university_id ?? 'University'} - ${c.name}`,
           distanceKm: distKm,
         }
       })
@@ -520,7 +520,7 @@ export default function PropertyDetail() {
       if (uniName && campusName) return `${uniName} – ${campusName}`
       return uniName ?? campusName ?? null
     }
-    if (universityId) return `${uniName ?? 'University'} — All campuses`
+    if (universityId) return `${uniName ?? 'University'} - All campuses`
     return null
   })()
 
@@ -678,7 +678,7 @@ export default function PropertyDetail() {
               )}
               <p className="text-sm text-stone-500">
                 Sign in to see the full description, amenities, availability, and landlord contact details. Listing
-                locations show suburb only — not the street address.
+                locations show suburb only - not the street address.
               </p>
             </div>
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
@@ -972,7 +972,7 @@ export default function PropertyDetail() {
             <div className="px-6 pt-4 pb-2 bg-gray-50 border-b border-gray-100">
               <p className="text-sm font-medium text-gray-900">{property.title}</p>
               <p className="text-sm text-gray-500">
-                {property.suburb ?? '—'} · $
+                {property.suburb ?? '-'} · $
                 {Number(property.rent_per_week).toLocaleString(undefined, { maximumFractionDigits: 0 })}/wk
               </p>
             </div>

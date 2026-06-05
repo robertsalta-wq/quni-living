@@ -30,7 +30,7 @@ const internationalStudentsLink = (
   </Link>
 )
 
-/** Comprehensive FAQ sections for /faq — consolidated from marketing pages. */
+/** Comprehensive FAQ sections for /faq - consolidated from marketing pages. */
 export const FAQ_SECTIONS: FaqSection[] = [
   {
     id: 'about',
@@ -64,7 +64,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-free',
         question: 'Is Quni free for renters?',
         answer:
-          'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money between you and your landlord, not Quni fees.',
+          'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni - ever. Bond and weekly rent are tenancy money between you and your landlord, not Quni fees.',
       },
       {
         id: 'students-student-only',
@@ -94,7 +94,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'students-declined',
         question: 'What if my booking request is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows — typically 5–7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
+          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank. See our Refund Policy for platform-fee questions.',
       },
       {
         id: 'students-data-residency',
@@ -116,7 +116,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'verification-docs',
         question: 'What documents do I need to verify?',
         answer:
-          "A government-issued photo ID (Australian passport or driver's licence) and one supporting document — for example a utility bill, employer letter, or Medicare card.",
+          "A government-issued photo ID (Australian passport or driver's licence) and one supporting document - for example a utility bill, employer letter, or Medicare card.",
       },
       {
         id: 'verification-time',
@@ -185,7 +185,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-rent',
         question: 'How do I receive rent payments?',
         answer:
-          'On Quni Listing, bond and weekly rent flow directly between landlord and renter — Quni is not in the payment chain after a booking is accepted. On Quni Managed, weekly rent is collected through Stripe Connect and the service fee is deducted before payout to your bank account.',
+          'On Quni Listing, bond and weekly rent flow directly between landlord and renter - Quni is not in the payment chain after a booking is accepted. On Quni Managed, weekly rent is collected through Stripe Connect and the service fee is deducted before payout to your bank account.',
       },
       {
         id: 'landlords-campus',
@@ -197,11 +197,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'landlords-deactivate',
         question: 'Can I pause or remove my listing?',
         answer:
-          'Yes — there are no lock-in contracts. You can deactivate or remove your listing from your landlord dashboard.',
+          'Yes - there are no lock-in contracts. You can deactivate or remove your listing from your landlord dashboard.',
       },
       {
         id: 'landlords-portfolio',
-        question: 'I have a portfolio or university partnership — where do I start?',
+        question: 'I have a portfolio or university partnership - where do I start?',
         answer: (
           <>
             See {partnershipsLink} for bulk placements and managed portfolios, or use subject{' '}
@@ -219,7 +219,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'money-renter-fees',
         question: 'Do renters pay any fees to Quni?',
         answer:
-          'No. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
+          'No. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni - ever. Bond and weekly rent are tenancy money, not Quni fees.',
       },
       {
         id: 'money-listing-fee',
@@ -237,7 +237,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         answer: (
           <>
             A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent
-            payouts — see {pricingLink} for the current Managed service fee.
+            payouts - see {pricingLink} for the current Managed service fee.
           </>
         ),
       },
@@ -263,7 +263,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: 'bond-refunds',
         question: 'Who sets bond refund rules?',
         answer:
-          'Cash bond refunds and disputes follow state or territory residential laws and bond authorities — not Quni’s refund policy for platform fees.',
+          'Cash bond refunds and disputes follow state or territory residential laws and bond authorities - not Quni’s refund policy for platform fees.',
       },
     ],
   },
@@ -335,7 +335,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     items: [
       {
         id: 'support-tenancy',
-        question: 'Something went wrong with my tenancy — can Quni decide bond disputes?',
+        question: 'Something went wrong with my tenancy - can Quni decide bond disputes?',
         answer: (
           <>
             Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
@@ -363,7 +363,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
             <a href="mailto:hello@quni.com.au" className="font-medium text-[#FF6F61] hover:underline">
               hello@quni.com.au
             </a>{' '}
-            or use our {contactLink} form — we usually reply within 1 business day. Signed-in users can also use support
+            or use our {contactLink} form - we usually reply within 1 business day. Signed-in users can also use support
             from the student or landlord dashboard.
           </>
         ),

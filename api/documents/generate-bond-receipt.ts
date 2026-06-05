@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// @ts-nocheck — Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json.
+// @ts-nocheck - Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json.
 /**
  * Generate boarding/lodger bond receipt PDF, upload, update tenancy, notify by email.
  *
@@ -16,7 +16,7 @@ import type { Database } from '../../src/lib/database.types'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
-/** Mirrors `src/lib/listings.ts` — kept local so Vercel’s API TS compile graph stays self-contained. */
+/** Mirrors `src/lib/listings.ts` - kept local so Vercel’s API TS compile graph stays self-contained. */
 function isBoardingLodgerBondContext(propertyType: string | null | undefined): boolean {
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
   if (!pt) return false
@@ -51,7 +51,7 @@ function personFullName(row: Record<string, unknown>): string {
   const joined = a.join(' ').trim()
   if (joined) return joined
   const full = typeof row.full_name === 'string' ? row.full_name.trim() : ''
-  return full || '—'
+  return full || '-'
 }
 
 function formatBondAud(amount: number): string {
@@ -260,7 +260,7 @@ export default async function handler(req: any, res: any) {
   const studentEmail = typeof stRec.email === 'string' && stRec.email.trim() ? stRec.email.trim() : ''
 
   const receiptNumber = receiptNumberFromTenancy(tenancyId, dateReceived)
-  const addressLine = propertyAddressLine(propRec) || '—'
+  const addressLine = propertyAddressLine(propRec) || '-'
   const dateObj = new Date(`${dateReceived}T12:00:00`)
   const dateReceivedDisplay = Number.isFinite(dateObj.getTime())
     ? dateObj.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -271,7 +271,7 @@ export default async function handler(req: any, res: any) {
     dateReceivedDisplay,
     propertyAddress: addressLine,
     landlordName,
-    landlordEmail: landlordEmail || '—',
+    landlordEmail: landlordEmail || '-',
     tenantName,
     amountDisplay: formatBondAud(amount),
     paymentMethod,

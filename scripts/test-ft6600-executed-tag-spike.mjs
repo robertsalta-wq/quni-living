@@ -34,7 +34,7 @@ function docusealBase() {
 async function buildMarginAnchorPdf() {
   const v2Path = path.join(outDir, 'refined-b-v2.pdf')
   if (!fs.existsSync(v2Path)) {
-    throw new Error(`Missing ${v2Path} — run refined-B spike first`)
+    throw new Error(`Missing ${v2Path} - run refined-B spike first`)
   }
   const doc = await PDFDocument.load(fs.readFileSync(v2Path))
   const font = await doc.embedFont(StandardFonts.Helvetica)
@@ -161,8 +161,8 @@ async function main() {
     sourceScan,
     executedScan,
     verdict: tagsStripped
-      ? 'OPTION_0 — tags consumed on completion; margin-anchor recipe ships (source-only cosmetic)'
-      : 'TAGS_PERSIST — need white/appendix/strip options from micro-spike brief',
+      ? 'OPTION_0 - tags consumed on completion; margin-anchor recipe ships (source-only cosmetic)'
+      : 'TAGS_PERSIST - need white/appendix/strip options from micro-spike brief',
     paths: { sourcePath, executedPath },
     deleteSubmissionId: submissionId,
   }

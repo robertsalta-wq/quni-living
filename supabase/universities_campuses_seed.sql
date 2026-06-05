@@ -4,7 +4,7 @@
 -- Fixes: slug (required) vs short_name, campus suburb/state, FK-safe clear.
 -- ============================================================
 
--- Part 2 — columns expected by app / seed
+-- Part 2 - columns expected by app / seed
 alter table public.universities add column if not exists short_name text;
 alter table public.campuses add column if not exists suburb text;
 alter table public.campuses add column if not exists state text;
@@ -15,7 +15,7 @@ alter table public.properties add column if not exists campus_id uuid references
 
 -- Idempotent seed: safe to re-run without creating duplicates or clearing relations.
 
--- Universities: slug is NOT NULL UNIQUE — use unique slug per row (ACU has multiple campuses)
+-- Universities: slug is NOT NULL UNIQUE - use unique slug per row (ACU has multiple campuses)
 insert into public.universities (id, name, slug, short_name, state, city) values
 -- NSW
 ('11111111-0000-0000-0000-000000000001', 'University of Sydney', 'usyd', 'USYD', 'NSW', 'Sydney'),

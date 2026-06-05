@@ -19,7 +19,7 @@ comment on column public.bookings.bond_window_expires_at is
   'Deadline for bond_pending (distinct from expires_at).';
 
 -- ---------------------------------------------------------------------------
--- Bookings: extend status check — bond_pending
+-- Bookings: extend status check - bond_pending
 -- ---------------------------------------------------------------------------
 alter table public.bookings drop constraint if exists bookings_status_check;
 
@@ -42,7 +42,7 @@ alter table public.bookings
   );
 
 -- ---------------------------------------------------------------------------
--- service_tier_events — append-only tier/bond audit trail
+-- service_tier_events - append-only tier/bond audit trail
 -- ---------------------------------------------------------------------------
 create table if not exists public.service_tier_events (
   id uuid primary key default gen_random_uuid(),

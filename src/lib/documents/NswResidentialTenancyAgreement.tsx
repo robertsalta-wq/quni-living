@@ -24,7 +24,7 @@ const CONDITION_REPORT_VERBATIM =
 const TENANCY_LAWS_VERBATIM =
   'The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.'
 
-const FT_FORM_REFERENCE = 'FT6600_171225 — NSW Fair Trading — Standard form from 19 May 2025'
+const FT_FORM_REFERENCE = 'FT6600_171225 - NSW Fair Trading - Standard form from 19 May 2025'
 
 const styles = StyleSheet.create({
   page: {
@@ -176,7 +176,7 @@ function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
 
 function suburbFromAddressLine(addressLine: string): string {
   const t = addressLine.trim()
-  if (!t || t === '—') return t || '—'
+  if (!t || t === '-') return t || '-'
   const parts = t.split(',').map((s) => s.trim()).filter(Boolean)
   const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p))
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t
@@ -590,7 +590,7 @@ function PageFooter({ documentId, pageNumber }: { documentId: string; pageNumber
 
 function rtaScheduleTenantNamePopulated(raw: string): boolean {
   const t = raw.trim()
-  return t.length > 0 && t !== '—'
+  return t.length > 0 && t !== '-'
 }
 
 function SignaturesBlock(props: NswResidentialTenancyAgreementProps) {
@@ -880,11 +880,11 @@ export function NswResidentialTenancyAgreement(props: NswResidentialTenancyAgree
       <Text style={{ ...styles.body, fontFamily: 'Helvetica-Bold', marginTop: 8 }}>
         Giving notices and other documents electronically
       </Text>
-      <Field label="Landlord — express consent to electronic service?" children={es.landlordConsentsToEmailService ? 'Yes' : 'No'} />
+      <Field label="Landlord - express consent to electronic service?" children={es.landlordConsentsToEmailService ? 'Yes' : 'No'} />
       {es.landlordConsentsToEmailService ? (
         <Field label="Landlord email for electronic service:" children={es.landlordEmail} />
       ) : null}
-      <Field label="Tenant — express consent to electronic service?" children={es.tenantConsentsToEmailService ? 'Yes' : 'No'} />
+      <Field label="Tenant - express consent to electronic service?" children={es.tenantConsentsToEmailService ? 'Yes' : 'No'} />
       {es.tenantConsentsToEmailService ? (
         <Field label="Tenant email for electronic service:" children={es.tenantEmail} />
       ) : null}

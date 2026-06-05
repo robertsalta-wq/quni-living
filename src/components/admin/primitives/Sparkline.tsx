@@ -2,7 +2,7 @@ export type SparklineColor = 'coral' | 'navy'
 
 export interface SparklineProps {
   data: number[]
-  /** Restricted palette per HANDOFF.md §2 — no hex strings. */
+  /** Restricted palette per HANDOFF.md §2 - no hex strings. */
   color?: SparklineColor
   width?: number
   height?: number
@@ -22,7 +22,7 @@ const COLOR_HEX: Record<SparklineColor, string> = {
  *
  * Per HANDOFF.md §3: use coral only for coral-primary KPIs (revenue, booking
  * volume); everything else uses navy. The component refuses to accept a hex
- * string on purpose — the palette stays locked at the type level.
+ * string on purpose - the palette stays locked at the type level.
  */
 export function Sparkline({
   data,

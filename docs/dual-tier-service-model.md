@@ -1,4 +1,4 @@
-# Quni Living — Dual-Tier Service Model and Persona Expansion
+# Quni Living - Dual-Tier Service Model and Persona Expansion
 
 **Status:** Strategic decisions locked. Implementation sequencing TBD.
 **Date:** April 2026
@@ -48,12 +48,12 @@ This dropped per-tenancy revenue from ~$1,394 (10%) to ~$1,001 (7%). Year 3 proj
 
 ### Persona expansion
 
-Brand opens to *students and professionals near campus*. The non-student signup path was already built architecturally — this decision activates it as a co-primary persona rather than a secondary segment.
+Brand opens to *students and professionals near campus*. The non-student signup path was already built architecturally - this decision activates it as a co-primary persona rather than a secondary segment.
 
 - **Headline (locked)**: *"Verified housing near your university or workplace. For students and professionals near campus."*
 - **Signup page**: three equal-weight cards (Student / Professional / Landlord). The "Non-Student" label renames to "Professional" at UI layer; DB field stays `non_student` for backwards compatibility.
-- **SEO content**: stays student-led. Suburb and university pages don't change. The student-keyword volume is real and Flatmates doesn't compete there — that's the moat.
-- **University partnerships**: stay student-led. Student unions and university accommodation offices are still served — they just don't need to know the platform also serves professionals.
+- **SEO content**: stays student-led. Suburb and university pages don't change. The student-keyword volume is real and Flatmates doesn't compete there - that's the moat.
+- **University partnerships**: stay student-led. Student unions and university accommodation offices are still served - they just don't need to know the platform also serves professionals.
 
 Cursor flagged that professionals near campus may need different product treatment (room norms, age preferences, shared-space etiquette templates). This is real implementation scope that's not yet sized.
 
@@ -71,9 +71,9 @@ Cursor flagged that professionals near campus may need different product treatme
 
 Listing-tier landlords are upgraded through three mechanisms:
 
-1. **Booking-stage upgrade request** — primary trigger. Student requesting to book a Listing property checks: *"I'd like this to be a Quni Managed tenancy."* Landlord receives the booking request with the upgrade flag. Landlord clicks one of three buttons: *Accept as Managed (7%)*, *Accept as Listing ($99)*, or *Decline*. If Managed is accepted, the $99 Listing fee is waived (no double charging).
-2. **Search filter** — students can filter for "Quni Managed only" or sort with Managed properties prioritised. Listing-tier landlords see their conversion rate drop and self-select into upgrading.
-3. **In-product education** — landlord dashboard shows: *"X% of bookings on your listing requested Managed protection."*
+1. **Booking-stage upgrade request** - primary trigger. Student requesting to book a Listing property checks: *"I'd like this to be a Quni Managed tenancy."* Landlord receives the booking request with the upgrade flag. Landlord clicks one of three buttons: *Accept as Managed (7%)*, *Accept as Listing ($99)*, or *Decline*. If Managed is accepted, the $99 Listing fee is waived (no double charging).
+2. **Search filter** - students can filter for "Quni Managed only" or sort with Managed properties prioritised. Listing-tier landlords see their conversion rate drop and self-select into upgrading.
+3. **In-product education** - landlord dashboard shows: *"X% of bookings on your listing requested Managed protection."*
 
 ### Anti-circumvention: contact masking
 
@@ -92,14 +92,14 @@ When a landlord chooses Listing tier during onboarding, they see an explicit non
 
 > **What Quni Listing does NOT include**
 > Once your tenant is signed, you run the rest:
-> - **Rent collection** — your tenant pays you directly. Quni never touches the money.
-> - **Bond** — you lodge it yourself (NSW Fair Trading for private rooms; held by you for hosted rooms).
-> - **Disputes** — we don't mediate between you and your tenant.
-> - **Late rent or arrears** — chasing payment is on you.
-> - **Maintenance and repairs** — your tenant contacts you, not Quni.
-> - **Move-out and final bond** — final inspection and bond release are your responsibility.
+> - **Rent collection** - your tenant pays you directly. Quni never touches the money.
+> - **Bond** - you lodge it yourself (NSW Fair Trading for private rooms; held by you for hosted rooms).
+> - **Disputes** - we don't mediate between you and your tenant.
+> - **Late rent or arrears** - chasing payment is on you.
+> - **Maintenance and repairs** - your tenant contacts you, not Quni.
+> - **Move-out and final bond** - final inspection and bond release are your responsibility.
 >
-> *Want all of this handled? Choose **Quni Managed** — 7% per booking, full tenancy operations.*
+> *Want all of this handled? Choose **Quni Managed** - 7% per booking, full tenancy operations.*
 
 This protects against regulatory boundary creep and makes the upgrade pitch obvious. Cursor specifically recommended this surface live at onboarding rather than in Terms.
 
@@ -107,12 +107,12 @@ This protects against regulatory boundary creep and makes the upgrade pitch obvi
 
 ## How this layers onto existing architecture
 
-The service tier (Listing vs Managed) sits **above** the existing property tier classification (T1/T2/T3) — they're orthogonal:
+The service tier (Listing vs Managed) sits **above** the existing property tier classification (T1/T2/T3) - they're orthogonal:
 
 - **Property tier** = legal classification (boarder/lodger / RTA / boarding house). Already implemented via `private_room_landlord_on_site` field and `resolveTenancyPackage` in `api/lib/tenancy/rules/`.
 - **Service tier** = operational scope (Listing or Managed). New concept.
 
-A Tier 2 (RTA private room) property can be on either Listing or Managed. So can a Tier 1. The TenancyRules layer already returns `bondCopy`, `schemeApplies`, etc. based on property tier — service tier needs to layer on top, controlling the ops/payment workflow but not the legal document content.
+A Tier 2 (RTA private room) property can be on either Listing or Managed. So can a Tier 1. The TenancyRules layer already returns `bondCopy`, `schemeApplies`, etc. based on property tier - service tier needs to layer on top, controlling the ops/payment workflow but not the legal document content.
 
 This means existing files don't need to be torn up. The service tier is an additive layer.
 
@@ -122,66 +122,66 @@ This means existing files don't need to be torn up. The service tier is an addit
 
 ### New things to build
 
-1. **Database** — `service_tier` enum on tenancy and/or property record (`listing` | `managed`)
-2. **Database** — `upgrade_requested` boolean on booking record
-3. **Database** — `platform_config` entries: `contact_masking_enabled`, `service_tier_naming` (managed|complete), `quni_listing_fee_amount`, `quni_managed_fee_percentage`
-4. **Booking acceptance UI** — three-button accept screen for landlords with upgrade-flagged bookings
-5. **Listing onboarding** — non-goals screen for Listing-tier landlords
-6. **Listing card UI** — service tier badge ("Quni Managed" or no badge for Listing)
-7. **Search/filter** — students can filter or sort by service tier
-8. **Messaging masking** — regex layer applied to messages until booking accepted, controlled by `platform_config` flag
-9. **Admin dashboard** — toggle for contact masking (and other config-driven settings)
-10. **Fee resolution logic** — Listing fee charged or waived based on service tier outcome of booking acceptance
+1. **Database** - `service_tier` enum on tenancy and/or property record (`listing` | `managed`)
+2. **Database** - `upgrade_requested` boolean on booking record
+3. **Database** - `platform_config` entries: `contact_masking_enabled`, `service_tier_naming` (managed|complete), `quni_listing_fee_amount`, `quni_managed_fee_percentage`
+4. **Booking acceptance UI** - three-button accept screen for landlords with upgrade-flagged bookings
+5. **Listing onboarding** - non-goals screen for Listing-tier landlords
+6. **Listing card UI** - service tier badge ("Quni Managed" or no badge for Listing)
+7. **Search/filter** - students can filter or sort by service tier
+8. **Messaging masking** - regex layer applied to messages until booking accepted, controlled by `platform_config` flag
+9. **Admin dashboard** - toggle for contact masking (and other config-driven settings)
+10. **Fee resolution logic** - Listing fee charged or waived based on service tier outcome of booking acceptance
 
 ### Things to modify
 
-1. **Pricing page** (`/pricing`) — current page shows old fees and incorrect bond information ("held via Stripe"). Full rewrite needed. Mockups exist at `/mnt/user-data/outputs/quni-variant-{a,b}-blocks.html` for reference.
-2. **Homepage hero** — locked headline replaces current copy
-3. **Signup page** — Professional path equal weight, "preview the non-student landing page" link removed
-4. **Footer copy** — current "Premium student accommodation... student-focused" is now inconsistent
-5. **Landlord onboarding flow** — adds tier choice step (Listing vs Managed)
+1. **Pricing page** (`/pricing`) - current page shows old fees and incorrect bond information ("held via Stripe"). Full rewrite needed. Mockups exist at `/mnt/user-data/outputs/quni-variant-{a,b}-blocks.html` for reference.
+2. **Homepage hero** - locked headline replaces current copy
+3. **Signup page** - Professional path equal weight, "preview the non-student landing page" link removed
+4. **Footer copy** - current "Premium student accommodation... student-focused" is now inconsistent
+5. **Landlord onboarding flow** - adds tier choice step (Listing vs Managed)
 
 ### Things deliberately untouched
 
-1. Suburb/university SEO pages — stay student-led for keyword volume
-2. University partnerships outreach — stays student-led
-3. Tier 1/2/3 property classification — separate concept from service tier
-4. Existing TenancyRules layer — service tier sits above it, doesn't replace it
-5. Tier 3 (boarding house) — deferred per existing roadmap
+1. Suburb/university SEO pages - stay student-led for keyword volume
+2. University partnerships outreach - stays student-led
+3. Tier 1/2/3 property classification - separate concept from service tier
+4. Existing TenancyRules layer - service tier sits above it, doesn't replace it
+5. Tier 3 (boarding house) - deferred per existing roadmap
 
 ---
 
 ## What's still open
 
-1. **Tier name** — Managed vs Complete. Test running. Default to Managed in code; UI string driven by `platform_config.service_tier_naming` for easy switch.
-2. **Persona product scope** — room norms, age preferences, shared-space templates for professionals near campus. Not sized yet.
-3. **NSW Managed launch timing** — gated on Jenny's PSAA 2002 opinion.
-4. **Tiered pricing** — possible future move to 7% under 30 weeks / 5% over 30 weeks. Data-driven decision post-launch. Not at launch.
-5. **VIC Managed** — pending Victorian property lawyer engagement.
+1. **Tier name** - Managed vs Complete. Test running. Default to Managed in code; UI string driven by `platform_config.service_tier_naming` for easy switch.
+2. **Persona product scope** - room norms, age preferences, shared-space templates for professionals near campus. Not sized yet.
+3. **NSW Managed launch timing** - gated on Jenny's PSAA 2002 opinion.
+4. **Tiered pricing** - possible future move to 7% under 30 weeks / 5% over 30 weeks. Data-driven decision post-launch. Not at launch.
+5. **VIC Managed** - pending Victorian property lawyer engagement.
 
 ---
 
 ## Question for Cursor
 
-Given all of this, please review and advise. I'm not asking for any code yet — I want to lock the approach before any implementation.
+Given all of this, please review and advise. I'm not asking for any code yet - I want to lock the approach before any implementation.
 
-1. **Sequencing** — what order should these changes ship in? My instinct is:
+1. **Sequencing** - what order should these changes ship in? My instinct is:
    - First: contact masking + admin toggle (low risk, high defensive value, can ship invisibly)
-   - Second: pricing page rewrite (urgent — current page misrepresents fees and has the bond/Stripe error)
+   - Second: pricing page rewrite (urgent - current page misrepresents fees and has the bond/Stripe error)
    - Third: booking-stage upgrade flow (the feature that operationalises the demand-pull dynamic)
    - Fourth: non-goals onboarding screen + tier badge on listing cards
    - Last: filters + search ranking changes (only meaningful once supply has both tiers)
    
    Do you agree, or is there a dependency I'm missing?
 
-2. **Database schema** — should `service_tier` live on the property record, the tenancy record, or both? How does it interact with the existing `TenancyRules` resolver? My instinct: on the **booking** at acceptance time, denormalised onto the **tenancy** when created. Property record stays tier-agnostic so a landlord can switch a property between tiers without rewriting history.
+2. **Database schema** - should `service_tier` live on the property record, the tenancy record, or both? How does it interact with the existing `TenancyRules` resolver? My instinct: on the **booking** at acceptance time, denormalised onto the **tenancy** when created. Property record stays tier-agnostic so a landlord can switch a property between tiers without rewriting history.
 
-3. **Migration risk** — any existing properties or bookings need backfilling? What's the safest approach for production data?
+3. **Migration risk** - any existing properties or bookings need backfilling? What's the safest approach for production data?
 
-4. **Prompt slicing** — would you recommend one mega-prompt covering everything, or smaller prompts per feature? If sliced, which feature would you tackle first?
+4. **Prompt slicing** - would you recommend one mega-prompt covering everything, or smaller prompts per feature? If sliced, which feature would you tackle first?
 
-5. **Anything I'm missing** — is there anything in the existing codebase (the `TenancyRules` layer, the booking flow, the message system, Stripe Connect setup, DocuSeal integration) that would conflict with this model, or any failure modes you'd flag?
+5. **Anything I'm missing** - is there anything in the existing codebase (the `TenancyRules` layer, the booking flow, the message system, Stripe Connect setup, DocuSeal integration) that would conflict with this model, or any failure modes you'd flag?
 
-6. **Defaulting Cursor's earlier sharpening points** — Cursor previously recommended (a) the non-goals paragraph at Listing onboarding, (b) reconsidering tier naming because "Complete" is asymmetric, and (c) modelling support cost per tier and upgrade rate. Items (a) and (b) are reflected here. (c) is a behavioural model that's separate from this implementation work — agree it can wait until post-launch data?
+6. **Defaulting Cursor's earlier sharpening points** - Cursor previously recommended (a) the non-goals paragraph at Listing onboarding, (b) reconsidering tier naming because "Complete" is asymmetric, and (c) modelling support cost per tier and upgrade rate. Items (a) and (b) are reflected here. (c) is a behavioural model that's separate from this implementation work - agree it can wait until post-launch data?
 
-This is review-only. Don't implement anything yet — I want to lock sequencing and approach before any code changes happen.
+This is review-only. Don't implement anything yet - I want to lock sequencing and approach before any code changes happen.

@@ -1,4 +1,4 @@
-# Quni Listing — process from listing to booking confirmation
+# Quni Listing - process from listing to booking confirmation
 
 **Last updated:** June 2026  
 **Scope:** End-to-end flow for **Quni Listing** properties from a live listing through landlord acceptance and platform **booking confirmation** (`confirmed` status).  
@@ -11,7 +11,7 @@ For strategic tier context see [`dual-tier-service-model.md`](./dual-tier-servic
 
 ## Summary in one paragraph
 
-A landlord publishes a **Listing** property. A renter applies and authorises a **one-week rent deposit hold** on Quni (not captured). The landlord reviews the applicant on the **booking review** page and **accepts as Listing** once Stripe identity and a saved card are ready. Quni charges the landlord **$99** (unless fee-exempt), **releases** the renter’s deposit hold, moves the booking to **`bond_pending`**, emails both parties, and **sends the tenancy agreement for electronic signing** (DocuSeal). Bond is paid **off-platform** (renter’s choice: state bond authority or landlord, where the law requires a scheme). When the landlord records **bond received**, the booking becomes **`confirmed`**. Rent after that is between landlord and renter — Quni does not collect weekly rent on Listing.
+A landlord publishes a **Listing** property. A renter applies and authorises a **one-week rent deposit hold** on Quni (not captured). The landlord reviews the applicant on the **booking review** page and **accepts as Listing** once Stripe identity and a saved card are ready. Quni charges the landlord **$99** (unless fee-exempt), **releases** the renter’s deposit hold, moves the booking to **`bond_pending`**, emails both parties, and **sends the tenancy agreement for electronic signing** (DocuSeal). Bond is paid **off-platform** (renter’s choice: state bond authority or landlord, where the law requires a scheme). When the landlord records **bond received**, the booking becomes **`confirmed`**. Rent after that is between landlord and renter - Quni does not collect weekly rent on Listing.
 
 ---
 
@@ -48,11 +48,11 @@ stateDiagram-v2
     active --> completed: Tenancy ends
 ```
 
-**Column meaning:** `confirmed_at` is set when the landlord **accepts** (commitment timestamp). **`confirmed` status** on Listing means bond has been acknowledged on Quni — not the same moment as accept.
+**Column meaning:** `confirmed_at` is set when the landlord **accepts** (commitment timestamp). **`confirmed` status** on Listing means bond has been acknowledged on Quni - not the same moment as accept.
 
 ---
 
-## Phase 1 — Landlord publishes a Listing property
+## Phase 1 - Landlord publishes a Listing property
 
 | Step | Actor | What happens |
 |------|--------|----------------|
@@ -65,14 +65,14 @@ stateDiagram-v2
 
 ---
 
-## Phase 2 — Renter applies for the property
+## Phase 2 - Renter applies for the property
 
 | Step | Actor | What happens |
 |------|--------|----------------|
 | 2.1 | Renter | Views listing, may use AI chat, starts **Book** flow (`/book/:propertyId` or equivalent). |
 | 2.2 | Renter | Chooses move-in, lease length, occupants, rent payment preference (card via Quni or bank transfer where offered). |
 | 2.3 | Renter | **Bond step:** Acknowledges bond arrangements. For **statutory bond schemes** (e.g. standard NSW residential), copy explains the landlord must offer paying through the **state authority first**; renter may still pay the landlord directly. NSW links to [Rental Bonds Online](https://www.nsw.gov.au/housing-and-construction/renting/rental-bonds). |
-| 2.4 | Renter | Authorises Stripe **PaymentIntent** for **one week’s rent** as a **holding deposit** (`requires_capture` — not taken unless Managed accept path captures it). |
+| 2.4 | Renter | Authorises Stripe **PaymentIntent** for **one week’s rent** as a **holding deposit** (`requires_capture` - not taken unless Managed accept path captures it). |
 | 2.5 | System | Creates `bookings` row → status **`pending_confirmation`**, stores `service_tier_at_request`, deposit PI id, occupancy snapshot, etc. |
 | 2.6 | System | Notifies landlord (email + dashboard **Bookings**). |
 
@@ -80,7 +80,7 @@ stateDiagram-v2
 
 ---
 
-## Phase 3 — Landlord reviews the application
+## Phase 3 - Landlord reviews the application
 
 | Step | Actor | What happens |
 |------|--------|----------------|
@@ -96,7 +96,7 @@ All must pass (see `landlordBookingConfirmGate.ts`):
 | Requirement | Why |
 |-------------|-----|
 | Booking status `pending_confirmation` or `awaiting_info` | Only open applications |
-| **Stripe Connect** — `stripe_charges_enabled` | Identity verification for all landlords before accept |
+| **Stripe Connect** - `stripe_charges_enabled` | Identity verification for all landlords before accept |
 | **Listing billing module** enabled | Platform flag |
 | **Saved payment method** on landlord Stripe customer | **$99** acceptance fee charge |
 | Tier selected **Listing** in three-button UI when both tiers shown | State may hide Managed |
@@ -105,7 +105,7 @@ If blocked, the review page shows a specific message (e.g. “Verify with Stripe
 
 ---
 
-## Phase 4 — Landlord accepts as Listing (`bond_pending`)
+## Phase 4 - Landlord accepts as Listing (`bond_pending`)
 
 **API:** `POST /api/confirm-booking` with `{ booking_id, service_tier: "listing", actor: "landlord" }` → `runListingConfirmBooking()`.
 
@@ -125,12 +125,12 @@ If blocked, the review page shows a specific message (e.g. “Verify with Stripe
 
 | Recipient | Subject theme | Main content |
 |-----------|---------------|--------------|
-| Renter | Booking confirmed — arrange bond | Sign agreement (DocuSeal / dashboard); **bond payment options** (authority first, or pay host); deadline |
+| Renter | Booking confirmed - arrange bond | Sign agreement (DocuSeal / dashboard); **bond payment options** (authority first, or pay host); deadline |
 | Landlord | Listing booking confirmed | $99 charged; agreement signing; **bond legal obligations**; link to review page |
 
 ---
 
-## Phase 5 — Bond pending (`bond_pending`)
+## Phase 5 - Bond pending (`bond_pending`)
 
 Bond and rent are **off-platform** on Listing. Quni does not hold bond money.
 
@@ -155,11 +155,11 @@ Bond and rent are **off-platform** on Listing. Quni does not hold bond money.
 
 **Landlord review page** shows bond obligation callout when a statutory scheme applies (`LandlordListingBondObligations`).
 
-### Bond payment — legal pattern (scheme properties)
+### Bond payment - legal pattern (scheme properties)
 
 | Option | Who | Notes |
 |--------|-----|--------|
-| **1. Pay state bond authority** (offered **first**) | Renter | e.g. NSW Rental Bonds Online — landlord must **invite** tenant in NSW before online payment |
+| **1. Pay state bond authority** (offered **first**) | Renter | e.g. NSW Rental Bonds Online - landlord must **invite** tenant in NSW before online payment |
 | **2. Pay landlord directly** | Renter | Landlord must **lodge** with authority within statutory period and provide receipt |
 
 **Boarder/lodger (no scheme):** Bond is landlord-held; copy is pay host directly + receipt recommended.
@@ -172,7 +172,7 @@ Bond and rent are **off-platform** on Listing. Quni does not hold bond money.
 
 ---
 
-## Phase 6 — Booking confirmation on platform (`confirmed`)
+## Phase 6 - Booking confirmation on platform (`confirmed`)
 
 **API:** `POST /api/booking-mark-bond-received` → `runMarkBondReceivedLandlord()`.
 
@@ -247,7 +247,7 @@ If the landlord **accepts as Managed** (where available):
 ## Compliance notes (current product behaviour)
 
 1. **Agreement timing:** Signing is initiated at **landlord accept**, not gated on bond receipt. Bond receipt is tracked separately for booking state and reminders.  
-2. **Bond choice:** Where `schemeApplies` is true in tenancy rules, UI and emails present **authority-first, then pay landlord** — aligned with NSW Fair Trading / Service NSW guidance for Rental Bonds Online.  
+2. **Bond choice:** Where `schemeApplies` is true in tenancy rules, UI and emails present **authority-first, then pay landlord** - aligned with NSW Fair Trading / Service NSW guidance for Rental Bonds Online.  
 3. **Jenny / legal:** Per-state wording should be reviewed before marketing outside tested states; bond **lodgement** deadlines in copy come from `api/lib/tenancy/rules/`.
 
 ---

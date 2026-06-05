@@ -2,7 +2,7 @@ import type { Database } from './database.types'
 
 export const NON_DISCRIMINATION_POLICY_PATH = '/non-discrimination' as const
 
-/** Bump when policy text changes materially — landlords must re-accept. */
+/** Bump when policy text changes materially - landlords must re-accept. */
 export const NON_DISCRIMINATION_POLICY_VERSION = '2026-06-05'
 
 type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']

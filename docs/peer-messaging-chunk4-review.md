@@ -1,4 +1,4 @@
-# Peer messaging — chunk 4 review
+# Peer messaging - chunk 4 review
 
 **Scope:** Dashboard entry points; deprecate enquiry reply path in product UI.
 
@@ -12,8 +12,8 @@
 
 ## Already in chunk 3
 
-- `PropertyDetail` — Message landlord → conversation open
-- `Header` — Messages nav + unread badge
+- `PropertyDetail` - Message landlord → conversation open
+- `Header` - Messages nav + unread badge
 
 ## Manual smoke (optional)
 

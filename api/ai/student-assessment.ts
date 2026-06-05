@@ -1,5 +1,5 @@
 /**
- * Landlord student profile AI assessment (Anthropic Claude) — Vercel Edge.
+ * Landlord student profile AI assessment (Anthropic Claude) - Vercel Edge.
  * Env: ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
  *      SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY
  *

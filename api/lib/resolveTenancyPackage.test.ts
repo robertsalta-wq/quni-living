@@ -11,7 +11,7 @@ function pkg(p: TenancyPackageInput) {
 }
 
 describe('resolveTenancyPackage', () => {
-  describe('truth table — NSW', () => {
+  describe('truth table - NSW', () => {
     it('T1 private_room_landlord_on_site → nsw-occupancy, bond scheme off', () => {
       const r = pkg({
         state: 'NSW',
@@ -86,7 +86,7 @@ describe('resolveTenancyPackage', () => {
     })
   })
 
-  describe('truth table — VIC', () => {
+  describe('truth table - VIC', () => {
     it('T1 on_site → vic-occupancy, owner-held security deposit', () => {
       const r = pkg({
         state: 'VIC',
@@ -144,7 +144,7 @@ describe('resolveTenancyPackage', () => {
     })
   })
 
-  describe('truth table — QLD', () => {
+  describe('truth table - QLD', () => {
     it('T1 private_room_landlord_on_site → qld-occupancy, bond scheme on (RTA)', () => {
       const r = pkg({
         state: 'QLD',

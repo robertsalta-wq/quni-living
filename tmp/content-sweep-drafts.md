@@ -1,10 +1,10 @@
-# Content sweep — policy drafts for review
+# Content sweep - policy drafts for review
 
 These drafts are **not** yet merged into the live `/refunds` page or Terms §§ **6.1** / **7.3** (full prose).
 
 **Already shipped in code (for alignment):** Terms **§4.4** bond paragraph uses neutral custody language; **§6.4** links to `/refunds`; footer links **Refund Policy**; `/refunds` is a short placeholder until the tables below are approved and pasted in.
 
-**Revision (post-review):** Incorporated conduit-vs-custody wording, Table A/B edits, removal of implementation-detail wording from public copy, simplified §7.3, and a short **draft note** on Managed deposit/bond aligned with current product behaviour (for Table B language only — not legal advice).
+**Revision (post-review):** Incorporated conduit-vs-custody wording, Table A/B edits, removal of implementation-detail wording from public copy, simplified §7.3, and a short **draft note** on Managed deposit/bond aligned with current product behaviour (for Table B language only - not legal advice).
 
 ---
 
@@ -15,11 +15,11 @@ Use wherever tenancy-state neutral wording is required:
 > Bond is held by the landlord or lodged with the relevant state or territory bond authority, depending on your tenancy type. Quni does not hold bond money for any tenancy.
 
 **Listing vs Managed (conduit vs custody)**  
-On **Quni Listing**, bond and weekly rent are paid directly between landlord and renter; Quni does not route those tenancy funds. On **Quni Managed**, bond and rent may **pass through** Quni’s payment infrastructure for a limited time (for example card capture and settlement). That **conduit** role is **not** the same as Quni acting as bond custodian under state bond laws — ultimate lodgement and custody still follow the landlord or the relevant bond authority as the law requires.
+On **Quni Listing**, bond and weekly rent are paid directly between landlord and renter; Quni does not route those tenancy funds. On **Quni Managed**, bond and rent may **pass through** Quni’s payment infrastructure for a limited time (for example card capture and settlement). That **conduit** role is **not** the same as Quni acting as bond custodian under state bond laws - ultimate lodgement and custody still follow the landlord or the relevant bond authority as the law requires.
 
 ---
 
-## New `/refunds` page — proposed copy
+## New `/refunds` page - proposed copy
 
 ### Intro
 
@@ -27,7 +27,7 @@ Quni administers refunds and reversals for money **Quni actually receives** thro
 
 ---
 
-### Table A — Quni Listing (landlord acceptance fee)
+### Table A - Quni Listing (landlord acceptance fee)
 
 Applies to **landlords** on Quni Listing only. Renters pay **no** booking, platform, service, or surcharge fees to Quni.
 
@@ -35,22 +35,22 @@ Applies to **landlords** on Quni Listing only. Renters pay **no** booking, platf
 |-----------|-----------------------------------------------------------------------------|
 | Landlord declines the booking before acceptance | **Full refund** of any acceptance fee charged to the landlord in line with the decline flow. |
 | Duplicate / erroneous charge | **Full refund** after verification. |
-| Landlord accepted the booking; tenancy proceeds | **No refund** — the fee covers acceptance and platform use for that booking. |
+| Landlord accepted the booking; tenancy proceeds | **No refund** - the fee covers acceptance and platform use for that booking. |
 | Tenancy unwinds after acceptance (cancellation / mutual exit) | **Fee treatment** depends on what was charged and why the booking unwound; contact **hello@quni.com.au** with your booking reference. |
 
 _Note: Listing acceptance fees are not yet charged automatically at landlord confirm in all flows; until billing is fully wired, alignment with this table is handled case-by-case via **hello@quni.com.au**._
 
 ---
 
-### Table B — Quni Managed (tenancy money Quni routes)
+### Table B - Quni Managed (tenancy money Quni routes)
 
-Renters pay **no** booking, platform, service, or surcharge fees to Quni. On Managed, **weekly rent** includes a **service component** retained by Quni as disclosed on the pricing page — it is **not** an extra line item on top of rent charged to the renter.
+Renters pay **no** booking, platform, service, or surcharge fees to Quni. On Managed, **weekly rent** includes a **service component** retained by Quni as disclosed on the pricing page - it is **not** an extra line item on top of rent charged to the renter.
 
 | Situation | Deposit / rent |
 |-----------|------------------|
 | Booking declined or expires before landlord confirmation | **Deposit hold released or refunded** per automated flows where applicable; timing follows your bank/card network (typically **5–7 business days**). |
-| Booking confirmed; tenancy proceeds | **Deposit, bond, and ongoing rent after confirmation** are governed by your **tenancy agreement**, applicable law, and the payment flows you complete at booking — **not fully restated in this policy.** Use **hello@quni.com.au** for questions about **platform-side** payments or reversals. |
-| Booking cancelled **after** landlord confirmation | Same as row above: outcomes depend on tenancy terms, timing, and what has already been captured or paid — contact **hello@quni.com.au** for platform administration; bond and rent disputes outside money Quni custodies follow tribunal or authority processes. |
+| Booking confirmed; tenancy proceeds | **Deposit, bond, and ongoing rent after confirmation** are governed by your **tenancy agreement**, applicable law, and the payment flows you complete at booking - **not fully restated in this policy.** Use **hello@quni.com.au** for questions about **platform-side** payments or reversals. |
+| Booking cancelled **after** landlord confirmation | Same as row above: outcomes depend on tenancy terms, timing, and what has already been captured or paid - contact **hello@quni.com.au** for platform administration; bond and rent disputes outside money Quni custodies follow tribunal or authority processes. |
 | Charge error / duplicate | Corrected after verification. |
 
 ---
@@ -61,7 +61,7 @@ Cash bonds and tribunal outcomes are governed by **state or territory residentia
 
 ---
 
-### Draft note — Managed deposit & bond (product-aligned, for wording only)
+### Draft note - Managed deposit & bond (product-aligned, for wording only)
 
 _Use this internally so Table B stays accurate; do not paste verbatim as legal advice._
 
@@ -71,7 +71,7 @@ _Use this internally so Table B stays accurate; do not paste verbatim as legal a
 
 ---
 
-## Terms — proposed §§ 6.1, 6.4, 7.3 (replace existing paragraphs under those headings)
+## Terms - proposed §§ 6.1, 6.4, 7.3 (replace existing paragraphs under those headings)
 
 ### 6.1 Fees (replace “Platform Fees” heading label optional → “Fees”)
 

@@ -6,7 +6,7 @@
  * (Vercel rejects that basename collision for serverless routes).
  *
  * NSW RTA + Platform Addendum are **bundled** (theme + FT6600 strings inlined) so production
- * never depends on sibling files like quniDocumentPdfTheme.js — those were easy to omit from git
+ * never depends on sibling files like quniDocumentPdfTheme.js - those were easy to omit from git
  * or from Vercel's serverless file trace, causing ERR_MODULE_NOT_FOUND at render time.
  */
 import esbuild from 'esbuild'
@@ -20,7 +20,7 @@ const reactPdfExternals = ['react', 'react/jsx-runtime', '@react-pdf/renderer']
 
 const bundleJobs = [
   {
-    /** Source of truth for FT6600 PDF — not `NswResidentialTenancyAgreement_legacy.tsx`. */
+    /** Source of truth for FT6600 PDF - not `NswResidentialTenancyAgreement_legacy.tsx`. */
     inFile: 'src/lib/documents/NswResidentialTenancyAgreement.tsx',
     outFile: 'api/documents/NswResidentialTenancyAgreement.js',
   },

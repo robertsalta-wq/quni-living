@@ -13,7 +13,7 @@ export default function NswRentalBondOnlineLink({ when }: { when: boolean }) {
       >
         NSW Rental Bonds Online
       </a>
-      <span className="text-gray-600"> — information on lodgement and official receipts.</span>
+      <span className="text-gray-600"> - information on lodgement and official receipts.</span>
     </p>
   )
 }

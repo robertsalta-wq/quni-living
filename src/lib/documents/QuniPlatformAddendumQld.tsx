@@ -56,7 +56,7 @@ function formatAuDate(iso: string) {
 function yn(v: boolean | null) {
   if (v === true) return 'Yes'
   if (v === false) return 'No'
-  return '—'
+  return '-'
 }
 
 function formatBsbDisplay(raw: string) {
@@ -65,7 +65,7 @@ function formatBsbDisplay(raw: string) {
   return raw.trim()
 }
 
-/** Section 1 — Tenancy summary (two-column schedule table). */
+/** Section 1 - Tenancy summary (two-column schedule table). */
 function Section1TenancySummary(props: QuniPlatformAddendumProps) {
   const { landlord, tenant, premises, term, rent, bond, utilitiesDescription } = props
 
@@ -77,11 +77,11 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
     term.periodic || !term.endDate ? 'Periodic tenancy (no fixed end date)' : formatAuDate(term.endDate)
 
   const bondText =
-    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '—'
+    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '-'
 
   const rows: { label: string; value: ReactNode }[] = [
     { label: 'Property address:', value: premises.addressLine },
-    { label: 'Room type:', value: premises.roomType?.trim() || '—' },
+    { label: 'Room type:', value: premises.roomType?.trim() || '-' },
     { label: 'Landlord:', value: landlordDisplay },
     { label: 'Landlord email:', value: landlord.email },
     { label: 'Landlord phone:', value: landlord.phone },
@@ -111,7 +111,7 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
     { label: 'Weekly cleaning service:', value: yn(premises.weeklyCleaningService) },
     {
       label: 'Utilities / services (summary):',
-      value: utilitiesDescription.trim() || '—',
+      value: utilitiesDescription.trim() || '-',
     },
   )
 
@@ -123,7 +123,7 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 2 — Quni platform & service fee. */
+/** Section 2 - Quni platform & service fee. */
 function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
   const { rent, rentPaymentMethod, bankDetails } = props
   const entityName = resolvePlatformLegalEntityName(props.platformLegalName)
@@ -138,10 +138,10 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
   const bankName = bankDetails.bankName.trim()
 
   const bankRows: { label: string; value: string }[] = [
-    { label: 'Account name:', value: name || '—' },
-    { label: 'BSB:', value: bsb || '—' },
-    { label: 'Account number:', value: acct || '—' },
-    { label: 'Bank:', value: bankName || '—' },
+    { label: 'Account name:', value: name || '-' },
+    { label: 'BSB:', value: bsb || '-' },
+    { label: 'Account number:', value: acct || '-' },
+    { label: 'Bank:', value: bankName || '-' },
   ]
 
   const cardDomestic = `${props.cardSurchargeDomesticText ?? '1.7% + $0.30'} per transaction (domestic cards)`
@@ -180,7 +180,7 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
         <View style={[occupancyMatchPdf.noteBox, { marginTop: 6 }]}>
           <Text style={occupancyMatchPdf.noteItalicMuted}>
             The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card
-            payments incur a payment processing surcharge passed through at Stripe&apos;s actual cost — typically{' '}
+            payments incur a payment processing surcharge passed through at Stripe&apos;s actual cost - typically{' '}
             {cardDomestic}, or {cardInternational}. The agreed rent amount is unchanged; the surcharge is shown
             separately at checkout.
           </Text>
@@ -201,17 +201,17 @@ function Section2QuniPlatformAndFee(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 3 — Communication channels. */
+/** Section 3 - Communication channels. */
 function Section3CommunicationChannels(props: QuniPlatformAddendumProps) {
   const { emergencyContact, rentEnquiriesEmail, generalEnquiriesEmail, houseCommunicationsChannel } = props
 
   const rows: { label: string; value: string }[] = [
     { label: 'Maintenance portal (non-urgent requests):', value: QUNI_MAINTENANCE_PORTAL_URL },
-    { label: 'Emergency contact (urgent repairs):', value: emergencyContact.trim() || '—' },
+    { label: 'Emergency contact (urgent repairs):', value: emergencyContact.trim() || '-' },
     { label: 'Move-out notice form:', value: QUNI_MOVE_OUT_FORM_URL },
-    { label: 'Rent account enquiries:', value: rentEnquiriesEmail.trim() || '—' },
-    { label: 'General enquiries:', value: generalEnquiriesEmail.trim() || '—' },
-    { label: 'House communications:', value: houseCommunicationsChannel.trim() || '—' },
+    { label: 'Rent account enquiries:', value: rentEnquiriesEmail.trim() || '-' },
+    { label: 'General enquiries:', value: generalEnquiriesEmail.trim() || '-' },
+    { label: 'House communications:', value: houseCommunicationsChannel.trim() || '-' },
   ]
 
   return (
@@ -226,7 +226,7 @@ function Section3CommunicationChannels(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 4 — Maintenance & repairs. */
+/** Section 4 - Maintenance & repairs. */
 function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -239,8 +239,8 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        Urgent repairs that affect health, safety, or security — including burst pipes, electrical hazards, gas
-        smells, serious leaks, or a failure of essential services — must be reported immediately using the emergency
+        Urgent repairs that affect health, safety, or security - including burst pipes, electrical hazards, gas
+        smells, serious leaks, or a failure of essential services - must be reported immediately using the emergency
         contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons
         or property, the tenant should also follow any emergency services guidance (including 000 where appropriate).
       </Text>
@@ -261,7 +261,7 @@ function Section4MaintenanceAndRepairs(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 5 — Utilities & bills. */
+/** Section 5 - Utilities & bills. */
 function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -279,7 +279,7 @@ function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
       <Text style={occupancyMatchPdf.bodyParagraph}>
         Usage in excess of the quarterly allowance must be paid by the tenant within 14 days of invoice (or as
         otherwise agreed in writing). This is the tenant&apos;s payment timing for excess-usage amounts invoiced through
-        the platform — it is separate from the landlord&apos;s obligation under the Residential Tenancies and Rooming
+        the platform - it is separate from the landlord&apos;s obligation under the Residential Tenancies and Rooming
         Accommodation Act 2008 (Qld) (including provisions about utility charges) to give the tenant copies of relevant
         supplier account documents within <Text style={{ fontFamily: 'Helvetica-Bold' }}>4 weeks</Text> of the property
         manager/owner receiving them, where the tenant is required to pay for a utility service by reference to the
@@ -302,7 +302,7 @@ function Section5UtilitiesAndBills(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 6 — House rules. */
+/** Section 6 - House rules. */
 function Section6HouseRules(props: QuniPlatformAddendumProps) {
   const text = (props.houseRules ?? '').trim()
   if (!text) return null
@@ -340,7 +340,7 @@ function Section6HouseRules(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 7 — Mould prevention. */
+/** Section 7 - Mould prevention. */
 function Section7MouldPrevention(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -372,7 +372,7 @@ function Section7MouldPrevention(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 8 — Condition report (QLD: entry Form 1a, exit Form 14a; RTRA Act ss 65–66). */
+/** Section 8 - Condition report (QLD: entry Form 1a, exit Form 14a; RTRA Act ss 65–66). */
 function Section8ConditionReport(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -405,7 +405,7 @@ function Section8ConditionReport(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 9 — Move-out procedures. */
+/** Section 9 - Move-out procedures. */
 function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   const dailyRent = props.rent.weeklyRent / 7
   const lateCheckoutFeeText = props.moveOutLateCheckoutFeeText ?? '$50'
@@ -425,7 +425,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
     },
     {
       label: 'Late checkout (still occupying after midnight on vacate date)',
-      value: `Full day rent (${formatMoney(dailyRent)} — one-seventh of the agreed weekly rent)`,
+      value: `Full day rent (${formatMoney(dailyRent)} - one-seventh of the agreed weekly rent)`,
     },
     {
       label: 'Linen replacement if significantly damaged',
@@ -459,7 +459,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: 'Helvetica-Bold' }]}>
-        Cleaning checklist — the tenant must leave the room in the following condition:
+        Cleaning checklist - the tenant must leave the room in the following condition:
       </Text>
       <View style={{ marginBottom: 6, paddingLeft: 4 }}>
         <Text style={occupancyMatchPdf.bodyParagraph}>
@@ -478,7 +478,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: 'Helvetica-Bold' }]}>
-        Fee schedule (indicative — charged only where applicable and lawfully recoverable):
+        Fee schedule (indicative - charged only where applicable and lawfully recoverable):
       </Text>
       <OccupancyMatchScheduleTable rows={feeRows.map((r) => ({ label: r.label, value: r.value }))} />
 
@@ -492,7 +492,7 @@ function Section9MoveOutProcedures(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 10 — Bond. */
+/** Section 10 - Bond. */
 function Section10Bond(props: QuniPlatformAddendumProps) {
   const bond = props.bond.amount
   return (
@@ -521,18 +521,18 @@ function Section10Bond(props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 11 — Inspections & access. */
+/** Section 11 - Inspections & access. */
 function Section11InspectionsAndAccess(_props: QuniPlatformAddendumProps) {
   const noticeRows: { purpose: string; notice: string }[] = [
     { purpose: 'Emergency repairs', notice: 'No notice required' },
     { purpose: 'Non-urgent repairs', notice: '24 hours (Form 9 entry notice)' },
     {
       purpose: 'Routine inspection',
-      notice: '7 days (Form 9) — not more than once every 3 months unless agreed in writing',
+      notice: '7 days (Form 9) - not more than once every 3 months unless agreed in writing',
     },
     {
       purpose: 'Show premises to prospective purchaser/tenant',
-      notice: "24 hours (Form 9) — subject to RTRA Act limits on frequency and 'reasonable time' rules",
+      notice: "24 hours (Form 9) - subject to RTRA Act limits on frequency and 'reasonable time' rules",
     },
     {
       purpose: 'Property valuation',
@@ -600,7 +600,7 @@ function Section11InspectionsAndAccess(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 12 — Termination (QLD reletting costs: ss 357A & 362 RTRA Act; official RTA guidance). */
+/** Section 12 - Termination (QLD reletting costs: ss 357A & 362 RTRA Act; official RTA guidance). */
 function Section12Termination(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -627,7 +627,7 @@ function Section12Termination(_props: QuniPlatformAddendumProps) {
 
       <Text style={[occupancyMatchPdf.bodyParagraph, { marginTop: 6 }]}>
         <Text style={{ fontFamily: 'Helvetica-Bold' }}>Leaving a fixed-term agreement early (reletting costs)</Text>
-        {' — '}If a tenant ends a fixed-term general tenancy agreement early without lawful grounds, liability for costs must
+        {' - '}If a tenant ends a fixed-term general tenancy agreement early without lawful grounds, liability for costs must
         be worked out under Queensland law. <Text style={{ fontFamily: 'Helvetica-Bold' }}>Section 357A</Text> of the
         Residential Tenancies and Rooming Accommodation Act 2008 (Qld) sets limits on how reletting costs may be agreed and
         calculated. <Text style={{ fontFamily: 'Helvetica-Bold' }}>Section 362</Text> requires the lessor to take all
@@ -653,7 +653,7 @@ function Section12Termination(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 13 — Disputes. */
+/** Section 13 - Disputes. */
 function Section13Disputes(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -680,7 +680,7 @@ function Section13Disputes(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 14 — Privacy. */
+/** Section 14 - Privacy. */
 function Section14Privacy(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -702,7 +702,7 @@ function Section14Privacy(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 15 — Electronic execution. */
+/** Section 15 - Electronic execution. */
 function Section15ElectronicExecution(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -723,7 +723,7 @@ function Section15ElectronicExecution(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 16 — Special conditions. */
+/** Section 16 - Special conditions. */
 function Section16SpecialConditions(_props: QuniPlatformAddendumProps) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -753,7 +753,7 @@ function Section16SpecialConditions(_props: QuniPlatformAddendumProps) {
   )
 }
 
-/** Section 17 — Execution (signatures). */
+/** Section 17 - Execution (signatures). */
 function Section17Execution(props: QuniPlatformAddendumProps) {
   const landlordDisplay = props.landlord.companyName
     ? `${props.landlord.fullName} (${props.landlord.companyName})`

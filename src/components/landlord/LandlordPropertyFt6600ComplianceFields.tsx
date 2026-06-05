@@ -280,7 +280,7 @@ export default function LandlordPropertyFt6600ComplianceFields({
         <YesNoField
           id="ft6600-strata-oc"
           label="Is the owners corporation responsible for smoke alarm repair and replacement?"
-          helperText="In some schemes the owners corporation maintains alarms in each lot. Check your by-laws or strata manager — if Yes, those duties sit with the OC, not you."
+          helperText="In some schemes the owners corporation maintains alarms in each lot. Check your by-laws or strata manager - if Yes, those duties sit with the OC, not you."
           value={form.strataOcResponsibleForAlarms}
           onChange={(v) =>
             onChange({

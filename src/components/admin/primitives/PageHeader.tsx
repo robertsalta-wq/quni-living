@@ -5,7 +5,7 @@ export interface AdminPageHeaderProps {
   title: string
   /** Optional 14px subtitle below the title. */
   subtitle?: ReactNode
-  /** Optional eyebrow row above the title — pills, status, "Last saved" text, etc. */
+  /** Optional eyebrow row above the title - pills, status, "Last saved" text, etc. */
   eyebrow?: ReactNode
   /** Optional right-aligned action row (buttons, badges). */
   actions?: ReactNode
@@ -14,7 +14,7 @@ export interface AdminPageHeaderProps {
 }
 
 /**
- * Standard page header for the admin redesign — used by Bookings, Pricing, and
+ * Standard page header for the admin redesign - used by Bookings, Pricing, and
  * every legacy page swept in PR 6.
  *
  * Visual contract (HANDOFF §3):

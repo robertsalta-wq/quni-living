@@ -1,4 +1,4 @@
-// Overview — "The Living Console"
+// Overview - "The Living Console"
 // Editorial hero, ATTENTION strip, 6 zones, Marketplace Pulse.
 
 function OverviewPage({ onNavigate }) {
@@ -165,7 +165,7 @@ const ZONES = [
     title: 'Platform', entry: 'apps', eyebrow: 'Config · Integrations', icon: 'package', iconTone: 'cream',
     spark: [1,1,1,1,1,1,1], sparkColor: C.navy,
     rows: [
-      { tone: 'ok', text: 'DocuSeal · Stripe · Resend · Sentry — all green' },
+      { tone: 'ok', text: 'DocuSeal · Stripe · Resend · Sentry - all green' },
       { tone: 'ok', text: '0 domains expiring ≤ 30 days' },
       { tone: 'watch', text: 'Knowledge base last edited 3d ago' },
     ],

@@ -13,12 +13,12 @@ alter table public.student_profiles
 alter table public.student_profiles
   add column if not exists identity_supporting_submitted_at timestamptz;
 
--- Chosen onboarding path (written when user answers the fork — not verification completion).
+-- Chosen onboarding path (written when user answers the fork - not verification completion).
 alter table public.student_profiles
   add column if not exists accommodation_verification_route text
     check (accommodation_verification_route is null or accommodation_verification_route in ('student', 'identity'));
 
-comment on column public.student_profiles.verification_type is 'student | identity | none — single source of truth for access and badges; set only when that tier is fully complete.';
+comment on column public.student_profiles.verification_type is 'student | identity | none - single source of truth for access and badges; set only when that tier is fully complete.';
 comment on column public.student_profiles.accommodation_verification_route is 'student vs identity verification path chosen during onboarding; distinct from verification_type.';
 
 -- Backfill verification_type (full student stack only).

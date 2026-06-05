@@ -1,5 +1,5 @@
 /**
- * Listing-tier bond payment guidance — statutory scheme vs landlord-held.
+ * Listing-tier bond payment guidance - statutory scheme vs landlord-held.
  * NSW: tenant may pay via Rental Bonds Online (landlord must offer first) or pay landlord directly.
  */
 import type { TenancyBondRules } from './rules/types.js'
@@ -45,8 +45,8 @@ export function listingBondPaymentTenantGuidance(
     st === 'NSW'
       ? 'For Rental Bonds Online, your host must send you an RBO invitation email first. You can then pay by card or BPAY. Your host cannot require you to use RBO only.'
       : st === 'QLD'
-        ? 'You can lodge and pay bond through the RTA web service, or pay your host directly — it is your choice.'
-        : 'You can pay bond through the state bond authority’s online service where available, or pay your host directly — it is your choice.'
+        ? 'You can lodge and pay bond through the RTA web service, or pay your host directly - it is your choice.'
+        : 'You can pay bond through the state bond authority’s online service where available, or pay your host directly - it is your choice.'
 
   return {
     schemeApplies: true,
@@ -94,10 +94,10 @@ export function listingBondPaymentEmailHtmlForTenant(
   const g = listingBondPaymentTenantGuidance(bond, stateCode)
   if (!g) return null
   const note = g.directPayNote ? `<p style="font-size:14px;color:#555;margin-top:8px;">${escapeHtml(g.directPayNote)}</p>` : ''
-  return `<p><strong>Bond — your choice:</strong></p>
+  return `<p><strong>Bond - your choice:</strong></p>
 <ol style="margin:12px 0;padding-left:20px;font-size:15px;line-height:1.5;">
   <li style="margin-bottom:8px;"><strong>Pay through ${escapeHtml(g.authorityLabel)}</strong> (offered first): <a href="${escapeHtml(g.directPayLinkUrl)}" style="color:#FF6F61;font-weight:600;">${escapeHtml(g.directPayLinkLabel)}</a></li>
-  <li><strong>Pay your host directly</strong> (bank transfer, cash, or as agreed) — they must lodge with ${escapeHtml(g.authorityLabel)} within ${escapeHtml(g.lodgementDeadlinePhrase)} and give you a receipt.</li>
+  <li><strong>Pay your host directly</strong> (bank transfer, cash, or as agreed) - they must lodge with ${escapeHtml(g.authorityLabel)} within ${escapeHtml(g.lodgementDeadlinePhrase)} and give you a receipt.</li>
 </ol>${note}`
 }
 
@@ -107,7 +107,7 @@ export function listingBondPaymentEmailHtmlForLandlord(
 ): string | null {
   const o = listingBondPaymentLandlordObligations(bond, stateCode)
   if (!o) return null
-  return `<p><strong>Bond — your legal obligations:</strong></p>
+  return `<p><strong>Bond - your legal obligations:</strong></p>
 <ul style="margin:12px 0;padding-left:20px;font-size:15px;line-height:1.5;">
   <li style="margin-bottom:8px;">${escapeHtml(o.mustOfferAuthorityFirst)}</li>
   <li>${escapeHtml(o.ifPaidToLandlord)} <a href="${escapeHtml(o.authorityUrl)}" style="color:#FF6F61;font-weight:600;">${escapeHtml(o.authorityLabel)}</a></li>

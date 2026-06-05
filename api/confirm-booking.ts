@@ -1,4 +1,4 @@
-// @ts-nocheck — Landlord booking confirm: Listing (fee + bond_pending) or Managed (existing subscription path).
+// @ts-nocheck - Landlord booking confirm: Listing (fee + bond_pending) or Managed (existing subscription path).
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'

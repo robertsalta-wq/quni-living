@@ -1,5 +1,5 @@
 /**
- * AI listing description (Anthropic Claude) — Vercel Edge.
+ * AI listing description (Anthropic Claude) - Vercel Edge.
  * Env: ANTHROPIC_API_KEY
  */
 import {

@@ -194,7 +194,7 @@ export function StudentUniEmailVerification({
           <p className="text-sm text-gray-600 mb-2">
             We sent a code to {uniEmailInput.trim().toLowerCase()}. It often arrives within a minute, but{' '}
             <strong className="font-semibold text-stone-700">Gmail and other providers sometimes delay</strong>{' '}
-            the first messages from a new sender (greylisting) — <strong>5–10 minutes</strong> is still normal.
+            the first messages from a new sender (greylisting) - <strong>5–10 minutes</strong> is still normal.
           </p>
           <div className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4">
             <p className="font-semibold text-stone-800">While you wait</p>
@@ -204,7 +204,7 @@ export function StudentUniEmailVerification({
                 inbox for <strong>Quni</strong> or <strong>verification</strong>.
               </li>
               <li>
-                Avoid tapping <strong>Resend</strong> too often — each send creates a <strong>new</strong> code and only
+                Avoid tapping <strong>Resend</strong> too often - each send creates a <strong>new</strong> code and only
                 the <strong>latest</strong> email will work.
               </li>
               <li>

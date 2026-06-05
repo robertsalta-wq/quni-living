@@ -86,7 +86,7 @@ create policy "Platform admins select all student_profiles"
   on public.student_profiles for select
   using (public.is_platform_admin());
 
--- Landlord profiles (verified toggle — public already has select true)
+-- Landlord profiles (verified toggle - public already has select true)
 drop policy if exists "Platform admins update all landlord_profiles" on public.landlord_profiles;
 
 create policy "Platform admins update all landlord_profiles"

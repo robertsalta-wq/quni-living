@@ -72,7 +72,7 @@ export function StudentWorkLocationSection({ profile, userId, onSaved }: Props) 
       const pt = await geocodeFirstMatch(queries)
       if (!pt) {
         setSaveError(
-          'We could not find that location. Check suburb, state and postcode — add a street address for a more precise pin.',
+          'We could not find that location. Check suburb, state and postcode - add a street address for a more precise pin.',
         )
         return
       }
@@ -114,7 +114,7 @@ export function StudentWorkLocationSection({ profile, userId, onSaved }: Props) 
     <section className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Work location</h2>
       <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-        Optional. Save where you work or commute from — used to sort listings by approximate distance.{' '}
+        Optional. Save where you work or commute from - used to sort listings by approximate distance.{' '}
         {STRAIGHT_LINE_DISTANCE_NOTE}
       </p>
 

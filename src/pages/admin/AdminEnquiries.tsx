@@ -129,8 +129,8 @@ export default function AdminEnquiries() {
                   return (
                     <tr key={row.id}>
                       <td className={adminTdClass}>
-                        <span className="font-medium text-gray-900">{row.name?.trim() || '—'}</span>
-                        <span className="block text-xs text-gray-500">{row.email?.trim() || '—'}</span>
+                        <span className="font-medium text-gray-900">{row.name?.trim() || '-'}</span>
+                        <span className="block text-xs text-gray-500">{row.email?.trim() || '-'}</span>
                       </td>
                       <td className={adminTdClass}>
                         {prop ? (
@@ -141,7 +141,7 @@ export default function AdminEnquiries() {
                             ) : null}
                           </>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={`${adminTdClass} max-w-xs`}>

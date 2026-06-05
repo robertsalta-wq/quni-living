@@ -1,7 +1,7 @@
 -- Qase row-level security.
 --
 -- Edge Functions and server jobs that use the Supabase **service_role** API key
--- bypass RLS. Inbound email and other automations must use that key — never the
+-- bypass RLS. Inbound email and other automations must use that key - never the
 -- anon or end-user JWT for privileged writes.
 --
 -- The **anon** role has no policies on qase_* tables here, so anonymous clients

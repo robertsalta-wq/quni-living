@@ -246,7 +246,7 @@ export default function Listings() {
             role="status"
           >
             <span className="font-semibold text-stone-900">Welcome!</span>{' '}
-            Your profile is ready — explore listings matched to what you told us.
+            Your profile is ready - explore listings matched to what you told us.
           </div>
         )}
         {showProfessionalVerificationHint && (

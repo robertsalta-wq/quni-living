@@ -1,5 +1,5 @@
 /**
- * FCM HTTP v1 — topic notification using a Firebase service account JSON (no firebase-admin SDK).
+ * FCM HTTP v1 - topic notification using a Firebase service account JSON (no firebase-admin SDK).
  */
 import { SignJWT, importPKCS8 } from 'https://esm.sh/jose@5.9.6'
 

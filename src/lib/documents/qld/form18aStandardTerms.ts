@@ -1,11 +1,11 @@
 /**
- * Form 18a — Part 2 Standard Terms only (verbatim).
+ * Form 18a - Part 2 Standard Terms only (verbatim).
  *
  * Source: RTA Queensland "General tenancy agreement (Form 18a)" PDF.
  * Retrieved from https://www.rta.qld.gov.au/sites/default/files/2021-06/Form-18a-General-tenancy-agreement.pdf
  * Extracted text identifies version v23 Sep25.
  *
- * Do not edit prescribed wording — regenerate from PDF via scripts/generate-form18a-standard-terms.mjs if RTA updates the form.
+ * Do not edit prescribed wording - regenerate from PDF via scripts/generate-form18a-standard-terms.mjs if RTA updates the form.
  */
 
 export const FORM18A_PART2_STANDARD_TERMS = `Part 2 Standard Terms
@@ -48,9 +48,9 @@ report to the lessor or lessor’s agent under section 65.
 obligations under this agreement.
 (3) Each tenant named in item 2 –
 (a) holds their interest in the tenancy –
-(i) if a special term states the tenants are joint tenants—as
+(i) if a special term states the tenants are joint tenants-as
 a joint tenant; or
-(ii) otherwise—as a tenant in common; and
+(ii) otherwise-as a tenant in common; and
 (b) must perform all the tenant’s obligations under this agreement.
 Division 2 Entering tenancy
 4 	Start of tenancy
@@ -458,7 +458,7 @@ the premises only if –
 for approval to attach the fixture or make the structural
 change; and
 (b) the lessor agrees to the request; and
-(c) for body corporate premises—the body corporate agrees to
+(c) for body corporate premises-the body corporate agrees to
 the request; and
 (d) the fixture is attached, or structural change is made, in
 accordance with the lessor’s agreement.
@@ -469,7 +469,7 @@ the fixture to a wall.
 (2) The lessor must –
 (a) decide the request –
 (i) within 28 days after receiving the request; or
-(ii) if the premises are not body corporate premises—within
+(ii) if the premises are not body corporate premises-within
 a longer period, if agreed to by the tenant and lessor; and
 (b) advise the tenant of the lessor’s decision; and
 (c) if the lessor agrees to the request and the premises are body

@@ -1,5 +1,5 @@
 /**
- * VIC on-site licence to occupy (T1 boarder/lodger) — Part A review PDF.
+ * VIC on-site licence to occupy (T1 boarder/lodger) - Part A review PDF.
  */
 import type { OccupancyAgreementProps } from '../../../../api/documents/rtaTypes.js'
 import { LicenceOccupyDocument } from '../licenceOccupy/LicenceOccupyDocument.js'

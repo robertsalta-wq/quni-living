@@ -1,7 +1,7 @@
 # FT6600 corrected field-name map (verified by position)
 
 131 fields mapped · 0 duplicates · **103 names corrected**, 28 already right.
-`made_on_spare_unused` = unlabelled spacer box on p1 — must be left EMPTY.
+`made_on_spare_unused` = unlabelled spacer box on p1 - must be left EMPTY.
 Signature widgets (type Signature) are driven by the DocuSeal overlay, not AcroForm fill.
 
 | Page | Correct name | Type | Was (wrong) name |

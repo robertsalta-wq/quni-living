@@ -5,7 +5,7 @@ function blurActiveElement(): void {
   }
 }
 
-/** Scroll the document to the top — retries help after layout shifts on mobile Safari. */
+/** Scroll the document to the top - retries help after layout shifts on mobile Safari. */
 export function scrollWindowToTop(behavior: ScrollBehavior = 'auto'): void {
   blurActiveElement()
 

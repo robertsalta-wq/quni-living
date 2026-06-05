@@ -1,7 +1,7 @@
 /**
  * Admin UI primitives barrel.
  *
- * Page code imports from `src/components/admin/primitives` only — never
+ * Page code imports from `src/components/admin/primitives` only - never
  * directly from a primitive file. Keeps the surface narrow and rename-safe.
  */
 export { Button } from './Button'

@@ -1,4 +1,4 @@
-# Professional / workplace location search — scope
+# Professional / workplace location search - scope
 
 **Status:** Phase 1 (R1) **implemented** · Phase 2 (R2) **implemented** (apply migration `20260602120000_workplace_location_and_near_point.sql` in Supabase)  
 **Context:** Hero and strategy copy promise *“near your university or workplace”*, but search/onboarding remain campus-first. Non-students (`accommodation_verification_route = 'non_student'`) have no workplace anchor and cannot sort by distance to work.  
@@ -10,10 +10,10 @@
 
 | # | Decision | Rationale |
 |---|----------|-----------|
-| 1 | **Workplace saved on profile only** — not onboarding step 1 | Signup friction; many professionals want to browse before committing. Optional profile field + contextual UI nudge, not a blocking onboarding step. |
-| 2 | **University/campus filters hidden for professionals** | Professionals don’t have a university; campus dropdowns feel off-brand. **Edge case:** UNSW staff (etc.) set **UNSW as their workplace address** in Phase 2 — not via campus filters. |
+| 1 | **Workplace saved on profile only** - not onboarding step 1 | Signup friction; many professionals want to browse before committing. Optional profile field + contextual UI nudge, not a blocking onboarding step. |
+| 2 | **University/campus filters hidden for professionals** | Professionals don’t have a university; campus dropdowns feel off-brand. **Edge case:** UNSW staff (etc.) set **UNSW as their workplace address** in Phase 2 - not via campus filters. |
 | 3 | **Default search radius 15 km**; UI options **5 / 10 / 15 / 25 km** | Fits Sydney sprawl: 5 km too tight, 25 km too broad. |
-| 4 | **Guests: one-off “near address” without login — yes, URL only** | Lowers hero → first-listing friction; nothing persisted; no privacy issue. Pre-signup taste of distance search. *(Phase 2 — requires geocode + `near_*` URL params.)* |
+| 4 | **Guests: one-off “near address” without login - yes, URL only** | Lowers hero → first-listing friction; nothing persisted; no privacy issue. Pre-signup taste of distance search. *(Phase 2 - requires geocode + `near_*` URL params.)* |
 | 5 | **Release: Phase 1 standalone, then Phase 2 later** | Phase 1 ~1 day = quick credibility fix. Phase 2 ~4–6 days = separate release once real professional signups inform spec, not guesswork. |
 
 **Still locked from draft (not re-litigated)**
@@ -21,7 +21,7 @@
 | Topic | Decision |
 |-------|----------|
 | Landlord applicant views | Workplace fields **not** shown to landlords in Phase 2 (search-private). |
-| Suburb-only workplace save | **Yes** — suburb + state + postcode minimum; street optional; centroid geocode with “approximate area” copy. |
+| Suburb-only workplace save | **Yes** - suburb + state + postcode minimum; street optional; centroid geocode with “approximate area” copy. |
 | Distance type | Straight-line km only; never driving/transit time in copy. |
 
 ---
@@ -41,7 +41,7 @@
 - Driving/transit commute times (Google Directions, Mapbox Isochrone)
 - Workplace shown on landlord applicant cards (unless explicitly added later)
 - Replacing campus SEO pages or university-first acquisition
-- Third renter persona in DB (`graduate` etc.) — still `student` vs `non_student`
+- Third renter persona in DB (`graduate` etc.) - still `student` vs `non_student`
 
 ---
 
@@ -57,15 +57,15 @@ flowchart LR
 
 | Release | Scope | When |
 |---------|--------|------|
-| **R1 — Phase 1 only** | Persona-aware labels; hide uni/campus for professionals; suburb-first browse | **Next build** (~1 day dev) |
-| **R2 — Phase 2** | Profile work location, geocode, `properties_near_point`, distance sort, guest URL `near_*` | **After R1 + early professional feedback** |
-| **R3 — Phase 3** | Autocomplete, defaults, map, etc. | Post-launch, pick items |
+| **R1 - Phase 1 only** | Persona-aware labels; hide uni/campus for professionals; suburb-first browse | **Next build** (~1 day dev) |
+| **R2 - Phase 2** | Profile work location, geocode, `properties_near_point`, distance sort, guest URL `near_*` | **After R1 + early professional feedback** |
+| **R3 - Phase 3** | Autocomplete, defaults, map, etc. | Post-launch, pick items |
 
 **Do not bundle Phase 1 and Phase 2** in one release unless explicitly re-scoped.
 
 ---
 
-## 3. Phase 1 — Persona-aware search (R1)
+## 3. Phase 1 - Persona-aware search (R1)
 
 **~1 day** · No new DB · No geocode
 
@@ -77,12 +77,12 @@ flowchart LR
 | Home uni + campus dropdowns | Shown | **Hidden** (not collapsed optional) |
 | Listings sidebar search placeholder | “Suburb or keyword…” | “Suburb or area…” |
 | Listings uni + campus filters | Shown | **Hidden** |
-| Onboarding step 1 | Unchanged (no workplace fields, no work-location CTA) | Unchanged — browse-first; workplace is Phase 2 profile |
+| Onboarding step 1 | Unchanged (no workplace fields, no work-location CTA) | Unchanged - browse-first; workplace is Phase 2 profile |
 
 ### Implementation notes
 
 - Persona: `isNonStudentAccommodationRoute(profile.accommodation_verification_route)`.
-- **Guests:** keep **student-style** search (uni/campus visible) — guest one-off near-address is **Phase 2**.
+- **Guests:** keep **student-style** search (uni/campus visible) - guest one-off near-address is **Phase 2**.
 - **No** geocode, migration, or URL `near_*` params in Phase 1.
 
 ### Phase 1 acceptance
@@ -92,7 +92,7 @@ flowchart LR
 - [x] Student and guest flows unchanged vs today.
 - [x] Hero/subhead no longer contradicted by forced campus UI for professionals.
 
-### Phase 1 — explicitly out of scope
+### Phase 1 - explicitly out of scope
 
 - Saving workplace on profile  
 - Distance sort / `near_lat` URL params  
@@ -101,7 +101,7 @@ flowchart LR
 
 ---
 
-## 4. Phase 2 — Workplace anchor + distance search (R2)
+## 4. Phase 2 - Workplace anchor + distance search (R2)
 
 **~4–6 days** · Separate release after Phase 1
 
@@ -122,7 +122,7 @@ flowchart LR
 
 **Where users set it:** **Profile only** (dedicated “Work location” section). Optional; never required to finish onboarding.
 
-**Contextual nudge (not onboarding):** e.g. on Listings for professionals without saved workplace — *“Set your work location to see nearby listings”* → Profile (or inline modal that writes to profile).
+**Contextual nudge (not onboarding):** e.g. on Listings for professionals without saved workplace - *“Set your work location to see nearby listings”* → Profile (or inline modal that writes to profile).
 
 **UNSW / uni staff edge case:** User enters workplace as **UNSW Kensington** (address), not campus filter. Distance anchor = geocoded workplace.
 
@@ -132,7 +132,7 @@ flowchart LR
 
 - Reuse `GET /api/geocode?q=…` + `buildGeocodeQueryCandidates` / `streetLineForGeocode`.
 - Minimum **suburb + state + postcode**; street optional.
-- Copy: *“Approximate distance — straight line, not driving time.”* Suburb-only → *“Approximate area”* where relevant.
+- Copy: *“Approximate distance - straight line, not driving time.”* Suburb-only → *“Approximate area”* where relevant.
 
 ### 4.3 Database RPC
 
@@ -141,7 +141,7 @@ flowchart LR
 -- Same Haversine as properties_near_campus; grant anon + authenticated.
 ```
 
-Keep `properties_near_campus` for SEO — no breaking change.
+Keep `properties_near_campus` for SEO - no breaking change.
 
 **Radius:** default **15 km**; filter UI **5 / 10 / 15 / 25 km**.
 
@@ -156,7 +156,7 @@ Keep `properties_near_campus` for SEO — no breaking change.
 | `near_radius` | `15` | km; default **15** if omitted |
 | `sort` | `distance` | Sort by distance |
 
-**Guests:** may land on `/listings?near_lat=…&near_lon=…` from hero — **URL only**, nothing saved to DB or localStorage (session navigation only; optional `sessionStorage` for same-tab convenience is OK if clearly non-persistent).
+**Guests:** may land on `/listings?near_lat=…&near_lon=…` from hero - **URL only**, nothing saved to DB or localStorage (session navigation only; optional `sessionStorage` for same-tab convenience is OK if clearly non-persistent).
 
 **Logged-in professionals**
 
@@ -197,7 +197,7 @@ Distance sort requires property `latitude` / `longitude`. Plan optional backfill
 
 ---
 
-## 5. Phase 3 — Polish (optional)
+## 5. Phase 3 - Polish (optional)
 
 **~3–5 days** · After R2
 
@@ -240,8 +240,8 @@ Distance sort requires property `latitude` / `longitude`. Plan optional backfill
 
 | Release | Dev (est.) | QA | Notes |
 |---------|------------|-----|-------|
-| **R1 — Phase 1** | 0.5–1 d | 0.5 d | **Shipped** (`useRenterSearchPersona`, Home, Listings) |
-| **R2 — Phase 2** | 4–6 d | 1–2 d | After R1 + feedback |
+| **R1 - Phase 1** | 0.5–1 d | 0.5 d | **Shipped** (`useRenterSearchPersona`, Home, Listings) |
+| **R2 - Phase 2** | 4–6 d | 1–2 d | After R1 + feedback |
 | Phase 3 | 3–5 d | 1 d | Optional |
 
 R2 may add **0.5–1 d** for listing coordinate backfill if needed.
@@ -265,11 +265,11 @@ R2 may add **0.5–1 d** for listing coordinate backfill if needed.
 ### R1 (Phase 1 only)
 
 1. Shared helper: `useRenterSearchPersona()` or equivalent (professional vs student vs guest).
-2. `Home.tsx` — conditional labels + hide `UniversityCampusSelect` for professionals.
-3. `Listings.tsx` — hide uni/campus filters for professionals; update placeholders.
+2. `Home.tsx` - conditional labels + hide `UniversityCampusSelect` for professionals.
+3. `Listings.tsx` - hide uni/campus filters for professionals; update placeholders.
 4. Smoke-test student, guest, professional logged-in paths.
 
-### R2 (Phase 2 — later)
+### R2 (Phase 2 - later)
 
 1. Migration + `properties_near_point`  
 2. Profile work location + geocode  

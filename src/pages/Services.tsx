@@ -56,7 +56,7 @@ const cards = [
     title: 'Why rent to students',
     Icon: IconTrending,
     description:
-      'Strong demand near campuses, predictable leases, and professional management — see how student rentals can improve yield and vacancy.',
+      'Strong demand near campuses, predictable leases, and professional management - see how student rentals can improve yield and vacancy.',
   },
   {
     to: '/services/student-accommodation',
@@ -81,7 +81,7 @@ const cards = [
     to: '/services/fully-furnished',
     title: 'Fully Furnished Units',
     Icon: IconSofa,
-    description: 'Move-in ready properties with everything included — furniture, linen, bills and more.',
+    description: 'Move-in ready properties with everything included - furniture, linen, bills and more.',
   },
 ] as const
 
@@ -90,12 +90,12 @@ export default function Services() {
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <Seo
         title="Services"
-        description="Student accommodation search, landlord listings, property management, and furnished rentals — services from Quni Living, Australia."
+        description="Student accommodation search, landlord listings, property management, and furnished rentals - services from Quni Living, Australia."
         canonicalPath="/services"
       />
       <PageHeroBand
         title="Our Services"
-        subtitle="Everything you need — whether you're looking for a home or managing a property."
+        subtitle="Everything you need - whether you're looking for a home or managing a property."
       />
 
       <section className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">

@@ -15,7 +15,7 @@ export const LISTING_CARD_PHOTO_BADGE_MAX = 2
 
 export type ListingCardBadgeDisplay = {
   photoBadges: ListingCardImageBadge[]
-  /** Inclusions that did not fit on the photo — show in card body. */
+  /** Inclusions that did not fit on the photo - show in card body. */
   extraInclusionLabels: string[]
 }
 

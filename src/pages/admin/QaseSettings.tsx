@@ -231,7 +231,7 @@ export default function QaseSettings() {
           <section className={adminCardClass}>
             <h2 className="text-sm font-semibold text-gray-900 mb-1">Categories</h2>
             <p className="text-xs text-gray-500 mb-4">
-              Deactivate instead of deleting — existing tickets keep their <code className="text-xs">field_key</code>{' '}
+              Deactivate instead of deleting - existing tickets keep their <code className="text-xs">field_key</code>{' '}
               values.
             </p>
             <div className={adminTableWrapClass}>
@@ -533,7 +533,7 @@ export default function QaseSettings() {
                             Delete
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs text-gray-400">-</span>
                         )}
                       </td>
                     </tr>

@@ -1,4 +1,4 @@
-# Peer messaging — chunk 3 review
+# Peer messaging - chunk 3 review
 
 **Scope:** Inbox + thread UI, Realtime hooks, Header badge, PropertyDetail “Message landlord” entry.
 

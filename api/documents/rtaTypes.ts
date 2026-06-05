@@ -1,12 +1,12 @@
 /**
  * Types for PDF agreements under the NSW Residential Tenancies Act 2010 (server-generated).
  *
- * - `OccupancyAgreementProps` — Quni Residential Occupancy Agreement (custom).
- * - `NswResidentialTenancyAgreementProps` — prescribed standard form FT6600 (Dec 2025);
+ * - `OccupancyAgreementProps` - Quni Residential Occupancy Agreement (custom).
+ * - `NswResidentialTenancyAgreementProps` - prescribed standard form FT6600 (Dec 2025);
  *   static clause text is sourced from `docs/ft6600-2025-12-17.txt`; these types cover
  *   schedule / variable fields only.
- * - `QuniPlatformAddendumProps` — Quni platform addendum for the residential tenancy package (NSW or QLD signing package).
- * - `QldGeneralTenancyAgreementProps` — RTA Form 18a schedule fields + Part 2 embedded standard terms.
+ * - `QuniPlatformAddendumProps` - Quni platform addendum for the residential tenancy package (NSW or QLD signing package).
+ * - `QldGeneralTenancyAgreementProps` - RTA Form 18a schedule fields + Part 2 embedded standard terms.
  */
 
 export type RtaLandlordPdf = {
@@ -62,7 +62,7 @@ export type RtaBondPdf = {
 export type OccupancyAgreementProps = {
   documentId: string
   generatedAt: string
-  /** Listing (default) or Managed — drives Clause 11 owner-side fee wording. */
+  /** Listing (default) or Managed - drives Clause 11 owner-side fee wording. */
   serviceTier?: 'listing' | 'managed'
   landlord: RtaLandlordPdf
   tenant: RtaTenantPdf
@@ -151,7 +151,7 @@ export type NswResidentialTenancyAgreementProps = {
   landlordAgent: NswRtaLandlordAgent | null
   urgentRepairsTradespeople: NswRtaUrgentRepairsContacts
   electronicService: NswRtaElectronicService
-  /** Listing has bills/utilities included — legacy fallback for water usage when property column unset. */
+  /** Listing has bills/utilities included - legacy fallback for water usage when property column unset. */
   billsIncluded?: boolean | null
   /** Landlord-entered FT6600 schedule compliance (properties table). */
   propertyCompliance: NswFt6600PropertyCompliance
@@ -160,7 +160,7 @@ export type NswResidentialTenancyAgreementProps = {
 }
 
 /**
- * Queensland Form 18a — General Tenancy Agreement (prescribed schedule fields + Part 2 verbatim body).
+ * Queensland Form 18a - General Tenancy Agreement (prescribed schedule fields + Part 2 verbatim body).
  * Part 2 standard terms text is embedded from RTA Queensland PDF extraction (`form18aStandardTerms.ts`).
  */
 export type QldGeneralTenancyAgreementProps = {
@@ -180,13 +180,13 @@ export type QldGeneralTenancyAgreementProps = {
   landlordAgent: NswRtaLandlordAgent | null
   urgentRepairsTradespeople: NswRtaUrgentRepairsContacts
   electronicService: NswRtaElectronicService
-  /** Item 11 — day last rent increased (ISO date) or null if unknown / N/A. */
+  /** Item 11 - day last rent increased (ISO date) or null if unknown / N/A. */
   lastRentIncreaseDate: string | null
-  /** Item 1 — lessor postcode (schedule line). */
+  /** Item 1 - lessor postcode (schedule line). */
   landlordPostcode: string
-  /** Item 5.1 — premises postcode. */
+  /** Item 5.1 - premises postcode. */
   premisesPostcode: string
-  /** Item 9 — direct credit details when rent is paid by bank transfer. */
+  /** Item 9 - direct credit details when rent is paid by bank transfer. */
   rentPaymentBankDetails: {
     bsb: string
     accountNumber: string
@@ -194,7 +194,7 @@ export type QldGeneralTenancyAgreementProps = {
     bankName: string
   } | null
   /**
-   * `bookings.rent_payment_method` — drives at least two Item 9 methods (Standard term 8(3) / s.83).
+   * `bookings.rent_payment_method` - drives at least two Item 9 methods (Standard term 8(3) / s.83).
    * Single enum per booking; rendering pairs methods to match operational reality.
    */
   rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null

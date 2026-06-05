@@ -9,7 +9,7 @@ export default {
       maxWidth: {
         /**
          * App content width cap (listings, property detail, header alignment).
-         * Property detail hero/gallery: import `SITE_CONTENT_MAX_CLASS` from `src/lib/site.ts` — keep in sync with this value.
+         * Property detail hero/gallery: import `SITE_CONTENT_MAX_CLASS` from `src/lib/site.ts` - keep in sync with this value.
          */
         site: '1200px',
       },
@@ -21,7 +21,7 @@ export default {
         lora: ['"Lora"', 'Georgia', 'serif'],
         inter: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
         /**
-         * Admin redesign tokens — keep in sync with `docs/admin-redesign/HANDOFF.md` §6.
+         * Admin redesign tokens - keep in sync with `docs/admin-redesign/HANDOFF.md` §6.
          * `font-admin-display` is Playfair Display, used ONLY for the Living Console hero.
          * `font-admin-serif` is Lora, used for pricing and editorial moments inside admin.
          * `font-admin-sans` is Inter, the default for every other admin surface.
@@ -32,7 +32,7 @@ export default {
       },
       colors: {
         /**
-         * Admin redesign palette ("The Living Console") — keep in sync with
+         * Admin redesign palette ("The Living Console") - keep in sync with
          * `docs/admin-redesign/HANDOFF.md` §6 and `prototype/colors_and_type.css`.
          * Prefixed with `admin-` so they never collide with existing brand tokens.
          */

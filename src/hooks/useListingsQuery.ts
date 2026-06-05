@@ -147,7 +147,7 @@ export function useListingsQuery(
     }
   }, [enabled, queryKey, tick])
 
-  // Date badges load after cards render — do not block the listings grid on this RPC.
+  // Date badges load after cards render - do not block the listings grid on this RPC.
   useEffect(() => {
     if (!enabled) return
 

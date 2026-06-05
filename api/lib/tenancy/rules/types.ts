@@ -13,7 +13,7 @@ export interface TenancyBondRulesSchemeOff {
   lodgementDaysUnit: null
   receiptDays: null
   authorityPublicLabel: null
-  /** Landlord-held acknowledgement checkbox — regulator named (e.g. NSW Tier 1 boarder/lodger) */
+  /** Landlord-held acknowledgement checkbox - regulator named (e.g. NSW Tier 1 boarder/lodger) */
   landlordAckAuthorityName: string | null
 }
 
@@ -32,14 +32,14 @@ export interface TenancyBondRulesSchemeOn {
    */
   lodgementDaysUnit: 'business' | 'calendar'
   receiptDays: number | null
-  /** Line shown under “{STATE} — state bond authority” on the bond step */
+  /** Line shown under “{STATE} - state bond authority” on the bond step */
   authorityPublicLabel: string
   landlordAckAuthorityName: null
 }
 
 export type TenancyBondRules = TenancyBondRulesSchemeOff | TenancyBondRulesSchemeOn
 
-/** Future: tribunal, terminology, notices, minStandards — add when a consumer exists. */
+/** Future: tribunal, terminology, notices, minStandards - add when a consumer exists. */
 export interface TenancyRules {
   bond: TenancyBondRules
 }

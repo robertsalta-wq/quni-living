@@ -30,7 +30,7 @@ function statusBadgeClass(s: AdminPropertyStatus) {
 }
 
 function roomLabel(rt: string | null) {
-  if (!rt) return '—'
+  if (!rt) return '-'
   return ROOM_TYPE_LABELS[rt as RoomType] ?? rt
 }
 
@@ -237,7 +237,7 @@ export default function AdminProperties() {
                             View
                           </a>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="text-xs text-gray-400">-</span>
                         )}
                       </td>
                       <td className={adminTdClass}>

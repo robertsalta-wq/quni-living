@@ -206,7 +206,7 @@ export default function AdminTeam() {
                     <input
                       type="text"
                       defaultValue={row.display_name ?? ''}
-                      placeholder="—"
+                      placeholder="-"
                       onBlur={(e) => void handleDisplayNameBlur(row, e.target.value)}
                       className="w-full min-w-[8rem] rounded border border-transparent bg-transparent px-1 py-0.5 text-sm hover:border-gray-200 focus:border-[#0F6E56] focus:outline-none"
                     />
@@ -220,7 +220,7 @@ export default function AdminTeam() {
                       <span className="text-amber-700">Awaiting login</span>
                     )}
                   </td>
-                  <td className={adminTdClass}>{row.notes ?? '—'}</td>
+                  <td className={adminTdClass}>{row.notes ?? '-'}</td>
                   <td className={adminTdClass}>{new Date(row.created_at).toLocaleDateString()}</td>
                   <td className={`${adminTdClass} text-right`}>
                     <button

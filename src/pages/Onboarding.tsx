@@ -37,7 +37,7 @@ function profileTermsComplete(role: 'student' | 'landlord', profile: AuthProfile
     return Boolean(
       sp.terms_accepted_at ||
         sp.onboarding_complete === true ||
-        /* Profile verification flow — don’t block users who already proved a uni email */
+        /* Profile verification flow - don’t block users who already proved a uni email */
         sp.uni_email_verified === true,
     )
   }
@@ -153,7 +153,7 @@ export default function Onboarding() {
         navigate('/admin', { replace: true })
         return
       }
-      // Do not require JWT user_metadata.role to match — legacy accounts can have a profile +
+      // Do not require JWT user_metadata.role to match - legacy accounts can have a profile +
       // terms_accepted_at while metadata.role is missing, which previously trapped users here forever.
       if (
         profile !== null &&

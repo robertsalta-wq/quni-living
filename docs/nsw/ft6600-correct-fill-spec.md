@@ -1,12 +1,12 @@
-# FT6600 — Authoritative correct-fill spec (NSW Standard Residential Tenancy Agreement)
+# FT6600 - Authoritative correct-fill spec (NSW Standard Residential Tenancy Agreement)
 
 Derived from the real field/label coordinates in the latest build's flattened draft
 (`nsw_residential_tenancy_agreement_draft__4_.pdf`), cross-referenced to the printed
 form labels page by page. This is the GROUND-TRUTH target for `officialNswFt6600Fill.ts`.
 
 Booking used for this audit (single tenant; co-tenant booking still needs a separate pass):
-- Landlord (host): Quinn Lee — +61410025719 — 18 Malvina Street, Ryde NSW 2112 — quinniele90@gmail.com
-- Tenant: Robert Saltalamacchia — +61425775308 — rob@3thingsatonce.com.au
+- Landlord (host): Quinn Lee - +61410025719 - 18 Malvina Street, Ryde NSW 2112 - quinniele90@gmail.com
+- Tenant: Robert Saltalamacchia - +61425775308 - rob@3thingsatonce.com.au
 - Premises: Unit 406/311 Hume Highway, Liverpool NSW 2170
 - Term: 10/06/2026 → 10/12/2026 (6 months)
 - Rent: $400.00 / week, due Wednesday, first payment 10/06/2026, direct deposit (QUINNVESTMENTS PTY LTD, BSB 939-200, Acct 823175945)
@@ -35,16 +35,16 @@ Legend below: ✅ correct · ❌ wrong (with what it currently shows) · ⚠️ 
 
 ---
 
-## PAGE 1 — Agreement header + Landlord
+## PAGE 1 - Agreement header + Landlord
 
 | Slot (printed label) | Correct value | Current build |
 |---|---|---|
 | THIS AGREEMENT WAS MADE ON | `03/06/2026` | ✅ |
 | AT | `Liverpool` | ✅ |
 | Landlord Name (1) | `Quinn Lee` | ❌ empty (name landed in the box ABOVE this) |
-| Landlord Name (2) | *(empty — one landlord)* | ❌ shows `+61410025719` |
+| Landlord Name (2) | *(empty - one landlord)* | ❌ shows `+61410025719` |
 | Landlord telephone or other contact details | `+61410025719` | ❌ empty |
-| If not in NSW, the State/Territory/country | *(empty — landlord is in NSW)* | ❌ shows `+61410025719` |
+| If not in NSW, the State/Territory/country | *(empty - landlord is in NSW)* | ❌ shows `+61410025719` |
 | Landlord's telephone (if no agent) | `+61410025719` *(or empty if already given above)* | ❌ shows `18 Malvina Street` |
 | Business/residential address of landlord for service | `18 Malvina Street` | ❌ shows `Ryde` |
 | Suburb | `Ryde` | ❌ shows `NSW` |
@@ -53,21 +53,21 @@ Legend below: ✅ correct · ❌ wrong (with what it currently shows) · ⚠️ 
 
 Pattern: landlord block shifted **up one slot**; address sub-block (street/suburb/state/postcode) each shifted one column.
 
-## PAGE 2 — Corporation / Tenant / Agents
+## PAGE 2 - Corporation / Tenant / Agents
 
 | Slot | Correct value | Current build |
 |---|---|---|
-| Corporation Name / Business Address / Suburb / State / Postcode | *(all empty — individual landlord)* | ❌ Corp `State` shows `Robert Saltalamacchia` |
+| Corporation Name / Business Address / Suburb / State / Postcode | *(all empty - individual landlord)* | ❌ Corp `State` shows `Robert Saltalamacchia` |
 | Tenant Name (1) | `Robert Saltalamacchia` | ❌ empty |
-| Tenant Name (2) | *(empty — no co-tenant on this booking)* | ✅ empty |
+| Tenant Name (2) | *(empty - no co-tenant on this booking)* | ✅ empty |
 | Tenant Name (3) / All other tenants | *(empty)* | ✅ empty |
-| Tenant's address for service (street) | ⚠️ tenant's address for service — confirm source (NOT "workplace address") | ❌ empty |
+| Tenant's address for service (street) | ⚠️ tenant's address for service - confirm source (NOT "workplace address") | ❌ empty |
 | Tenant Suburb / State / Postcode | ⚠️ per tenant address | ❌ tenant `State` shows `Phone: +61425775308` |
 | Tenant Contact details | `Phone: +61425775308 · Email: rob@3thingsatonce.com.au` | ❌ empty |
-| Landlord's agent (all fields) | *(empty — no agent)* | ✅ empty |
-| Tenant's agent (all fields) | *(empty — no agent)* | ❌ Suburb=`10/06/2026`, Postcode=`10/12/2026`, Contact=`Unit 406/311 Hume Highway…` |
+| Landlord's agent (all fields) | *(empty - no agent)* | ✅ empty |
+| Tenant's agent (all fields) | *(empty - no agent)* | ❌ Suburb=`10/06/2026`, Postcode=`10/12/2026`, Contact=`Unit 406/311 Hume Highway…` |
 
-## PAGE 3 — Term / Premises / Rent
+## PAGE 3 - Term / Premises / Rent
 
 | Slot | Correct value | Current build |
 |---|---|---|
@@ -84,7 +84,7 @@ Pattern: landlord block shifted **up one slot**; address sub-block (street/subur
 | Rent must be paid by | ☑ **approved electronic bank transfer** | ❌ none ticked |
 | Details of payment method | `Direct deposit - Account name: QUINNVESTMENTS PTY LTD; BSB: 939-200; Account number: 823175945` | ❌ shows `Quinn Lee` |
 
-## PAGE 4 — Bond / Occupants / Repairs / Water / Smoke
+## PAGE 4 - Bond / Occupants / Repairs / Water / Smoke
 
 | Slot | Correct value | Current build |
 |---|---|---|
@@ -94,25 +94,25 @@ Pattern: landlord block shifted **up one slot**; address sub-block (street/subur
 | Electrical repairs / Telephone | ⚠️ nominated tradesperson, else empty | ✅ empty |
 | Plumbing repairs / Telephone | ⚠️ tradesperson name / phone, else empty | ❌ `800.00` / `Quinn Lee` |
 | Other repairs / Telephone | *(empty)* | ✅ empty |
-| Water usage — pay separately? | ☑ **No** (bills included) | ⚠️ verify |
+| Water usage - pay separately? | ☑ **No** (bills included) | ⚠️ verify |
 | Electricity embedded network? | ☑ No *(unless known)* | ⚠️ verify |
 | Gas embedded network? | ☑ No *(unless known)* | ⚠️ verify |
-| Smoke alarms — hardwired / battery | ⚠️ **do not default** — capture on listing or leave blank | ❌ `Battery operated` defaulted |
+| Smoke alarms - hardwired / battery | ⚠️ **do not default** - capture on listing or leave blank | ❌ `Battery operated` defaulted |
 
-## PAGE 5 — Smoke alarm follow-ups / Strata / E-service
+## PAGE 5 - Smoke alarm follow-ups / Strata / E-service
 
 | Slot | Correct value | Current build |
 |---|---|---|
 | Battery type (text) | *(empty unless battery + replaceable)* | ❌ shows `No` |
 | Hardwired back-up battery replaceable? Yes/No | *(only if hardwired)* | ⚠️ verify |
-| Strata SMA — owners corp responsible? Yes/No | ☑ exactly ONE | ❌ BOTH Yes and No ticked |
+| Strata SMA - owners corp responsible? Yes/No | ☑ exactly ONE | ❌ BOTH Yes and No ticked |
 | Strata by-laws applicable? Yes/No | ☑ one | ⚠️ verify |
-| Landlord — express consent to e-service? Yes/No | ☑ per actual consent (default **unticked**) | ⚠️ verify — do not pre-tick |
+| Landlord - express consent to e-service? Yes/No | ☑ per actual consent (default **unticked**) | ⚠️ verify - do not pre-tick |
 | Landlord email (for service) | `quinniele90@gmail.com` | ✅ position ok |
-| Tenant — express consent to e-service? Yes/No | ☑ per actual consent (default **unticked**) | ⚠️ verify — do not pre-tick |
+| Tenant - express consent to e-service? Yes/No | ☑ per actual consent (default **unticked**) | ⚠️ verify - do not pre-tick |
 | Tenant email (for service) | `rob@3thingsatonce.com.au` | ✅ position ok |
 
-## PAGES 17–18 — Signatures (DocuSeal tag overlay)
+## PAGES 17–18 - Signatures (DocuSeal tag overlay)
 
 - Landlord Signature + date → landlord signature block (page 17)
 - Landlord LIS Signature + date → Landlord Information Statement block (page 17)
@@ -121,7 +121,7 @@ Pattern: landlord block shifted **up one slot**; address sub-block (street/subur
 - Tenant (2) → co-tenant block when present (out of scope for this single-tenant booking)
 - Tenant (3) / (4) → leave blank (out of scope)
 
-Note: the `{{…}}` tag literals visible on the draft are expected — DocuSeal consumes them on
+Note: the `{{…}}` tag literals visible on the draft are expected - DocuSeal consumes them on
 completion (Option 0). Verify `{{` = 0 on the executed download from this corrected booking.
 
 ---
@@ -130,7 +130,7 @@ completion (Option 0). Verify `{{` = 0 on the executed download from this correc
 
 1. From the BLANK official form, dump every field: `{name, page, rect:[x0,y0,x1,y1]}`.
 2. For each printed section header, record its y-band; assign each field to a section by which band its rect falls in.
-3. Within a section, sort fields by reading order (y, then x) and map to the slots in the tables above by position — never by label text alone (labels repeat).
+3. Within a section, sort fields by reading order (y, then x) and map to the slots in the tables above by position - never by label text alone (labels repeat).
 4. Build `name → semantic slot` once, encode it in `officialNswFt6600Fill.ts`.
 5. Regression test asserts the full `name → slot` map (not just 5 fields) against the spec above.
 6. Regenerate this exact booking and visually confirm every ✅/❌ row flips to correct.

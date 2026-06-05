@@ -218,7 +218,7 @@ export type BankDetailsForRta = {
 }
 
 /**
- * Loads bank.* from platform_config. Does not throw — callers validate non-empty fields.
+ * Loads bank.* from platform_config. Does not throw - callers validate non-empty fields.
  */
 export async function fetchBankDetailsForRta(
   client: SupabaseClient<Database>,

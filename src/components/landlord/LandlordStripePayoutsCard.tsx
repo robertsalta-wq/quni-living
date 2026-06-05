@@ -246,7 +246,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
             {requirementsSummary.items.map((item) => (
               <li key={`${item.kind}:${item.label}:${item.detail ?? ''}`}>
                 <span className="font-medium">{item.label}</span>
-                {item.detail ? ` — ${item.detail}` : null}
+                {item.detail ? ` - ${item.detail}` : null}
               </li>
             ))}
           </ul>
@@ -271,7 +271,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-gray-900">Rent payouts</h2>
           <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-            Connect Stripe to receive rent to your bank — a short Express onboarding flow; we never see your full bank
+            Connect Stripe to receive rent to your bank - a short Express onboarding flow; we never see your full bank
             details. You can publish listings first; connect before you accept paid bookings.
           </p>
           {connectError && (

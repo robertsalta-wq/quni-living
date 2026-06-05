@@ -46,7 +46,7 @@ function landlordTypeRequiresCompanyDetails(landlordType: string): boolean {
 const AU_STATE_OPTIONS = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
 
 const BIO_PLACEHOLDER =
-  'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
+  'Tell students about yourself - your management style, response times, and what makes your properties great to live in.'
 
 const LANDLORD_ONBOARDING_DRAFT_KEY = 'landlord_onboarding_draft' as const
 const LANDLORD_ONBOARDING_DRAFT_VERSION = 1 as const
@@ -54,7 +54,7 @@ const LANDLORD_ONBOARDING_DRAFT_VERSION = 1 as const
 const LANDLORD_TYPE_VALUE_SET = new Set(LANDLORD_TYPE_OPTIONS.map((o) => o.value).filter(Boolean))
 const AU_STATE_VALUE_SET = new Set<string>(AU_STATE_OPTIONS)
 
-/** Local draft — terms checkboxes are never persisted. */
+/** Local draft - terms checkboxes are never persisted. */
 type LandlordOnboardingDraftV1 = {
   v: typeof LANDLORD_ONBOARDING_DRAFT_VERSION
   step: LandlordWizardStep
@@ -870,7 +870,7 @@ export default function LandlordOnboarding() {
                 </label>
                 {photoUploading && <p className="text-xs text-stone-500">Uploading…</p>}
                 {photoError && <p className={errClass}>{photoError}</p>}
-                <p className="text-xs text-stone-500 text-center max-w-xs">Optional — encouraged so students know who they&apos;re renting from.</p>
+                <p className="text-xs text-stone-500 text-center max-w-xs">Optional - encouraged so students know who they&apos;re renting from.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -981,7 +981,7 @@ export default function LandlordOnboarding() {
                 <p className="font-medium">Your address stays private</p>
                 <p className="mt-1 text-emerald-900/90 leading-relaxed">
                   We need your home or business address for legal agreements and account verification. It is{' '}
-                  <strong>never</strong> shown on your public listings — students and visitors only see each
+                  <strong>never</strong> shown on your public listings - students and visitors only see each
                   property&apos;s <strong>suburb</strong>, not this personal address.
                 </p>
               </div>
@@ -1142,7 +1142,7 @@ export default function LandlordOnboarding() {
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-stone-900">Add a card for Quni Listing fees</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
-                You picked Quni Listing on the pricing page — you run the tenancy and bond &amp; rent stay between you and
+                You picked Quni Listing on the pricing page - you run the tenancy and bond &amp; rent stay between you and
                 your renter. Quni only charges a flat acceptance fee on your saved card when you accept a booking. You
                 won&apos;t be charged today.
               </p>
@@ -1192,7 +1192,7 @@ export default function LandlordOnboarding() {
                   </p>
                   {!managedTierEnabled ? (
                     <div className="rounded-lg border border-[#E8EFE3] bg-[#F6FAF8] px-3 py-2.5 text-xs text-stone-700 leading-relaxed">
-                      <p className="font-semibold text-[#376256]">Quni Managed — coming soon</p>
+                      <p className="font-semibold text-[#376256]">Quni Managed - coming soon</p>
                       <p className="mt-1">{MANAGED_COMING_SOON_SHORT} You can connect a bank account now if you want to be ready when Managed opens.</p>
                       <button
                         type="button"
@@ -1239,7 +1239,7 @@ export default function LandlordOnboarding() {
               <h2 className="text-lg font-bold text-stone-900">Connect your bank account to receive rent payments</h2>
               <p className="text-sm text-stone-600 leading-relaxed">
                 We use Stripe to securely process Quni Managed rent payouts. You&apos;ll complete a short Stripe Express
-                onboarding — we never see your full bank details. If you intend to run only Quni Listing properties (you
+                onboarding - we never see your full bank details. If you intend to run only Quni Listing properties (you
                 handle bond and rent directly), you can skip this and just save a card from your profile instead.
               </p>
 

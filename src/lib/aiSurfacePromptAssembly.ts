@@ -1,6 +1,6 @@
 /**
  * Canonical assembly of model-bound strings for every AI surface.
- * Used by handlers and sentinel verification tests — keep in sync with api/* callers.
+ * Used by handlers and sentinel verification tests - keep in sync with api/* callers.
  */
 import {
   NON_DISCRIMINATION_AI_RULE,
@@ -16,6 +16,8 @@ import {
   formatLandlordAssessmentUserMessage,
 } from '../../api/lib/aiMatchingAudit.js'
 import type { BookingFitPropertyInput } from '../../api/lib/bookingFitForAssessment.js'
+
+const NO_EM_DASH_RULE = `- Punctuation: never use em dashes. Use commas, full stops, colons, or a simple hyphen with spaces instead.`
 
 export const AI_SENTINEL_VALUES = {
   nationality: 'ZZ_NAT',
@@ -85,32 +87,33 @@ export function buildSentinelBookingRow(overrides: Record<string, unknown> = {})
 
 export const LANDLORD_ASSESSMENT_SYSTEM_PROMPT = `You are a helpful assistant on Quni Living, an Australian verified accommodation marketplace (students, graduates, and professional renters). You are helping a landlord review an applicant who has requested their property.
 
-Address the landlord by their first name naturally once at the opening of the assessment when tone.landlord_first_name is provided. Use the applicant's first name throughout when tone.applicant_first_name is provided — never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all — repeat the first name instead — so gender is never assumed incorrectly.
+Address the landlord by their first name naturally once at the opening of the assessment when tone.landlord_first_name is provided. Use the applicant's first name throughout when tone.applicant_first_name is provided - never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all - repeat the first name instead - so gender is never assumed incorrectly.
 
 Based on the allowlisted applicant and booking fields provided, write a short, warm, and balanced 3-4 sentence assessment to help the landlord make an informed decision.
 
 Rules:
 - Open naturally addressing the landlord by first name when provided
 - Use the applicant's first name throughout when provided; never use he/she/they pronouns
-- Be factual and balanced — do not make the decision for the landlord
+- Be factual and balanced - do not make the decision for the landlord
 - ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
 - Applicant verification tier (student.verification_type): "student" = full student verification (uni email, ID, enrolment); "identity" = non-student identity path complete (ID + supporting doc; work email may apply); "none" = incomplete. State the tier plainly when it is not "student". For "none", say what verification steps are still missing and do not describe them as fully verified. For "identity", note they are a verified non-student tenant, not a verified student.
 - For non-student applicants (identity or none tiers), do not assume university enrollment or praise course credentials unless provided; focus on identity/work-email verification, housing preferences, and listing fit.
-- When context.fit_summary is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap — do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing — say what to verify. You may still comment on verification credentials separately from preference/listing fit.
+- When context.fit_summary is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap - do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing - say what to verify. You may still comment on verification credentials separately from preference/listing fit.
 - If there is no context.fit_summary block, do not claim strong preference alignment with the listing; summarise what the applicant asked for and note what to check on the listing.
 - Focus on: verification completeness and tier, university and course when provided as facts only, housing preference alignment (occupancy, move-in flexibility, pets, parking, bills, furnishing when in allowlisted fields), budget fit, smoking status when present, and fit vs listing/booking context
 - Location and commute: Do not claim the listing is near a specific university, campus, or landmark, and do not discuss commute length, unless those facts appear in context.property_listing. You may state the student's university from context.university_name as a fact; if listing context does not tie the property to a campus/university, do not invent a geographic mismatch or "wrong uni" narrative.
 - Rent: Never invent dollar amounts. Only mention weekly rent if a figure appears in context.property_listing or booking.weekly_rent. If no rent is in the context, do not guess.
 - End with one practical suggestion for what the landlord might want to ask or consider before confirming
-- Keep the tone professional but warm and conversational`
+- Keep the tone professional but warm and conversational
+- ${NO_EM_DASH_RULE.replace(/^- /, '')}`
 
 const VERIFICATION_HONESTY_RULE = `- Verification honesty: Only describe user or host verification exactly as stated in this system message or in RELEVANT KNOWLEDGE BASE below. Quni does not verify government IDs for hosts, check property titles, or manually review landlord profiles. Hosts complete Stripe Connect identity verification before accepting bookings; approved hosts may show a "Verified host" badge. Do not invent verification steps not explicitly listed.`
 
-const TRUST_STRIPE_PAYMENTS_RULE = `- Trust & Stripe payments (priority topic): Quni's main trust feature for students is the Verified host badge — landlords must complete Stripe Connect identity verification (Stripe's regulated KYC, not manual Quni review) before they can accept a booking. When Stripe enables charges on their account, the badge appears on listings so renters know the host passed identity checks. Students can still browse, message, and submit booking requests before that step; only acceptance is blocked. Explain why this matters for peace of mind when users ask if a landlord is legitimate, safe, or verified. For payment flows, use RELEVANT KNOWLEDGE BASE articles on student payments, landlord payments, and host verification — do not conflate bond/rent (tenancy money) with Quni platform fees. Students pay no Quni booking/platform/service fees; Listing landlords receive bond/rent directly after accept; Managed landlords use Connect for rent collection and payouts.`
+const TRUST_STRIPE_PAYMENTS_RULE = `- Trust & Stripe payments (priority topic): Quni's main trust feature for students is the Verified host badge - landlords must complete Stripe Connect identity verification (Stripe's regulated KYC, not manual Quni review) before they can accept a booking. When Stripe enables charges on their account, the badge appears on listings so renters know the host passed identity checks. Students can still browse, message, and submit booking requests before that step; only acceptance is blocked. Explain why this matters for peace of mind when users ask if a landlord is legitimate, safe, or verified. For payment flows, use RELEVANT KNOWLEDGE BASE articles on student payments, landlord payments, and host verification - do not conflate bond/rent (tenancy money) with Quni platform fees. Students pay no Quni booking/platform/service fees; Listing landlords receive bond/rent directly after accept; Managed landlords use Connect for rent collection and payouts.`
 
-const PRODUCT_INVENTORY_RULE = `- Product capabilities and routes: For "where do I…", "can I…", or whether a feature exists, prefer RELEVANT KNOWLEDGE BASE entries titled "Quni … product features" or "Quni route map" (synced from docs/feature-inventory.md). Do not claim features not listed there. Saved listings is UI only (coming soon) — do not say users can save favourites yet. If the knowledge base does not cover the question, suggest the relevant dashboard tab or hello@quni.com.au rather than inventing flows.`
+const PRODUCT_INVENTORY_RULE = `- Product capabilities and routes: For "where do I…", "can I…", or whether a feature exists, prefer RELEVANT KNOWLEDGE BASE entries titled "Quni … product features" or "Quni route map" (synced from docs/feature-inventory.md). Do not claim features not listed there. Saved listings is UI only (coming soon) - do not say users can save favourites yet. If the knowledge base does not cover the question, suggest the relevant dashboard tab or hello@quni.com.au rather than inventing flows.`
 
-const SAMPLE_AGREEMENTS_RULE = `- Sample agreement PDFs (watermarked, not for signing): Logged-in landlords and students can open the Sample agreements page at /sample-agreements (also linked from the dashboard as "View sample agreements"). It shows clickable thumbnail previews of live-generated templates by state (NSW, QLD, VIC) and tier (T1 occupancy/licence, T2 residential with Quni addendum where applicable). Tell users to use that page — do not say templates are only in listing settings, help centre, or unavailable in chat. You cannot display PDFs inside this chat. Admins reviewing all templates use /admin/agreement-previews. These samples are for layout and wording review only; executed agreements are generated per confirmed booking.`
+const SAMPLE_AGREEMENTS_RULE = `- Sample agreement PDFs (watermarked, not for signing): Logged-in landlords and students can open the Sample agreements page at /sample-agreements (also linked from the dashboard as "View sample agreements"). It shows clickable thumbnail previews of live-generated templates by state (NSW, QLD, VIC) and tier (T1 occupancy/licence, T2 residential with Quni addendum where applicable). Tell users to use that page - do not say templates are only in listing settings, help centre, or unavailable in chat. You cannot display PDFs inside this chat. Admins reviewing all templates use /admin/agreement-previews. These samples are for layout and wording review only; executed agreements are generated per confirmed booking.`
 
 export const CHAT_SYSTEM_PROMPTS = {
   visitor: `You are Quni Living’s AI assistant for visitors who are not logged in. Quni is a verified accommodation marketplace for students, graduates, and professionals; some listings accept only verified students, others also accept verified non-student renters.
@@ -122,6 +125,7 @@ Rules:
 - When users ask for “best listings”, respond with general advice and suggest that they sign up to see their full options.
 - Encourage next steps with clear, short guidance and links if appropriate (plain guidance is acceptable).
 - Use Australian English.
+${NO_EM_DASH_RULE}
 ${VERIFICATION_HONESTY_RULE}
 ${TRUST_STRIPE_PAYMENTS_RULE}
 ${PRODUCT_INVENTORY_RULE}
@@ -149,6 +153,7 @@ You MUST follow these rules:
 11) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 12) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
 13) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
+14) ${NO_EM_DASH_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
@@ -176,7 +181,8 @@ Rules:
 13) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 14) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
-16) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}`,
+16) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
+17) ${NO_EM_DASH_RULE.replace(/^- /, '')}`,
 } as const
 
 export function buildStudentListingContextBlock(props: Array<Record<string, unknown>>): string {
@@ -531,7 +537,7 @@ export function buildImproveDescriptionUserPrompt(
 
   if (typeof body.weeklyRent === 'number' && Number.isFinite(body.weeklyRent)) {
     lines.push(
-      'A weekly rent is set on the listing elsewhere — do not mention rent, bonds, or any dollar amounts in this description.',
+      'A weekly rent is set on the listing elsewhere - do not mention rent, bonds, or any dollar amounts in this description.',
     )
   }
 
@@ -579,6 +585,7 @@ export function buildDescriptionUserPrompt(body: Record<string, unknown>): strin
     'Requirements:',
     '- 3–4 paragraphs, 120–180 words total.',
     '- Australian English; warm, practical tone.',
+    '- Never use em dashes; use commas, full stops, or a simple hyphen with spaces.',
     '- Plain paragraphs only (no bullet lists, no title line).',
   )
 
@@ -587,7 +594,8 @@ export function buildDescriptionUserPrompt(body: Record<string, unknown>): strin
 
 export const DESCRIPTION_GENERATOR_SYSTEM_PROMPT = `You write property listing descriptions for an Australian verified accommodation marketplace.
 ${NON_DISCRIMINATION_AI_RULE}
-Output plain paragraphs only — no discriminatory tenant preferences.`
+${NO_EM_DASH_RULE}
+Output plain paragraphs only - no discriminatory tenant preferences.`
 
 export function assembleDescriptionGeneratorModelCall(body: Record<string, unknown>): {
   system: string
@@ -636,7 +644,8 @@ export function buildEnquiryReplyUserPrompt(input: {
 
 export const ENQUIRY_REPLY_SYSTEM_PROMPT = `You draft landlord replies to renter enquiries on an Australian verified accommodation marketplace.
 ${NON_DISCRIMINATION_AI_RULE}
-Write warm, professional replies only — never express tenant preferences on protected grounds.`
+${NO_EM_DASH_RULE}
+Write warm, professional replies only - never express tenant preferences on protected grounds.`
 
 export function assembleEnquiryReplyModelCall(input: {
   studentName: string
@@ -644,7 +653,7 @@ export function assembleEnquiryReplyModelCall(input: {
   propertyTitle?: string
   propertySuburb?: string
   landlordName?: string
-  /** Sentinel profile — must not leak into prompt (API does not load profile). */
+  /** Sentinel profile - must not leak into prompt (API does not load profile). */
   sentinelProfile?: Record<string, unknown>
 }): { system: string; userMessage: string; fullAssembled: string } {
   void input.sentinelProfile

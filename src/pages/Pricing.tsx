@@ -67,7 +67,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'money-fees-0',
         question: 'Do renters pay any fees to Quni?',
         answer:
-          'No. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
+          'No. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni - ever. Bond and weekly rent are tenancy money, not Quni fees.',
       },
       {
         id: 'money-fees-1',
@@ -79,7 +79,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'money-fees-2',
         question: 'What does a landlord pay on Quni Managed?',
         answer:
-          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts — shown above as the Managed service fee.',
+          'A percentage of weekly rent while the tenancy is active, collected via Stripe Connect as part of rent payouts - shown above as the Managed service fee.',
       },
       {
         id: 'money-fees-3',
@@ -103,7 +103,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'bond-compliance-1',
         question: 'Who sets bond refund rules?',
         answer:
-          'Cash bond refunds and disputes follow state or territory residential laws and bond authorities — not Quni’s refund policy for platform fees.',
+          'Cash bond refunds and disputes follow state or territory residential laws and bond authorities - not Quni’s refund policy for platform fees.',
       },
     ],
   },
@@ -115,19 +115,19 @@ const faqBuckets: FaqBucket[] = [
         id: 'bookings-cancellations-0',
         question: 'Is there a minimum lease length?',
         answer:
-          'No — Quni supports flexible, short-term and long-term stays where landlords offer them. Lease length is agreed between you and your landlord.',
+          'No - Quni supports flexible, short-term and long-term stays where landlords offer them. Lease length is agreed between you and your landlord.',
       },
       {
         id: 'bookings-cancellations-1',
         question: 'What if my booking is declined?',
         answer:
-          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows — typically 5–7 business days to your card or bank.',
+          'If a landlord declines your request, any authorised deposit hold is released or refunded per automated flows - typically 5–7 business days to your card or bank.',
       },
       {
         id: 'bookings-cancellations-2',
         question: 'Can I cancel my listing as a landlord?',
         answer:
-          'Yes — there are no lock-in contracts. You can deactivate or remove your listing from your dashboard.',
+          'Yes - there are no lock-in contracts. You can deactivate or remove your listing from your dashboard.',
       },
     ],
   },
@@ -145,7 +145,7 @@ const faqBuckets: FaqBucket[] = [
         id: 'listing-managed-1',
         question: 'Where is each tier available?',
         answer:
-          'See the availability lines under each landlord column on this page — they reflect Queensland, New South Wales, and Victoria for typical private-room listings.',
+          'See the availability lines under each landlord column on this page - they reflect Queensland, New South Wales, and Victoria for typical private-room listings.',
       },
       {
         id: 'listing-managed-2',
@@ -161,7 +161,7 @@ const faqBuckets: FaqBucket[] = [
     items: [
       {
         id: 'support-disputes-0',
-        question: 'Something went wrong with my tenancy — can Quni decide bond disputes?',
+        question: 'Something went wrong with my tenancy - can Quni decide bond disputes?',
         answer: (
           <>
             Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
@@ -176,7 +176,7 @@ const faqBuckets: FaqBucket[] = [
       {
         id: 'support-disputes-1',
         question: 'Who do I contact?',
-        answer: 'Email hello@quni.com.au — we respond as soon as we can.',
+        answer: 'Email hello@quni.com.au - we respond as soon as we can.',
       },
     ],
   },
@@ -218,7 +218,7 @@ export default function Pricing() {
   return (
     <>
       <Seo
-        title="Pricing — Quni Living"
+        title="Pricing - Quni Living"
         description="Free for renters. Free to list for landlords. Choose Listing or Managed pricing."
         canonicalPath="/pricing"
       />
@@ -498,7 +498,7 @@ export default function Pricing() {
                       }
                       name="Service fee"
                       value={managedFeeText}
-                      description="Of weekly rent. All-inclusive — no letting fees or extras. Only charged when you have an active tenant."
+                      description="Of weekly rent. All-inclusive - no letting fees or extras. Only charged when you have an active tenant."
                       valueKind="coralLg"
                     />
                     <LineItem
@@ -552,7 +552,7 @@ export default function Pricing() {
                       }
                       name="Bond lodgement"
                       value="Included"
-                      description="We coordinate lodgement with the bond authority where your tenancy requires it. Bond remains tenancy money — not a Quni fee."
+                      description="We coordinate lodgement with the bond authority where your tenancy requires it. Bond remains tenancy money - not a Quni fee."
                       valueKind="coralSm"
                     />
                     <LineItem
@@ -637,8 +637,8 @@ export default function Pricing() {
           <h2 className="font-display text-center text-3xl font-bold text-[#FF6F61] sm:text-4xl">How it works</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
             {managedTierEnabled
-              ? 'Parallel flows for Quni Listing and Quni Managed — three steps each for renters and landlords.'
-              : 'Quni Listing is live now. Compare both tiers — Quni Managed launches within the next month.'}
+              ? 'Parallel flows for Quni Listing and Quni Managed - three steps each for renters and landlords.'
+              : 'Quni Listing is live now. Compare both tiers - Quni Managed launches within the next month.'}
           </p>
           <div className="mt-8 flex justify-center">
             <Link

@@ -10,7 +10,7 @@ const nodeEnv =
 const envUrl = (viteEnv?.VITE_SUPABASE_URL ?? nodeEnv?.VITE_SUPABASE_URL ?? nodeEnv?.SUPABASE_URL ?? '').trim()
 const envKey = (viteEnv?.VITE_SUPABASE_ANON_KEY ?? nodeEnv?.VITE_SUPABASE_ANON_KEY ?? nodeEnv?.SUPABASE_ANON_KEY ?? '').trim()
 
-/** JWT `role` claim (unsigned decode) — detects service_role misuse in the browser. */
+/** JWT `role` claim (unsigned decode) - detects service_role misuse in the browser. */
 function readJwtRole(token: string): string | undefined {
   const part = token.split('.')[1]
   if (!part) return undefined
@@ -63,7 +63,7 @@ export function getSupabaseEdgeFunctionUrl(functionName: string): string | null 
 }
 
 /**
- * Supabase throws if url/key are empty at import time — that blanked the whole app.
+ * Supabase throws if url/key are empty at import time - that blanked the whole app.
  * Use placeholders when env is missing so React can render; gated features use
  * `isSupabaseConfigured` (Listings setup screen, etc.). Unconfigured requests fail at
  * the network layer only.
@@ -78,7 +78,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     /**
      * Implicit flow (not PKCE) so **email confirmation links work in any browser** (mail app webview,
      * phone, etc.). PKCE ties the one-time `code` to a `code_verifier` stored only where sign-up
-     * started — opening the link elsewhere causes "PKCE code verifier not found".
+     * started - opening the link elsewhere causes "PKCE code verifier not found".
      *
      * Only parse auth tokens from the URL on `/auth/callback` so other routes are unaffected.
      */

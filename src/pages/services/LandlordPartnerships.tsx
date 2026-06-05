@@ -54,7 +54,7 @@ export default function LandlordPartnerships() {
       />
       <ServicePageLayout
       title="Landlord Partnerships"
-      subtitle="More income. Less vacancy. Predictable returns — verified accommodation with a structured, numbers-driven approach."
+      subtitle="More income. Less vacancy. Predictable returns - verified accommodation with a structured, numbers-driven approach."
       relatedMode="newest"
       contentVariant="fullBleed"
       heroCta={{ label: 'List your property free →', to: SIGNUP_LANDLORD, variant: 'coralProminentOnCoral' }}
@@ -67,7 +67,7 @@ export default function LandlordPartnerships() {
         <div className="max-w-3xl mx-auto px-6 py-10 md:py-12 text-center">
           <p className="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
             Partner with Quni Living to reach serious verified renters across Australia. We help you keep occupancy steadier near
-            campuses and run proper leases — not short-stay chaos — whether you list a whole home or individual rooms.
+            campuses and run proper leases - not short-stay chaos - whether you list a whole home or individual rooms.
           </p>
         </div>
         <div className="max-w-site mx-auto px-6 pb-10 md:pb-12">
@@ -88,7 +88,7 @@ export default function LandlordPartnerships() {
               Powered by AI
             </p>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-              The smartest tools in campus-area rentals — built for landlords like you.
+              The smartest tools in campus-area rentals - built for landlords like you.
             </h2>
             <p className="mt-3 text-gray-700 leading-relaxed max-w-3xl">
               Write listings in one click, price with live market data, and reply to enquiries instantly. No other
@@ -107,7 +107,7 @@ export default function LandlordPartnerships() {
         </div>
       </section>
 
-      {/* The numbers that matter — stat cards */}
+      {/* The numbers that matter - stat cards */}
       <section className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
           <p className="text-center text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-2">
@@ -126,7 +126,7 @@ export default function LandlordPartnerships() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
               <h3 className="font-display text-lg font-bold text-[#FF6F61]">Vacancy</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-                Built around demand near universities — recurring student interest and longer stays improve occupancy
+                Built around demand near universities - recurring student interest and longer stays improve occupancy
                 stability.
               </p>
             </div>
@@ -140,7 +140,7 @@ export default function LandlordPartnerships() {
         </div>
       </section>
 
-      {/* Why explore — callout full width */}
+      {/* Why explore - callout full width */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 pt-10 md:pt-12 pb-0">
           <div className="w-full rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
@@ -150,7 +150,7 @@ export default function LandlordPartnerships() {
             <p className="mt-4 text-gray-700 leading-relaxed text-center sm:text-left">
               Student demand near universities is recurring; tenancies are often medium-to-longer stays, which can mean fewer
               gaps between renters and rent that reflects real market demand. If you want clear weekly numbers, professional
-              oversight, and leases (not Airbnb-style turnover), the sections below spell out how that works — and you can
+              oversight, and leases (not Airbnb-style turnover), the sections below spell out how that works - and you can
               talk to us anytime with no obligation.
             </p>
             <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-3">
@@ -175,7 +175,7 @@ export default function LandlordPartnerships() {
       <section className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-3xl mx-auto px-6 pb-8 pt-0 text-center">
           <p className="text-gray-700 leading-relaxed text-base sm:text-lg">
-            We focus on the property, the tenants, and protecting your asset — with one clear process instead of juggling
+            We focus on the property, the tenants, and protecting your asset - with one clear process instead of juggling
             multiple informal arrangements.
           </p>
         </div>
@@ -190,7 +190,7 @@ export default function LandlordPartnerships() {
                 How would you like to rent your property?
               </h2>
               <p className="text-center lg:text-left text-gray-600 max-w-2xl lg:max-w-none mx-auto lg:mx-0 mb-6">
-                Two common models — we assess layout, location, and demand before recommending the best fit.
+                Two common models - we assess layout, location, and demand before recommending the best fit.
               </p>
               <div className="grid sm:grid-cols-2 gap-4 lg:gap-6 mb-6">
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
@@ -272,7 +272,7 @@ export default function LandlordPartnerships() {
                   </li>
                   <li>
                     <span className="font-medium text-gray-900">With Quni:</span> whole-property student lease for stable demand, or
-                    room-by-room leasing for higher total weekly income potential — we recommend based on your property.
+                    room-by-room leasing for higher total weekly income potential - we recommend based on your property.
                   </li>
                 </ul>
               </div>
@@ -281,14 +281,14 @@ export default function LandlordPartnerships() {
         </div>
       </section>
 
-      {/* Income estimate — links to signup; full lead capture sits above footer */}
+      {/* Income estimate - links to signup; full lead capture sits above footer */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12 text-center">
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Curious what your property could earn?
           </h2>
           <p className="mt-3 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            We can outline expected weekly income, likely vacancy profile, and the best leasing structure — clear assumptions, no hype.
+            We can outline expected weekly income, likely vacancy profile, and the best leasing structure - clear assumptions, no hype.
           </p>
           <p className="mt-4 text-sm text-gray-500 italic max-w-xl mx-auto">
             Not short-stay. Not Airbnb. Proper leases. Professional management.

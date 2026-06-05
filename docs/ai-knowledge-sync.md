@@ -4,9 +4,9 @@ The in-app AI assistant (floating widget and `/landlords/ai`) does **not** autom
 
 ## 1. System prompts (always-on behaviour)
 
-**File:** `api/chat.ts` — `SYSTEM_PROMPTS` for `visitor`, `student_renter`, and `landlord`.
+**File:** `api/chat.ts` - `SYSTEM_PROMPTS` for `visitor`, `student_renter`, and `landlord`.
 
-These rules apply to every chat turn for that persona (verification honesty, sample agreement URLs, tone, etc.). Changes here take effect on the next API deploy — no database step.
+These rules apply to every chat turn for that persona (verification honesty, sample agreement URLs, tone, etc.). Changes here take effect on the next API deploy - no database step.
 
 Other AI endpoints have their own prompts and are **not** updated automatically:
 
@@ -26,7 +26,7 @@ Each chat message embeds the user question and retrieves the top matching chunks
 
 ### Feature inventory → AI (recommended for “whole product” coverage)
 
-**Living doc:** [`docs/feature-inventory.md`](./feature-inventory.md) — student/landlord capability list with routes and Live vs UI-only status.
+**Living doc:** [`docs/feature-inventory.md`](./feature-inventory.md) - student/landlord capability list with routes and Live vs UI-only status.
 
 When you update that file, sync four large `platform_policy` chunks into the seed JSON, then re-embed:
 
@@ -85,11 +85,11 @@ Update when you want one-click suggestions to reflect new features.
 
 ## Priority topics (keep explicit articles)
 
-Some flows deserve dedicated `knowledgeData.json` entries **in addition to** the feature inventory sync — especially when you want the model to explain *why* (not just *where*):
+Some flows deserve dedicated `knowledgeData.json` entries **in addition to** the feature inventory sync - especially when you want the model to explain *why* (not just *where*):
 
-- **Verified host / Stripe identity** — `Quni host verification (Verified host badge)`
-- **Student payments** — `Quni student payments and Stripe`
-- **Landlord payments (Listing vs Managed)** — `Quni landlord payments and Stripe`
+- **Verified host / Stripe identity** - `Quni host verification (Verified host badge)`
+- **Student payments** - `Quni student payments and Stripe`
+- **Landlord payments (Listing vs Managed)** - `Quni landlord payments and Stripe`
 
 Pair these with `TRUST_STRIPE_PAYMENTS_RULE` in `api/chat.ts` so chat always prioritises trust and payment honesty.
 

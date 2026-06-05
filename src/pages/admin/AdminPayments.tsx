@@ -126,7 +126,7 @@ function landlordDisplayName(row: {
   if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
   if (row.full_name?.trim()) return row.full_name.trim()
   if (row.company_name?.trim()) return row.company_name.trim()
-  return '—'
+  return '-'
 }
 
 function propertyLine(p: {
@@ -135,9 +135,9 @@ function propertyLine(p: {
   state?: string | null
   postcode?: string | null
 } | null): string {
-  if (!p) return '—'
+  if (!p) return '-'
   const parts = [p.address, p.suburb, p.state, p.postcode].filter(Boolean)
-  return parts.length ? parts.join(', ') : '—'
+  return parts.length ? parts.join(', ') : '-'
 }
 
 function paymentTypeLabel(t: string | null | undefined): string {
@@ -151,7 +151,7 @@ function paymentTypeLabel(t: string | null | undefined): string {
     case 'refund':
       return 'Refund'
     default:
-      return t?.replace(/_/g, ' ') || '—'
+      return t?.replace(/_/g, ' ') || '-'
   }
 }
 
@@ -641,7 +641,7 @@ function TransactionsTab() {
                             {studentDisplayName(sp)}
                           </Link>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>
@@ -653,7 +653,7 @@ function TransactionsTab() {
                             {landlordDisplayName(lp)}
                           </Link>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>{propertyLine(r.bookings?.properties ?? null)}</td>
@@ -662,7 +662,7 @@ function TransactionsTab() {
                       <td className={adminTdClass}>{formatAudCents(r.amount_platform_fee)}</td>
                       <td className={adminTdClass}>{formatAudCents(r.amount_landlord_payout)}</td>
                       <td className={adminTdClass}>
-                        <span className="capitalize">{r.status || '—'}</span>
+                        <span className="capitalize">{r.status || '-'}</span>
                       </td>
                       <td className={adminTdClass}>
                         {pi ? (
@@ -675,7 +675,7 @@ function TransactionsTab() {
                             {truncateId(pi)}
                           </button>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                     </tr>
@@ -857,7 +857,7 @@ function SubscriptionsTab() {
                             {studentDisplayName(sp)}
                           </Link>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>
@@ -869,23 +869,23 @@ function SubscriptionsTab() {
                             {landlordDisplayName(lp)}
                           </Link>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>{propertyLine(b.properties)}</td>
                       <td className={adminTdClass}>
                         {b.weekly_rent != null
                           ? formatAudCents(Math.round(Number(b.weekly_rent) * 100))
-                          : '—'}
+                          : '-'}
                       </td>
                       <td className={adminTdClass}>8.00%</td>
                       <td className={adminTdClass}>{formatDate(b.move_in_date || b.start_date)}</td>
                       <td className={adminTdClass}>
-                        {nextMs ? formatDate(new Date(nextMs).toISOString()) : '—'}
+                        {nextMs ? formatDate(new Date(nextMs).toISOString()) : '-'}
                       </td>
                       <td className={adminTdClass}>{formatDate(b.end_date)}</td>
                       <td className={adminTdClass}>
-                        <span className="capitalize">{b.stripe_subscription_status || '—'}</span>
+                        <span className="capitalize">{b.stripe_subscription_status || '-'}</span>
                       </td>
                       <td className={adminTdClass}>
                         {subId ? (
@@ -897,7 +897,7 @@ function SubscriptionsTab() {
                             {truncateId(subId, 12)}
                           </button>
                         ) : (
-                          '—'
+                          '-'
                         )}
                       </td>
                       <td className={adminTdClass}>
@@ -1137,7 +1137,7 @@ function RefundsTab() {
       const j = (await res.json()) as { error?: string; stripeRefundId?: string; amountRefundedCents?: number }
       if (!res.ok) throw new Error(j.error || 'Refund failed')
       setSuccessMsg(
-        `Refund issued. Stripe refund ID: ${j.stripeRefundId ?? '—'} (${formatAudCents(j.amountRefundedCents ?? 0)}).`,
+        `Refund issued. Stripe refund ID: ${j.stripeRefundId ?? '-'} (${formatAudCents(j.amountRefundedCents ?? 0)}).`,
       )
     } catch (e) {
       setSearchError(e instanceof Error ? e.message : 'Refund failed')
@@ -1474,7 +1474,7 @@ function BondsTab() {
                           {studentDisplayName(r.student_profiles)}
                         </Link>
                       ) : (
-                        '—'
+                        '-'
                       )}
                     </td>
                     <td className={adminTdClass}>
@@ -1486,14 +1486,14 @@ function BondsTab() {
                           {landlordDisplayName(r.landlord_profiles)}
                         </Link>
                       ) : (
-                        '—'
+                        '-'
                       )}
                     </td>
                     <td className={adminTdClass}>{propertyLine(r.properties)}</td>
-                    <td className={adminTdClass}>{r.state || '—'}</td>
+                    <td className={adminTdClass}>{r.state || '-'}</td>
                     <td className={adminTdClass}>{formatAudCents(r.bond_amount)}</td>
-                    <td className={adminTdClass}>{r.bond_type || '—'}</td>
-                    <td className={adminTdClass}>{r.bond_status || '—'}</td>
+                    <td className={adminTdClass}>{r.bond_type || '-'}</td>
+                    <td className={adminTdClass}>{r.bond_status || '-'}</td>
                     <td className={adminTdClass}>
                       {editRef?.id === r.id ? (
                         <div className="flex gap-1">
@@ -1519,7 +1519,7 @@ function BondsTab() {
                           className="text-left text-sm text-gray-800 hover:text-indigo-600"
                           onClick={() => setEditRef({ id: r.id, value: r.lodgement_reference || '' })}
                         >
-                          {r.lodgement_reference?.trim() || '—'}
+                          {r.lodgement_reference?.trim() || '-'}
                         </button>
                       )}
                     </td>

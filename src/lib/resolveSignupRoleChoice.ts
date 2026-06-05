@@ -9,7 +9,7 @@ export type SignupRoleChoice = 'student' | 'landlord'
  */
 export async function resolveSignupRoleChoice(user: User): Promise<{
   role: SignupRoleChoice
-  /** True only when neither server nor localStorage had a role — we default to student. */
+  /** True only when neither server nor localStorage had a role - we default to student. */
   missingRoleChoice: boolean
 }> {
   const { role: resolved } = await fetchRoleAndProfile(user)

@@ -16,7 +16,7 @@ export interface ErrorStateProps {
  * Canonical admin error state.
  *
  * Per HANDOFF.md §3: danger-tinted square with `alert-triangle` glyph +
- * `Couldn't load this` + navy SECONDARY retry button (not coral — error
+ * `Couldn't load this` + navy SECONDARY retry button (not coral - error
  * retries are never the primary action of a page).
  */
 export function ErrorState({

@@ -138,7 +138,7 @@ async function main() {
     /File last updated on:\s*([^.<]+)/i,
   )
   const nswProvenance = {
-    form: 'NSW FT6600 — Residential Tenancy Agreement',
+    form: 'NSW FT6600 - Residential Tenancy Agreement',
     sourcePageUrl: NSW_PAGE_URL,
     downloadUrl: nswUrl,
     downloadDate,
@@ -178,7 +178,7 @@ async function main() {
 
   const qldVersionInPdf = /v23\s*Sep25/i.test(qldText) ? 'v23 Sep25' : null
   const qldProvenance = {
-    form: 'QLD RTA Form 18a — General Tenancy Agreement',
+    form: 'QLD RTA Form 18a - General Tenancy Agreement',
     sourceUrl: QLD_PDF_URL,
     rtaVersionString: qldVersionInPdf || 'v23 Sep25 (expected; verify on PDF)',
     downloadDate,

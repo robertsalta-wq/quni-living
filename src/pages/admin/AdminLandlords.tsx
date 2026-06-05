@@ -13,7 +13,7 @@ function landlordDisplayName(row: LandlordRow) {
   if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
   if (row.full_name?.trim()) return row.full_name.trim()
   if (row.company_name?.trim()) return row.company_name.trim()
-  return '—'
+  return '-'
 }
 
 export default function AdminLandlords() {
@@ -125,8 +125,8 @@ export default function AdminLandlords() {
                     <td className={adminTdClass}>
                       <span className="font-medium text-gray-900">{landlordDisplayName(row)}</span>
                     </td>
-                    <td className={adminTdClass}>{row.email?.trim() || '—'}</td>
-                    <td className={adminTdClass}>{row.phone?.trim() || '—'}</td>
+                    <td className={adminTdClass}>{row.email?.trim() || '-'}</td>
+                    <td className={adminTdClass}>{row.phone?.trim() || '-'}</td>
                     <td className={adminTdClass}>
                       <div className="flex flex-wrap items-center gap-2">
                         {row.verified ? (

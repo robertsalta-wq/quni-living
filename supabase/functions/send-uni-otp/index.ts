@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
   const otp = randomOtp()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
-  // Single row per user (requires unique index on user_id — see student_verification.sql).
+  // Single row per user (requires unique index on user_id - see student_verification.sql).
   const { error: upsertErr } = await admin.from('verification_otps').upsert(
     {
       user_id: user.id,

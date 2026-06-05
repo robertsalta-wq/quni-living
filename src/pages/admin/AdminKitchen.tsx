@@ -133,7 +133,7 @@ export default function AdminKitchen() {
           <Card>
             <Eyebrow>Resting</Eyebrow>
             <p className="mt-1.5 text-[14px] text-admin-ink-3">
-              Default card surface — 1px line, 16px radius, light shadow.
+              Default card surface - 1px line, 16px radius, light shadow.
             </p>
           </Card>
           <Card hoverable>

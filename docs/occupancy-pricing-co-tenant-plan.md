@@ -1,10 +1,10 @@
-# Occupancy pricing & co-tenant on lease — implementation plan
+# Occupancy pricing & co-tenant on lease - implementation plan
 
 **Status:** Chunks 1–7 complete on `main`. Acceptance: `docs/occupancy-pricing-chunk7-review.md` + `api/lib/booking/occupancyAcceptance.test.ts`. Optional v1.1: DocuSeal co-tenant signer.  
 **Last updated:** 26 May 2026  
 **Stack:** Supabase (Postgres + RLS) + Vercel API routes + React app + existing PDF/DocuSeal pipeline
 
-**Motivating example:** Single room, queen bed, max 2 occupants — **$400/wk** (1 person), **+$100/wk** (2 people / couple), **+$50/wk** optional carpark.
+**Motivating example:** Single room, queen bed, max 2 occupants - **$400/wk** (1 person), **+$100/wk** (2 people / couple), **+$50/wk** optional carpark.
 
 **Related:** `docs/listing-only-go-live-plan.md` (Listing tier go-live), `docs/dual-tier-service-model.md` (fees vs rent).
 
@@ -18,12 +18,12 @@
 | Couple surcharge | Optional `couple_surcharge_per_week`; applies when booking selects **2 occupants** |
 | Parking surcharge | Optional `parking_surcharge_per_week`; **`parking_available` is source of truth**; landlord form syncs Parking **feature** tick |
 | Max occupants | `max_occupants` on property (default **1** when null for backward compat) |
-| Booking source of truth | **Booking** stores `occupant_count`, `parking_selected`, resolved `weekly_rent` — not profile `occupancy_type` alone |
+| Booking source of truth | **Booking** stores `occupant_count`, `parking_selected`, resolved `weekly_rent` - not profile `occupancy_type` alone |
 | Server validation | API recomputes rent; never trusts client total |
 | Deposit | **1 week** of resolved `weekly_rent` at PI create/commit (unchanged formula) |
 | Bond | **Manual** on listing; helper text suggests **4× max weekly rent** (base + surcharges); no auto-recalc in v1 |
-| Co-tenant email | May match primary student email — **soft warning in UI**, do not block |
-| NSW FT6600 co-tenant | **Alignment** with prescribed form (signatures + parties), not a new legal concept — see §8.2 |
+| Co-tenant email | May match primary student email - **soft warning in UI**, do not block |
+| NSW FT6600 co-tenant | **Alignment** with prescribed form (signatures + parties), not a new legal concept - see §8.2 |
 | PI / commit data | Scalars on PI metadata; **co-tenant on commit body** (see §6.3) |
 | Co-tenant identity | When `occupant_count = 2`, collect **co-tenant** details on booking; snapshot on `bookings` |
 | Co-tenant signing | **v1:** names on PDF; **one** DocuSeal tenant submitter (primary student). **v1.1:** second submitter for co-tenant signature |
@@ -119,7 +119,7 @@ resolveWeeklyRent(property, { occupantCount, parkingSelected })
 
 ---
 
-## 5. Migrations — apply order
+## 5. Migrations - apply order
 
 Single file e.g. `supabase/migrations/20260530120000_occupancy_pricing_co_tenant.sql`:
 
@@ -170,9 +170,9 @@ Stripe: **40 chars per key**, **500 chars per value**, 50 keys max ([metadata do
 
 | Approach | Verdict |
 |----------|---------|
-| Single `co_tenant` JSON in metadata | **Risky** — typical payload ~180–350 chars (fits one value), but brittle if fields grow; prefer not |
+| Single `co_tenant` JSON in metadata | **Risky** - typical payload ~180–350 chars (fits one value), but brittle if fields grow; prefer not |
 | Split keys (`coTenantName`, `coTenantEmail`, …) | OK for PI snapshot; still redundant with commit body |
-| **Commit body + PI scalars** | **Preferred** — matches today (commit already re-posts `moveInDate`, `leaseLength`, etc.) |
+| **Commit body + PI scalars** | **Preferred** - matches today (commit already re-posts `moveInDate`, `leaseLength`, etc.) |
 | `booking_drafts` table keyed by `payment_intent_id` | Fallback only if we need pre-payment persistence across sessions |
 
 **Do not** rely on metadata alone for co-tenant identity at commit.
@@ -181,7 +181,7 @@ Stripe: **40 chars per key**, **500 chars per value**, 50 keys max ([metadata do
 
 | File | Change |
 |------|--------|
-| `api/lib/booking/confirmManaged.ts` | Subscription amount from `booking.weekly_rent` (already) — ensure commit set it |
+| `api/lib/booking/confirmManaged.ts` | Subscription amount from `booking.weekly_rent` (already) - ensure commit set it |
 | `api/lib/docusealLeasePrefill.js` | Optional `tenant_2_*` keys when `co_tenant` present |
 | `api/documents/generate-*.ts` | Pass `additionalTenantNames`, `maxOccupantsPermitted` from booking + property |
 | `api/lib/bookingFitForAssessment.ts` | Couple + `max_occupants >= 2` → **match** for single room |
@@ -191,7 +191,7 @@ Stripe: **40 chars per key**, **500 chars per value**, 50 keys max ([metadata do
 
 ## 7. Frontend changes
 
-### 7.1 Landlord — `LandlordPropertyFormPage.tsx`
+### 7.1 Landlord - `LandlordPropertyFormPage.tsx`
 
 New subsection under **Pricing**:
 
@@ -200,25 +200,25 @@ New subsection under **Pricing**:
 - Parking available + parking surcharge ($/wk)
 - Helper: “Leave surcharges empty if not offered”
 
-### 7.2 Student — `PropertyDetail.tsx` / `PropertyCard.tsx`
+### 7.2 Student - `PropertyDetail.tsx` / `PropertyCard.tsx`
 
 - Show **From $X/wk** when surcharges exist
 - Pricing breakdown text: “$400 (1 person) · +$100 second person · +$50 carpark”
 
-### 7.3 Student — `Booking.tsx`
+### 7.3 Student - `Booking.tsx`
 
-**Single combined step** (before payment), after move-in / lease length — not separate steps:
+**Single combined step** (before payment), after move-in / lease length - not separate steps:
 
-1. **How many people will live here?** — 1 / 2 (disable 2 if `max_occupants < 2`)
+1. **How many people will live here?** - 1 / 2 (disable 2 if `max_occupants < 2`)
 2. **Co-tenant details** (conditional, inline when 2 selected): name, email, phone, DOB
 3. **Include carpark?** (conditional checkbox when `parking_available`)
 4. **Rent summary** line items → total → existing deposit + fee display
 
 Prefill: if profile `occupancy_type === 'couple'`, pre-select 2 occupants (editable).
 
-**Co-tenant email:** if same as logged-in student email, show non-blocking warning (“Co-tenant email matches your account — partner may not receive a separate copy”).
+**Co-tenant email:** if same as logged-in student email, show non-blocking warning (“Co-tenant email matches your account - partner may not receive a separate copy”).
 
-### 7.4 Landlord — `LandlordBookingReviewPage.tsx`
+### 7.4 Landlord - `LandlordBookingReviewPage.tsx`
 
 Show: occupant count, parking, rent breakdown, co-tenant contact block.
 
@@ -239,14 +239,14 @@ No requirement to add partner fields in v1; optional later for prefill.
 | `generate-lease.ts` / QLD occupancy | Second named occupant in schedule or special conditions: “Co-occupant: {name}, DOB …” |
 | `docusealLeasePrefill.js` | Map `tenant_2_full_name`, `tenant_2_email`, etc. |
 
-### 8.2 NSW FT6600 — alignment, not invention
+### 8.2 NSW FT6600 - alignment, not invention
 
 **Prescribed form (FT6600 Dec 2025 extraction, `docs/ft6600-2025-12-17.txt`):**
 
 - Signature section includes **SIGNED BY THE TENANT (1–4)** with “Name of tenant:” / “Signature of tenant:” for each.
 - Our **legacy** `NswResidentialTenancyAgreement_legacy.tsx` already rendered Tenant (2–4) in the parties table and tenant (2–4) signature blocks.
 
-**Current gap:** live `NswResidentialTenancyAgreement.tsx` regressed — schedule shows **Tenant Name (1)** only and signatures stop at tenant (1).
+**Current gap:** live `NswResidentialTenancyAgreement.tsx` regressed - schedule shows **Tenant Name (1)** only and signatures stop at tenant (1).
 
 | Work | Type |
 |------|------|
@@ -299,28 +299,28 @@ One full-stack dev, includes QA. **~4–6 days** total.
 
 ### Pricing
 
-- [x] Listing with no surcharges: booking unchanged ($400 → $400 deposit) — automated
-- [x] Couple surcharge: 2 occupants → $500/wk on booking, PI, `weekly_rent` — automated
-- [x] Parking: +$50 only when selected and `parking_available` — automated
-- [x] Couple + parking: $550/wk — automated
-- [x] API rejects `occupantCount: 2` when `max_occupants = 1` — automated
-- [x] API rejects `parkingSelected: true` when parking not offered — automated
-- [x] Client tamper (wrong total) → server uses resolved rent — automated (`assertPiMetadataMatchesOccupancy`)
+- [x] Listing with no surcharges: booking unchanged ($400 → $400 deposit) - automated
+- [x] Couple surcharge: 2 occupants → $500/wk on booking, PI, `weekly_rent` - automated
+- [x] Parking: +$50 only when selected and `parking_available` - automated
+- [x] Couple + parking: $550/wk - automated
+- [x] API rejects `occupantCount: 2` when `max_occupants = 1` - automated
+- [x] API rejects `parkingSelected: true` when parking not offered - automated
+- [x] Client tamper (wrong total) → server uses resolved rent - automated (`assertPiMetadataMatchesOccupancy`)
 
 ### Co-tenant
 
-- [x] 1 occupant: no `co_tenant` required — automated
-- [x] 2 occupants: commit blocked without valid `co_tenant` — automated
-- [ ] Landlord review shows co-tenant details — manual (chunk 5 UI)
-- [x] NSW/QLD PDF includes second name where implemented — automated + manual PDF visual
-- [x] `maxOccupantsPermitted` matches property `max_occupants` — automated
-- [x] `housemates_count` = 1 when 2 occupants — automated
+- [x] 1 occupant: no `co_tenant` required - automated
+- [x] 2 occupants: commit blocked without valid `co_tenant` - automated
+- [ ] Landlord review shows co-tenant details - manual (chunk 5 UI)
+- [x] NSW/QLD PDF includes second name where implemented - automated + manual PDF visual
+- [x] `maxOccupantsPermitted` matches property `max_occupants` - automated
+- [x] `housemates_count` = 1 when 2 occupants - automated
 
 ### Regression
 
-- [x] Existing active listings (null surcharges) book as today — automated
-- [ ] Sole student profile + 1 occupant booking — manual
-- [ ] Listing E2E: accept → deposit → sign (primary tenant only in v1) — manual
+- [x] Existing active listings (null surcharges) book as today - automated
+- [ ] Sole student profile + 1 occupant booking - manual
+- [ ] Listing E2E: accept → deposit → sign (primary tenant only in v1) - manual
 
 See `docs/occupancy-pricing-chunk7-review.md` for smoke steps.
 
@@ -338,12 +338,12 @@ See `docs/occupancy-pricing-chunk7-review.md` for smoke steps.
 
 ---
 
-## 13. Locked decisions (26 May 2026 — review pass)
+## 13. Locked decisions (26 May 2026 - review pass)
 
 | # | Decision |
 |---|----------|
-| 1 | NSW FT6600: **restore** tenant (2) blocks per prescribed form / legacy — not “extend” with new fields |
-| 2 | Co-tenant email may equal primary — **warn, don’t block** |
+| 1 | NSW FT6600: **restore** tenant (2) blocks per prescribed form / legacy - not “extend” with new fields |
+| 2 | Co-tenant email may equal primary - **warn, don’t block** |
 | 3 | `parking_available` source of truth; form syncs Parking feature |
 | 4 | Bond manual + helper “4× max weekly rent” |
 | 5 | Booking UI: **one** combined occupancy + co-tenant + parking step |
@@ -377,6 +377,6 @@ See `docs/occupancy-pricing-chunk7-review.md` for smoke steps.
 
 ## Related docs
 
-- `docs/listing-only-go-live-plan.md` — G2 E2E after implementation
-- `docs/dual-tier-service-model.md` — platform fees vs weekly rent
-- `supabase/migrations/20260409120000_residential_tenancy_package.sql` — `housemates_count` origin
+- `docs/listing-only-go-live-plan.md` - G2 E2E after implementation
+- `docs/dual-tier-service-model.md` - platform fees vs weekly rent
+- `supabase/migrations/20260409120000_residential_tenancy_package.sql` - `housemates_count` origin

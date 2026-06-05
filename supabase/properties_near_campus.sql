@@ -1,4 +1,4 @@
--- Haversine (great-circle) distance filter in Postgres — used by SEO pages via RPC.
+-- Haversine (great-circle) distance filter in Postgres - used by SEO pages via RPC.
 -- Run in Supabase SQL Editor (or migrate) before relying on client RPC calls.
 
 create or replace function public.properties_near_campus(

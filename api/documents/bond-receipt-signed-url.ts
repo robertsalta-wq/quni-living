@@ -3,7 +3,7 @@
  * Signed download URL for an existing bond receipt (private bucket).
  *
  * POST JSON: { booking_id: string }
- * Authorization: Bearer <Supabase access_token> — must be landlord or student on the booking.
+ * Authorization: Bearer <Supabase access_token> - must be landlord or student on the booking.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY
  */

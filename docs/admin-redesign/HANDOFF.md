@@ -1,4 +1,4 @@
-# Quni Admin — Cursor Handoff
+# Quni Admin - Cursor Handoff
 
 This package is a **visual + behavioural spec**, not production code. Re-implement
 the components properly in the existing TS + Tailwind + Supabase stack; the inline
@@ -6,7 +6,7 @@ JSX in this mockup is for design intent only.
 
 > Where this doc references existing tables or routes by name, those names are
 > inferred from the UI. **Verify against the live Supabase schema before
-> wiring** — placeholder names are flagged with `⚠ verify`.
+> wiring** - placeholder names are flagged with `⚠ verify`.
 
 ---
 
@@ -39,24 +39,24 @@ navigational groupings, **not** pages.
 
 | Path | Component | Title | Notes |
 |---|---|---|---|
-| `/admin` | `<LivingConsole/>` | The Living Console | Home — always reachable from the always-visible sidebar item. Six zone cards link into the first sub-item of each zone. |
+| `/admin` | `<LivingConsole/>` | The Living Console | Home - always reachable from the always-visible sidebar item. Six zone cards link into the first sub-item of each zone. |
 | `/admin/marketplace/bookings` | `<BookingsPage/>` | Bookings | First sub-item of Marketplace zone. Default route when clicking the Marketplace zone card. |
 | `/admin/marketplace/tier-events` | `<TierEventsPage/>` | Tier events | Empty state in mockup. |
 | `/admin/marketplace/enquiries` | `<EnquiriesPage/>` | Enquiries | Loading state in mockup. |
 | `/admin/marketplace/properties` | `<PropertiesPage/>` | Properties | Empty state in mockup. |
 | `/admin/tenancies/active` | `<ActiveTenanciesPage/>` | Active tenancies | First sub-item of Tenancies. |
-| `/admin/tenancies/condition-reports` | `<ConditionReportsPage/>` | Condition reports | — |
+| `/admin/tenancies/condition-reports` | `<ConditionReportsPage/>` | Condition reports | - |
 | `/admin/supply/landlords` | `<LandlordsPage/>` | Landlords | First sub-item of Supply. Loading state in mockup. |
-| `/admin/supply/leads` | `<LandlordLeadsPage/>` | Landlord leads | — |
+| `/admin/supply/leads` | `<LandlordLeadsPage/>` | Landlord leads | - |
 | `/admin/money/payments` | `<PaymentsPage/>` | Payments | First sub-item of Money. Error state in mockup. |
 | `/admin/money/pricing` | `<PricingPage/>` | Pricing | Full form spec in §3. |
 | `/admin/trust/checklist` | `<TrustChecklistPage/>` | Trust checklist | First sub-item of Trust & compliance. |
-| `/admin/trust/workflows` | `<StateWorkflowsPage/>` | State workflows | — |
-| `/admin/trust/documents` | `<DocumentsPage/>` | Documents | — |
+| `/admin/trust/workflows` | `<StateWorkflowsPage/>` | State workflows | - |
+| `/admin/trust/documents` | `<DocumentsPage/>` | Documents | - |
 | `/admin/platform/apps` | `<AppsPage/>` | Apps | First sub-item of Platform. |
-| `/admin/platform/domains` | `<DomainsPage/>` | Domains | — |
-| `/admin/platform/kb` | `<KnowledgeBasePage/>` | Knowledge base | — |
-| `/admin/platform/qase` | `<QasePage/>` | Support (Qase) | — |
+| `/admin/platform/domains` | `<DomainsPage/>` | Domains | - |
+| `/admin/platform/kb` | `<KnowledgeBasePage/>` | Knowledge base | - |
+| `/admin/platform/qase` | `<QasePage/>` | Support (Qase) | - |
 | `/admin/platform/business-settings` | `<BusinessSettingsPage/>` | Business settings | Was previously under Settings; moved into Platform. |
 
 **Sidebar collapse rule:** only one zone group expanded at a time. The expanded
@@ -239,7 +239,7 @@ export type IconName = keyof typeof ICONS;
   a parent grid forces it; otherwise left-align in cell.
 - [ ] Sparklines use `coral` only when the underlying metric is a coral-primary
   KPI (revenue, booking volume). Everything else uses `navy`.
-- [ ] No empty state for the Living Console — if a zone has zero data, show
+- [ ] No empty state for the Living Console - if a zone has zero data, show
   `"All clear"` in place of the rows.
 
 ### Bookings (`/admin/marketplace/bookings`)
@@ -281,7 +281,7 @@ export type IconName = keyof typeof ICONS;
 - [ ] Loading: 36px ring spinner using `--quni-coral` over `--quni-coral-tint-15`
   track; `Loading…` + secondary "Fetching live data" subtitle.
 - [ ] Error: warning glyph + `Couldn't load this` + retry button (navy
-  secondary, not coral — error retries are not the primary action of the page).
+  secondary, not coral - error retries are not the primary action of the page).
 
 ---
 
@@ -295,16 +295,16 @@ export type IconName = keyof typeof ICONS;
 | Mock field | Supabase source | Notes |
 |---|---|---|
 | `booking.id` | `bookings.id` (`BK-{seq}` formatted client-side) | ⚠ verify ID format. |
-| `student.name` | `profiles.display_name` via `bookings.student_id` | — |
+| `student.name` | `profiles.display_name` via `bookings.student_id` | - |
 | `student.uni` | `profiles.university_id` → `universities.short_code` | ⚠ verify FK. |
 | `student.initials` | derived from `display_name` | client-side. |
-| `student.verified` | `profiles.identity_verified_at IS NOT NULL` | — |
+| `student.verified` | `profiles.identity_verified_at IS NOT NULL` | - |
 | `student.tier` | `bookings.tier` | enum `T1`/`T2`/`T3`. |
-| `property.addr` + `suburb` | `properties.address_line` + `properties.suburb` | — |
+| `property.addr` + `suburb` | `properties.address_line` + `properties.suburb` | - |
 | `property.color` | derived hash from `property.id` | mock-only; drop in production and use a real thumbnail. |
 | `status` | `bookings.status` | enum `confirmed`/`pending`/`awaiting`/`completed`/`declined`/`cancelled`. |
 | `movein` | `bookings.move_in_date` | format dd MMM yyyy, AU locale. |
-| `rent` | `properties.weekly_rent` (snapshot at booking time) ⚠ verify | — |
+| `rent` | `properties.weekly_rent` (snapshot at booking time) ⚠ verify | - |
 | `enquired` | `enquiries.created_at` via `bookings.enquiry_id` | ⚠ verify FK. |
 
 ### Living Console aggregations
@@ -331,7 +331,7 @@ Cache for 60s on the edge.
 
 ---
 
-## 5. Replace / keep / retire — `src/pages/admin/`
+## 5. Replace / keep / retire - `src/pages/admin/`
 
 > Filenames below match the live repo. Names that were inferred in the original
 > draft have been corrected per Decision **A** in the addendum at the top of
@@ -368,7 +368,7 @@ Add to `tailwind.config.ts` (or extend existing theme). All values mirror
 `colors_and_type.css`.
 
 ```ts
-// tailwind.config.ts — theme.extend
+// tailwind.config.ts - theme.extend
 colors: {
   coral:        '#FF6F61',
   'coral-hover':'#F2604F',
@@ -418,16 +418,16 @@ borderRadius: {
 
 | Element | Class string |
 |---|---|
-| Sidebar item — resting | `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium text-ink-3 hover:bg-coral-tint transition-colors` |
-| Sidebar item — **active** (current sub-item) | `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold text-coral-active bg-coral-tint-15` |
-| Sidebar zone header — collapsed | `flex items-center gap-1.5 w-full px-2 py-2 text-[10px] font-bold tracking-[0.08em] uppercase text-ink-5` |
-| Sidebar zone header — expanded | same as collapsed; the chevron flips via `rotate-0` ↔ `-rotate-90` |
+| Sidebar item - resting | `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium text-ink-3 hover:bg-coral-tint transition-colors` |
+| Sidebar item - **active** (current sub-item) | `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold text-coral-active bg-coral-tint-15` |
+| Sidebar zone header - collapsed | `flex items-center gap-1.5 w-full px-2 py-2 text-[10px] font-bold tracking-[0.08em] uppercase text-ink-5` |
+| Sidebar zone header - expanded | same as collapsed; the chevron flips via `rotate-0` ↔ `-rotate-90` |
 | The Living Console nav row (always visible, above zones) | `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-semibold text-ink bg-white border border-cream-border` (active variant adds `bg-coral-tint-15 text-coral-active border-coral/30`) |
 | Primary CTA | `inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-coral hover:bg-coral-hover text-white text-[13px] font-semibold` |
 | Secondary (navy) CTA | `… bg-navy hover:bg-navy/90 text-white …` |
 | Ghost CTA | `… bg-white hover:bg-surface-2 text-ink-2 border border-line …` |
 | Card | `bg-white border border-line rounded-lg shadow-card` |
-| Card — hoverable | add `hover:shadow-card-hover hover:-translate-y-0.5 transition` |
+| Card - hoverable | add `hover:shadow-card-hover hover:-translate-y-0.5 transition` |
 | Eyebrow | `text-[11px] font-bold tracking-[0.08em] uppercase text-ink-5` |
 | Tabular numbers | `tabular-nums` (Tailwind built-in) |
 
@@ -466,20 +466,20 @@ Explicit, to stop scope creep:
 
 To land this without a 50-file mega-PR:
 
-1. **PR 1 — Tokens + Shell.** Tailwind config, `<Shell/>`, `<Sidebar/>`,
+1. **PR 1 - Tokens + Shell.** Tailwind config, `<Shell/>`, `<Sidebar/>`,
    `<TopBar/>`, `<EnvBadge/>`. Mount under existing dashboard route; keep
    old layout reachable behind a feature flag.
-2. **PR 2 — Primitives + canonical states.** `<Button/>`, `<Pill/>`,
+2. **PR 2 - Primitives + canonical states.** `<Button/>`, `<Pill/>`,
    `<Card/>`, `<Eyebrow/>`, `<Sparkline/>`, `<EmptyState/>`, `<LoadingState/>`,
    `<ErrorState/>`. No page changes yet; primitives live in Storybook (or
    our equivalent).
-3. **PR 3 — The Living Console.** `/admin` replaces old overview. ATTENTION
+3. **PR 3 - The Living Console.** `/admin` replaces old overview. ATTENTION
    + zone cards + Marketplace Pulse + `get-living-console-snapshot` edge fn.
-4. **PR 4 — Bookings rebuild.** Toolbar + sticky table + drawer.
-5. **PR 5 — Pricing rebuild.** Tabs + live preview + change log.
-6. **PR 6 — Sidebar IA migration.** Move pages into the six zones; update
+4. **PR 4 - Bookings rebuild.** Toolbar + sticky table + drawer.
+5. **PR 5 - Pricing rebuild.** Tabs + live preview + change log.
+6. **PR 6 - Sidebar IA migration.** Move pages into the six zones; update
    redirects from old URLs. Retire the old layout flag.
-7. **PR 7 — State-of-the-system pass.** Audit every other admin page;
+7. **PR 7 - State-of-the-system pass.** Audit every other admin page;
    ensure empty/loading/error use canonical components.
 
 ---

@@ -1,8 +1,8 @@
-# Quni Logo Export — Phase 1
+# Quni Logo Export - Phase 1
 
 Minimum-viable export pack for the live site, favicons, social previews, and the Landlord AI page.
 
-**Brand:** Quni Living — warm, editorial, trustworthy. Serif wordmark "Quni".
+**Brand:** Quni Living - warm, editorial, trustworthy. Serif wordmark "Quni".
 
 ## Colours
 
@@ -37,7 +37,7 @@ All wordmark PNGs ship with **true transparent backgrounds**. SVG is the master.
 
 | File | Notes |
 |---|---|
-| `source/quni-logo-master.svg` | Horizontal "Quni" wordmark. Coral `#FF6F61`. Transparent artboard. **This is the master — recolor from here.** |
+| `source/quni-logo-master.svg` | Horizontal "Quni" wordmark. Coral `#FF6F61`. Transparent artboard. **This is the master - recolor from here.** |
 | `source/quni-mark-master.svg` | Standalone Q only, same serif. Master for favicons. |
 
 ## HTML snippet
@@ -52,7 +52,7 @@ All wordmark PNGs ship with **true transparent backgrounds**. SVG is the master.
 <meta property="og:image" content="https://quni.com.au/og-default.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Quni — verified rooms near Australian universities">
+<meta property="og:image:alt" content="Quni - verified rooms near Australian universities">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://quni.com.au/og-default.png">
 ```

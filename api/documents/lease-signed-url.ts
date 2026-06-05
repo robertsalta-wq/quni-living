@@ -3,12 +3,12 @@
  * Signed download URL for a signed lease / residential tenancy agreement (private bucket).
  *
  * POST JSON: { booking_id: string }
- * Authorization: Bearer <Supabase access_token> — must be landlord or student on the booking.
+ * Authorization: Bearer <Supabase access_token> - must be landlord or student on the booking.
  *
  * Looks up tenancy_documents with document_type `lease` or `residential_tenancy` and status `signed`.
  *
  * NSW residential package: returns `signed_url_rta` and `signed_url_addendum` when both files exist
- * (separate PDFs from DocuSeal — not merged server-side for download). Legacy rows may only return `signed_url`.
+ * (separate PDFs from DocuSeal - not merged server-side for download). Legacy rows may only return `signed_url`.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY or VITE_SUPABASE_ANON_KEY
  */
@@ -25,7 +25,7 @@ export const config = {
   maxDuration: 30,
 }
 
-/** 7 days — signed URL lifetime for agreement PDFs */
+/** 7 days - signed URL lifetime for agreement PDFs */
 const SIGNED_URL_EXPIRY_SEC = 7 * 24 * 60 * 60
 
 function parseBearerFromHeader(authHeader: string): string {
@@ -125,7 +125,7 @@ export default async function handler(req: any, res: any) {
 
   /**
    * Phase 3 / Task J: gate downloads on both parties having actually signed.
-   * Status='signed' alone is not enough — the DocuSeal webhook can fire after a single
+   * Status='signed' alone is not enough - the DocuSeal webhook can fire after a single
    * signature in some configurations. Requiring both per-party timestamps means the
    * "Download signed agreement" button never serves a partially-signed PDF.
    */

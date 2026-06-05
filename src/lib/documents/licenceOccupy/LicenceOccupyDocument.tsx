@@ -34,7 +34,7 @@ function formatAuDate(iso: string) {
 function yn(v: boolean | null) {
   if (v === true) return 'Yes'
   if (v === false) return 'No'
-  return '—'
+  return '-'
 }
 
 function LicenceFooter({

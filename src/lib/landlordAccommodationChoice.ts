@@ -32,7 +32,7 @@ export const ACCOMMODATION_UI_OPTIONS: {
   {
     value: 'private_room_landlord_off_site',
     title: 'One private room',
-    description: 'A bedroom in a shared house — you do not live on site.',
+    description: 'A bedroom in a shared house - you do not live on site.',
   },
   {
     value: 'private_room_landlord_on_site',

@@ -1,5 +1,5 @@
 /**
- * Placeholder — Xero OAuth (future).
+ * Placeholder - Xero OAuth (future).
  */
 export const config = { runtime: 'edge' }
 

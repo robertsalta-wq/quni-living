@@ -178,7 +178,7 @@ export default function QaseAdminCreateModal({ isOpen, onClose, onCreated }: Qas
           kind: 'student',
           id: r.id,
           name: studentDisplayName(r),
-          email: r.email?.trim() || '—',
+          email: r.email?.trim() || '-',
         })
       }
       for (const row of llRes.data ?? []) {
@@ -187,7 +187,7 @@ export default function QaseAdminCreateModal({ isOpen, onClose, onCreated }: Qas
           kind: 'landlord',
           id: r.id,
           name: landlordDisplayName(r),
-          email: r.email?.trim() || '—',
+          email: r.email?.trim() || '-',
         })
       }
       setSubmitterHits(hits.slice(0, 12))

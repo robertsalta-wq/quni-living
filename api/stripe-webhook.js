@@ -1,8 +1,8 @@
 /**
 
- * Stripe webhook (Vercel Serverless — Node.js runtime).
+ * Stripe webhook (Vercel Serverless - Node.js runtime).
 
- * Same behaviour as supabase/functions/stripe-webhook — no Supabase CLI required.
+ * Same behaviour as supabase/functions/stripe-webhook - no Supabase CLI required.
 
  *
 
@@ -14,7 +14,7 @@
 
  *   SUPABASE_URL=https://xxxx.supabase.co
 
- *   SUPABASE_SERVICE_ROLE_KEY=eyJ... (service_role — never VITE_* or client)
+ *   SUPABASE_SERVICE_ROLE_KEY=eyJ... (service_role - never VITE_* or client)
 
  *
 
@@ -44,7 +44,7 @@ export const config = {
 
 /** Vercel may set `req.body` when buffered; otherwise read the stream (raw string for Stripe).
 
- * If `req.body` is a parsed object, never JSON.stringify it for verification — the signature is over the exact raw bytes.
+ * If `req.body` is a parsed object, never JSON.stringify it for verification - the signature is over the exact raw bytes.
 
  * Empty string / empty Buffer on `req.body` is ignored so we still read the stream (a real Stripe payload is never empty). */
 
@@ -64,8 +64,8 @@ async function readRawBody(req) {
 
   }
 
-  // Empty string / empty Buffer: fall through — real payload may still be on the stream (Vercel).
-  // Non-Buffer objects (parsed JSON): never use — do not JSON.stringify (breaks key order vs signature).
+  // Empty string / empty Buffer: fall through - real payload may still be on the stream (Vercel).
+  // Non-Buffer objects (parsed JSON): never use - do not JSON.stringify (breaks key order vs signature).
 
   return await new Promise((resolve, reject) => {
 

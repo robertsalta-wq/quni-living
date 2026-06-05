@@ -83,7 +83,7 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
           </p>
           {hasCustomer && (
             <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 mt-2 inline-block">
-              Stripe billing profile saved — add or replace your card below when you&apos;re ready.
+              Stripe billing profile saved - add or replace your card below when you&apos;re ready.
             </p>
           )}
           {error && (

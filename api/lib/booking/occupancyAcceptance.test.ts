@@ -32,7 +32,7 @@ const validCo = {
 }
 
 describe('§11 Pricing acceptance', () => {
-  it('no surcharges — base rent and 1-week deposit cents', () => {
+  it('no surcharges - base rent and 1-week deposit cents', () => {
     const legacy = {
       rent_per_week: 400,
       max_occupants: 1,
@@ -45,7 +45,7 @@ describe('§11 Pricing acceptance', () => {
     expect(r.weeklyRentCents).toBe(40_000)
   })
 
-  it('couple surcharge — $500/wk', () => {
+  it('couple surcharge - $500/wk', () => {
     const r = resolveWeeklyRentForBooking(casaRoom, { occupantCount: 2, parkingSelected: false })
     expect(r.ok).toBe(true)
     if (r.ok) expect(r.resolved.weeklyRent).toBe(500)
@@ -63,7 +63,7 @@ describe('§11 Pricing acceptance', () => {
     ).toBe(false)
   })
 
-  it('couple + parking — $550/wk', () => {
+  it('couple + parking - $550/wk', () => {
     const r = resolveWeeklyRentForBooking(casaRoom, { occupantCount: 2, parkingSelected: true })
     expect(r.ok).toBe(true)
     if (r.ok) expect(r.resolved.weeklyRent).toBe(550)
@@ -105,16 +105,16 @@ describe('§11 Pricing acceptance', () => {
 })
 
 describe('§11 Co-tenant acceptance', () => {
-  it('sole occupant — co-tenant not required', () => {
+  it('sole occupant - co-tenant not required', () => {
     expect(resolveCoTenantForCommit(1, null)).toEqual({ ok: true, coTenant: null })
   })
 
-  it('two occupants — commit blocked without co-tenant', () => {
+  it('two occupants - commit blocked without co-tenant', () => {
     expect(resolveCoTenantForCommit(2, null).ok).toBe(false)
     expect(resolveCoTenantForCommit(2, validCo).ok).toBe(true)
   })
 
-  it('lease PDF fields — second tenant name from booking', () => {
+  it('lease PDF fields - second tenant name from booking', () => {
     const booking = { co_tenant: validCo, occupant_count: 2 }
     expect(additionalTenantNamesFromBooking(booking)).toEqual(['Jane Smith'])
     const lease = occupancyLeaseFieldsFromBooking(booking, { max_occupants: 2 })
@@ -139,7 +139,7 @@ describe('§11 Co-tenant acceptance', () => {
 })
 
 describe('§11 Regression acceptance', () => {
-  it('legacy listing — null surcharges book at base rent only', () => {
+  it('legacy listing - null surcharges book at base rent only', () => {
     const r = resolveWeeklyRentForBooking(
       {
         rent_per_week: 350,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-/** Uses RPC (security definer) — not visible under normal bookings RLS. */
+/** Uses RPC (security definer) - not visible under normal bookings RLS. */
 export async function fetchUnavailablePropertyIdsForDateRange(
   client: SupabaseClient,
   propertyIds: string[],

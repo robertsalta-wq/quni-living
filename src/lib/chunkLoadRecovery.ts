@@ -20,7 +20,7 @@ export function recoverFromStaleChunkLoad(reason: unknown): boolean {
     if (sessionStorage.getItem(CHUNK_RELOAD_SESSION_KEY) === '1') return false
     sessionStorage.setItem(CHUNK_RELOAD_SESSION_KEY, '1')
   } catch {
-    // private mode / blocked storage — still try reload once
+    // private mode / blocked storage - still try reload once
   }
   window.location.reload()
   return true

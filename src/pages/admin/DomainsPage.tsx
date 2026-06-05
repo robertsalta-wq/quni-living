@@ -169,7 +169,7 @@ export default function DomainsPage() {
                 <tr key={row.domain} className="border-t border-gray-100">
                   <td className={`${adminTdClass} font-medium text-gray-900`}>{row.domain}</td>
                   <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>
-                    {row.expiryDate ? formatDate(row.expiryDate) : '—'}
+                    {row.expiryDate ? formatDate(row.expiryDate) : '-'}
                   </td>
                   <td className={adminTdClass}>
                     {row.daysUntilExpiry !== null && row.daysUntilExpiry !== undefined ? (
@@ -179,18 +179,18 @@ export default function DomainsPage() {
                         {row.daysUntilExpiry} days
                       </span>
                     ) : (
-                      <span className="text-gray-500">—</span>
+                      <span className="text-gray-500">-</span>
                     )}
                   </td>
                   <td className={`${adminTdClass} text-gray-600`}>
-                    {row.autoRenew === null ? '—' : row.autoRenew ? 'Yes' : 'No'}
+                    {row.autoRenew === null ? '-' : row.autoRenew ? 'Yes' : 'No'}
                   </td>
-                  <td className={`${adminTdClass} text-gray-600`}>{row.lockStatus?.trim() || '—'}</td>
+                  <td className={`${adminTdClass} text-gray-600`}>{row.lockStatus?.trim() || '-'}</td>
                   <td className={`${adminTdClass} text-gray-600 break-all max-w-[14rem]`}>
-                    {row.nameservers.length > 0 ? row.nameservers.join(', ') : '—'}
+                    {row.nameservers.length > 0 ? row.nameservers.join(', ') : '-'}
                   </td>
                   <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>
-                    {lastChecked ? formatCheckedAt(lastChecked) : '—'}
+                    {lastChecked ? formatCheckedAt(lastChecked) : '-'}
                   </td>
                 </tr>
               ))}

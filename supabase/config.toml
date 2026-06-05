@@ -1,4 +1,4 @@
-# Supabase CLI — https://supabase.com/docs/guides/cli/config
+# Supabase CLI - https://supabase.com/docs/guides/cli/config
 # Link project: supabase link --project-ref YOUR_REF
 #
 # Email templates: used by local `supabase start`. For hosted Supabase, copy HTML into

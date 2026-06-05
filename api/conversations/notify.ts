@@ -1,5 +1,5 @@
 /**
- * POST /api/conversations/notify — internal retry / ops
+ * POST /api/conversations/notify - internal retry / ops
  * Body: { conversationId, messageId }
  * Auth: Bearer INTERNAL_DOC_FLOW_SECRET or X-Conversation-Notify-Secret
  */

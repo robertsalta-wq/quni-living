@@ -1,12 +1,12 @@
 /**
- * VIC on-site licence to occupy — narrative copy (T1 boarder/lodger).
+ * VIC on-site licence to occupy - narrative copy (T1 boarder/lodger).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
 
 export const VIC_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
-  docSubtitle: 'Victoria — Licence to occupy (on-site accommodation)',
-  draftFooter: 'Draft for legal review — not for execution',
+  docSubtitle: 'Victoria - Licence to occupy (on-site accommodation)',
+  draftFooter: 'Draft for legal review - not for execution',
   natureParagraphs: [
     'This document is a common-law licence to occupy a specified room within residential premises in Victoria. It is not a residential tenancy agreement.',
     'The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.',

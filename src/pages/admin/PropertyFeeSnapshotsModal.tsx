@@ -503,7 +503,7 @@ export function PropertyFeeSnapshotsModal({ open, propertyId, onClose }: Propert
                     rows={3}
                     value={changeReason}
                     onChange={(e) => setChangeReason(e.target.value)}
-                    placeholder="Audit trail — describe why fees are changing"
+                    placeholder="Audit trail - describe why fees are changing"
                     required
                   />
                 </div>
@@ -564,7 +564,7 @@ export function PropertyFeeSnapshotsModal({ open, propertyId, onClose }: Propert
                               <td className={adminTdClass}>{row.service_tier}</td>
                               <td className={adminTdClass}>{row.snapshot_source}</td>
                               <td className={adminTdClass}>{row.is_active ? 'yes' : 'no'}</td>
-                              <td className={`${adminTdClass} max-w-xs truncate`}>{row.change_reason ?? '—'}</td>
+                              <td className={`${adminTdClass} max-w-xs truncate`}>{row.change_reason ?? '-'}</td>
                             </tr>
                           ))
                         )}

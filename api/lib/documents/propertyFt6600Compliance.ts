@@ -74,7 +74,7 @@ export function resolveWaterUsageChargedSeparately(
 }
 
 /**
- * Premises inclusions line for FT6600 schedule — derived from existing listing inclusions/features
+ * Premises inclusions line for FT6600 schedule - derived from existing listing inclusions/features
  * (furnished, linen, cleaning, property_features); no separate DB column.
  */
 export function nswFt6600PremisesInclusionsFromPropertyRow(

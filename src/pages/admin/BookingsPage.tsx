@@ -113,7 +113,7 @@ function StatusPill({ status }: { status: BookingStatus }) {
 }
 
 function TierBadge({ tier }: { tier: 'listing' | 'managed' | null }) {
-  if (!tier) return <span className="text-admin-ink-5">—</span>
+  if (!tier) return <span className="text-admin-ink-5">-</span>
   return (
     <Pill tone={tier === 'managed' ? 'coral' : 'navy'} className="!text-[10px]">
       {tier === 'managed' ? 'Managed' : 'Listing'}
@@ -134,8 +134,8 @@ function PropertyThumb({ id, title, suburb }: { id: string | null; title: string
         <Icon name="home" size={14} className="absolute left-2.5 top-2.5 text-white/85" />
       </div>
       <div className="min-w-0">
-        <p className="m-0 truncate text-[13px] font-medium text-admin-ink-2">{title ?? '—'}</p>
-        <p className="m-0 text-[11px] text-admin-ink-4">{suburb ?? '—'}</p>
+        <p className="m-0 truncate text-[13px] font-medium text-admin-ink-2">{title ?? '-'}</p>
+        <p className="m-0 text-[11px] text-admin-ink-4">{suburb ?? '-'}</p>
       </div>
     </div>
   )
@@ -143,13 +143,13 @@ function PropertyThumb({ id, title, suburb }: { id: string | null; title: string
 
 function StudentCell({ row }: { row: BookingRow }) {
   const sp = row.student_profiles
-  const name = sp ? studentDisplayName(sp) : '—'
+  const name = sp ? studentDisplayName(sp) : '-'
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? '')
-    .join('') || '—'
+    .join('') || '-'
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       <div className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-admin-surface-3 text-[11px] font-semibold text-admin-ink-2">
@@ -157,7 +157,7 @@ function StudentCell({ row }: { row: BookingRow }) {
       </div>
       <div className="min-w-0">
         <p className="m-0 truncate text-[13px] font-medium text-admin-ink">{name}</p>
-        <p className="m-0 truncate text-[11px] text-admin-ink-5">{sp?.email ?? '—'}</p>
+        <p className="m-0 truncate text-[11px] text-admin-ink-5">{sp?.email ?? '-'}</p>
       </div>
     </div>
   )
@@ -526,7 +526,7 @@ export default function BookingsPage() {
                             <PropertyThumb id={b.properties?.id ?? null} title={b.properties?.title ?? null} suburb={b.properties?.suburb ?? null} />
                           </td>
                           <td className="whitespace-nowrap border-b border-admin-line-soft px-3.5 py-3.5 align-middle text-[13px] text-admin-ink-2">
-                            {b.student_profiles?.universities?.short_name ?? b.student_profiles?.universities?.name ?? '—'}
+                            {b.student_profiles?.universities?.short_name ?? b.student_profiles?.universities?.name ?? '-'}
                           </td>
                           <td className="whitespace-nowrap border-b border-admin-line-soft px-3.5 py-3.5 align-middle">
                             <TierBadge tier={tier} />
@@ -626,7 +626,7 @@ function DrawerBody({ booking }: { booking: BookingRow }) {
           [
             'Student',
             <span key="s">
-              {booking.student_profiles ? studentDisplayName(booking.student_profiles) : '—'}
+              {booking.student_profiles ? studentDisplayName(booking.student_profiles) : '-'}
               {booking.student_profiles?.universities ? (
                 <span className="text-admin-ink-4">
                   {' · '}
@@ -635,12 +635,12 @@ function DrawerBody({ booking }: { booking: BookingRow }) {
               ) : null}
             </span>,
           ],
-          ['Property', booking.properties ? `${booking.properties.title}${booking.properties.suburb ? `, ${booking.properties.suburb}` : ''}` : '—'],
+          ['Property', booking.properties ? `${booking.properties.title}${booking.properties.suburb ? `, ${booking.properties.suburb}` : ''}` : '-'],
           ['Tier', <TierBadge key="t" tier={tier} />],
           ['Move-in date', formatDate(booking.start_date)],
           ['Lease ends', formatDate(booking.end_date)],
-          ['Weekly rent', booking.weekly_rent ? `${formatMoney(booking.weekly_rent)} AUD` : '—'],
-          ['Rent via', booking.rent_payment_method === 'quni_platform' ? 'Quni platform' : booking.rent_payment_method === 'bank_transfer' ? 'Bank transfer' : '—'],
+          ['Weekly rent', booking.weekly_rent ? `${formatMoney(booking.weekly_rent)} AUD` : '-'],
+          ['Rent via', booking.rent_payment_method === 'quni_platform' ? 'Quni platform' : booking.rent_payment_method === 'bank_transfer' ? 'Bank transfer' : '-'],
         ]}
       />
 
@@ -685,7 +685,7 @@ function DrawerBody({ booking }: { booking: BookingRow }) {
                 }
               />
               <strong className="text-admin-ink-2">{e.label}</strong>
-              {e.detail ? ` — ${e.detail}` : ''} · <span className="tabular-nums">{formatDate(e.iso)}</span>
+              {e.detail ? ` - ${e.detail}` : ''} · <span className="tabular-nums">{formatDate(e.iso)}</span>
             </li>
           ))}
         </ul>

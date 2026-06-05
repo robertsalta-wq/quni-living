@@ -22,7 +22,7 @@ const CONTACT_FAQ = [
   },
   {
     id: 'landlord-managed',
-    question: 'I’m a landlord — how does managed tenancy work?',
+    question: 'I’m a landlord - how does managed tenancy work?',
     answer: (
       <>
         See{' '}
@@ -87,7 +87,7 @@ function LandlordPartnershipAd() {
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF6F61]">For landlords</p>
       <h3 className="font-display mt-2 text-lg font-bold text-gray-900">Portfolio or many properties?</h3>
       <p className="mt-3 text-sm leading-relaxed text-gray-600">
-        If you own several rentals near campus — or want to place a block of rooms with a university — Quni can help you
+        If you own several rentals near campus - or want to place a block of rooms with a university - Quni can help you
         list individually or run a managed portfolio with structured leases, verified renter demand, and clearer
         placement support than a generic listing site.
       </p>
@@ -235,7 +235,7 @@ export default function Contact() {
       />
       <PageHeroBand
         title="Get in Touch"
-        subtitle="We'd love to hear from you — whether you're a student looking for accommodation or a landlord wanting to list your property."
+        subtitle="We'd love to hear from you - whether you're a student looking for accommodation or a landlord wanting to list your property."
       />
 
       <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">

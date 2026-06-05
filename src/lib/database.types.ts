@@ -1,5 +1,5 @@
 ﻿/**
- * Supabase public schema — matches supabase/quni_supabase_schema.sql (Claude / Wix-style model).
+ * Supabase public schema - matches supabase/quni_supabase_schema.sql (Claude / Wix-style model).
  * Regenerate: npx supabase gen types typescript --project-id <id> > src/lib/database.types.ts
  */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]

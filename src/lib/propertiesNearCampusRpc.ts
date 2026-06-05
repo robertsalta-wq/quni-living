@@ -51,7 +51,7 @@ export async function rpcPropertiesNearCampus(
 
 /**
  * For each property id, minimum straight-line distance (Haversine, approximate) to any campus
- * with coordinates — one RPC per campus.
+ * with coordinates - one RPC per campus.
  */
 export async function fetchMinDistanceByPropertyIdForUniversityCampuses(
   supabase: SupabaseClient,

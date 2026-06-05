@@ -30,7 +30,7 @@ export function chunkText(text: string, maxChars: number): string[] {
 
 function isPartHeading(line: string): boolean {
   const t = line.trim()
-  return /^PART [A-F]—/i.test(t) || /^Part [A-F] –/.test(t)
+  return /^PART [A-F]-/i.test(t) || /^Part [A-F] –/.test(t)
 }
 
 function isTodoLine(line: string): boolean {

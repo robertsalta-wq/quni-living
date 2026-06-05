@@ -1,5 +1,5 @@
 /**
- * QLD tenancy rules by tier — mirrors nsw.ts export shape.
+ * QLD tenancy rules by tier - mirrors nsw.ts export shape.
  * Tier 3 (rooming accommodation) is deferred in resolveTenancyPackage, not defined here (same pattern as vic.ts omitting T3).
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'

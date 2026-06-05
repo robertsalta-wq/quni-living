@@ -7,7 +7,7 @@ import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 type Props = {
   role: 'student' | 'landlord'
   active: UserDashboardSection
-  /** Landlord dashboard only — pending booking count badge on Bookings tab */
+  /** Landlord dashboard only - pending booking count badge on Bookings tab */
   pendingBookings?: number
   totalBookings?: number
   onSelect?: (section: Exclude<UserDashboardSection, 'messages' | 'profile'>) => void

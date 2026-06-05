@@ -18,7 +18,7 @@ export interface ChipFilterProps<T extends string> {
   active?: boolean
   onChange: (next: T) => void
   /**
-   * Disabled chips render dim with a tooltip — used while a filter source is
+   * Disabled chips render dim with a tooltip - used while a filter source is
    * not yet wired (e.g. "University" until students are universally linked).
    */
   disabled?: boolean
@@ -30,7 +30,7 @@ export interface ChipFilterProps<T extends string> {
  *
  * Per HANDOFF.md §2: generic over the option value `T`. The chip itself opens
  * a small native-style popover anchored below the chip. Closes on outside
- * click, Escape, or option select. No animation library — pure CSS positioning.
+ * click, Escape, or option select. No animation library - pure CSS positioning.
  */
 export function ChipFilter<T extends string>({
   label,
@@ -44,7 +44,7 @@ export function ChipFilter<T extends string>({
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const isActive = disabled ? false : (active ?? value !== options[0]?.value)
-  const currentLabel = options.find((o) => o.value === value)?.label ?? options[0]?.label ?? '—'
+  const currentLabel = options.find((o) => o.value === value)?.label ?? options[0]?.label ?? '-'
 
   useEffect(() => {
     if (!open) return

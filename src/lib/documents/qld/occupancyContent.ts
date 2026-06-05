@@ -1,13 +1,13 @@
 /**
- * Queensland on-site licence to occupy — boarder/lodger; RTA bond lodgement (T1).
+ * Queensland on-site licence to occupy - boarder/lodger; RTA bond lodgement (T1).
  */
 import type { LicenceOccupyContent } from '../licenceOccupy/contentTypes.js'
 import { QLD_RTRA_ACT_SHORT, QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS } from '../../tenancy/qldBoarderLodger.js'
 
 export const QLD_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
   docTitle: 'Licence to Occupy',
-  docSubtitle: 'Queensland — Licence to occupy (on-site accommodation)',
-  draftFooter: 'Draft — not for execution until signed',
+  docSubtitle: 'Queensland - Licence to occupy (on-site accommodation)',
+  draftFooter: 'Draft - not for execution until signed',
   natureParagraphs: [
     `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,
     'Under s 27(1) of the RTRA Act, the Act does not apply to a residential tenancy agreement if the person is a boarder or lodger. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities.',

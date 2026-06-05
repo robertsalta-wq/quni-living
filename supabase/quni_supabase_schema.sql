@@ -1,5 +1,5 @@
 -- ============================================================
--- QUNI LIVING — Supabase Schema (matches Claude / Wix-style model)
+-- QUNI LIVING - Supabase Schema (matches Claude / Wix-style model)
 -- Run in Supabase Dashboard → SQL Editor
 -- Uses public schema explicitly; drop-policy guards for safer re-runs in dev
 -- ============================================================
@@ -266,7 +266,7 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ============================================================
--- RLS — drop then create (re-runnable in dev)
+-- RLS - drop then create (re-runnable in dev)
 -- ============================================================
 alter table public.properties enable row level security;
 alter table public.universities enable row level security;
@@ -375,7 +375,7 @@ create policy "Public can read landlord profiles"
   on public.landlord_profiles for select
   using (true);
 
--- See supabase/student_profiles_rls_recursion_fix.sql — subquery on student_profiles inside
+-- See supabase/student_profiles_rls_recursion_fix.sql - subquery on student_profiles inside
 -- bookings/enquiries RLS + landlord read policies on student_profiles causes recursion.
 create or replace function public.current_auth_student_profile_id()
 returns uuid

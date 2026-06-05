@@ -73,7 +73,7 @@
   },
   {
     "section": "Part A item 5 (Length of agreement)",
-    "issue": "Stray \"z\" character from Word form field — removed from extract; verify against CAV PDF."
+    "issue": "Stray \"z\" character from Word form field - removed from extract; verify against CAV PDF."
   },
   {
     "section": "Part A fields 1–7",
@@ -85,11 +85,11 @@
   },
   {
     "section": "Part B items 9.1 / 9.2 (electronic service)",
-    "issue": "Per-renter Yes/No checkbox grids are multi-column tables; extract has sequential Yes/No lines — schedule uses consolidated Yes/No with emails."
+    "issue": "Per-renter Yes/No checkbox grids are multi-column tables; extract has sequential Yes/No lines - schedule uses consolidated Yes/No with emails."
   },
   {
     "section": "Part C item 16",
-    "issue": "Official Nov 2025 form states \"16 [Clause revoked by law]\" — smoke alarm obligations moved to Part D heading \"Smoke Alarms\" (not a numbered Part C clause)."
+    "issue": "Official Nov 2025 form states \"16 [Clause revoked by law]\" - smoke alarm obligations moved to Part D heading \"Smoke Alarms\" (not a numbered Part C clause)."
   },
   {
     "section": "Part D",
@@ -97,7 +97,7 @@
   },
   {
     "section": "Part E item 21",
-    "issue": "Free-text \"Further details\" area is a large empty table cell — not extracted as fillable lines."
+    "issue": "Free-text \"Further details\" area is a large empty table cell - not extracted as fillable lines."
   },
   {
     "section": "Help or further information + interpreter pages",

@@ -1,5 +1,5 @@
 /**
- * VIC tenancy rules — T1 on-site licence (owner-held security deposit) vs T2 Form 1 (RTBA bond).
+ * VIC tenancy rules - T1 on-site licence (owner-held security deposit) vs T2 Form 1 (RTBA bond).
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'
 

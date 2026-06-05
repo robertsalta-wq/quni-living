@@ -128,7 +128,7 @@ export default function LandlordAIFeaturePage() {
             <span className="block italic text-[#E8583A]">rent to students.</span>
           </h1>
           <p className="ai-reveal mt-6 max-w-3xl mx-auto text-base md:text-xl text-stone-300/90 leading-relaxed">
-            Quni Living is a verified accommodation platform with built-in AI — from writing your listing to
+            Quni Living is a verified accommodation platform with built-in AI - from writing your listing to
             pricing it perfectly and replying to enquiries instantly.
           </p>
           <div className="ai-reveal mt-8 flex flex-col sm:flex-row justify-center gap-3">
@@ -243,7 +243,7 @@ export default function LandlordAIFeaturePage() {
           >
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-[0.16em] text-stone-400">Suggested weekly rent range</p>
-              <p className="text-4xl md:text-5xl font-serif text-stone-100">$280 — $320 /week</p>
+              <p className="text-4xl md:text-5xl font-serif text-stone-100">$280 - $320 /week</p>
               <div className="border-l-4 border-[#E8583A] bg-black/20 p-3 text-sm text-stone-300">
                 Similar private rooms in Kensington are listing between $280-$320. Scape and Iglu sit higher, making
                 $300 competitive and realistic.

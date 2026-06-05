@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     if (r.status !== 'down') continue
 
     if (!firebaseJson) {
-      console.warn('platform-health-cron: skip FCM — FIREBASE_SERVICE_ACCOUNT_JSON not set', r.service)
+      console.warn('platform-health-cron: skip FCM - FIREBASE_SERVICE_ACCOUNT_JSON not set', r.service)
       continue
     }
 

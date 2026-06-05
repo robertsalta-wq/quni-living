@@ -1,4 +1,4 @@
--- Stripe Connect + Subscriptions — foundation (run in SQL Editor after main schema)
+-- Stripe Connect + Subscriptions - foundation (run in SQL Editor after main schema)
 -- Stores IDs only; all charges/subscriptions are created via Edge Functions or Stripe Dashboard + webhooks.
 
 -- ---------------------------------------------------------------------------

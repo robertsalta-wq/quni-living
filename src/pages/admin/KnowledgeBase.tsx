@@ -205,7 +205,7 @@ export default function KnowledgeBase() {
               <input
                 value={form.state}
                 onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                placeholder="e.g. NSW — leave blank for national / platform"
+                placeholder="e.g. NSW - leave blank for national / platform"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               />
             </div>
@@ -254,7 +254,7 @@ export default function KnowledgeBase() {
                         <p className="font-medium text-gray-900 line-clamp-2">{row.title}</p>
                       </td>
                       <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>{row.category}</td>
-                      <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>{row.state ?? '—'}</td>
+                      <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>{row.state ?? '-'}</td>
                       <td className={`${adminTdClass} text-gray-500 text-xs whitespace-nowrap`}>
                         {formatDate(row.updated_at)}
                       </td>

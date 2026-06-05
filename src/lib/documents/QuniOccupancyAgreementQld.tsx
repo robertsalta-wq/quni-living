@@ -1,5 +1,5 @@
 /**
- * Re-export — QLD T1 licence PDF is bundled to `api/documents/QldOccupancyAgreement.js`.
+ * Re-export - QLD T1 licence PDF is bundled to `api/documents/QldOccupancyAgreement.js`.
  */
 export {
   QldLicenceToOccupyOnSite,

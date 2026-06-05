@@ -218,7 +218,7 @@ const OPS_POLL_MS = 60_000
 
 function formatRelativeCheckedAt(iso: string, now: Date): string {
   const t = new Date(iso).getTime()
-  if (!Number.isFinite(t)) return '—'
+  if (!Number.isFinite(t)) return '-'
   const sec = Math.max(0, Math.floor((now.getTime() - t) / 1000))
   if (sec < 10) return 'just now'
   if (sec < 60) return `${sec} second${sec === 1 ? '' : 's'} ago`
@@ -241,7 +241,7 @@ function OpsStatusBadge({ status }: { status: OperationalStatusRow['status'] | n
   if (status === 'down') {
     return <span className={`${base} bg-red-100 text-red-800`}>Down</span>
   }
-  return <span className={`${base} bg-gray-100 text-gray-600`}>—</span>
+  return <span className={`${base} bg-gray-100 text-gray-600`}>-</span>
 }
 
 type RoutePerfHealth = 'good' | 'watch' | 'issue' | 'no_data'
@@ -348,7 +348,7 @@ function formatSubscriptionLine(sub: AdminAppSubscription): string {
   } else if (sub.cadence === 'usage') {
     parts.push('Usage-based (set amount if you want a typical month)')
   }
-  return parts.length ? parts.join(' · ') : '—'
+  return parts.length ? parts.join(' · ') : '-'
 }
 
 /** Normalise each row to an approximate monthly AUD figure for the summary strip. */
@@ -561,7 +561,7 @@ function GoogleWorkspaceAppCard({ linkClass }: { linkClass: string }) {
       </div>
       <div className="mt-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
-        <p className="text-sm text-gray-800 mt-1">Per-seat Workspace plan — billed by Google (Starter / Standard / Plus, etc.)</p>
+        <p className="text-sm text-gray-800 mt-1">Per-seat Workspace plan - billed by Google (Starter / Standard / Plus, etc.)</p>
       </div>
       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
         <a href={GOOGLE_WORKSPACE_ADMIN_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
@@ -646,7 +646,7 @@ function FirebaseAppCard({ linkClass, healthResults }: { linkClass: string; heal
       </div>
       <div className="mt-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Subscription</p>
-        <p className="text-sm text-gray-800 mt-1">Free tier / usage — see Google Cloud billing if linked</p>
+        <p className="text-sm text-gray-800 mt-1">Free tier / usage - see Google Cloud billing if linked</p>
       </div>
       <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-x-4 gap-y-2">
         <a href={FIREBASE_CONSOLE_HREF} target="_blank" rel="noopener noreferrer" className={linkClass}>
@@ -806,7 +806,7 @@ function VendorEditModal({
         className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border border-gray-100 relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-gray-900">Edit subscription — {row.title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Edit subscription - {row.title}</h2>
         <p className="text-sm text-gray-500 mt-1">Dashboard link and title are fixed in the database (run a SQL migration to change them).</p>
 
         <div className="mt-4 border-b border-gray-200 flex gap-6" role="tablist" aria-label="Edit vendor sections">
@@ -927,7 +927,7 @@ function VendorEditModal({
                 onChange={(e) => setAccountEntity(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 <option value="quni">Quni Living</option>
                 <option value="4logistics">4Logistics</option>
                 <option value="personal">Personal</option>
@@ -971,7 +971,7 @@ function VendorEditModal({
                 onChange={(e) => setApiKeyNotes(e.target.value)}
                 rows={3}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y min-h-[4.5rem]"
-                placeholder="List key names and where actual values are stored — do not paste keys here"
+                placeholder="List key names and where actual values are stored - do not paste keys here"
               />
             </label>
             <label className="block">
@@ -991,7 +991,7 @@ function VendorEditModal({
                 onChange={(e) => setCredNotes(e.target.value)}
                 rows={3}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y min-h-[4.5rem]"
-                placeholder="Anything else — org name, team members, special config"
+                placeholder="Anything else - org name, team members, special config"
               />
             </label>
           </div>
@@ -1313,7 +1313,7 @@ export default function AdminApps() {
     <div>
       <AdminPageHeader
         title="Apps"
-        subtitle="External tools for running Quni Living — costs are stored in Supabase and editable below. Apple Developer, Firebase, Google Play Console, and Google Workspace are fixed shortcuts for the app stack and org productivity; vendor cards from the database fill in the rest. All cards are sorted A–Z by name."
+        subtitle="External tools for running Quni Living - costs are stored in Supabase and editable below. Apple Developer, Firebase, Google Play Console, and Google Workspace are fixed shortcuts for the app stack and org productivity; vendor cards from the database fill in the rest. All cards are sorted A–Z by name."
         actions={
           <div className="flex flex-col items-stretch gap-2 sm:items-end">
             <button
@@ -1413,7 +1413,7 @@ export default function AdminApps() {
               <p className="text-2xl font-bold text-indigo-900 mt-1 tabular-nums">{totalFormatted}</p>
               <p className="text-xs text-gray-600 mt-2">
                 Rough rollup: USD × {USD_TO_AUD_PLACEHOLDER} (placeholder rate), yearly ÷ 12, usage/free treated as above. Not financial
-                advice — numbers are indicative only.
+                advice - numbers are indicative only.
               </p>
             </div>
           ) : null}
@@ -1604,7 +1604,7 @@ export default function AdminApps() {
             <p className="text-sm text-gray-600 mb-4">Loading status…</p>
           ) : !opsLoading && statusSummary.known === 0 ? (
             <p className="text-sm font-medium text-gray-600 mb-4">
-              No status rows yet — open Services and use Refresh All, or wait for the scheduled health cron.
+              No status rows yet - open Services and use Refresh All, or wait for the scheduled health cron.
             </p>
           ) : statusSummary.down > 0 ? (
             <p className="text-sm font-medium text-red-800 mb-4">
@@ -1640,10 +1640,10 @@ export default function AdminApps() {
                         <OpsStatusBadge status={row?.status ?? null} />
                       </td>
                       <td className={`${adminTdClass} max-w-md`}>
-                        <span className="text-gray-700 break-words">{row?.message?.trim() ? row.message : '—'}</span>
+                        <span className="text-gray-700 break-words">{row?.message?.trim() ? row.message : '-'}</span>
                       </td>
                       <td className={`${adminTdClass} whitespace-nowrap text-gray-700`}>
-                        {row?.checked_at ? formatRelativeCheckedAt(row.checked_at, statusNow) : opsLoading ? '…' : '—'}
+                        {row?.checked_at ? formatRelativeCheckedAt(row.checked_at, statusNow) : opsLoading ? '…' : '-'}
                       </td>
                     </tr>
                   )
@@ -1666,20 +1666,20 @@ export default function AdminApps() {
             </p>
             <ul className="mt-3 space-y-2 text-sm text-gray-600 list-disc list-inside">
               <li>
-                <span className="font-medium text-gray-800">Transactions</span> — how many page loads Sentry saw
+                <span className="font-medium text-gray-800">Transactions</span> - how many page loads Sentry saw
                 for that route pattern.
               </li>
               <li>
-                <span className="font-medium text-gray-800">P75</span> — 75th percentile (most users experience
+                <span className="font-medium text-gray-800">P75</span> - 75th percentile (most users experience
                 this or better). LCP = load speed; INP = responsiveness; CLS = visual stability.
               </li>
               <li>
-                <span className="font-medium text-gray-800">Samples</span> — how many visits included that
+                <span className="font-medium text-gray-800">Samples</span> - how many visits included that
                 measurement. Low samples mean the P75 may be blank until more traffic arrives.
               </li>
             </ul>
             <p className="mt-3 text-sm text-gray-600">
-              Use <span className="font-medium">Refresh metrics</span> after a deploy, or wait — data refreshes
+              Use <span className="font-medium">Refresh metrics</span> after a deploy, or wait - data refreshes
               automatically every few minutes. For deeper investigation, open Sentry Performance and filter{' '}
               <span className="font-medium">environment:production</span>.
             </p>
@@ -1697,16 +1697,16 @@ export default function AdminApps() {
 
           <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-gray-600">
             <span className="inline-flex items-center gap-1.5">
-              <PerfTrafficDot health="good" /> Good — within thresholds with enough vitals data
+              <PerfTrafficDot health="good" /> Good - within thresholds with enough vitals data
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <PerfTrafficDot health="watch" /> Low data — visits but few/no Web Vitals samples yet
+              <PerfTrafficDot health="watch" /> Low data - visits but few/no Web Vitals samples yet
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <PerfTrafficDot health="no_data" /> No traffic — no production visits in this window
+              <PerfTrafficDot health="no_data" /> No traffic - no production visits in this window
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <PerfTrafficDot health="issue" /> Over threshold — above Google CWV limits
+              <PerfTrafficDot health="issue" /> Over threshold - above Google CWV limits
             </span>
           </div>
 
@@ -1772,13 +1772,13 @@ export default function AdminApps() {
             >
               {perfSummary.overall === 'issue' ? (
                 <>
-                  🔴 {perfSummary.issue} route{perfSummary.issue === 1 ? '' : 's'} over CWV thresholds — investigate
+                  🔴 {perfSummary.issue} route{perfSummary.issue === 1 ? '' : 's'} over CWV thresholds - investigate
                   in Sentry or optimise those pages.
                 </>
               ) : perfSummary.overall === 'watch' ? (
                 <>
                   ⚠️ {perfSummary.noData === perfRouteHealth.length
-                    ? 'No production visits on monitored routes yet — normal before GTM/SEO traffic.'
+                    ? 'No production visits on monitored routes yet - normal before GTM/SEO traffic.'
                     : `${perfSummary.watch} route${perfSummary.watch === 1 ? '' : 's'} have visits but not enough Web Vitals samples for a reliable P75.`}
                 </>
               ) : (
@@ -1818,13 +1818,13 @@ export default function AdminApps() {
                     <td className={`${adminTdClass} font-medium text-gray-900`}>{row.label}</td>
                     <td className={`${adminTdClass} tabular-nums`}>{row.transactionCount}</td>
                     <td className={`${adminTdClass} tabular-nums ${row.lcpExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
-                      {row.p75Lcp == null ? '—' : Math.round(row.p75Lcp)}
+                      {row.p75Lcp == null ? '-' : Math.round(row.p75Lcp)}
                     </td>
                     <td className={`${adminTdClass} tabular-nums ${row.inpExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
-                      {row.p75Inp == null ? '—' : Math.round(row.p75Inp)}
+                      {row.p75Inp == null ? '-' : Math.round(row.p75Inp)}
                     </td>
                     <td className={`${adminTdClass} tabular-nums ${row.clsExceeded ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>
-                      {row.p75Cls == null ? '—' : row.p75Cls.toFixed(3)}
+                      {row.p75Cls == null ? '-' : row.p75Cls.toFixed(3)}
                     </td>
                     <td className={`${adminTdClass} tabular-nums`}>{row.lcpSampleCount}</td>
                     <td className={`${adminTdClass} tabular-nums`}>{row.inpSampleCount}</td>
@@ -1851,7 +1851,7 @@ export default function AdminApps() {
             {incidentsLoading && incidents.length === 0 ? (
               <p className="text-sm text-gray-500 mt-3">Loading incidents…</p>
             ) : incidents.length === 0 ? (
-              <p className="text-sm text-gray-600 mt-3">No incidents recorded — all systems have been operational.</p>
+              <p className="text-sm text-gray-600 mt-3">No incidents recorded - all systems have been operational.</p>
             ) : (
               <div className={`${adminTableWrapClass} mt-4`}>
                 <table className="min-w-full border-collapse text-left">
@@ -1876,7 +1876,7 @@ export default function AdminApps() {
                           <IncidentStatusBadge status={row.status} />
                         </td>
                         <td className={`${adminTdClass} max-w-xs`}>
-                          <span className="text-gray-700 break-words">{row.message ?? '—'}</span>
+                          <span className="text-gray-700 break-words">{row.message ?? '-'}</span>
                         </td>
                         <td className={`${adminTdClass} whitespace-nowrap tabular-nums text-gray-700`}>
                           {formatIncidentAt(row.created_at)}

@@ -1,7 +1,7 @@
 /// <reference types="node" />
-// @ts-nocheck — Vercel isolated API TS pass (see tsconfig.api.json for full check).
+// @ts-nocheck - Vercel isolated API TS pass (see tsconfig.api.json for full check).
 /**
- * DocuSeal (self-hosted) + tenancy lease workflow — server-only (Vercel Node).
+ * DocuSeal (self-hosted) + tenancy lease workflow - server-only (Vercel Node).
  * Uses SUPABASE_SERVICE_ROLE_KEY, DOCUSEAL_API_URL, DOCUSEAL_API_TOKEN, RESEND_API_KEY.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
@@ -160,7 +160,7 @@ function extractDocumentPartsFromSubmissionRoot(sub: Record<string, unknown>): D
   return out
 }
 
-/** Prescribed RTA draft first, Quni addendum second — matches signing package order (NSW or QLD). */
+/** Prescribed RTA draft first, Quni addendum second - matches signing package order (NSW or QLD). */
 function sortResidentialPackageDocumentParts(parts: DocusealDocumentPart[]): DocusealDocumentPart[] {
   const score = (name: string): number => {
     const n = name.toLowerCase()
@@ -371,8 +371,8 @@ export async function sendForSigning(documentId: string): Promise<void> {
 
   const submission = await createDocusealSubmissionFromPdf({
     name: coTenantSigner
-      ? `Lease — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-      : `Lease — ${landlordName} / ${tenantName}`,
+      ? `Lease - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+      : `Lease - ${landlordName} / ${tenantName}`,
     pdfBase64,
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
@@ -410,7 +410,7 @@ export async function sendForSigning(documentId: string): Promise<void> {
     <p>Your Quni Living residential tenancy agreement is ready to sign.</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
     <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>— Quni Living (quni.com.au)</p>
+    <p>- Quni Living (quni.com.au)</p>
   `
 
   const coTenantLink =
@@ -558,15 +558,15 @@ export async function sendResidentialTenancyPackageForSigning(
   const submission = await createDocusealSubmissionFromPdf({
     name: isVicResidential
       ? coTenantSigner
-        ? `VIC Form 1 — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-        : `VIC Form 1 — ${landlordName} / ${tenantName}`
+        ? `VIC Form 1 - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+        : `VIC Form 1 - ${landlordName} / ${tenantName}`
       : isQldResidential
         ? coTenantSigner
-          ? `QLD Form 18a — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-          : `QLD Form 18a — ${landlordName} / ${tenantName}`
+          ? `QLD Form 18a - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+          : `QLD Form 18a - ${landlordName} / ${tenantName}`
         : coTenantSigner
-          ? `NSW RTA — ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-          : `NSW RTA — ${landlordName} / ${tenantName}`,
+          ? `NSW RTA - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
+          : `NSW RTA - ${landlordName} / ${tenantName}`,
     documents: [
       {
         name: isVicResidential
@@ -622,7 +622,7 @@ export async function sendResidentialTenancyPackageForSigning(
     <p>Your Victoria Form 1 residential rental agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
     <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>— Quni Living (quni.com.au)</p>
+    <p>- Quni Living (quni.com.au)</p>
   `
       : isQldResidential
         ? `
@@ -630,14 +630,14 @@ export async function sendResidentialTenancyPackageForSigning(
     <p>Your Queensland Form 18a general tenancy agreement package is ready to sign (prescribed agreement plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
     <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>— Quni Living (quni.com.au)</p>
+    <p>- Quni Living (quni.com.au)</p>
   `
         : `
     <p>Hi ${escapeHtml(who)},</p>
     <p>Your NSW residential tenancy agreement package is ready to sign (standard form plus Quni platform addendum).</p>
     <p><a href="${escapeHtml(link)}">Open signing page</a></p>
     <p>If the button does not work, copy this link: ${escapeHtml(link)}</p>
-    <p>— Quni Living (quni.com.au)</p>
+    <p>- Quni Living (quni.com.au)</p>
   `
 
   const readySubject = isVicResidential
@@ -867,16 +867,16 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     : 'Download signed lease (7-day link)'
   const signedSubject = isResidentialTenancyPackage
     ? isVicResidentialPackage
-      ? 'Your VIC tenancy agreement is signed — Quni Living'
+      ? 'Your VIC tenancy agreement is signed - Quni Living'
       : isQldResidentialPackage
-        ? 'Your QLD tenancy agreement is signed — Quni Living'
-        : 'Your NSW tenancy agreement is signed — Quni Living'
-    : 'Your lease is signed — Quni Living'
+        ? 'Your QLD tenancy agreement is signed - Quni Living'
+        : 'Your NSW tenancy agreement is signed - Quni Living'
+    : 'Your lease is signed - Quni Living'
   const doneHtml = (name: string) => `
     <p>Hi ${escapeHtml(name)},</p>
     <p>Your residential tenancy agreement has been fully signed. You can download a copy here:</p>
     <p><a href="${escapeHtml(link)}">${escapeHtml(signedDocLabel)}</a></p>
-    <p>— Quni Living</p>
+    <p>- Quni Living</p>
   `
 
   if (le && link) await sendEmail({ to: le, subject: signedSubject, html: doneHtml(String(ln)) })

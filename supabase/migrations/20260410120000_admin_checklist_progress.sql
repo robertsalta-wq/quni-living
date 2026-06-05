@@ -1,5 +1,5 @@
 -- Admin-only checklist progress (e.g. trust checklist).
--- RLS: public.is_platform_admin() — keep in sync with supabase/admin_rls_policies.sql and src/lib/adminEmails.ts.
+-- RLS: public.is_platform_admin() - keep in sync with supabase/admin_rls_policies.sql and src/lib/adminEmails.ts.
 
 create table if not exists public.admin_checklist_progress (
   id uuid primary key default gen_random_uuid(),

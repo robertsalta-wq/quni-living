@@ -33,7 +33,7 @@ export function validateBookingOccupancy(opts: {
   parkingSelected: boolean
   parkingAvailable: boolean
   coTenant: CoTenantFormState
-  /** Primary tenant email — co-tenant must differ for separate DocuSeal signatures. */
+  /** Primary tenant email - co-tenant must differ for separate DocuSeal signatures. */
   primaryTenantEmail?: string | null
 }): string | null {
   if (opts.occupantCount > opts.maxOccupants) {

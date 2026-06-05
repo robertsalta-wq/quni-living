@@ -1,5 +1,5 @@
 /**
- * Edge-cached public listings browse (default filters only — no near-anchor RPC).
+ * Edge-cached public listings browse (default filters only - no near-anchor RPC).
  * GET /api/listings-browse?q=&university_id=&campus_id=&...
  */
 import {

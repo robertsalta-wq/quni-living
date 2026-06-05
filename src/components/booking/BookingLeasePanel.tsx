@@ -4,7 +4,7 @@ import { apiUrl } from '../../lib/apiUrl'
 import { type LeaseDocState } from '../../lib/leaseState'
 
 /**
- * Phase 3 / Task J — shared "lease document" panel for renter and landlord booking
+ * Phase 3 / Task J - shared "lease document" panel for renter and landlord booking
  * detail surfaces. Single fetch against /api/documents/lease-state, renders the
  * appropriate CTA per derived state:
  *
@@ -36,7 +36,7 @@ type LeaseStateApiResult = {
 
 export type BookingLeasePanelProps = {
   bookingId: string
-  /** Caller-controlled key — change to trigger refetch (e.g. after mark-bond-received). */
+  /** Caller-controlled key - change to trigger refetch (e.g. after mark-bond-received). */
   refreshKey?: number
   /** Listing bond_pending: show prepare/retry when accept-time generation failed. */
   allowPrepareRetry?: boolean
@@ -276,7 +276,7 @@ export default function BookingLeasePanel({
           <p className="text-xs leading-relaxed text-indigo-900/90">
             Your residential tenancy agreement has been drafted.{' '}
             {viewer_role === 'tenant'
-              ? 'Check your email for DocuSeal signing, or use the button below when ready. Bond payment is separate — see bond guidance on your dashboard.'
+              ? 'Check your email for DocuSeal signing, or use the button below when ready. Bond payment is separate - see bond guidance on your dashboard.'
               : 'Check your email for DocuSeal signing, or use the button below. Record bond receipt on Quni when the renter has paid (this does not block signing).'}
           </p>
           {preview_url && (

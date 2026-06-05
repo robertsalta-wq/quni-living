@@ -1,4 +1,4 @@
-// @ts-nocheck — Vercel Node handler; mirrors confirm-booking typing style.
+// @ts-nocheck - Vercel Node handler; mirrors confirm-booking typing style.
 import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { runMarkBondReceivedLandlord } from './lib/booking/markBondReceived.js'

@@ -49,7 +49,7 @@ export function bookingHasOccupancySnapshot(booking: {
 
 export function formatOccupantCountLabel(count: number | null | undefined): string {
   const n = Math.floor(Number(count))
-  if (!Number.isFinite(n) || n < 1) return '—'
+  if (!Number.isFinite(n) || n < 1) return '-'
   if (n === 1) return '1 occupant'
   return `${n} occupants`
 }

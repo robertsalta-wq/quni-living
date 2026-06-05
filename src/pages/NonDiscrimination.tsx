@@ -22,12 +22,12 @@ export default function NonDiscrimination() {
       />
       <LegalPageShell
         bandTitle="Non-Discrimination Policy"
-        pageTitle="Quni Living — Non-Discrimination Policy"
+        pageTitle="Quni Living - Non-Discrimination Policy"
         toc={TOC}
       >
         <LegalH2 id="commitment">Our commitment</LegalH2>
         <LegalP>
-          Quni Living is an inclusive platform. Everyone who uses Quni — renters and landlords alike — deserves to be
+          Quni Living is an inclusive platform. Everyone who uses Quni - renters and landlords alike - deserves to be
           treated fairly and with respect. We are committed to providing a marketplace free from unlawful
           discrimination, in line with the Racial Discrimination Act 1975 (Cth), the Sex Discrimination Act 1984 (Cth),
           the Disability Discrimination Act 1992 (Cth), the Age Discrimination Act 2004 (Cth), and the
@@ -52,9 +52,9 @@ export default function NonDiscrimination() {
         <LegalH2 id="listings">Listings and communication</LegalH2>
         <LegalP>
           Listings, messages, and any other content on Quni must not state or imply a preference for or against users
-          on the basis of a protected attribute — for example, wording such as &quot;no international students&quot; or
+          on the basis of a protected attribute - for example, wording such as &quot;no international students&quot; or
           &quot;working professionals only&quot;, or any phrasing that arbitrarily excludes a particular group. Landlords
-          may set legitimate, functional requirements for a tenancy — for example, affordability for the advertised
+          may set legitimate, functional requirements for a tenancy - for example, affordability for the advertised
           rent, a non-smoking household, or a minimum lease length. What is not permitted is excluding people on the
           basis of a protected attribute, or using wording that signals such a preference indirectly.
         </LegalP>
@@ -92,8 +92,8 @@ export default function NonDiscrimination() {
 
         <LegalH2 id="agreement">Agreement</LegalH2>
         <LegalP>
-          By creating an account, listing a property, or otherwise using Quni&apos;s platform and services, all users —
-          landlords and renters — confirm they have read, understood, and agree to comply with this policy.
+          By creating an account, listing a property, or otherwise using Quni&apos;s platform and services, all users -
+          landlords and renters - confirm they have read, understood, and agree to comply with this policy.
         </LegalP>
       </LegalPageShell>
     </>

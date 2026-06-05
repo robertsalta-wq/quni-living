@@ -6,7 +6,7 @@
 -- Volume count uses active + booked so tenanted rooms still count if booked is ever restored.
 
 -- ---------------------------------------------------------------------------
--- pricing_config — fee rates per tier (one row per tier)
+-- pricing_config - fee rates per tier (one row per tier)
 -- ---------------------------------------------------------------------------
 create table if not exists public.pricing_config (
   id uuid primary key default gen_random_uuid(),
@@ -74,7 +74,7 @@ create policy "Platform admins delete pricing_config"
   using (public.is_platform_admin());
 
 -- ---------------------------------------------------------------------------
--- volume_discount_tiers — volume → service fee %
+-- volume_discount_tiers - volume → service fee %
 -- ---------------------------------------------------------------------------
 create table if not exists public.volume_discount_tiers (
   id uuid primary key default gen_random_uuid(),
@@ -115,7 +115,7 @@ create policy "Platform admins delete volume_discount_tiers"
   using (public.is_platform_admin());
 
 -- ---------------------------------------------------------------------------
--- pricing_change_log — audit (rows inserted by admin/app on change)
+-- pricing_change_log - audit (rows inserted by admin/app on change)
 -- ---------------------------------------------------------------------------
 create table if not exists public.pricing_change_log (
   id uuid primary key default gen_random_uuid(),

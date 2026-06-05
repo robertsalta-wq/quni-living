@@ -1,5 +1,5 @@
 /**
- * @deprecated Peer messaging cutover — new listing contact uses conversations API.
+ * @deprecated Peer messaging cutover - new listing contact uses conversations API.
  * Returns 410. Kept so old clients fail clearly instead of sending legacy enquiry emails.
  */
 import { jsonResponse, optionsResponse } from './lib/publicEmailRoute.js'

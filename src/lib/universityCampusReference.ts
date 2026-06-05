@@ -18,7 +18,7 @@ export type CampusReferenceRow = {
   suburb: string | null
   state: string | null
   slug: string | null
-  /** From DB when present — use for accurate distance vs geocoding campus names. */
+  /** From DB when present - use for accurate distance vs geocoding campus names. */
   latitude: number | null
   longitude: number | null
 }
@@ -96,7 +96,7 @@ export const UNIVERSITY_INDEX_NEAR_CAMPUS_KM = 10
 
 /**
  * Campuses in the university’s home city for index cards (card subtitle uses `u.city`).
- * Excludes satellite campuses — e.g. UoW Liverpool when the card says “Wollongong, NSW”.
+ * Excludes satellite campuses - e.g. UoW Liverpool when the card says “Wollongong, NSW”.
  */
 export function campusesForHomeCityIndex(
   u: Pick<UniversityReferenceRow, 'city'>,
@@ -310,7 +310,7 @@ export function normUuid(s: string | null | undefined): string {
   return (s ?? '').trim().toLowerCase()
 }
 
-/** Full campus rows + parent uni slug (joined in JS — avoids flaky PostgREST embeds). */
+/** Full campus rows + parent uni slug (joined in JS - avoids flaky PostgREST embeds). */
 type CampusJoinRow = {
   id: string
   name: string
@@ -470,7 +470,7 @@ function mapCampusRow(r: {
 
 /**
  * Load all campuses (plain select), then attach parent slug via the same university list
- * the dropdown uses. No nested PostgREST resource — works when embeds are blocked or misconfigured.
+ * the dropdown uses. No nested PostgREST resource - works when embeds are blocked or misconfigured.
  */
 async function loadAllCampusesJoined(): Promise<CampusJoinRow[]> {
   const ext = await supabase
@@ -533,7 +533,7 @@ function getAllCampusesJoinedCached(): Promise<CampusJoinRow[]> {
   }
   if (!allCampusesJoinedCache) {
     const p = loadAllCampusesJoined().then((rows) => {
-      // Don't cache an empty list — often means anon RLS blocked the first load; allow retry after fixes.
+      // Don't cache an empty list - often means anon RLS blocked the first load; allow retry after fixes.
       if (rows.length === 0) allCampusesJoinedCache = null
       return rows
     })
@@ -545,7 +545,7 @@ function getAllCampusesJoinedCached(): Promise<CampusJoinRow[]> {
   return allCampusesJoinedCache
 }
 
-/** Same as SQL `where university_id = ?` — works when bulk cache is empty (e.g. RLS). */
+/** Same as SQL `where university_id = ?` - works when bulk cache is empty (e.g. RLS). */
 async function fetchCampusesDirectByUniversityId(universityId: string): Promise<CampusReferenceRow[]> {
   const trimmed = universityId.trim()
   if (!trimmed) return []

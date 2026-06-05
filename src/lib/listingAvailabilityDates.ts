@@ -38,7 +38,7 @@ export function effectiveMoveOutForAvailability(
 
 export function formatAuShortDate(isoDate: string): string {
   const s = isoDate.trim()
-  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return s || '—'
+  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return s || '-'
   const [y, m, d] = s.slice(0, 10).split('-').map(Number)
   const dt = new Date(y, m - 1, d)
   return dt.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })

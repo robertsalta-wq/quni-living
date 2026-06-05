@@ -1,6 +1,6 @@
-# Occupancy pricing — chunk 3 review (booking UI)
+# Occupancy pricing - chunk 3 review (booking UI)
 
-**Scope:** `Booking.tsx` — combined occupancy step on **Details (step 1)**; create PI + commit payloads wired.
+**Scope:** `Booking.tsx` - combined occupancy step on **Details (step 1)**; create PI + commit payloads wired.
 
 **Depends on:** Chunk 1 (DB) + chunk 2 (API) on production.
 

@@ -1,6 +1,6 @@
 /**
  * When Listing-tier document generators may run.
- * Listing accept sets `bond_pending` then generates with `defer_signing: false` — must be allowed.
+ * Listing accept sets `bond_pending` then generates with `defer_signing: false` - must be allowed.
  */
 export function bookingAllowsTenancyDocumentGeneration(booking) {
   const status = typeof booking.status === 'string' ? booking.status : ''

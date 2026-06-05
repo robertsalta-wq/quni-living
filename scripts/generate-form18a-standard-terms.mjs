@@ -36,13 +36,13 @@ part2 = part2.trim()
 const escaped = part2.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
 
 const header = `/**
- * Form 18a — Part 2 Standard Terms only (verbatim).
+ * Form 18a - Part 2 Standard Terms only (verbatim).
  *
  * Source: RTA Queensland "General tenancy agreement (Form 18a)" PDF.
  * Retrieved from https://www.rta.qld.gov.au/sites/default/files/2021-06/Form-18a-General-tenancy-agreement.pdf
  * Extracted text identifies version v23 Sep25.
  *
- * Do not edit prescribed wording — regenerate from PDF via scripts/generate-form18a-standard-terms.mjs if RTA updates the form.
+ * Do not edit prescribed wording - regenerate from PDF via scripts/generate-form18a-standard-terms.mjs if RTA updates the form.
  */
 
 `

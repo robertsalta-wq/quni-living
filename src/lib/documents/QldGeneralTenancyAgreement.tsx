@@ -1,11 +1,11 @@
 /**
- * Queensland Form 18a — General tenancy agreement (prescribed Part 2 verbatim).
+ * Queensland Form 18a - General tenancy agreement (prescribed Part 2 verbatim).
  *
  * Part 2 standard terms: `qld/form18aStandardTerms.ts` (RTA Queensland PDF v23 Sep25).
  * Source PDF: https://www.rta.qld.gov.au/sites/default/files/2021-06/Form-18a-General-tenancy-agreement.pdf
  * Retrieved for embedding: 2026 (see docs/form18a-v23-sep25-extracted.txt).
  *
- * Quni branding applies to headers and schedule (Part 1) only — prescribed clauses are not edited.
+ * Quni branding applies to headers and schedule (Part 1) only - prescribed clauses are not edited.
  */
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
@@ -29,13 +29,13 @@ function rentDueWeekdayFromCommencement(isoDate: string): string {
 }
 
 const FORM_REFERENCE_LINE =
-  'Form 18a — General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.'
+  'Form 18a - General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.'
 
 const QUNI_RENT_PORTAL_URL = 'https://quni.com.au'
 
 /**
  * Item 9 must name at least two ways to pay rent (Standard term 8(3); s.83 RTRA Act).
- * Wording is tied to `bookings.rent_payment_method` — no payment rail is described that the booking does not use.
+ * Wording is tied to `bookings.rent_payment_method` - no payment rail is described that the booking does not use.
  */
 export function item9RentPaymentMethodPair(preference: 'bank_transfer' | 'quni_platform' | null): {
   method1: string
@@ -54,10 +54,10 @@ export function item9RentPaymentMethodPair(preference: 'bank_transfer' | 'quni_p
   }
 }
 
-/** Verbatim — Form 18a Part 3 (final page of RTA PDF). */
+/** Verbatim - Form 18a Part 3 (final page of RTA PDF). */
 const FORM18A_PART3_FORM17A_NOTICE = [
   'The tenant/s must receive a copy of the information statement (Form 17a) and a copy of any applicable by-laws if copies have not',
-  'previously been given to the tenant/s. Do not send to the RTA—give this form to the tenant/s, keep a copy for your records.',
+  'previously been given to the tenant/s. Do not send to the RTA-give this form to the tenant/s, keep a copy for your records.',
 ].join(' ')
 
 const FORM18A_PART3_INTERPRETER_LINE =
@@ -225,7 +225,7 @@ function agreementMadeOnFromGeneratedAt(generatedAt: string): string {
 
 function suburbFromAddressLine(addressLine: string): string {
   const t = addressLine.trim()
-  if (!t || t === '—') return t || '—'
+  if (!t || t === '-') return t || '-'
   const parts = t.split(',').map((s) => s.trim()).filter(Boolean)
   const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p))
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t
@@ -427,7 +427,7 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
   const endDateText = term.periodic || !term.endDate ? null : formatAuDate(term.endDate)
 
   const incLine =
-    premisesInclusionsLine && premisesInclusionsLine.trim() ? premisesInclusionsLine.trim() : '—'
+    premisesInclusionsLine && premisesInclusionsLine.trim() ? premisesInclusionsLine.trim() : '-'
 
   const maxOcc =
     props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted)
@@ -457,51 +457,51 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
         {atSuburb}
       </Text>
 
-      <Text style={styles.subHeading}>Item 1 — Lessor</Text>
+      <Text style={styles.subHeading}>Item 1 - Lessor</Text>
       <Field label="1.1 Name/trading name:" children={landlord.fullName} />
       <Field label="Address:" children={landlord.addressLine} />
-      <Field label="Postcode:" children={landlordPostcode.trim() || '—'} />
+      <Field label="Postcode:" children={landlordPostcode.trim() || '-'} />
       <Field
         label="1.2 Phone / Mobile / ABN (optional) / Email:"
         children={`Phone: ${landlord.phone} · Email: ${landlord.email}`}
       />
 
-      <Text style={styles.subHeading}>Item 2 — Tenant/s</Text>
+      <Text style={styles.subHeading}>Item 2 - Tenant/s</Text>
       <Field label="2.1 (1) Full name/s:" children={tenant.fullName} />
       <Field label="Phone / Email:" children={`${tenant.phone} · ${tenant.email}`} />
       <Field
         label="Emergency contact full name/s / phone / email:"
         children={
           tenant.emergencyContactName || tenant.emergencyContactPhone
-            ? `${tenant.emergencyContactName ?? '—'} · ${tenant.emergencyContactPhone ?? '—'}`
-            : '—'
+            ? `${tenant.emergencyContactName ?? '-'} · ${tenant.emergencyContactPhone ?? '-'}`
+            : '-'
         }
       />
       {props.additionalTenantNames[0]?.trim() ? (
         <>
           <Field label="2.1 (2) Full name/s:" children={props.additionalTenantNames[0].trim()} />
-          <Field label="Phone / Email:" children="—" />
-          <Field label="Emergency contact full name/s / phone / email:" children="—" />
+          <Field label="Phone / Email:" children="-" />
+          <Field label="Emergency contact full name/s / phone / email:" children="-" />
         </>
       ) : null}
       {props.additionalTenantNames[1]?.trim() ? (
         <>
           <Field label="2.1 (3) Full name/s:" children={props.additionalTenantNames[1].trim()} />
-          <Field label="Phone / Email:" children="—" />
-          <Field label="Emergency contact full name/s / phone / email:" children="—" />
+          <Field label="Phone / Email:" children="-" />
+          <Field label="Emergency contact full name/s / phone / email:" children="-" />
         </>
       ) : null}
       <Field
         label="2.2 Address for service (if different from premises):"
-        children={tenant.addressForServiceLine?.trim() ? tenant.addressForServiceLine.trim() : 'Same as premises — Item 5.1'}
+        children={tenant.addressForServiceLine?.trim() ? tenant.addressForServiceLine.trim() : 'Same as premises - Item 5.1'}
       />
 
-      <Text style={styles.subHeading}>Item 3 — Lessor’s agent</Text>
+      <Text style={styles.subHeading}>Item 3 - Lessor’s agent</Text>
       {landlordAgent ? (
         <>
           <Field label="3.1 Full name/trading name:" children={landlordAgent.name} />
           <Field label="Address:" children={landlordAgent.businessAddress} />
-          <Field label="Postcode:" children="—" />
+          <Field label="Postcode:" children="-" />
           <Field
             label="3.2 Phone / Mobile / ABN (optional) / Email:"
             children={`Phone: ${landlordAgent.phone}${landlordAgent.email ? ` · Email: ${landlordAgent.email}` : ''}`}
@@ -517,30 +517,30 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
   pages.push(
     <Page key="p-part1-2" size="A4" style={styles.page}>
       <QldTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
-      <Text style={styles.subHeading}>Item 4 — Notices may be given to</Text>
+      <Text style={styles.subHeading}>Item 4 - Notices may be given to</Text>
       <Field
-        label="4.1 Lessor — consent to email / text / facsimile:"
+        label="4.1 Lessor - consent to email / text / facsimile:"
         children={`Email: ${electronicService.landlordConsentsToEmailService ? 'Yes' : 'No'} (${electronicService.landlordEmail})`}
       />
       <Field
-        label="4.2 Tenant/s — consent to email / text / facsimile:"
+        label="4.2 Tenant/s - consent to email / text / facsimile:"
         children={`Email: ${electronicService.tenantConsentsToEmailService ? 'Yes' : 'No'} (${electronicService.tenantEmail})`}
       />
       <Field label="4.3 Agent:" children={landlordAgent ? 'As per Item 3' : 'Not applicable'} />
 
-      <Text style={styles.subHeading}>Item 5 — Rental premises</Text>
+      <Text style={styles.subHeading}>Item 5 - Rental premises</Text>
       <Field label="5.1 Address of the rental premises:" children={premises.addressLine} />
-      <Field label="Postcode:" children={premisesPostcode.trim() || '—'} />
+      <Field label="Postcode:" children={premisesPostcode.trim() || '-'} />
       <Field label="5.2 Inclusions provided:" children={incLine} />
       <Field label="5.3 Details of current repair orders:" children="None stated" />
 
-      <Text style={styles.subHeading}>Item 6 — Term</Text>
+      <Text style={styles.subHeading}>Item 6 - Term</Text>
       <CheckboxLine checked={Boolean(!term.periodic && term.endDate)} label="fixed term agreement" />
       <CheckboxLine checked={term.periodic} label="periodic agreement" />
       <Field label="6.2 Starting on:" children={formatAuDate(term.startDate)} />
       {endDateText ? <Field label="6.3 Ending on:" children={endDateText} /> : null}
 
-      <Text style={styles.subHeading}>Items 7–8 — Rent</Text>
+      <Text style={styles.subHeading}>Items 7–8 - Rent</Text>
       <Field label="Item 7 Rent:" children={`${weeklyRentDisplay} (${freq})`} />
       <CheckboxLine checked={freq === 'weekly'} label="weekly" />
       <CheckboxLine checked={freq === 'fortnightly'} label="fortnightly" />
@@ -550,7 +550,7 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
         children={`${rentWeekday} of each ${periodWord}`}
       />
 
-      <Text style={styles.subHeading}>Item 9 — Methods of rent payment</Text>
+      <Text style={styles.subHeading}>Item 9 - Methods of rent payment</Text>
       <Field label="Method 1:" children={item9Methods.method1} />
       <Field label="Method 2:" children={item9Methods.method2} />
       {rentPaymentBankDetails ? (
@@ -562,16 +562,16 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
           <Field label="Payment reference:" children={`Booking ${documentId.slice(0, 8)}…`} />
         </>
       ) : (
-        <Field label="Direct credit details:" children="—" />
+        <Field label="Direct credit details:" children="-" />
       )}
 
-      <Text style={styles.subHeading}>Item 10 — Place of rent payment</Text>
-      <Field label="Place (optional):" children="As agreed — electronic transfer" />
+      <Text style={styles.subHeading}>Item 10 - Place of rent payment</Text>
+      <Field label="Place (optional):" children="As agreed - electronic transfer" />
 
-      <Text style={styles.subHeading}>Item 11 — Day of last rent increase</Text>
+      <Text style={styles.subHeading}>Item 11 - Day of last rent increase</Text>
       <Field
         label="Date:"
-        children={lastRentIncreaseDate ? formatAuDate(lastRentIncreaseDate) : 'Not stated — new tenancy / unknown'}
+        children={lastRentIncreaseDate ? formatAuDate(lastRentIncreaseDate) : 'Not stated - new tenancy / unknown'}
       />
 
       <PageFooter documentId={documentId} pageNumber={nextPage()} />
@@ -581,32 +581,32 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
   pages.push(
     <Page key="p-part1-3" size="A4" style={styles.page}>
       <QldTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
-      <Text style={styles.subHeading}>Item 12 — Rental bond</Text>
+      <Text style={styles.subHeading}>Item 12 - Rental bond</Text>
       {bondDisplay ? (
         <Field label="Rental bond amount:" children={`${bondDisplay} (payable as required under the Act)`} />
       ) : (
-        <Field label="Rental bond amount:" children="—" />
+        <Field label="Rental bond amount:" children="-" />
       )}
 
-      <Text style={styles.subHeading}>Item 13 — Services supplied for which tenant must pay</Text>
+      <Text style={styles.subHeading}>Item 13 - Services supplied for which tenant must pay</Text>
       <Field
         label="13.1 Electricity / gas / phone / other:"
-        children="As summarised in the Quni Platform Addendum — rent may include utilities subject to fair use."
+        children="As summarised in the Quni Platform Addendum - rent may include utilities subject to fair use."
       />
-      <Field label="13.2 Tenant to pay for water supplied to the premises:" children="No — unless stated in special terms" />
+      <Field label="13.2 Tenant to pay for water supplied to the premises:" children="No - unless stated in special terms" />
 
-      <Text style={styles.subHeading}>Items 14–15 — Service costs</Text>
+      <Text style={styles.subHeading}>Items 14–15 - Service costs</Text>
       <Field label="Item 14 Apportionment (if not individually metered):" children="See platform addendum / fair use" />
       <Field label="Item 15 How services must be paid for:" children="As described in the Quni Platform Addendum" />
 
-      <Text style={styles.subHeading}>Item 16 — Number of persons allowed to reside</Text>
-      {maxOcc ? <Field label="Maximum occupants:" children={maxOcc} /> : <Field label="Maximum occupants:" children="—" />}
+      <Text style={styles.subHeading}>Item 16 - Number of persons allowed to reside</Text>
+      {maxOcc ? <Field label="Maximum occupants:" children={maxOcc} /> : <Field label="Maximum occupants:" children="-" />}
 
-      <Text style={styles.subHeading}>Item 17 — Body corporate by-laws</Text>
+      <Text style={styles.subHeading}>Item 17 - Body corporate by-laws</Text>
       <Field label="17.1 By-laws applicable?" children="No" />
       <Field label="17.2 Copy given?" children="Not applicable" />
 
-      <Text style={styles.subHeading}>Item 18 — Nominated repairers (urgent / emergency)</Text>
+      <Text style={styles.subHeading}>Item 18 - Nominated repairers (urgent / emergency)</Text>
       {elecLine(urgentRepairsTradespeople.electrician) ? (
         <Field label="Electrical repairs / phone:" children={urgentRepairsTradespeople.electrician} />
       ) : null}
@@ -621,15 +621,15 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
       !elecLine(urgentRepairsTradespeople.other) ? (
         <Field
           label="Lessor contact for emergency repairs (Item 18):"
-          children={`${landlord.fullName} — ${landlord.phone}`}
+          children={`${landlord.fullName} - ${landlord.phone}`}
         />
       ) : null}
       <Field
         label="18.2 Nominated repairers first point of contact for emergency repairs?"
-        children="Yes — otherwise contact lessor using details in Item 1"
+        children="Yes - otherwise contact lessor using details in Item 1"
       />
 
-      <Text style={styles.subHeading}>Item 19 — Pets</Text>
+      <Text style={styles.subHeading}>Item 19 - Pets</Text>
       <Field label="Type / number approved:" children="None unless agreed in writing by the lessor" />
 
       {bookingNotes ? (
@@ -657,7 +657,7 @@ export function QldGeneralTenancyAgreement(props: QldGeneralTenancyAgreementProp
   pages.push(
     <Page key="part3" size="A4" style={styles.page}>
       <QldTopHeader documentId={documentId} generatedAt={generatedAt} logoPath={logoPath} />
-      {/* Match RTA Form 18a caption (do not uppercase — Part 3 is not a Quni banner). */}
+      {/* Match RTA Form 18a caption (do not uppercase - Part 3 is not a Quni banner). */}
       <Text style={{ ...styles.subHeading, textTransform: 'none' }}>Part 3 Special terms</Text>
       <Text style={styles.body}>
         Insert any special terms here and/or attach a separate list if required. See clause 2(3) to 2(5).

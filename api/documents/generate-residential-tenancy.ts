@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// @ts-nocheck — Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
+// @ts-nocheck - Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
 /**
  * Generate NSW Residential Tenancy Agreement (FT6600) + Quni Platform Addendum PDFs, upload to Storage,
  * create tenancy_documents row, optionally send both to DocuSeal as one submission.
@@ -14,7 +14,7 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database, Json } from '../../src/lib/database.types'
-/** Bundled from `src/lib/documents/NswResidentialTenancyAgreement.tsx` via `npm run build:api-documents` — not `_legacy`. */
+/** Bundled from `src/lib/documents/NswResidentialTenancyAgreement.tsx` via `npm run build:api-documents` - not `_legacy`. */
 import { NswResidentialTenancyAgreement } from './NswResidentialTenancyAgreement.js'
 import { QuniPlatformAddendum } from './QuniPlatformAddendum.js'
 import type { NswResidentialTenancyAgreementProps } from './rtaTypes'
@@ -219,7 +219,7 @@ export default async function handler(req: any, res: any) {
   }
 
   /**
-   * Phase 3 / Task J: see generate-lease.ts — Listing bookings call this with
+   * Phase 3 / Task J: see generate-lease.ts - Listing bookings call this with
    * `defer_signing=true` while in `bond_pending`; signing is initiated later when
    * mark-bond-received transitions the booking to `confirmed` and re-triggers this endpoint.
    */
@@ -560,7 +560,7 @@ export default async function handler(req: any, res: any) {
   const ecName = (sharedTenant.emergencyContactName ?? '').trim()
   const ecPhone = (sharedTenant.emergencyContactPhone ?? '').trim()
   const emergencyContact =
-    ecName && ecPhone ? `${ecName} — ${ecPhone}` : ecPhone || ecName || '—'
+    ecName && ecPhone ? `${ecName} - ${ecPhone}` : ecPhone || ecName || '-'
 
   const rawCap = Number(managedPricingCell.utilities_cap_aud ?? 0)
   const utilitiesCap = Number.isFinite(rawCap) && rawCap >= 0 ? rawCap : 0

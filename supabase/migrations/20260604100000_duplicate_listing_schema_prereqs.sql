@@ -90,7 +90,7 @@ alter table public.properties
   );
 
 -- ---------------------------------------------------------------------------
--- duplicate_property_listing (explicit columns — no properties%rowtype drift)
+-- duplicate_property_listing (explicit columns - no properties%rowtype drift)
 -- ---------------------------------------------------------------------------
 create or replace function public.duplicate_property_listing(p_source_id uuid)
 returns uuid

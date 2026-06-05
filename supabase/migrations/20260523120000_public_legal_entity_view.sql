@@ -5,7 +5,7 @@
 --   id uuid, config_key text, config_value text, label text, category text,
 --   is_sensitive boolean, sort_order integer, updated_at timestamptz, updated_by text
 --
--- NOT a singleton row table — one row per config_key (EAV). This view pivots keys
+-- NOT a singleton row table - one row per config_key (EAV). This view pivots keys
 -- into a single public trust-signal row.
 --
 -- Mapped config_key → view column:

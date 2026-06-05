@@ -22,7 +22,7 @@ export default function LandlordServiceAgreement() {
     <>
       <Seo
         title="Landlord Service Agreement"
-        description="Agreement for landlords listing accommodation on Quni Living — listings, bookings, fees, and obligations."
+        description="Agreement for landlords listing accommodation on Quni Living - listings, bookings, fees, and obligations."
         canonicalPath="/landlord-service-agreement"
       />
     <LegalPageShell
@@ -52,7 +52,7 @@ export default function LandlordServiceAgreement() {
       <LegalH3 id="role-payments">2.2 Payment Facilitation</LegalH3>
       <LegalP>
         Quni Living facilitates the collection of platform fees and, where applicable, rent payments through Stripe. In
-        facilitating payments, Quni Living acts as a technology intermediary — the tenancy contract remains between you and
+        facilitating payments, Quni Living acts as a technology intermediary - the tenancy contract remains between you and
         the student.
       </LegalP>
       <LegalH3 id="role-bookings">2.3 No Guarantee of Bookings</LegalH3>

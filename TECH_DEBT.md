@@ -2,11 +2,11 @@
 
 Items that are acceptable for now but must be revisited before related work ships or dependencies upgrade.
 
-## DocuSeal — duplicate signature tags on official FT6600 (NSW)
+## DocuSeal - duplicate signature tags on official FT6600 (NSW)
 
 **Added:** 2026-06-03  
 **Area:** `api/lib/docuseal.shared.js`, future NSW official-fill generator  
-**Risk:** High — signing can silently break on DocuSeal upgrade.
+**Risk:** High - signing can silently break on DocuSeal upgrade.
 
 ### What we depend on (undocumented)
 
@@ -29,15 +29,15 @@ This is **not** documented DocuSeal API behaviour; it is spike-observed only.
 
 ### Executed PDF tag literals (micro-spike 2026-06-03)
 
-Completed submission **87** (deleted after test): source upload had **9** `{{` occurrences; **downloaded executed PDF had 0** — DocuSeal consumes tag text on completion. Visible literals on the draft/source PDF are **cosmetic only**; margin-anchor recipe `(12,18)` / `(12,34)` on page 16 is acceptable for signing module.
+Completed submission **87** (deleted after test): source upload had **9** `{{` occurrences; **downloaded executed PDF had 0** - DocuSeal consumes tag text on completion. Visible literals on the draft/source PDF are **cosmetic only**; margin-anchor recipe `(12,18)` / `(12,34)` on page 16 is acceptable for signing module.
 
 Re-run: `node scripts/test-ft6600-executed-tag-spike.mjs` after DocuSeal upgrades.
 
-## Official FT6600 — schedule AcroForm misaligned with printed boxes
+## Official FT6600 - schedule AcroForm misaligned with printed boxes
 
 **Added:** 2026-06-03  
 **Area:** `api/lib/documents/officialNswFt6600Fill.ts`, `officialNswFt6600BurnIn.ts`  
-**Risk:** High — schedule text lands in wrong rows if enabled without calibration.
+**Risk:** High - schedule text lands in wrong rows if enabled without calibration.
 
 ### Problem
 
@@ -45,7 +45,7 @@ The Dec 2025 Fair Trading PDF attaches almost all widgets to page 0, but **widge
 
 ### Fix shipped (2026-06-03)
 
-Burn-in now resolves the correct PDF page per widget (`findTextFieldWidgetPageIndex` — do not default to page 0). Re-run `node scripts/export-ft6600-widget-placements.mjs` after template updates.
+Burn-in now resolves the correct PDF page per widget (`findTextFieldWidgetPageIndex` - do not default to page 0). Re-run `node scripts/export-ft6600-widget-placements.mjs` after template updates.
 
 ### Production default
 

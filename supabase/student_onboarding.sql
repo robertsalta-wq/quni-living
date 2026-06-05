@@ -14,7 +14,7 @@ alter table public.student_profiles
 
 comment on column public.student_profiles.onboarding_complete is 'True after student finishes guided onboarding at /onboarding/student.';
 comment on column public.student_profiles.terms_accepted_at is 'When the student accepted Terms + Privacy during onboarding.';
-comment on column public.student_profiles.study_level is 'e.g. year_1, year_2, postgraduate, phd — from onboarding dropdown.';
+comment on column public.student_profiles.study_level is 'e.g. year_1, year_2, postgraduate, phd - from onboarding dropdown.';
 comment on column public.student_profiles.preferred_move_in_date is 'Student preferred move-in from onboarding.';
 comment on column public.student_profiles.preferred_lease_length is 'e.g. 3_months, 6_months, 12_months, flexible.';
 comment on column public.student_profiles.emergency_contact_relationship is 'Relationship to emergency contact.';

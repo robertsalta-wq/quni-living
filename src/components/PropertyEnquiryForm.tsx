@@ -16,7 +16,7 @@ type Props = {
 }
 
 /**
- * @deprecated Legacy enquiry form — frozen at peer messaging cutover.
+ * @deprecated Legacy enquiry form - frozen at peer messaging cutover.
  * Renders sign-in / open-messages CTAs only (no `enquiries` insert or enquiry-email).
  */
 export default function PropertyEnquiryForm({

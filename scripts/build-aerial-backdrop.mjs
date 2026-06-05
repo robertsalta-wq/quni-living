@@ -1,5 +1,5 @@
 /**
- * Generates `public/admin/aerial-backdrop.svg` — the decorative aerial-suburb
+ * Generates `public/admin/aerial-backdrop.svg` - the decorative aerial-suburb
  * tile rendered behind The Living Console (`/admin`).
  *
  * Source of truth lives in `docs/admin-redesign/prototype/shell.jsx`
@@ -19,7 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT_PATH = join(__dirname, '..', 'public', 'admin', 'aerial-backdrop.svg')
 
 // ---------------------------------------------------------------------------
-// Geometry — kept in lockstep with `docs/admin-redesign/prototype/shell.jsx`.
+// Geometry - kept in lockstep with `docs/admin-redesign/prototype/shell.jsx`.
 // ---------------------------------------------------------------------------
 
 const PARK_CANOPY_TREES = [
@@ -175,7 +175,7 @@ const HOUSES = [
   [994, 1010, 56, 106, '#E0A581', 1],
 ]
 
-// Compact number formatter — trims trailing zeros so we don't emit "16.18".
+// Compact number formatter - trims trailing zeros so we don't emit "16.18".
 function n(value) {
   const r = Math.round(value * 100) / 100
   return Number.isInteger(r) ? r.toString() : r.toString().replace(/\.?0+$/, '')

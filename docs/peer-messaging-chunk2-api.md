@@ -1,4 +1,4 @@
-# Peer messaging — chunk 2 API (manual test)
+# Peer messaging - chunk 2 API (manual test)
 
 **Endpoints:** Node runtime on Vercel (`api/conversations/*.ts`)
 

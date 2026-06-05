@@ -76,9 +76,9 @@ type LandlordAgreementSignedPaths =
 type BookingWithRelations = BookingRow & {
   properties: { title: string; slug: string; suburb: string | null; state: string | null } | null
   student_profiles: LandlordSafeStudentSnapshot | null
-  /** DocuSeal signer embed — only while signing is pending (not after `status === 'signed'`). */
+  /** DocuSeal signer embed - only while signing is pending (not after `status === 'signed'`). */
   landlord_agreement_signing_url: string | null
-  /** When the lease/RTA row is signed and Storage paths exist — download instead of opening DocuSeal. */
+  /** When the lease/RTA row is signed and Storage paths exist - download instead of opening DocuSeal. */
   landlord_agreement_signed_paths: LandlordAgreementSignedPaths | null
 }
 
@@ -205,7 +205,7 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
 
 type TabId = 'listings' | 'bookings'
 
-/** Loaded for landlord dashboard — safe fields only (see LandlordSafeStudentSnapshot). */
+/** Loaded for landlord dashboard - safe fields only (see LandlordSafeStudentSnapshot). */
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
 const LANDLORD_DASHBOARD_STUDENT_SELECT_BASE =
@@ -249,21 +249,21 @@ function bookingServiceTier(b: BookingWithRelations): 'listing' | 'managed' | nu
 
 function studentDisplayFromBooking(b: BookingWithRelations): string {
   const sp = b.student_profiles
-  if (!sp) return '—'
+  if (!sp) return '-'
   if (sp.full_name?.trim()) return sp.full_name.trim()
-  return '—'
+  return '-'
 }
 
-/** Stable key for session UI (e.g. AI assessment nudge) per booking request (not per student — same student can have multiple listings). */
+/** Stable key for session UI (e.g. AI assessment nudge) per booking request (not per student - same student can have multiple listings). */
 function applicantSessionKeyFromBooking(b: BookingWithRelations): string {
   return b.id
 }
 
 function ExpiresIn({ expiresAt }: { expiresAt: string | null | undefined }) {
-  const [txt, setTxt] = useState('—')
+  const [txt, setTxt] = useState('-')
   useEffect(() => {
     if (!expiresAt) {
-      setTxt('—')
+      setTxt('-')
       return
     }
     const deadline = expiresAt
@@ -287,7 +287,7 @@ function ExpiresIn({ expiresAt }: { expiresAt: string | null | undefined }) {
 
 /** Prominent tenancy start date for landlord follow-up (rent is arranged off-platform until recurring rent exists). */
 function formatMoveInDateProminent(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return '-'
   const t = iso.trim().slice(0, 10)
   try {
     const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T12:00:00`) : new Date(iso)
@@ -298,7 +298,7 @@ function formatMoveInDateProminent(iso: string | null | undefined): string {
       year: 'numeric',
     })
   } catch {
-    return '—'
+    return '-'
   }
 }
 
@@ -907,7 +907,7 @@ export default function LandlordDashboard() {
         {listingTierProperties > 0 && managedTierProperties > 0 && (
           <p className="mb-6 text-sm text-gray-600">
             <span className="font-medium text-gray-900">Mixed service models:</span>{' '}
-            {listingTierProperties} self-managed and {managedTierProperties} Quni Managed — each property keeps its own
+            {listingTierProperties} self-managed and {managedTierProperties} Quni Managed - each property keeps its own
             tier.
           </p>
         )}
@@ -1219,7 +1219,7 @@ export default function LandlordDashboard() {
                       <div className="min-w-0 space-y-1 text-sm text-gray-700">
                         <p className="break-words">
                           <span className="text-gray-500">Property:</span>{' '}
-                          <span className="font-medium text-gray-900">{b.properties?.title ?? '—'}</span>
+                          <span className="font-medium text-gray-900">{b.properties?.title ?? '-'}</span>
                           {b.properties?.suburb ? ` · ${b.properties.suburb}` : ''}
                         </p>
                         <p className="break-words">
@@ -1233,7 +1233,7 @@ export default function LandlordDashboard() {
                           <span className="font-medium">{formatDate(moveInRaw || b.start_date)}</span>
                           <span className="text-gray-400 mx-1">·</span>
                           <span className="text-gray-500">Lease:</span>{' '}
-                          <span className="font-medium">{b.lease_length?.trim() || '—'}</span>
+                          <span className="font-medium">{b.lease_length?.trim() || '-'}</span>
                         </p>
                         {b.student_message?.trim() && (
                           <div className="mt-2 min-w-0 overflow-hidden rounded-xl border border-amber-100/80 bg-white/80 px-4 py-3">
@@ -1337,7 +1337,7 @@ export default function LandlordDashboard() {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <span className="font-medium text-gray-900">{b.properties?.title ?? '—'}</span>
+                            <span className="font-medium text-gray-900">{b.properties?.title ?? '-'}</span>
                             {b.properties?.suburb && (
                               <span className="block text-xs text-gray-500">{b.properties.suburb}</span>
                             )}
@@ -1350,7 +1350,7 @@ export default function LandlordDashboard() {
                           <td className="px-4 py-3 text-gray-800">
                             {b.weekly_rent != null
                               ? `$${Number(b.weekly_rent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                              : '—'}
+                              : '-'}
                           </td>
                           <td className="px-4 py-3">
                             <span className="text-xs font-semibold text-gray-900">

@@ -7,4 +7,4 @@ revoke insert on public.enquiries from authenticated;
 revoke insert on public.enquiries from anon;
 
 comment on table public.enquiries is
-  'Legacy property enquiries — frozen at peer messaging cutover. New tenant–landlord chat uses conversations / conversation_messages. Historical rows remain readable; backfill ran in 20260527120000_peer_messaging.sql (M11).';
+  'Legacy property enquiries - frozen at peer messaging cutover. New tenant–landlord chat uses conversations / conversation_messages. Historical rows remain readable; backfill ran in 20260527120000_peer_messaging.sql (M11).';

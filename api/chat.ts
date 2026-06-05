@@ -1,5 +1,5 @@
 /**
- * Quni Living AI chat assistant — /api/chat
+ * Quni Living AI chat assistant - /api/chat
  * Streaming: raw text deltas only (client decides how to render).
  */
 import { createClient } from '@supabase/supabase-js'
@@ -539,7 +539,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let tenantPreferenceBlock =
-    'No allowlisted tenant preference fields on file — complete your profile for personalised fit guidance.'
+    'No allowlisted tenant preference fields on file - complete your profile for personalised fit guidance.'
   if (persona === 'student_renter' && userId) {
     const { data: spFullRaw } = await supabaseAdmin
       .from('student_profiles')
@@ -617,7 +617,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Anthropic stream call — wait for OK before committing streaming headers so errors can still be JSON.
+    // Anthropic stream call - wait for OK before committing streaming headers so errors can still be JSON.
     console.log('[chat] calling Anthropic')
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

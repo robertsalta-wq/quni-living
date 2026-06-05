@@ -1,10 +1,10 @@
 -- Admin payments dashboard: payments Xero columns, refunds audit, platform_settings, xero_settings, bonds.
 --
 -- PREREQUISITE (in order):
---   1. quni_supabase_schema.sql  — base tables including bookings
---   2. stripe_connect_foundation.sql — if you use Stripe Connect (optional but typical)
---   3. booking_flow_complete.sql — creates public.payments and extends bookings
---   4. admin_rls_policies.sql — defines is_platform_admin(); re-run after this file if you split runs
+--   1. quni_supabase_schema.sql  - base tables including bookings
+--   2. stripe_connect_foundation.sql - if you use Stripe Connect (optional but typical)
+--   3. booking_flow_complete.sql - creates public.payments and extends bookings
+--   4. admin_rls_policies.sql - defines is_platform_admin(); re-run after this file if you split runs
 --
 do $guard$
 begin
@@ -42,7 +42,7 @@ alter table public.payments add column if not exists stripe_refund_id text;
 comment on column public.payments.xero_sync_status is 'pending | synced | failed';
 
 -- ---------------------------------------------------------------------------
--- platform_settings (key/value — fee rates for display & future bookings)
+-- platform_settings (key/value - fee rates for display & future bookings)
 -- ---------------------------------------------------------------------------
 create table if not exists public.platform_settings (
   id uuid primary key default gen_random_uuid(),
@@ -59,7 +59,7 @@ alter table public.platform_settings enable row level security;
 -- Deprecated fee keys removed in Phase 2: canonical pricing now lives in pricing_config.
 
 -- ---------------------------------------------------------------------------
--- xero_settings (OAuth — service role / server only; no client SELECT policy)
+-- xero_settings (OAuth - service role / server only; no client SELECT policy)
 -- ---------------------------------------------------------------------------
 create table if not exists public.xero_settings (
   id uuid primary key default gen_random_uuid(),
@@ -147,7 +147,7 @@ create policy "Platform admins delete platform_settings"
   on public.platform_settings for delete
   using (public.is_platform_admin());
 
--- xero_settings: no policies — only service role (server-side). Admins use API for status.
+-- xero_settings: no policies - only service role (server-side). Admins use API for status.
 
 drop policy if exists "Platform admins select all bonds" on public.bonds;
 drop policy if exists "Platform admins insert bonds" on public.bonds;

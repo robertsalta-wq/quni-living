@@ -36,7 +36,7 @@ function StatesPage({ active }) {
       </div>
 
       <p style={{ marginTop: 24, fontSize: 12, color: C.ink5 }}>
-        All three states are quiet by design — text + a single Lucide glyph + a single action.
+        All three states are quiet by design - text + a single Lucide glyph + a single action.
         No illustrations, no marketing copy.
       </p>
     </div>

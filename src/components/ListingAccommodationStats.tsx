@@ -10,7 +10,7 @@ type Props = {
   variant?: 'hero' | 'compact'
 }
 
-/** Side-view bed — matches common AU property listing iconography. */
+/** Side-view bed - matches common AU property listing iconography. */
 function BedIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -24,7 +24,7 @@ function BedIcon({ className }: { className?: string }) {
   )
 }
 
-/** Bathtub with shower — similar to realestate.com.au listing stats. */
+/** Bathtub with shower - similar to realestate.com.au listing stats. */
 function BathIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>

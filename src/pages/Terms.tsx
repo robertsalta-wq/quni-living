@@ -22,7 +22,7 @@ export default function Terms() {
     <>
       <Seo
         title="Terms of Service"
-        description="Terms of Service for the Quni Living accommodation marketplace — accounts, listings, bookings, and acceptable use."
+        description="Terms of Service for the Quni Living accommodation marketplace - accounts, listings, bookings, and acceptable use."
         canonicalPath="/terms"
       />
     <LegalPageShell
@@ -47,7 +47,7 @@ export default function Terms() {
       <LegalH3 id="about-who">1.1 Who We Are</LegalH3>
       <LegalP>
         Quni Living is a technology platform that connects students seeking accommodation with landlords offering rental
-        properties in Australia. We are a marketplace intermediary — we do not own, manage, or control any properties
+        properties in Australia. We are a marketplace intermediary - we do not own, manage, or control any properties
         listed on our Platform, and we are not a party to any tenancy agreement entered into between students and
         landlords.
       </LegalP>

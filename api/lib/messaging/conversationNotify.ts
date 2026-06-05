@@ -18,7 +18,7 @@ export type NewMessageNotifyInput = {
   conversationId: string
 }
 
-/** HTML for peer message notification — no message body or contact details. */
+/** HTML for peer message notification - no message body or contact details. */
 export function buildNewMessageNotificationHtml(input: NewMessageNotifyInput): string {
   const title = escapeHtml(input.propertyTitle)
   const name = escapeHtml(input.senderFirstName)
@@ -29,7 +29,7 @@ export function buildNewMessageNotificationHtml(input: NewMessageNotifyInput): s
   <p style="margin: 1.5rem 0;">
     <a href="${url}" style="background-color: #FF6F61; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">Open conversation</a>
   </p>
-  <p style="font-size: 0.875rem; color: #6b7280;">Reply in Quni — we do not include message content in email for your privacy.</p>
+  <p style="font-size: 0.875rem; color: #6b7280;">Reply in Quni - we do not include message content in email for your privacy.</p>
 </div>`
 }
 

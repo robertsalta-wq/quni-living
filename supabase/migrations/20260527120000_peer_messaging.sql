@@ -4,12 +4,12 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- M1 — is_platform_admin() (no-op if already present)
+-- M1 - is_platform_admin() (no-op if already present)
 -- ---------------------------------------------------------------------------
 -- Function defined in 20260526120000_platform_staff.sql.
 
 -- ---------------------------------------------------------------------------
--- M2 — conversations
+-- M2 - conversations
 -- ---------------------------------------------------------------------------
 create table if not exists public.conversations (
   id uuid primary key default gen_random_uuid(),
@@ -43,7 +43,7 @@ create index if not exists conversations_booking_id_idx
   where booking_id is not null;
 
 -- ---------------------------------------------------------------------------
--- M3 — conversation_messages
+-- M3 - conversation_messages
 -- ---------------------------------------------------------------------------
 create table if not exists public.conversation_messages (
   id uuid primary key default gen_random_uuid(),
@@ -66,7 +66,7 @@ create index if not exists conversation_messages_conversation_created_idx
   on public.conversation_messages (conversation_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- M4 — message_contact_mask_events
+-- M4 - message_contact_mask_events
 -- ---------------------------------------------------------------------------
 create table if not exists public.message_contact_mask_events (
   id uuid primary key default gen_random_uuid(),
@@ -90,7 +90,7 @@ create index if not exists message_contact_mask_events_sender_created_idx
   where sender_user_id is not null;
 
 -- ---------------------------------------------------------------------------
--- M5 — bookings.conversation_id
+-- M5 - bookings.conversation_id
 -- ---------------------------------------------------------------------------
 alter table public.bookings
   add column if not exists conversation_id uuid references public.conversations (id) on delete set null;
@@ -196,7 +196,7 @@ create trigger conversations_guard_participant_update
   for each row execute function public.conversations_guard_participant_update();
 
 -- ---------------------------------------------------------------------------
--- M6 — RLS
+-- M6 - RLS
 -- ---------------------------------------------------------------------------
 alter table public.conversations enable row level security;
 alter table public.conversation_messages enable row level security;
@@ -288,14 +288,14 @@ create policy "Platform admins select mask events"
   using (public.is_platform_admin());
 
 -- ---------------------------------------------------------------------------
--- M7 — Grants
+-- M7 - Grants
 -- ---------------------------------------------------------------------------
 grant select, insert, update on public.conversations to authenticated;
 grant select, insert on public.conversation_messages to authenticated;
 -- mask_events: no grant to authenticated (service role + admin RLS)
 
 -- ---------------------------------------------------------------------------
--- M8 — booking_messages freeze at cutover (read-only for app users)
+-- M8 - booking_messages freeze at cutover (read-only for app users)
 -- ---------------------------------------------------------------------------
 drop policy if exists "Landlord inserts booking messages" on public.booking_messages;
 drop policy if exists "Student inserts booking messages" on public.booking_messages;
@@ -303,10 +303,10 @@ drop policy if exists "Student inserts booking messages" on public.booking_messa
 revoke insert on public.booking_messages from authenticated;
 
 comment on table public.booking_messages is
-  'Legacy booking review thread — frozen at peer messaging cutover. New chat uses conversation_messages.';
+  'Legacy booking review thread - frozen at peer messaging cutover. New chat uses conversation_messages.';
 
 -- ---------------------------------------------------------------------------
--- M9 — Realtime publication
+-- M9 - Realtime publication
 -- ---------------------------------------------------------------------------
 do $$
 begin
@@ -323,7 +323,7 @@ exception
 end $$;
 
 -- ---------------------------------------------------------------------------
--- M10 — platform_config: contact_masking_enabled
+-- M10 - platform_config: contact_masking_enabled
 -- ---------------------------------------------------------------------------
 insert into public.platform_config (config_key, config_value, label, category, is_sensitive, sort_order)
 values (
@@ -337,7 +337,7 @@ values (
 on conflict (config_key) do nothing;
 
 -- ---------------------------------------------------------------------------
--- M11 — Backfill enquiries → conversations (authenticated tenants only)
+-- M11 - Backfill enquiries → conversations (authenticated tenants only)
 -- Skips rows with student_id null (anonymous legacy enquiries).
 -- ---------------------------------------------------------------------------
 insert into public.conversations (

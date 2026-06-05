@@ -5,7 +5,7 @@
  * 1. Byte-identical green artifact (executed-spike-source.pdf = submission 87 upload)
  * 2. Known-good react-pdf sample (public/agreement-samples/nsw-t2-ft6600-tenancy-agreement.pdf)
  *
- * Uses raw API POST — does NOT run pdf-lib reencode (unlike createDocusealSubmissionFromPdf).
+ * Uses raw API POST - does NOT run pdf-lib reencode (unlike createDocusealSubmissionFromPdf).
  * DOCUSEAL_SEND_EMAIL=false. Deletes created submissions when done.
  */
 import dotenv from 'dotenv'
@@ -33,7 +33,7 @@ function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex')
 }
 
-/** Submit exact file bytes — no reencode. */
+/** Submit exact file bytes - no reencode. */
 async function submitExactBytes(label, filePath, { coTenant = false } = {}) {
   const buf = fs.readFileSync(filePath)
   const base = docusealBase()
@@ -49,7 +49,7 @@ async function submitExactBytes(label, filePath, { coTenant = false } = {}) {
   }
 
   const body = {
-    name: `instance-diag — ${label}`,
+    name: `instance-diag - ${label}`,
     order: 'preserved',
     send_email: false,
     documents: [{ name: path.basename(filePath), file: buf.toString('base64') }],

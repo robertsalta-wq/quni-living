@@ -43,39 +43,39 @@ interface TierMeta {
 const TIERS: TierMeta[] = [
   {
     id: 't1',
-    label: 'Tier 1 — Hosted Room',
+    label: 'Tier 1 - Hosted Room',
     sub: 'Landlord lives on-site',
-    legal: 'Boarder/lodger — RTA does not apply',
+    legal: 'Boarder/lodger - RTA does not apply',
     doc: 'Custom Quni Occupancy Agreement',
-    bond: 'Held by landlord — no RBO required',
+    bond: 'Held by landlord - no RBO required',
     status: 'live',
-    statusLabel: 'Live — Phase 1',
+    statusLabel: 'Live - Phase 1',
   },
   {
     id: 't2',
-    label: 'Tier 2 — Private Room',
+    label: 'Tier 2 - Private Room',
     sub: 'Landlord does not live on-site',
     legal: 'Residential Tenancies Act 2010 (NSW)',
     doc: 'Prescribed form FT6600 + Quni Addendum',
-    bond: 'Lodged via NSW Fair Trading RBO — mandatory',
+    bond: 'Lodged via NSW Fair Trading RBO - mandatory',
     status: 'live',
-    statusLabel: 'Live — Phase 1',
+    statusLabel: 'Live - Phase 1',
   },
   {
     id: 't3',
-    label: 'Tier 3 — Boarding House',
+    label: 'Tier 3 - Boarding House',
     sub: '5+ paying residents',
     legal: 'Boarding Houses Act 2012 (NSW)',
     doc: 'Boarding house agreement (TBD)',
     bond: 'Per Boarding Houses Act requirements',
     status: 'deferred',
-    statusLabel: 'Deferred — post-launch',
+    statusLabel: 'Deferred - post-launch',
   },
 ]
 
 const TIER_PAYMENT_NOTES: Record<TierId, string> = {
-  t1: 'Platform can mandate Quni payment — RTA does not apply',
-  t2: 'Bank transfer must be offered free — s.35 RTA',
+  t1: 'Platform can mandate Quni payment - RTA does not apply',
+  t2: 'Bank transfer must be offered free - s.35 RTA',
   t3: 'Per Boarding Houses Act 2012 requirements',
 }
 
@@ -160,7 +160,7 @@ function tierLabelShort(t: string | null): string {
   if (t === 't1') return 'T1'
   if (t === 't2') return 'T2'
   if (t === 't3') return 'T3'
-  return '—'
+  return '-'
 }
 
 function svcLabelShort(s: string | null): string {
@@ -201,7 +201,7 @@ function isPricingDirty(
   return false
 }
 
-/** ===== Inline form primitives — co-located until reuse outside Pricing. ===== */
+/** ===== Inline form primitives - co-located until reuse outside Pricing. ===== */
 
 interface FormSectionProps {
   title: string
@@ -225,7 +225,7 @@ interface FormRowProps {
   label: string
   hint?: string
   /**
-   * Vertical layout (label above field) — for narrow surfaces like the
+   * Vertical layout (label above field) - for narrow surfaces like the
    * side-by-side tier cards on Pricing. Default is the documented
    * 180px-label / 1fr-field grid.
    */
@@ -1031,7 +1031,7 @@ function FeeTabIntro({ serviceTier }: { serviceTier: ServiceTierId }) {
       <strong className="text-admin-ink-2">
         {isListing ? 'Quni Listing' : 'Quni Managed'}
       </strong>
-      {' — '}
+      {' - '}
       {isListing
         ? 'Self-service tier. Landlord runs enquiries, bookings and the agreement; Quni charges a flat fee per booking.'
         : 'Full-service tier. Quni handles enquiries, viewings, agreements, bond and payouts; pricing is a percentage of weekly rent.'}
@@ -1262,7 +1262,7 @@ function EarlyAdopterCard({ tier, earlyByKey, pricingByKey, setEarlyField, saveE
             />
           </FormRow>
         ) : (
-          <p className="m-0 text-[12px] text-admin-ink-5">Landlord pays 0% — free listing period.</p>
+          <p className="m-0 text-[12px] text-admin-ink-5">Landlord pays 0% - free listing period.</p>
         )}
         <FormRow label="Expiry">
           <Select
@@ -1295,7 +1295,7 @@ function EarlyAdopterCard({ tier, earlyByKey, pricingByKey, setEarlyField, saveE
         ) : null}
         <div className="pt-2">
           <Button kind="primary" size="sm" onClick={() => void saveEarly(tier.id)} disabled={isSaving}>
-            {isSaving ? 'Saving…' : `Save ${tier.label.split('—')[1]?.trim() ?? tier.label}`}
+            {isSaving ? 'Saving…' : `Save ${tier.label.split('-')[1]?.trim() ?? tier.label}`}
           </Button>
         </div>
       </div>
@@ -1308,7 +1308,7 @@ interface DiffChipProps {
   kind: 'old' | 'new'
 }
 function DiffChip({ value, kind }: DiffChipProps) {
-  if (!value) return <span className="text-admin-ink-5">—</span>
+  if (!value) return <span className="text-admin-ink-5">-</span>
   const isOld = kind === 'old'
   return (
     <span
@@ -1405,7 +1405,7 @@ interface LandlordPreviewCardProps {
   /**
    * The managed row for the same property tier. Payment settings only live
    * there, so the preview reads them from here rather than from the active
-   * service-tier row — otherwise the Listing-tier preview would always show
+   * service-tier row - otherwise the Listing-tier preview would always show
    * defaults.
    */
   propertyRow: PricingConfigRow
@@ -1417,7 +1417,7 @@ function LandlordPreviewCard({ row, propertyRow, svc, tier }: LandlordPreviewCar
   const headline = isListing ? 'List it yourself.' : 'Let us manage.'
   const description = isListing
     ? 'Self-service listing tier. You manage enquiries, bookings and the tenancy agreement; we handle marketplace exposure and verification.'
-    : 'Full-service tier. Quni handles enquiries, viewings, agreements, bond lodgement and payouts — you collect rent automatically.'
+    : 'Full-service tier. Quni handles enquiries, viewings, agreements, bond lodgement and payouts - you collect rent automatically.'
   const priceMain = row.fee_mode === 'fixed' ? `$${centsToDollars(row.fee_fixed_cents).replace(/\.00$/, '')}` : `${row.fee_percent}%`
   const priceSuffix = row.fee_mode === 'fixed' ? 'flat per booking · AUD' : 'of weekly rent · AUD'
   const studentFee = row.student_fee_fixed_cents > 0 ? `$${centsToDollars(row.student_fee_fixed_cents).replace(/\.00$/, '')} student booking fee` : 'No student booking fee'

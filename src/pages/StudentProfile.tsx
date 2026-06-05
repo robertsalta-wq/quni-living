@@ -1098,7 +1098,7 @@ export default function StudentProfile() {
                 </select>
                 <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
                   Optional. We use this only in aggregate to understand our community and improve support for international
-                  students. It&apos;s never shown to landlords and plays no part in your bookings — you can leave it blank
+                  students. It&apos;s never shown to landlords and plays no part in your bookings - you can leave it blank
                   or remove it anytime.
                 </p>
               </div>
@@ -1126,7 +1126,7 @@ export default function StudentProfile() {
                 Languages spoken
               </span>
               <p className="text-xs text-gray-500 mb-2">
-                Optional — shown on your profile and when hosts review your booking request.
+                Optional - shown on your profile and when hosts review your booking request.
               </p>
               <LanguagesSpokenSelector
                 id="st-languages"
@@ -1357,7 +1357,7 @@ export default function StudentProfile() {
             <div className="rounded-xl border border-gray-100 bg-[#FEF9E4]/40 px-4 py-4 space-y-4">
               <h3 className="text-sm font-semibold text-gray-900">Living preferences</h3>
               <p className="text-xs text-gray-600">
-                Optional — helps hosts see if you&apos;re a good fit. You can change these anytime.
+                Optional - helps hosts see if you&apos;re a good fit. You can change these anytime.
               </p>
               <div>
                 <label htmlFor="st-bio" className={labelClass}>

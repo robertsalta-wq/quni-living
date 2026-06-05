@@ -1,5 +1,5 @@
 // Minimal Lucide-style inline SVG icons (outline, 1.5 stroke).
-// Only the set used across the admin shell — kept in one place so we never reach
+// Only the set used across the admin shell - kept in one place so we never reach
 // for emoji and never load a heavy icon font.
 const Icon = ({ name, size = 16, color = 'currentColor', strokeWidth = 1.75, style }) => {
   const s = { width: size, height: size, display: 'inline-block', flexShrink: 0, verticalAlign: 'middle', ...style };

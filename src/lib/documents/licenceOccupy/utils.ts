@@ -21,7 +21,7 @@ function formatManagedFeePercent(percent: number): string {
   return `${n.toLocaleString('en-AU', { maximumFractionDigits: 2 })}%`
 }
 
-/** Clause 11 owner-side fee paragraph — driven by booking service tier. */
+/** Clause 11 owner-side fee paragraph - driven by booking service tier. */
 export function ownerServiceFeeParagraphForTier(
   tier: LicenceOccupyServiceTier,
   managedFeePercent: number,
@@ -31,5 +31,5 @@ export function ownerServiceFeeParagraphForTier(
     const pct = formatManagedFeePercent(managedFeePercent)
     return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted — it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`
+  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`
 }

@@ -1,5 +1,5 @@
 /**
- * Co-tenant DocuSeal signer — load from booking and validate distinct email from primary tenant.
+ * Co-tenant DocuSeal signer - load from booking and validate distinct email from primary tenant.
  */
 import { parseCoTenantFromBooking } from './occupancyLeaseContext.js'
 

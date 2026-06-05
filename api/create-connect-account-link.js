@@ -1,10 +1,10 @@
 /**
- * Stripe Connect Express — create account (if needed) + Account Link for onboarding.
+ * Stripe Connect Express - create account (if needed) + Account Link for onboarding.
  *
  * Vercel env:
  *   STRIPE_SECRET_KEY=sk_...
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and anon key for JWT verify: SUPABASE_ANON_KEY
- *   or VITE_SUPABASE_ANON_KEY (Vercel often only has the latter — both work)
+ *   or VITE_SUPABASE_ANON_KEY (Vercel often only has the latter - both work)
  * Optional: SITE_URL or PUBLIC_SITE_URL = https://your-domain.com (otherwise uses request URL origin)
  *
  * POST with header: Authorization: Bearer <Supabase access_token>
@@ -64,7 +64,7 @@ export default async function handler(request) {
       }
     }
   } catch {
-    /* invalid body — use dashboard defaults */
+    /* invalid body - use dashboard defaults */
   }
 
   const stripeSecret = process.env.STRIPE_SECRET_KEY
@@ -179,7 +179,7 @@ export default async function handler(request) {
       }
 
       if (!saved || saved.stripe_connect_account_id !== accountId) {
-        console.error('landlord_profiles update returned no row — wrong service key or RLS?', {
+        console.error('landlord_profiles update returned no row - wrong service key or RLS?', {
           profileId: profile.id,
         })
         return json(

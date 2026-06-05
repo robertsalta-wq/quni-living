@@ -88,7 +88,7 @@ export function getNavDashboardPath(role: UserRole, profile: AuthProfile | null)
   return '/onboarding'
 }
 
-/** Legacy helper — prefer `getPostLoginRedirectDestination` or `getNavDashboardPath` by context. */
+/** Legacy helper - prefer `getPostLoginRedirectDestination` or `getNavDashboardPath` by context. */
 export function getDashboardPath(role: UserRole): string {
   if (role === 'student') return '/student-dashboard'
   if (role === 'landlord') return '/landlord/dashboard'

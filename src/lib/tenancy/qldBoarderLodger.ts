@@ -1,10 +1,10 @@
 /**
- * Queensland on-site boarder/lodger (T1) — RTRA Act 2008 framing for listings and licence PDFs.
+ * Queensland on-site boarder/lodger (T1) - RTRA Act 2008 framing for listings and licence PDFs.
  */
 
 export const QLD_RTRA_ACT_SHORT = 'Residential Tenancies and Rooming Accommodation Act 2008 (Qld)'
 
-/** s 43 — owner-occupied premises with at most this many rooms for residents. */
+/** s 43 - owner-occupied premises with at most this many rooms for residents. */
 export const QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3
 
 export function isQldOnSiteBoarderLodgerListing(
@@ -27,7 +27,7 @@ export function qldRoomsRentedFieldError(rooms: number | null): string | null {
     return 'Enter how many rooms you rent to residents in this home (including this listing).'
   }
   if (rooms > QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS) {
-    return `Queensland boarder/lodger arrangements where the owner lives on site usually rely on the s 43 exemption (no more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms for residents). With more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms, the arrangement may be rooming accommodation under the ${QLD_RTRA_ACT_SHORT} — use a registered rooming house listing or seek legal advice.`
+    return `Queensland boarder/lodger arrangements where the owner lives on site usually rely on the s 43 exemption (no more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms for residents). With more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms, the arrangement may be rooming accommodation under the ${QLD_RTRA_ACT_SHORT} - use a registered rooming house listing or seek legal advice.`
   }
   return null
 }

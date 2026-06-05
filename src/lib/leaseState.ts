@@ -1,17 +1,17 @@
 /**
- * Pure derivation of "lease document state" for a booking — used by both the renter
+ * Pure derivation of "lease document state" for a booking - used by both the renter
  * and landlord booking detail surfaces (Phase 3 / Task J).
  *
  * The booking + tenancy_document combination produces one of these conceptual states
  * which the UI maps to the right CTA / view-only / download element:
  *
- *   - 'none'              — no tenancy document yet (lease not generated).
- *   - 'preview'           — Listing-tier draft: PDF exists, signing is intentionally deferred
+ *   - 'none'              - no tenancy document yet (lease not generated).
+ *   - 'preview'           - Listing-tier draft: PDF exists, signing is intentionally deferred
  *                           until the landlord ticks "Bond received". Both parties may VIEW
  *                           the draft but cannot sign yet.
- *   - 'ready_to_sign'     — DocuSeal session is live and the viewer has not yet signed.
- *   - 'awaiting_other'    — DocuSeal session is live, viewer has signed but counterparty has not.
- *   - 'fully_signed'      — All required parties have signed; the executed PDF is downloadable.
+ *   - 'ready_to_sign'     - DocuSeal session is live and the viewer has not yet signed.
+ *   - 'awaiting_other'    - DocuSeal session is live, viewer has signed but counterparty has not.
+ *   - 'fully_signed'      - All required parties have signed; the executed PDF is downloadable.
  *
  * When the booking has a co-tenant (occupant_count >= 2 with co_tenant details), a third
  * DocuSeal signature is required before `fully_signed`.
@@ -24,7 +24,7 @@ export type LeaseStateInput = {
   serviceTierFinal: string | null | undefined
   /** Whether a tenancy_document row exists for this tenancy at all. */
   documentExists: boolean
-  /** tenancy_documents.status — 'draft' | 'sent_for_signing' | 'signed' | etc. */
+  /** tenancy_documents.status - 'draft' | 'sent_for_signing' | 'signed' | etc. */
   documentStatus: string | null | undefined
   landlordSignedAt: string | null | undefined
   studentSignedAt: string | null | undefined

@@ -32,7 +32,7 @@ function chunkText(text, maxChars) {
 }
 function isPartHeading(line) {
   const t = line.trim();
-  return /^PART [A-F]—/i.test(t) || /^Part [A-F] –/.test(t);
+  return /^PART [A-F]-/i.test(t) || /^Part [A-F] –/.test(t);
 }
 function isTodoLine(line) {
   return line.includes("[TODO(VIC-FORM1");

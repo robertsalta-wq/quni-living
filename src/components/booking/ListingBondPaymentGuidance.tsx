@@ -11,7 +11,7 @@ function formatBondAud(amount: number): string {
   return `$${amount.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
 }
 
-/** Renter-facing: statutory bond scheme — pay authority (first) or pay landlord. */
+/** Renter-facing: statutory bond scheme - pay authority (first) or pay landlord. */
 export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, className }: Props) {
   const amountPhrase =
     bondAmountAud != null && Number.isFinite(bondAmountAud) && bondAmountAud > 0
@@ -45,12 +45,12 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
           {guidance.directPayNote && <p className="mt-1 pl-4 text-amber-900/90">{guidance.directPayNote}</p>}
         </li>
         <li>
-          <span className="font-semibold">Pay your host directly</span> (bank transfer, cash, or as agreed) — they must
+          <span className="font-semibold">Pay your host directly</span> (bank transfer, cash, or as agreed) - they must
           lodge with {guidance.authorityLabel} within {guidance.lodgementDeadlinePhrase} and give you a receipt.
         </li>
       </ol>
       <p className="text-xs text-amber-900/90 border-t border-amber-200/80 pt-2">
-        Sign your tenancy agreement on Quni when you receive the signing email — you do not need to wait for bond
+        Sign your tenancy agreement on Quni when you receive the signing email - you do not need to wait for bond
         confirmation to sign.
       </p>
     </div>

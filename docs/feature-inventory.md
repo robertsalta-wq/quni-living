@@ -3,7 +3,7 @@
 **Last reviewed:** 2026-06-02  
 **Source of truth:** codebase (`src/`, `api/`, Supabase functions). If this doc disagrees with the app, the app wins until someone updates this file.
 
-Granular list of student and landlord capabilities — including small actions (e.g. **duplicate listing**, **request more information** on a booking). Admin-only tools are out of scope.
+Granular list of student and landlord capabilities - including small actions (e.g. **duplicate listing**, **request more information** on a booking). Admin-only tools are out of scope.
 
 ---
 
@@ -37,7 +37,7 @@ Before a student- or landlord-facing release:
 
 ### 4. Support and triage
 
-Map tenant/landlord tickets to a bullet (e.g. “Bond receipt download” → Students → Post-booking). If the user asks for something with no bullet, it is either missing product, mis-routed role, or a bug — not “undocumented magic.”
+Map tenant/landlord tickets to a bullet (e.g. “Bond receipt download” → Students → Post-booking). If the user asks for something with no bullet, it is either missing product, mis-routed role, or a bug - not “undocumented magic.”
 
 ### 5. Scope and prioritisation
 
@@ -77,25 +77,25 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - Public **listings browse** and property detail (`/listings`, `/properties/:slug`) with role-specific gates
 - **Verified host** badge on listing cards and property detail when `landlord_profiles.verified` (Stripe-driven)
 - **AI chat** widget (persona: student renter vs landlord); host verification honesty rules + knowledge-base chunk
-- **Sample agreement previews** (`/sample-agreements`) — watermarked PDF templates by state/tier; dashboard link for students and landlords
+- **Sample agreement previews** (`/sample-agreements`) - watermarked PDF templates by state/tier; dashboard link for students and landlords
 - Auth: signup, login, Google OAuth, email verification, sign out
 
-### Trust, Stripe & payments — Live
+### Trust, Stripe & payments - Live
 
 - **Verified host** (core trust feature): landlords complete **Stripe Connect identity verification** (regulated KYC by Stripe, not manual Quni ID review) before they can **accept** any booking; when Stripe enables charges, a **Verified host** badge shows on profile and listings so students get peace of mind
-- Students may **browse, message, and submit booking requests** before a host finishes Stripe — only **acceptance** is gated on verification
+- Students may **browse, message, and submit booking requests** before a host finishes Stripe - only **acceptance** is gated on verification
 - **Students**: no Quni booking/platform/service fees; booking **deposit** via Stripe (card hold/charge at application); ongoing rent via **Quni card** (Stripe Customer) or **bank transfer**; bond is tenancy money between parties (Quni is not the bond custodian)
-- **Landlords — Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
-- **Landlords — Quni Managed**: **Stripe Connect** for identity + **weekly rent collection**; service fee deducted before payout to bank (~2–3 business days typical)
+- **Landlords - Quni Listing**: saved card for flat **acceptance fee** (charged on accept via Stripe); bond and weekly rent flow **directly** with the renter after accept (Quni not in rent chain)
+- **Landlords - Quni Managed**: **Stripe Connect** for identity + **weekly rent collection**; service fee deducted before payout to bank (~2–3 business days typical)
 - Declined bookings: deposit hold **released/refunded** via automated Stripe flows (often 5–7 business days)
 - Legal/info: Terms, Privacy, Refunds, How it works, FAQ, Contact
-- Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) — no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
+- Ad-hoc feedback via Sentry (`submitUserFeedback` in `src/lib`) - no public “Report a problem” button; structured issues use **Qase** (admin + dashboard “Get support”)
 
 ---
 
 ## Students
 
-### Account & auth — Live
+### Account & auth - Live
 
 - Sign up as **Student** or **Non-student tenant** (same `student` role; different verification route)
 - Email/password + confirmation email; **Continue with Google** (role chosen first)
@@ -103,29 +103,29 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - Role/terms gate (`/onboarding`); legacy `/student-signup` → `/signup`
 - **Delete account** (confirm with `DELETE`)
 
-### Onboarding (`/onboarding/student`) — Live
+### Onboarding (`/onboarding/student`) - Live
 
 - **University email OTP** (student route only at onboarding); non-students skip uni email and verify later on Profile → Verification
 - Steps: about you → emergency contact + living prefs → accept Terms/Privacy
 - Profile photo; uni/campus/course/year; phone; budget; move-in; lease length; gender
 - **Draft saved** in browser (resume / start fresh); back between steps
 
-### Profile (`/student-profile`, `/student/profile`) — Live
+### Profile (`/student-profile`, `/student/profile`) - Live
 
 - Tabs: **Profile** | **Verification** | **Bookings** (`?tab=…`)
 - Edit profile, photo, emergency contact, living preferences
 - **Work location** + geocode (non-student route) for distance search
-- **Rent billing card** — Stripe Customer for ongoing rent (Quni card path)
+- **Rent billing card** - Stripe Customer for ongoing rent (Quni card path)
 - Profile draft autosave
 - Delete account (danger zone)
 
-### Verification — Live
+### Verification - Live
 
 - Student route: uni email OTP, **photo ID**, **enrolment proof**
 - Non-student route: work email OTP, photo ID, **identity supporting** doc
 - Progress meter (Verification tab + onboarding)
 
-### Dashboard (`/student-dashboard`) — Live
+### Dashboard (`/student-dashboard`) - Live
 
 - Cards: bookings (+ pending), messages, profile completeness, browse CTA
 - Dismissible **onboarding checklist** with deep links
@@ -136,11 +136,11 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **View sample agreements** → `/sample-agreements`
 - Legacy `?tab=enquiries` → `/messages`
 
-### Saved listings — UI only
+### Saved listings - UI only
 
 - **Saved** tab shows “coming soon”; no backend favourites yet
 
-### Search & browse — Live
+### Search & browse - Live
 
 - Filters (URL-synced): keyword, university/campus, suburb, room type, rent, furnished, dates, lease length
 - **Near work**: `near_lat` / `near_lon` / radius; **nearest first** sort
@@ -152,7 +152,7 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - SEO: university/campus accommodation, rent near campus
 - Featured listings on Home (guest)
 
-### Property detail — Live
+### Property detail - Live
 
 - Guest: partial listing + sign-in CTA
 - **Student-only listings** access check (RPC)
@@ -162,9 +162,9 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **Message landlord** (conversation); pending intent after onboarding
 - **Request to book** (gated until core profile complete)
 - Link if **active pipeline booking** exists
-- **Property enquiry form** — Deprecated (redirects to Messages)
+- **Property enquiry form** - Deprecated (redirects to Messages)
 
-### Booking application (`/booking/:propertyId`) — Live
+### Booking application (`/booking/:propertyId`) - Live
 
 - Student role only; 4 steps: dates & occupancy → rent method → bond ack → deposit payment
 - Move-in (min 7 days), lease length, **1–2 occupants**, **co-tenant** fields when 2
@@ -176,23 +176,23 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **Listing-tier** properties: deposit/booking request allowed before host finishes Stripe identity; **Managed-tier** blocked until host Connect ready
 - Statuses: `pending`, `pending_payment`, `pending_confirmation`, `awaiting_info`, `bond_pending`, `confirmed`, `active`, `declined`, `expired`, `payment_failed`, `cancelled`, `completed`, etc.
 
-### Messaging — Live
+### Messaging - Live
 
 - Inbox; realtime thread; mark read; send messages
 - Masked contact until acceptance; then landlord name, email, phone
 - Open from listing (`openConversation`)
 
-### Post-booking — Live
+### Post-booking - Live
 
 - **Lease panel**: draft preview, **sign** (DocuSeal), download signed agreement + addendum
 - Co-tenant signing awareness
 - Reply when status is `awaiting_info` (profile Bookings tab)
 
-### Payments — Live
+### Payments - Live
 
 - Booking deposit (Stripe); saved card for rent; method stored on booking
 
-### AI & support — Live
+### AI & support - Live
 
 - AI chat (`student_renter` persona)
 - Qase tickets from dashboard
@@ -211,22 +211,22 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 
 ## Landlords
 
-### Account & auth — Live
+### Account & auth - Live
 
 - Signup as landlord; tier intent from pricing (`?tier=listing|managed` → localStorage)
 - `/landlord-signup` → `/signup`; post-auth → onboarding then `/landlord/dashboard`
 - Sign out; email verification
 
-### Onboarding (`/onboarding/landlord`) — Live
+### Onboarding (`/onboarding/landlord`) - Live
 
-1. **Profile** — photo, name, phone, type (Individual / Company / Trust), ABN, address, bio  
-2. **Terms** — Terms, Privacy, **Landlord Service Agreement**  
-3. **Payments** — Listing: save card (+ optional Connect); Managed: **Stripe Connect** (identity verification required before **accept**, not before listing)  
-4. **Insurance** — insurer links + confirmation checkbox  
-5. **Complete** — add first listing or dashboard  
+1. **Profile** - photo, name, phone, type (Individual / Company / Trust), ABN, address, bio  
+2. **Terms** - Terms, Privacy, **Landlord Service Agreement**  
+3. **Payments** - Listing: save card (+ optional Connect); Managed: **Stripe Connect** (identity verification required before **accept**, not before listing)  
+4. **Insurance** - insurer links + confirmation checkbox  
+5. **Complete** - add first listing or dashboard  
 - Wizard draft autosave; Stripe return query params
 
-### Dashboard (`/landlord/dashboard`) — Live
+### Dashboard (`/landlord/dashboard`) - Live
 
 - Onboarding checklist; **Add new listing** (gated until setup)
 - **Rent payouts** (Connect): connect / continue / manage
@@ -235,7 +235,7 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **View sample agreements** → `/sample-agreements`
 - Tabs: **Listings** | **Messages** | **Bookings**
 
-### Listings (dashboard & profile Properties tab) — Live
+### Listings (dashboard & profile Properties tab) - Live
 
 Per listing:
 
@@ -247,7 +247,7 @@ Per listing:
 - **Pause** / **Reactivate** (active ↔ inactive)
 - Badges: draft/active/inactive, featured, service tier
 
-### Property form (`/landlord/property/new`, edit) — Live
+### Property form (`/landlord/property/new`, edit) - Live
 
 - Sections: Basic info, Property details, Inclusions, Rules, Location, Description, Pricing, Photos
 - Types: **Rent**, **Homestay**, **Student House**
@@ -261,10 +261,10 @@ Per listing:
 - **Publish listing** / **Save changes**
 - New listing: draft indicator; **resume draft** / **start fresh**
 
-### Booking review (`/landlord/bookings/:bookingId/review`) — Live
+### Booking review (`/landlord/bookings/:bookingId/review`) - Live
 
 - Fit summary; occupancy/rent; verification badges; read-only thread
-- **AI assessment** (generate / refresh, cooldown; all applicant tiers — student, identity, incomplete)
+- **AI assessment** (generate / refresh, cooldown; all applicant tiers - student, identity, incomplete)
 - **Accept as Listing** / **Accept as Managed** / **Upgrade and accept as Managed**
 - **Decline** (optional reason); **Request more information** (suggested chips + message)
 - **Bond received from renter** (Listing); **Cancel booking**
@@ -273,46 +273,46 @@ Per listing:
 - Blockers: **Stripe identity** (`stripe_charges_enabled`), Listing saved card, billing module
 - **Verified host** badge (Stripe-synced; admin manual override with lock)
 
-### Bookings tab (dashboard) — Live
+### Bookings tab (dashboard) - Live
 
 - Request queue; 48h expiry; **Review request**; applicant modal
 - **Verification details**; AI assessment; download/open agreement
 - **Bank account required** modal; payment error retry
 
-### Landlord profile — Live
+### Landlord profile - Live
 
 - Tabs: Profile | Properties (same listing actions)
 - Completion widget; account agreements; rent payouts; saved Listing card display
 - Edit profile + photo
 
-### Messaging — Live
+### Messaging - Live
 
 - Same shared messaging; landlord as host; contact unlock after booking
 
-### Host identity & trust — Live
+### Host identity & trust - Live
 
 - **Verified host** badge when Stripe Connect has `charges_enabled` (webhook + sync; flips off if Stripe disables)
 - **Accept booking** gated on Stripe identity for **both** Listing and Managed; Listing also needs saved card for $99 fee
 - List, message, and receive booking **requests** without verification; only **accept** requires Stripe
 - Admin **manual verified** toggle sets `admin_override_verified` so webhooks do not overwrite
 
-### Payments & payouts — Live
+### Payments & payouts - Live
 
 - **Stripe Connect** (Managed rent payouts; host identity KYC)
 - **Listing fee card**; charge on accept via `/api/confirm-booking` (3DS when needed)
 - Refund deposit on decline; Listing cancel with fee rules
 
-### Service tiers — Live
+### Service tiers - Live
 
-- **Quni Listing** — self-managed; card fee on accept; bond/rent with renter; optional upgrade to Managed on accept
-- **Quni Managed** — Connect required; managed workflow; no downgrade after upgrade
+- **Quni Listing** - self-managed; card fee on accept; bond/rent with renter; optional upgrade to Managed on accept
+- **Quni Managed** - Connect required; managed workflow; no downgrade after upgrade
 
-### AI & support — Live
+### AI & support - Live
 
 - AI chat (landlord persona)
 - Qase from dashboard
 
-### Marketing / leads (pre-login) — Live
+### Marketing / leads (pre-login) - Live
 
 - Landlord partnerships + lead form → `landlord_leads`
 - Landlord AI page; pricing CTAs with tier; Landlord Service Agreement
@@ -327,20 +327,20 @@ Per listing:
 | Dashboard | `/student-dashboard` | `/landlord/dashboard` |
 | Profile | `/student-profile` | `/landlord-profile` |
 | Onboarding | `/onboarding/student` | `/onboarding/landlord` |
-| Book | `/booking/:propertyId` | — |
-| Review booking | — | `/landlord/bookings/:id/review` |
-| Listing editor | — | `/landlord/property/new`, `.../edit/:id` |
+| Book | `/booking/:propertyId` | - |
+| Review booking | - | `/landlord/bookings/:id/review` |
+| Listing editor | - | `/landlord/property/new`, `.../edit/:id` |
 | Messages | `/messages` | `/messages` |
 
 ---
 
 ## Related docs
 
-- [`faq-comprehensive-review.md`](./faq-comprehensive-review.md) — customer-facing FAQ copy  
-- [`dual-tier-service-model.md`](./dual-tier-service-model.md) — Listing vs Managed product rules  
-- [`mobile-testing-checklist.md`](./mobile-testing-checklist.md) — device QA  
-- [`professional-workplace-search-scope.md`](./professional-workplace-search-scope.md) — non-student search behaviour  
-- [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) — how chat AI stays aligned with this inventory  
+- [`faq-comprehensive-review.md`](./faq-comprehensive-review.md) - customer-facing FAQ copy  
+- [`dual-tier-service-model.md`](./dual-tier-service-model.md) - Listing vs Managed product rules  
+- [`mobile-testing-checklist.md`](./mobile-testing-checklist.md) - device QA  
+- [`professional-workplace-search-scope.md`](./professional-workplace-search-scope.md) - non-student search behaviour  
+- [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) - how chat AI stays aligned with this inventory  
 
 ---
 

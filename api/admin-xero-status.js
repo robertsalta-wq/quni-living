@@ -1,6 +1,6 @@
 /**
  * Safe Xero connection summary for admin UI (no tokens exposed).
- * GET — Authorization: Bearer <Supabase access_token> (platform admin)
+ * GET - Authorization: Bearer <Supabase access_token> (platform admin)
  */
 import { createClient } from '@supabase/supabase-js'
 import { requireAdminUser } from './lib/adminAuth.js'

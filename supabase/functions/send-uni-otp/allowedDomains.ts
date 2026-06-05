@@ -1,4 +1,4 @@
-/** Mirror src/lib/uniEmailDomains.ts BASE_DOMAINS — update both when changing. */
+/** Mirror src/lib/uniEmailDomains.ts BASE_DOMAINS - update both when changing. */
 export const BASE_DOMAINS = [
   'sydney.edu.au',
   'unsw.edu.au',

@@ -81,7 +81,7 @@ export default function VerifyEmail() {
         navigate(dest, { replace: true })
         return
       }
-      setMsg('Not confirmed yet — open the link in the email we sent, then try again.')
+      setMsg('Not confirmed yet - open the link in the email we sent, then try again.')
     } finally {
       setBusy(false)
     }
@@ -124,7 +124,7 @@ export default function VerifyEmail() {
           onClick={() => void recheck()}
           className="w-full rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
         >
-          I&apos;ve clicked the link — continue
+          I&apos;ve clicked the link - continue
         </button>
         <button
           type="button"

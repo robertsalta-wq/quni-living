@@ -84,7 +84,7 @@ function startWarm(queryKey: string, filters: ListingsQueryFilters): void {
       rememberListingsPrefetch(queryKey, filters)
     })
     .catch(() => {
-      /* ignore — page will retry */
+      /* ignore - page will retry */
     })
     .finally(() => {
       warmInflightByKey.delete(key)

@@ -1,7 +1,7 @@
 -- =============================================================================
 -- tenancy-documents storage bucket + RLS policies
 -- Reconstructed from the live Tokyo project (flegysnshryzvkwzfclc) baseline,
--- captured 28 May 2026. These policies had NO source in the repo — the live
+-- captured 28 May 2026. These policies had NO source in the repo - the live
 -- project was the only source of truth. This file makes them replayable so the
 -- Sydney project (and any future project) has them in version control.
 --

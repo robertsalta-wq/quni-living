@@ -1,4 +1,4 @@
-# Peer messaging — chunk 1 review
+# Peer messaging - chunk 1 review
 
 **Migration:** `supabase/migrations/20260527120000_peer_messaging.sql`  
 **Types:** `src/lib/database.types.ts`, `src/lib/messaging/conversationTypes.ts`
@@ -52,4 +52,4 @@ where config_key = 'contact_masking_enabled';
 - [ ] Spot-check backfill counts vs `enquiries` where `student_id is not null`
 - [ ] Confirm anonymous enquiry count acceptable as legacy-only
 
-**Stopped here** — chunk 2 (API: `open`, `message`, `read`, notify) not started.
+**Stopped here** - chunk 2 (API: `open`, `message`, `read`, notify) not started.

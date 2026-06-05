@@ -1,4 +1,4 @@
-/** Mirror src/lib/workEmailDomains.ts BASE_DOMAINS — update both when changing. */
+/** Mirror src/lib/workEmailDomains.ts BASE_DOMAINS - update both when changing. */
 
 const FREE_PROVIDER_HOSTS = [
   'gmail.com',

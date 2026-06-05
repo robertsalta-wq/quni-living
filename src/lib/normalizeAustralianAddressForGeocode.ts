@@ -10,7 +10,7 @@ function expandStreetAbbreviations(line: string): string {
     .replace(/\bPde\b/gi, 'Parade')
 }
 
-/** Prefixes like "Unit 406," that geocoders often fail on — strip for street-level lookup. */
+/** Prefixes like "Unit 406," that geocoders often fail on - strip for street-level lookup. */
 const UNIT_LINE_PREFIX =
   /^(?:unit|apt|apartment|apts?|suite|ste|level|lvl|lot|shop|office|flat)\s*[\d\w-]+\s*,?\s*/i
 

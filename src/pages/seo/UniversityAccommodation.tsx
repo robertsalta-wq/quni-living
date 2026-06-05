@@ -98,7 +98,7 @@ function AreaGuideBlock(props: {
               {props.averagePrivateRoomPerWeek}/week.
             </>
           ) : (
-            <> Weekly rents vary — browse live listings for current pricing.</>
+            <> Weekly rents vary - browse live listings for current pricing.</>
           )}
         </p>
         <p>
@@ -551,7 +551,7 @@ export default function UniversityAccommodation({
               </h1>
               <p className="text-white/85 text-sm sm:text-base mt-2 max-w-2xl">
                 {city}
-                {state ? `, ${state}` : ''} — Verified listings for {shortLabel} students
+                {state ? `, ${state}` : ''} - Verified listings for {shortLabel} students
               </p>
             </>
           ) : null
@@ -629,7 +629,7 @@ export default function UniversityAccommodation({
               </div>
               {featuredExact.length === 0 && featuredNearby.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center">
-                  <p className="text-gray-700 font-medium">No listings yet — check back soon</p>
+                  <p className="text-gray-700 font-medium">No listings yet - check back soon</p>
                   <p className="text-sm text-gray-500 mt-2">
                     Want updates when rooms go live near {university.name}?
                   </p>

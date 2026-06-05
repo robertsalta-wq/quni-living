@@ -1,5 +1,5 @@
 /**
- * Qase — email submitter when an admin posts a public reply.
+ * Qase - email submitter when an admin posts a public reply.
  * Internal only: requires `x-qase-internal` matching `QASE_INTERNAL_SECRET`.
  *
  * Deploy: supabase functions deploy qase-notify --no-verify-jwt
@@ -179,10 +179,10 @@ Deno.serve(async (req) => {
   <h2 style="color:#FF6F61; margin-top:0;">Quni Living support reply</h2>
   <p style="white-space: pre-wrap; margin:0; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">${bodyEscaped}</p>
   <p style="margin-top:1.25rem; font-size:0.875rem; color:#6b7280;">${dashHint}</p>
-  <p style="margin-top:0.75rem; font-size:0.875rem; color:#6b7280;">Ticket reference: #${Number.isFinite(ticketNum) ? ticketNum : '—'}</p>
+  <p style="margin-top:0.75rem; font-size:0.875rem; color:#6b7280;">Ticket reference: #${Number.isFinite(ticketNum) ? ticketNum : '-'}</p>
 </div>`.trim()
 
-  const textPlain = `${msg.body ?? ''}\n\n${st === 'landlord' ? dashUrlLandlord : dashUrlStudent}\nTicket reference: #${Number.isFinite(ticketNum) ? ticketNum : '—'}`
+  const textPlain = `${msg.body ?? ''}\n\n${st === 'landlord' ? dashUrlLandlord : dashUrlStudent}\nTicket reference: #${Number.isFinite(ticketNum) ? ticketNum : '-'}`
 
   try {
     const res = await fetch('https://api.resend.com/emails', {

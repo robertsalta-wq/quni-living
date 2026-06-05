@@ -119,7 +119,7 @@ const ZONE_META: Array<{
 ]
 
 /**
- * The Living Console — `/admin`.
+ * The Living Console - `/admin`.
  *
  * Per HANDOFF.md §3, this page is the only true "console" page in admin.
  * Data comes from one round-trip to `api/admin/living-console-snapshot.ts`

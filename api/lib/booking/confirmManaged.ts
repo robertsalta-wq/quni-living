@@ -1,4 +1,4 @@
-// @ts-nocheck — shared Managed confirm (Stripe + subscription); consumed by confirm-booking.
+// @ts-nocheck - shared Managed confirm (Stripe + subscription); consumed by confirm-booking.
 /**
  * Landlord confirms a booking (managed tier): captures the student's booking-deposit PaymentIntent and
  * creates a weekly rent Stripe subscription (Connect).
@@ -268,7 +268,7 @@ export async function runManagedConfirmBooking(params) {
     }
 
     const rentProduct = await stripe.products.create({
-      name: `Weekly rent — ${propertyTitle}`,
+      name: `Weekly rent - ${propertyTitle}`,
       metadata: { booking_id: booking.id, property_id: booking.property_id ?? '' },
     })
 
@@ -435,7 +435,7 @@ export async function runManagedConfirmBooking(params) {
             try {
               await sendEmail({
                 to: 'hello@quni.com.au',
-                subject: `Urgent: auto-decline refund failed — booking ${row.id}`,
+                subject: `Urgent: auto-decline refund failed - booking ${row.id}`,
                 html: `<p>Refund/cancel failed for booking <code>${row.id}</code> after another booking was confirmed for the same property.</p>
 <p>Property id: <code>${booking.property_id}</code></p>
 <p>PaymentIntent: <code>${piRow}</code></p>
@@ -518,7 +518,7 @@ export async function runManagedConfirmBooking(params) {
     const studentEmail = typeof sp.email === 'string' ? sp.email.trim() : ''
     const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
     const landlordName = typeof lp.full_name === 'string' ? lp.full_name.trim() || 'Host' : 'Host'
-    const landlordPhone = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '—'
+    const landlordPhone = typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone.trim() : '-'
 
     const depositCents = typeof booking.deposit_amount === 'number' ? booking.deposit_amount : null
 
@@ -564,7 +564,7 @@ export async function runManagedConfirmBooking(params) {
 
     /**
      * Emails + tenancy/PDF generation must finish in this invocation.
-     * Previously on Vercel we only used waitUntil() and skipped await — the background work could be cut off
+     * Previously on Vercel we only used waitUntil() and skipped await - the background work could be cut off
      * after the HTTP response, leaving bookings confirmed without tenancies or documents.
      */
     try {

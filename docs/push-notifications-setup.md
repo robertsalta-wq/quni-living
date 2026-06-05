@@ -9,7 +9,7 @@ Official Capacitor API reference: [Push Notifications](https://capacitorjs.com/d
 1. Create or select a project in the [Firebase Console](https://console.firebase.google.com/).
 2. Add an **iOS** app and an **Android** app with the same bundle / application IDs you use in Xcode and `android/app/build.gradle` (must match your Capacitor `appId`).
 
-## iOS — APNs and Xcode
+## iOS - APNs and Xcode
 
 ### What you need from Apple
 
@@ -29,7 +29,7 @@ Your iOS app’s **Push Notifications** capability must be enabled for the targe
 - Firebase Console → **Project settings** (gear) → **Cloud Messaging**.
 - Under **Apple app configuration**, upload the **APNs authentication key** (`.p8`) or the **APNs certificates**, as prompted. This lets FCM deliver to your iOS app via APNs.
 
-## Android — `google-services.json`
+## Android - `google-services.json`
 
 1. In Firebase Console, open the **Android** app you registered.
 2. Download **`google-services.json`**.

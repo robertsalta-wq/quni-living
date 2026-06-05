@@ -5,7 +5,7 @@ export interface TabItem<T extends string> {
   label: string
   /** Optional sub-label rendered next to the main label (e.g. "$99 flat"). */
   sub?: ReactNode
-  /** Optional small count badge — used by Change log etc. */
+  /** Optional small count badge - used by Change log etc. */
   count?: number
 }
 

@@ -1,5 +1,5 @@
 -- Vendor subscription rows for Admin → Apps.
--- RLS: public.is_platform_admin() — email list MUST stay in sync with supabase/admin_rls_policies.sql and src/lib/adminEmails.ts.
+-- RLS: public.is_platform_admin() - email list MUST stay in sync with supabase/admin_rls_policies.sql and src/lib/adminEmails.ts.
 -- This project does not use a single "profiles" table; admin access matches existing platform admin policies.
 
 -- If this fails, apply supabase/admin_rls_policies.sql first (defines public.is_platform_admin()).
@@ -65,13 +65,13 @@ create policy "Platform admins delete vendor subscriptions"
   to authenticated
   using (public.is_platform_admin());
 
--- Placeholder amounts for budgeting only — replace with your real figures.
+-- Placeholder amounts for budgeting only - replace with your real figures.
 insert into public.admin_vendor_subscriptions (
   title, subtitle, href, billing_href, plan_name, amount, currency, cadence, logo_src, is_active
 ) values
   (
     'Supabase (Quni Living)',
-    'Database + auth — Quni Living project',
+    'Database + auth - Quni Living project',
     'https://supabase.com',
     'https://supabase.com/dashboard/org/_/billing',
     'Pro (placeholder)',

@@ -1,11 +1,11 @@
 /// <reference types="node" />
-// @ts-nocheck — Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
+// @ts-nocheck - Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
 /**
  * Generate NSW Residential Tenancy Agreement PDF, upload to Storage, create tenancy rows,
  * optionally send to DocuSeal (see src/lib/docuseal.ts).
  *
  * POST JSON: { booking_id: string }
- * Authorization: Bearer INTERNAL_DOC_FLOW_SECRET (or X-Internal-Doc-Flow-Secret — some Vercel paths strip Authorization on internal fetch)
+ * Authorization: Bearer INTERNAL_DOC_FLOW_SECRET (or X-Internal-Doc-Flow-Secret - some Vercel paths strip Authorization on internal fetch)
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, INTERNAL_DOC_FLOW_SECRET,
  *      DOCUSEAL_* (optional for signing step)
@@ -60,7 +60,7 @@ function landlordAddressLine(lp: Record<string, unknown>): string {
     typeof lp.state === 'string' ? lp.state.trim() : '',
     typeof lp.postcode === 'string' ? lp.postcode.trim() : '',
   ].filter(Boolean)
-  return parts.join(', ') || '—'
+  return parts.join(', ') || '-'
 }
 
 export default async function handler(req: any, res: any) {
@@ -303,22 +303,22 @@ export default async function handler(req: any, res: any) {
         (typeof lp.full_name === 'string' ? lp.full_name : 'Landlord'),
       companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
       addressLine: landlordAddressLine(lpRec),
-      email: typeof lp.email === 'string' ? lp.email : '—',
-      phone: typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone : '—',
+      email: typeof lp.email === 'string' ? lp.email : '-',
+      phone: typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone : '-',
     },
     tenant: {
       fullName:
         [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
         (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
-      email: typeof sp.email === 'string' ? sp.email : '—',
-      phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone : '—',
+      email: typeof sp.email === 'string' ? sp.email : '-',
+      phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone : '-',
       dateOfBirth:
         typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
       emergencyContactName: null,
       emergencyContactPhone: null,
     },
     premises: {
-      addressLine: propertyAddressLine(prop) || '—',
+      addressLine: propertyAddressLine(prop) || '-',
       propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
       roomType: typeof prop.room_type === 'string' ? prop.room_type : null,
       furnished: typeof prop.furnished === 'boolean' ? prop.furnished : null,

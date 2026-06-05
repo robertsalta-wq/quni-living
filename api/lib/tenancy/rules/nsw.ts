@@ -1,5 +1,5 @@
 /**
- * NSW tenancy rules by tier — structural migration from resolveTenancyPackage bond helpers.
+ * NSW tenancy rules by tier - structural migration from resolveTenancyPackage bond helpers.
  */
 import type { TenancyBondRules, TenancyRules } from './types.js'
 

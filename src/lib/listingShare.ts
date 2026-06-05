@@ -13,6 +13,6 @@ export function listingShareUrl(slug: string): string {
 export function listingShareText(title: string, subtitle?: string): string {
   const t = title.trim()
   const s = subtitle?.trim()
-  if (t && s) return `${t} — ${s}`
+  if (t && s) return `${t} - ${s}`
   return t || 'Student accommodation on Quni Living'
 }

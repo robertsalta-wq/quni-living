@@ -1,4 +1,4 @@
-# Draft: Privacy Policy — “Where we store your data”
+# Draft: Privacy Policy - “Where we store your data”
 
 **Status:** Lawyer review only. **Do not** publish to `/privacy` until approved.
 
@@ -20,7 +20,7 @@ After legal sign-off, add this block as a new section **before** the current **�
 
 Quni Living is an Australian company, and your core information is stored in Australia.
 
-Your account, listings, bookings, messages, verification documents, signed tenancy agreements, and database backups are stored on AWS infrastructure located in Sydney, Australia (Asia Pacific (Sydney) region — ap-southeast-2). They do not leave Australia for routine storage.
+Your account, listings, bookings, messages, verification documents, signed tenancy agreements, and database backups are stored on AWS infrastructure located in Sydney, Australia (Asia Pacific (Sydney) region - ap-southeast-2). They do not leave Australia for routine storage.
 
 Some supporting services use international infrastructure for the limited purpose of operating the platform:
 
@@ -43,7 +43,7 @@ Where international processing occurs through these providers, it is governed by
 <LegalP>
   Your account, listings, bookings, messages, verification documents, signed tenancy agreements, and
   database backups are stored on AWS infrastructure located in Sydney, Australia (Asia Pacific (Sydney)
-  region — ap-southeast-2). They do not leave Australia for routine storage.
+  region - ap-southeast-2). They do not leave Australia for routine storage.
 </LegalP>
 <LegalP>
   Some supporting services use international infrastructure for the limited purpose of operating the

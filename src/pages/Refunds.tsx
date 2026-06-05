@@ -11,7 +11,7 @@ export default function Refunds() {
   return (
     <>
       <Seo
-        title="Refund Policy — Quni Living"
+        title="Refund Policy - Quni Living"
         description="Refunds and reversals for money Quni receives; tenancy bond and rent follow your agreement and state law."
         canonicalPath="/refunds"
       />
@@ -34,7 +34,7 @@ export default function Refunds() {
 
             <section className="space-y-4">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                Quni Listing — landlord acceptance fee
+                Quni Listing - landlord acceptance fee
               </h2>
               <p>
                 Applies to <strong>landlords</strong> on Quni Listing only. Renters pay <strong>no</strong> booking,
@@ -65,7 +65,7 @@ export default function Refunds() {
                     <tr>
                       <td className={TD}>Landlord accepted the booking; tenancy proceeds</td>
                       <td className={TD}>
-                        <strong>No refund</strong> — the fee covers acceptance and platform use for that booking.
+                        <strong>No refund</strong> - the fee covers acceptance and platform use for that booking.
                       </td>
                     </tr>
                     <tr>
@@ -93,12 +93,12 @@ export default function Refunds() {
 
             <section className="space-y-4">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                Quni Managed — tenancy money Quni routes
+                Quni Managed - tenancy money Quni routes
               </h2>
               <p>
                 Renters pay <strong>no</strong> booking, platform, service, or surcharge fees to Quni. On Managed,{' '}
                 <strong>weekly rent</strong> includes a <strong>service component</strong> retained by Quni as
-                disclosed on the pricing page — it is <strong>not</strong> an extra line item on top of rent charged to
+                disclosed on the pricing page - it is <strong>not</strong> an extra line item on top of rent charged to
                 the renter.
               </p>
               <div className={TABLE_WRAP}>
@@ -121,7 +121,7 @@ export default function Refunds() {
                       <td className={TD}>Booking confirmed; tenancy proceeds</td>
                       <td className={TD}>
                         <strong>Deposit, bond, and ongoing rent after confirmation</strong> are governed by your{' '}
-                        <strong>tenancy agreement</strong>, applicable law, and the payment flows you complete at booking —{' '}
+                        <strong>tenancy agreement</strong>, applicable law, and the payment flows you complete at booking -{' '}
                         <strong>not fully restated in this policy.</strong> Use{' '}
                         <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
                           {ORGANIZATION_EMAIL}
@@ -133,7 +133,7 @@ export default function Refunds() {
                       <td className={TD}>Booking cancelled after landlord confirmation</td>
                       <td className={TD}>
                         Same as row above: outcomes depend on tenancy terms, timing, and what has already been captured or
-                        paid — contact{' '}
+                        paid - contact{' '}
                         <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
                           {ORGANIZATION_EMAIL}
                         </a>{' '}

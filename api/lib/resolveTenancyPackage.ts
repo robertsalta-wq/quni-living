@@ -21,7 +21,7 @@ export interface TenancyPackageInput {
   /** properties.is_registered_rooming_house */
   is_registered_rooming_house: boolean
   /**
-   * Tenancy start / agreement date for future rule versioning — v1 ignored.
+   * Tenancy start / agreement date for future rule versioning - v1 ignored.
    */
   date?: string | Date
 }
@@ -42,7 +42,7 @@ type TenancyPackageResultBase = {
   ragState: RagState
 }
 
-/** Supported package — generator id set; rules fully populated. */
+/** Supported package - generator id set; rules fully populated. */
 export type SupportedTenancyPackageResult = TenancyPackageResultBase & {
   supported: true
   generator: string
@@ -50,7 +50,7 @@ export type SupportedTenancyPackageResult = TenancyPackageResultBase & {
   unsupportedReason: null
 }
 
-/** Unsupported — no generator; rules omitted. */
+/** Unsupported - no generator; rules omitted. */
 export type UnsupportedTenancyPackageResult = TenancyPackageResultBase & {
   supported: false
   generator: null
@@ -231,7 +231,7 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
         generator: 'qld-form18a',
         pdfKind: 'residential_tenancy_agreement',
         rules,
-        signingPackageName: 'QLD Form 18a — General Tenancy Agreement',
+        signingPackageName: 'QLD Form 18a - General Tenancy Agreement',
         storagePaths: qldForm18aPaths(),
         ragState,
         unsupportedReason: null,
@@ -244,7 +244,7 @@ export function resolveTenancyPackage(input: TenancyPackageInput): TenancyPackag
       generator: 'vic-form1',
       pdfKind: 'residential_rental_agreement',
       rules,
-      signingPackageName: 'VIC Form 1 — Residential rental agreement',
+      signingPackageName: 'VIC Form 1 - Residential rental agreement',
       storagePaths: vicForm1Paths(),
       ragState,
       unsupportedReason: null,
@@ -268,7 +268,7 @@ export function tenancyPackageInputFromPropertyRow(
   }
 }
 
-/** Same fields as triggerListingDocumentGeneration — property row plus booking move-in date. */
+/** Same fields as triggerListingDocumentGeneration - property row plus booking move-in date. */
 export function tenancyPackageInputFromBooking(
   booking: Record<string, unknown> | null | undefined,
   prop: Record<string, unknown> | null | undefined,
@@ -301,7 +301,7 @@ export function bookingUsesNswFt6600Generator(
   return resolvesToNswFt6600(tenancyPackageInputFromBooking(booking, prop))
 }
 
-/** Property row only (no booking date) — use bookingUsesNswFt6600Generator when a booking exists. */
+/** Property row only (no booking date) - use bookingUsesNswFt6600Generator when a booking exists. */
 export function propertyUsesNswFt6600T2FromRow(
   prop: Record<string, unknown> | null | undefined,
 ): boolean {

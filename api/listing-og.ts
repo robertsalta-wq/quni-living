@@ -1,5 +1,5 @@
 /**
- * Server-rendered Open Graph HTML for listing URLs (social crawlers only — see middleware.ts).
+ * Server-rendered Open Graph HTML for listing URLs (social crawlers only - see middleware.ts).
  * GET /api/listing-og?slug=...&path=/listings/...
  */
 import { buildListingOgHtml, fetchListingOgMeta } from './lib/listingOgMeta.js'

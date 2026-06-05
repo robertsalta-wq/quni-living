@@ -7,7 +7,7 @@
 --   → Run **`quni_supabase_schema.sql`** in SQL Editor first (creates properties,
 --      bookings, enquiries, RLS, etc.). Idempotent; safe to re-run.
 --   → If you only ever ran **`profile_tables_bootstrap.sql`**, that file does NOT
---      create `properties` — you still need the full schema above.
+--      create `properties` - you still need the full schema above.
 --
 -- Recommended order after the main schema:
 --   1. `stripe_connect_foundation.sql` (if not already applied)
@@ -38,7 +38,7 @@ end
 $guard$;
 
 -- ---------------------------------------------------------------------------
--- Properties: booking "property type" (bond / listing context) — distinct from room_type
+-- Properties: booking "property type" (bond / listing context) - distinct from room_type
 -- ---------------------------------------------------------------------------
 alter table public.properties
   add column if not exists property_type text;
@@ -99,7 +99,7 @@ comment on column public.bookings.move_in_date is 'Tenant move-in date (mirrors 
 comment on column public.bookings.stripe_payment_intent_id is 'Stripe PaymentIntent for booking deposit (manual capture until landlord confirms).';
 
 -- ---------------------------------------------------------------------------
--- Payments ledger (Stripe webhook + audits; no client RLS — service role only)
+-- Payments ledger (Stripe webhook + audits; no client RLS - service role only)
 -- ---------------------------------------------------------------------------
 create table if not exists public.payments (
   id uuid default gen_random_uuid() primary key,

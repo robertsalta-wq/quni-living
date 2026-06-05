@@ -1,4 +1,4 @@
-# Peer messaging — chunk 5 review
+# Peer messaging - chunk 5 review
 
 **Scope:** Wire bookings to conversations; unlock contact on landlord confirm.
 

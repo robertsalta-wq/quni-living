@@ -20,7 +20,7 @@ type Props = {
   heroCta?: HeroCta
   /** Renders after the “Related listings” block, above the site footer */
   afterRelated?: React.ReactNode
-  /** Full-bleed main content (no max-w-3xl prose wrapper) — use for custom multi-section pages */
+  /** Full-bleed main content (no max-w-3xl prose wrapper) - use for custom multi-section pages */
   contentVariant?: 'default' | 'fullBleed'
 }
 

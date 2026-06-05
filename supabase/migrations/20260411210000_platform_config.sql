@@ -1,5 +1,5 @@
--- platform_config — Quni business / bank / compliance / document defaults (admin-editable).
--- RLS: public.is_platform_admin() — requires supabase/admin_rls_policies.sql.
+-- platform_config - Quni business / bank / compliance / document defaults (admin-editable).
+-- RLS: public.is_platform_admin() - requires supabase/admin_rls_policies.sql.
 -- Audit: app writes to pricing_change_log with tier = null; redact sensitive values in the client.
 
 create table if not exists public.platform_config (
@@ -50,7 +50,7 @@ create policy "Platform admins delete platform_config"
   on public.platform_config for delete
   using (public.is_platform_admin());
 
--- Seed: business + bank only (no payments category — UI omits until rows exist).
+-- Seed: business + bank only (no payments category - UI omits until rows exist).
 insert into public.platform_config (config_key, config_value, label, category, is_sensitive, sort_order)
 values
   ('business.legal_name', '', 'Legal entity name', 'business', false, 10),

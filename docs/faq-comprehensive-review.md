@@ -22,7 +22,7 @@ Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni
 No. Quni is primarily a student marketplace, but landlords can opt in to accepting professional renters. Once verified, you can see and book every listing available to your account type.
 
 ### How do I know the landlord is legitimate?
-Hosts complete Stripe identity verification before they can accept a booking. When Stripe approves their account, they show a **Verified host** badge on their profile and listing. You can still browse, message, and submit a booking request before that step — acceptance is what requires verification.
+Hosts complete Stripe identity verification before they can accept a booking. When Stripe approves their account, they show a **Verified host** badge on their profile and listing. You can still browse, message, and submit a booking request before that step - acceptance is what requires verification.
 
 ### Are tenancy agreements legally binding?
 Yes. Where available for your state and property type, Quni helps generate compliant tenancy documents for digital signature (for example via DocuSeal).

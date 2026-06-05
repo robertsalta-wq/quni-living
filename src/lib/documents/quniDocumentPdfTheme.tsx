@@ -475,7 +475,7 @@ export const occupancyMatchPdf = StyleSheet.create({
     paddingVertical: 4,
     marginBottom: 8,
   },
-  /** DocuSeal field regions — minimum heights for comfortable signing (react-pdf px). */
+  /** DocuSeal field regions - minimum heights for comfortable signing (react-pdf px). */
   docusealSignatureFieldBox: {
     marginTop: 6,
     borderWidth: 0.5,
@@ -729,7 +729,7 @@ export function QuniRtaPdfFooter() {
         <Text
           style={quniPdf.footerPageRta}
           render={({ pageNumber, totalPages }) =>
-            `Page ${pageNumber} of ${totalPages != null && totalPages > 0 ? totalPages : '—'}`
+            `Page ${pageNumber} of ${totalPages != null && totalPages > 0 ? totalPages : '-'}`
           }
         />
       </View>

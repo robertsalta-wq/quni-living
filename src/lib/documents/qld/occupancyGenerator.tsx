@@ -9,7 +9,7 @@ export function QldLicenceToOccupyOnSite(props: OccupancyAgreementProps) {
   return <LicenceOccupyDocument content={QLD_LICENCE_OCCUPY_CONTENT} props={props} />
 }
 
-/** @deprecated Use QldLicenceToOccupyOnSite — kept for generate-qld-occupancy import compatibility. */
+/** @deprecated Use QldLicenceToOccupyOnSite - kept for generate-qld-occupancy import compatibility. */
 export function QuniOccupancyAgreementQld(props: OccupancyAgreementProps) {
   return QldLicenceToOccupyOnSite(props)
 }

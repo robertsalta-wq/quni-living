@@ -99,7 +99,7 @@ function bookingStatusClass(s: BookingStatus) {
 }
 
 function formatWeeklyRent(n: number | null | undefined): string {
-  if (n == null || Number.isNaN(Number(n))) return '—'
+  if (n == null || Number.isNaN(Number(n))) return '-'
   return `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })} /wk`
 }
 
@@ -323,7 +323,7 @@ export default function StudentDashboard() {
             Welcome back, {welcomeName}
           </h1>
           <p className="text-gray-500 mt-2 text-base max-w-2xl">
-            Here’s a quick look at your bookings and messages — everything in one place.
+            Here’s a quick look at your bookings and messages - everything in one place.
           </p>
         </div>
         <Link to="/listings" className={primaryBtnClass}>
@@ -351,12 +351,12 @@ export default function StudentDashboard() {
           <p className="text-2xl font-bold text-gray-900 mt-1">{bookings.length}</p>
           {bondPendingBookings > 0 ? (
             <p className="text-sm text-emerald-800 mt-2 font-medium">
-              {bondPendingBookings === 1 ? 'Host accepted' : `${bondPendingBookings} accepted`} — complete bond &
+              {bondPendingBookings === 1 ? 'Host accepted' : `${bondPendingBookings} accepted`} - complete bond &
               agreement
             </p>
           ) : pendingBookings > 0 ? (
             <p className="text-sm text-amber-800 mt-2 font-medium">
-              {pendingBookings === 1 ? 'Request submitted' : `${pendingBookings} submitted`} — waiting for host
+              {pendingBookings === 1 ? 'Request submitted' : `${pendingBookings} submitted`} - waiting for host
             </p>
           ) : confirmedBookings > 0 ? (
             <p className="text-sm text-green-800 mt-2 font-medium">
@@ -378,7 +378,7 @@ export default function StudentDashboard() {
           {profileComplete ? (
             <>
               <p className="text-sm font-semibold text-green-800 mt-2">Profile complete</p>
-              <p className="text-sm text-gray-500 mt-1">Nice work — hosts see you as ready to go.</p>
+              <p className="text-sm text-gray-500 mt-1">Nice work - hosts see you as ready to go.</p>
             </>
           ) : (
             <>
@@ -547,7 +547,7 @@ export default function StudentDashboard() {
 
       {tab === 'saved' && (
         <div className={`${cardClass} text-center py-14`}>
-          <p className="text-gray-800 font-medium">Save your favourite properties — coming soon.</p>
+          <p className="text-gray-800 font-medium">Save your favourite properties - coming soon.</p>
           <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
             Soon you&apos;ll be able to shortlist homes and come back to them anytime.
           </p>

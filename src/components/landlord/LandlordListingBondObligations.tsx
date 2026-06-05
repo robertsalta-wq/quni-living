@@ -11,7 +11,7 @@ export default function LandlordListingBondObligations({ obligations, className 
       className={`rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-950 space-y-2 ${className ?? ''}`.trim()}
       role="note"
     >
-      <p className="font-semibold leading-snug">Bond — your legal obligations ({obligations.stateLabel})</p>
+      <p className="font-semibold leading-snug">Bond - your legal obligations ({obligations.stateLabel})</p>
       <ul className="list-disc list-inside space-y-2 text-xs leading-relaxed text-sky-900">
         <li>{obligations.mustOfferAuthorityFirst}</li>
         <li>

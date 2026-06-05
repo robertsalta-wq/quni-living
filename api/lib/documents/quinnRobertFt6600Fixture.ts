@@ -1,4 +1,4 @@
-/** Quinn/Robert Listing FT6600 fixture — E2E fill tests and draft regen script. */
+/** Quinn/Robert Listing FT6600 fixture - E2E fill tests and draft regen script. */
 
 export const QUINN_ROBERT_FT6600_PROPERTY = {
   address: 'Unit 406/311 Hume Highway',

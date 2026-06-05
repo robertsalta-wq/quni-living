@@ -72,7 +72,7 @@ fs.writeFileSync(labelVerifyPath, JSON.stringify(labelVerify, null, 2))
 const labelPassCount = labelVerify.rows.filter((r) => r.ok).length
 if (labelPassCount < 131) {
   console.warn(
-    `[rename-ft6600-fields] label verify: ${labelPassCount}/131 passed (${labelVerify.failures.length} nearest-label mismatches — see ${labelVerifyPath})`,
+    `[rename-ft6600-fields] label verify: ${labelPassCount}/131 passed (${labelVerify.failures.length} nearest-label mismatches - see ${labelVerifyPath})`,
   )
 }
 

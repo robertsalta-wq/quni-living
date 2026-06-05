@@ -16,7 +16,7 @@
 -- select university_id, campus_id, count(*) from public.properties group by 1, 2 order by 3 desc;
 
 -- -----------------------------------------------------------------------------
--- METHOD A — Resolve by slug + campus name/suburb (portable)
+-- METHOD A - Resolve by slug + campus name/suburb (portable)
 -- -----------------------------------------------------------------------------
 begin;
 
@@ -38,11 +38,11 @@ from (
   limit 1
 ) t;
 
--- If METHOD A updated 0 rows, Macquarie rows are missing or names differ — use METHOD B instead.
+-- If METHOD A updated 0 rows, Macquarie rows are missing or names differ - use METHOD B instead.
 commit;
 
 -- -----------------------------------------------------------------------------
--- METHOD B — Fixed UUIDs (dev / seed DB only). Run separately if METHOD A failed.
+-- METHOD B - Fixed UUIDs (dev / seed DB only). Run separately if METHOD A failed.
 -- -----------------------------------------------------------------------------
 -- begin;
 -- update public.properties

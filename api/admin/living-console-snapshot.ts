@@ -3,12 +3,12 @@
  *
  * Single roll-up endpoint that powers `/admin` (the Living Console).
  *
- * Replaces what HANDOFF.md called `get-living-console-snapshot` — implemented
+ * Replaces what HANDOFF.md called `get-living-console-snapshot` - implemented
  * as a Vercel edge function rather than a Supabase Edge Function (Decision J1).
  *
  * Aggregations run with the service-role key after `requireAdminUser` verifies
  * the caller. Range is `today` or `7d` (default `7d`). Numbers are
- * pre-formatted at the boundary per HANDOFF non-goal 8 — the React page never
+ * pre-formatted at the boundary per HANDOFF non-goal 8 - the React page never
  * does number formatting.
  *
  * Where the live schema can't satisfy a row yet (per the ratified decisions),
@@ -443,7 +443,7 @@ export default async function handler(request: Request): Promise<Response> {
           rows: dropEmpty([
             row('ok', activeTenancyCount, `${activeTenancyCount} active tenancies`, activeTenancyCount === 0),
             // Decision B2: condition reports + rent overdue stay stubbed until tables exist.
-            { tone: 'action', text: 'Rent overdue — coming soon', stub: true } as ZoneRow,
+            { tone: 'action', text: 'Rent overdue - coming soon', stub: true } as ZoneRow,
             row('watch', tenanciesEndingCount, `${tenanciesEndingCount} tenancies ending in 14d`, tenanciesEndingCount === 0),
           ]),
         },
@@ -471,9 +471,9 @@ export default async function handler(request: Request): Promise<Response> {
           sparkColor: 'navy',
           rows: [
             // Decision F1: completion % is overlaid by the client from localStorage.
-            { tone: 'watch', text: 'Trust checklist completion — overlaid by client', stub: true },
+            { tone: 'watch', text: 'Trust checklist completion - overlaid by client', stub: true },
             // Decision B2: condition reports stub until table lands.
-            { tone: 'action', text: 'Condition reports — coming soon', stub: true },
+            { tone: 'action', text: 'Condition reports - coming soon', stub: true },
             { tone: 'watch', text: '0 SLA at risk', stub: true },
           ],
         },
@@ -481,7 +481,7 @@ export default async function handler(request: Request): Promise<Response> {
           spark: platformSpark,
           sparkColor: 'navy',
           rows: [
-            { tone: 'ok', text: 'DocuSeal · Stripe · Resend · Sentry — all green' },
+            { tone: 'ok', text: 'DocuSeal · Stripe · Resend · Sentry - all green' },
             { tone: 'ok', text: '0 domains expiring ≤ 30 days', stub: true },
             kbLatest?.updated_at
               ? { tone: 'watch', text: `Knowledge base last edited ${relativeAgo(kbLatest.updated_at)}` }
@@ -518,7 +518,7 @@ export default async function handler(request: Request): Promise<Response> {
           linkLabel: 'Funnel →',
         },
         avgWeeklyRent: {
-          value: avgWeeklyRent > 0 ? fmtCurrency(avgWeeklyRent * 100) : '—',
+          value: avgWeeklyRent > 0 ? fmtCurrency(avgWeeklyRent * 100) : '-',
           unit: avgWeeklyRent > 0 ? 'AUD' : null,
           delta: avgWeeklyRent > 0 ? 'rolling avg' : 'no tenancies yet',
           deltaTone: 'neutral',
@@ -567,7 +567,7 @@ function bucketRevenueByDay(
 }
 
 // Flat synthetic sparkline when daily snapshots aren't stored (e.g. active
-// tenancy count). Keeps the chart honest — same value across the window.
+// tenancy count). Keeps the chart honest - same value across the window.
 function monoidSpark(value: number, days: number): number[] {
   return new Array<number>(days).fill(value)
 }

@@ -185,7 +185,7 @@ export function buildBookingFitSummary(args: {
   const miStatus = moveInMatch(moveIn, avail, args.student.move_in_flexibility)
   rows.push({
     label: 'Move-in date',
-    studentSide: moveIn ? `${moveIn}${args.student.move_in_flexibility ? ` (${args.student.move_in_flexibility.replace(/_/g, ' ')})` : ''}` : '—',
+    studentSide: moveIn ? `${moveIn}${args.student.move_in_flexibility ? ` (${args.student.move_in_flexibility.replace(/_/g, ' ')})` : ''}` : '-',
     propertySide: avail ? `From ${avail}` : 'Not specified on listing',
     status: miStatus,
   })
@@ -193,8 +193,8 @@ export function buildBookingFitSummary(args: {
   const leaseSt = leaseMatch(args.booking.lease_length, property?.lease_length ?? null)
   rows.push({
     label: 'Lease length',
-    studentSide: args.booking.lease_length?.trim() || '—',
-    propertySide: property?.lease_length?.trim() || '—',
+    studentSide: args.booking.lease_length?.trim() || '-',
+    propertySide: property?.lease_length?.trim() || '-',
     status: leaseSt,
   })
 

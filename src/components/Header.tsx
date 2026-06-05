@@ -35,7 +35,7 @@ const MOBILE_QUICK_NAV = [
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
-/** Mobile header bar — compact pill so the bar still fits beside auth + menu on narrow phones. */
+/** Mobile header bar - compact pill so the bar still fits beside auth + menu on narrow phones. */
 const mobileListingsPillClass =
   'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#FF6F61] bg-[#FF6F61] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3 sm:py-1 sm:text-xs'
 

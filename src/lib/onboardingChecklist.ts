@@ -80,7 +80,7 @@ export function clearOnboardingDismissed(): void {
   }
 }
 
-/** university, course, weekly budget range, and phone — required for enquiries / bookings checklist step. */
+/** university, course, weekly budget range, and phone - required for enquiries / bookings checklist step. */
 export function isStudentCoreProfileComplete(p: StudentProfileRow | null | undefined): boolean {
   if (!p) return false
   const hasBudget =
@@ -117,7 +117,7 @@ export function isLandlordStripePayoutsComplete(p: LandlordProfileRow | null | u
   return p?.stripe_charges_enabled === true && p?.stripe_payouts_enabled === true
 }
 
-/** Terms + profile basics — enough to create and edit property listings. */
+/** Terms + profile basics - enough to create and edit property listings. */
 export function canLandlordCreateListing(p: LandlordProfileRow | null | undefined): boolean {
   if (!p) return false
   return Boolean(
@@ -266,7 +266,7 @@ export function buildLandlordOnboardingSteps(
     },
     {
       id: 'stripe',
-      label: 'Bank account connected — charges enabled',
+      label: 'Bank account connected - charges enabled',
       complete: bankChargesOk,
       ...(bankChargesOk || !opts?.onStripeConnect
         ? {}

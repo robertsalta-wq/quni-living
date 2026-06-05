@@ -311,7 +311,7 @@ export default function QaseTicketList() {
                           )}
                         </div>
                       </td>
-                      <td className={adminTdClass}>{row.category ?? '—'}</td>
+                      <td className={adminTdClass}>{row.category ?? '-'}</td>
                       <td className={adminTdClass}>
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${priorityBadgeClass(row.priority)}`}

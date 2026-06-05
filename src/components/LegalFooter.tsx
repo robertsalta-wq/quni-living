@@ -5,7 +5,7 @@ type LegalFooterProps = {
   className?: string
 }
 
-/** Registered office line — distinct from marketing contact; low visual weight. */
+/** Registered office line - distinct from marketing contact; low visual weight. */
 export default function LegalFooter({ className = '' }: LegalFooterProps) {
   const legalEntity = useLegalEntity()
   return (

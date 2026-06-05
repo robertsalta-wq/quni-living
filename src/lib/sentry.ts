@@ -45,7 +45,7 @@ if (typeof dsn === 'string' && dsn.trim() !== '') {
         if (/send was called before connect/i.test(msg)) {
           return null
         }
-        // Normal form validation copy — never noise in Sentry (defense in depth if captured elsewhere).
+        // Normal form validation copy - never noise in Sentry (defense in depth if captured elsewhere).
         if (
           msg.includes('Please accept the Terms of Service and Privacy Policy to continue') ||
           msg === 'Terms not accepted'

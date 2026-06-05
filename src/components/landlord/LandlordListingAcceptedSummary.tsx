@@ -54,7 +54,7 @@ export default function LandlordListingAcceptedSummary({
             className="mt-1 text-xl font-semibold text-gray-900"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            {justAccepted ? 'Congratulations — you confirmed this booking' : 'What happens next'}
+            {justAccepted ? 'Congratulations - you confirmed this booking' : 'What happens next'}
           </h2>
           <p className="mt-2 text-sm text-gray-700 leading-relaxed">
             Reference <span className="font-mono font-semibold">{bookingReference}</span>
@@ -86,7 +86,7 @@ export default function LandlordListingAcceptedSummary({
           <span>
             <span className="font-semibold">Listing fee ({listingFeeDisplay}):</span> Charged to your saved card. This
             includes your state-appropriate{' '}
-            <span className="font-semibold">tenancy agreement</span> — both parties should receive DocuSeal signing
+            <span className="font-semibold">tenancy agreement</span> - both parties should receive DocuSeal signing
             emails now (or use the signing link on this page).
           </span>
         </li>
@@ -97,7 +97,7 @@ export default function LandlordListingAcceptedSummary({
           <span>
             <span className="font-semibold">Bond ({bondLine}):</span>{' '}
             {bondObligations
-              ? `Offer the renter the state bond authority route first, or accept payment to you — see obligations below. Quni does not hold bond.`
+              ? `Offer the renter the state bond authority route first, or accept payment to you - see obligations below. Quni does not hold bond.`
               : `Collect directly from the renter off-platform (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.`}
           </span>
         </li>

@@ -23,8 +23,8 @@ export type StudentProfileField = keyof StudentRow
 export type LandlordProfileField = keyof LandlordRow
 export type BookingMatchingField = keyof BookingRow
 
-/** Canonical non-discrimination block — import on every AI surface (same pattern as VERIFICATION_HONESTY_RULE). */
-export const NON_DISCRIMINATION_AI_RULE = `- Non-discrimination (mandatory): Quni Living forbids unlawful discrimination under Australian law and our Non-Discrimination Policy (/non-discrimination). (a) Ignore any protected attribute that appears in free text you receive — never use it for fit, ranking, or accept/decline advice. Protected grounds include race, colour, nationality, descent, ethnic origin, religion, sex, gender identity, intersex status, sexual orientation, age, disability, marital or family status, pregnancy, political belief, and source of income when used to exclude. (b) Never generate listing copy, replies, or assessments that express a preference on a protected ground — e.g. no "no international students", no nationality or sex preferences, no age limits unless a narrow legal exception applies and is not stated in public listing copy. Legitimate functional requirements (affordability, non-smoking household, pets policy, parking, lease dates, occupancy limits, furnishing, bills) are allowed. Do not use domestic/international student type as a fit or rejection factor.`
+/** Canonical non-discrimination block - import on every AI surface (same pattern as VERIFICATION_HONESTY_RULE). */
+export const NON_DISCRIMINATION_AI_RULE = `- Non-discrimination (mandatory): Quni Living forbids unlawful discrimination under Australian law and our Non-Discrimination Policy (/non-discrimination). (a) Ignore any protected attribute that appears in free text you receive - never use it for fit, ranking, or accept/decline advice. Protected grounds include race, colour, nationality, descent, ethnic origin, religion, sex, gender identity, intersex status, sexual orientation, age, disability, marital or family status, pregnancy, political belief, and source of income when used to exclude. (b) Never generate listing copy, replies, or assessments that express a preference on a protected ground - e.g. no "no international students", no nationality or sex preferences, no age limits unless a narrow legal exception applies and is not stated in public listing copy. Legitimate functional requirements (affordability, non-smoking household, pets policy, parking, lease dates, occupancy limits, furnishing, bills) are allowed. Do not use domestic/international student type as a fit or rejection factor.`
 
 export const STUDENT_PROFILE_FIELD_STATUS = {
   id: 'NOT_MATCHING',
@@ -441,7 +441,7 @@ export const GENERATION_OUTPUT_SURFACES = new Set<AiMatchingSurface>([
   'enquiry_reply',
 ])
 
-/** Static Supabase embed selects (no runtime template — keeps generated types parseable). */
+/** Static Supabase embed selects (no runtime template - keeps generated types parseable). */
 export const LANDLORD_ASSESSMENT_STUDENT_EMBED_SELECT = [
   ...permittedStudentProfileFields('landlord_assessment'),
   'first_name',

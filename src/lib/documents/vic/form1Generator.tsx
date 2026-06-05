@@ -1,5 +1,5 @@
 /**
- * VIC Form 1 — Residential rental agreement (≤5 years).
+ * VIC Form 1 - Residential rental agreement (≤5 years).
  *
  * Part A scope: T2 residential only (off-site room, entire property, shared room).
  * T1 on-site boarder/lodger uses `occupancyGenerator.tsx` (licence to occupy).
@@ -18,7 +18,7 @@ import {
   type VicForm1ClauseStyles,
 } from './vicForm1ClauseRender.js'
 
-/** Reuses the QLD/NSW residential schedule prop bag — no VIC-specific types. */
+/** Reuses the QLD/NSW residential schedule prop bag - no VIC-specific types. */
 export type VicResidentialRentalAgreementForm1Props = QldGeneralTenancyAgreementProps
 
 const QUNI_RENT_PORTAL_URL = 'https://quni.com.au'
@@ -37,7 +37,7 @@ function formatBsbDisplay(raw: string): string {
   return raw.trim()
 }
 
-/** Item 8 — rental provider preferred payment methods (fee-free EFT required). */
+/** Item 8 - rental provider preferred payment methods (fee-free EFT required). */
 export function item8RentPaymentDetails(
   preference: 'bank_transfer' | 'quni_platform' | null,
   bank: QldGeneralTenancyAgreementProps['rentPaymentBankDetails'],
@@ -47,8 +47,8 @@ export function item8RentPaymentDetails(
   const name = bank?.accountName?.trim() ?? ''
   const bankLine =
     acct && bsb && name
-      ? `Direct deposit — Account name: ${name}; BSB: ${bsb}; Account number: ${acct}.`
-      : 'Direct deposit (bank deposit) — account details to be provided by the rental provider.'
+      ? `Direct deposit - Account name: ${name}; BSB: ${bsb}; Account number: ${acct}.`
+      : 'Direct deposit (bank deposit) - account details to be provided by the rental provider.'
 
   if (preference === 'quni_platform') {
     return `${bankLine} Recurring rent may also be paid via the Quni Living platform (${QUNI_RENT_PORTAL_URL}) using the payment facility activated in the renter's Quni account.`
@@ -259,7 +259,7 @@ function QuniTopHeader({
       {logoPath ? <Image style={styles.logo} src={logoPath} /> : <View style={{ width: 72, marginRight: 14 }} />}
       <View style={styles.headerTitleCol}>
         <Text style={styles.headerTitle}>Residential Rental Agreement</Text>
-        <Text style={styles.headerSubtitle}>Victoria — Form 1 (T2 residential)</Text>
+        <Text style={styles.headerSubtitle}>Victoria - Form 1 (T2 residential)</Text>
         <Text style={styles.docMetaLine}>
           Doc {documentId} · Generated {generatedAt}
         </Text>
@@ -285,7 +285,7 @@ function SignaturesBlock(props: QldGeneralTenancyAgreementProps) {
     <View>
       <Text style={styles.sectionHeading}>22. Signatures</Text>
       <Text style={styles.body}>
-        This agreement is made under the Residential Tenancies Act 1997 (Vic). Before signing you must read Part D —
+        This agreement is made under the Residential Tenancies Act 1997 (Vic). Before signing you must read Part D -
         Rights and obligations in this form. Signatures are collected electronically where permitted.
       </Text>
       <Text style={{ ...styles.subHeading, marginTop: 8 }}>Rental provider</Text>
@@ -413,7 +413,7 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
       <Field label="Full name of renter:" children={tenant.fullName} />
       <Field
         label="Current address:"
-        children={tenant.addressForServiceLine?.trim() || '—'}
+        children={tenant.addressForServiceLine?.trim() || '-'}
       />
       <Field label="Phone number:" children={tenant.phone} />
       <Field label="Email address:" children={tenant.email} />
@@ -452,25 +452,25 @@ export function VicResidentialRentalAgreementForm1(props: QldGeneralTenancyAgree
         </>
       ) : null}
 
-      <Text style={styles.subHeading}>Part B — Standard terms (schedule highlights)</Text>
+      <Text style={styles.subHeading}>Part B - Standard terms (schedule highlights)</Text>
       <Text style={{ ...styles.body, marginBottom: 4 }}>8. Rental provider&apos;s preferred methods of payment</Text>
       <CheckboxLine checked label="bank deposit" />
       <CheckboxLine checked={rentPaymentPreference === 'quni_platform'} label="other electronic form of payment, including Centrepay" />
       <Field label="Payment details:" children={paymentDetails} />
 
       <Text style={{ ...styles.body, marginTop: 6, fontFamily: 'Helvetica-Bold' }}>9. Electronic service of notices</Text>
-      <CheckboxLine checked={electronicService.landlordConsentsToEmailService} label={`Rental provider — yes (${electronicService.landlordEmail})`} />
-      <CheckboxLine checked={!electronicService.landlordConsentsToEmailService} label="Rental provider — no" />
-      <CheckboxLine checked={electronicService.tenantConsentsToEmailService} label={`Renter — yes (${electronicService.tenantEmail})`} />
-      <CheckboxLine checked={!electronicService.tenantConsentsToEmailService} label="Renter — no" />
+      <CheckboxLine checked={electronicService.landlordConsentsToEmailService} label={`Rental provider - yes (${electronicService.landlordEmail})`} />
+      <CheckboxLine checked={!electronicService.landlordConsentsToEmailService} label="Rental provider - no" />
+      <CheckboxLine checked={electronicService.tenantConsentsToEmailService} label={`Renter - yes (${electronicService.tenantEmail})`} />
+      <CheckboxLine checked={!electronicService.tenantConsentsToEmailService} label="Renter - no" />
 
       <Text style={{ ...styles.body, marginTop: 6, fontFamily: 'Helvetica-Bold' }}>10. Urgent repairs contact</Text>
-      <Field label="Emergency contact name:" children={urgentRepairsTradespeople.electrician?.split('—')[0]?.trim() ?? landlord.fullName} />
+      <Field label="Emergency contact name:" children={urgentRepairsTradespeople.electrician?.split('-')[0]?.trim() ?? landlord.fullName} />
       <Field label="Emergency contact phone:" children={landlord.phone} />
       <Field label="Emergency contact email:" children={landlord.email} />
 
-      <CheckboxLine checked={false} label="12. Owners corporation rules apply — yes" />
-      <CheckboxLine checked label="12. Owners corporation rules apply — no" />
+      <CheckboxLine checked={false} label="12. Owners corporation rules apply - yes" />
+      <CheckboxLine checked label="12. Owners corporation rules apply - no" />
 
       <CheckboxLine checked={false} label="13. Condition report has been provided" />
       <CheckboxLine checked label="13. Condition report will be provided on or before the agreement start date" />

@@ -45,7 +45,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 /**
- * Admin icon set — single source of truth.
+ * Admin icon set - single source of truth.
  *
  * Thin wrapper around lucide-react that locks the surface to a small,
  * named subset. Per `docs/admin-redesign/HANDOFF.md` §2/§7:

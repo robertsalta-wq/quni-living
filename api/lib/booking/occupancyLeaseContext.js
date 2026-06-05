@@ -38,7 +38,7 @@ export function additionalTenantNamesFromBooking(booking) {
 }
 
 /**
- * Lease agreement max-occupants cap — booking.occupant_count only (never property.max_occupants).
+ * Lease agreement max-occupants cap - booking.occupant_count only (never property.max_occupants).
  *
  * @param {{ occupant_count?: unknown } | null | undefined} booking
  * @returns {number}

@@ -194,9 +194,9 @@ export default function DocumentsPage() {
                       <span className="font-semibold text-gray-900">{row.name}</span>
                     </td>
                     <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>
-                      {row.modifiedTime ? formatDate(row.modifiedTime) : '—'}
+                      {row.modifiedTime ? formatDate(row.modifiedTime) : '-'}
                     </td>
-                    <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>{sizeStr || '—'}</td>
+                    <td className={`${adminTdClass} text-gray-600 whitespace-nowrap`}>{sizeStr || '-'}</td>
                     <td className={`${adminTdClass} text-right whitespace-nowrap`}>
                       <button
                         type="button"

@@ -11,7 +11,7 @@ export interface ZoneCardRow {
   text: string
   /**
    * When true, the row renders dimmer to telegraph that the data is placeholder
-   * (see Decisions B2/F1/G1 — some metrics ship as stubs in PR 3).
+   * (see Decisions B2/F1/G1 - some metrics ship as stubs in PR 3).
    */
   stub?: boolean
 }
@@ -25,7 +25,7 @@ export interface ZoneCardProps {
   spark: number[]
   sparkColor: SparklineColor
   rows: ZoneCardRow[]
-  /** Where clicking the card navigates — typically the first sub-item of the zone. */
+  /** Where clicking the card navigates - typically the first sub-item of the zone. */
   href: string
 }
 
@@ -55,7 +55,7 @@ const ICON_TONE: Record<ZoneIconTone, { wrap: string; icon: string }> = {
  * One of the six cards on the Living Console.
  *
  * Per HANDOFF.md §3 acceptance criteria, clicking the card navigates to the
- * zone's first sub-item — and the sidebar expansion logic in `Sidebar.tsx`
+ * zone's first sub-item - and the sidebar expansion logic in `Sidebar.tsx`
  * picks up that path so the right zone opens automatically. When `rows` is
  * empty (everything healthy), the card shows "All clear" instead of an empty
  * list (HANDOFF §3 explicitly forbids an empty state on the Living Console).

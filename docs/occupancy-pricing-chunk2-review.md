@@ -1,6 +1,6 @@
-# Occupancy pricing — chunk 2 review (booking API)
+# Occupancy pricing - chunk 2 review (booking API)
 
-**Scope:** `POST /api/create-booking-payment-intent` — PI create + commit use `resolveWeeklyRent`; deposit = 1× resolved weekly rent; PI metadata scalars; commit stores occupancy snapshot + `co_tenant`.
+**Scope:** `POST /api/create-booking-payment-intent` - PI create + commit use `resolveWeeklyRent`; deposit = 1× resolved weekly rent; PI metadata scalars; commit stores occupancy snapshot + `co_tenant`.
 
 **Prerequisite:** Chunk 1 migration applied; test property configured with surcharges (example below).
 
@@ -74,7 +74,7 @@ export API_BASE="http://localhost:3000"
 
 ---
 
-## 1. Create PaymentIntent — sole occupant ($400)
+## 1. Create PaymentIntent - sole occupant ($400)
 
 ```bash
 curl -sS -X POST "${API_BASE}/api/create-booking-payment-intent" \
@@ -94,7 +94,7 @@ curl -sS -X POST "${API_BASE}/api/create-booking-payment-intent" \
 
 ---
 
-## 2. Create PI — couple + parking ($550)
+## 2. Create PI - couple + parking ($550)
 
 ```bash
 curl -sS -X POST "${API_BASE}/api/create-booking-payment-intent" \
@@ -112,7 +112,7 @@ curl -sS -X POST "${API_BASE}/api/create-booking-payment-intent" \
 
 **Expect:** `depositCents` = 55000, `weeklyRent` = 550, `breakdownAud` includes `base`, `couple`, `parking`.
 
-Complete card auth in Stripe test mode (clientSecret) before commit — PI status must be `requires_capture`.
+Complete card auth in Stripe test mode (clientSecret) before commit - PI status must be `requires_capture`.
 
 ---
 
@@ -225,7 +225,7 @@ After create PI (couple + parking), open PaymentIntent in Stripe test mode:
 
 ## Not in chunk 2
 
-- `Booking.tsx` UI (still sends old body — use curl until chunk 3)  
+- `Booking.tsx` UI (still sends old body - use curl until chunk 3)  
 - Landlord form surcharges  
 - Lease PDF co-tenant names  
 

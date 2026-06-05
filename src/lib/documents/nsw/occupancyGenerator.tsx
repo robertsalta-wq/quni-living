@@ -9,7 +9,7 @@ export function NswLicenceToOccupyOnSite(props: OccupancyAgreementProps) {
   return <LicenceOccupyDocument content={NSW_LICENCE_OCCUPY_CONTENT} props={props} />
 }
 
-/** @deprecated Use NswLicenceToOccupyOnSite — kept for generate-lease import compatibility. */
+/** @deprecated Use NswLicenceToOccupyOnSite - kept for generate-lease import compatibility. */
 export function OccupancyAgreement(props: OccupancyAgreementProps) {
   return NswLicenceToOccupyOnSite(props)
 }

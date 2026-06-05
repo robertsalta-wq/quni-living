@@ -15,7 +15,7 @@ const HERO_IMG_PROFESSIONALS_ALT =
 const TICKER_ITEMS = [
   '✦ Furnished rooms across Australia',
   '✦ Landlords who actually reply',
-  '✦ Bills included — fewer surprises',
+  '✦ Bills included - fewer surprises',
   '✦ Walk in with a suitcase, not a toolkit',
   '✦ Newtown · Glebe · Randwick · Kensington · Macquarie Park · Redfern · Ultimo',
   '✦ Enquire from one dashboard',
@@ -26,15 +26,15 @@ const TICKER_ITEMS = [
 const WHO_CARDS = [
   {
     title: 'University staff',
-    body: 'Lecturers, researchers, admin — live minutes from campus in a space that feels settled: furnished, bills wrapped in, and yours for the long semester or the long haul.',
+    body: 'Lecturers, researchers, admin - live minutes from campus in a space that feels settled: furnished, bills wrapped in, and yours for the long semester or the long haul.',
   },
   {
     title: 'Early-career & CBD commuters',
-    body: 'Uni precincts often give you more room per dollar than a shoebox closer to town — same city, shorter commute, less drama, and a home you are happy to open the door to.',
+    body: 'Uni precincts often give you more room per dollar than a shoebox closer to town - same city, shorter commute, less drama, and a home you are happy to open the door to.',
   },
   {
     title: 'New to the city',
-    body: 'New job, new postcode? Land with a real address, real photos, and hosts who verify with Stripe before accepting bookings — not a vague gumtree thread and a weekend at IKEA.',
+    body: 'New job, new postcode? Land with a real address, real photos, and hosts who verify with Stripe before accepting bookings - not a vague gumtree thread and a weekend at IKEA.',
   },
 ] as const
 
@@ -42,17 +42,17 @@ const HOW_STEPS = [
   {
     n: 1 as const,
     title: 'Create your renter account',
-    desc: 'Sign up and, when we ask about study, choose that you are not currently enrolled. That switches you to the professional path — same platform, tailored to how you actually live.',
+    desc: 'Sign up and, when we ask about study, choose that you are not currently enrolled. That switches you to the professional path - same platform, tailored to how you actually live.',
   },
   {
     n: 2 as const,
     title: 'Verify once, unlock everything',
-    desc: 'Photo ID plus one simple supporting document. Most people earn their Verified Identity badge within a business day — then you are on equal footing with every verified renter here.',
+    desc: 'Photo ID plus one simple supporting document. Most people earn their Verified Identity badge within a business day - then you are on equal footing with every verified renter here.',
   },
   {
     n: 3 as const,
     title: 'Choose your room, move in',
-    desc: 'Browse listings from landlords who welcome working renters, ask questions in one place, and book when it feels right — without the endless DM ping-pong.',
+    desc: 'Browse listings from landlords who welcome working renters, ask questions in one place, and book when it feels right - without the endless DM ping-pong.',
   },
 ] as const
 
@@ -65,7 +65,7 @@ const FAQ_ITEMS = [
   {
     question: 'What documents do I need?',
     answer:
-      "A government-issued photo ID (Australian passport or driver's licence) and one supporting document — a utility bill, employer letter, or Medicare card works fine.",
+      "A government-issued photo ID (Australian passport or driver's licence) and one supporting document - a utility bill, employer letter, or Medicare card works fine.",
   },
   {
     question: 'How long does verification take?',
@@ -98,7 +98,7 @@ export default function RentNearCampus() {
       </style>
       <Seo
         title="Furnished rentals near Australian universities | Quni Living"
-        description="Modern furnished rooms in uni precincts across Australia — verified listings, bills sorted, identity-verified renters welcome."
+        description="Modern furnished rooms in uni precincts across Australia - verified listings, bills sorted, identity-verified renters welcome."
         canonicalPath="/rent-near-campus"
       />
 
@@ -115,7 +115,7 @@ export default function RentNearCampus() {
                 <span className="block">matches your pace.</span>
               </h1>
               <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
-                Furnished rooms in some of Australia&apos;s best-connected uni pockets — think light-filled spaces, bills
+                Furnished rooms in some of Australia&apos;s best-connected uni pockets - think light-filled spaces, bills
                 sorted, landlords who chose to welcome working renters. Verify your identity once, then explore and book
                 on your terms.
               </p>
@@ -214,7 +214,7 @@ export default function RentNearCampus() {
             Who this is for
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
-            You are past the &ldquo;any roof will do&rdquo; phase — you want a place that fits your commute, your
+            You are past the &ldquo;any roof will do&rdquo; phase - you want a place that fits your commute, your
             headspace, and the version of your city you are investing in.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
@@ -294,7 +294,7 @@ export default function RentNearCampus() {
               What landlords see
             </h2>
             <p className="mb-4 text-sm leading-relaxed text-gray-600 sm:text-base">
-              They list furnished, move-in-ready rooms; you show up as a verified renter — credible, serious, and easy to
+              They list furnished, move-in-ready rooms; you show up as a verified renter - credible, serious, and easy to
               say yes to.
             </p>
             <p className="mb-8 text-sm leading-relaxed text-gray-600 sm:text-base">
@@ -358,7 +358,7 @@ export default function RentNearCampus() {
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-14 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white !mt-0 !mb-3">See what is available now</h2>
           <p className="mx-auto mb-8 max-w-2xl text-sm text-white/80 sm:text-base">
-            Scroll real listings, save the ones that feel right, and start the conversation when you are ready — your
+            Scroll real listings, save the ones that feel right, and start the conversation when you are ready - your
             next chapter does not need to start in a rushed Facebook group.
           </p>
           <Link

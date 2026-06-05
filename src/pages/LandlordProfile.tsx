@@ -84,7 +84,7 @@ function initialsFrom(first: string, last: string, fullFallback: string | null, 
 }
 
 const BIO_PLACEHOLDER =
-  'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
+  'Tell students about yourself - your management style, response times, and what makes your properties great to live in.'
 
 function landlordPersonalDetailsComplete(p: LandlordRow): boolean {
   return Boolean(
@@ -993,7 +993,7 @@ export default function LandlordProfile() {
           <div>
             <span className={llLabelClass}>Languages spoken</span>
             <p className="text-xs text-gray-500 mb-2">
-              Optional — shown on your listings and when renters view your booking requests.
+              Optional - shown on your listings and when renters view your booking requests.
             </p>
             <LanguagesSpokenSelector
               value={languagesSpoken}

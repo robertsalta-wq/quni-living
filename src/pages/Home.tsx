@@ -69,7 +69,7 @@ const STUDENT_FAQ = [
   {
     id: 'faq-s-1',
     q: 'Is Quni Living free for renters?',
-    a: 'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni — ever. Bond and weekly rent are tenancy money, not Quni fees.',
+    a: 'Yes. Renters pay no booking fee, platform fee, service fee, or surcharge to Quni - ever. Bond and weekly rent are tenancy money, not Quni fees.',
   },
   {
     id: 'faq-s-2',
@@ -119,6 +119,11 @@ const LANDLORD_FAQ = [
     id: 'faq-l-4',
     q: "Can I list if my property isn't near a university?",
     a: 'Quni is designed for properties near Australian university campuses. Search is organised by university and suburb, so listings near campuses get the most visibility.',
+  },
+  {
+    id: 'faq-l-5',
+    q: 'Will my home address appear on the tenancy agreement?',
+    a: 'It depends which Quni service you use. On Quni Listing, you self-manage the tenancy - NSW law requires the landlord\'s address for service of notices on the residential agreement when there\'s no managing agent, so your address is included on the lease. On Quni Managed, Quni acts as your appointed managing agent, so our business address is used for service of notices and your home address does not appear on the lease. Your name and a contact number still appear (as the law requires), and if you live outside NSW the state or territory is noted. Applies to NSW residential tenancies. Quni Managed availability varies by location.',
   },
 ] as const
 
@@ -355,7 +360,7 @@ export default function Home() {
         image={homeOgImage}
         jsonLd={homeJsonLd}
       />
-      {/* Hero — coral band; collage + badges reference Wix trial */}
+      {/* Hero - coral band; collage + badges reference Wix trial */}
       <section className="bg-[#FF6F61] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
@@ -369,7 +374,7 @@ export default function Home() {
                 <span className="block">near campus.</span>
               </h1>
               <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 max-w-xl font-normal">
-                Browse verified listings near your university or workplace — enquire and book on one
+                Browse verified listings near your university or workplace - enquire and book on one
                 marketplace.
               </p>
 
@@ -471,7 +476,7 @@ export default function Home() {
                 <span className="text-[11px] font-semibold leading-tight">Fast Wifi</span>
               </div>
 
-              {/* Top image — right */}
+              {/* Top image - right */}
               <div className="relative z-10 flex justify-end pr-1">
                 <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
                   <img
@@ -481,7 +486,7 @@ export default function Home() {
                   />
                 </div>
               </div>
-              {/* Bottom image — left, overlaps */}
+              {/* Bottom image - left, overlaps */}
               <div className="relative z-20 -mt-8 ml-0 w-2/3">
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
                   <img
@@ -496,7 +501,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works — below hero / search */}
+      {/* How it works - below hero / search */}
       <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-14 sm:py-16">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-3">
@@ -511,7 +516,7 @@ export default function Home() {
                 Quni Listing is live
               </Link>
               {' · '}
-              Quni Managed (rent collection &amp; weekly payouts) — launching within the next month.
+              Quni Managed (rent collection &amp; weekly payouts) - launching within the next month.
             </p>
           ) : (
             <div className="mb-10 sm:mb-12" aria-hidden />
@@ -610,7 +615,7 @@ export default function Home() {
                       ? `Landlords can choose Listing (${dynamicListingFeeText} flat per accepted booking) or Managed (${dynamicManagedFeeText} of weekly rent).`
                       : `${MANAGED_LISTING_DUAL_INTRO} Listing fee: ${dynamicListingFeeText} per accepted booking; Managed service fee: ${dynamicManagedFeeText} of weekly rent when it launches.`
                     : item.id === 'faq-l-3' && !managedTierEnabled
-                      ? `On Quni Listing, bond and rent are paid directly to you. Quni Managed will add Stripe Connect weekly rent payouts — ${MANAGED_COMING_SOON_SHORT.toLowerCase()}`
+                      ? `On Quni Listing, bond and rent are paid directly to you. Quni Managed will add Stripe Connect weekly rent payouts - ${MANAGED_COMING_SOON_SHORT.toLowerCase()}`
                       : item.a
                 return (
                   <div key={item.id} className="border-t border-gray-200 first:border-t-0">
@@ -689,7 +694,7 @@ export default function Home() {
               </h2>
               <p className="text-white/80 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
                 Campus-area rentals are one of Australia&apos;s most resilient markets. Quni Living connects verified
-                landlords with verified renters — students, graduates, and professionals — giving you consistent occupancy,
+                landlords with verified renters - students, graduates, and professionals - giving you consistent occupancy,
                 structured leases, and a platform that handles enquiries and bookings for you.
               </p>
               <div className="flex flex-wrap gap-3">

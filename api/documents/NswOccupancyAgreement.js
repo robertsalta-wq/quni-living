@@ -469,7 +469,7 @@ var occupancyMatchPdf = StyleSheet.create({
     paddingVertical: 4,
     marginBottom: 8
   },
-  /** DocuSeal field regions — minimum heights for comfortable signing (react-pdf px). */
+  /** DocuSeal field regions - minimum heights for comfortable signing (react-pdf px). */
   docusealSignatureFieldBox: {
     marginTop: 6,
     borderWidth: 0.5,

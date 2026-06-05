@@ -1,4 +1,4 @@
-// Bookings — dense table with toolbar, sticky header, detail drawer.
+// Bookings - dense table with toolbar, sticky header, detail drawer.
 
 const STUDENTS = [
   { name: 'Aisha Chen',      uni: 'USYD',       initials: 'AC', verified: true,  tier: 'T1' },
@@ -291,7 +291,7 @@ function BookingDrawer({ booking, onClose }) {
           <ul style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, fontSize: 12, color: C.ink3, lineHeight: 1.5 }}>
             <li style={{ paddingLeft: 14, borderLeft: `1px solid ${C.line}`, paddingBottom: 10, position: 'relative' }}>
               <span style={{ position: 'absolute', left: -4, top: 5, width: 7, height: 7, borderRadius: 999, background: C.coral }}/>
-              <strong style={{ color: C.ink2 }}>Awaiting info</strong> — verification documents requested · <span className="tabnums">22 Jan, 14:02</span>
+              <strong style={{ color: C.ink2 }}>Awaiting info</strong> - verification documents requested · <span className="tabnums">22 Jan, 14:02</span>
             </li>
             <li style={{ paddingLeft: 14, borderLeft: `1px solid ${C.line}`, paddingBottom: 10, position: 'relative' }}>
               <span style={{ position: 'absolute', left: -4, top: 5, width: 7, height: 7, borderRadius: 999, background: C.ink5 }}/>

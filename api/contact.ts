@@ -1,5 +1,5 @@
 /**
- * Public contact form — POST JSON:
+ * Public contact form - POST JSON:
  * { name, email, subject, message, turnstileToken }
  * Sends via Resend to hello@quni.com.au with Reply-To set to the sender.
  */
@@ -79,7 +79,7 @@ export default async function handler(request: Request) {
   <h2 style="color:#FF6F61; margin-top:0;">New message from quni.com.au contact form</h2>
   <p><strong>Name</strong><br>${escapeHtml(name)}</p>
   <p><strong>Email</strong><br><a href="mailto:${encodeURIComponent(email)}">${escapeHtml(email)}</a></p>
-  <p><strong>Subject</strong><br>${escapeHtml(subject || '—')}</p>
+  <p><strong>Subject</strong><br>${escapeHtml(subject || '-')}</p>
   <p><strong>Message</strong></p>
   <p style="white-space: pre-wrap; margin:0; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">${escapeHtml(
     message,
