@@ -16,6 +16,8 @@ export type GuideSeoConfig = {
   dateModified: string
   /** Optional absolute OG/Twitter image; falls back to DEFAULT_OG_IMAGE. */
   ogImage?: string
+  /** Optional shorter label for header/footer nav menus. */
+  navLabel?: string
 }
 
 export type GuideEntry = {

@@ -16,3 +16,15 @@ export function getGuideBySlug(slug: string): GuideEntry | undefined {
 export function listGuideSlugs(): string[] {
   return Object.keys(GUIDE_BY_SLUG)
 }
+
+export type GuideNavItem = {
+  to: string
+  label: string
+}
+
+export function listGuideNavItems(): GuideNavItem[] {
+  return Object.values(GUIDE_BY_SLUG).map(({ seo }) => ({
+    to: `/guides/${seo.slug}`,
+    label: seo.navLabel ?? seo.headline,
+  }))
+}

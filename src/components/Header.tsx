@@ -15,20 +15,21 @@ import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
+import { listGuideNavItems } from '../lib/guides/registry'
 
 const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
   { to: '/student-accommodation', label: 'Accommodation' },
-  {
-    to: '/guides/can-a-landlord-refuse-international-students-australia',
-    label: 'International student renting rights',
-  },
   { to: '/pricing', label: 'Pricing' },
   { to: '/faq', label: 'FAQ' },
   { to: '/for-landlords', label: 'For landlords' },
   { to: '/about', label: 'About' },
   { to: '/contact', label: 'Contact' },
 ] as const
+
+const GUIDE_NAV_ITEMS = listGuideNavItems()
+
+const mainNavLinkClass = 'whitespace-nowrap text-sm text-gray-600 hover:text-gray-900'
 
 /** Always visible in the mobile header bar (full menu stays in the drawer). */
 const MOBILE_QUICK_NAV = [
@@ -53,9 +54,12 @@ export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
+  const [guidesOpen, setGuidesOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const menuPanelRef = useRef<HTMLDivElement>(null)
+  const guidesButtonRef = useRef<HTMLButtonElement>(null)
+  const guidesPanelRef = useRef<HTMLDivElement>(null)
   const mobileNavRootRef = useRef<HTMLDivElement>(null)
 
   function syncMenuAnchor() {
@@ -68,13 +72,27 @@ export default function Header() {
     setMenuAnchor(null)
   }
 
+  function closeGuidesMenu() {
+    setGuidesOpen(false)
+  }
+
   function toggleAccountMenu() {
     if (menuOpen) {
       closeAccountMenu()
       return
     }
+    closeGuidesMenu()
     syncMenuAnchor()
     setMenuOpen(true)
+  }
+
+  function toggleGuidesMenu() {
+    if (guidesOpen) {
+      closeGuidesMenu()
+      return
+    }
+    closeAccountMenu()
+    setGuidesOpen(true)
   }
 
   useEffect(() => {
@@ -99,6 +117,32 @@ export default function Header() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [menuOpen])
+
+  useEffect(() => {
+    if (!guidesOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeGuidesMenu()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [guidesOpen])
+
+  useEffect(() => {
+    if (!guidesOpen) return
+    function closeGuides(e: MouseEvent) {
+      const t = e.target as Node
+      if (guidesButtonRef.current?.contains(t)) return
+      if (guidesPanelRef.current?.contains(t)) return
+      closeGuidesMenu()
+    }
+    const id = window.setTimeout(() => {
+      document.addEventListener('click', closeGuides)
+    }, 0)
+    return () => {
+      window.clearTimeout(id)
+      document.removeEventListener('click', closeGuides)
+    }
+  }, [guidesOpen])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -181,12 +225,86 @@ export default function Header() {
 
   async function handleSignOut() {
     closeAccountMenu()
+    closeGuidesMenu()
     setMobileNavOpen(false)
     await signOut()
   }
 
   function closeMobileNav() {
+    closeGuidesMenu()
     setMobileNavOpen(false)
+  }
+
+  function renderMainNavLink(item: (typeof MAIN_NAV)[number]) {
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        className={mainNavLinkClass}
+        {...(item.to === '/listings' ? listingsNavWarm : {})}
+      >
+        {item.label}
+      </Link>
+    )
+  }
+
+  function renderGuidesNavDesktop() {
+    if (GUIDE_NAV_ITEMS.length === 0) return null
+    return (
+      <div className="relative">
+        <button
+          ref={guidesButtonRef}
+          type="button"
+          onClick={toggleGuidesMenu}
+          className={`${mainNavLinkClass} inline-flex items-center gap-0.5`}
+          aria-expanded={guidesOpen}
+          aria-haspopup="menu"
+        >
+          Guides
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {guidesOpen ? (
+          <div
+            ref={guidesPanelRef}
+            role="menu"
+            className="absolute top-full left-1/2 z-[200] mt-2 w-72 -translate-x-1/2 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+          >
+            {GUIDE_NAV_ITEMS.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                role="menuitem"
+                className="block px-4 py-2.5 text-sm leading-snug text-gray-700 hover:bg-gray-50"
+                onClick={closeGuidesMenu}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  function renderGuidesNavMobile() {
+    if (GUIDE_NAV_ITEMS.length === 0) return null
+    return (
+      <div>
+        <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Guides</p>
+        {GUIDE_NAV_ITEMS.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className="block px-4 py-2.5 pl-6 text-sm text-gray-800 hover:bg-gray-50"
+            onClick={closeMobileNav}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -202,16 +320,9 @@ export default function Header() {
             className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-5 xl:gap-6"
             aria-label="Main"
           >
-            {MAIN_NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900"
-                {...(item.to === '/listings' ? listingsNavWarm : {})}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {MAIN_NAV.slice(0, 2).map((item) => renderMainNavLink(item))}
+            {renderGuidesNavDesktop()}
+            {MAIN_NAV.slice(2).map((item) => renderMainNavLink(item))}
           </nav>
           <nav
             className="flex md:hidden min-w-0 items-center justify-center gap-3 overflow-x-hidden"
@@ -424,7 +535,18 @@ export default function Header() {
                 className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-2 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
                 aria-label="Mobile"
               >
-                {MAIN_NAV.map((item) => (
+                {MAIN_NAV.slice(0, 2).map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="block px-4 py-3 text-sm text-gray-800 hover:bg-gray-50"
+                    onClick={closeMobileNav}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                {renderGuidesNavMobile()}
+                {MAIN_NAV.slice(2).map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}

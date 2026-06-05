@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MARKETPLACE_TAGLINE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { listGuideNavItems } from '../lib/guides/registry'
 import AiSparkleIcon from './AiSparkleIcon'
 import LegalFooter from './LegalFooter'
 
@@ -43,6 +44,8 @@ function IconMail(props: { className?: string }) {
 const linkClass =
   'text-[#333] text-sm hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded'
 
+const GUIDE_NAV_ITEMS = listGuideNavItems()
+
 export default function Footer() {
   return (
     <footer className="bg-[#FF6F61] text-[#333] font-footer mt-auto">
@@ -62,28 +65,36 @@ export default function Footer() {
             <p className="mt-4 text-sm leading-relaxed max-w-xs">{MARKETPLACE_TAGLINE}</p>
           </div>
 
-          <div>
-            <h2 className="font-display font-bold text-lg text-white mb-4">For renters</h2>
-            <ul className="space-y-2.5">
-              <li>
-                <Link to="/student-accommodation" className={linkClass}>
-                  Accommodation guides →
-                </Link>
-              </li>
-              <li>
-                <Link to="/international" className={linkClass}>
-                  International students →
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/guides/can-a-landlord-refuse-international-students-australia"
-                  className={linkClass}
-                >
-                  International student renting rights →
-                </Link>
-              </li>
-            </ul>
+          <div className="space-y-8">
+            <div>
+              <h2 className="font-display font-bold text-lg text-white mb-4">For renters</h2>
+              <ul className="space-y-2.5">
+                <li>
+                  <Link to="/student-accommodation" className={linkClass}>
+                    Accommodation guides →
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/international" className={linkClass}>
+                    International students →
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            {GUIDE_NAV_ITEMS.length > 0 ? (
+              <div>
+                <h2 className="font-display font-bold text-lg text-white mb-4">Guides</h2>
+                <ul className="space-y-2.5">
+                  {GUIDE_NAV_ITEMS.map((item) => (
+                    <li key={item.to}>
+                      <Link to={item.to} className={linkClass}>
+                        {item.label} →
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
 
           <div>

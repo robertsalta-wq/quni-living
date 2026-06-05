@@ -1,4 +1,4 @@
-import type { GuideSeoConfig } from '../../../src/lib/guides/types'
+﻿import type { GuideSeoConfig } from '../../../src/lib/guides/types'
 
 /** Update datePublished/dateModified here at deploy; keep manifest.json dateModified in sync. */
 export const guideSeo: GuideSeoConfig = {
@@ -11,6 +11,7 @@ export const guideSeo: GuideSeoConfig = {
     'Know your rights as an international student renting in Australia, and how Quni keeps the search fair.',
   jsonLdHeadline:
     'Can a Landlord Refuse International Students in Australia? Your Rights, Explained',
+  navLabel: 'Can a landlord refuse international students?',
   datePublished: '2026-06-05',
   dateModified: '2026-06-05',
 }
