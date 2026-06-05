@@ -41,10 +41,29 @@ export function buildGuideBlogPostingJsonLd(
   }
 }
 
-/** Reserved for follow-up: merge FAQPage JSON-LD alongside BlogPosting. */
+export function buildGuideFaqPageJsonLd(seo: GuideSeoConfig): Record<string, unknown> | null {
+  if (!seo.faqs?.length) return null
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: seo.faqs.map(({ question, answer }) => ({
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: answer,
+      },
+    })),
+  }
+}
+
 export function buildGuidePageJsonLd(
   seo: GuideSeoConfig,
   opts?: { image?: string },
 ): Record<string, unknown>[] {
-  return [buildGuideBlogPostingJsonLd(seo, opts)]
+  const blocks: Record<string, unknown>[] = [buildGuideBlogPostingJsonLd(seo, opts)]
+  const faqPage = buildGuideFaqPageJsonLd(seo)
+  if (faqPage) blocks.push(faqPage)
+  return blocks
 }

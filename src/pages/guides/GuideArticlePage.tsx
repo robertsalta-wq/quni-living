@@ -57,8 +57,8 @@ export default function GuideArticlePage() {
   const canonicalPath = `/guides/${seo.slug}`
   const ogImage = seo.ogImage ?? DEFAULT_OG_IMAGE
   const bodyMarkdown = normalizeArticleMarkdown(guide.articleMarkdown)
-  // Follow-up: append faqPageJsonLd to this array when FAQ schema is ready.
   const jsonLd = buildGuidePageJsonLd(seo, { image: ogImage })
+  const faqs = seo.faqs ?? []
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
@@ -91,6 +91,26 @@ export default function GuideArticlePage() {
       <div className={`${SITE_CONTENT_MAX_CLASS} py-8 sm:py-10`}>
         <article className="mx-auto max-w-3xl rounded-2xl border border-gray-100 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
           <GuideMarkdown markdown={bodyMarkdown} />
+          {faqs.length > 0 ? (
+            <section className="mt-10 border-t border-gray-100 pt-10">
+              <h2 className="scroll-mt-28 font-display text-xl font-bold text-gray-900 mb-3 sm:text-2xl">
+                Frequently asked questions
+              </h2>
+              <p className="text-[15px] leading-relaxed text-gray-700 mb-6">
+                General information, not legal advice.
+              </p>
+              {faqs.map((faq, index) => (
+                <div key={faq.question}>
+                  <h3
+                    className={`scroll-mt-28 text-base font-bold text-gray-900 mb-2 sm:text-lg ${index === 0 ? 'mt-0' : 'mt-6'}`}
+                  >
+                    {faq.question}
+                  </h3>
+                  <p className="text-[15px] leading-relaxed text-gray-700 mb-4 last:mb-0">{faq.answer}</p>
+                </div>
+              ))}
+            </section>
+          ) : null}
         </article>
 
         <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-gray-600">

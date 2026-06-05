@@ -1,3 +1,8 @@
+export type GuideFaqItem = {
+  question: string
+  answer: string
+}
+
 export type GuideSeoConfig = {
   slug: string
   /** Document `<title>` and OG/Twitter title (Seo may append site name). */
@@ -18,6 +23,8 @@ export type GuideSeoConfig = {
   ogImage?: string
   /** Optional shorter label for header/footer nav menus. */
   navLabel?: string
+  /** Optional FAQ pairs for on-page section and FAQPage JSON-LD. */
+  faqs?: GuideFaqItem[]
 }
 
 export type GuideEntry = {
