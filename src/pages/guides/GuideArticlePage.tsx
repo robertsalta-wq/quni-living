@@ -65,6 +65,7 @@ export default function GuideArticlePage() {
       <Seo
         title={seo.title}
         description={seo.metaDescription}
+        ogDescription={seo.ogDescription}
         canonicalPath={canonicalPath}
         image={ogImage}
         ogType="article"

@@ -4,7 +4,12 @@ export type GuideSeoConfig = {
   title: string
   /** Single on-page H1 in the hero band. */
   headline: string
+  /** Meta description and JSON-LD description. */
   metaDescription: string
+  /** OG/Twitter description when it differs from meta (e.g. product-scoped social copy). */
+  ogDescription?: string
+  /** BlogPosting headline when it differs from the on-page H1. */
+  jsonLdHeadline?: string
   /** ISO date YYYY-MM-DD — set at deploy. */
   datePublished: string
   /** ISO date YYYY-MM-DD — set at deploy. */

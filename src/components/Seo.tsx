@@ -20,6 +20,8 @@ export type SeoProps = {
   image?: string
   imageAlt?: string
   ogType?: 'website' | 'article'
+  /** OG/Twitter description; falls back to `description`. */
+  ogDescription?: string
   /** ISO date (YYYY-MM-DD) for article Open Graph tags */
   articlePublishedTime?: string
   articleModifiedTime?: string
@@ -41,6 +43,7 @@ export default function Seo({
   image = DEFAULT_OG_IMAGE,
   imageAlt = DEFAULT_OG_IMAGE_ALT,
   ogType = 'website',
+  ogDescription,
   articlePublishedTime,
   articleModifiedTime,
   noindex = false,
@@ -56,6 +59,7 @@ export default function Seo({
   const canonical = `${SITE_URL}${pathPart}`
 
   const robots = noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+  const socialDescription = ogDescription ?? description
 
   const ldBlocks = jsonLd
     ? Array.isArray(jsonLd)
@@ -76,7 +80,7 @@ export default function Seo({
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle(title)} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={socialDescription} />
       <meta property="og:url" content={canonical} />
       <meta property="og:locale" content="en_AU" />
       {ogType === 'article' && articlePublishedTime ? (
@@ -96,7 +100,7 @@ export default function Seo({
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle(title)} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={socialDescription} />
       {image ? <meta name="twitter:image" content={image} /> : null}
 
       {ldBlocks.map((data, i) => (

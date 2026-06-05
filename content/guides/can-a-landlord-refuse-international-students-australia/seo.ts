@@ -6,7 +6,11 @@ export const guideSeo: GuideSeoConfig = {
   title: 'Can a Landlord Refuse International Students in Australia?',
   headline: 'Can a Landlord Refuse International Students in Australia?',
   metaDescription:
-    'In most cases, no. Australian anti-discrimination law protects renters from being refused accommodation because of nationality or visa status. Learn what landlords can lawfully consider and what to do if you are treated unfairly.',
+    "A landlord can't refuse you for your nationality or background, but enforcement is reactive. Know your rights as an international student renting in Australia.",
+  ogDescription:
+    'Know your rights as an international student renting in Australia, and how Quni keeps the search fair.',
+  jsonLdHeadline:
+    'Can a Landlord Refuse International Students in Australia? Your Rights, Explained',
   datePublished: '2026-06-05',
   dateModified: '2026-06-05',
 }

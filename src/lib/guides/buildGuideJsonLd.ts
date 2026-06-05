@@ -12,7 +12,7 @@ export function buildGuideBlogPostingJsonLd(
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: seo.headline,
+    headline: seo.jsonLdHeadline ?? seo.headline,
     description: seo.metaDescription,
     url,
     datePublished: seo.datePublished,
