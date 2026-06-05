@@ -88,6 +88,39 @@ describe('generation surface adversarial (output must not echo protected prefere
     expect(assembled.system).toContain('Non-discrimination')
   })
 
+  it('generate-description improve path: adversarial existing copy; mock output stays neutral', async () => {
+    mockAnthropicReply(
+      'This comfortable furnished room in Kensington offers a practical base near UNSW. ' +
+        'The share house has a friendly atmosphere with bills included. Contact us to arrange a viewing.',
+    )
+
+    const { default: handler } = await import('../../api/ai/generate-description.ts')
+    const req = new Request('https://example.com/api/ai/generate-description', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', origin: 'https://example.com' },
+      body: JSON.stringify({
+        roomType: 'single',
+        suburb: 'Kensington',
+        existingDescription: 'Cozy room. No international students, Aussies only, females preferred.',
+      }),
+    })
+
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    const res = await handler(req)
+    const json = (await res.json()) as { description?: string; error?: string }
+    expect(res.status).toBe(200)
+    expect(json.description).toBeTruthy()
+    assertNeutralGenerationOutput(json.description ?? '')
+
+    const assembled = assembleDescriptionGeneratorModelCall({
+      roomType: 'single',
+      suburb: 'Kensington',
+      existingDescription: 'Cozy room. No international students, Aussies only, females preferred.',
+    })
+    expect(assembled.userMessage).toMatch(/no international students/i)
+    expect(assembled.system).toContain('Non-discrimination')
+  })
+
   it('draft-enquiry-reply: nationality enquiry in input; mock reply does not solicit nationality', async () => {
     mockAnthropicReply(
       'Hi Alex, thanks for your interest in Campus Studio. The room is still available and I would be happy to arrange an inspection at a time that suits you. Feel free to send any other questions about the lease or move-in dates.',

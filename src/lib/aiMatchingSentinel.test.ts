@@ -93,6 +93,20 @@ describe('AI surface sentinel leakage (assembled model call)', () => {
     }
   })
 
+  it('description_generator improve path: no profile/booking sentinels in full Anthropic payload', () => {
+    const { fullAssembled, userMessage } = assembleDescriptionGeneratorModelCall({
+      roomType: 'single',
+      suburb: 'Kensington',
+      existingDescription:
+        'Bright room near campus. No international students, Aussies only, females preferred.',
+    })
+    for (const sentinel of ALL_AI_SENTINELS) {
+      expect(fullAssembled, `leaked ${sentinel} in description_generator improve`).not.toContain(sentinel)
+    }
+    expect(userMessage).toContain('Existing description:')
+    expect(userMessage).toMatch(/no international students/i)
+  })
+
   it('enquiry_reply: profile sentinels absent; enquiry text is user-supplied only', () => {
     const { fullAssembled } = assembleEnquiryReplyModelCall({
       studentName: `Alex ${AI_SENTINEL_VALUES.last_name}`,

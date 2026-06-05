@@ -325,11 +325,38 @@ function buildPropertyListingLines(
   const propParts: string[] = []
   if (prop && 'title' in prop) {
     propParts.push(`Title: ${String(prop.title ?? '')}`)
+    if (prop.address) propParts.push(`Address (on file): ${String(prop.address)}`)
     if (prop.suburb) propParts.push(`Suburb: ${String(prop.suburb)}`)
+    if (prop.state) propParts.push(`State: ${String(prop.state)}`)
+    const listUni =
+      prop.universities && typeof prop.universities === 'object' && !Array.isArray(prop.universities)
+        ? (prop.universities as { name?: string }).name?.trim() ?? ''
+        : ''
+    const listCampus =
+      prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
+        ? (prop.campuses as { name?: string; address?: string | null }).name?.trim() ?? ''
+        : ''
+    const listCampusAddr =
+      prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
+        ? (prop.campuses as { address?: string | null }).address?.trim() ?? ''
+        : ''
+    if (listUni) propParts.push(`Listing linked university (platform): ${listUni}`)
+    if (listCampus) propParts.push(`Listing linked campus (platform): ${listCampus}`)
+    if (listCampusAddr) propParts.push(`Campus address (platform): ${listCampusAddr}`)
     if (prop.rent_per_week != null) propParts.push(`Listing weekly rent: $${Number(prop.rent_per_week)}`)
     if (prop.room_type) propParts.push(`Room / listing type: ${String(prop.room_type)}`)
+    if (prop.furnished === true) propParts.push('Furnished: yes')
+    else if (prop.furnished === false) propParts.push('Furnished: no')
+    if (prop.bond != null) propParts.push(`Bond (weeks/value on file): ${String(prop.bond)}`)
+    if (prop.lease_length) propParts.push(`Typical lease on listing: ${String(prop.lease_length)}`)
+    if (prop.available_from) propParts.push(`Available from: ${String(prop.available_from).slice(0, 10)}`)
+    if (prop.property_type) propParts.push(`Accommodation type: ${String(prop.property_type)}`)
     const featLine = propertyFeaturesLine(prop.property_features)
     if (featLine) propParts.push(featLine)
+  }
+  const bookingWeekly = booking.weekly_rent
+  if (bookingWeekly != null && Number.isFinite(Number(bookingWeekly))) {
+    propParts.push(`This booking weekly rent: $${Math.round(Number(bookingWeekly))}`)
   }
   propParts.push(
     `Requested move-in: ${String(booking.move_in_date || booking.start_date || '').slice(0, 10)}`,
@@ -349,27 +376,45 @@ export function serializeModelCall(args: {
 
 export function assembleLandlordAssessmentModelCall(args: {
   studentProfileRow: Record<string, unknown>
-  bookingRow: Record<string, unknown>
+  /** Omitted for dashboard modal assessments (profile-only, no booking). */
+  bookingRow?: Record<string, unknown> | null
   propertyRow?: Record<string, unknown> | null
   universityName?: string
   campusName?: string
   landlordFirstName?: string
-}): { system: string; userMessage: string; fullAssembled: string } {
+  /** When first_name is not on the profile row (e.g. modal body field). */
+  applicantFirstName?: string
+}): {
+  system: string
+  userMessage: string
+  fullAssembled: string
+  fullPayload: Record<string, unknown>
+  payloadFieldKeys: string[]
+} {
   const spJoin = { ...args.studentProfileRow }
-  const applicantFirstName = toneFirstNameOnly(
-    typeof spJoin.first_name === 'string' ? spJoin.first_name : null,
-  )
+  const applicantFirstName =
+    args.applicantFirstName?.trim() ||
+    toneFirstNameOnly(typeof spJoin.first_name === 'string' ? spJoin.first_name : null)
   const { universities: _u, campuses: _c, first_name: _fn, ...spRow } = spJoin
 
   const studentPayload = buildStudentProfileAiPayload('landlord_assessment', spRow)
-  const bookingPayload = buildBookingAiPayload('landlord_assessment', args.bookingRow)
-  const merged = mergeAssessmentAiPayloads(studentPayload, bookingPayload)
+  let mergedPayload = studentPayload.payload
+  let fieldKeys = [...studentPayload.fieldKeys]
+
+  if (args.bookingRow) {
+    const bookingPayload = buildBookingAiPayload('landlord_assessment', args.bookingRow)
+    const merged = mergeAssessmentAiPayloads(studentPayload, bookingPayload)
+    mergedPayload = merged.payload
+    fieldKeys = merged.fieldKeys
+  }
 
   const prop = args.propertyRow ?? null
   const propertyForFit: BookingFitPropertyInput | null =
     prop && 'title' in prop ? (prop as BookingFitPropertyInput) : null
-  const fitSummaryText = buildFitSummaryForAudit(args.bookingRow, spRow, propertyForFit)
-  const propParts = buildPropertyListingLines(prop, args.bookingRow)
+  const fitSummaryText = args.bookingRow
+    ? buildFitSummaryForAudit(args.bookingRow, spRow, propertyForFit)
+    : ''
+  const propParts = args.bookingRow ? buildPropertyListingLines(prop, args.bookingRow) : []
 
   const extra = buildAssessmentExtraContext({
     universityName: args.universityName ?? '',
@@ -380,7 +425,8 @@ export function assembleLandlordAssessmentModelCall(args: {
     applicantFirstName,
   })
 
-  const fullPayload = { ...merged.payload, ...extra.extraPayload }
+  const fullPayload = { ...mergedPayload, ...extra.extraPayload }
+  const payloadFieldKeys = [...fieldKeys, ...extra.extraFieldKeys].sort()
   const userMessage = formatLandlordAssessmentUserMessage(fullPayload)
   const system = LANDLORD_ASSESSMENT_SYSTEM_PROMPT
   const fullAssembled = serializeModelCall({
@@ -388,7 +434,7 @@ export function assembleLandlordAssessmentModelCall(args: {
     messages: [{ role: 'user', content: userMessage }],
   })
 
-  return { system, userMessage, fullAssembled }
+  return { system, userMessage, fullAssembled, fullPayload, payloadFieldKeys }
 }
 
 export function assembleStudentChatModelCall(args: {
@@ -458,6 +504,60 @@ export function assembleVisitorChatModelCall(args: {
   return { system, messages, fullAssembled: serializeModelCall({ system, messages }) }
 }
 
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((x) => typeof x === 'string')
+}
+
+export function buildImproveDescriptionUserPrompt(
+  body: Record<string, unknown>,
+  existingDescription: string,
+): string {
+  const roomType = String(body.roomType ?? '').trim()
+  const suburb = String(body.suburb ?? '').trim()
+  const lines: string[] = [
+    'You are helping an Australian landlord improve an existing property listing description.',
+    'Polish, expand, and improve the following description using the additional property details provided.',
+    "Keep the landlord's voice and any specific details they've mentioned.",
+    'Use Australian English.',
+    'Return only the improved description, no headings or labels.',
+    '',
+    'Existing description:',
+    existingDescription,
+    '',
+    'Additional property details:',
+    `Room type: ${roomType}`,
+    `Suburb: ${suburb}`,
+  ]
+
+  if (typeof body.weeklyRent === 'number' && Number.isFinite(body.weeklyRent)) {
+    lines.push(
+      'A weekly rent is set on the listing elsewhere — do not mention rent, bonds, or any dollar amounts in this description.',
+    )
+  }
+
+  if (isStringArray(body.nearbyUniversities) && body.nearbyUniversities.length > 0) {
+    lines.push(`Nearby / associated universities: ${body.nearbyUniversities.join(', ')}`)
+  }
+
+  if (isStringArray(body.amenities) && body.amenities.length > 0) {
+    lines.push(`Amenities / features: ${body.amenities.join(', ')}`)
+  }
+
+  if (typeof body.houseRules === 'string' && body.houseRules.trim()) {
+    lines.push(`House rules / expectations: ${body.houseRules.trim()}`)
+  }
+
+  if (typeof body.billsIncluded === 'boolean') {
+    lines.push(`Bills included: ${body.billsIncluded ? 'yes' : 'no'}`)
+  }
+
+  if (typeof body.furnished === 'boolean') {
+    lines.push(`Furnished: ${body.furnished ? 'yes' : 'no'}`)
+  }
+
+  return lines.join('\n')
+}
+
 export function buildDescriptionUserPrompt(body: Record<string, unknown>): string {
   const roomType = String(body.roomType ?? '').trim()
   const suburb = String(body.suburb ?? '').trim()
@@ -494,7 +594,11 @@ export function assembleDescriptionGeneratorModelCall(body: Record<string, unkno
   userMessage: string
   fullAssembled: string
 } {
-  const userMessage = buildDescriptionUserPrompt(body)
+  const existingDescription =
+    typeof body.existingDescription === 'string' ? body.existingDescription.trim() : ''
+  const userMessage = existingDescription
+    ? buildImproveDescriptionUserPrompt(body, existingDescription)
+    : buildDescriptionUserPrompt(body)
   const system = DESCRIPTION_GENERATOR_SYSTEM_PROMPT
   return {
     system,

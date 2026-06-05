@@ -12,20 +12,14 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import {
-  buildBookingAiPayload,
   buildDeterministicFitVector,
-  buildStudentProfileAiPayload,
   hashAiPayload,
-  mergeAssessmentAiPayloads,
   BOOKING_AI_ASSESSMENT_SELECT,
   toneFirstNameOnly,
 } from '../../src/lib/aiMatchingCriteria.js'
-import { LANDLORD_ASSESSMENT_SYSTEM_PROMPT } from '../../src/lib/aiSurfacePromptAssembly.js'
+import { assembleLandlordAssessmentModelCall } from '../../src/lib/aiSurfacePromptAssembly.js'
 import type { BookingFitPropertyInput } from '../lib/bookingFitForAssessment.js'
 import {
-  buildAssessmentExtraContext,
-  buildFitSummaryForAudit,
-  formatLandlordAssessmentUserMessage,
   insertAiMatchingComplianceAudit,
   AiMatchingAuditError,
 } from '../lib/aiMatchingAudit.js'
@@ -36,7 +30,6 @@ export const config = {
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
-const SYSTEM_PROMPT = LANDLORD_ASSESSMENT_SYSTEM_PROMPT
 
 type AnthropicContentBlock = { type: string; text?: string }
 type AnthropicMessagesResponse = {
@@ -70,20 +63,6 @@ function landlordFirstFromProfile(firstName: string | null | undefined): string 
   return toneFirstNameOnly(firstName) || ''
 }
 
-function propertyFeaturesLine(features: unknown): string {
-  if (!Array.isArray(features)) return ''
-  const names = features
-    .map((f) => {
-      if (f && typeof f === 'object' && 'features' in f) {
-        const inner = (f as { features?: { name?: string } }).features
-        return typeof inner?.name === 'string' ? inner.name : ''
-      }
-      return ''
-    })
-    .filter(Boolean)
-  return names.length ? `Amenities / features: ${names.join(', ')}` : ''
-}
-
 function studentProfileFromBookingJoin(spRaw: unknown): Record<string, unknown> | null {
   if (spRaw == null) return null
   const row =
@@ -93,54 +72,6 @@ function studentProfileFromBookingJoin(spRaw: unknown): Record<string, unknown> 
         ? spRaw
         : null
   return row ? (row as Record<string, unknown>) : null
-}
-
-function buildPropertyListingLines(
-  prop: Record<string, unknown> | null,
-  booking: Record<string, unknown>,
-): string[] {
-  const propParts: string[] = []
-  if (prop && 'title' in prop) {
-    propParts.push(`Title: ${String(prop.title ?? '')}`)
-    if (prop.address) propParts.push(`Address (on file): ${String(prop.address)}`)
-    if (prop.suburb) propParts.push(`Suburb: ${String(prop.suburb)}`)
-    if (prop.state) propParts.push(`State: ${String(prop.state)}`)
-    const listUni =
-      prop.universities && typeof prop.universities === 'object' && !Array.isArray(prop.universities)
-        ? (prop.universities as { name?: string }).name?.trim() ?? ''
-        : ''
-    const listCampus =
-      prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
-        ? (prop.campuses as { name?: string; address?: string | null }).name?.trim() ?? ''
-        : ''
-    const listCampusAddr =
-      prop.campuses && typeof prop.campuses === 'object' && !Array.isArray(prop.campuses)
-        ? (prop.campuses as { address?: string | null }).address?.trim() ?? ''
-        : ''
-    if (listUni) propParts.push(`Listing linked university (platform): ${listUni}`)
-    if (listCampus) propParts.push(`Listing linked campus (platform): ${listCampus}`)
-    if (listCampusAddr) propParts.push(`Campus address (platform): ${listCampusAddr}`)
-    if (prop.rent_per_week != null) propParts.push(`Listing weekly rent: $${Number(prop.rent_per_week)}`)
-    if (prop.room_type) propParts.push(`Room / listing type: ${String(prop.room_type)}`)
-    if (prop.furnished === true) propParts.push('Furnished: yes')
-    else if (prop.furnished === false) propParts.push('Furnished: no')
-    if (prop.bond != null) propParts.push(`Bond (weeks/value on file): ${String(prop.bond)}`)
-    if (prop.lease_length) propParts.push(`Typical lease on listing: ${String(prop.lease_length)}`)
-    if (prop.available_from) propParts.push(`Available from: ${String(prop.available_from).slice(0, 10)}`)
-    if (prop.property_type) propParts.push(`Accommodation type: ${String(prop.property_type)}`)
-    const featLine = propertyFeaturesLine(prop.property_features)
-    if (featLine) propParts.push(featLine)
-  }
-  const bookingWeekly = booking.weekly_rent
-  if (bookingWeekly != null && Number.isFinite(Number(bookingWeekly))) {
-    propParts.push(`This booking weekly rent: $${Math.round(Number(bookingWeekly))}`)
-  }
-  propParts.push(
-    `Requested move-in: ${String(booking.move_in_date || booking.start_date || '').slice(0, 10)}`,
-    `Requested lease length: ${String(booking.lease_length || '').trim() || 'Not specified'}`,
-    `Occupant count (capacity signal): ${String(booking.occupant_count ?? 'Not specified')}`,
-  )
-  return propParts
 }
 
 export default async function handler(request: Request) {
@@ -219,7 +150,8 @@ export default async function handler(request: Request) {
   if (!landlordFirstName && bodyLandlordHint) landlordFirstName = toneFirstNameOnly(bodyLandlordHint)
   if (!landlordFirstName) landlordFirstName = 'there'
 
-  let userMessage: string
+  let userMessage = ''
+  let systemPrompt = ''
   let persistBookingId: string | null = null
   let auditPayloadFieldKeys: string[] = []
   let auditPayloadHash = ''
@@ -317,9 +249,6 @@ export default async function handler(request: Request) {
     )
 
     const { universities: _u, campuses: _c, first_name: _fn, ...spRow } = spJoin
-    const studentPayload = buildStudentProfileAiPayload('landlord_assessment', spRow)
-    const bookingPayload = buildBookingAiPayload('landlord_assessment', booking as Record<string, unknown>)
-    const merged = mergeAssessmentAiPayloads(studentPayload, bookingPayload)
 
     const propRaw = booking.properties
     const prop =
@@ -328,31 +257,25 @@ export default async function handler(request: Request) {
         : null
     const propertyForFit: BookingFitPropertyInput | null =
       prop && 'title' in prop ? (prop as BookingFitPropertyInput) : null
-    const fitSummaryText = buildFitSummaryForAudit(
-      booking as Record<string, unknown>,
-      spRow,
-      propertyForFit,
-    )
-    const propParts = buildPropertyListingLines(prop, booking as Record<string, unknown>)
 
-    const extra = buildAssessmentExtraContext({
+    const assembled = assembleLandlordAssessmentModelCall({
+      studentProfileRow: spJoin,
+      bookingRow: booking as Record<string, unknown>,
+      propertyRow: prop,
       universityName: uni,
       campusName: stuCampus,
-      propertyListingLines: propParts,
-      fitSummaryBlock: fitSummaryText,
       landlordFirstName,
       applicantFirstName,
     })
-
-    const fullPayload = { ...merged.payload, ...extra.extraPayload }
-    auditPayloadFieldKeys = [...merged.fieldKeys, ...extra.extraFieldKeys].sort()
-    auditPayloadHash = await hashAiPayload(auditPayloadFieldKeys, fullPayload)
+    userMessage = assembled.userMessage
+    systemPrompt = assembled.system
+    auditPayloadFieldKeys = assembled.payloadFieldKeys
+    auditPayloadHash = await hashAiPayload(assembled.payloadFieldKeys, assembled.fullPayload)
     auditFitVector = buildDeterministicFitVector({
       booking: booking as never,
       student: spRow as never,
       property: propertyForFit,
     })
-    userMessage = formatLandlordAssessmentUserMessage(fullPayload)
     persistBookingId = typeof booking.id === 'string' ? booking.id : null
     auditStudentId = typeof booking.student_id === 'string' ? booking.student_id : null
     const tierRaw = booking.service_tier_final ?? booking.service_tier_at_request
@@ -470,19 +393,16 @@ export default async function handler(request: Request) {
       guarantor_name: guarantorName,
     }
 
-    const studentPayload = buildStudentProfileAiPayload('landlord_assessment', modalProfileRow)
-    const extra = buildAssessmentExtraContext({
+    const assembled = assembleLandlordAssessmentModelCall({
+      studentProfileRow: modalProfileRow,
       universityName: typeof body.university === 'string' ? body.university : '',
-      campusName: undefined,
-      propertyListingLines: [],
-      fitSummaryBlock: '',
       landlordFirstName,
       applicantFirstName,
     })
-    const fullPayload = { ...studentPayload.payload, ...extra.extraPayload }
-    auditPayloadFieldKeys = [...studentPayload.fieldKeys, ...extra.extraFieldKeys].sort()
-    auditPayloadHash = await hashAiPayload(auditPayloadFieldKeys, fullPayload)
-    userMessage = formatLandlordAssessmentUserMessage(fullPayload)
+    userMessage = assembled.userMessage
+    systemPrompt = assembled.system
+    auditPayloadFieldKeys = assembled.payloadFieldKeys
+    auditPayloadHash = await hashAiPayload(assembled.payloadFieldKeys, assembled.fullPayload)
   }
 
   let anthropicRes: Response
@@ -497,7 +417,7 @@ export default async function handler(request: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 500,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
     })

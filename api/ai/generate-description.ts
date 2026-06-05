@@ -5,6 +5,7 @@
 import {
   DESCRIPTION_GENERATOR_SYSTEM_PROMPT,
   buildDescriptionUserPrompt,
+  buildImproveDescriptionUserPrompt,
 } from '../../src/lib/aiSurfacePromptAssembly.js'
 
 export const config = {
@@ -28,53 +29,6 @@ function json(body: unknown, status = 200, origin: string) {
 
 function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string')
-}
-
-function buildImprovePrompt(body: Record<string, unknown>, existingDescription: string): string {
-  const roomType = String(body.roomType ?? '').trim()
-  const suburb = String(body.suburb ?? '').trim()
-  const lines: string[] = [
-    'You are helping an Australian landlord improve an existing property listing description.',
-    'Polish, expand, and improve the following description using the additional property details provided.',
-    "Keep the landlord's voice and any specific details they've mentioned.",
-    'Use Australian English.',
-    'Return only the improved description, no headings or labels.',
-    '',
-    'Existing description:',
-    existingDescription,
-    '',
-    'Additional property details:',
-    `Room type: ${roomType}`,
-    `Suburb: ${suburb}`,
-  ]
-
-  if (typeof body.weeklyRent === 'number' && Number.isFinite(body.weeklyRent)) {
-    lines.push(
-      'A weekly rent is set on the listing elsewhere — do not mention rent, bonds, or any dollar amounts in this description.',
-    )
-  }
-
-  if (isStringArray(body.nearbyUniversities) && body.nearbyUniversities.length > 0) {
-    lines.push(`Nearby / associated universities: ${body.nearbyUniversities.join(', ')}`)
-  }
-
-  if (isStringArray(body.amenities) && body.amenities.length > 0) {
-    lines.push(`Amenities / features: ${body.amenities.join(', ')}`)
-  }
-
-  if (typeof body.houseRules === 'string' && body.houseRules.trim()) {
-    lines.push(`House rules / expectations: ${body.houseRules.trim()}`)
-  }
-
-  if (typeof body.billsIncluded === 'boolean') {
-    lines.push(`Bills included: ${body.billsIncluded ? 'yes' : 'no'}`)
-  }
-
-  if (typeof body.furnished === 'boolean') {
-    lines.push(`Furnished: ${body.furnished ? 'yes' : 'no'}`)
-  }
-
-  return lines.join('\n')
 }
 
 type AnthropicContentBlock = { type: string; text?: string }
@@ -148,7 +102,9 @@ export default async function handler(request: Request) {
   }
 
   const existingDescription = typeof body.existingDescription === 'string' ? body.existingDescription.trim() : ''
-  const userMessage = existingDescription ? buildImprovePrompt(body, existingDescription) : buildDescriptionUserPrompt(body)
+  const userMessage = existingDescription
+    ? buildImproveDescriptionUserPrompt(body, existingDescription)
+    : buildDescriptionUserPrompt(body)
 
   let anthropicRes: Response
   try {
