@@ -16,6 +16,7 @@ import {
 import {
   bookingUsesNswFt6600Generator,
 } from './lib/resolveTenancyPackage.js'
+import { recordLandlordReviewAudit } from './lib/aiMatchingAudit.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -257,6 +258,11 @@ export default async function handler(req, res) {
         return corsJson(res, listingResult.body, listingResult.status, origin)
       }
 
+      await recordLandlordReviewAudit(admin, bookingId, {
+        eventType: 'landlord_confirm',
+        outcome: listingResult.idempotent ? 'confirmed_idempotent' : 'confirmed',
+      })
+
       return corsJson(
         res,
         {
@@ -288,6 +294,11 @@ export default async function handler(req, res) {
     if (!managedResult.ok) {
       return corsJson(res, managedResult.body, managedResult.status, origin)
     }
+
+    await recordLandlordReviewAudit(admin, bookingId, {
+      eventType: 'landlord_confirm',
+      outcome: 'confirmed',
+    })
 
     return corsJson(
       res,

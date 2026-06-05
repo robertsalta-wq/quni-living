@@ -2,6 +2,12 @@ export const config = {
   runtime: 'edge',
 }
 
+import { NON_DISCRIMINATION_AI_RULE, toneFirstNameOnly } from '../../src/lib/aiMatchingCriteria.js'
+
+const ENQUIRY_REPLY_SYSTEM_PROMPT = `You draft landlord replies to renter enquiries on an Australian verified accommodation marketplace.
+${NON_DISCRIMINATION_AI_RULE}
+Write warm, professional replies only — never express tenant preferences on protected grounds.`
+
 type AnthropicContentBlock = { type: string; text?: string }
 type AnthropicMessagesResponse = {
   content?: AnthropicContentBlock[]
@@ -31,32 +37,22 @@ function json(body: unknown, status = 200, origin: string) {
   })
 }
 
-function firstNameFrom(fullName: string): string {
-  const cleaned = fullName.trim().replace(/\s+/g, ' ')
-  if (!cleaned) return 'there'
-  const [first] = cleaned.split(' ')
-  return first || 'there'
-}
-
 function buildPrompt(input: DraftReplyInput): string {
-  const studentFirstName = firstNameFrom(input.studentName)
+  const studentFirstName = toneFirstNameOnly(input.studentName) || 'there'
   const propertyBits = [input.propertyTitle?.trim(), input.propertySuburb?.trim()].filter(Boolean).join(', ')
-  const signOffName = input.landlordName?.trim() || 'Landlord'
+  const signOffName = toneFirstNameOnly(input.landlordName ?? '') || 'Landlord'
 
   const lines: string[] = [
-    'You are writing a landlord reply to a student enquiry for an Australian rental listing.',
-    '',
-    'Write a warm, professional reply from the landlord to the student.',
-    `Address the student by first name: ${studentFirstName}`,
+    'Write a warm, professional reply from the landlord to the renter.',
+    `Address the renter by first name only: ${studentFirstName}`,
     propertyBits ? `Reference this property naturally if relevant: ${propertyBits}` : 'No property details were provided.',
-    'Invite the student to ask further questions or arrange an inspection.',
+    'Invite the renter to ask further questions or arrange an inspection.',
     'Use Australian English and keep the tone friendly but not overly casual.',
     'Write 3-5 sentences only.',
     'Return only the reply text with no labels, headings, or markdown.',
     '',
-    `Landlord name (for sign-off context): ${signOffName}`,
-    `Student full name: ${input.studentName}`,
-    `Student message: ${input.studentMessage}`,
+    `Landlord first name (sign-off context): ${signOffName}`,
+    `Renter enquiry message: ${input.studentMessage}`,
   ]
 
   return lines.join('\n')
@@ -131,6 +127,7 @@ export default async function handler(request: Request) {
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 300,
+          system: ENQUIRY_REPLY_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: prompt }],
         }),
       })

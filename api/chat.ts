@@ -6,6 +6,13 @@ import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 import { retrieveRelevantKnowledge } from './lib/knowledgeRetrieval.js'
+import {
+  NON_DISCRIMINATION_AI_RULE,
+  buildStudentProfileAiPayload,
+  formatAiPayloadContextBlock,
+  STUDENT_CHAT_PROFILE_SELECT,
+  toneFirstNameOnly,
+} from '../src/lib/aiMatchingCriteria.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -58,13 +65,6 @@ function safeParseJsonFromEnvInt(name: string, fallback: number): number {
   const raw = (process.env[name] ?? '').toString().trim()
   const n = Number(raw)
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback
-}
-
-function firstNameFrom(fullName: string | null | undefined): string {
-  const t = (fullName ?? '').trim().replace(/\s+/g, ' ')
-  if (!t) return ''
-  const [first] = t.split(' ')
-  return first?.trim() ?? ''
 }
 
 function buildStudentListingContextBlock(props: Array<Record<string, unknown>>): string {
@@ -215,6 +215,7 @@ ${VERIFICATION_HONESTY_RULE}
 ${TRUST_STRIPE_PAYMENTS_RULE}
 ${PRODUCT_INVENTORY_RULE}
 ${SAMPLE_AGREEMENTS_RULE}
+${NON_DISCRIMINATION_AI_RULE}
 
 No listing context block is available for visitors. Landlords and students must sign in to use /sample-agreements for watermarked PDF previews.`,
 
@@ -224,7 +225,7 @@ Address the user naturally and warmly once at the beginning using their first na
 Use Australian English.
 
 You MUST follow these rules:
-1) Facts only: You may use only the information provided in LISTING CONTEXT below.
+1) Facts only: You may use only the information provided in LISTING CONTEXT and TENANT PREFERENCE CONTEXT below.
 2) If something isn’t present in LISTING CONTEXT, say you don’t have that specific detail and ask a focused follow-up question.
 3) Be practical: translate listing facts into concrete “fit” guidance (location, room type, amenities, budget fit, what to ask the landlord).
 4) Do not guess prices, distances, availability, landlord intent, or policies.
@@ -236,9 +237,13 @@ You MUST follow these rules:
 10) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 11) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
 12) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
+13) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
 
 LISTING CONTEXT (FACTS ONLY):
 {{LISTING_CONTEXT_BLOCK}}
+
+TENANT PREFERENCE CONTEXT (allowlisted profile fields only):
+{{TENANT_PREFERENCE_BLOCK}}
 
 Respond to the user’s latest question using only the provided facts.`,
 
@@ -259,7 +264,8 @@ Rules:
 12) ${VERIFICATION_HONESTY_RULE.replace(/^- /, '')}
 13) ${PRODUCT_INVENTORY_RULE.replace(/^- /, '')}
 14) ${SAMPLE_AGREEMENTS_RULE.replace(/^- /, '')}
-15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}`,
+15) ${TRUST_STRIPE_PAYMENTS_RULE.replace(/^- /, '')}
+16) ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}`,
 }
 
 async function verifyTurnstileOrThrow(token: string): Promise<void> {
@@ -502,17 +508,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Determine persona from profiles.
       const [{ data: lp, error: lpErr }, { data: sp, error: spErr }] = await Promise.all([
-        supabaseAdmin.from('landlord_profiles').select('first_name, full_name').eq('user_id', userData.user.id).maybeSingle(),
-        supabaseAdmin.from('student_profiles').select('verification_type, full_name').eq('user_id', userData.user.id).maybeSingle(),
+        supabaseAdmin.from('landlord_profiles').select('first_name').eq('user_id', userData.user.id).maybeSingle(),
+        supabaseAdmin.from('student_profiles').select('first_name').eq('user_id', userData.user.id).maybeSingle(),
       ])
 
       if (!lpErr && lp) {
         persona = 'landlord'
         const fn = typeof (lp as { first_name?: unknown }).first_name === 'string' ? (lp as { first_name?: string }).first_name : null
-        landlordFirstName = fn || firstNameFrom((lp as { full_name?: unknown }).full_name as string | undefined) || ''
+        landlordFirstName = toneFirstNameOnly(fn) || ''
       } else if (!spErr && sp) {
         persona = 'student_renter'
-        studentFirstName = firstNameFrom((sp as { full_name?: unknown } | null)?.full_name as string | undefined)
+        studentFirstName = toneFirstNameOnly(
+          typeof (sp as { first_name?: unknown }).first_name === 'string'
+            ? (sp as { first_name: string }).first_name
+            : null,
+        )
       } else {
         persona = 'visitor'
       }
@@ -727,11 +737,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     listingContextBlock = buildStudentListingContextBlock(propertiesRows)
   }
 
+  let tenantPreferenceBlock =
+    'No allowlisted tenant preference fields on file — complete your profile for personalised fit guidance.'
+  if (persona === 'student_renter' && userId) {
+    const { data: spFullRaw } = await supabaseAdmin
+      .from('student_profiles')
+      .select(STUDENT_CHAT_PROFILE_SELECT)
+      .eq('user_id', userId)
+      .maybeSingle()
+    const spFull = spFullRaw as Record<string, unknown> | null
+    if (spFull) {
+      if (!studentFirstName) {
+        studentFirstName = toneFirstNameOnly(
+          typeof spFull.first_name === 'string' ? spFull.first_name : null,
+        )
+      }
+      const { payload } = buildStudentProfileAiPayload(
+        'student_chat',
+        spFull,
+      )
+      tenantPreferenceBlock = formatAiPayloadContextBlock(
+        'TENANT PREFERENCE CONTEXT (allowlisted fields only)',
+        payload,
+      )
+    }
+  }
+
   const systemPrompt = (() => {
     if (persona === 'student_renter') {
       return SYSTEM_PROMPTS.student_renter
         .replace('{{FIRST_NAME}}', studentFirstName)
         .replace('{{LISTING_CONTEXT_BLOCK}}', listingContextBlock)
+        .replace('{{TENANT_PREFERENCE_BLOCK}}', tenantPreferenceBlock)
     }
     if (persona === 'landlord') {
       return SYSTEM_PROMPTS.landlord.replace('{{FIRST_NAME}}', landlordFirstName || '')

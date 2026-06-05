@@ -2,6 +2,12 @@
  * AI listing description (Anthropic Claude) — Vercel Edge.
  * Env: ANTHROPIC_API_KEY
  */
+import { NON_DISCRIMINATION_AI_RULE } from '../../src/lib/aiMatchingCriteria.js'
+
+const DESCRIPTION_SYSTEM_PROMPT = `You write property listing descriptions for an Australian verified accommodation marketplace.
+${NON_DISCRIMINATION_AI_RULE}
+Output plain paragraphs only — no discriminatory tenant preferences.`
+
 export const config = {
   runtime: 'edge',
 }
@@ -208,6 +214,7 @@ export default async function handler(request: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
+        system: DESCRIPTION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
       }),
     })
