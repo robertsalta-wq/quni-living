@@ -45,6 +45,13 @@ const mobileListingsPillClass =
   'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#FF6F61] bg-[#FF6F61] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3 sm:py-1 sm:text-xs'
 
 const ACCOUNT_MENU_WIDTH_PX = 208
+const GUIDES_MENU_WIDTH_PX = 288
+
+function guidesMenuLeft(anchor: DOMRect): number {
+  const centered = anchor.left + anchor.width / 2 - GUIDES_MENU_WIDTH_PX / 2
+  const maxLeft = window.innerWidth - GUIDES_MENU_WIDTH_PX - 8
+  return Math.max(8, Math.min(centered, maxLeft))
+}
 
 function warmListingsNav() {
   warmListingsBrowseCache()
@@ -55,6 +62,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const [guidesOpen, setGuidesOpen] = useState(false)
+  const [guidesAnchor, setGuidesAnchor] = useState<DOMRect | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const menuPanelRef = useRef<HTMLDivElement>(null)
@@ -72,8 +80,14 @@ export default function Header() {
     setMenuAnchor(null)
   }
 
+  function syncGuidesAnchor() {
+    const rect = guidesButtonRef.current?.getBoundingClientRect()
+    if (rect) setGuidesAnchor(rect)
+  }
+
   function closeGuidesMenu() {
     setGuidesOpen(false)
+    setGuidesAnchor(null)
   }
 
   function toggleAccountMenu() {
@@ -92,8 +106,23 @@ export default function Header() {
       return
     }
     closeAccountMenu()
+    syncGuidesAnchor()
     setGuidesOpen(true)
   }
+
+  useEffect(() => {
+    if (!guidesOpen) return
+    syncGuidesAnchor()
+    function onLayout() {
+      syncGuidesAnchor()
+    }
+    window.addEventListener('resize', onLayout)
+    window.addEventListener('scroll', onLayout, true)
+    return () => {
+      window.removeEventListener('resize', onLayout)
+      window.removeEventListener('scroll', onLayout, true)
+    }
+  }, [guidesOpen])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -265,25 +294,32 @@ export default function Header() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        {guidesOpen ? (
-          <div
-            ref={guidesPanelRef}
-            role="menu"
-            className="absolute top-full left-1/2 z-[200] mt-2 w-72 -translate-x-1/2 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
-          >
-            {GUIDE_NAV_ITEMS.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                role="menuitem"
-                className="block px-4 py-2.5 text-sm leading-snug text-gray-700 hover:bg-gray-50"
-                onClick={closeGuidesMenu}
+        {guidesOpen && guidesAnchor
+          ? createPortal(
+              <div
+                ref={guidesPanelRef}
+                role="menu"
+                className="fixed z-[200] w-72 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+                style={{
+                  top: guidesAnchor.bottom + 8,
+                  left: guidesMenuLeft(guidesAnchor),
+                }}
               >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        ) : null}
+                {GUIDE_NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    role="menuitem"
+                    className="block px-4 py-2.5 text-sm leading-snug text-gray-700 hover:bg-gray-50"
+                    onClick={closeGuidesMenu}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     )
   }
