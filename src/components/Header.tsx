@@ -19,6 +19,10 @@ import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 const MAIN_NAV = [
   { to: '/listings', label: 'Listings' },
   { to: '/student-accommodation', label: 'Accommodation' },
+  {
+    to: '/guides/can-a-landlord-refuse-international-students-australia',
+    label: 'International student renting rights',
+  },
   { to: '/pricing', label: 'Pricing' },
   { to: '/faq', label: 'FAQ' },
   { to: '/for-landlords', label: 'For landlords' },

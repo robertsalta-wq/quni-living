@@ -80,7 +80,7 @@ export default function Footer() {
                   to="/guides/can-a-landlord-refuse-international-students-australia"
                   className={linkClass}
                 >
-                  Landlords &amp; international students →
+                  International student renting rights →
                 </Link>
               </li>
             </ul>
