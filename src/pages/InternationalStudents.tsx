@@ -24,6 +24,23 @@ export default function InternationalStudents() {
 
             <WhyQuniTrustBlock />
 
+            <section className="rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
+                Your rights when renting in Australia
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-gray-700">
+                Wondering whether a landlord can turn you away because you are an international student? Australian
+                anti-discrimination law generally says no. Read our guide on what is lawful, what is not, and how Quni
+                enforces fair housing on the platform.
+              </p>
+              <Link
+                to="/guides/can-a-landlord-refuse-international-students-australia"
+                className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2"
+              >
+                Can a landlord refuse international students?
+              </Link>
+            </section>
+
             <div className="flex flex-wrap gap-3 pt-2">
               <Link
                 to="/student-accommodation"

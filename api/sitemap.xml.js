@@ -2,6 +2,8 @@
  * Dynamic sitemap from Supabase (active listings, universities, campuses).
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, optional VITE_SITE_URL (canonical origin).
  */
+import fs from 'node:fs'
+import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 
 const SITE_URL = (process.env.VITE_SITE_URL || 'https://quni-living.vercel.app').replace(
@@ -84,7 +86,9 @@ export default async function handler(req, res) {
     })
     .filter(Boolean)
 
-  const allUrls = [...staticPages, ...propertyUrls, ...universityUrls, ...campusUrls]
+  const guideUrls = loadGuideUrlsFromManifest()
+
+  const allUrls = [...staticPages, ...guideUrls, ...propertyUrls, ...universityUrls, ...campusUrls]
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -103,6 +107,25 @@ ${allUrls
   res.setHeader('Content-Type', 'application/xml; charset=utf-8')
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400')
   res.status(200).send(sitemap)
+}
+
+function loadGuideUrlsFromManifest() {
+  try {
+    const manifestPath = path.join(process.cwd(), 'content/guides/manifest.json')
+    const raw = fs.readFileSync(manifestPath, 'utf8')
+    const entries = JSON.parse(raw)
+    if (!Array.isArray(entries)) return []
+    return entries
+      .filter((e) => e && typeof e.slug === 'string' && e.slug.trim())
+      .map((e) => ({
+        url: `/guides/${e.slug.trim()}`,
+        lastmod: typeof e.dateModified === 'string' ? e.dateModified : undefined,
+        priority: '0.7',
+        changefreq: 'monthly',
+      }))
+  } catch {
+    return []
+  }
 }
 
 function slugify(text) {

@@ -24,7 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"],
+  "include": ["src", "content/guides/**/*.ts"],
   "exclude": [
     "src/scripts",
     "src/lib/documents/NswResidentialTenancyAgreement_legacy.tsx",

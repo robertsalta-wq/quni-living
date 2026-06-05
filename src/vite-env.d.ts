@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+declare module '*.md?raw' {
+  const content: string
+  export default content
+}
+
 interface ImportMetaEnv {
   /** Canonical site URL (https, no trailing slash) - used for SEO meta, JSON-LD, and Open Graph. */
   readonly VITE_SITE_URL?: string

@@ -75,6 +75,14 @@ export default function Footer() {
                   International students →
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/guides/can-a-landlord-refuse-international-students-australia"
+                  className={linkClass}
+                >
+                  Landlords &amp; international students →
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Signature Field 1",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 572.347,
+    "width": 181.41729999999998,
+    "height": 36.78499999999997
+  },
+  {
+    "name": "Signature Field 2",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 436.958,
+    "width": 181.41729999999998,
+    "height": 36.78499999999997
+  },
+  {
+    "name": "Signature Field 3",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 303.292,
+    "width": 181.41729999999998,
+    "height": 36.78400000000005
+  },
+  {
+    "name": "Signature Field 4",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 169.626,
+    "width": 181.41729999999998,
+    "height": 36.78399999999999
+  },
+  {
+    "name": "Signature Field 5",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 667.424,
+    "width": 181.41729999999998,
+    "height": 36.78499999999997
+  },
+  {
+    "name": "Signature Field 6",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 535.731,
+    "width": 181.41729999999998,
+    "height": 36.78499999999997
+  },
+  {
+    "name": "Signature Field 7",
+    "widgetIndex": 0,
+    "x": 34.0157,
+    "y": 415.377,
+    "width": 181.41729999999998,
+    "height": 36.78399999999999
+  }
+]

@@ -18,6 +18,11 @@ export type SeoProps = {
   canonicalPath?: string
   /** Absolute URL for og:image / twitter:image */
   image?: string
+  imageAlt?: string
+  ogType?: 'website' | 'article'
+  /** ISO date (YYYY-MM-DD) for article Open Graph tags */
+  articlePublishedTime?: string
+  articleModifiedTime?: string
   noindex?: boolean
   jsonLd?: Record<string, unknown> | Record<string, unknown>[]
 }
@@ -34,6 +39,10 @@ export default function Seo({
   description = DEFAULT_DESCRIPTION,
   canonicalPath,
   image = DEFAULT_OG_IMAGE,
+  imageAlt = DEFAULT_OG_IMAGE_ALT,
+  ogType = 'website',
+  articlePublishedTime,
+  articleModifiedTime,
   noindex = false,
   jsonLd,
 }: SeoProps) {
@@ -64,18 +73,24 @@ export default function Seo({
       <meta name="googlebot" content={robots} />
       <meta name="theme-color" content="#FF6F61" />
 
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle(title)} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />
       <meta property="og:locale" content="en_AU" />
+      {ogType === 'article' && articlePublishedTime ? (
+        <meta property="article:published_time" content={articlePublishedTime} />
+      ) : null}
+      {ogType === 'article' && articleModifiedTime ? (
+        <meta property="article:modified_time" content={articleModifiedTime} />
+      ) : null}
       {image ? (
         <>
           <meta property="og:image" content={image} />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
-          <meta property="og:image:alt" content={DEFAULT_OG_IMAGE_ALT} />
+          <meta property="og:image:alt" content={imageAlt} />
         </>
       ) : null}
 

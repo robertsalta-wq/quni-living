@@ -70,6 +70,7 @@ function App() {
           <Route path="/properties/:slug" element={<PropertyDetail />} />
           <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
           <Route path="/international" element={<Lazy.InternationalStudents />} />
+          <Route path="/guides/:slug" element={<Lazy.GuideArticlePage />} />
           <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
           <Route path="/student-accommodation/:universitySlug" element={<Lazy.UniversityAccommodation />} />
           <Route
