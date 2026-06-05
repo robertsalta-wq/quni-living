@@ -8,7 +8,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingDeclinedStudent, propertyAddressLine } from './lib/emailTemplates.js'
-import { recordLandlordReviewAudit } from './lib/aiMatchingAudit.js'
+import { recordLandlordReviewAudit, AiMatchingAuditError } from './lib/aiMatchingAudit.js'
 
 export const config = { runtime: 'edge' }
 
@@ -154,6 +154,21 @@ export default async function handler(request) {
   const reasonLine = declineReason ? `Decline reason (${nowIso}): ${declineReason}` : ''
   const mergedNotes = [prevNotes, reasonLine].filter(Boolean).join('\n\n') || null
 
+  try {
+    await recordLandlordReviewAudit(admin, booking.id, {
+      eventType: 'landlord_decline',
+      outcome: 'decline_requested',
+      decisionReason: declineReason || null,
+    })
+  } catch (e) {
+    console.error('refund-booking-deposit compliance audit', e)
+    const msg =
+      e instanceof AiMatchingAuditError
+        ? e.message
+        : 'Compliance audit failed; booking was not declined.'
+    return json({ error: msg }, 503, origin)
+  }
+
   const { error: upErr } = await admin
     .from('bookings')
     .update({
@@ -167,12 +182,6 @@ export default async function handler(request) {
   if (upErr) {
     return json({ error: upErr.message || 'Could not update booking' }, 500, origin)
   }
-
-  await recordLandlordReviewAudit(admin, booking.id, {
-    eventType: 'landlord_decline',
-    outcome: 'declined',
-    decisionReason: declineReason || null,
-  })
 
   const propRow = booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
   const addr = propertyAddressLine(propRow)

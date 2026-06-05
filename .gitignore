@@ -50,7 +50,8 @@ android/key.properties
 scripts/test-output.pdf
 scripts/*.pdf
 scripts/test-*.mjs
-scripts/test-official-form-spike/
+# Vitest snapshot / scratch output from AI verification tests
+src/lib/__test_output__/
 scripts/test-official-form-docuseal-spike.mjs
 scripts/test-official-form-refined-b-spike.mjs
 

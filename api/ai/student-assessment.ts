@@ -17,16 +17,17 @@ import {
   buildStudentProfileAiPayload,
   hashAiPayload,
   mergeAssessmentAiPayloads,
-  NON_DISCRIMINATION_AI_RULE,
   BOOKING_AI_ASSESSMENT_SELECT,
   toneFirstNameOnly,
 } from '../../src/lib/aiMatchingCriteria.js'
+import { LANDLORD_ASSESSMENT_SYSTEM_PROMPT } from '../../src/lib/aiSurfacePromptAssembly.js'
 import type { BookingFitPropertyInput } from '../lib/bookingFitForAssessment.js'
 import {
   buildAssessmentExtraContext,
   buildFitSummaryForAudit,
   formatLandlordAssessmentUserMessage,
   insertAiMatchingComplianceAudit,
+  AiMatchingAuditError,
 } from '../lib/aiMatchingAudit.js'
 
 export const config = {
@@ -35,26 +36,7 @@ export const config = {
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
-const SYSTEM_PROMPT = `You are a helpful assistant on Quni Living, an Australian verified accommodation marketplace (students, graduates, and professional renters). You are helping a landlord review an applicant who has requested their property.
-
-Address the landlord by their first name naturally once at the opening of the assessment when tone.landlord_first_name is provided. Use the applicant's first name throughout when tone.applicant_first_name is provided — never refer to them as "this applicant", "the student", or "they" as a substitute for their name. Do not use third-person pronouns (he, she, they, him, her, them, his, hers, their) at all — repeat the first name instead — so gender is never assumed incorrectly.
-
-Based on the allowlisted applicant and booking fields provided, write a short, warm, and balanced 3-4 sentence assessment to help the landlord make an informed decision.
-
-Rules:
-- Open naturally addressing the landlord by first name when provided
-- Use the applicant's first name throughout when provided; never use he/she/they pronouns
-- Be factual and balanced — do not make the decision for the landlord
-- ${NON_DISCRIMINATION_AI_RULE.replace(/^- /, '')}
-- Applicant verification tier (student.verification_type): "student" = full student verification (uni email, ID, enrolment); "identity" = non-student identity path complete (ID + supporting doc; work email may apply); "none" = incomplete. State the tier plainly when it is not "student". For "none", say what verification steps are still missing and do not describe them as fully verified. For "identity", note they are a verified non-student tenant, not a verified student.
-- For non-student applicants (identity or none tiers), do not assume university enrollment or praise course credentials unless provided; focus on identity/work-email verification, housing preferences, and listing fit.
-- When context.fit_summary is present, it mirrors the booking review table on the site. You MUST reflect it faithfully: any line marked MISMATCH is a material gap — do not say preferences "align well", "line up nicely", or similar overall praise if there is at least one MISMATCH. Call out those gaps plainly (lease length, parking, bills, pets, move-in, occupancy, furnishing as applicable). UNKNOWN means data was missing — say what to verify. You may still comment on verification credentials separately from preference/listing fit.
-- If there is no context.fit_summary block, do not claim strong preference alignment with the listing; summarise what the applicant asked for and note what to check on the listing.
-- Focus on: verification completeness and tier, university and course when provided as facts only, housing preference alignment (occupancy, move-in flexibility, pets, parking, bills, furnishing when in allowlisted fields), budget fit, smoking status when present, and fit vs listing/booking context
-- Location and commute: Do not claim the listing is near a specific university, campus, or landmark, and do not discuss commute length, unless those facts appear in context.property_listing. You may state the student's university from context.university_name as a fact; if listing context does not tie the property to a campus/university, do not invent a geographic mismatch or "wrong uni" narrative.
-- Rent: Never invent dollar amounts. Only mention weekly rent if a figure appears in context.property_listing or booking.weekly_rent. If no rent is in the context, do not guess.
-- End with one practical suggestion for what the landlord might want to ask or consider before confirming
-- Keep the tone professional but warm and conversational`
+const SYSTEM_PROMPT = LANDLORD_ASSESSMENT_SYSTEM_PROMPT
 
 type AnthropicContentBlock = { type: string; text?: string }
 type AnthropicMessagesResponse = {
@@ -542,26 +524,32 @@ export default async function handler(request: Request) {
   const nowIso = new Date().toISOString()
 
   if (persistBookingId) {
+    try {
+      await insertAiMatchingComplianceAudit(admin, {
+        bookingId: persistBookingId,
+        landlordId: lpRow.id,
+        studentId: auditStudentId,
+        eventType: 'ai_assessment',
+        aiSurface: 'landlord_assessment',
+        serviceTier: auditServiceTier,
+        outcome: 'assessment_generated',
+        fitVector: auditFitVector,
+        payloadFieldKeys: auditPayloadFieldKeys,
+        payloadHash: auditPayloadHash,
+      })
+    } catch (e) {
+      const detail = e instanceof AiMatchingAuditError ? e.message : 'Compliance audit failed'
+      return json({ error: `${detail}; assessment not saved.` }, 503, origin)
+    }
+
     const { error: upErr } = await admin
       .from('bookings')
       .update({ ai_assessment: assessment, ai_assessment_at: nowIso })
       .eq('id', persistBookingId)
     if (upErr) {
       console.error('student-assessment persist booking', upErr)
+      return json({ error: 'Assessment generated but could not be saved.' }, 500, origin)
     }
-
-    await insertAiMatchingComplianceAudit(admin, {
-      bookingId: persistBookingId,
-      landlordId: lpRow.id,
-      studentId: auditStudentId,
-      eventType: 'ai_assessment',
-      aiSurface: 'landlord_assessment',
-      serviceTier: auditServiceTier,
-      outcome: 'assessment_generated',
-      fitVector: auditFitVector,
-      payloadFieldKeys: auditPayloadFieldKeys,
-      payloadHash: auditPayloadHash,
-    })
   }
 
   return json({ assessment, assessmentAt: nowIso, cached: false }, 200, origin)

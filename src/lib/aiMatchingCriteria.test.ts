@@ -4,6 +4,8 @@ import {
   BOOKING_FIELD_STATUS,
   LANDLORD_PROFILE_FIELD_STATUS,
   STUDENT_PROFILE_FIELD_STATUS,
+  buildBookingAiPayload,
+  buildLandlordProfileAiPayload,
   buildStudentProfileAiPayload,
   permittedStudentProfileFields,
 } from './aiMatchingCriteria'
@@ -183,25 +185,83 @@ describe('aiMatchingCriteria classification drift', () => {
 })
 
 describe('aiMatchingCriteria fail-closed payload', () => {
+  const EXCLUDED_KEYS = ['gender', 'nationality', 'student_type', 'date_of_birth', 'last_name', 'full_name'] as const
+
+  const fullExcludedStudentRow = {
+    first_name: 'Alex',
+    last_name: 'Secret',
+    full_name: 'Alex Secret',
+    gender: 'female',
+    nationality: 'Chinese',
+    student_type: 'international',
+    date_of_birth: '2000-01-01',
+    bio: 'Hello world',
+    room_type_preference: 'single',
+    budget_max_per_week: 400,
+    _dummy_unclassified_field: 'ZZ_DUMMY',
+  }
+
   it('never includes EXCLUDE fields on landlord_assessment', () => {
-    const row = {
-      first_name: 'Alex',
-      gender: 'female',
-      nationality: 'Chinese',
-      student_type: 'international',
-      date_of_birth: '2000-01-01',
-      bio: 'Hello world',
-      room_type_preference: 'single',
-      budget_max_per_week: 400,
+    const { payload, fieldKeys } = buildStudentProfileAiPayload('landlord_assessment', fullExcludedStudentRow)
+    for (const key of EXCLUDED_KEYS) {
+      expect(fieldKeys).not.toContain(key)
+      expect(payload[key]).toBeUndefined()
     }
-    const { payload, fieldKeys } = buildStudentProfileAiPayload('landlord_assessment', row)
-    expect(fieldKeys).not.toContain('gender')
-    expect(fieldKeys).not.toContain('nationality')
-    expect(fieldKeys).not.toContain('student_type')
-    expect(fieldKeys).not.toContain('date_of_birth')
     expect(fieldKeys).not.toContain('bio')
+    expect(fieldKeys).not.toContain('_dummy_unclassified_field')
     expect(fieldKeys).toContain('room_type_preference')
-    expect(payload.gender).toBeUndefined()
+  })
+
+  it('student_chat builder omits excluded and unclassified fields', () => {
+    const { payload, fieldKeys } = buildStudentProfileAiPayload('student_chat', fullExcludedStudentRow)
+    for (const key of EXCLUDED_KEYS) {
+      expect(fieldKeys).not.toContain(key)
+    }
+    expect(fieldKeys).not.toContain('_dummy_unclassified_field')
+    expect(payload._dummy_unclassified_field).toBeUndefined()
+  })
+
+  it('landlord profile builder omits excluded name fields on student_chat surface', () => {
+    const row = {
+      first_name: 'Sam',
+      last_name: 'Secret',
+      full_name: 'Sam Secret',
+      bio: 'Private bio',
+      verified: true,
+      _dummy_unclassified_field: 'ZZ_DUMMY',
+    }
+    const { payload, fieldKeys } = buildLandlordProfileAiPayload('student_chat', row)
+    expect(fieldKeys).not.toContain('last_name')
+    expect(fieldKeys).not.toContain('full_name')
+    expect(fieldKeys).not.toContain('bio')
+    expect(fieldKeys).not.toContain('_dummy_unclassified_field')
+    expect(fieldKeys).toContain('verified')
+    expect(payload.verified).toBe(true)
+  })
+
+  it('booking builder omits student_message and co_tenant on landlord_assessment', () => {
+    const row = {
+      move_in_date: '2026-03-01',
+      start_date: '2026-03-01',
+      lease_length: 'fixed_12_months',
+      occupant_count: 2,
+      student_message: 'ZZ_MSG',
+      co_tenant: { name: 'Co' },
+      _dummy_unclassified_field: 'ZZ_DUMMY',
+    }
+    const { payload, fieldKeys } = buildBookingAiPayload('landlord_assessment', row)
+    expect(fieldKeys).not.toContain('student_message')
+    expect(fieldKeys).not.toContain('co_tenant')
+    expect(fieldKeys).not.toContain('_dummy_unclassified_field')
+    expect(fieldKeys).toContain('occupant_count')
+    expect(payload.occupant_count).toBe(2)
+  })
+
+  it('drift guard: unclassified column would fail classification inventory', () => {
+    const classified = rowKeys(STUDENT_PROFILE_FIELD_STATUS)
+    const withDummy = [...classified, '_dummy_unclassified_field'].sort()
+    const missing = withDummy.filter((k) => !(k in STUDENT_PROFILE_FIELD_STATUS))
+    expect(missing).toEqual(['_dummy_unclassified_field'])
   })
 
   it('includes USE preference fields on student_chat', () => {

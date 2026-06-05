@@ -2,6 +2,7 @@
  * Append-only compliance audit for AI matching and landlord review actions.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { captureSentryMessageEdge } from './sentryEdgeCapture.js'
 import {
   buildBookingAiPayload,
   buildDeterministicFitVector,
@@ -17,6 +18,16 @@ import {
   type BookingFitPropertyInput,
   type BookingFitStudentInput,
 } from './bookingFitForAssessment.js'
+
+export class AiMatchingAuditError extends Error {
+  readonly causeDetail: unknown
+
+  constructor(message: string, causeDetail?: unknown) {
+    super(message)
+    this.name = 'AiMatchingAuditError'
+    this.causeDetail = causeDetail
+  }
+}
 
 export type AiMatchingAuditEventType = 'ai_assessment' | 'landlord_confirm' | 'landlord_decline'
 
@@ -55,6 +66,15 @@ export async function insertAiMatchingComplianceAudit(
   })
   if (error) {
     console.error('[aiMatchingAudit] insert failed', error)
+    await captureSentryMessageEdge('AI matching compliance audit insert failed', {
+      bookingId: input.bookingId,
+      eventType: input.eventType,
+      aiSurface: input.aiSurface ?? null,
+      outcome: input.outcome,
+      supabaseError: error.message,
+      code: error.code,
+    })
+    throw new AiMatchingAuditError('Compliance audit record could not be saved', error)
   }
 }
 
@@ -277,7 +297,13 @@ export async function recordLandlordReviewAudit(
   },
 ): Promise<void> {
   const ctx = await loadBookingFitAuditContext(admin, bookingId)
-  if (!ctx) return
+  if (!ctx) {
+    await captureSentryMessageEdge('AI matching compliance audit: booking context missing', {
+      bookingId,
+      eventType: args.eventType,
+    })
+    throw new AiMatchingAuditError('Compliance audit context unavailable for booking')
+  }
 
   const fitVector = buildDeterministicFitVector({
     booking: ctx.booking as never,

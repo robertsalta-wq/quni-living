@@ -16,7 +16,7 @@ import {
 import {
   bookingUsesNswFt6600Generator,
 } from './lib/resolveTenancyPackage.js'
-import { recordLandlordReviewAudit } from './lib/aiMatchingAudit.js'
+import { recordLandlordReviewAudit, AiMatchingAuditError } from './lib/aiMatchingAudit.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -246,6 +246,20 @@ export default async function handler(req, res) {
         )
       }
 
+      try {
+        await recordLandlordReviewAudit(admin, bookingId, {
+          eventType: 'landlord_confirm',
+          outcome: 'confirm_requested',
+        })
+      } catch (e) {
+        console.error('confirm-booking compliance audit', e)
+        const msg =
+          e instanceof AiMatchingAuditError
+            ? e.message
+            : 'Compliance audit failed; booking was not confirmed.'
+        return corsJson(res, { error: 'compliance_audit_failed', message: msg }, 503, origin)
+      }
+
       const listingResult = await runListingConfirmBooking({
         stripe,
         admin,
@@ -257,11 +271,6 @@ export default async function handler(req, res) {
       if (!listingResult.ok) {
         return corsJson(res, listingResult.body, listingResult.status, origin)
       }
-
-      await recordLandlordReviewAudit(admin, bookingId, {
-        eventType: 'landlord_confirm',
-        outcome: listingResult.idempotent ? 'confirmed_idempotent' : 'confirmed',
-      })
 
       return corsJson(
         res,
@@ -283,6 +292,20 @@ export default async function handler(req, res) {
       return corsJson(res, { error: 'Landlord Stripe account not ready for charges' }, 400, origin)
     }
 
+    try {
+      await recordLandlordReviewAudit(admin, bookingId, {
+        eventType: 'landlord_confirm',
+        outcome: 'confirm_requested',
+      })
+    } catch (e) {
+      console.error('confirm-booking compliance audit', e)
+      const msg =
+        e instanceof AiMatchingAuditError
+          ? e.message
+          : 'Compliance audit failed; booking was not confirmed.'
+      return corsJson(res, { error: 'compliance_audit_failed', message: msg }, 503, origin)
+    }
+
     const managedResult = await runManagedConfirmBooking({
       stripe,
       admin,
@@ -294,11 +317,6 @@ export default async function handler(req, res) {
     if (!managedResult.ok) {
       return corsJson(res, managedResult.body, managedResult.status, origin)
     }
-
-    await recordLandlordReviewAudit(admin, bookingId, {
-      eventType: 'landlord_confirm',
-      outcome: 'confirmed',
-    })
 
     return corsJson(
       res,

@@ -2,11 +2,10 @@
  * AI listing description (Anthropic Claude) — Vercel Edge.
  * Env: ANTHROPIC_API_KEY
  */
-import { NON_DISCRIMINATION_AI_RULE } from '../../src/lib/aiMatchingCriteria.js'
-
-const DESCRIPTION_SYSTEM_PROMPT = `You write property listing descriptions for an Australian verified accommodation marketplace.
-${NON_DISCRIMINATION_AI_RULE}
-Output plain paragraphs only — no discriminatory tenant preferences.`
+import {
+  DESCRIPTION_GENERATOR_SYSTEM_PROMPT,
+  buildDescriptionUserPrompt,
+} from '../../src/lib/aiSurfacePromptAssembly.js'
 
 export const config = {
   runtime: 'edge',
@@ -29,57 +28,6 @@ function json(body: unknown, status = 200, origin: string) {
 
 function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string')
-}
-
-function buildUserPrompt(body: Record<string, unknown>): string {
-  const roomType = String(body.roomType ?? '').trim()
-  const suburb = String(body.suburb ?? '').trim()
-  const lines: string[] = [
-    'Write a property listing description for renters in Australia (students, graduates, and young professionals near campus or work).',
-    '',
-    'Use only the facts below. Do not invent rooms, facilities, distances, prices, or any other details not listed.',
-    '',
-    `Room type: ${roomType}`,
-    `Suburb: ${suburb}`,
-  ]
-
-  if (typeof body.weeklyRent === 'number' && Number.isFinite(body.weeklyRent)) {
-    lines.push(
-      'A weekly rent is set on the listing elsewhere — do not mention rent, bonds, or any dollar amounts in this description.',
-    )
-  }
-
-  if (isStringArray(body.nearbyUniversities) && body.nearbyUniversities.length > 0) {
-    lines.push(`Nearby / associated universities: ${body.nearbyUniversities.join(', ')}`)
-  }
-
-  if (isStringArray(body.amenities) && body.amenities.length > 0) {
-    lines.push(`Amenities / features: ${body.amenities.join(', ')}`)
-  }
-
-  if (typeof body.houseRules === 'string' && body.houseRules.trim()) {
-    lines.push(`House rules / expectations: ${body.houseRules.trim()}`)
-  }
-
-  if (typeof body.billsIncluded === 'boolean') {
-    lines.push(`Bills included: ${body.billsIncluded ? 'yes' : 'no'}`)
-  }
-
-  if (typeof body.furnished === 'boolean') {
-    lines.push(`Furnished: ${body.furnished ? 'yes' : 'no'}`)
-  }
-
-  lines.push(
-    '',
-    'Requirements:',
-    '- 3–4 paragraphs, 120–180 words total.',
-    '- Australian English; warm, practical tone.',
-    '- No price or dollar amounts in the text.',
-    '- End with a short invitation to enquire (e.g. contact for a viewing).',
-    '- Plain paragraphs only (no bullet lists, no title line).',
-  )
-
-  return lines.join('\n')
 }
 
 function buildImprovePrompt(body: Record<string, unknown>, existingDescription: string): string {
@@ -200,7 +148,7 @@ export default async function handler(request: Request) {
   }
 
   const existingDescription = typeof body.existingDescription === 'string' ? body.existingDescription.trim() : ''
-  const userMessage = existingDescription ? buildImprovePrompt(body, existingDescription) : buildUserPrompt(body)
+  const userMessage = existingDescription ? buildImprovePrompt(body, existingDescription) : buildDescriptionUserPrompt(body)
 
   let anthropicRes: Response
   try {
@@ -214,7 +162,7 @@ export default async function handler(request: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
-        system: DESCRIPTION_SYSTEM_PROMPT,
+        system: DESCRIPTION_GENERATOR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
       }),
     })

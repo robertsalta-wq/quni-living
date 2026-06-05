@@ -1,25 +1,16 @@
+import {
+  ENQUIRY_REPLY_SYSTEM_PROMPT,
+  buildEnquiryReplyUserPrompt,
+} from '../../src/lib/aiSurfacePromptAssembly.js'
+
 export const config = {
   runtime: 'edge',
 }
-
-import { NON_DISCRIMINATION_AI_RULE, toneFirstNameOnly } from '../../src/lib/aiMatchingCriteria.js'
-
-const ENQUIRY_REPLY_SYSTEM_PROMPT = `You draft landlord replies to renter enquiries on an Australian verified accommodation marketplace.
-${NON_DISCRIMINATION_AI_RULE}
-Write warm, professional replies only — never express tenant preferences on protected grounds.`
 
 type AnthropicContentBlock = { type: string; text?: string }
 type AnthropicMessagesResponse = {
   content?: AnthropicContentBlock[]
   error?: { type?: string; message?: string }
-}
-
-type DraftReplyInput = {
-  studentName: string
-  studentMessage: string
-  propertyTitle?: string
-  propertySuburb?: string
-  landlordName?: string
 }
 
 function json(body: unknown, status = 200, origin: string) {
@@ -35,27 +26,6 @@ function json(body: unknown, status = 200, origin: string) {
       'Cache-Control': 'public, max-age=0, s-maxage=0',
     },
   })
-}
-
-function buildPrompt(input: DraftReplyInput): string {
-  const studentFirstName = toneFirstNameOnly(input.studentName) || 'there'
-  const propertyBits = [input.propertyTitle?.trim(), input.propertySuburb?.trim()].filter(Boolean).join(', ')
-  const signOffName = toneFirstNameOnly(input.landlordName ?? '') || 'Landlord'
-
-  const lines: string[] = [
-    'Write a warm, professional reply from the landlord to the renter.',
-    `Address the renter by first name only: ${studentFirstName}`,
-    propertyBits ? `Reference this property naturally if relevant: ${propertyBits}` : 'No property details were provided.',
-    'Invite the renter to ask further questions or arrange an inspection.',
-    'Use Australian English and keep the tone friendly but not overly casual.',
-    'Write 3-5 sentences only.',
-    'Return only the reply text with no labels, headings, or markdown.',
-    '',
-    `Landlord first name (sign-off context): ${signOffName}`,
-    `Renter enquiry message: ${input.studentMessage}`,
-  ]
-
-  return lines.join('\n')
 }
 
 export default async function handler(request: Request) {
@@ -107,7 +77,7 @@ export default async function handler(request: Request) {
       return json({ error: 'landlordName must be a string when provided' }, 400, origin)
     }
 
-    const prompt = buildPrompt({
+    const prompt = buildEnquiryReplyUserPrompt({
       studentName,
       studentMessage,
       propertyTitle: body.propertyTitle as string | undefined,
