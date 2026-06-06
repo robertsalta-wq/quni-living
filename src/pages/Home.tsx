@@ -501,6 +501,16 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-5 sm:py-6">
+        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-gray-600 sm:text-base">
+            Built so you can&apos;t be filtered out for being international. Our AI never receives
+            your nationality, gender, residency status, or date of birth. It&apos;s enforced in the
+            code itself, and we keep a tamper-proof record of every decision.
+          </p>
+        </div>
+      </section>
+
       {/* How it works - below hero / search */}
       <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-14 sm:py-16">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
