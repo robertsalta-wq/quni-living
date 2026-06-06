@@ -69,7 +69,6 @@ export default function Seo({
 
   return (
     <Helmet prioritizeSeoTags>
-      <html lang="en-AU" />
       <title>{fullTitle(title)}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />

@@ -1,6 +1,5 @@
-import * as Sentry from '@sentry/react'
 import { Suspense } from 'react'
-import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
@@ -16,6 +15,7 @@ import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
+import GuideArticlePage from './pages/guides/GuideArticlePage'
 import * as Lazy from './lazyPages'
 
 function AdminPropertyFeesDeepLinkRedirect() {
@@ -32,20 +32,6 @@ function App() {
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
 
   return (
-    <Sentry.ErrorBoundary
-      fallback={
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-6 text-center text-gray-900">
-          <p className="text-base font-medium">Something went wrong. Our team has been notified.</p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-          >
-            Reload
-          </button>
-        </div>
-      }
-    >
       <BookingFlowChromeProvider>
         <>
         <ScrollToTop />
@@ -59,8 +45,16 @@ function App() {
               : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
           }
         >
-          <Suspense fallback={<PageRouteFallback />}>
           <Routes>
+          {/* Eager guide routes sit outside Suspense so prerender HTML matches client hydration. */}
+          <Route path="/guides/:slug" element={<GuideArticlePage />} />
+          <Route
+            element={
+              <Suspense fallback={<PageRouteFallback />}>
+                <Outlet />
+              </Suspense>
+            }
+          >
           {/* Public - eager: home, listings funnel, login */}
           <Route path="/" element={<Home />} />
           <Route path="/listings" element={<Listings />} />
@@ -70,7 +64,6 @@ function App() {
           <Route path="/properties/:slug" element={<PropertyDetail />} />
           <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
           <Route path="/international" element={<Lazy.InternationalStudents />} />
-          <Route path="/guides/:slug" element={<Lazy.GuideArticlePage />} />
           <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
           <Route path="/student-accommodation/:universitySlug" element={<Lazy.UniversityAccommodation />} />
           <Route
@@ -272,14 +265,13 @@ function App() {
             <Route path="qase/settings" element={<Lazy.QaseSettings />} />
             <Route path="qase/:ticketId" element={<Lazy.QaseTicketDetail />} />
           </Route>
+          </Route>
           </Routes>
-          </Suspense>
         </main>
         {showPublicChrome && !hideFooterForFormFlow && <Footer />}
         <AIChatWidget />
         </>
       </BookingFlowChromeProvider>
-    </Sentry.ErrorBoundary>
   )
 }
 

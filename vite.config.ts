@@ -44,6 +44,9 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define,
+    ssr: {
+      noExternal: ['react-markdown', 'remark-gfm', 'remark-parse', 'remark-rehype', 'unified'],
+    },
     server: {
       port: 5173,
       strictPort: true,

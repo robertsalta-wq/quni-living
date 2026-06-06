@@ -50,7 +50,6 @@ export const LandlordAIFeaturePage = lazy(() => import('./pages/LandlordAIFeatur
 export const StudentAccommodationIndex = lazy(() => import('./pages/seo/StudentAccommodationIndex'))
 export const UniversityAccommodation = lazy(() => import('./pages/seo/UniversityAccommodation'))
 export const CampusAccommodation = lazy(() => import('./pages/seo/CampusAccommodation'))
-export const GuideArticlePage = lazy(() => import('./pages/guides/GuideArticlePage'))
 
 // Admin shell + pages
 export const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))

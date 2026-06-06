@@ -1,39 +1,49 @@
 import './lib/sentry'
 import { clearChunkReloadSessionFlag, registerStaleChunkLoadRecovery } from './lib/chunkLoadRecovery'
+import * as Sentry from '@sentry/react'
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
-import { AuthProvider } from './context/AuthContext'
-import { LegalEntityProvider } from './context/LegalEntityContext'
-import { PlatformFeaturesProvider } from './context/PlatformFeaturesContext'
-import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { AppTree } from './AppTree'
 import { registerNativeOAuthDeepLinkHandler } from './lib/nativeOAuthDeepLink'
 import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFallback'
-import AppNavigationRegistrar from './components/AppNavigationRegistrar'
 import './index.css'
-import App from './App'
 
 applyNativeStatusBarInsetFallback()
 registerNativeOAuthDeepLinkHandler()
 clearChunkReloadSessionFlag()
 registerStaleChunkLoadRecovery()
 
-createRoot(document.getElementById('root')!).render(
+const rootEl = document.getElementById('root')!
+
+const app = (
   <StrictMode>
-    <BrowserRouter>
-      <AppNavigationRegistrar />
+    <Sentry.ErrorBoundary
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-6 text-center text-gray-900">
+          <p className="text-base font-medium">Something went wrong. Our team has been notified.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+          >
+            Reload
+          </button>
+        </div>
+      }
+    >
       <HelmetProvider>
-        <AuthProvider>
-          <LegalEntityProvider>
-            <PlatformFeaturesProvider>
-              <AppErrorBoundary>
-                <App />
-              </AppErrorBoundary>
-            </PlatformFeaturesProvider>
-          </LegalEntityProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <AppTree />
+        </BrowserRouter>
       </HelmetProvider>
-    </BrowserRouter>
-  </StrictMode>,
+    </Sentry.ErrorBoundary>
+  </StrictMode>
 )
+
+if (rootEl.hasChildNodes()) {
+  hydrateRoot(rootEl, app)
+} else {
+  createRoot(rootEl).render(app)
+}
