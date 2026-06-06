@@ -649,7 +649,7 @@ function vicTenancyRules(tier) {
 
 // src/lib/documents/vic/addendumContent.ts
 var VIC_ADDENDUM_LEGISLATION = "Residential Tenancies Act 1997 (Vic)";
-var VIC_ADDENDUM_FORM_LABEL = "Form 1 \u2014 Residential rental agreement";
+var VIC_ADDENDUM_FORM_LABEL = "Form 1 - Residential rental agreement";
 var VIC_ADDENDUM_SUBTITLE = "Supplementary to the Residential Rental Agreement (Form 1)";
 var VIC_T2_BOND_RULES = vicTenancyRules("T2").bond;
 function vicBondLodgementDeadlinePhrase() {
@@ -693,7 +693,7 @@ function formatAuDate(iso) {
 function yn(v) {
   if (v === true) return "Yes";
   if (v === false) return "No";
-  return "\u2014";
+  return "-";
 }
 function formatBsbDisplay(raw) {
   const digits = raw.replace(/\D/g, "");
@@ -704,10 +704,10 @@ function Section1TenancySummary(props) {
   const { landlord, tenant, premises, term, rent, bond, utilitiesDescription } = props;
   const landlordDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
   const endDateText = term.periodic || !term.endDate ? "Periodic tenancy (no fixed end date)" : formatAuDate(term.endDate);
-  const bondText = bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : "\u2014";
+  const bondText = bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : "-";
   const rows = [
     { label: "Property address:", value: premises.addressLine },
-    { label: "Room type:", value: premises.roomType?.trim() || "\u2014" },
+    { label: "Room type:", value: premises.roomType?.trim() || "-" },
     { label: "Landlord:", value: landlordDisplay },
     { label: "Landlord email:", value: landlord.email },
     { label: "Landlord phone:", value: landlord.phone },
@@ -734,7 +734,7 @@ function Section1TenancySummary(props) {
     { label: "Weekly cleaning service:", value: yn(premises.weeklyCleaningService) },
     {
       label: "Utilities / services (summary):",
-      value: utilitiesDescription.trim() || "\u2014"
+      value: utilitiesDescription.trim() || "-"
     }
   );
   return /* @__PURE__ */ jsxs3(View3, { style: { marginTop: 4, marginBottom: 10 }, children: [
@@ -755,10 +755,10 @@ function Section2QuniPlatformAndFee(props) {
   const name = bankDetails.accountName.trim();
   const bankName = bankDetails.bankName.trim();
   const bankRows = [
-    { label: "Account name:", value: name || "\u2014" },
-    { label: "BSB:", value: bsb || "\u2014" },
-    { label: "Account number:", value: acct || "\u2014" },
-    { label: "Bank:", value: bankName || "\u2014" }
+    { label: "Account name:", value: name || "-" },
+    { label: "BSB:", value: bsb || "-" },
+    { label: "Account number:", value: acct || "-" },
+    { label: "Bank:", value: bankName || "-" }
   ];
   const cardDomestic = `${props.cardSurchargeDomesticText ?? "1.7% + $0.30"} per transaction (domestic cards)`;
   const cardInternational = `${props.cardSurchargeInternationalText ?? "3.5% + $0.30"} per transaction (international cards)`;
@@ -783,7 +783,7 @@ function Section2QuniPlatformAndFee(props) {
     /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 6 }], children: "Rent is payable by direct bank transfer using the following account details (reference your name and the property address when transferring):" }),
     /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows: bankRows.map((r) => ({ label: r.label, value: r.value })) }),
     rentPaymentMethod === "quni_platform" ? /* @__PURE__ */ jsx3(View3, { style: [occupancyMatchPdf.noteBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.noteItalicMuted, children: [
-      "The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card payments incur a payment processing surcharge passed through at Stripe's actual cost \u2014 typically",
+      "The tenant has elected (where available) to pay recurring rent via card through the Quni platform. Card payments incur a payment processing surcharge passed through at Stripe's actual cost - typically",
       " ",
       cardDomestic,
       ", or ",
@@ -801,11 +801,11 @@ function Section3CommunicationChannels(props) {
   const { emergencyContact, rentEnquiriesEmail, generalEnquiriesEmail, houseCommunicationsChannel } = props;
   const rows = [
     { label: "Maintenance portal (non-urgent requests):", value: QUNI_MAINTENANCE_PORTAL_URL },
-    { label: "Emergency contact (urgent repairs):", value: emergencyContact.trim() || "\u2014" },
+    { label: "Emergency contact (urgent repairs):", value: emergencyContact.trim() || "-" },
     { label: "Move-out notice form:", value: QUNI_MOVE_OUT_FORM_URL },
-    { label: "Rent account enquiries:", value: rentEnquiriesEmail.trim() || "\u2014" },
-    { label: "General enquiries:", value: generalEnquiriesEmail.trim() || "\u2014" },
-    { label: "House communications:", value: houseCommunicationsChannel.trim() || "\u2014" }
+    { label: "Rent account enquiries:", value: rentEnquiriesEmail.trim() || "-" },
+    { label: "General enquiries:", value: generalEnquiriesEmail.trim() || "-" },
+    { label: "House communications:", value: houseCommunicationsChannel.trim() || "-" }
   ];
   return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 3, title: "Communication channels" }),
@@ -817,7 +817,7 @@ function Section4MaintenanceAndRepairs(_props) {
   return /* @__PURE__ */ jsxs3(View3, { style: { marginBottom: 10 }, children: [
     /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 4, title: "Maintenance & repairs" }),
     /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Non-urgent maintenance requests (for example dripping taps, minor appliance faults, or common-area cleaning issues) must be lodged through the maintenance portal listed in Section 3. The tenant should include a clear description, photos where helpful, and safe access notes." }),
-    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Urgent repairs that affect health, safety, or security \u2014 including burst pipes, electrical hazards, gas smells, serious leaks, or a failure of essential services \u2014 must be reported immediately using the emergency contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons or property, the tenant should also follow any emergency services guidance (including 000 where appropriate)." }),
+    /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Urgent repairs that affect health, safety, or security - including burst pipes, electrical hazards, gas smells, serious leaks, or a failure of essential services - must be reported immediately using the emergency contact in Section 3. If the emergency contact cannot be reached and there is an immediate risk to persons or property, the tenant should also follow any emergency services guidance (including 000 where appropriate)." }),
     /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "The landlord (or their authorised tradesperson) will use reasonable endeavours to respond to urgent items without undue delay. Response times for non-urgent items depend on severity, parts availability, and access; the parties agree to communicate promptly through the portal where additional information is required." }),
     /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "The tenant is responsible for damage caused by the tenant, their guests, or invitees (including through misuse, negligence, or failure to report issues promptly). Fair wear and tear is excluded. Where damage is tenant caused, the landlord may seek reimbursement in accordance with the ",
@@ -905,7 +905,7 @@ function Section9MoveOutProcedures(props) {
     },
     {
       label: "Late checkout (still occupying after midnight on vacate date)",
-      value: `Full day rent (${formatMoney(dailyRent)} \u2014 one-seventh of the agreed weekly rent)`
+      value: `Full day rent (${formatMoney(dailyRent)} - one-seventh of the agreed weekly rent)`
     },
     {
       label: "Linen replacement if significantly damaged",
@@ -941,7 +941,7 @@ function Section9MoveOutProcedures(props) {
       formatMoney(dailyRent),
       " per day, in addition to any other amounts lawfully payable."
     ] }),
-    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Cleaning checklist \u2014 the tenant must leave the room in the following condition:" }),
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Cleaning checklist - the tenant must leave the room in the following condition:" }),
     /* @__PURE__ */ jsx3(View3, { style: { marginBottom: 6, paddingLeft: 4 }, children: /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
       "\u2022 Vacuum and mop all floors including under bed and furniture",
       "\n",
@@ -961,7 +961,7 @@ function Section9MoveOutProcedures(props) {
       "\n",
       "\u2022 Return all keys as directed"
     ] }) }),
-    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Fee schedule (indicative \u2014 charged where applicable and lawfully recoverable):" }),
+    /* @__PURE__ */ jsx3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4, fontFamily: "Helvetica-Bold" }], children: "Fee schedule (indicative - charged where applicable and lawfully recoverable):" }),
     /* @__PURE__ */ jsx3(OccupancyMatchScheduleTable, { rows: feeRows.map((r) => ({ label: r.label, value: r.value })) }),
     /* @__PURE__ */ jsxs3(Text3, { style: [occupancyMatchPdf.bodyParagraph, { marginTop: 4 }], children: [
       "The tenant should supply a forwarding address and contact details for bond and correspondence. Bond release (if applicable) will follow ",

@@ -570,7 +570,7 @@ function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisp
     const pct = formatManagedFeePercent(managedFeePercent);
     return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`;
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted \u2014 it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
+  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
 }
 
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
@@ -589,7 +589,7 @@ function formatAuDate(iso) {
 function yn(v) {
   if (v === true) return "Yes";
   if (v === false) return "No";
-  return "\u2014";
+  return "-";
 }
 function LicenceFooter({
   content,
@@ -793,8 +793,8 @@ var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
 // src/lib/documents/qld/occupancyContent.ts
 var QLD_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
-  docSubtitle: "Queensland \u2014 Licence to occupy (on-site accommodation)",
-  draftFooter: "Draft \u2014 not for execution until signed",
+  docSubtitle: "Queensland - Licence to occupy (on-site accommodation)",
+  draftFooter: "Draft - not for execution until signed",
   natureParagraphs: [
     `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,
     "Under s 27(1) of the RTRA Act, the Act does not apply to a residential tenancy agreement if the person is a boarder or lodger. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities.",
@@ -858,7 +858,7 @@ var QLD_OCCUPANCY_PDF_MARKERS = [
   "Residential Tenancies Authority",
   "RTA Queensland",
   "10 calendar days",
-  "The resident pays no Quni platform fee",
+  "The resident is not required to pay Quni platform fees",
   "s 27",
   "s 43",
   "Form R18",
