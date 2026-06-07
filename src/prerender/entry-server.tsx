@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server'
 import { HelmetProvider } from 'react-helmet-async'
 import { MemoryRouter } from 'react-router-dom'
 import { AppTree } from '../AppTree'
-import { listGuideSlugs } from '../lib/guides/registry'
+import { listPrerenderPathnames, pathnameToDistDir } from './routes'
 
 function renderAppAt(pathname: string): { body: string; head: string } {
   const body = renderToString(
@@ -59,19 +59,18 @@ function injectPrerender(template: string, body: string, head: string): string {
   return page
 }
 
-export async function prerenderGuides(distDir: string): Promise<void> {
+export async function prerenderRoutes(distDir: string): Promise<void> {
   const templatePath = path.join(distDir, 'index.html')
   const template = readFileSync(templatePath, 'utf8')
-  const slugs = listGuideSlugs()
+  const pathnames = listPrerenderPathnames()
 
-  for (const slug of slugs) {
-    const pathname = `/guides/${slug}`
+  for (const pathname of pathnames) {
     const { body, head } = renderAppAt(pathname)
-    const outDir = path.join(distDir, 'guides', slug)
+    const outDir = pathnameToDistDir(distDir, pathname)
     mkdirSync(outDir, { recursive: true })
     writeFileSync(path.join(outDir, 'index.html'), injectPrerender(template, body, head), 'utf8')
-    console.log(`prerender-guides: wrote ${pathname}`)
+    console.log(`prerender-routes: wrote ${pathname}`)
   }
 
-  console.log(`prerender-guides: ${slugs.length} guide route(s) prerendered`)
+  console.log(`prerender-routes: ${pathnames.length} route(s) prerendered`)
 }

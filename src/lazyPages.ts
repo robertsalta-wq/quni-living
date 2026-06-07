@@ -32,7 +32,6 @@ export const ConversationThreadPage = lazy(() => import('./pages/ConversationThr
 export const RentNearCampus = lazy(() => import('./pages/RentNearCampus'))
 export const InternationalStudents = lazy(() => import('./pages/InternationalStudents'))
 export const About = lazy(() => import('./pages/About'))
-export const ForUniversities = lazy(() => import('./pages/ForUniversities'))
 export const HowItWorks = lazy(() => import('./pages/HowItWorks'))
 export const Refunds = lazy(() => import('./pages/Refunds'))
 export const Pricing = lazy(() => import('./pages/Pricing'))

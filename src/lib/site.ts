@@ -41,10 +41,8 @@ export const RENTERS_BROWSE_SEO_TITLE = 'Rooms & rentals near campus'
 export const DEFAULT_OG_URL = 'https://quni.com.au'
 
 const ogFromEnv = (import.meta.env.VITE_OG_IMAGE_URL as string | undefined)?.trim()
-/** 1200×630 branded share image (`public/og-default.png`). Pre-launch: Vercel origin until DNS cutover. */
-// TODO: switch back to https://quni.com.au/og-default.png after DNS cutover
-export const DEFAULT_OG_IMAGE =
-  ogFromEnv || 'https://quni-living.vercel.app/og-default.png'
+/** 1200×630 branded share image (`public/og-default.png`). */
+export const DEFAULT_OG_IMAGE = ogFromEnv || 'https://quni.com.au/og-default.png'
 
 export const DEFAULT_OG_IMAGE_ALT = 'Quni - verified accommodation near campus and work'
 

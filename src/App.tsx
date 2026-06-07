@@ -16,6 +16,7 @@ import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
+import ForUniversities from './pages/ForUniversities'
 import * as Lazy from './lazyPages'
 
 function AdminPropertyFeesDeepLinkRedirect() {
@@ -46,8 +47,9 @@ function App() {
           }
         >
           <Routes>
-          {/* Eager guide routes sit outside Suspense so prerender HTML matches client hydration. */}
+          {/* Eager prerender routes sit outside Suspense so SSR HTML matches client hydration. */}
           <Route path="/guides/:slug" element={<GuideArticlePage />} />
+          <Route path="/for-universities" element={<ForUniversities />} />
           <Route
             element={
               <Suspense fallback={<PageRouteFallback />}>
@@ -75,7 +77,6 @@ function App() {
           <Route path="/non-discrimination" element={<Lazy.NonDiscrimination />} />
           <Route path="/landlord-service-agreement" element={<Lazy.LandlordServiceAgreement />} />
           <Route path="/about" element={<Lazy.About />} />
-          <Route path="/for-universities" element={<Lazy.ForUniversities />} />
           <Route path="/how-it-works" element={<Lazy.HowItWorks />} />
           <Route path="/refunds" element={<Lazy.Refunds />} />
           <Route path="/pricing" element={<Lazy.Pricing />} />

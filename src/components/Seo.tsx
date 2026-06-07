@@ -88,14 +88,10 @@ export default function Seo({
       {ogType === 'article' && articleModifiedTime ? (
         <meta property="article:modified_time" content={articleModifiedTime} />
       ) : null}
-      {image ? (
-        <>
-          <meta property="og:image" content={image} />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
-          <meta property="og:image:alt" content={imageAlt} />
-        </>
-      ) : null}
+      {image ? <meta property="og:image" content={image} /> : null}
+      {image ? <meta property="og:image:width" content="1200" /> : null}
+      {image ? <meta property="og:image:height" content="630" /> : null}
+      {image ? <meta property="og:image:alt" content={imageAlt} /> : null}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle(title)} />
