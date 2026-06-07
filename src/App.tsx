@@ -16,6 +16,7 @@ import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
+import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
 import * as Lazy from './lazyPages'
 
@@ -48,6 +49,7 @@ function App() {
         >
           <Routes>
           {/* Eager prerender routes sit outside Suspense so SSR HTML matches client hydration. */}
+          <Route path="/guides" element={<Guides />} />
           <Route path="/guides/:slug" element={<GuideArticlePage />} />
           <Route path="/for-universities" element={<ForUniversities />} />
           <Route

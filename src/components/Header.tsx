@@ -1,55 +1,52 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Info, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
+import { formatDisplayName } from '../lib/formatDisplayName'
+import SiteBrandLockup from './SiteBrandLockup'
+import AiSparkleIcon from './AiSparkleIcon'
+import SiteSocialLinks from './SiteSocialLinks'
+import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
+import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
   if (r === 'student') return '/onboarding/student'
   return '/onboarding/landlord'
 }
-import { formatDisplayName } from '../lib/formatDisplayName'
-import SiteBrandLockup from './SiteBrandLockup'
-import AiSparkleIcon from './AiSparkleIcon'
-import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
-import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
-import { listGuideNavItems } from '../lib/guides/registry'
 
-const MAIN_NAV = [
-  { to: '/listings', label: 'Listings' },
-  { to: '/student-accommodation', label: 'Accommodation' },
-  { to: '/pricing', label: 'Pricing' },
-  { to: '/faq', label: 'FAQ' },
-  { to: '/for-landlords', label: 'For landlords' },
-  { to: '/about', label: 'About' },
-  { to: '/contact', label: 'Contact' },
+const LANDLORD_NAV_TO = '/for-landlords'
+
+const STUDENT_NAV_ITEMS = [
+  { to: '/student-accommodation', label: 'Browse by university' },
+  { to: '/international', label: 'International students' },
+  { to: '/rent-near-campus', label: 'Rent near campus' },
+  { to: '/guides', label: 'Guides & advice' },
 ] as const
-
-const GUIDE_NAV_ITEMS = listGuideNavItems()
 
 const mainNavLinkClass = 'whitespace-nowrap text-sm text-gray-600 hover:text-gray-900'
+const secondaryNavLinkClass = 'whitespace-nowrap text-sm text-[#1B2A4A]/75 hover:text-[#1B2A4A]'
 
-/** Always visible in the mobile header bar (full menu stays in the drawer). */
-const MOBILE_QUICK_NAV = [
-  { to: '/listings', label: 'Listings' },
-  { to: '/faq', label: 'FAQ' },
-] as const
+const MOBILE_QUICK_NAV = [{ to: '/listings', label: 'Listings' }] as const
 
 const coralCtaClass =
   'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
 
-/** Mobile header bar - compact pill so the bar still fits beside auth + menu on narrow phones. */
 const mobileListingsPillClass =
   'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#FF6F61] bg-[#FF6F61] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3 sm:py-1 sm:text-xs'
 
-const ACCOUNT_MENU_WIDTH_PX = 208
-const GUIDES_MENU_WIDTH_PX = 288
+const mobileDrawerRowClass =
+  'flex min-h-11 items-center px-4 text-sm text-gray-800 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#FF6F61]/40'
 
-function guidesMenuLeft(anchor: DOMRect): number {
-  const centered = anchor.left + anchor.width / 2 - GUIDES_MENU_WIDTH_PX / 2
-  const maxLeft = window.innerWidth - GUIDES_MENU_WIDTH_PX - 8
+const ACCOUNT_MENU_WIDTH_PX = 208
+const STUDENTS_MENU_WIDTH_PX = 260
+
+function studentsMenuLeft(anchor: DOMRect): number {
+  const centered = anchor.left + anchor.width / 2 - STUDENTS_MENU_WIDTH_PX / 2
+  const maxLeft = window.innerWidth - STUDENTS_MENU_WIDTH_PX - 8
   return Math.max(8, Math.min(centered, maxLeft))
 }
 
@@ -61,13 +58,13 @@ export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
-  const [guidesOpen, setGuidesOpen] = useState(false)
-  const [guidesAnchor, setGuidesAnchor] = useState<DOMRect | null>(null)
+  const [studentsOpen, setStudentsOpen] = useState(false)
+  const [studentsAnchor, setStudentsAnchor] = useState<DOMRect | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const menuPanelRef = useRef<HTMLDivElement>(null)
-  const guidesButtonRef = useRef<HTMLButtonElement>(null)
-  const guidesPanelRef = useRef<HTMLDivElement>(null)
+  const studentsButtonRef = useRef<HTMLButtonElement>(null)
+  const studentsPanelRef = useRef<HTMLDivElement>(null)
   const mobileNavRootRef = useRef<HTMLDivElement>(null)
 
   function syncMenuAnchor() {
@@ -80,14 +77,14 @@ export default function Header() {
     setMenuAnchor(null)
   }
 
-  function syncGuidesAnchor() {
-    const rect = guidesButtonRef.current?.getBoundingClientRect()
-    if (rect) setGuidesAnchor(rect)
+  function syncStudentsAnchor() {
+    const rect = studentsButtonRef.current?.getBoundingClientRect()
+    if (rect) setStudentsAnchor(rect)
   }
 
-  function closeGuidesMenu() {
-    setGuidesOpen(false)
-    setGuidesAnchor(null)
+  function closeStudentsMenu() {
+    setStudentsOpen(false)
+    setStudentsAnchor(null)
   }
 
   function toggleAccountMenu() {
@@ -95,26 +92,26 @@ export default function Header() {
       closeAccountMenu()
       return
     }
-    closeGuidesMenu()
+    closeStudentsMenu()
     syncMenuAnchor()
     setMenuOpen(true)
   }
 
-  function toggleGuidesMenu() {
-    if (guidesOpen) {
-      closeGuidesMenu()
+  function toggleStudentsMenu() {
+    if (studentsOpen) {
+      closeStudentsMenu()
       return
     }
     closeAccountMenu()
-    syncGuidesAnchor()
-    setGuidesOpen(true)
+    syncStudentsAnchor()
+    setStudentsOpen(true)
   }
 
   useEffect(() => {
-    if (!guidesOpen) return
-    syncGuidesAnchor()
+    if (!studentsOpen) return
+    syncStudentsAnchor()
     function onLayout() {
-      syncGuidesAnchor()
+      syncStudentsAnchor()
     }
     window.addEventListener('resize', onLayout)
     window.addEventListener('scroll', onLayout, true)
@@ -122,7 +119,7 @@ export default function Header() {
       window.removeEventListener('resize', onLayout)
       window.removeEventListener('scroll', onLayout, true)
     }
-  }, [guidesOpen])
+  }, [studentsOpen])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -148,30 +145,30 @@ export default function Header() {
   }, [menuOpen])
 
   useEffect(() => {
-    if (!guidesOpen) return
+    if (!studentsOpen) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeGuidesMenu()
+      if (e.key === 'Escape') closeStudentsMenu()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [guidesOpen])
+  }, [studentsOpen])
 
   useEffect(() => {
-    if (!guidesOpen) return
-    function closeGuides(e: MouseEvent) {
+    if (!studentsOpen) return
+    function closeStudents(e: MouseEvent) {
       const t = e.target as Node
-      if (guidesButtonRef.current?.contains(t)) return
-      if (guidesPanelRef.current?.contains(t)) return
-      closeGuidesMenu()
+      if (studentsButtonRef.current?.contains(t)) return
+      if (studentsPanelRef.current?.contains(t)) return
+      closeStudentsMenu()
     }
     const id = window.setTimeout(() => {
-      document.addEventListener('click', closeGuides)
+      document.addEventListener('click', closeStudents)
     }, 0)
     return () => {
       window.clearTimeout(id)
-      document.removeEventListener('click', closeGuides)
+      document.removeEventListener('click', closeStudents)
     }
-  }, [guidesOpen])
+  }, [studentsOpen])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -254,64 +251,50 @@ export default function Header() {
 
   async function handleSignOut() {
     closeAccountMenu()
-    closeGuidesMenu()
+    closeStudentsMenu()
     setMobileNavOpen(false)
     await signOut()
   }
 
   function closeMobileNav() {
-    closeGuidesMenu()
+    closeStudentsMenu()
     setMobileNavOpen(false)
   }
 
-  function renderMainNavLink(item: (typeof MAIN_NAV)[number]) {
-    return (
-      <Link
-        key={item.to}
-        to={item.to}
-        className={mainNavLinkClass}
-        {...(item.to === '/listings' ? listingsNavWarm : {})}
-      >
-        {item.label}
-      </Link>
-    )
-  }
-
-  function renderGuidesNavDesktop() {
-    if (GUIDE_NAV_ITEMS.length === 0) return null
+  function renderStudentsNavDesktop() {
     return (
       <div className="relative">
         <button
-          ref={guidesButtonRef}
+          ref={studentsButtonRef}
           type="button"
-          onClick={toggleGuidesMenu}
+          onClick={toggleStudentsMenu}
           className={`${mainNavLinkClass} inline-flex items-center gap-0.5`}
-          aria-expanded={guidesOpen}
+          aria-expanded={studentsOpen}
           aria-haspopup="menu"
         >
-          Guides
+          For students
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        {guidesOpen && guidesAnchor
+        {studentsOpen && studentsAnchor
           ? createPortal(
               <div
-                ref={guidesPanelRef}
+                ref={studentsPanelRef}
                 role="menu"
-                className="fixed z-[200] w-72 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+                className="fixed z-[200] w-64 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
                 style={{
-                  top: guidesAnchor.bottom + 8,
-                  left: guidesMenuLeft(guidesAnchor),
+                  top: studentsAnchor.bottom + 8,
+                  left: studentsMenuLeft(studentsAnchor),
                 }}
               >
-                {GUIDE_NAV_ITEMS.map((item) => (
+                {STUDENT_NAV_ITEMS.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
                     role="menuitem"
                     className="block px-4 py-2.5 text-sm leading-snug text-gray-700 hover:bg-gray-50"
-                    onClick={closeGuidesMenu}
+                    onClick={closeStudentsMenu}
                   >
                     {item.label}
                   </Link>
@@ -324,16 +307,15 @@ export default function Header() {
     )
   }
 
-  function renderGuidesNavMobile() {
-    if (GUIDE_NAV_ITEMS.length === 0) return null
+  function renderStudentsNavMobile() {
     return (
       <div>
-        <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Guides</p>
-        {GUIDE_NAV_ITEMS.map((item) => (
+        <p className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">For students</p>
+        {STUDENT_NAV_ITEMS.map((item) => (
           <Link
             key={item.to}
             to={item.to}
-            className="block px-4 py-2.5 pl-6 text-sm text-gray-800 hover:bg-gray-50"
+            className={`${mobileDrawerRowClass} pl-8 text-gray-600`}
             onClick={closeMobileNav}
           >
             {item.label}
@@ -353,12 +335,23 @@ export default function Header() {
 
         <div className="flex min-w-0 items-center justify-center">
           <nav
-            className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-5 xl:gap-6"
+            className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
             aria-label="Main"
           >
-            {MAIN_NAV.slice(0, 2).map((item) => renderMainNavLink(item))}
-            {renderGuidesNavDesktop()}
-            {MAIN_NAV.slice(2).map((item) => renderMainNavLink(item))}
+            <Link to="/listings" className={mainNavLinkClass} {...listingsNavWarm}>
+              Listings
+            </Link>
+            {renderStudentsNavDesktop()}
+            <Link to="/pricing" className={mainNavLinkClass}>
+              Pricing
+            </Link>
+            <span className="mx-0.5 hidden h-4 w-px bg-[#1B2A4A]/15 lg:inline" aria-hidden />
+            <Link to={LANDLORD_NAV_TO} className={secondaryNavLinkClass}>
+              For landlords
+            </Link>
+            <Link to="/for-universities" className={secondaryNavLinkClass}>
+              Universities
+            </Link>
           </nav>
           <nav
             className="flex md:hidden min-w-0 items-center justify-center gap-3 overflow-x-hidden"
@@ -368,12 +361,8 @@ export default function Header() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={
-                  item.to === '/listings'
-                    ? mobileListingsPillClass
-                    : 'hidden whitespace-nowrap text-xs text-gray-600 hover:text-gray-900 min-[400px]:inline sm:text-sm'
-                }
-                {...(item.to === '/listings' ? listingsNavWarm : {})}
+                className={mobileListingsPillClass}
+                {...listingsNavWarm}
               >
                 {item.label}
               </Link>
@@ -528,7 +517,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
-            className="inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50"
+            className="inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 min-h-11 min-w-11"
             aria-expanded={mobileNavOpen}
             aria-haspopup="true"
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
@@ -559,7 +548,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
-                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-50"
+                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 min-h-11 min-w-11 inline-flex items-center justify-center"
                   aria-label="Close menu"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -571,31 +560,23 @@ export default function Header() {
                 className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain py-2 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
                 aria-label="Mobile"
               >
-                {MAIN_NAV.slice(0, 2).map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="block px-4 py-3 text-sm text-gray-800 hover:bg-gray-50"
-                    onClick={closeMobileNav}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-                {renderGuidesNavMobile()}
-                {MAIN_NAV.slice(2).map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="block px-4 py-3 text-sm text-gray-800 hover:bg-gray-50"
-                    onClick={closeMobileNav}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                <Link to="/listings" className={mobileDrawerRowClass} onClick={closeMobileNav} {...listingsNavWarm}>
+                  Listings
+                </Link>
+                {renderStudentsNavMobile()}
+                <Link to="/pricing" className={mobileDrawerRowClass} onClick={closeMobileNav}>
+                  Pricing
+                </Link>
+                <Link to={LANDLORD_NAV_TO} className={mobileDrawerRowClass} onClick={closeMobileNav}>
+                  For landlords
+                </Link>
+                <Link to="/for-universities" className={mobileDrawerRowClass} onClick={closeMobileNav}>
+                  Universities
+                </Link>
                 <div className="border-t border-gray-100 my-1" />
                 <Link
                   to="/landlords/ai"
-                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-[#FF6F61] hover:bg-[#FF6F61]/5"
+                  className={`${mobileDrawerRowClass} gap-2 font-medium text-[#FF6F61]`}
                   onClick={closeMobileNav}
                 >
                   <AiSparkleIcon className="h-5 w-5 shrink-0" />
@@ -604,20 +585,20 @@ export default function Header() {
                 {role === 'admin' && (
                   <Link
                     to="/admin"
-                    className="block px-4 py-3 text-sm font-medium text-indigo-600 hover:bg-gray-50"
+                    className={`${mobileDrawerRowClass} font-medium text-indigo-600`}
                     onClick={closeMobileNav}
                   >
                     Admin dashboard
                   </Link>
                 )}
                 <div className="border-t border-gray-100 my-2" />
-                <div className="space-y-3 px-4 pb-2">
+                <div className="space-y-1 px-0 pb-2">
                   {user ? (
                     <>
                       {showMessagesNav && (
                         <Link
                           to="/messages"
-                          className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                          className={`${mobileDrawerRowClass} gap-2 font-medium text-gray-900`}
                           onClick={closeMobileNav}
                         >
                           Messages
@@ -631,7 +612,7 @@ export default function Header() {
                       {showDashboardInAuth && (
                         <Link
                           to={dashboardHref}
-                          className="block text-sm font-medium text-gray-900 hover:text-gray-700"
+                          className={`${mobileDrawerRowClass} font-medium text-gray-900`}
                           onClick={closeMobileNav}
                         >
                           Dashboard
@@ -640,7 +621,7 @@ export default function Header() {
                       {needsOnboarding(role, profile) ? (
                         <Link
                           to={finishSetupHref(role)}
-                          className="block text-sm text-amber-700"
+                          className={`${mobileDrawerRowClass} text-amber-700`}
                           onClick={closeMobileNav}
                         >
                           Finish setup
@@ -648,7 +629,7 @@ export default function Header() {
                       ) : role !== 'admin' ? (
                         <Link
                           to={profileHref}
-                          className="block text-sm text-gray-600 hover:text-gray-900"
+                          className={`${mobileDrawerRowClass} text-gray-600`}
                           onClick={closeMobileNav}
                         >
                           Profile
@@ -657,20 +638,28 @@ export default function Header() {
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="text-sm text-red-600 hover:text-red-700"
+                        className={`${mobileDrawerRowClass} w-full text-left text-red-600`}
                       >
                         Sign out
                       </button>
                     </>
                   ) : (
-                    <Link
-                      to="/login"
-                      className="block text-sm text-gray-600 hover:text-gray-900"
-                      onClick={closeMobileNav}
-                    >
+                    <Link to="/login" className={`${mobileDrawerRowClass} text-gray-600`} onClick={closeMobileNav}>
                       Log in
                     </Link>
                   )}
+                </div>
+                <div className="border-t border-gray-100 my-2" />
+                <Link to="/about" className={`${mobileDrawerRowClass} gap-3 text-gray-700`} onClick={closeMobileNav}>
+                  <Info className="h-5 w-5 shrink-0 text-[#1B2A4A]/70" aria-hidden />
+                  About
+                </Link>
+                <Link to="/contact" className={`${mobileDrawerRowClass} gap-3 text-gray-700`} onClick={closeMobileNav}>
+                  <Mail className="h-5 w-5 shrink-0 text-[#1B2A4A]/70" aria-hidden />
+                  Contact
+                </Link>
+                <div className="px-4 pt-3 pb-4">
+                  <SiteSocialLinks variant="drawer" />
                 </div>
               </nav>
             </div>

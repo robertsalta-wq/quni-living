@@ -20,7 +20,9 @@ function GuideBreadcrumbs(props: { headline: string }) {
           /
         </li>
         <li>
-          <span className="text-gray-500">Guides</span>
+          <Link to="/guides" className="text-indigo-600 hover:underline">
+            Guides
+          </Link>
         </li>
         <li aria-hidden className="text-gray-300">
           /

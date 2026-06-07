@@ -3,6 +3,7 @@ import { MARKETPLACE_TAGLINE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { listGuideNavItems } from '../lib/guides/registry'
 import AiSparkleIcon from './AiSparkleIcon'
 import LegalFooter from './LegalFooter'
+import SiteSocialLinks from './SiteSocialLinks'
 
 function IconPhone(props: { className?: string }) {
   return (
@@ -63,6 +64,7 @@ export default function Footer() {
               />
             </Link>
             <p className="mt-4 text-sm leading-relaxed max-w-xs">{MARKETPLACE_TAGLINE}</p>
+            <SiteSocialLinks variant="footer" className="mt-5" />
           </div>
 
           <div className="space-y-8">
@@ -85,6 +87,11 @@ export default function Footer() {
               <div>
                 <h2 className="font-display font-bold text-lg text-white mb-4">Guides</h2>
                 <ul className="space-y-2.5">
+                  <li>
+                    <Link to="/guides" className={linkClass}>
+                      All guides →
+                    </Link>
+                  </li>
                   {GUIDE_NAV_ITEMS.map((item) => (
                     <li key={item.to}>
                       <Link to={item.to} className={linkClass}>
