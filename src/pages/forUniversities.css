@@ -127,7 +127,8 @@
   margin-bottom: 0.375rem;
 }
 
-.for-universities-doc .partnership-form-field input {
+.for-universities-doc .partnership-form-field input,
+.for-universities-doc .partnership-form-field textarea {
   width: 100%;
   border: 1px solid var(--partnership-mint-border);
   border-radius: 6px;
@@ -138,7 +139,14 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.for-universities-doc .partnership-form-field input:focus {
+.for-universities-doc .partnership-form-field textarea {
+  resize: vertical;
+  min-height: 6rem;
+  line-height: 1.45;
+}
+
+.for-universities-doc .partnership-form-field input:focus,
+.for-universities-doc .partnership-form-field textarea:focus {
   outline: none;
   border-color: var(--partnership-coral);
   box-shadow: 0 0 0 2px rgba(255, 111, 97, 0.2);

@@ -47,6 +47,7 @@ function PartnershipEnquiryForm() {
   const [institution, setInstitution] = useState('')
   const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
+  const [notes, setNotes] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<'name' | 'institution' | 'role' | 'email', string>>>(
     {},
   )
@@ -92,7 +93,15 @@ function PartnershipEnquiryForm() {
       return
     }
 
-    const message = `Institution: ${institution.trim()}\nYour role: ${role.trim()}\n\n—\nSubmitted via /for-universities partnership form`
+    const notesTrimmed = notes.trim()
+    const message = [
+      `Institution: ${institution.trim()}`,
+      `Your role: ${role.trim()}`,
+      notesTrimmed ? `\nMessage:\n${notesTrimmed}` : '',
+      '\n—\nSubmitted via /for-universities partnership form',
+    ]
+      .filter(Boolean)
+      .join('\n')
 
     setSubmitting(true)
     try {
@@ -119,6 +128,7 @@ function PartnershipEnquiryForm() {
       setInstitution('')
       setRole('')
       setEmail('')
+      setNotes('')
       setCaptchaToken(null)
       setCaptchaResetKey((k) => k + 1)
     } catch {
@@ -215,6 +225,17 @@ function PartnershipEnquiryForm() {
                 {fieldErrors.email}
               </p>
             ) : null}
+          </div>
+          <div className="partnership-form-field">
+            <label htmlFor="partnership-notes">Message</label>
+            <textarea
+              id="partnership-notes"
+              name="message"
+              rows={4}
+              value={notes}
+              onChange={(ev) => setNotes(ev.target.value)}
+              placeholder="Optional — tell us what you're looking for or any questions."
+            />
           </div>
 
           {showCaptcha ? (
