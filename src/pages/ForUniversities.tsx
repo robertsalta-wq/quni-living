@@ -1,14 +1,245 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
-import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT } from '../lib/site'
+import TurnstileCaptcha from '../components/TurnstileCaptcha'
+import { apiUrl } from '../lib/apiUrl'
+import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_ALT, ORGANIZATION_EMAIL } from '../lib/site'
+import {
+  REFERENCE_COVERAGE_CAMPUS_COUNT,
+  REFERENCE_COVERAGE_UNIVERSITY_COUNT,
+} from '../lib/universityCampusReference'
+import { isTurnstileSiteKeyConfigured } from '../lib/verifyTurnstile'
 import './forUniversities.css'
 
 const BODY_CLASS = 'for-universities-page'
+const FORM_ID = 'partnership-form'
+const PARTNERSHIP_SUBJECT = 'Partnership - University (for-universities)'
 
 const SEO_TITLE = 'University partnerships'
 const SEO_DESCRIPTION =
   'Partnership overview for university accommodation and international offices. A fair, verified place to send your international students.'
+
+const SUCCESS_MESSAGE = "Thanks. We'll be in touch shortly about a Quni partnership."
+const ERROR_MESSAGE = 'Something went wrong. Please try again, or email us directly.'
+
+const UNIVERSITY_WIN_COPY =
+  'Give your students a fair, verified alternative to a private rental market where international students are often screened out, and take routine housing queries off your office\u2019s plate.'
+
+const COVERAGE_COPY = `Quni is built around ${REFERENCE_COVERAGE_UNIVERSITY_COUNT} universities and ${REFERENCE_COVERAGE_CAMPUS_COUNT} campuses across Australia.`
+
+const PRINT_CONTACT_COPY = `To discuss a partnership, contact Quni Living at ${ORGANIZATION_EMAIL} or visit quni.com.au/for-universities.`
+
+function scrollToPartnershipForm() {
+  document.getElementById(FORM_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function PartnershipCtaButton() {
+  return (
+    <button type="button" className="partnership-cta partnership-web-only" onClick={scrollToPartnershipForm}>
+      Start a partnership conversation
+    </button>
+  )
+}
+
+function PartnershipEnquiryForm() {
+  const [showCaptcha, setShowCaptcha] = useState(false)
+  const [name, setName] = useState('')
+  const [institution, setInstitution] = useState('')
+  const [role, setRole] = useState('')
+  const [email, setEmail] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'name' | 'institution' | 'role' | 'email', string>>>(
+    {},
+  )
+  const [formError, setFormError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaResetKey, setCaptchaResetKey] = useState(0)
+
+  function validate(): boolean {
+    const errors: Partial<Record<'name' | 'institution' | 'role' | 'email', string>> = {}
+    const n = name.trim()
+    const inst = institution.trim()
+    const r = role.trim()
+    const em = email.trim()
+
+    if (!n) errors.name = 'Please enter your name.'
+    if (!inst) errors.institution = 'Please enter your institution.'
+    if (!r) errors.role = 'Please enter your role.'
+    if (!em) errors.email = 'Please enter your work email.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) errors.email = 'Please enter a valid email address.'
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setFormError(null)
+    if (!validate()) return
+
+    if (!isTurnstileSiteKeyConfigured()) {
+      setFormError('This form is not available right now. Please email hello@quni.com.au directly.')
+      return
+    }
+
+    if (!showCaptcha) {
+      setShowCaptcha(true)
+    }
+
+    if (!captchaToken?.trim()) {
+      setFormError('Please complete the verification step.')
+      return
+    }
+
+    const message = `Institution: ${institution.trim()}\nYour role: ${role.trim()}\n\n—\nSubmitted via /for-universities partnership form`
+
+    setSubmitting(true)
+    try {
+      const res = await fetch(apiUrl('/api/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          subject: PARTNERSHIP_SUBJECT,
+          message,
+          turnstileToken: captchaToken,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+      if (!res.ok || !data.ok) {
+        setFormError(ERROR_MESSAGE)
+        setCaptchaToken(null)
+        setCaptchaResetKey((k) => k + 1)
+        return
+      }
+      setSent(true)
+      setName('')
+      setInstitution('')
+      setRole('')
+      setEmail('')
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
+    } catch {
+      setFormError(ERROR_MESSAGE)
+      setCaptchaToken(null)
+      setCaptchaResetKey((k) => k + 1)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <section id={FORM_ID} className="partnership-enquiry partnership-web-only" aria-labelledby="partnership-form-heading">
+      <h2 id="partnership-form-heading" className="partnership-enquiry-heading">
+        Start a partnership conversation
+      </h2>
+      <p className="partnership-enquiry-intro">{UNIVERSITY_WIN_COPY}</p>
+      <p className="partnership-enquiry-coverage">{COVERAGE_COPY}</p>
+
+      {sent ? (
+        <p className="partnership-form-success" role="status">
+          {SUCCESS_MESSAGE}
+        </p>
+      ) : (
+        <form className="partnership-form" onSubmit={handleSubmit} noValidate>
+          <div className="partnership-form-field">
+            <label htmlFor="partnership-name">Name</label>
+            <input
+              id="partnership-name"
+              type="text"
+              name="name"
+              required
+              autoComplete="name"
+              value={name}
+              onChange={(ev) => setName(ev.target.value)}
+              aria-invalid={fieldErrors.name ? true : undefined}
+            />
+            {fieldErrors.name ? (
+              <p className="partnership-form-field-error" role="alert">
+                {fieldErrors.name}
+              </p>
+            ) : null}
+          </div>
+          <div className="partnership-form-field">
+            <label htmlFor="partnership-institution">Institution</label>
+            <input
+              id="partnership-institution"
+              type="text"
+              name="institution"
+              required
+              autoComplete="organization"
+              value={institution}
+              onChange={(ev) => setInstitution(ev.target.value)}
+              aria-invalid={fieldErrors.institution ? true : undefined}
+            />
+            {fieldErrors.institution ? (
+              <p className="partnership-form-field-error" role="alert">
+                {fieldErrors.institution}
+              </p>
+            ) : null}
+          </div>
+          <div className="partnership-form-field">
+            <label htmlFor="partnership-role">Your role</label>
+            <input
+              id="partnership-role"
+              type="text"
+              name="role"
+              required
+              autoComplete="organization-title"
+              value={role}
+              onChange={(ev) => setRole(ev.target.value)}
+              aria-invalid={fieldErrors.role ? true : undefined}
+            />
+            {fieldErrors.role ? (
+              <p className="partnership-form-field-error" role="alert">
+                {fieldErrors.role}
+              </p>
+            ) : null}
+          </div>
+          <div className="partnership-form-field">
+            <label htmlFor="partnership-email">Work email</label>
+            <input
+              id="partnership-email"
+              type="email"
+              name="email"
+              required
+              autoComplete="work email"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+              aria-invalid={fieldErrors.email ? true : undefined}
+            />
+            {fieldErrors.email ? (
+              <p className="partnership-form-field-error" role="alert">
+                {fieldErrors.email}
+              </p>
+            ) : null}
+          </div>
+
+          {showCaptcha ? (
+            <TurnstileCaptcha
+              resetKey={captchaResetKey}
+              onTokenChange={setCaptchaToken}
+              disabled={submitting}
+              labelClassName="partnership-form-captcha-label"
+            />
+          ) : null}
+
+          {formError ? (
+            <p className="partnership-form-error" role="alert">
+              {formError}
+            </p>
+          ) : null}
+
+          <button type="submit" className="partnership-form-submit" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Send'}
+          </button>
+        </form>
+      )}
+    </section>
+  )
+}
 
 export default function ForUniversities() {
   useEffect(() => {
@@ -27,7 +258,11 @@ export default function ForUniversities() {
       />
       <div className="for-universities-shell mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <article className="for-universities-doc">
-          <button type="button" className="partnership-print-btn" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="partnership-print-btn partnership-web-only"
+            onClick={() => window.print()}
+          >
             Print
           </button>
 
@@ -54,6 +289,8 @@ export default function ForUniversities() {
           </div>
 
           <p className="partnership-lede">A fair, verified place to send your international students.</p>
+
+          <PartnershipCtaButton />
 
           <h2 className="partnership-section-title">The problem your students keep running into</h2>
           <p>
@@ -154,7 +391,13 @@ export default function ForUniversities() {
             part that&apos;s enforced deterministically in code, and we keep the records to back it.
           </div>
 
-          <div className="partnership-doc-footer">
+          <PartnershipCtaButton />
+
+          <PartnershipEnquiryForm />
+
+          <p className="partnership-print-only partnership-print-contact">{PRINT_CONTACT_COPY}</p>
+
+          <div className="partnership-doc-footer partnership-web-only">
             <div>
               <span className="partnership-talk">Let&apos;s talk.</span>
               <span className="partnership-contact">

@@ -762,3 +762,7 @@ export function universityShortLabel(u: {
   if (slug) return slug.toUpperCase()
   return u.name
 }
+
+/** Row counts in `supabase/universities_campuses_seed.sql` (full Australian reference coverage). */
+export const REFERENCE_COVERAGE_UNIVERSITY_COUNT = 41
+export const REFERENCE_COVERAGE_CAMPUS_COUNT = 122
