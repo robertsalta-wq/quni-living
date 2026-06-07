@@ -66,6 +66,7 @@ type PropertySummary = Pick<
   | 'featured'
   | 'created_at'
   | 'service_tier'
+  | 'authority_to_let_attested_at'
 >
 
 /** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
@@ -519,7 +520,7 @@ export default function LandlordDashboard() {
       const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier')
+          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier, authority_to_let_attested_at')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),

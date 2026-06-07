@@ -2,6 +2,10 @@ import { useCallback, useState } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 import type { Database } from '../lib/database.types'
 import { supabase } from '../lib/supabase'
+import {
+  AUTHORITY_TO_LET_BLOCKED_MESSAGE,
+  propertyHasAuthorityToLetAttestation,
+} from '../lib/authorityToLetAttestation'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 
@@ -9,7 +13,10 @@ type PropertyRow = Database['public']['Tables']['properties']['Row']
 
 export type LandlordPropertyDuplicateTarget = Pick<PropertyRow, 'id' | 'title'>
 
-export type LandlordPropertyForListingActions = Pick<PropertyRow, 'id' | 'title' | 'slug' | 'status'>
+export type LandlordPropertyForListingActions = Pick<
+  PropertyRow,
+  'id' | 'title' | 'slug' | 'status' | 'authority_to_let_attested_at'
+>
 
 export function useLandlordPropertyListingActions(args: {
   reload: () => Promise<void>
@@ -30,6 +37,10 @@ export function useLandlordPropertyListingActions(args: {
   const publishDraftListing = useCallback(
     async (property: LandlordPropertyForListingActions) => {
       if (property.status !== 'draft') return
+      if (!propertyHasAuthorityToLetAttestation(property)) {
+        showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+        return
+      }
       setPublishingListingId(property.id)
       try {
         const { error: updateError } = await supabase.from('properties').update({ status: 'active' }).eq('id', property.id)
@@ -75,6 +86,10 @@ export function useLandlordPropertyListingActions(args: {
     async (property: LandlordPropertyForListingActions) => {
       if (property.status !== 'active' && property.status !== 'inactive') return
       const nextStatus: PropertyRow['status'] = property.status === 'active' ? 'inactive' : 'active'
+      if (nextStatus === 'active' && !propertyHasAuthorityToLetAttestation(property)) {
+        showToast({ kind: 'error', message: AUTHORITY_TO_LET_BLOCKED_MESSAGE })
+        return
+      }
       setUpdatingListingId(property.id)
       try {
         const { error: updateError } = await withSentryMonitoring('LandlordPropertyListing/toggle-status', () =>

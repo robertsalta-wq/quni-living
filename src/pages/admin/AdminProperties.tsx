@@ -14,6 +14,20 @@ type AdminPropertyStatus = PropertyStatus | 'suspended'
 
 type PropertyRow = Omit<Database['public']['Tables']['properties']['Row'], 'status'> & { status: AdminPropertyStatus }
 
+type ListerRoleFilter = 'all' | 'head_tenant'
+
+function authorityToLetBadgeClass(attested: boolean) {
+  return attested ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+}
+
+function listerRoleBadgeClass(role: PropertyRow['lister_role']) {
+  return role === 'head_tenant' ? 'bg-[#FF6F61]/15 text-[#1B2A4A]' : 'bg-slate-100 text-slate-700'
+}
+
+function listerRoleLabel(role: PropertyRow['lister_role']) {
+  return role === 'head_tenant' ? 'Head-tenant' : 'Owner'
+}
+
 function statusBadgeClass(s: AdminPropertyStatus) {
   switch (s) {
     case 'active':
@@ -40,6 +54,22 @@ export default function AdminProperties() {
   const [searchParams, setSearchParams] = useSearchParams()
   const feesParam = searchParams.get('fees')
   const feesPropertyId = useMemo(() => (feesParam && UUID_RE.test(feesParam) ? feesParam : null), [feesParam])
+  const listerRoleFilter = (searchParams.get('lister_role') ?? 'all') as ListerRoleFilter
+
+  const setListerRoleFilter = useCallback(
+    (next: ListerRoleFilter) => {
+      setSearchParams(
+        (prev) => {
+          const params = new URLSearchParams(prev)
+          if (next === 'all') params.delete('lister_role')
+          else params.set('lister_role', next)
+          return params
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
 
   const openFeesModal = useCallback(
     (propertyId: string) => {
@@ -70,6 +100,11 @@ export default function AdminProperties() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const filteredRows = useMemo(() => {
+    if (listerRoleFilter !== 'head_tenant') return rows
+    return rows.filter((row) => row.lister_role === 'head_tenant')
+  }, [rows, listerRoleFilter])
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -131,6 +166,37 @@ export default function AdminProperties() {
 
       <AdminPageHeader title="Properties" subtitle="All listings across every status." />
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-gray-500">Lister role:</span>
+        <button
+          type="button"
+          onClick={() => setListerRoleFilter('all')}
+          className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+            listerRoleFilter === 'all'
+              ? 'bg-[#1B2A4A] text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          onClick={() => setListerRoleFilter('head_tenant')}
+          className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+            listerRoleFilter === 'head_tenant'
+              ? 'bg-[#FF6F61] text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Head-tenant
+        </button>
+        {listerRoleFilter === 'head_tenant' ? (
+          <span className="text-xs text-gray-500">
+            {filteredRows.length} listing{filteredRows.length === 1 ? '' : 's'}
+          </span>
+        ) : null}
+      </div>
+
       {error && (
         <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
           {error}
@@ -146,6 +212,12 @@ export default function AdminProperties() {
             title="No properties yet"
             description="Listings appear here as soon as landlords publish them."
           />
+        ) : filteredRows.length === 0 ? (
+          <EmptyState
+            icon="filter"
+            title="No head-tenant listings"
+            description="No listings match the head-tenant filter."
+          />
         ) : (
           <table className="min-w-full border-collapse">
             <thead>
@@ -154,6 +226,8 @@ export default function AdminProperties() {
                 <th className={adminThClass}>Price / week</th>
                 <th className={adminThClass}>Room type</th>
                 <th className={adminThClass}>Status</th>
+                <th className={adminThClass}>Authority to let</th>
+                <th className={adminThClass}>Lister role</th>
                 <th className={adminThClass}>Featured</th>
                 <th className={adminThClass}>Fees</th>
                 <th className={adminThClass}>View</th>
@@ -161,7 +235,7 @@ export default function AdminProperties() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {filteredRows.map((row) => {
                   const thumb = firstPropertyImageUrl(row.images)?.trim()
                   return (
                     <tr key={row.id}>
@@ -204,6 +278,20 @@ export default function AdminProperties() {
                             <option value="suspended">suspended</option>
                           </select>
                         </div>
+                      </td>
+                      <td className={adminTdClass}>
+                        <span
+                          className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${authorityToLetBadgeClass(Boolean(row.authority_to_let_attested_at))}`}
+                        >
+                          {row.authority_to_let_attested_at ? 'Attested' : 'Not attested'}
+                        </span>
+                      </td>
+                      <td className={adminTdClass}>
+                        <span
+                          className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${listerRoleBadgeClass(row.lister_role ?? 'owner')}`}
+                        >
+                          {listerRoleLabel(row.lister_role ?? 'owner')}
+                        </span>
                       </td>
                       <td className={adminTdClass}>
                         <label className="inline-flex cursor-pointer items-center gap-2">

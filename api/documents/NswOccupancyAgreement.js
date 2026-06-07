@@ -570,7 +570,7 @@ function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisp
     const pct = formatManagedFeePercent(managedFeePercent);
     return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`;
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted \u2014 it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
+  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
 }
 
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
@@ -589,7 +589,7 @@ function formatAuDate(iso) {
 function yn(v) {
   if (v === true) return "Yes";
   if (v === false) return "No";
-  return "\u2014";
+  return "-";
 }
 function LicenceFooter({
   content,
@@ -789,8 +789,8 @@ function LicenceOccupyDocument({
 // src/lib/documents/nsw/occupancyContent.ts
 var NSW_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
-  docSubtitle: "New South Wales \u2014 Licence to occupy (on-site accommodation)",
-  draftFooter: "Draft for legal review \u2014 not for execution",
+  docSubtitle: "New South Wales - Licence to occupy (on-site accommodation)",
+  draftFooter: "Draft for legal review - not for execution",
   natureParagraphs: [
     "This document is a common-law licence to occupy a specified room within residential premises in New South Wales. It is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW).",
     "The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
@@ -852,7 +852,7 @@ var NSW_OCCUPANCY_PDF_MARKERS = [
   "Security deposit",
   "Residential Tenancies Act 2010",
   "not lodged with NSW Fair Trading",
-  "The resident pays no Quni platform fee"
+  "The resident is not required to pay Quni platform fees"
 ];
 
 // src/lib/documents/nsw/occupancyGenerator.tsx

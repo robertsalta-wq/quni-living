@@ -44,9 +44,9 @@ report to the lessor or lessor\u2019s agent under section 65.
 obligations under this agreement.
 (3) Each tenant named in item 2 \u2013
 (a) holds their interest in the tenancy \u2013
-(i) if a special term states the tenants are joint tenants\u2014as
+(i) if a special term states the tenants are joint tenants-as
 a joint tenant; or
-(ii) otherwise\u2014as a tenant in common; and
+(ii) otherwise-as a tenant in common; and
 (b) must perform all the tenant\u2019s obligations under this agreement.
 Division 2 Entering tenancy
 4 	Start of tenancy
@@ -454,7 +454,7 @@ the premises only if \u2013
 for approval to attach the fixture or make the structural
 change; and
 (b) the lessor agrees to the request; and
-(c) for body corporate premises\u2014the body corporate agrees to
+(c) for body corporate premises-the body corporate agrees to
 the request; and
 (d) the fixture is attached, or structural change is made, in
 accordance with the lessor\u2019s agreement.
@@ -465,7 +465,7 @@ the fixture to a wall.
 (2) The lessor must \u2013
 (a) decide the request \u2013
 (i) within 28 days after receiving the request; or
-(ii) if the premises are not body corporate premises\u2014within
+(ii) if the premises are not body corporate premises-within
 a longer period, if agreed to by the tenant and lessor; and
 (b) advise the tenant of the lessor\u2019s decision; and
 (c) if the lessor agrees to the request and the premises are body
@@ -1075,7 +1075,7 @@ function rentDueWeekdayFromCommencement(isoDate) {
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.toLocaleDateString("en-AU", { weekday: "long", timeZone: "UTC" });
 }
-var FORM_REFERENCE_LINE = "Form 18a \u2014 General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.";
+var FORM_REFERENCE_LINE = "Form 18a - General tenancy agreement (RTA Queensland; PDF v23 Sep25). Prescribed standard terms in Part 2 are reproduced verbatim from the published form.";
 var QUNI_RENT_PORTAL_URL = "https://quni.com.au";
 function item9RentPaymentMethodPair(preference) {
   if (preference === "quni_platform") {
@@ -1091,7 +1091,7 @@ function item9RentPaymentMethodPair(preference) {
 }
 var FORM18A_PART3_FORM17A_NOTICE = [
   "The tenant/s must receive a copy of the information statement (Form 17a) and a copy of any applicable by-laws if copies have not",
-  "previously been given to the tenant/s. Do not send to the RTA\u2014give this form to the tenant/s, keep a copy for your records."
+  "previously been given to the tenant/s. Do not send to the RTA-give this form to the tenant/s, keep a copy for your records."
 ].join(" ");
 var FORM18A_PART3_INTERPRETER_LINE = "Other languages: You can access a free interpreter service by calling the RTA on 1300 366 311 (Monday to Friday, 8:30am to 5:00pm).";
 var styles = StyleSheet.create({
@@ -1250,7 +1250,7 @@ function agreementMadeOnFromGeneratedAt(generatedAt) {
 }
 function suburbFromAddressLine(addressLine) {
   const t = addressLine.trim();
-  if (!t || t === "\u2014") return t || "\u2014";
+  if (!t || t === "-") return t || "-";
   const parts = t.split(",").map((s) => s.trim()).filter(Boolean);
   const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p));
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t;
@@ -1391,7 +1391,7 @@ function QldGeneralTenancyAgreement(props) {
   const periodWord = rentFrequencyNoun(freq);
   const elecLine = (v) => v && v.trim() ? v.trim() : "";
   const endDateText = term.periodic || !term.endDate ? null : formatAuDate(term.endDate);
-  const incLine = premisesInclusionsLine && premisesInclusionsLine.trim() ? premisesInclusionsLine.trim() : "\u2014";
+  const incLine = premisesInclusionsLine && premisesInclusionsLine.trim() ? premisesInclusionsLine.trim() : "-";
   const maxOcc = props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted) ? String(props.maxOccupantsPermitted) : null;
   const clauseChunks = chunkText(FORM18A_PART2_STANDARD_TERMS, 2600);
   let pageNum = 0;
@@ -1411,10 +1411,10 @@ function QldGeneralTenancyAgreement(props) {
         /* @__PURE__ */ jsx2(Text2, { style: styles.labelBold, children: " AT: " }),
         atSuburb
       ] }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 1 \u2014 Lessor" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 1 - Lessor" }),
       /* @__PURE__ */ jsx2(Field, { label: "1.1 Name/trading name:", children: landlord.fullName }),
       /* @__PURE__ */ jsx2(Field, { label: "Address:", children: landlord.addressLine }),
-      /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: landlordPostcode.trim() || "\u2014" }),
+      /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: landlordPostcode.trim() || "-" }),
       /* @__PURE__ */ jsx2(
         Field,
         {
@@ -1422,38 +1422,38 @@ function QldGeneralTenancyAgreement(props) {
           children: `Phone: ${landlord.phone} \xB7 Email: ${landlord.email}`
         }
       ),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 2 \u2014 Tenant/s" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 2 - Tenant/s" }),
       /* @__PURE__ */ jsx2(Field, { label: "2.1 (1) Full name/s:", children: tenant.fullName }),
       /* @__PURE__ */ jsx2(Field, { label: "Phone / Email:", children: `${tenant.phone} \xB7 ${tenant.email}` }),
       /* @__PURE__ */ jsx2(
         Field,
         {
           label: "Emergency contact full name/s / phone / email:",
-          children: tenant.emergencyContactName || tenant.emergencyContactPhone ? `${tenant.emergencyContactName ?? "\u2014"} \xB7 ${tenant.emergencyContactPhone ?? "\u2014"}` : "\u2014"
+          children: tenant.emergencyContactName || tenant.emergencyContactPhone ? `${tenant.emergencyContactName ?? "-"} \xB7 ${tenant.emergencyContactPhone ?? "-"}` : "-"
         }
       ),
       props.additionalTenantNames[0]?.trim() ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(Field, { label: "2.1 (2) Full name/s:", children: props.additionalTenantNames[0].trim() }),
-        /* @__PURE__ */ jsx2(Field, { label: "Phone / Email:", children: "\u2014" }),
-        /* @__PURE__ */ jsx2(Field, { label: "Emergency contact full name/s / phone / email:", children: "\u2014" })
+        /* @__PURE__ */ jsx2(Field, { label: "Phone / Email:", children: "-" }),
+        /* @__PURE__ */ jsx2(Field, { label: "Emergency contact full name/s / phone / email:", children: "-" })
       ] }) : null,
       props.additionalTenantNames[1]?.trim() ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(Field, { label: "2.1 (3) Full name/s:", children: props.additionalTenantNames[1].trim() }),
-        /* @__PURE__ */ jsx2(Field, { label: "Phone / Email:", children: "\u2014" }),
-        /* @__PURE__ */ jsx2(Field, { label: "Emergency contact full name/s / phone / email:", children: "\u2014" })
+        /* @__PURE__ */ jsx2(Field, { label: "Phone / Email:", children: "-" }),
+        /* @__PURE__ */ jsx2(Field, { label: "Emergency contact full name/s / phone / email:", children: "-" })
       ] }) : null,
       /* @__PURE__ */ jsx2(
         Field,
         {
           label: "2.2 Address for service (if different from premises):",
-          children: tenant.addressForServiceLine?.trim() ? tenant.addressForServiceLine.trim() : "Same as premises \u2014 Item 5.1"
+          children: tenant.addressForServiceLine?.trim() ? tenant.addressForServiceLine.trim() : "Same as premises - Item 5.1"
         }
       ),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 3 \u2014 Lessor\u2019s agent" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 3 - Lessor\u2019s agent" }),
       landlordAgent ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(Field, { label: "3.1 Full name/trading name:", children: landlordAgent.name }),
         /* @__PURE__ */ jsx2(Field, { label: "Address:", children: landlordAgent.businessAddress }),
-        /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: "\u2014" }),
+        /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: "-" }),
         /* @__PURE__ */ jsx2(
           Field,
           {
@@ -1468,33 +1468,33 @@ function QldGeneralTenancyAgreement(props) {
   pages.push(
     /* @__PURE__ */ jsxs2(Page, { size: "A4", style: styles.page, children: [
       /* @__PURE__ */ jsx2(QldTopHeader, { documentId, generatedAt, logoPath }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 4 \u2014 Notices may be given to" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 4 - Notices may be given to" }),
       /* @__PURE__ */ jsx2(
         Field,
         {
-          label: "4.1 Lessor \u2014 consent to email / text / facsimile:",
+          label: "4.1 Lessor - consent to email / text / facsimile:",
           children: `Email: ${electronicService.landlordConsentsToEmailService ? "Yes" : "No"} (${electronicService.landlordEmail})`
         }
       ),
       /* @__PURE__ */ jsx2(
         Field,
         {
-          label: "4.2 Tenant/s \u2014 consent to email / text / facsimile:",
+          label: "4.2 Tenant/s - consent to email / text / facsimile:",
           children: `Email: ${electronicService.tenantConsentsToEmailService ? "Yes" : "No"} (${electronicService.tenantEmail})`
         }
       ),
       /* @__PURE__ */ jsx2(Field, { label: "4.3 Agent:", children: landlordAgent ? "As per Item 3" : "Not applicable" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 5 \u2014 Rental premises" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 5 - Rental premises" }),
       /* @__PURE__ */ jsx2(Field, { label: "5.1 Address of the rental premises:", children: premises.addressLine }),
-      /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: premisesPostcode.trim() || "\u2014" }),
+      /* @__PURE__ */ jsx2(Field, { label: "Postcode:", children: premisesPostcode.trim() || "-" }),
       /* @__PURE__ */ jsx2(Field, { label: "5.2 Inclusions provided:", children: incLine }),
       /* @__PURE__ */ jsx2(Field, { label: "5.3 Details of current repair orders:", children: "None stated" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 6 \u2014 Term" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 6 - Term" }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: Boolean(!term.periodic && term.endDate), label: "fixed term agreement" }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: term.periodic, label: "periodic agreement" }),
       /* @__PURE__ */ jsx2(Field, { label: "6.2 Starting on:", children: formatAuDate(term.startDate) }),
       endDateText ? /* @__PURE__ */ jsx2(Field, { label: "6.3 Ending on:", children: endDateText }) : null,
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Items 7\u20138 \u2014 Rent" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Items 7\u20138 - Rent" }),
       /* @__PURE__ */ jsx2(Field, { label: "Item 7 Rent:", children: `${weeklyRentDisplay} (${freq})` }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: freq === "weekly", label: "weekly" }),
       /* @__PURE__ */ jsx2(CheckboxLine, { checked: freq === "fortnightly", label: "fortnightly" }),
@@ -1506,7 +1506,7 @@ function QldGeneralTenancyAgreement(props) {
           children: `${rentWeekday} of each ${periodWord}`
         }
       ),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 9 \u2014 Methods of rent payment" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 9 - Methods of rent payment" }),
       /* @__PURE__ */ jsx2(Field, { label: "Method 1:", children: item9Methods.method1 }),
       /* @__PURE__ */ jsx2(Field, { label: "Method 2:", children: item9Methods.method2 }),
       rentPaymentBankDetails ? /* @__PURE__ */ jsxs2(Fragment, { children: [
@@ -1515,15 +1515,15 @@ function QldGeneralTenancyAgreement(props) {
         /* @__PURE__ */ jsx2(Field, { label: "Account no.:", children: rentPaymentBankDetails.accountNumber }),
         /* @__PURE__ */ jsx2(Field, { label: "Account name:", children: rentPaymentBankDetails.accountName }),
         /* @__PURE__ */ jsx2(Field, { label: "Payment reference:", children: `Booking ${documentId.slice(0, 8)}\u2026` })
-      ] }) : /* @__PURE__ */ jsx2(Field, { label: "Direct credit details:", children: "\u2014" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 10 \u2014 Place of rent payment" }),
-      /* @__PURE__ */ jsx2(Field, { label: "Place (optional):", children: "As agreed \u2014 electronic transfer" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 11 \u2014 Day of last rent increase" }),
+      ] }) : /* @__PURE__ */ jsx2(Field, { label: "Direct credit details:", children: "-" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 10 - Place of rent payment" }),
+      /* @__PURE__ */ jsx2(Field, { label: "Place (optional):", children: "As agreed - electronic transfer" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 11 - Day of last rent increase" }),
       /* @__PURE__ */ jsx2(
         Field,
         {
           label: "Date:",
-          children: lastRentIncreaseDate ? formatAuDate(lastRentIncreaseDate) : "Not stated \u2014 new tenancy / unknown"
+          children: lastRentIncreaseDate ? formatAuDate(lastRentIncreaseDate) : "Not stated - new tenancy / unknown"
         }
       ),
       /* @__PURE__ */ jsx2(PageFooter, { documentId, pageNumber: nextPage() })
@@ -1532,26 +1532,26 @@ function QldGeneralTenancyAgreement(props) {
   pages.push(
     /* @__PURE__ */ jsxs2(Page, { size: "A4", style: styles.page, children: [
       /* @__PURE__ */ jsx2(QldTopHeader, { documentId, generatedAt, logoPath }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 12 \u2014 Rental bond" }),
-      bondDisplay ? /* @__PURE__ */ jsx2(Field, { label: "Rental bond amount:", children: `${bondDisplay} (payable as required under the Act)` }) : /* @__PURE__ */ jsx2(Field, { label: "Rental bond amount:", children: "\u2014" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 13 \u2014 Services supplied for which tenant must pay" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 12 - Rental bond" }),
+      bondDisplay ? /* @__PURE__ */ jsx2(Field, { label: "Rental bond amount:", children: `${bondDisplay} (payable as required under the Act)` }) : /* @__PURE__ */ jsx2(Field, { label: "Rental bond amount:", children: "-" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 13 - Services supplied for which tenant must pay" }),
       /* @__PURE__ */ jsx2(
         Field,
         {
           label: "13.1 Electricity / gas / phone / other:",
-          children: "As summarised in the Quni Platform Addendum \u2014 rent may include utilities subject to fair use."
+          children: "As summarised in the Quni Platform Addendum - rent may include utilities subject to fair use."
         }
       ),
-      /* @__PURE__ */ jsx2(Field, { label: "13.2 Tenant to pay for water supplied to the premises:", children: "No \u2014 unless stated in special terms" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Items 14\u201315 \u2014 Service costs" }),
+      /* @__PURE__ */ jsx2(Field, { label: "13.2 Tenant to pay for water supplied to the premises:", children: "No - unless stated in special terms" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Items 14\u201315 - Service costs" }),
       /* @__PURE__ */ jsx2(Field, { label: "Item 14 Apportionment (if not individually metered):", children: "See platform addendum / fair use" }),
       /* @__PURE__ */ jsx2(Field, { label: "Item 15 How services must be paid for:", children: "As described in the Quni Platform Addendum" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 16 \u2014 Number of persons allowed to reside" }),
-      maxOcc ? /* @__PURE__ */ jsx2(Field, { label: "Maximum occupants:", children: maxOcc }) : /* @__PURE__ */ jsx2(Field, { label: "Maximum occupants:", children: "\u2014" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 17 \u2014 Body corporate by-laws" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 16 - Number of persons allowed to reside" }),
+      maxOcc ? /* @__PURE__ */ jsx2(Field, { label: "Maximum occupants:", children: maxOcc }) : /* @__PURE__ */ jsx2(Field, { label: "Maximum occupants:", children: "-" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 17 - Body corporate by-laws" }),
       /* @__PURE__ */ jsx2(Field, { label: "17.1 By-laws applicable?", children: "No" }),
       /* @__PURE__ */ jsx2(Field, { label: "17.2 Copy given?", children: "Not applicable" }),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 18 \u2014 Nominated repairers (urgent / emergency)" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 18 - Nominated repairers (urgent / emergency)" }),
       elecLine(urgentRepairsTradespeople.electrician) ? /* @__PURE__ */ jsx2(Field, { label: "Electrical repairs / phone:", children: urgentRepairsTradespeople.electrician }) : null,
       elecLine(urgentRepairsTradespeople.plumber) ? /* @__PURE__ */ jsx2(Field, { label: "Plumbing repairs / phone:", children: urgentRepairsTradespeople.plumber }) : null,
       elecLine(urgentRepairsTradespeople.other) ? /* @__PURE__ */ jsx2(Field, { label: "Other repairs / phone:", children: urgentRepairsTradespeople.other }) : null,
@@ -1559,17 +1559,17 @@ function QldGeneralTenancyAgreement(props) {
         Field,
         {
           label: "Lessor contact for emergency repairs (Item 18):",
-          children: `${landlord.fullName} \u2014 ${landlord.phone}`
+          children: `${landlord.fullName} - ${landlord.phone}`
         }
       ) : null,
       /* @__PURE__ */ jsx2(
         Field,
         {
           label: "18.2 Nominated repairers first point of contact for emergency repairs?",
-          children: "Yes \u2014 otherwise contact lessor using details in Item 1"
+          children: "Yes - otherwise contact lessor using details in Item 1"
         }
       ),
-      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 19 \u2014 Pets" }),
+      /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Item 19 - Pets" }),
       /* @__PURE__ */ jsx2(Field, { label: "Type / number approved:", children: "None unless agreed in writing by the lessor" }),
       bookingNotes ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(Text2, { style: styles.subHeading, children: "Booking notes (reference only)" }),

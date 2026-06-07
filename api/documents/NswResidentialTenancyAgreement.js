@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 // src/lib/documents/ft6600EmbeddedStrings.ts
-var FT6600_TITLE_AND_IMPORTANT = `NSW FAIR TRADING \u2014 RESIDENTIAL TENANCY AGREEMENT
-Form FT6600 \u2014 Updated 17 December 2025
+var FT6600_TITLE_AND_IMPORTANT = `NSW FAIR TRADING - RESIDENTIAL TENANCY AGREEMENT
+Form FT6600 - Updated 17 December 2025
 Standard form from 19 May 2025
 Residential Tenancies Regulation 2019 Schedule 1 Standard Form Agreement (Clause 4(1))
 
@@ -470,7 +470,7 @@ function rentDueWeekdayFromCommencement(isoDate) {
 }
 var CONDITION_REPORT_VERBATIM = "A condition report relating to the condition of the premises must be completed by or on behalf of the landlord before or when this agreement is given to the tenant for signing.";
 var TENANCY_LAWS_VERBATIM = "The Residential Tenancies Act 2010 and the Residential Tenancies Regulation 2019 apply to this agreement. Both the landlord and the tenant must comply with these laws.";
-var FT_FORM_REFERENCE = "FT6600_171225 \u2014 NSW Fair Trading \u2014 Standard form from 19 May 2025";
+var FT_FORM_REFERENCE = "FT6600_171225 - NSW Fair Trading - Standard form from 19 May 2025";
 var styles = StyleSheet.create({
   page: {
     paddingTop: 36,
@@ -616,7 +616,7 @@ function agreementMadeOnFromGeneratedAt(generatedAt) {
 }
 function suburbFromAddressLine(addressLine) {
   const t = addressLine.trim();
-  if (!t || t === "\u2014") return t || "\u2014";
+  if (!t || t === "-") return t || "-";
   const parts = t.split(",").map((s) => s.trim()).filter(Boolean);
   const stateIdx = parts.findIndex((p) => /^(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)$/i.test(p));
   if (stateIdx > 0) return parts[stateIdx - 1] ?? parts[0] ?? t;
@@ -927,7 +927,7 @@ function PageFooter({ documentId, pageNumber }) {
 }
 function rtaScheduleTenantNamePopulated(raw) {
   const t = raw.trim();
-  return t.length > 0 && t !== "\u2014";
+  return t.length > 0 && t !== "-";
 }
 function SignaturesBlock(props) {
   const landlordName = props.landlord.fullName;
@@ -1147,9 +1147,9 @@ function NswResidentialTenancyAgreement(props) {
       ),
       /* @__PURE__ */ jsx(Field, { label: "Are there any strata or community scheme by-laws applicable to the residential premises?", children: "No" }),
       /* @__PURE__ */ jsx(Text, { style: { ...styles.body, fontFamily: "Helvetica-Bold", marginTop: 8 }, children: "Giving notices and other documents electronically" }),
-      /* @__PURE__ */ jsx(Field, { label: "Landlord \u2014 express consent to electronic service?", children: es.landlordConsentsToEmailService ? "Yes" : "No" }),
+      /* @__PURE__ */ jsx(Field, { label: "Landlord - express consent to electronic service?", children: es.landlordConsentsToEmailService ? "Yes" : "No" }),
       es.landlordConsentsToEmailService ? /* @__PURE__ */ jsx(Field, { label: "Landlord email for electronic service:", children: es.landlordEmail }) : null,
-      /* @__PURE__ */ jsx(Field, { label: "Tenant \u2014 express consent to electronic service?", children: es.tenantConsentsToEmailService ? "Yes" : "No" }),
+      /* @__PURE__ */ jsx(Field, { label: "Tenant - express consent to electronic service?", children: es.tenantConsentsToEmailService ? "Yes" : "No" }),
       es.tenantConsentsToEmailService ? /* @__PURE__ */ jsx(Field, { label: "Tenant email for electronic service:", children: es.tenantEmail }) : null,
       /* @__PURE__ */ jsx(Text, { style: { ...styles.subHeading, marginTop: 10 }, children: "Condition report" }),
       /* @__PURE__ */ jsx(Text, { style: styles.body, children: CONDITION_REPORT_VERBATIM }),

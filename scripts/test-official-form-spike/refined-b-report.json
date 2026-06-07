@@ -1,0 +1,49 @@
+{
+  "ranAt": "2026-06-03T03:15:00.000Z",
+  "verdict": "GREEN for mapping; signing anchors approved at page 16 (12,18)/(12,34) per signer-view API check 2026-06-03",
+  "greenCriteria": {
+    "1_twoSubmitters": {
+      "pass": true,
+      "evidence": "Submissions from refined-b-v3-repro.pdf, from-v2+anchors, from-white-v1+anchors via createDocusealSubmissionFromPdf: submitters [First Party, Second Party], 7–8 fields."
+    },
+    "2_tagPlacement": {
+      "pass": "partial - API confirms fields; UI check recommended",
+      "evidence": "Widget tags on pages 16–17 (0-based). Parser anchors at page 16 (12,18) and (12,34) unlock two-party parse; DocuSeal places fields at widget column (~y 0.18–0.78), not on anchor text. Body anchors (40,600)/(40,500) rejected - visible on form body."
+    },
+    "3_filledValuesSurviveFlatten": {
+      "pass": true,
+      "evidence": "pdf-parse finds Spike Test Landlord/Tenant, premises, rent after flatten in refined-b-v2.pdf and step outputs."
+    },
+    "4_noResidualAcroForm": {
+      "pass": true,
+      "evidence": "acroFormFieldCountAfter flatten = 0 on all candidates."
+    }
+  },
+  "refinedBRecipe": {
+    "steps": [
+      "1. Load docs/nsw/residential-tenancy-agreement-form-2025-12.pdf",
+      "2. pdf-lib fill schedule Text fields (mapping doc TBD)",
+      "3. form.flatten() - bake values, strip AcroForm",
+      "4. Overlay production DocuSeal tags at signature widget rects: size 7, color #6b7280 (match NswResidentialTenancyAgreement sigHint)",
+      "5. Add two parser-anchor tags on page index 16 bottom-left: size 14 black {{Landlord Signature;role=First Party;type=signature}} at (12,18) and {{Tenant Signature;role=Second Party;type=signature}} at (12,34) - duplicates intentional; do NOT use body (40,600)/(40,500)",
+      "6. POST via createDocusealSubmissionFromPdf (reencode OK when tags parseable)"
+    ],
+    "doNotUse": "1pt white tags alone - DocuSeal returns 0 fields and 1 submitter"
+  },
+  "deviationsFromProdReactPdf": [
+    "Generated react-pdf sample returns 0 DocuSeal fields without anchors in API tests (tags visible in pdf-parse). Official FT6600 needs anchor tags on signature page in addition to widget-level tags.",
+    "DocuSeal maps tag roles to submitter roles First Party / Second Party in response; API still sends Landlord/Tenant - matches existing production pattern.",
+    "Widget-to-tag mapping for LIS/TIS vs SF1–7 order needs visual validation in DocuSeal UI (not blocking two-party signing)."
+  ],
+  "approachA": "Still dead for two-party signing on raw AcroForm.",
+  "approachB_refined": "GREEN with two-step tag overlay recipe above.",
+  "testSubmissionsToDelete": [
+    "32", "33", "34", "35", "36", "37", "38", "39", "42", "43", "44", "49", "52",
+    "v3-repro and green tests 45+ - delete all spike-*@example.com and spike-*@test.quni.invalid in DocuSeal admin"
+  ],
+  "bestLocalArtifacts": {
+    "spotCheckPdf": "scripts/test-official-form-spike/refined-b-v3-repro.pdf",
+    "or": "scripts/test-official-form-spike/refined-b-flattened-tagged.pdf + anchor step"
+  },
+  "goNoGoFieldMapping": "GO - start docs/nsw/ft6600-acroform-mapping.md"
+}

@@ -73,9 +73,20 @@ import LandlordPropertyFt6600ComplianceFields, {
 import { nswFt6600ComplianceBlockedMessage } from '../../../api/lib/documents/propertyFt6600Compliance.js'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import {
+  AUTHORITY_TO_LET_ATTESTATION_BULLETS,
+  AUTHORITY_TO_LET_ATTESTATION_FOOTER,
+  AUTHORITY_TO_LET_ATTESTATION_INTRO,
+  AUTHORITY_TO_LET_ATTESTATION_LABEL,
+  AUTHORITY_TO_LET_BLOCKED_MESSAGE,
+  authorityToLetAttestationPatch,
+  propertyHasAuthorityToLetAttestation,
+} from '../../lib/authorityToLetAttestation'
+import {
   landlordNonDiscriminationAccepted,
   nonDiscriminationAcceptancePatch,
 } from '../../lib/nonDiscriminationPolicy'
+import HeadTenantSubletHelper from '../../components/landlord/HeadTenantSubletHelper'
+import { parseListerRole, type ListerRole } from '../../lib/sublettingResources'
 
 const FT6600_COMPLIANCE_MIGRATION_HINT =
   'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production - check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
@@ -384,6 +395,9 @@ export default function LandlordPropertyFormPage() {
   const [submitSuccessMessage, setSubmitSuccessMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
+  const [authorityToLetAgreed, setAuthorityToLetAgreed] = useState(false)
+  const [authorityToLetAttestedAt, setAuthorityToLetAttestedAt] = useState<string | null>(null)
+  const [listerRole, setListerRole] = useState<ListerRole>('owner')
 
   const needsNonDiscriminationAcceptance =
     role === 'landlord' && !landlordNonDiscriminationAccepted(landlordProfile)
@@ -446,6 +460,20 @@ export default function LandlordPropertyFormPage() {
   const [suburb, setSuburb] = useState('')
   const [state, setState] = useState('NSW')
   const [postcode, setPostcode] = useState('')
+
+  const listingAddressForSublet = useMemo(
+    () => [address, suburb, state, postcode].filter(Boolean).join(', '),
+    [address, suburb, state, postcode],
+  )
+
+  const listerDisplayName = useMemo(() => {
+    if (!landlordProfile) return ''
+    return (
+      [landlordProfile.first_name, landlordProfile.last_name].filter(Boolean).join(' ').trim() ||
+      landlordProfile.full_name?.trim() ||
+      ''
+    )
+  }, [landlordProfile])
 
   const qldOnSiteBoarderLodger = useMemo(
     () => isQldOnSiteBoarderLodgerListing(state, propertyListingType),
@@ -921,6 +949,10 @@ export default function LandlordPropertyFormPage() {
 
         setExistingSlug(prop.slug)
         setExistingListingStatus(prop.status)
+        const loadedAttestedAt = prop.authority_to_let_attested_at ?? null
+        setAuthorityToLetAttestedAt(loadedAttestedAt)
+        setAuthorityToLetAgreed(Boolean(loadedAttestedAt))
+        setListerRole(parseListerRole(prop.lister_role))
         setTitle(prop.title)
         setDescription(prop.description ?? '')
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
@@ -1768,6 +1800,17 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    const isPublishingNewListing = !isEdit
+    if (
+      isPublishingNewListing &&
+      !propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt }) &&
+      !authorityToLetAgreed
+    ) {
+      reportSubmitError(AUTHORITY_TO_LET_BLOCKED_MESSAGE)
+      document.getElementById('section-authority-to-let')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -1840,6 +1883,10 @@ export default function LandlordPropertyFormPage() {
     const complianceColumns = showNswFt6600ComplianceSection
       ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
       : null
+    const attestationPatch = authorityToLetAttestationPatch({
+      agreed: authorityToLetAgreed,
+      existingAttestedAt: authorityToLetAttestedAt,
+    })
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
       title: t,
@@ -1894,6 +1941,8 @@ export default function LandlordPropertyFormPage() {
             gas_embedded_network: null,
             strata_bylaws_applicable: null,
           }),
+      ...attestationPatch,
+      lister_role: listerRole,
     }
 
     const complianceSelect =
@@ -1952,6 +2001,10 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
+        if (attestationPatch.authority_to_let_attested_at) {
+          setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
+          setAuthorityToLetAgreed(true)
+        }
         if (existingListingStatus === 'draft') {
           navigate('/landlord-dashboard', { replace: true })
         } else {
@@ -2350,6 +2403,66 @@ export default function LandlordPropertyFormPage() {
                     ) : null}
                   </div>
                 ) : null}
+              </div>
+              <div id="section-lister-role" className="space-y-3">
+                <p className="text-sm font-medium text-gray-900">Who is listing this property?</p>
+                <div className="space-y-2">
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-[#FF6F61]/50 has-[:checked]:bg-[#FF6F61]/5">
+                    <input
+                      type="radio"
+                      name="lister-role"
+                      value="owner"
+                      checked={listerRole === 'owner'}
+                      onChange={() => setListerRole('owner')}
+                      className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                    />
+                    <span>I own this property</span>
+                  </label>
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-[#FF6F61]/50 has-[:checked]:bg-[#FF6F61]/5">
+                    <input
+                      type="radio"
+                      name="lister-role"
+                      value="head_tenant"
+                      checked={listerRole === 'head_tenant'}
+                      onChange={() => setListerRole('head_tenant')}
+                      className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                    />
+                    <span>
+                      I rent this property and have my landlord&apos;s written consent to sub-let/transfer
+                    </span>
+                  </label>
+                </div>
+                {listerRole === 'head_tenant' ? (
+                  <HeadTenantSubletHelper
+                    stateCode={state}
+                    listingAddress={listingAddressForSublet}
+                    listerName={listerDisplayName}
+                  />
+                ) : null}
+              </div>
+              <div id="section-authority-to-let">
+                <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={authorityToLetAgreed}
+                    onChange={(e) => {
+                      setAuthorityToLetAgreed(e.target.checked)
+                      if (submitError === AUTHORITY_TO_LET_BLOCKED_MESSAGE) setSubmitError(null)
+                    }}
+                    className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                    aria-describedby="authority-to-let-certification"
+                  />
+                  <span id="authority-to-let-certification" className="space-y-2">
+                    <span className="block font-medium text-gray-900">{AUTHORITY_TO_LET_ATTESTATION_LABEL}</span>
+                    <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_INTRO}</span>
+                    <ul className="list-disc space-y-1 pl-5 text-gray-800">
+                      {AUTHORITY_TO_LET_ATTESTATION_BULLETS.map((bullet) => (
+                        <li key={bullet}>{bullet}</li>
+                      ))}
+                    </ul>
+                    <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_FOOTER}</span>
+                  </span>
+                </label>
               </div>
             </div>,
             'section-property-details',

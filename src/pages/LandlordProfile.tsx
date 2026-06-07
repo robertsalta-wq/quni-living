@@ -30,7 +30,7 @@ import {
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured'
+  'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured' | 'authority_to_let_attested_at'
 >
 
 /** Supabase Storage bucket id (legacy name); stores profile photos of the landlord. */
@@ -323,7 +323,7 @@ export default function LandlordProfile() {
 
       const { data: props, error: lErr } = await supabase
         .from('properties')
-        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured')
+        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, authority_to_let_attested_at')
         .eq('landlord_id', prof.id)
         .order('created_at', { ascending: false })
 

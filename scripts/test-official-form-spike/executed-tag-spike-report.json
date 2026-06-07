@@ -1,0 +1,39 @@
+{
+  "ranAt": "2026-06-04T07:27:33.869Z",
+  "submissionId": 124,
+  "submitters": [
+    {
+      "id": 198,
+      "role": "First Party",
+      "email": "spike.executed.landlord@example.com"
+    },
+    {
+      "id": 199,
+      "role": "Second Party",
+      "email": "spike.executed.tenant@example.com"
+    }
+  ],
+  "fieldCount": 7,
+  "sourceScan": {
+    "label": "source-upload",
+    "curlyCount": 9,
+    "landlordSigMentions": 2,
+    "tenantSigMentions": 2,
+    "hasRoleSyntax": true,
+    "sample": "gnature;role=First Party;type=signature}}\n{{Landlord LIS Date;role=First Party;type=date}}\n{{Tenant Signature;role=Second Party;type=signature}}\n{{Tenant Sign Date;role=Second Party;type=date}}\n{{Tenant TIS Signature;role=Second Party;type=signature}}\n{{Landlord Signature;role=First Party;type=signature}}\n{{Tenant Signature;role=Second Party;type=signature}}\n\n-- 17 of 18 --\n\nPage 18 of 18\tResidential tenancy agreement | updated 17 December 2025\nFT6600_171225\nSIGNED BY THE TENANT (3)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nSIGNED BY THE TENANT (4)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nTENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was\ngiven a copy of the Tenant Information Statement published by NSW Fair Trading.\nSignature of tenant:\non the \tday of \t20\nFor information about your rights and obligations as a landlord or tenant, contact:\n(a) NSW Fair Trading on 13 32 20 or nsw.gov.au/fair-trading or\n(b) Law Access NSW on 1300 888 529 or lawaccess.nsw.gov.au or\n(c) your local Tenants Advice and Advocacy Service at tenants.org.au\nMore information\n\n-- 18 of 18 --\n\n"
+  },
+  "executedScan": {
+    "label": "executed-download",
+    "curlyCount": 0,
+    "landlordSigMentions": 0,
+    "tenantSigMentions": 0,
+    "hasRoleSyntax": false,
+    "sample": "air Trading that\nsets out the landlord’s rights and obligations.\nSignature of landlord:\non the \tday of \t20\nSIGNED BY THE TENANT (1)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nSIGNED BY THE TENANT (2)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nDocument ID: 565E1F7D233574115EDD4437000E8E28\n\n-- 17 of 18 --\n\nPage 18 of 18\tResidential tenancy agreement | updated 17 December 2025\nFT6600_171225\nSIGNED BY THE TENANT (3)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nSIGNED BY THE TENANT (4)\nName of tenant:\nSignature of tenant:\non the \tday of \t20\nTENANT INFORMATION STATEMENT\nThe tenant acknowledges that, at or before the time of signing this residential tenancy agreement, the tenant was\ngiven a copy of the Tenant Information Statement published by NSW Fair Trading.\nSignature of tenant:\non the \tday of \t20\nFor information about your rights and obligations as a landlord or tenant, contact:\n(a) NSW Fair Trading on 13 32 20 or nsw.gov.au/fair-trading or\n(b) Law Access NSW on 1300 888 529 or lawaccess.nsw.gov.au or\n(c) your local Tenants Advice and Advocacy Service at tenants.org.au\nMore information\nDocument ID: 565E1F7D233574115EDD4437000E8E28\n\n-- 18 of 18 --\n\n"
+  },
+  "verdict": "OPTION_0 - tags consumed on completion; margin-anchor recipe ships (source-only cosmetic)",
+  "paths": {
+    "sourcePath": "C:\\Users\\quinn\\quni-living\\scripts\\test-official-form-spike\\executed-spike-source.pdf",
+    "executedPath": "C:\\Users\\quinn\\quni-living\\scripts\\test-official-form-spike\\executed-spike-completed.pdf"
+  },
+  "deleteSubmissionId": 124
+}

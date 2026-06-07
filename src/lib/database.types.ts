@@ -972,6 +972,8 @@ export interface Database {
           electricity_embedded_network: boolean | null
           gas_embedded_network: boolean | null
           strata_bylaws_applicable: boolean | null
+          authority_to_let_attested_at: string | null
+          lister_role: 'owner' | 'head_tenant'
         }
         Insert: {
           id?: string
@@ -1026,6 +1028,8 @@ export interface Database {
           electricity_embedded_network?: boolean | null
           gas_embedded_network?: boolean | null
           strata_bylaws_applicable?: boolean | null
+          authority_to_let_attested_at?: string | null
+          lister_role?: 'owner' | 'head_tenant'
         }
         Update: {
           id?: string
@@ -1080,6 +1084,8 @@ export interface Database {
           electricity_embedded_network?: boolean | null
           gas_embedded_network?: boolean | null
           strata_bylaws_applicable?: boolean | null
+          authority_to_let_attested_at?: string | null
+          lister_role?: 'owner' | 'head_tenant'
         }
         Relationships: [
           {
