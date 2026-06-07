@@ -391,8 +391,6 @@ export default function ForUniversities() {
             part that&apos;s enforced deterministically in code, and we keep the records to back it.
           </div>
 
-          <PartnershipCtaButton />
-
           <PartnershipEnquiryForm />
 
           <p className="partnership-print-only partnership-print-contact">{PRINT_CONTACT_COPY}</p>
