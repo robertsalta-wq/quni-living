@@ -6,4 +6,4 @@ alter table public.properties
   add column if not exists utilities_services jsonb null;
 
 comment on column public.properties.utilities_services is
-  'Per-service utilities truth for electricity and gas: tenant_pays, individually_metered, apportionment_method (Item 14), how_must_be_paid (Item 15). Null or omitted keys when bills are included in rent.';
+  'Per-service utilities truth for electricity and gas: tenant_pays, individually_metered, apportionment_percent (Item 14, 1–100), how_must_be_paid (Item 15). Null or omitted keys when bills are included in rent.';

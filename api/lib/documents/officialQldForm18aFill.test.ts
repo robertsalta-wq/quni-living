@@ -9,7 +9,6 @@ import {
 } from './officialQldForm18aFill.js'
 import type { QldGeneralTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { resolvePropertyUtilities } from '../../../src/lib/propertyUtilitiesResolver.js'
-import { QLD_FORM18A_SPECIAL_TERMS_POINTER } from './qldForm18aScheduleOverflow.js'
 
 const PETS_TYPE_LINE = 'None unless agreed in writing by the lessor'
 
@@ -160,7 +159,7 @@ describe('officialQldForm18aFill', () => {
     expect(page3).not.toContain('How electricity must be paid for')
   })
 
-  it('renders non-inclusive utilities with Item 14 overflow to Special Terms on flattened PDF', async () => {
+  it('fills non-inclusive utilities with Item 14 percent and unchanged 13.1/13.2 checkboxes', async () => {
     const utilitiesResolution = resolvePropertyUtilities({
       featureNames: ['furnished'],
       waterUsageChargedSeparately: false,
@@ -171,46 +170,14 @@ describe('officialQldForm18aFill', () => {
         electricity: {
           tenant_pays: true,
           individually_metered: false,
-          apportionment_method:
-            '50% of common area electricity usage divided equally among four bedrooms',
+          apportionment_percent: 25,
           how_must_be_paid: 'Invoiced quarterly to tenant via Quni platform',
         },
         gas: {
           tenant_pays: true,
           individually_metered: true,
-          apportionment_method: null,
+          apportionment_percent: null,
           how_must_be_paid: 'Paid direct to gas retailer on individual account',
-        },
-      },
-    })
-    const props = { ...minimalProps(), utilitiesResolution }
-    const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
-    const page12 = await pageText(pdfBytes, 12)
-
-    expect(page12).toContain('Electricity apportionment (Item 14):')
-    expect(page12).toContain('divided equally among four bedrooms')
-    expect(page12).not.toContain('Nil additional special terms at execution.')
-  })
-
-  it('writes short Item 14 apportionment in schedule without overflow pointer', async () => {
-    const utilitiesResolution = resolvePropertyUtilities({
-      featureNames: ['furnished'],
-      waterUsageChargedSeparately: false,
-      electricityEmbeddedNetwork: null,
-      gasEmbeddedNetwork: null,
-      waterSeparatelyMeteredEfficientAttestedAt: null,
-      utilitiesServices: {
-        electricity: {
-          tenant_pays: true,
-          individually_metered: false,
-          apportionment_method: '50% of common-area electricity',
-          how_must_be_paid: 'Quarterly invoice',
-        },
-        gas: {
-          tenant_pays: false,
-          individually_metered: null,
-          apportionment_method: null,
-          how_must_be_paid: null,
         },
       },
     })
@@ -219,9 +186,24 @@ describe('officialQldForm18aFill', () => {
       ...minimalProps(),
       utilitiesResolution,
     })
+    const form = doc.getForm()
     const assignmentMap = new Map(assignments)
-    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('50% of common-area electricity')
-    expect(assignmentMap.get(F.Cost_for_electricity)).not.toBe(QLD_FORM18A_SPECIAL_TERMS_POINTER)
+
+    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('25%')
+    expect(assignmentMap.get(F.How_electricity_must_be_paid_for)).toBe(
+      'Invoiced quarterly to tenant via Quni platform',
+    )
+    expect(assignmentMap.get(F.How_gas_must_be_paid_for)).toBe(
+      'Paid direct to gas retailer on individual account',
+    )
+    expect(assignmentMap.get(F.Special_terms)).toBe('Nil additional special terms at execution.')
+
+    expect(form.getCheckBox(F.services_electricity_yes).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_electricity_no).isChecked()).toBe(false)
+    expect(form.getCheckBox(F.services_gas_yes).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_gas_no).isChecked()).toBe(false)
+    expect(form.getCheckBox(F.water_charge_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.water_charge_yes).isChecked()).toBe(false)
   })
 
   it('produces flattened PDF with action buttons removed and zero widgets', async () => {

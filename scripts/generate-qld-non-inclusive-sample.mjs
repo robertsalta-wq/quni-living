@@ -1,6 +1,6 @@
 /**
- * Flattened QLD Form 18a sample: non-inclusive listing with long Item 14 overflow.
- * Output: scripts/test-qld-non-inclusive-item14-overflow.pdf (gitignored)
+ * Flattened QLD Form 18a sample: non-inclusive listing with Item 14 percentage apportionment.
+ * Output: scripts/test-qld-non-inclusive-item14-percent.pdf (gitignored)
  *
  * Run: npx tsx scripts/generate-qld-non-inclusive-sample.mjs
  */
@@ -19,22 +19,21 @@ const utilitiesResolution = resolvePropertyUtilities({
     electricity: {
       tenant_pays: true,
       individually_metered: false,
-      apportionment_method:
-        '50% of common area electricity usage divided equally among four bedrooms',
+      apportionment_percent: 25,
       how_must_be_paid: 'Invoiced quarterly to tenant via Quni platform',
     },
     gas: {
       tenant_pays: true,
       individually_metered: true,
-      apportionment_method: null,
+      apportionment_percent: null,
       how_must_be_paid: 'Paid direct to gas retailer on individual account',
     },
   },
 })
 
 const props = {
-  documentId: 'qld-non-inclusive-item14-overflow-sample',
-  generatedAt: '09/06/2026, 4:00:00 pm',
+  documentId: 'qld-non-inclusive-item14-percent-sample',
+  generatedAt: '09/06/2026, 4:30:00 pm',
   landlord: {
     fullName: 'Quinn Lessor',
     companyName: null,
@@ -105,6 +104,6 @@ const props = {
 }
 
 const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
-const outPath = join(process.cwd(), 'scripts', 'test-qld-non-inclusive-item14-overflow.pdf')
+const outPath = join(process.cwd(), 'scripts', 'test-qld-non-inclusive-item14-percent.pdf')
 writeFileSync(outPath, pdfBytes)
 console.log(`Wrote ${outPath} (${pdfBytes.length} bytes)`)

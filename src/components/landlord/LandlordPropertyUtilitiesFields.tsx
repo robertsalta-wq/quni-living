@@ -101,7 +101,7 @@ function PerServiceUtilitiesFields({
           onChange({
             tenantPays: v,
             ...(v !== 'yes'
-              ? { individuallyMetered: '', apportionmentMethod: '', howMustBePaid: '' }
+              ? { individuallyMetered: '', apportionmentPercent: '', howMustBePaid: '' }
               : {}),
           })
         }
@@ -117,7 +117,7 @@ function PerServiceUtilitiesFields({
             onChange={(v) =>
               onChange({
                 individuallyMetered: v,
-                ...(v === 'yes' ? { apportionmentMethod: '' } : {}),
+                ...(v === 'yes' ? { apportionmentPercent: '' } : {}),
               })
             }
             labelClass={labelClass}
@@ -125,20 +125,26 @@ function PerServiceUtilitiesFields({
           {form.individuallyMetered === 'no' ? (
             <div>
               <label htmlFor={`utilities-${serviceId}-apportionment`} className={labelClass}>
-                How the tenant&apos;s share is worked out (Form 18a Item 14)
+                Percentage of total {label.toLowerCase()} charge (Form 18a Item 14)
               </label>
               <p className="mb-2 text-xs text-gray-600">
-                Use a percentage or short basis (e.g. &quot;50% of common-area electricity&quot;) so it fits Item 14 on
-                the agreement. Longer wording is recorded in Special Terms (page 12).
+                The tenant pays this percentage of the total charge (1–100, one decimal allowed).
               </p>
-              <input
-                id={`utilities-${serviceId}-apportionment`}
-                type="text"
-                value={form.apportionmentMethod}
-                onChange={(e) => onChange({ apportionmentMethod: e.target.value })}
-                className={inputClass}
-                placeholder="e.g. 50% of common-area electricity"
-              />
+              <div className="flex items-center gap-2 max-w-xs">
+                <input
+                  id={`utilities-${serviceId}-apportionment`}
+                  type="number"
+                  min={1}
+                  max={100}
+                  step={0.1}
+                  inputMode="decimal"
+                  value={form.apportionmentPercent}
+                  onChange={(e) => onChange({ apportionmentPercent: e.target.value })}
+                  className={inputClass}
+                  placeholder="e.g. 25"
+                />
+                <span className="text-sm text-gray-600">%</span>
+              </div>
             </div>
           ) : null}
           <div>

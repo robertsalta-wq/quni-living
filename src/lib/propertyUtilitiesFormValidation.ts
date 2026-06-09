@@ -1,6 +1,7 @@
 import {
   CAPTURABLE_UTILITY_SERVICE_IDS,
   UTILITY_SERVICE_DISPLAY_LABELS,
+  parseApportionmentPercentInput,
   type CapturableUtilityServiceId,
 } from './propertyUtilitiesServices'
 import type { LandlordPropertyUtilitiesFormState, PerServiceUtilitiesFormState } from './propertyUtilitiesFormState'
@@ -21,8 +22,10 @@ function missingPerServiceFormMessages(
     messages.push(`Specify whether ${label.toLowerCase()} is individually metered.`)
     return messages
   }
-  if (form.individuallyMetered === 'no' && !form.apportionmentMethod.trim()) {
-    messages.push(`Describe how the tenant's share of ${label.toLowerCase()} is worked out (Form 18a Item 14).`)
+  if (form.individuallyMetered === 'no' && parseApportionmentPercentInput(form.apportionmentPercent) == null) {
+    messages.push(
+      `Enter the percentage of the total ${label.toLowerCase()} charge the tenant must pay (1–100, Form 18a Item 14).`,
+    )
   }
   if (!form.howMustBePaid.trim()) {
     messages.push(`Describe how the tenant pays for ${label.toLowerCase()} (Form 18a Item 15).`)

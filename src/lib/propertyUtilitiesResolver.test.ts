@@ -24,7 +24,7 @@ describe('resolvePropertyUtilities', () => {
     expect(resolution.listingDisclosureLabels).toContain('Water included in rent')
   })
 
-  it('resolves non-inclusive with metered gas and apportioned electricity', () => {
+  it('resolves non-inclusive with metered gas and apportioned electricity at a percentage', () => {
     const resolution = resolvePropertyUtilities({
       featureNames: ['furnished'],
       waterUsageChargedSeparately: false,
@@ -35,13 +35,13 @@ describe('resolvePropertyUtilities', () => {
         electricity: {
           tenant_pays: true,
           individually_metered: false,
-          apportionment_method: '50% of common area electricity divided by occupants',
+          apportionment_percent: 25,
           how_must_be_paid: 'Invoiced quarterly via Quni',
         },
         gas: {
           tenant_pays: true,
           individually_metered: true,
-          apportionment_method: null,
+          apportionment_percent: null,
           how_must_be_paid: 'Direct to retailer account',
         },
       },
@@ -49,12 +49,12 @@ describe('resolvePropertyUtilities', () => {
 
     expect(resolution.billsIncluded).toBe(false)
     expect(resolution.services.electricity.tenantMustPay).toBe(true)
-    expect(resolution.services.electricity.apportionmentCost).toContain('50%')
+    expect(resolution.services.electricity.apportionmentPercent).toBe(25)
+    expect(resolution.services.electricity.apportionmentCost).toBe('25%')
     expect(resolution.services.electricity.howMustBePaid).toContain('quarterly')
     expect(resolution.services.gas.tenantMustPay).toBe(true)
     expect(resolution.services.gas.apportionmentCost).toBeNull()
-    expect(resolution.services.gas.howMustBePaid).toContain('retailer')
-    expect(resolution.listingDisclosureLabels.some((l) => l.includes('apportioned'))).toBe(true)
+    expect(resolution.listingDisclosureLabels).toContain('Tenant pays 25% of electricity')
     expect(resolution.listingDisclosureLabels.some((l) => l.includes('individually metered'))).toBe(true)
   })
 })
@@ -78,13 +78,13 @@ describe('propertyUtilitiesPreflightMessages', () => {
           electricity: {
             tenant_pays: true,
             individually_metered: true,
-            apportionment_method: null,
+            apportionment_percent: null,
             how_must_be_paid: 'Direct debit',
           },
           gas: {
             tenant_pays: false,
             individually_metered: null,
-            apportionment_method: null,
+            apportionment_percent: null,
             how_must_be_paid: null,
           },
         },
@@ -95,6 +95,31 @@ describe('propertyUtilitiesPreflightMessages', () => {
     expect(messages.some((m) => m.includes('separately metered'))).toBe(true)
   })
 
+  it('requires apportionment percent when tenant pays and not individually metered', () => {
+    const input = propertyUtilitiesInputFromPropertyRow(
+      {
+        water_usage_charged_separately: false,
+        utilities_services: {
+          electricity: {
+            tenant_pays: true,
+            individually_metered: false,
+            apportionment_percent: null,
+            how_must_be_paid: 'Quarterly invoice',
+          },
+          gas: {
+            tenant_pays: true,
+            individually_metered: true,
+            apportionment_percent: null,
+            how_must_be_paid: 'Retailer account',
+          },
+        },
+      },
+      ['furnished'],
+    )
+    const messages = propertyUtilitiesPreflightMessages(input)
+    expect(messages.some((m) => m.includes('percentage'))).toBe(true)
+  })
+
   it('passes when non-inclusive listing is fully specified', () => {
     const input = propertyUtilitiesInputFromPropertyRow(
       {
@@ -103,13 +128,13 @@ describe('propertyUtilitiesPreflightMessages', () => {
           electricity: {
             tenant_pays: true,
             individually_metered: false,
-            apportionment_method: 'Equal split among 4 bedrooms',
+            apportionment_percent: 50,
             how_must_be_paid: 'Quarterly invoice',
           },
           gas: {
             tenant_pays: true,
             individually_metered: true,
-            apportionment_method: null,
+            apportionment_percent: null,
             how_must_be_paid: 'Retailer account',
           },
         },

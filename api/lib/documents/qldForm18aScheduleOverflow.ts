@@ -1,6 +1,6 @@
 /**
- * QLD Form 18a Items 14/15 overflow via Part 3 Special Terms (page 12).
- * Prescribed form prints "See special terms (page 12)" beside narrow schedule fields.
+ * QLD Form 18a Item 15 overflow via Part 3 Special Terms (page 12) when how-paid text
+ * does not fit the schedule field. Item 14 uses a percentage and is written directly.
  */
 import type { PDFFont, PDFForm } from 'pdf-lib'
 import type { PropertyUtilitiesResolution } from '../../../src/lib/propertyUtilitiesResolver.js'
@@ -43,7 +43,7 @@ function fieldRect(form: PDFForm, fieldName: string): Rect | null {
   }
 }
 
-function resolveScheduleValue(
+function resolveHowPaidOverflow(
   fullText: string,
   fieldName: string,
   form: PDFForm,
@@ -65,7 +65,7 @@ export type UtilitiesScheduleOverflowResult = {
   specialTermsLines: string[]
 }
 
-/** Map Items 14/15 from resolver output; overflow long values to Special Terms. */
+/** Map Items 14/15 from resolver output; Item 14 percent is direct, Item 15 may overflow. */
 export function resolveUtilitiesScheduleOverflow(
   form: PDFForm,
   font: PDFFont,
@@ -80,21 +80,11 @@ export function resolveUtilitiesScheduleOverflow(
     if (!service.tenantMustPay) continue
 
     if (service.apportionmentCost?.trim()) {
-      const resolved = resolveScheduleValue(
-        service.apportionmentCost,
-        binding.apportionmentField,
-        form,
-        font,
-        `${label} apportionment (Item 14): ${service.apportionmentCost.trim()}`,
-      )
-      if (resolved.scheduleValue) {
-        scheduleAssignments.push([binding.apportionmentField, resolved.scheduleValue])
-      }
-      if (resolved.overflowLine) specialTermsLines.push(resolved.overflowLine)
+      scheduleAssignments.push([binding.apportionmentField, service.apportionmentCost.trim()])
     }
 
     if (service.howMustBePaid?.trim()) {
-      const resolved = resolveScheduleValue(
+      const resolved = resolveHowPaidOverflow(
         service.howMustBePaid,
         binding.howPaidField,
         form,

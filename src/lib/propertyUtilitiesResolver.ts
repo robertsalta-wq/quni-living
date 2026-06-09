@@ -3,6 +3,7 @@ import { propertyHasWaterSeparatelyMeteredAttestation } from './waterSeparatelyM
 import {
   CAPTURABLE_UTILITY_SERVICE_IDS,
   UTILITY_SERVICE_DISPLAY_LABELS,
+  formatApportionmentPercentForItem14,
   propertyUtilitiesServicesFromPropertyRow,
   type CapturableUtilityServiceId,
   type PropertyUtilitiesServicesStored,
@@ -28,7 +29,9 @@ export type ResolvedUtilityService = {
   payer: UtilityPayer
   basis: UtilityChargeBasis
   individuallyMetered: boolean | null
-  /** Form 18a Item 14 — tenant pays and not individually metered. */
+  /** Stored apportionment share (1–100) when tenant pays and not individually metered. */
+  apportionmentPercent: number | null
+  /** Form 18a Item 14 display — "{n}%". */
   apportionmentCost: string | null
   /** Form 18a Item 15 — when tenantMustPay. */
   howMustBePaid: string | null
@@ -63,6 +66,7 @@ function service(
   basis: UtilityChargeBasis,
   opts?: {
     individuallyMetered?: boolean | null
+    apportionmentPercent?: number | null
     apportionmentCost?: string | null
     howMustBePaid?: string | null
   },
@@ -73,6 +77,7 @@ function service(
     payer: tenantMustPay ? 'tenant' : 'lessor',
     basis,
     individuallyMetered: opts?.individuallyMetered ?? null,
+    apportionmentPercent: tenantMustPay ? (opts?.apportionmentPercent ?? null) : null,
     apportionmentCost: tenantMustPay ? (opts?.apportionmentCost ?? null) : null,
     howMustBePaid: tenantMustPay ? (opts?.howMustBePaid ?? null) : null,
   }
@@ -95,9 +100,16 @@ function resolveCapturedService(
       ? 'metered_separate'
       : 'apportionment'
 
+  const apportionmentPercent =
+    !individuallyMetered && capture?.apportionment_percent != null
+      ? capture.apportionment_percent
+      : null
+
   return service(id, true, basis, {
     individuallyMetered: capture?.individually_metered ?? null,
-    apportionmentCost: individuallyMetered ? null : capture?.apportionment_method ?? null,
+    apportionmentPercent,
+    apportionmentCost:
+      apportionmentPercent != null ? formatApportionmentPercentForItem14(apportionmentPercent) : null,
     howMustBePaid: capture?.how_must_be_paid ?? null,
   })
 }
@@ -107,8 +119,8 @@ function serviceDisclosureLabel(resolved: ResolvedUtilityService): string | null
   if (!name) return null
   if (!resolved.tenantMustPay) return `${name} included in rent (lessor pays)`
   if (resolved.individuallyMetered === true) return `Tenant pays ${name.toLowerCase()} (individually metered)`
-  if (resolved.apportionmentCost) {
-    return `Tenant pays ${name.toLowerCase()} (apportioned: ${resolved.apportionmentCost})`
+  if (resolved.apportionmentPercent != null) {
+    return `Tenant pays ${formatApportionmentPercentForItem14(resolved.apportionmentPercent)} of ${name.toLowerCase()}`
   }
   return `Tenant pays ${name.toLowerCase()}`
 }
@@ -247,8 +259,10 @@ function missingCaptureMessages(
     messages.push(`Specify whether ${label.toLowerCase()} is individually metered.`)
     return messages
   }
-  if (capture.individually_metered === false && !capture.apportionment_method?.trim()) {
-    messages.push(`Describe how the tenant's share of ${label.toLowerCase()} is worked out (Form 18a Item 14).`)
+  if (capture.individually_metered === false && capture.apportionment_percent == null) {
+    messages.push(
+      `Enter the percentage of the total ${label.toLowerCase()} charge the tenant must pay (Form 18a Item 14).`,
+    )
   }
   if (!capture.how_must_be_paid?.trim()) {
     messages.push(`Describe how the tenant pays for ${label.toLowerCase()} (Form 18a Item 15).`)

@@ -4,6 +4,7 @@ import {
   type TriState,
 } from '../components/landlord/LandlordPropertyFt6600ComplianceFields'
 import {
+  parseApportionmentPercentInput,
   type PropertyUtilitiesServicesStored,
   type StoredUtilityServiceCapture,
 } from './propertyUtilitiesServices'
@@ -11,7 +12,7 @@ import {
 export type PerServiceUtilitiesFormState = {
   tenantPays: TriState
   individuallyMetered: TriState
-  apportionmentMethod: string
+  apportionmentPercent: string
   howMustBePaid: string
 }
 
@@ -26,7 +27,7 @@ function emptyPerServiceFormState(): PerServiceUtilitiesFormState {
   return {
     tenantPays: '',
     individuallyMetered: '',
-    apportionmentMethod: '',
+    apportionmentPercent: '',
     howMustBePaid: '',
   }
 }
@@ -44,10 +45,12 @@ function perServiceFormFromStored(
   capture: StoredUtilityServiceCapture | null | undefined,
 ): PerServiceUtilitiesFormState {
   if (!capture) return emptyPerServiceFormState()
+  const percent = capture.apportionment_percent
   return {
     tenantPays: boolColToTri(capture.tenant_pays),
     individuallyMetered: boolColToTri(capture.individually_metered),
-    apportionmentMethod: capture.apportionment_method ?? '',
+    apportionmentPercent:
+      percent != null ? (Number.isInteger(percent) ? String(percent) : percent.toFixed(1)) : '',
     howMustBePaid: capture.how_must_be_paid ?? '',
   }
 }
@@ -70,16 +73,20 @@ export function landlordPropertyUtilitiesFormStateFromProperty(prop: {
 function storedFromPerServiceForm(form: PerServiceUtilitiesFormState): StoredUtilityServiceCapture {
   const tenantPays = triToBool(form.tenantPays)
   if (tenantPays !== true) {
-    return { tenant_pays: tenantPays, individually_metered: null, apportionment_method: null, how_must_be_paid: null }
+    return {
+      tenant_pays: tenantPays,
+      individually_metered: null,
+      apportionment_percent: null,
+      how_must_be_paid: null,
+    }
   }
   const individuallyMetered = triToBool(form.individuallyMetered)
+  const apportionmentPercent =
+    individuallyMetered === false ? parseApportionmentPercentInput(form.apportionmentPercent) : null
   return {
     tenant_pays: true,
     individually_metered: individuallyMetered,
-    apportionment_method:
-      individuallyMetered === false && form.apportionmentMethod.trim()
-        ? form.apportionmentMethod.trim()
-        : null,
+    apportionment_percent: apportionmentPercent,
     how_must_be_paid: form.howMustBePaid.trim() ? form.howMustBePaid.trim() : null,
   }
 }

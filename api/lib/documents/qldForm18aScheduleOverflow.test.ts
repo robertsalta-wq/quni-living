@@ -10,7 +10,7 @@ import { loadOfficialQldForm18aTemplate } from './officialQldForm18aFill.js'
 import { resolvePropertyUtilities } from '../../../src/lib/propertyUtilitiesResolver.js'
 
 describe('qldForm18aScheduleOverflow', () => {
-  it('overflows long Item 14 apportionment to Special Terms with schedule pointer', async () => {
+  it('writes Item 14 percentage directly without special-terms overflow', async () => {
     const doc = await loadOfficialQldForm18aTemplate()
     const font = await doc.embedFont(StandardFonts.Helvetica)
     const utilities = resolvePropertyUtilities({
@@ -23,14 +23,13 @@ describe('qldForm18aScheduleOverflow', () => {
         electricity: {
           tenant_pays: true,
           individually_metered: false,
-          apportionment_method:
-            '50% of common area electricity usage divided equally among four bedrooms',
+          apportionment_percent: 25,
           how_must_be_paid: 'Invoiced quarterly',
         },
         gas: {
           tenant_pays: true,
           individually_metered: true,
-          apportionment_method: null,
+          apportionment_percent: null,
           how_must_be_paid: 'Direct to retailer',
         },
       },
@@ -39,17 +38,16 @@ describe('qldForm18aScheduleOverflow', () => {
     const result = resolveUtilitiesScheduleOverflow(doc.getForm(), font, utilities)
     const assignmentMap = new Map(result.scheduleAssignments)
 
-    expect(assignmentMap.get(F.Cost_for_electricity)).toBe(QLD_FORM18A_SPECIAL_TERMS_POINTER)
+    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('25%')
+    expect(assignmentMap.get(F.Cost_for_electricity)).not.toBe(QLD_FORM18A_SPECIAL_TERMS_POINTER)
     expect(assignmentMap.get(F.How_gas_must_be_paid_for)).toBe('Direct to retailer')
-    expect(result.specialTermsLines.some((l) => l.includes('Electricity apportionment (Item 14)'))).toBe(
-      true,
-    )
-    expect(result.specialTermsLines.some((l) => l.includes('four bedrooms'))).toBe(true)
+    expect(result.specialTermsLines).toEqual([])
   })
 
-  it('keeps short Item 14 apportionment in the schedule field', async () => {
+  it('overflows long Item 15 how-paid text to Special Terms', async () => {
     const doc = await loadOfficialQldForm18aTemplate()
     const font = await doc.embedFont(StandardFonts.Helvetica)
+    const longHowPaid = 'Pay '.repeat(120)
     const utilities = resolvePropertyUtilities({
       featureNames: ['furnished'],
       waterUsageChargedSeparately: false,
@@ -60,13 +58,13 @@ describe('qldForm18aScheduleOverflow', () => {
         electricity: {
           tenant_pays: true,
           individually_metered: false,
-          apportionment_method: '50% of common-area electricity',
-          how_must_be_paid: 'Quarterly invoice',
+          apportionment_percent: 25,
+          how_must_be_paid: longHowPaid,
         },
         gas: {
           tenant_pays: false,
           individually_metered: null,
-          apportionment_method: null,
+          apportionment_percent: null,
           how_must_be_paid: null,
         },
       },
@@ -75,8 +73,9 @@ describe('qldForm18aScheduleOverflow', () => {
     const result = resolveUtilitiesScheduleOverflow(doc.getForm(), font, utilities)
     const assignmentMap = new Map(result.scheduleAssignments)
 
-    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('50% of common-area electricity')
-    expect(result.specialTermsLines).toEqual([])
+    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('25%')
+    expect(assignmentMap.get(F.How_electricity_must_be_paid_for)).toBe(QLD_FORM18A_SPECIAL_TERMS_POINTER)
+    expect(result.specialTermsLines.some((l) => l.includes('how must be paid (Item 15)'))).toBe(true)
   })
 
   it('composes Special Terms only as Nil when genuinely empty', () => {
@@ -87,13 +86,5 @@ describe('qldForm18aScheduleOverflow', () => {
         bookingNotes: null,
       }),
     ).toBe('Nil additional special terms at execution.')
-
-    expect(
-      composeQldForm18aSpecialTermsText({
-        utilitiesOverflowLines: ['Electricity apportionment (Item 14): 50% shared'],
-        specialConditions: [],
-        bookingNotes: null,
-      }),
-    ).toContain('Electricity apportionment (Item 14)')
   })
 })

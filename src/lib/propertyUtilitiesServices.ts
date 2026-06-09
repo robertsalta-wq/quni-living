@@ -3,7 +3,8 @@
 export type StoredUtilityServiceCapture = {
   tenant_pays: boolean | null
   individually_metered: boolean | null
-  apportionment_method: string | null
+  /** Tenant's share of the total charge (Form 18a Item 14), 1–100 with at most one decimal. */
+  apportionment_percent: number | null
   how_must_be_paid: string | null
 }
 
@@ -25,7 +26,7 @@ export function emptyStoredUtilityServiceCapture(): StoredUtilityServiceCapture 
   return {
     tenant_pays: null,
     individually_metered: null,
-    apportionment_method: null,
+    apportionment_percent: null,
     how_must_be_paid: null,
   }
 }
@@ -35,6 +36,28 @@ export function emptyPropertyUtilitiesServicesStored(): PropertyUtilitiesService
     electricity: emptyStoredUtilityServiceCapture(),
     gas: emptyStoredUtilityServiceCapture(),
   }
+}
+
+/** Normalise to one decimal place within 1–100, or null if invalid. */
+export function normaliseApportionmentPercent(raw: unknown): number | null {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return null
+  if (raw < 1 || raw > 100) return null
+  return Math.round(raw * 10) / 10
+}
+
+/** Parse landlord form / API input (1–100, at most one decimal). */
+export function parseApportionmentPercentInput(raw: string): number | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  if (!/^\d{1,3}(\.\d)?$/.test(trimmed)) return null
+  return normaliseApportionmentPercent(Number(trimmed))
+}
+
+/** Form 18a Item 14 display value (clause 16(c) percentage of total charge). */
+export function formatApportionmentPercentForItem14(percent: number): string {
+  const n = normaliseApportionmentPercent(percent)
+  if (n == null) return ''
+  return Number.isInteger(n) ? `${n}%` : `${n.toFixed(1)}%`
 }
 
 function readStoredService(raw: unknown): StoredUtilityServiceCapture | null {
@@ -49,7 +72,7 @@ function readStoredService(raw: unknown): StoredUtilityServiceCapture | null {
   return {
     tenant_pays: readBool(o.tenant_pays),
     individually_metered: readBool(o.individually_metered),
-    apportionment_method: readText(o.apportionment_method),
+    apportionment_percent: normaliseApportionmentPercent(o.apportionment_percent),
     how_must_be_paid: readText(o.how_must_be_paid),
   }
 }
