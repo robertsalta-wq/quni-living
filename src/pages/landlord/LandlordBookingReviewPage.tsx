@@ -318,6 +318,7 @@ export default function LandlordBookingReviewPage() {
       listingBilling: data.listingBilling,
       stripeChargesEnabled: data.stripeChargesEnabled,
       adminOverrideVerified: data.adminOverrideVerified,
+      listingFeeExempt: data.landlordFeeExempt,
       property: data.property,
       booking: data.booking,
     })
@@ -662,6 +663,7 @@ export default function LandlordBookingReviewPage() {
     listingBilling,
     stripeChargesEnabled,
     adminOverrideVerified,
+    listingFeeExempt: landlordFeeExempt,
     property: property ?? undefined,
     booking,
   })

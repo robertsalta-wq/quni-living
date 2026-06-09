@@ -104,6 +104,20 @@ describe('landlordBookingConfirmAllowed', () => {
     ).toBe(true)
   })
 
+  it('listing: fee-exempt landlord can accept without a saved card', () => {
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
+        stripeChargesEnabled: false,
+        adminOverrideVerified: true,
+        listingFeeExempt: true,
+      }),
+    ).toBe(true)
+  })
+
   it('managed: requires Connect', () => {
     expect(
       landlordBookingConfirmAllowed({
@@ -182,6 +196,20 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         adminOverrideVerified: true,
       }),
     ).toBe('listing_no_payment_method')
+  })
+
+  it('listing fee-exempt skips card requirement banner', () => {
+    expect(
+      landlordBookingConfirmBlockedBanner({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
+        stripeChargesEnabled: false,
+        adminOverrideVerified: true,
+        listingFeeExempt: true,
+      }),
+    ).toBe(null)
   })
 
   it('listing module off shows module banner', () => {

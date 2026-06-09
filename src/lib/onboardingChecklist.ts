@@ -232,7 +232,8 @@ export function buildLandlordOnboardingSteps(
 
   const showListingCardStep =
     listingBilling?.listingModuleEnabled === true &&
-    listingBilling.hasListingPaymentMethod !== true
+    listingBilling.hasListingPaymentMethod !== true &&
+    profile?.fee_exempt !== true
 
   const core: ChecklistStep[] = [
     { id: 'account', label: 'Account created', complete: true },

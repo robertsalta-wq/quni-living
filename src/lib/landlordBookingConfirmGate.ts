@@ -35,6 +35,8 @@ export function landlordBookingConfirmAllowed(args: {
   listingBilling: LandlordListingBillingSnapshot | null
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
+  /** When true, Listing acceptance fee is $0 — saved card is not required. */
+  listingFeeExempt?: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -66,7 +68,9 @@ export function landlordBookingConfirmAllowed(args: {
     if (!args.listingBillingLoaded) return false
     const lb = args.listingBilling
     if (!lb) return false
-    return lb.moduleEnabled === true && lb.hasPaymentMethod === true
+    if (!lb.moduleEnabled) return false
+    if (args.listingFeeExempt === true) return true
+    return lb.hasPaymentMethod === true
   }
 
   return true
@@ -79,6 +83,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
   listingBilling: LandlordListingBillingSnapshot | null
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
+  listingFeeExempt?: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -116,7 +121,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
 
   const lb = args.listingBilling
   if (!lb.moduleEnabled) return 'listing_module_disabled'
-  if (!lb.hasPaymentMethod) return 'listing_no_payment_method'
+  if (args.listingFeeExempt !== true && !lb.hasPaymentMethod) return 'listing_no_payment_method'
   return null
 }
 
