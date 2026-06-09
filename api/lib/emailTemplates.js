@@ -254,31 +254,49 @@ export function depositReleasedLandlord(data) {
   }
 }
 
-/** Listing tier - renter: landlord accepted; pay bond off-platform; deadline; lease preview */
+/** Listing tier - renter: landlord accepted; pay bond off-platform; deadline (no signing CTA). */
 export function listingBookingAcceptedRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
   const bookingRef = escapeHtml(data.booking_reference || '-')
   const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
-  const signUrl = escapeHtml(data.sign_agreement_url || data.lease_preview_url || data.student_dashboard_url || '#')
   const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
   const bondPaymentBlock =
     typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim()
       ? data.bond_payment_html
       : `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
 
-  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed - sign your agreement &amp; pay bond</h2>
+  const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed - arrange bond</h2>
 <p>Hi ${studentName},</p>
 <p>Good news - your host has accepted your booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Tenancy agreement:</strong> Your agreement is ready to sign electronically. You should receive a separate DocuSeal email, or use the button below.</p>
-<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>
+<p><strong>Tenancy agreement:</strong> We&apos;re preparing your agreement for electronic signing. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
 ${bondPaymentBlock}
 <p><strong>Deadline:</strong> Please arrange bond payment before <strong>${bondDeadline}</strong>. If bond isn&apos;t received in time, this booking may lapse.</p>
-<p style="margin-top:12px;font-size:14px;color:#555;">Your host will confirm bond receipt on Quni when they have received it (this does not block signing).</p>
+<p style="margin-top:12px;font-size:14px;color:#555;">Your host will confirm bond receipt on Quni when they have received it.</p>
 <a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
 
   return {
     subject: `Booking confirmed - arrange bond for ${data.property_address || data.property_title || 'your stay'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier - renter: agreement ready to sign (DocuSeal dispatched). */
+export function listingAgreementReadyRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
+  const signUrl = escapeHtml(data.sign_agreement_url || data.student_dashboard_url || '#')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+
+  const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement is ready to sign</h2>
+<p>Hi ${studentName},</p>
+<p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
+<p>You should also receive a DocuSeal email with your signing link. Use the button below if you prefer to sign from your dashboard.</p>
+<a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>
+<a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
+
+  return {
+    subject: `Sign your agreement - ${data.property_address || data.property_title || 'your booking'}`,
     html: wrapContent(inner),
   }
 }
@@ -300,7 +318,8 @@ export function listingBookingAcceptedLandlord(data) {
   const inner = `<h2 style="color: #1A1A2E;">Listing booking confirmed</h2>
 <p>Hi ${landlordName},</p>
 <p>You&apos;ve confirmed a Listing booking for <strong>${propertyAddress}</strong> (reference <strong>${bookingRef}</strong>).</p>
-<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation. This includes your state-appropriate tenancy agreement - both parties can sign now via DocuSeal (check your email or open the booking on Quni).</p>
+<p><strong>Listing fee:</strong> We&apos;ve charged your saved card <strong>${listingFee}</strong> (AUD) for this confirmation.</p>
+<p><strong>Tenancy agreement:</strong> We&apos;re preparing your state-appropriate agreement. You&apos;ll receive a separate email when it&apos;s ready to sign.</p>
 ${bondObligationsBlock}
 <p>When bond is received (by you or lodged with the authority), confirm on Quni before <strong>${bondDeadline}</strong> so the booking stays active.</p>
 <a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>
@@ -308,6 +327,24 @@ ${bondObligationsBlock}
 
   return {
     subject: `Listing booking confirmed - ${data.property_address || data.property_title || 'your listing'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier - landlord: agreement ready to sign (DocuSeal dispatched). */
+export function listingAgreementReadyLandlord(data) {
+  const landlordName = escapeHtml(data.landlord_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
+  const reviewUrl = escapeHtml(data.review_url || data.dashboard_url || '#')
+
+  const inner = `<h2 style="color: #1A1A2E;">Tenancy agreement ready to sign</h2>
+<p>Hi ${landlordName},</p>
+<p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
+<p>Check your email for the DocuSeal signing link, or open the booking on Quni to sign.</p>
+<a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>`
+
+  return {
+    subject: `Sign your agreement - ${data.property_address || data.property_title || 'your listing'}`,
     html: wrapContent(inner),
   }
 }

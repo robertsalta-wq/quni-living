@@ -1212,6 +1212,8 @@ export interface Database {
           expired_at: string | null
           bond_received_by_landlord_at: string | null
           bond_window_expires_at: string | null
+          listing_agreement_status: 'pending' | 'ready' | 'failed' | null
+          listing_agreement_error: string | null
           bond_acknowledged: boolean | null
           property_type: string | null
           rent_payment_method: 'bank_transfer' | 'quni_platform' | null
@@ -1272,6 +1274,8 @@ export interface Database {
           expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
+          listing_agreement_status?: 'pending' | 'ready' | 'failed' | null
+          listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null
@@ -1331,6 +1335,8 @@ export interface Database {
           expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
+          listing_agreement_status?: 'pending' | 'ready' | 'failed' | null
+          listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
           property_type?: string | null
           rent_payment_method?: 'bank_transfer' | 'quni_platform' | null

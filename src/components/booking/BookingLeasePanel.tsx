@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { apiUrl } from '../../lib/apiUrl'
 import { type LeaseDocState } from '../../lib/leaseState'
@@ -13,7 +13,9 @@ import { type LeaseDocState } from '../../lib/leaseState'
  *   awaiting_other   → "Awaiting <counterparty> signature" status; viewer's signed copy
  *                      is not yet available for download until both parties have signed
  *   fully_signed     → "Download signed agreement"
- *   none             → nothing rendered
+ *   agreement_preparing → agreement is being generated post-accept
+ *   agreement_failed    → generation failed; landlord may retry
+ *   none             → nothing rendered (non-listing or pre-accept)
  *
  * The panel polls the endpoint on mount and exposes a `refreshKey` re-fetch trigger so
  * parents can call refresh after server-side state changes (e.g. after the landlord ticks
@@ -32,6 +34,8 @@ type LeaseStateApiResult = {
   signed_url?: string
   signed_url_rta?: string
   signed_url_addendum?: string
+  listing_agreement_status?: string | null
+  listing_agreement_error?: string | null
 }
 
 export type BookingLeasePanelProps = {
@@ -63,7 +67,6 @@ export default function BookingLeasePanel({
   const [prepareError, setPrepareError] = useState<string | null>(null)
   const [regenerateBusy, setRegenerateBusy] = useState(false)
   const [regenerateError, setRegenerateError] = useState<string | null>(null)
-  const autoPrepareAttempted = useRef(false)
 
   const fetchState = useCallback(async () => {
     if (!bookingId) return
@@ -196,13 +199,6 @@ export default function BookingLeasePanel({
     </div>
   ) : null
 
-  useEffect(() => {
-    if (!allowPrepareRetry || loading || prepareBusy || autoPrepareAttempted.current) return
-    if (data?.state !== 'none') return
-    autoPrepareAttempted.current = true
-    void prepareAgreement()
-  }, [allowPrepareRetry, data?.state, loading, prepareBusy, prepareAgreement])
-
   if (loading && !data) {
     return (
       <div
@@ -225,27 +221,55 @@ export default function BookingLeasePanel({
   }
 
   if (!data || data.state === 'none') {
-    if (!allowPrepareRetry) return null
+    return null
+  }
+
+  if (data.state === 'agreement_preparing') {
+    return (
+      <div
+        className={`rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 ${className ?? ''}`.trim()}
+        role="status"
+      >
+        <p className="font-semibold leading-snug">Tenancy agreement</p>
+        <p className="text-xs leading-relaxed mt-1">
+          {data.viewer_role === 'tenant'
+            ? 'Your agreement is being prepared. We&apos;ll email you when it&apos;s ready to sign.'
+            : 'Your agreement is being prepared. You&apos;ll receive a signing email once it&apos;s ready.'}
+        </p>
+      </div>
+    )
+  }
+
+  if (data.state === 'agreement_failed') {
+    const showRetry =
+      allowPrepareRetry &&
+      data.viewer_role === 'landlord' &&
+      (data.listing_agreement_status === 'failed' || data.state === 'agreement_failed')
     return (
       <div
         className={`rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-3 ${className ?? ''}`.trim()}
         role="status"
       >
-        <p className="font-semibold leading-snug">Tenancy agreement</p>
+        <p className="font-semibold leading-snug">Tenancy agreement needs attention</p>
         <p className="text-xs leading-relaxed">
-          {prepareBusy
-            ? 'Preparing your agreement and signing links…'
-            : 'Your agreement is not ready yet. Use the button below to generate it now, or check your email for DocuSeal.'}
+          {data.viewer_role === 'tenant'
+            ? 'We couldn&apos;t finish preparing your agreement. Your host has been notified and can retry from their booking review page.'
+            : 'Agreement generation did not complete. Use the button below to retry, or contact support if this keeps happening.'}
         </p>
+        {data.listing_agreement_error && (
+          <p className="text-xs text-red-800">{data.listing_agreement_error}</p>
+        )}
         {prepareError && <p className="text-xs text-red-800">{prepareError}</p>}
-        <button
-          type="button"
-          disabled={prepareBusy}
-          onClick={() => void prepareAgreement()}
-          className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700 disabled:opacity-60"
-        >
-          {prepareBusy ? 'Preparing…' : 'Prepare tenancy agreement'}
-        </button>
+        {showRetry && (
+          <button
+            type="button"
+            disabled={prepareBusy}
+            onClick={() => void prepareAgreement()}
+            className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700 disabled:opacity-60"
+          >
+            {prepareBusy ? 'Retrying…' : 'Retry agreement generation'}
+          </button>
+        )}
       </div>
     )
   }

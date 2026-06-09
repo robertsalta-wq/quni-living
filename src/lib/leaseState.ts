@@ -17,7 +17,14 @@
  * DocuSeal signature is required before `fully_signed`.
  */
 
-export type LeaseDocState = 'none' | 'preview' | 'ready_to_sign' | 'awaiting_other' | 'fully_signed'
+export type LeaseDocState =
+  | 'none'
+  | 'agreement_preparing'
+  | 'agreement_failed'
+  | 'preview'
+  | 'ready_to_sign'
+  | 'awaiting_other'
+  | 'fully_signed'
 
 export type LeaseStateInput = {
   bookingStatus: string | null | undefined
@@ -87,6 +94,10 @@ export function leaseDocStateCtaLabel(state: LeaseDocState): string {
       return 'Awaiting counterparty signature'
     case 'fully_signed':
       return 'Download signed agreement'
+    case 'agreement_preparing':
+      return 'Agreement being prepared'
+    case 'agreement_failed':
+      return 'Agreement needs attention'
     case 'none':
     default:
       return ''

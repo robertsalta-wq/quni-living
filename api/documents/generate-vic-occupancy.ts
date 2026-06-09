@@ -1,5 +1,4 @@
 /// <reference types="node" />
-// @ts-nocheck - Vercel runs a separate TS check on api/*.ts; see tsconfig.api.json for full project typecheck.
 /**
  * Generate Victoria on-site Licence to Occupy PDF, upload to Storage,
  * optional DocuSeal (see src/lib/docuseal.ts).
@@ -10,18 +9,11 @@
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, INTERNAL_DOC_FLOW_SECRET,
  *      DOCUSEAL_* (optional)
  */
-import React from 'react'
-import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '../../src/lib/database.types'
-import { VicLicenceToOccupyOnSite } from './VicOccupancyAgreement.js'
-import type { OccupancyAgreementProps } from './rtaTypes'
-import { occupancyLeaseFieldsFromBooking } from '../lib/booking/occupancyLeaseContext.js'
-import {
-  bookingAllowsTenancyDocumentGeneration,
-  isListingPreviewGeneration,
-} from '../lib/booking/listingDocumentGenerationEligibility.js'
-import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../lib/docuseal.js'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { Database } from '../../src/lib/database.types.js'
+import type { ListingDocGenResult } from '../lib/booking/listingAgreementTypes.js'
+import { runVicOccupancyListingTenancy } from '../lib/documents/listingTenancyGeneration/vicOccupancy.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
 export const config = {
@@ -29,41 +21,38 @@ export const config = {
   maxDuration: 60,
 }
 
-function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
-  const raw = moveInIso.slice(0, 10)
-  const [y, m, d] = raw.split('-').map(Number)
-  if (!y || !m || !d) return null
-  const start = new Date(Date.UTC(y, m - 1, d))
-  let weeks = 52
-  if (leaseLength === '3 months') weeks = 13
-  else if (leaseLength === '6 months') weeks = 26
-  else if (leaseLength === '12 months') weeks = 52
-  else if (leaseLength === 'Flexible') weeks = 104
-  const end = new Date(start.getTime() + weeks * 7 * 86400000)
-  return end.toISOString().slice(0, 10)
+function mapDocGenResult(
+  result: ListingDocGenResult,
+  deferSigning: boolean,
+): { status: number; body: Record<string, unknown> } {
+  if (!result.ok) {
+    return {
+      status: result.status,
+      body: {
+        error: result.error,
+        ...(result.detail ? { detail: result.detail, message: result.detail } : {}),
+      },
+    }
+  }
+  if ('skipped' in result && result.skipped) {
+    return {
+      status: 200,
+      body: { ok: true, skipped: true, reason: result.reason },
+    }
+  }
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      tenancy_id: result.tenancyId,
+      document_id: result.documentId,
+      deferred_signing: deferSigning,
+      ...(result.docusealSubmissionId ? { docuseal_submission_id: result.docusealSubmissionId } : {}),
+    },
+  }
 }
 
-function propertyAddressLine(p: Record<string, unknown>): string {
-  const parts = [
-    typeof p.address === 'string' ? p.address.trim() : '',
-    typeof p.suburb === 'string' ? p.suburb.trim() : '',
-    typeof p.state === 'string' ? p.state.trim() : '',
-    typeof p.postcode === 'string' ? p.postcode.trim() : '',
-  ].filter(Boolean)
-  return parts.join(', ')
-}
-
-function landlordAddressLine(lp: Record<string, unknown>): string {
-  const parts = [
-    typeof lp.address === 'string' ? lp.address.trim() : '',
-    typeof lp.suburb === 'string' ? lp.suburb.trim() : '',
-    typeof lp.state === 'string' ? lp.state.trim() : '',
-    typeof lp.postcode === 'string' ? lp.postcode.trim() : '',
-  ].filter(Boolean)
-  return parts.join(', ') || '-'
-}
-
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[generate-vic-occupancy] incoming request', { method: req.method })
 
   if (req.method !== 'POST') {
@@ -102,294 +91,8 @@ export default async function handler(req: any, res: any) {
   }
 
   const deferSigning = body.defer_signing === true
-
   const admin = createClient<Database>(supabaseUrl, serviceRole)
-
-  const { data: bookingRaw, error: bErr } = await admin
-    .from('bookings')
-    .select(
-      `
-      id,
-      property_id,
-      student_id,
-      landlord_id,
-      status,
-      service_tier_final,
-      weekly_rent,
-      move_in_date,
-      start_date,
-      end_date,
-      lease_length,
-      notes,
-      occupant_count,
-      co_tenant,
-      properties (
-        title,
-        address,
-        suburb,
-        state,
-        postcode,
-        rent_per_week,
-        max_occupants,
-        room_type,
-        property_type,
-        is_registered_rooming_house,
-        furnished,
-        bond,
-        linen_supplied,
-        weekly_cleaning_service,
-        house_rules
-      )
-    `,
-    )
-    .eq('id', bookingId)
-    .maybeSingle()
-
-  if (bErr || !bookingRaw) {
-    return res.status(404).json({ error: 'Booking not found' })
-  }
-
-  type BookingRow = Database['public']['Tables']['bookings']['Row']
-  const booking = bookingRaw as BookingRow & {
-    properties?: Record<string, unknown> | null
-  }
-
-  /** Phase 3 / Task J: see generate-lease.ts. */
-  const isListingPreview = isListingPreviewGeneration(deferSigning, booking)
-  if (!bookingAllowsTenancyDocumentGeneration(booking)) {
-    return res.status(400).json({ error: 'Booking must be confirmed' })
-  }
-
-  if (!booking.property_id || !booking.student_id || !booking.landlord_id) {
-    return res.status(400).json({ error: 'Booking missing property or profile ids' })
-  }
-
-  const { data: lp, error: lpErr } = await admin
-    .from('landlord_profiles')
-    .select(
-      'id, user_id, full_name, first_name, last_name, email, phone, address, suburb, state, postcode, company_name',
-    )
-    .eq('id', booking.landlord_id)
-    .maybeSingle()
-
-  const { data: sp, error: spErr } = await admin
-    .from('student_profiles')
-    .select('id, user_id, full_name, first_name, last_name, email, phone, date_of_birth')
-    .eq('id', booking.student_id)
-    .maybeSingle()
-
-  if (lpErr || spErr || !lp || !sp) {
-    return res.status(500).json({ error: 'Could not load profiles' })
-  }
-
-  const prop =
-    booking.properties && typeof booking.properties === 'object' && !Array.isArray(booking.properties)
-      ? (booking.properties as Record<string, unknown>)
-      : {}
-
-  const stateRaw = typeof prop.state === 'string' ? prop.state.trim().toUpperCase() : ''
-  if (stateRaw !== 'VIC') {
-    return res.status(400).json({ error: 'Property must be in Victoria for VIC licence to occupy PDF' })
-  }
-
-  const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
-  if (!moveIn) {
-    return res.status(400).json({ error: 'Booking missing move-in / start date' })
-  }
-
-  const weeklyRent = Number(booking.weekly_rent)
-  if (!Number.isFinite(weeklyRent) || weeklyRent <= 0) {
-    return res.status(400).json({ error: 'Invalid weekly rent' })
-  }
-
-  const leaseLen = typeof booking.lease_length === 'string' ? booking.lease_length : null
-  const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
-  const periodic = leaseLen === 'Flexible' || endDate == null
-
-  const bondNum =
-    typeof prop.bond === 'number' && Number.isFinite(prop.bond)
-      ? prop.bond
-      : Math.round(weeklyRent * 4 * 100) / 100
-
-  const { data: existingTenancy } = await admin.from('tenancies').select('id').eq('booking_id', bookingId).maybeSingle()
-
-  let tenancyId = existingTenancy?.id
-  if (!tenancyId) {
-    const { data: insT, error: tInsErr } = await admin
-      .from('tenancies')
-      .insert({
-        booking_id: bookingId,
-        property_id: booking.property_id,
-        landlord_profile_id: booking.landlord_id,
-        student_profile_id: booking.student_id,
-        start_date: moveIn,
-        end_date: periodic ? null : endDate,
-        weekly_rent: weeklyRent,
-        bond_amount: bondNum,
-        status: 'active',
-      })
-      .select('id')
-      .single()
-
-    if (tInsErr || !insT) {
-      console.error('tenancy insert', tInsErr)
-      return res.status(500).json({ error: 'Could not create tenancy' })
-    }
-    tenancyId = insT.id
-  }
-
-  const { data: existingLease } = await admin
-    .from('tenancy_documents')
-    .select('id, status')
-    .eq('tenancy_id', tenancyId)
-    .eq('document_type', 'lease')
-    .maybeSingle()
-
-  if (existingLease && (existingLease.status === 'sent_for_signing' || existingLease.status === 'signed')) {
-    return res.status(200).json({
-      ok: true,
-      skipped: true,
-      tenancy_id: tenancyId,
-      document_id: existingLease.id,
-      message: 'Lease already sent or signed',
-    })
-  }
-
-  const landlordUserId = typeof lp.user_id === 'string' ? lp.user_id : null
-
-  let documentId: string
-  if (existingLease?.id) {
-    documentId = existingLease.id
-  } else {
-    const { data: insD, error: dErr } = await admin
-      .from('tenancy_documents')
-      .insert({
-        tenancy_id: tenancyId,
-        document_type: 'lease',
-        status: 'draft',
-        generated_by: landlordUserId,
-      })
-      .select('id')
-      .single()
-
-    if (dErr || !insD) {
-      console.error('tenancy_documents insert', dErr)
-      return res.status(500).json({ error: 'Could not create tenancy document' })
-    }
-    documentId = insD.id
-  }
-
-  const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
-  const platformFeePercent =
-    serviceTier === 'managed'
-      ? await getManagedLandlordFeePercentForProperty(booking.property_id)
-      : 0
-  const paymentMethod =
-    serviceTier === 'listing'
-      ? 'Direct credit to owner account (fee-free). Reference: resident name and property address.'
-      : 'Via Quni Living platform (quni.com.au)'
-
-  const lpRec = lp as Record<string, unknown>
-  const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
-
-  const pdfProps: OccupancyAgreementProps = {
-    documentId,
-    generatedAt: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Brisbane' }),
-    serviceTier,
-    landlord: {
-      fullName:
-        [lp.first_name, lp.last_name].filter(Boolean).join(' ').trim() ||
-        (typeof lp.full_name === 'string' ? lp.full_name : 'Landlord'),
-      companyName: typeof lp.company_name === 'string' && lp.company_name.trim() ? lp.company_name.trim() : null,
-      addressLine: landlordAddressLine(lpRec),
-      email: typeof lp.email === 'string' ? lp.email : '-',
-      phone: typeof lp.phone === 'string' && lp.phone.trim() ? lp.phone : '-',
-    },
-    tenant: {
-      fullName:
-        [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
-        (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
-      email: typeof sp.email === 'string' ? sp.email : '-',
-      phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone : '-',
-      dateOfBirth:
-        typeof sp.date_of_birth === 'string' && sp.date_of_birth.trim() ? sp.date_of_birth.trim() : null,
-      emergencyContactName: null,
-      emergencyContactPhone: null,
-    },
-    premises: {
-      addressLine: propertyAddressLine(prop) || '-',
-      propertyType: typeof prop.property_type === 'string' ? prop.property_type : null,
-      roomType: typeof prop.room_type === 'string' ? prop.room_type : null,
-      furnished: typeof prop.furnished === 'boolean' ? prop.furnished : null,
-      linenSupplied: typeof prop.linen_supplied === 'boolean' ? prop.linen_supplied : null,
-      weeklyCleaningService:
-        typeof prop.weekly_cleaning_service === 'boolean' ? prop.weekly_cleaning_service : null,
-    },
-    term: {
-      startDate: moveIn,
-      endDate: periodic ? null : endDate,
-      periodic,
-      leaseLengthDescription: leaseLen || 'As agreed',
-    },
-    rent: {
-      weeklyRent,
-      platformFeePercent,
-      totalWeekly: weeklyRent,
-      paymentMethod,
-    },
-    bond: { amount: bondNum },
-    specialConditions: [
-      'This licence is facilitated through the Quni Living platform (quni.com.au).',
-      'Any security deposit under this licence is held directly by the owner and is not lodged with the Residential Tenancies Bond Authority (RTBA). Quni Living does not hold or manage security deposits.',
-      "Licence fee payments are processed through Quni Living's secure payment system powered by Stripe.",
-      ...coTenantSpecialConditions,
-    ],
-    houseRules: prop.house_rules ?? null,
-    bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
-  }
-
-  const element = React.createElement(VicLicenceToOccupyOnSite, pdfProps)
-  const pdfBuffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
-
-  const storagePath = `${tenancyId}/occupancy/vic_occupancy_agreement_draft.pdf`
-  const { error: upErr } = await admin.storage
-    .from('tenancy-documents')
-    .upload(storagePath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
-
-  if (upErr) {
-    console.error('storage upload qld occupancy draft', upErr)
-    return res.status(500).json({ error: 'Could not upload PDF' })
-  }
-
-  const { error: pathErr } = await admin
-    .from('tenancy_documents')
-    .update({ file_path: storagePath, status: 'draft' })
-    .eq('id', documentId)
-
-  if (pathErr) {
-    console.error('tenancy_documents update path', pathErr)
-    return res.status(500).json({ error: 'Could not save file path' })
-  }
-
-  let docusealError: string | undefined
-  const hasDocuseal =
-    (process.env.DOCUSEAL_API_URL || '').trim() && (process.env.DOCUSEAL_API_TOKEN || '').trim()
-
-  if (hasDocuseal && !deferSigning) {
-    try {
-      await sendForSigning(documentId)
-    } catch (e) {
-      console.error('sendForSigning', e)
-      docusealError = e instanceof Error ? e.message : String(e)
-    }
-  }
-
-  return res.status(200).json({
-    ok: true,
-    tenancy_id: tenancyId,
-    document_id: documentId,
-    file_path: storagePath,
-    deferred_signing: deferSigning,
-    ...(docusealError ? { docuseal_error: docusealError } : {}),
-  })
+  const result = await runVicOccupancyListingTenancy(admin, bookingId, { deferSigning })
+  const mapped = mapDocGenResult(result, deferSigning)
+  return res.status(mapped.status).json(mapped.body)
 }

@@ -8,6 +8,8 @@ import {
   listingBondPaymentEmailHtmlForTenant,
 } from '../tenancy/listingBondPaymentCopy.js'
 import {
+  listingAgreementReadyLandlord,
+  listingAgreementReadyRenter,
   listingBookingAcceptedLandlord,
   listingBookingAcceptedRenter,
   listingBondPendingExpiredLandlord,
@@ -155,7 +157,6 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
     const bookingRef = bookingReferenceLabel(bookingId)
     const bondDeadline = formatAuLongDate(opts.bond_window_expires_at)
     const studentDash = `${base}/student-dashboard?tab=bookings`
-    const leasePreview = studentDash
     const markBond = `${base}/landlord/bookings/${bookingId}/review`
 
     const sendRenter = async () => {
@@ -166,10 +167,8 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         property_title: ctx.propertyTitle,
         booking_reference: bookingRef,
         bond_deadline_display: bondDeadline,
-        lease_preview_url: leasePreview,
         student_dashboard_url: studentDash,
         bond_payment_html: ctx.bondPaymentTenantHtml,
-        sign_agreement_url: studentDash,
       })
       await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
     }
@@ -194,6 +193,50 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
     await Promise.all([sendRenter(), sendLl()])
   } catch (e) {
     console.error('[listing-emails] sendListingBookingAcceptedEmails', bookingId, e)
+  }
+}
+
+/**
+ * After Listing confirm when DocuSeal signing is live.
+ * @param {import('@supabase/supabase-js').SupabaseClient} admin
+ * @param {string} bookingId
+ */
+export async function sendListingAgreementReadyEmails(admin, bookingId) {
+  try {
+    const ctx = await loadListingEmailContext(admin, bookingId)
+    if (!ctx) return
+
+    const base = siteBaseUrl()
+    const studentDash = `${base}/student-dashboard?tab=bookings`
+    const reviewUrl = `${base}/landlord/bookings/${bookingId}/review`
+
+    const sendRenter = async () => {
+      if (!ctx.studentEmail) return
+      const t = listingAgreementReadyRenter({
+        student_name: ctx.studentName,
+        property_address: ctx.propertyAddress,
+        property_title: ctx.propertyTitle,
+        sign_agreement_url: studentDash,
+        student_dashboard_url: studentDash,
+      })
+      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+    }
+
+    const sendLl = async () => {
+      if (!ctx.landlordEmail) return
+      const t = listingAgreementReadyLandlord({
+        landlord_name: ctx.landlordName,
+        property_address: ctx.propertyAddress,
+        property_title: ctx.propertyTitle,
+        review_url: reviewUrl,
+        dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
+      })
+      await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })
+    }
+
+    await Promise.all([sendRenter(), sendLl()])
+  } catch (e) {
+    console.error('[listing-emails] sendListingAgreementReadyEmails', bookingId, e)
   }
 }
 

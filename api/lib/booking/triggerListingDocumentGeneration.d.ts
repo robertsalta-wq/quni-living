@@ -1,13 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-export type TriggerListingDocResult =
-  | { ok: true; skipped: true; reason: string }
-  | { ok: true; skipped?: false; status: number; generatePath: string; deferSigning: boolean }
-  | { ok: false; status: number; body: string }
+import type { Database } from '../../../src/lib/database.types.js'
+import type { ListingDocGenResult } from './listingAgreementTypes.js'
 
 export function triggerListingDocumentGeneration(args: {
-  admin: SupabaseClient
+  admin: SupabaseClient<Database>
   bookingId: string
-  deferSigning: boolean
+  deferSigning?: boolean
   logger?: Pick<Console, 'warn' | 'error'>
-}): Promise<TriggerListingDocResult>
+}): Promise<ListingDocGenResult>

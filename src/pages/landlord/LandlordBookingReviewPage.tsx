@@ -763,7 +763,11 @@ export default function LandlordBookingReviewPage() {
             <BookingLeasePanel
               bookingId={booking.id}
               refreshKey={leasePanelRefreshKey}
-              allowPrepareRetry={booking.service_tier_final === 'listing' && booking.status === 'bond_pending'}
+              allowPrepareRetry={
+                booking.service_tier_final === 'listing' &&
+                booking.status === 'bond_pending' &&
+                booking.listing_agreement_status === 'failed'
+              }
               allowRegenerateAgreement={
                 booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
               }

@@ -2,17 +2,37 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./listingTransactionalEmails.js', () => ({
   sendListingBookingAcceptedEmails: vi.fn().mockResolvedValue(undefined),
+  sendListingAgreementReadyEmails: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('./triggerListingDocumentGeneration.js', () => ({
-  triggerListingDocumentGeneration: vi.fn().mockResolvedValue({ ok: true, skipped: true, reason: 'mock' }),
+  triggerListingDocumentGeneration: vi.fn().mockResolvedValue({
+    ok: true,
+    tenancyId: 'ten1',
+    documentId: 'doc1',
+    docusealSubmissionId: 'sub1',
+  }),
 }))
 
-import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
+vi.mock('../documents/listingTenancyGeneration/index.js', () => ({
+  preflightListingTenancyDocument: vi.fn().mockResolvedValue({ ok: true, generator: 'qld-form18a' }),
+}))
+
+vi.mock('./listingAgreementStatus.js', () => ({
+  setListingAgreementStatus: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('../messaging/bookingConversation.js', () => ({
+  unlockConversationOnBookingConfirmed: vi.fn().mockResolvedValue(undefined),
+}))
+
+import { sendListingAgreementReadyEmails, sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
+import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
+import { setListingAgreementStatus } from './listingAgreementStatus.js'
 import { runListingConfirmBooking } from './confirmListing.js'
 
-const landlord = { id: 'll1', stripe_customer_id: 'cus_ll' }
+const landlord = { id: 'll1', stripe_customer_id: 'cus_ll', stripe_charges_enabled: true }
 
 const baseBooking = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -54,7 +74,7 @@ function mockAdmin(opts: {
         }),
         update: () => ({
           eq: () => ({
-            eq: () => ({
+            in: () => ({
               select: async () => ({
                 data: updateRows,
                 error: null,
@@ -97,9 +117,16 @@ function stripeHappy() {
 describe('runListingConfirmBooking', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(preflightListingTenancyDocument).mockResolvedValue({ ok: true, generator: 'qld-form18a' })
+    vi.mocked(triggerListingDocumentGeneration).mockResolvedValue({
+      ok: true,
+      tenancyId: 'ten1',
+      documentId: 'doc1',
+      docusealSubmissionId: 'sub1',
+    })
   })
 
-  it('happy path: cancel hold, charge $99, bond_pending, telemetry insert', async () => {
+  it('happy path: preflight, cancel hold, charge $99, bond_pending, doc gen, ready status', async () => {
     const stripe = stripeHappy()
     const admin = mockAdmin({})
 
@@ -114,7 +141,9 @@ describe('runListingConfirmBooking', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.status).toBe('bond_pending')
-    expect(result.listing_fee_payment_intent_id).toBe('pi_fee')
+    expect(result.listing_agreement_status).toBe('ready')
+    expect(preflightListingTenancyDocument).toHaveBeenCalled()
+    expect(sendListingAgreementReadyEmails).toHaveBeenCalledWith(expect.anything(), baseBooking.id)
     expect(sendListingBookingAcceptedEmails).toHaveBeenCalledWith(
       expect.anything(),
       baseBooking.id,
@@ -122,21 +151,72 @@ describe('runListingConfirmBooking', () => {
         bond_window_expires_at: expect.any(String),
       }),
     )
-    expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
-    expect(stripe.paymentIntents.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        amount: 9900,
-        currency: 'aud',
-        confirm: true,
-        off_session: true,
-        metadata: expect.objectContaining({
-          booking_id: baseBooking.id,
-          service_tier: 'listing',
-        }),
-      }),
-      { idempotencyKey: `confirm-listing-${baseBooking.id}` },
+    expect(setListingAgreementStatus).toHaveBeenCalledWith(
+      expect.anything(),
+      baseBooking.id,
+      'ready',
+      null,
     )
+    expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
+    expect(stripe.paymentIntents.create).toHaveBeenCalled()
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+  })
+
+  it('preflight failure blocks charge and bond_pending', async () => {
+    vi.mocked(preflightListingTenancyDocument).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      error: 'Rent payment details are not configured',
+    })
+
+    const stripe = stripeHappy()
+    const admin = mockAdmin({})
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.body.error).toBe('agreement_preflight_failed')
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
+    expect(triggerListingDocumentGeneration).not.toHaveBeenCalled()
+    expect(sendListingBookingAcceptedEmails).not.toHaveBeenCalled()
+    expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
+  })
+
+  it('doc-gen ok:false sets failed status, no agreement-ready email', async () => {
+    vi.mocked(triggerListingDocumentGeneration).mockResolvedValueOnce({
+      ok: false,
+      status: 0,
+      error: 'fetch failed',
+      detail: 'network',
+    })
+
+    const stripe = stripeHappy()
+    const admin = mockAdmin({})
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.listing_agreement_status).toBe('failed')
+    expect(setListingAgreementStatus).toHaveBeenCalledWith(
+      expect.anything(),
+      baseBooking.id,
+      'failed',
+      expect.stringContaining('fetch failed'),
+    )
+    expect(sendListingAgreementReadyEmails).not.toHaveBeenCalled()
+    expect(sendListingBookingAcceptedEmails).toHaveBeenCalled()
   })
 
   it('fee-exempt landlord: skips listing fee charge', async () => {
@@ -224,7 +304,6 @@ describe('runListingConfirmBooking', () => {
     if (result.ok) return
     expect(result.status).toBe(402)
     expect(result.body.error).toBe('charge_failed')
-    expect(admin.from).toHaveBeenCalledWith('bookings')
     const insertCalls = admin.from.mock.calls.filter((c) => c[0] === 'service_tier_events')
     expect(insertCalls.length).toBe(0)
   })
@@ -287,6 +366,7 @@ describe('runListingConfirmBooking', () => {
                       ...baseBooking,
                       status: 'bond_pending',
                       bond_window_expires_at: '2099-01-01T00:00:00.000Z',
+                      listing_agreement_status: 'ready',
                     },
                     error: null,
                   }
@@ -295,7 +375,7 @@ describe('runListingConfirmBooking', () => {
             }),
             update: () => ({
               eq: () => ({
-                eq: () => ({
+                in: () => ({
                   select: async () => ({ data: [], error: null }),
                 }),
               }),

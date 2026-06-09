@@ -163,6 +163,8 @@ export const BOOKING_FIELD_STATUS = {
   expired_at: 'NOT_MATCHING',
   bond_received_by_landlord_at: 'NOT_MATCHING',
   bond_window_expires_at: 'NOT_MATCHING',
+  listing_agreement_status: 'NOT_MATCHING',
+  listing_agreement_error: 'NOT_MATCHING',
   bond_acknowledged: 'NOT_MATCHING',
   rent_payment_method: 'NOT_MATCHING',
   stripe_subscription_id: 'NOT_MATCHING',

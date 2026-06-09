@@ -113,38 +113,40 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
         aria-describedby={ariaDescribedBy}
         className={className}
       />
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={openPicker}
-        className={
-          calendarButtonClassName ??
-          'shrink-0 rounded-lg border border-gray-900/20 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
-        }
-        aria-label="Choose date"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-        </svg>
-      </button>
-      <input
-        ref={hiddenRef}
-        type="date"
-        className="sr-only fixed left-0 top-0 h-px w-px opacity-0"
-        tabIndex={-1}
-        aria-hidden
-        value={isIsoDateString(value) ? value : ''}
-        min={min}
-        max={max}
-        onChange={(e) => {
-          const v = e.target.value
-          if (v && isIsoDateString(v)) {
-            onChange(v)
-            setText(formatIsoDateAuNumeric(v))
+      <div className="relative shrink-0">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={openPicker}
+          className={
+            calendarButtonClassName ??
+            'rounded-lg border border-gray-900/20 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
           }
-        }}
-      />
+          aria-label="Choose date"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+          </svg>
+        </button>
+        <input
+          ref={hiddenRef}
+          type="date"
+          className="absolute inset-0 h-full w-full opacity-0 pointer-events-none"
+          tabIndex={-1}
+          aria-hidden
+          value={isIsoDateString(value) ? value : ''}
+          min={min}
+          max={max}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v && isIsoDateString(v)) {
+              onChange(v)
+              setText(formatIsoDateAuNumeric(v))
+            }
+          }}
+        />
+      </div>
     </div>
   )
 })

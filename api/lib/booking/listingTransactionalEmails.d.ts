@@ -8,6 +8,8 @@ export function sendListingBookingAcceptedEmails(
   opts: { bond_window_expires_at: string },
 ): Promise<void>
 
+export function sendListingAgreementReadyEmails(admin: SupabaseClient, bookingId: string): Promise<void>
+
 export function sendListingBondReceivedEmails(admin: SupabaseClient, bookingId: string): Promise<void>
 
 export function sendListingBondPendingExpiredEmails(

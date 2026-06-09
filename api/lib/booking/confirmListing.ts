@@ -1,6 +1,10 @@
-// @ts-nocheck - Listing-tier confirm: cancel renter hold + $99 landlord charge + bond_pending.
-
-import { sendListingBookingAcceptedEmails } from './listingTransactionalEmails.js'
+import type Stripe from 'stripe'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../../../src/lib/database.types.js'
+import {
+  sendListingAgreementReadyEmails,
+  sendListingBookingAcceptedEmails,
+} from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
 import {
@@ -8,18 +12,32 @@ import {
   resolveListingPlatformFeeCents,
 } from '../pricing/resolvePlatformFee.js'
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
+import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
+import { setListingAgreementStatus } from './listingAgreementStatus.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID =
   (typeof process !== 'undefined' && process.env?.STRIPE_LISTING_PRODUCT_ID?.trim()) ||
   'prod_UTXU1Ilz3bfCY7'
 
-function jsonFail(status, body) {
+type ConfirmFail = { ok: false; status: number; body: Record<string, unknown> }
+type ConfirmOk = {
+  ok: true
+  idempotent: boolean
+  status: 'bond_pending'
+  bond_window_expires_at: string
+  service_tier_final: 'listing'
+  listing_fee_payment_intent_id?: string | null
+  listing_agreement_status?: 'pending' | 'ready' | 'failed' | null
+}
+
+function jsonFail(status: number, body: Record<string, unknown>): ConfirmFail {
   return { ok: false, status, body }
 }
 
-function cancellationTolerated(err) {
-  const msg = err && typeof err === 'object' && 'message' in err ? String(err.message).toLowerCase() : ''
+function cancellationTolerated(err: unknown): boolean {
+  const msg =
+    err && typeof err === 'object' && 'message' in err ? String(err.message).toLowerCase() : ''
   const code = err && typeof err === 'object' && 'code' in err ? String(err.code) : ''
   return (
     code === 'payment_intent_unexpected_state' ||
@@ -32,15 +50,31 @@ function cancellationTolerated(err) {
   )
 }
 
-/**
- * @param {object} params
- * @param {import('stripe').default} params.stripe
- * @param {import('@supabase/supabase-js').SupabaseClient} params.admin
- * @param {{ id: string; stripe_customer_id?: string | null; user_id?: string | null }} params.landlord
- * @param {string} params.bookingId
- */
-export async function runListingConfirmBooking(params) {
-  const { stripe, admin, landlord, bookingId, origin: _origin } = params
+function docGenSucceededForSigning(
+  gen: Awaited<ReturnType<typeof triggerListingDocumentGeneration>>,
+): boolean {
+  if (!gen.ok || gen.skipped) return false
+  return Boolean(gen.docusealSubmissionId) || Boolean(gen.documentId)
+}
+
+export type RunListingConfirmBookingParams = {
+  stripe: Stripe
+  admin: SupabaseClient<Database>
+  landlord: {
+    id: string
+    stripe_customer_id?: string | null
+    user_id?: string | null
+    stripe_charges_enabled?: boolean | null
+    admin_override_verified?: boolean | null
+  }
+  bookingId: string
+  origin?: string
+}
+
+export async function runListingConfirmBooking(
+  params: RunListingConfirmBookingParams,
+): Promise<ConfirmFail | ConfirmOk> {
+  const { stripe, admin, landlord, bookingId } = params
   const landlordUserId =
     typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
 
@@ -84,6 +118,17 @@ export async function runListingConfirmBooking(params) {
     })
   }
 
+  const preflight = await preflightListingTenancyDocument(admin, booking.id)
+  if (!preflight.ok) {
+    return jsonFail(preflight.status >= 500 ? 503 : preflight.status, {
+      error: 'agreement_preflight_failed',
+      message:
+        preflight.error ||
+        'We could not prepare your tenancy agreement. Fix the issue below and try again.',
+      detail: preflight.detail,
+    })
+  }
+
   const feeExempt = await isLandlordFeeExempt(admin, landlord.id)
   const listingFeeCents = resolveListingPlatformFeeCents(feeExempt, LISTING_FEE_CENTS)
 
@@ -94,7 +139,7 @@ export async function runListingConfirmBooking(params) {
       await stripe.paymentIntents.cancel(piHold)
     } catch (e) {
       if (cancellationTolerated(e)) {
-        console.warn('[confirm-listing] deposit PI cancel tolerated', { piHold, err: String(e?.message || e) })
+        console.warn('[confirm-listing] deposit PI cancel tolerated', { piHold, err: String((e as Error)?.message || e) })
       } else {
         console.error('[confirm-listing] deposit PI cancel failed', e)
       }
@@ -103,7 +148,7 @@ export async function runListingConfirmBooking(params) {
 
   const idempotencyKey = `confirm-listing-${booking.id}`
 
-  let chargePi = null
+  let chargePi: Stripe.PaymentIntent | null = null
   if (listingFeeCents > 0) {
     const customerId = typeof landlord.stripe_customer_id === 'string' ? landlord.stripe_customer_id.trim() : ''
     if (!customerId) {
@@ -113,7 +158,7 @@ export async function runListingConfirmBooking(params) {
       })
     }
 
-    let customer
+    let customer: Stripe.Customer | Stripe.DeletedCustomer
     try {
       customer = await stripe.customers.retrieve(customerId, {
         expand: ['invoice_settings.default_payment_method'],
@@ -134,7 +179,7 @@ export async function runListingConfirmBooking(params) {
     }
 
     const pm = customer.invoice_settings?.default_payment_method
-    let defaultPaymentMethodId = null
+    let defaultPaymentMethodId: string | null = null
     if (typeof pm === 'string') defaultPaymentMethodId = pm
     else if (pm && typeof pm === 'object' && 'id' in pm && typeof pm.id === 'string')
       defaultPaymentMethodId = pm.id
@@ -167,14 +212,17 @@ export async function runListingConfirmBooking(params) {
         { idempotencyKey },
       )
     } catch (e) {
-      const code = e && typeof e === 'object' && 'code' in e ? String(e.code) : ''
-      const raw = e && typeof e === 'object' && 'raw' in e && e.raw && typeof e.raw === 'object' ? e.raw : null
-      const piFromErr = e && typeof e === 'object' && 'payment_intent' in e ? e.payment_intent : null
+      const err = e as Stripe.errors.StripeError
+      const code = err?.code ? String(err.code) : ''
+      const raw = err?.raw && typeof err.raw === 'object' ? err.raw : null
+      const piFromErr = err?.payment_intent
       const piFromRaw =
         raw && 'payment_intent' in raw && raw.payment_intent && typeof raw.payment_intent === 'object'
           ? raw.payment_intent
           : null
-      const paymentIntent = piFromErr && typeof piFromErr === 'object' ? piFromErr : piFromRaw
+      const paymentIntent = (piFromErr && typeof piFromErr === 'object' ? piFromErr : piFromRaw) as
+        | Stripe.PaymentIntent
+        | null
 
       if (code === 'authentication_required' && paymentIntent?.client_secret && paymentIntent?.id) {
         return {
@@ -189,9 +237,8 @@ export async function runListingConfirmBooking(params) {
         }
       }
 
-      const declineCode =
-        e && typeof e === 'object' && 'decline_code' in e ? String(e.decline_code || '') : ''
-      const msg = e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Payment failed'
+      const declineCode = err?.decline_code ? String(err.decline_code) : ''
+      const msg = err?.message ? String(err.message) : 'Payment failed'
 
       return jsonFail(402, {
         error: 'charge_failed',
@@ -234,6 +281,8 @@ export async function runListingConfirmBooking(params) {
       bond_window_expires_at: bondWindow,
       confirmed_at: nowIso,
       listing_fee_stripe_payment_intent_id: chargePi?.id ?? null,
+      listing_agreement_status: 'pending',
+      listing_agreement_error: null,
     })
     .eq('id', booking.id)
     .in('status', ['pending_confirmation', 'awaiting_info'])
@@ -249,7 +298,9 @@ export async function runListingConfirmBooking(params) {
   if (!updated) {
     const { data: again } = await admin
       .from('bookings')
-      .select('id, status, bond_window_expires_at, service_tier_final, stripe_payment_intent_id')
+      .select(
+        'id, status, bond_window_expires_at, service_tier_final, stripe_payment_intent_id, listing_agreement_status',
+      )
       .eq('id', booking.id)
       .maybeSingle()
     if (again?.status === 'bond_pending') {
@@ -262,8 +313,9 @@ export async function runListingConfirmBooking(params) {
         ok: true,
         idempotent: true,
         status: 'bond_pending',
-        bond_window_expires_at: again.bond_window_expires_at,
+        bond_window_expires_at: again.bond_window_expires_at ?? bondWindow,
         service_tier_final: 'listing',
+        listing_agreement_status: again.listing_agreement_status ?? null,
       }
     }
     return jsonFail(409, {
@@ -291,35 +343,59 @@ export async function runListingConfirmBooking(params) {
     console.error('[confirm-listing] service_tier_events insert', evErr)
   }
 
-  if (updated) {
-    try {
-      await sendListingBookingAcceptedEmails(admin, booking.id, {
-        bond_window_expires_at: bondWindow,
-      })
-    } catch (e) {
-      console.error('[confirm-listing] acceptance emails', e)
-    }
+  let listingAgreementStatus: 'pending' | 'ready' | 'failed' = 'pending'
 
-    /**
-     * Generate the lease and send DocuSeal signing to both parties at accept.
-     * Bond receipt on Quni is tracked separately (booking state) and is not a legal
-     * prerequisite for issuing the agreement.
-     */
-    try {
-      await triggerListingDocumentGeneration({
-        admin,
-        bookingId: booking.id,
-        deferSigning: false,
-      })
-    } catch (e) {
-      console.error('[confirm-listing] preview document generation', e)
-    }
+  const gen = await triggerListingDocumentGeneration({
+    admin,
+    bookingId: booking.id,
+    deferSigning: false,
+  })
 
+  if (!gen.ok) {
+    listingAgreementStatus = 'failed'
+    const errMsg = [gen.error, gen.detail].filter(Boolean).join(': ')
+    await setListingAgreementStatus(admin, booking.id, 'failed', errMsg)
+    console.error('[confirm-listing] document generation failed', gen)
+  } else if (gen.skipped) {
+    listingAgreementStatus = 'failed'
+    await setListingAgreementStatus(
+      admin,
+      booking.id,
+      'failed',
+      `Skipped: ${gen.reason ?? 'unknown'}`,
+    )
+    console.error('[confirm-listing] document generation skipped unexpectedly', gen)
+  } else if (docGenSucceededForSigning(gen)) {
+    listingAgreementStatus = 'ready'
+    await setListingAgreementStatus(admin, booking.id, 'ready', null)
     try {
-      await unlockConversationOnBookingConfirmed(admin, booking.id, { landlordUserId })
+      await sendListingAgreementReadyEmails(admin, booking.id)
     } catch (e) {
-      console.error('[confirm-listing] conversation unlock', e)
+      console.error('[confirm-listing] agreement-ready emails', e)
     }
+  } else {
+    listingAgreementStatus = 'failed'
+    await setListingAgreementStatus(
+      admin,
+      booking.id,
+      'failed',
+      'Agreement PDF created but signing was not dispatched',
+    )
+    console.error('[confirm-listing] document generation incomplete (no signing)', gen)
+  }
+
+  try {
+    await sendListingBookingAcceptedEmails(admin, booking.id, {
+      bond_window_expires_at: bondWindow,
+    })
+  } catch (e) {
+    console.error('[confirm-listing] acceptance emails', e)
+  }
+
+  try {
+    await unlockConversationOnBookingConfirmed(admin, booking.id, { landlordUserId })
+  } catch (e) {
+    console.error('[confirm-listing] conversation unlock', e)
   }
 
   return {
@@ -329,5 +405,6 @@ export async function runListingConfirmBooking(params) {
     bond_window_expires_at: bondWindow,
     service_tier_final: 'listing',
     listing_fee_payment_intent_id: chargePi?.id ?? null,
+    listing_agreement_status: listingAgreementStatus,
   }
 }

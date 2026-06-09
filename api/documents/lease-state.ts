@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - Vercel api handler; strict typing deferred to shared leaseState helpers.
 /**
  * Lease document state for a booking - used by both renter and landlord booking-detail
  * surfaces (Phase 3 / Task J).
@@ -93,7 +93,9 @@ export default async function handler(req, res) {
 
   const { data: booking, error: bErr } = await admin
     .from('bookings')
-    .select('id, landlord_id, student_id, status, service_tier_final, occupant_count, co_tenant')
+    .select(
+      'id, landlord_id, student_id, status, service_tier_final, occupant_count, co_tenant, listing_agreement_status, listing_agreement_error',
+    )
     .eq('id', bookingId)
     .maybeSingle()
 
@@ -118,11 +120,22 @@ export default async function handler(req, res) {
     .maybeSingle()
 
   if (!tenancy) {
+    const agreementStatus =
+      typeof booking.listing_agreement_status === 'string' ? booking.listing_agreement_status : null
+    let state = 'none'
+    if (booking.service_tier_final === 'listing' && agreementStatus === 'pending') {
+      state = 'agreement_preparing'
+    } else if (booking.service_tier_final === 'listing' && agreementStatus === 'failed') {
+      state = 'agreement_failed'
+    }
     return res.status(200).json({
-      state: 'none',
+      state,
       viewer_role: viewerRole,
       viewer_signed: false,
       counterparty_signed: false,
+      listing_agreement_status: agreementStatus,
+      listing_agreement_error:
+        typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
     })
   }
 
@@ -145,11 +158,22 @@ export default async function handler(req, res) {
     null
 
   if (!doc) {
+    const agreementStatus =
+      typeof booking.listing_agreement_status === 'string' ? booking.listing_agreement_status : null
+    let state = 'none'
+    if (booking.service_tier_final === 'listing' && agreementStatus === 'pending') {
+      state = 'agreement_preparing'
+    } else if (booking.service_tier_final === 'listing' && agreementStatus === 'failed') {
+      state = 'agreement_failed'
+    }
     return res.status(200).json({
-      state: 'none',
+      state,
       viewer_role: viewerRole,
       viewer_signed: false,
       counterparty_signed: false,
+      listing_agreement_status: agreementStatus,
+      listing_agreement_error:
+        typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
     })
   }
 

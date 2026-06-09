@@ -113,13 +113,25 @@ export default async function handler(req, res) {
     if (!gen.ok) {
       return corsJson(
         res,
-        { error: 'Could not prepare tenancy agreement', detail: gen.body ?? gen.reason },
-        500,
+        { error: 'Could not prepare tenancy agreement', detail: gen.detail ?? gen.error },
+        gen.status >= 400 && gen.status < 600 ? gen.status : 500,
         origin,
       )
     }
 
-    return corsJson(res, { ok: true, skipped: Boolean(gen.skipped), reason: gen.reason ?? null }, 200, origin)
+    if (gen.skipped) {
+      return corsJson(
+        res,
+        { error: 'Could not prepare tenancy agreement', detail: gen.reason ?? 'skipped' },
+        409,
+        origin,
+      )
+    }
+
+    const { setListingAgreementStatus } = await import('./lib/booking/listingAgreementStatus.js')
+    await setListingAgreementStatus(admin, bookingId, 'ready', null)
+
+    return corsJson(res, { ok: true }, 200, origin)
   } catch (e) {
     console.error('[booking-prepare-listing-agreement]', e)
     return corsJson(res, { error: 'Server error' }, 500, origin)
