@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
+import { declineCompetingBookings } from './declineCompetingBookings.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
@@ -179,6 +180,17 @@ export async function runMarkBondReceivedLandlord(args: {
 
   if (evErr) {
     warn(logger, '[mark-bond-received] service_tier_events insert', evErr)
+  }
+
+  if (updated.property_id) {
+    try {
+      await declineCompetingBookings(admin, null, {
+        propertyId: updated.property_id,
+        winningBookingId: updated.id,
+      })
+    } catch (e) {
+      warn(logger, '[mark-bond-received] decline competing bookings', e)
+    }
   }
 
   if (updated.service_tier_final === 'listing') {

@@ -8,9 +8,9 @@ import { sendEmail } from '../../lib/sendEmail.js'
 import {
   bookingConfirmedStudent,
   bookingConfirmedLandlord,
-  bookingAutoDeclinedPropertyTakenStudent,
   propertyAddressLine,
 } from '../../lib/emailTemplates.js'
+import { declineCompetingBookings } from './declineCompetingBookings.js'
 import { captureSentryMessageEdge } from '../../lib/sentryEdgeCapture.js'
 import { bondAuthorityForState } from '../../lib/bondAuthority.js'
 import {
@@ -359,105 +359,13 @@ export async function runManagedConfirmBooking(params) {
         ? origin.replace(/\/$/, '')
         : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(/\/$/, '')
 
-    const propRowForAutoDecline =
-      booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
-    const addrForAutoDecline = propertyAddressLine(propRowForAutoDecline)
-    const titleForAutoDecline =
-      booking.properties && typeof booking.properties === 'object' && 'title' in booking.properties
-        ? String(booking.properties.title ?? 'Property')
-        : 'Property'
-
-    const { data: competitors, error: compErr } = await admin
-      .from('bookings')
-      .select(
-        `
-        id,
-        stripe_payment_intent_id,
-        student_profiles ( email, full_name, first_name, last_name )
-      `,
-      )
-      .eq('property_id', booking.property_id)
-      .neq('id', booking.id)
-      .in('status', ['pending_confirmation', 'awaiting_info'])
-
-    const runCompetitorDeclines = async () => {
-      if (compErr) {
-        console.error('load competitor bookings', compErr)
-        return
-      }
-      for (const row of competitors ?? []) {
-        const nowDecline = new Date().toISOString()
-        const { error: decErr } = await admin
-          .from('bookings')
-          .update({
-            status: 'declined',
-            declined_at: nowDecline,
-            decline_reason: 'property_taken',
-          })
-          .eq('id', row.id)
-
-        if (decErr) {
-          console.error('auto-decline update', decErr)
-          continue
-        }
-
-        const piRow = typeof row.stripe_payment_intent_id === 'string' ? row.stripe_payment_intent_id.trim() : ''
-        if (piRow) {
-          try {
-            const opi = await stripe.paymentIntents.retrieve(piRow)
-            if (opi.status === 'requires_capture' || opi.status === 'requires_confirmation') {
-              await stripe.paymentIntents.cancel(piRow)
-            } else if (opi.status === 'succeeded') {
-              await stripe.refunds.create({ payment_intent: piRow })
-            }
-          } catch (stripeEx) {
-            console.error('auto-decline stripe', stripeEx)
-            const errText = stripeEx instanceof Error ? stripeEx.message : String(stripeEx)
-            await captureSentryMessageEdge('Auto-decline refund/cancel failed after property confirmed', {
-              declinedBookingId: row.id,
-              propertyId: booking.property_id,
-              paymentIntentId: piRow,
-              err: errText,
-            })
-            try {
-              await sendEmail({
-                to: 'hello@quni.com.au',
-                subject: `Urgent: auto-decline refund failed - booking ${row.id}`,
-                html: `<p>Refund/cancel failed for booking <code>${row.id}</code> after another booking was confirmed for the same property.</p>
-<p>Property id: <code>${booking.property_id}</code></p>
-<p>PaymentIntent: <code>${piRow}</code></p>
-<p>Error: ${errText.replace(/</g, '&lt;')}</p>`,
-              })
-            } catch (mailEx) {
-              console.error('alert hello@quni.com.au failed', mailEx)
-            }
-          }
-        }
-
-        const stRow = row.student_profiles && typeof row.student_profiles === 'object' ? row.student_profiles : {}
-        const compEmail = typeof stRow.email === 'string' ? stRow.email.trim() : ''
-        const compName =
-          [stRow.first_name, stRow.last_name].filter(Boolean).join(' ').trim() ||
-          (typeof stRow.full_name === 'string' && stRow.full_name.trim()) ||
-          'there'
-
-        if (compEmail) {
-          try {
-            const t = bookingAutoDeclinedPropertyTakenStudent({
-              student_name: compName,
-              property_address: addrForAutoDecline || titleForAutoDecline,
-              property_title: titleForAutoDecline,
-              listings_url: `${siteBase}/listings`,
-            })
-            await sendEmail({ to: compEmail, subject: t.subject, html: t.html })
-          } catch (mailEx) {
-            console.error('auto-decline student email', mailEx)
-          }
-        }
-      }
+    if (booking.property_id) {
+      await declineCompetingBookings(admin, stripe, {
+        propertyId: booking.property_id,
+        winningBookingId: booking.id,
+        siteBase,
+      })
     }
-
-    await runCompetitorDeclines()
 
     const propForBond =
       booking.properties && typeof booking.properties === 'object' ? booking.properties : {}

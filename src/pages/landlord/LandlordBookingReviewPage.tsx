@@ -648,6 +648,11 @@ export default function LandlordBookingReviewPage() {
   const isListingBondPending =
     booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
 
+  const isListingPropertyContext =
+    property?.service_tier === 'listing' ||
+    booking.service_tier_at_request === 'listing' ||
+    booking.service_tier_final === 'listing'
+
   const listingFeeDisplay = landlordFeeExempt ? '$0.00' : '$99.00'
 
   const propertyAddressLine = property
@@ -867,7 +872,22 @@ export default function LandlordBookingReviewPage() {
           >
             <p className="font-medium leading-snug">
               ⚠️ {otherPendingPipelineCount} other student{otherPendingPipelineCount === 1 ? '' : 's'} have also
-              requested this property. Confirming this booking will automatically decline and refund the others.
+              requested this property.{' '}
+              {isListingPropertyContext ? (
+                isListingBondPending ? (
+                  <>
+                    They remain as backups until you confirm bond receipt below; confirming bond will automatically
+                    decline them. Quni does not hold deposits on Listing applications.
+                  </>
+                ) : (
+                  <>
+                    They stay as backups while you review this request. If you accept and later confirm bond receipt,
+                    remaining applicants are automatically declined. Quni does not hold deposits on Listing applications.
+                  </>
+                )
+              ) : (
+                <>Confirming this booking will automatically decline and refund the others.</>
+              )}
             </p>
           </div>
         )}
@@ -1114,6 +1134,14 @@ export default function LandlordBookingReviewPage() {
                   Tenancy agreement
                 </a>{' '}
                 above and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
+                {otherPendingPipelineCount > 0 ? (
+                  <>
+                    {' '}
+                    Confirming bond receipt will automatically decline the{' '}
+                    {otherPendingPipelineCount} remaining backup applicant
+                    {otherPendingPipelineCount === 1 ? '' : 's'} for this property.
+                  </>
+                ) : null}
               </p>
               {canCancelListingBondPending && (
                 <button

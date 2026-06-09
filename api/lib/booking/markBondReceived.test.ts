@@ -8,8 +8,13 @@ vi.mock('./triggerListingDocumentGeneration.js', () => ({
   triggerListingDocumentGeneration: vi.fn().mockResolvedValue({ ok: true, skipped: true, reason: 'mock' }),
 }))
 
+vi.mock('./declineCompetingBookings.js', () => ({
+  declineCompetingBookings: vi.fn().mockResolvedValue({ declined: 0 }),
+}))
+
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
+import { declineCompetingBookings } from './declineCompetingBookings.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'
@@ -139,6 +144,11 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(result.booking.status).toBe('confirmed')
     expect(admin.from).toHaveBeenCalledWith('service_tier_events')
     expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
+    expect(declineCompetingBookings).toHaveBeenCalledWith(
+      expect.anything(),
+      null,
+      expect.objectContaining({ propertyId: 'pr1', winningBookingId: bookingBase.id }),
+    )
   })
 
   it('bond received retries document generation when signing was never sent', async () => {

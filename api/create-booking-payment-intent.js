@@ -37,7 +37,7 @@ import {
   resolveWeeklyRentForBooking,
 } from './lib/booking/occupancyBooking.js'
 import {
-  TENANT_BOOKING_CONFIRMED_STATUSES,
+  PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES,
   TENANT_BOOKING_PIPELINE_STATUSES,
 } from './lib/booking/tenantBookingPipelineStatuses.js'
 import {
@@ -48,7 +48,7 @@ import {
 export const config = { runtime: 'edge' }
 
 const PROPERTY_PIPELINE_STATUSES = TENANT_BOOKING_PIPELINE_STATUSES
-const PROPERTY_CONFIRMED_STATUSES = TENANT_BOOKING_CONFIRMED_STATUSES
+const PROPERTY_RESERVED_STATUSES = PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES
 
 const VALID_PROPERTY_TYPES = new Set([
   'entire_property',
@@ -148,7 +148,7 @@ async function assertPropertyAvailableForBooking(admin, propertyId, origin) {
     .from('bookings')
     .select('id')
     .eq('property_id', propertyId)
-    .in('status', PROPERTY_CONFIRMED_STATUSES)
+    .in('status', PROPERTY_RESERVED_STATUSES)
     .limit(1)
 
   if (error) {
