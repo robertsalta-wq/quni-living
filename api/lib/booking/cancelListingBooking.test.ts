@@ -15,6 +15,10 @@ vi.mock('./listingTransactionalEmails.js', () => ({
   sendListingCancelledByLandlordEmails: mocks.sendListingCancelledByLandlordEmails,
 }))
 
+vi.mock('./unwindListingAgreement.js', () => ({
+  runUnwindListingAgreementCleanup: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { runCancelListingBookingLandlord } from './cancelListingBooking.js'
 
 const llId = 'll1'

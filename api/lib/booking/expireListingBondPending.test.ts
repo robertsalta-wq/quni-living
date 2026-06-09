@@ -15,6 +15,10 @@ vi.mock('./listingTransactionalEmails.js', () => ({
   sendListingBondPendingExpiredEmails: mocks.sendListingBondPendingExpiredEmails,
 }))
 
+vi.mock('./unwindListingAgreement.js', () => ({
+  runUnwindListingAgreementCleanup: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { runExpireListingBondPendingBooking } from './expireListingBondPending.js'
 
 const bookingId = '00000000-0000-4000-8000-000000000002'

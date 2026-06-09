@@ -5,6 +5,7 @@ import {
   refundListingFeePaymentIntentFull,
 } from './listingFeePaymentIntent.js'
 import { sendListingCancelledByLandlordEmails } from './listingTransactionalEmails.js'
+import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
 
 export type CancelListingBookingResult =
   | { ok: true; idempotent: true; bookingId: string; status: 'cancelled' }
@@ -133,6 +134,14 @@ export async function runCancelListingBookingLandlord(args: {
       .eq('id', bookingId)
       .maybeSingle()
     if (again?.status === 'cancelled') {
+      await runUnwindListingAgreementCleanup(admin, {
+        bookingId,
+        propertyId: booking.property_id,
+        landlordId: booking.landlord_id,
+        studentId: booking.student_id,
+        serviceTier: booking.service_tier_final,
+        unwindReason: 'cancelled',
+      })
       return { ok: true, idempotent: true, bookingId, status: 'cancelled' }
     }
     return {
@@ -171,6 +180,15 @@ export async function runCancelListingBookingLandlord(args: {
   } catch (e) {
     console.error('[cancel-listing] cancellation emails', bookingId, e)
   }
+
+  await runUnwindListingAgreementCleanup(admin, {
+    bookingId,
+    propertyId: booking.property_id,
+    landlordId: booking.landlord_id,
+    studentId: booking.student_id,
+    serviceTier: booking.service_tier_final,
+    unwindReason: 'cancelled',
+  })
 
   return {
     ok: true,

@@ -28,7 +28,7 @@ type ConfirmOk = {
   bond_window_expires_at: string
   service_tier_final: 'listing'
   listing_fee_payment_intent_id?: string | null
-  listing_agreement_status?: 'pending' | 'ready' | 'failed' | null
+  listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
 }
 
 function jsonFail(status: number, body: Record<string, unknown>): ConfirmFail {

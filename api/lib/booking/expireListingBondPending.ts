@@ -5,6 +5,7 @@ import {
   refundListingFeePaymentIntentFull,
 } from './listingFeePaymentIntent.js'
 import { sendListingBondPendingExpiredEmails } from './listingTransactionalEmails.js'
+import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
 
 /** Row shape from expire-bookings bond_pending select (includes email joins). */
 export type ExpireListingBondPendingRow = {
@@ -101,6 +102,15 @@ export async function runExpireListingBondPendingBooking(args: {
   } catch (emErr) {
     console.error('expire-bookings bond_pending email', bookingId, emErr)
   }
+
+  await runUnwindListingAgreementCleanup(admin, {
+    bookingId,
+    propertyId: booking.property_id,
+    landlordId: booking.landlord_id,
+    studentId: booking.student_id,
+    serviceTier: 'listing',
+    unwindReason: 'expired',
+  })
 
   return { ok: true, expired: true }
 }

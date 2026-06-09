@@ -1,5 +1,5 @@
 /** Persisted on bookings.listing_agreement_status for Listing-tier accepts. */
-export type ListingAgreementStatus = 'pending' | 'ready' | 'failed'
+export type ListingAgreementStatus = 'pending' | 'ready' | 'failed' | 'voided'
 
 export type ListingDocGenSkipReason =
   | 'no_internal_secret'
