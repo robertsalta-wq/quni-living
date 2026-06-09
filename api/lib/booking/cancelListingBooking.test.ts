@@ -232,6 +232,81 @@ describe('runCancelListingBookingLandlord', () => {
     expect(result.code).toBe('forbidden')
   })
 
+  it('fee-exempt (no PI): cancelled without refund, telemetry + emails', async () => {
+    mocks.fetchListingFeePaymentIntentId.mockResolvedValue(null)
+
+    let eventInsert: Record<string, unknown> | null = null
+    let bookingsPhase = 0
+    const admin = {
+      from: vi.fn((table: string) => {
+        if (table === 'bookings') {
+          bookingsPhase += 1
+          if (bookingsPhase === 1) {
+            return {
+              select: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({
+                    data: {
+                      id: bookingId,
+                      landlord_id: llId,
+                      student_id: 'st1',
+                      property_id: 'pr1',
+                      status: 'bond_pending',
+                      service_tier_final: 'listing',
+                    },
+                    error: null,
+                  }),
+                }),
+              }),
+            }
+          }
+          return {
+            update: () => ({
+              eq: () => ({
+                eq: () => ({
+                  select: async () => ({
+                    data: [{ id: bookingId, status: 'cancelled' }],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'service_tier_events') {
+          return {
+            insert: async (row: Record<string, unknown>) => {
+              eventInsert = row
+              return { error: null }
+            },
+          }
+        }
+        return {}
+      }),
+    }
+
+    const result = await runCancelListingBookingLandlord({
+      stripe: stripeOk(),
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId,
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.idempotent).toBe(false)
+    expect(result.refundId).toBeNull()
+    expect(result.refundAmountCents).toBeNull()
+    expect(mocks.refundListingFeePaymentIntentFull).not.toHaveBeenCalled()
+    expect(mocks.sendListingCancelledByLandlordEmails).toHaveBeenCalledTimes(1)
+    expect(eventInsert).toMatchObject({
+      event_type: 'bond_pending_cancelled_by_landlord',
+      service_tier: 'listing',
+    })
+    expect(eventInsert?.metadata).toMatchObject({ fee_exempt: true })
+    expect(eventInsert?.metadata).not.toHaveProperty('stripe_payment_intent_id')
+  })
+
   it('email failure does not fail cancel success path', async () => {
     mocks.fetchListingFeePaymentIntentId.mockResolvedValue('pi_fee')
     mocks.refundListingFeePaymentIntentFull.mockResolvedValue({

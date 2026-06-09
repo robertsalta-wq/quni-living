@@ -1174,7 +1174,9 @@ export default function LandlordBookingReviewPage() {
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900">Cancel this booking?</h3>
             <p className="mt-2 text-sm text-gray-600">
-              Your $99 fee will be refunded in full. The renter will be notified.
+              {listingFeeDisplay === '$0.00'
+                ? 'No Listing fee was charged for this booking. The renter will be notified.'
+                : `Your ${listingFeeDisplay} Listing fee will be refunded in full. The renter will be notified.`}
             </p>
             <label className="block mt-4 text-sm font-medium text-gray-700">
               Optional note to the renter <span className="text-gray-400 font-normal">(shown in their email)</span>

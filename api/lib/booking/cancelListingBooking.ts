@@ -19,7 +19,8 @@ export type CancelListingBookingResult =
   | { ok: false; status: number; code: string; message: string }
 
 /**
- * Landlord cancels a Listing booking while `bond_pending` (full $99 refund).
+ * Landlord cancels a Listing booking while `bond_pending`.
+ * Refunds the Listing fee when a PI exists; fee-exempt accepts (no PI) skip refund.
  */
 export async function runCancelListingBookingLandlord(args: {
   stripe: Stripe
@@ -71,33 +72,29 @@ export async function runCancelListingBookingLandlord(args: {
   }
 
   const piId = await fetchListingFeePaymentIntentId(admin, bookingId)
-  if (!piId) {
-    return {
-      ok: false,
-      status: 500,
-      code: 'missing_listing_fee_pi',
-      message: 'Could not locate the Listing fee payment to refund.',
-    }
-  }
 
   let refundId: string | null = null
   let refundAmountCents: number | null = null
-  try {
-    const r = await refundListingFeePaymentIntentFull(
-      stripe,
-      piId,
-      `listing-cancel-${bookingId}`,
-    )
-    refundId = r.refundId
-    refundAmountCents = r.refundAmountCents ?? 9900
-  } catch (e) {
-    console.error('[cancel-listing] stripe refund', bookingId, e)
-    return {
-      ok: false,
-      status: 502,
-      code: 'refund_failed',
-      message: 'Refund could not be processed. Try again or contact support.',
+  if (piId) {
+    try {
+      const r = await refundListingFeePaymentIntentFull(
+        stripe,
+        piId,
+        `listing-cancel-${bookingId}`,
+      )
+      refundId = r.refundId
+      refundAmountCents = r.refundAmountCents ?? 9900
+    } catch (e) {
+      console.error('[cancel-listing] stripe refund', bookingId, e)
+      return {
+        ok: false,
+        status: 502,
+        code: 'refund_failed',
+        message: 'Refund could not be processed. Try again or contact support.',
+      }
     }
+  } else {
+    console.warn('[cancel-listing] no listing fee PI; skipping refund', { bookingId })
   }
 
   const nowIso = new Date().toISOString()
@@ -117,12 +114,14 @@ export async function runCancelListingBookingLandlord(args: {
     .select('id, status')
 
   if (upErr) {
-    console.error('[cancel-listing] booking update after refund', upErr, { bookingId })
+    console.error('[cancel-listing] booking update after cancel', upErr, { bookingId })
     return {
       ok: false,
       status: 500,
       code: 'state_out_of_sync',
-      message: 'Refund may have succeeded but we could not update the booking. Contact support.',
+      message: piId
+        ? 'Refund may have succeeded but we could not update the booking. Contact support.'
+        : 'Could not update the booking. Try again or contact support.',
     }
   }
 
@@ -145,10 +144,10 @@ export async function runCancelListingBookingLandlord(args: {
   }
 
   const metaPayload = {
-    refund_id: refundId,
-    refund_amount_cents: refundAmountCents ?? 9900,
+    ...(refundId != null ? { refund_id: refundId } : {}),
+    ...(refundAmountCents != null ? { refund_amount_cents: refundAmountCents } : { fee_exempt: true }),
     reason: reasonTrim || undefined,
-    stripe_payment_intent_id: piId,
+    ...(piId ? { stripe_payment_intent_id: piId } : {}),
   }
 
   const { error: evErr } = await admin.from('service_tier_events').insert({
@@ -179,6 +178,6 @@ export async function runCancelListingBookingLandlord(args: {
     bookingId,
     status: 'cancelled',
     refundId,
-    refundAmountCents: refundAmountCents ?? 9900,
+    refundAmountCents,
   }
 }
