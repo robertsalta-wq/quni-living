@@ -29,7 +29,8 @@ export type LandlordBookingReviewData = {
   property: LandlordBookingReviewProperty | null
   student: LandlordBookingReviewStudent
   messages: MessageRow[]
-  landlordStripeReady: boolean
+  stripeChargesEnabled: boolean
+  adminOverrideVerified: boolean
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
   fitRows: ReturnType<typeof buildBookingFitSummary>
@@ -73,7 +74,7 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
     try {
       const { data: lp, error: lpErr } = await supabase
         .from('landlord_profiles')
-        .select('id, stripe_charges_enabled, stripe_connect_account_id, fee_exempt')
+        .select('id, stripe_charges_enabled, stripe_connect_account_id, fee_exempt, admin_override_verified')
         .eq('user_id', landlordUserId)
         .maybeSingle()
 
@@ -163,7 +164,8 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         property: prop,
       })
 
-      const stripeReady = lp.stripe_charges_enabled === true
+      const stripeChargesEnabled = lp.stripe_charges_enabled === true
+      const adminOverrideVerified = lp.admin_override_verified === true
 
       let otherPendingPipelineCount = 0
       if (booking.property_id) {
@@ -182,7 +184,8 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         property: prop,
         student: st,
         messages: (msgs ?? []) as MessageRow[],
-        landlordStripeReady: stripeReady,
+        stripeChargesEnabled,
+        adminOverrideVerified,
         listingBillingLoaded: true,
         listingBilling: listingSnap,
         fitRows,

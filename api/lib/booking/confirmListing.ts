@@ -7,6 +7,7 @@ import {
   isLandlordFeeExempt,
   resolveListingPlatformFeeCents,
 } from '../pricing/resolvePlatformFee.js'
+import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID =
@@ -76,7 +77,7 @@ export async function runListingConfirmBooking(params) {
     })
   }
 
-  if (landlord.stripe_charges_enabled !== true) {
+  if (!landlordHostIdentityReadyForConfirm(landlord, { tier: 'listing' })) {
     return jsonFail(400, {
       error: 'host_identity_not_ready',
       message: 'Complete Stripe identity verification before accepting bookings.',

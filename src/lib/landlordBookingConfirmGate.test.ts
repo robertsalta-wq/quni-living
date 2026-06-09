@@ -17,7 +17,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: false,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
   })
@@ -29,7 +30,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: false,
         listingBilling: null,
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -39,7 +41,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: null,
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -49,7 +52,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -59,7 +63,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -69,7 +74,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: false,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -79,7 +85,21 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
+      }),
+    ).toBe(true)
+  })
+
+  it('listing: admin override satisfies identity without Stripe charges', () => {
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: true,
       }),
     ).toBe(true)
   })
@@ -91,7 +111,8 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'managed',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: false,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
       }),
     ).toBe(false)
 
@@ -101,9 +122,23 @@ describe('landlordBookingConfirmAllowed', () => {
         selectedConfirmTier: 'managed',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe(true)
+  })
+
+  it('managed: admin override does not bypass Stripe charges', () => {
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'managed',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: true,
+      }),
+    ).toBe(false)
   })
 })
 
@@ -117,7 +152,8 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         selectedConfirmTier: 'managed',
         listingBillingLoaded: true,
         listingBilling: readyListing,
-        landlordStripeReady: false,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
       }),
     ).toBe('host_identity_required')
   })
@@ -129,9 +165,23 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
-        landlordStripeReady: false,
+        stripeChargesEnabled: false,
+        adminOverrideVerified: false,
       }),
     ).toBe('host_identity_required')
+  })
+
+  it('listing with admin override skips host identity banner', () => {
+    expect(
+      landlordBookingConfirmBlockedBanner({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
+        stripeChargesEnabled: false,
+        adminOverrideVerified: true,
+      }),
+    ).toBe('listing_no_payment_method')
   })
 
   it('listing module off shows module banner', () => {
@@ -141,7 +191,8 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe('listing_module_disabled')
   })
@@ -153,7 +204,8 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: null,
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe('listing_billing_unavailable')
   })
@@ -165,7 +217,8 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         selectedConfirmTier: 'listing',
         listingBillingLoaded: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
-        landlordStripeReady: true,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
       }),
     ).toBe('listing_no_payment_method')
   })

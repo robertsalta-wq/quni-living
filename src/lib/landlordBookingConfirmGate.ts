@@ -16,13 +16,25 @@ export type ConfirmBlockedBanner =
   | 'host_identity_required'
   | 'ft6600_compliance_incomplete'
 
+function landlordHostIdentityReadyForConfirm(args: {
+  selectedConfirmTier: 'listing' | 'managed'
+  stripeChargesEnabled: boolean
+  adminOverrideVerified: boolean
+}): boolean {
+  if (args.selectedConfirmTier === 'listing' && args.adminOverrideVerified) {
+    return true
+  }
+  return args.stripeChargesEnabled
+}
+
 export function landlordBookingConfirmAllowed(args: {
   bookingStatus: string
   /** Tier the landlord will confirm (three-button flow); drives Listing vs Managed gates. */
   selectedConfirmTier: 'listing' | 'managed'
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
-  landlordStripeReady: boolean
+  stripeChargesEnabled: boolean
+  adminOverrideVerified: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -32,7 +44,15 @@ export function landlordBookingConfirmAllowed(args: {
   const st = args.bookingStatus
   if (st !== 'pending_confirmation' && st !== 'awaiting_info') return false
 
-  if (!args.landlordStripeReady) return false
+  if (
+    !landlordHostIdentityReadyForConfirm({
+      selectedConfirmTier: args.selectedConfirmTier,
+      stripeChargesEnabled: args.stripeChargesEnabled,
+      adminOverrideVerified: args.adminOverrideVerified,
+    })
+  ) {
+    return false
+  }
 
   if (
     args.property &&
@@ -57,7 +77,8 @@ export function landlordBookingConfirmBlockedBanner(args: {
   selectedConfirmTier: 'listing' | 'managed'
   listingBillingLoaded: boolean
   listingBilling: LandlordListingBillingSnapshot | null
-  landlordStripeReady: boolean
+  stripeChargesEnabled: boolean
+  adminOverrideVerified: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -68,7 +89,13 @@ export function landlordBookingConfirmBlockedBanner(args: {
     return null
   }
 
-  if (!args.landlordStripeReady) {
+  if (
+    !landlordHostIdentityReadyForConfirm({
+      selectedConfirmTier: args.selectedConfirmTier,
+      stripeChargesEnabled: args.stripeChargesEnabled,
+      adminOverrideVerified: args.adminOverrideVerified,
+    })
+  ) {
     return 'host_identity_required'
   }
 

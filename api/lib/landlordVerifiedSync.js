@@ -37,3 +37,19 @@ export function mergeVerifiedIntoLandlordUpdate(account, profile) {
     verified: verifiedFromStripeChargesEnabled(account.charges_enabled),
   }
 }
+
+/**
+ * Whether a landlord may accept bookings from an identity-verification standpoint.
+ * Listing: Stripe charges enabled OR admin manual override.
+ * Managed: Stripe charges enabled only (Connect required for payouts).
+ *
+ * @param {{ stripe_charges_enabled?: boolean | null; admin_override_verified?: boolean | null }} profile
+ * @param {{ tier?: 'listing' | 'managed' }} [opts]
+ */
+export function landlordHostIdentityReadyForConfirm(profile, opts = {}) {
+  const tier = opts.tier === 'managed' ? 'managed' : 'listing'
+  if (tier === 'listing' && profile?.admin_override_verified === true) {
+    return true
+  }
+  return profile?.stripe_charges_enabled === true
+}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { mergeVerifiedIntoLandlordUpdate, verifiedFromStripeChargesEnabled } from './landlordVerifiedSync.js'
+import {
+  landlordHostIdentityReadyForConfirm,
+  mergeVerifiedIntoLandlordUpdate,
+  verifiedFromStripeChargesEnabled,
+} from './landlordVerifiedSync.js'
 
 describe('verifiedFromStripeChargesEnabled', () => {
   it('is true only when charges are enabled', () => {
@@ -35,6 +39,32 @@ describe('mergeVerifiedIntoLandlordUpdate', () => {
         { charges_enabled: false, payouts_enabled: false, details_submitted: true },
         { admin_override_verified: false },
       ).verified,
+    ).toBe(false)
+  })
+})
+
+describe('landlordHostIdentityReadyForConfirm', () => {
+  it('listing: true when Stripe charges enabled', () => {
+    expect(
+      landlordHostIdentityReadyForConfirm({ stripe_charges_enabled: true, admin_override_verified: false }, {
+        tier: 'listing',
+      }),
+    ).toBe(true)
+  })
+
+  it('listing: true when admin override set without Stripe', () => {
+    expect(
+      landlordHostIdentityReadyForConfirm({ stripe_charges_enabled: false, admin_override_verified: true }, {
+        tier: 'listing',
+      }),
+    ).toBe(true)
+  })
+
+  it('managed: false when only admin override is set', () => {
+    expect(
+      landlordHostIdentityReadyForConfirm({ stripe_charges_enabled: false, admin_override_verified: true }, {
+        tier: 'managed',
+      }),
     ).toBe(false)
   })
 })

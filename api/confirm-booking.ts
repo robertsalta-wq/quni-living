@@ -17,6 +17,7 @@ import {
   bookingUsesNswFt6600Generator,
 } from './lib/resolveTenancyPackage.js'
 import { recordLandlordReviewAudit, AiMatchingAuditError } from './lib/aiMatchingAudit.js'
+import { landlordHostIdentityReadyForConfirm } from './lib/landlordVerifiedSync.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 60 }
 
@@ -89,7 +90,9 @@ export default async function handler(req, res) {
 
     const { data: landlord, error: llErr } = await admin
       .from('landlord_profiles')
-      .select('id, user_id, stripe_connect_account_id, stripe_charges_enabled, stripe_customer_id')
+      .select(
+        'id, user_id, stripe_connect_account_id, stripe_charges_enabled, stripe_customer_id, admin_override_verified',
+      )
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -234,7 +237,7 @@ export default async function handler(req, res) {
     const stripe = new Stripe(stripeSecret)
 
     if (useListing) {
-      if (landlord.stripe_charges_enabled !== true) {
+      if (!landlordHostIdentityReadyForConfirm(landlord, { tier: 'listing' })) {
         return corsJson(
           res,
           {

@@ -204,13 +204,13 @@ export default function LandlordBookingReviewPage() {
   }, [reload])
 
   useEffect(() => {
-    if (loading || data?.landlordStripeReady) return
+    if (loading || data?.stripeChargesEnabled || data?.adminOverrideVerified) return
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void reload()
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [loading, reload, data?.landlordStripeReady])
+  }, [loading, reload, data?.stripeChargesEnabled, data?.adminOverrideVerified])
 
   useEffect(() => {
     if (searchParams.get('accepted') !== 'listing') return
@@ -316,7 +316,8 @@ export default function LandlordBookingReviewPage() {
       selectedConfirmTier,
       listingBillingLoaded: data.listingBillingLoaded,
       listingBilling: data.listingBilling,
-      landlordStripeReady: data.landlordStripeReady,
+      stripeChargesEnabled: data.stripeChargesEnabled,
+      adminOverrideVerified: data.adminOverrideVerified,
       property: data.property,
       booking: data.booking,
     })
@@ -624,7 +625,8 @@ export default function LandlordBookingReviewPage() {
     property,
     messages,
     fitRows,
-    landlordStripeReady,
+    stripeChargesEnabled,
+    adminOverrideVerified,
     listingBillingLoaded,
     listingBilling,
     otherPendingPipelineCount,
@@ -658,7 +660,8 @@ export default function LandlordBookingReviewPage() {
     selectedConfirmTier,
     listingBillingLoaded,
     listingBilling,
-    landlordStripeReady,
+    stripeChargesEnabled,
+    adminOverrideVerified,
     property: property ?? undefined,
     booking,
   })
