@@ -104,7 +104,15 @@ import {
   nonDiscriminationAcceptancePatch,
 } from '../../lib/nonDiscriminationPolicy'
 import HeadTenantSubletHelper from '../../components/landlord/HeadTenantSubletHelper'
-import { parseListerRole, type ListerRole } from '../../lib/sublettingResources'
+import {
+  canHeadTenantAttestAuthorityToLet,
+  HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
+  HEAD_TENANT_LANDLORD_CONSENT_QUESTION,
+  headTenantLandlordConsentFromAttestation,
+  parseListerRole,
+  type HeadTenantLandlordConsent,
+  type ListerRole,
+} from '../../lib/sublettingResources'
 
 const FT6600_COMPLIANCE_MIGRATION_HINT =
   'Run supabase/property_ft6600_compliance_apply_and_reload.sql in the Supabase SQL editor (same project as production - check Settings → API → Project URL matches your live site). If columns already exist, the script still reloads the API schema cache; wait 30 seconds, hard-refresh, then save again.'
@@ -209,6 +217,8 @@ type LandlordPropertyDraftV1 = {
   serviceTier: LandlordServiceTier
   houseRules: string
   selectedRules: Partial<Record<string, RulePermitted>>
+  listerRole?: ListerRole
+  headTenantLandlordConsent?: HeadTenantLandlordConsent
 }
 
 function parseDraftSelectedRules(raw: unknown): Partial<Record<string, RulePermitted>> {
@@ -301,6 +311,11 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       serviceTier: parseLandlordServiceTier(d.serviceTier) ?? 'listing',
       houseRules: typeof d.houseRules === 'string' ? d.houseRules : '',
       selectedRules: parseDraftSelectedRules(d.selectedRules),
+      listerRole: parseListerRole(typeof d.listerRole === 'string' ? d.listerRole : null),
+      headTenantLandlordConsent:
+        d.headTenantLandlordConsent === true || d.headTenantLandlordConsent === false
+          ? d.headTenantLandlordConsent
+          : null,
     }
     return draft
   } catch {
@@ -421,6 +436,12 @@ export default function LandlordPropertyFormPage() {
   )
   const [waterSeparatelyMeteredAgreed, setWaterSeparatelyMeteredAgreed] = useState(false)
   const [listerRole, setListerRole] = useState<ListerRole>('owner')
+  const [headTenantLandlordConsent, setHeadTenantLandlordConsent] =
+    useState<HeadTenantLandlordConsent>(null)
+
+  const headTenantAuthorityAttestationLocked =
+    listerRole === 'head_tenant' && !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent)
+  const headTenantConsentLocked = Boolean(authorityToLetAttestedAt)
 
   const needsNonDiscriminationAcceptance =
     role === 'landlord' && !landlordNonDiscriminationAccepted(landlordProfile)
@@ -730,6 +751,8 @@ export default function LandlordPropertyFormPage() {
         serviceTier,
         houseRules,
         selectedRules: { ...selectedRules },
+        listerRole,
+        headTenantLandlordConsent,
       }),
     [
       title,
@@ -767,6 +790,8 @@ export default function LandlordPropertyFormPage() {
       serviceTier,
       houseRules,
       selectedRules,
+      listerRole,
+      headTenantLandlordConsent,
     ],
   )
 
@@ -997,7 +1022,13 @@ export default function LandlordPropertyFormPage() {
         setWaterSeparatelyMeteredAttestedAt(loadedWaterAttestedAt)
         setWaterSeparatelyMeteredAgreed(Boolean(loadedWaterAttestedAt))
         setUtilitiesForm(landlordPropertyUtilitiesFormStateFromProperty(prop))
-        setListerRole(parseListerRole(prop.lister_role))
+        const loadedListerRole = parseListerRole(prop.lister_role)
+        setListerRole(loadedListerRole)
+        setHeadTenantLandlordConsent(
+          loadedListerRole === 'head_tenant'
+            ? headTenantLandlordConsentFromAttestation(loadedAttestedAt)
+            : null,
+        )
         setTitle(prop.title)
         setDescription(prop.description ?? '')
         setBedrooms(prop.bedrooms != null ? String(prop.bedrooms) : '1')
@@ -1177,6 +1208,10 @@ export default function LandlordPropertyFormPage() {
       setImages(normalizePropertyImages(parsed.images))
       setHouseRules(parsed.houseRules)
       setSelectedRules({ ...parsed.selectedRules })
+      if (parsed.listerRole) setListerRole(parsed.listerRole)
+      if (parsed.listerRole === 'head_tenant' && parsed.headTenantLandlordConsent != null) {
+        setHeadTenantLandlordConsent(parsed.headTenantLandlordConsent)
+      }
 
       const addrDirty =
         Boolean(parsed.address.trim()) ||
@@ -1861,6 +1896,19 @@ export default function LandlordPropertyFormPage() {
     const isPublishingNewListing = !isEdit
     if (
       isPublishingNewListing &&
+      listerRole === 'head_tenant' &&
+      !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent)
+    ) {
+      reportSubmitError(
+        headTenantLandlordConsent === false
+          ? HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE
+          : 'Please confirm whether you have your landlord\'s written consent to sub-let or transfer.',
+      )
+      document.getElementById('section-lister-role')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    if (
+      isPublishingNewListing &&
       !propertyHasAuthorityToLetAttestation({ authority_to_let_attested_at: authorityToLetAttestedAt }) &&
       !authorityToLetAgreed
     ) {
@@ -1963,7 +2011,7 @@ export default function LandlordPropertyFormPage() {
           })
         : null
     const attestationPatch = authorityToLetAttestationPatch({
-      agreed: authorityToLetAgreed,
+      agreed: headTenantAuthorityAttestationLocked ? false : authorityToLetAgreed,
       existingAttestedAt: authorityToLetAttestedAt,
     })
     const waterAttestationPatch = waterSeparatelyMeteredAttestationPatch({
@@ -2506,7 +2554,10 @@ export default function LandlordPropertyFormPage() {
                       name="lister-role"
                       value="owner"
                       checked={listerRole === 'owner'}
-                      onChange={() => setListerRole('owner')}
+                      onChange={() => {
+                        setListerRole('owner')
+                        setHeadTenantLandlordConsent(null)
+                      }}
                       className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
                     />
                     <span>I own this property</span>
@@ -2517,27 +2568,80 @@ export default function LandlordPropertyFormPage() {
                       name="lister-role"
                       value="head_tenant"
                       checked={listerRole === 'head_tenant'}
-                      onChange={() => setListerRole('head_tenant')}
+                      onChange={() => {
+                        setListerRole('head_tenant')
+                        setHeadTenantLandlordConsent(null)
+                        if (!authorityToLetAttestedAt) setAuthorityToLetAgreed(false)
+                      }}
                       className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
                     />
-                    <span>
-                      I rent this property and have my landlord&apos;s written consent to sub-let/transfer
-                    </span>
+                    <span>I rent this property and want to sub-let or transfer it</span>
                   </label>
                 </div>
                 {listerRole === 'head_tenant' ? (
+                  <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                    <p className="text-sm font-medium text-gray-900">{HEAD_TENANT_LANDLORD_CONSENT_QUESTION}</p>
+                    <div className="space-y-2">
+                      <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                        <input
+                          type="radio"
+                          name="head-tenant-landlord-consent"
+                          value="yes"
+                          checked={headTenantLandlordConsent === true}
+                          disabled={headTenantConsentLocked}
+                          onChange={() => {
+                            setHeadTenantLandlordConsent(true)
+                            if (submitError === HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE) {
+                              setSubmitError(null)
+                            }
+                          }}
+                          className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                        />
+                        <span>Yes</span>
+                      </label>
+                      <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
+                        <input
+                          type="radio"
+                          name="head-tenant-landlord-consent"
+                          value="no"
+                          checked={headTenantLandlordConsent === false}
+                          disabled={headTenantConsentLocked}
+                          onChange={() => {
+                            setHeadTenantLandlordConsent(false)
+                            if (!authorityToLetAttestedAt) setAuthorityToLetAgreed(false)
+                            if (
+                              submitError === AUTHORITY_TO_LET_BLOCKED_MESSAGE ||
+                              submitError === HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE
+                            ) {
+                              setSubmitError(null)
+                            }
+                          }}
+                          className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5 rounded-full`}
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
+                {listerRole === 'head_tenant' && headTenantLandlordConsent === false ? (
                   <HeadTenantSubletHelper
                     stateCode={state}
                     listingAddress={listingAddressForSublet}
                     listerName={listerDisplayName}
+                    consentRequired
                   />
                 ) : null}
               </div>
               <div id="section-authority-to-let">
-                <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                <label
+                  className={`flex gap-3 items-start text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 ${
+                    headTenantAuthorityAttestationLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={authorityToLetAgreed}
+                    disabled={headTenantAuthorityAttestationLocked}
                     onChange={(e) => {
                       setAuthorityToLetAgreed(e.target.checked)
                       if (submitError === AUTHORITY_TO_LET_BLOCKED_MESSAGE) setSubmitError(null)
@@ -2554,6 +2658,13 @@ export default function LandlordPropertyFormPage() {
                       ))}
                     </ul>
                     <span className="block text-gray-800">{AUTHORITY_TO_LET_ATTESTATION_FOOTER}</span>
+                    {headTenantAuthorityAttestationLocked ? (
+                      <span className="block text-sm text-amber-900">
+                        {headTenantLandlordConsent === false
+                          ? HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE
+                          : "Confirm you have your landlord's written consent above before attesting."}
+                      </span>
+                    ) : null}
                   </span>
                 </label>
               </div>

@@ -130,7 +130,7 @@ function PerServiceUtilitiesFields({
               <p className="mb-2 text-xs text-gray-600">
                 The tenant pays this percentage of the total charge (1–100, one decimal allowed).
               </p>
-              <div className="flex items-center gap-2 max-w-xs">
+              <div className="flex items-center gap-1.5">
                 <input
                   id={`utilities-${serviceId}-apportionment`}
                   type="number"
@@ -140,8 +140,8 @@ function PerServiceUtilitiesFields({
                   inputMode="decimal"
                   value={form.apportionmentPercent}
                   onChange={(e) => onChange({ apportionmentPercent: e.target.value })}
-                  className={inputClass}
-                  placeholder="e.g. 25"
+                  className={`${inputClass} !w-20 shrink-0`}
+                  placeholder="25"
                 />
                 <span className="text-sm text-gray-600">%</span>
               </div>

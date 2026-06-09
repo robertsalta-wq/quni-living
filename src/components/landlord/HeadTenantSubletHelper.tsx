@@ -9,15 +9,18 @@ type HeadTenantSubletHelperProps = {
   stateCode: string
   listingAddress: string
   listerName: string
+  /** When consent is not yet obtained, show the letter prominently (always expanded). */
+  consentRequired?: boolean
 }
 
 export default function HeadTenantSubletHelper({
   stateCode,
   listingAddress,
   listerName,
+  consentRequired = false,
 }: HeadTenantSubletHelperProps) {
   const resource = useMemo(() => getSublettingResource(stateCode), [stateCode])
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(consentRequired)
   const [letterCopied, setLetterCopied] = useState(false)
 
   const prefillLetter = useMemo(() => {
@@ -46,22 +49,33 @@ export default function HeadTenantSubletHelper({
   }, [listingAddress, letterText])
 
   const hasLetter = Boolean(resource.letterTemplate.trim())
+  const showExpanded = consentRequired || expanded
+
+  useEffect(() => {
+    if (consentRequired) setExpanded(true)
+  }, [consentRequired])
 
   return (
     <div className="mt-3 rounded-xl border border-[#FF6F61]/30 bg-[#FF6F61]/5 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-[#1B2A4A] hover:bg-[#FF6F61]/10 transition-colors"
-        aria-expanded={expanded}
-      >
-        <span>Need help requesting landlord consent?</span>
-        <span className="text-[#FF6F61] text-xs font-semibold shrink-0" aria-hidden>
-          {expanded ? 'Hide' : 'Show'}
-        </span>
-      </button>
+      {consentRequired ? (
+        <div className="px-4 py-3 text-sm font-medium text-[#1B2A4A]">
+          Request your landlord&apos;s written consent
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-[#1B2A4A] hover:bg-[#FF6F61]/10 transition-colors"
+          aria-expanded={expanded}
+        >
+          <span>Need help requesting landlord consent?</span>
+          <span className="text-[#FF6F61] text-xs font-semibold shrink-0" aria-hidden>
+            {expanded ? 'Hide' : 'Show'}
+          </span>
+        </button>
+      )}
 
-      {expanded ? (
+      {showExpanded ? (
         <div className="border-t border-[#FF6F61]/20 px-4 py-4 space-y-3">
           <p className="text-sm text-[#1B2A4A]/90 leading-relaxed">{resource.ruleSummary}</p>
 

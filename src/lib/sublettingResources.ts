@@ -1,5 +1,24 @@
 export type ListerRole = 'owner' | 'head_tenant'
 
+/** `null` = not answered yet; `false` = needs consent; `true` = consent obtained. */
+export type HeadTenantLandlordConsent = boolean | null
+
+export const HEAD_TENANT_LANDLORD_CONSENT_QUESTION =
+  "Do you have your landlord's written consent to sub-let or transfer?"
+
+export const HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE =
+  "You must obtain your landlord's written consent to sub-let or transfer before publishing. Use the request letter below, then return and confirm consent when you have it."
+
+export function canHeadTenantAttestAuthorityToLet(consent: HeadTenantLandlordConsent): boolean {
+  return consent === true
+}
+
+export function headTenantLandlordConsentFromAttestation(
+  attestedAt: string | null | undefined,
+): HeadTenantLandlordConsent {
+  return attestedAt ? true : null
+}
+
 export interface SubletResource {
   authorityName: string
   legalRef: string
