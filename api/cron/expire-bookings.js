@@ -8,11 +8,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../lib/sendEmail.js'
 import { bookingExpiredStudent, propertyAddressLine } from '../lib/emailTemplates.js'
-import {
-  fetchListingFeePaymentIntentId,
-  refundListingFeePaymentIntentFull,
-} from '../lib/booking/listingFeePaymentIntent.js'
-import { sendListingBondPendingExpiredEmails } from '../lib/booking/listingTransactionalEmails.js'
+import { runExpireListingBondPendingBooking } from '../lib/booking/expireListingBondPending.js'
 
 export const config = { runtime: 'edge' }
 
@@ -134,70 +130,13 @@ export default async function handler(request) {
   let bondCount = 0
   for (const b of bondRows ?? []) {
     try {
-      const piId = await fetchListingFeePaymentIntentId(admin, b.id)
-      if (!piId) {
-        console.error('expire-bookings bond_pending missing listing fee PI', b.id)
-        continue
-      }
-
-      let refundId = null
-      let refundAmountCents = 9900
-      try {
-        const r = await refundListingFeePaymentIntentFull(
-          stripe,
-          piId,
-          `listing-expire-${b.id}`,
-        )
-        refundId = r.refundId
-        refundAmountCents =
-          typeof r.refundAmountCents === 'number' && Number.isFinite(r.refundAmountCents)
-            ? r.refundAmountCents
-            : 9900
-      } catch (re) {
-        console.error('expire-bookings bond refund', b.id, re)
-        continue
-      }
-
-      const { error: upBondErr } = await admin
-        .from('bookings')
-        .update({ status: 'expired', expired_at: nowIso })
-        .eq('id', b.id)
-        .eq('status', 'bond_pending')
-
-      if (upBondErr) {
-        console.error('expire-bookings bond_pending update', b.id, upBondErr)
-        continue
-      }
-
-      bondCount += 1
-
-      const { error: evErr } = await admin.from('service_tier_events').insert({
-        booking_id: b.id,
-        property_id: b.property_id,
-        landlord_id: b.landlord_id,
-        student_id: b.student_id,
-        event_type: 'bond_pending_expired',
-        service_tier: 'listing',
-        metadata: {
-          reason: 'bond_window_elapsed',
-          refund_id: refundId,
-          refund_amount_cents: refundAmountCents,
-          stripe_payment_intent_id: piId,
-        },
+      const result = await runExpireListingBondPendingBooking({
+        stripe,
+        admin,
+        booking: b,
+        nowIso,
       })
-
-      if (evErr) {
-        console.error('expire-bookings bond_pending telemetry', b.id, evErr)
-      }
-
-      try {
-        await sendListingBondPendingExpiredEmails(admin, b, {
-          refund_id: refundId,
-          refund_amount_cents: refundAmountCents,
-        })
-      } catch (emErr) {
-        console.error('expire-bookings bond_pending email', b.id, emErr)
-      }
+      if (result.ok && result.expired) bondCount += 1
     } catch (loopErr) {
       console.error('expire-bookings bond_pending row', b?.id, loopErr)
     }
