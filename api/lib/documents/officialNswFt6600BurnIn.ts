@@ -66,6 +66,18 @@ export function layoutSingleLineInField(
   return { size: MIN_FONT_SIZE, line, x: rect.x + HORIZONTAL_PAD, y: rect.y + BASELINE_OFFSET }
 }
 
+/** True when the full string fits at the minimum legible size without ellipsis truncation. */
+export function singleLineFitsInFieldWithoutTruncation(
+  text: string,
+  font: PDFFont,
+  rect: Rect,
+): boolean {
+  const raw = text.replace(/\s+/g, ' ').trim()
+  if (!raw) return true
+  const { line } = layoutSingleLineInField(raw, font, rect)
+  return line === raw
+}
+
 /** Multi-line for tall/wide fields (payment method, plumber block). */
 function layoutWrappedInField(
   text: string,

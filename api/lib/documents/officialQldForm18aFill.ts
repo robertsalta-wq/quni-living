@@ -23,6 +23,10 @@ import {
   QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS,
 } from './officialQldForm18aBurnIn.js'
 import {
+  composeQldForm18aSpecialTermsText,
+  resolveUtilitiesScheduleOverflow,
+} from './qldForm18aScheduleOverflow.js'
+import {
   flattenAndCleanForm,
   saveNormalizedPdf,
 } from './officialNswFt6600PdfNormalize.js'
@@ -282,8 +286,6 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
     premisesPostcode,
     rentPaymentBankDetails,
     rentPaymentPreference,
-    specialConditions,
-    bookingNotes,
   } = props
 
   const landlordAddr = parseAustralianAddressLine(landlord.addressLine)
@@ -414,14 +416,6 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
 
   pushText(text, F.Type_of_pets_approved1, 'None unless agreed in writing by the lessor')
 
-  const specialLines = [...specialConditions]
-  if (bookingNotes?.trim()) specialLines.push(`Booking notes: ${bookingNotes.trim()}`)
-  if (specialLines.length > 0) {
-    pushText(text, F.Special_terms, specialLines.join('\n'))
-  } else {
-    pushText(text, F.Special_terms, 'Nil additional special terms at execution.')
-  }
-
   pushText(text, F.Lessor_agent_name_trading_name, landlord.fullName)
   pushText(text, F.Name_of_tenant1, tenant.fullName)
   if (tenant2) pushText(text, F.Name_of_tenant2, tenant2)
@@ -458,30 +452,6 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
     checks.add(other.tenantMustPay ? F.services_other_yes : F.services_other_no)
     checks.add(water.tenantMustPay ? F.water_charge_yes : F.water_charge_no)
 
-    if (elec.tenantMustPay && elec.apportionmentCost) {
-      pushText(text, F.Cost_for_electricity, elec.apportionmentCost)
-    }
-    if (gas.tenantMustPay && gas.apportionmentCost) {
-      pushText(text, F.Cost_for_gas, gas.apportionmentCost)
-    }
-    if (phone.tenantMustPay && phone.apportionmentCost) {
-      pushText(text, F.Cost_for_phone, phone.apportionmentCost)
-    }
-    if (other.tenantMustPay && other.apportionmentCost) {
-      pushText(text, F.Cost_for_other_services, other.apportionmentCost)
-    }
-    if (elec.tenantMustPay && elec.howMustBePaid) {
-      pushText(text, F.How_electricity_must_be_paid_for, elec.howMustBePaid)
-    }
-    if (gas.tenantMustPay && gas.howMustBePaid) {
-      pushText(text, F.How_gas_must_be_paid_for, gas.howMustBePaid)
-    }
-    if (phone.tenantMustPay && phone.howMustBePaid) {
-      pushText(text, F.How_phone_must_be_paid_for, phone.howMustBePaid)
-    }
-    if (other.tenantMustPay && other.howMustBePaid) {
-      pushText(text, F.How_other_services_must_be_paid_for, other.howMustBePaid)
-    }
   } else {
     checks.add(F.water_charge_no)
     checks.add(F.services_electricity_no)
@@ -522,12 +492,29 @@ export type OfficialQldForm18aScheduleFillResult = {
   assignments: Array<[string, string]>
 }
 
-export function applyOfficialQldForm18aScheduleFill(
+export async function applyOfficialQldForm18aScheduleFill(
   doc: PDFDocument,
   props: QldGeneralTenancyAgreementProps,
-): OfficialQldForm18aScheduleFillResult {
+): Promise<OfficialQldForm18aScheduleFillResult> {
   const form = doc.getForm()
+  const font = await doc.embedFont(StandardFonts.Helvetica)
   const state = buildFillAssignments(props)
+
+  let utilitiesOverflowLines: string[] = []
+  if (props.utilitiesResolution) {
+    const overflow = resolveUtilitiesScheduleOverflow(form, font, props.utilitiesResolution)
+    utilitiesOverflowLines = overflow.specialTermsLines
+    for (const [name, value] of overflow.scheduleAssignments) {
+      state.text.set(name, value)
+    }
+  }
+
+  const specialTermsText = composeQldForm18aSpecialTermsText({
+    utilitiesOverflowLines,
+    specialConditions: props.specialConditions,
+    bookingNotes: props.bookingNotes,
+  })
+  state.text.set(F.Special_terms, specialTermsText)
 
   uncheckAll(form, TERM_CHECKBOXES)
   uncheckAll(form, RENT_PERIOD_CHECKBOXES)
@@ -591,7 +578,7 @@ export async function prepareOfficialQldForm18aScheduleForFlatten(
   doc: PDFDocument,
   props: QldGeneralTenancyAgreementProps,
 ): Promise<OfficialQldForm18aScheduleFillResult> {
-  const result = applyOfficialQldForm18aScheduleFill(doc, props)
+  const result = await applyOfficialQldForm18aScheduleFill(doc, props)
   const font = await doc.embedFont(StandardFonts.Helvetica)
   doc.getForm().updateFieldAppearances(font)
   burnInOfficialQldForm18aShrinkFields(doc, result.assignments, font)

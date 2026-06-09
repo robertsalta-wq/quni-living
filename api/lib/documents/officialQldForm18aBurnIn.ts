@@ -10,14 +10,10 @@ import {
 } from './officialNswFt6600BurnIn.js'
 import { QLD_FORM18A_RENAMED_FIELDS as F } from './qldForm18aRenamedFields.js'
 
-/** Item 11, 13.1 Type, 14 apportionment, 19 Type — narrow boxes that clip at default AcroForm font size. */
+/** Item 11, 13.1 Type, 19 Type — narrow boxes that clip at default AcroForm font size. */
 export const QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS = [
   F.Day_of_last_rent_increase_dd_mm_yyyy,
   F.Type_of_services_the_tenant_must_pay_for,
-  F.Cost_for_electricity,
-  F.Cost_for_gas,
-  F.Cost_for_phone,
-  F.Cost_for_other_services,
   F.Type_of_pets_approved1,
 ] as const
 

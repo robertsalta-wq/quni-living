@@ -9,6 +9,7 @@ import {
 } from './officialQldForm18aFill.js'
 import type { QldGeneralTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { resolvePropertyUtilities } from '../../../src/lib/propertyUtilitiesResolver.js'
+import { QLD_FORM18A_SPECIAL_TERMS_POINTER } from './qldForm18aScheduleOverflow.js'
 
 const PETS_TYPE_LINE = 'None unless agreed in writing by the lessor'
 
@@ -102,7 +103,7 @@ describe('officialQldForm18aFill', () => {
 
   it('fills schedule fields by name', async () => {
     const doc = await loadOfficialQldForm18aTemplate()
-    const { assignments } = applyOfficialQldForm18aScheduleFill(doc, minimalProps())
+    const { assignments } = await applyOfficialQldForm18aScheduleFill(doc, minimalProps())
     const form = doc.getForm()
     expect(form.getTextField(F.Lessor_name_trading_name).getText()).toBe('Quinn Lessor')
     expect(form.getTextField(F.Tenant1_full_name_s).getText()).toBe('Robert Tenant')
@@ -159,7 +160,7 @@ describe('officialQldForm18aFill', () => {
     expect(page3).not.toContain('How electricity must be paid for')
   })
 
-  it('renders non-inclusive utilities on flattened PDF with Item 14 apportionment and Item 15 how-paid', async () => {
+  it('renders non-inclusive utilities with Item 14 overflow to Special Terms on flattened PDF', async () => {
     const utilitiesResolution = resolvePropertyUtilities({
       featureNames: ['furnished'],
       waterUsageChargedSeparately: false,
@@ -184,15 +185,43 @@ describe('officialQldForm18aFill', () => {
     })
     const props = { ...minimalProps(), utilitiesResolution }
     const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
-    const page3 = await pageText(pdfBytes, 3)
+    const page12 = await pageText(pdfBytes, 12)
 
-    expect(page3).toMatch(/electricity.*Yes/i)
-    expect(page3).toMatch(/gas.*Yes/i)
-    expect(page3).toMatch(/water.*No/i)
-    expect(page3).toContain('50% of common area electricity usage')
-    expect(page3).toContain('Invoiced quarterly to tenant via Quni platform')
-    expect(page3).toContain('Paid direct to gas retailer on individual account')
-    expect(page3).not.toMatch(/Cost for electricity/)
+    expect(page12).toContain('Electricity apportionment (Item 14):')
+    expect(page12).toContain('divided equally among four bedrooms')
+    expect(page12).not.toContain('Nil additional special terms at execution.')
+  })
+
+  it('writes short Item 14 apportionment in schedule without overflow pointer', async () => {
+    const utilitiesResolution = resolvePropertyUtilities({
+      featureNames: ['furnished'],
+      waterUsageChargedSeparately: false,
+      electricityEmbeddedNetwork: null,
+      gasEmbeddedNetwork: null,
+      waterSeparatelyMeteredEfficientAttestedAt: null,
+      utilitiesServices: {
+        electricity: {
+          tenant_pays: true,
+          individually_metered: false,
+          apportionment_method: '50% of common-area electricity',
+          how_must_be_paid: 'Quarterly invoice',
+        },
+        gas: {
+          tenant_pays: false,
+          individually_metered: null,
+          apportionment_method: null,
+          how_must_be_paid: null,
+        },
+      },
+    })
+    const doc = await loadOfficialQldForm18aTemplate()
+    const { assignments } = await applyOfficialQldForm18aScheduleFill(doc, {
+      ...minimalProps(),
+      utilitiesResolution,
+    })
+    const assignmentMap = new Map(assignments)
+    expect(assignmentMap.get(F.Cost_for_electricity)).toBe('50% of common-area electricity')
+    expect(assignmentMap.get(F.Cost_for_electricity)).not.toBe(QLD_FORM18A_SPECIAL_TERMS_POINTER)
   })
 
   it('produces flattened PDF with action buttons removed and zero widgets', async () => {

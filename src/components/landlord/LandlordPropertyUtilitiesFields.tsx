@@ -128,7 +128,8 @@ function PerServiceUtilitiesFields({
                 How the tenant&apos;s share is worked out (Form 18a Item 14)
               </label>
               <p className="mb-2 text-xs text-gray-600">
-                e.g. percentage of common-area usage, fixed monthly contribution, or formula agreed between the parties.
+                Use a percentage or short basis (e.g. &quot;50% of common-area electricity&quot;) so it fits Item 14 on
+                the agreement. Longer wording is recorded in Special Terms (page 12).
               </p>
               <input
                 id={`utilities-${serviceId}-apportionment`}
@@ -136,7 +137,7 @@ function PerServiceUtilitiesFields({
                 value={form.apportionmentMethod}
                 onChange={(e) => onChange({ apportionmentMethod: e.target.value })}
                 className={inputClass}
-                placeholder="e.g. 50% of common area electricity usage divided by number of occupants"
+                placeholder="e.g. 50% of common-area electricity"
               />
             </div>
           ) : null}
