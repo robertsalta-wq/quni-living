@@ -8,6 +8,7 @@ import {
   loadOfficialQldForm18aTemplate,
 } from './officialQldForm18aFill.js'
 import type { QldGeneralTenancyAgreementProps } from '../../documents/rtaTypes.js'
+import { resolvePropertyUtilities } from '../../../src/lib/propertyUtilitiesResolver.js'
 
 const PETS_TYPE_LINE = 'None unless agreed in writing by the lessor'
 
@@ -136,6 +137,25 @@ describe('officialQldForm18aFill', () => {
     const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
     const page3 = await pageText(pdfBytes, 3)
     expect(page3).toContain('15/03/2025')
+  })
+
+  it('fills all-inclusive utilities from resolver with all service/water No on flattened PDF', async () => {
+    const utilitiesResolution = resolvePropertyUtilities({
+      featureNames: ['bills included'],
+      waterUsageChargedSeparately: false,
+      electricityEmbeddedNetwork: false,
+      gasEmbeddedNetwork: false,
+      waterSeparatelyMeteredEfficientAttestedAt: null,
+    })
+    const props = { ...minimalProps(), utilitiesResolution }
+    const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
+    const page3 = await pageText(pdfBytes, 3)
+
+    expect(page3).toMatch(/electricity.*No/i)
+    expect(page3).toMatch(/gas.*No/i)
+    expect(page3).toMatch(/water.*No/i)
+    expect(page3).not.toContain('Cost for electricity')
+    expect(page3).not.toContain('How electricity must be paid for')
   })
 
   it('produces flattened PDF with action buttons removed and zero widgets', async () => {

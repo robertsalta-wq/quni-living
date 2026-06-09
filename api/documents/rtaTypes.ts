@@ -198,6 +198,8 @@ export type QldGeneralTenancyAgreementProps = {
    * Single enum per booking; rendering pairs methods to match operational reality.
    */
   rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null
+  /** When set, Items 13–15 derive from canonical utilities resolver; omit for legacy hard-coded fill. */
+  utilitiesResolution?: import('../../src/lib/propertyUtilitiesResolver.js').PropertyUtilitiesResolution | null
   specialConditions: string[]
   bookingNotes: string | null
 }

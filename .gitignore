@@ -50,6 +50,7 @@ android/key.properties
 
 scripts/test-output.pdf
 scripts/*.pdf
+scripts/test-*.pdf
 scripts/test-*.mjs
 # Vitest snapshot / scratch output from AI verification tests
 src/lib/__test_output__/

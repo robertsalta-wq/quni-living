@@ -82,6 +82,22 @@ import {
   propertyHasAuthorityToLetAttestation,
 } from '../../lib/authorityToLetAttestation'
 import {
+  LandlordPropertyUtilitiesFields,
+  emptyLandlordPropertyUtilitiesFormState,
+  landlordPropertyUtilitiesColumnsFromFormState,
+  landlordPropertyUtilitiesFormStateFromProperty,
+  type LandlordPropertyUtilitiesFormState,
+} from '../../components/landlord/LandlordPropertyUtilitiesFields'
+import {
+  WATER_SEPARATELY_METERED_ATTESTATION_BULLETS,
+  WATER_SEPARATELY_METERED_ATTESTATION_FOOTER,
+  WATER_SEPARATELY_METERED_ATTESTATION_INTRO,
+  WATER_SEPARATELY_METERED_ATTESTATION_LABEL,
+  WATER_SEPARATELY_METERED_BLOCKED_MESSAGE,
+  propertyHasWaterSeparatelyMeteredAttestation,
+  waterSeparatelyMeteredAttestationPatch,
+} from '../../lib/waterSeparatelyMeteredAttestation'
+import {
   landlordNonDiscriminationAccepted,
   nonDiscriminationAcceptancePatch,
 } from '../../lib/nonDiscriminationPolicy'
@@ -114,6 +130,7 @@ const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-basic-info', label: 'Basic info' },
   { id: 'section-property-details', label: 'Property details' },
   { id: 'section-inclusions-features', label: 'Inclusions' },
+  { id: 'section-utilities', label: 'Utilities' },
   { id: 'section-ft6600-compliance', label: 'Compliance' },
   { id: 'section-house-rules', label: 'Rules' },
   { id: 'section-location', label: 'Location' },
@@ -397,6 +414,10 @@ export default function LandlordPropertyFormPage() {
   const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
   const [authorityToLetAgreed, setAuthorityToLetAgreed] = useState(false)
   const [authorityToLetAttestedAt, setAuthorityToLetAttestedAt] = useState<string | null>(null)
+  const [waterSeparatelyMeteredAttestedAt, setWaterSeparatelyMeteredAttestedAt] = useState<string | null>(
+    null,
+  )
+  const [waterSeparatelyMeteredAgreed, setWaterSeparatelyMeteredAgreed] = useState(false)
   const [listerRole, setListerRole] = useState<ListerRole>('owner')
 
   const needsNonDiscriminationAcceptance =
@@ -481,14 +502,22 @@ export default function LandlordPropertyFormPage() {
   )
 
   const showNswFt6600ComplianceSection = state.trim().toUpperCase() === 'NSW'
+  const showPropertyUtilitiesSection = ['QLD', 'VIC'].includes(state.trim().toUpperCase())
 
-  const formNavSections = useMemo(
-    () =>
-      showNswFt6600ComplianceSection
-        ? LANDLORD_FORM_NAV_SECTIONS
-        : LANDLORD_FORM_NAV_SECTIONS.filter((s) => s.id !== 'section-ft6600-compliance'),
-    [showNswFt6600ComplianceSection],
+  const [utilitiesForm, setUtilitiesForm] = useState<LandlordPropertyUtilitiesFormState>(
+    emptyLandlordPropertyUtilitiesFormState(),
   )
+
+  const formNavSections = useMemo(() => {
+    let sections = LANDLORD_FORM_NAV_SECTIONS
+    if (!showNswFt6600ComplianceSection) {
+      sections = sections.filter((s) => s.id !== 'section-ft6600-compliance')
+    }
+    if (!showPropertyUtilitiesSection) {
+      sections = sections.filter((s) => s.id !== 'section-utilities')
+    }
+    return sections
+  }, [showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
 
   const qldRoomsRentedError = useMemo(
     () =>
@@ -544,6 +573,11 @@ export default function LandlordPropertyFormPage() {
   const [ft6600Compliance, setFt6600Compliance] = useState<LandlordFt6600ComplianceFormState>(
     emptyLandlordFt6600ComplianceFormState,
   )
+
+  const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
+    ? ft6600Compliance.waterUsageChargedSeparately === 'yes'
+    : utilitiesForm.waterUsageChargedSeparately === 'yes'
+
   const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('section-basic-info')
   const weeklyRentNum = useMemo(() => {
@@ -952,6 +986,10 @@ export default function LandlordPropertyFormPage() {
         const loadedAttestedAt = prop.authority_to_let_attested_at ?? null
         setAuthorityToLetAttestedAt(loadedAttestedAt)
         setAuthorityToLetAgreed(Boolean(loadedAttestedAt))
+        const loadedWaterAttestedAt = prop.water_separately_metered_efficient_attested_at ?? null
+        setWaterSeparatelyMeteredAttestedAt(loadedWaterAttestedAt)
+        setWaterSeparatelyMeteredAgreed(Boolean(loadedWaterAttestedAt))
+        setUtilitiesForm(landlordPropertyUtilitiesFormStateFromProperty(prop))
         setListerRole(parseListerRole(prop.lister_role))
         setTitle(prop.title)
         setDescription(prop.description ?? '')
@@ -1811,6 +1849,23 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (
+      waterUsageChargedSeparatelySelected &&
+      !propertyHasWaterSeparatelyMeteredAttestation({
+        water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
+      }) &&
+      !(showPropertyUtilitiesSection
+        ? utilitiesForm.waterSeparatelyMeteredAgreed
+        : waterSeparatelyMeteredAgreed)
+    ) {
+      reportSubmitError(WATER_SEPARATELY_METERED_BLOCKED_MESSAGE)
+      const targetId = showPropertyUtilitiesSection
+        ? 'section-utilities'
+        : 'section-ft6600-compliance'
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -1882,10 +1937,18 @@ export default function LandlordPropertyFormPage() {
     const qldOnSiteSave = isQldOnSiteBoarderLodgerListing(state.trim(), accommodation.propertyListingType)
     const complianceColumns = showNswFt6600ComplianceSection
       ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
-      : null
+      : showPropertyUtilitiesSection
+        ? landlordPropertyUtilitiesColumnsFromFormState(utilitiesForm)
+        : null
     const attestationPatch = authorityToLetAttestationPatch({
       agreed: authorityToLetAgreed,
       existingAttestedAt: authorityToLetAttestedAt,
+    })
+    const waterAttestationPatch = waterSeparatelyMeteredAttestationPatch({
+      agreed: showPropertyUtilitiesSection
+        ? utilitiesForm.waterSeparatelyMeteredAgreed
+        : waterSeparatelyMeteredAgreed,
+      existingAttestedAt: waterSeparatelyMeteredAttestedAt,
     })
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
@@ -1942,11 +2005,12 @@ export default function LandlordPropertyFormPage() {
             strata_bylaws_applicable: null,
           }),
       ...attestationPatch,
+      ...waterAttestationPatch,
       lister_role: listerRole,
     }
 
     const complianceSelect =
-      'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable'
+      'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable, water_separately_metered_efficient_attested_at'
 
       if (isEdit && propertyId) {
         const { data: updatedRow, error: upErr } = await supabase
@@ -2001,6 +2065,13 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
+        if (waterAttestationPatch.water_separately_metered_efficient_attested_at) {
+          setWaterSeparatelyMeteredAttestedAt(
+            waterAttestationPatch.water_separately_metered_efficient_attested_at,
+          )
+          setWaterSeparatelyMeteredAgreed(true)
+          setUtilitiesForm((prev) => ({ ...prev, waterSeparatelyMeteredAgreed: true }))
+        }
         if (attestationPatch.authority_to_let_attested_at) {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
@@ -2543,15 +2614,72 @@ export default function LandlordPropertyFormPage() {
             'section-inclusions-features',
           )}
 
+          {showPropertyUtilitiesSection
+            ? sectionClass(
+                'Utilities & water',
+                <LandlordPropertyUtilitiesFields
+                  form={utilitiesForm}
+                  onChange={(patch) => setUtilitiesForm((prev) => ({ ...prev, ...patch }))}
+                  labelClass={labelClass}
+                  waterAttestationPersisted={propertyHasWaterSeparatelyMeteredAttestation({
+                    water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
+                  })}
+                />,
+                'section-utilities',
+              )
+            : null}
+
           {showNswFt6600ComplianceSection
             ? sectionClass(
                 'Smoke alarms & compliance (NSW)',
-                <LandlordPropertyFt6600ComplianceFields
-                  form={ft6600Compliance}
-                  onChange={(patch) => setFt6600Compliance((prev) => ({ ...prev, ...patch }))}
-                  inputClass={inputClass}
-                  labelClass={labelClass}
-                />,
+                <div className="space-y-5">
+                  <LandlordPropertyFt6600ComplianceFields
+                    form={ft6600Compliance}
+                    onChange={(patch) => setFt6600Compliance((prev) => ({ ...prev, ...patch }))}
+                    inputClass={inputClass}
+                    labelClass={labelClass}
+                  />
+                  {ft6600Compliance.waterUsageChargedSeparately === 'yes' &&
+                  !propertyHasWaterSeparatelyMeteredAttestation({
+                    water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
+                  }) ? (
+                    <div id="section-water-metered-attestation">
+                      <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={waterSeparatelyMeteredAgreed}
+                          onChange={(e) => {
+                            setWaterSeparatelyMeteredAgreed(e.target.checked)
+                            if (submitError === WATER_SEPARATELY_METERED_BLOCKED_MESSAGE) {
+                              setSubmitError(null)
+                            }
+                          }}
+                          className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                        />
+                        <span className="space-y-2">
+                          <span className="block font-medium text-gray-900">
+                            {WATER_SEPARATELY_METERED_ATTESTATION_LABEL}
+                          </span>
+                          <span className="block text-gray-800">
+                            {WATER_SEPARATELY_METERED_ATTESTATION_INTRO}
+                          </span>
+                          <ul className="list-disc space-y-1 pl-5 text-gray-800">
+                            {WATER_SEPARATELY_METERED_ATTESTATION_BULLETS.map((bullet) => (
+                              <li key={bullet}>{bullet}</li>
+                            ))}
+                          </ul>
+                          <span className="block text-gray-800">
+                            {WATER_SEPARATELY_METERED_ATTESTATION_FOOTER}
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+                  ) : ft6600Compliance.waterUsageChargedSeparately === 'yes' ? (
+                    <p className="text-sm text-emerald-700" role="status">
+                      Water metering and efficiency attestation recorded.
+                    </p>
+                  ) : null}
+                </div>,
                 'section-ft6600-compliance',
               )
             : null}

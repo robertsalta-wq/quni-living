@@ -19,6 +19,14 @@ import {
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../../platformConfig.js'
+import { fetchUtilitiesResolverStateFlags } from '../utilitiesResolverFlags.js'
+import { featureNamesFromPropertyRow } from '../../../../src/lib/propertyFeatureSignals.js'
+import {
+  propertyUtilitiesInputFromPropertyRow,
+  propertyUtilitiesPreflightBlockedMessage,
+  propertyUtilitiesPreflightMessages,
+  resolvePropertyUtilities,
+} from '../../../../src/lib/propertyUtilitiesResolver.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -119,6 +127,8 @@ type LoadedQldContext = {
   platformIdentity: Awaited<ReturnType<typeof fetchPlatformBusinessIdentityForDocuments>>
   occupancyLease: ReturnType<typeof occupancyLeaseFieldsFromBooking>
   rentPaymentPreference: 'bank_transfer' | 'quni_platform' | null
+  utilitiesResolverQldEnabled: boolean
+  featureNames: string[]
 }
 
 async function loadQldForm18aContext(
@@ -164,7 +174,12 @@ async function loadQldForm18aContext(
         bond,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        water_usage_charged_separately,
+        electricity_embedded_network,
+        gas_embedded_network,
+        water_separately_metered_efficient_attested_at,
+        property_features ( features ( name ) )
       )
     `,
     )
@@ -313,6 +328,18 @@ async function loadQldForm18aContext(
 
   const occupancyLease = occupancyLeaseFieldsFromBooking(booking, prop)
 
+  let utilitiesResolverQldEnabled = false
+  try {
+    const flags = await fetchUtilitiesResolverStateFlags(admin)
+    utilitiesResolverQldEnabled = flags.qldEnabled
+  } catch (e) {
+    console.error('[qld-form18a] utilities resolver flags', e)
+  }
+
+  const featureNames = featureNamesFromPropertyRow(
+    prop as Parameters<typeof featureNamesFromPropertyRow>[0],
+  )
+
   return {
     ok: true,
     ctx: {
@@ -339,8 +366,17 @@ async function loadQldForm18aContext(
       platformIdentity,
       occupancyLease,
       rentPaymentPreference,
+      utilitiesResolverQldEnabled,
+      featureNames,
     },
   }
+}
+
+function qldUtilitiesPreflightForContext(ctx: LoadedQldContext): string[] | null {
+  if (!ctx.utilitiesResolverQldEnabled) return null
+  const input = propertyUtilitiesInputFromPropertyRow(ctx.prop, ctx.featureNames)
+  const messages = propertyUtilitiesPreflightMessages(input, { mandateAllInclusive: true })
+  return messages.length > 0 ? messages : null
 }
 
 function buildQldPdfProps(ctx: LoadedQldContext, documentId: string) {
@@ -426,6 +462,10 @@ function buildQldPdfProps(ctx: LoadedQldContext, documentId: string) {
   const landlordEmailForService = typeof lp.email === 'string' && lp.email.trim() ? lp.email.trim() : '-'
   const tenantEmailForService = typeof sp.email === 'string' && sp.email.trim() ? sp.email.trim() : '-'
 
+  const utilitiesResolution = ctx.utilitiesResolverQldEnabled
+    ? resolvePropertyUtilities(propertyUtilitiesInputFromPropertyRow(ctx.prop, ctx.featureNames))
+    : null
+
   const form18aProps: QldGeneralTenancyAgreementProps = {
     documentId,
     generatedAt,
@@ -464,6 +504,7 @@ function buildQldPdfProps(ctx: LoadedQldContext, documentId: string) {
       bankName: ctx.bankDetails.bankName,
     },
     rentPaymentPreference: ctx.rentPaymentPreference,
+    utilitiesResolution,
     specialConditions: coTenantSpecialConditions,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
   }
@@ -490,6 +531,7 @@ function buildQldPdfProps(ctx: LoadedQldContext, documentId: string) {
     rent: sharedRent,
     bond: { amount: ctx.bondNum },
     utilitiesDescription:
+      utilitiesResolution?.utilitiesDescription ??
       'Electricity, gas, water, internet and waste services as agreed between the parties and as described on the property listing where applicable.',
     signingPackage: 'residential_tenancy_qld' as const,
     rentPaymentMethod: ctx.rentPaymentPreference,
@@ -543,6 +585,15 @@ export async function preflightQldForm18aListingTenancy(
   if (!loaded.ok) {
     return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
   }
+  const utilitiesIssues = qldUtilitiesPreflightForContext(loaded.ctx)
+  if (utilitiesIssues) {
+    return {
+      ok: false,
+      status: 400,
+      error: propertyUtilitiesPreflightBlockedMessage(utilitiesIssues),
+      detail: utilitiesIssues.join('; '),
+    }
+  }
   try {
     await buildQldForm18aPdfBuffers(loaded.ctx, PREFLIGHT_DOCUMENT_ID)
     return { ok: true, generator: 'qld-form18a' }
@@ -561,6 +612,16 @@ export async function runQldForm18aListingTenancy(
   const loaded = await loadQldForm18aContext(admin, bookingId)
   if (!loaded.ok) {
     return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  }
+
+  const utilitiesIssues = qldUtilitiesPreflightForContext(loaded.ctx)
+  if (utilitiesIssues) {
+    return {
+      ok: false,
+      status: 400,
+      error: propertyUtilitiesPreflightBlockedMessage(utilitiesIssues),
+      detail: utilitiesIssues.join('; '),
+    }
   }
 
   const { booking, lp, moveIn, weeklyRent, periodic, endDate, bondNum } = loaded.ctx

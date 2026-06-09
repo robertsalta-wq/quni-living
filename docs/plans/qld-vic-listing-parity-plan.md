@@ -16,7 +16,7 @@
 |------|-----|-----|-----|
 | Listing tier bookable | Yes | Yes | Yes |
 | Doc routing (`resolveTenancyPackage`) | `nsw-ft6600` / `nsw-occupancy` | `qld-form18a` / `qld-occupancy` | `vic-form1` / `vic-occupancy` |
-| PDF generation path | **Official AcroForm fill** + widget tag overlay | **react-pdf recreation** from prescribed text | **react-pdf** from CAV .docx extract |
+| PDF generation path | **Official AcroForm fill** + widget tag overlay | **Official AcroForm fill** (`officialQldForm18aFill.ts` → `docs/qld/form18a-renamed.pdf`) | **react-pdf** from CAV .docx extract |
 | Automated PDF tests | Extensive (fill, burn-in, signing, e2e) | Marker smoke only (`QldGeneralTenancyAgreement.test.ts`) | **None** for Form 1 |
 | Property/accept compliance gate | FT6600 fields required at accept | None | None |
 | DocuSeal signing | Renamed AcroForm widget allowlist + regression suite | Embedded `{{...;type=signature}}` text tags in PDF | Same text-tag approach |
@@ -72,7 +72,7 @@ NSW and react-pdf states use **different signing mechanisms**. Fix/verify each:
 
 ### Stream 1 — QLD Form 18a to verified standard
 
-**Reference:** `docs/form18a-field-mapping.md`, `src/lib/documents/QldGeneralTenancyAgreement.tsx`, `api/documents/generate-qld-residential-tenancy.ts`
+**Reference:** `docs/form18a-field-mapping.md`, `api/lib/documents/officialQldForm18aFill.ts`, `api/documents/generate-qld-residential-tenancy.ts`
 
 | # | Task | Priority |
 |---|------|----------|

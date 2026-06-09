@@ -26,9 +26,12 @@ This table maps **RTA Part 1 items** → **platform source** → **default when 
 | **8** Rent due day | Derived weekday from start date | Monday fallback |
 | **9** Payment methods / BSB | `bookings.rent_payment_method` + `platform_config` bank details | **Two methods** (s.83 / standard term 8(3)): `quni_platform` → Quni platform + direct credit; `bank_transfer` or null → EFT + OTC/branch to same account |
 | **10** Place of payment | - | “As agreed - electronic transfer” |
-| **11** Last rent increase | - | **GAP**: “Not stated - new tenancy / unknown” |
+| **11** Last rent increase | - | Left blank when unknown (no default text) |
 | **12** Bond | `properties.bond` or 4× weekly rent | - |
-| **13–15** Services / water / apportionment | Listing + addendum | Summary points to Quni QLD addendum |
+| **13.1** Electricity / gas / phone / other | `resolvePropertyUtilities()` → `services.*.tenantMustPay` | Legacy (flag off): all No. Resolver (flag on): electricity/gas from bills-included tag; phone and other always No; Type blank |
+| **13.2** Water charged to tenant | `water_usage_charged_separately` + water-efficiency attestation | Resolver: Yes only when water charged separately and attested; No when all-inclusive |
+| **14** Apportionment costs | Resolver `services.*.apportionmentCost` | Blank when tenant must not pay (all-inclusive) |
+| **15** How charges recovered | Resolver `services.*.howMustBePaid` | Blank when tenant must not pay (all-inclusive) |
 | **16** Max occupants | `housemates_count + 1` | - |
 | **17** Body corporate | - | No / N/A |
 | **18** Nominated repairers | Landlord phone | Same contact for electrical / plumbing |

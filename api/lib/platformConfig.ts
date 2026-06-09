@@ -28,6 +28,12 @@ export const PLATFORM_CONFIG_KEYS = {
   SERVICE_TIER_NAMING: 'service_tier_naming',
   QUNI_SERVICE_TIER_MODULE_ENABLED: 'quni_service_tier_module_enabled',
   QUNI_SERVICE_TIER_MANAGED_ENABLED: 'quni_service_tier_managed_enabled',
+  /** Utilities resolver rollout — each defaults false (legacy fill until flipped per state). */
+  UTILITIES_RESOLVER_QLD_ENABLED: 'utilities_resolver_qld_enabled',
+  UTILITIES_RESOLVER_NSW_ENABLED: 'utilities_resolver_nsw_enabled',
+  UTILITIES_RESOLVER_VIC_ENABLED: 'utilities_resolver_vic_enabled',
+  UTILITIES_RESOLVER_ADDENDUM_ENABLED: 'utilities_resolver_addendum_enabled',
+  UTILITIES_RESOLVER_LISTING_DISCLOSURE_ENABLED: 'utilities_resolver_listing_disclosure_enabled',
 } as const
 
 export type ServiceTierPlatformFlags = {

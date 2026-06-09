@@ -377,7 +377,10 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
     pushText(text, F.Rental_bond_amount, formatPlainMoney(bond.amount))
   }
 
-  const tenantPaysOtherServices = false
+  const utilities = props.utilitiesResolution
+  const tenantPaysOtherServices = utilities
+    ? utilities.services.other.tenantMustPay
+    : false
   if (tenantPaysOtherServices) {
     pushText(
       text,
@@ -442,17 +445,61 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
     setYesNoPairChecks(checks, pair, false)
   }
 
-  checks.add(F.water_charge_no)
+  if (utilities) {
+    const elec = utilities.services.electricity
+    const gas = utilities.services.gas
+    const water = utilities.services.water
+    const phone = utilities.services.phone
+    const other = utilities.services.other
+
+    checks.add(elec.tenantMustPay ? F.services_electricity_yes : F.services_electricity_no)
+    checks.add(gas.tenantMustPay ? F.services_gas_yes : F.services_gas_no)
+    checks.add(phone.tenantMustPay ? F.services_phone_yes : F.services_phone_no)
+    checks.add(other.tenantMustPay ? F.services_other_yes : F.services_other_no)
+    checks.add(water.tenantMustPay ? F.water_charge_yes : F.water_charge_no)
+
+    if (elec.tenantMustPay && elec.apportionmentCost) {
+      pushText(text, F.Cost_for_electricity, elec.apportionmentCost)
+    }
+    if (gas.tenantMustPay && gas.apportionmentCost) {
+      pushText(text, F.Cost_for_gas, gas.apportionmentCost)
+    }
+    if (phone.tenantMustPay && phone.apportionmentCost) {
+      pushText(text, F.Cost_for_phone, phone.apportionmentCost)
+    }
+    if (other.tenantMustPay && other.apportionmentCost) {
+      pushText(text, F.Cost_for_other_services, other.apportionmentCost)
+    }
+    if (elec.tenantMustPay && elec.howMustBePaid) {
+      pushText(text, F.How_electricity_must_be_paid_for, elec.howMustBePaid)
+    }
+    if (gas.tenantMustPay && gas.howMustBePaid) {
+      pushText(text, F.How_gas_must_be_paid_for, gas.howMustBePaid)
+    }
+    if (phone.tenantMustPay && phone.howMustBePaid) {
+      pushText(text, F.How_phone_must_be_paid_for, phone.howMustBePaid)
+    }
+    if (other.tenantMustPay && other.howMustBePaid) {
+      pushText(text, F.How_other_services_must_be_paid_for, other.howMustBePaid)
+    }
+  } else {
+    checks.add(F.water_charge_no)
+    checks.add(F.services_electricity_no)
+    checks.add(F.services_gas_no)
+    checks.add(F.services_phone_no)
+    if (tenantPaysOtherServices) checks.add(F.services_other_yes)
+    else checks.add(F.services_other_no)
+  }
+
   checks.add(F.bylaws_applicable_no)
   checks.add(F.bylaws_copy_given_no)
-  checks.add(F.services_electricity_no)
-  checks.add(F.services_gas_no)
-  checks.add(F.services_phone_no)
-  if (tenantPaysOtherServices) checks.add(F.services_other_yes)
-  else checks.add(F.services_other_no)
   checks.add(F.repairers_first_contact_yes)
 
   return { text, checks }
+}
+
+function yesNoFromChecks(checks: Set<string>, pair: YesNoPair): boolean {
+  return checks.has(pair.yes)
 }
 
 function setYesNoPairChecks(checks: Set<string>, pair: YesNoPair, yes: boolean) {
@@ -521,18 +568,19 @@ export function applyOfficialQldForm18aScheduleFill(
     setYesNoPair(form, pair, false)
   }
 
-  setYesNoPair(form, { yes: F.water_charge_yes, no: F.water_charge_no }, false)
+  const waterPair = { yes: F.water_charge_yes, no: F.water_charge_no }
+  const elecPair = { yes: F.services_electricity_yes, no: F.services_electricity_no }
+  const gasPair = { yes: F.services_gas_yes, no: F.services_gas_no }
+  const phonePair = { yes: F.services_phone_yes, no: F.services_phone_no }
+  const otherPair = { yes: F.services_other_yes, no: F.services_other_no }
+
+  setYesNoPair(form, waterPair, yesNoFromChecks(state.checks, waterPair))
   setYesNoPair(form, { yes: F.bylaws_applicable_yes, no: F.bylaws_applicable_no }, false)
   setYesNoPair(form, { yes: F.bylaws_copy_given_yes, no: F.bylaws_copy_given_no }, false)
-  setYesNoPair(form, { yes: F.services_electricity_yes, no: F.services_electricity_no }, false)
-  setYesNoPair(form, { yes: F.services_gas_yes, no: F.services_gas_no }, false)
-  setYesNoPair(form, { yes: F.services_phone_yes, no: F.services_phone_no }, false)
-  const tenantPaysOtherServices = state.checks.has(F.services_other_yes)
-  setYesNoPair(
-    form,
-    { yes: F.services_other_yes, no: F.services_other_no },
-    tenantPaysOtherServices,
-  )
+  setYesNoPair(form, elecPair, yesNoFromChecks(state.checks, elecPair))
+  setYesNoPair(form, gasPair, yesNoFromChecks(state.checks, gasPair))
+  setYesNoPair(form, phonePair, yesNoFromChecks(state.checks, phonePair))
+  setYesNoPair(form, otherPair, yesNoFromChecks(state.checks, otherPair))
   setYesNoPair(form, { yes: F.repairers_first_contact_yes, no: F.repairers_first_contact_no }, true)
 
   const assignments = applyAssignments(form, state)
