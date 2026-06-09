@@ -23,6 +23,7 @@ import {
   resolveManagedApplicationFeePercent,
 } from '../../lib/pricing/resolvePlatformFee.js'
 import { unlockConversationOnBookingConfirmed } from '../messaging/bookingConversation.js'
+import { internalApiOrigin } from '../internalApiOrigin.js'
 
 function jsonFail(status, body) {
   return { ok: false, status, body }
@@ -63,20 +64,6 @@ function internalPostHeaders(secret) {
     headers['x-vercel-protection-bypass'] = bypass
   }
   return headers
-}
-
-/** Absolute origin for serverless → serverless calls (relative /api/... URLs fail on Vercel). */
-function internalApiOrigin() {
-  const explicit = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim().replace(/\/$/, '')
-  if (explicit.startsWith('http://') || explicit.startsWith('https://')) {
-    return explicit
-  }
-  const vercel = (process.env.VERCEL_URL || '').trim().replace(/\/$/, '')
-  if (vercel) {
-    const host = vercel.replace(/^https?:\/\//i, '')
-    return `https://${host}`
-  }
-  return 'https://quni-living.vercel.app'
 }
 
 export async function runManagedConfirmBooking(params) {

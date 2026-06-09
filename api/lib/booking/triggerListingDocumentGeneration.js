@@ -7,19 +7,7 @@
  * Mark-bond-received only re-triggers generation if signing was never sent (legacy rows).
  */
 import { resolveTenancyPackage, tenancyGeneratorToApiPath, tenancyPackageInputFromBooking } from '../resolveTenancyPackage.js'
-
-function internalApiOrigin() {
-  const explicit = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim().replace(/\/$/, '')
-  if (explicit.startsWith('http://') || explicit.startsWith('https://')) {
-    return explicit
-  }
-  const vercel = (process.env.VERCEL_URL || '').trim().replace(/\/$/, '')
-  if (vercel) {
-    const host = vercel.replace(/^https?:\/\//i, '')
-    return `https://${host}`
-  }
-  return 'https://quni-living.vercel.app'
-}
+import { internalApiOrigin } from '../internalApiOrigin.js'
 
 function internalPostHeaders(secret) {
   const headers = {
