@@ -1222,6 +1222,106 @@ export default function Booking() {
     }
   }, [property?.id, studentProfile, moveIn, leaseLength, message, occupantCount, parkingSelected, validateOccupancyStep])
 
+  const isListingProperty = property?.service_tier === 'listing'
+
+  const finalizeListingBooking = useCallback(async () => {
+    if (!property?.id || !property.landlord_id || !studentProfile) return
+    setSubmitError(null)
+    setBookingConflict(null)
+    setSubmittingBooking(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setSubmitError('Session expired. Please sign in again.')
+        return
+      }
+
+      const pt = property.property_type
+      const propertyTypeSnapshot =
+        pt && isPropertyListingType(pt) ? pt : ('entire_property' satisfies PropertyListingType)
+
+      const commitUrl = apiUrl('/api/create-booking-payment-intent')
+      const res = await fetch(commitUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          commit: true,
+          propertyId: property.id,
+          moveInDate: moveIn,
+          leaseLength,
+          studentMessage: message.trim(),
+          bondAcknowledged: true,
+          propertyType: propertyTypeSnapshot,
+          occupantCount,
+          parkingSelected,
+          ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
+          ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
+        }),
+      })
+
+      const raw = await res.text()
+      let j: { error?: string; message?: string; bookingId?: string; ok?: boolean; conflict?: unknown }
+      try {
+        j = JSON.parse(raw) as typeof j
+      } catch {
+        setSubmitError('Invalid response while saving your booking. Please try again.')
+        return
+      }
+
+      if (res.status === 409 && j.error === 'date_overlap') {
+        setBookingConflict({ kind: 'date_overlap', conflict: parseDateOverlapConflict(j.conflict) })
+        return
+      }
+      const commitConflict = j.error
+      if (
+        res.status === 409 &&
+        (commitConflict === 'property_unavailable' || commitConflict === 'duplicate_booking')
+      ) {
+        setBookingConflict({ kind: commitConflict })
+        return
+      }
+      if (res.status === 409 && j.error === 'race_condition') {
+        setBookingConflict({ kind: 'race_condition' })
+        return
+      }
+      if (!res.ok || !j.ok || typeof j.bookingId !== 'string') {
+        setSubmitError(
+          (typeof j.message === 'string' && j.message.trim()) ||
+            (typeof j.error === 'string' && j.error) ||
+            'Could not save booking.',
+        )
+        return
+      }
+
+      const lp = property.landlord_profiles
+      if (lp?.email?.trim() && j.bookingId) {
+        void sendBookingRequestToLandlord(j.bookingId)
+      }
+
+      clearBookingDraft(property.id)
+      setSuccessBookingId(j.bookingId)
+      setSuccess(true)
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Could not save booking.')
+    } finally {
+      setSubmittingBooking(false)
+    }
+  }, [
+    property,
+    studentProfile,
+    moveIn,
+    leaseLength,
+    message,
+    conversationIdFromThread,
+    occupantCount,
+    parkingSelected,
+    buildCoTenantPayload,
+  ])
+
   const finalizeBooking = useCallback(
     async (paymentIntentId: string) => {
       if (!property?.id || !property.landlord_id || !studentProfile) return
@@ -1426,7 +1526,6 @@ export default function Booking() {
   }
 
   const hostStripeChargesReady = property.landlord_profiles?.stripe_charges_enabled === true
-  const isListingProperty = property.service_tier === 'listing'
   if (!isListingProperty && !hostStripeChargesReady) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
@@ -1454,6 +1553,7 @@ export default function Booking() {
           propertySuburb={property.suburb ?? null}
           moveInDate={moveIn}
           leaseLength={leaseLength}
+          isListing={isListingProperty}
         />
       )
     }
@@ -1702,13 +1802,19 @@ export default function Booking() {
                   <span className="tabular-nums">+${breakdownAud.parking.toLocaleString('en-AU')}</span>
                 </div>
               ) : null}
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Booking deposit</span>
-                <span className="font-semibold text-gray-900 tabular-nums">
-                  ${depositDollars.toLocaleString('en-AU')}{' '}
-                  <span className="text-gray-500 font-normal">(1 week rent)</span>
-                </span>
-              </div>
+              {!isListingProperty ? (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Booking deposit</span>
+                  <span className="font-semibold text-gray-900 tabular-nums">
+                    ${depositDollars.toLocaleString('en-AU')}{' '}
+                    <span className="text-gray-500 font-normal">(1 week rent)</span>
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  No payment through Quni for this listing — bond and rent are arranged directly with your host.
+                </p>
+              )}
             </div>
           </div>
 
@@ -1780,7 +1886,7 @@ export default function Booking() {
                 }
                 setOccupancyError(null)
                 setSubmitError(null)
-                setStep(2)
+                setStep(isListingProperty ? 3 : 2)
               }}
               disabled={step1DateBlock !== null || (rentResolution != null && 'error' in rentResolution)}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
@@ -1798,7 +1904,7 @@ export default function Booking() {
         </div>
       )}
 
-      {step === 2 && (
+      {step === 2 && !isListingProperty && (
         <div className="mt-8 space-y-6" role="radiogroup" aria-labelledby="rent-payment-heading">
           <h2 id="rent-payment-heading" className="text-lg font-bold text-gray-900">
             How would you like to pay your weekly rent?
@@ -1881,6 +1987,13 @@ export default function Booking() {
       {step === 3 && (
         <div className="mt-8 space-y-6">
           <h2 className="text-lg font-bold text-gray-900">About your bond</h2>
+          {isListingProperty ? (
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Quni does not collect bond or rent on Listing stays. If your host accepts, you will pay bond directly to
+              them (or lodge it with the state authority where required). No card payment is taken when you submit this
+              request.
+            </p>
+          ) : null}
           <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 space-y-4 text-sm text-gray-700 leading-relaxed">
             <p>
               {bondAmountAud != null ? (
@@ -1977,7 +2090,7 @@ export default function Booking() {
             <button
               type="button"
               onClick={() => {
-                setStep(2)
+                setStep(isListingProperty ? 1 : 2)
                 setClientSecret(null)
                 setDepositCents(null)
               }}
@@ -1987,14 +2100,24 @@ export default function Booking() {
             </button>
             <button
               type="button"
-              disabled={!bondCheck || piBusy}
+              disabled={!bondCheck || piBusy || submittingBooking}
               onClick={() => {
                 if (!bondCheck) return
+                if (isListingProperty) {
+                  void finalizeListingBooking()
+                  return
+                }
                 void startPaymentStep()
               }}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
             >
-              {piBusy ? 'Preparing payment…' : 'Continue to payment'}
+              {isListingProperty
+                ? submittingBooking
+                  ? 'Submitting…'
+                  : 'Submit booking request'
+                : piBusy
+                  ? 'Preparing payment…'
+                  : 'Continue to payment'}
             </button>
           </div>
           {bookingConflict && (
@@ -2023,7 +2146,7 @@ export default function Booking() {
         </div>
       )}
 
-      {step === 4 && (
+      {step === 4 && !isListingProperty && (
         <div className="mt-8 space-y-6 max-md:min-h-[min(48dvh,26rem)] scroll-mt-4">
           {!clientSecret ? (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

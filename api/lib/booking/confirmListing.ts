@@ -132,6 +132,7 @@ export async function runListingConfirmBooking(
   const feeExempt = await isLandlordFeeExempt(admin, landlord.id)
   const listingFeeCents = resolveListingPlatformFeeCents(feeExempt, LISTING_FEE_CENTS)
 
+  // Legacy Listing applies may still have a deposit hold until this cancel runs; new applies have no PI.
   const piHold =
     typeof booking.stripe_payment_intent_id === 'string' ? booking.stripe_payment_intent_id.trim() : ''
   if (piHold) {

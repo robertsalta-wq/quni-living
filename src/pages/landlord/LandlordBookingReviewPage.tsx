@@ -41,6 +41,7 @@ import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBre
 import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
+import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -245,6 +246,7 @@ export default function LandlordBookingReviewPage() {
       managedGloballyEnabled: serviceTierResolverOptions.managedGloballyEnabled,
       managedOverrides: serviceTierResolverOptions.managedOverrides,
       propertyServiceTier: data.property.service_tier,
+      studentDepositAuthorized: bookingHasStudentDepositAuthorization(data.booking),
     })
   }, [
     data?.property?.id,
@@ -252,6 +254,8 @@ export default function LandlordBookingReviewPage() {
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
     data?.property?.service_tier,
+    data?.booking?.stripe_payment_intent_id,
+    data?.booking?.service_tier_at_request,
     data?.listingBillingLoaded,
     data?.listingBilling?.moduleEnabled,
     serviceTierResolverOptions,
@@ -323,10 +327,16 @@ export default function LandlordBookingReviewPage() {
       booking: data.booking,
     })
 
+  const isListingApplyBooking =
+    data?.booking?.service_tier_at_request === 'listing' ||
+    (data?.property?.service_tier === 'listing' &&
+      data?.booking != null &&
+      !bookingHasStudentDepositAuthorization(data.booking))
+
   const canDeclineOrInfo =
     data &&
     (data.booking.status === 'pending_confirmation' || data.booking.status === 'awaiting_info') &&
-    Boolean(data.booking.stripe_payment_intent_id)
+    (isListingApplyBooking || Boolean(data.booking.stripe_payment_intent_id))
 
   const callAssessmentApi = useCallback(
     async (opts: { refresh: boolean }) => {
@@ -957,14 +967,25 @@ export default function LandlordBookingReviewPage() {
                 <dd className="mt-1 whitespace-pre-wrap text-gray-800">{booking.student_message.trim()}</dd>
               </div>
             )}
-            <div className="flex justify-between gap-4 pt-2 border-t border-gray-100">
-              <dt className="text-gray-500">Deposit held</dt>
-              <dd className="font-medium text-right tabular-nums">{formatAudCents(depositCents)}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-gray-500">Deposit authorised</dt>
-              <dd className="text-right text-xs text-gray-500">{formatDate(booking.created_at.slice(0, 10))}</dd>
-            </div>
+            {isListingApplyBooking ? (
+              <div className="pt-2 border-t border-gray-100 text-sm text-gray-600 leading-relaxed">
+                <p>
+                  <span className="font-medium text-gray-800">No Quni payment from renter.</span> This is a Quni Listing
+                  request — bond and rent are arranged directly with you. Quni does not hold a deposit for this booking.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between gap-4 pt-2 border-t border-gray-100">
+                  <dt className="text-gray-500">Deposit held</dt>
+                  <dd className="font-medium text-right tabular-nums">{formatAudCents(depositCents)}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Deposit authorised</dt>
+                  <dd className="text-right text-xs text-gray-500">{formatDate(booking.created_at.slice(0, 10))}</dd>
+                </div>
+              </>
+            )}
             {!bookingHasOccupancySnapshot(booking) ? (
               <div className="flex justify-between gap-4">
                 <dt className="text-gray-500">Weekly rent</dt>

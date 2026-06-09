@@ -5,6 +5,7 @@ import {
   nswFt6600ComplianceBlockedMessage,
 } from '../../api/lib/documents/propertyFt6600Compliance.js'
 import { bookingUsesNswFt6600Generator } from '../../api/lib/resolveTenancyPackage.js'
+import { bookingHasStudentDepositAuthorization } from './bookingStudentDepositAuthorization'
 
 export type LandlordBookingReviewProperty = Database['public']['Tables']['properties']['Row']
 
@@ -40,7 +41,7 @@ export function landlordBookingConfirmAllowed(args: {
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
-    'move_in_date' | 'start_date'
+    'move_in_date' | 'start_date' | 'stripe_payment_intent_id' | 'service_tier_at_request'
   > | null
 }): boolean {
   const st = args.bookingStatus
@@ -62,6 +63,12 @@ export function landlordBookingConfirmAllowed(args: {
     missingNswFt6600ComplianceFieldLabels(args.property).length > 0
   ) {
     return false
+  }
+
+  if (args.selectedConfirmTier === 'managed' && args.booking) {
+    if (!bookingHasStudentDepositAuthorization(args.booking)) {
+      return false
+    }
   }
 
   if (args.selectedConfirmTier === 'listing') {

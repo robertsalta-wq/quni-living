@@ -235,7 +235,15 @@ export default async function handler(req, res) {
 
         if (pi?.metadata?.bookingType === 'deposit' && pi.status === 'requires_capture' && pi.id) {
 
-          await admin.from('bookings').update({ booking_fee_paid: true }).eq('stripe_payment_intent_id', pi.id)
+          const { data: b } = await admin
+            .from('bookings')
+            .select('id, service_tier_at_request')
+            .eq('stripe_payment_intent_id', pi.id)
+            .maybeSingle()
+
+          if (b?.id && b.service_tier_at_request !== 'listing') {
+            await admin.from('bookings').update({ booking_fee_paid: true }).eq('stripe_payment_intent_id', pi.id)
+          }
 
         }
 
@@ -251,19 +259,23 @@ export default async function handler(req, res) {
 
         if (pi.metadata?.bookingType === 'deposit') {
 
-          await admin.from('bookings').update({ booking_fee_paid: true }).eq('stripe_payment_intent_id', pi.id)
-
           const { data: b } = await admin
 
             .from('bookings')
 
-            .select('id, deposit_amount, platform_fee_amount')
+            .select('id, deposit_amount, platform_fee_amount, service_tier_at_request')
 
             .eq('stripe_payment_intent_id', pi.id)
 
             .maybeSingle()
 
+          if (b?.id && b.service_tier_at_request === 'listing') {
+            break
+          }
+
           if (b?.id) {
+
+          await admin.from('bookings').update({ booking_fee_paid: true }).eq('stripe_payment_intent_id', pi.id)
 
             const received = pi.amount_received ?? pi.amount ?? 0
 

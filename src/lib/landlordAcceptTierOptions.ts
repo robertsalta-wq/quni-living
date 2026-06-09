@@ -12,6 +12,10 @@ export type LandlordAcceptTierUiModel = {
   defaultTier: LandlordAcceptChoice
   propertyTier: PropertyTier
   propertyServiceTier: LandlordServiceTier
+  /**
+   * Listing → Managed upgrade at accept requires a student deposit PI to capture.
+   * Listing apply no longer creates one; hide upgrade until async re-authorization exists.
+   */
   showManagedUpgrade: boolean
 }
 
@@ -27,6 +31,8 @@ export function landlordAcceptTierUiModel(args: {
   managedGloballyEnabled?: boolean
   managedOverrides?: ManagedOverridesMap
   propertyServiceTier: string | null | undefined
+  /** When false, Managed upgrade at accept is hidden (no student deposit authorization on file). */
+  studentDepositAuthorized?: boolean
 }): LandlordAcceptTierUiModel {
   const propertyServiceTier = parseLandlordServiceTier(args.propertyServiceTier) ?? 'listing'
   const propertyTier = resolvePropertyTierFromListing(
@@ -45,7 +51,10 @@ export function landlordAcceptTierUiModel(args: {
   const showListing =
     propertyServiceTier === 'listing' && args.moduleEnabled === true && avail.listing !== 'unsupported'
   const showManaged = avail.managed === 'available'
-  const showManagedUpgrade = propertyServiceTier === 'listing' && showManaged
+  const depositReadyForManagedUpgrade = args.studentDepositAuthorized === true
+  // Proper fix: async student deposit re-authorization before Managed upgrade at accept (deferred).
+  const showManagedUpgrade =
+    propertyServiceTier === 'listing' && showManaged && depositReadyForManagedUpgrade
 
   const defaultTier: LandlordAcceptChoice =
     propertyServiceTier === 'listing' && showListing ? 'listing' : showManaged ? 'managed' : 'listing'

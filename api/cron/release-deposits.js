@@ -61,12 +61,15 @@ export default async function handler(request) {
       move_in_date,
       start_date,
       landlord_id,
+      service_tier_final,
+      service_tier_at_request,
       landlord_profiles ( stripe_connect_account_id, email, full_name ),
       properties ( title )
     `,
     )
     .eq('status', 'confirmed')
     .is('deposit_released_at', null)
+    .neq('service_tier_final', 'listing')
 
   if (error) {
     console.error('release-deposits select', error)
@@ -75,6 +78,8 @@ export default async function handler(request) {
 
   let released = 0
   for (const b of rows ?? []) {
+    if (b.service_tier_final === 'listing' || b.service_tier_at_request === 'listing') continue
+
     const moveIn = (b.move_in_date || b.start_date || '').slice(0, 10)
     if (!moveIn || moveIn !== yesterdaySydney) continue
 

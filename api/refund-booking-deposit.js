@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingDeclinedStudent, propertyAddressLine } from './lib/emailTemplates.js'
 import { recordLandlordReviewAudit, AiMatchingAuditError } from './lib/aiMatchingAudit.js'
+import { isListingBookingApplyRow } from './lib/booking/listingBookingApply.js'
 
 export const config = { runtime: 'edge' }
 
@@ -108,6 +109,7 @@ export default async function handler(request) {
       student_id,
       status,
       notes,
+      service_tier_at_request,
       stripe_payment_intent_id,
       deposit_amount,
       weekly_rent,
@@ -131,22 +133,28 @@ export default async function handler(request) {
     return json({ error: 'Booking is not awaiting confirmation' }, 400, origin)
   }
 
-  if (!booking.stripe_payment_intent_id) {
-    return json({ error: 'Booking has no payment on file' }, 400, origin)
-  }
+  const listingApply = isListingBookingApplyRow(booking)
+  const piId =
+    typeof booking.stripe_payment_intent_id === 'string' ? booking.stripe_payment_intent_id.trim() : ''
 
-  const stripe = new Stripe(stripeSecret)
-  const pi = await stripe.paymentIntents.retrieve(booking.stripe_payment_intent_id)
-
-  try {
-    if (pi.status === 'requires_capture' || pi.status === 'requires_confirmation') {
-      await stripe.paymentIntents.cancel(pi.id)
-    } else if (pi.status === 'succeeded') {
-      await stripe.refunds.create({ payment_intent: pi.id })
+  if (!listingApply) {
+    if (!piId) {
+      return json({ error: 'Booking has no payment on file' }, 400, origin)
     }
-  } catch (e) {
-    console.error('refund/cancel PI', e)
-    return json({ error: e instanceof Error ? e.message : 'Stripe error' }, 500, origin)
+
+    const stripe = new Stripe(stripeSecret)
+    const pi = await stripe.paymentIntents.retrieve(piId)
+
+    try {
+      if (pi.status === 'requires_capture' || pi.status === 'requires_confirmation') {
+        await stripe.paymentIntents.cancel(pi.id)
+      } else if (pi.status === 'succeeded') {
+        await stripe.refunds.create({ payment_intent: pi.id })
+      }
+    } catch (e) {
+      console.error('refund/cancel PI', e)
+      return json({ error: e instanceof Error ? e.message : 'Stripe error' }, 500, origin)
+    }
   }
 
   const nowIso = new Date().toISOString()
@@ -198,7 +206,7 @@ export default async function handler(request) {
     'there'
 
   let depositCents = typeof booking.deposit_amount === 'number' ? booking.deposit_amount : null
-  if (depositCents == null && booking.weekly_rent != null) {
+  if (!listingApply && depositCents == null && booking.weekly_rent != null) {
     depositCents = Math.round(Number(booking.weekly_rent) * 100)
   }
 
@@ -208,7 +216,7 @@ export default async function handler(request) {
         student_name: studentName,
         property_address: addr || title,
         property_title: title,
-        deposit_amount_cents: depositCents ?? undefined,
+        deposit_amount_cents: listingApply ? undefined : depositCents ?? undefined,
       })
       await sendEmail({ to: studentEmail, subject: t.subject, html: t.html })
     } catch (e) {

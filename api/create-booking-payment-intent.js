@@ -1,15 +1,19 @@
 /**
- * Student booking deposit - PaymentIntent (manual capture) + optional commit (insert booking via service role).
+ * Student booking apply — tier-branched (mirrors confirmListing / confirmManaged on accept).
  *
- * POST JSON (create PI): {
+ * Managed: PaymentIntent (manual capture) + commit with paymentIntentId.
+ * Listing: no student Stripe call — commit inserts pending_confirmation with no deposit fields.
+ *
+ * POST JSON (Managed create PI): {
  *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
  *   occupantCount?: 1|2, parkingSelected?: boolean
  * }
+ * POST JSON (Listing apply preview): same body → { listingApply: true, weeklyRent, ... }
  * POST JSON (commit): {
- *   commit: true, paymentIntentId, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
- *   propertyType?, rentPaymentMethod: 'bank_transfer' | 'quni_platform', conversationId?,
- *   occupantCount?: 1|2, parkingSelected?: boolean,
- *   coTenant?: { full_name, email, phone, date_of_birth }  // required when occupantCount === 2
+ *   commit: true, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   paymentIntentId?,  // Managed only
+ *   propertyType?, rentPaymentMethod?, conversationId?, occupantCount?, parkingSelected?,
+ *   coTenant?: { full_name, email, phone, date_of_birth }
  * }
  *
  * Authorization: Bearer <Supabase access_token>
@@ -36,6 +40,10 @@ import {
   TENANT_BOOKING_CONFIRMED_STATUSES,
   TENANT_BOOKING_PIPELINE_STATUSES,
 } from './lib/booking/tenantBookingPipelineStatuses.js'
+import {
+  buildListingApplyBookingRow,
+  isListingServiceTier,
+} from './lib/booking/listingBookingApply.js'
 
 export const config = { runtime: 'edge' }
 
@@ -263,6 +271,205 @@ async function assertNoCrossPropertyDateOverlap(
   return null
 }
 
+async function loadPropertyServiceTier(admin, propertyId) {
+  const { data, error } = await admin
+    .from('properties')
+    .select('service_tier')
+    .eq('id', propertyId)
+    .maybeSingle()
+  if (error || !data) return null
+  return isListingServiceTier(data.service_tier) ? 'listing' : 'managed'
+}
+
+/** Listing apply commit — no student PI, deposit, or rent_payment_method. */
+async function handleListingBookingCommit(request, origin, body) {
+  const supabaseUrl = process.env.SUPABASE_URL
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+
+  if (!supabaseUrl || !serviceRole || !anonKey) {
+    return json({ error: 'Server misconfigured' }, 500, origin)
+  }
+
+  const propertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
+  const moveInDate = typeof body.moveInDate === 'string' ? body.moveInDate.trim() : ''
+  const leaseLength = typeof body.leaseLength === 'string' ? body.leaseLength.trim() : ''
+  const studentMessage = typeof body.studentMessage === 'string' ? body.studentMessage.slice(0, 4000) : ''
+  const bondAcknowledged = body.bondAcknowledged === true
+  const propertyTypeRaw = typeof body.propertyType === 'string' ? body.propertyType.trim() : ''
+  const propertyType = VALID_PROPERTY_TYPES.has(propertyTypeRaw) ? propertyTypeRaw : 'entire_property'
+  const conversationIdHint =
+    typeof body.conversationId === 'string' ? body.conversationId.trim() : ''
+
+  const occupancyParsed = parseOccupancyScalarsFromBody(body)
+  if (!occupancyParsed.ok) {
+    return json(occupancyParsed.body, occupancyParsed.status, origin)
+  }
+  const { occupantCount, parkingSelected } = occupancyParsed
+
+  if (!propertyId || !moveInDate || !leaseLength) {
+    return json({ error: 'propertyId, moveInDate, and leaseLength are required' }, 400, origin)
+  }
+  if (!bondAcknowledged) {
+    return json({ error: 'Bond acknowledgement is required' }, 400, origin)
+  }
+
+  const minMoveIn = addDaysIso(todayUtcIso(), 7)
+  if (moveInDate < minMoveIn) {
+    return json({ error: 'Move-in date must be at least 7 days from today' }, 400, origin)
+  }
+
+  const auth = request.headers.get('authorization') || ''
+  const token = auth.replace(/^Bearer\s+/i, '').trim()
+  if (!token) {
+    return json({ error: 'Missing authorization' }, 401, origin)
+  }
+
+  const supabaseAuth = createClient(supabaseUrl, anonKey)
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabaseAuth.auth.getUser(token)
+
+  if (userErr || !user) {
+    return json({ error: 'Invalid or expired session' }, 401, origin)
+  }
+
+  if (user.user_metadata?.role !== 'student') {
+    return json({ error: 'Only student accounts can book' }, 403, origin)
+  }
+
+  const admin = createClient(supabaseUrl, serviceRole)
+
+  const { data: student, error: stErr } = await admin
+    .from('student_profiles')
+    .select('id, user_id, email, full_name, first_name, last_name')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (stErr || !student) {
+    return json({ error: 'Student profile not found' }, 404, origin)
+  }
+
+  const coTenantResolved = resolveCoTenantForCommit(occupantCount, body.coTenant ?? body.co_tenant, {
+    primaryTenantEmail: student.email,
+  })
+  if (!coTenantResolved.ok) {
+    return json(coTenantResolved.body, coTenantResolved.status, origin)
+  }
+  const coTenant = coTenantResolved.coTenant
+
+  const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
+  if (block1) return block1
+  const block2 = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
+  if (block2) return block2
+  const block3 = await assertNoCrossPropertyDateOverlap(
+    admin,
+    student.id,
+    propertyId,
+    moveInDate,
+    leaseLength,
+    origin,
+  )
+  if (block3) return block3
+
+  const { data: property, error: propErr } = await admin
+    .from('properties')
+    .select(
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, ${OCCUPANCY_PROPERTY_COLUMNS}`,
+    )
+    .eq('id', propertyId)
+    .maybeSingle()
+
+  if (propErr || !property) {
+    return json({ error: 'Property not found' }, 404, origin)
+  }
+
+  if (!isListingServiceTier(property.service_tier)) {
+    return json({ error: 'This property requires a deposit authorization' }, 400, origin)
+  }
+
+  if (property.status !== 'active') {
+    return json(
+      {
+        error: 'property_unavailable',
+        message: 'This property is no longer available.',
+      },
+      409,
+      origin,
+    )
+  }
+
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  if (!rentResolved.ok) {
+    return json(rentResolved.body, rentResolved.status, origin)
+  }
+  const { weeklyRent, breakdownAud } = rentResolved.resolved
+
+  const tierContext = await fetchServiceTierResolverContext(admin)
+
+  const serviceTierAtRequest = computeServiceTierAtRequestSnapshot({
+    state: property.state,
+    propertyType: property.property_type,
+    isRegisteredRoomingHouse: property.is_registered_rooming_house,
+    moduleEnabled: tierContext.moduleEnabled,
+    managedGloballyEnabled: tierContext.managedGloballyEnabled,
+    managedOverrides: tierContext.managedOverrides,
+    propertyServiceTier: property.service_tier,
+  })
+
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+  const endDate = leaseEndDateIso(moveInDate, leaseLength)
+
+  const row = buildListingApplyBookingRow({
+    property,
+    student,
+    moveInDate,
+    leaseLength,
+    studentMessage,
+    propertyType,
+    occupantCount,
+    parkingSelected,
+    weeklyRent,
+    breakdownAud,
+    coTenant,
+    serviceTierAtRequest,
+    expiresAt,
+    endDate,
+  })
+
+  const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()
+
+  if (!insErr && inserted?.id) {
+    try {
+      await attachBookingToConversationOnCreate(admin, {
+        bookingId: inserted.id,
+        propertyId: property.id,
+        tenantUserId: student.user_id,
+        tenantProfileId: student.id,
+        conversationIdHint: conversationIdHint || null,
+      })
+    } catch (e) {
+      console.error('[booking] attach conversation', e)
+    }
+    return json({ ok: true, bookingId: inserted.id, listingApply: true }, 200, origin)
+  }
+
+  if (!isUniqueViolation(insErr)) {
+    console.error('listing booking insert', insErr)
+    return json({ error: insErr?.message || 'Could not save booking' }, 500, origin)
+  }
+
+  return json(
+    {
+      error: 'race_condition',
+      message: 'Sorry, this property was just booked by another student. Please try again.',
+    },
+    409,
+    origin,
+  )
+}
+
 async function handlePaymentIntentCommit(request, origin, body) {
   const stripeSecret = process.env.STRIPE_SECRET_KEY
   const supabaseUrl = process.env.SUPABASE_URL
@@ -400,6 +607,11 @@ async function handlePaymentIntentCommit(request, origin, body) {
       409,
       origin,
     )
+  }
+
+  if (isListingServiceTier(property.service_tier)) {
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'listing_property_managed_commit')
+    return json({ error: 'This Listing property does not use a deposit authorization' }, 400, origin)
   }
 
   const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
@@ -613,6 +825,18 @@ export default async function handler(request) {
   }
 
   if (body && body.commit === true) {
+    const commitPropertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
+    if (commitPropertyId) {
+      const supabaseUrlPeek = process.env.SUPABASE_URL
+      const serviceRolePeek = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (supabaseUrlPeek && serviceRolePeek) {
+        const adminPeek = createClient(supabaseUrlPeek, serviceRolePeek)
+        const tier = await loadPropertyServiceTier(adminPeek, commitPropertyId)
+        if (tier === 'listing') {
+          return handleListingBookingCommit(request, origin, body)
+        }
+      }
+    }
     return handlePaymentIntentCommit(request, origin, body)
   }
 
@@ -740,7 +964,29 @@ export default async function handler(request) {
   }
 
   const lp = property.landlord_profiles
-  const propertyServiceTier = property.service_tier === 'listing' ? 'listing' : 'managed'
+  const propertyServiceTier = isListingServiceTier(property.service_tier) ? 'listing' : 'managed'
+
+  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
+  if (!rentResolved.ok) {
+    return json(rentResolved.body, rentResolved.status, origin)
+  }
+
+  if (propertyServiceTier === 'listing') {
+    const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
+    return json(
+      {
+        listingApply: true,
+        weeklyRent,
+        weeklyRentCents,
+        breakdownAud,
+        occupantCount,
+        parkingSelected,
+      },
+      200,
+      origin,
+    )
+  }
+
   if (propertyServiceTier === 'managed' && (!lp?.stripe_connect_account_id || !lp.stripe_charges_enabled)) {
     return json(
       {
@@ -753,10 +999,6 @@ export default async function handler(request) {
     )
   }
 
-  const rentResolved = resolveWeeklyRentForBooking(property, { occupantCount, parkingSelected })
-  if (!rentResolved.ok) {
-    return json(rentResolved.body, rentResolved.status, origin)
-  }
   const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
   const depositCents = weeklyRentCents
 

@@ -7,6 +7,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingMoreInfoFromLandlordStudent, propertyAddressLine } from './lib/emailTemplates.js'
+import { isListingBookingApplyRow } from './lib/booking/listingBookingApply.js'
 
 export const config = { runtime: 'edge' }
 
@@ -105,6 +106,7 @@ export default async function handler(request) {
       id,
       landlord_id,
       status,
+      service_tier_at_request,
       stripe_payment_intent_id,
       properties ( title, address, suburb, state, postcode ),
       student_profiles ( email, full_name, first_name, last_name )
@@ -126,7 +128,7 @@ export default async function handler(request) {
     return json({ error: 'Booking cannot be moved to awaiting information in its current state' }, 400, origin)
   }
 
-  if (!booking.stripe_payment_intent_id) {
+  if (!isListingBookingApplyRow(booking) && !booking.stripe_payment_intent_id) {
     return json({ error: 'Booking has no payment on file' }, 400, origin)
   }
 

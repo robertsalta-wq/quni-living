@@ -9,6 +9,8 @@ type Props = {
   propertySuburb: string | null
   moveInDate: string
   leaseLength: string
+  /** Quni Listing apply — no student payment or deposit hold through Quni. */
+  isListing?: boolean
 }
 
 export default function TenantBookingRequestSubmittedSummary({
@@ -17,6 +19,7 @@ export default function TenantBookingRequestSubmittedSummary({
   propertySuburb,
   moveInDate,
   leaseLength,
+  isListing = false,
 }: Props) {
   const locationLine = [propertyTitle.trim() || 'Your listing', propertySuburb?.trim()].filter(Boolean).join(' · ')
   const moveInDisplay = formatIsoDateAuNumeric(moveInDate) || moveInDate
@@ -65,8 +68,18 @@ export default function TenantBookingRequestSubmittedSummary({
               ✓
             </span>
             <span>
-              <span className="font-semibold">Deposit hold:</span> One week&apos;s rent is held securely on Stripe until
-              your host responds - not taken on Quni Listing unless you book a Managed stay that captures it.
+              {isListing ? (
+                <>
+                  <span className="font-semibold">No payment through Quni.</span> This is a Quni Listing property — we did
+                  not charge your card or hold a deposit. If your host accepts, you will pay bond directly to them (or via
+                  the state bond authority where required) before move-in.
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold">Deposit hold:</span> One week&apos;s rent is held securely on Stripe
+                  until your host responds. If they decline, the hold is released automatically.
+                </>
+              )}
             </span>
           </li>
           <li className="flex gap-2">
@@ -81,7 +94,7 @@ export default function TenantBookingRequestSubmittedSummary({
         </ul>
       </section>
 
-      <PaymentsSecuredByStripe align="center" className="mt-6 max-w-sm mx-auto" />
+      {!isListing ? <PaymentsSecuredByStripe align="center" className="mt-6 max-w-sm mx-auto" /> : null}
 
       <div className="mt-8 flex flex-col gap-3">
         <Link

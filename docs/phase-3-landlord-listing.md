@@ -71,11 +71,11 @@ NSW row disambiguated by tier (T1 vs T2); product/legal sign-off recorded when e
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending_confirmation: Renter submits + deposit hold authorized
+    [*] --> pending_confirmation: Renter submits (Listing: no payment; Managed: deposit hold authorized)
     pending_confirmation --> declined: Landlord declines
     pending_confirmation --> expired: Timeout
-    pending_confirmation --> confirmed: Accept Managed (existing path)
-    pending_confirmation --> bond_pending: Accept Listing
+    pending_confirmation --> confirmed: Accept Managed (capture deposit + subscription)
+    pending_confirmation --> bond_pending: Accept Listing (landlord $99 only)
     bond_pending --> confirmed: Landlord ticks "Bond received"
     bond_pending --> expired: Bond not confirmed within window
     confirmed --> active: Move-in date reached
@@ -123,10 +123,12 @@ Same idempotency key pattern as `create-rent-subscription`. Double-clicks must n
 
 | Step | Listing | Managed |
 |---|---|---|
-| Renter submits booking | Deposit PI authorized (held, not captured) | Deposit PI authorized (held, not captured) |
-| Landlord accepts | Cancel renter deposit hold + charge landlord $99 | Capture renter deposit PI + create rent subscription |
-| Bond payment | Direct landlord ↔ renter (off-platform) | Per open audit (memory line 24) |
+| Renter submits booking | **No Stripe charge or hold** — booking request only (`pending_confirmation`) | Deposit PI authorized (held, not captured) |
+| Landlord accepts | Charge landlord **$99** platform fee only | Capture renter deposit PI + create rent subscription |
+| Bond payment | Direct landlord ↔ renter (off-platform); Quni never holds bond | Per open audit (memory line 24) |
 | Weekly rent | Direct landlord ↔ renter (off-platform) | Connect subscription with 7% retained |
+
+Renter pays **zero** through Quni on Listing at every step. `stripe_payment_intent_id` and `deposit_amount` stay null on Listing apply; there is no student `payments` row of type `deposit`.
 
 ### Listing $99 charge mechanism - confirmed Option 1
 
@@ -137,9 +139,9 @@ Two options were considered:
 
 **Decision: Option 1.** Listing landlords don't need Connect (they receive bond/rent direct from renters). Direct charge keeps landlord onboarding simple - they only need a saved card on file.
 
-### Renter deposit hold release on Listing
+### Listing apply (shipped)
 
-When the landlord accepts as Listing, the renter's authorized deposit hold must be released (no capture). Stripe `paymentIntents.cancel` reverts the hold immediately. Test this end-to-end before launch.
+`POST /api/create-booking-payment-intent` branches on `properties.service_tier`: Listing commits insert `pending_confirmation` with no student PI, no `deposit_amount`, no `rent_payment_method`, and `booking_fee_paid` false. Managed unchanged (PI + commit).
 
 ---
 
@@ -147,14 +149,14 @@ When the landlord accepts as Listing, the renter's authorized deposit hold must 
 
 ### Current state (per Stage 1 audit)
 
-- `bookings.bond_acknowledged` - renter-only; set true on booking insert; means "renter ticked the T&C checkbox." No conflict with future use.
-- `bonds.acknowledged_by_landlord` - auto-set true on `create-rent-subscription` confirm without any real landlord action. **Misleading.**
+- `bookings.bond_acknowledged` - renter-only; set true on booking insert; means "renter acknowledged bond is paid directly to the landlord / lodged with the authority — Quni holds nothing on Listing." No conflict with future use.
+- `bonds.acknowledged_by_landlord` - **Managed only** (auto-set on Managed confirm in legacy path). Listing does not create a `bonds` row at apply or accept.
 
 ### Phase 3 changes
 
-- **Stop** auto-setting `acknowledged_by_landlord` on confirm. The field stays in schema but is only set when a landlord actually performs an acknowledgement action.
-- **Add** `bookings.bond_received_by_landlord_at` (Listing only) - set when the landlord ticks "Bond received" in their dashboard. Gates Listing lease unlock per the option-2 handshake.
-- **Defer** Managed bond row schema decisions until the open audit completes (memory line 24).
+- **Listing:** no `bonds` row from Quni; bond is entirely off-platform until landlord self-reports via `bond_received_by_landlord_at`.
+- **Add** `bookings.bond_received_by_landlord_at` (Listing only) - set when the landlord ticks "Bond received" in their dashboard. Gates transition `bond_pending` → `confirmed`.
+- **Managed:** `acknowledged_by_landlord` on `bonds` remains a legacy auto-set on confirm until the Managed bond audit completes (memory line 24).
 
 ### Migration
 
