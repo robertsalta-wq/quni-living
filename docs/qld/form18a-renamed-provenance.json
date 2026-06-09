@@ -1,0 +1,25 @@
+{
+  "sourcePdf": "docs/qld/form-18a-general-tenancy-agreement-v23-sep25.pdf",
+  "sourceSha256": "27bced98156ebcedfb021d2c7dd803e085afa1983fdccd38b66ad87a2700b015",
+  "renamedPdf": "docs/qld/form18a-renamed.pdf",
+  "renamedSha256": "02050a4a078fe91e4b6e8fe2de04fbf6fc317777072badfa02da27725e51399c",
+  "renameMap": "docs/qld/qld-form18a-corrected-field-map.json",
+  "pageCount": 12,
+  "acroFormFieldCount": 135,
+  "dataFieldCount": 133,
+  "actionButtonsExcludedFromFill": [
+    "Reset form",
+    "Print form"
+  ],
+  "pageContentsByteIdentical": true,
+  "renderDiff": {
+    "attempted": true,
+    "ok": true,
+    "reason": null,
+    "maxDiffPixels": 0,
+    "pagesCompared": 12,
+    "scale": 2
+  },
+  "renameScript": "scripts/rename-form18a-fields.mjs",
+  "generatedAt": "2026-06-09T01:12:51.984Z"
+}

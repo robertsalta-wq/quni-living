@@ -23,9 +23,6 @@
     "src/lib/documents/QuniPlatformAddendum.tsx",
     "src/lib/documents/QuniPlatformAddendumQld.tsx",
     "src/lib/documents/QuniOccupancyAgreementQld.tsx",
-    "src/lib/documents/QldGeneralTenancyAgreement.tsx",
-    "src/lib/documents/qld/form18aStandardTerms.ts",
-    "src/lib/documents/qld/qldForm18aClauseRender.tsx",
     "src/lib/documents/ft6600EmbeddedStrings.ts",
     "src/lib/docuseal.ts"
   ]

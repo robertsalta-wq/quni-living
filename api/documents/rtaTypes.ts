@@ -6,7 +6,7 @@
  *   static clause text is sourced from `docs/ft6600-2025-12-17.txt`; these types cover
  *   schedule / variable fields only.
  * - `QuniPlatformAddendumProps` - Quni platform addendum for the residential tenancy package (NSW or QLD signing package).
- * - `QldGeneralTenancyAgreementProps` - RTA Form 18a schedule fields + Part 2 embedded standard terms.
+ * - `QldGeneralTenancyAgreementProps` - RTA Form 18a schedule fill inputs (official PDF AcroForm).
  */
 
 export type RtaLandlordPdf = {
@@ -161,7 +161,7 @@ export type NswResidentialTenancyAgreementProps = {
 
 /**
  * Queensland Form 18a - General Tenancy Agreement (prescribed schedule fields + Part 2 verbatim body).
- * Part 2 standard terms text is embedded from RTA Queensland PDF extraction (`form18aStandardTerms.ts`).
+ * Part 2 standard terms ship in the official RTA PDF (`docs/qld/form18a-renamed.pdf`); not re-typeset.
  */
 export type QldGeneralTenancyAgreementProps = {
   documentId: string

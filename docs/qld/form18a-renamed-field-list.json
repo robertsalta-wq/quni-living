@@ -1,0 +1,681 @@
+{
+  "count": 135,
+  "dataFieldCount": 133,
+  "fields": [
+    {
+      "name": "Account name",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Account number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Address of the rental premises1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Address of the rental premises2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Agent facsimilie number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Agent mobile number for text messages",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Agents email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "BSB number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Bank/building society/credit union",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Cost for electricity",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Cost for gas",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Cost for other services",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Cost for phone",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Date of signature (dd/mm/yyyy)1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Date of signature (dd/mm/yyyy)2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Date of signature (dd/mm/yyyy)3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Date of signature (dd/mm/yyyy)4",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Day of last rent increase (dd/mm/yyyy)",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Day the rent must be paid on",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Details of current repair orders for the rental premises or inclusions2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact email1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact email2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact email3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact full name/s1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact full name/s2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact full name/s3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact phone1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact phone2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Emengency contact phone3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "End date (dd/mm/yyyy)",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "How electricity must be paid for",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "How gas must be paid for",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "How other services must be paid for",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "How phone must be paid for",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Inclusions provided1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor ABN (optional)1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor address",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor address2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor email address",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor facsimilie number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor mobile number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor mobile number for text messages",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor name/trading name",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor phone number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor postcode",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent ABN (optional)1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent address line 1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent address line 2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent full name/trading name",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent mobile number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent phone number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor's agent postcode",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessor/agent name/trading name",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Lessors email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Method 1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Method 2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Name",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Name of tenant 1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Name of tenant 2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Name of tenant 3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Nominated electrical repairer",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Nominated other repairer",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Nominated plumbing repairer",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Number of persons allowed to reside at the premises",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Number of the approved pets1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Number of the approved pets2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Payment reference",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Phone number2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Phone number3",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Phone number4",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Phone number5",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Place of rent payment",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Postcode",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Print form",
+      "action": "exclude",
+      "type": "action_button"
+    },
+    {
+      "name": "Rent amount",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Rental bond amount",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Reset form",
+      "action": "exclude",
+      "type": "action_button"
+    },
+    {
+      "name": "Special terms",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Start date (dd/mm/yyyy)",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 1 email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 1 full name/s",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 1 phone number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 2 email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 2 full name/s",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 2 phone number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 3 email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 3 full name/s",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant 3 phone number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant/s email",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant/s facsimilie number",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Tenant/s mobile number for text messages",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Type of pets approved_1",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Type of pets approved_2",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "Type of services the tenant must pay for",
+      "action": "keep",
+      "type": "text"
+    },
+    {
+      "name": "bylaws_applicable_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "bylaws_applicable_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "bylaws_copy_given_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "bylaws_copy_given_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_email_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_email_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_fax_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_fax_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_text_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_agent_text_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_email_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_email_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_fax_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_fax_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_text_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_lessor_text_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_email_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_email_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_fax_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_fax_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_text_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "notice_tenant_text_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "rent_period_fortnightly",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "rent_period_monthly",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "rent_period_weekly",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "repairers_first_contact_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "repairers_first_contact_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_electricity_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_electricity_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_gas_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_gas_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_other_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_other_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_phone_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "services_phone_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "term_fixed",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "term_periodic",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "water_charge_no",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "water_charge_yes",
+      "action": "rename",
+      "type": "checkbox"
+    },
+    {
+      "name": "week, fortnight or month",
+      "action": "keep",
+      "type": "text"
+    }
+  ]
+}

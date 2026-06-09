@@ -22,7 +22,7 @@ const { NswLicenceToOccupyOnSite } = await import('../src/lib/documents/nsw/occu
 const { NswResidentialTenancyAgreement } = await import('../src/lib/documents/NswResidentialTenancyAgreement.tsx')
 const { QuniPlatformAddendum } = await import('../src/lib/documents/QuniPlatformAddendum.tsx')
 const { QldLicenceToOccupyOnSite } = await import('../src/lib/documents/qld/occupancyGenerator.tsx')
-const { QldGeneralTenancyAgreement } = await import('../src/lib/documents/QldGeneralTenancyAgreement.tsx')
+const { fillOfficialQldForm18aPdf } = await import('../api/lib/documents/officialQldForm18aFill.ts')
 const { QuniPlatformAddendumQld } = await import('../src/lib/documents/QuniPlatformAddendumQld.tsx')
 const { VicLicenceToOccupyOnSite } = await import('../src/lib/documents/vic/occupancyGenerator.tsx')
 const { VicResidentialRentalAgreementForm1 } = await import('../src/lib/documents/vic/form1Generator.tsx')
@@ -93,7 +93,7 @@ const samples = [
     state: 'QLD',
     tier: 'T2',
     document: 'General tenancy agreement (Form 18a)',
-    component: QldGeneralTenancyAgreement,
+    officialQldForm18a: true,
     props: qldT2AgreementSampleProps(),
   },
   {
@@ -138,7 +138,9 @@ const manifest = {
 for (const sample of samples) {
   const fileName = `${sanitizeFileName(sample.state)}-${sanitizeFileName(sample.tier)}-${sanitizeFileName(sample.document)}.pdf`
   const outputPath = join(SAMPLE_ROOT, fileName)
-  const rawBuffer = await renderToBuffer(element(sample.component, sample.props))
+  const rawBuffer = sample.officialQldForm18a
+    ? Buffer.from((await fillOfficialQldForm18aPdf(sample.props)).pdfBytes)
+    : await renderToBuffer(element(sample.component, sample.props))
   const watermarked = await applyWatermark(rawBuffer)
   writeFileSync(outputPath, watermarked)
 

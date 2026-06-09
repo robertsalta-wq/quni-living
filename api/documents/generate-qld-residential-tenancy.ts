@@ -14,8 +14,7 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database, Json } from '../../src/lib/database.types'
-/** Bundled from `src/lib/documents/QldGeneralTenancyAgreement.tsx` via `npm run build:api-documents`. */
-import { QldGeneralTenancyAgreement } from './QldGeneralTenancyAgreement.js'
+import { fillOfficialQldForm18aPdf } from '../lib/documents/officialQldForm18aFill.js'
 import { QuniPlatformAddendumQld } from './QuniPlatformAddendumQld.js'
 import type { QldGeneralTenancyAgreementProps } from './rtaTypes'
 import { sendResidentialTenancyPackageForSigning } from '../lib/docuseal.js'
@@ -557,10 +556,10 @@ export default async function handler(req: any, res: any) {
     additionalTenantNames,
   }
 
-  const form18aEl = React.createElement(QldGeneralTenancyAgreement, form18aProps)
-  const addendumEl = React.createElement(QuniPlatformAddendumQld, addendumProps)
+  const filled = await fillOfficialQldForm18aPdf(form18aProps)
+  const form18aBuffer = Buffer.from(filled.pdfBytes)
 
-  const form18aBuffer = await renderToBuffer(form18aEl as Parameters<typeof renderToBuffer>[0])
+  const addendumEl = React.createElement(QuniPlatformAddendumQld, addendumProps)
   const addendumBuffer = await renderToBuffer(addendumEl as Parameters<typeof renderToBuffer>[0])
 
   const rtaStoragePath = `${tenancyId}/residential_tenancy/qld_form18a_general_tenancy_agreement_draft.pdf`
