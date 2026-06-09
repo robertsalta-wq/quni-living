@@ -109,7 +109,6 @@ import {
   HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE,
   HEAD_TENANT_LANDLORD_CONSENT_QUESTION,
   headTenantLandlordConsentFromAttestation,
-  headTenantLandlordConsentLocked,
   parseListerRole,
   type HeadTenantLandlordConsent,
   type ListerRole,
@@ -442,10 +441,6 @@ export default function LandlordPropertyFormPage() {
 
   const headTenantAuthorityAttestationLocked =
     listerRole === 'head_tenant' && !canHeadTenantAttestAuthorityToLet(headTenantLandlordConsent)
-  const headTenantConsentLocked = headTenantLandlordConsentLocked({
-    consent: headTenantLandlordConsent,
-    authorityToLetAttestedAt,
-  })
 
   const needsNonDiscriminationAcceptance =
     role === 'landlord' && !landlordNonDiscriminationAccepted(landlordProfile)
@@ -2592,7 +2587,6 @@ export default function LandlordPropertyFormPage() {
                           name="head-tenant-landlord-consent"
                           value="yes"
                           checked={headTenantLandlordConsent === true}
-                          disabled={headTenantConsentLocked}
                           onChange={() => {
                             setHeadTenantLandlordConsent(true)
                             if (submitError === HEAD_TENANT_LANDLORD_CONSENT_BLOCKED_MESSAGE) {
@@ -2609,7 +2603,6 @@ export default function LandlordPropertyFormPage() {
                           name="head-tenant-landlord-consent"
                           value="no"
                           checked={headTenantLandlordConsent === false}
-                          disabled={headTenantConsentLocked}
                           onChange={() => {
                             setHeadTenantLandlordConsent(false)
                             setAuthorityToLetAgreed(false)
