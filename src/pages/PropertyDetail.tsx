@@ -46,6 +46,7 @@ import {
   buildListingPhotoBadges,
   listingHighlightSignals,
 } from '../lib/listingDisplayHighlights'
+import { propertyUtilitiesQuickBarItems } from '../lib/propertyUtilitiesDisclosure'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
 import {
@@ -516,6 +517,11 @@ export default function PropertyDetail() {
 
   const inclusionSignals = useMemo(
     () => (property ? listingHighlightSignals(property) : null),
+    [property],
+  )
+
+  const utilitiesQuickBarItems = useMemo(
+    () => (property ? propertyUtilitiesQuickBarItems(property) : []),
     [property],
   )
 
@@ -1079,6 +1085,7 @@ export default function PropertyDetail() {
     if (inclusionSignals?.linenSupplied) items.push({ icon: '🛏️', text: 'Linen supplied' })
     if (inclusionSignals?.weeklyCleaning) items.push({ icon: '🧹', text: 'Weekly cleaning' })
     if (inclusionSignals?.billsIncluded) items.push({ icon: '💡', text: 'Bills included' })
+    for (const item of utilitiesQuickBarItems) items.push(item)
     if (inclusionSignals?.parkingAvailable) items.push({ icon: '🚗', text: 'Parking' })
     if (!isRoomListingProperty(property) && roomLabel) items.push({ icon: '🛌', text: roomLabel })
     return items

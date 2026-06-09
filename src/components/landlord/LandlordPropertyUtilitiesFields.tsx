@@ -1,44 +1,35 @@
+import { propertyBillsIncluded } from '../../lib/propertyFeatureSignals'
+import {
+  CAPTURABLE_UTILITY_SERVICE_IDS,
+  UTILITY_SERVICE_DISPLAY_LABELS,
+  type CapturableUtilityServiceId,
+} from '../../lib/propertyUtilitiesServices'
+import { missingPerServiceUtilitiesFormMessages } from '../../lib/propertyUtilitiesFormValidation'
+import type {
+  LandlordPropertyUtilitiesFormState,
+  PerServiceUtilitiesFormState,
+} from '../../lib/propertyUtilitiesFormState'
 import {
   WATER_SEPARATELY_METERED_ATTESTATION_BULLETS,
   WATER_SEPARATELY_METERED_ATTESTATION_FOOTER,
   WATER_SEPARATELY_METERED_ATTESTATION_INTRO,
   WATER_SEPARATELY_METERED_ATTESTATION_LABEL,
 } from '../../lib/waterSeparatelyMeteredAttestation'
-import {
-  boolColToTri,
-  triToBool,
-  type TriState,
-} from './LandlordPropertyFt6600ComplianceFields'
+import { type TriState } from './LandlordPropertyFt6600ComplianceFields'
 
-export type LandlordPropertyUtilitiesFormState = {
-  waterUsageChargedSeparately: TriState
-  waterSeparatelyMeteredAgreed: boolean
-}
+export type { LandlordPropertyUtilitiesFormState, PerServiceUtilitiesFormState } from '../../lib/propertyUtilitiesFormState'
+export {
+  emptyLandlordPropertyUtilitiesFormState,
+  landlordPropertyUtilitiesColumnsFromFormState,
+  landlordPropertyUtilitiesFormStateFromProperty,
+} from '../../lib/propertyUtilitiesFormState'
 
-export function emptyLandlordPropertyUtilitiesFormState(): LandlordPropertyUtilitiesFormState {
-  return {
-    waterUsageChargedSeparately: '',
-    waterSeparatelyMeteredAgreed: false,
-  }
-}
-
-export function landlordPropertyUtilitiesFormStateFromProperty(prop: {
-  water_usage_charged_separately?: boolean | null
-  water_separately_metered_efficient_attested_at?: string | null
-}): LandlordPropertyUtilitiesFormState {
-  const attested = Boolean(prop.water_separately_metered_efficient_attested_at)
-  return {
-    waterUsageChargedSeparately: boolColToTri(prop.water_usage_charged_separately),
-    waterSeparatelyMeteredAgreed: attested,
-  }
-}
-
-export function landlordPropertyUtilitiesColumnsFromFormState(
+export function missingLandlordPropertyUtilitiesFormMessages(
   form: LandlordPropertyUtilitiesFormState,
-): { water_usage_charged_separately: boolean | null } {
-  return {
-    water_usage_charged_separately: triToBool(form.waterUsageChargedSeparately),
-  }
+  opts: { billsIncluded: boolean },
+): string[] {
+  if (opts.billsIncluded) return []
+  return missingPerServiceUtilitiesFormMessages(form)
 }
 
 type YesNoFieldProps = {
@@ -81,23 +72,139 @@ function YesNoField({ id, label, helperText, value, onChange, labelClass }: YesN
   )
 }
 
+type PerServiceFieldsProps = {
+  serviceId: CapturableUtilityServiceId
+  form: PerServiceUtilitiesFormState
+  onChange: (patch: Partial<PerServiceUtilitiesFormState>) => void
+  labelClass: string
+  inputClass: string
+}
+
+function PerServiceUtilitiesFields({
+  serviceId,
+  form,
+  onChange,
+  labelClass,
+  inputClass,
+}: PerServiceFieldsProps) {
+  const label = UTILITY_SERVICE_DISPLAY_LABELS[serviceId]
+  const tenantPays = form.tenantPays === 'yes'
+
+  return (
+    <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+      <p className="text-sm font-semibold text-gray-900">{label}</p>
+      <YesNoField
+        id={`utilities-${serviceId}-tenant-pays`}
+        label={`Does the tenant pay for ${label.toLowerCase()}?`}
+        value={form.tenantPays}
+        onChange={(v) =>
+          onChange({
+            tenantPays: v,
+            ...(v !== 'yes'
+              ? { individuallyMetered: '', apportionmentMethod: '', howMustBePaid: '' }
+              : {}),
+          })
+        }
+        labelClass={labelClass}
+      />
+      {tenantPays ? (
+        <>
+          <YesNoField
+            id={`utilities-${serviceId}-metered`}
+            label={`Is ${label.toLowerCase()} individually metered for the tenant?`}
+            helperText="Yes if the tenant has their own meter or retail account. No if the tenant's share is worked out by apportionment (Item 14)."
+            value={form.individuallyMetered}
+            onChange={(v) =>
+              onChange({
+                individuallyMetered: v,
+                ...(v === 'yes' ? { apportionmentMethod: '' } : {}),
+              })
+            }
+            labelClass={labelClass}
+          />
+          {form.individuallyMetered === 'no' ? (
+            <div>
+              <label htmlFor={`utilities-${serviceId}-apportionment`} className={labelClass}>
+                How the tenant&apos;s share is worked out (Form 18a Item 14)
+              </label>
+              <p className="mb-2 text-xs text-gray-600">
+                e.g. percentage of common-area usage, fixed monthly contribution, or formula agreed between the parties.
+              </p>
+              <input
+                id={`utilities-${serviceId}-apportionment`}
+                type="text"
+                value={form.apportionmentMethod}
+                onChange={(e) => onChange({ apportionmentMethod: e.target.value })}
+                className={inputClass}
+                placeholder="e.g. 50% of common area electricity usage divided by number of occupants"
+              />
+            </div>
+          ) : null}
+          <div>
+            <label htmlFor={`utilities-${serviceId}-how-paid`} className={labelClass}>
+              How the tenant must pay (Form 18a Item 15)
+            </label>
+            <p className="mb-2 text-xs text-gray-600">
+              e.g. direct to retailer, invoiced quarterly, or paid with rent.
+            </p>
+            <input
+              id={`utilities-${serviceId}-how-paid`}
+              type="text"
+              value={form.howMustBePaid}
+              onChange={(e) => onChange({ howMustBePaid: e.target.value })}
+              className={inputClass}
+              placeholder="e.g. Billed quarterly via Quni platform"
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 type Props = {
   form: LandlordPropertyUtilitiesFormState
   onChange: (patch: Partial<LandlordPropertyUtilitiesFormState>) => void
+  onServiceChange: (serviceId: CapturableUtilityServiceId, patch: Partial<PerServiceUtilitiesFormState>) => void
   labelClass: string
+  inputClass: string
   waterAttestationPersisted: boolean
+  billsIncluded: boolean
 }
 
 export function LandlordPropertyUtilitiesFields({
   form,
   onChange,
+  onServiceChange,
   labelClass,
+  inputClass,
   waterAttestationPersisted,
+  billsIncluded,
 }: Props) {
   const showWaterAttestation = form.waterUsageChargedSeparately === 'yes'
+  const showPerServiceCapture = !billsIncluded
 
   return (
     <div className="space-y-5">
+      {showPerServiceCapture ? (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Bills are not included in the rent. Specify who pays for electricity and gas so the tenancy agreement
+            and listing can state this lawfully (QLD Form 18a Items 13–15).
+          </p>
+          {CAPTURABLE_UTILITY_SERVICE_IDS.map((serviceId) => (
+            <PerServiceUtilitiesFields
+              key={serviceId}
+              serviceId={serviceId}
+              form={form[serviceId]}
+              onChange={(patch) => onServiceChange(serviceId, patch)}
+              labelClass={labelClass}
+              inputClass={inputClass}
+            />
+          ))}
+        </div>
+      ) : null}
+
       <YesNoField
         id="utilities-water-usage"
         label="Is water usage charged separately to the tenant?"
@@ -142,4 +249,15 @@ export function LandlordPropertyUtilitiesFields({
       ) : null}
     </div>
   )
+}
+
+/** Whether bills-included feature is ticked from landlord feature selection. */
+export function billsIncludedFromFeatureSelection(
+  features: { id: string; name: string }[],
+  selectedFeatureIds: Set<string>,
+): boolean {
+  const names = features
+    .filter((f) => selectedFeatureIds.has(f.id))
+    .map((f) => f.name.trim().toLowerCase())
+  return propertyBillsIncluded(names)
 }

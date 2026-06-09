@@ -179,6 +179,7 @@ async function loadQldForm18aContext(
         electricity_embedded_network,
         gas_embedded_network,
         water_separately_metered_efficient_attested_at,
+        utilities_services,
         property_features ( features ( name ) )
       )
     `,
@@ -375,7 +376,7 @@ async function loadQldForm18aContext(
 function qldUtilitiesPreflightForContext(ctx: LoadedQldContext): string[] | null {
   if (!ctx.utilitiesResolverQldEnabled) return null
   const input = propertyUtilitiesInputFromPropertyRow(ctx.prop, ctx.featureNames)
-  const messages = propertyUtilitiesPreflightMessages(input, { mandateAllInclusive: true })
+  const messages = propertyUtilitiesPreflightMessages(input)
   return messages.length > 0 ? messages : null
 }
 

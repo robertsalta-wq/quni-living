@@ -146,6 +146,7 @@ describe('officialQldForm18aFill', () => {
       electricityEmbeddedNetwork: false,
       gasEmbeddedNetwork: false,
       waterSeparatelyMeteredEfficientAttestedAt: null,
+      utilitiesServices: null,
     })
     const props = { ...minimalProps(), utilitiesResolution }
     const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
@@ -156,6 +157,42 @@ describe('officialQldForm18aFill', () => {
     expect(page3).toMatch(/water.*No/i)
     expect(page3).not.toContain('Cost for electricity')
     expect(page3).not.toContain('How electricity must be paid for')
+  })
+
+  it('renders non-inclusive utilities on flattened PDF with Item 14 apportionment and Item 15 how-paid', async () => {
+    const utilitiesResolution = resolvePropertyUtilities({
+      featureNames: ['furnished'],
+      waterUsageChargedSeparately: false,
+      electricityEmbeddedNetwork: null,
+      gasEmbeddedNetwork: null,
+      waterSeparatelyMeteredEfficientAttestedAt: null,
+      utilitiesServices: {
+        electricity: {
+          tenant_pays: true,
+          individually_metered: false,
+          apportionment_method:
+            '50% of common area electricity usage divided equally among four bedrooms',
+          how_must_be_paid: 'Invoiced quarterly to tenant via Quni platform',
+        },
+        gas: {
+          tenant_pays: true,
+          individually_metered: true,
+          apportionment_method: null,
+          how_must_be_paid: 'Paid direct to gas retailer on individual account',
+        },
+      },
+    })
+    const props = { ...minimalProps(), utilitiesResolution }
+    const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
+    const page3 = await pageText(pdfBytes, 3)
+
+    expect(page3).toMatch(/electricity.*Yes/i)
+    expect(page3).toMatch(/gas.*Yes/i)
+    expect(page3).toMatch(/water.*No/i)
+    expect(page3).toContain('50% of common area electricity usage')
+    expect(page3).toContain('Invoiced quarterly to tenant via Quni platform')
+    expect(page3).toContain('Paid direct to gas retailer on individual account')
+    expect(page3).not.toMatch(/Cost for electricity/)
   })
 
   it('produces flattened PDF with action buttons removed and zero widgets', async () => {

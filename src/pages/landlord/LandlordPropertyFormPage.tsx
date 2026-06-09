@@ -83,9 +83,11 @@ import {
 } from '../../lib/authorityToLetAttestation'
 import {
   LandlordPropertyUtilitiesFields,
+  billsIncludedFromFeatureSelection,
   emptyLandlordPropertyUtilitiesFormState,
   landlordPropertyUtilitiesColumnsFromFormState,
   landlordPropertyUtilitiesFormStateFromProperty,
+  missingLandlordPropertyUtilitiesFormMessages,
   type LandlordPropertyUtilitiesFormState,
 } from '../../components/landlord/LandlordPropertyUtilitiesFields'
 import {
@@ -577,6 +579,11 @@ export default function LandlordPropertyFormPage() {
   const waterUsageChargedSeparatelySelected = showNswFt6600ComplianceSection
     ? ft6600Compliance.waterUsageChargedSeparately === 'yes'
     : utilitiesForm.waterUsageChargedSeparately === 'yes'
+
+  const billsIncludedSelected = useMemo(
+    () => billsIncludedFromFeatureSelection(features, selectedFeatureIds),
+    [features, selectedFeatureIds],
+  )
 
   const [pricingSuggestionOpen, setPricingSuggestionOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('section-basic-info')
@@ -1833,6 +1840,19 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
+    if (showPropertyUtilitiesSection) {
+      const missingUtilities = missingLandlordPropertyUtilitiesFormMessages(utilitiesForm, {
+        billsIncluded: billsIncludedSelected,
+      })
+      if (missingUtilities.length > 0) {
+        reportSubmitError(
+          `Complete utilities on the property listing before saving. ${missingUtilities.join(' ')}`,
+        )
+        document.getElementById('section-utilities')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+
     if (needsNonDiscriminationAcceptance && !nonDiscriminationAgreed) {
       reportSubmitError('Please confirm you have read and agree to Quni\'s Non-Discrimination Policy.')
       return
@@ -1938,7 +1958,9 @@ export default function LandlordPropertyFormPage() {
     const complianceColumns = showNswFt6600ComplianceSection
       ? ft6600ComplianceColumnsFromFormState(ft6600Compliance)
       : showPropertyUtilitiesSection
-        ? landlordPropertyUtilitiesColumnsFromFormState(utilitiesForm)
+        ? landlordPropertyUtilitiesColumnsFromFormState(utilitiesForm, {
+            billsIncluded: billsIncludedSelected,
+          })
         : null
     const attestationPatch = authorityToLetAttestationPatch({
       agreed: authorityToLetAgreed,
@@ -2010,7 +2032,7 @@ export default function LandlordPropertyFormPage() {
     }
 
     const complianceSelect =
-      'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable, water_separately_metered_efficient_attested_at'
+      'smoke_alarm_type, smoke_alarm_battery_tenant_replaceable, smoke_alarm_battery_type, smoke_alarm_backup_tenant_replaceable, smoke_alarm_backup_battery_type, strata_oc_responsible_for_alarms, water_usage_charged_separately, electricity_embedded_network, gas_embedded_network, strata_bylaws_applicable, water_separately_metered_efficient_attested_at, utilities_services'
 
       if (isEdit && propertyId) {
         const { data: updatedRow, error: upErr } = await supabase
@@ -2620,7 +2642,15 @@ export default function LandlordPropertyFormPage() {
                 <LandlordPropertyUtilitiesFields
                   form={utilitiesForm}
                   onChange={(patch) => setUtilitiesForm((prev) => ({ ...prev, ...patch }))}
+                  onServiceChange={(serviceId, patch) =>
+                    setUtilitiesForm((prev) => ({
+                      ...prev,
+                      [serviceId]: { ...prev[serviceId], ...patch },
+                    }))
+                  }
                   labelClass={labelClass}
+                  inputClass={inputClass}
+                  billsIncluded={billsIncludedSelected}
                   waterAttestationPersisted={propertyHasWaterSeparatelyMeteredAttestation({
                     water_separately_metered_efficient_attested_at: waterSeparatelyMeteredAttestedAt,
                   })}

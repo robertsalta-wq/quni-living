@@ -1,16 +1,25 @@
 import { propertyBillsIncluded } from './propertyFeatureSignals.js'
 import { propertyHasWaterSeparatelyMeteredAttestation } from './waterSeparatelyMeteredAttestation.js'
+import {
+  CAPTURABLE_UTILITY_SERVICE_IDS,
+  UTILITY_SERVICE_DISPLAY_LABELS,
+  propertyUtilitiesServicesFromPropertyRow,
+  type CapturableUtilityServiceId,
+  type PropertyUtilitiesServicesStored,
+  type StoredUtilityServiceCapture,
+} from './propertyUtilitiesServices.js'
 
 export type UtilityServiceId = 'electricity' | 'gas' | 'water' | 'phone' | 'other'
 
 export type UtilityPayer = 'tenant' | 'lessor'
 
-/** How a utility charge is determined; extensible for future per-service capture. */
+/** How a utility charge is determined. */
 export type UtilityChargeBasis =
   | 'included_in_rent'
   | 'metered_separate'
   | 'apportionment'
   | 'embedded_network'
+  | 'lessor_pays'
 
 export type ResolvedUtilityService = {
   id: UtilityServiceId
@@ -18,9 +27,10 @@ export type ResolvedUtilityService = {
   tenantMustPay: boolean
   payer: UtilityPayer
   basis: UtilityChargeBasis
-  /** Form 18a Item 14 — only when tenantMustPay. */
+  individuallyMetered: boolean | null
+  /** Form 18a Item 14 — tenant pays and not individually metered. */
   apportionmentCost: string | null
-  /** Form 18a Item 15 — only when tenantMustPay. */
+  /** Form 18a Item 15 — when tenantMustPay. */
   howMustBePaid: string | null
 }
 
@@ -30,11 +40,12 @@ export type PropertyUtilitiesInput = {
   electricityEmbeddedNetwork: boolean | null
   gasEmbeddedNetwork: boolean | null
   waterSeparatelyMeteredEfficientAttestedAt: string | null
+  utilitiesServices: PropertyUtilitiesServicesStored | null
 }
 
 export type PropertyUtilitiesResolution = {
   billsIncluded: boolean
-  /** Bills included with no separate water charge — platform mandate-all-inclusive path. */
+  /** Bills included with no separate water charge. */
   allInclusive: boolean
   waterChargedSeparately: boolean
   electricityEmbeddedNetwork: boolean | null
@@ -46,70 +57,106 @@ export type PropertyUtilitiesResolution = {
   listingDisclosureLabels: string[]
 }
 
-export type PropertyUtilitiesPreflightOptions = {
-  /** When true, listings without bills included are blocked (current product fork). */
-  mandateAllInclusive: boolean
-}
-
 function service(
   id: UtilityServiceId,
   tenantMustPay: boolean,
   basis: UtilityChargeBasis,
-  opts?: { apportionmentCost?: string | null; howMustBePaid?: string | null },
+  opts?: {
+    individuallyMetered?: boolean | null
+    apportionmentCost?: string | null
+    howMustBePaid?: string | null
+  },
 ): ResolvedUtilityService {
   return {
     id,
     tenantMustPay,
     payer: tenantMustPay ? 'tenant' : 'lessor',
     basis,
+    individuallyMetered: opts?.individuallyMetered ?? null,
     apportionmentCost: tenantMustPay ? (opts?.apportionmentCost ?? null) : null,
     howMustBePaid: tenantMustPay ? (opts?.howMustBePaid ?? null) : null,
   }
 }
 
-function buildListingDisclosureLabels(
-  billsIncluded: boolean,
-  waterChargedSeparately: boolean,
-  electricityEmbeddedNetwork: boolean | null,
-  gasEmbeddedNetwork: boolean | null,
-): string[] {
+function resolveCapturedService(
+  id: CapturableUtilityServiceId,
+  capture: StoredUtilityServiceCapture | null | undefined,
+  embeddedNetwork: boolean | null,
+): ResolvedUtilityService {
+  const tenantPays = capture?.tenant_pays === true
+  if (!tenantPays) {
+    return service(id, false, 'lessor_pays')
+  }
+
+  const individuallyMetered = capture?.individually_metered === true
+  const basis: UtilityChargeBasis = embeddedNetwork === true
+    ? 'embedded_network'
+    : individuallyMetered
+      ? 'metered_separate'
+      : 'apportionment'
+
+  return service(id, true, basis, {
+    individuallyMetered: capture?.individually_metered ?? null,
+    apportionmentCost: individuallyMetered ? null : capture?.apportionment_method ?? null,
+    howMustBePaid: capture?.how_must_be_paid ?? null,
+  })
+}
+
+function serviceDisclosureLabel(resolved: ResolvedUtilityService): string | null {
+  const name = UTILITY_SERVICE_DISPLAY_LABELS[resolved.id as CapturableUtilityServiceId]
+  if (!name) return null
+  if (!resolved.tenantMustPay) return `${name} included in rent (lessor pays)`
+  if (resolved.individuallyMetered === true) return `Tenant pays ${name.toLowerCase()} (individually metered)`
+  if (resolved.apportionmentCost) {
+    return `Tenant pays ${name.toLowerCase()} (apportioned: ${resolved.apportionmentCost})`
+  }
+  return `Tenant pays ${name.toLowerCase()}`
+}
+
+function buildListingDisclosureLabels(resolution: PropertyUtilitiesResolution): string[] {
   const labels: string[] = []
-  if (billsIncluded) labels.push('Bills included')
-  if (waterChargedSeparately) {
+  if (resolution.billsIncluded) labels.push('Bills included')
+  if (resolution.waterChargedSeparately) {
     labels.push('Water usage charged separately')
-  } else if (billsIncluded) {
+  } else if (resolution.billsIncluded) {
     labels.push('Water included in rent')
   }
-  if (electricityEmbeddedNetwork === true) labels.push('Electricity via embedded network')
-  if (gasEmbeddedNetwork === true) labels.push('Gas via embedded network')
-  if (electricityEmbeddedNetwork === false && gasEmbeddedNetwork === false) {
-    labels.push('Standard metered utilities')
+
+  if (!resolution.billsIncluded) {
+    for (const id of CAPTURABLE_UTILITY_SERVICE_IDS) {
+      const line = serviceDisclosureLabel(resolution.services[id])
+      if (line) labels.push(line)
+    }
+  } else if (resolution.electricityEmbeddedNetwork === true) {
+    labels.push('Electricity via embedded network')
+  } else if (resolution.gasEmbeddedNetwork === true) {
+    labels.push('Gas via embedded network')
   }
+
   return labels
 }
 
-function buildUtilitiesDescription(
-  billsIncluded: boolean,
-  waterChargedSeparately: boolean,
-  electricityEmbeddedNetwork: boolean | null,
-  gasEmbeddedNetwork: boolean | null,
-): string {
-  if (billsIncluded && !waterChargedSeparately) {
+function buildUtilitiesDescription(resolution: PropertyUtilitiesResolution): string {
+  if (resolution.allInclusive) {
     return 'Electricity, gas and water usage are included in the rent. Internet and waste services as described on the property listing.'
   }
+
   const parts: string[] = []
-  if (billsIncluded) {
+  if (resolution.billsIncluded) {
     parts.push('Electricity and gas are included in the rent')
+  } else {
+    for (const id of CAPTURABLE_UTILITY_SERVICE_IDS) {
+      const line = serviceDisclosureLabel(resolution.services[id])
+      if (line) parts.push(line)
+    }
   }
-  if (waterChargedSeparately) {
+  if (resolution.waterChargedSeparately) {
     parts.push('water usage is charged separately to the tenant on a metered basis')
   }
-  if (electricityEmbeddedNetwork === true) parts.push('electricity is supplied via an embedded network')
-  if (gasEmbeddedNetwork === true) parts.push('gas is supplied via an embedded network')
   if (parts.length === 0) {
     return 'Utilities and services as described on the property listing.'
   }
-  return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts.length > 1 ? `; ${parts.slice(1).join('; ')}` : ''}.`
+  return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts.length > 1 ? `. ${parts.slice(1).join('. ')}` : ''}.`
 }
 
 /**
@@ -124,34 +171,31 @@ export function resolvePropertyUtilities(input: PropertyUtilitiesInput): Propert
     water_separately_metered_efficient_attested_at: input.waterSeparatelyMeteredEfficientAttestedAt,
   })
 
-  const electricityTenantPays = billsIncluded ? false : true
-  const gasTenantPays = billsIncluded ? false : true
+  const stored = input.utilitiesServices
 
-  const electricityBasis: UtilityChargeBasis =
-    input.electricityEmbeddedNetwork === true
-      ? 'embedded_network'
-      : billsIncluded
-        ? 'included_in_rent'
-        : 'metered_separate'
+  const electricity = billsIncluded
+    ? service(
+        'electricity',
+        false,
+        input.electricityEmbeddedNetwork === true ? 'embedded_network' : 'included_in_rent',
+      )
+    : resolveCapturedService('electricity', stored?.electricity, input.electricityEmbeddedNetwork)
 
-  const gasBasis: UtilityChargeBasis =
-    input.gasEmbeddedNetwork === true
-      ? 'embedded_network'
-      : billsIncluded
-        ? 'included_in_rent'
-        : 'metered_separate'
+  const gas = billsIncluded
+    ? service('gas', false, input.gasEmbeddedNetwork === true ? 'embedded_network' : 'included_in_rent')
+    : resolveCapturedService('gas', stored?.gas, input.gasEmbeddedNetwork)
 
   const waterBasis: UtilityChargeBasis = waterChargedSeparately ? 'metered_separate' : 'included_in_rent'
 
   const services: Record<UtilityServiceId, ResolvedUtilityService> = {
-    electricity: service('electricity', electricityTenantPays, electricityBasis),
-    gas: service('gas', gasTenantPays, gasBasis),
+    electricity,
+    gas,
     water: service('water', waterChargedSeparately, waterBasis),
     phone: service('phone', false, 'included_in_rent'),
     other: service('other', false, 'included_in_rent'),
   }
 
-  return {
+  const resolution: PropertyUtilitiesResolution = {
     billsIncluded,
     allInclusive,
     waterChargedSeparately,
@@ -159,19 +203,13 @@ export function resolvePropertyUtilities(input: PropertyUtilitiesInput): Propert
     gasEmbeddedNetwork: input.gasEmbeddedNetwork,
     waterSeparatelyMeteredEfficientAttested: waterAttested,
     services,
-    utilitiesDescription: buildUtilitiesDescription(
-      billsIncluded,
-      waterChargedSeparately,
-      input.electricityEmbeddedNetwork,
-      input.gasEmbeddedNetwork,
-    ),
-    listingDisclosureLabels: buildListingDisclosureLabels(
-      billsIncluded,
-      waterChargedSeparately,
-      input.electricityEmbeddedNetwork,
-      input.gasEmbeddedNetwork,
-    ),
+    utilitiesDescription: '',
+    listingDisclosureLabels: [],
   }
+
+  resolution.utilitiesDescription = buildUtilitiesDescription(resolution)
+  resolution.listingDisclosureLabels = buildListingDisclosureLabels(resolution)
+  return resolution
 }
 
 export function propertyUtilitiesInputFromPropertyRow(
@@ -189,22 +227,39 @@ export function propertyUtilitiesInputFromPropertyRow(
       typeof p.water_separately_metered_efficient_attested_at === 'string'
         ? p.water_separately_metered_efficient_attested_at
         : null,
+    utilitiesServices: propertyUtilitiesServicesFromPropertyRow(p),
   }
 }
 
-/** Fail-closed preflight messages when utilities facts cannot be asserted on prescribed forms. */
-export function propertyUtilitiesPreflightMessages(
-  input: PropertyUtilitiesInput,
-  opts: PropertyUtilitiesPreflightOptions,
+function missingCaptureMessages(
+  id: CapturableUtilityServiceId,
+  capture: StoredUtilityServiceCapture | null | undefined,
 ): string[] {
+  const label = UTILITY_SERVICE_DISPLAY_LABELS[id]
+  const messages: string[] = []
+  if (!capture || capture.tenant_pays == null) {
+    messages.push(`Specify whether the tenant pays for ${label.toLowerCase()}.`)
+    return messages
+  }
+  if (capture.tenant_pays !== true) return messages
+
+  if (capture.individually_metered == null) {
+    messages.push(`Specify whether ${label.toLowerCase()} is individually metered.`)
+    return messages
+  }
+  if (capture.individually_metered === false && !capture.apportionment_method?.trim()) {
+    messages.push(`Describe how the tenant's share of ${label.toLowerCase()} is worked out (Form 18a Item 14).`)
+  }
+  if (!capture.how_must_be_paid?.trim()) {
+    messages.push(`Describe how the tenant pays for ${label.toLowerCase()} (Form 18a Item 15).`)
+  }
+  return messages
+}
+
+/** Fail-closed preflight when utilities facts cannot be asserted on prescribed forms. */
+export function propertyUtilitiesPreflightMessages(input: PropertyUtilitiesInput): string[] {
   const messages: string[] = []
   const billsIncluded = propertyBillsIncluded(input.featureNames)
-
-  if (opts.mandateAllInclusive && !billsIncluded) {
-    messages.push(
-      'Listing must include bills (electricity and gas) in the rent. Per-service utility billing is not yet supported.',
-    )
-  }
 
   if (input.waterUsageChargedSeparately == null) {
     messages.push(
@@ -221,6 +276,12 @@ export function propertyUtilitiesPreflightMessages(
     messages.push(
       'Attest that the premises are separately metered and water-efficient before charging water usage to tenants.',
     )
+  }
+
+  if (!billsIncluded) {
+    for (const id of CAPTURABLE_UTILITY_SERVICE_IDS) {
+      messages.push(...missingCaptureMessages(id, input.utilitiesServices?.[id]))
+    }
   }
 
   return messages
