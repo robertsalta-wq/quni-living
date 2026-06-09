@@ -9,6 +9,16 @@ import {
 } from './officialQldForm18aFill.js'
 import type { QldGeneralTenancyAgreementProps } from '../../documents/rtaTypes.js'
 
+const PETS_TYPE_LINE = 'None unless agreed in writing by the lessor'
+
+async function pageText(pdfBytes: Uint8Array, pageNumber: number): Promise<string> {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const pdf = await pdfjs.getDocument({ data: pdfBytes, useSystemFonts: true }).promise
+  const page = await pdf.getPage(pageNumber)
+  const content = await page.getTextContent()
+  return content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
+}
+
 function minimalProps(): QldGeneralTenancyAgreementProps {
   return {
     documentId: 'qld-form18a-fill-test',
@@ -91,7 +101,7 @@ describe('officialQldForm18aFill', () => {
 
   it('fills schedule fields by name', async () => {
     const doc = await loadOfficialQldForm18aTemplate()
-    applyOfficialQldForm18aScheduleFill(doc, minimalProps())
+    const { assignments } = applyOfficialQldForm18aScheduleFill(doc, minimalProps())
     const form = doc.getForm()
     expect(form.getTextField(F.Lessor_name_trading_name).getText()).toBe('Quinn Lessor')
     expect(form.getTextField(F.Tenant1_full_name_s).getText()).toBe('Robert Tenant')
@@ -99,6 +109,33 @@ describe('officialQldForm18aFill', () => {
     expect(form.getCheckBox(F.term_fixed).isChecked()).toBe(true)
     expect(form.getCheckBox(F.rent_period_weekly).isChecked()).toBe(true)
     expect(form.getCheckBox(F.notice_lessor_email_yes).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_electricity_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_gas_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_phone_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_other_no).isChecked()).toBe(true)
+    expect(form.getCheckBox(F.services_other_yes).isChecked()).toBe(false)
+
+    const assignmentMap = new Map(assignments)
+    expect(assignmentMap.has(F.Day_of_last_rent_increase_dd_mm_yyyy)).toBe(false)
+    expect(assignmentMap.has(F.Type_of_services_the_tenant_must_pay_for)).toBe(false)
+    expect(assignmentMap.get(F.Type_of_pets_approved1)).toBe(PETS_TYPE_LINE)
+  })
+
+  it('renders page 3 shrink-to-fit fields in full on flattened PDF', async () => {
+    const { pdfBytes } = await fillOfficialQldForm18aPdf(minimalProps())
+    const page3 = await pageText(pdfBytes, 3)
+
+    expect(page3).toContain(PETS_TYPE_LINE)
+    expect(page3).not.toContain('Not stated')
+    expect(page3).not.toContain('As summarised in the Quni Platform Addendum')
+    expect(page3).not.toMatch(/None unless agreed in writing by the les…/)
+  })
+
+  it('renders last rent increase date when provided', async () => {
+    const props = { ...minimalProps(), lastRentIncreaseDate: '2025-03-15' }
+    const { pdfBytes } = await fillOfficialQldForm18aPdf(props)
+    const page3 = await pageText(pdfBytes, 3)
+    expect(page3).toContain('15/03/2025')
   })
 
   it('produces flattened PDF with action buttons removed and zero widgets', async () => {

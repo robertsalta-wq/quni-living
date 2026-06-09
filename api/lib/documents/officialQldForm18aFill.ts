@@ -19,6 +19,10 @@ import {
 } from './qldForm18aRenamedFields.js'
 import { item9RentPaymentMethodPair } from './qldForm18aRentPayment.js'
 import {
+  burnInOfficialQldForm18aShrinkFields,
+  QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS,
+} from './officialQldForm18aBurnIn.js'
+import {
   flattenAndCleanForm,
   saveNormalizedPdf,
 } from './officialNswFt6600PdfNormalize.js'
@@ -169,10 +173,13 @@ function pushText(map: Map<string, string>, field: string, value: string | null 
   if (v) map.set(field, v)
 }
 
+const SHRINK_TO_FIT_FIELD_SET = new Set<string>(QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS)
+
 function applyAssignments(form: PDFForm, state: FillAssignments): Array<[string, string]> {
   const assignments: Array<[string, string]> = []
   for (const [name, value] of state.text) {
     assignments.push([name, value])
+    if (SHRINK_TO_FIT_FIELD_SET.has(name)) continue
     try {
       form.getTextField(name).setText(value)
     } catch {
@@ -362,21 +369,22 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
   }
 
   pushText(text, F.Place_of_rent_payment, 'As agreed - electronic transfer')
-  pushText(
-    text,
-    F.Day_of_last_rent_increase_dd_mm_yyyy,
-    lastRentIncreaseDate ? formatAuDate(lastRentIncreaseDate) : 'Not stated - new tenancy / unknown',
-  )
+  if (lastRentIncreaseDate) {
+    pushText(text, F.Day_of_last_rent_increase_dd_mm_yyyy, formatAuDate(lastRentIncreaseDate))
+  }
 
   if (bond.amount != null && Number.isFinite(bond.amount)) {
     pushText(text, F.Rental_bond_amount, formatPlainMoney(bond.amount))
   }
 
-  pushText(
-    text,
-    F.Type_of_services_the_tenant_must_pay_for,
-    'As summarised in the Quni Platform Addendum',
-  )
+  const tenantPaysOtherServices = false
+  if (tenantPaysOtherServices) {
+    pushText(
+      text,
+      F.Type_of_services_the_tenant_must_pay_for,
+      'As summarised in the Quni Platform Addendum',
+    )
+  }
 
   if (props.maxOccupantsPermitted != null && Number.isFinite(props.maxOccupantsPermitted)) {
     pushText(text, F.Number_of_persons_allowed_to_reside_at_the_premises, String(props.maxOccupantsPermitted))
@@ -440,7 +448,8 @@ function buildFillAssignments(props: QldGeneralTenancyAgreementProps): FillAssig
   checks.add(F.services_electricity_no)
   checks.add(F.services_gas_no)
   checks.add(F.services_phone_no)
-  checks.add(F.services_other_no)
+  if (tenantPaysOtherServices) checks.add(F.services_other_yes)
+  else checks.add(F.services_other_no)
   checks.add(F.repairers_first_contact_yes)
 
   return { text, checks }
@@ -518,7 +527,12 @@ export function applyOfficialQldForm18aScheduleFill(
   setYesNoPair(form, { yes: F.services_electricity_yes, no: F.services_electricity_no }, false)
   setYesNoPair(form, { yes: F.services_gas_yes, no: F.services_gas_no }, false)
   setYesNoPair(form, { yes: F.services_phone_yes, no: F.services_phone_no }, false)
-  setYesNoPair(form, { yes: F.services_other_yes, no: F.services_other_no }, false)
+  const tenantPaysOtherServices = state.checks.has(F.services_other_yes)
+  setYesNoPair(
+    form,
+    { yes: F.services_other_yes, no: F.services_other_no },
+    tenantPaysOtherServices,
+  )
   setYesNoPair(form, { yes: F.repairers_first_contact_yes, no: F.repairers_first_contact_no }, true)
 
   const assignments = applyAssignments(form, state)
@@ -532,6 +546,8 @@ export async function prepareOfficialQldForm18aScheduleForFlatten(
   const result = applyOfficialQldForm18aScheduleFill(doc, props)
   const font = await doc.embedFont(StandardFonts.Helvetica)
   doc.getForm().updateFieldAppearances(font)
+  burnInOfficialQldForm18aShrinkFields(doc, result.assignments, font)
+  removeAcroFormFieldsBeforeFlatten(doc, QLD_FORM18A_SHRINK_TO_FIT_TEXT_FIELDS)
   const acroFormRef = doc.catalog.get(PDFName.of('AcroForm'))
   if (acroFormRef) {
     const acroForm = doc.context.lookup(acroFormRef, PDFDict)
