@@ -36,10 +36,8 @@ import {
   resolveCoTenantForCommit,
   resolveWeeklyRentForBooking,
 } from './lib/booking/occupancyBooking.js'
-import {
-  PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES,
-  TENANT_BOOKING_PIPELINE_STATUSES,
-} from './lib/booking/tenantBookingPipelineStatuses.js'
+import { TENANT_BOOKING_PIPELINE_STATUSES } from './lib/booking/tenantBookingPipelineStatuses.js'
+import { checkPropertyAvailableForNewApplication } from './lib/booking/propertyAvailability.js'
 import {
   buildListingApplyBookingRow,
   isListingServiceTier,
@@ -48,7 +46,6 @@ import {
 export const config = { runtime: 'edge' }
 
 const PROPERTY_PIPELINE_STATUSES = TENANT_BOOKING_PIPELINE_STATUSES
-const PROPERTY_RESERVED_STATUSES = PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES
 
 const VALID_PROPERTY_TYPES = new Set([
   'entire_property',
@@ -144,28 +141,9 @@ async function releaseAuthorisedDepositIntent(stripe, paymentIntentId, context) 
 }
 
 async function assertPropertyAvailableForBooking(admin, propertyId, origin) {
-  const { data: rows, error } = await admin
-    .from('bookings')
-    .select('id')
-    .eq('property_id', propertyId)
-    .in('status', PROPERTY_RESERVED_STATUSES)
-    .limit(1)
-
-  if (error) {
-    console.error('assertPropertyAvailableForBooking', error)
-    return json({ error: 'Server error' }, 500, origin)
-  }
-  if (rows?.length) {
-    return json(
-      {
-        error: 'property_unavailable',
-        message: 'This property is no longer available.',
-      },
-      409,
-      origin,
-    )
-  }
-  return null
+  const result = await checkPropertyAvailableForNewApplication(admin, propertyId)
+  if (result.ok) return null
+  return json(result.body, result.status, origin)
 }
 
 async function assertStudentPipelineFree(admin, studentId, propertyId, origin) {
