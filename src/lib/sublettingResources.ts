@@ -19,6 +19,14 @@ export function headTenantLandlordConsentFromAttestation(
   return attestedAt ? true : null
 }
 
+/** Lock consent only after a head-tenant listing was attested with consent confirmed. */
+export function headTenantLandlordConsentLocked(args: {
+  consent: HeadTenantLandlordConsent
+  authorityToLetAttestedAt: string | null | undefined
+}): boolean {
+  return Boolean(args.authorityToLetAttestedAt) && args.consent === true
+}
+
 export interface SubletResource {
   authorityName: string
   legalRef: string
