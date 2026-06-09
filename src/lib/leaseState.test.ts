@@ -116,6 +116,40 @@ describe('deriveLeaseDocState', () => {
     expect(state).toBe('awaiting_other')
   })
 
+  it("returns 'none' for terminal booking statuses even when document is sent_for_signing", () => {
+    for (const terminal of ['cancelled', 'expired', 'declined'] as const) {
+      const state = deriveLeaseDocState({
+        ...baseRow,
+        bookingStatus: terminal,
+        serviceTierFinal: 'listing',
+        documentStatus: 'sent_for_signing',
+      })
+      expect(state).toBe('none')
+    }
+  })
+
+  it("returns 'none' for terminal booking even when both parties have signed timestamps", () => {
+    const state = deriveLeaseDocState({
+      ...baseRow,
+      bookingStatus: 'cancelled',
+      documentStatus: 'signed',
+      landlordSignedAt: '2026-05-09T00:00:00Z',
+      studentSignedAt: '2026-05-09T01:00:00Z',
+    })
+    expect(state).toBe('none')
+  })
+
+  it('bond_pending sent_for_signing still yields ready_to_sign', () => {
+    const state = deriveLeaseDocState({
+      ...baseRow,
+      bookingStatus: 'bond_pending',
+      serviceTierFinal: 'listing',
+      documentStatus: 'sent_for_signing',
+      viewerRole: 'tenant',
+    })
+    expect(state).toBe('ready_to_sign')
+  })
+
   it('yields fully_signed when co-tenant has also signed', () => {
     const state = deriveLeaseDocState({
       ...baseRow,

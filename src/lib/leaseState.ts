@@ -1,3 +1,5 @@
+import { isTerminalBookingStatus } from './terminalBookingStatus'
+
 /**
  * Pure derivation of "lease document state" for a booking - used by both the renter
  * and landlord booking detail surfaces (Phase 3 / Task J).
@@ -54,6 +56,8 @@ function allRequiredPartiesSigned(input: LeaseStateInput): boolean {
 
 /** Purely derive the conceptual lease state for the viewer. No I/O. */
 export function deriveLeaseDocState(input: LeaseStateInput): LeaseDocState {
+  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
+
   if (allRequiredPartiesSigned(input)) return 'fully_signed'
 
   if (!input.documentExists) return 'none'

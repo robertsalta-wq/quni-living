@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { isTerminalBookingStatus } from './booking/terminalBookingStatus.js'
+
 /**
  * Server-side mirror of `src/lib/leaseState.ts` (pure derivation; no I/O).
  *
@@ -19,6 +21,8 @@ function allRequiredPartiesSigned(input) {
 }
 
 export function deriveLeaseDocState(input) {
+  if (isTerminalBookingStatus(input.bookingStatus)) return 'none'
+
   if (allRequiredPartiesSigned(input)) return 'fully_signed'
 
   if (!input.documentExists) return 'none'

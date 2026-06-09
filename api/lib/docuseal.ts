@@ -22,6 +22,7 @@ import {
   fetchCoTenantSignerForTenancy,
   fetchCoTenantSignerForBooking,
 } from './booking/coTenantSigning.js'
+import { isTerminalBookingStatus } from './booking/terminalBookingStatus.js'
 
 export function getDocusealSubmissionsUrl(): string {
   return getDocusealSubmissionsUrlImpl()
@@ -707,6 +708,52 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
   if (findErr) throw findErr
   if (!docRow?.tenancy_id) {
     return { ok: true, message: 'No matching tenancy_document (ignored)' }
+  }
+
+  const { data: tenancyForBooking, error: tenancyLookupErr } = await admin
+    .from('tenancies')
+    .select('booking_id')
+    .eq('id', docRow.tenancy_id)
+    .maybeSingle()
+
+  if (tenancyLookupErr) throw tenancyLookupErr
+
+  if (tenancyForBooking?.booking_id) {
+    const { data: bookingRow, error: bookingLookupErr } = await admin
+      .from('bookings')
+      .select('id, status, property_id, landlord_id, student_id, service_tier_final')
+      .eq('id', tenancyForBooking.booking_id)
+      .maybeSingle()
+
+    if (bookingLookupErr) throw bookingLookupErr
+
+    if (bookingRow && isTerminalBookingStatus(bookingRow.status)) {
+      console.warn('[docuseal-webhook] signature on terminal booking ignored', {
+        bookingId: bookingRow.id,
+        submissionId,
+        bookingStatus: bookingRow.status,
+      })
+
+      const { error: evErr } = await admin.from('service_tier_events').insert({
+        booking_id: bookingRow.id,
+        property_id: bookingRow.property_id,
+        landlord_id: bookingRow.landlord_id,
+        student_id: bookingRow.student_id,
+        event_type: 'signature_on_terminal_booking',
+        service_tier: bookingRow.service_tier_final,
+        metadata: {
+          docuseal_submission_id: submissionId,
+          tenancy_document_id: docRow.id,
+          booking_status: bookingRow.status,
+        },
+      })
+
+      if (evErr) {
+        console.error('[docuseal-webhook] signature_on_terminal_booking telemetry', evErr)
+      }
+
+      return { ok: true, message: 'Booking terminal; signature ignored' }
+    }
   }
 
   const rowMetaEarly =
