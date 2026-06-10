@@ -141,18 +141,33 @@ function shellQuote(arg) {
   return `'${arg.replace(/'/g, `'\\''`)}'`
 }
 
+const LO_PROFILE_HOST = path.join(root, 'tmp', 'vic-form1-freeze', 'lo-profile')
+
+function loProfileContainerPath() {
+  return `/work/${toPosixRel(LO_PROFILE_HOST)}`
+}
+
 /** @param {string[]} sofficeArgs @param {{ withNotoFonts?: boolean }} [opts] */
 function dockerInnerSofficeScript(sofficeArgs, opts = {}) {
   const aptPkgs = [...LO_RUNTIME_PACKAGES]
   if (opts.withNotoFonts) aptPkgs.push(...NOTO_FONT_PACKAGES)
+  const sofficeCmd = sofficeArgs.map(shellQuote).join(' ')
   return [
     'set -e',
     'export DEBIAN_FRONTEND=noninteractive',
     'apt-get update -qq >/dev/null 2>&1',
     `apt-get install -y -qq ${aptPkgs.join(' ')} >/dev/null 2>&1`,
     'fc-cache -f >/dev/null 2>&1 || true',
-    sofficeArgs.map(shellQuote).join(' '),
-  ].join(' && ')
+    'set +e',
+    'ec=0',
+    'for attempt in 1 2 3; do',
+    sofficeCmd,
+    'ec=$?',
+    '[ "$ec" -eq 0 ] && exit 0',
+    '[ "$ec" -eq 81 ] || exit "$ec"',
+    'done',
+    'exit "$ec"',
+  ].join('\n')
 }
 
 
@@ -453,17 +468,17 @@ function loVersionDocker(imageRef) {
 
 function convertDocxToPdfRawDocker(imageRef, opts = {}) {
 
-  const profileId = crypto.randomUUID()
-
   const outId = crypto.randomUUID()
 
   const hostOutDir = path.join(root, 'tmp', 'vic-form1-freeze', `out-${outId}`)
 
   fs.mkdirSync(hostOutDir, { recursive: true })
 
+  fs.mkdirSync(LO_PROFILE_HOST, { recursive: true })
+
   const containerOutDir = `/work/${toPosixRel(hostOutDir)}`
 
-  const profileDir = `/tmp/lo-profile-${profileId}`
+  const profileDir = loProfileContainerPath()
 
   const docxInContainer = '/work/docs/vic/form-1-residential-rental-agreement.docx'
 
@@ -583,7 +598,7 @@ async function runFreeze() {
 
   }
 
-
+  fs.mkdirSync(LO_PROFILE_HOST, { recursive: true })
 
   const imageRef = resolveLoDockerImage()
 
