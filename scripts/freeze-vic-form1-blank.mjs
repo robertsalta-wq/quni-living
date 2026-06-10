@@ -744,7 +744,7 @@ async function runFreeze() {
 
   fs.mkdirSync(path.dirname(BLANK_PDF), { recursive: true })
 
-  fs.writeFileSync(BLANK_PDF, normalized)
+  fs.writeFileSync(BLANK_PDF, Buffer.from(normalized))
 
 
 

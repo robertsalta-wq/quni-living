@@ -72,15 +72,18 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
   if (start < 0) {
     throw new Error(`interpreter annex: missing start marker "${ANNEX_START_MARKER}"`)
   }
-  let end = start
+  let end = pageTexts.length - 1
   for (let i = start; i < pageTexts.length; i++) {
     if (new RegExp(`\\b${ANNEX_END_MARKER}\\b`, 'i').test(pageTexts[i])) {
       end = i
-      break
     }
   }
   if (end < start) {
     throw new Error(`interpreter annex: missing end marker "${ANNEX_END_MARKER}"`)
+  }
+  // LO may break the annex across trailing pages (e.g. page 9 shell + page 10 body).
+  if (end < pageTexts.length - 1) {
+    end = pageTexts.length - 1
   }
   return { start, end, pageIndices: Array.from({ length: end - start + 1 }, (_, k) => start + k) }
 }
