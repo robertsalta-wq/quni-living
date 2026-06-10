@@ -27,6 +27,11 @@ const TOFU_TEXT_RE = /[\u25A1\uFFFD\uF8FF]/g
 const RASTER_SCALE = 2
 const MIN_ANNEX_INK_RATIO = 0.008
 
+/** pdfjs rejects Node Buffer even though it subclasses Uint8Array. */
+function toUint8(bytes) {
+  return new Uint8Array(bytes)
+}
+
 let canvasModule = null
 try {
   canvasModule = await import('canvas')
@@ -86,8 +91,7 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
  */
 export async function extractPdfPageTexts(pdfBytes) {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const data = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes)
-  const pdf = await pdfjs.getDocument({ data, useSystemFonts: true }).promise
+  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
   const pageTexts = []
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
@@ -126,8 +130,7 @@ export async function rasterizeAnnexPagesToPng(pdfBytes, pageIndices, outDir) {
   }
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
   const { createCanvas } = canvasModule
-  const data = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes)
-  const pdf = await pdfjs.getDocument({ data, useSystemFonts: true }).promise
+  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
   fs.mkdirSync(outDir, { recursive: true })
 
   const pngPaths = []
