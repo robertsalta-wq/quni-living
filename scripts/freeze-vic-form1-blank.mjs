@@ -136,10 +136,15 @@ function dockerImageDigest(imageRef) {
 /** Cached absolute soffice path inside pinned distroless image (discovered once per run). */
 let cachedLoBinaryPath = null
 
-/** Common paths in TDF / Debian LibreOffice 7.6 distroless images. */
+/** Common paths in TDF / distroless LibreOffice 7.6 images (lankalana uses soffice.bin). */
 const LO_BINARY_CANDIDATES = [
+  '/opt/libreoffice7.6/program/soffice.bin',
   '/opt/libreoffice7.6/program/soffice',
+  '/opt/libreoffice7.6.7.2/program/soffice.bin',
   '/opt/libreoffice7.6.7.2/program/soffice',
+  '/instdir/program/soffice.bin',
+  '/instdir/program/soffice',
+  '/usr/lib/libreoffice/program/soffice.bin',
   '/usr/lib/libreoffice/program/soffice',
   '/usr/bin/libreoffice',
   '/usr/bin/soffice',
@@ -173,7 +178,8 @@ function discoverLoBinaryPath(imageRef) {
       'for blob in "$work"/*; do',
       '  [ -f "$blob" ] || continue',
       '  case "$blob" in *.json) continue ;; esac',
-      '  line=$(tar -tf "$blob" 2>/dev/null | grep -E "(program/soffice|/libreoffice)$" | grep -v "\\.bin$" | head -1 || true)',
+      '  listing=$(tar -tf "$blob" 2>/dev/null || gzip -dc "$blob" 2>/dev/null | tar -tf - 2>/dev/null || true)',
+      '  line=$(printf "%s\\n" "$listing" | grep -E "program/soffice(\\.bin)?$|/libreoffice$" | head -1 || true)',
       '  if [ -n "$line" ]; then found="${line#./}"; break; fi',
       'done',
       'rm -rf "$work"',
