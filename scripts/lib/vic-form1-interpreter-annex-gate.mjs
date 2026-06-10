@@ -129,7 +129,10 @@ export async function rasterizeAnnexPagesToPng(pdfBytes, pageIndices, outDir) {
     throw new Error('canvas package required for interpreter annex raster gate')
   }
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas } = canvasModule
+  const { createCanvas, Image } = canvasModule
+  if (typeof globalThis.Image === 'undefined') {
+    globalThis.Image = Image
+  }
   const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
   fs.mkdirSync(outDir, { recursive: true })
 

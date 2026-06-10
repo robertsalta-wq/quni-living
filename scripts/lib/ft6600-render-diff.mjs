@@ -18,7 +18,10 @@ export async function renderDiffFt6600Pair(officialBytes, renamedBytes) {
   }
 
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas } = canvasModule
+  const { createCanvas, Image } = canvasModule
+  if (typeof globalThis.Image === 'undefined') {
+    globalThis.Image = Image
+  }
 
   const scale = 2
   let maxDiffPixels = 0
