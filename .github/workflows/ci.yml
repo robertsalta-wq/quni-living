@@ -25,3 +25,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify VIC Form 1 blank PDF baseline
+        run: |
+          if [ -f docs/vic/form-1-blank.pdf ]; then
+            node scripts/freeze-vic-form1-blank.mjs --check
+          else
+            echo "Skip: docs/vic/form-1-blank.pdf not committed yet"
+          fi

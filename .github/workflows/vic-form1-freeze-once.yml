@@ -1,0 +1,39 @@
+# One-shot / manual: freeze VIC Form 1 blank PDF via pinned LibreOffice Docker image.
+# Does not run on push. Download artifacts after success, then commit locally.
+name: VIC Form 1 blank freeze (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify canonical docx (no overwrite)
+        run: node scripts/source-official-tenancy-pdfs.mjs --vic-only
+
+      - name: Freeze blank PDF (Docker LibreOffice)
+        run: node scripts/freeze-vic-form1-blank.mjs
+
+      - name: Verify committed baseline (--check)
+        run: node scripts/freeze-vic-form1-blank.mjs --check
+
+      - name: Upload freeze artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vic-form1-freeze
+          path: |
+            docs/vic/form-1-blank.pdf
+            docs/vic/form-1-blank-provenance.json
+            docs/vic/source.json
+            scripts/test-official-form-spike/vic-form1-blank-render-diff.json

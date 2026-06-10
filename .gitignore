@@ -66,3 +66,9 @@ supabase/.temp/
 
 # Tokyo migration reference dumps (local only; Sydney is production)
 supabase/tokyo_*.sql
+
+# VIC Form 1 freeze scratch (LO profile + conversion output)
+tmp/
+
+# Live CAV downloads on docx SHA mismatch (review only)
+docs/vic/_incoming/

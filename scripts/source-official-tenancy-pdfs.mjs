@@ -2,7 +2,9 @@
  * Part 1 de-risk: download official NSW + QLD prescribed PDFs, verify vs repo extractions,
  * write docs/{nsw,qld}/*.pdf and source.json provenance.
  *
- * Usage: node scripts/source-official-tenancy-pdfs.mjs
+ * Usage:
+ *   node scripts/source-official-tenancy-pdfs.mjs           # NSW + QLD + VIC
+ *   node scripts/source-official-tenancy-pdfs.mjs --vic-only  # VIC docx verify only
  */
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -11,6 +13,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PDFDocument } from 'pdf-lib'
 import { PDFParse } from 'pdf-parse'
+import {
+  phraseCoverage as vicPhraseCoverage,
+  VIC_FORM1_DOCX_REGRESSION_PHRASES,
+} from './lib/vic-form1-phrase-gate.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
@@ -21,6 +27,9 @@ const NSW_FALLBACK_PDF =
   'https://www.nsw.gov.au/sites/default/files/noindex/2025-06/residential-tenancy-agreement-form.pdf'
 const QLD_PDF_URL =
   'https://www.rta.qld.gov.au/sites/default/files/2021-06/Form-18a-General-tenancy-agreement.pdf'
+const VIC_DOCX_URL =
+  'https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx'
+const VIC_SOURCE_PAGE_URL = 'https://www.consumer.vic.gov.au/housing/renting/renting-forms-and-publications'
 
 function fetchBuffer(url) {
   return new Promise((resolve, reject) => {
@@ -116,8 +125,90 @@ async function writeProvenance(dir, json) {
   fs.writeFileSync(path.join(dir, 'source.json'), `${JSON.stringify(json, null, 2)}\n`, 'utf8')
 }
 
+const vicOnly = process.argv.includes('--vic-only')
+
+async function verifyVicDocx(downloadDate) {
+  // --- VIC (docx verify-only; never overwrite committed canonical) ---
+  console.log('[VIC] Download URL:', VIC_DOCX_URL)
+  const vicBuf = await fetchBuffer(VIC_DOCX_URL)
+  const vicDir = path.join(root, 'docs', 'vic')
+  const vicCanonical = path.join(vicDir, 'form-1-residential-rental-agreement.docx')
+  const vicIncomingDir = path.join(vicDir, '_incoming')
+
+  if (!fs.existsSync(vicCanonical)) {
+    throw new Error(`[VIC] Missing canonical docx: ${vicCanonical}`)
+  }
+  const canonicalBuf = fs.readFileSync(vicCanonical)
+  const liveSha = sha256(vicBuf)
+  const canonicalSha = sha256(canonicalBuf)
+
+  if (liveSha !== canonicalSha) {
+    fs.mkdirSync(vicIncomingDir, { recursive: true })
+    const incomingName = `form-1-residential-rental-agreement-${downloadDate}.docx`
+    const incomingPath = path.join(vicIncomingDir, incomingName)
+    fs.writeFileSync(incomingPath, vicBuf)
+    console.error('[VIC] SHA mismatch — live download differs from committed canonical.')
+    console.error('[VIC] Live SHA:', liveSha, 'bytes:', vicBuf.length)
+    console.error('[VIC] Repo SHA:', canonicalSha, 'bytes:', canonicalBuf.length)
+    console.error('[VIC] Wrote live copy for review:', incomingPath)
+    process.exitCode = 1
+    return
+  }
+
+  const vicRef = fs.readFileSync(path.join(vicDir, 'form-1-extracted-from-cav.md'), 'utf8')
+  const vicPhrase = vicPhraseCoverage(vicRef, VIC_FORM1_DOCX_REGRESSION_PHRASES)
+
+  let blankPdfSha256 = null
+  let blankPdfPageCount = null
+  let blankPdfEmbeddedImageCount = null
+  const blankProvenancePath = path.join(vicDir, 'form-1-blank-provenance.json')
+  if (fs.existsSync(blankProvenancePath)) {
+    const blankProv = JSON.parse(fs.readFileSync(blankProvenancePath, 'utf8'))
+    blankPdfSha256 = blankProv.blankSha256 ?? null
+    blankPdfPageCount = blankProv.pageCount ?? null
+    blankPdfEmbeddedImageCount = blankProv.embeddedImageCount ?? null
+  }
+
+  const vicProvenance = {
+    form: 'VIC CAV Form 1 - Residential rental agreement (no more than 5 years)',
+    sourceUrl: VIC_DOCX_URL,
+    sourcePageUrl: VIC_SOURCE_PAGE_URL,
+    downloadDate,
+    inForceReference:
+      'Residential Tenancies Act 1997 s 26(1); Residential Tenancies Regulations 2021 reg 10(1)',
+    cavReformDate: '25 November 2025',
+    sha256: canonicalSha,
+    fileSizeBytes: canonicalBuf.length,
+    publisherListedSizeNote:
+      'CAV library page labels ~1.5MB; live .docx download and repo copy are 119929 bytes (verified byte-identical).',
+    storedAs: 'docs/vic/form-1-residential-rental-agreement.docx',
+    sourceFormat: 'docx',
+    blankPdf: 'docs/vic/form-1-blank.pdf',
+    blankPdfSha256,
+    blankPdfPageCount,
+    blankPdfEmbeddedImageCount,
+    blankPdfProvenance: 'docs/vic/form-1-blank-provenance.json',
+    textVerification: {
+      referenceFile: 'docs/vic/form-1-extracted-from-cav.md',
+      phraseCoveragePct: vicPhrase.coveragePct,
+      phrasesFound: vicPhrase.found,
+      phrasesMissing: vicPhrase.missing,
+      note: 'Docx extract gate; OFFICIAL footer phrase is verified on blank PDF after freeze.',
+    },
+  }
+  await writeProvenance(vicDir, vicProvenance)
+  console.log('[VIC] Canonical docx verified (no overwrite).')
+  console.log('[VIC] Provenance:', JSON.stringify(vicProvenance, null, 2))
+}
+
 async function main() {
   const downloadDate = new Date().toISOString().slice(0, 10)
+
+  if (vicOnly) {
+    await verifyVicDocx(downloadDate)
+    console.log('\nDone.')
+    return
+  }
 
   // --- NSW ---
   const nswUrl = await resolveNswPdfUrl()
@@ -197,6 +288,8 @@ async function main() {
   await writeProvenance(qldDir, qldProvenance)
   console.log('[QLD] Wrote', qldOut)
   console.log('[QLD] Provenance:', JSON.stringify(qldProvenance, null, 2))
+
+  await verifyVicDocx(downloadDate)
 
   console.log('\nDone.')
 }
