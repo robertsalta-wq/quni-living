@@ -146,22 +146,14 @@ function digestKeyFromImageRef(imageRef) {
  * @param {string[]} loArgs
  */
 function loHostEnv(programDir) {
-  const loRoot = path.dirname(programDir)
-  const homeDir = path.join(root, 'tmp', 'lo-home')
+  const homeDir = path.join('/tmp', 'lo-home')
   fs.mkdirSync(homeDir, { recursive: true })
-  const libPaths = [
-    programDir,
-    path.join(loRoot, 'program'),
-    path.join(loRoot, 'ure', 'lib'),
-  ].filter((p) => fs.existsSync(p))
   return {
     HOME: homeDir,
-    LD_LIBRARY_PATH: libPaths.join(path.delimiter),
+    LD_LIBRARY_PATH: programDir,
     UNO_PATH: programDir,
     SOURCE_DATE_EPOCH,
     LANG: process.env.LANG || 'en_US.UTF-8',
-    SAL_USE_VCLPLUGIN: 'svp',
-    BRAND_BASE_DIR: loRoot,
   }
 }
 
@@ -192,21 +184,23 @@ function loVersionFromProgramDir(programDir) {
  * @returns {Buffer}
  */
 function convertDocxToPdfRaw(programDir) {
-  const profileDir = path.join(root, 'tmp', `lo-profile-${crypto.randomUUID()}`)
+  const profileDir = path.join('/tmp', `lo-profile-${crypto.randomUUID()}`)
   fs.mkdirSync(profileDir, { recursive: true })
-  const outDir = path.join(root, 'tmp', `lo-out-${crypto.randomUUID()}`)
+  const outDir = path.join('/tmp', `lo-out-${crypto.randomUUID()}`)
   fs.mkdirSync(outDir, { recursive: true })
 
-  const userInstallation = `file://${profileDir.replace(/\\/g, '/')}`
+  const userInstallation = `file://${profileDir}`
 
   try {
     runLoOnHost(programDir, [
       '--headless',
       '--norestore',
       '--nolockcheck',
+      '--nofirststartwizard',
+      '--nodefault',
       `-env:UserInstallation=${userInstallation}`,
       '--convert-to',
-      'pdf:writer_pdf_Export',
+      'pdf',
       '--outdir',
       outDir,
       SOURCE_DOCX,
