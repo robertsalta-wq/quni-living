@@ -133,14 +133,46 @@ function dockerImageDigest(imageRef) {
   return out
 }
 
-function loVersionFromDocker(imageRef) {
+/** lankalana/libreoffice-headless has no ENTRYPOINT; soffice is not on default PATH. */
+const LO_DOCKER_SHELL_PREAMBLE = `SOFFICE=""
+for c in libreoffice soffice; do
+  if command -v "$c" >/dev/null 2>&1; then SOFFICE="$c"; break; fi
+done
+if [ -z "$SOFFICE" ]; then
+  for p in /usr/bin/libreoffice /usr/bin/soffice /opt/libreoffice*/program/soffice; do
+    if [ -x "$p" ]; then SOFFICE="$p"; break; fi
+  done
+fi
+if [ -z "$SOFFICE" ]; then echo "soffice not found in container" >&2; exit 127; fi`
+
+function shellQuote(arg) {
+  return `'${String(arg).replace(/'/g, `'\"'\"'`)}'`
+}
+
+/**
+ * @param {string} imageRef
+ * @param {string[]} loArgs soffice/libreoffice argv (after binary)
+ * @param {string[]} [dockerArgs] extra docker run flags before imageRef
+ */
+function runLoDocker(imageRef, loArgs, dockerArgs = []) {
   const docker = resolveDockerBin()
-  // Image default entrypoint wraps soffice; do not override with --entrypoint (not on PATH).
-  const out = execFileSync(
+  const script = `${LO_DOCKER_SHELL_PREAMBLE}\nexec "$SOFFICE" ${loArgs.map(shellQuote).join(' ')}`
+  const result = spawnSync(
     docker,
-    ['run', '--rm', imageRef, 'soffice', '--version'],
+    ['run', '--rm', ...dockerArgs, '--entrypoint', '/bin/sh', imageRef, '-c', script],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-  ).trim()
+  )
+  if (result.status !== 0) {
+    throw new Error(
+      `LibreOffice docker failed (exit ${result.status}): ${result.stderr || result.stdout}`,
+    )
+  }
+  return { stdout: (result.stdout || '').trim(), stderr: (result.stderr || '').trim() }
+}
+
+function loVersionFromDocker(imageRef) {
+  const { stdout, stderr } = runLoDocker(imageRef, ['--version'])
+  const out = stdout || stderr
   return out.split('\n')[0] || out
 }
 
@@ -156,22 +188,9 @@ function convertDocxToPdfRaw(imageRef) {
   const userInstallation = `file://${profileDir.replace(/\\/g, '/')}`
 
   try {
-    const docker = resolveDockerBin()
-    const result = spawnSync(
-      docker,
+    runLoDocker(
+      imageRef,
       [
-        'run',
-        '--rm',
-        '-v',
-        `${root}:/work`,
-        '-w',
-        '/work',
-        '-e',
-        `SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}`,
-        '-e',
-        'HOME=/tmp',
-        imageRef,
-        'soffice',
         '--headless',
         '--norestore',
         '--nolockcheck',
@@ -182,13 +201,17 @@ function convertDocxToPdfRaw(imageRef) {
         path.posix.join('/work', path.relative(root, outDir).replace(/\\/g, '/')),
         path.posix.join('/work', path.relative(root, SOURCE_DOCX).replace(/\\/g, '/')),
       ],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+      [
+        '-v',
+        `${root}:/work`,
+        '-w',
+        '/work',
+        '-e',
+        `SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}`,
+        '-e',
+        'HOME=/tmp',
+      ],
     )
-    if (result.status !== 0) {
-      throw new Error(
-        `LibreOffice docker conversion failed (exit ${result.status}): ${result.stderr || result.stdout}`,
-      )
-    }
     const base = path.basename(SOURCE_DOCX, '.docx')
     const produced = path.join(outDir, `${base}.pdf`)
     if (!fs.existsSync(produced)) {
