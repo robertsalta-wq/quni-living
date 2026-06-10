@@ -145,22 +145,32 @@ function digestKeyFromImageRef(imageRef) {
  * @param {string} programDir libreoffice/program
  * @param {string[]} loArgs
  */
-function runLoOnHost(programDir, loArgs) {
-  const soffice = path.join(programDir, 'soffice.bin')
+function loHostEnv(programDir) {
+  const loRoot = path.dirname(programDir)
   const homeDir = path.join(root, 'tmp', 'lo-home')
   fs.mkdirSync(homeDir, { recursive: true })
+  const libPaths = [
+    programDir,
+    path.join(loRoot, 'program'),
+    path.join(loRoot, 'ure', 'lib'),
+  ].filter((p) => fs.existsSync(p))
+  return {
+    HOME: homeDir,
+    LD_LIBRARY_PATH: libPaths.join(path.delimiter),
+    UNO_PATH: programDir,
+    SOURCE_DATE_EPOCH,
+    LANG: process.env.LANG || 'en_US.UTF-8',
+    SAL_USE_VCLPLUGIN: 'svp',
+    BRAND_BASE_DIR: loRoot,
+  }
+}
+
+function runLoOnHost(programDir, loArgs) {
+  const soffice = path.join(programDir, 'soffice.bin')
   const result = spawnSync(soffice, loArgs, {
     encoding: 'utf8',
     cwd: programDir,
-    env: {
-      ...process.env,
-      HOME: homeDir,
-      LD_LIBRARY_PATH: programDir,
-      UNO_PATH: programDir,
-      SOURCE_DATE_EPOCH,
-      LANG: process.env.LANG || 'en_US.UTF-8',
-      SAL_USE_VCLPLUGIN: 'svp',
-    },
+    env: { ...process.env, ...loHostEnv(programDir) },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   if (result.status !== 0) {

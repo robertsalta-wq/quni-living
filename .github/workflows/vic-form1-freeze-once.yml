@@ -26,7 +26,8 @@ jobs:
             libxinerama1 libfontconfig1 libcups2 libdbus-1-3 \
             libglib2.0-0 libsm6 libice6 libxext6 libxrender1 \
             libx11-6 libxcb1 libnss3 libnspr4 libxslt1.1 libxml2 libgl1 \
-            fonts-liberation fonts-dejavu-core
+            fonts-liberation fonts-dejavu-core \
+            libreoffice-writer-nogui
 
       - name: Verify canonical docx (no overwrite)
         run: node scripts/source-official-tenancy-pdfs.mjs --vic-only
