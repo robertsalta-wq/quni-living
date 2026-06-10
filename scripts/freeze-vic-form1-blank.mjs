@@ -173,18 +173,14 @@ function discoverLoBinaryPath(imageRef) {
       'for blob in "$work"/*; do',
       '  [ -f "$blob" ] || continue',
       '  case "$blob" in *.json) continue ;; esac',
-      '  while IFS= read -r line; do',
-      '    case "$line" in',
-      '      */program/soffice|*/libreoffice)',
-      '        found="${line#./}"; break 2 ;;',
-      '    esac',
-      '  done < <(tar -tf "$blob" 2>/dev/null || true)',
+      '  line=$(tar -tf "$blob" 2>/dev/null | grep -E "(program/soffice|/libreoffice)$" | grep -v "\\.bin$" | head -1 || true)',
+      '  if [ -n "$line" ]; then found="${line#./}"; break; fi',
       'done',
       'rm -rf "$work"',
       'if [ -z "$found" ]; then echo "soffice not found in docker save layers" >&2; exit 127; fi',
       'printf "%s" "$found"',
     ].join('\n')
-    const result = spawnSync('sh', ['-c', script], {
+    const result = spawnSync('bash', ['-c', script], {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
     })
