@@ -106,21 +106,52 @@ const LO_DOCKER_IMAGE_INSPECTED_NON_RUNNABLE =
 
 
 
-const NOTO_FONT_PACKAGES = [
-
-  'fonts-noto-core',
-
-  'fonts-noto-cjk',
-
-  'fonts-noto-extra',
-
-  'fonts-noto-ui-core',
-
-  'fonts-noto-unhinted',
-
-  'fonts-noto-color-emoji',
-
+/** Installed inside the LO container (not on GHA host) — temurin image lacks some LO .so deps. */
+const LO_RUNTIME_PACKAGES = [
+  'libnss3',
+  'libnspr4',
+  'libxslt1.1',
+  'libxml2',
+  'libfontconfig1',
+  'libcups2',
+  'libdbus-1-3',
+  'libglib2.0-0',
+  'libxinerama1',
+  'libsm6',
+  'libice6',
+  'libxext6',
+  'libxrender1',
+  'libx11-6',
+  'libxcb1',
+  'libgl1',
 ]
+
+const NOTO_FONT_PACKAGES = [
+  'fonts-noto-core',
+  'fonts-noto-cjk',
+  'fonts-noto-extra',
+  'fonts-noto-ui-core',
+  'fonts-noto-unhinted',
+  'fonts-noto-color-emoji',
+]
+
+function shellQuote(arg) {
+  return `'${arg.replace(/'/g, `'\\''`)}'`
+}
+
+/** @param {string[]} sofficeArgs @param {{ withNotoFonts?: boolean }} [opts] */
+function dockerInnerSofficeScript(sofficeArgs, opts = {}) {
+  const aptPkgs = [...LO_RUNTIME_PACKAGES]
+  if (opts.withNotoFonts) aptPkgs.push(...NOTO_FONT_PACKAGES)
+  return [
+    'set -e',
+    'export DEBIAN_FRONTEND=noninteractive',
+    'apt-get update -qq',
+    `apt-get install -y -qq ${aptPkgs.join(' ')}`,
+    'fc-cache -f',
+    sofficeArgs.map(shellQuote).join(' '),
+  ].join(' && ')
+}
 
 
 
@@ -392,7 +423,9 @@ function runDocker(imageRef, containerArgs, extraEnv = {}) {
 
 function loVersionDocker(imageRef) {
 
-  const { stdout, stderr } = runDocker(imageRef, ['soffice', '--version'])
+  const inner = dockerInnerSofficeScript(['soffice', '--version'])
+
+  const { stdout, stderr } = runDocker(imageRef, ['bash', '-lc', inner])
 
   const out = stdout || stderr
 
@@ -462,33 +495,9 @@ function convertDocxToPdfRawDocker(imageRef, opts = {}) {
 
   try {
 
-    if (opts.withNotoFonts) {
+    const inner = dockerInnerSofficeScript(sofficeArgs, opts)
 
-      const aptPkgs = NOTO_FONT_PACKAGES.join(' ')
-
-      const inner = [
-
-        'set -e',
-
-        'export DEBIAN_FRONTEND=noninteractive',
-
-        'apt-get update -qq',
-
-        `apt-get install -y -qq ${aptPkgs}`,
-
-        'fc-cache -f',
-
-        sofficeArgs.map((a) => (/\s/.test(a) ? `'${a.replace(/'/g, `'\\''`)}'` : a)).join(' '),
-
-      ].join(' && ')
-
-      runDocker(imageRef, ['bash', '-lc', inner])
-
-    } else {
-
-      runDocker(imageRef, sofficeArgs)
-
-    }
+    runDocker(imageRef, ['bash', '-lc', inner])
 
 
 
@@ -730,7 +739,9 @@ async function runFreeze() {
 
     conversionNote:
 
-      'Pinned lankalana 7.6.7.2 eclipse-temurin JRE image; Docker-only soffice conversion (no host layer extract).',
+      'Pinned lankalana 7.6.7.2 eclipse-temurin JRE image; Docker-only soffice conversion (LO runtime deps via apt inside container, not on GHA host).',
+
+    loRuntimePackagesInstalledInContainer: LO_RUNTIME_PACKAGES,
 
     notoFontsInstalledInContainer: withNotoFonts,
 
