@@ -159,12 +159,13 @@ function runLoOnHost(programDir, loArgs) {
       UNO_PATH: programDir,
       SOURCE_DATE_EPOCH,
       LANG: process.env.LANG || 'en_US.UTF-8',
+      SAL_USE_VCLPLUGIN: 'svp',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   if (result.status !== 0) {
     throw new Error(
-      `LibreOffice conversion failed (exit ${result.status}): ${result.stderr || result.stdout}`,
+      `LibreOffice failed (exit ${result.status}). stdout: ${result.stdout || '(empty)'} stderr: ${result.stderr || '(empty)'}`,
     )
   }
   return { stdout: (result.stdout || '').trim(), stderr: (result.stderr || '').trim() }
@@ -195,7 +196,7 @@ function convertDocxToPdfRaw(programDir) {
       '--nolockcheck',
       `-env:UserInstallation=${userInstallation}`,
       '--convert-to',
-      'pdf',
+      'pdf:writer_pdf_Export',
       '--outdir',
       outDir,
       SOURCE_DOCX,
