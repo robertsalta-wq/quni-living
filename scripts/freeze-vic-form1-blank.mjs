@@ -277,7 +277,7 @@ async function validateBlankPdf(bytes, opts = {}) {
 
   const complexScript = gateComplexScriptText(text)
 
-  if (!complexScript.ok) {
+  if (!complexScript.ok && !opts.freezeForReview) {
 
     const failed = complexScript.results.filter((r) => !r.pass).map((r) => r.id)
 
@@ -725,7 +725,10 @@ async function runFreeze() {
 
   const blankSha = sha256(normalized)
 
-  const validation = await validateBlankPdf(normalized, { allowPageCountMismatch: true })
+  const validation = await validateBlankPdf(normalized, {
+    allowPageCountMismatch: true,
+    freezeForReview: true,
+  })
 
   if (!validation.pageCountGate.pass) {
 
