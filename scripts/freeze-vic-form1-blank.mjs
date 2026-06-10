@@ -210,6 +210,15 @@ async function extractPdfText(buf) {
 
 }
 
+/** @param {Uint8Array | Buffer} bytes */
+async function pdfPageCount(bytes) {
+
+  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true })
+
+  return doc.getPageCount()
+
+}
+
 
 
 /**
@@ -622,6 +631,8 @@ async function runFreeze() {
 
   let withNotoFonts = false
 
+  let notoRetryRejectedDueToPageCount = false
+
   let annexGate = null
 
 
@@ -642,6 +653,8 @@ async function runFreeze() {
 
   annexGate = await runInterpreterAnnexGate(raw1, { outDir: ANNEX_PNG_DIR, repoRoot: root })
 
+  const baselinePageCount = await pdfPageCount(raw1)
+
   if (!annexGate.heuristicOk && !withNotoFonts) {
 
     console.warn('[vic-form1-freeze] Annex heuristics failed; retrying with Noto fonts in container...')
@@ -650,13 +663,35 @@ async function runFreeze() {
 
     console.log('[vic-form1-freeze] Conversion run 1 (Noto)...')
 
-    raw1 = convert()
+    const notoRaw1 = convert()
 
     console.log('[vic-form1-freeze] Conversion run 2 (Noto)...')
 
-    raw2 = convert()
+    const notoRaw2 = convert()
 
-    annexGate = await runInterpreterAnnexGate(raw1, { outDir: ANNEX_PNG_DIR, repoRoot: root })
+    const notoPageCount = await pdfPageCount(notoRaw1)
+
+    if (notoPageCount === baselinePageCount) {
+
+      raw1 = notoRaw1
+
+      raw2 = notoRaw2
+
+      annexGate = await runInterpreterAnnexGate(raw1, { outDir: ANNEX_PNG_DIR, repoRoot: root })
+
+    } else {
+
+      console.warn(
+
+        `[vic-form1-freeze] Noto retry changed pageCount ${baselinePageCount} -> ${notoPageCount}; keeping baseline conversion for canonical PDF.`,
+
+      )
+
+      withNotoFonts = false
+
+      notoRetryRejectedDueToPageCount = true
+
+    }
 
   }
 
@@ -765,6 +800,10 @@ async function runFreeze() {
     loRuntimePackagesInstalledInContainer: LO_RUNTIME_PACKAGES,
 
     notoFontsInstalledInContainer: withNotoFonts,
+
+    notoRetryRejectedDueToPageCount,
+
+    conversionBaselinePageCount: baselinePageCount,
 
     notoFontPackages: withNotoFonts ? NOTO_FONT_PACKAGES : [],
 
