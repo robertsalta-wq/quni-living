@@ -37,6 +37,12 @@ const RENDER_REPORT = path.join(root, 'scripts', 'test-official-form-spike', 'vi
 const LO_DOCKER_IMAGE =
   'lankalana/libreoffice-headless@sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0'
 
+/** Absolute soffice path inside pinned image (layer root: libreoffice/program/soffice.bin). */
+const LO_DOCKER_PINNED_BINARY = {
+  'sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0':
+    '/libreoffice/program/soffice.bin',
+}
+
 const EXPECTED_PAGE_COUNT = 9
 /** CAV reform date 2025-11-25 UTC (matches VIC_FORM1_BLANK_PDF_EPOCH_ISO). */
 const SOURCE_DATE_EPOCH = String(VIC_FORM1_BLANK_PDF_EPOCH_UNIX)
@@ -157,7 +163,17 @@ const LO_BINARY_CANDIDATES = [
  * Probe known paths, then fall back to scanning `docker save` layer tarballs on the host.
  * @param {string} imageRef
  */
+function pinnedLoBinaryForImage(imageRef) {
+  const digestKey = imageRef.includes('@sha256:')
+    ? imageRef.slice(imageRef.indexOf('@sha256:'))
+    : dockerImageDigest(imageRef).slice(dockerImageDigest(imageRef).indexOf('@sha256:'))
+  return LO_DOCKER_PINNED_BINARY[digestKey] ?? null
+}
+
 function discoverLoBinaryPath(imageRef) {
+  const pinned = pinnedLoBinaryForImage(imageRef)
+  if (pinned) return pinned
+
   const docker = resolveDockerBin()
   for (const loBin of LO_BINARY_CANDIDATES) {
     const probe = spawnSync(docker, ['run', '--rm', '--entrypoint', loBin, imageRef, '--version'], {
@@ -212,6 +228,17 @@ function getLoBinaryPath(imageRef) {
   return cachedLoBinaryPath
 }
 
+/** Distroless lankalana layout: run soffice.bin from program/ with local libs on LD_LIBRARY_PATH. */
+function loDockerInvocation(loBin) {
+  if (loBin.includes('/libreoffice/program/soffice.bin')) {
+    return {
+      dockerPrefix: ['-w', '/libreoffice/program', '-e', 'LD_LIBRARY_PATH=/libreoffice/program'],
+      entrypoint: './soffice.bin',
+    }
+  }
+  return { dockerPrefix: [], entrypoint: loBin }
+}
+
 /**
  * @param {string} imageRef
  * @param {string[]} loArgs argv after soffice binary
@@ -220,9 +247,10 @@ function getLoBinaryPath(imageRef) {
 function runLoDocker(imageRef, loArgs, dockerArgs = []) {
   const docker = resolveDockerBin()
   const loBin = getLoBinaryPath(imageRef)
+  const { dockerPrefix, entrypoint } = loDockerInvocation(loBin)
   const result = spawnSync(
     docker,
-    ['run', '--rm', ...dockerArgs, '--entrypoint', loBin, imageRef, ...loArgs],
+    ['run', '--rm', ...dockerArgs, ...dockerPrefix, '--entrypoint', entrypoint, imageRef, ...loArgs],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   )
   if (result.status !== 0) {
