@@ -164,10 +164,10 @@ const LO_BINARY_CANDIDATES = [
  * @param {string} imageRef
  */
 function pinnedLoBinaryForImage(imageRef) {
-  const digestKey = imageRef.includes('@sha256:')
-    ? imageRef.slice(imageRef.indexOf('@sha256:'))
-    : dockerImageDigest(imageRef).slice(dockerImageDigest(imageRef).indexOf('@sha256:'))
-  return LO_DOCKER_PINNED_BINARY[digestKey] ?? null
+  const raw = imageRef.includes('@sha256:')
+    ? imageRef.slice(imageRef.indexOf('@sha256:') + 1)
+    : dockerImageDigest(imageRef).split('@').pop()
+  return LO_DOCKER_PINNED_BINARY[raw] ?? null
 }
 
 function discoverLoBinaryPath(imageRef) {
