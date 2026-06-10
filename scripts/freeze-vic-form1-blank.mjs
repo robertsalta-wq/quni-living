@@ -138,6 +138,8 @@ let cachedLoBinaryPath = null
 
 /** Common paths in TDF / distroless LibreOffice 7.6 images (lankalana uses soffice.bin). */
 const LO_BINARY_CANDIDATES = [
+  '/libreoffice/program/soffice.bin',
+  '/libreoffice/program/soffice',
   '/opt/libreoffice7.6/program/soffice.bin',
   '/opt/libreoffice7.6/program/soffice',
   '/opt/libreoffice7.6.7.2/program/soffice.bin',
