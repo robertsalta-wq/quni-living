@@ -165,23 +165,25 @@ function discoverLoBinaryPath(imageRef) {
   try {
     execFileSync(docker, ['save', '-o', savePath, imageRef], { stdio: 'pipe' })
     const escaped = savePath.replace(/'/g, `'\\''`)
-    const script = `set -e
-work=$(mktemp -d)
-tar -xf '${escaped}' -C "$work"
-found=""
-for blob in "$work"/*; do
-  [ -f "$blob" ] || continue
-  case "$blob" in *.json) continue ;; esac
-  while IFS= read -r line; do
-    case "$line" in
-      */program/soffice|*/libreoffice)
-        found="${line#./}"; break 2 ;;
-    esac
-  done < <(tar -tf "$blob" 2>/dev/null || true)
-done
-rm -rf "$work"
-if [ -z "$found" ]; then echo "soffice not found in docker save layers" >&2; exit 127; fi
-printf '%s' "$found"`
+    const script = [
+      'set -e',
+      'work=$(mktemp -d)',
+      `tar -xf '${escaped}' -C "$work"`,
+      'found=""',
+      'for blob in "$work"/*; do',
+      '  [ -f "$blob" ] || continue',
+      '  case "$blob" in *.json) continue ;; esac',
+      '  while IFS= read -r line; do',
+      '    case "$line" in',
+      '      */program/soffice|*/libreoffice)',
+      '        found="${line#./}"; break 2 ;;',
+      '    esac',
+      '  done < <(tar -tf "$blob" 2>/dev/null || true)',
+      'done',
+      'rm -rf "$work"',
+      'if [ -z "$found" ]; then echo "soffice not found in docker save layers" >&2; exit 127; fi',
+      'printf "%s" "$found"',
+    ].join('\n')
     const result = spawnSync('sh', ['-c', script], {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
