@@ -23,6 +23,7 @@ import {
   VIC_FORM1_BLANK_PDF_EPOCH_ISO,
   VIC_FORM1_BLANK_PDF_EPOCH_UNIX,
 } from './lib/vic-form1-pdf-normalize.mjs'
+import { ensureLoProgramDirFromRegistry } from './lib/vic-form1-lo-layer-extract.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
@@ -36,12 +37,6 @@ const RENDER_REPORT = path.join(root, 'scripts', 'test-official-form-spike', 'vi
 /** Pinned linux/amd64 digest — update only after intentional LO toolchain bump + re-freeze. */
 const LO_DOCKER_IMAGE =
   'lankalana/libreoffice-headless@sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0'
-
-/** Absolute soffice path inside pinned image (layer root: libreoffice/program/soffice.bin). */
-const LO_DOCKER_PINNED_BINARY = {
-  'sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0':
-    '/libreoffice/program/soffice.bin',
-}
 
 const EXPECTED_PAGE_COUNT = 9
 /** CAV reform date 2025-11-25 UTC (matches VIC_FORM1_BLANK_PDF_EPOCH_ISO). */
@@ -139,147 +134,53 @@ function dockerImageDigest(imageRef) {
   return out
 }
 
-/** Cached absolute soffice path inside pinned distroless image (discovered once per run). */
-let cachedLoBinaryPath = null
-
-/** Common paths in TDF / distroless LibreOffice 7.6 images (lankalana uses soffice.bin). */
-const LO_BINARY_CANDIDATES = [
-  '/libreoffice/program/soffice.bin',
-  '/libreoffice/program/soffice',
-  '/opt/libreoffice7.6/program/soffice.bin',
-  '/opt/libreoffice7.6/program/soffice',
-  '/opt/libreoffice7.6.7.2/program/soffice.bin',
-  '/opt/libreoffice7.6.7.2/program/soffice',
-  '/instdir/program/soffice.bin',
-  '/instdir/program/soffice',
-  '/usr/lib/libreoffice/program/soffice.bin',
-  '/usr/lib/libreoffice/program/soffice',
-  '/usr/bin/libreoffice',
-  '/usr/bin/soffice',
-]
-
-/**
- * lankalana/libreoffice-headless is distroless (no /bin/sh, no ENTRYPOINT/CMD).
- * Probe known paths, then fall back to scanning `docker save` layer tarballs on the host.
- * @param {string} imageRef
- */
-function pinnedLoBinaryForImage(imageRef) {
-  const raw = imageRef.includes('@sha256:')
-    ? imageRef.slice(imageRef.indexOf('@sha256:') + 1)
-    : dockerImageDigest(imageRef).split('@').pop()
-  return LO_DOCKER_PINNED_BINARY[raw] ?? null
-}
-
-function discoverLoBinaryPath(imageRef) {
-  const pinned = pinnedLoBinaryForImage(imageRef)
-  if (pinned) return pinned
-
-  const docker = resolveDockerBin()
-  for (const loBin of LO_BINARY_CANDIDATES) {
-    const probe = spawnSync(docker, ['run', '--rm', '--entrypoint', loBin, imageRef, '--version'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-    if (probe.status === 0) return loBin
-  }
-
-  const savePath = path.join(root, 'tmp', `lo-image-save-${crypto.randomUUID()}.tar`)
-  fs.mkdirSync(path.dirname(savePath), { recursive: true })
-  try {
-    execFileSync(docker, ['save', '-o', savePath, imageRef], { stdio: 'pipe' })
-    const escaped = savePath.replace(/'/g, `'\\''`)
-    const script = [
-      'set -e',
-      'work=$(mktemp -d)',
-      `tar -xf '${escaped}' -C "$work"`,
-      'found=""',
-      'for blob in "$work"/*; do',
-      '  [ -f "$blob" ] || continue',
-      '  case "$blob" in *.json) continue ;; esac',
-      '  listing=$(tar -tf "$blob" 2>/dev/null || gzip -dc "$blob" 2>/dev/null | tar -tf - 2>/dev/null || true)',
-      '  line=$(printf "%s\\n" "$listing" | grep -E "program/soffice(\\.bin)?$|/libreoffice$" | head -1 || true)',
-      '  if [ -n "$line" ]; then found="${line#./}"; break; fi',
-      'done',
-      'rm -rf "$work"',
-      'if [ -z "$found" ]; then echo "soffice not found in docker save layers" >&2; exit 127; fi',
-      'printf "%s" "$found"',
-    ].join('\n')
-    const result = spawnSync('bash', ['-c', script], {
-      encoding: 'utf8',
-      maxBuffer: 64 * 1024 * 1024,
-    })
-    if (result.status !== 0) {
-      throw new Error(
-        `soffice not found in image (probe + save scan): ${result.stderr || result.stdout || '(empty)'}`,
-      )
-    }
-    const pick = result.stdout.trim()
-    return pick.startsWith('/') ? pick : `/${pick}`
-  } finally {
-    fs.rmSync(savePath, { force: true })
-  }
-}
-
-function getLoBinaryPath(imageRef) {
-  if (!cachedLoBinaryPath) {
-    cachedLoBinaryPath = discoverLoBinaryPath(imageRef)
-    console.log('[vic-form1-freeze] Resolved LO binary in image:', cachedLoBinaryPath)
-  }
-  return cachedLoBinaryPath
-}
-
-/** Distroless lankalana layout: run soffice.bin with program/ on LD_LIBRARY_PATH + UNO_PATH. */
-function loDockerInvocation(loBin) {
-  if (loBin.includes('/libreoffice/program/soffice.bin')) {
-    return {
-      dockerPrefix: [
-        '-w',
-        '/libreoffice/program',
-        '-e',
-        'HOME=/tmp',
-        '-e',
-        'LD_LIBRARY_PATH=/libreoffice/program',
-        '-e',
-        'UNO_PATH=/libreoffice/program',
-      ],
-      entrypoint: '/libreoffice/program/soffice.bin',
-    }
-  }
-  return { dockerPrefix: ['-e', 'HOME=/tmp'], entrypoint: loBin }
+function digestKeyFromImageRef(imageRef) {
+  if (imageRef.includes('@sha256:')) return imageRef.slice(imageRef.indexOf('@') + 1)
+  return dockerImageDigest(imageRef).split('@').pop()
 }
 
 /**
- * @param {string} imageRef
- * @param {string[]} loArgs argv after soffice binary
- * @param {string[]} [dockerArgs] extra docker run flags before imageRef
+ * Pinned lankalana 7.6.7.2 image is distroless (LO instdir only, no libc).
+ * Extract layer from registry and run soffice.bin on the ubuntu host.
+ * @param {string} programDir libreoffice/program
+ * @param {string[]} loArgs
  */
-function runLoDocker(imageRef, loArgs, dockerArgs = []) {
-  const docker = resolveDockerBin()
-  const loBin = getLoBinaryPath(imageRef)
-  const { dockerPrefix, entrypoint } = loDockerInvocation(loBin)
-  const result = spawnSync(
-    docker,
-    ['run', '--rm', ...dockerArgs, ...dockerPrefix, '--entrypoint', entrypoint, imageRef, ...loArgs],
-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-  )
+function runLoOnHost(programDir, loArgs) {
+  const soffice = path.join(programDir, 'soffice.bin')
+  const homeDir = path.join(root, 'tmp', 'lo-home')
+  fs.mkdirSync(homeDir, { recursive: true })
+  const result = spawnSync(soffice, loArgs, {
+    encoding: 'utf8',
+    cwd: programDir,
+    env: {
+      ...process.env,
+      HOME: homeDir,
+      LD_LIBRARY_PATH: programDir,
+      UNO_PATH: programDir,
+      SOURCE_DATE_EPOCH,
+      LANG: process.env.LANG || 'en_US.UTF-8',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
   if (result.status !== 0) {
     throw new Error(
-      `LibreOffice docker failed (exit ${result.status}): ${result.stderr || result.stdout}`,
+      `LibreOffice conversion failed (exit ${result.status}): ${result.stderr || result.stdout}`,
     )
   }
   return { stdout: (result.stdout || '').trim(), stderr: (result.stderr || '').trim() }
 }
 
-function loVersionFromDocker(imageRef) {
-  const { stdout, stderr } = runLoDocker(imageRef, ['--version'])
+function loVersionFromProgramDir(programDir) {
+  const { stdout, stderr } = runLoOnHost(programDir, ['--version'])
   const out = stdout || stderr
   return out.split('\n')[0] || out
 }
 
 /**
+ * @param {string} programDir
  * @returns {Buffer}
  */
-function convertDocxToPdfRaw(imageRef) {
+function convertDocxToPdfRaw(programDir) {
   const profileDir = path.join(root, 'tmp', `lo-profile-${crypto.randomUUID()}`)
   fs.mkdirSync(profileDir, { recursive: true })
   const outDir = path.join(root, 'tmp', `lo-out-${crypto.randomUUID()}`)
@@ -288,30 +189,17 @@ function convertDocxToPdfRaw(imageRef) {
   const userInstallation = `file://${profileDir.replace(/\\/g, '/')}`
 
   try {
-    runLoDocker(
-      imageRef,
-      [
-        '--headless',
-        '--norestore',
-        '--nolockcheck',
-        `-env:UserInstallation=${userInstallation}`,
-        '--convert-to',
-        'pdf',
-        '--outdir',
-        path.posix.join('/work', path.relative(root, outDir).replace(/\\/g, '/')),
-        path.posix.join('/work', path.relative(root, SOURCE_DOCX).replace(/\\/g, '/')),
-      ],
-      [
-        '-v',
-        `${root}:/work`,
-        '-w',
-        '/work',
-        '-e',
-        `SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}`,
-        '-e',
-        'HOME=/tmp',
-      ],
-    )
+    runLoOnHost(programDir, [
+      '--headless',
+      '--norestore',
+      '--nolockcheck',
+      `-env:UserInstallation=${userInstallation}`,
+      '--convert-to',
+      'pdf',
+      '--outdir',
+      outDir,
+      SOURCE_DOCX,
+    ])
     const base = path.basename(SOURCE_DOCX, '.docx')
     const produced = path.join(outDir, `${base}.pdf`)
     if (!fs.existsSync(produced)) {
@@ -359,14 +247,17 @@ async function runFreeze() {
   const docker = resolveDockerBin()
   execFileSync(docker, ['pull', imageRef], { stdio: 'inherit' })
   const imageDigest = dockerImageDigest(imageRef)
-  const loVersion = loVersionFromDocker(imageRef)
+  const digestKey = digestKeyFromImageRef(imageRef)
+  const loProgramDir = await ensureLoProgramDirFromRegistry(digestKey)
+  const loVersion = loVersionFromProgramDir(loProgramDir)
   console.log('[vic-form1-freeze] Resolved digest:', imageDigest)
+  console.log('[vic-form1-freeze] LO program dir:', loProgramDir)
   console.log('[vic-form1-freeze] LO version:', loVersion)
 
   console.log('[vic-form1-freeze] Conversion run 1...')
-  const raw1 = convertDocxToPdfRaw(imageRef)
+  const raw1 = convertDocxToPdfRaw(loProgramDir)
   console.log('[vic-form1-freeze] Conversion run 2...')
-  const raw2 = convertDocxToPdfRaw(imageRef)
+  const raw2 = convertDocxToPdfRaw(loProgramDir)
 
   const { renderDiffFt6600Pair } = await import('./lib/ft6600-render-diff.mjs')
   const renderDiff = await renderDiffFt6600Pair(raw1, raw2)
@@ -403,14 +294,17 @@ async function runFreeze() {
     pageCount: validation.pageCount,
     embeddedImageCount: validation.embeddedImageCount,
     expectedPageCount: EXPECTED_PAGE_COUNT,
-    conversionTool: 'libreoffice-docker',
+    conversionTool: 'libreoffice-pinned-layer-host',
     conversionDockerImage: imageDigest,
     conversionLoVersion: loVersion,
-    conversionLoBinaryPath: getLoBinaryPath(imageRef),
+    conversionLoProgramDir: loProgramDir,
+    conversionLoBinary: path.join(loProgramDir, 'soffice.bin'),
+    conversionNote:
+      'Pinned lankalana image is distroless (LO instdir only); layer extracted from registry digest; soffice.bin runs on ubuntu host libc.',
     sourceDateEpoch: SOURCE_DATE_EPOCH,
     sourceDateEpochIso: VIC_FORM1_BLANK_PDF_EPOCH_ISO,
     conversionCommand:
-      'soffice --headless --norestore --nolockcheck -env:UserInstallation=<temp> --convert-to pdf',
+      'soffice.bin --headless --norestore --nolockcheck -env:UserInstallation=<temp> --convert-to pdf',
     layoutDeterminism: {
       gate: 'renderDiff',
       renderDiff,

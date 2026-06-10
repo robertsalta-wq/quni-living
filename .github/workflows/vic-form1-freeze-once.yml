@@ -19,6 +19,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Host runtime libs for pinned distroless LO layer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxinerama1 libfontconfig1 libcups2 libdbus-1-3 \
+            libglib2.0-0 libsm6 libice6 libxext6 libxrender1
+
       - name: Verify canonical docx (no overwrite)
         run: node scripts/source-official-tenancy-pdfs.mjs --vic-only
 
