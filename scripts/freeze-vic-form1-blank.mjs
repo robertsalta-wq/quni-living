@@ -124,6 +124,8 @@ const LO_RUNTIME_PACKAGES = [
   'libx11-6',
   'libxcb1',
   'libgl1',
+  'fonts-liberation',
+  'fonts-dejavu-core',
 ]
 
 const NOTO_FONT_PACKAGES = [
@@ -146,9 +148,9 @@ function dockerInnerSofficeScript(sofficeArgs, opts = {}) {
   return [
     'set -e',
     'export DEBIAN_FRONTEND=noninteractive',
-    'apt-get update -qq',
-    `apt-get install -y -qq ${aptPkgs.join(' ')}`,
-    'fc-cache -f',
+    'apt-get update -qq >/dev/null 2>&1',
+    `apt-get install -y -qq ${aptPkgs.join(' ')} >/dev/null 2>&1`,
+    'fc-cache -f >/dev/null 2>&1 || true',
     sofficeArgs.map(shellQuote).join(' '),
   ].join(' && ')
 }
@@ -387,6 +389,10 @@ function runDocker(imageRef, containerArgs, extraEnv = {}) {
 
     'LANG=en_US.UTF-8',
 
+    '-e',
+
+    'SAL_USE_VCLPLUGIN=svp',
+
   ]
 
   for (const [k, v] of Object.entries(extraEnv)) {
@@ -481,7 +487,7 @@ function convertDocxToPdfRawDocker(imageRef, opts = {}) {
 
     '--convert-to',
 
-    'pdf',
+    'pdf:writer_pdf_Export',
 
     '--outdir',
 
@@ -753,7 +759,7 @@ async function runFreeze() {
 
     conversionCommand:
 
-      'docker run … soffice --headless --norestore --nolockcheck -env:UserInstallation=<temp> --convert-to pdf',
+      'docker run … SAL_USE_VCLPLUGIN=svp soffice --headless … --convert-to pdf:writer_pdf_Export',
 
     layoutDeterminism: {
 
