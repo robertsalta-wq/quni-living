@@ -228,15 +228,24 @@ function getLoBinaryPath(imageRef) {
   return cachedLoBinaryPath
 }
 
-/** Distroless lankalana layout: run soffice.bin from program/ with local libs on LD_LIBRARY_PATH. */
+/** Distroless lankalana layout: run soffice.bin with program/ on LD_LIBRARY_PATH + UNO_PATH. */
 function loDockerInvocation(loBin) {
   if (loBin.includes('/libreoffice/program/soffice.bin')) {
     return {
-      dockerPrefix: ['-w', '/libreoffice/program', '-e', 'LD_LIBRARY_PATH=/libreoffice/program'],
-      entrypoint: './soffice.bin',
+      dockerPrefix: [
+        '-w',
+        '/libreoffice/program',
+        '-e',
+        'HOME=/tmp',
+        '-e',
+        'LD_LIBRARY_PATH=/libreoffice/program',
+        '-e',
+        'UNO_PATH=/libreoffice/program',
+      ],
+      entrypoint: '/libreoffice/program/soffice.bin',
     }
   }
-  return { dockerPrefix: [], entrypoint: loBin }
+  return { dockerPrefix: ['-e', 'HOME=/tmp'], entrypoint: loBin }
 }
 
 /**
