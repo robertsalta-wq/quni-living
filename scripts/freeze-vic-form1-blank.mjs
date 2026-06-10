@@ -136,37 +136,65 @@ function dockerImageDigest(imageRef) {
 /** Cached absolute soffice path inside pinned distroless image (discovered once per run). */
 let cachedLoBinaryPath = null
 
+/** Common paths in TDF / Debian LibreOffice 7.6 distroless images. */
+const LO_BINARY_CANDIDATES = [
+  '/opt/libreoffice7.6/program/soffice',
+  '/opt/libreoffice7.6.7.2/program/soffice',
+  '/usr/lib/libreoffice/program/soffice',
+  '/usr/bin/libreoffice',
+  '/usr/bin/soffice',
+]
+
 /**
- * lankalana/libreoffice-headless is distroless (no /bin/sh, no ENTRYPOINT).
- * List paths via host-side `docker export | tar -t`.
+ * lankalana/libreoffice-headless is distroless (no /bin/sh, no ENTRYPOINT/CMD).
+ * Probe known paths, then fall back to scanning `docker save` layer tarballs on the host.
  * @param {string} imageRef
  */
 function discoverLoBinaryPath(imageRef) {
   const docker = resolveDockerBin()
-  const cid = execFileSync(docker, ['create', imageRef], { encoding: 'utf8' }).trim()
+  for (const loBin of LO_BINARY_CANDIDATES) {
+    const probe = spawnSync(docker, ['run', '--rm', '--entrypoint', loBin, imageRef, '--version'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    if (probe.status === 0) return loBin
+  }
+
+  const savePath = path.join(root, 'tmp', `lo-image-save-${crypto.randomUUID()}.tar`)
+  fs.mkdirSync(path.dirname(savePath), { recursive: true })
   try {
-    const script = `docker export ${cid} | tar -t 2>/dev/null | grep -E '(program/soffice|/libreoffice)$' | grep -v '\\.bin$' | head -30`
+    execFileSync(docker, ['save', '-o', savePath, imageRef], { stdio: 'pipe' })
+    const escaped = savePath.replace(/'/g, `'\\''`)
+    const script = `set -e
+work=$(mktemp -d)
+tar -xf '${escaped}' -C "$work"
+found=""
+for blob in "$work"/*; do
+  [ -f "$blob" ] || continue
+  case "$blob" in *.json) continue ;; esac
+  while IFS= read -r line; do
+    case "$line" in
+      */program/soffice|*/libreoffice)
+        found="${line#./}"; break 2 ;;
+    esac
+  done < <(tar -tf "$blob" 2>/dev/null || true)
+done
+rm -rf "$work"
+if [ -z "$found" ]; then echo "soffice not found in docker save layers" >&2; exit 127; fi
+printf '%s' "$found"`
     const result = spawnSync('sh', ['-c', script], {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,
     })
-    const lines = (result.stdout || '')
-      .split('\n')
-      .map((l) => l.replace(/^\.\//, '').trim())
-      .filter(Boolean)
-    const pick =
-      lines.find((l) => l.includes('program/soffice')) ||
-      lines.find((l) => l.endsWith('/soffice')) ||
-      lines.find((l) => l.endsWith('/libreoffice')) ||
-      lines[0]
-    if (!pick) {
+    if (result.status !== 0) {
       throw new Error(
-        `soffice not found in image export (tar exit ${result.status}): ${result.stderr || '(empty)'}`,
+        `soffice not found in image (probe + save scan): ${result.stderr || result.stdout || '(empty)'}`,
       )
     }
+    const pick = result.stdout.trim()
     return pick.startsWith('/') ? pick : `/${pick}`
   } finally {
-    spawnSync(docker, ['rm', cid], { stdio: 'ignore' })
+    fs.rmSync(savePath, { force: true })
   }
 }
 
