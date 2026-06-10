@@ -133,33 +133,62 @@ function dockerImageDigest(imageRef) {
   return out
 }
 
-/** lankalana/libreoffice-headless has no ENTRYPOINT; soffice is not on default PATH. */
-const LO_DOCKER_SHELL_PREAMBLE = `SOFFICE=""
-for c in libreoffice soffice; do
-  if command -v "$c" >/dev/null 2>&1; then SOFFICE="$c"; break; fi
-done
-if [ -z "$SOFFICE" ]; then
-  for p in /usr/bin/libreoffice /usr/bin/soffice /opt/libreoffice*/program/soffice; do
-    if [ -x "$p" ]; then SOFFICE="$p"; break; fi
-  done
-fi
-if [ -z "$SOFFICE" ]; then echo "soffice not found in container" >&2; exit 127; fi`
+/** Cached absolute soffice path inside pinned distroless image (discovered once per run). */
+let cachedLoBinaryPath = null
 
-function shellQuote(arg) {
-  return `'${String(arg).replace(/'/g, `'\"'\"'`)}'`
+/**
+ * lankalana/libreoffice-headless is distroless (no /bin/sh, no ENTRYPOINT).
+ * List paths via host-side `docker export | tar -t`.
+ * @param {string} imageRef
+ */
+function discoverLoBinaryPath(imageRef) {
+  const docker = resolveDockerBin()
+  const cid = execFileSync(docker, ['create', imageRef], { encoding: 'utf8' }).trim()
+  try {
+    const script = `docker export ${cid} | tar -t 2>/dev/null | grep -E '(program/soffice|/libreoffice)$' | grep -v '\\.bin$' | head -30`
+    const result = spawnSync('sh', ['-c', script], {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    })
+    const lines = (result.stdout || '')
+      .split('\n')
+      .map((l) => l.replace(/^\.\//, '').trim())
+      .filter(Boolean)
+    const pick =
+      lines.find((l) => l.includes('program/soffice')) ||
+      lines.find((l) => l.endsWith('/soffice')) ||
+      lines.find((l) => l.endsWith('/libreoffice')) ||
+      lines[0]
+    if (!pick) {
+      throw new Error(
+        `soffice not found in image export (tar exit ${result.status}): ${result.stderr || '(empty)'}`,
+      )
+    }
+    return pick.startsWith('/') ? pick : `/${pick}`
+  } finally {
+    spawnSync(docker, ['rm', cid], { stdio: 'ignore' })
+  }
+}
+
+function getLoBinaryPath(imageRef) {
+  if (!cachedLoBinaryPath) {
+    cachedLoBinaryPath = discoverLoBinaryPath(imageRef)
+    console.log('[vic-form1-freeze] Resolved LO binary in image:', cachedLoBinaryPath)
+  }
+  return cachedLoBinaryPath
 }
 
 /**
  * @param {string} imageRef
- * @param {string[]} loArgs soffice/libreoffice argv (after binary)
+ * @param {string[]} loArgs argv after soffice binary
  * @param {string[]} [dockerArgs] extra docker run flags before imageRef
  */
 function runLoDocker(imageRef, loArgs, dockerArgs = []) {
   const docker = resolveDockerBin()
-  const script = `${LO_DOCKER_SHELL_PREAMBLE}\nexec "$SOFFICE" ${loArgs.map(shellQuote).join(' ')}`
+  const loBin = getLoBinaryPath(imageRef)
   const result = spawnSync(
     docker,
-    ['run', '--rm', ...dockerArgs, '--entrypoint', '/bin/sh', imageRef, '-c', script],
+    ['run', '--rm', ...dockerArgs, '--entrypoint', loBin, imageRef, ...loArgs],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   )
   if (result.status !== 0) {
@@ -306,6 +335,7 @@ async function runFreeze() {
     conversionTool: 'libreoffice-docker',
     conversionDockerImage: imageDigest,
     conversionLoVersion: loVersion,
+    conversionLoBinaryPath: getLoBinaryPath(imageRef),
     sourceDateEpoch: SOURCE_DATE_EPOCH,
     sourceDateEpochIso: VIC_FORM1_BLANK_PDF_EPOCH_ISO,
     conversionCommand:
