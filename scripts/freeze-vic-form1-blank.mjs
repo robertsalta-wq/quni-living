@@ -135,9 +135,10 @@ function dockerImageDigest(imageRef) {
 
 function loVersionFromDocker(imageRef) {
   const docker = resolveDockerBin()
+  // Image default entrypoint wraps soffice; do not override with --entrypoint (not on PATH).
   const out = execFileSync(
     docker,
-    ['run', '--rm', '--entrypoint', 'soffice', imageRef, '--version'],
+    ['run', '--rm', imageRef, 'soffice', '--version'],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
   ).trim()
   return out.split('\n')[0] || out
