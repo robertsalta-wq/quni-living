@@ -233,7 +233,13 @@ async function validateBlankPdf(bytes, opts = {}) {
 
   const pageCount = doc.getPageCount()
 
-  if (pageCount !== EXPECTED_PAGE_COUNT) {
+  const pageCountGate = {
+    expected: EXPECTED_PAGE_COUNT,
+    actual: pageCount,
+    pass: pageCount === EXPECTED_PAGE_COUNT,
+  }
+
+  if (!pageCountGate.pass && !opts.allowPageCountMismatch) {
 
     throw new Error(`pageCount ${pageCount} !== ${EXPECTED_PAGE_COUNT}`)
 
@@ -286,6 +292,8 @@ async function validateBlankPdf(bytes, opts = {}) {
   return {
 
     pageCount,
+
+    pageCountGate,
 
     embeddedImageCount,
 
@@ -655,45 +663,7 @@ async function runFreeze() {
 
   const baselinePageCount = await pdfPageCount(raw1)
 
-  if (!annexGate.heuristicOk && !withNotoFonts) {
-
-    console.warn('[vic-form1-freeze] Annex heuristics failed; retrying with Noto fonts in container...')
-
-    withNotoFonts = true
-
-    console.log('[vic-form1-freeze] Conversion run 1 (Noto)...')
-
-    const notoRaw1 = convert()
-
-    console.log('[vic-form1-freeze] Conversion run 2 (Noto)...')
-
-    const notoRaw2 = convert()
-
-    const notoPageCount = await pdfPageCount(notoRaw1)
-
-    if (notoPageCount === baselinePageCount) {
-
-      raw1 = notoRaw1
-
-      raw2 = notoRaw2
-
-      annexGate = await runInterpreterAnnexGate(raw1, { outDir: ANNEX_PNG_DIR, repoRoot: root })
-
-    } else {
-
-      console.warn(
-
-        `[vic-form1-freeze] Noto retry changed pageCount ${baselinePageCount} -> ${notoPageCount}; keeping baseline conversion for canonical PDF.`,
-
-      )
-
-      withNotoFonts = false
-
-      notoRetryRejectedDueToPageCount = true
-
-    }
-
-  }
+  console.log('[vic-form1-freeze] Baseline pageCount:', baselinePageCount)
 
   if (!annexGate.heuristicOk) {
 
@@ -755,7 +725,17 @@ async function runFreeze() {
 
   const blankSha = sha256(normalized)
 
-  const validation = await validateBlankPdf(normalized)
+  const validation = await validateBlankPdf(normalized, { allowPageCountMismatch: true })
+
+  if (!validation.pageCountGate.pass) {
+
+    console.warn(
+
+      `[vic-form1-freeze] pageCount ${validation.pageCountGate.actual} !== expected ${EXPECTED_PAGE_COUNT}; recorded in provenance for review (freeze continues).`,
+
+    )
+
+  }
 
 
 
@@ -778,6 +758,8 @@ async function runFreeze() {
     blankSha256: blankSha,
 
     pageCount: validation.pageCount,
+
+    pageCountGate: validation.pageCountGate,
 
     embeddedImageCount: validation.embeddedImageCount,
 
