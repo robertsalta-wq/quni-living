@@ -18,17 +18,15 @@ export async function renderDiffFt6600Pair(officialBytes, renamedBytes) {
   }
 
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas, Image } = canvasModule
-  if (typeof globalThis.Image === 'undefined') {
-    globalThis.Image = Image
-  }
+  const { pdfjsGetDocument } = await import('./pdfjs-node-canvas-factory.mjs')
+  const { createCanvas } = canvasModule
 
   const scale = 2
   let maxDiffPixels = 0
   let pagesCompared = 0
 
   const renderDoc = async (bytes) => {
-    const loadingTask = pdfjs.getDocument({ data: bytes, useSystemFonts: true })
+    const loadingTask = pdfjsGetDocument(pdfjs, bytes, createCanvas)
     const pdf = await loadingTask.promise
     const images = []
     for (let i = 1; i <= pdf.numPages; i++) {

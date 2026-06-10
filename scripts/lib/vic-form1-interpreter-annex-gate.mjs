@@ -91,7 +91,9 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
  */
 export async function extractPdfPageTexts(pdfBytes) {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
+  const { pdfjsGetDocument } = await import('./pdfjs-node-canvas-factory.mjs')
+  const canvasModule = await import('canvas')
+  const pdf = await pdfjsGetDocument(pdfjs, toUint8(pdfBytes), canvasModule.createCanvas).promise
   const pageTexts = []
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
@@ -129,11 +131,9 @@ export async function rasterizeAnnexPagesToPng(pdfBytes, pageIndices, outDir) {
     throw new Error('canvas package required for interpreter annex raster gate')
   }
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { createCanvas, Image } = canvasModule
-  if (typeof globalThis.Image === 'undefined') {
-    globalThis.Image = Image
-  }
-  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
+  const { pdfjsGetDocument } = await import('./pdfjs-node-canvas-factory.mjs')
+  const { createCanvas } = canvasModule
+  const pdf = await pdfjsGetDocument(pdfjs, toUint8(pdfBytes), createCanvas).promise
   fs.mkdirSync(outDir, { recursive: true })
 
   const pngPaths = []
