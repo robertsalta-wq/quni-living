@@ -34,6 +34,7 @@ import {
   VIC_FORM1_FONT_PACKAGE_NAMES,
 } from './lib/vic-form1-container-packages.mjs'
 import { writePatchedVicForm1DocxForFreeze } from './lib/vic-form1-docx-pagination-patch.mjs'
+import { removeVicForm1StrayPage4Box } from './lib/vic-form1-remove-stray-page4-box.mjs'
 import { bytesToBuffer, rasterizeAllPagesToNamedPngs } from './lib/vic-form1-pdftoppm-raster.mjs'
 import { renderDiffVicForm1Pair } from './lib/vic-form1-render-diff.mjs'
 
@@ -324,9 +325,13 @@ async function runFreeze() {
   console.log('[vic-form1-freeze] Patched docx for LO pagination:', toPosixRel(patchedDocx))
 
   console.log('[vic-form1-freeze] Conversion run 1...')
-  const raw1 = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
+  const raw1Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
   console.log('[vic-form1-freeze] Conversion run 2...')
-  const raw2 = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
+  const raw2Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
+
+  console.log('[vic-form1-freeze] Removing stray page-4 top-left border artifact...')
+  const raw1 = Buffer.from(await removeVicForm1StrayPage4Box(raw1Converted))
+  const raw2 = Buffer.from(await removeVicForm1StrayPage4Box(raw2Converted))
 
   const pdfProbe = await probeVicForm1PdfWithPdfLib(raw1)
   console.log('[vic-form1-freeze] pageCount after conversion:', pdfProbe.pageCount)
@@ -437,7 +442,13 @@ async function runFreeze() {
       appliedAtFreezeOnly: true,
       canonicalDocxUnchanged: true,
       changes:
-        'Strip w:lastRenderedPageBreak; merge item 9.2 Renter 1–4 mini-tables into one 8-row table; w:cantSplit on each row (fixes LO stray box at page 3→4 break).',
+        'Strip w:lastRenderedPageBreak; merge item 9.2 Renter 1–4 mini-tables into one 8-row table; w:cantSplit on each row.',
+    },
+    strayPage4BoxFix: {
+      tool: 'scripts/lib/vic-form1-remove-stray-page4-box.mjs',
+      reason:
+        'LO draws an extra ~11pt square at page 4 top-left (not one of 25 FORMCHECKBOX fields); white cover before gates.',
+      boundsPdfPoints: { page: 4, x: -2, y: 836, width: 16, height: 16 },
     },
     containerAptPackages: VIC_FORM1_CONTAINER_APT_PACKAGES,
     fontPackageNames: VIC_FORM1_FONT_PACKAGE_NAMES,
