@@ -109,7 +109,7 @@ async function validateBlankPdf(bytes) {
       phrasesMissing: contentCompleteness.phraseGate.phrasesMissing,
       structureGate: contentCompleteness.structureGate,
       complexScriptGate: contentCompleteness.complexScriptGate,
-      checkboxGate: contentCompleteness.checkboxGate,
+      checkboxExportMode: contentCompleteness.checkboxExportMode,
       imageGate: contentCompleteness.imageGate,
     },
   }

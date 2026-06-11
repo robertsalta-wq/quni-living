@@ -50,6 +50,52 @@ export async function countPdfFormCheckboxes(bytes) {
 }
 
 /**
+ * Record how LO exported the 25 legacy Word FORMCHECKBOX fields — informational only.
+ * M2 overlays tick glyphs on a flat canonical page; widget survival is not required.
+ *
+ * @param {Uint8Array | Buffer} bytes
+ * @param {string} text PDF text extract
+ * @param {{ totalFormFields: number, checkboxCount: number, checkboxNames: string[] }} formFields
+ */
+export function recordCheckboxExportMode(bytes, text, formFields) {
+  const latin = Buffer.from(bytes).toString('latin1')
+  const hasAcroForm = /\/AcroForm\b/.test(latin)
+  const btnFieldMarkers = latin.match(/\/FT\s*\/Btn\b/g) ?? []
+  const widgetSubtypeMarkers = latin.match(/\/Subtype\s*\/Widget\b/g) ?? []
+  const textLayerBoxGlyphs = text.match(/[\u2610\u2611\u2612\u25A1\u25A0\u274F\u2751□☐☑]/g) ?? []
+
+  /** @type {'acroform_checkbox_widgets' | 'acroform_btn_widgets_no_pdf_lib_checkboxes' | 'flattened_text_glyphs' | 'flattened_drawings_no_widgets' | 'mixed_or_unknown'} */
+  let exportMode = 'mixed_or_unknown'
+  if (formFields.checkboxCount > 0) {
+    exportMode = 'acroform_checkbox_widgets'
+  } else if (formFields.totalFormFields > 0 || btnFieldMarkers.length > 0) {
+    exportMode = 'acroform_btn_widgets_no_pdf_lib_checkboxes'
+  } else if (textLayerBoxGlyphs.length > 0) {
+    exportMode = 'flattened_text_glyphs'
+  } else if (!hasAcroForm && widgetSubtypeMarkers.length === 0) {
+    exportMode = 'flattened_drawings_no_widgets'
+  }
+
+  return {
+    gate: 'checkboxExportMode',
+    informationalOnly: true,
+    abortOnMismatch: false,
+    pass: true,
+    docxLegacyFormCheckboxCountInformational: VIC_FORM1_EXPECTED_CHECKBOX_COUNT,
+    acroFormCheckboxWidgetCount: formFields.checkboxCount,
+    acroFormCheckboxNames: formFields.checkboxNames,
+    totalAcroFormFields: formFields.totalFormFields,
+    hasAcroForm,
+    pdfBtnFieldMarkerCount: btnFieldMarkers.length,
+    pdfWidgetSubtypeMarkerCount: widgetSubtypeMarkers.length,
+    textLayerBoxGlyphCount: textLayerBoxGlyphs.length,
+    exportMode,
+    note:
+      'CAV .docx has 25 legacy FORMCHECKBOX fields; LO PDF export may emit widgets, flatten to glyphs, or another count. Not a fidelity gate for M2 — confirm 25 boxes visually in page PNGs; exportMode feeds coordinate-map detection.',
+  }
+}
+
+/**
  * @param {string} text
  */
 export function gateContentStructureMarkers(text) {
@@ -80,12 +126,7 @@ export async function runVicForm1ContentCompletenessGate(bytes, text) {
   const structure = gateContentStructureMarkers(text)
   const complexScript = gateComplexScriptText(text)
   const formFields = await countPdfFormCheckboxes(bytes)
-
-  const checkboxGate = {
-    expected: VIC_FORM1_EXPECTED_CHECKBOX_COUNT,
-    actual: formFields.checkboxCount,
-    pass: formFields.checkboxCount === VIC_FORM1_EXPECTED_CHECKBOX_COUNT,
-  }
+  const checkboxExportMode = recordCheckboxExportMode(bytes, text, formFields)
 
   const imageGate = {
     expectedMin: 1,
@@ -120,9 +161,6 @@ export async function runVicForm1ContentCompletenessGate(bytes, text) {
     const failed = complexScript.results.filter((r) => !r.pass).map((r) => r.id)
     failures.push(`complex-script annex: ${failed.join(', ')} tofu=${complexScript.tofuCharCount}`)
   }
-  if (!checkboxGate.pass) {
-    failures.push(`checkboxCount ${formFields.checkboxCount} !== ${VIC_FORM1_EXPECTED_CHECKBOX_COUNT}`)
-  }
   if (!imageGate.pass) {
     failures.push(`embeddedImageCount ${embeddedImageCount} < 1`)
   }
@@ -136,11 +174,7 @@ export async function runVicForm1ContentCompletenessGate(bytes, text) {
     pageCountGate,
     embeddedImageCount,
     imageGate,
-    checkboxGate,
-    formFields: {
-      totalFormFields: formFields.totalFormFields,
-      checkboxCount: formFields.checkboxCount,
-    },
+    checkboxExportMode,
     phraseGate,
     structureGate: structure,
     complexScriptGate: complexScript,
