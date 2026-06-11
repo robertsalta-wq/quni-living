@@ -257,6 +257,33 @@ function convertDocxToPdfRawDocker(imageRef, hostDocxPath) {
 }
 
 /**
+ * When total exceeds 25 but min-x/top-y heuristics miss the stray, use the lone box on
+ * a page that only carries the table-break fragment (prescribed boxes sit at x ≈ 45.85).
+ *
+ * @param {{ total: number, expected: number, perPage: { page: number, count: number, boxes: object[] }[] }} scan
+ */
+function inferStrayTopLeftFromScan(scan) {
+  if (scan.total <= scan.expected) return []
+  const extras = scan.total - scan.expected
+  /** @type {object[]} */
+  const hints = []
+  for (const p of scan.perPage) {
+    for (const b of p.boxes) {
+      if (b.minX < 15 && b.topY < 80) hints.push({ page: p.page, ...b })
+    }
+  }
+  if (hints.length === 0) {
+    for (const p of scan.perPage) {
+      if (p.count === 1 && p.page >= 4) {
+        hints.push({ page: p.page, ...p.boxes[0] })
+      }
+    }
+  }
+  hints.sort((a, b) => a.minX - b.minX || a.topY - b.topY)
+  return hints.slice(0, extras)
+}
+
+/**
  * @param {Buffer} raw1Converted
  * @param {Buffer} raw2Converted
  */
@@ -278,8 +305,11 @@ async function remediateStrayPage4CheckboxArtifact(raw1Converted, raw2Converted)
     console.log(
       '[vic-form1-freeze] Stray page-4 border still present after docx keep-together; deleting path operators from content stream...',
     )
-    const fixed1 = await removeVicForm1StrayPage4BoxFromContentStream(raw1)
-    const fixed2 = await removeVicForm1StrayPage4BoxFromContentStream(raw2)
+    const strayHints = checkboxOperatorScan.strayTopLeft.length
+      ? checkboxOperatorScan.strayTopLeft
+      : inferStrayTopLeftFromScan(checkboxOperatorScan)
+    const fixed1 = await removeVicForm1StrayPage4BoxFromContentStream(raw1, strayHints)
+    const fixed2 = await removeVicForm1StrayPage4BoxFromContentStream(raw2, strayHints)
     raw1 = Buffer.from(fixed1.bytes)
     raw2 = Buffer.from(fixed2.bytes)
     strayPage4BoxFix = {
