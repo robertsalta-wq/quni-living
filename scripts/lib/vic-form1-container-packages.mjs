@@ -23,10 +23,16 @@ export const VIC_FORM1_CONTAINER_APT_PACKAGES = [
   'fonts-liberation',
   'fonts-noto-core',
   'fonts-noto-cjk',
+  'fonts-noto-extra',
 ]
 
 /** dpkg names recorded in provenance after install. */
-export const VIC_FORM1_FONT_PACKAGE_NAMES = ['fonts-liberation', 'fonts-noto-core', 'fonts-noto-cjk']
+export const VIC_FORM1_FONT_PACKAGE_NAMES = [
+  'fonts-liberation',
+  'fonts-noto-core',
+  'fonts-noto-cjk',
+  'fonts-noto-extra',
+]
 
 /**
  * @param {string} bodyScript bash lines run after apt + fc-cache

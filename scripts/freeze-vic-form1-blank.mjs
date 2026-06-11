@@ -76,10 +76,6 @@ function shellQuote(arg) {
   return `'${arg.replace(/'/g, `'\\''`)}'`
 }
 
-function loProfileContainerPath() {
-  return `/work/${toPosixRel(LO_PROFILE_HOST)}`
-}
-
 async function extractPdfText(buf) {
   const parser = new PDFParse({ data: buf })
   const result = await parser.getText()
@@ -214,6 +210,7 @@ function runDocker(imageRef, containerArgs, extraEnv = {}) {
   return { stdout: (result.stdout || '').trim(), stderr: (result.stderr || '').trim() }
 }
 
+/** @param {string[]} sofficeArgs */
 function dockerSofficeConvertScript(sofficeArgs) {
   const sofficeCmd = sofficeArgs.map(shellQuote).join(' ')
   return dockerContainerSetupScript(
@@ -232,12 +229,12 @@ function loVersionDocker(imageRef) {
 
 function convertDocxToPdfRawDocker(imageRef) {
   const outId = crypto.randomUUID()
+  const profileId = crypto.randomUUID()
   const hostOutDir = path.join(root, 'tmp', 'vic-form1-freeze', `out-${outId}`)
   fs.mkdirSync(hostOutDir, { recursive: true })
-  fs.mkdirSync(LO_PROFILE_HOST, { recursive: true })
 
   const containerOutDir = `/work/${toPosixRel(hostOutDir)}`
-  const profileDir = loProfileContainerPath()
+  const profileDir = `/tmp/lo-profile-${profileId}`
   const docxInContainer = '/work/docs/vic/form-1-residential-rental-agreement.docx'
 
   const sofficeArgs = [
@@ -314,7 +311,7 @@ async function runFreeze() {
     throw new Error(`Missing source docx: ${SOURCE_DOCX}`)
   }
 
-  fs.mkdirSync(LO_PROFILE_HOST, { recursive: true })
+  fs.rmSync(LO_PROFILE_HOST, { recursive: true, force: true })
 
   const imageRef = resolveLoDockerImage()
   console.log('[vic-form1-freeze] Docker image:', imageRef)
