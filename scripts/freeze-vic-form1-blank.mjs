@@ -437,7 +437,7 @@ async function runFreeze() {
       appliedAtFreezeOnly: true,
       canonicalDocxUnchanged: true,
       changes:
-        'Strip w:lastRenderedPageBreak; w:cantSplit on item 9.2 Renter 1–4 rows; pageBreakBefore on Renter 1 table (keeps 9.2 grids off page 3→4 split).',
+        'Strip w:lastRenderedPageBreak; merge item 9.2 Renter 1–4 mini-tables into one 8-row table; w:cantSplit on each row (fixes LO stray box at page 3→4 break).',
     },
     containerAptPackages: VIC_FORM1_CONTAINER_APT_PACKAGES,
     fontPackageNames: VIC_FORM1_FONT_PACKAGE_NAMES,
