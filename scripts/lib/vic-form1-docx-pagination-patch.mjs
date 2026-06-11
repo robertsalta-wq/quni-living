@@ -41,12 +41,20 @@ export function patchVicForm1DocumentXml(documentXml) {
   }
 
   let patched = xml
-  for (const { start, end, tbl } of [...tables].reverse()) {
-    const next = injectCantSplitInRenterTable(tbl)
+  for (let i = tables.length - 1; i >= 0; i--) {
+    const { start, end, tbl } = tables[i]
+    let next = injectCantSplitInRenterTable(tbl)
+    if (i === 0) next = addPageBreakBeforeTable(next)
     patched = patched.slice(0, start) + next + patched.slice(end)
   }
 
   return patched
+}
+
+/** @param {string} tblXml */
+function addPageBreakBeforeTable(tblXml) {
+  if (tblXml.includes('w:pageBreakBefore')) return tblXml
+  return tblXml.replace('<w:tblPr>', '<w:tblPr><w:pageBreakBefore w:val="1"/>')
 }
 
 /**
