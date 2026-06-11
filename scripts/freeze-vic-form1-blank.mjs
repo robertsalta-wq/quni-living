@@ -22,6 +22,8 @@ import {
 } from './lib/vic-form1-pdf-normalize.mjs'
 import { runInterpreterAnnexGate } from './lib/vic-form1-interpreter-annex-gate.mjs'
 import {
+  finishVicForm1ContentCompletenessGate,
+  probeVicForm1PdfWithPdfLib,
   runVicForm1ContentCompletenessGate,
   VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL,
 } from './lib/vic-form1-content-completeness-gate.mjs'
@@ -307,12 +309,12 @@ async function runFreeze() {
   const dockerCtx = { imageRef, runDocker, repoRoot: root }
 
   console.log('[vic-form1-freeze] Conversion run 1...')
-  const raw1 = convertDocxToPdfRawDocker(imageRef)
+  const raw1 = Buffer.from(convertDocxToPdfRawDocker(imageRef))
   console.log('[vic-form1-freeze] Conversion run 2...')
-  const raw2 = convertDocxToPdfRawDocker(imageRef)
+  const raw2 = Buffer.from(convertDocxToPdfRawDocker(imageRef))
 
-  const pageCountRaw = await pdfPageCount(raw1)
-  console.log('[vic-form1-freeze] pageCount after conversion:', pageCountRaw)
+  const pdfProbe = await probeVicForm1PdfWithPdfLib(raw1)
+  console.log('[vic-form1-freeze] pageCount after conversion:', pdfProbe.pageCount)
   console.log(
     `[vic-form1-freeze] expectedPageCount (informational only): ${VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL}`,
   )
@@ -331,7 +333,7 @@ async function runFreeze() {
   )
 
   const rawText = await extractPdfText(raw1)
-  const contentCompletenessRaw = await runVicForm1ContentCompletenessGate(raw1, rawText)
+  const contentCompletenessRaw = finishVicForm1ContentCompletenessGate(rawText, pdfProbe)
   fs.mkdirSync(path.dirname(CONTENT_COMPLETENESS_REPORT), { recursive: true })
   fs.writeFileSync(
     CONTENT_COMPLETENESS_REPORT,

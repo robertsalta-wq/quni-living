@@ -65,6 +65,101 @@ export async function countPdfFormCheckboxes(bytes) {
 }
 
 /**
+ * pdf-lib probe — run before pdfjs/pdf-parse so LO PDF bytes are not loaded twice
+ * in one process (pdf-lib reload after pdfjs can fail on CI for this export).
+ *
+ * @param {Uint8Array | Buffer} bytes
+ */
+export async function probeVicForm1PdfWithPdfLib(bytes) {
+  const pdfBytes = toPdfLibBytes(bytes)
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const pageCount = doc.getPageCount()
+
+  let embeddedImageCount = countEmbeddedImages(doc)
+  if (embeddedImageCount < 1) {
+    embeddedImageCount = countImageMarkersInPdfBytes(pdfBytes)
+  }
+
+  const form = doc.getForm()
+  const fields = form.getFields()
+  const checkboxes = fields.filter((f) => f instanceof PDFCheckBox)
+  const formFields = {
+    totalFormFields: fields.length,
+    checkboxCount: checkboxes.length,
+    checkboxNames: checkboxes.map((f) => f.getName()),
+  }
+
+  return { pdfBytes, pageCount, embeddedImageCount, formFields }
+}
+
+/**
+ * @param {string} text
+ * @param {Awaited<ReturnType<typeof probeVicForm1PdfWithPdfLib>>} pdfProbe
+ */
+export function finishVicForm1ContentCompletenessGate(text, pdfProbe) {
+  const { pdfBytes, pageCount, embeddedImageCount, formFields } = pdfProbe
+  const phrases = phraseCoverage(text, VIC_FORM1_REGRESSION_PHRASES)
+  const structure = gateContentStructureMarkers(text)
+  const complexScript = gateComplexScriptText(text)
+  const checkboxExportMode = recordCheckboxExportMode(pdfBytes, text, formFields)
+
+  const imageGate = {
+    expectedMin: 1,
+    actual: embeddedImageCount,
+    pass: embeddedImageCount >= 1,
+    note: 'CAV logo expected as embedded image',
+  }
+
+  const pageCountGate = {
+    expectedPageCountInformational: VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL,
+    actual: pageCount,
+    pass: true,
+    abortOnMismatch: false,
+    note: 'CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical.',
+  }
+
+  const phraseGate = {
+    coveragePct: phrases.coveragePct,
+    phrasesFound: phrases.found,
+    phrasesMissing: phrases.missing,
+    pass: phrases.coveragePct === 100,
+  }
+
+  const failures = []
+  if (!phraseGate.pass) failures.push(`phrases missing: ${phrases.missing.join(', ')}`)
+  if (!structure.ok) {
+    failures.push(
+      `structure markers missing: ${structure.results.filter((r) => !r.pass).map((r) => r.id).join(', ')}`,
+    )
+  }
+  if (!complexScript.ok) {
+    const failed = complexScript.results.filter((r) => !r.pass).map((r) => r.id)
+    failures.push(`complex-script annex: ${failed.join(', ')} tofu=${complexScript.tofuCharCount}`)
+  }
+  if (!imageGate.pass) {
+    failures.push(`embeddedImageCount ${embeddedImageCount} < 1`)
+  }
+
+  const ok = failures.length === 0
+
+  return {
+    ok,
+    gate: 'contentCompleteness',
+    pageCount,
+    pageCountGate,
+    embeddedImageCount,
+    imageGate,
+    checkboxExportMode,
+    phraseGate,
+    structureGate: structure,
+    complexScriptGate: complexScript,
+    annexScriptSamples: VIC_FORM1_ANNEX_COMPLEX_SCRIPT_SAMPLES.map((s) => s.id),
+    failures,
+    note: 'Human review of full-page pdftoppm PNGs is gate of record for layout fidelity; this gate checks text/structure completeness only.',
+  }
+}
+
+/**
  * Record how LO exported the 25 legacy Word FORMCHECKBOX fields — informational only.
  * M2 overlays tick glyphs on a flat canonical page; widget survival is not required.
  *
@@ -129,73 +224,6 @@ export function gateContentStructureMarkers(text) {
  * @param {string} text full PDF text extract
  */
 export async function runVicForm1ContentCompletenessGate(bytes, text) {
-  const pdfBytes = toPdfLibBytes(bytes)
-  const pageCountDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
-  const pageCount = pageCountDoc.getPageCount()
-
-  let embeddedImageCount = countEmbeddedImages(pageCountDoc)
-  if (embeddedImageCount < 1) {
-    embeddedImageCount = countImageMarkersInPdfBytes(pdfBytes)
-  }
-
-  const phrases = phraseCoverage(text, VIC_FORM1_REGRESSION_PHRASES)
-  const structure = gateContentStructureMarkers(text)
-  const complexScript = gateComplexScriptText(text)
-  const formFields = await countPdfFormCheckboxes(pdfBytes)
-  const checkboxExportMode = recordCheckboxExportMode(pdfBytes, text, formFields)
-
-  const imageGate = {
-    expectedMin: 1,
-    actual: embeddedImageCount,
-    pass: embeddedImageCount >= 1,
-    note: 'CAV logo expected as embedded image',
-  }
-
-  const pageCountGate = {
-    expectedPageCountInformational: VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL,
-    actual: pageCount,
-    pass: true,
-    abortOnMismatch: false,
-    note: 'CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical.',
-  }
-
-  const phraseGate = {
-    coveragePct: phrases.coveragePct,
-    phrasesFound: phrases.found,
-    phrasesMissing: phrases.missing,
-    pass: phrases.coveragePct === 100,
-  }
-
-  const failures = []
-  if (!phraseGate.pass) failures.push(`phrases missing: ${phrases.missing.join(', ')}`)
-  if (!structure.ok) {
-    failures.push(
-      `structure markers missing: ${structure.results.filter((r) => !r.pass).map((r) => r.id).join(', ')}`,
-    )
-  }
-  if (!complexScript.ok) {
-    const failed = complexScript.results.filter((r) => !r.pass).map((r) => r.id)
-    failures.push(`complex-script annex: ${failed.join(', ')} tofu=${complexScript.tofuCharCount}`)
-  }
-  if (!imageGate.pass) {
-    failures.push(`embeddedImageCount ${embeddedImageCount} < 1`)
-  }
-
-  const ok = failures.length === 0
-
-  return {
-    ok,
-    gate: 'contentCompleteness',
-    pageCount,
-    pageCountGate,
-    embeddedImageCount,
-    imageGate,
-    checkboxExportMode,
-    phraseGate,
-    structureGate: structure,
-    complexScriptGate: complexScript,
-    annexScriptSamples: VIC_FORM1_ANNEX_COMPLEX_SCRIPT_SAMPLES.map((s) => s.id),
-    failures,
-    note: 'Human review of full-page pdftoppm PNGs is gate of record for layout fidelity; this gate checks text/structure completeness only.',
-  }
+  const pdfProbe = await probeVicForm1PdfWithPdfLib(bytes)
+  return finishVicForm1ContentCompletenessGate(text, pdfProbe)
 }
