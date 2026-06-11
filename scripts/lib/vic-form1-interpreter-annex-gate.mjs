@@ -30,9 +30,17 @@ const TOFU_TEXT_RE = /[\u25A1\uFFFD\uF8FF]/g
 const MIN_ANNEX_INK_RATIO = 0.008
 
 function toUint8(bytes) {
-  return bytes instanceof Uint8Array && bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
-    ? bytes
-    : new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  // pdfjs-dist rejects Node Buffer even though Buffer extends Uint8Array.
+  if (Buffer.isBuffer(bytes)) {
+    return Uint8Array.from(bytes)
+  }
+  if (bytes instanceof Uint8Array) {
+    if (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength) {
+      return bytes
+    }
+    return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  }
+  return new Uint8Array(bytes)
 }
 
 /**
