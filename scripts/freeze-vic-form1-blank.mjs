@@ -33,6 +33,7 @@ import {
   VIC_FORM1_CONTAINER_APT_PACKAGES,
   VIC_FORM1_FONT_PACKAGE_NAMES,
 } from './lib/vic-form1-container-packages.mjs'
+import { writePatchedVicForm1DocxForFreeze } from './lib/vic-form1-docx-pagination-patch.mjs'
 import { bytesToBuffer, rasterizeAllPagesToNamedPngs } from './lib/vic-form1-pdftoppm-raster.mjs'
 import { renderDiffVicForm1Pair } from './lib/vic-form1-render-diff.mjs'
 
@@ -215,7 +216,7 @@ function loVersionDocker(imageRef) {
   return out.split('\n')[0] || out
 }
 
-function convertDocxToPdfRawDocker(imageRef) {
+function convertDocxToPdfRawDocker(imageRef, hostDocxPath) {
   const outId = crypto.randomUUID()
   const profileId = crypto.randomUUID()
   const hostOutDir = path.join(root, 'tmp', 'vic-form1-freeze', `out-${outId}`)
@@ -223,7 +224,7 @@ function convertDocxToPdfRawDocker(imageRef) {
 
   const containerOutDir = `/work/${toPosixRel(hostOutDir)}`
   const profileDir = `/tmp/lo-profile-${profileId}`
-  const docxInContainer = '/work/docs/vic/form-1-residential-rental-agreement.docx'
+  const docxInContainer = `/work/${toPosixRel(hostDocxPath)}`
 
   const sofficeArgs = [
     'soffice',
@@ -242,7 +243,7 @@ function convertDocxToPdfRawDocker(imageRef) {
 
   try {
     runDocker(imageRef, ['bash', '-lc', dockerSofficeConvertScript(sofficeArgs)])
-    const base = path.basename(SOURCE_DOCX, '.docx')
+    const base = path.basename(hostDocxPath, '.docx')
     const produced = path.join(hostOutDir, `${base}.pdf`)
     if (!fs.existsSync(produced)) {
       throw new Error(`Expected PDF not found: ${produced}`)
@@ -318,10 +319,14 @@ async function runFreeze() {
 
   const dockerCtx = { imageRef, runDocker, repoRoot: root }
 
+  const patchedDocx = path.join(root, 'tmp', 'vic-form1-freeze', 'form-1-residential-rental-agreement-patched.docx')
+  await writePatchedVicForm1DocxForFreeze(SOURCE_DOCX, patchedDocx)
+  console.log('[vic-form1-freeze] Patched docx for LO pagination:', toPosixRel(patchedDocx))
+
   console.log('[vic-form1-freeze] Conversion run 1...')
-  const raw1 = Buffer.from(convertDocxToPdfRawDocker(imageRef))
+  const raw1 = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
   console.log('[vic-form1-freeze] Conversion run 2...')
-  const raw2 = Buffer.from(convertDocxToPdfRawDocker(imageRef))
+  const raw2 = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
 
   const pdfProbe = await probeVicForm1PdfWithPdfLib(raw1)
   console.log('[vic-form1-freeze] pageCount after conversion:', pdfProbe.pageCount)
@@ -427,6 +432,13 @@ async function runFreeze() {
     conversionDockerImageInspectedNonRunnable: LO_DOCKER_IMAGE_INSPECTED_NON_RUNNABLE,
     conversionNote:
       'Pinned lankalana 7.6.7.2 eclipse-temurin JRE; Docker-only soffice + pdftoppm; apt packages and fonts installed inside container only.',
+    docxPaginationPatch: {
+      tool: 'scripts/lib/vic-form1-docx-pagination-patch.mjs',
+      appliedAtFreezeOnly: true,
+      canonicalDocxUnchanged: true,
+      changes:
+        'Strip w:lastRenderedPageBreak; w:cantSplit on item 9.2 Renter 1–4 table rows (prevents stray checkbox-sized border at page 3→4 break).',
+    },
     containerAptPackages: VIC_FORM1_CONTAINER_APT_PACKAGES,
     fontPackageNames: VIC_FORM1_FONT_PACKAGE_NAMES,
     fontPackageVersions,
