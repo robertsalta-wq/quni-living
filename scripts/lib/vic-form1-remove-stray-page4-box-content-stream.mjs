@@ -192,3 +192,52 @@ export async function removeVicForm1StrayPage4BoxFromContentStream(bytes, strayH
     pagesTouched,
   }
 }
+
+/**
+ * @param {import('pdf-lib').PDFDocument} doc
+ * @param {number} pageIndex 0-based
+ */
+function decodedPageContentStreamText(doc, pageIndex) {
+  const page = doc.getPage(pageIndex)
+  const contentsRef = page.node.get(PDFName.of('Contents'))
+  const contents = doc.context.lookup(contentsRef)
+  /** @type {import('pdf-lib').PDFRawStream[]} */
+  const streams = []
+  if (contents instanceof PDFArray) {
+    for (let i = 0; i < contents.size(); i++) {
+      streams.push(doc.context.lookup(contents.get(i)))
+    }
+  } else if (contents) {
+    streams.push(contents)
+  }
+
+  let text = ''
+  for (const stream of streams) {
+    const filter = stream.dict.get(PDFName.of('Filter'))
+    let decoded = stream.contents
+    if (filter && String(filter) === '/FlateDecode') {
+      decoded = zlib.inflateSync(Buffer.from(decoded))
+    }
+    text += `${decoded.toString('latin1')}\n`
+  }
+  return text
+}
+
+/**
+ * @param {Uint8Array | Buffer} bytes
+ */
+export async function verifyNoStrayCoverOrPolygonInPdfBytes(bytes) {
+  const pdfBytes = Buffer.isBuffer(bytes) ? Uint8Array.from(bytes) : bytes
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const page4 = decodedPageContentStreamText(doc, 3)
+  /** @type {string[]} */
+  const failures = []
+  if (page4.includes('1 1 1 rg') && page4.includes('-2 836')) {
+    failures.push('white-cover rectangle on page 4 (-2 836 cm with 1 1 1 rg)')
+  }
+  const strayRemaining = removeStrayTopLeftCheckboxBorderPathsFromStream(page4)
+  if (strayRemaining.removed > 0 || /-0\.3 851/.test(page4)) {
+    failures.push('stray table-break polygon still present on page 4 content stream')
+  }
+  return { ok: failures.length === 0, failures, page: 4 }
+}

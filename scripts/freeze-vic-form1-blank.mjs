@@ -33,9 +33,11 @@ import {
   VIC_FORM1_CONTAINER_APT_PACKAGES,
   VIC_FORM1_FONT_PACKAGE_NAMES,
 } from './lib/vic-form1-container-packages.mjs'
-import { writePatchedVicForm1DocxForFreeze } from './lib/vic-form1-docx-pagination-patch.mjs'
 import { scanVicForm1CheckboxSquaresFromBytes } from './lib/vic-form1-checkbox-operator-scan.mjs'
-import { removeVicForm1StrayPage4BoxFromContentStream } from './lib/vic-form1-remove-stray-page4-box-content-stream.mjs'
+import {
+  removeVicForm1StrayPage4BoxFromContentStream,
+  verifyNoStrayCoverOrPolygonInPdfBytes,
+} from './lib/vic-form1-remove-stray-page4-box-content-stream.mjs'
 import { bytesToBuffer, rasterizeAllPagesToNamedPngs } from './lib/vic-form1-pdftoppm-raster.mjs'
 import { renderDiffVicForm1Pair } from './lib/vic-form1-render-diff.mjs'
 
@@ -69,6 +71,9 @@ const LO_DOCKER_IMAGE_INSPECTED_NON_RUNNABLE =
 
 const LO_PROFILE_HOST = path.join(root, 'tmp', 'vic-form1-freeze', 'lo-profile')
 const SOURCE_DATE_EPOCH = String(VIC_FORM1_BLANK_PDF_EPOCH_UNIX)
+
+/** Pinned LO 7.6.7.2 on unmodified CAV .docx (no freeze-time docx edits). */
+const VIC_FORM1_CANONICAL_PAGE_COUNT = 10
 
 const checkOnly = process.argv.includes('--check')
 
@@ -303,7 +308,7 @@ async function remediateStrayPage4CheckboxArtifact(raw1Converted, raw2Converted)
 
   if (!checkboxOperatorScan.ok) {
     console.log(
-      '[vic-form1-freeze] Stray page-4 border still present after docx keep-together; deleting path operators from content stream...',
+      '[vic-form1-freeze] LO table-break border fragment detected; deleting stray path operators from PDF content stream...',
     )
     const strayHints = checkboxOperatorScan.strayTopLeft.length
       ? checkboxOperatorScan.strayTopLeft
@@ -405,14 +410,12 @@ async function runFreeze() {
 
   const dockerCtx = { imageRef, runDocker, repoRoot: root }
 
-  const patchedDocx = path.join(root, 'tmp', 'vic-form1-freeze', 'form-1-residential-rental-agreement-patched.docx')
-  await writePatchedVicForm1DocxForFreeze(SOURCE_DOCX, patchedDocx)
-  console.log('[vic-form1-freeze] Patched docx for LO pagination:', toPosixRel(patchedDocx))
+  console.log('[vic-form1-freeze] Converting official CAV docx (unmodified):', toPosixRel(SOURCE_DOCX))
 
   console.log('[vic-form1-freeze] Conversion run 1...')
-  const raw1Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
+  const raw1Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, SOURCE_DOCX))
   console.log('[vic-form1-freeze] Conversion run 2...')
-  const raw2Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
+  const raw2Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, SOURCE_DOCX))
 
   const { raw1, raw2, checkboxOperatorScan, strayPage4BoxFix } = await remediateStrayPage4CheckboxArtifact(
     raw1Converted,
@@ -421,9 +424,17 @@ async function runFreeze() {
 
   const pdfProbe = await probeVicForm1PdfWithPdfLib(raw1)
   console.log('[vic-form1-freeze] pageCount after conversion:', pdfProbe.pageCount)
-  console.log(
-    `[vic-form1-freeze] expectedPageCount (informational only): ${VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL}`,
-  )
+  if (pdfProbe.pageCount !== VIC_FORM1_CANONICAL_PAGE_COUNT) {
+    throw new Error(
+      `page count must be ${VIC_FORM1_CANONICAL_PAGE_COUNT} (unmodified CAV docx + pinned LO), got ${pdfProbe.pageCount}`,
+    )
+  }
+
+  const bytesGate = await verifyNoStrayCoverOrPolygonInPdfBytes(raw1)
+  if (!bytesGate.ok) {
+    throw new Error(`PDF bytes gate failed: ${bytesGate.failures.join('; ')}`)
+  }
+  console.log('[vic-form1-freeze] PDF bytes gate ok (no white cover, no stray polygon markers)')
 
   const fullPageRaster = rasterizeAllPagesToNamedPngs({
     pdfBytes: raw1,
@@ -523,13 +534,9 @@ async function runFreeze() {
     conversionDockerImageInspectedNonRunnable: LO_DOCKER_IMAGE_INSPECTED_NON_RUNNABLE,
     conversionNote:
       'Pinned lankalana 7.6.7.2 eclipse-temurin JRE; Docker-only soffice + pdftoppm; apt packages and fonts installed inside container only.',
-    docxPaginationPatch: {
-      tool: 'scripts/lib/vic-form1-docx-pagination-patch.mjs',
-      appliedAtFreezeOnly: true,
-      canonicalDocxUnchanged: true,
-      changes:
-        'Strip w:lastRenderedPageBreak; pageBreakBefore + keepNext on item 9.2 block; merge Renter 1–4 into one 8-row table; w:cantSplit per row; outer keep-together wrapper table.',
-    },
+    sourceDocxUnmodified: true,
+    canonicalPageCount: VIC_FORM1_CANONICAL_PAGE_COUNT,
+    pdfBytesGate: bytesGate,
     checkboxOperatorScan: {
       tool: 'scripts/lib/vic-form1-checkbox-operator-scan.mjs',
       ...checkboxOperatorScan,
