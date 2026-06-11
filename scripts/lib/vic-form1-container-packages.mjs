@@ -63,7 +63,9 @@ export function parseDpkgVersionLines(stdout) {
  * @param {(imageRef: string, args: string[]) => { stdout: string, stderr: string }} runDocker
  */
 export function queryFontPackageVersionsDocker(imageRef, runDocker) {
-  const dpkgLine = `dpkg-query -W -f='\\${Package}\\t\\${Version}\\n' ${VIC_FORM1_FONT_PACKAGE_NAMES.join(' ')} 2>/dev/null || true`
+  const dpkgLine =
+    "dpkg-query -W -f='${Package}\\t${Version}\\n' " +
+    `${VIC_FORM1_FONT_PACKAGE_NAMES.join(' ')} 2>/dev/null || true`
   const inner = dockerContainerSetupScript(dpkgLine)
   const { stdout } = runDocker(imageRef, ['bash', '-lc', inner])
   return parseDpkgVersionLines(stdout)
