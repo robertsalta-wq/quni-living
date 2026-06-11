@@ -115,3 +115,59 @@ export function rasterizePdfBytesToPngs(opts) {
     fs.rmSync(tmpDir, { recursive: true, force: true })
   }
 }
+
+/**
+ * Rasterize every page to named PNGs for human fidelity review.
+ *
+ * @param {object} opts
+ * @param {Uint8Array | Buffer} opts.pdfBytes
+ * @param {string} opts.outDir host directory for output PNGs
+ * @param {string} opts.repoRoot
+ * @param {string} opts.imageRef
+ * @param {Function} opts.runDocker
+ * @param {string} [opts.fileNamePrefix] default vic-form1-blank-page
+ * @param {number} [opts.dpi]
+ * @returns {{ pngPaths: string[], relPaths: string[], pageCount: number, scale: number, rasterizer: string }}
+ */
+export function rasterizeAllPagesToNamedPngs(opts) {
+  const prefix = opts.fileNamePrefix ?? 'vic-form1-blank-page'
+  const dpi = opts.dpi ?? VIC_FORM1_RASTER_DPI
+  const tmpDir = path.join(opts.repoRoot, 'tmp', 'vic-form1-freeze', `all-pages-${crypto.randomUUID()}`)
+  fs.mkdirSync(tmpDir, { recursive: true })
+  fs.mkdirSync(opts.outDir, { recursive: true })
+
+  const pdfPath = path.join(tmpDir, 'input.pdf')
+  fs.writeFileSync(pdfPath, bytesToBuffer(opts.pdfBytes))
+
+  try {
+    const produced = pdftoppmPagesDocker({
+      imageRef: opts.imageRef,
+      runDocker: opts.runDocker,
+      hostPdfPath: pdfPath,
+      hostOutDir: tmpDir,
+      repoRoot: opts.repoRoot,
+      dpi,
+    })
+
+    const pngPaths = []
+    const relPaths = []
+    for (let i = 0; i < produced.length; i++) {
+      const pageNum = i + 1
+      const fileName = `${prefix}-${pageNum}.png`
+      const outPath = path.join(opts.outDir, fileName)
+      fs.copyFileSync(produced[i], outPath)
+      pngPaths.push(outPath)
+      relPaths.push(path.relative(opts.repoRoot, outPath).split(path.sep).join('/'))
+    }
+
+    return {
+      pngPaths,
+      relPaths,
+      pageCount: produced.length,
+      scale: dpi,
+      rasterizer: 'pdftoppm',
+    }
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  }
+}

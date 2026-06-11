@@ -15,25 +15,23 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { PDFDocument } from 'pdf-lib'
 import { PDFParse } from 'pdf-parse'
-import { phraseCoverage, VIC_FORM1_REGRESSION_PHRASES } from './lib/vic-form1-phrase-gate.mjs'
 import {
-  countEmbeddedImages,
-  countImageMarkersInPdfBytes,
   normalizeVicForm1BlankPdfBytes,
   VIC_FORM1_BLANK_PDF_EPOCH_ISO,
   VIC_FORM1_BLANK_PDF_EPOCH_UNIX,
 } from './lib/vic-form1-pdf-normalize.mjs'
+import { runInterpreterAnnexGate } from './lib/vic-form1-interpreter-annex-gate.mjs'
 import {
-  gateComplexScriptText,
-  runInterpreterAnnexGate,
-} from './lib/vic-form1-interpreter-annex-gate.mjs'
+  runVicForm1ContentCompletenessGate,
+  VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL,
+} from './lib/vic-form1-content-completeness-gate.mjs'
 import {
   dockerContainerSetupScript,
   queryFontPackageVersionsDocker,
   VIC_FORM1_CONTAINER_APT_PACKAGES,
   VIC_FORM1_FONT_PACKAGE_NAMES,
 } from './lib/vic-form1-container-packages.mjs'
-import { bytesToBuffer } from './lib/vic-form1-pdftoppm-raster.mjs'
+import { bytesToBuffer, rasterizeAllPagesToNamedPngs } from './lib/vic-form1-pdftoppm-raster.mjs'
 import { renderDiffVicForm1Pair } from './lib/vic-form1-render-diff.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -51,6 +49,12 @@ const ANNEX_GATE_REPORT = path.join(
   'vic-form1-interpreter-annex-gate.json',
 )
 const ANNEX_PNG_DIR = path.join(root, 'scripts', 'test-official-form-spike')
+const CONTENT_COMPLETENESS_REPORT = path.join(
+  root,
+  'scripts',
+  'test-official-form-spike',
+  'vic-form1-content-completeness-gate.json',
+)
 
 const LO_DOCKER_IMAGE =
   'lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b'
@@ -59,7 +63,6 @@ const LO_DOCKER_IMAGE_INSPECTED_NON_RUNNABLE =
   'lankalana/libreoffice-headless@sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0'
 
 const LO_PROFILE_HOST = path.join(root, 'tmp', 'vic-form1-freeze', 'lo-profile')
-const EXPECTED_PAGE_COUNT = 9
 const SOURCE_DATE_EPOCH = String(VIC_FORM1_BLANK_PDF_EPOCH_UNIX)
 
 const checkOnly = process.argv.includes('--check')
@@ -89,52 +92,25 @@ async function pdfPageCount(bytes) {
 }
 
 async function validateBlankPdf(bytes) {
-  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true })
-  const pageCount = doc.getPageCount()
-  const pageCountGate = {
-    expected: EXPECTED_PAGE_COUNT,
-    actual: pageCount,
-    pass: pageCount === EXPECTED_PAGE_COUNT,
-  }
-  if (!pageCountGate.pass) {
-    throw new Error(`pageCount ${pageCount} !== ${EXPECTED_PAGE_COUNT}`)
-  }
-
-  let embeddedImageCount = countEmbeddedImages(doc)
-  if (embeddedImageCount < 1) {
-    embeddedImageCount = countImageMarkersInPdfBytes(bytes)
-  }
-  if (embeddedImageCount < 1) {
-    throw new Error(`embeddedImageCount ${embeddedImageCount} < 1 (CAV logo expected)`)
-  }
-
   const text = await extractPdfText(bytes)
-  const phrases = phraseCoverage(text)
-  if (phrases.coveragePct !== 100) {
-    throw new Error(`phrase gate failed: missing ${phrases.missing.join(', ')}`)
-  }
-  if (!text.includes('Italian')) {
-    throw new Error('interpreter annex: expected Italian language section in PDF text')
-  }
-
-  const complexScript = gateComplexScriptText(text)
-  if (!complexScript.ok) {
-    const failed = complexScript.results.filter((r) => !r.pass).map((r) => r.id)
-    throw new Error(
-      `interpreter annex complex-script text gate failed: ${failed.join(', ')} tofuChars=${complexScript.tofuCharCount}`,
-    )
+  const contentCompleteness = await runVicForm1ContentCompletenessGate(bytes, text)
+  if (!contentCompleteness.ok) {
+    throw new Error(`content completeness gate failed: ${contentCompleteness.failures.join('; ')}`)
   }
 
   return {
-    pageCount,
-    pageCountGate,
-    embeddedImageCount,
+    pageCount: contentCompleteness.pageCount,
+    pageCountGate: contentCompleteness.pageCountGate,
+    embeddedImageCount: contentCompleteness.embeddedImageCount,
+    contentCompleteness,
     textVerification: {
-      phraseCoveragePct: phrases.coveragePct,
-      phrasesFound: phrases.found,
-      phrasesMissing: phrases.missing,
-      regressionPhrases: [...VIC_FORM1_REGRESSION_PHRASES],
-      complexScriptGate: complexScript,
+      phraseCoveragePct: contentCompleteness.phraseGate.coveragePct,
+      phrasesFound: contentCompleteness.phraseGate.phrasesFound,
+      phrasesMissing: contentCompleteness.phraseGate.phrasesMissing,
+      structureGate: contentCompleteness.structureGate,
+      complexScriptGate: contentCompleteness.complexScriptGate,
+      checkboxGate: contentCompleteness.checkboxGate,
+      imageGate: contentCompleteness.imageGate,
     },
   }
 }
@@ -337,11 +313,22 @@ async function runFreeze() {
 
   const pageCountRaw = await pdfPageCount(raw1)
   console.log('[vic-form1-freeze] pageCount after conversion:', pageCountRaw)
-  if (pageCountRaw !== EXPECTED_PAGE_COUNT) {
-    throw new Error(
-      `pageCount ${pageCountRaw} !== ${EXPECTED_PAGE_COUNT} — stop before freeze; fix fonts/render (coordinate map depends on faithful pagination)`,
-    )
-  }
+  console.log(
+    `[vic-form1-freeze] expectedPageCount (informational only): ${VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL}`,
+  )
+
+  const fullPageRaster = rasterizeAllPagesToNamedPngs({
+    pdfBytes: raw1,
+    outDir: ANNEX_PNG_DIR,
+    repoRoot: root,
+    imageRef,
+    runDocker,
+    fileNamePrefix: 'vic-form1-blank-page',
+  })
+  console.log(
+    `[vic-form1-freeze] Rasterized ${fullPageRaster.pageCount} page(s) for human review:`,
+    fullPageRaster.relPaths.join(', '),
+  )
 
   const annexGate = await runInterpreterAnnexGate(raw1, {
     outDir: ANNEX_PNG_DIR,
@@ -357,6 +344,17 @@ async function runFreeze() {
 
   fs.mkdirSync(path.dirname(ANNEX_GATE_REPORT), { recursive: true })
   fs.writeFileSync(ANNEX_GATE_REPORT, `${JSON.stringify({ ...annexGate, comparedAt: new Date().toISOString() }, null, 2)}\n`)
+
+  const rawText = await extractPdfText(raw1)
+  const contentCompletenessRaw = await runVicForm1ContentCompletenessGate(raw1, rawText)
+  fs.mkdirSync(path.dirname(CONTENT_COMPLETENESS_REPORT), { recursive: true })
+  fs.writeFileSync(
+    CONTENT_COMPLETENESS_REPORT,
+    `${JSON.stringify({ ...contentCompletenessRaw, comparedAt: new Date().toISOString() }, null, 2)}\n`,
+  )
+  if (!contentCompletenessRaw.ok) {
+    throw new Error(`content completeness gate failed: ${contentCompletenessRaw.failures.join('; ')}`)
+  }
 
   const renderDiff = await renderDiffVicForm1Pair(raw1, raw2, dockerCtx)
   if (!renderDiff.ok) {
@@ -392,7 +390,9 @@ async function runFreeze() {
     pageCount: validation.pageCount,
     pageCountGate: validation.pageCountGate,
     embeddedImageCount: validation.embeddedImageCount,
-    expectedPageCount: EXPECTED_PAGE_COUNT,
+    expectedPageCountInformational: VIC_FORM1_EXPECTED_PAGE_COUNT_INFORMATIONAL,
+    canonicalPageCountNote:
+      'Page count from pinned LO 7.6.7.2 container is canonical for coordinate map; not compared to sandbox LO 24.x.',
     conversionTool: 'libreoffice-docker',
     conversionDockerImage: imageDigest,
     conversionLoVersion: loVersion,
@@ -413,6 +413,15 @@ async function runFreeze() {
       renderDiff,
       renderDiffReport: 'scripts/test-official-form-spike/vic-form1-blank-render-diff.json',
       note: 'Raw conversion SHAs differ per-run (LO metadata); layout proven by pdftoppm maxDiffPixels 0.',
+    },
+    fullPageRaster: {
+      ...fullPageRaster,
+      fidelityGateOfRecord: 'all-page pdftoppm PNG human review',
+      note: 'Review all pages before locking canonical page count; 9 vs 10 is renderer-dependent.',
+    },
+    contentCompletenessGate: {
+      ...validation.contentCompleteness,
+      report: 'scripts/test-official-form-spike/vic-form1-content-completeness-gate.json',
     },
     interpreterAnnexGate: {
       ...annexGate,

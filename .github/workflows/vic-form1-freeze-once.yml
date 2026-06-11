@@ -39,5 +39,7 @@ jobs:
             docs/vic/form-1-blank-provenance.json
             docs/vic/source.json
             scripts/test-official-form-spike/vic-form1-blank-render-diff.json
+            scripts/test-official-form-spike/vic-form1-content-completeness-gate.json
             scripts/test-official-form-spike/vic-form1-interpreter-annex-gate.json
+            scripts/test-official-form-spike/vic-form1-blank-page-*.png
             scripts/test-official-form-spike/vic-form1-interpreter-annex-page-*.png
