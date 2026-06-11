@@ -34,7 +34,8 @@ import {
   VIC_FORM1_FONT_PACKAGE_NAMES,
 } from './lib/vic-form1-container-packages.mjs'
 import { writePatchedVicForm1DocxForFreeze } from './lib/vic-form1-docx-pagination-patch.mjs'
-import { removeVicForm1StrayPage4Box } from './lib/vic-form1-remove-stray-page4-box.mjs'
+import { scanVicForm1CheckboxSquaresFromBytes } from './lib/vic-form1-checkbox-operator-scan.mjs'
+import { removeVicForm1StrayPage4BoxFromContentStream } from './lib/vic-form1-remove-stray-page4-box-content-stream.mjs'
 import { bytesToBuffer, rasterizeAllPagesToNamedPngs } from './lib/vic-form1-pdftoppm-raster.mjs'
 import { renderDiffVicForm1Pair } from './lib/vic-form1-render-diff.mjs'
 
@@ -255,6 +256,59 @@ function convertDocxToPdfRawDocker(imageRef, hostDocxPath) {
   }
 }
 
+/**
+ * @param {Buffer} raw1Converted
+ * @param {Buffer} raw2Converted
+ */
+async function remediateStrayPage4CheckboxArtifact(raw1Converted, raw2Converted) {
+  let raw1 = Buffer.from(raw1Converted)
+  let raw2 = Buffer.from(raw2Converted)
+  let checkboxOperatorScan = await scanVicForm1CheckboxSquaresFromBytes(raw1)
+  /** @type {object | null} */
+  let strayPage4BoxFix = null
+
+  console.log(
+    `[vic-form1-freeze] Checkbox operator scan (pre-remediation): total=${checkboxOperatorScan.total} expected=${checkboxOperatorScan.expected}`,
+  )
+  for (const p of checkboxOperatorScan.perPage) {
+    if (p.count > 0) console.log(`  page ${p.page}: ${p.count}`)
+  }
+
+  if (!checkboxOperatorScan.ok) {
+    console.log(
+      '[vic-form1-freeze] Stray page-4 border still present after docx keep-together; deleting path operators from content stream...',
+    )
+    const fixed1 = await removeVicForm1StrayPage4BoxFromContentStream(raw1)
+    const fixed2 = await removeVicForm1StrayPage4BoxFromContentStream(raw2)
+    raw1 = Buffer.from(fixed1.bytes)
+    raw2 = Buffer.from(fixed2.bytes)
+    strayPage4BoxFix = {
+      tool: 'scripts/lib/vic-form1-remove-stray-page4-box-content-stream.mjs',
+      method: 'content-stream path deletion',
+      pathsRemovedPerRun: fixed1.removed,
+      reason:
+        'LO drew an extra ~11pt square at page 4 top-left (table page-break border fragment, not a 26th FORMCHECKBOX).',
+    }
+    checkboxOperatorScan = await scanVicForm1CheckboxSquaresFromBytes(raw1)
+    console.log(
+      `[vic-form1-freeze] Checkbox operator scan (post-remediation): total=${checkboxOperatorScan.total}`,
+    )
+  }
+
+  if (!checkboxOperatorScan.ok) {
+    throw new Error(
+      `checkbox operator scan failed: total ${checkboxOperatorScan.total}, expected ${checkboxOperatorScan.expected}`,
+    )
+  }
+  if (checkboxOperatorScan.strayPage4TopLeft.length > 0) {
+    throw new Error(
+      `page 4 top-left still has stray checkbox-sized path(s): ${JSON.stringify(checkboxOperatorScan.strayPage4TopLeft)}`,
+    )
+  }
+
+  return { raw1, raw2, checkboxOperatorScan, strayPage4BoxFix }
+}
+
 function writeBlankPdfAndVerify(normalized, blankSha) {
   fs.mkdirSync(path.dirname(BLANK_PDF), { recursive: true })
   const buf = bytesToBuffer(normalized)
@@ -329,9 +383,10 @@ async function runFreeze() {
   console.log('[vic-form1-freeze] Conversion run 2...')
   const raw2Converted = Buffer.from(convertDocxToPdfRawDocker(imageRef, patchedDocx))
 
-  console.log('[vic-form1-freeze] Removing stray page-4 top-left border artifact...')
-  const raw1 = Buffer.from(await removeVicForm1StrayPage4Box(raw1Converted))
-  const raw2 = Buffer.from(await removeVicForm1StrayPage4Box(raw2Converted))
+  const { raw1, raw2, checkboxOperatorScan, strayPage4BoxFix } = await remediateStrayPage4CheckboxArtifact(
+    raw1Converted,
+    raw2Converted,
+  )
 
   const pdfProbe = await probeVicForm1PdfWithPdfLib(raw1)
   console.log('[vic-form1-freeze] pageCount after conversion:', pdfProbe.pageCount)
@@ -442,14 +497,14 @@ async function runFreeze() {
       appliedAtFreezeOnly: true,
       canonicalDocxUnchanged: true,
       changes:
-        'Strip w:lastRenderedPageBreak; merge item 9.2 Renter 1–4 mini-tables into one 8-row table; w:cantSplit on each row.',
+        'Strip w:lastRenderedPageBreak; pageBreakBefore + keepNext on item 9.2 block; merge Renter 1–4 into one 8-row table; w:cantSplit per row; outer keep-together wrapper table.',
     },
-    strayPage4BoxFix: {
-      tool: 'scripts/lib/vic-form1-remove-stray-page4-box.mjs',
-      reason:
-        'LO draws an extra ~11pt square at page 4 top-left (not one of 25 FORMCHECKBOX fields); white cover before gates.',
-      boundsPdfPoints: { page: 4, x: -2, y: 836, width: 16, height: 16 },
+    checkboxOperatorScan: {
+      tool: 'scripts/lib/vic-form1-checkbox-operator-scan.mjs',
+      ...checkboxOperatorScan,
+      gate: 'hard — total must equal 25 with no page-4 top-left stray',
     },
+    ...(strayPage4BoxFix ? { strayPage4BoxFix } : {}),
     containerAptPackages: VIC_FORM1_CONTAINER_APT_PACKAGES,
     fontPackageNames: VIC_FORM1_FONT_PACKAGE_NAMES,
     fontPackageVersions,

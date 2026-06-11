@@ -6,6 +6,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import JSZip from 'jszip'
 
+const ITEM_92_QUESTION_MARKER = 'Does the renter agree to the service of notices'
+const ITEM_92_TICK_MARKER = 'tick as appropriate)</w:t></w:r></w:p><w:tbl>'
+
 /**
  * @param {string} documentXml
  */
@@ -14,6 +17,8 @@ export function patchVicForm1DocumentXml(documentXml) {
 
   // Word print hints; LO can render stray checkbox-sized boxes at page breaks.
   xml = xml.replace(/<w:lastRenderedPageBreak\/>/g, '')
+
+  xml = injectItem92BlockKeepTogether(xml)
 
   const tables = findRenterGridTables(xml)
   if (tables.length === 0) return xml
@@ -26,8 +31,88 @@ export function patchVicForm1DocumentXml(documentXml) {
   }
 
   const { start, end, tbl } = merged[0]
-  const next = injectCantSplitInRenterTable(tbl)
+  let next = injectCantSplitInRenterTable(tbl)
+  next = wrapRenterTableInKeepTogetherOuter(next)
   return xml.slice(0, start) + next + xml.slice(end)
+}
+
+/**
+ * Force item 9.2 (question + tick line + renter grid) to start on a fresh page and
+ * stay with the following table so LO does not draw a continuation border fragment.
+ *
+ * @param {string} xml
+ */
+function injectItem92BlockKeepTogether(xml) {
+  const question = findParagraphContaining(xml, ITEM_92_QUESTION_MARKER)
+  if (!question) throw new Error('item 9.2 question paragraph not found')
+
+  const tick = findParagraphEndingBefore(xml, ITEM_92_TICK_MARKER, question.end)
+  if (!tick) throw new Error('item 9.2 tick-instruction paragraph not found')
+
+  let questionPara = injectPageBreakBefore(question.para)
+  questionPara = injectKeepNext(questionPara)
+
+  let tickPara = injectKeepNext(tick.para)
+
+  return (
+    xml.slice(0, question.start) +
+    questionPara +
+    xml.slice(question.end, tick.start) +
+    tickPara +
+    xml.slice(tick.end)
+  )
+}
+
+/**
+ * @param {string} xml
+ * @param {string} marker unique suffix through following sibling tag
+ * @param {number} afterIndex search only after this offset
+ */
+function findParagraphEndingBefore(xml, marker, afterIndex) {
+  const idx = xml.indexOf(marker, afterIndex)
+  if (idx < 0) return null
+  const pEnd = idx + marker.indexOf('</w:p>') + 6
+  const pStart = xml.lastIndexOf('<w:p ', pEnd)
+  if (pStart < afterIndex) return null
+  return { start: pStart, end: pEnd, para: xml.slice(pStart, pEnd) }
+}
+
+/**
+ * @param {string} xml
+ * @param {string} marker
+ */
+function findParagraphContaining(xml, marker) {
+  const idx = xml.indexOf(marker)
+  if (idx < 0) return null
+
+  const pStart = xml.lastIndexOf('<w:p ', idx)
+  if (pStart < 0) return null
+  const pEnd = xml.indexOf('</w:p>', idx)
+  if (pEnd < 0) return null
+
+  return { start: pStart, end: pEnd + 6, para: xml.slice(pStart, pEnd + 6) }
+}
+
+/**
+ * @param {string} paraXml
+ */
+function injectPageBreakBefore(paraXml) {
+  if (paraXml.includes('w:pageBreakBefore')) return paraXml
+  if (paraXml.includes('<w:pPr>')) {
+    return paraXml.replace('<w:pPr>', '<w:pPr><w:pageBreakBefore w:val="1"/>')
+  }
+  return paraXml.replace(/<w:p\b[^>]*>/, (open) => `${open}<w:pPr><w:pageBreakBefore w:val="1"/></w:pPr>`)
+}
+
+/**
+ * @param {string} paraXml
+ */
+function injectKeepNext(paraXml) {
+  if (paraXml.includes('w:keepNext')) return paraXml
+  if (paraXml.includes('<w:pPr>')) {
+    return paraXml.replace('<w:pPr>', '<w:pPr><w:keepNext w:val="1"/>')
+  }
+  return paraXml.replace(/<w:p\b[^>]*>/, (open) => `${open}<w:pPr><w:keepNext w:val="1"/></w:pPr>`)
 }
 
 /**
@@ -106,6 +191,15 @@ function injectCantSplitInRenterTable(tblXml) {
     }
     return row.replace(/<w:tr\b[^>]*>/, (open) => `${open}<w:trPr><w:cantSplit w:val="1"/></w:trPr>`)
   })
+}
+
+/**
+ * Outer single-cell table with cantSplit so LO cannot break the renter grid across pages.
+ *
+ * @param {string} innerTblXml full <w:tbl>…</w:tbl>
+ */
+function wrapRenterTableInKeepTogetherOuter(innerTblXml) {
+  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblLayout w:type="autofit"/><w:tblLook w:val="0000" w:firstRow="0" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0"/></w:tblPr><w:tblGrid><w:gridCol w:w="10000"/></w:tblGrid><w:tr><w:trPr><w:cantSplit w:val="1"/></w:trPr><w:tc><w:tcPr><w:tcW w:w="10000" w:type="dxa"/><w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders></w:tcPr>${innerTblXml}</w:tc></w:tr></w:tbl>`
 }
 
 /**
