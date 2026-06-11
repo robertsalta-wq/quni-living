@@ -31,6 +31,7 @@ jobs:
         run: node scripts/freeze-vic-form1-blank.mjs --check
 
       - name: Upload freeze artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vic-form1-freeze

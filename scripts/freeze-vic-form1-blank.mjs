@@ -81,11 +81,21 @@ function shellQuote(arg) {
   return `'${arg.replace(/'/g, `'\\''`)}'`
 }
 
-async function extractPdfText(buf) {
+async function extractPdfTextWithPages(buf) {
   const parser = new PDFParse({ data: buf })
-  const result = await parser.getText()
-  await parser.destroy()
-  return (result.text || '').replace(/\r\n/g, '\n')
+  try {
+    const result = await parser.getText()
+    const text = (result.text || '').replace(/\r\n/g, '\n')
+    const pageTexts = result.pages?.length ? result.pages.map((page) => page.text || '') : [text]
+    return { text, pageTexts }
+  } finally {
+    await parser.destroy()
+  }
+}
+
+async function extractPdfText(buf) {
+  const { text } = await extractPdfTextWithPages(buf)
+  return text
 }
 
 async function pdfPageCount(bytes) {
@@ -332,8 +342,8 @@ async function runFreeze() {
     fullPageRaster.relPaths.join(', '),
   )
 
-  const rawText = await extractPdfText(raw1)
-  const contentCompletenessRaw = finishVicForm1ContentCompletenessGate(rawText, pdfProbe)
+  const rawTextBundle = await extractPdfTextWithPages(raw1)
+  const contentCompletenessRaw = finishVicForm1ContentCompletenessGate(rawTextBundle.text, pdfProbe)
   fs.mkdirSync(path.dirname(CONTENT_COMPLETENESS_REPORT), { recursive: true })
   fs.writeFileSync(
     CONTENT_COMPLETENESS_REPORT,
@@ -348,6 +358,7 @@ async function runFreeze() {
     repoRoot: root,
     imageRef,
     runDocker,
+    pageTexts: rawTextBundle.pageTexts,
   })
   if (!annexGate.heuristicOk) {
     console.warn(
@@ -376,9 +387,23 @@ async function runFreeze() {
     ),
   )
 
-  const normalized = await normalizeVicForm1BlankPdfBytes(raw1)
+  const normalized = await normalizeVicForm1BlankPdfBytes(pdfProbe.pdfBytes)
   const blankSha = sha256(normalized)
-  const validation = await validateBlankPdf(normalized)
+  const validation = {
+    pageCount: contentCompletenessRaw.pageCount,
+    pageCountGate: contentCompletenessRaw.pageCountGate,
+    embeddedImageCount: contentCompletenessRaw.embeddedImageCount,
+    contentCompleteness: contentCompletenessRaw,
+    textVerification: {
+      phraseCoveragePct: contentCompletenessRaw.phraseGate.coveragePct,
+      phrasesFound: contentCompletenessRaw.phraseGate.phrasesFound,
+      phrasesMissing: contentCompletenessRaw.phraseGate.phrasesMissing,
+      structureGate: contentCompletenessRaw.structureGate,
+      complexScriptGate: contentCompletenessRaw.complexScriptGate,
+      checkboxExportMode: contentCompletenessRaw.checkboxExportMode,
+      imageGate: contentCompletenessRaw.imageGate,
+    },
+  }
   const diskVerify = writeBlankPdfAndVerify(normalized, blankSha)
 
   const sourceDocxSha = sha256(fs.readFileSync(SOURCE_DOCX))

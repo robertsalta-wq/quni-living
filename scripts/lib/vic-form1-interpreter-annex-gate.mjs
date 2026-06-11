@@ -157,10 +157,10 @@ export async function rasterizeAnnexPagesToPng(opts) {
 
 /**
  * @param {Uint8Array | Buffer} pdfBytes
- * @param {{ outDir: string, repoRoot: string, imageRef: string, runDocker: Function }} opts
+ * @param {{ outDir: string, repoRoot: string, imageRef: string, runDocker: Function, pageTexts?: string[] }} opts
  */
 export async function runInterpreterAnnexGate(pdfBytes, opts) {
-  const pageTexts = await extractPdfPageTexts(pdfBytes)
+  const pageTexts = opts.pageTexts ?? (await extractPdfPageTexts(pdfBytes))
   const fullText = pageTexts.join('\n')
   const textGate = gateComplexScriptText(fullText)
   const { pageIndices } = findInterpreterAnnexPageIndices(pageTexts)
