@@ -86,16 +86,19 @@ export async function scanVicForm1CheckboxSquares(pdfjs, data) {
   await pdf.destroy()
 
   const total = perPage.reduce((s, p) => s + p.boxes.length, 0)
-  const page4 = perPage.find((p) => p.page === 4)
-  const strayCandidates =
-    page4?.boxes.filter((b) => b.minX < 60 && b.topY < 50) ?? []
+  const strayTopLeft = perPage.flatMap((p) =>
+    p.boxes
+      .filter((b) => b.minX < 15 && b.topY < 50)
+      .map((b) => ({ page: p.page, ...b })),
+  )
 
   return {
     total,
     expected: 25,
     ok: total === 25,
     perPage: perPage.map((p) => ({ page: p.page, count: p.boxes.length, boxes: p.boxes })),
-    strayPage4TopLeft: strayCandidates,
+    strayTopLeft,
+    strayPage4TopLeft: strayTopLeft.filter((b) => b.page === 4),
   }
 }
 

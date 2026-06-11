@@ -1,21 +1,15 @@
 /**
- * Remove LO stray checkbox-sized border artifact at page 4 top-left by deleting
- * the path operators from the page content stream (not masking).
- *
- * Used only when docx keep-together cannot prevent the table-break fragment.
+ * Remove LO stray checkbox-sized border artifact(s) by deleting path operators
+ * from page content streams (not masking). Stray paths sit at the visual page top
+ * with min x below ~15pt when the 9.2 renter grid straddles a page break.
  */
 import zlib from 'node:zlib'
 import { PDFDocument, PDFName, PDFArray } from 'pdf-lib'
 
-const STRAY_PAGE_INDEX = 3 // 0-based page 4
-
 /**
- * LO draws a ~11pt closed path near the page top with min x below ~15pt when the
- * 9.2 renter grid straddles a page break. Prescribed checkboxes sit at x ≈ 45.85.
- *
  * @param {string} streamText decoded PDF content stream
  */
-export function removeStrayPage4TopLeftPathFromStream(streamText) {
+export function removeStrayTopLeftCheckboxBorderPathsFromStream(streamText) {
   const strayPathRe =
     /q 0\.5 w 0 J 0 j [\d.]+ M\r?\n[\d.-]+ [\d.]+ m\r?\n[\d.-]+ [\d.]+ l [\d.-]+ [\d.]+ l [\d.]+ [\d.]+ l [\d.]+ [\d.]+ l\r?\n[\d.]+ [\d.]+ l h\r?\nS\r?\nQ\r?\n/g
 
@@ -44,27 +38,28 @@ export function removeStrayPage4TopLeftPathFromStream(streamText) {
 }
 
 /**
- * @param {Uint8Array | Buffer} bytes
- * @returns {Promise<{ bytes: Uint8Array, removed: number }>}
+ * @param {import('pdf-lib').PDFDocument} doc
+ * @param {number} pageIndex 0-based
  */
-export async function removeVicForm1StrayPage4BoxFromContentStream(bytes) {
-  const pdfBytes = Buffer.isBuffer(bytes) ? Uint8Array.from(bytes) : bytes
-  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
-  if (doc.getPageCount() <= STRAY_PAGE_INDEX) {
-    throw new Error(`stray box content-stream fix: expected page 4, got ${doc.getPageCount()} pages`)
-  }
-
-  const page = doc.getPage(STRAY_PAGE_INDEX)
+function removeStrayPathsFromPage(doc, pageIndex) {
+  const page = doc.getPage(pageIndex)
   const contentsRef = page.node.get(PDFName.of('Contents'))
   const contents = doc.context.lookup(contentsRef)
-  if (!(contents instanceof PDFArray)) {
-    throw new Error('stray box content-stream fix: expected page Contents array')
+  /** @type {import('pdf-lib').PDFRawStream[]} */
+  const streams = []
+
+  if (contents instanceof PDFArray) {
+    for (let i = 0; i < contents.size(); i++) {
+      streams.push(doc.context.lookup(contents.get(i)))
+    }
+  } else if (contents) {
+    streams.push(contents)
+  } else {
+    throw new Error(`stray box content-stream fix: page ${pageIndex + 1} has no Contents`)
   }
 
-  let totalRemoved = 0
-  for (let i = 0; i < contents.size(); i++) {
-    const streamRef = contents.get(i)
-    const stream = doc.context.lookup(streamRef)
+  let removed = 0
+  for (const stream of streams) {
     const filter = stream.dict.get(PDFName.of('Filter'))
     let decoded = stream.contents
     if (filter && String(filter) === '/FlateDecode') {
@@ -72,18 +67,45 @@ export async function removeVicForm1StrayPage4BoxFromContentStream(bytes) {
     }
 
     const text = decoded.toString('latin1')
-    const { streamText, removed } = removeStrayPage4TopLeftPathFromStream(text)
-    if (removed === 0) continue
+    const { streamText, removed: n } = removeStrayTopLeftCheckboxBorderPathsFromStream(text)
+    if (n === 0) continue
 
-    totalRemoved += removed
+    removed += n
     const encoded = zlib.deflateSync(Buffer.from(streamText, 'latin1'))
     stream.contents = encoded
     stream.dict.set(PDFName.of('Length'), doc.context.obj(encoded.length))
   }
 
-  if (totalRemoved === 0) {
-    throw new Error('stray box content-stream fix: no matching path operators found on page 4')
+  return removed
+}
+
+/**
+ * @param {Uint8Array | Buffer} bytes
+ * @returns {Promise<{ bytes: Uint8Array, removed: number, pagesTouched: number[] }>}
+ */
+export async function removeVicForm1StrayPage4BoxFromContentStream(bytes) {
+  const pdfBytes = Buffer.isBuffer(bytes) ? Uint8Array.from(bytes) : bytes
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+
+  let totalRemoved = 0
+  /** @type {number[]} */
+  const pagesTouched = []
+
+  for (let pageIndex = 0; pageIndex < doc.getPageCount(); pageIndex++) {
+    const n = removeStrayPathsFromPage(doc, pageIndex)
+    if (n > 0) {
+      totalRemoved += n
+      pagesTouched.push(pageIndex + 1)
+    }
   }
 
-  return { bytes: await doc.save({ useObjectStreams: false }), removed: totalRemoved }
+  if (totalRemoved === 0) {
+    throw new Error('stray box content-stream fix: no matching path operators found in PDF')
+  }
+
+  return {
+    bytes: await doc.save({ useObjectStreams: false }),
+    removed: totalRemoved,
+    pagesTouched,
+  }
 }

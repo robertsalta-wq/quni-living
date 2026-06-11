@@ -285,9 +285,10 @@ async function remediateStrayPage4CheckboxArtifact(raw1Converted, raw2Converted)
     strayPage4BoxFix = {
       tool: 'scripts/lib/vic-form1-remove-stray-page4-box-content-stream.mjs',
       method: 'content-stream path deletion',
-      pathsRemovedPerRun: fixed1.removed,
+      pathsRemovedRun1: fixed1.removed,
+      pagesTouchedRun1: fixed1.pagesTouched,
       reason:
-        'LO drew an extra ~11pt square at page 4 top-left (table page-break border fragment, not a 26th FORMCHECKBOX).',
+        'LO drew an extra ~11pt square at a page top (9.2 table page-break border fragment, not a 26th FORMCHECKBOX).',
     }
     checkboxOperatorScan = await scanVicForm1CheckboxSquaresFromBytes(raw1)
     console.log(
@@ -300,9 +301,9 @@ async function remediateStrayPage4CheckboxArtifact(raw1Converted, raw2Converted)
       `checkbox operator scan failed: total ${checkboxOperatorScan.total}, expected ${checkboxOperatorScan.expected}`,
     )
   }
-  if (checkboxOperatorScan.strayPage4TopLeft.length > 0) {
+  if (checkboxOperatorScan.strayTopLeft.length > 0) {
     throw new Error(
-      `page 4 top-left still has stray checkbox-sized path(s): ${JSON.stringify(checkboxOperatorScan.strayPage4TopLeft)}`,
+      `page top-left still has stray checkbox-sized path(s): ${JSON.stringify(checkboxOperatorScan.strayTopLeft)}`,
     )
   }
 
