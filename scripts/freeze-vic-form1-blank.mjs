@@ -330,6 +330,17 @@ async function runFreeze() {
     fullPageRaster.relPaths.join(', '),
   )
 
+  const rawText = await extractPdfText(raw1)
+  const contentCompletenessRaw = await runVicForm1ContentCompletenessGate(raw1, rawText)
+  fs.mkdirSync(path.dirname(CONTENT_COMPLETENESS_REPORT), { recursive: true })
+  fs.writeFileSync(
+    CONTENT_COMPLETENESS_REPORT,
+    `${JSON.stringify({ ...contentCompletenessRaw, comparedAt: new Date().toISOString() }, null, 2)}\n`,
+  )
+  if (!contentCompletenessRaw.ok) {
+    throw new Error(`content completeness gate failed: ${contentCompletenessRaw.failures.join('; ')}`)
+  }
+
   const annexGate = await runInterpreterAnnexGate(raw1, {
     outDir: ANNEX_PNG_DIR,
     repoRoot: root,
@@ -344,17 +355,6 @@ async function runFreeze() {
 
   fs.mkdirSync(path.dirname(ANNEX_GATE_REPORT), { recursive: true })
   fs.writeFileSync(ANNEX_GATE_REPORT, `${JSON.stringify({ ...annexGate, comparedAt: new Date().toISOString() }, null, 2)}\n`)
-
-  const rawText = await extractPdfText(raw1)
-  const contentCompletenessRaw = await runVicForm1ContentCompletenessGate(raw1, rawText)
-  fs.mkdirSync(path.dirname(CONTENT_COMPLETENESS_REPORT), { recursive: true })
-  fs.writeFileSync(
-    CONTENT_COMPLETENESS_REPORT,
-    `${JSON.stringify({ ...contentCompletenessRaw, comparedAt: new Date().toISOString() }, null, 2)}\n`,
-  )
-  if (!contentCompletenessRaw.ok) {
-    throw new Error(`content completeness gate failed: ${contentCompletenessRaw.failures.join('; ')}`)
-  }
 
   const renderDiff = await renderDiffVicForm1Pair(raw1, raw2, dockerCtx)
   if (!renderDiff.ok) {

@@ -6,6 +6,7 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import { PDFParse } from 'pdf-parse'
 import {
   measurePngInkRatio,
   pdftoppmPagesDocker,
@@ -28,20 +29,6 @@ const ANNEX_END_MARKER = 'Italian'
 
 const TOFU_TEXT_RE = /[\u25A1\uFFFD\uF8FF]/g
 const MIN_ANNEX_INK_RATIO = 0.008
-
-function toUint8(bytes) {
-  // pdfjs-dist rejects Node Buffer even though Buffer extends Uint8Array.
-  if (Buffer.isBuffer(bytes)) {
-    return Uint8Array.from(bytes)
-  }
-  if (bytes instanceof Uint8Array) {
-    if (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength) {
-      return bytes
-    }
-    return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  }
-  return new Uint8Array(bytes)
-}
 
 /**
  * @param {string} text
@@ -89,20 +76,20 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
 }
 
 /**
- * Text-only page extract (pdfjs getTextContent — no canvas render).
+ * Text-only per-page extract (pdf-parse; same engine as freeze extractPdfText).
  * @param {Uint8Array | Buffer} pdfBytes
  */
 export async function extractPdfPageTexts(pdfBytes) {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
-  const pageTexts = []
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i)
-    const content = await page.getTextContent()
-    const text = content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
-    pageTexts.push(text)
+  const parser = new PDFParse({ data: bytesToBuffer(pdfBytes) })
+  try {
+    const result = await parser.getText()
+    if (result.pages?.length) {
+      return result.pages.map((page) => page.text || '')
+    }
+    return [result.text || '']
+  } finally {
+    await parser.destroy()
   }
-  return pageTexts
 }
 
 /**

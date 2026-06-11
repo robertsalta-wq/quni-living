@@ -36,9 +36,24 @@ export const VIC_FORM1_CONTENT_STRUCTURE_MARKERS = [
 
 /**
  * @param {Uint8Array | Buffer} bytes
+ * @returns {Uint8Array}
+ */
+function toPdfLibBytes(bytes) {
+  if (Buffer.isBuffer(bytes)) return Uint8Array.from(bytes)
+  if (bytes instanceof Uint8Array) {
+    if (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength) {
+      return bytes
+    }
+    return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  }
+  return new Uint8Array(bytes)
+}
+
+/**
+ * @param {Uint8Array | Buffer} bytes
  */
 export async function countPdfFormCheckboxes(bytes) {
-  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true })
+  const doc = await PDFDocument.load(toPdfLibBytes(bytes), { ignoreEncryption: true })
   const form = doc.getForm()
   const fields = form.getFields()
   const checkboxes = fields.filter((f) => f instanceof PDFCheckBox)
@@ -114,19 +129,20 @@ export function gateContentStructureMarkers(text) {
  * @param {string} text full PDF text extract
  */
 export async function runVicForm1ContentCompletenessGate(bytes, text) {
-  const pageCountDoc = await PDFDocument.load(bytes, { ignoreEncryption: true })
+  const pdfBytes = toPdfLibBytes(bytes)
+  const pageCountDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
   const pageCount = pageCountDoc.getPageCount()
 
   let embeddedImageCount = countEmbeddedImages(pageCountDoc)
   if (embeddedImageCount < 1) {
-    embeddedImageCount = countImageMarkersInPdfBytes(bytes)
+    embeddedImageCount = countImageMarkersInPdfBytes(pdfBytes)
   }
 
   const phrases = phraseCoverage(text, VIC_FORM1_REGRESSION_PHRASES)
   const structure = gateContentStructureMarkers(text)
   const complexScript = gateComplexScriptText(text)
-  const formFields = await countPdfFormCheckboxes(bytes)
-  const checkboxExportMode = recordCheckboxExportMode(bytes, text, formFields)
+  const formFields = await countPdfFormCheckboxes(pdfBytes)
+  const checkboxExportMode = recordCheckboxExportMode(pdfBytes, text, formFields)
 
   const imageGate = {
     expectedMin: 1,
