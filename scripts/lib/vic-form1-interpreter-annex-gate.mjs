@@ -1,13 +1,17 @@
 /**
  * Interpreter annex gate for VIC Form 1 blank PDF freeze.
  *
- * Fidelity gate of record: rasterized annex PNG(s) for human review against a known-good render.
- * Automated checks below are supporting heuristics only — correct Arabic/CJK codepoints remain
- * in the PDF text layer even when glyphs render as boxes, and box glyphs carry ink so density
- * checks can miss tofu too.
+ * Fidelity gate of record: pdftoppm rasterized annex PNG(s) for human review.
+ * Text/ink heuristics are supporting only.
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import {
+  measurePngInkRatio,
+  pdftoppmPagesDocker,
+  VIC_FORM1_RASTER_DPI,
+  bytesToBuffer,
+} from './vic-form1-pdftoppm-raster.mjs'
 
 /** Representative substrings from docs/vic/form-1-extracted-from-cav.md (interpreter annex). */
 export const VIC_FORM1_ANNEX_COMPLEX_SCRIPT_SAMPLES = [
@@ -23,20 +27,12 @@ const ANNEX_START_MARKER = 'Telephone interpreter service'
 const ANNEX_END_MARKER = 'Italian'
 
 const TOFU_TEXT_RE = /[\u25A1\uFFFD\uF8FF]/g
-
-const RASTER_SCALE = 2
 const MIN_ANNEX_INK_RATIO = 0.008
 
-/** pdfjs rejects Node Buffer even though it subclasses Uint8Array. */
 function toUint8(bytes) {
-  return new Uint8Array(bytes)
-}
-
-let canvasModule = null
-try {
-  canvasModule = await import('canvas')
-} catch {
-  canvasModule = null
+  return bytes instanceof Uint8Array && bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
+    ? bytes
+    : new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 }
 
 /**
@@ -72,7 +68,7 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
   if (start < 0) {
     throw new Error(`interpreter annex: missing start marker "${ANNEX_START_MARKER}"`)
   }
-  let end = pageTexts.length - 1
+  let end = start
   for (let i = start; i < pageTexts.length; i++) {
     if (new RegExp(`\\b${ANNEX_END_MARKER}\\b`, 'i').test(pageTexts[i])) {
       end = i
@@ -81,22 +77,16 @@ export function findInterpreterAnnexPageIndices(pageTexts) {
   if (end < start) {
     throw new Error(`interpreter annex: missing end marker "${ANNEX_END_MARKER}"`)
   }
-  // LO may break the annex across trailing pages (e.g. page 9 shell + page 10 body).
-  if (end < pageTexts.length - 1) {
-    end = pageTexts.length - 1
-  }
   return { start, end, pageIndices: Array.from({ length: end - start + 1 }, (_, k) => start + k) }
 }
 
 /**
- * @param {Uint8Array} pdfBytes
- * @returns {Promise<string[]>}
+ * Text-only page extract (pdfjs getTextContent — no canvas render).
+ * @param {Uint8Array | Buffer} pdfBytes
  */
 export async function extractPdfPageTexts(pdfBytes) {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { pdfjsGetDocument } = await import('./pdfjs-node-canvas-factory.mjs')
-  const canvasModule = await import('canvas')
-  const pdf = await pdfjsGetDocument(pdfjs, toUint8(pdfBytes), canvasModule.createCanvas).promise
+  const pdf = await pdfjs.getDocument({ data: toUint8(pdfBytes), useSystemFonts: true }).promise
   const pageTexts = []
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
@@ -108,84 +98,98 @@ export async function extractPdfPageTexts(pdfBytes) {
 }
 
 /**
- * @param {import('canvas').ImageData} imageData
+ * @param {object} opts
+ * @param {Uint8Array | Buffer} opts.pdfBytes
+ * @param {number[]} opts.pageIndices 0-based
+ * @param {string} opts.outDir
+ * @param {string} opts.repoRoot
+ * @param {string} opts.imageRef
+ * @param {Function} opts.runDocker
  */
-export function measureInkRatio(imageData) {
-  const { data, width, height } = imageData
-  let dark = 0
-  const total = width * height
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i]
-    const g = data[i + 1]
-    const b = data[i + 2]
-    const lum = 0.299 * r + 0.587 * g + 0.114 * b
-    if (lum < 200) dark++
+export async function rasterizeAnnexPagesToPng(opts) {
+  const { pageIndices } = opts
+  if (pageIndices.length === 0) {
+    throw new Error('interpreter annex: no pages to rasterize')
   }
-  return total > 0 ? dark / total : 0
+
+  const tmpDir = path.join(opts.repoRoot, 'tmp', 'vic-form1-freeze', `annex-${Date.now()}`)
+  fs.mkdirSync(tmpDir, { recursive: true })
+  const pdfPath = path.join(tmpDir, 'input.pdf')
+  fs.writeFileSync(pdfPath, bytesToBuffer(opts.pdfBytes))
+
+  const firstPage = pageIndices[0] + 1
+  const lastPage = pageIndices[pageIndices.length - 1] + 1
+
+  try {
+    const produced = pdftoppmPagesDocker({
+      imageRef: opts.imageRef,
+      runDocker: opts.runDocker,
+      hostPdfPath: pdfPath,
+      hostOutDir: tmpDir,
+      repoRoot: opts.repoRoot,
+      firstPage,
+      lastPage,
+      dpi: VIC_FORM1_RASTER_DPI,
+    })
+
+    fs.mkdirSync(opts.outDir, { recursive: true })
+    const pngPaths = []
+    const inkByPage = []
+
+    for (let i = 0; i < produced.length; i++) {
+      const pageIndex = pageIndices[i]
+      const pageNum = pageIndex + 1
+      const fileName = `vic-form1-interpreter-annex-page-${pageNum}.png`
+      const outPath = path.join(opts.outDir, fileName)
+      fs.copyFileSync(produced[i], outPath)
+      pngPaths.push(outPath)
+
+      const ink = await measurePngInkRatio(fs.readFileSync(outPath))
+      inkByPage.push({
+        pageIndex,
+        pageNum,
+        inkRatio: ink.inkRatio,
+        width: ink.width,
+        height: ink.height,
+      })
+    }
+
+    return { pngPaths, inkByPage, scale: VIC_FORM1_RASTER_DPI, rasterizer: 'pdftoppm' }
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  }
 }
 
 /**
- * @param {Uint8Array} pdfBytes
- * @param {number[]} pageIndices 0-based
- * @param {string} outDir
- */
-export async function rasterizeAnnexPagesToPng(pdfBytes, pageIndices, outDir) {
-  if (!canvasModule) {
-    throw new Error('canvas package required for interpreter annex raster gate')
-  }
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const { pdfjsGetDocument } = await import('./pdfjs-node-canvas-factory.mjs')
-  const { createCanvas } = canvasModule
-  const pdf = await pdfjsGetDocument(pdfjs, toUint8(pdfBytes), createCanvas).promise
-  fs.mkdirSync(outDir, { recursive: true })
-
-  const pngPaths = []
-  const inkByPage = []
-
-  for (const pageIndex of pageIndices) {
-    const pageNum = pageIndex + 1
-    const page = await pdf.getPage(pageNum)
-    const viewport = page.getViewport({ scale: RASTER_SCALE })
-    const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height))
-    const ctx = canvas.getContext('2d')
-    await page.render({ canvasContext: ctx, viewport }).promise
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const inkRatio = measureInkRatio(imageData)
-    inkByPage.push({ pageIndex, pageNum, inkRatio, width: canvas.width, height: canvas.height })
-
-    const fileName = `vic-form1-interpreter-annex-page-${pageNum}.png`
-    const outPath = path.join(outDir, fileName)
-    fs.writeFileSync(outPath, canvas.toBuffer('image/png'))
-    pngPaths.push(outPath)
-  }
-
-  return { pngPaths, inkByPage, scale: RASTER_SCALE }
-}
-
-/**
- * @param {Uint8Array} pdfBytes
- * @param {{ outDir: string, repoRoot?: string }} opts
+ * @param {Uint8Array | Buffer} pdfBytes
+ * @param {{ outDir: string, repoRoot: string, imageRef: string, runDocker: Function }} opts
  */
 export async function runInterpreterAnnexGate(pdfBytes, opts) {
   const pageTexts = await extractPdfPageTexts(pdfBytes)
   const fullText = pageTexts.join('\n')
   const textGate = gateComplexScriptText(fullText)
   const { pageIndices } = findInterpreterAnnexPageIndices(pageTexts)
-  const { pngPaths, inkByPage, scale } = await rasterizeAnnexPagesToPng(pdfBytes, pageIndices, opts.outDir)
+  const { pngPaths, inkByPage, scale, rasterizer } = await rasterizeAnnexPagesToPng({
+    pdfBytes,
+    pageIndices,
+    outDir: opts.outDir,
+    repoRoot: opts.repoRoot,
+    imageRef: opts.imageRef,
+    runDocker: opts.runDocker,
+  })
 
   const lowInkPages = inkByPage.filter((p) => p.inkRatio < MIN_ANNEX_INK_RATIO)
   const inkOk = lowInkPages.length === 0
-
   const heuristicOk = textGate.ok && inkOk
   const repoRoot = opts.repoRoot ?? process.cwd()
   const relPaths = pngPaths.map((p) => path.relative(repoRoot, p).split(path.sep).join('/'))
 
   return {
     heuristicOk,
-    /** @deprecated use heuristicOk — automated checks are not the fidelity gate */
     ok: heuristicOk,
     gate: 'interpreterAnnex',
-    fidelityGateOfRecord: 'annex PNG human review',
+    fidelityGateOfRecord: 'annex PNG human review (pdftoppm)',
+    rasterizer,
     scale,
     annexPageIndices: pageIndices,
     annexPageNumbers: pageIndices.map((i) => i + 1),
@@ -196,6 +200,6 @@ export async function runInterpreterAnnexGate(pdfBytes, opts) {
     lowInkPages,
     pngPaths: relPaths,
     reportNote:
-      'PNG visual is gate of record; text samples, tofu chars, and ink density are supporting heuristics only.',
+      'pdftoppm PNG is gate of record; text samples, tofu chars, and ink density are supporting heuristics only.',
   }
 }
