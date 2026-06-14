@@ -37,7 +37,7 @@ import { AUDateField } from '../components/AUDateField'
 import Seo from '../components/Seo'
 import ChatEmbed from '../components/aiChat/ChatEmbed'
 import { DEFAULT_OG_IMAGE, LISTING_SEO_SUFFIX, LISTING_TITLE_FALLBACK, SITE_CONTENT_MAX_CLASS } from '../lib/site'
-import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
+import { firstPropertyImageUrl, filterPropertyImagesExcludingUrls, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import { isRoomListingProperty } from '../lib/listingAccommodationDisplay'
@@ -159,6 +159,7 @@ function PropertyThumbnail({
   isActive,
   onSelect,
   caption,
+  onBroken,
 }: {
   src: string
   caption?: string
@@ -166,6 +167,7 @@ function PropertyThumbnail({
   total: number
   isActive: boolean
   onSelect: () => void
+  onBroken?: (url: string) => void
 }) {
   const [failed, setFailed] = useState(false)
   const captionLabel = caption?.trim()
@@ -188,7 +190,10 @@ function PropertyThumbnail({
         alt={captionLabel ?? ''}
         className="w-full h-full object-cover pointer-events-none"
         draggable={false}
-        onError={() => setFailed(true)}
+        onError={() => {
+          setFailed(true)
+          onBroken?.(src)
+        }}
       />
     </button>
   )
@@ -305,6 +310,7 @@ export default function PropertyDetail() {
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
+  const [brokenImageUrls, setBrokenImageUrls] = useState<Set<string>>(() => new Set())
   const [messageOpening, setMessageOpening] = useState(false)
   const [messageError, setMessageError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -426,6 +432,19 @@ export default function PropertyDetail() {
     const btn = root.querySelector<HTMLElement>(`[data-thumb-index="${imageIndex}"]`)
     btn?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [imageIndex])
+
+  useEffect(() => {
+    setBrokenImageUrls(new Set())
+  }, [property?.id, property?.images])
+
+  const markPropertyImageBroken = useCallback((url: string) => {
+    setBrokenImageUrls((prev) => {
+      if (prev.has(url)) return prev
+      const next = new Set(prev)
+      next.add(url)
+      return next
+    })
+  }, [])
 
   const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null
   const studentListingActionsOk = !user || role !== 'student' || isStudentListingActionsUnlocked(studentProfile)
@@ -1000,7 +1019,10 @@ export default function PropertyDetail() {
   const showActiveBookingLink =
     role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
-  const propertyImages = normalizePropertyImages(property.images)
+  const propertyImages = filterPropertyImagesExcludingUrls(
+    normalizePropertyImages(property.images),
+    brokenImageUrls,
+  )
   const activeImage = propertyImages[imageIndex] ?? propertyImages[0] ?? null
   const mainImage = activeImage?.url ?? null
   const mainImageCaption = activeImage?.description?.trim() || null
@@ -1060,7 +1082,7 @@ export default function PropertyDetail() {
 
   const listingMetaDesc = buildPropertyMetaDescription(property, { campusDisplay, roomLabel })
   const listingOg = (() => {
-    const og = firstPropertyImageUrl(property.images)
+    const og = propertyImages[0]?.url ?? firstPropertyImageUrl(property.images)
     return og && /^https?:\/\//i.test(og) ? og : DEFAULT_OG_IMAGE
   })()
 
@@ -1177,7 +1199,12 @@ export default function PropertyDetail() {
       <div className={SITE_CONTENT_MAX_CLASS}>
         <div className="relative w-full min-w-0 aspect-[4/3] md:aspect-video bg-stone-200 overflow-hidden rounded-xl shadow-sm ring-1 ring-stone-900/5">
         {mainImage ? (
-          <img src={mainImage} alt={mainImageCaption ?? ''} className="w-full h-full object-cover" />
+          <img
+            src={mainImage}
+            alt={mainImageCaption ?? ''}
+            className="w-full h-full object-cover"
+            onError={() => markPropertyImageBroken(mainImage)}
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-stone-400 min-h-[200px]">
             <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -1255,6 +1282,7 @@ export default function PropertyDetail() {
                 total={propertyImages.length}
                 isActive={i === imageIndex}
                 onSelect={() => setImageIndex(i)}
+                onBroken={markPropertyImageBroken}
               />
             ))}
           </div>

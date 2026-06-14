@@ -26,6 +26,8 @@ import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReo
 import {
   normalizePropertyImages,
   serializePropertyImages,
+  storagePathsForPropertyImageUrls,
+  urlsToRemoveFromPropertyImageSave,
   type PropertyImage,
 } from '../../lib/propertyImages'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
@@ -384,11 +386,10 @@ function fileForImageUpload(file: File): File {
   return new File([file], file.name, { type: mime })
 }
 
-function pathFromPropertyImageUrl(url: string): string | null {
-  const marker = `/${BUCKET}/`
-  const i = url.indexOf(marker)
-  if (i === -1) return null
-  return decodeURIComponent(url.slice(i + marker.length))
+async function purgePropertyImageStorage(urls: string[], ownerUserId: string): Promise<void> {
+  const paths = storagePathsForPropertyImageUrls(urls, ownerUserId, BUCKET)
+  if (!paths.length) return
+  await supabase.storage.from(BUCKET).remove(paths)
 }
 
 function sectionClass(title: string, children: ReactNode, sectionId?: string) {
@@ -711,6 +712,10 @@ export default function LandlordPropertyFormPage() {
   const photoFileInputRef = useRef<HTMLInputElement>(null)
   const imagesRef = useRef<PropertyImage[]>([])
   imagesRef.current = images
+  /** Images loaded from DB (edit) or empty (new listing) — used to purge storage only after save. */
+  const imagesAtLoadRef = useRef<PropertyImage[]>([])
+  /** Uploaded this session but not yet saved; purged on save if still removed from the form. */
+  const sessionUploadedUrlsRef = useRef<Set<string>>(new Set())
 
   const landlordPropertyDraftSnapshot = useMemo(
     () =>
@@ -1101,7 +1106,10 @@ export default function LandlordPropertyFormPage() {
         setBond(prop.bond != null ? String(prop.bond) : '')
         setLeaseLength(prop.lease_length ?? 'Flexible')
         setAvailableFrom(prop.available_from ? prop.available_from.slice(0, 10) : '')
-        setImages(normalizePropertyImages(prop.images))
+        const loadedImages = normalizePropertyImages(prop.images)
+        imagesAtLoadRef.current = loadedImages
+        sessionUploadedUrlsRef.current = new Set()
+        setImages(loadedImages)
         const pf = prop.property_features
         setSelectedFeatureIds(new Set((pf ?? []).map((x) => x.feature_id)))
         const phr = prop.property_house_rules
@@ -1658,15 +1666,27 @@ export default function LandlordPropertyFormPage() {
     return () => window.clearTimeout(timeout)
   }, [address, postcode, suburb, state, campusRefRows, uniRefRows, refsLoading, isEdit, nearbyLookupNonce])
 
-  const removeImage = useCallback(
-    async (url: string) => {
-      setImages((prev) => prev.filter((img) => img.url !== url))
-      if (user?.id) {
-        const path = pathFromPropertyImageUrl(url)
-        if (path && path.startsWith(`${user.id}/`)) {
-          await supabase.storage.from(BUCKET).remove([path])
-        }
+  const removeImage = useCallback((url: string) => {
+    setImages((prev) => prev.filter((img) => img.url !== url))
+  }, [])
+
+  const commitSavedPropertyImages = useCallback(
+    async (savedImages: PropertyImage[]) => {
+      if (!user?.id) {
+        imagesAtLoadRef.current = savedImages
+        sessionUploadedUrlsRef.current = new Set()
+        return
       }
+      const urlsToPurge = urlsToRemoveFromPropertyImageSave(
+        imagesAtLoadRef.current,
+        savedImages,
+        sessionUploadedUrlsRef.current,
+      )
+      if (urlsToPurge.length) {
+        await purgePropertyImageStorage(urlsToPurge, user.id)
+      }
+      imagesAtLoadRef.current = savedImages
+      sessionUploadedUrlsRef.current = new Set()
     },
     [user?.id],
   )
@@ -1732,6 +1752,7 @@ export default function LandlordPropertyFormPage() {
             continue
           }
           const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(objectPath)
+          sessionUploadedUrlsRef.current.add(pub.publicUrl)
           next.push({ url: pub.publicUrl })
         }
         setImages(next)
@@ -2145,6 +2166,7 @@ export default function LandlordPropertyFormPage() {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
         }
+        await commitSavedPropertyImages(images)
         if (existingListingStatus === 'draft') {
           navigate('/landlord-dashboard', { replace: true })
         } else {
@@ -2184,6 +2206,7 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(newId, featureIds)
         await savePropertyHouseRules(newId, selectedRules)
+        await commitSavedPropertyImages(images)
         try {
           localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
         } catch {
@@ -3450,7 +3473,7 @@ export default function LandlordPropertyFormPage() {
               <PropertyPhotoReorderGrid
                 images={images}
                 onChange={setImages}
-                onRemove={(url) => void removeImage(url)}
+                onRemove={(url) => removeImage(url)}
                 disabled={uploadingImage}
               />
             </div>,

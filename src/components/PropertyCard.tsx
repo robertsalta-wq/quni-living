@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
-import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { useListingCoverImage } from '../hooks/useListingCoverImage'
 import { formatDistanceKm } from '../lib/workplaceLocation'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
 import {
@@ -35,7 +35,7 @@ export function PropertyCard({
   unavailableBadgeLabel,
 }: Props) {
   const { user } = useAuthContext()
-  const image = firstPropertyImageUrl(property.images)
+  const { coverUrl, onCoverError } = useListingCoverImage(property.images)
   const listingRent = getListingRentDisplay(property)
   const isVerified = property.landlord_profiles?.verified ?? false
   const showLandlordName = Boolean(user)
@@ -66,14 +66,15 @@ export function PropertyCard({
       }`}
     >
       <div className="relative h-48 bg-gray-100 overflow-hidden">
-        {image ? (
+        {coverUrl ? (
           <img
-            src={image}
+            src={coverUrl}
             alt=""
             loading="lazy"
             decoding="async"
             fetchPriority="low"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={onCoverError}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300">
