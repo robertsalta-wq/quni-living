@@ -1,5 +1,55 @@
 import { SignJWT, importPKCS8 } from 'https://esm.sh/jose@5.9.6'
 
+type ServiceAccountJson = {
+  client_email?: string
+  private_key?: string
+}
+
+export type GoogleServiceAccountCreds = {
+  clientEmail: string
+  privateKey: string
+  source: 'GOOGLE_SERVICE_ACCOUNT' | 'FIREBASE_SERVICE_ACCOUNT_JSON'
+}
+
+function parseServiceAccountJson(raw: string): ServiceAccountJson | null {
+  const trimmed = raw.trim()
+  try {
+    return JSON.parse(trimmed) as ServiceAccountJson
+  } catch {
+    try {
+      return JSON.parse(atob(trimmed)) as ServiceAccountJson
+    } catch {
+      return null
+    }
+  }
+}
+
+export function loadGoogleServiceAccountCreds(): GoogleServiceAccountCreds | null {
+  const serviceEmail = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL')?.trim()
+  const serviceKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY')?.trim()
+  if (serviceEmail && serviceKey) {
+    return {
+      clientEmail: serviceEmail,
+      privateKey: serviceKey,
+      source: 'GOOGLE_SERVICE_ACCOUNT',
+    }
+  }
+
+  const firebaseJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim()
+  if (!firebaseJson) return null
+
+  const sa = parseServiceAccountJson(firebaseJson)
+  const clientEmail = sa?.client_email?.trim()
+  const privateKey = sa?.private_key?.trim()
+  if (!clientEmail || !privateKey) return null
+
+  return {
+    clientEmail,
+    privateKey,
+    source: 'FIREBASE_SERVICE_ACCOUNT_JSON',
+  }
+}
+
 export async function getGoogleServiceAccountAccessToken(
   clientEmail: string,
   privateKeyRaw: string,
@@ -39,4 +89,37 @@ export async function getGoogleServiceAccountAccessToken(
     throw new Error('Google OAuth response had no access_token')
   }
   return accessToken
+}
+
+export async function getGoogleDriveReadonlyAccessToken(): Promise<{
+  accessToken: string
+  serviceAccountEmail: string
+  source: GoogleServiceAccountCreds['source']
+}> {
+  const creds = loadGoogleServiceAccountCreds()
+  if (!creds) {
+    const hasFirebase = Boolean(Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim())
+    if (hasFirebase) {
+      throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT_JSON is set but could not be parsed. Re-paste the full Firebase service account JSON in Supabase → Edge Functions → Secrets.',
+      )
+    }
+    throw new Error(
+      'Document register is not configured. Set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY on Supabase, or set FIREBASE_SERVICE_ACCOUNT_JSON.',
+    )
+  }
+
+  try {
+    const accessToken = await getGoogleServiceAccountAccessToken(
+      creds.clientEmail,
+      creds.privateKey,
+      'https://www.googleapis.com/auth/drive.readonly',
+    )
+    return { accessToken, serviceAccountEmail: creds.clientEmail, source: creds.source }
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e)
+    throw new Error(
+      `Google service account auth failed (${creds.source}, ${creds.clientEmail}): ${detail}`,
+    )
+  }
 }

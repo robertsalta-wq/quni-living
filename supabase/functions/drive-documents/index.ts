@@ -6,16 +6,12 @@
  *   GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY (preferred), or
  *   FIREBASE_SERVICE_ACCOUNT_JSON (reuses Firebase service account if folder is shared with it).
  * Share the Drive folder with the service account email (Viewer).
- *
- * Legacy fallback (public folder only):
- *   GOOGLE_DRIVE_API_KEY
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-import { getGoogleServiceAccountAccessToken } from '../_shared/googleAccessToken.ts'
+import { getGoogleDriveReadonlyAccessToken } from '../_shared/googleAccessToken.ts'
 import { isPlatformAdminUser } from '../_shared/platformStaff.ts'
 
 const QUNI_LIVING_FOLDER_ID = '13u7rROY2ztVnvxqSpVESGEE74TgsqQOy'
-const DRIVE_READONLY_SCOPE = 'https://www.googleapis.com/auth/drive.readonly'
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -43,51 +39,7 @@ type DriveListResponse = {
   nextPageToken?: string
 }
 
-type DriveAuth =
-  | { kind: 'oauth'; accessToken: string }
-  | { kind: 'apiKey'; apiKey: string }
-
-type ServiceAccountCreds = {
-  client_email?: string
-  private_key?: string
-}
-
-function parseServiceAccountJson(raw: string): ServiceAccountCreds | null {
-  try {
-    return JSON.parse(raw) as ServiceAccountCreds
-  } catch {
-    return null
-  }
-}
-
-async function resolveDriveAuth(): Promise<DriveAuth> {
-  const serviceEmail = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL')?.trim()
-  const serviceKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY')?.trim()
-  if (serviceEmail && serviceKey) {
-    const accessToken = await getGoogleServiceAccountAccessToken(serviceEmail, serviceKey, DRIVE_READONLY_SCOPE)
-    return { kind: 'oauth', accessToken }
-  }
-
-  const firebaseJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim()
-  if (firebaseJson) {
-    const sa = parseServiceAccountJson(firebaseJson)
-    if (sa?.client_email?.trim() && sa.private_key?.trim()) {
-      const accessToken = await getGoogleServiceAccountAccessToken(sa.client_email, sa.private_key, DRIVE_READONLY_SCOPE)
-      return { kind: 'oauth', accessToken }
-    }
-  }
-
-  const driveApiKey = Deno.env.get('GOOGLE_DRIVE_API_KEY')?.trim()
-  if (driveApiKey) {
-    return { kind: 'apiKey', apiKey: driveApiKey }
-  }
-
-  throw new Error(
-    'Document register is not configured. Set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY on Supabase, or share the Drive folder with the Firebase service account email.',
-  )
-}
-
-async function listAllFilesInFolder(auth: DriveAuth, folderId: string): Promise<DriveFile[]> {
+async function listAllFilesInFolder(accessToken: string, serviceAccountEmail: string, folderId: string): Promise<DriveFile[]> {
   const all: DriveFile[] = []
   let pageToken: string | undefined
 
@@ -103,29 +55,20 @@ async function listAllFilesInFolder(auth: DriveAuth, folderId: string): Promise<
       'pageSize=100',
       'supportsAllDrives=true',
       'includeItemsFromAllDrives=true',
-      ...(auth.kind === 'apiKey' ? [`key=${encodeURIComponent(auth.apiKey)}`] : []),
       ...(pageToken ? [`pageToken=${encodeURIComponent(pageToken)}`] : []),
     ].join('&')
 
-    const headers: Record<string, string> = {}
-    if (auth.kind === 'oauth') {
-      headers.Authorization = `Bearer ${auth.accessToken}`
-    }
-
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files?${qs}`, { headers })
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?${qs}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
     const data = (await res.json()) as DriveListResponse & { error?: { message?: string } }
     if (!res.ok) {
       console.error('drive files list error', data)
       const message = data.error?.message || 'Google Drive request failed.'
-      if (auth.kind === 'oauth' && res.status === 403) {
+      if (res.status === 403) {
         throw new Error(
-          'Google Drive denied access. In Google Drive, share the Quni Living folder with the Firebase service account email (Project settings → Service accounts) as Viewer.',
-        )
-      }
-      if (auth.kind === 'apiKey' && /api key not valid/i.test(message)) {
-        throw new Error(
-          'Google Drive API key is invalid. Configure GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY on Supabase instead, and share the Quni Living folder with that service account.',
+          `Google Drive denied access for ${serviceAccountEmail}. Share the Quni Living folder with that email as Viewer, and enable the Google Drive API in the linked Google Cloud project.`,
         )
       }
       throw new Error(message)
@@ -184,8 +127,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const driveAuth = await resolveDriveAuth()
-    let files = await listAllFilesInFolder(driveAuth, QUNI_LIVING_FOLDER_ID)
+    const { accessToken, serviceAccountEmail } = await getGoogleDriveReadonlyAccessToken()
+    let files = await listAllFilesInFolder(accessToken, serviceAccountEmail, QUNI_LIVING_FOLDER_ID)
 
     files = files.sort((a, b) => {
       const ta = a.modifiedTime ? Date.parse(a.modifiedTime) : 0
