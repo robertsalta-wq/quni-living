@@ -11,17 +11,89 @@ export type GoogleServiceAccountCreds = {
   source: 'GOOGLE_SERVICE_ACCOUNT' | 'FIREBASE_SERVICE_ACCOUNT_JSON'
 }
 
-function parseServiceAccountJson(raw: string): ServiceAccountJson | null {
-  const trimmed = raw.trim()
+function normalizePrivateKey(raw: string): string {
+  return raw.trim().replace(/\\n/g, '\n')
+}
+
+function isValidServiceAccount(value: ServiceAccountJson | null | undefined): value is ServiceAccountJson {
+  return Boolean(value?.client_email?.trim() && value?.private_key?.trim())
+}
+
+function tryParseJson(raw: string): ServiceAccountJson | null {
   try {
-    return JSON.parse(trimmed) as ServiceAccountJson
+    const parsed = JSON.parse(raw) as unknown
+    if (typeof parsed === 'string') {
+      return tryParseJson(parsed)
+    }
+    return parsed as ServiceAccountJson
   } catch {
-    try {
-      return JSON.parse(atob(trimmed)) as ServiceAccountJson
-    } catch {
-      return null
+    return null
+  }
+}
+
+function extractServiceAccountFields(raw: string): ServiceAccountJson | null {
+  const emailMatch = raw.match(/"client_email"\s*:\s*"([^"\\]+(?:\\.[^"\\]*)*)"/)
+  if (!emailMatch) return null
+
+  const escapedKeyMatch = raw.match(/"private_key"\s*:\s*"((?:[^"\\]|\\.)*)"/)
+  if (escapedKeyMatch) {
+    return {
+      client_email: emailMatch[1],
+      private_key: normalizePrivateKey(escapedKeyMatch[1]),
     }
   }
+
+  const pemMatch = raw.match(/"private_key"\s*:\s*"(\s*-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----\s*)"/)
+  if (pemMatch) {
+    return {
+      client_email: emailMatch[1],
+      private_key: normalizePrivateKey(pemMatch[1]),
+    }
+  }
+
+  return null
+}
+
+function parseServiceAccountJson(raw: string): ServiceAccountJson | null {
+  let candidate = raw.trim()
+  if (!candidate) return null
+
+  if (candidate.charCodeAt(0) === 0xfeff) {
+    candidate = candidate.slice(1).trim()
+  }
+
+  const attempts = new Set<string>([candidate])
+  if (
+    (candidate.startsWith('"') && candidate.endsWith('"')) ||
+    (candidate.startsWith("'") && candidate.endsWith("'"))
+  ) {
+    const unwrapped = tryParseJson(candidate)
+    if (typeof unwrapped === 'string') attempts.add(unwrapped)
+  }
+
+  try {
+    attempts.add(atob(candidate))
+  } catch {
+    // not base64
+  }
+
+  for (const attempt of attempts) {
+    const parsed = tryParseJson(attempt)
+    if (isValidServiceAccount(parsed)) return parsed
+  }
+
+  return extractServiceAccountFields(candidate)
+}
+
+export function describeInvalidFirebaseServiceAccountJson(raw: string): string {
+  const trimmed = raw.trim()
+  if (/^[a-f0-9]{32,128}$/i.test(trimmed)) {
+    return 'The FIREBASE_SERVICE_ACCOUNT_JSON value looks like a hash, not JSON. Download the service account JSON from Firebase Console and set GOOGLE_SERVICE_ACCOUNT_EMAIL plus GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY instead (see scripts/set-drive-service-account-secrets.mjs).'
+  }
+  if (!trimmed.startsWith('{')) {
+    return `FIREBASE_SERVICE_ACCOUNT_JSON must be JSON starting with "{". Current value length is ${trimmed.length} characters and does not look like JSON.`
+  }
+  return `FIREBASE_SERVICE_ACCOUNT_JSON could not be parsed (${trimmed.length} characters). Download a fresh service account key from Firebase Console, then run: node scripts/set-drive-service-account-secrets.mjs path/to/key.json`
 }
 
 export function loadGoogleServiceAccountCreds(): GoogleServiceAccountCreds | null {
@@ -39,13 +111,11 @@ export function loadGoogleServiceAccountCreds(): GoogleServiceAccountCreds | nul
   if (!firebaseJson) return null
 
   const sa = parseServiceAccountJson(firebaseJson)
-  const clientEmail = sa?.client_email?.trim()
-  const privateKey = sa?.private_key?.trim()
-  if (!clientEmail || !privateKey) return null
+  if (!isValidServiceAccount(sa)) return null
 
   return {
-    clientEmail,
-    privateKey,
+    clientEmail: sa.client_email!.trim(),
+    privateKey: sa.private_key!,
     source: 'FIREBASE_SERVICE_ACCOUNT_JSON',
   }
 }
@@ -56,7 +126,7 @@ export async function getGoogleServiceAccountAccessToken(
   scope: string,
 ): Promise<string> {
   const email = clientEmail.trim()
-  const privateKey = privateKeyRaw.trim().replace(/\\n/g, '\n')
+  const privateKey = normalizePrivateKey(privateKeyRaw)
   if (!email || !privateKey) {
     throw new Error('Google service account email and private key are required.')
   }
@@ -98,14 +168,12 @@ export async function getGoogleDriveReadonlyAccessToken(): Promise<{
 }> {
   const creds = loadGoogleServiceAccountCreds()
   if (!creds) {
-    const hasFirebase = Boolean(Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim())
-    if (hasFirebase) {
-      throw new Error(
-        'FIREBASE_SERVICE_ACCOUNT_JSON is set but could not be parsed. Re-paste the full Firebase service account JSON in Supabase → Edge Functions → Secrets.',
-      )
+    const firebaseJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_JSON')?.trim()
+    if (firebaseJson) {
+      throw new Error(describeInvalidFirebaseServiceAccountJson(firebaseJson))
     }
     throw new Error(
-      'Document register is not configured. Set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY on Supabase, or set FIREBASE_SERVICE_ACCOUNT_JSON.',
+      'Document register is not configured. Set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY on Supabase.',
     )
   }
 
