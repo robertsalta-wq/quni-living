@@ -79,7 +79,7 @@ export function singleLineFitsInFieldWithoutTruncation(
 }
 
 /** Multi-line for tall/wide fields (payment method, plumber block). */
-function layoutWrappedInField(
+export function layoutWrappedInField(
   text: string,
   font: PDFFont,
   rect: Rect,
