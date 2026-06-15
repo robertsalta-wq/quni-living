@@ -27,6 +27,7 @@ const ALIASES: Record<string, string> = {
   'university-of-southern-queensland': 'usq',
   'bond-university': 'bond',
   'central-queensland-university': 'cqu',
+  'university-of-the-sunshine-coast': 'usc',
   'university-of-western-australia': 'uwa',
   'curtin-university': 'curtin',
   'murdoch-university': 'murdoch',

@@ -27,6 +27,7 @@ export const BASE_DOMAINS = [
   'usq.edu.au',
   'bond.edu.au',
   'cqu.edu.au',
+  'usc.edu.au',
   'uwa.edu.au',
   'curtin.edu.au',
   'murdoch.edu.au',

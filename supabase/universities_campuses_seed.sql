@@ -47,6 +47,7 @@ insert into public.universities (id, name, slug, short_name, state, city) values
 ('11111111-0000-0000-0000-000000000025', 'Bond University', 'bond', 'BOND', 'QLD', 'Gold Coast'),
 ('11111111-0000-0000-0000-000000000026', 'Central Queensland University', 'cqu', 'CQU', 'QLD', 'Rockhampton'),
 ('11111111-0000-0000-0000-000000000027', 'Australian Catholic University', 'acu-qld', 'ACU', 'QLD', 'Brisbane'),
+('11111111-0000-0000-0000-000000000042', 'University of the Sunshine Coast', 'usc', 'USC', 'QLD', 'Sunshine Coast'),
 -- WA
 ('11111111-0000-0000-0000-000000000028', 'University of Western Australia', 'uwa', 'UWA', 'WA', 'Perth'),
 ('11111111-0000-0000-0000-000000000029', 'Curtin University', 'curtin', 'CURTIN', 'WA', 'Perth'),
@@ -189,6 +190,11 @@ insert into public.campuses (id, university_id, name, suburb, state) values
 ('22222222-0000-0000-0000-000000000087', '11111111-0000-0000-0000-000000000026', 'Gladstone Campus', 'Gladstone', 'QLD'),
 -- ACU Brisbane
 ('22222222-0000-0000-0000-000000000088', '11111111-0000-0000-0000-000000000027', 'Brisbane Campus', 'Banyo', 'QLD'),
+-- USC
+('22222222-0000-0000-0000-000000000123', '11111111-0000-0000-0000-000000000042', 'Sunshine Coast Campus', 'Sippy Downs', 'QLD'),
+('22222222-0000-0000-0000-000000000124', '11111111-0000-0000-0000-000000000042', 'Moreton Bay Campus', 'Petrie', 'QLD'),
+('22222222-0000-0000-0000-000000000125', '11111111-0000-0000-0000-000000000042', 'Fraser Coast Campus', 'Hervey Bay', 'QLD'),
+('22222222-0000-0000-0000-000000000126', '11111111-0000-0000-0000-000000000042', 'South Bank Campus', 'South Brisbane', 'QLD'),
 -- UWA
 ('22222222-0000-0000-0000-000000000089', '11111111-0000-0000-0000-000000000028', 'Crawley Campus', 'Crawley', 'WA'),
 ('22222222-0000-0000-0000-000000000090', '11111111-0000-0000-0000-000000000028', 'Albany Campus', 'Albany', 'WA'),
