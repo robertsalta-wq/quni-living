@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom'
 import type { Database } from '../../lib/database.types'
 import { formatDate } from '../../pages/admin/adminUi'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
-import { isBoardingLodgerBondContext } from '../../lib/listings'
+import { isLandlordHeldBondContext } from '../../lib/listings'
 import TenancyAgreementExplainer from '../TenancyAgreementExplainer'
 import BookingLeasePanel from '../booking/BookingLeasePanel'
+import RtaBondRecordForm from '../bond/RtaBondRecordForm'
 import ListingBondPaymentGuidance from '../booking/ListingBondPaymentGuidance'
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../../lib/tenancy/listingBondPaymentCopy'
+import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../../lib/tenantBookingStatus'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -76,7 +78,11 @@ function ListingBondGuidanceForBooking({
     date: moveIn,
   })
   if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
-  const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state)
+  const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state, {
+    qldBondRemittancePreference: parseQldBondRemittancePreference(
+      (property as { qld_bond_remittance_preference?: string | null }).qld_bond_remittance_preference,
+    ),
+  })
   if (!guidance) return null
   const bondAud =
     typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
@@ -150,7 +156,20 @@ export default function StudentDashboardBookingCard({
       {(b.status === 'bond_pending' || b.status === 'confirmed' || b.status === 'active') && (
         <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
           {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
-            <ListingBondGuidanceForBooking booking={b} property={prop} />
+            <>
+              <ListingBondGuidanceForBooking booking={b} property={prop} />
+              {(prop.state ?? '').trim().toUpperCase() === 'QLD' ? (
+                <RtaBondRecordForm
+                  bookingId={b.id}
+                  compact
+                  initialBondNumber={b.rta_bond_number}
+                  initialAckRef={b.rta_acknowledgement_reference}
+                  initialLodgedDate={
+                    typeof b.rta_bond_lodged_at === 'string' ? b.rta_bond_lodged_at.slice(0, 10) : null
+                  }
+                />
+              ) : null}
+            </>
           )}
           <TenancyAgreementExplainer
             state={prop?.state ?? ''}
@@ -162,7 +181,7 @@ export default function StudentDashboardBookingCard({
       )}
       {(b.status === 'confirmed' || b.status === 'active') &&
         prop &&
-        isBoardingLodgerBondContext(prop.property_type) && (
+        isLandlordHeldBondContext(prop.property_type, prop.state) && (
           <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
             {bondDownloadErrorId === b.id ? (
               <p className="text-amber-900 text-xs leading-relaxed">

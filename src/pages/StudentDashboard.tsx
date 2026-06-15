@@ -10,13 +10,14 @@ import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isTenantCoreProfileComplete } from '../lib/studentOnboarding'
-import { isBoardingLodgerBondContext } from '../lib/listings'
+import { isLandlordHeldBondContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
 import ListingBondPaymentGuidance from '../components/booking/ListingBondPaymentGuidance'
 import { resolveTenancyPackage } from '../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../lib/tenancy/listingBondPaymentCopy'
+import { parseQldBondRemittancePreference } from '../lib/tenancy/qldBondRemittance'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
@@ -67,7 +68,11 @@ function ListingBondGuidanceForBooking({
     date: moveIn,
   })
   if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
-  const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state)
+  const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state, {
+    qldBondRemittancePreference: parseQldBondRemittancePreference(
+      (property as { qld_bond_remittance_preference?: string | null }).qld_bond_remittance_preference,
+    ),
+  })
   if (!guidance) return null
   const bondAud =
     typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
@@ -519,7 +524,7 @@ export default function StudentDashboard() {
                     )}
                     {(b.status === 'confirmed' || b.status === 'active') &&
                       prop &&
-                      isBoardingLodgerBondContext(prop.property_type) && (
+                      isLandlordHeldBondContext(prop.property_type, prop.state) && (
                         <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
                           {bondDownloadErrorId === b.id ? (
                             <p className="text-amber-900 text-xs leading-relaxed">
