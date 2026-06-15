@@ -14,20 +14,13 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../src/lib/database.types'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
+import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
-/** Mirrors `src/lib/listings.ts` — QLD excluded; all other states unchanged from boarding/lodger gate. */
-function isLandlordHeldBondContext(
-  propertyType: string | null | undefined,
-  state: string | null | undefined,
-): boolean {
+function isBoardingLodgerBondContext(propertyType: string | null | undefined): boolean {
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
   if (!pt) return false
-  const boarding = ['private_room_landlord_on_site', 'boarding', 'lodger', 'homestay'].includes(pt)
-  if (!boarding) return false
-  const st = typeof state === 'string' ? state.trim().toUpperCase() : ''
-  if (st === 'QLD') return false
-  return true
+  return ['private_room_landlord_on_site', 'boarding', 'lodger', 'homestay'].includes(pt)
 }
 
 export const config = {
@@ -224,7 +217,7 @@ export default async function handler(req: any, res: any) {
     return res.status(409).json({ error: 'Bond receipt already exists for this tenancy' })
   }
 
-  if (tenancy.bond_lodged_at) {
+  if (tenancy.bond_lodged_at || tenancy.bond_lodgement_reference) {
     return res.status(409).json({ error: 'Bond has already been marked as received' })
   }
 
@@ -239,12 +232,10 @@ export default async function handler(req: any, res: any) {
   }
 
   const propRec = prop as Record<string, unknown>
-  const propState = typeof prop.state === 'string' ? prop.state : ''
-  if (!isLandlordHeldBondContext(prop.property_type, propState)) {
-    return res.status(400).json({
-      error:
-        'Bond receipts are not available for Queensland listings — boarder/lodger bonds must be lodged with the RTA.',
-    })
+  const propState = typeof prop.state === 'string' ? prop.state.trim().toUpperCase() : ''
+  const isQld = propState === 'QLD'
+  if (!isBoardingLodgerBondContext(prop.property_type)) {
+    return res.status(400).json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' })
   }
 
   const { data: landlord, error: llErr } = await admin
@@ -290,7 +281,9 @@ export default async function handler(req: any, res: any) {
     acknowledgementName: landlordName,
   }
 
-  const element = React.createElement(BondReceiptPdf, pdfProps)
+  const element = isQld
+    ? React.createElement(QldBondPaymentReceiptPdf, pdfProps)
+    : React.createElement(BondReceiptPdf, pdfProps)
   const pdfBuffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
   const storagePath = `${tenancyId}/bond/bond_receipt.pdf`
 
@@ -304,14 +297,15 @@ export default async function handler(req: any, res: any) {
   }
 
   const bondLodgedAt = bondLodgedAtIso(dateReceived)
+  const tenancyPatch = isQld
+    ? { bond_lodgement_reference: receiptNumber }
+    : { bond_lodged_at: bondLodgedAt, bond_lodgement_reference: receiptNumber }
   const { data: updatedTenancy, error: upT } = await admin
     .from('tenancies')
-    .update({
-      bond_lodged_at: bondLodgedAt,
-      bond_lodgement_reference: receiptNumber,
-    })
+    .update(tenancyPatch)
     .eq('id', tenancyId)
     .is('bond_lodged_at', null)
+    .is('bond_lodgement_reference', null)
     .select('id')
     .maybeSingle()
 
@@ -332,6 +326,7 @@ export default async function handler(req: any, res: any) {
         payment_method: paymentMethod,
         notes,
         amount_received: amount,
+        receipt_variant: isQld ? 'qld_payment' : 'nsw_boarding',
       },
     })
     .select('id')
@@ -349,9 +344,16 @@ export default async function handler(req: any, res: any) {
   const downloadUrl = signedData?.signedUrl ?? ''
   const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
   const amountLine = formatBondAud(amount)
-  const subject = `Bond receipt for ${addressLine}`
+  const subject = isQld ? `Bond payment receipt for ${addressLine}` : `Bond receipt for ${addressLine}`
   const safeAddr = escapeHtml(addressLine)
-  const htmlBody = `
+  const htmlBody = isQld
+    ? `
+<p>Your bond <strong>payment receipt</strong> for ${safeAddr} is attached.</p>
+<p>This is not RTA lodgement confirmation. The landlord must lodge with the RTA within 10 days.</p>
+<p>Receipt number: <strong>${escapeHtml(receiptNumber)}</strong>. Amount: <strong>${escapeHtml(amountLine)}</strong>.</p>
+${downloadUrl ? `<p><a href="${escapeHtml(downloadUrl)}">Download PDF</a> (link expires in 7 days)</p>` : ''}
+`.trim()
+    : `
 <p>Your bond receipt for ${safeAddr} is attached.</p>
 <p>Receipt number: <strong>${escapeHtml(receiptNumber)}</strong>. Amount: <strong>${escapeHtml(amountLine)}</strong>.</p>
 ${downloadUrl ? `<p><a href="${escapeHtml(downloadUrl)}">Download PDF</a> (link expires in 7 days)</p>` : ''}
