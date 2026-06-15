@@ -1,0 +1,1622 @@
+{
+  "form": "VIC CAV Form 1 - Residential rental agreement (no more than 5 years)",
+  "sourcePdf": "docs/vic/form-1-blank.pdf",
+  "sourcePdfSha256": "c6a1ec0240f62cb738f84e0cc70d1c7ce381a59163a5938cc74aa078b740c56a",
+  "pageCount": 10,
+  "pageSize": {
+    "width": 595.3,
+    "height": 841.9
+  },
+  "coordinateNote": "rect_top is [x0,top,x1,bottom] top-left origin (pdfplumber). rect_pdf is [x0,y0,x1,y1] bottom-left origin for pdf-lib drawText.",
+  "checkboxGlyph": "draw an X or check centred in rect; boxes are flattened drawings, not AcroForm widgets",
+  "status": {
+    "complete": [
+      "page1",
+      "page2",
+      "page3",
+      "page4",
+      "page8"
+    ],
+    "pending": []
+  },
+  "fields": [
+    {
+      "id": "agreement.date",
+      "page": 1,
+      "type": "date",
+      "rect_top": [
+        45.4,
+        293.0,
+        149.2,
+        310.0
+      ],
+      "rect_pdf": [
+        45.4,
+        531.9,
+        149.2,
+        548.9
+      ]
+    },
+    {
+      "id": "premises.address",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        45.4,
+        387.0,
+        450.2,
+        412.7
+      ],
+      "rect_pdf": [
+        45.4,
+        429.2,
+        450.2,
+        454.9
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "premises.postcode",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        498.2,
+        387.0,
+        570.5,
+        412.7
+      ],
+      "rect_pdf": [
+        498.2,
+        429.2,
+        570.5,
+        454.9
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "rentalProvider.nameOrCompany",
+      "page": 1,
+      "type": "multiline",
+      "rect_top": [
+        141.2,
+        440.0,
+        567.2,
+        477.7
+      ],
+      "rect_pdf": [
+        141.2,
+        364.2,
+        567.2,
+        401.9
+      ],
+      "lines": 2
+    },
+    {
+      "id": "rentalProvider.acn",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        142.1,
+        492.0,
+        363.8,
+        509.0
+      ],
+      "rect_pdf": [
+        142.1,
+        332.9,
+        363.8,
+        349.9
+      ]
+    },
+    {
+      "id": "rentalProvider.address",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.7,
+        539.2,
+        448.4,
+        553.9
+      ],
+      "rect_pdf": [
+        141.7,
+        288.0,
+        448.4,
+        302.7
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "rentalProvider.postcode",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        496.4,
+        539.2,
+        568.2,
+        553.9
+      ],
+      "rect_pdf": [
+        496.4,
+        288.0,
+        568.2,
+        302.7
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "rentalProvider.phone",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.4,
+        559.1,
+        269.6,
+        581.7
+      ],
+      "rect_pdf": [
+        141.4,
+        260.2,
+        269.6,
+        282.8
+      ]
+    },
+    {
+      "id": "rentalProvider.email",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.6,
+        591.5,
+        567.2,
+        608.5
+      ],
+      "rect_pdf": [
+        141.6,
+        233.4,
+        567.2,
+        250.4
+      ]
+    },
+    {
+      "id": "agent.fullName",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.6,
+        645.6,
+        567.2,
+        662.6
+      ],
+      "rect_pdf": [
+        141.6,
+        179.3,
+        567.2,
+        196.3
+      ]
+    },
+    {
+      "id": "agent.address",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.6,
+        667.8,
+        447.6,
+        684.8
+      ],
+      "rect_pdf": [
+        141.6,
+        157.1,
+        447.6,
+        174.1
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "agent.postcode",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        495.6,
+        667.8,
+        567.2,
+        684.8
+      ],
+      "rect_pdf": [
+        495.6,
+        157.1,
+        567.2,
+        174.1
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "agent.phone",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.4,
+        689.9,
+        266.8,
+        706.9
+      ],
+      "rect_pdf": [
+        141.4,
+        135.0,
+        266.8,
+        152.0
+      ]
+    },
+    {
+      "id": "agent.acn",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.4,
+        712.1,
+        266.8,
+        729.1
+      ],
+      "rect_pdf": [
+        141.4,
+        112.8,
+        266.8,
+        129.8
+      ]
+    },
+    {
+      "id": "agent.email",
+      "page": 1,
+      "type": "text",
+      "rect_top": [
+        141.6,
+        734.2,
+        567.2,
+        751.2
+      ],
+      "rect_pdf": [
+        141.6,
+        90.7,
+        567.2,
+        107.7
+      ]
+    },
+    {
+      "id": "renter1.fullName",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        70.0,
+        567.2,
+        87.0
+      ],
+      "rect_pdf": [
+        147.2,
+        754.9,
+        567.2,
+        771.9
+      ]
+    },
+    {
+      "id": "renter1.currentAddress",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        92.1,
+        447.6,
+        109.1
+      ],
+      "rect_pdf": [
+        147.2,
+        732.8,
+        447.6,
+        749.8
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "renter1.postcode",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        495.6,
+        92.1,
+        567.2,
+        109.1
+      ],
+      "rect_pdf": [
+        495.6,
+        732.8,
+        567.2,
+        749.8
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "renter1.phone",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        114.3,
+        272.4,
+        131.3
+      ],
+      "rect_pdf": [
+        147.2,
+        710.6,
+        272.4,
+        727.6
+      ]
+    },
+    {
+      "id": "renter1.email",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        148.6,
+        141.1,
+        567.2,
+        158.1
+      ],
+      "rect_pdf": [
+        148.6,
+        683.8,
+        567.2,
+        700.8
+      ]
+    },
+    {
+      "id": "renter2.fullName",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        167.9,
+        567.2,
+        184.9
+      ],
+      "rect_pdf": [
+        147.2,
+        657.0,
+        567.2,
+        674.0
+      ]
+    },
+    {
+      "id": "renter2.currentAddress",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        190.0,
+        447.6,
+        207.0
+      ],
+      "rect_pdf": [
+        147.2,
+        634.9,
+        447.6,
+        651.9
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "renter2.postcode",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        495.6,
+        190.0,
+        567.2,
+        207.0
+      ],
+      "rect_pdf": [
+        495.6,
+        634.9,
+        567.2,
+        651.9
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "renter2.phone",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        212.2,
+        272.4,
+        229.2
+      ],
+      "rect_pdf": [
+        147.2,
+        612.7,
+        272.4,
+        629.7
+      ]
+    },
+    {
+      "id": "renter2.email",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        148.6,
+        239.0,
+        567.2,
+        256.0
+      ],
+      "rect_pdf": [
+        148.6,
+        585.9,
+        567.2,
+        602.9
+      ]
+    },
+    {
+      "id": "renter3.fullName",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        265.8,
+        567.2,
+        282.8
+      ],
+      "rect_pdf": [
+        147.2,
+        559.1,
+        567.2,
+        576.1
+      ]
+    },
+    {
+      "id": "renter3.currentAddress",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        287.9,
+        447.6,
+        304.9
+      ],
+      "rect_pdf": [
+        147.2,
+        537.0,
+        447.6,
+        554.0
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "renter3.postcode",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        495.6,
+        287.9,
+        567.2,
+        304.9
+      ],
+      "rect_pdf": [
+        495.6,
+        537.0,
+        567.2,
+        554.0
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "renter3.phone",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        310.1,
+        272.4,
+        327.1
+      ],
+      "rect_pdf": [
+        147.2,
+        514.8,
+        272.4,
+        531.8
+      ]
+    },
+    {
+      "id": "renter3.email",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        148.6,
+        336.9,
+        567.2,
+        353.9
+      ],
+      "rect_pdf": [
+        148.6,
+        488.0,
+        567.2,
+        505.0
+      ]
+    },
+    {
+      "id": "renter4.fullName",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        359.0,
+        567.2,
+        376.0
+      ],
+      "rect_pdf": [
+        147.2,
+        465.9,
+        567.2,
+        482.9
+      ]
+    },
+    {
+      "id": "renter4.currentAddress",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        381.2,
+        447.6,
+        398.2
+      ],
+      "rect_pdf": [
+        147.2,
+        443.7,
+        447.6,
+        460.7
+      ],
+      "split": "address_of_pair"
+    },
+    {
+      "id": "renter4.postcode",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        495.6,
+        381.2,
+        567.2,
+        398.2
+      ],
+      "rect_pdf": [
+        495.6,
+        443.7,
+        567.2,
+        460.7
+      ],
+      "split": "postcode_of_pair",
+      "align": "left"
+    },
+    {
+      "id": "renter4.phone",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        147.2,
+        403.3,
+        272.4,
+        420.3
+      ],
+      "rect_pdf": [
+        147.2,
+        421.6,
+        272.4,
+        438.6
+      ]
+    },
+    {
+      "id": "renter4.email",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        148.6,
+        430.1,
+        567.2,
+        447.1
+      ],
+      "rect_pdf": [
+        148.6,
+        394.8,
+        567.2,
+        411.8
+      ]
+    },
+    {
+      "id": "term.fixedTerm",
+      "page": 2,
+      "type": "checkbox",
+      "rect_top": [
+        45.9,
+        508.8,
+        56.4,
+        519.3
+      ],
+      "rect_pdf": [
+        45.9,
+        322.6,
+        56.4,
+        333.1
+      ]
+    },
+    {
+      "id": "term.fixedStartDate",
+      "page": 2,
+      "type": "date",
+      "rect_top": [
+        254.9,
+        501.7,
+        363.9,
+        526.9
+      ],
+      "rect_pdf": [
+        254.9,
+        315.0,
+        363.9,
+        340.2
+      ]
+    },
+    {
+      "id": "term.fixedEndDate",
+      "page": 2,
+      "type": "date",
+      "rect_top": [
+        254.9,
+        536.7,
+        361.8,
+        553.7
+      ],
+      "rect_pdf": [
+        254.9,
+        288.2,
+        361.8,
+        305.2
+      ]
+    },
+    {
+      "id": "term.periodic",
+      "page": 2,
+      "type": "checkbox",
+      "rect_top": [
+        45.9,
+        568.0,
+        56.4,
+        578.5
+      ],
+      "rect_pdf": [
+        45.9,
+        263.4,
+        56.4,
+        273.9
+      ]
+    },
+    {
+      "id": "term.periodicStartDate",
+      "page": 2,
+      "type": "date",
+      "rect_top": [
+        254.8,
+        563.5,
+        361.8,
+        580.5
+      ],
+      "rect_pdf": [
+        254.8,
+        261.4,
+        361.8,
+        278.4
+      ]
+    },
+    {
+      "id": "rent.amount",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        175.6,
+        652.8,
+        283.8,
+        669.8
+      ],
+      "rect_pdf": [
+        175.6,
+        172.1,
+        283.8,
+        189.1
+      ]
+    },
+    {
+      "id": "rent.perWeek",
+      "page": 2,
+      "type": "checkbox",
+      "rect_top": [
+        176.2,
+        694.1,
+        186.8,
+        704.6
+      ],
+      "rect_pdf": [
+        176.2,
+        137.3,
+        186.8,
+        147.8
+      ]
+    },
+    {
+      "id": "rent.perFortnight",
+      "page": 2,
+      "type": "checkbox",
+      "rect_top": [
+        283.9,
+        694.1,
+        294.4,
+        704.6
+      ],
+      "rect_pdf": [
+        283.9,
+        137.3,
+        294.4,
+        147.8
+      ]
+    },
+    {
+      "id": "rent.perCalendarMonth",
+      "page": 2,
+      "type": "checkbox",
+      "rect_top": [
+        376.1,
+        694.1,
+        386.6,
+        704.6
+      ],
+      "rect_pdf": [
+        376.1,
+        137.3,
+        386.6,
+        147.8
+      ]
+    },
+    {
+      "id": "rent.dayPaid",
+      "page": 2,
+      "type": "text",
+      "rect_top": [
+        174.1,
+        716.1,
+        281.6,
+        734.4
+      ],
+      "rect_pdf": [
+        174.1,
+        107.5,
+        281.6,
+        125.8
+      ]
+    },
+    {
+      "id": "rent.firstPaymentDate",
+      "page": 2,
+      "type": "date",
+      "rect_top": [
+        175.6,
+        743.8,
+        283.8,
+        760.8
+      ],
+      "rect_pdf": [
+        175.6,
+        81.1,
+        283.8,
+        98.1
+      ]
+    },
+    {
+      "id": "bond.amount",
+      "page": 3,
+      "type": "text",
+      "rect_top": [
+        164.8,
+        163.0,
+        276.6,
+        180.0
+      ],
+      "rect_pdf": [
+        164.8,
+        661.9,
+        276.6,
+        678.9
+      ]
+    },
+    {
+      "id": "bond.dueDate",
+      "page": 3,
+      "type": "date",
+      "rect_top": [
+        164.8,
+        185.1,
+        276.6,
+        202.1
+      ],
+      "rect_pdf": [
+        164.8,
+        639.8,
+        276.6,
+        656.8
+      ]
+    },
+    {
+      "id": "payment.directDebit",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        60.0,
+        337.2,
+        70.5,
+        347.7
+      ],
+      "rect_pdf": [
+        60.0,
+        494.2,
+        70.5,
+        504.7
+      ]
+    },
+    {
+      "id": "payment.bankDeposit",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        160.8,
+        337.2,
+        171.2,
+        347.7
+      ],
+      "rect_pdf": [
+        160.8,
+        494.2,
+        171.2,
+        504.7
+      ]
+    },
+    {
+      "id": "payment.cash",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        258.6,
+        337.2,
+        269.1,
+        347.7
+      ],
+      "rect_pdf": [
+        258.6,
+        494.2,
+        269.1,
+        504.7
+      ]
+    },
+    {
+      "id": "payment.chequeOrMoneyOrder",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        326.6,
+        337.2,
+        337.1,
+        347.7
+      ],
+      "rect_pdf": [
+        326.6,
+        494.2,
+        337.1,
+        504.7
+      ]
+    },
+    {
+      "id": "payment.bpay",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        482.2,
+        337.2,
+        492.8,
+        347.7
+      ],
+      "rect_pdf": [
+        482.2,
+        494.2,
+        492.8,
+        504.7
+      ]
+    },
+    {
+      "id": "payment.otherElectronic",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        60.0,
+        369.7,
+        70.5,
+        380.2
+      ],
+      "rect_pdf": [
+        60.0,
+        461.7,
+        70.5,
+        472.2
+      ]
+    },
+    {
+      "id": "payment.otherElectronicDetails",
+      "page": 3,
+      "type": "text",
+      "rect_top": [
+        325.8,
+        368.0,
+        567.2,
+        386.0
+      ],
+      "rect_pdf": [
+        325.8,
+        455.9,
+        567.2,
+        473.9
+      ]
+    },
+    {
+      "id": "payment.details",
+      "page": 3,
+      "type": "multiline",
+      "rect_top": [
+        45.1,
+        418.5,
+        567.6,
+        454.3
+      ],
+      "rect_pdf": [
+        45.1,
+        387.6,
+        567.6,
+        423.4
+      ],
+      "lines": 2
+    },
+    {
+      "id": "electronic.rentalProviderYes",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        120.5,
+        666.0,
+        131.0,
+        676.5
+      ],
+      "rect_pdf": [
+        120.5,
+        165.4,
+        131.0,
+        175.9
+      ]
+    },
+    {
+      "id": "electronic.rentalProviderNo",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        120.5,
+        692.5,
+        131.0,
+        703.0
+      ],
+      "rect_pdf": [
+        120.5,
+        138.9,
+        131.0,
+        149.4
+      ]
+    },
+    {
+      "id": "electronic.rentalProviderContact",
+      "page": 3,
+      "type": "multiline",
+      "rect_top": [
+        347.1,
+        662.5,
+        567.4,
+        689.0
+      ],
+      "rect_pdf": [
+        347.1,
+        152.9,
+        567.4,
+        179.4
+      ],
+      "lines": 2
+    },
+    {
+      "id": "electronic.renter1Yes",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        764.5,
+        139.6,
+        775.0
+      ],
+      "rect_pdf": [
+        129.1,
+        66.9,
+        139.6,
+        77.4
+      ]
+    },
+    {
+      "id": "electronic.renter1No",
+      "page": 3,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        791.0,
+        139.6,
+        801.5
+      ],
+      "rect_pdf": [
+        129.1,
+        40.4,
+        139.6,
+        50.9
+      ]
+    },
+    {
+      "id": "electronic.renter1Contact",
+      "page": 3,
+      "type": "multiline",
+      "rect_top": [
+        347.1,
+        761.0,
+        567.4,
+        787.5
+      ],
+      "rect_pdf": [
+        347.1,
+        54.4,
+        567.4,
+        80.9
+      ],
+      "lines": 2
+    },
+    {
+      "id": "electronic.renter2Yes",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        32.2,
+        139.6,
+        42.7
+      ],
+      "rect_pdf": [
+        129.1,
+        799.2,
+        139.6,
+        809.7
+      ]
+    },
+    {
+      "id": "electronic.renter2No",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        58.7,
+        139.6,
+        69.2
+      ],
+      "rect_pdf": [
+        129.1,
+        772.7,
+        139.6,
+        783.2
+      ]
+    },
+    {
+      "id": "electronic.renter2Contact",
+      "page": 4,
+      "type": "multiline",
+      "rect_top": [
+        347.1,
+        28.7,
+        567.4,
+        55.2
+      ],
+      "rect_pdf": [
+        347.1,
+        786.7,
+        567.4,
+        813.2
+      ],
+      "lines": 2
+    },
+    {
+      "id": "electronic.renter3Yes",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        81.8,
+        139.6,
+        92.3
+      ],
+      "rect_pdf": [
+        129.1,
+        749.6,
+        139.6,
+        760.1
+      ]
+    },
+    {
+      "id": "electronic.renter3No",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        108.3,
+        139.6,
+        118.8
+      ],
+      "rect_pdf": [
+        129.1,
+        723.1,
+        139.6,
+        733.6
+      ]
+    },
+    {
+      "id": "electronic.renter3Contact",
+      "page": 4,
+      "type": "multiline",
+      "rect_top": [
+        347.1,
+        78.3,
+        567.4,
+        104.8
+      ],
+      "rect_pdf": [
+        347.1,
+        737.1,
+        567.4,
+        763.6
+      ],
+      "lines": 2
+    },
+    {
+      "id": "electronic.renter4Yes",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        131.5,
+        139.6,
+        142.0
+      ],
+      "rect_pdf": [
+        129.1,
+        699.9,
+        139.6,
+        710.4
+      ]
+    },
+    {
+      "id": "electronic.renter4No",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        129.1,
+        158.0,
+        139.6,
+        168.5
+      ],
+      "rect_pdf": [
+        129.1,
+        673.4,
+        139.6,
+        683.9
+      ]
+    },
+    {
+      "id": "electronic.renter4Contact",
+      "page": 4,
+      "type": "multiline",
+      "rect_top": [
+        347.1,
+        128.0,
+        567.4,
+        154.5
+      ],
+      "rect_pdf": [
+        347.1,
+        687.4,
+        567.4,
+        713.9
+      ],
+      "lines": 2
+    },
+    {
+      "id": "emergency.contactName",
+      "page": 4,
+      "type": "text",
+      "rect_top": [
+        175.6,
+        287.6,
+        567.2,
+        304.6
+      ],
+      "rect_pdf": [
+        175.6,
+        537.3,
+        567.2,
+        554.3
+      ]
+    },
+    {
+      "id": "emergency.phone",
+      "page": 4,
+      "type": "text",
+      "rect_top": [
+        175.6,
+        309.8,
+        306.4,
+        326.8
+      ],
+      "rect_pdf": [
+        175.6,
+        515.1,
+        306.4,
+        532.1
+      ]
+    },
+    {
+      "id": "emergency.email",
+      "page": 4,
+      "type": "text",
+      "rect_top": [
+        175.6,
+        331.9,
+        567.2,
+        348.9
+      ],
+      "rect_pdf": [
+        175.6,
+        493.0,
+        567.2,
+        510.0
+      ]
+    },
+    {
+      "id": "ownersCorp.no",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        45.9,
+        586.8,
+        56.4,
+        597.3
+      ],
+      "rect_pdf": [
+        45.9,
+        244.6,
+        56.4,
+        255.1
+      ]
+    },
+    {
+      "id": "ownersCorp.yes",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        109.7,
+        586.8,
+        120.2,
+        597.3
+      ],
+      "rect_pdf": [
+        109.7,
+        244.6,
+        120.2,
+        255.1
+      ]
+    },
+    {
+      "id": "conditionReport.provided",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        45.9,
+        681.0,
+        58.7,
+        693.8
+      ],
+      "rect_pdf": [
+        45.9,
+        148.1,
+        58.7,
+        160.9
+      ]
+    },
+    {
+      "id": "conditionReport.willBeProvided",
+      "page": 4,
+      "type": "checkbox",
+      "rect_top": [
+        45.9,
+        714.8,
+        56.4,
+        725.3
+      ],
+      "rect_pdf": [
+        45.9,
+        116.6,
+        56.4,
+        127.1
+      ]
+    },
+    {
+      "id": "additionalTerms.furtherDetails",
+      "page": 8,
+      "type": "multiline",
+      "rect_top": [
+        45.4,
+        143.6,
+        569.2,
+        280.8
+      ],
+      "rect_pdf": [
+        45.4,
+        561.1,
+        569.2,
+        698.3
+      ],
+      "lines": 8
+    },
+    {
+      "id": "signature.rentalProvider1",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        390.2,
+        390.1,
+        419.7
+      ],
+      "rect_pdf": [
+        155.7,
+        422.2,
+        390.1,
+        451.7
+      ]
+    },
+    {
+      "id": "signature.rentalProvider1Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        424.9,
+        269.6,
+        441.9
+      ],
+      "rect_pdf": [
+        155.8,
+        400.0,
+        269.6,
+        417.0
+      ]
+    },
+    {
+      "id": "signature.rentalProvider2",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        447.0,
+        390.1,
+        476.5
+      ],
+      "rect_pdf": [
+        155.7,
+        365.4,
+        390.1,
+        394.9
+      ]
+    },
+    {
+      "id": "signature.rentalProvider2Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        481.7,
+        269.6,
+        498.7
+      ],
+      "rect_pdf": [
+        155.8,
+        343.2,
+        269.6,
+        360.2
+      ]
+    },
+    {
+      "id": "signature.renter1",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        541.0,
+        390.1,
+        569.3
+      ],
+      "rect_pdf": [
+        155.7,
+        272.6,
+        390.1,
+        300.9
+      ]
+    },
+    {
+      "id": "signature.renter1Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        574.5,
+        269.6,
+        591.5
+      ],
+      "rect_pdf": [
+        155.8,
+        250.4,
+        269.6,
+        267.4
+      ]
+    },
+    {
+      "id": "signature.renter2",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        602.0,
+        390.1,
+        630.3
+      ],
+      "rect_pdf": [
+        155.7,
+        211.6,
+        390.1,
+        239.9
+      ]
+    },
+    {
+      "id": "signature.renter2Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        635.5,
+        269.6,
+        652.5
+      ],
+      "rect_pdf": [
+        155.8,
+        189.4,
+        269.6,
+        206.4
+      ]
+    },
+    {
+      "id": "signature.renter3",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        663.0,
+        390.1,
+        691.3
+      ],
+      "rect_pdf": [
+        155.7,
+        150.6,
+        390.1,
+        178.9
+      ]
+    },
+    {
+      "id": "signature.renter3Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        696.5,
+        269.6,
+        713.5
+      ],
+      "rect_pdf": [
+        155.8,
+        128.4,
+        269.6,
+        145.4
+      ]
+    },
+    {
+      "id": "signature.renter4",
+      "page": 8,
+      "type": "signature",
+      "rect_top": [
+        155.7,
+        724.0,
+        390.1,
+        752.3
+      ],
+      "rect_pdf": [
+        155.7,
+        89.6,
+        390.1,
+        117.9
+      ]
+    },
+    {
+      "id": "signature.renter4Date",
+      "page": 8,
+      "type": "date",
+      "rect_top": [
+        155.8,
+        757.5,
+        269.6,
+        774.5
+      ],
+      "rect_pdf": [
+        155.8,
+        67.4,
+        269.6,
+        84.4
+      ]
+    }
+  ],
+  "docusealSigners": [
+    {
+      "role": "First Party",
+      "signatureField": "signature.rentalProvider1",
+      "dateField": "signature.rentalProvider1Date"
+    },
+    {
+      "role": "Second Party",
+      "signatureField": "signature.renter1",
+      "dateField": "signature.renter1Date"
+    },
+    {
+      "role": "Third Party (co-renter, gated)",
+      "signatureField": "signature.renter2",
+      "dateField": "signature.renter2Date"
+    }
+  ],
+  "fillPadding": {
+    "left": 3,
+    "bottom": 3,
+    "note": "inset text from box borders; baseline sits flush otherwise (confirmed by spike)"
+  }
+}
