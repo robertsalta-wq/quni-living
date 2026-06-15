@@ -1,9 +1,9 @@
 /** RTA Queensland - boarders and lodgers guidance (prefer over bare section numbers in UI). */
 export const QLD_RTA_BOARDERS_LODGERS_URL = 'https://www.rta.qld.gov.au/renting/boarders-and-lodgers'
 
-export const QLD_RTA_RENTAL_BOND_URL = 'https://www.rta.qld.gov.au/renting/rental-bond'
+export const QLD_RTA_RENTAL_BOND_URL = 'https://www.rta.qld.gov.au/starting-a-tenancy/rental-bond'
 
-export const QLD_RTA_WEB_SERVICES_URL = 'https://www.rta.qld.gov.au/renting/rental-bond/lodge-rental-bond'
+export const QLD_RTA_WEB_SERVICES_URL = 'https://www.rta.qld.gov.au/rta-web-services/online-bond-lodgement'
 
 export const QLD_RTA_HOME_URL = 'https://www.rta.qld.gov.au/'
 
