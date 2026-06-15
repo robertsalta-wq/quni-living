@@ -7,6 +7,7 @@ import {
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { getPostLoginRedirectDestination, needsOnboarding } from '../lib/authProfile'
+import { formatAuthLoginErrorMessage } from '../lib/authErrors'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import {
   isSafeInternalPath,
@@ -55,8 +56,8 @@ export default function Login() {
   let urlDetailSecondary: string | null = null
 
   if (urlError === 'auth_failed') {
-    errorMessage = 'Sign-in failed. Please try again.'
-    urlDetailSecondary = detailText
+    errorMessage = formatAuthLoginErrorMessage(detailText ?? 'Sign-in failed.')
+    urlDetailSecondary = null
   } else if (urlError === 'pkce_verifier_missing') {
     errorMessage =
       'This confirmation link could not be used (often an older link from before our last update, or opened in a different app than where you signed up). Use your email and password below, or tap “Resend confirmation email” and open only the newest link.'
@@ -138,8 +139,7 @@ export default function Login() {
       clearQuniAccommodationVerificationRoute()
       // Redirect once AuthContext finishes hydrating (avoids duplicate profile fetches here).
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Invalid email or password.'
-      setError(msg)
+      setError(formatAuthLoginErrorMessage(e))
     } finally {
       setSubmitting(false)
     }
@@ -157,7 +157,7 @@ export default function Login() {
       provider: 'google',
       options: getGoogleOAuthOptions(),
     })
-    if (oErr) setError(oErr.message)
+    if (oErr) setError(formatAuthLoginErrorMessage(oErr))
   }
 
   const redirectQ = searchParams.get('redirect')
