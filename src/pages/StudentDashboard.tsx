@@ -10,7 +10,7 @@ import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { isTenantCoreProfileComplete } from '../lib/studentOnboarding'
-import { isLandlordHeldBondContext } from '../lib/listings'
+import { isBondPaymentReceiptContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import BookingLeasePanel from '../components/booking/BookingLeasePanel'
@@ -524,7 +524,7 @@ export default function StudentDashboard() {
                     )}
                     {(b.status === 'confirmed' || b.status === 'active') &&
                       prop &&
-                      isLandlordHeldBondContext(prop.property_type, prop.state) && (
+                      isBondPaymentReceiptContext(prop.property_type) && (
                         <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
                           {bondDownloadErrorId === b.id ? (
                             <p className="text-amber-900 text-xs leading-relaxed">

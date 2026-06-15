@@ -1,26 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { isBoardingLodgerBondContext, isLandlordHeldBondContext } from './listings'
+import {
+  isBoardingLodgerBondContext,
+  isBondPaymentReceiptContext,
+  isLandlordHeldBondContext,
+} from './listings'
 
-describe('isLandlordHeldBondContext', () => {
+describe('bond receipt gates', () => {
   const onSite = 'private_room_landlord_on_site'
 
-  it('matches boarding/lodger gate for NSW (unchanged from pre-QLD fix)', () => {
-    expect(isBoardingLodgerBondContext(onSite)).toBe(true)
-    expect(isLandlordHeldBondContext(onSite, 'NSW')).toBe(true)
-  })
-
-  it('matches boarding/lodger gate for VIC (unchanged from pre-QLD fix)', () => {
+  it('VIC T1 boarding: landlord-held statutory context (schemeApplies false in vic.ts)', () => {
     expect(isLandlordHeldBondContext(onSite, 'VIC')).toBe(true)
   })
 
-  it('excludes QLD on-site (RTA scheme — only intentional delta)', () => {
+  it('QLD boarding: payment receipt eligible, not landlord-held statutory context', () => {
+    expect(isBondPaymentReceiptContext(onSite)).toBe(true)
     expect(isBoardingLodgerBondContext(onSite)).toBe(true)
     expect(isLandlordHeldBondContext(onSite, 'QLD')).toBe(false)
   })
 
+  it('NSW boarding: both payment receipt and landlord-held context', () => {
+    expect(isBondPaymentReceiptContext(onSite)).toBe(true)
+    expect(isLandlordHeldBondContext(onSite, 'NSW')).toBe(true)
+  })
+
   it('returns false for non-boarding types regardless of state', () => {
+    expect(isBondPaymentReceiptContext('private_room')).toBe(false)
     expect(isLandlordHeldBondContext('private_room', 'NSW')).toBe(false)
-    expect(isLandlordHeldBondContext('private_room', 'VIC')).toBe(false)
-    expect(isLandlordHeldBondContext('private_room', 'QLD')).toBe(false)
   })
 })

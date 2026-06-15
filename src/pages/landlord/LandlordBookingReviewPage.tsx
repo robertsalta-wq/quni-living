@@ -20,7 +20,7 @@ import {
 } from '../../lib/pricing/bookingOccupancySnapshot'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
-import { isLandlordHeldBondContext } from '../../lib/listings'
+import { isBondPaymentReceiptContext } from '../../lib/listings'
 import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
 import QldRtaLodgementGuidance from '../../components/bond/QldRtaLodgementGuidance'
 import { apiUrl } from '../../lib/apiUrl'
@@ -758,11 +758,16 @@ export default function LandlordBookingReviewPage() {
     (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
     listingBondObligations != null
 
+  const isQldBoardingProperty =
+    (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
+    isBondPaymentReceiptContext(property?.property_type)
+
   const showMarkBondReceived =
     Boolean(tenancy) &&
     !tenancy?.bond_lodged_at &&
+    !tenancy?.bond_lodgement_reference &&
     property &&
-    isLandlordHeldBondContext(property.property_type, property.state) &&
+    isBondPaymentReceiptContext(property.property_type) &&
     (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
 
   const showRtaBondRecord =
@@ -1102,14 +1107,25 @@ export default function LandlordBookingReviewPage() {
               <dt className="text-gray-500">Platform booking fee</dt>
               <dd className="font-medium text-right tabular-nums">{formatAudCents(feeCents)}</dd>
             </div>
-            {tenancy?.bond_lodged_at && tenancy.bond_lodgement_reference && (
+            {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
               <div className="pt-3 border-t border-gray-100 space-y-1">
-                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Bond received</p>
+                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">
+                  {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
+                </p>
                 <p className="text-sm text-gray-800">
                   Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
-                  {' · '}
-                  {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
+                  {tenancy.bond_lodged_at ? (
+                    <>
+                      {' · '}
+                      {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
+                    </>
+                  ) : null}
                 </p>
+                {isQldBoardingProperty ? (
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
+                  </p>
+                ) : null}
               </div>
             )}
           </dl>
@@ -1123,8 +1139,9 @@ export default function LandlordBookingReviewPage() {
                 Mark bond as received
               </button>
               <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                For boarding/lodger or homestay stays, record when you receive the bond and we&apos;ll email a PDF receipt
-                to you and the renter.
+                {isQldBoardingProperty
+                  ? 'Record when you receive bond payment from the renter. We\u2019ll email a payment receipt (not RTA lodgement confirmation) and remind you to lodge with the RTA within 10 days.'
+                  : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
               </p>
             </div>
           )}
@@ -1203,7 +1220,7 @@ export default function LandlordBookingReviewPage() {
                 )}
               </button>
               <p className="text-xs text-gray-600 leading-relaxed px-0.5">
-                {isQldSchemeListing ? (
+                {isQldBoardingProperty ? (
                   <>
                     Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
                     must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
@@ -1458,7 +1475,9 @@ export default function LandlordBookingReviewPage() {
           <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900">Mark bond as received</h3>
             <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-              We&apos;ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the renter.
+              {isQldBoardingProperty
+                ? 'We\u2019ll generate a bond payment receipt PDF (not RTA lodgement confirmation), save it to this tenancy, and email a copy to you and the renter. You must still lodge with the RTA within 10 days.'
+                : 'We\u2019ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the renter.'}
             </p>
             {bondFormError && (
               <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{bondFormError}</p>

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Database } from '../../lib/database.types'
 import { formatDate } from '../../pages/admin/adminUi'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
-import { isLandlordHeldBondContext } from '../../lib/listings'
+import { isBondPaymentReceiptContext } from '../../lib/listings'
 import TenancyAgreementExplainer from '../TenancyAgreementExplainer'
 import BookingLeasePanel from '../booking/BookingLeasePanel'
 import RtaBondRecordForm from '../bond/RtaBondRecordForm'
@@ -181,7 +181,7 @@ export default function StudentDashboardBookingCard({
       )}
       {(b.status === 'confirmed' || b.status === 'active') &&
         prop &&
-        isLandlordHeldBondContext(prop.property_type, prop.state) && (
+        isBondPaymentReceiptContext(prop.property_type) && (
           <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
             {bondDownloadErrorId === b.id ? (
               <p className="text-amber-900 text-xs leading-relaxed">

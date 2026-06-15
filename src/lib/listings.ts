@@ -112,9 +112,14 @@ export function isBoardingLodgerBondContext(propertyType: string | null | undefi
   return BOARDING_LODGER_PROPERTY_TYPE_VALUES.has(pt)
 }
 
+/** Boarding/lodger stays eligible for bond payment receipt PDF (NSW, VIC, QLD). */
+export function isBondPaymentReceiptContext(propertyType: string | null | undefined): boolean {
+  return isBoardingLodgerBondContext(propertyType)
+}
+
 /**
- * Boarding/lodger bond receipt PDF — same gate as pre-QLD fix {@link isBoardingLodgerBondContext},
- * except QLD is excluded (boarder/lodger bonds must be RTA-lodged; NSW/VIC T1 may hold).
+ * NSW/VIC boarding/lodger where bond may be held by the landlord (schemeApplies: false for T1).
+ * QLD uses {@link isBondPaymentReceiptContext} with the QLD payment-receipt PDF variant instead.
  */
 export function isLandlordHeldBondContext(
   propertyType: string | null | undefined,
