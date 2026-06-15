@@ -9,6 +9,9 @@
     "api/booking-mark-bond-received.ts": {
       "maxDuration": 30
     },
+    "api/booking-record-rta-bond.ts": {
+      "maxDuration": 30
+    },
     "api/booking-prepare-listing-agreement.ts": {
       "maxDuration": 60
     },

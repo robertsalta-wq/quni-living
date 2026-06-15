@@ -20,7 +20,9 @@ import {
 } from '../../lib/pricing/bookingOccupancySnapshot'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
-import { isBoardingLodgerBondContext } from '../../lib/listings'
+import { isLandlordHeldBondContext } from '../../lib/listings'
+import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
+import QldRtaLodgementGuidance from '../../components/bond/QldRtaLodgementGuidance'
 import { apiUrl } from '../../lib/apiUrl'
 import {
   landlordBookingConfirmAllowed,
@@ -172,6 +174,12 @@ export default function LandlordBookingReviewPage() {
 
   const [listingPaymentModalOpen, setListingPaymentModalOpen] = useState(false)
 
+  const [rtaBondNumber, setRtaBondNumber] = useState('')
+  const [rtaAckRef, setRtaAckRef] = useState('')
+  const [rtaLodgedDate, setRtaLodgedDate] = useState('')
+  const [rtaRecordBusy, setRtaRecordBusy] = useState(false)
+  const [rtaRecordError, setRtaRecordError] = useState<string | null>(null)
+  const [rtaRecordToast, setRtaRecordToast] = useState<string | null>(null)
   const [bondReceivedBusy, setBondReceivedBusy] = useState(false)
   const [bondReceivedError, setBondReceivedError] = useState<string | null>(null)
   const [bondReceivedToast, setBondReceivedToast] = useState<string | null>(null)
@@ -300,7 +308,10 @@ export default function LandlordBookingReviewPage() {
       date: moveIn,
     })
     if (!pkg.supported) return null
-    return listingBondPaymentLandlordObligations(pkg.rules.bond, data.property.state)
+    const qldPref = parseQldBondRemittancePreference(data.property.qld_bond_remittance_preference)
+    return listingBondPaymentLandlordObligations(pkg.rules.bond, data.property.state, {
+      qldBondRemittancePreference: qldPref,
+    })
   }, [
     data?.booking?.status,
     data?.booking?.service_tier_final,
@@ -309,6 +320,7 @@ export default function LandlordBookingReviewPage() {
     data?.property?.state,
     data?.property?.property_type,
     data?.property?.is_registered_rooming_house,
+    data?.property?.qld_bond_remittance_preference,
   ])
 
   const canConfirm =
@@ -524,7 +536,58 @@ export default function LandlordBookingReviewPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [bookingId, infoMessage, reload])
+  }, [bookingId, reload])
+
+  useEffect(() => {
+    if (!data?.booking) return
+    const b = data.booking as Database['public']['Tables']['bookings']['Row']
+    setRtaBondNumber(typeof b.rta_bond_number === 'string' ? b.rta_bond_number : '')
+    setRtaAckRef(typeof b.rta_acknowledgement_reference === 'string' ? b.rta_acknowledgement_reference : '')
+    setRtaLodgedDate(
+      typeof b.rta_bond_lodged_at === 'string' && b.rta_bond_lodged_at.trim()
+        ? b.rta_bond_lodged_at.slice(0, 10)
+        : '',
+    )
+  }, [data?.booking?.id, data?.booking?.rta_bond_number, data?.booking?.rta_acknowledgement_reference, data?.booking?.rta_bond_lodged_at])
+
+  const onSaveRtaBondDetails = useCallback(async () => {
+    if (!bookingId) return
+    setRtaRecordError(null)
+    setRtaRecordBusy(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setRtaRecordError('You need to be signed in.')
+        return
+      }
+      const res = await fetch(apiUrl('/api/booking-record-rta-bond'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookingId,
+          rtaBondNumber: rtaBondNumber.trim() || null,
+          rtaAcknowledgementReference: rtaAckRef.trim() || null,
+          rtaBondLodgedAt: rtaLodgedDate.trim() || null,
+        }),
+      })
+      const j = (await readJsonApiResponse(res)) as { error?: string }
+      if (!res.ok) {
+        setRtaRecordError(typeof j.error === 'string' ? j.error : 'Could not save RTA bond details.')
+        return
+      }
+      setRtaRecordToast('RTA bond details saved.')
+      window.setTimeout(() => setRtaRecordToast(null), 4500)
+      await reload()
+    } catch {
+      setRtaRecordError('Something went wrong.')
+    } finally {
+      setRtaRecordBusy(false)
+    }
+  }, [bookingId, rtaAckRef, rtaBondNumber, rtaLodgedDate, reload])
 
   const onMarkBondReceived = useCallback(async () => {
     if (!bookingId) return
@@ -691,12 +754,23 @@ export default function LandlordBookingReviewPage() {
   const depositCents = booking.deposit_amount ?? null
   const feeCents = booking.platform_fee_amount ?? null
 
+  const isQldSchemeListing =
+    (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
+    listingBondObligations != null
+
   const showMarkBondReceived =
     Boolean(tenancy) &&
     !tenancy?.bond_lodged_at &&
     property &&
-    isBoardingLodgerBondContext(property.property_type) &&
+    isLandlordHeldBondContext(property.property_type, property.state) &&
     (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
+
+  const showRtaBondRecord =
+    isQldSchemeListing &&
+    (isListingBondPending ||
+      booking.status === 'confirmed' ||
+      booking.status === 'active' ||
+      booking.status === 'completed')
 
   const flowLabel =
     booking.status === 'awaiting_info'
@@ -1129,20 +1203,90 @@ export default function LandlordBookingReviewPage() {
                 )}
               </button>
               <p className="text-xs text-gray-600 leading-relaxed px-0.5">
-                Confirms you&apos;ve received bond directly from the renter. Signing links are in{' '}
+                {isQldSchemeListing ? (
+                  <>
+                    Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
+                    must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
+                  </>
+                ) : (
+                  <>Confirms you&apos;ve received bond directly from the renter.</>
+                )}{' '}
+                Signing links are in{' '}
                 <a href="#tenancy-agreement-preview" className="font-semibold text-[#FF6F61] underline underline-offset-2">
                   Tenancy agreement
                 </a>{' '}
                 above and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
-                {otherPendingPipelineCount > 0 ? (
-                  <>
-                    {' '}
-                    Confirming bond receipt will automatically decline the{' '}
-                    {otherPendingPipelineCount} remaining backup applicant
-                    {otherPendingPipelineCount === 1 ? '' : 's'} for this property.
-                  </>
-                ) : null}
               </p>
+              {isQldSchemeListing ? <QldRtaLodgementGuidance className="mt-2" /> : null}
+              {showRtaBondRecord ? (
+                <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-gray-900">RTA bond record (optional)</p>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    After lodgement, save the bond number from your Acknowledgement of Rental Bond. This does not gate
+                    booking confirmation.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="rta-bond-number" className="block text-xs font-medium text-gray-700 mb-1">
+                        RTA bond number
+                      </label>
+                      <input
+                        id="rta-bond-number"
+                        type="text"
+                        value={rtaBondNumber}
+                        onChange={(e) => setRtaBondNumber(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                        placeholder="From Acknowledgement of Rental Bond"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="rta-ack-ref" className="block text-xs font-medium text-gray-700 mb-1">
+                        Acknowledgement reference
+                      </label>
+                      <input
+                        id="rta-ack-ref"
+                        type="text"
+                        value={rtaAckRef}
+                        onChange={(e) => setRtaAckRef(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="rta-lodged-date" className="block text-xs font-medium text-gray-700 mb-1">
+                        Lodgement date
+                      </label>
+                      <input
+                        id="rta-lodged-date"
+                        type="date"
+                        value={rtaLodgedDate}
+                        onChange={(e) => setRtaLodgedDate(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+                  {rtaRecordError ? (
+                    <p className="text-xs text-red-700">{rtaRecordError}</p>
+                  ) : null}
+                  {rtaRecordToast ? (
+                    <p className="text-xs text-emerald-800">{rtaRecordToast}</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={rtaRecordBusy}
+                    onClick={() => void onSaveRtaBondDetails()}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {rtaRecordBusy ? 'Saving…' : 'Save RTA bond details'}
+                  </button>
+                </div>
+              ) : null}
+              {otherPendingPipelineCount > 0 ? (
+                <p className="text-xs text-gray-600 leading-relaxed px-0.5">
+                  Confirming bond receipt will automatically decline the {otherPendingPipelineCount} remaining backup
+                  applicant
+                  {otherPendingPipelineCount === 1 ? '' : 's'} for this property.
+                </p>
+              ) : null}
               {canCancelListingBondPending && (
                 <button
                   type="button"

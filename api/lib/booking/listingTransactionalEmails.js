@@ -62,7 +62,7 @@ async function loadListingEmailContext(admin, bookingId) {
       start_date,
       lease_length,
       bond_window_expires_at,
-      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house ),
+      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference ),
       student_profiles ( email, full_name, first_name, last_name ),
       landlord_profiles ( email, full_name, phone )
     `,
@@ -115,13 +115,19 @@ async function loadListingEmailContext(admin, bookingId) {
     date: moveInRaw || undefined,
   })
   const bondRules = tenancyPackage.supported ? tenancyPackage.rules.bond : null
+  const qldBondRemittancePreference =
+    typeof prop.qld_bond_remittance_preference === 'string' ? prop.qld_bond_remittance_preference : null
+  const bondPaymentOpts =
+    qldBondRemittancePreference === 'landlord_collects_remits' || qldBondRemittancePreference === 'tenant_choice'
+      ? { qldBondRemittancePreference: qldBondRemittancePreference }
+      : undefined
   const bondPaymentTenantHtml =
     bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState)
+      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState, bondPaymentOpts)
       : null
   const bondPaymentLandlordHtml =
     bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState)
+      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState, bondPaymentOpts)
       : null
 
   return {

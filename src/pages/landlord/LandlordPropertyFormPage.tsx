@@ -21,6 +21,12 @@ import {
   qldOnSiteListingCallout,
   qldRoomsRentedFieldError,
 } from '../../lib/tenancy/qldBoarderLodger'
+import {
+  QLD_BOND_REMITTANCE_OPTIONS,
+  parseQldBondRemittancePreference,
+  type QldBondRemittancePreference,
+} from '../../lib/tenancy/qldBondRemittance'
+import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
 import {
@@ -208,6 +214,7 @@ type LandlordPropertyDraftV1 = {
   parkingSurchargePerWeek: string
   parkingAvailable: boolean
   bond: string
+  qldBondRemittancePreference: QldBondRemittancePreference
   leaseLength: string
   availableFrom: string
   /** Serialized via `serializePropertyImages` when persisted to localStorage. */
@@ -302,6 +309,8 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
         typeof d.parkingSurchargePerWeek === 'string' ? d.parkingSurchargePerWeek : '',
       parkingAvailable: Boolean(d.parkingAvailable),
       bond: typeof d.bond === 'string' ? d.bond : '',
+      qldBondRemittancePreference:
+        parseQldBondRemittancePreference(d.qldBondRemittancePreference) ?? 'tenant_choice',
       leaseLength: parseDraftLeaseLength(d.leaseLength),
       availableFrom: typeof d.availableFrom === 'string' ? d.availableFrom : '',
       images: Array.isArray(d.images) ? d.images.filter((x): x is string => typeof x === 'string') : [],
@@ -641,6 +650,15 @@ export default function LandlordPropertyFormPage() {
     [state, resolvedPropertyTier, serviceTierResolverOptions],
   )
   const listingTierAvailable = serviceTierAvailability.listing !== 'unsupported'
+  const showQldBondRemittance = useMemo(() => {
+    if ((state.trim() || '').toUpperCase() !== 'QLD' || isRegisteredRoomingHouse) return false
+    const pkg = resolveTenancyPackage({
+      state: 'QLD',
+      property_type: propertyListingType,
+      is_registered_rooming_house: false,
+    })
+    return pkg.supported && pkg.rules.bond.schemeApplies
+  }, [state, propertyListingType, isRegisteredRoomingHouse])
   const managedTierAvailable = serviceTierAvailability.managed === 'available'
   const managedTierUnavailableReason =
     serviceTierAvailability.managed === 'gated'
@@ -702,6 +720,8 @@ export default function LandlordPropertyFormPage() {
   )
 
   const [bond, setBond] = useState('')
+  const [qldBondRemittancePreference, setQldBondRemittancePreference] =
+    useState<QldBondRemittancePreference>('tenant_choice')
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
   const [availableFrom, setAvailableFrom] = useState('')
 
@@ -742,6 +762,7 @@ export default function LandlordPropertyFormPage() {
         parkingSurchargePerWeek,
         parkingAvailable,
         bond,
+        qldBondRemittancePreference,
         leaseLength,
         availableFrom,
         images: serializePropertyImages(images),
@@ -783,6 +804,7 @@ export default function LandlordPropertyFormPage() {
       parkingSurchargePerWeek,
       parkingAvailable,
       bond,
+      qldBondRemittancePreference,
       leaseLength,
       availableFrom,
       images,
@@ -1099,6 +1121,9 @@ export default function LandlordPropertyFormPage() {
         )
         setParkingAvailable(Boolean(prop.parking_available))
         setBond(prop.bond != null ? String(prop.bond) : '')
+        setQldBondRemittancePreference(
+          parseQldBondRemittancePreference(prop.qld_bond_remittance_preference) ?? 'tenant_choice',
+        )
         setLeaseLength(prop.lease_length ?? 'Flexible')
         setAvailableFrom(prop.available_from ? prop.available_from.slice(0, 10) : '')
         setImages(normalizePropertyImages(prop.images))
@@ -1202,6 +1227,7 @@ export default function LandlordPropertyFormPage() {
       setParkingSurchargePerWeek(parsed.parkingSurchargePerWeek)
       setParkingAvailable(parsed.parkingAvailable)
       setBond(parsed.bond)
+      setQldBondRemittancePreference(parsed.qldBondRemittancePreference)
       setLeaseLength(parsed.leaseLength)
       setAvailableFrom(parsed.availableFrom)
       setImages(normalizePropertyImages(parsed.images))
@@ -2056,6 +2082,8 @@ export default function LandlordPropertyFormPage() {
         parkingAvailable && parkingAmt != null && parkingAmt > 0 ? parkingAmt : null,
       parking_available: parkingAvailable,
       bond: bond.trim() ? Number(bond) : null,
+      qld_bond_remittance_preference:
+        showQldBondRemittance ? qldBondRemittancePreference : null,
       lease_length: leaseLength || null,
       available_from: availableFrom.trim() || null,
       images: images.length ? serializePropertyImages(images) : null,
@@ -3137,7 +3165,7 @@ export default function LandlordPropertyFormPage() {
                       managedComingSoon
                         ? MANAGED_COMING_SOON_SHORT
                         : tier === 'listing'
-                          ? 'Listing is not available for this property.'
+                          ? serviceTierAvailability.notes ?? 'Listing is not available for this property.'
                           : locked
                             ? 'Managed is permanent for this property.'
                             : managedTierUnavailableReason
@@ -3392,6 +3420,43 @@ export default function LandlordPropertyFormPage() {
                   </p>
                 ) : null}
               </div>
+              {showQldBondRemittance ? (
+                <fieldset className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
+                  <legend className="text-sm font-semibold text-gray-900 px-1">QLD bond payment preference</legend>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    How do you prefer the renter to pay bond? This steers booking instructions — renters can still lodge
+                    directly with the RTA. Quni never holds or remits bond.
+                  </p>
+                  <div className="space-y-2">
+                    {QLD_BOND_REMITTANCE_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.value}
+                        className={`flex gap-3 rounded-lg border px-3 py-2.5 cursor-pointer ${
+                          qldBondRemittancePreference === opt.value
+                            ? 'border-[#FF6F61] bg-white ring-1 ring-[#FF6F61]/30'
+                            : 'border-gray-200 bg-white/80'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="qld-bond-remittance"
+                          value={opt.value}
+                          checked={qldBondRemittancePreference === opt.value}
+                          onChange={() => setQldBondRemittancePreference(opt.value)}
+                          className="mt-1 shrink-0"
+                        />
+                        <span>
+                          <span className="block text-sm font-semibold text-gray-900">{opt.label}</span>
+                          <span className="block text-xs text-gray-600 mt-0.5">{opt.description}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-sky-900/90">
+                    Tip: a bond is not compulsory under Queensland law — rent in advance is a lawful alternative.
+                  </p>
+                </fieldset>
+              ) : null}
               <div>
                 <label htmlFor="pf-lease" className={labelClass}>
                   Lease length

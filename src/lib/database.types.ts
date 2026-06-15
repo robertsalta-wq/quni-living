@@ -932,6 +932,7 @@ export interface Database {
           rooms_rented_to_residents: number | null
           furnished: boolean | null
           bond: number | null
+          qld_bond_remittance_preference: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length: string | null
           listing_type: 'rent' | 'homestay' | 'student_house' | null
           featured: boolean | null
@@ -990,6 +991,7 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
+          qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
           featured?: boolean | null
@@ -1047,6 +1049,7 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
+          qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
           featured?: boolean | null
@@ -1217,6 +1220,9 @@ export interface Database {
           expired_at: string | null
           bond_received_by_landlord_at: string | null
           bond_window_expires_at: string | null
+          rta_bond_number: string | null
+          rta_acknowledgement_reference: string | null
+          rta_bond_lodged_at: string | null
           listing_agreement_status: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error: string | null
           bond_acknowledged: boolean | null
@@ -1279,6 +1285,9 @@ export interface Database {
           expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
+          rta_bond_number?: string | null
+          rta_acknowledgement_reference?: string | null
+          rta_bond_lodged_at?: string | null
           listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
@@ -1340,6 +1349,9 @@ export interface Database {
           expired_at?: string | null
           bond_received_by_landlord_at?: string | null
           bond_window_expires_at?: string | null
+          rta_bond_number?: string | null
+          rta_acknowledgement_reference?: string | null
+          rta_bond_lodged_at?: string | null
           listing_agreement_status?: 'pending' | 'ready' | 'failed' | 'voided' | null
           listing_agreement_error?: string | null
           bond_acknowledged?: boolean | null
