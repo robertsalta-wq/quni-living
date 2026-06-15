@@ -304,7 +304,7 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
     bond: { amount: ctx.bondNum },
     specialConditions: [
       'This licence is facilitated through the Quni Living platform (quni.com.au).',
-      'Any bond must be lodged with RTA Queensland within 10 calendar days of receipt (RTRA Act 2008 (Qld) s 27(2)). The owner cannot hold bond as a private deposit; Quni Living does not hold or manage bond payments.',
+      'Any bond must be lodged with RTA Queensland within 10 calendar days of receipt (RTRA Act 2008 (Qld) s 32). The owner cannot hold bond as a private deposit; Quni Living does not hold or manage bond payments.',
       ...(ctx.roomsForResidents != null ? [qldSection43PdfAcknowledgement(ctx.roomsForResidents)] : []),
       "Licence fee payments are processed through Quni Living's secure payment system powered by Stripe.",
       ...ctx.coTenantSpecialConditions,

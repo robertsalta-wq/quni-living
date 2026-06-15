@@ -9,8 +9,10 @@ import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
+import QldRtaLodgementGuidance from '../components/bond/QldRtaLodgementGuidance'
 import {
-  isBoardingLodgerBondContext,
+  isLandlordHeldBondContext,
   isPropertyListingType,
   PROPERTY_LISTING_TYPE_LABELS,
   type PropertyListingType,
@@ -1595,7 +1597,7 @@ export default function Booking() {
       : undefined
 
   const stateAu = normalizeAuStateCode(property?.state)
-  const rtaExemptArrangement = isBoardingLodgerBondContext(property?.property_type)
+  const rtaExemptArrangement = isLandlordHeldBondContext(property?.property_type, property?.state)
   const statutoryRentCopy = statutoryRentBankTransferCopy(property?.state, rtaExemptArrangement)
 
   return (
@@ -2035,6 +2037,15 @@ export default function Booking() {
                     <p className="font-semibold">{bondRegulatoryCopy.amberTitle}</p>
                     <p className="mt-1">{bondRegulatoryCopy.amberBody}</p>
                   </div>
+                  {isQldOnSiteBoarderLodgerListing(property.state, property.property_type) ? (
+                    <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
+                      <p>{qldOnSiteTenantBondCallout()}</p>
+                    </div>
+                  ) : null}
+                  {(property.state ?? '').trim().toUpperCase() === 'QLD' &&
+                  bondRegulatoryCopy.mode === 'scheme' ? (
+                    <QldRtaLodgementGuidance />
+                  ) : null}
                 </>
               )
             ) : (

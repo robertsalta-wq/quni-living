@@ -1,4 +1,5 @@
 import type { ListingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
+import QldRtaLodgementGuidance from '../bond/QldRtaLodgementGuidance'
 
 type Props = {
   obligations: ListingBondPaymentLandlordObligations
@@ -25,7 +26,9 @@ export default function LandlordListingBondObligations({ obligations, className 
             {obligations.authorityLabel}
           </a>
         </li>
+        {obligations.qldRecordReceiptNote ? <li>{obligations.qldRecordReceiptNote}</li> : null}
       </ul>
+      {obligations.stateLabel === 'QLD' ? <QldRtaLodgementGuidance compact className="mt-2" /> : null}
     </div>
   )
 }

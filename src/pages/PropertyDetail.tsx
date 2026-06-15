@@ -29,6 +29,7 @@ import {
 } from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
 import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
+import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
@@ -1535,6 +1536,13 @@ export default function PropertyDetail() {
                     {property.bond != null && Number(property.bond) > 0 && (
                       <SidebarRow label="Bond">{`$${Number(property.bond).toLocaleString()}`}</SidebarRow>
                     )}
+                    {property.bond != null &&
+                    Number(property.bond) > 0 &&
+                    isQldOnSiteBoarderLodgerListing(property.state, property.property_type) ? (
+                      <p className="text-xs text-sky-900 leading-relaxed rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2">
+                        {qldOnSiteTenantBondCallout()}
+                      </p>
+                    ) : null}
                     {property.lease_length?.trim() && (
                       <SidebarRow label="Lease">{property.lease_length.trim()}</SidebarRow>
                     )}
