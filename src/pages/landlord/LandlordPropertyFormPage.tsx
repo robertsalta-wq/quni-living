@@ -26,6 +26,7 @@ import {
   parseQldBondRemittancePreference,
   type QldBondRemittancePreference,
 } from '../../lib/tenancy/qldBondRemittance'
+import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
@@ -3408,7 +3409,12 @@ export default function LandlordPropertyFormPage() {
                   onChange={(e) => setBond(e.target.value)}
                   className={inputClass}
                 />
-                {bondSuggestedMaxWeeklyRent != null ? (
+                {(state.trim() || '').toUpperCase() === 'QLD' ? (
+                  <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+                    Under Queensland law, a bond cannot exceed 4 weeks&apos; rent, regardless of the weekly rent
+                    amount.
+                  </p>
+                ) : (state.trim() || '').toUpperCase() === 'NSW' && bondSuggestedMaxWeeklyRent != null ? (
                   <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
                     NSW residential bonds are often up to 4 weeks&apos; rent. At maximum occupancy and extras, that
                     could be up to{' '}
@@ -3448,6 +3454,21 @@ export default function LandlordPropertyFormPage() {
                         <span>
                           <span className="block text-sm font-semibold text-gray-900">{opt.label}</span>
                           <span className="block text-xs text-gray-600 mt-0.5">{opt.description}</span>
+                          {opt.value === 'landlord_collects_remits' ? (
+                            <span className="block text-xs text-gray-600 mt-1.5 leading-relaxed">
+                              If the landlord collects the bond, they must lodge it with the RTA within 10 days, and
+                              failing to lodge is an offence under Queensland law.{' '}
+                              <a
+                                href={QLD_RTA_RENTAL_BOND_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+                              >
+                                RTA Queensland — rental bonds
+                              </a>
+                              .
+                            </span>
+                          ) : null}
                         </span>
                       </label>
                     ))}
