@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import type { Database } from '../../lib/database.types'
+
+type StudentProfileInsert = Database['public']['Tables']['student_profiles']['Insert']
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
 import PageHeroBand from '../../components/PageHeroBand'
@@ -45,6 +49,50 @@ const ONBOARD_OCC_SET = new Set(['sole', 'couple', 'open'])
 const ONBOARD_MOVE_FLEX_SET = new Set(['exact', 'one_week', 'two_weeks'])
 const ONBOARD_BILLS_SET = new Set(['included', 'separate', 'either'])
 const ONBOARD_FURN_SET = new Set(['furnished', 'unfurnished', 'either'])
+
+/** Update if row exists (trigger at signup); insert bootstrap row if missing — avoids silent no-op UPDATE. */
+async function saveStudentProfileByUserId(
+  user: User,
+  patch: Record<string, unknown>,
+  sentryLabel: string,
+  accommodationRoute?: 'student' | 'non_student' | null,
+): Promise<{ error: unknown }> {
+  const fullName =
+    (user.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user.user_metadata?.name as string | undefined)?.trim() ||
+    user.email?.split('@')[0] ||
+    ''
+  const metaRoute = user.user_metadata?.accommodation_verification_route
+  const routeFromMeta =
+    metaRoute === 'student' || metaRoute === 'non_student' ? metaRoute : null
+  const route = accommodationRoute ?? routeFromMeta
+
+  const { data: existing, error: selErr } = await withSentryMonitoring(
+    `${sentryLabel}/select-profile`,
+    () => supabase.from('student_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
+  )
+  if (selErr) return { error: selErr }
+
+  if (existing) {
+    const { error: upErr } = await withSentryMonitoring(sentryLabel, () =>
+      supabase.from('student_profiles').update(patch).eq('user_id', user.id),
+    )
+    return { error: upErr }
+  }
+
+  const insertRow = {
+    user_id: user.id,
+    email: user.email ?? '',
+    full_name: fullName,
+    ...patch,
+    ...(route ? { accommodation_verification_route: route } : {}),
+  } as StudentProfileInsert
+
+  const { error: insErr } = await withSentryMonitoring(`${sentryLabel}/insert-profile`, () =>
+    supabase.from('student_profiles').insert(insertRow),
+  )
+  return { error: insErr }
+}
 
 /** Local draft - profile-style fields only; terms acceptance is never persisted. */
 type StudentOnboardingDraftV1 = {
@@ -540,11 +588,11 @@ export default function StudentOnboarding() {
       })
       if (upErr) throw upErr
       const { data: pub } = supabase.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path)
-      const { error: dbErr } = await withSentryMonitoring('StudentOnboarding/update-avatar-url', () =>
-        supabase
-          .from('student_profiles')
-          .update({ avatar_url: pub.publicUrl })
-          .eq('user_id', user.id),
+      const { error: dbErr } = await saveStudentProfileByUserId(
+        user,
+        { avatar_url: pub.publicUrl },
+        'StudentOnboarding/update-avatar-url',
+        profile?.accommodation_verification_route ?? undefined,
       )
       if (dbErr) throw dbErr
       setAvatarUrl(pub.publicUrl)
@@ -665,13 +713,20 @@ export default function StudentOnboarding() {
 
     setSubmitting(true)
     try {
-      let { error } = await withSentryMonitoring('StudentOnboarding/update-step1-full', () =>
-        supabase.from('student_profiles').update(fullPayload).eq('user_id', user.id),
+      const routeHint = profile?.accommodation_verification_route ?? undefined
+      let { error } = await saveStudentProfileByUserId(
+        user,
+        fullPayload,
+        'StudentOnboarding/update-step1-full',
+        routeHint,
       )
 
       if (error && looksLikeMissingDbColumn(error)) {
-        const r = await withSentryMonitoring('StudentOnboarding/update-step1-core', () =>
-          supabase.from('student_profiles').update(corePayload).eq('user_id', user.id),
+        const r = await saveStudentProfileByUserId(
+          user,
+          corePayload,
+          'StudentOnboarding/update-step1-core',
+          routeHint,
         )
         error = r.error
         if (!error) {
@@ -682,8 +737,11 @@ export default function StudentOnboarding() {
       }
 
       if (error && looksLikeMissingDbColumn(error)) {
-        const r = await withSentryMonitoring('StudentOnboarding/update-step1-bootstrap', () =>
-          supabase.from('student_profiles').update(bootstrapPayload).eq('user_id', user.id),
+        const r = await saveStudentProfileByUserId(
+          user,
+          bootstrapPayload,
+          'StudentOnboarding/update-step1-bootstrap',
+          routeHint,
         )
         error = r.error
         if (!error) {
@@ -752,13 +810,19 @@ export default function StudentOnboarding() {
         emergency_contact_phone: emergencyPhone.trim(),
       }
 
-      let { error } = await withSentryMonitoring('StudentOnboarding/update-step2-full', () =>
-        supabase.from('student_profiles').update(fullPayload).eq('user_id', user.id),
+      let { error } = await saveStudentProfileByUserId(
+        user,
+        fullPayload,
+        'StudentOnboarding/update-step2-full',
+        profile?.accommodation_verification_route ?? undefined,
       )
 
       if (error && looksLikeMissingDbColumn(error)) {
-        const r = await withSentryMonitoring('StudentOnboarding/update-step2-core', () =>
-          supabase.from('student_profiles').update(corePayload).eq('user_id', user.id),
+        const r = await saveStudentProfileByUserId(
+          user,
+          corePayload,
+          'StudentOnboarding/update-step2-core',
+          profile?.accommodation_verification_route ?? undefined,
         )
         error = r.error
         if (!error) {
@@ -815,13 +879,19 @@ export default function StudentOnboarding() {
         onboarding_complete: true,
         terms_accepted_at: now,
       }
-      let { error } = await withSentryMonitoring('StudentOnboarding/complete-onboarding-full', () =>
-        supabase.from('student_profiles').update(fullPayload).eq('user_id', user.id),
+      let { error } = await saveStudentProfileByUserId(
+        user,
+        fullPayload,
+        'StudentOnboarding/complete-onboarding-full',
+        profile?.accommodation_verification_route ?? undefined,
       )
 
       if (error && looksLikeMissingDbColumn(error)) {
-        const r = await withSentryMonitoring('StudentOnboarding/complete-onboarding-minimal', () =>
-          supabase.from('student_profiles').update({ onboarding_complete: true }).eq('user_id', user.id),
+        const r = await saveStudentProfileByUserId(
+          user,
+          { onboarding_complete: true },
+          'StudentOnboarding/complete-onboarding-minimal',
+          profile?.accommodation_verification_route ?? undefined,
         )
         error = r.error
         if (!error) {
