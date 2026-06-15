@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import { PAGE_HERO_OUTER_CLASS } from '../components/PageHeroBand'
-import { BOND_NEUTRAL_PRICING_SHORT } from '../lib/bondPublicCopy'
+import { BOND_NEUTRAL_PRICING_SHORT, BOND_FAQ_HOW_HANDLED } from '../lib/bondPublicCopy'
 import { pricingTierAvailabilitySummary } from '../lib/pricingAvailabilityFootnote'
 import { fetchPricingForPropertyTier, formatFeeForDisplay } from '../lib/pricing'
 import { usePlatformFeatures, useServiceTierResolverOptions } from '../context/PlatformFeaturesContext'
@@ -96,8 +96,7 @@ const faqBuckets: FaqBucket[] = [
       {
         id: 'bond-compliance-0',
         question: 'How is bond handled?',
-        answer:
-          'Bond is held by the landlord or lodged with the relevant state or territory bond authority, depending on your tenancy type. Quni does not hold bond money for any tenancy. On Quni Listing, bond is between landlord and renter. On Quni Managed, lodgement may be coordinated where your tenancy requires a statutory scheme.',
+        answer: BOND_FAQ_HOW_HANDLED,
       },
       {
         id: 'bond-compliance-1',

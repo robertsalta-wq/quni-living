@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { BOND_FAQ_HOSTED_VS_PRIVATE, BOND_FAQ_HOW_HANDLED } from './bondPublicCopy'
 
 export type FaqItem = { id: string; question: string; answer: ReactNode }
 export type FaqSection = { id: string; label: string; items: FaqItem[] }
@@ -256,8 +257,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'bond-handled',
         question: 'How is bond handled?',
-        answer:
-          'Bond is held by the landlord (for hosted rooms / boarder-lodger arrangements) or lodged with the relevant state or territory bond authority (for standard residential tenancies), depending on your listing and agreement. Quni is not the custodian of bond money. Where a statutory scheme applies, lodgement follows the rules in your state or territory.',
+        answer: BOND_FAQ_HOW_HANDLED,
       },
       {
         id: 'bond-refunds',
@@ -324,8 +324,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'room-types-hosted-vs-private',
         question: "What's the difference between a hosted room and a private room?",
-        answer:
-          "Hosted rooms are typically where the owner lives on-site (a boarder/lodger-style arrangement) and you sign an occupancy-style agreement; bond (if any) is usually held directly by the landlord. Private rooms are standard residential tenancies where you sign a tenancy agreement and bond (if required) is lodged with your state's bond authority under the relevant rules.",
+        answer: BOND_FAQ_HOSTED_VS_PRIVATE,
       },
     ],
   },

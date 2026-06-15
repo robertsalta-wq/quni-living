@@ -98,7 +98,7 @@ export function isPropertyListingType(value: string): value is PropertyListingTy
   return Object.prototype.hasOwnProperty.call(PROPERTY_LISTING_TYPE_LABELS, value)
 }
 
-/** Bond / RTA copy: landlord on-site (boarder/lodger) - bond is not lodged as an RTA bond in NSW. */
+/** On-site / homestay property types that may use boarder-lodger bond flows. */
 const BOARDING_LODGER_PROPERTY_TYPE_VALUES = new Set<string>([
   'private_room_landlord_on_site',
   'boarding',
@@ -110,4 +110,18 @@ export function isBoardingLodgerBondContext(propertyType: string | null | undefi
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
   if (!pt) return false
   return BOARDING_LODGER_PROPERTY_TYPE_VALUES.has(pt)
+}
+
+/**
+ * Boarding/lodger bond receipt PDF — same gate as pre-QLD fix {@link isBoardingLodgerBondContext},
+ * except QLD is excluded (boarder/lodger bonds must be RTA-lodged; NSW/VIC T1 may hold).
+ */
+export function isLandlordHeldBondContext(
+  propertyType: string | null | undefined,
+  state: string | null | undefined,
+): boolean {
+  if (!isBoardingLodgerBondContext(propertyType)) return false
+  const st = typeof state === 'string' ? state.trim().toUpperCase() : ''
+  if (st === 'QLD') return false
+  return true
 }

@@ -16,11 +16,18 @@ import type { Database } from '../../src/lib/database.types'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 
-/** Mirrors `src/lib/listings.ts` - kept local so Vercel’s API TS compile graph stays self-contained. */
-function isBoardingLodgerBondContext(propertyType: string | null | undefined): boolean {
+/** Mirrors `src/lib/listings.ts` — QLD excluded; all other states unchanged from boarding/lodger gate. */
+function isLandlordHeldBondContext(
+  propertyType: string | null | undefined,
+  state: string | null | undefined,
+): boolean {
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
   if (!pt) return false
-  return ['private_room_landlord_on_site', 'boarding', 'lodger', 'homestay'].includes(pt)
+  const boarding = ['private_room_landlord_on_site', 'boarding', 'lodger', 'homestay'].includes(pt)
+  if (!boarding) return false
+  const st = typeof state === 'string' ? state.trim().toUpperCase() : ''
+  if (st === 'QLD') return false
+  return true
 }
 
 export const config = {
@@ -232,8 +239,12 @@ export default async function handler(req: any, res: any) {
   }
 
   const propRec = prop as Record<string, unknown>
-  if (!isBoardingLodgerBondContext(prop.property_type)) {
-    return res.status(400).json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' })
+  const propState = typeof prop.state === 'string' ? prop.state : ''
+  if (!isLandlordHeldBondContext(prop.property_type, propState)) {
+    return res.status(400).json({
+      error:
+        'Bond receipts are not available for Queensland listings — boarder/lodger bonds must be lodged with the RTA.',
+    })
   }
 
   const { data: landlord, error: llErr } = await admin
