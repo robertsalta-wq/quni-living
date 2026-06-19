@@ -151,11 +151,10 @@ export default function Verification() {
             Quni verifies both sides of every booking so renters and landlords always know they&apos;re dealing with a
             real, accountable person. Here is exactly what you&apos;ll be asked for.
           </p>
+        </div>
 
-          <nav
-            className="sticky top-below-fixed-header z-30 mt-8 mb-10 flex flex-wrap gap-2 border-b border-gray-200 bg-gray-50 py-4 shadow-sm md:top-24"
-            aria-label="Verification sections"
-          >
+        <div className="sticky top-below-fixed-header z-40 -mx-6 mt-8 mb-10 border-b border-gray-200 bg-gray-50 px-6 py-4 shadow-sm md:top-24">
+          <nav className="max-w-3xl flex flex-wrap gap-2" aria-label="Verification sections">
             {NAV_ITEMS.map((item) => (
               <a
                 key={item.href}
@@ -166,8 +165,9 @@ export default function Verification() {
               </a>
             ))}
           </nav>
+        </div>
 
-          <div className="space-y-14">
+        <div className="max-w-3xl space-y-14">
             <section aria-labelledby="renters-heading">
               <h2 id="renters-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
                 For renters
@@ -244,7 +244,6 @@ export default function Verification() {
                 ))}
               </dl>
             </section>
-          </div>
         </div>
       </div>
     </div>

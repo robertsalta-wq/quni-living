@@ -455,11 +455,14 @@ export default function Signup() {
     errLower.includes('forbidden') && errLower.includes('secret')
 
   const roleCardClass = (k: SignupAccountKind) =>
-    `w-full rounded-xl border-2 p-5 text-left transition-colors ${
+    `flex h-full flex-col rounded-xl border-2 p-5 text-left transition-colors ${
       accountKind === k
         ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
     }`
+
+  const roleVerifyLinkClass =
+    'mt-auto pt-3 block text-xs font-medium text-[#FF6F61] hover:underline whitespace-nowrap'
 
   const signupKindLabel =
     accountKind === 'landlord' ? 'Landlord' : accountKind === 'non_student' ? 'Non-Student' : 'Student'
@@ -515,58 +518,58 @@ export default function Signup() {
               {tenantInviteHints.isTenantInviteFlow ? 'I am a…' : 'I am signing up as a…'}
             </p>
             <div
-              className={`grid grid-cols-1 gap-3 ${tenantInviteHints.isTenantInviteFlow ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
+              className={`grid grid-cols-1 items-stretch gap-3 ${tenantInviteHints.isTenantInviteFlow ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
             >
               <div className={roleCardClass('student')}>
-                <button type="button" onClick={() => pickAccountKind('student')} className="w-full text-left">
+                <button type="button" onClick={() => pickAccountKind('student')} className="w-full flex-1 text-left">
                   <span className="font-semibold text-gray-900">Student</span>
-                  <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
+                  <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">Find housing and manage bookings.</p>
                 </button>
-                <Link
-                  to="/verification#students"
-                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
-                >
-                  What you&apos;ll need to verify →
+                <Link to="/verification#students" className={roleVerifyLinkClass}>
+                  What you&apos;ll need to verify
                 </Link>
               </div>
               <div className={roleCardClass('non_student')}>
-                <button type="button" onClick={() => pickAccountKind('non_student')} className="w-full text-left">
+                <button type="button" onClick={() => pickAccountKind('non_student')} className="w-full flex-1 text-left">
                   <span className="font-semibold text-gray-900">Non-Student</span>
-                  <p className="text-sm text-gray-600 mt-1">Find rooms near university and manage your bookings.</p>
+                  <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">
+                    Find rooms near university and manage your bookings.
+                  </p>
                 </button>
-                <Link
-                  to="/verification#working-tenants"
-                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
-                >
-                  What you&apos;ll need to verify →
+                <Link to="/verification#working-tenants" className={roleVerifyLinkClass}>
+                  What you&apos;ll need to verify
                 </Link>
               </div>
               {!tenantInviteHints.isTenantInviteFlow && (
                 <div className={roleCardClass('landlord')}>
-                  <button type="button" onClick={() => pickAccountKind('landlord')} className="w-full text-left">
+                  <button type="button" onClick={() => pickAccountKind('landlord')} className="w-full flex-1 text-left">
                     <span className="font-semibold text-gray-900">Landlord</span>
-                    <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
+                    <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">List properties and manage enquiries.</p>
                   </button>
-                  <Link
-                    to="/verification#landlords"
-                    className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
-                  >
-                    What you&apos;ll need to verify →
+                  <Link to="/verification#landlords" className={roleVerifyLinkClass}>
+                    What you&apos;ll need to verify
                   </Link>
                 </div>
               )}
             </div>
             {!tenantInviteHints.isTenantInviteFlow ? (
             <p className="text-xs text-gray-600 mt-3">
-              New to renting near campus as a professional?{' '}
+              Not sure what verification involves?{' '}
+              <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+                See what you&apos;ll verify on Quni
+              </Link>
+              . New to renting near campus as a professional?{' '}
               <Link to="/rent-near-campus" className="text-indigo-600 font-medium hover:text-indigo-800">
                 Preview the non-student landing page.
               </Link>
             </p>
             ) : (
             <p className="text-xs text-gray-600 mt-3">
-              Choose the renter type that matches how you will verify. You will complete the same verification as any
-              other tenant on Quni before booking this room.
+              Choose the renter type that matches how you will verify.{' '}
+              <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+                See what you&apos;ll verify on Quni
+              </Link>
+              . You will complete the same verification as any other tenant before booking this room.
             </p>
             )}
             {!accountKind && (
