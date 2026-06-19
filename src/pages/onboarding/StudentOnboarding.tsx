@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -33,6 +42,13 @@ import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/su
 import { reportFormError } from '../../lib/reportFormError'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 import { useScrollToTopOnChange } from '../../hooks/useScrollToTopOnChange'
+import {
+  LegalDocumentModal,
+  SignupLegalDocLink,
+  type LegalDocumentKind,
+} from '../../components/legal/LegalDocumentModal'
+import { PrivacyContent } from '../../components/legal/PrivacyContent'
+import { TermsContent } from '../../components/legal/TermsContent'
 
 const PROFILE_PHOTO_BUCKET = 'student-avatars'
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024
@@ -49,6 +65,13 @@ const ONBOARD_OCC_SET = new Set(['sole', 'couple', 'open'])
 const ONBOARD_MOVE_FLEX_SET = new Set(['exact', 'one_week', 'two_weeks'])
 const ONBOARD_BILLS_SET = new Set(['included', 'separate', 'either'])
 const ONBOARD_FURN_SET = new Set(['furnished', 'unfurnished', 'either'])
+
+type StudentLegalDocumentKind = Extract<LegalDocumentKind, 'terms' | 'privacy'>
+
+const STUDENT_LEGAL_DOC_MODAL: Record<StudentLegalDocumentKind, { title: string; content: ReactNode }> = {
+  terms: { title: 'Platform Terms of Service', content: <TermsContent /> },
+  privacy: { title: 'Privacy Policy', content: <PrivacyContent /> },
+}
 
 /** Update if row exists (trigger at signup); insert bootstrap row if missing — avoids silent no-op UPDATE. */
 async function saveStudentProfileByUserId(
@@ -310,6 +333,11 @@ export default function StudentOnboarding() {
 
   // Step 3
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
+  const activeLegalDoc =
+    openLegalDoc === 'terms' || openLegalDoc === 'privacy'
+      ? STUDENT_LEGAL_DOC_MODAL[openLegalDoc]
+      : null
 
   const studentOnboardingDraftSnapshot = useMemo(
     () =>
@@ -1585,27 +1613,24 @@ export default function StudentOnboarding() {
                         *{' '}
                       </span>
                       I agree to the{' '}
-                      <a
-                        href="/terms"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative z-[1] text-[#FF6F61] font-medium underline underline-offset-2"
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
+                      <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
                         Terms of Service
-                      </a>{' '}
+                      </SignupLegalDocLink>{' '}
                       and{' '}
-                      <a
-                        href="/privacy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative z-[1] text-[#FF6F61] font-medium underline underline-offset-2"
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
+                      <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
                         Privacy Policy
-                      </a>
+                      </SignupLegalDocLink>
                     </span>
                   </label>
+                  {activeLegalDoc && (
+                    <LegalDocumentModal
+                      open={openLegalDoc !== null}
+                      onClose={() => setOpenLegalDoc(null)}
+                      title={activeLegalDoc.title}
+                    >
+                      {activeLegalDoc.content}
+                    </LegalDocumentModal>
+                  )}
                   {fieldErrors.terms && <p className={errClass}>{fieldErrors.terms}</p>}
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
