@@ -10,6 +10,7 @@ import {
 import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
+import { ensureAuthUserProfileRow } from '../lib/ensureAuthUserProfileRow'
 
 export type AuthState = {
   user: User | null
@@ -62,6 +63,7 @@ export function useProvideAuth(): AuthState {
       resolved = data.user ?? u
     }
     setUser(resolved)
+    await ensureAuthUserProfileRow(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
     setRole(r)
     setProfile(p)

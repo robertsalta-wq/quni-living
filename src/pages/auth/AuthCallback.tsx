@@ -10,6 +10,7 @@ import {
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
+import { ensureAuthUserProfileRow } from '../../lib/ensureAuthUserProfileRow'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 import {
@@ -45,6 +46,7 @@ export default function AuthCallback() {
     let cancelled = false
 
     async function finishWithSession(sessionUser: User) {
+      await ensureAuthUserProfileRow(sessionUser)
       await applyPendingAccommodationRouteToStudentProfile(
         sessionUser.id,
         sessionUser.created_at,
@@ -98,6 +100,8 @@ export default function AuthCallback() {
       let sessionErr: { message: string } | null = null
 
       if (tokenParams) {
+        // Drop any unrelated session so a failed verify cannot continue as another user.
+        await supabase.auth.signOut()
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenParams.token_hash,
           type: 'signup',
@@ -127,12 +131,23 @@ export default function AuthCallback() {
       if (cancelled) return
 
       if (session) {
-        if (oauthErr || sessionErr || tokenHashErr) {
+        if (tokenHashErr) {
+          await supabase.auth.signOut()
+          navigate(
+            `/login?error=oauth&detail=${encodeURIComponent(
+              tokenHashErr.message ||
+                'That confirmation link could not be used. Request a new confirmation email and open only the newest link.',
+            )}`,
+            { replace: true },
+          )
+          return
+        }
+
+        if (oauthErr || sessionErr) {
           console.warn('Auth callback: continuing with session despite URL error and/or exchange error', {
             oauthErr,
             oauthDesc,
             sessionErr,
-            tokenHashErr,
           })
         }
 
