@@ -23,5 +23,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check Anthropic model IDs
+        run: npm run check:anthropic-models
+
       - name: Build
         run: npm run build

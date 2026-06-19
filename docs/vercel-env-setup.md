@@ -63,6 +63,8 @@ vercel env add DELETE_USER_DOCS_WEBHOOK_SECRET production
 vercel env add SITE_URL production
 vercel env add PUBLIC_SITE_URL production
 vercel env add ANTHROPIC_API_KEY production
+# Same value as Supabase PLATFORM_HEALTH_CRON_SECRET (AI integration canary for platform-health-cron)
+vercel env add PLATFORM_HEALTH_CRON_SECRET production
 vercel env add OPENAI_API_KEY production
 vercel env add CHAT_LIMIT_LOGGED_IN_PER_24H production
 vercel env add CHAT_LIMIT_VISITOR_PER_HOUR production

@@ -23,6 +23,8 @@ import {
   insertAiMatchingComplianceAudit,
   AiMatchingAuditError,
 } from '../lib/aiMatchingAudit.js'
+import { ANTHROPIC_SONNET_MODEL } from '../lib/anthropicModel.js'
+import { reportAiFailure } from '../lib/reportAiFailure.js'
 
 export const config = {
   runtime: 'edge',
@@ -415,7 +417,7 @@ export default async function handler(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 500,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
@@ -423,6 +425,7 @@ export default async function handler(request: Request) {
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error'
+    await reportAiFailure('student-assessment', 'network error', { message: msg })
     return json({ error: `Could not reach AI service: ${msg}` }, 502, origin)
   }
 
@@ -431,6 +434,11 @@ export default async function handler(request: Request) {
   if (!anthropicRes.ok) {
     const errMsg = anthropicData.error?.message || anthropicRes.statusText || 'Anthropic request failed'
     const status = anthropicRes.status === 429 ? 429 : anthropicRes.status >= 500 ? 502 : 502
+    await reportAiFailure('student-assessment', 'anthropic error', {
+      status: anthropicRes.status,
+      anthropic_message: errMsg,
+      model: ANTHROPIC_SONNET_MODEL,
+    })
     return json({ error: errMsg }, status, origin)
   }
 
@@ -438,6 +446,7 @@ export default async function handler(request: Request) {
   const assessment = typeof textBlock?.text === 'string' ? textBlock.text.trim() : ''
 
   if (!assessment) {
+    await reportAiFailure('student-assessment', 'empty response')
     return json({ error: 'AI returned an empty assessment' }, 502, origin)
   }
 

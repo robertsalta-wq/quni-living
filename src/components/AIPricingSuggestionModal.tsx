@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import AiSparkleIcon from './AiSparkleIcon'
 
 type PricingSuggestion = {
@@ -72,13 +73,24 @@ export default function AIPricingSuggestionModal({
       const data = (await res.json().catch(() => null)) as
         | { low?: number; high?: number; reasoning?: string; error?: string }
         | null
-      if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`)
+      if (!res.ok) {
+        Sentry.captureMessage('AI pricing suggestion failed', {
+          level: 'warning',
+          extra: { status: res.status, error: data?.error },
+          tags: { ai_route: 'suggest-pricing' },
+        })
+        throw new Error(data?.error || `Request failed (${res.status})`)
+      }
       if (
         typeof data?.low !== 'number' ||
         typeof data?.high !== 'number' ||
         typeof data?.reasoning !== 'string' ||
         data.high < data.low
       ) {
+        Sentry.captureMessage('AI pricing suggestion invalid response', {
+          level: 'warning',
+          tags: { ai_route: 'suggest-pricing' },
+        })
         throw new Error('Invalid AI pricing suggestion returned')
       }
       setSuggestion({

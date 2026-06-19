@@ -15,6 +15,8 @@ export type HealthResult = {
 export type HealthCheckEnv = Record<string, never>
 
 const TIMEOUT_MS = 5000
+const QUNI_AI_TIMEOUT_MS = 15000
+const QUNI_AI_HEALTH_URL = 'https://quni.com.au/api/ai/health'
 
 function timeoutSignal(): AbortSignal {
   return AbortSignal.timeout(TIMEOUT_MS)
@@ -244,6 +246,45 @@ function checkFirebase(): Promise<HealthResult> {
   })()
 }
 
+async function checkQuniAi(): Promise<HealthResult> {
+  const service = 'quni_ai'
+  const secret = Deno.env.get('PLATFORM_HEALTH_CRON_SECRET')?.trim()
+  if (!secret) {
+    return { service, status: 'down', message: 'PLATFORM_HEALTH_CRON_SECRET not set' }
+  }
+  try {
+    const res = await fetch(QUNI_AI_HEALTH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-cron-secret': secret,
+      },
+      body: '{}',
+      signal: AbortSignal.timeout(QUNI_AI_TIMEOUT_MS),
+    })
+    const text = await res.text()
+    let data: { ok?: boolean; error?: string; model?: string } = {}
+    try {
+      data = JSON.parse(text) as { ok?: boolean; error?: string; model?: string }
+    } catch {
+      /* non-JSON body */
+    }
+    if (res.ok && data.ok === true) {
+      const model = data.model?.trim()
+      return {
+        service,
+        status: 'operational',
+        message: model ? `Claude integration OK (${model})` : 'Claude integration OK',
+      }
+    }
+    const msg = data.error?.trim() || text.slice(0, 200) || `HTTP ${res.status}`
+    return { service, status: 'down', message: msg }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'AI probe failed'
+    return { service, status: 'down', message: msg }
+  }
+}
+
 export async function checkAllServices(_env: HealthCheckEnv = {}): Promise<HealthResult[]> {
   void _env
   return await Promise.all([
@@ -252,6 +293,7 @@ export async function checkAllServices(_env: HealthCheckEnv = {}): Promise<Healt
     checkStripe(),
     checkResend(),
     checkVercel(),
+    checkQuniAi(),
     checkStatusPageV2('cloudflare', 'https://www.cloudflarestatus.com/api/v2/status.json'),
     checkStatusPageV2('anthropic', 'https://status.anthropic.com/api/v2/status.json'),
     checkStatusPageV2('supabase', 'https://status.supabase.com/api/v2/status.json'),

@@ -6,9 +6,10 @@
  * Secrets: ANTHROPIC_API_KEY (existing), QASE_INTERNAL_SECRET
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { ANTHROPIC_SONNET_MODEL } from '../_shared/anthropicModel.ts'
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
-const MODEL = 'claude-sonnet-4-5'
+const MODEL = ANTHROPIC_SONNET_MODEL
 
 const ALLOWED_CATEGORIES = [
   'booking_issue',

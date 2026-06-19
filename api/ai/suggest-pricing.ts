@@ -2,6 +2,9 @@ export const config = {
   runtime: 'edge',
 }
 
+import { ANTHROPIC_SONNET_MODEL } from '../lib/anthropicModel.js'
+import { reportAiFailure } from '../lib/reportAiFailure.js'
+
 type SuggestPricingBody = {
   roomType: string
   suburb: string
@@ -247,7 +250,7 @@ export default async function handler(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: 2048,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
         messages: [{ role: 'user', content: prompt }],
@@ -255,12 +258,18 @@ export default async function handler(request: Request) {
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error'
+    await reportAiFailure('suggest-pricing', 'network error', { message: msg })
     return json({ error: `Could not reach AI service: ${msg}` }, 502, origin)
   }
 
   const anthropicData = (await anthropicRes.json().catch(() => ({}))) as AnthropicMessagesResponse
   if (!anthropicRes.ok) {
     const status = anthropicRes.status === 429 ? 429 : 502
+    await reportAiFailure('suggest-pricing', 'anthropic error', {
+      status: anthropicRes.status,
+      anthropic_message: anthropicData.error?.message,
+      model: ANTHROPIC_SONNET_MODEL,
+    })
     return json({ error: clientFacingAnthropicError(status) }, status, origin)
   }
 
@@ -281,6 +290,7 @@ export default async function handler(request: Request) {
       contentBlockTypes: (anthropicData.content ?? []).map((b) => b.type),
     })
     if (stopReason === 'max_tokens') {
+      await reportAiFailure('suggest-pricing', 'max_tokens', { output_tokens: outputTokens })
       return json(
         {
           error:
@@ -290,6 +300,11 @@ export default async function handler(request: Request) {
         origin,
       )
     }
+    await reportAiFailure('suggest-pricing', 'parse failed', {
+      stop_reason: stopReason,
+      output_tokens: outputTokens,
+      text_length: text.length,
+    })
     return json({ error: 'AI returned an invalid pricing suggestion format' }, 502, origin)
   }
 

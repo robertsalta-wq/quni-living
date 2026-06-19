@@ -14,6 +14,7 @@
     "build:capacitor": "node scripts/build-capacitor.mjs",
     "lint": "eslint .",
     "lint:no-em-dash": "node scripts/replace-em-dashes.mjs --check",
+    "check:anthropic-models": "node scripts/check-anthropic-model-ids.mjs",
     "test": "vitest run",
     "preview": "vite preview",
     "cap:sync": "npm run build:capacitor && npx cap sync",

@@ -27,6 +27,9 @@
     "api/ai/suggest-pricing.ts": {
       "maxDuration": 30
     },
+    "api/ai/health.ts": {
+      "maxDuration": 15
+    },
     "api/ai/generate-description.ts": {
       "maxDuration": 30
     },

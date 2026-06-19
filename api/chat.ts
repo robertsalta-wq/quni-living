@@ -6,6 +6,8 @@ import { createClient } from '@supabase/supabase-js'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 import { retrieveRelevantKnowledge } from './lib/knowledgeRetrieval.js'
+import { ANTHROPIC_SONNET_MODEL } from './lib/anthropicModel.js'
+import { reportAiFailure } from './lib/reportAiFailure.js'
 import {
   buildStudentProfileAiPayload,
   formatAiPayloadContextBlock,
@@ -627,7 +629,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: ANTHROPIC_SONNET_MODEL,
         max_tokens: chatMaxTokens,
         system: finalSystemPrompt,
         messages: anthropicMessages.length ? anthropicMessages : [{ role: 'user', content: userMessage }],
@@ -639,6 +641,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!anthropicRes.ok) {
       const errBody = await anthropicRes.text().catch(() => '')
       console.error('[chat] anthropic error body:', errBody)
+      await reportAiFailure('chat', 'anthropic error', {
+        status: anthropicRes.status,
+        body: errBody.slice(0, 500),
+        model: ANTHROPIC_SONNET_MODEL,
+      })
       sendJson(res, { error: 'anthropic_error', message: errBody || 'Anthropic request failed.' }, 400)
       return
     }
@@ -661,7 +668,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
+          model: ANTHROPIC_SONNET_MODEL,
           max_tokens: chatMaxTokens,
           system: finalSystemPrompt,
           messages: anthropicMessages.length ? anthropicMessages : [{ role: 'user', content: userMessage }],

@@ -2,6 +2,8 @@ import {
   ENQUIRY_REPLY_SYSTEM_PROMPT,
   buildEnquiryReplyUserPrompt,
 } from '../../src/lib/aiSurfacePromptAssembly.js'
+import { ANTHROPIC_SONNET_MODEL } from '../lib/anthropicModel.js'
+import { reportAiFailure } from '../lib/reportAiFailure.js'
 
 export const config = {
   runtime: 'edge',
@@ -95,7 +97,7 @@ export default async function handler(request: Request) {
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
+          model: ANTHROPIC_SONNET_MODEL,
           max_tokens: 300,
           system: ENQUIRY_REPLY_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: prompt }],
@@ -104,6 +106,7 @@ export default async function handler(request: Request) {
     } catch (e) {
       console.error('[api/ai/draft-enquiry-reply] anthropic network error', e)
       const msg = e instanceof Error ? e.message : 'Network error'
+      await reportAiFailure('draft-enquiry-reply', 'network error', { message: msg })
       return json({ error: `Could not reach AI service: ${msg}` }, 502, origin)
     }
 
@@ -114,6 +117,11 @@ export default async function handler(request: Request) {
       console.error('[api/ai/draft-enquiry-reply] anthropic error response', {
         status: anthropicRes.status,
         errMsg,
+      })
+      await reportAiFailure('draft-enquiry-reply', 'anthropic error', {
+        status: anthropicRes.status,
+        anthropic_message: errMsg,
+        model: ANTHROPIC_SONNET_MODEL,
       })
       return json({ error: errMsg }, status, origin)
     }
@@ -126,6 +134,7 @@ export default async function handler(request: Request) {
 
     if (!reply) {
       console.error('[api/ai/draft-enquiry-reply] empty reply from anthropic')
+      await reportAiFailure('draft-enquiry-reply', 'empty response')
       return json({ error: 'AI returned an empty reply draft' }, 502, origin)
     }
 

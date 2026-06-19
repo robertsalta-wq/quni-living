@@ -1,5 +1,6 @@
 /**
  * Scheduled health checks + FCM topic alert when a service transitions to "down".
+ * Includes quni_ai canary (POST https://quni.com.au/api/ai/health with x-cron-secret).
  * Secrets: PLATFORM_HEALTH_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
  *   FIREBASE_SERVICE_ACCOUNT_JSON, + same as healthChecks (TPP_*, STRIPE_SECRET_KEY, RESEND_API_KEY).
  * Deploy: supabase functions deploy platform-health-cron --no-verify-jwt
