@@ -313,6 +313,7 @@ export default function PropertyDetail() {
   const bookingCardRef = useRef<HTMLDivElement>(null)
 
   const isPreview = !user
+  const userId = user?.id ?? null
   const listingPath = `${location.pathname}${location.search}`
   const encodedRedirect = encodeURIComponent(listingPath)
 
@@ -352,16 +353,19 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     // Guests: fetch immediately. Logged-in: wait until role is resolved for student-only gate.
-    if (!shouldFetch || (authLoading && user)) return
+    if (!shouldFetch || (authLoading && userId)) return
 
     let cancelled = false
+    const showLoadingShell = !property || property.slug !== slug
 
     void (async () => {
-      setLoading(true)
-      setError(null)
-      setStudentListingBlocked(false)
+      if (showLoadingShell) {
+        setLoading(true)
+        setError(null)
+        setStudentListingBlocked(false)
+      }
 
-      if (user && role === 'student') {
+      if (userId && role === 'student') {
         const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer', {
           p_slug: slug,
         })
@@ -411,7 +415,7 @@ export default function PropertyDetail() {
         setProperty(null)
       } else {
         setProperty(data as Property)
-        setImageIndex(0)
+        if (showLoadingShell) setImageIndex(0)
       }
       setLoading(false)
     })()
@@ -419,7 +423,7 @@ export default function PropertyDetail() {
     return () => {
       cancelled = true
     }
-  }, [slug, shouldFetch, user, role, authLoading])
+  }, [slug, shouldFetch, userId, role, authLoading])
 
   useEffect(() => {
     const root = thumbsScrollRef.current
