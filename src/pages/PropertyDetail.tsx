@@ -155,7 +155,8 @@ function SidebarRow({ label, children }: { label: string; children: ReactNode })
 }
 
 const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.2em] text-[#FF6F61]'
-const sectionHeadingClass = `${sectionLabelClass} scroll-mt-below-header md:scroll-mt-28`
+const sectionHeadingClass =
+  'text-base sm:text-lg font-bold text-stone-900 tracking-tight scroll-mt-below-header md:scroll-mt-28'
 
 function PropertyThumbnail({
   src,
@@ -1416,7 +1417,7 @@ export default function PropertyDetail() {
               </div>
 
               {property.description ? (
-                <section className="space-y-3 border-t border-stone-100 pt-5">
+                <section className="space-y-4 border-t border-stone-100 pt-5">
                   <h2 id={`listing-description-heading-${property.id}`} className={sectionHeadingClass}>
                     About this place
                   </h2>
@@ -1431,7 +1432,7 @@ export default function PropertyDetail() {
               ) : null}
 
               {amenityGrid.length > 0 && (
-                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="Amenities">
+                <section className="space-y-4 border-t border-stone-100 pt-5" aria-label="Amenities">
                   <h2 className={sectionHeadingClass}>Amenities</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-w-2xl">
                     {amenityGrid.map((a) => (
@@ -1450,7 +1451,7 @@ export default function PropertyDetail() {
               )}
 
               {(hasHouseRuleBadges || hasWrittenHouseRules) && (
-                <section className="space-y-3 border-t border-stone-100 pt-5" aria-label="House rules">
+                <section className="space-y-4 border-t border-stone-100 pt-5" aria-label="House rules">
                   <h2 id={`listing-house-rules-heading-${property.id}`} className={sectionHeadingClass}>
                     House rules
                   </h2>
@@ -1509,8 +1510,8 @@ export default function PropertyDetail() {
               )}
 
               {(listingGeoLoading || nearbyCampuses.length > 0) && (
-                <section className="space-y-3 border-t border-stone-100 pt-5">
-                  <h2 className={sectionHeadingClass}>NEARBY UNIVERSITIES</h2>
+                <section className="space-y-4 border-t border-stone-100 pt-5">
+                  <h2 className={sectionHeadingClass}>Nearby universities</h2>
                   <p className="text-xs text-stone-500">Approximate distances</p>
                   {listingGeoLoading ? (
                     <div className="flex items-center gap-2 py-2" aria-busy="true" aria-label="Loading nearby universities">
