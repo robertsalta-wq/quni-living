@@ -1,0 +1,54 @@
+﻿2026-06-10T10:11:47.0889537Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-10T10:11:47.0889986Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-10T10:11:47.0915845Z shell: /usr/bin/bash -e {0}
+2026-06-10T10:11:47.0916111Z ##[endgroup]
+2026-06-10T10:11:47.3034836Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:11:47.5550702Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-10T10:11:47.5558338Z d9802f032d67: Pulling fs layer
+2026-06-10T10:11:47.5559217Z 8c476128eb22: Pulling fs layer
+2026-06-10T10:11:47.5559907Z e846d8e9647d: Pulling fs layer
+2026-06-10T10:11:47.5560609Z 843c17e581f4: Pulling fs layer
+2026-06-10T10:11:47.5561582Z 15e0c869e1f8: Pulling fs layer
+2026-06-10T10:11:47.5562516Z 0933f1eadfad: Pulling fs layer
+2026-06-10T10:11:47.5563163Z 45de3bd96a35: Pulling fs layer
+2026-06-10T10:11:47.5563667Z 843c17e581f4: Waiting
+2026-06-10T10:11:47.5564088Z 15e0c869e1f8: Waiting
+2026-06-10T10:11:47.5564570Z 0933f1eadfad: Waiting
+2026-06-10T10:11:47.5564920Z 45de3bd96a35: Waiting
+2026-06-10T10:11:48.0361612Z 8c476128eb22: Verifying Checksum
+2026-06-10T10:11:48.0362538Z 8c476128eb22: Download complete
+2026-06-10T10:11:48.0934633Z d9802f032d67: Verifying Checksum
+2026-06-10T10:11:48.0935270Z d9802f032d67: Download complete
+2026-06-10T10:11:48.1238274Z 843c17e581f4: Verifying Checksum
+2026-06-10T10:11:48.1239340Z 843c17e581f4: Download complete
+2026-06-10T10:11:48.1931453Z e846d8e9647d: Verifying Checksum
+2026-06-10T10:11:48.1933748Z e846d8e9647d: Download complete
+2026-06-10T10:11:48.1934353Z 15e0c869e1f8: Verifying Checksum
+2026-06-10T10:11:48.2918858Z 15e0c869e1f8: Download complete
+2026-06-10T10:11:48.2919358Z 45de3bd96a35: Verifying Checksum
+2026-06-10T10:11:48.2920546Z 45de3bd96a35: Download complete
+2026-06-10T10:11:49.0107308Z 0933f1eadfad: Verifying Checksum
+2026-06-10T10:11:49.0108231Z 0933f1eadfad: Download complete
+2026-06-10T10:11:49.1624563Z d9802f032d67: Pull complete
+2026-06-10T10:11:52.0321605Z 8c476128eb22: Pull complete
+2026-06-10T10:11:52.6936615Z e846d8e9647d: Pull complete
+2026-06-10T10:11:52.7298309Z 843c17e581f4: Pull complete
+2026-06-10T10:11:52.7379852Z 15e0c869e1f8: Pull complete
+2026-06-10T10:11:57.0856755Z 0933f1eadfad: Pull complete
+2026-06-10T10:11:57.0987612Z 45de3bd96a35: Pull complete
+2026-06-10T10:11:57.1032535Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:11:57.1044136Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:11:57.1053103Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:12:12.8677889Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:12:12.8678897Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-10T10:12:12.8679314Z [vic-form1-freeze] Conversion run 1...
+2026-06-10T10:12:30.5611153Z [vic-form1-freeze] Conversion run 2...
+2026-06-10T10:12:47.7164148Z [vic-form1-freeze] Annex heuristics failed; retrying with Noto fonts in container...
+2026-06-10T10:12:47.7166940Z [vic-form1-freeze] Conversion run 1 (Noto)...
+2026-06-10T10:13:18.1749070Z [vic-form1-freeze] Conversion run 2 (Noto)...
+2026-06-10T10:13:48.8089701Z [vic-form1-freeze] Annex heuristic gate not clean (textOk=true inkOk=false); PNG visual is gate of record for human review.
+2026-06-10T10:13:49.6639111Z Error: pageCount 10 !== 9
+2026-06-10T10:13:49.6641969Z     at validateBlankPdf (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:229:11)
+2026-06-10T10:13:49.6643160Z     at async runFreeze (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:723:22)
+2026-06-10T10:13:49.6643975Z     at async main (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:859:3)
+2026-06-10T10:13:49.6867563Z ##[error]Process completed with exit code 1.

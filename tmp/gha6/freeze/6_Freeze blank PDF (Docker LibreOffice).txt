@@ -1,0 +1,57 @@
+﻿2026-06-10T10:06:10.8994965Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-10T10:06:10.8995409Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-10T10:06:10.9021120Z shell: /usr/bin/bash -e {0}
+2026-06-10T10:06:10.9021763Z ##[endgroup]
+2026-06-10T10:06:11.1158095Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:06:11.5828856Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-10T10:06:11.5831655Z d9802f032d67: Pulling fs layer
+2026-06-10T10:06:11.5833588Z 8c476128eb22: Pulling fs layer
+2026-06-10T10:06:11.5834407Z e846d8e9647d: Pulling fs layer
+2026-06-10T10:06:11.5834734Z 843c17e581f4: Pulling fs layer
+2026-06-10T10:06:11.5835390Z 15e0c869e1f8: Pulling fs layer
+2026-06-10T10:06:11.5835987Z 0933f1eadfad: Pulling fs layer
+2026-06-10T10:06:11.5836540Z 45de3bd96a35: Pulling fs layer
+2026-06-10T10:06:11.5837240Z 15e0c869e1f8: Waiting
+2026-06-10T10:06:11.5837684Z 0933f1eadfad: Waiting
+2026-06-10T10:06:11.5838122Z 45de3bd96a35: Waiting
+2026-06-10T10:06:11.5838537Z 843c17e581f4: Waiting
+2026-06-10T10:06:12.0420679Z d9802f032d67: Verifying Checksum
+2026-06-10T10:06:12.0422421Z d9802f032d67: Download complete
+2026-06-10T10:06:12.1306411Z 8c476128eb22: Verifying Checksum
+2026-06-10T10:06:12.1307747Z 8c476128eb22: Download complete
+2026-06-10T10:06:12.1987161Z 843c17e581f4: Verifying Checksum
+2026-06-10T10:06:12.1987785Z 843c17e581f4: Download complete
+2026-06-10T10:06:12.3694585Z 15e0c869e1f8: Verifying Checksum
+2026-06-10T10:06:12.3695249Z 15e0c869e1f8: Download complete
+2026-06-10T10:06:12.5186703Z 45de3bd96a35: Verifying Checksum
+2026-06-10T10:06:12.5188397Z 45de3bd96a35: Download complete
+2026-06-10T10:06:12.8505676Z e846d8e9647d: Verifying Checksum
+2026-06-10T10:06:12.8506462Z e846d8e9647d: Download complete
+2026-06-10T10:06:13.1756252Z d9802f032d67: Pull complete
+2026-06-10T10:06:15.7230029Z 8c476128eb22: Pull complete
+2026-06-10T10:06:16.5291887Z e846d8e9647d: Pull complete
+2026-06-10T10:06:16.5728937Z 843c17e581f4: Pull complete
+2026-06-10T10:06:16.5860902Z 15e0c869e1f8: Pull complete
+2026-06-10T10:06:17.8008829Z 0933f1eadfad: Verifying Checksum
+2026-06-10T10:06:17.8009978Z 0933f1eadfad: Download complete
+2026-06-10T10:06:22.2679888Z 0933f1eadfad: Pull complete
+2026-06-10T10:06:22.2799045Z 45de3bd96a35: Pull complete
+2026-06-10T10:06:22.2831934Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:06:22.2841294Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:06:22.2847929Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:06:37.9481936Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:06:37.9483474Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-10T10:06:37.9484120Z [vic-form1-freeze] Conversion run 1...
+2026-06-10T10:06:55.0508011Z [vic-form1-freeze] Conversion run 2...
+2026-06-10T10:07:13.0178330Z [vic-form1-freeze] Annex heuristics failed; retrying with Noto fonts in container...
+2026-06-10T10:07:13.0179455Z [vic-form1-freeze] Conversion run 1 (Noto)...
+2026-06-10T10:07:44.4370057Z [vic-form1-freeze] Conversion run 2 (Noto)...
+2026-06-10T10:08:16.0458348Z [vic-form1-freeze] Annex heuristic gate not clean (textOk=true inkOk=false); PNG visual is gate of record for human review.
+2026-06-10T10:08:16.1483690Z TypeError: Image or Canvas expected
+2026-06-10T10:08:16.1485103Z     at drawImageAtIntegerCoords (file:///home/runner/work/quni-living/quni-living/node_modules/pdfjs-dist/legacy/build/pdf.mjs:15760:9)
+2026-06-10T10:08:16.1487052Z     at CanvasGraphics.paintInlineImageXObject (file:///home/runner/work/quni-living/quni-living/node_modules/pdfjs-dist/legacy/build/pdf.mjs:17545:5)
+2026-06-10T10:08:16.1489544Z     at CanvasGraphics.paintImageXObject (file:///home/runner/work/quni-living/quni-living/node_modules/pdfjs-dist/legacy/build/pdf.mjs:17467:10)
+2026-06-10T10:08:16.1491754Z     at CanvasGraphics.executeOperatorList (file:///home/runner/work/quni-living/quni-living/node_modules/pdfjs-dist/legacy/build/pdf.mjs:16121:23)
+2026-06-10T10:08:16.1493603Z     at InternalRenderTask._next (file:///home/runner/work/quni-living/quni-living/node_modules/pdfjs-dist/legacy/build/pdf.mjs:22077:37)
+2026-06-10T10:08:16.1495027Z     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-06-10T10:08:16.1669308Z ##[error]Process completed with exit code 1.

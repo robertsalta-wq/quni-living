@@ -1,0 +1,33 @@
+{
+  "form": "VIC CAV Form 1 - Residential rental agreement (no more than 5 years)",
+  "sourceUrl": "https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx",
+  "sourcePageUrl": "https://www.consumer.vic.gov.au/housing/renting/renting-forms-and-publications",
+  "downloadDate": "2026-06-11",
+  "inForceReference": "Residential Tenancies Act 1997 s 26(1); Residential Tenancies Regulations 2021 reg 10(1)",
+  "cavReformDate": "25 November 2025",
+  "sha256": "a3b35d182e48676bd463ddfb7a56f5e997194b22090736e05e02c0a32ac15aba",
+  "fileSizeBytes": 119929,
+  "publisherListedSizeNote": "CAV library page labels ~1.5MB; live .docx download and repo copy are 119929 bytes (verified byte-identical).",
+  "storedAs": "docs/vic/form-1-residential-rental-agreement.docx",
+  "sourceFormat": "docx",
+  "blankPdf": "docs/vic/form-1-blank.pdf",
+  "blankPdfSha256": "acb83509141799584aa8bbbeedc51edfe4208da8e99f4e6bdc183b2317e9a7b8",
+  "blankPdfPageCount": 10,
+  "blankPdfEmbeddedImageCount": 2,
+  "blankPdfProvenance": "docs/vic/form-1-blank-provenance.json",
+  "textVerification": {
+    "referenceFile": "docs/vic/form-1-extracted-from-cav.md",
+    "phraseCoveragePct": 100,
+    "phrasesFound": [
+      "Residential Tenancies Act 1997 Section 26(1)",
+      "Residential Tenancies Regulations 2021 Regulation 10(1)",
+      "Part A – Basic terms",
+      "residential rental provider",
+      "at least 90 days written notice of a proposed rent increase",
+      "Telephone interpreter service",
+      "Arabic"
+    ],
+    "phrasesMissing": [],
+    "note": "Docx extract gate; OFFICIAL footer phrase is verified on blank PDF after freeze."
+  }
+}

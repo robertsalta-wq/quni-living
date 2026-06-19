@@ -1,0 +1,10 @@
+﻿2026-06-11T04:23:32.5856345Z Post job cleanup.
+2026-06-11T04:23:32.6868040Z [command]/usr/bin/git version
+2026-06-11T04:23:32.6905735Z git version 2.54.0
+2026-06-11T04:23:32.6947890Z Temporarily overriding HOME='/home/runner/work/_temp/85e478b0-4e26-4f51-ba06-0bf2f9814728' before making global git config changes
+2026-06-11T04:23:32.6948845Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-11T04:23:32.6953442Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-11T04:23:32.6992060Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-11T04:23:32.7027203Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-11T04:23:32.7258030Z fatal: No url found for submodule path '.tmp-vercel-worktree' in .gitmodules
+2026-06-11T04:23:32.7297670Z ##[warning]The process '/usr/bin/git' failed with exit code 128

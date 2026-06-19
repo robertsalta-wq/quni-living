@@ -1,0 +1,41 @@
+﻿2026-06-10T10:33:57.8665116Z ##[group]Run node scripts/source-official-tenancy-pdfs.mjs --vic-only
+2026-06-10T10:33:57.8665725Z [36;1mnode scripts/source-official-tenancy-pdfs.mjs --vic-only[0m
+2026-06-10T10:33:57.8701099Z shell: /usr/bin/bash -e {0}
+2026-06-10T10:33:57.8701674Z ##[endgroup]
+2026-06-10T10:33:58.8302273Z [VIC] Download URL: https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx
+2026-06-10T10:34:00.5326704Z [VIC] Canonical docx verified (no overwrite).
+2026-06-10T10:34:00.5327409Z [VIC] Provenance: {
+2026-06-10T10:34:00.5328047Z   "form": "VIC CAV Form 1 - Residential rental agreement (no more than 5 years)",
+2026-06-10T10:34:00.5329424Z   "sourceUrl": "https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx",
+2026-06-10T10:34:00.5330903Z   "sourcePageUrl": "https://www.consumer.vic.gov.au/housing/renting/renting-forms-and-publications",
+2026-06-10T10:34:00.5331916Z   "downloadDate": "2026-06-10",
+2026-06-10T10:34:00.5333332Z   "inForceReference": "Residential Tenancies Act 1997 s 26(1); Residential Tenancies Regulations 2021 reg 10(1)",
+2026-06-10T10:34:00.5333931Z   "cavReformDate": "25 November 2025",
+2026-06-10T10:34:00.5334436Z   "sha256": "a3b35d182e48676bd463ddfb7a56f5e997194b22090736e05e02c0a32ac15aba",
+2026-06-10T10:34:00.5334917Z   "fileSizeBytes": 119929,
+2026-06-10T10:34:00.5335608Z   "publisherListedSizeNote": "CAV library page labels ~1.5MB; live .docx download and repo copy are 119929 bytes (verified byte-identical).",
+2026-06-10T10:34:00.5336426Z   "storedAs": "docs/vic/form-1-residential-rental-agreement.docx",
+2026-06-10T10:34:00.5336837Z   "sourceFormat": "docx",
+2026-06-10T10:34:00.5337166Z   "blankPdf": "docs/vic/form-1-blank.pdf",
+2026-06-10T10:34:00.5337528Z   "blankPdfSha256": null,
+2026-06-10T10:34:00.5337841Z   "blankPdfPageCount": null,
+2026-06-10T10:34:00.5338181Z   "blankPdfEmbeddedImageCount": null,
+2026-06-10T10:34:00.5338680Z   "blankPdfProvenance": "docs/vic/form-1-blank-provenance.json",
+2026-06-10T10:34:00.5339166Z   "textVerification": {
+2026-06-10T10:34:00.5339543Z     "referenceFile": "docs/vic/form-1-extracted-from-cav.md",
+2026-06-10T10:34:00.5339910Z     "phraseCoveragePct": 100,
+2026-06-10T10:34:00.5340207Z     "phrasesFound": [
+2026-06-10T10:34:00.5340532Z       "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-10T10:34:00.5340978Z       "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-10T10:34:00.5341883Z       "Part A – Basic terms",
+2026-06-10T10:34:00.5342205Z       "residential rental provider",
+2026-06-10T10:34:00.5342634Z       "at least 90 days written notice of a proposed rent increase",
+2026-06-10T10:34:00.5343070Z       "Telephone interpreter service",
+2026-06-10T10:34:00.5343387Z       "Arabic"
+2026-06-10T10:34:00.5343620Z     ],
+2026-06-10T10:34:00.5343859Z     "phrasesMissing": [],
+2026-06-10T10:34:00.5344329Z     "note": "Docx extract gate; OFFICIAL footer phrase is verified on blank PDF after freeze."
+2026-06-10T10:34:00.5344825Z   }
+2026-06-10T10:34:00.5345066Z }
+2026-06-10T10:34:00.5345185Z 
+2026-06-10T10:34:00.5345278Z Done.

@@ -1,0 +1,301 @@
+﻿2026-06-11T08:12:18.8105599Z Current runner version: '2.335.1'
+2026-06-11T08:12:18.8129862Z ##[group]Runner Image Provisioner
+2026-06-11T08:12:18.8130661Z Hosted Compute Agent
+2026-06-11T08:12:18.8131248Z Version: 20260527.539
+2026-06-11T08:12:18.8131898Z Commit: a891dd388383b896fa6ac04a82c0b75cec981078
+2026-06-11T08:12:18.8132570Z Build Date: 2026-05-27T21:39:57Z
+2026-06-11T08:12:18.8133185Z Worker ID: {f197651e-8ffa-4107-9839-b9566e9b3edd}
+2026-06-11T08:12:18.8133848Z Azure Region: westus3
+2026-06-11T08:12:18.8134356Z ##[endgroup]
+2026-06-11T08:12:18.8135693Z ##[group]Operating System
+2026-06-11T08:12:18.8136255Z Ubuntu
+2026-06-11T08:12:18.8136850Z 24.04.4
+2026-06-11T08:12:18.8137413Z LTS
+2026-06-11T08:12:18.8137880Z ##[endgroup]
+2026-06-11T08:12:18.8138426Z ##[group]Runner Image
+2026-06-11T08:12:18.8138970Z Image: ubuntu-24.04
+2026-06-11T08:12:18.8139458Z Version: 20260607.184.1
+2026-06-11T08:12:18.8140616Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260607.184/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-11T08:12:18.8141933Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260607.184
+2026-06-11T08:12:18.8142883Z ##[endgroup]
+2026-06-11T08:12:18.8143951Z ##[group]GITHUB_TOKEN Permissions
+2026-06-11T08:12:18.8145870Z Contents: read
+2026-06-11T08:12:18.8146400Z Metadata: read
+2026-06-11T08:12:18.8147142Z Packages: read
+2026-06-11T08:12:18.8147639Z ##[endgroup]
+2026-06-11T08:12:18.8149641Z Secret source: Actions
+2026-06-11T08:12:18.8150729Z Prepare workflow directory
+2026-06-11T08:12:18.8456985Z Prepare all required actions
+2026-06-11T08:12:18.8498859Z Getting action download info
+2026-06-11T08:12:19.4787954Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-11T08:12:19.5473346Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-06-11T08:12:19.6461065Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-06-11T08:12:19.8272079Z Complete job name: freeze
+2026-06-11T08:12:19.9099223Z ##[group]Run actions/checkout@v4
+2026-06-11T08:12:19.9100154Z with:
+2026-06-11T08:12:19.9100655Z   ref: vic/form1-blank-freeze
+2026-06-11T08:12:19.9101251Z   repository: robertsalta-wq/quni-living
+2026-06-11T08:12:19.9106116Z   token: ***
+2026-06-11T08:12:19.9106592Z   ssh-strict: true
+2026-06-11T08:12:19.9107491Z   ssh-user: git
+2026-06-11T08:12:19.9107993Z   persist-credentials: true
+2026-06-11T08:12:19.9108533Z   clean: true
+2026-06-11T08:12:19.9109020Z   sparse-checkout-cone-mode: true
+2026-06-11T08:12:19.9109600Z   fetch-depth: 1
+2026-06-11T08:12:19.9110093Z   fetch-tags: false
+2026-06-11T08:12:19.9110575Z   show-progress: true
+2026-06-11T08:12:19.9111066Z   lfs: false
+2026-06-11T08:12:19.9111533Z   submodules: false
+2026-06-11T08:12:19.9112058Z   set-safe-directory: true
+2026-06-11T08:12:19.9112920Z ##[endgroup]
+2026-06-11T08:12:20.0212950Z Syncing repository: robertsalta-wq/quni-living
+2026-06-11T08:12:20.0215455Z ##[group]Getting Git version info
+2026-06-11T08:12:20.0216406Z Working directory is '/home/runner/work/quni-living/quni-living'
+2026-06-11T08:12:20.0217971Z [command]/usr/bin/git version
+2026-06-11T08:12:20.0266988Z git version 2.54.0
+2026-06-11T08:12:20.0291640Z ##[endgroup]
+2026-06-11T08:12:20.0305517Z Temporarily overriding HOME='/home/runner/work/_temp/66044034-e29f-47f4-93a9-d429e88ee512' before making global git config changes
+2026-06-11T08:12:20.0307181Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-11T08:12:20.0319013Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-11T08:12:20.0358062Z Deleting the contents of '/home/runner/work/quni-living/quni-living'
+2026-06-11T08:12:20.0361078Z ##[group]Initializing the repository
+2026-06-11T08:12:20.0364675Z [command]/usr/bin/git init /home/runner/work/quni-living/quni-living
+2026-06-11T08:12:20.0441288Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-11T08:12:20.0442637Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-11T08:12:20.0443641Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-11T08:12:20.0444435Z hint: call:
+2026-06-11T08:12:20.0445078Z hint:
+2026-06-11T08:12:20.0445795Z hint: 	git config --global init.defaultBranch <name>
+2026-06-11T08:12:20.0447273Z hint:
+2026-06-11T08:12:20.0447922Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-11T08:12:20.0448930Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-11T08:12:20.0449717Z hint:
+2026-06-11T08:12:20.0450299Z hint: 	git branch -m <name>
+2026-06-11T08:12:20.0450853Z hint:
+2026-06-11T08:12:20.0451529Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-11T08:12:20.0452656Z Initialized empty Git repository in /home/runner/work/quni-living/quni-living/.git/
+2026-06-11T08:12:20.0456560Z [command]/usr/bin/git remote add origin https://github.com/robertsalta-wq/quni-living
+2026-06-11T08:12:20.0490645Z ##[endgroup]
+2026-06-11T08:12:20.0491534Z ##[group]Disabling automatic garbage collection
+2026-06-11T08:12:20.0494808Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-11T08:12:20.0522483Z ##[endgroup]
+2026-06-11T08:12:20.0524354Z ##[group]Setting up auth
+2026-06-11T08:12:20.0529233Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-11T08:12:20.0557018Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-11T08:12:20.0837638Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-11T08:12:20.0863884Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-11T08:12:20.1033495Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-11T08:12:20.1062456Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-11T08:12:20.1238904Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-11T08:12:20.1267509Z ##[endgroup]
+2026-06-11T08:12:20.1269133Z ##[group]Fetching the repository
+2026-06-11T08:12:20.1277129Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/vic/form1-blank-freeze*:refs/remotes/origin/vic/form1-blank-freeze* +refs/tags/vic/form1-blank-freeze*:refs/tags/vic/form1-blank-freeze*
+2026-06-11T08:12:21.9923008Z From https://github.com/robertsalta-wq/quni-living
+2026-06-11T08:12:21.9924032Z  * [new branch]      vic/form1-blank-freeze -> origin/vic/form1-blank-freeze
+2026-06-11T08:12:21.9953867Z ##[endgroup]
+2026-06-11T08:12:21.9954701Z ##[group]Determining the checkout info
+2026-06-11T08:12:21.9961234Z [command]/usr/bin/git branch --list --remote origin/vic/form1-blank-freeze
+2026-06-11T08:12:21.9983437Z   origin/vic/form1-blank-freeze
+2026-06-11T08:12:21.9986828Z ##[endgroup]
+2026-06-11T08:12:21.9992306Z [command]/usr/bin/git sparse-checkout disable
+2026-06-11T08:12:22.0023967Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-11T08:12:22.0044653Z ##[group]Checking out the ref
+2026-06-11T08:12:22.0049154Z [command]/usr/bin/git checkout --progress --force -B vic/form1-blank-freeze refs/remotes/origin/vic/form1-blank-freeze
+2026-06-11T08:12:22.0934598Z Switched to a new branch 'vic/form1-blank-freeze'
+2026-06-11T08:12:22.0935810Z branch 'vic/form1-blank-freeze' set up to track 'origin/vic/form1-blank-freeze'.
+2026-06-11T08:12:22.0945508Z ##[endgroup]
+2026-06-11T08:12:22.0981396Z [command]/usr/bin/git log -1 --format=%H
+2026-06-11T08:12:22.1000025Z 4e58ec68d2fd120abca407a83b1c20de2aeffbe9
+2026-06-11T08:12:22.1208273Z ##[group]Run actions/setup-node@v4
+2026-06-11T08:12:22.1208626Z with:
+2026-06-11T08:12:22.1208885Z   node-version: 22
+2026-06-11T08:12:22.1209159Z   cache: npm
+2026-06-11T08:12:22.1209415Z   always-auth: false
+2026-06-11T08:12:22.1209688Z   check-latest: false
+2026-06-11T08:12:22.1213057Z   token: ***
+2026-06-11T08:12:22.1213308Z ##[endgroup]
+2026-06-11T08:12:22.2869498Z Found in cache @ /opt/hostedtoolcache/node/22.22.3/x64
+2026-06-11T08:12:22.2875719Z ##[group]Environment details
+2026-06-11T08:12:25.0636108Z node: v22.22.3
+2026-06-11T08:12:25.0636432Z npm: 10.9.8
+2026-06-11T08:12:25.0636784Z yarn: 1.22.22
+2026-06-11T08:12:25.0638362Z ##[endgroup]
+2026-06-11T08:12:25.0656078Z [command]/opt/hostedtoolcache/node/22.22.3/x64/bin/npm config get cache
+2026-06-11T08:12:25.2681632Z /home/runner/.npm
+2026-06-11T08:12:25.5427628Z Cache hit for: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
+2026-06-11T08:12:26.7692421Z Received 12582912 of 198419680 (6.3%), 12.0 MBs/sec
+2026-06-11T08:12:27.7696024Z Received 134217728 of 198419680 (67.6%), 64.0 MBs/sec
+2026-06-11T08:12:28.2362946Z Received 198419680 of 198419680 (100.0%), 76.7 MBs/sec
+2026-06-11T08:12:28.2363349Z Cache Size: ~189 MB (198419680 B)
+2026-06-11T08:12:28.2395751Z [command]/usr/bin/tar -xf /home/runner/work/_temp/06e0996d-d69b-4cea-ba6b-bfcb49a0d0d5/cache.tzst -P -C /home/runner/work/quni-living/quni-living --use-compress-program unzstd
+2026-06-11T08:12:28.4832233Z Cache restored successfully
+2026-06-11T08:12:28.4901998Z Cache restored from key: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
+2026-06-11T08:12:28.5023571Z ##[group]Run npm ci
+2026-06-11T08:12:28.5023917Z [36;1mnpm ci[0m
+2026-06-11T08:12:28.5155127Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:12:28.5155430Z ##[endgroup]
+2026-06-11T08:12:33.9800880Z npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
+2026-06-11T08:12:35.6125418Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-06-11T08:12:40.6025212Z 
+2026-06-11T08:12:40.6027770Z added 831 packages, and audited 832 packages in 12s
+2026-06-11T08:12:40.6028103Z 
+2026-06-11T08:12:40.6028314Z 207 packages are looking for funding
+2026-06-11T08:12:40.6028687Z   run `npm fund` for details
+2026-06-11T08:12:40.6544176Z 
+2026-06-11T08:12:40.6545213Z 22 vulnerabilities (8 moderate, 12 high, 2 critical)
+2026-06-11T08:12:40.6545657Z 
+2026-06-11T08:12:40.6546014Z To address issues that do not require attention, run:
+2026-06-11T08:12:40.6546527Z   npm audit fix
+2026-06-11T08:12:40.6546916Z 
+2026-06-11T08:12:40.6547285Z To address all issues (including breaking changes), run:
+2026-06-11T08:12:40.6547880Z   npm audit fix --force
+2026-06-11T08:12:40.6548283Z 
+2026-06-11T08:12:40.6548519Z Run `npm audit` for details.
+2026-06-11T08:12:40.7101636Z ##[group]Run node scripts/source-official-tenancy-pdfs.mjs --vic-only
+2026-06-11T08:12:40.7102165Z [36;1mnode scripts/source-official-tenancy-pdfs.mjs --vic-only[0m
+2026-06-11T08:12:40.7121213Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:12:40.7121506Z ##[endgroup]
+2026-06-11T08:12:41.7352852Z [VIC] Download URL: https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx
+2026-06-11T08:12:42.9803713Z [VIC] Canonical docx verified (no overwrite).
+2026-06-11T08:12:42.9804401Z [VIC] Provenance: {
+2026-06-11T08:12:42.9805027Z   "form": "VIC CAV Form 1 - Residential rental agreement (no more than 5 years)",
+2026-06-11T08:12:42.9806215Z   "sourceUrl": "https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx",
+2026-06-11T08:12:42.9807874Z   "sourcePageUrl": "https://www.consumer.vic.gov.au/housing/renting/renting-forms-and-publications",
+2026-06-11T08:12:42.9809137Z   "downloadDate": "2026-06-11",
+2026-06-11T08:12:42.9809999Z   "inForceReference": "Residential Tenancies Act 1997 s 26(1); Residential Tenancies Regulations 2021 reg 10(1)",
+2026-06-11T08:12:42.9810799Z   "cavReformDate": "25 November 2025",
+2026-06-11T08:12:42.9811618Z   "sha256": "a3b35d182e48676bd463ddfb7a56f5e997194b22090736e05e02c0a32ac15aba",
+2026-06-11T08:12:42.9812387Z   "fileSizeBytes": 119929,
+2026-06-11T08:12:42.9813608Z   "publisherListedSizeNote": "CAV library page labels ~1.5MB; live .docx download and repo copy are 119929 bytes (verified byte-identical).",
+2026-06-11T08:12:42.9814895Z   "storedAs": "docs/vic/form-1-residential-rental-agreement.docx",
+2026-06-11T08:12:42.9815678Z   "sourceFormat": "docx",
+2026-06-11T08:12:42.9816196Z   "blankPdf": "docs/vic/form-1-blank.pdf",
+2026-06-11T08:12:42.9816937Z   "blankPdfSha256": null,
+2026-06-11T08:12:42.9817385Z   "blankPdfPageCount": null,
+2026-06-11T08:12:42.9817958Z   "blankPdfEmbeddedImageCount": null,
+2026-06-11T08:12:42.9818676Z   "blankPdfProvenance": "docs/vic/form-1-blank-provenance.json",
+2026-06-11T08:12:42.9819417Z   "textVerification": {
+2026-06-11T08:12:42.9820051Z     "referenceFile": "docs/vic/form-1-extracted-from-cav.md",
+2026-06-11T08:12:42.9820670Z     "phraseCoveragePct": 100,
+2026-06-11T08:12:42.9821161Z     "phrasesFound": [
+2026-06-11T08:12:42.9821640Z       "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:12:42.9822400Z       "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:12:42.9823324Z       "Part A – Basic terms",
+2026-06-11T08:12:42.9823888Z       "residential rental provider",
+2026-06-11T08:12:42.9824580Z       "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:12:42.9825247Z       "Telephone interpreter service",
+2026-06-11T08:12:42.9825652Z       "Arabic"
+2026-06-11T08:12:42.9826030Z     ],
+2026-06-11T08:12:42.9826402Z     "phrasesMissing": [],
+2026-06-11T08:12:42.9827464Z     "note": "Docx extract gate; OFFICIAL footer phrase is verified on blank PDF after freeze."
+2026-06-11T08:12:42.9828312Z   }
+2026-06-11T08:12:42.9828654Z }
+2026-06-11T08:12:42.9828860Z 
+2026-06-11T08:12:42.9829031Z Done.
+2026-06-11T08:12:42.9894390Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-11T08:12:42.9894815Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-11T08:12:42.9913067Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:12:42.9913353Z ##[endgroup]
+2026-06-11T08:12:43.1895500Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:12:43.8387557Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-11T08:12:43.8393008Z d9802f032d67: Pulling fs layer
+2026-06-11T08:12:43.8393520Z 8c476128eb22: Pulling fs layer
+2026-06-11T08:12:43.8393990Z e846d8e9647d: Pulling fs layer
+2026-06-11T08:12:43.8394495Z 843c17e581f4: Pulling fs layer
+2026-06-11T08:12:43.8394918Z 15e0c869e1f8: Pulling fs layer
+2026-06-11T08:12:43.8395317Z 0933f1eadfad: Pulling fs layer
+2026-06-11T08:12:43.8395806Z 45de3bd96a35: Pulling fs layer
+2026-06-11T08:12:43.8396201Z 15e0c869e1f8: Waiting
+2026-06-11T08:12:43.8396449Z 0933f1eadfad: Waiting
+2026-06-11T08:12:43.8396872Z 45de3bd96a35: Waiting
+2026-06-11T08:12:43.8397131Z 843c17e581f4: Waiting
+2026-06-11T08:12:44.4139054Z 8c476128eb22: Verifying Checksum
+2026-06-11T08:12:44.4140664Z 8c476128eb22: Download complete
+2026-06-11T08:12:44.4164255Z d9802f032d67: Verifying Checksum
+2026-06-11T08:12:44.4169778Z d9802f032d67: Download complete
+2026-06-11T08:12:44.4771079Z e846d8e9647d: Verifying Checksum
+2026-06-11T08:12:44.4771592Z e846d8e9647d: Download complete
+2026-06-11T08:12:44.6425051Z 843c17e581f4: Verifying Checksum
+2026-06-11T08:12:44.6425753Z 843c17e581f4: Download complete
+2026-06-11T08:12:44.6475750Z 15e0c869e1f8: Verifying Checksum
+2026-06-11T08:12:44.6476625Z 15e0c869e1f8: Download complete
+2026-06-11T08:12:44.8529180Z 45de3bd96a35: Verifying Checksum
+2026-06-11T08:12:44.8530154Z 45de3bd96a35: Download complete
+2026-06-11T08:12:45.2294228Z d9802f032d67: Pull complete
+2026-06-11T08:12:45.2811216Z 0933f1eadfad: Verifying Checksum
+2026-06-11T08:12:45.2811862Z 0933f1eadfad: Download complete
+2026-06-11T08:12:49.0666813Z 8c476128eb22: Pull complete
+2026-06-11T08:12:49.7159736Z e846d8e9647d: Pull complete
+2026-06-11T08:12:49.7276082Z 843c17e581f4: Pull complete
+2026-06-11T08:12:49.7665859Z 15e0c869e1f8: Pull complete
+2026-06-11T08:12:53.8661499Z 0933f1eadfad: Pull complete
+2026-06-11T08:12:53.8734325Z 45de3bd96a35: Pull complete
+2026-06-11T08:12:53.8762582Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:12:53.8770021Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:12:53.8778361Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:12:53.8969053Z [vic-form1-freeze] Resolving container font package versions...
+2026-06-11T08:13:51.0548327Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:13:51.0550103Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-11T08:13:51.0550851Z [vic-form1-freeze] Font packages: {
+2026-06-11T08:13:51.0551472Z   'fonts-liberation': '1:1.07.4-11',
+2026-06-11T08:13:51.0552453Z   'fonts-noto-cjk': '1:20190410+repack1-2',
+2026-06-11T08:13:51.0553113Z   'fonts-noto-core': '20200323-1build1~ubuntu20.04.1',
+2026-06-11T08:13:51.0553741Z   'fonts-noto-extra': '20200323-1build1~ubuntu20.04.1'
+2026-06-11T08:13:51.0554192Z }
+2026-06-11T08:13:51.1868170Z [vic-form1-freeze] Patched docx for LO pagination: tmp/vic-form1-freeze/form-1-residential-rental-agreement-patched.docx
+2026-06-11T08:13:51.1869200Z [vic-form1-freeze] Conversion run 1...
+2026-06-11T08:14:21.5705301Z [vic-form1-freeze] Conversion run 2...
+2026-06-11T08:14:52.2893258Z [vic-form1-freeze] Checkbox operator scan (pre-remediation): total=26 expected=25
+2026-06-11T08:14:52.2896544Z   page 2: 5
+2026-06-11T08:14:52.2897464Z   page 3: 8
+2026-06-11T08:14:52.2898214Z   page 4: 12
+2026-06-11T08:14:52.2898603Z   page 5: 1
+2026-06-11T08:14:52.2899698Z [vic-form1-freeze] Stray page-4 border still present after docx keep-together; deleting path operators from content stream...
+2026-06-11T08:14:52.3708320Z Error: stray box content-stream fix: expected page Contents array
+2026-06-11T08:14:52.3709961Z     at removeVicForm1StrayPage4BoxFromContentStream (file:///home/runner/work/quni-living/quni-living/scripts/lib/vic-form1-remove-stray-page4-box-content-stream.mjs:61:11)
+2026-06-11T08:14:52.3712042Z     at async remediateStrayPage4CheckboxArtifact (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:281:20)
+2026-06-11T08:14:52.3713432Z     at async runFreeze (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:386:66)
+2026-06-11T08:14:52.3714281Z     at async main (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:565:3)
+2026-06-11T08:14:52.3800305Z ##[error]Process completed with exit code 1.
+2026-06-11T08:14:52.3878049Z ##[group]Run actions/upload-artifact@v4
+2026-06-11T08:14:52.3878355Z with:
+2026-06-11T08:14:52.3878569Z   name: vic-form1-freeze
+2026-06-11T08:14:52.3880213Z   path: docs/vic/form-1-blank.pdf
+docs/vic/form-1-blank-provenance.json
+docs/vic/source.json
+scripts/test-official-form-spike/vic-form1-blank-render-diff.json
+scripts/test-official-form-spike/vic-form1-content-completeness-gate.json
+scripts/test-official-form-spike/vic-form1-interpreter-annex-gate.json
+scripts/test-official-form-spike/vic-form1-blank-page-*.png
+scripts/test-official-form-spike/vic-form1-interpreter-annex-page-*.png
+
+2026-06-11T08:14:52.3881856Z   if-no-files-found: warn
+2026-06-11T08:14:52.3882237Z   compression-level: 6
+2026-06-11T08:14:52.3882475Z   overwrite: false
+2026-06-11T08:14:52.3882706Z   include-hidden-files: false
+2026-06-11T08:14:52.3882976Z ##[endgroup]
+2026-06-11T08:14:52.6022831Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-06-11T08:14:52.6028999Z The least common ancestor is /home/runner/work/quni-living/quni-living. This will be the root directory of the artifact
+2026-06-11T08:14:52.6030555Z With the provided path, there will be 1 file uploaded
+2026-06-11T08:14:52.6035008Z Artifact name is valid!
+2026-06-11T08:14:52.6036645Z Root directory input is valid!
+2026-06-11T08:14:52.9587959Z Beginning upload of artifact content to blob storage
+2026-06-11T08:14:53.2209707Z Uploaded bytes 935
+2026-06-11T08:14:53.2921958Z Finished uploading artifact content to blob storage!
+2026-06-11T08:14:53.2924493Z SHA256 digest of uploaded artifact zip is 9f8b9a0c4f17aeeec8831d08370bed0d4004a383374bdbd5646ea536c0760a84
+2026-06-11T08:14:53.2926053Z Finalizing artifact upload
+2026-06-11T08:14:53.5231898Z Artifact vic-form1-freeze.zip successfully finalized. Artifact ID 7558493771
+2026-06-11T08:14:53.5232758Z Artifact vic-form1-freeze has been successfully uploaded! Final size is 935 bytes. Artifact ID is 7558493771
+2026-06-11T08:14:53.5240217Z Artifact download URL: https://github.com/robertsalta-wq/quni-living/actions/runs/27333277551/artifacts/7558493771
+2026-06-11T08:14:53.5459982Z Post job cleanup.
+2026-06-11T08:14:53.6377680Z [command]/usr/bin/git version
+2026-06-11T08:14:53.6410608Z git version 2.54.0
+2026-06-11T08:14:53.6448033Z Temporarily overriding HOME='/home/runner/work/_temp/454aa005-cf3e-4f48-9cbb-ce5308c8ac34' before making global git config changes
+2026-06-11T08:14:53.6449419Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-11T08:14:53.6460676Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-11T08:14:53.6492078Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-11T08:14:53.6520310Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-11T08:14:53.6688559Z fatal: No url found for submodule path '.tmp-vercel-worktree' in .gitmodules
+2026-06-11T08:14:53.6725500Z ##[warning]The process '/usr/bin/git' failed with exit code 128
+2026-06-11T08:14:53.6803230Z Cleaning up orphan processes
+2026-06-11T08:14:53.7051627Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

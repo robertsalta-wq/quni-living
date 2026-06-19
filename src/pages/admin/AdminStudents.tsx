@@ -1,12 +1,53 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
+import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { adminTableWrapClass, adminTdClass, adminThClass, formatDate, studentDisplayName } from './adminUi'
 import { AdminPageHeader, EmptyState, LoadingState } from '../../components/admin/primitives'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row'] & {
   universities: { name: string } | null
+}
+
+type RouteFilter = 'all' | 'student' | 'non_student'
+
+function filterButtonClass(active: boolean): string {
+  return [
+    'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    active ? 'bg-indigo-50 text-indigo-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+  ].join(' ')
+}
+
+/** Intent axis: chosen onboarding route (null = not yet chosen). */
+function routeIntentLabel(route: StudentRow['accommodation_verification_route']): string {
+  if (route === 'student') return 'Student'
+  if (isNonStudentAccommodationRoute(route)) return 'Non-student'
+  return 'Route not chosen'
+}
+
+/** Proof axis: verification tier once fully complete (`none` = unverified). */
+function verificationProofLabel(verificationType: StudentRow['verification_type']): string {
+  if (verificationType === 'student') return 'Verified (student)'
+  if (verificationType === 'identity') return 'Verified (identity)'
+  return 'Unverified'
+}
+
+function proofStatusClass(verificationType: StudentRow['verification_type']): string {
+  if (verificationType === 'none') return 'text-amber-800'
+  return 'text-emerald-800'
+}
+
+function matchesRouteFilter(row: StudentRow, filter: RouteFilter): boolean {
+  if (filter === 'all') return true
+  const route = row.accommodation_verification_route
+  if (filter === 'student') return route === 'student'
+  if (filter === 'non_student') return isNonStudentAccommodationRoute(route)
+  return true
+}
+
+function countByFilter(rows: StudentRow[], filter: RouteFilter): number {
+  return rows.filter((row) => matchesRouteFilter(row, filter)).length
 }
 
 export default function AdminStudents() {
@@ -16,6 +57,7 @@ export default function AdminStudents() {
   const [rows, setRows] = useState<StudentRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [routeFilter, setRouteFilter] = useState<RouteFilter>('all')
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -49,9 +91,31 @@ export default function AdminStudents() {
     return () => window.clearTimeout(t)
   }, [highlightProfileId, loading, rows])
 
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesRouteFilter(row, routeFilter)),
+    [rows, routeFilter],
+  )
+
+  const unchosenRouteCount = useMemo(
+    () => rows.filter((row) => row.accommodation_verification_route == null).length,
+    [rows],
+  )
+
+  const emptyDescription =
+    rows.length === 0
+      ? 'Tenant profiles appear here once someone finishes signup.'
+      : routeFilter === 'all'
+        ? 'No profiles match this view.'
+        : routeFilter === 'student'
+          ? 'No profiles on the student route. Profiles without a chosen route appear under All only.'
+          : 'No profiles on the non-student route. Profiles without a chosen route appear under All only.'
+
   return (
     <div>
-      <AdminPageHeader title="Students" subtitle="Registered student profiles." />
+      <AdminPageHeader
+        title="Tenant profiles"
+        subtitle="Students and non-students who signed up to rent."
+      />
 
       {error && (
         <div className="mb-4 rounded-admin-md border border-admin-danger/20 bg-admin-danger-bg px-3.5 py-2.5 text-[13px] text-admin-danger-fg">
@@ -59,15 +123,51 @@ export default function AdminStudents() {
         </div>
       )}
 
+      {!loading && rows.length > 0 ? (
+        <>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={filterButtonClass(routeFilter === 'all')}
+              onClick={() => setRouteFilter('all')}
+            >
+              All ({countByFilter(rows, 'all')})
+            </button>
+            <button
+              type="button"
+              className={filterButtonClass(routeFilter === 'student')}
+              onClick={() => setRouteFilter('student')}
+            >
+              Students ({countByFilter(rows, 'student')})
+            </button>
+            <button
+              type="button"
+              className={filterButtonClass(routeFilter === 'non_student')}
+              onClick={() => setRouteFilter('non_student')}
+            >
+              Non-students ({countByFilter(rows, 'non_student')})
+            </button>
+          </div>
+          {unchosenRouteCount > 0 ? (
+            <p className="mb-4 text-[13px] text-admin-ink-5">
+              {unchosenRouteCount} profile{unchosenRouteCount === 1 ? '' : 's'} ha
+              {unchosenRouteCount === 1 ? 's' : 've'} not chosen a route yet — visible under All only.
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
       <div className={adminTableWrapClass}>
         {loading ? (
-          <LoadingState label="Loading students…" />
+          <LoadingState label="Loading tenant profiles…" />
         ) : rows.length === 0 ? (
           <EmptyState
             icon="graduation-cap"
-            title="No students yet"
-            description="Student profiles appear here once they finish signup."
+            title="No tenant profiles yet"
+            description="Tenant profiles appear here once someone finishes signup."
           />
+        ) : filteredRows.length === 0 ? (
+          <EmptyState icon="graduation-cap" title="No matching profiles" description={emptyDescription} />
         ) : (
           <table className="min-w-full border-collapse">
             <thead>
@@ -77,30 +177,41 @@ export default function AdminStudents() {
                 <th className={adminThClass}>University</th>
                 <th className={adminThClass}>Course</th>
                 <th className={adminThClass}>Year</th>
+                <th className={adminThClass}>Route &amp; verification</th>
                 <th className={adminThClass}>Created</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    ref={highlightProfileId === row.id ? highlightRef : undefined}
-                    className={
-                      highlightProfileId === row.id ? 'bg-amber-50/80 outline outline-2 outline-amber-200 -outline-offset-2' : ''
-                    }
-                  >
-                    <td className={adminTdClass}>
-                      <span className="font-medium text-gray-900">{studentDisplayName(row)}</span>
-                    </td>
-                    <td className={adminTdClass}>{row.email?.trim() || '-'}</td>
-                    <td className={adminTdClass}>{row.universities?.name ?? '-'}</td>
-                    <td className={adminTdClass}>{row.course?.trim() || '-'}</td>
-                    <td className={adminTdClass}>
-                      {row.year_of_study != null ? String(row.year_of_study) : '-'}
-                    </td>
-                    <td className={adminTdClass}>{formatDate(row.created_at)}</td>
-                  </tr>
-                ))}
+              {filteredRows.map((row) => (
+                <tr
+                  key={row.id}
+                  ref={highlightProfileId === row.id ? highlightRef : undefined}
+                  className={
+                    highlightProfileId === row.id ? 'bg-amber-50/80 outline outline-2 outline-amber-200 -outline-offset-2' : ''
+                  }
+                >
+                  <td className={adminTdClass}>
+                    <span className="font-medium text-gray-900">{studentDisplayName(row)}</span>
+                  </td>
+                  <td className={adminTdClass}>{row.email?.trim() || '-'}</td>
+                  <td className={adminTdClass}>{row.universities?.name ?? '-'}</td>
+                  <td className={adminTdClass}>{row.course?.trim() || '-'}</td>
+                  <td className={adminTdClass}>
+                    {row.year_of_study != null ? String(row.year_of_study) : '-'}
+                  </td>
+                  <td className={adminTdClass}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-gray-900">
+                        {routeIntentLabel(row.accommodation_verification_route)}
+                      </span>
+                      <span className={`text-[12px] ${proofStatusClass(row.verification_type)}`}>
+                        {verificationProofLabel(row.verification_type)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className={adminTdClass}>{formatDate(row.created_at)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

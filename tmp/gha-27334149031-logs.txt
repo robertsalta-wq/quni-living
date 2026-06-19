@@ -1,0 +1,1568 @@
+﻿2026-06-11T08:28:53.7555728Z Current runner version: '2.334.0'
+2026-06-11T08:28:53.7595605Z ##[group]Runner Image Provisioner
+2026-06-11T08:28:53.7597176Z Hosted Compute Agent
+2026-06-11T08:28:53.7598216Z Version: 20260520.533
+2026-06-11T08:28:53.7599328Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-06-11T08:28:53.7600658Z Build Date: 2026-05-20T17:44:04Z
+2026-06-11T08:28:53.7601911Z Worker ID: {b27879c8-935d-4e51-bb04-6058c81fa57c}
+2026-06-11T08:28:53.7603091Z Azure Region: eastus
+2026-06-11T08:28:53.7604176Z ##[endgroup]
+2026-06-11T08:28:53.7607054Z ##[group]Operating System
+2026-06-11T08:28:53.7608222Z Ubuntu
+2026-06-11T08:28:53.7609176Z 24.04.4
+2026-06-11T08:28:53.7610010Z LTS
+2026-06-11T08:28:53.7610966Z ##[endgroup]
+2026-06-11T08:28:53.7611991Z ##[group]Runner Image
+2026-06-11T08:28:53.7613230Z Image: ubuntu-24.04
+2026-06-11T08:28:53.7614921Z Version: 20260525.161.1
+2026-06-11T08:28:53.7617293Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260525.161/images/ubuntu/Ubuntu2404-Readme.md
+2026-06-11T08:28:53.7620144Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260525.161
+2026-06-11T08:28:53.7621800Z ##[endgroup]
+2026-06-11T08:28:53.7623951Z ##[group]GITHUB_TOKEN Permissions
+2026-06-11T08:28:53.7627188Z Contents: read
+2026-06-11T08:28:53.7628277Z Metadata: read
+2026-06-11T08:28:53.7629419Z Packages: read
+2026-06-11T08:28:53.7630491Z ##[endgroup]
+2026-06-11T08:28:53.7634041Z Secret source: Actions
+2026-06-11T08:28:53.7635961Z Prepare workflow directory
+2026-06-11T08:28:53.8135882Z Prepare all required actions
+2026-06-11T08:28:53.8193658Z Getting action download info
+2026-06-11T08:28:54.2363478Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-06-11T08:28:54.3725032Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-06-11T08:28:54.5058837Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-06-11T08:28:54.7229164Z Complete job name: freeze
+2026-06-11T08:28:54.8021842Z ##[group]Run actions/checkout@v4
+2026-06-11T08:28:54.8022793Z with:
+2026-06-11T08:28:54.8023271Z   ref: vic/form1-blank-freeze
+2026-06-11T08:28:54.8023869Z   repository: robertsalta-wq/quni-living
+2026-06-11T08:28:54.8029348Z   token: ***
+2026-06-11T08:28:54.8029843Z   ssh-strict: true
+2026-06-11T08:28:54.8030353Z   ssh-user: git
+2026-06-11T08:28:54.8030896Z   persist-credentials: true
+2026-06-11T08:28:54.8031418Z   clean: true
+2026-06-11T08:28:54.8031896Z   sparse-checkout-cone-mode: true
+2026-06-11T08:28:54.8032449Z   fetch-depth: 1
+2026-06-11T08:28:54.8032943Z   fetch-tags: false
+2026-06-11T08:28:54.8033409Z   show-progress: true
+2026-06-11T08:28:54.8033893Z   lfs: false
+2026-06-11T08:28:54.8034344Z   submodules: false
+2026-06-11T08:28:54.8034819Z   set-safe-directory: true
+2026-06-11T08:28:54.8035777Z ##[endgroup]
+2026-06-11T08:28:54.9134080Z Syncing repository: robertsalta-wq/quni-living
+2026-06-11T08:28:54.9136223Z ##[group]Getting Git version info
+2026-06-11T08:28:54.9137545Z Working directory is '/home/runner/work/quni-living/quni-living'
+2026-06-11T08:28:54.9138695Z [command]/usr/bin/git version
+2026-06-11T08:28:54.9234124Z git version 2.54.0
+2026-06-11T08:28:54.9260677Z ##[endgroup]
+2026-06-11T08:28:54.9275036Z Temporarily overriding HOME='/home/runner/work/_temp/5dc3afdc-f7ac-4ef1-a8f8-c8dfe3f190f3' before making global git config changes
+2026-06-11T08:28:54.9276922Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-11T08:28:54.9280812Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-11T08:28:54.9337606Z Deleting the contents of '/home/runner/work/quni-living/quni-living'
+2026-06-11T08:28:54.9341459Z ##[group]Initializing the repository
+2026-06-11T08:28:54.9345471Z [command]/usr/bin/git init /home/runner/work/quni-living/quni-living
+2026-06-11T08:28:54.9473459Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-11T08:28:54.9475742Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-11T08:28:54.9477357Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-11T08:28:54.9478668Z hint: call:
+2026-06-11T08:28:54.9479530Z hint:
+2026-06-11T08:28:54.9480653Z hint: 	git config --global init.defaultBranch <name>
+2026-06-11T08:28:54.9482099Z hint:
+2026-06-11T08:28:54.9483389Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-11T08:28:54.9484638Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-11T08:28:54.9485592Z hint:
+2026-06-11T08:28:54.9486104Z hint: 	git branch -m <name>
+2026-06-11T08:28:54.9486979Z hint:
+2026-06-11T08:28:54.9488197Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-11T08:28:54.9489616Z Initialized empty Git repository in /home/runner/work/quni-living/quni-living/.git/
+2026-06-11T08:28:54.9493082Z [command]/usr/bin/git remote add origin https://github.com/robertsalta-wq/quni-living
+2026-06-11T08:28:54.9536069Z ##[endgroup]
+2026-06-11T08:28:54.9537266Z ##[group]Disabling automatic garbage collection
+2026-06-11T08:28:54.9540412Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-11T08:28:54.9568290Z ##[endgroup]
+2026-06-11T08:28:54.9569081Z ##[group]Setting up auth
+2026-06-11T08:28:54.9574983Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-11T08:28:54.9608379Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-11T08:28:54.9973516Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-11T08:28:55.0004601Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-11T08:28:55.0221369Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-11T08:28:55.0252119Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-11T08:28:55.0480284Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-11T08:28:55.0514851Z ##[endgroup]
+2026-06-11T08:28:55.0516864Z ##[group]Fetching the repository
+2026-06-11T08:28:55.0526111Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/vic/form1-blank-freeze*:refs/remotes/origin/vic/form1-blank-freeze* +refs/tags/vic/form1-blank-freeze*:refs/tags/vic/form1-blank-freeze*
+2026-06-11T08:28:55.8323400Z From https://github.com/robertsalta-wq/quni-living
+2026-06-11T08:28:55.8325433Z  * [new branch]      vic/form1-blank-freeze -> origin/vic/form1-blank-freeze
+2026-06-11T08:28:55.8389350Z ##[endgroup]
+2026-06-11T08:28:55.8396952Z ##[group]Determining the checkout info
+2026-06-11T08:28:55.8398470Z [command]/usr/bin/git branch --list --remote origin/vic/form1-blank-freeze
+2026-06-11T08:28:55.8468699Z   origin/vic/form1-blank-freeze
+2026-06-11T08:28:55.8474808Z ##[endgroup]
+2026-06-11T08:28:55.8477703Z [command]/usr/bin/git sparse-checkout disable
+2026-06-11T08:28:55.8520146Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-11T08:28:55.8547782Z ##[group]Checking out the ref
+2026-06-11T08:28:55.8552732Z [command]/usr/bin/git checkout --progress --force -B vic/form1-blank-freeze refs/remotes/origin/vic/form1-blank-freeze
+2026-06-11T08:28:55.9687063Z Switched to a new branch 'vic/form1-blank-freeze'
+2026-06-11T08:28:55.9700279Z branch 'vic/form1-blank-freeze' set up to track 'origin/vic/form1-blank-freeze'.
+2026-06-11T08:28:55.9705372Z ##[endgroup]
+2026-06-11T08:28:55.9747513Z [command]/usr/bin/git log -1 --format=%H
+2026-06-11T08:28:55.9770767Z a713de2049f4cc189dabadd0d1cea7e700f1a375
+2026-06-11T08:28:56.0123179Z ##[group]Run actions/setup-node@v4
+2026-06-11T08:28:56.0124387Z with:
+2026-06-11T08:28:56.0125251Z   node-version: 22
+2026-06-11T08:28:56.0126199Z   cache: npm
+2026-06-11T08:28:56.0127404Z   always-auth: false
+2026-06-11T08:28:56.0128388Z   check-latest: false
+2026-06-11T08:28:56.0141132Z   token: ***
+2026-06-11T08:28:56.0142032Z ##[endgroup]
+2026-06-11T08:28:56.2252804Z Found in cache @ /opt/hostedtoolcache/node/22.22.3/x64
+2026-06-11T08:28:56.2258893Z ##[group]Environment details
+2026-06-11T08:28:59.1477200Z node: v22.22.3
+2026-06-11T08:28:59.1477720Z npm: 10.9.8
+2026-06-11T08:28:59.1478093Z yarn: 1.22.22
+2026-06-11T08:28:59.1479139Z ##[endgroup]
+2026-06-11T08:28:59.1505140Z [command]/opt/hostedtoolcache/node/22.22.3/x64/bin/npm config get cache
+2026-06-11T08:28:59.5412042Z /home/runner/.npm
+2026-06-11T08:28:59.6664962Z Cache hit for: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
+2026-06-11T08:29:00.7016562Z Received 194225376 of 198419680 (97.9%), 185.0 MBs/sec
+2026-06-11T08:29:00.7412488Z Received 198419680 of 198419680 (100.0%), 181.9 MBs/sec
+2026-06-11T08:29:00.7413804Z Cache Size: ~189 MB (198419680 B)
+2026-06-11T08:29:00.7454293Z [command]/usr/bin/tar -xf /home/runner/work/_temp/5ea6c8a8-4a29-4bcc-8b97-1dee9fe59b4e/cache.tzst -P -C /home/runner/work/quni-living/quni-living --use-compress-program unzstd
+2026-06-11T08:29:01.1893800Z Cache restored successfully
+2026-06-11T08:29:01.1983326Z Cache restored from key: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
+2026-06-11T08:29:01.2147727Z ##[group]Run npm ci
+2026-06-11T08:29:01.2148074Z [36;1mnpm ci[0m
+2026-06-11T08:29:01.2188924Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:29:01.2189230Z ##[endgroup]
+2026-06-11T08:29:07.4002163Z npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
+2026-06-11T08:29:09.4569924Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-06-11T08:29:16.3181380Z 
+2026-06-11T08:29:16.3182704Z added 831 packages, and audited 832 packages in 15s
+2026-06-11T08:29:16.3183190Z 
+2026-06-11T08:29:16.3183488Z 207 packages are looking for funding
+2026-06-11T08:29:16.3184050Z   run `npm fund` for details
+2026-06-11T08:29:16.3856183Z 
+2026-06-11T08:29:16.3857987Z 22 vulnerabilities (8 moderate, 12 high, 2 critical)
+2026-06-11T08:29:16.3876915Z 
+2026-06-11T08:29:16.3877569Z To address issues that do not require attention, run:
+2026-06-11T08:29:16.3878655Z   npm audit fix
+2026-06-11T08:29:16.3879172Z 
+2026-06-11T08:29:16.3879781Z To address all issues (including breaking changes), run:
+2026-06-11T08:29:16.3880591Z   npm audit fix --force
+2026-06-11T08:29:16.3881041Z 
+2026-06-11T08:29:16.3881445Z Run `npm audit` for details.
+2026-06-11T08:29:16.4984002Z ##[group]Run node scripts/source-official-tenancy-pdfs.mjs --vic-only
+2026-06-11T08:29:16.4984946Z [36;1mnode scripts/source-official-tenancy-pdfs.mjs --vic-only[0m
+2026-06-11T08:29:16.5016183Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:29:16.5016802Z ##[endgroup]
+2026-06-11T08:29:17.9696061Z [VIC] Download URL: https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx
+2026-06-11T08:29:19.4122339Z [VIC] Canonical docx verified (no overwrite).
+2026-06-11T08:29:19.4122915Z [VIC] Provenance: {
+2026-06-11T08:29:19.4123553Z   "form": "VIC CAV Form 1 - Residential rental agreement (no more than 5 years)",
+2026-06-11T08:29:19.4124898Z   "sourceUrl": "https://www.consumer.vic.gov.au/library/forms/housing-and-accommodation/renting/form-1-residential-rental-agreement.docx",
+2026-06-11T08:29:19.4127421Z   "sourcePageUrl": "https://www.consumer.vic.gov.au/housing/renting/renting-forms-and-publications",
+2026-06-11T08:29:19.4129189Z   "downloadDate": "2026-06-11",
+2026-06-11T08:29:19.4130383Z   "inForceReference": "Residential Tenancies Act 1997 s 26(1); Residential Tenancies Regulations 2021 reg 10(1)",
+2026-06-11T08:29:19.4131557Z   "cavReformDate": "25 November 2025",
+2026-06-11T08:29:19.4132520Z   "sha256": "a3b35d182e48676bd463ddfb7a56f5e997194b22090736e05e02c0a32ac15aba",
+2026-06-11T08:29:19.4133384Z   "fileSizeBytes": 119929,
+2026-06-11T08:29:19.4134885Z   "publisherListedSizeNote": "CAV library page labels ~1.5MB; live .docx download and repo copy are 119929 bytes (verified byte-identical).",
+2026-06-11T08:29:19.4136700Z   "storedAs": "docs/vic/form-1-residential-rental-agreement.docx",
+2026-06-11T08:29:19.4137321Z   "sourceFormat": "docx",
+2026-06-11T08:29:19.4137787Z   "blankPdf": "docs/vic/form-1-blank.pdf",
+2026-06-11T08:29:19.4138300Z   "blankPdfSha256": null,
+2026-06-11T08:29:19.4138707Z   "blankPdfPageCount": null,
+2026-06-11T08:29:19.4139197Z   "blankPdfEmbeddedImageCount": null,
+2026-06-11T08:29:19.4139937Z   "blankPdfProvenance": "docs/vic/form-1-blank-provenance.json",
+2026-06-11T08:29:19.4140589Z   "textVerification": {
+2026-06-11T08:29:19.4141145Z     "referenceFile": "docs/vic/form-1-extracted-from-cav.md",
+2026-06-11T08:29:19.4141737Z     "phraseCoveragePct": 100,
+2026-06-11T08:29:19.4142173Z     "phrasesFound": [
+2026-06-11T08:29:19.4142673Z       "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:29:19.4143381Z       "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:29:19.4144277Z       "Part A – Basic terms",
+2026-06-11T08:29:19.4144761Z       "residential rental provider",
+2026-06-11T08:29:19.4145405Z       "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:29:19.4146054Z       "Telephone interpreter service",
+2026-06-11T08:29:19.4176950Z       "Arabic"
+2026-06-11T08:29:19.4177230Z     ],
+2026-06-11T08:29:19.4177473Z     "phrasesMissing": [],
+2026-06-11T08:29:19.4178215Z     "note": "Docx extract gate; OFFICIAL footer phrase is verified on blank PDF after freeze."
+2026-06-11T08:29:19.4179015Z   }
+2026-06-11T08:29:19.4179330Z }
+2026-06-11T08:29:19.4179513Z 
+2026-06-11T08:29:19.4179665Z Done.
+2026-06-11T08:29:19.4310416Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-11T08:29:19.4310866Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-11T08:29:19.4337208Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:29:19.4337479Z ##[endgroup]
+2026-06-11T08:29:19.6674023Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:29:20.0618264Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-11T08:29:20.0738119Z d9802f032d67: Pulling fs layer
+2026-06-11T08:29:20.0738811Z 8c476128eb22: Pulling fs layer
+2026-06-11T08:29:20.0739276Z e846d8e9647d: Pulling fs layer
+2026-06-11T08:29:20.0739848Z 843c17e581f4: Pulling fs layer
+2026-06-11T08:29:20.0740395Z 15e0c869e1f8: Pulling fs layer
+2026-06-11T08:29:20.0740825Z 0933f1eadfad: Pulling fs layer
+2026-06-11T08:29:20.0741225Z 45de3bd96a35: Pulling fs layer
+2026-06-11T08:29:20.0741531Z 843c17e581f4: Waiting
+2026-06-11T08:29:20.0741807Z 15e0c869e1f8: Waiting
+2026-06-11T08:29:20.0742083Z 0933f1eadfad: Waiting
+2026-06-11T08:29:20.0742344Z 45de3bd96a35: Waiting
+2026-06-11T08:29:20.1952218Z 8c476128eb22: Verifying Checksum
+2026-06-11T08:29:20.1952885Z 8c476128eb22: Download complete
+2026-06-11T08:29:20.2051844Z d9802f032d67: Verifying Checksum
+2026-06-11T08:29:20.2052490Z d9802f032d67: Download complete
+2026-06-11T08:29:20.2244610Z 843c17e581f4: Verifying Checksum
+2026-06-11T08:29:20.2245545Z 843c17e581f4: Download complete
+2026-06-11T08:29:20.2318282Z 15e0c869e1f8: Verifying Checksum
+2026-06-11T08:29:20.2318815Z 15e0c869e1f8: Download complete
+2026-06-11T08:29:20.2614247Z 45de3bd96a35: Verifying Checksum
+2026-06-11T08:29:20.2614729Z 45de3bd96a35: Download complete
+2026-06-11T08:29:20.2894403Z e846d8e9647d: Verifying Checksum
+2026-06-11T08:29:20.2895161Z e846d8e9647d: Download complete
+2026-06-11T08:29:20.9350179Z 0933f1eadfad: Verifying Checksum
+2026-06-11T08:29:20.9350682Z 0933f1eadfad: Download complete
+2026-06-11T08:29:21.3018107Z d9802f032d67: Pull complete
+2026-06-11T08:29:23.4840099Z 8c476128eb22: Pull complete
+2026-06-11T08:29:24.1760125Z e846d8e9647d: Pull complete
+2026-06-11T08:29:24.1885876Z 843c17e581f4: Pull complete
+2026-06-11T08:29:24.2298409Z 15e0c869e1f8: Pull complete
+2026-06-11T08:29:28.7224644Z 0933f1eadfad: Pull complete
+2026-06-11T08:29:28.7332687Z 45de3bd96a35: Pull complete
+2026-06-11T08:29:28.7366576Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:29:28.7389271Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:29:28.7394855Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:29:28.7587379Z [vic-form1-freeze] Resolving container font package versions...
+2026-06-11T08:30:26.6348149Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-11T08:30:26.6348966Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-11T08:30:26.6349609Z [vic-form1-freeze] Font packages: {
+2026-06-11T08:30:26.6350140Z   'fonts-liberation': '1:1.07.4-11',
+2026-06-11T08:30:26.6350473Z   'fonts-noto-cjk': '1:20190410+repack1-2',
+2026-06-11T08:30:26.6350952Z   'fonts-noto-core': '20200323-1build1~ubuntu20.04.1',
+2026-06-11T08:30:26.6351666Z   'fonts-noto-extra': '20200323-1build1~ubuntu20.04.1'
+2026-06-11T08:30:26.6352240Z }
+2026-06-11T08:30:26.7761632Z [vic-form1-freeze] Patched docx for LO pagination: tmp/vic-form1-freeze/form-1-residential-rental-agreement-patched.docx
+2026-06-11T08:30:26.7762538Z [vic-form1-freeze] Conversion run 1...
+2026-06-11T08:30:57.6896963Z [vic-form1-freeze] Conversion run 2...
+2026-06-11T08:31:28.8541047Z [vic-form1-freeze] Checkbox operator scan (pre-remediation): total=26 expected=25
+2026-06-11T08:31:28.8542392Z   page 2: 5
+2026-06-11T08:31:28.8544353Z   page 3: 8
+2026-06-11T08:31:28.8544683Z   page 4: 12
+2026-06-11T08:31:28.8544901Z   page 5: 1
+2026-06-11T08:31:28.8545571Z [vic-form1-freeze] Stray page-4 border still present after docx keep-together; deleting path operators from content stream...
+2026-06-11T08:31:29.2872880Z [vic-form1-freeze] Checkbox operator scan (post-remediation): total=25
+2026-06-11T08:31:29.3471326Z [vic-form1-freeze] pageCount after conversion: 11
+2026-06-11T08:31:29.3473980Z [vic-form1-freeze] expectedPageCount (informational only): 9
+2026-06-11T08:32:01.4989064Z [vic-form1-freeze] Rasterized 11 page(s) for human review: scripts/test-official-form-spike/vic-form1-blank-page-1.png, scripts/test-official-form-spike/vic-form1-blank-page-2.png, scripts/test-official-form-spike/vic-form1-blank-page-3.png, scripts/test-official-form-spike/vic-form1-blank-page-4.png, scripts/test-official-form-spike/vic-form1-blank-page-5.png, scripts/test-official-form-spike/vic-form1-blank-page-6.png, scripts/test-official-form-spike/vic-form1-blank-page-7.png, scripts/test-official-form-spike/vic-form1-blank-page-8.png, scripts/test-official-form-spike/vic-form1-blank-page-9.png, scripts/test-official-form-spike/vic-form1-blank-page-10.png, scripts/test-official-form-spike/vic-form1-blank-page-11.png
+2026-06-11T08:33:35.3458651Z 
+2026-06-11T08:33:35.3459257Z [vic-form1-freeze] Freeze complete (not committed).
+2026-06-11T08:33:35.3460743Z {
+2026-06-11T08:33:35.3461362Z   "sourceDocx": "docs/vic/form-1-residential-rental-agreement.docx",
+2026-06-11T08:33:35.3462175Z   "sourceSha256": "a3b35d182e48676bd463ddfb7a56f5e997194b22090736e05e02c0a32ac15aba",
+2026-06-11T08:33:35.3462839Z   "blankPdf": "docs/vic/form-1-blank.pdf",
+2026-06-11T08:33:35.3463515Z   "blankSha256": "79f5d1a0f60a75af13a1de7acbf7517b8bd6bf6b3b243670eb778b83d1a8d78c",
+2026-06-11T08:33:35.3464542Z   "blankPdfBytesOnDisk": 371103,
+2026-06-11T08:33:35.3465303Z   "blankPdfSha256OnDisk": "79f5d1a0f60a75af13a1de7acbf7517b8bd6bf6b3b243670eb778b83d1a8d78c",
+2026-06-11T08:33:35.3466010Z   "pageCount": 11,
+2026-06-11T08:33:35.3466851Z   "pageCountGate": {
+2026-06-11T08:33:35.3467421Z     "expectedPageCountInformational": 9,
+2026-06-11T08:33:35.3467848Z     "actual": 11,
+2026-06-11T08:33:35.3468157Z     "pass": true,
+2026-06-11T08:33:35.3468472Z     "abortOnMismatch": false,
+2026-06-11T08:33:35.3469261Z     "note": "CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical."
+2026-06-11T08:33:35.3469968Z   },
+2026-06-11T08:33:35.3470611Z   "embeddedImageCount": 2,
+2026-06-11T08:33:35.3471263Z   "expectedPageCountInformational": 9,
+2026-06-11T08:33:35.3472697Z   "canonicalPageCountNote": "Page count from pinned LO 7.6.7.2 container is canonical for coordinate map; not compared to sandbox LO 24.x.",
+2026-06-11T08:33:35.3474081Z   "conversionTool": "libreoffice-docker",
+2026-06-11T08:33:35.3475671Z   "conversionDockerImage": "lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b",
+2026-06-11T08:33:35.3477820Z   "conversionLoVersion": "LibreOffice 7.6.7.2",
+2026-06-11T08:33:35.3478668Z   "conversionLoBinary": "soffice",
+2026-06-11T08:33:35.3480358Z   "conversionDockerImageInspectedNonRunnable": "lankalana/libreoffice-headless@sha256:b8548113edb08452a41d4ec337ce8202961203d8390ee60187f545ca1418cbe0",
+2026-06-11T08:33:35.3482859Z   "conversionNote": "Pinned lankalana 7.6.7.2 eclipse-temurin JRE; Docker-only soffice + pdftoppm; apt packages and fonts installed inside container only.",
+2026-06-11T08:33:35.3484345Z   "docxPaginationPatch": {
+2026-06-11T08:33:35.3484803Z     "tool": "scripts/lib/vic-form1-docx-pagination-patch.mjs",
+2026-06-11T08:33:35.3485304Z     "appliedAtFreezeOnly": true,
+2026-06-11T08:33:35.3485680Z     "canonicalDocxUnchanged": true,
+2026-06-11T08:33:35.3487965Z     "changes": "Strip w:lastRenderedPageBreak; pageBreakBefore + keepNext on item 9.2 block; merge Renter 1–4 into one 8-row table; w:cantSplit per row; outer keep-together wrapper table."
+2026-06-11T08:33:35.3489511Z   },
+2026-06-11T08:33:35.3490264Z   "checkboxOperatorScan": {
+2026-06-11T08:33:35.3491075Z     "tool": "scripts/lib/vic-form1-checkbox-operator-scan.mjs",
+2026-06-11T08:33:35.3491784Z     "total": 25,
+2026-06-11T08:33:35.3492236Z     "expected": 25,
+2026-06-11T08:33:35.3492648Z     "ok": true,
+2026-06-11T08:33:35.3493041Z     "perPage": [
+2026-06-11T08:33:35.3493443Z       {
+2026-06-11T08:33:35.3493852Z         "page": 1,
+2026-06-11T08:33:35.3494288Z         "count": 0,
+2026-06-11T08:33:35.3494759Z         "boxes": []
+2026-06-11T08:33:35.3495171Z       },
+2026-06-11T08:33:35.3495539Z       {
+2026-06-11T08:33:35.3495897Z         "page": 2,
+2026-06-11T08:33:35.3496295Z         "count": 5,
+2026-06-11T08:33:35.3496900Z         "boxes": [
+2026-06-11T08:33:35.3497270Z           {
+2026-06-11T08:33:35.3497611Z             "minX": 176.25,
+2026-06-11T08:33:35.3498123Z             "minY": 137.33900451660156,
+2026-06-11T08:33:35.3498583Z             "maxX": 186.75,
+2026-06-11T08:33:35.3499105Z             "maxY": 147.83900451660156,
+2026-06-11T08:33:35.3499559Z             "w": 10.5,
+2026-06-11T08:33:35.3499930Z             "h": 10.5,
+2026-06-11T08:33:35.3500339Z             "cx": 181.5,
+2026-06-11T08:33:35.3500784Z             "cy": 142.58900451660156,
+2026-06-11T08:33:35.3501196Z             "topY": 694.0507592629265,
+2026-06-11T08:33:35.3501525Z             "bottomY": 704.5507592629265
+2026-06-11T08:33:35.3501826Z           },
+2026-06-11T08:33:35.3502049Z           {
+2026-06-11T08:33:35.3502304Z             "minX": 283.95001220703125,
+2026-06-11T08:33:35.3502629Z             "minY": 137.33900451660156,
+2026-06-11T08:33:35.3502941Z             "maxX": 294.45001220703125,
+2026-06-11T08:33:35.3503255Z             "maxY": 147.83900451660156,
+2026-06-11T08:33:35.3503557Z             "w": 10.5,
+2026-06-11T08:33:35.3503840Z             "h": 10.5,
+2026-06-11T08:33:35.3504436Z             "cx": 289.20001220703125,
+2026-06-11T08:33:35.3504814Z             "cy": 142.58900451660156,
+2026-06-11T08:33:35.3505145Z             "topY": 694.0507592629265,
+2026-06-11T08:33:35.3505465Z             "bottomY": 704.5507592629265
+2026-06-11T08:33:35.3505755Z           },
+2026-06-11T08:33:35.3505984Z           {
+2026-06-11T08:33:35.3506215Z             "minX": 376.1499938964844,
+2026-06-11T08:33:35.3506812Z             "minY": 137.33900451660156,
+2026-06-11T08:33:35.3507188Z             "maxX": 386.6499938964844,
+2026-06-11T08:33:35.3507580Z             "maxY": 147.83900451660156,
+2026-06-11T08:33:35.3507846Z             "w": 10.5,
+2026-06-11T08:33:35.3508072Z             "h": 10.5,
+2026-06-11T08:33:35.3508320Z             "cx": 381.3999938964844,
+2026-06-11T08:33:35.3508632Z             "cy": 142.58900451660156,
+2026-06-11T08:33:35.3508921Z             "topY": 694.0507592629265,
+2026-06-11T08:33:35.3509228Z             "bottomY": 704.5507592629265
+2026-06-11T08:33:35.3509496Z           },
+2026-06-11T08:33:35.3509702Z           {
+2026-06-11T08:33:35.3509954Z             "minX": 45.849998474121094,
+2026-06-11T08:33:35.3510245Z             "minY": 263.4389953613281,
+2026-06-11T08:33:35.3510539Z             "maxX": 56.349998474121094,
+2026-06-11T08:33:35.3511609Z             "maxY": 273.9389953613281,
+2026-06-11T08:33:35.3512073Z             "w": 10.5,
+2026-06-11T08:33:35.3512469Z             "h": 10.5,
+2026-06-11T08:33:35.3512972Z             "cx": 51.099998474121094,
+2026-06-11T08:33:35.3513513Z             "cy": 268.6889953613281,
+2026-06-11T08:33:35.3513811Z             "topY": 567.9507684181999,
+2026-06-11T08:33:35.3514149Z             "bottomY": 578.4507684181999
+2026-06-11T08:33:35.3514411Z           },
+2026-06-11T08:33:35.3514614Z           {
+2026-06-11T08:33:35.3517254Z             "minX": 45.849998474121094,
+2026-06-11T08:33:35.3517600Z             "minY": 322.6390075683594,
+2026-06-11T08:33:35.3517908Z             "maxX": 56.349998474121094,
+2026-06-11T08:33:35.3518202Z             "maxY": 333.1390075683594,
+2026-06-11T08:33:35.3518482Z             "w": 10.5,
+2026-06-11T08:33:35.3518708Z             "h": 10.5,
+2026-06-11T08:33:35.3519123Z             "cx": 51.099998474121094,
+2026-06-11T08:33:35.3519426Z             "cy": 327.8890075683594,
+2026-06-11T08:33:35.3519719Z             "topY": 508.75075621116866,
+2026-06-11T08:33:35.3520013Z             "bottomY": 519.2507562111687
+2026-06-11T08:33:35.3520272Z           }
+2026-06-11T08:33:35.3520468Z         ]
+2026-06-11T08:33:35.3520666Z       },
+2026-06-11T08:33:35.3520852Z       {
+2026-06-11T08:33:35.3521051Z         "page": 3,
+2026-06-11T08:33:35.3521280Z         "count": 8,
+2026-06-11T08:33:35.3521495Z         "boxes": [
+2026-06-11T08:33:35.3521702Z           {
+2026-06-11T08:33:35.3521907Z             "minX": 120.5,
+2026-06-11T08:33:35.3522181Z             "minY": 138.88900756835938,
+2026-06-11T08:33:35.3522450Z             "maxX": 131,
+2026-06-11T08:33:35.3522710Z             "maxY": 149.38900756835938,
+2026-06-11T08:33:35.3522980Z             "w": 10.5,
+2026-06-11T08:33:35.3523206Z             "h": 10.5,
+2026-06-11T08:33:35.3523485Z             "cx": 125.75,
+2026-06-11T08:33:35.3523755Z             "cy": 144.13900756835938,
+2026-06-11T08:33:35.3524052Z             "topY": 692.5007562111687,
+2026-06-11T08:33:35.3524343Z             "bottomY": 703.0007562111687
+2026-06-11T08:33:35.3525048Z           },
+2026-06-11T08:33:35.3557441Z           {
+2026-06-11T08:33:35.3557795Z             "minX": 120.5,
+2026-06-11T08:33:35.3558255Z             "minY": 165.38900756835938,
+2026-06-11T08:33:35.3558691Z             "maxX": 131,
+2026-06-11T08:33:35.3559115Z             "maxY": 175.88900756835938,
+2026-06-11T08:33:35.3559539Z             "w": 10.5,
+2026-06-11T08:33:35.3559881Z             "h": 10.5,
+2026-06-11T08:33:35.3560224Z             "cx": 125.75,
+2026-06-11T08:33:35.3560630Z             "cy": 170.63900756835938,
+2026-06-11T08:33:35.3561091Z             "topY": 666.0007562111687,
+2026-06-11T08:33:35.3561566Z             "bottomY": 676.5007562111687
+2026-06-11T08:33:35.3562205Z           },
+2026-06-11T08:33:35.3562511Z           {
+2026-06-11T08:33:35.3562887Z             "minX": 60.04999923706055,
+2026-06-11T08:33:35.3563505Z             "minY": 461.739013671875,
+2026-06-11T08:33:35.3563964Z             "maxX": 70.55000305175781,
+2026-06-11T08:33:35.3564428Z             "maxY": 472.239013671875,
+2026-06-11T08:33:35.3564875Z             "w": 10.500003814697266,
+2026-06-11T08:33:35.3565274Z             "h": 10.5,
+2026-06-11T08:33:35.3565665Z             "cx": 65.30000114440918,
+2026-06-11T08:33:35.3566107Z             "cy": 466.989013671875,
+2026-06-11T08:33:35.3566767Z             "topY": 369.65075010765304,
+2026-06-11T08:33:35.3567245Z             "bottomY": 380.15075010765304
+2026-06-11T08:33:35.3567664Z           },
+2026-06-11T08:33:35.3567971Z           {
+2026-06-11T08:33:35.3568325Z             "minX": 60.04999923706055,
+2026-06-11T08:33:35.3568776Z             "minY": 494.239013671875,
+2026-06-11T08:33:35.3569227Z             "maxX": 70.55000305175781,
+2026-06-11T08:33:35.3569684Z             "maxY": 504.739013671875,
+2026-06-11T08:33:35.3570128Z             "w": 10.500003814697266,
+2026-06-11T08:33:35.3570549Z             "h": 10.5,
+2026-06-11T08:33:35.3570938Z             "cx": 65.30000114440918,
+2026-06-11T08:33:35.3571483Z             "cy": 499.489013671875,
+2026-06-11T08:33:35.3571982Z             "topY": 337.15075010765304,
+2026-06-11T08:33:35.3572512Z             "bottomY": 347.65075010765304
+2026-06-11T08:33:35.3572968Z           },
+2026-06-11T08:33:35.3573301Z           {
+2026-06-11T08:33:35.3573648Z             "minX": 160.75,
+2026-06-11T08:33:35.3574106Z             "minY": 494.239013671875,
+2026-06-11T08:33:35.3574560Z             "maxX": 171.25,
+2026-06-11T08:33:35.3575007Z             "maxY": 504.739013671875,
+2026-06-11T08:33:35.3575453Z             "w": 10.5,
+2026-06-11T08:33:35.3575828Z             "h": 10.5,
+2026-06-11T08:33:35.3576199Z             "cx": 166,
+2026-06-11T08:33:35.3576801Z             "cy": 499.489013671875,
+2026-06-11T08:33:35.3577312Z             "topY": 337.15075010765304,
+2026-06-11T08:33:35.3577825Z             "bottomY": 347.65075010765304
+2026-06-11T08:33:35.3578249Z           },
+2026-06-11T08:33:35.3578753Z           {
+2026-06-11T08:33:35.3579118Z             "minX": 258.6499938964844,
+2026-06-11T08:33:35.3579583Z             "minY": 494.239013671875,
+2026-06-11T08:33:35.3580028Z             "maxX": 269.1499938964844,
+2026-06-11T08:33:35.3580527Z             "maxY": 504.739013671875,
+2026-06-11T08:33:35.3580963Z             "w": 10.5,
+2026-06-11T08:33:35.3581334Z             "h": 10.5,
+2026-06-11T08:33:35.3581751Z             "cx": 263.8999938964844,
+2026-06-11T08:33:35.3582241Z             "cy": 499.489013671875,
+2026-06-11T08:33:35.3582728Z             "topY": 337.15075010765304,
+2026-06-11T08:33:35.3583234Z             "bottomY": 347.65075010765304
+2026-06-11T08:33:35.3583700Z           },
+2026-06-11T08:33:35.3584027Z           {
+2026-06-11T08:33:35.3584398Z             "minX": 326.54998779296875,
+2026-06-11T08:33:35.3584855Z             "minY": 494.239013671875,
+2026-06-11T08:33:35.3585291Z             "maxX": 337.04998779296875,
+2026-06-11T08:33:35.3585756Z             "maxY": 504.739013671875,
+2026-06-11T08:33:35.3586197Z             "w": 10.5,
+2026-06-11T08:33:35.3586805Z             "h": 10.5,
+2026-06-11T08:33:35.3587231Z             "cx": 331.79998779296875,
+2026-06-11T08:33:35.3587721Z             "cy": 499.489013671875,
+2026-06-11T08:33:35.3588243Z             "topY": 337.15075010765304,
+2026-06-11T08:33:35.3588754Z             "bottomY": 347.65075010765304
+2026-06-11T08:33:35.3589206Z           },
+2026-06-11T08:33:35.3589540Z           {
+2026-06-11T08:33:35.3589879Z             "minX": 482.25,
+2026-06-11T08:33:35.3590335Z             "minY": 494.239013671875,
+2026-06-11T08:33:35.3590785Z             "maxX": 492.75,
+2026-06-11T08:33:35.3591234Z             "maxY": 504.739013671875,
+2026-06-11T08:33:35.3591675Z             "w": 10.5,
+2026-06-11T08:33:35.3592030Z             "h": 10.5,
+2026-06-11T08:33:35.3592563Z             "cx": 487.5,
+2026-06-11T08:33:35.3592995Z             "cy": 499.489013671875,
+2026-06-11T08:33:35.3593486Z             "topY": 337.15075010765304,
+2026-06-11T08:33:35.3593984Z             "bottomY": 347.65075010765304
+2026-06-11T08:33:35.3594391Z           }
+2026-06-11T08:33:35.3594692Z         ]
+2026-06-11T08:33:35.3594994Z       },
+2026-06-11T08:33:35.3595314Z       {
+2026-06-11T08:33:35.3595639Z         "page": 4,
+2026-06-11T08:33:35.3595981Z         "count": 11,
+2026-06-11T08:33:35.3596491Z         "boxes": [
+2026-06-11T08:33:35.3596828Z           {
+2026-06-11T08:33:35.3597183Z             "minX": 45.849998474121094,
+2026-06-11T08:33:35.3597653Z             "minY": 69.93900299072266,
+2026-06-11T08:33:35.3598109Z             "maxX": 58.650001525878906,
+2026-06-11T08:33:35.3598573Z             "maxY": 82.73899841308594,
+2026-06-11T08:33:35.3599023Z             "w": 12.800003051757812,
+2026-06-11T08:33:35.3599476Z             "h": 12.799995422363281,
+2026-06-11T08:33:35.3599887Z             "cx": 52.25,
+2026-06-11T08:33:35.3600311Z             "cy": 76.3390007019043,
+2026-06-11T08:33:35.3600763Z             "topY": 759.1507653664421,
+2026-06-11T08:33:35.3601242Z             "bottomY": 771.9507607888054
+2026-06-11T08:33:35.3601672Z           },
+2026-06-11T08:33:35.3601980Z           {
+2026-06-11T08:33:35.3602335Z             "minX": 45.849998474121094,
+2026-06-11T08:33:35.3602796Z             "minY": 166.43899536132812,
+2026-06-11T08:33:35.3603253Z             "maxX": 56.349998474121094,
+2026-06-11T08:33:35.3603705Z             "maxY": 176.93899536132812,
+2026-06-11T08:33:35.3604108Z             "w": 10.5,
+2026-06-11T08:33:35.3604457Z             "h": 10.5,
+2026-06-11T08:33:35.3604920Z             "cx": 51.099998474121094,
+2026-06-11T08:33:35.3605382Z             "cy": 171.68899536132812,
+2026-06-11T08:33:35.3605845Z             "topY": 664.9507684181999,
+2026-06-11T08:33:35.3606494Z             "bottomY": 675.4507684181999
+2026-06-11T08:33:35.3606922Z           },
+2026-06-11T08:33:35.3607234Z           {
+2026-06-11T08:33:35.3607595Z             "minX": 109.6500015258789,
+2026-06-11T08:33:35.3608055Z             "minY": 166.43899536132812,
+2026-06-11T08:33:35.3608696Z             "maxX": 120.1500015258789,
+2026-06-11T08:33:35.3609175Z             "maxY": 176.93899536132812,
+2026-06-11T08:33:35.3609600Z             "w": 10.5,
+2026-06-11T08:33:35.3609942Z             "h": 10.5,
+2026-06-11T08:33:35.3610334Z             "cx": 114.9000015258789,
+2026-06-11T08:33:35.3610789Z             "cy": 171.68899536132812,
+2026-06-11T08:33:35.3611250Z             "topY": 664.9507684181999,
+2026-06-11T08:33:35.3611737Z             "bottomY": 675.4507684181999
+2026-06-11T08:33:35.3612159Z           },
+2026-06-11T08:33:35.3612473Z           {
+2026-06-11T08:33:35.3612830Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3613278Z             "minY": 595.239013671875,
+2026-06-11T08:33:35.3613727Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3614251Z             "maxY": 605.739013671875,
+2026-06-11T08:33:35.3614698Z             "w": 10.5,
+2026-06-11T08:33:35.3615066Z             "h": 10.5,
+2026-06-11T08:33:35.3615450Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3615921Z             "cy": 600.489013671875,
+2026-06-11T08:33:35.3616577Z             "topY": 236.15075010765304,
+2026-06-11T08:33:35.3617082Z             "bottomY": 246.65075010765304
+2026-06-11T08:33:35.3617492Z           },
+2026-06-11T08:33:35.3617810Z           {
+2026-06-11T08:33:35.3618190Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3618682Z             "minY": 621.739013671875,
+2026-06-11T08:33:35.3619152Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3619631Z             "maxY": 632.239013671875,
+2026-06-11T08:33:35.3620072Z             "w": 10.5,
+2026-06-11T08:33:35.3620445Z             "h": 10.5,
+2026-06-11T08:33:35.3620849Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3621274Z             "cy": 626.989013671875,
+2026-06-11T08:33:35.3621718Z             "topY": 209.65075010765304,
+2026-06-11T08:33:35.3622350Z             "bottomY": 220.15075010765304
+2026-06-11T08:33:35.3622761Z           },
+2026-06-11T08:33:35.3623090Z           {
+2026-06-11T08:33:35.3623481Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3623980Z             "minY": 639.739013671875,
+2026-06-11T08:33:35.3624471Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3624963Z             "maxY": 650.239013671875,
+2026-06-11T08:33:35.3625408Z             "w": 10.5,
+2026-06-11T08:33:35.3625774Z             "h": 10.5,
+2026-06-11T08:33:35.3626191Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3626849Z             "cy": 644.989013671875,
+2026-06-11T08:33:35.3627407Z             "topY": 191.65075010765304,
+2026-06-11T08:33:35.3627893Z             "bottomY": 202.15075010765304
+2026-06-11T08:33:35.3628329Z           },
+2026-06-11T08:33:35.3628641Z           {
+2026-06-11T08:33:35.3628993Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3629456Z             "minY": 666.239013671875,
+2026-06-11T08:33:35.3629948Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3630457Z             "maxY": 676.739013671875,
+2026-06-11T08:33:35.3630904Z             "w": 10.5,
+2026-06-11T08:33:35.3631282Z             "h": 10.5,
+2026-06-11T08:33:35.3631699Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3632186Z             "cy": 671.489013671875,
+2026-06-11T08:33:35.3632678Z             "topY": 165.15075010765304,
+2026-06-11T08:33:35.3633186Z             "bottomY": 175.65075010765304
+2026-06-11T08:33:35.3633631Z           },
+2026-06-11T08:33:35.3633937Z           {
+2026-06-11T08:33:35.3634284Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3634725Z             "minY": 684.239013671875,
+2026-06-11T08:33:35.3635169Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3635657Z             "maxY": 694.739013671875,
+2026-06-11T08:33:35.3636093Z             "w": 10.5,
+2026-06-11T08:33:35.3637162Z             "h": 10.5,
+2026-06-11T08:33:35.3637599Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3638091Z             "cy": 689.489013671875,
+2026-06-11T08:33:35.3638954Z             "topY": 147.15075010765304,
+2026-06-11T08:33:35.3639915Z             "bottomY": 157.65075010765304
+2026-06-11T08:33:35.3640384Z           },
+2026-06-11T08:33:35.3640719Z           {
+2026-06-11T08:33:35.3641103Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3641592Z             "minY": 710.739013671875,
+2026-06-11T08:33:35.3642089Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3642578Z             "maxY": 721.239013671875,
+2026-06-11T08:33:35.3643003Z             "w": 10.5,
+2026-06-11T08:33:35.3643353Z             "h": 10.5,
+2026-06-11T08:33:35.3643749Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3644198Z             "cy": 715.989013671875,
+2026-06-11T08:33:35.3644664Z             "topY": 120.65075010765304,
+2026-06-11T08:33:35.3645157Z             "bottomY": 131.15075010765304
+2026-06-11T08:33:35.3645590Z           },
+2026-06-11T08:33:35.3645914Z           {
+2026-06-11T08:33:35.3646280Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3646963Z             "minY": 728.739013671875,
+2026-06-11T08:33:35.3647458Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3647940Z             "maxY": 739.239013671875,
+2026-06-11T08:33:35.3648345Z             "w": 10.5,
+2026-06-11T08:33:35.3648759Z             "h": 10.5,
+2026-06-11T08:33:35.3649181Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3649707Z             "cy": 733.989013671875,
+2026-06-11T08:33:35.3650314Z             "topY": 102.65075010765304,
+2026-06-11T08:33:35.3650821Z             "bottomY": 113.15075010765304
+2026-06-11T08:33:35.3651279Z           },
+2026-06-11T08:33:35.3651599Z           {
+2026-06-11T08:33:35.3651973Z             "minX": 129.10000610351562,
+2026-06-11T08:33:35.3652429Z             "minY": 755.239013671875,
+2026-06-11T08:33:35.3652923Z             "maxX": 139.60000610351562,
+2026-06-11T08:33:35.3653232Z             "maxY": 765.739013671875,
+2026-06-11T08:33:35.3653670Z             "w": 10.5,
+2026-06-11T08:33:35.3653890Z             "h": 10.5,
+2026-06-11T08:33:35.3654144Z             "cx": 134.35000610351562,
+2026-06-11T08:33:35.3654440Z             "cy": 760.489013671875,
+2026-06-11T08:33:35.3654728Z             "topY": 76.15075010765304,
+2026-06-11T08:33:35.3655029Z             "bottomY": 86.65075010765304
+2026-06-11T08:33:35.3655288Z           }
+2026-06-11T08:33:35.3655591Z         ]
+2026-06-11T08:33:35.3655936Z       },
+2026-06-11T08:33:35.3656271Z       {
+2026-06-11T08:33:35.3657612Z         "page": 5,
+2026-06-11T08:33:35.3657993Z         "count": 1,
+2026-06-11T08:33:35.3658353Z         "boxes": [
+2026-06-11T08:33:35.3658711Z           {
+2026-06-11T08:33:35.3658953Z             "minX": 45.849998474121094,
+2026-06-11T08:33:35.3659256Z             "minY": 799.739013671875,
+2026-06-11T08:33:35.3659550Z             "maxX": 56.349998474121094,
+2026-06-11T08:33:35.3659843Z             "maxY": 810.239013671875,
+2026-06-11T08:33:35.3660110Z             "w": 10.5,
+2026-06-11T08:33:35.3660347Z             "h": 10.5,
+2026-06-11T08:33:35.3660599Z             "cx": 51.099998474121094,
+2026-06-11T08:33:35.3660890Z             "cy": 804.989013671875,
+2026-06-11T08:33:35.3661178Z             "topY": 31.65075010765304,
+2026-06-11T08:33:35.3661475Z             "bottomY": 42.15075010765304
+2026-06-11T08:33:35.3661740Z           }
+2026-06-11T08:33:35.3661934Z         ]
+2026-06-11T08:33:35.3662121Z       },
+2026-06-11T08:33:35.3662308Z       {
+2026-06-11T08:33:35.3662508Z         "page": 6,
+2026-06-11T08:33:35.3662727Z         "count": 0,
+2026-06-11T08:33:35.3662941Z         "boxes": []
+2026-06-11T08:33:35.3663151Z       },
+2026-06-11T08:33:35.3663334Z       {
+2026-06-11T08:33:35.3663523Z         "page": 7,
+2026-06-11T08:33:35.3663733Z         "count": 0,
+2026-06-11T08:33:35.3663944Z         "boxes": []
+2026-06-11T08:33:35.3664155Z       },
+2026-06-11T08:33:35.3664341Z       {
+2026-06-11T08:33:35.3664533Z         "page": 8,
+2026-06-11T08:33:35.3664748Z         "count": 0,
+2026-06-11T08:33:35.3664964Z         "boxes": []
+2026-06-11T08:33:35.3665164Z       },
+2026-06-11T08:33:35.3665348Z       {
+2026-06-11T08:33:35.3665542Z         "page": 9,
+2026-06-11T08:33:35.3665937Z         "count": 0,
+2026-06-11T08:33:35.3666157Z         "boxes": []
+2026-06-11T08:33:35.3666828Z       },
+2026-06-11T08:33:35.3667050Z       {
+2026-06-11T08:33:35.3667250Z         "page": 10,
+2026-06-11T08:33:35.3667470Z         "count": 0,
+2026-06-11T08:33:35.3667679Z         "boxes": []
+2026-06-11T08:33:35.3667886Z       },
+2026-06-11T08:33:35.3668074Z       {
+2026-06-11T08:33:35.3668266Z         "page": 11,
+2026-06-11T08:33:35.3668481Z         "count": 0,
+2026-06-11T08:33:35.3668689Z         "boxes": []
+2026-06-11T08:33:35.3668890Z       }
+2026-06-11T08:33:35.3669071Z     ],
+2026-06-11T08:33:35.3669280Z     "strayTopLeft": [],
+2026-06-11T08:33:35.3669536Z     "strayPage4TopLeft": [],
+2026-06-11T08:33:35.3670122Z     "gate": "hard — total must equal 25 with no page-4 top-left stray"
+2026-06-11T08:33:35.3670506Z   },
+2026-06-11T08:33:35.3670721Z   "strayPage4BoxFix": {
+2026-06-11T08:33:35.3671157Z     "tool": "scripts/lib/vic-form1-remove-stray-page4-box-content-stream.mjs",
+2026-06-11T08:33:35.3671652Z     "method": "content-stream path deletion",
+2026-06-11T08:33:35.3671971Z     "pathsRemovedRun1": 1,
+2026-06-11T08:33:35.3672233Z     "pagesTouchedRun1": [
+2026-06-11T08:33:35.3672473Z       4
+2026-06-11T08:33:35.3672661Z     ],
+2026-06-11T08:33:35.3673199Z     "reason": "LO drew an extra ~11pt square at a page top (9.2 table page-break border fragment, not a 26th FORMCHECKBOX)."
+2026-06-11T08:33:35.3673720Z   },
+2026-06-11T08:33:35.3673937Z   "containerAptPackages": [
+2026-06-11T08:33:35.3674198Z     "libnss3",
+2026-06-11T08:33:35.3674410Z     "libnspr4",
+2026-06-11T08:33:35.3674634Z     "libxslt1.1",
+2026-06-11T08:33:35.3674851Z     "libxml2",
+2026-06-11T08:33:35.3675062Z     "libfontconfig1",
+2026-06-11T08:33:35.3675293Z     "libcups2",
+2026-06-11T08:33:35.3675505Z     "libdbus-1-3",
+2026-06-11T08:33:35.3675876Z     "libglib2.0-0",
+2026-06-11T08:33:35.3676104Z     "libxinerama1",
+2026-06-11T08:33:35.3676542Z     "libsm6",
+2026-06-11T08:33:35.3676795Z     "libice6",
+2026-06-11T08:33:35.3677007Z     "libxext6",
+2026-06-11T08:33:35.3677226Z     "libxrender1",
+2026-06-11T08:33:35.3677439Z     "libx11-6",
+2026-06-11T08:33:35.3677654Z     "libxcb1",
+2026-06-11T08:33:35.3677862Z     "libgl1",
+2026-06-11T08:33:35.3678080Z     "poppler-utils",
+2026-06-11T08:33:35.3678323Z     "fonts-liberation",
+2026-06-11T08:33:35.3678566Z     "fonts-noto-core",
+2026-06-11T08:33:35.3678798Z     "fonts-noto-cjk",
+2026-06-11T08:33:35.3679033Z     "fonts-noto-extra"
+2026-06-11T08:33:35.3679250Z   ],
+2026-06-11T08:33:35.3679453Z   "fontPackageNames": [
+2026-06-11T08:33:35.3679696Z     "fonts-liberation",
+2026-06-11T08:33:35.3679932Z     "fonts-noto-core",
+2026-06-11T08:33:35.3680166Z     "fonts-noto-cjk",
+2026-06-11T08:33:35.3680398Z     "fonts-noto-extra"
+2026-06-11T08:33:35.3680621Z   ],
+2026-06-11T08:33:35.3680829Z   "fontPackageVersions": {
+2026-06-11T08:33:35.3681127Z     "fonts-liberation": "1:1.07.4-11",
+2026-06-11T08:33:35.3681458Z     "fonts-noto-cjk": "1:20190410+repack1-2",
+2026-06-11T08:33:35.3681846Z     "fonts-noto-core": "20200323-1build1~ubuntu20.04.1",
+2026-06-11T08:33:35.3682247Z     "fonts-noto-extra": "20200323-1build1~ubuntu20.04.1"
+2026-06-11T08:33:35.3682552Z   },
+2026-06-11T08:33:35.3682788Z   "sourceDateEpoch": "1764028800",
+2026-06-11T08:33:35.3683130Z   "sourceDateEpochIso": "2025-11-25T00:00:00.000Z",
+2026-06-11T08:33:35.3684018Z   "conversionCommand": "docker run … SAL_USE_VCLPLUGIN=svp soffice --headless … --convert-to pdf:writer_pdf_Export",
+2026-06-11T08:33:35.3684576Z   "layoutDeterminism": {
+2026-06-11T08:33:35.3684837Z     "gate": "renderDiff",
+2026-06-11T08:33:35.3685093Z     "rasterizer": "pdftoppm",
+2026-06-11T08:33:35.3685352Z     "renderDiff": {
+2026-06-11T08:33:35.3685589Z       "attempted": true,
+2026-06-11T08:33:35.3685827Z       "ok": true,
+2026-06-11T08:33:35.3686074Z       "rasterizer": "pdftoppm",
+2026-06-11T08:33:35.3686561Z       "reason": null,
+2026-06-11T08:33:35.3686815Z       "maxDiffPixels": 0,
+2026-06-11T08:33:35.3687066Z       "pagesCompared": 11,
+2026-06-11T08:33:35.3687466Z       "dpi": 144
+2026-06-11T08:33:35.3687684Z     },
+2026-06-11T08:33:35.3688144Z     "renderDiffReport": "scripts/test-official-form-spike/vic-form1-blank-render-diff.json",
+2026-06-11T08:33:35.3688893Z     "note": "Raw conversion SHAs differ per-run (LO metadata); layout proven by pdftoppm maxDiffPixels 0."
+2026-06-11T08:33:35.3689369Z   },
+2026-06-11T08:33:35.3689573Z   "fullPageRaster": {
+2026-06-11T08:33:35.3689805Z     "pngPaths": [
+2026-06-11T08:33:35.3690340Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-1.png",
+2026-06-11T08:33:35.3691171Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-2.png",
+2026-06-11T08:33:35.3691977Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-3.png",
+2026-06-11T08:33:35.3692785Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-4.png",
+2026-06-11T08:33:35.3693596Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-5.png",
+2026-06-11T08:33:35.3694398Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-6.png",
+2026-06-11T08:33:35.3695200Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-7.png",
+2026-06-11T08:33:35.3696001Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-8.png",
+2026-06-11T08:33:35.3697049Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-9.png",
+2026-06-11T08:33:35.3697876Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-10.png",
+2026-06-11T08:33:35.3698831Z       "/home/runner/work/quni-living/quni-living/scripts/test-official-form-spike/vic-form1-blank-page-11.png"
+2026-06-11T08:33:35.3699338Z     ],
+2026-06-11T08:33:35.3699540Z     "relPaths": [
+2026-06-11T08:33:35.3699909Z       "scripts/test-official-form-spike/vic-form1-blank-page-1.png",
+2026-06-11T08:33:35.3700417Z       "scripts/test-official-form-spike/vic-form1-blank-page-2.png",
+2026-06-11T08:33:35.3700908Z       "scripts/test-official-form-spike/vic-form1-blank-page-3.png",
+2026-06-11T08:33:35.3701401Z       "scripts/test-official-form-spike/vic-form1-blank-page-4.png",
+2026-06-11T08:33:35.3701896Z       "scripts/test-official-form-spike/vic-form1-blank-page-5.png",
+2026-06-11T08:33:35.3702387Z       "scripts/test-official-form-spike/vic-form1-blank-page-6.png",
+2026-06-11T08:33:35.3702883Z       "scripts/test-official-form-spike/vic-form1-blank-page-7.png",
+2026-06-11T08:33:35.3703377Z       "scripts/test-official-form-spike/vic-form1-blank-page-8.png",
+2026-06-11T08:33:35.3703868Z       "scripts/test-official-form-spike/vic-form1-blank-page-9.png",
+2026-06-11T08:33:35.3704380Z       "scripts/test-official-form-spike/vic-form1-blank-page-10.png",
+2026-06-11T08:33:35.3704961Z       "scripts/test-official-form-spike/vic-form1-blank-page-11.png"
+2026-06-11T08:33:35.3705324Z     ],
+2026-06-11T08:33:35.3705528Z     "pageCount": 11,
+2026-06-11T08:33:35.3705763Z     "scale": 144,
+2026-06-11T08:33:35.3705996Z     "rasterizer": "pdftoppm",
+2026-06-11T08:33:35.3706672Z     "fidelityGateOfRecord": "all-page pdftoppm PNG human review",
+2026-06-11T08:33:35.3707597Z     "note": "Review all pages before locking canonical page count; 9 vs 10 is renderer-dependent."
+2026-06-11T08:33:35.3708076Z   },
+2026-06-11T08:33:35.3708312Z   "contentCompletenessGate": {
+2026-06-11T08:33:35.3708575Z     "ok": true,
+2026-06-11T08:33:35.3708833Z     "gate": "contentCompleteness",
+2026-06-11T08:33:35.3709106Z     "pageCount": 11,
+2026-06-11T08:33:35.3709338Z     "pageCountGate": {
+2026-06-11T08:33:35.3709625Z       "expectedPageCountInformational": 9,
+2026-06-11T08:33:35.3709933Z       "actual": 11,
+2026-06-11T08:33:35.3710160Z       "pass": true,
+2026-06-11T08:33:35.3710565Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.3711147Z       "note": "CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical."
+2026-06-11T08:33:35.3711645Z     },
+2026-06-11T08:33:35.3711861Z     "embeddedImageCount": 2,
+2026-06-11T08:33:35.3712128Z     "imageGate": {
+2026-06-11T08:33:35.3712364Z       "expectedMin": 1,
+2026-06-11T08:33:35.3712597Z       "actual": 2,
+2026-06-11T08:33:35.3712813Z       "pass": true,
+2026-06-11T08:33:35.3713098Z       "note": "CAV logo expected as embedded image"
+2026-06-11T08:33:35.3713410Z     },
+2026-06-11T08:33:35.3713624Z     "checkboxExportMode": {
+2026-06-11T08:33:35.3713917Z       "gate": "checkboxExportMode",
+2026-06-11T08:33:35.3714235Z       "informationalOnly": true,
+2026-06-11T08:33:35.3714529Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.3714787Z       "pass": true,
+2026-06-11T08:33:35.3715108Z       "docxLegacyFormCheckboxCountInformational": 25,
+2026-06-11T08:33:35.3715497Z       "acroFormCheckboxWidgetCount": 0,
+2026-06-11T08:33:35.3715825Z       "acroFormCheckboxNames": [],
+2026-06-11T08:33:35.3716129Z       "totalAcroFormFields": 0,
+2026-06-11T08:33:35.3716640Z       "hasAcroForm": false,
+2026-06-11T08:33:35.3716931Z       "pdfBtnFieldMarkerCount": 0,
+2026-06-11T08:33:35.3717256Z       "pdfWidgetSubtypeMarkerCount": 0,
+2026-06-11T08:33:35.3717578Z       "textLayerBoxGlyphCount": 0,
+2026-06-11T08:33:35.3717965Z       "exportMode": "flattened_drawings_no_widgets",
+2026-06-11T08:33:35.3719247Z       "note": "CAV .docx has 25 legacy FORMCHECKBOX fields; LO PDF export may emit widgets, flatten to glyphs, or another count. Not a fidelity gate for M2 — confirm 25 boxes visually in page PNGs; exportMode feeds coordinate-map detection."
+2026-06-11T08:33:35.3720172Z     },
+2026-06-11T08:33:35.3720375Z     "phraseGate": {
+2026-06-11T08:33:35.3720605Z       "coveragePct": 100,
+2026-06-11T08:33:35.3720995Z       "phrasesFound": [
+2026-06-11T08:33:35.3721310Z         "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:33:35.3721751Z         "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:33:35.3722168Z         "Part A – Basic terms",
+2026-06-11T08:33:35.3722467Z         "residential rental provider",
+2026-06-11T08:33:35.3722863Z         "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:33:35.3723266Z         "Telephone interpreter service",
+2026-06-11T08:33:35.3723546Z         "Arabic",
+2026-06-11T08:33:35.3723764Z         "OFFICIAL"
+2026-06-11T08:33:35.3723976Z       ],
+2026-06-11T08:33:35.3724184Z       "phrasesMissing": [],
+2026-06-11T08:33:35.3724433Z       "pass": true
+2026-06-11T08:33:35.3724648Z     },
+2026-06-11T08:33:35.3724848Z     "structureGate": {
+2026-06-11T08:33:35.3725076Z       "ok": true,
+2026-06-11T08:33:35.3725290Z       "results": [
+2026-06-11T08:33:35.3725497Z         {
+2026-06-11T08:33:35.3725711Z           "id": "part_a",
+2026-06-11T08:33:35.3726034Z           "label": "Part A – Basic terms",
+2026-06-11T08:33:35.3726689Z           "pass": true
+2026-06-11T08:33:35.3726940Z         },
+2026-06-11T08:33:35.3727133Z         {
+2026-06-11T08:33:35.3727332Z           "id": "renter_1",
+2026-06-11T08:33:35.3727617Z           "label": "Full name of renter 1",
+2026-06-11T08:33:35.3727913Z           "pass": true
+2026-06-11T08:33:35.3728132Z         },
+2026-06-11T08:33:35.3728324Z         {
+2026-06-11T08:33:35.3728527Z           "id": "renter_2",
+2026-06-11T08:33:35.3728801Z           "label": "Full name of renter 2",
+2026-06-11T08:33:35.3729083Z           "pass": true
+2026-06-11T08:33:35.3729305Z         },
+2026-06-11T08:33:35.3729494Z         {
+2026-06-11T08:33:35.3729691Z           "id": "renter_3",
+2026-06-11T08:33:35.3729964Z           "label": "Full name of renter 3",
+2026-06-11T08:33:35.3730247Z           "pass": true
+2026-06-11T08:33:35.3730461Z         },
+2026-06-11T08:33:35.3730658Z         {
+2026-06-11T08:33:35.3730859Z           "id": "renter_4",
+2026-06-11T08:33:35.3731137Z           "label": "Full name of renter 4",
+2026-06-11T08:33:35.3731558Z           "pass": true
+2026-06-11T08:33:35.3731781Z         },
+2026-06-11T08:33:35.3731978Z         {
+2026-06-11T08:33:35.3732186Z           "id": "item_8",
+2026-06-11T08:33:35.3732473Z           "label": "Item 8 payment methods",
+2026-06-11T08:33:35.3732764Z           "pass": true
+2026-06-11T08:33:35.3732987Z         },
+2026-06-11T08:33:35.3733176Z         {
+2026-06-11T08:33:35.3733375Z           "id": "item_9_1",
+2026-06-11T08:33:35.3733721Z           "label": "Item 9.1 rental provider electronic service",
+2026-06-11T08:33:35.3734071Z           "pass": true
+2026-06-11T08:33:35.3734290Z         },
+2026-06-11T08:33:35.3734481Z         {
+2026-06-11T08:33:35.3734679Z           "id": "item_9_2",
+2026-06-11T08:33:35.3735001Z           "label": "Item 9.2 renter electronic service",
+2026-06-11T08:33:35.3735313Z           "pass": true
+2026-06-11T08:33:35.3735537Z         },
+2026-06-11T08:33:35.3735733Z         {
+2026-06-11T08:33:35.3735930Z           "id": "item_12",
+2026-06-11T08:33:35.3736232Z           "label": "Item 12 owners corporation",
+2026-06-11T08:33:35.3736794Z           "pass": true
+2026-06-11T08:33:35.3737026Z         },
+2026-06-11T08:33:35.3737217Z         {
+2026-06-11T08:33:35.3737415Z           "id": "item_13",
+2026-06-11T08:33:35.3737705Z           "label": "Item 13 condition report",
+2026-06-11T08:33:35.3738006Z           "pass": true
+2026-06-11T08:33:35.3738226Z         },
+2026-06-11T08:33:35.3738414Z         {
+2026-06-11T08:33:35.3738627Z           "id": "signatures",
+2026-06-11T08:33:35.3738916Z           "label": "Item 22 signatures",
+2026-06-11T08:33:35.3739201Z           "pass": true
+2026-06-11T08:33:35.3739421Z         },
+2026-06-11T08:33:35.3739614Z         {
+2026-06-11T08:33:35.3739845Z           "id": "interpreter_annex",
+2026-06-11T08:33:35.3740182Z           "label": "Telephone interpreter service",
+2026-06-11T08:33:35.3740493Z           "pass": true
+2026-06-11T08:33:35.3740852Z         },
+2026-06-11T08:33:35.3741042Z         {
+2026-06-11T08:33:35.3741266Z           "id": "official_footer",
+2026-06-11T08:33:35.3741565Z           "label": "OFFICIAL footer",
+2026-06-11T08:33:35.3741841Z           "pass": true
+2026-06-11T08:33:35.3742059Z         }
+2026-06-11T08:33:35.3742250Z       ]
+2026-06-11T08:33:35.3742442Z     },
+2026-06-11T08:33:35.3742651Z     "complexScriptGate": {
+2026-06-11T08:33:35.3742899Z       "ok": true,
+2026-06-11T08:33:35.3743113Z       "results": [
+2026-06-11T08:33:35.3743325Z         {
+2026-06-11T08:33:35.3743521Z           "id": "arabic",
+2026-06-11T08:33:35.3743819Z           "sample": "إذا",
+2026-06-11T08:33:35.3744067Z           "hasSample": true,
+2026-06-11T08:33:35.3744351Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3744608Z           "pass": true
+2026-06-11T08:33:35.3744851Z         },
+2026-06-11T08:33:35.3745044Z         {
+2026-06-11T08:33:35.3745253Z           "id": "chinese",
+2026-06-11T08:33:35.3745552Z           "sample": "如果您",
+2026-06-11T08:33:35.3745792Z           "hasSample": true,
+2026-06-11T08:33:35.3746067Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3746559Z           "pass": true
+2026-06-11T08:33:35.3746812Z         },
+2026-06-11T08:33:35.3747005Z         {
+2026-06-11T08:33:35.3747211Z           "id": "amharic",
+2026-06-11T08:33:35.3747529Z           "sample": "በእንግሊዝኛ",
+2026-06-11T08:33:35.3747790Z           "hasSample": true,
+2026-06-11T08:33:35.3748074Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3748333Z           "pass": true
+2026-06-11T08:33:35.3748550Z         },
+2026-06-11T08:33:35.3748738Z         {
+2026-06-11T08:33:35.3748934Z           "id": "greek",
+2026-06-11T08:33:35.3749244Z           "sample": "Αν έχετε",
+2026-06-11T08:33:35.3749503Z           "hasSample": true,
+2026-06-11T08:33:35.3749774Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3750032Z           "pass": true
+2026-06-11T08:33:35.3750248Z         },
+2026-06-11T08:33:35.3750437Z         {
+2026-06-11T08:33:35.3750650Z           "id": "cyrillic",
+2026-06-11T08:33:35.3750934Z           "sample": "Ако",
+2026-06-11T08:33:35.3751179Z           "hasSample": true,
+2026-06-11T08:33:35.3751600Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3751863Z           "pass": true
+2026-06-11T08:33:35.3752084Z         },
+2026-06-11T08:33:35.3752273Z         {
+2026-06-11T08:33:35.3752470Z           "id": "dari",
+2026-06-11T08:33:35.3752771Z           "sample": "اگر شما",
+2026-06-11T08:33:35.3753027Z           "hasSample": true,
+2026-06-11T08:33:35.3753296Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3753544Z           "pass": true
+2026-06-11T08:33:35.3753764Z         }
+2026-06-11T08:33:35.3753951Z       ],
+2026-06-11T08:33:35.3754154Z       "tofuCharCount": 0
+2026-06-11T08:33:35.3754383Z     },
+2026-06-11T08:33:35.3754604Z     "annexScriptSamples": [
+2026-06-11T08:33:35.3754849Z       "arabic",
+2026-06-11T08:33:35.3755060Z       "chinese",
+2026-06-11T08:33:35.3755269Z       "amharic",
+2026-06-11T08:33:35.3755478Z       "greek",
+2026-06-11T08:33:35.3755695Z       "cyrillic",
+2026-06-11T08:33:35.3755904Z       "dari"
+2026-06-11T08:33:35.3756099Z     ],
+2026-06-11T08:33:35.3756680Z     "failures": [],
+2026-06-11T08:33:35.3757378Z     "note": "Human review of full-page pdftoppm PNGs is gate of record for layout fidelity; this gate checks text/structure completeness only.",
+2026-06-11T08:33:35.3758239Z     "report": "scripts/test-official-form-spike/vic-form1-content-completeness-gate.json"
+2026-06-11T08:33:35.3758699Z   },
+2026-06-11T08:33:35.3758915Z   "interpreterAnnexGate": {
+2026-06-11T08:33:35.3759177Z     "heuristicOk": true,
+2026-06-11T08:33:35.3759419Z     "ok": true,
+2026-06-11T08:33:35.3759666Z     "gate": "interpreterAnnex",
+2026-06-11T08:33:35.3760050Z     "fidelityGateOfRecord": "annex PNG human review (pdftoppm)",
+2026-06-11T08:33:35.3760430Z     "rasterizer": "pdftoppm",
+2026-06-11T08:33:35.3760687Z     "scale": 144,
+2026-06-11T08:33:35.3760916Z     "annexPageIndices": [
+2026-06-11T08:33:35.3761155Z       9
+2026-06-11T08:33:35.3761494Z     ],
+2026-06-11T08:33:35.3761709Z     "annexPageNumbers": [
+2026-06-11T08:33:35.3761949Z       10
+2026-06-11T08:33:35.3762138Z     ],
+2026-06-11T08:33:35.3762330Z     "textGate": {
+2026-06-11T08:33:35.3762550Z       "ok": true,
+2026-06-11T08:33:35.3762764Z       "results": [
+2026-06-11T08:33:35.3762970Z         {
+2026-06-11T08:33:35.3763181Z           "id": "arabic",
+2026-06-11T08:33:35.3763480Z           "sample": "إذا",
+2026-06-11T08:33:35.3763728Z           "hasSample": true,
+2026-06-11T08:33:35.3764008Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3764269Z           "pass": true
+2026-06-11T08:33:35.3764489Z         },
+2026-06-11T08:33:35.3764681Z         {
+2026-06-11T08:33:35.3764879Z           "id": "chinese",
+2026-06-11T08:33:35.3765160Z           "sample": "如果您",
+2026-06-11T08:33:35.3765401Z           "hasSample": true,
+2026-06-11T08:33:35.3765675Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3765926Z           "pass": true
+2026-06-11T08:33:35.3766151Z         },
+2026-06-11T08:33:35.3766613Z         {
+2026-06-11T08:33:35.3766828Z           "id": "amharic",
+2026-06-11T08:33:35.3767151Z           "sample": "በእንግሊዝኛ",
+2026-06-11T08:33:35.3767421Z           "hasSample": true,
+2026-06-11T08:33:35.3767699Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3767953Z           "pass": true
+2026-06-11T08:33:35.3768177Z         },
+2026-06-11T08:33:35.3768368Z         {
+2026-06-11T08:33:35.3768566Z           "id": "greek",
+2026-06-11T08:33:35.3768861Z           "sample": "Αν έχετε",
+2026-06-11T08:33:35.3769124Z           "hasSample": true,
+2026-06-11T08:33:35.3769392Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3769639Z           "pass": true
+2026-06-11T08:33:35.3769861Z         },
+2026-06-11T08:33:35.3770051Z         {
+2026-06-11T08:33:35.3770249Z           "id": "cyrillic",
+2026-06-11T08:33:35.3770524Z           "sample": "Ако",
+2026-06-11T08:33:35.3770774Z           "hasSample": true,
+2026-06-11T08:33:35.3771044Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3771376Z           "pass": true
+2026-06-11T08:33:35.3771735Z         },
+2026-06-11T08:33:35.3772033Z         {
+2026-06-11T08:33:35.3772465Z           "id": "dari",
+2026-06-11T08:33:35.3773058Z           "sample": "اگر شما",
+2026-06-11T08:33:35.3773500Z           "hasSample": true,
+2026-06-11T08:33:35.3773920Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3774346Z           "pass": true
+2026-06-11T08:33:35.3774686Z         }
+2026-06-11T08:33:35.3774985Z       ],
+2026-06-11T08:33:35.3775335Z       "tofuCharCount": 0
+2026-06-11T08:33:35.3775742Z     },
+2026-06-11T08:33:35.3776071Z     "inkByPage": [
+2026-06-11T08:33:35.3776651Z       {
+2026-06-11T08:33:35.3784625Z         "pageIndex": 9,
+2026-06-11T08:33:35.3784910Z         "pageNum": 10,
+2026-06-11T08:33:35.3785197Z         "inkRatio": 0.09189417463916827,
+2026-06-11T08:33:35.3785483Z         "width": 1191,
+2026-06-11T08:33:35.3785721Z         "height": 1684
+2026-06-11T08:33:35.3785945Z       }
+2026-06-11T08:33:35.3786140Z     ],
+2026-06-11T08:33:35.3786766Z     "minAnnexInkRatio": 0.008,
+2026-06-11T08:33:35.3787055Z     "inkOk": true,
+2026-06-11T08:33:35.3787290Z     "lowInkPages": [],
+2026-06-11T08:33:35.3787536Z     "pngPaths": [
+2026-06-11T08:33:35.3787978Z       "scripts/test-official-form-spike/vic-form1-interpreter-annex-page-10.png"
+2026-06-11T08:33:35.3788419Z     ],
+2026-06-11T08:33:35.3788973Z     "reportNote": "pdftoppm PNG is gate of record; text samples, tofu chars, and ink density are supporting heuristics only.",
+2026-06-11T08:33:35.3789742Z     "report": "scripts/test-official-form-spike/vic-form1-interpreter-annex-gate.json"
+2026-06-11T08:33:35.3790181Z   },
+2026-06-11T08:33:35.3790396Z   "metadataNormalization": {
+2026-06-11T08:33:35.3790744Z     "tool": "scripts/lib/vic-form1-pdf-normalize.mjs",
+2026-06-11T08:33:35.3791127Z     "producer": "quni-vic-form1-freeze/1",
+2026-06-11T08:33:35.3791422Z     "fixedIdHex": true
+2026-06-11T08:33:35.3791643Z   },
+2026-06-11T08:33:35.3791845Z   "textVerification": {
+2026-06-11T08:33:35.3792101Z     "phraseCoveragePct": 100,
+2026-06-11T08:33:35.3792563Z     "phrasesFound": [
+2026-06-11T08:33:35.3792867Z       "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:33:35.3793305Z       "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:33:35.3793748Z       "Part A – Basic terms",
+2026-06-11T08:33:35.3794041Z       "residential rental provider",
+2026-06-11T08:33:35.3794431Z       "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:33:35.3794838Z       "Telephone interpreter service",
+2026-06-11T08:33:35.3795115Z       "Arabic",
+2026-06-11T08:33:35.3795326Z       "OFFICIAL"
+2026-06-11T08:33:35.3795537Z     ],
+2026-06-11T08:33:35.3795747Z     "phrasesMissing": [],
+2026-06-11T08:33:35.3796002Z     "structureGate": {
+2026-06-11T08:33:35.3796239Z       "ok": true,
+2026-06-11T08:33:35.3796748Z       "results": [
+2026-06-11T08:33:35.3796967Z         {
+2026-06-11T08:33:35.3797175Z           "id": "part_a",
+2026-06-11T08:33:35.3797519Z           "label": "Part A – Basic terms",
+2026-06-11T08:33:35.3797833Z           "pass": true
+2026-06-11T08:33:35.3798059Z         },
+2026-06-11T08:33:35.3798252Z         {
+2026-06-11T08:33:35.3798459Z           "id": "renter_1",
+2026-06-11T08:33:35.3798753Z           "label": "Full name of renter 1",
+2026-06-11T08:33:35.3799066Z           "pass": true
+2026-06-11T08:33:35.3799285Z         },
+2026-06-11T08:33:35.3799482Z         {
+2026-06-11T08:33:35.3799682Z           "id": "renter_2",
+2026-06-11T08:33:35.3799964Z           "label": "Full name of renter 2",
+2026-06-11T08:33:35.3800246Z           "pass": true
+2026-06-11T08:33:35.3800512Z         },
+2026-06-11T08:33:35.3800700Z         {
+2026-06-11T08:33:35.3800900Z           "id": "renter_3",
+2026-06-11T08:33:35.3801176Z           "label": "Full name of renter 3",
+2026-06-11T08:33:35.3801459Z           "pass": true
+2026-06-11T08:33:35.3801676Z         },
+2026-06-11T08:33:35.3801867Z         {
+2026-06-11T08:33:35.3802067Z           "id": "renter_4",
+2026-06-11T08:33:35.3802348Z           "label": "Full name of renter 4",
+2026-06-11T08:33:35.3802632Z           "pass": true
+2026-06-11T08:33:35.3802846Z         },
+2026-06-11T08:33:35.3803045Z         {
+2026-06-11T08:33:35.3803378Z           "id": "item_8",
+2026-06-11T08:33:35.3803671Z           "label": "Item 8 payment methods",
+2026-06-11T08:33:35.3803960Z           "pass": true
+2026-06-11T08:33:35.3804186Z         },
+2026-06-11T08:33:35.3804383Z         {
+2026-06-11T08:33:35.3804599Z           "id": "item_9_1",
+2026-06-11T08:33:35.3805000Z           "label": "Item 9.1 rental provider electronic service",
+2026-06-11T08:33:35.3805360Z           "pass": true
+2026-06-11T08:33:35.3805575Z         },
+2026-06-11T08:33:35.3805761Z         {
+2026-06-11T08:33:35.3805967Z           "id": "item_9_2",
+2026-06-11T08:33:35.3806281Z           "label": "Item 9.2 renter electronic service",
+2026-06-11T08:33:35.3806870Z           "pass": true
+2026-06-11T08:33:35.3807090Z         },
+2026-06-11T08:33:35.3807286Z         {
+2026-06-11T08:33:35.3807489Z           "id": "item_12",
+2026-06-11T08:33:35.3807802Z           "label": "Item 12 owners corporation",
+2026-06-11T08:33:35.3808105Z           "pass": true
+2026-06-11T08:33:35.3808350Z         },
+2026-06-11T08:33:35.3808549Z         {
+2026-06-11T08:33:35.3808753Z           "id": "item_13",
+2026-06-11T08:33:35.3809052Z           "label": "Item 13 condition report",
+2026-06-11T08:33:35.3809349Z           "pass": true
+2026-06-11T08:33:35.3809568Z         },
+2026-06-11T08:33:35.3809758Z         {
+2026-06-11T08:33:35.3809969Z           "id": "signatures",
+2026-06-11T08:33:35.3810255Z           "label": "Item 22 signatures",
+2026-06-11T08:33:35.3810539Z           "pass": true
+2026-06-11T08:33:35.3810758Z         },
+2026-06-11T08:33:35.3810953Z         {
+2026-06-11T08:33:35.3811183Z           "id": "interpreter_annex",
+2026-06-11T08:33:35.3811520Z           "label": "Telephone interpreter service",
+2026-06-11T08:33:35.3811836Z           "pass": true
+2026-06-11T08:33:35.3812053Z         },
+2026-06-11T08:33:35.3812240Z         {
+2026-06-11T08:33:35.3812607Z           "id": "official_footer",
+2026-06-11T08:33:35.3812910Z           "label": "OFFICIAL footer",
+2026-06-11T08:33:35.3813190Z           "pass": true
+2026-06-11T08:33:35.3813409Z         }
+2026-06-11T08:33:35.3813597Z       ]
+2026-06-11T08:33:35.3813790Z     },
+2026-06-11T08:33:35.3814000Z     "complexScriptGate": {
+2026-06-11T08:33:35.3814248Z       "ok": true,
+2026-06-11T08:33:35.3814464Z       "results": [
+2026-06-11T08:33:35.3814680Z         {
+2026-06-11T08:33:35.3814878Z           "id": "arabic",
+2026-06-11T08:33:35.3815170Z           "sample": "إذا",
+2026-06-11T08:33:35.3815416Z           "hasSample": true,
+2026-06-11T08:33:35.3815701Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3815960Z           "pass": true
+2026-06-11T08:33:35.3816177Z         },
+2026-06-11T08:33:35.3816593Z         {
+2026-06-11T08:33:35.3816809Z           "id": "chinese",
+2026-06-11T08:33:35.3817102Z           "sample": "如果您",
+2026-06-11T08:33:35.3817351Z           "hasSample": true,
+2026-06-11T08:33:35.3817650Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3817909Z           "pass": true
+2026-06-11T08:33:35.3818132Z         },
+2026-06-11T08:33:35.3818329Z         {
+2026-06-11T08:33:35.3818532Z           "id": "amharic",
+2026-06-11T08:33:35.3818835Z           "sample": "በእንግሊዝኛ",
+2026-06-11T08:33:35.3819092Z           "hasSample": true,
+2026-06-11T08:33:35.3819371Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3819625Z           "pass": true
+2026-06-11T08:33:35.3819843Z         },
+2026-06-11T08:33:35.3820032Z         {
+2026-06-11T08:33:35.3820238Z           "id": "greek",
+2026-06-11T08:33:35.3820532Z           "sample": "Αν έχετε",
+2026-06-11T08:33:35.3820787Z           "hasSample": true,
+2026-06-11T08:33:35.3821056Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3821306Z           "pass": true
+2026-06-11T08:33:35.3821523Z         },
+2026-06-11T08:33:35.3821712Z         {
+2026-06-11T08:33:35.3821916Z           "id": "cyrillic",
+2026-06-11T08:33:35.3822201Z           "sample": "Ако",
+2026-06-11T08:33:35.3822458Z           "hasSample": true,
+2026-06-11T08:33:35.3822730Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3822985Z           "pass": true
+2026-06-11T08:33:35.3823329Z         },
+2026-06-11T08:33:35.3823527Z         {
+2026-06-11T08:33:35.3823722Z           "id": "dari",
+2026-06-11T08:33:35.3824015Z           "sample": "اگر شما",
+2026-06-11T08:33:35.3824265Z           "hasSample": true,
+2026-06-11T08:33:35.3824535Z           "hasScriptRun": true,
+2026-06-11T08:33:35.3824780Z           "pass": true
+2026-06-11T08:33:35.3824991Z         }
+2026-06-11T08:33:35.3825177Z       ],
+2026-06-11T08:33:35.3825381Z       "tofuCharCount": 0
+2026-06-11T08:33:35.3825608Z     },
+2026-06-11T08:33:35.3825815Z     "checkboxExportMode": {
+2026-06-11T08:33:35.3826101Z       "gate": "checkboxExportMode",
+2026-06-11T08:33:35.3826686Z       "informationalOnly": true,
+2026-06-11T08:33:35.3826989Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.3827248Z       "pass": true,
+2026-06-11T08:33:35.3827580Z       "docxLegacyFormCheckboxCountInformational": 25,
+2026-06-11T08:33:35.3827967Z       "acroFormCheckboxWidgetCount": 0,
+2026-06-11T08:33:35.3828299Z       "acroFormCheckboxNames": [],
+2026-06-11T08:33:35.3828596Z       "totalAcroFormFields": 0,
+2026-06-11T08:33:35.3828857Z       "hasAcroForm": false,
+2026-06-11T08:33:35.3829140Z       "pdfBtnFieldMarkerCount": 0,
+2026-06-11T08:33:35.3829453Z       "pdfWidgetSubtypeMarkerCount": 0,
+2026-06-11T08:33:35.3829775Z       "textLayerBoxGlyphCount": 0,
+2026-06-11T08:33:35.3830117Z       "exportMode": "flattened_drawings_no_widgets",
+2026-06-11T08:33:35.3831370Z       "note": "CAV .docx has 25 legacy FORMCHECKBOX fields; LO PDF export may emit widgets, flatten to glyphs, or another count. Not a fidelity gate for M2 — confirm 25 boxes visually in page PNGs; exportMode feeds coordinate-map detection."
+2026-06-11T08:33:35.3832284Z     },
+2026-06-11T08:33:35.3832485Z     "imageGate": {
+2026-06-11T08:33:35.3832713Z       "expectedMin": 1,
+2026-06-11T08:33:35.3833090Z       "actual": 2,
+2026-06-11T08:33:35.3833309Z       "pass": true,
+2026-06-11T08:33:35.3833592Z       "note": "CAV logo expected as embedded image"
+2026-06-11T08:33:35.3833896Z     }
+2026-06-11T08:33:35.3834078Z   },
+2026-06-11T08:33:35.3834375Z   "freezeScript": "scripts/freeze-vic-form1-blank.mjs",
+2026-06-11T08:33:35.3834755Z   "generatedAt": "2026-06-11T08:33:35.345Z",
+2026-06-11T08:33:35.3835087Z   "generatedOnHost": "runnervm3jyl0"
+2026-06-11T08:33:35.3835365Z }
+2026-06-11T08:33:35.3861286Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs --check
+2026-06-11T08:33:35.3861773Z [36;1mnode scripts/freeze-vic-form1-blank.mjs --check[0m
+2026-06-11T08:33:35.3888066Z shell: /usr/bin/bash -e {0}
+2026-06-11T08:33:35.3888336Z ##[endgroup]
+2026-06-11T08:33:35.9389604Z [vic-form1-freeze] --check ok
+2026-06-11T08:33:35.9394394Z {
+2026-06-11T08:33:35.9395385Z   "blankSha256": "79f5d1a0f60a75af13a1de7acbf7517b8bd6bf6b3b243670eb778b83d1a8d78c",
+2026-06-11T08:33:35.9396872Z   "blankPdfBytesOnDisk": 371103,
+2026-06-11T08:33:35.9397323Z   "pageCount": 11,
+2026-06-11T08:33:35.9397922Z   "pageCountGate": {
+2026-06-11T08:33:35.9398454Z     "expectedPageCountInformational": 9,
+2026-06-11T08:33:35.9398838Z     "actual": 11,
+2026-06-11T08:33:35.9399099Z     "pass": true,
+2026-06-11T08:33:35.9399393Z     "abortOnMismatch": false,
+2026-06-11T08:33:35.9400114Z     "note": "CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical."
+2026-06-11T08:33:35.9400832Z   },
+2026-06-11T08:33:35.9401104Z   "embeddedImageCount": 2,
+2026-06-11T08:33:35.9401447Z   "contentCompleteness": {
+2026-06-11T08:33:35.9401764Z     "ok": true,
+2026-06-11T08:33:35.9402088Z     "gate": "contentCompleteness",
+2026-06-11T08:33:35.9402443Z     "pageCount": 11,
+2026-06-11T08:33:35.9402740Z     "pageCountGate": {
+2026-06-11T08:33:35.9403135Z       "expectedPageCountInformational": 9,
+2026-06-11T08:33:35.9403514Z       "actual": 11,
+2026-06-11T08:33:35.9403796Z       "pass": true,
+2026-06-11T08:33:35.9404110Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.9404836Z       "note": "CAV publishes .docx only; page count is renderer-dependent. Pinned LO 7.6.7.2 output is canonical."
+2026-06-11T08:33:35.9405479Z     },
+2026-06-11T08:33:35.9405767Z     "embeddedImageCount": 2,
+2026-06-11T08:33:35.9406090Z     "imageGate": {
+2026-06-11T08:33:35.9406652Z       "expectedMin": 1,
+2026-06-11T08:33:35.9406964Z       "actual": 2,
+2026-06-11T08:33:35.9407247Z       "pass": true,
+2026-06-11T08:33:35.9407616Z       "note": "CAV logo expected as embedded image"
+2026-06-11T08:33:35.9408021Z     },
+2026-06-11T08:33:35.9408308Z     "checkboxExportMode": {
+2026-06-11T08:33:35.9408693Z       "gate": "checkboxExportMode",
+2026-06-11T08:33:35.9409063Z       "informationalOnly": true,
+2026-06-11T08:33:35.9409380Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.9409661Z       "pass": true,
+2026-06-11T08:33:35.9409977Z       "docxLegacyFormCheckboxCountInformational": 25,
+2026-06-11T08:33:35.9410382Z       "acroFormCheckboxWidgetCount": 0,
+2026-06-11T08:33:35.9410734Z       "acroFormCheckboxNames": [],
+2026-06-11T08:33:35.9411062Z       "totalAcroFormFields": 0,
+2026-06-11T08:33:35.9411343Z       "hasAcroForm": false,
+2026-06-11T08:33:35.9411645Z       "pdfBtnFieldMarkerCount": 0,
+2026-06-11T08:33:35.9411982Z       "pdfWidgetSubtypeMarkerCount": 0,
+2026-06-11T08:33:35.9412342Z       "textLayerBoxGlyphCount": 0,
+2026-06-11T08:33:35.9412704Z       "exportMode": "flattened_drawings_no_widgets",
+2026-06-11T08:33:35.9414248Z       "note": "CAV .docx has 25 legacy FORMCHECKBOX fields; LO PDF export may emit widgets, flatten to glyphs, or another count. Not a fidelity gate for M2 — confirm 25 boxes visually in page PNGs; exportMode feeds coordinate-map detection."
+2026-06-11T08:33:35.9415244Z     },
+2026-06-11T08:33:35.9415467Z     "phraseGate": {
+2026-06-11T08:33:35.9415720Z       "coveragePct": 100,
+2026-06-11T08:33:35.9416011Z       "phrasesFound": [
+2026-06-11T08:33:35.9416620Z         "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:33:35.9417562Z         "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:33:35.9418091Z         "Part A – Basic terms",
+2026-06-11T08:33:35.9418421Z         "residential rental provider",
+2026-06-11T08:33:35.9418846Z         "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:33:35.9419309Z         "Telephone interpreter service",
+2026-06-11T08:33:35.9419608Z         "Arabic",
+2026-06-11T08:33:35.9419825Z         "OFFICIAL"
+2026-06-11T08:33:35.9420308Z       ],
+2026-06-11T08:33:35.9420561Z       "phrasesMissing": [],
+2026-06-11T08:33:35.9420832Z       "pass": true
+2026-06-11T08:33:35.9421064Z     },
+2026-06-11T08:33:35.9421265Z     "structureGate": {
+2026-06-11T08:33:35.9421519Z       "ok": true,
+2026-06-11T08:33:35.9421749Z       "results": [
+2026-06-11T08:33:35.9421954Z         {
+2026-06-11T08:33:35.9422156Z           "id": "part_a",
+2026-06-11T08:33:35.9422503Z           "label": "Part A – Basic terms",
+2026-06-11T08:33:35.9422811Z           "pass": true
+2026-06-11T08:33:35.9423041Z         },
+2026-06-11T08:33:35.9423231Z         {
+2026-06-11T08:33:35.9423447Z           "id": "renter_1",
+2026-06-11T08:33:35.9423734Z           "label": "Full name of renter 1",
+2026-06-11T08:33:35.9424038Z           "pass": true
+2026-06-11T08:33:35.9424260Z         },
+2026-06-11T08:33:35.9424447Z         {
+2026-06-11T08:33:35.9424643Z           "id": "renter_2",
+2026-06-11T08:33:35.9424918Z           "label": "Full name of renter 2",
+2026-06-11T08:33:35.9425229Z           "pass": true
+2026-06-11T08:33:35.9425446Z         },
+2026-06-11T08:33:35.9425634Z         {
+2026-06-11T08:33:35.9425828Z           "id": "renter_3",
+2026-06-11T08:33:35.9426144Z           "label": "Full name of renter 3",
+2026-06-11T08:33:35.9426747Z           "pass": true
+2026-06-11T08:33:35.9426997Z         },
+2026-06-11T08:33:35.9427199Z         {
+2026-06-11T08:33:35.9427422Z           "id": "renter_4",
+2026-06-11T08:33:35.9427723Z           "label": "Full name of renter 4",
+2026-06-11T08:33:35.9428027Z           "pass": true
+2026-06-11T08:33:35.9428284Z         },
+2026-06-11T08:33:35.9428504Z         {
+2026-06-11T08:33:35.9428722Z           "id": "item_8",
+2026-06-11T08:33:35.9429037Z           "label": "Item 8 payment methods",
+2026-06-11T08:33:35.9429355Z           "pass": true
+2026-06-11T08:33:35.9429592Z         },
+2026-06-11T08:33:35.9429782Z         {
+2026-06-11T08:33:35.9430002Z           "id": "item_9_1",
+2026-06-11T08:33:35.9430397Z           "label": "Item 9.1 rental provider electronic service",
+2026-06-11T08:33:35.9430768Z           "pass": true
+2026-06-11T08:33:35.9431008Z         },
+2026-06-11T08:33:35.9431225Z         {
+2026-06-11T08:33:35.9431427Z           "id": "item_9_2",
+2026-06-11T08:33:35.9431782Z           "label": "Item 9.2 renter electronic service",
+2026-06-11T08:33:35.9432119Z           "pass": true
+2026-06-11T08:33:35.9432359Z         },
+2026-06-11T08:33:35.9432565Z         {
+2026-06-11T08:33:35.9432782Z           "id": "item_12",
+2026-06-11T08:33:35.9433096Z           "label": "Item 12 owners corporation",
+2026-06-11T08:33:35.9433432Z           "pass": true
+2026-06-11T08:33:35.9433671Z         },
+2026-06-11T08:33:35.9433881Z         {
+2026-06-11T08:33:35.9434106Z           "id": "item_13",
+2026-06-11T08:33:35.9434415Z           "label": "Item 13 condition report",
+2026-06-11T08:33:35.9434733Z           "pass": true
+2026-06-11T08:33:35.9435017Z         },
+2026-06-11T08:33:35.9435226Z         {
+2026-06-11T08:33:35.9435449Z           "id": "signatures",
+2026-06-11T08:33:35.9435771Z           "label": "Item 22 signatures",
+2026-06-11T08:33:35.9436076Z           "pass": true
+2026-06-11T08:33:35.9436537Z         },
+2026-06-11T08:33:35.9436837Z         {
+2026-06-11T08:33:35.9437095Z           "id": "interpreter_annex",
+2026-06-11T08:33:35.9437461Z           "label": "Telephone interpreter service",
+2026-06-11T08:33:35.9437791Z           "pass": true
+2026-06-11T08:33:35.9438038Z         },
+2026-06-11T08:33:35.9438251Z         {
+2026-06-11T08:33:35.9438499Z           "id": "official_footer",
+2026-06-11T08:33:35.9438994Z           "label": "OFFICIAL footer",
+2026-06-11T08:33:35.9439308Z           "pass": true
+2026-06-11T08:33:35.9439531Z         }
+2026-06-11T08:33:35.9439739Z       ]
+2026-06-11T08:33:35.9439946Z     },
+2026-06-11T08:33:35.9440179Z     "complexScriptGate": {
+2026-06-11T08:33:35.9440446Z       "ok": true,
+2026-06-11T08:33:35.9440665Z       "results": [
+2026-06-11T08:33:35.9440898Z         {
+2026-06-11T08:33:35.9441118Z           "id": "arabic",
+2026-06-11T08:33:35.9441623Z           "sample": "إذا",
+2026-06-11T08:33:35.9441905Z           "hasSample": true,
+2026-06-11T08:33:35.9442215Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9442490Z           "pass": true
+2026-06-11T08:33:35.9442726Z         },
+2026-06-11T08:33:35.9442932Z         {
+2026-06-11T08:33:35.9443139Z           "id": "chinese",
+2026-06-11T08:33:35.9443473Z           "sample": "如果您",
+2026-06-11T08:33:35.9443735Z           "hasSample": true,
+2026-06-11T08:33:35.9444007Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9444271Z           "pass": true
+2026-06-11T08:33:35.9444485Z         },
+2026-06-11T08:33:35.9444671Z         {
+2026-06-11T08:33:35.9444873Z           "id": "amharic",
+2026-06-11T08:33:35.9445182Z           "sample": "በእንግሊዝኛ",
+2026-06-11T08:33:35.9445440Z           "hasSample": true,
+2026-06-11T08:33:35.9445703Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9445957Z           "pass": true
+2026-06-11T08:33:35.9446172Z         },
+2026-06-11T08:33:35.9446930Z         {
+2026-06-11T08:33:35.9447152Z           "id": "greek",
+2026-06-11T08:33:35.9447529Z           "sample": "Αν έχετε",
+2026-06-11T08:33:35.9447795Z           "hasSample": true,
+2026-06-11T08:33:35.9448074Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9448334Z           "pass": true
+2026-06-11T08:33:35.9448555Z         },
+2026-06-11T08:33:35.9448747Z         {
+2026-06-11T08:33:35.9448945Z           "id": "cyrillic",
+2026-06-11T08:33:35.9449229Z           "sample": "Ако",
+2026-06-11T08:33:35.9449508Z           "hasSample": true,
+2026-06-11T08:33:35.9449794Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9450045Z           "pass": true
+2026-06-11T08:33:35.9450291Z         },
+2026-06-11T08:33:35.9450489Z         {
+2026-06-11T08:33:35.9450687Z           "id": "dari",
+2026-06-11T08:33:35.9451650Z           "sample": "اگر شما",
+2026-06-11T08:33:35.9452011Z           "hasSample": true,
+2026-06-11T08:33:35.9452292Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9452551Z           "pass": true
+2026-06-11T08:33:35.9452789Z         }
+2026-06-11T08:33:35.9452987Z       ],
+2026-06-11T08:33:35.9453196Z       "tofuCharCount": 0
+2026-06-11T08:33:35.9453431Z     },
+2026-06-11T08:33:35.9453662Z     "annexScriptSamples": [
+2026-06-11T08:33:35.9453912Z       "arabic",
+2026-06-11T08:33:35.9454121Z       "chinese",
+2026-06-11T08:33:35.9454331Z       "amharic",
+2026-06-11T08:33:35.9454540Z       "greek",
+2026-06-11T08:33:35.9454745Z       "cyrillic",
+2026-06-11T08:33:35.9454957Z       "dari"
+2026-06-11T08:33:35.9455157Z     ],
+2026-06-11T08:33:35.9455363Z     "failures": [],
+2026-06-11T08:33:35.9456010Z     "note": "Human review of full-page pdftoppm PNGs is gate of record for layout fidelity; this gate checks text/structure completeness only."
+2026-06-11T08:33:35.9456892Z   },
+2026-06-11T08:33:35.9457107Z   "textVerification": {
+2026-06-11T08:33:35.9457364Z     "phraseCoveragePct": 100,
+2026-06-11T08:33:35.9457626Z     "phrasesFound": [
+2026-06-11T08:33:35.9457926Z       "Residential Tenancies Act 1997 Section 26(1)",
+2026-06-11T08:33:35.9458364Z       "Residential Tenancies Regulations 2021 Regulation 10(1)",
+2026-06-11T08:33:35.9458781Z       "Part A – Basic terms",
+2026-06-11T08:33:35.9459068Z       "residential rental provider",
+2026-06-11T08:33:35.9459458Z       "at least 90 days written notice of a proposed rent increase",
+2026-06-11T08:33:35.9459854Z       "Telephone interpreter service",
+2026-06-11T08:33:35.9460130Z       "Arabic",
+2026-06-11T08:33:35.9460338Z       "OFFICIAL"
+2026-06-11T08:33:35.9460549Z     ],
+2026-06-11T08:33:35.9460753Z     "phrasesMissing": [],
+2026-06-11T08:33:35.9461263Z     "structureGate": {
+2026-06-11T08:33:35.9461492Z       "ok": true,
+2026-06-11T08:33:35.9461713Z       "results": [
+2026-06-11T08:33:35.9461921Z         {
+2026-06-11T08:33:35.9462128Z           "id": "part_a",
+2026-06-11T08:33:35.9462462Z           "label": "Part A – Basic terms",
+2026-06-11T08:33:35.9462748Z           "pass": true
+2026-06-11T08:33:35.9462971Z         },
+2026-06-11T08:33:35.9463162Z         {
+2026-06-11T08:33:35.9463502Z           "id": "renter_1",
+2026-06-11T08:33:35.9463795Z           "label": "Full name of renter 1",
+2026-06-11T08:33:35.9464080Z           "pass": true
+2026-06-11T08:33:35.9464299Z         },
+2026-06-11T08:33:35.9464493Z         {
+2026-06-11T08:33:35.9464692Z           "id": "renter_2",
+2026-06-11T08:33:35.9464972Z           "label": "Full name of renter 2",
+2026-06-11T08:33:35.9465247Z           "pass": true
+2026-06-11T08:33:35.9465467Z         },
+2026-06-11T08:33:35.9465656Z         {
+2026-06-11T08:33:35.9465855Z           "id": "renter_3",
+2026-06-11T08:33:35.9466143Z           "label": "Full name of renter 3",
+2026-06-11T08:33:35.9466736Z           "pass": true
+2026-06-11T08:33:35.9466969Z         },
+2026-06-11T08:33:35.9467159Z         {
+2026-06-11T08:33:35.9467366Z           "id": "renter_4",
+2026-06-11T08:33:35.9467646Z           "label": "Full name of renter 4",
+2026-06-11T08:33:35.9467932Z           "pass": true
+2026-06-11T08:33:35.9468147Z         },
+2026-06-11T08:33:35.9468347Z         {
+2026-06-11T08:33:35.9468547Z           "id": "item_8",
+2026-06-11T08:33:35.9468826Z           "label": "Item 8 payment methods",
+2026-06-11T08:33:35.9469115Z           "pass": true
+2026-06-11T08:33:35.9469330Z         },
+2026-06-11T08:33:35.9469518Z         {
+2026-06-11T08:33:35.9469717Z           "id": "item_9_1",
+2026-06-11T08:33:35.9470067Z           "label": "Item 9.1 rental provider electronic service",
+2026-06-11T08:33:35.9470438Z           "pass": true
+2026-06-11T08:33:35.9470656Z         },
+2026-06-11T08:33:35.9470845Z         {
+2026-06-11T08:33:35.9471054Z           "id": "item_9_2",
+2026-06-11T08:33:35.9471365Z           "label": "Item 9.2 renter electronic service",
+2026-06-11T08:33:35.9471678Z           "pass": true
+2026-06-11T08:33:35.9471895Z         },
+2026-06-11T08:33:35.9472088Z         {
+2026-06-11T08:33:35.9472289Z           "id": "item_12",
+2026-06-11T08:33:35.9472582Z           "label": "Item 12 owners corporation",
+2026-06-11T08:33:35.9472881Z           "pass": true
+2026-06-11T08:33:35.9473100Z         },
+2026-06-11T08:33:35.9473294Z         {
+2026-06-11T08:33:35.9473490Z           "id": "item_13",
+2026-06-11T08:33:35.9473781Z           "label": "Item 13 condition report",
+2026-06-11T08:33:35.9474070Z           "pass": true
+2026-06-11T08:33:35.9474289Z         },
+2026-06-11T08:33:35.9474479Z         {
+2026-06-11T08:33:35.9474687Z           "id": "signatures",
+2026-06-11T08:33:35.9474971Z           "label": "Item 22 signatures",
+2026-06-11T08:33:35.9475246Z           "pass": true
+2026-06-11T08:33:35.9475466Z         },
+2026-06-11T08:33:35.9475658Z         {
+2026-06-11T08:33:35.9475894Z           "id": "interpreter_annex",
+2026-06-11T08:33:35.9476223Z           "label": "Telephone interpreter service",
+2026-06-11T08:33:35.9477020Z           "pass": true
+2026-06-11T08:33:35.9477477Z         },
+2026-06-11T08:33:35.9477825Z         {
+2026-06-11T08:33:35.9478183Z           "id": "official_footer",
+2026-06-11T08:33:35.9478518Z           "label": "OFFICIAL footer",
+2026-06-11T08:33:35.9478966Z           "pass": true
+2026-06-11T08:33:35.9479372Z         }
+2026-06-11T08:33:35.9479576Z       ]
+2026-06-11T08:33:35.9479777Z     },
+2026-06-11T08:33:35.9479990Z     "complexScriptGate": {
+2026-06-11T08:33:35.9480244Z       "ok": true,
+2026-06-11T08:33:35.9480468Z       "results": [
+2026-06-11T08:33:35.9480677Z         {
+2026-06-11T08:33:35.9480938Z           "id": "arabic",
+2026-06-11T08:33:35.9481524Z           "sample": "إذا",
+2026-06-11T08:33:35.9481964Z           "hasSample": true,
+2026-06-11T08:33:35.9482250Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9482712Z           "pass": true
+2026-06-11T08:33:35.9482937Z         },
+2026-06-11T08:33:35.9483135Z         {
+2026-06-11T08:33:35.9483339Z           "id": "chinese",
+2026-06-11T08:33:35.9483645Z           "sample": "如果您",
+2026-06-11T08:33:35.9483893Z           "hasSample": true,
+2026-06-11T08:33:35.9484177Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9484434Z           "pass": true
+2026-06-11T08:33:35.9484655Z         },
+2026-06-11T08:33:35.9485000Z         {
+2026-06-11T08:33:35.9485210Z           "id": "amharic",
+2026-06-11T08:33:35.9485686Z           "sample": "በእንግሊዝኛ",
+2026-06-11T08:33:35.9486117Z           "hasSample": true,
+2026-06-11T08:33:35.9486806Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9487230Z           "pass": true
+2026-06-11T08:33:35.9487587Z         },
+2026-06-11T08:33:35.9487898Z         {
+2026-06-11T08:33:35.9488225Z           "id": "greek",
+2026-06-11T08:33:35.9488725Z           "sample": "Αν έχετε",
+2026-06-11T08:33:35.9489138Z           "hasSample": true,
+2026-06-11T08:33:35.9489608Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9490020Z           "pass": true
+2026-06-11T08:33:35.9490380Z         },
+2026-06-11T08:33:35.9490696Z         {
+2026-06-11T08:33:35.9491029Z           "id": "cyrillic",
+2026-06-11T08:33:35.9491489Z           "sample": "Ако",
+2026-06-11T08:33:35.9491894Z           "hasSample": true,
+2026-06-11T08:33:35.9492344Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9492772Z           "pass": true
+2026-06-11T08:33:35.9493135Z         },
+2026-06-11T08:33:35.9493447Z         {
+2026-06-11T08:33:35.9493773Z           "id": "dari",
+2026-06-11T08:33:35.9494264Z           "sample": "اگر شما",
+2026-06-11T08:33:35.9494689Z           "hasSample": true,
+2026-06-11T08:33:35.9495146Z           "hasScriptRun": true,
+2026-06-11T08:33:35.9495571Z           "pass": true
+2026-06-11T08:33:35.9495931Z         }
+2026-06-11T08:33:35.9496243Z       ],
+2026-06-11T08:33:35.9496761Z       "tofuCharCount": 0
+2026-06-11T08:33:35.9497162Z     },
+2026-06-11T08:33:35.9497520Z     "checkboxExportMode": {
+2026-06-11T08:33:35.9498001Z       "gate": "checkboxExportMode",
+2026-06-11T08:33:35.9498571Z       "informationalOnly": true,
+2026-06-11T08:33:35.9499065Z       "abortOnMismatch": false,
+2026-06-11T08:33:35.9499490Z       "pass": true,
+2026-06-11T08:33:35.9500020Z       "docxLegacyFormCheckboxCountInformational": 25,
+2026-06-11T08:33:35.9500659Z       "acroFormCheckboxWidgetCount": 0,
+2026-06-11T08:33:35.9501208Z       "acroFormCheckboxNames": [],
+2026-06-11T08:33:35.9501710Z       "totalAcroFormFields": 0,
+2026-06-11T08:33:35.9502148Z       "hasAcroForm": false,
+2026-06-11T08:33:35.9502623Z       "pdfBtnFieldMarkerCount": 0,
+2026-06-11T08:33:35.9503202Z       "pdfWidgetSubtypeMarkerCount": 0,
+2026-06-11T08:33:35.9503768Z       "textLayerBoxGlyphCount": 0,
+2026-06-11T08:33:35.9504375Z       "exportMode": "flattened_drawings_no_widgets",
+2026-06-11T08:33:35.9506751Z       "note": "CAV .docx has 25 legacy FORMCHECKBOX fields; LO PDF export may emit widgets, flatten to glyphs, or another count. Not a fidelity gate for M2 — confirm 25 boxes visually in page PNGs; exportMode feeds coordinate-map detection."
+2026-06-11T08:33:35.9508189Z     },
+2026-06-11T08:33:35.9508506Z     "imageGate": {
+2026-06-11T08:33:35.9508874Z       "expectedMin": 1,
+2026-06-11T08:33:35.9509243Z       "actual": 2,
+2026-06-11T08:33:35.9509574Z       "pass": true,
+2026-06-11T08:33:35.9510017Z       "note": "CAV logo expected as embedded image"
+2026-06-11T08:33:35.9510491Z     }
+2026-06-11T08:33:35.9510788Z   }
+2026-06-11T08:33:35.9511074Z }
+2026-06-11T08:33:35.9651708Z ##[group]Run actions/upload-artifact@v4
+2026-06-11T08:33:35.9652024Z with:
+2026-06-11T08:33:35.9652242Z   name: vic-form1-freeze
+2026-06-11T08:33:35.9653976Z   path: docs/vic/form-1-blank.pdf
+docs/vic/form-1-blank-provenance.json
+docs/vic/source.json
+scripts/test-official-form-spike/vic-form1-blank-render-diff.json
+scripts/test-official-form-spike/vic-form1-content-completeness-gate.json
+scripts/test-official-form-spike/vic-form1-interpreter-annex-gate.json
+scripts/test-official-form-spike/vic-form1-blank-page-*.png
+scripts/test-official-form-spike/vic-form1-interpreter-annex-page-*.png
+
+2026-06-11T08:33:35.9655939Z   if-no-files-found: warn
+2026-06-11T08:33:35.9656190Z   compression-level: 6
+2026-06-11T08:33:35.9656713Z   overwrite: false
+2026-06-11T08:33:35.9656941Z   include-hidden-files: false
+2026-06-11T08:33:35.9657211Z ##[endgroup]
+2026-06-11T08:33:36.2060532Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-06-11T08:33:36.2063164Z The least common ancestor is /home/runner/work/quni-living/quni-living. This will be the root directory of the artifact
+2026-06-11T08:33:36.2064399Z With the provided path, there will be 18 files uploaded
+2026-06-11T08:33:36.2065325Z Artifact name is valid!
+2026-06-11T08:33:36.2065833Z Root directory input is valid!
+2026-06-11T08:33:36.4040795Z Beginning upload of artifact content to blob storage
+2026-06-11T08:33:36.7612823Z Uploaded bytes 3342673
+2026-06-11T08:33:36.7774697Z Finished uploading artifact content to blob storage!
+2026-06-11T08:33:36.7778161Z SHA256 digest of uploaded artifact zip is c6df550cd356204fbed301457694e2a365a1ab7eda36ab77e32c32409602a00f
+2026-06-11T08:33:36.7780232Z Finalizing artifact upload
+2026-06-11T08:33:36.9581180Z Artifact vic-form1-freeze.zip successfully finalized. Artifact ID 7558909827
+2026-06-11T08:33:36.9582998Z Artifact vic-form1-freeze has been successfully uploaded! Final size is 3342673 bytes. Artifact ID is 7558909827
+2026-06-11T08:33:36.9590467Z Artifact download URL: https://github.com/robertsalta-wq/quni-living/actions/runs/27334149031/artifacts/7558909827
+2026-06-11T08:33:36.9756280Z Post job cleanup.
+2026-06-11T08:33:37.1362172Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511, not saving cache.
+2026-06-11T08:33:37.1481151Z Post job cleanup.
+2026-06-11T08:33:37.2455473Z [command]/usr/bin/git version
+2026-06-11T08:33:37.2492765Z git version 2.54.0
+2026-06-11T08:33:37.2537538Z Temporarily overriding HOME='/home/runner/work/_temp/c6453099-e1d7-471c-b636-2164ba4e71c2' before making global git config changes
+2026-06-11T08:33:37.2539173Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-11T08:33:37.2557105Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-11T08:33:37.2587552Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-11T08:33:37.2622029Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-11T08:33:37.2848003Z fatal: No url found for submodule path '.tmp-vercel-worktree' in .gitmodules
+2026-06-11T08:33:37.2895632Z ##[warning]The process '/usr/bin/git' failed with exit code 128
+2026-06-11T08:33:37.2985904Z Cleaning up orphan processes
+2026-06-11T08:33:37.3304370Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

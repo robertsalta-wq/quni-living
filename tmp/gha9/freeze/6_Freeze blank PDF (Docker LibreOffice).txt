@@ -1,0 +1,51 @@
+﻿2026-06-10T10:22:55.3472257Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-10T10:22:55.3472688Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-10T10:22:55.3498633Z shell: /usr/bin/bash -e {0}
+2026-06-10T10:22:55.3499116Z ##[endgroup]
+2026-06-10T10:22:55.5721010Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:22:55.8313891Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-10T10:22:55.8323717Z d9802f032d67: Pulling fs layer
+2026-06-10T10:22:55.8324414Z 8c476128eb22: Pulling fs layer
+2026-06-10T10:22:55.8325204Z e846d8e9647d: Pulling fs layer
+2026-06-10T10:22:55.8325940Z 843c17e581f4: Pulling fs layer
+2026-06-10T10:22:55.8326311Z 15e0c869e1f8: Pulling fs layer
+2026-06-10T10:22:55.8326683Z 0933f1eadfad: Pulling fs layer
+2026-06-10T10:22:55.8327071Z 45de3bd96a35: Pulling fs layer
+2026-06-10T10:22:55.8327413Z 15e0c869e1f8: Waiting
+2026-06-10T10:22:55.8327662Z 0933f1eadfad: Waiting
+2026-06-10T10:22:55.8328021Z 45de3bd96a35: Waiting
+2026-06-10T10:22:55.8328267Z 843c17e581f4: Waiting
+2026-06-10T10:22:55.9843078Z 8c476128eb22: Verifying Checksum
+2026-06-10T10:22:55.9843752Z 8c476128eb22: Download complete
+2026-06-10T10:22:55.9988716Z d9802f032d67: Verifying Checksum
+2026-06-10T10:22:55.9989626Z d9802f032d67: Download complete
+2026-06-10T10:22:56.0239539Z 843c17e581f4: Verifying Checksum
+2026-06-10T10:22:56.0246437Z 843c17e581f4: Download complete
+2026-06-10T10:22:56.0311870Z 15e0c869e1f8: Download complete
+2026-06-10T10:22:56.0639963Z 45de3bd96a35: Verifying Checksum
+2026-06-10T10:22:56.0640738Z 45de3bd96a35: Download complete
+2026-06-10T10:22:56.0674974Z e846d8e9647d: Verifying Checksum
+2026-06-10T10:22:56.0675580Z e846d8e9647d: Download complete
+2026-06-10T10:22:56.6984055Z 0933f1eadfad: Verifying Checksum
+2026-06-10T10:22:56.6984741Z 0933f1eadfad: Download complete
+2026-06-10T10:22:57.1533539Z d9802f032d67: Pull complete
+2026-06-10T10:22:59.5102883Z 8c476128eb22: Pull complete
+2026-06-10T10:23:00.1845078Z e846d8e9647d: Pull complete
+2026-06-10T10:23:00.2031497Z 843c17e581f4: Pull complete
+2026-06-10T10:23:00.2140900Z 15e0c869e1f8: Pull complete
+2026-06-10T10:23:04.6177015Z 0933f1eadfad: Pull complete
+2026-06-10T10:23:04.6304309Z 45de3bd96a35: Pull complete
+2026-06-10T10:23:04.6341913Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:23:04.6356864Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:23:04.6368060Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:23:20.6904349Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T10:23:20.6906742Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-10T10:23:20.6907865Z [vic-form1-freeze] Conversion run 1...
+2026-06-10T10:23:37.6939313Z [vic-form1-freeze] Conversion run 2...
+2026-06-10T10:23:54.7749807Z [vic-form1-freeze] Annex heuristic gate not clean (textOk=false inkOk=false); PNG visual is gate of record for human review.
+2026-06-10T10:23:54.7750998Z [vic-form1-freeze] Baseline pageCount: 10
+2026-06-10T10:23:55.7580696Z Error: interpreter annex complex-script text gate failed: chinese, amharic tofuChars=0
+2026-06-10T10:23:55.7582099Z     at validateBlankPdf (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:284:11)
+2026-06-10T10:23:55.7583448Z     at async runFreeze (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:728:22)
+2026-06-10T10:23:55.7584654Z     at async main (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:880:3)
+2026-06-10T10:23:55.7832558Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,75 @@
+﻿2026-06-10T10:16:18.9408219Z ##[group]Run actions/checkout@v4
+2026-06-10T10:16:18.9408878Z with:
+2026-06-10T10:16:18.9409218Z   ref: vic/form1-blank-freeze
+2026-06-10T10:16:18.9409637Z   repository: robertsalta-wq/quni-living
+2026-06-10T10:16:18.9413414Z   token: ***
+2026-06-10T10:16:18.9413762Z   ssh-strict: true
+2026-06-10T10:16:18.9414101Z   ssh-user: git
+2026-06-10T10:16:18.9414447Z   persist-credentials: true
+2026-06-10T10:16:18.9414826Z   clean: true
+2026-06-10T10:16:18.9415178Z   sparse-checkout-cone-mode: true
+2026-06-10T10:16:18.9415582Z   fetch-depth: 1
+2026-06-10T10:16:18.9415918Z   fetch-tags: false
+2026-06-10T10:16:18.9416254Z   show-progress: true
+2026-06-10T10:16:18.9416597Z   lfs: false
+2026-06-10T10:16:18.9416915Z   submodules: false
+2026-06-10T10:16:18.9417291Z   set-safe-directory: true
+2026-06-10T10:16:18.9417937Z ##[endgroup]
+2026-06-10T10:16:19.0292447Z Syncing repository: robertsalta-wq/quni-living
+2026-06-10T10:16:19.0294563Z ##[group]Getting Git version info
+2026-06-10T10:16:19.0295223Z Working directory is '/home/runner/work/quni-living/quni-living'
+2026-06-10T10:16:19.0296089Z [command]/usr/bin/git version
+2026-06-10T10:16:19.0462050Z git version 2.54.0
+2026-06-10T10:16:19.0481674Z ##[endgroup]
+2026-06-10T10:16:19.0494431Z Temporarily overriding HOME='/home/runner/work/_temp/63f7b7c8-1610-46f0-b392-5060e382244d' before making global git config changes
+2026-06-10T10:16:19.0496182Z Adding repository directory to the temporary git global config as a safe directory
+2026-06-10T10:16:19.0506422Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/quni-living/quni-living
+2026-06-10T10:16:19.0533372Z Deleting the contents of '/home/runner/work/quni-living/quni-living'
+2026-06-10T10:16:19.0536399Z ##[group]Initializing the repository
+2026-06-10T10:16:19.0539725Z [command]/usr/bin/git init /home/runner/work/quni-living/quni-living
+2026-06-10T10:16:19.2339581Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-06-10T10:16:19.2340960Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-06-10T10:16:19.2341883Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-06-10T10:16:19.2343062Z hint: call:
+2026-06-10T10:16:19.2343459Z hint:
+2026-06-10T10:16:19.2343906Z hint: 	git config --global init.defaultBranch <name>
+2026-06-10T10:16:19.2344450Z hint:
+2026-06-10T10:16:19.2345063Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-06-10T10:16:19.2346136Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-06-10T10:16:19.2346773Z hint:
+2026-06-10T10:16:19.2347135Z hint: 	git branch -m <name>
+2026-06-10T10:16:19.2347555Z hint:
+2026-06-10T10:16:19.2348106Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-06-10T10:16:19.2349192Z Initialized empty Git repository in /home/runner/work/quni-living/quni-living/.git/
+2026-06-10T10:16:19.2351200Z [command]/usr/bin/git remote add origin https://github.com/robertsalta-wq/quni-living
+2026-06-10T10:16:19.2382028Z ##[endgroup]
+2026-06-10T10:16:19.2382866Z ##[group]Disabling automatic garbage collection
+2026-06-10T10:16:19.2386772Z [command]/usr/bin/git config --local gc.auto 0
+2026-06-10T10:16:19.2413762Z ##[endgroup]
+2026-06-10T10:16:19.2414390Z ##[group]Setting up auth
+2026-06-10T10:16:19.2421645Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-06-10T10:16:19.2449282Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-06-10T10:16:19.2691266Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-06-10T10:16:19.2717044Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-06-10T10:16:19.2898539Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-06-10T10:16:19.2933944Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-06-10T10:16:19.3120195Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-06-10T10:16:19.3148916Z ##[endgroup]
+2026-06-10T10:16:19.3150631Z ##[group]Fetching the repository
+2026-06-10T10:16:19.3159567Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/vic/form1-blank-freeze*:refs/remotes/origin/vic/form1-blank-freeze* +refs/tags/vic/form1-blank-freeze*:refs/tags/vic/form1-blank-freeze*
+2026-06-10T10:16:21.0289635Z From https://github.com/robertsalta-wq/quni-living
+2026-06-10T10:16:21.0291074Z  * [new branch]      vic/form1-blank-freeze -> origin/vic/form1-blank-freeze
+2026-06-10T10:16:21.0313970Z ##[endgroup]
+2026-06-10T10:16:21.0314648Z ##[group]Determining the checkout info
+2026-06-10T10:16:21.0320015Z [command]/usr/bin/git branch --list --remote origin/vic/form1-blank-freeze
+2026-06-10T10:16:21.0339963Z   origin/vic/form1-blank-freeze
+2026-06-10T10:16:21.0348576Z ##[endgroup]
+2026-06-10T10:16:21.0349082Z [command]/usr/bin/git sparse-checkout disable
+2026-06-10T10:16:21.0376992Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-06-10T10:16:21.0399614Z ##[group]Checking out the ref
+2026-06-10T10:16:21.0403383Z [command]/usr/bin/git checkout --progress --force -B vic/form1-blank-freeze refs/remotes/origin/vic/form1-blank-freeze
+2026-06-10T10:16:21.1683171Z Switched to a new branch 'vic/form1-blank-freeze'
+2026-06-10T10:16:21.1683842Z branch 'vic/form1-blank-freeze' set up to track 'origin/vic/form1-blank-freeze'.
+2026-06-10T10:16:21.1698485Z ##[endgroup]
+2026-06-10T10:16:21.1740246Z [command]/usr/bin/git log -1 --format=%H
+2026-06-10T10:16:21.1753978Z a9a087d19f49feb3da79e64613ca3c5efa90e6b0

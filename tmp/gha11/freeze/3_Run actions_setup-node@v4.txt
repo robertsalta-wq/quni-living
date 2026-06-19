@@ -1,0 +1,22 @@
+﻿2026-06-10T10:33:42.6748801Z ##[group]Run actions/setup-node@v4
+2026-06-10T10:33:42.6750041Z with:
+2026-06-10T10:33:42.6750940Z   node-version: 22
+2026-06-10T10:33:42.6752251Z   cache: npm
+2026-06-10T10:33:42.6753189Z   always-auth: false
+2026-06-10T10:33:42.6754204Z   check-latest: false
+2026-06-10T10:33:42.6766217Z   token: ***
+2026-06-10T10:33:42.6767130Z ##[endgroup]
+2026-06-10T10:33:42.8689933Z Found in cache @ /opt/hostedtoolcache/node/22.22.3/x64
+2026-06-10T10:33:42.8696120Z ##[group]Environment details
+2026-06-10T10:33:43.2400314Z node: v22.22.3
+2026-06-10T10:33:43.2401385Z npm: 10.9.8
+2026-06-10T10:33:43.2404247Z yarn: 1.22.22
+2026-06-10T10:33:43.2405223Z ##[endgroup]
+2026-06-10T10:33:43.2425047Z [command]/opt/hostedtoolcache/node/22.22.3/x64/bin/npm config get cache
+2026-06-10T10:33:43.3545455Z /home/runner/.npm
+2026-06-10T10:33:43.4933479Z Cache hit for: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
+2026-06-10T10:33:44.4634896Z Received 198419680 of 198419680 (100.0%), 206.8 MBs/sec
+2026-06-10T10:33:44.4636382Z Cache Size: ~189 MB (198419680 B)
+2026-06-10T10:33:44.4671896Z [command]/usr/bin/tar -xf /home/runner/work/_temp/6a71699f-1dd5-4775-aadd-b2b408da14d2/cache.tzst -P -C /home/runner/work/quni-living/quni-living --use-compress-program unzstd
+2026-06-10T10:33:44.8719276Z Cache restored successfully
+2026-06-10T10:33:44.8822435Z Cache restored from key: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511

@@ -1,0 +1,50 @@
+﻿2026-06-10T09:49:57.5948802Z ##[group]Run node scripts/freeze-vic-form1-blank.mjs
+2026-06-10T09:49:57.5949234Z [36;1mnode scripts/freeze-vic-form1-blank.mjs[0m
+2026-06-10T09:49:57.5974916Z shell: /usr/bin/bash -e {0}
+2026-06-10T09:49:57.5975182Z ##[endgroup]
+2026-06-10T09:49:57.8169004Z [vic-form1-freeze] Docker image: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T09:49:58.2903165Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b: Pulling from lankalana/libreoffice-headless
+2026-06-10T09:49:58.2909705Z d9802f032d67: Pulling fs layer
+2026-06-10T09:49:58.2910634Z 8c476128eb22: Pulling fs layer
+2026-06-10T09:49:58.2911345Z e846d8e9647d: Pulling fs layer
+2026-06-10T09:49:58.2911864Z 843c17e581f4: Pulling fs layer
+2026-06-10T09:49:58.2912265Z 15e0c869e1f8: Pulling fs layer
+2026-06-10T09:49:58.2912560Z 0933f1eadfad: Pulling fs layer
+2026-06-10T09:49:58.2912841Z 45de3bd96a35: Pulling fs layer
+2026-06-10T09:49:58.2913469Z 15e0c869e1f8: Waiting
+2026-06-10T09:49:58.2913840Z 0933f1eadfad: Waiting
+2026-06-10T09:49:58.2914207Z 45de3bd96a35: Waiting
+2026-06-10T09:49:58.2914582Z 843c17e581f4: Waiting
+2026-06-10T09:49:58.6152992Z d9802f032d67: Verifying Checksum
+2026-06-10T09:49:58.6154110Z d9802f032d67: Download complete
+2026-06-10T09:49:58.6189909Z 8c476128eb22: Verifying Checksum
+2026-06-10T09:49:58.6190779Z 8c476128eb22: Download complete
+2026-06-10T09:49:58.7740976Z 15e0c869e1f8: Download complete
+2026-06-10T09:49:58.7816059Z e846d8e9647d: Verifying Checksum
+2026-06-10T09:49:58.7817330Z e846d8e9647d: Download complete
+2026-06-10T09:49:58.8119317Z 843c17e581f4: Download complete
+2026-06-10T09:49:58.9228402Z 45de3bd96a35: Verifying Checksum
+2026-06-10T09:49:58.9229114Z 45de3bd96a35: Download complete
+2026-06-10T09:49:59.7427942Z 0933f1eadfad: Verifying Checksum
+2026-06-10T09:49:59.7428996Z 0933f1eadfad: Download complete
+2026-06-10T09:50:00.0622341Z d9802f032d67: Pull complete
+2026-06-10T09:50:02.6185671Z 8c476128eb22: Pull complete
+2026-06-10T09:50:03.3188871Z e846d8e9647d: Pull complete
+2026-06-10T09:50:03.3311836Z 843c17e581f4: Pull complete
+2026-06-10T09:50:03.3572267Z 15e0c869e1f8: Pull complete
+2026-06-10T09:50:07.8675211Z 0933f1eadfad: Pull complete
+2026-06-10T09:50:07.8770073Z 45de3bd96a35: Pull complete
+2026-06-10T09:50:07.8804427Z Digest: sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T09:50:07.8815937Z Status: Downloaded newer image for lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T09:50:07.8824195Z docker.io/lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T09:50:23.8919066Z [vic-form1-freeze] Resolved digest: lankalana/libreoffice-headless@sha256:73910b51dabfbc32234f0d14d7f64751e8c5414e380d191647a41e7f81975c7b
+2026-06-10T09:50:23.8919923Z [vic-form1-freeze] LO version: LibreOffice 7.6.7.2
+2026-06-10T09:50:23.8920318Z [vic-form1-freeze] Conversion run 1...
+2026-06-10T09:50:39.5865025Z Error: Docker LO failed (exit 81). stdout: (empty) stderr: (empty)
+2026-06-10T09:50:39.5866143Z     at runDocker (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:416:11)
+2026-06-10T09:50:39.5869242Z     at convertDocxToPdfRawDocker (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:506:5)
+2026-06-10T09:50:39.5870687Z     at convert (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:614:25)
+2026-06-10T09:50:39.5871688Z     at runFreeze (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:620:14)
+2026-06-10T09:50:39.5872515Z     at main (file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:844:9)
+2026-06-10T09:50:39.5873271Z     at file:///home/runner/work/quni-living/quni-living/scripts/freeze-vic-form1-blank.mjs:850:1
+2026-06-10T09:50:39.5958861Z ##[error]Process completed with exit code 1.

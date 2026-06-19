@@ -1,0 +1,79 @@
+{
+  "heuristicOk": true,
+  "ok": true,
+  "gate": "interpreterAnnex",
+  "fidelityGateOfRecord": "annex PNG human review (pdftoppm)",
+  "rasterizer": "pdftoppm",
+  "scale": 144,
+  "annexPageIndices": [
+    8
+  ],
+  "annexPageNumbers": [
+    9
+  ],
+  "textGate": {
+    "ok": true,
+    "results": [
+      {
+        "id": "arabic",
+        "sample": "إذا",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      },
+      {
+        "id": "chinese",
+        "sample": "如果您",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      },
+      {
+        "id": "amharic",
+        "sample": "በእንግሊዝኛ",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      },
+      {
+        "id": "greek",
+        "sample": "Αν έχετε",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      },
+      {
+        "id": "cyrillic",
+        "sample": "Ако",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      },
+      {
+        "id": "dari",
+        "sample": "اگر شما",
+        "hasSample": true,
+        "hasScriptRun": true,
+        "pass": true
+      }
+    ],
+    "tofuCharCount": 0
+  },
+  "inkByPage": [
+    {
+      "pageIndex": 8,
+      "pageNum": 9,
+      "inkRatio": 0.09188370418678489,
+      "width": 1191,
+      "height": 1684
+    }
+  ],
+  "minAnnexInkRatio": 0.008,
+  "inkOk": true,
+  "lowInkPages": [],
+  "pngPaths": [
+    "scripts/test-official-form-spike/vic-form1-interpreter-annex-page-9.png"
+  ],
+  "reportNote": "pdftoppm PNG is gate of record; text samples, tofu chars, and ink density are supporting heuristics only.",
+  "comparedAt": "2026-06-11T07:30:13.489Z"
+}

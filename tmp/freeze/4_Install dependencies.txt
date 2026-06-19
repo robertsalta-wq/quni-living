@@ -1,0 +1,21 @@
+﻿2026-06-10T09:37:38.8846118Z ##[group]Run npm ci
+2026-06-10T09:37:38.8846475Z [36;1mnpm ci[0m
+2026-06-10T09:37:39.0425127Z shell: /usr/bin/bash -e {0}
+2026-06-10T09:37:39.0425509Z ##[endgroup]
+2026-06-10T09:37:42.8444384Z npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
+2026-06-10T09:37:48.7644737Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-06-10T09:37:57.5102254Z 
+2026-06-10T09:37:57.5103270Z added 831 packages, and audited 832 packages in 18s
+2026-06-10T09:37:57.5103765Z 
+2026-06-10T09:37:57.5104038Z 207 packages are looking for funding
+2026-06-10T09:37:57.5104575Z   run `npm fund` for details
+2026-06-10T09:37:57.5627028Z 
+2026-06-10T09:37:57.5628153Z 22 vulnerabilities (8 moderate, 12 high, 2 critical)
+2026-06-10T09:37:57.5628755Z 
+2026-06-10T09:37:57.5629173Z To address issues that do not require attention, run:
+2026-06-10T09:37:57.5629739Z   npm audit fix
+2026-06-10T09:37:57.5629951Z 
+2026-06-10T09:37:57.5630324Z To address all issues (including breaking changes), run:
+2026-06-10T09:37:57.5631165Z   npm audit fix --force
+2026-06-10T09:37:57.5631460Z 
+2026-06-10T09:37:57.5631704Z Run `npm audit` for details.

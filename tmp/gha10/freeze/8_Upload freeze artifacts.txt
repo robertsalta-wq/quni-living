@@ -1,0 +1,28 @@
+﻿2026-06-10T10:28:02.4490725Z ##[group]Run actions/upload-artifact@v4
+2026-06-10T10:28:02.4491047Z with:
+2026-06-10T10:28:02.4491259Z   name: vic-form1-freeze
+2026-06-10T10:28:02.4492426Z   path: docs/vic/form-1-blank.pdf
+docs/vic/form-1-blank-provenance.json
+docs/vic/source.json
+scripts/test-official-form-spike/vic-form1-blank-render-diff.json
+scripts/test-official-form-spike/vic-form1-interpreter-annex-gate.json
+scripts/test-official-form-spike/vic-form1-interpreter-annex-page-*.png
+
+2026-06-10T10:28:02.4493609Z   if-no-files-found: warn
+2026-06-10T10:28:02.4493864Z   compression-level: 6
+2026-06-10T10:28:02.4494098Z   overwrite: false
+2026-06-10T10:28:02.4494329Z   include-hidden-files: false
+2026-06-10T10:28:02.4494583Z ##[endgroup]
+2026-06-10T10:28:02.6804419Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-06-10T10:28:02.6808578Z The least common ancestor is /home/runner/work/quni-living/quni-living. This will be the root directory of the artifact
+2026-06-10T10:28:02.6809575Z With the provided path, there will be 6 files uploaded
+2026-06-10T10:28:02.6813540Z Artifact name is valid!
+2026-06-10T10:28:02.6814553Z Root directory input is valid!
+2026-06-10T10:28:02.8539168Z Beginning upload of artifact content to blob storage
+2026-06-10T10:28:02.9092302Z Uploaded bytes 5057
+2026-06-10T10:28:02.9222539Z Finished uploading artifact content to blob storage!
+2026-06-10T10:28:02.9225467Z SHA256 digest of uploaded artifact zip is 0db2b8b8ffd333341e969a4610037d08aff3b1eb6c4bb8e4627f0123872669f7
+2026-06-10T10:28:02.9226927Z Finalizing artifact upload
+2026-06-10T10:28:03.0590528Z Artifact vic-form1-freeze.zip successfully finalized. Artifact ID 7533072292
+2026-06-10T10:28:03.0591406Z Artifact vic-form1-freeze has been successfully uploaded! Final size is 5057 bytes. Artifact ID is 7533072292
+2026-06-10T10:28:03.0599018Z Artifact download URL: https://github.com/robertsalta-wq/quni-living/actions/runs/27269903310/artifacts/7533072292
