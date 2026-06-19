@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -15,6 +15,13 @@ import {
   setQuniAccommodationVerificationRoute,
 } from '../lib/quniAccommodationRoute'
 import Seo from '../components/Seo'
+import {
+  LegalDocumentModal,
+  SignupLegalDocLink,
+  type LegalDocumentKind,
+} from '../components/legal/LegalDocumentModal'
+import { PrivacyContent } from '../components/legal/PrivacyContent'
+import { TermsContent } from '../components/legal/TermsContent'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 /** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
@@ -53,6 +60,14 @@ type SignupTermsFieldsProps = {
   clearTermsError: () => void
 }
 
+const LEGAL_DOC_MODAL: Record<
+  LegalDocumentKind,
+  { title: string; content: ReactNode }
+> = {
+  terms: { title: 'Platform Terms of Service', content: <TermsContent /> },
+  privacy: { title: 'Privacy Policy', content: <PrivacyContent /> },
+}
+
 function SignupTermsFields({
   showLandlordAgreement,
   termsPrivacy,
@@ -62,6 +77,9 @@ function SignupTermsFields({
   termsError,
   clearTermsError,
 }: SignupTermsFieldsProps) {
+  const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
+  const activeLegalDoc = openLegalDoc ? LEGAL_DOC_MODAL[openLegalDoc] : null
+
   return (
     <div className="space-y-3">
       <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
@@ -76,25 +94,24 @@ function SignupTermsFields({
         />
         <span>
           I agree to the{' '}
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
-          >
+          <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
             Terms of Service
-          </a>{' '}
+          </SignupLegalDocLink>{' '}
           and{' '}
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
-          >
+          <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
             Privacy Policy
-          </a>
+          </SignupLegalDocLink>
         </span>
       </label>
+      {activeLegalDoc && (
+        <LegalDocumentModal
+          open={openLegalDoc !== null}
+          onClose={() => setOpenLegalDoc(null)}
+          title={activeLegalDoc.title}
+        >
+          {activeLegalDoc.content}
+        </LegalDocumentModal>
+      )}
       {showLandlordAgreement && (
         <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed">
           <input
