@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -24,6 +24,8 @@ import { LandlordServiceAgreementContent } from '../components/legal/LandlordSer
 import { PrivacyContent } from '../components/legal/PrivacyContent'
 import { TermsContent } from '../components/legal/TermsContent'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
+import { resolveTenantInviteSignupHints } from '../lib/tenantInviteSignupContext'
+import TenantInviteSignupBanner from '../components/tenantInvite/TenantInviteSignupBanner'
 
 /** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
 type SignupAccountKind = 'student' | 'non_student' | 'landlord'
@@ -443,6 +445,7 @@ export default function Signup() {
   }
 
   const redirectQ = searchParams.get('redirect')
+  const tenantInviteHints = useMemo(() => resolveTenantInviteSignupHints(searchParams), [searchParams])
   const loginHref =
     redirectQ && isSafeInternalPath(redirectQ) ? `/login?redirect=${encodeURIComponent(redirectQ)}` : '/login'
 
@@ -467,12 +470,13 @@ export default function Signup() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <Seo
-        title="Create an account"
+        title={tenantInviteHints.isTenantInviteFlow ? "You're invited to book" : 'Create an account'}
         description="Sign up for Quni Living - find verified accommodation near campus or work, or list your property for verified renters."
         canonicalPath="/signup"
       />
+      <TenantInviteSignupBanner hints={tenantInviteHints} loginHref={loginHref} />
       <h1 ref={formTopRef} className="scroll-mt-below-header text-2xl font-bold text-gray-900">
-        Create an account
+        {tenantInviteHints.isTenantInviteFlow ? 'Create your renter account' : 'Create an account'}
       </h1>
       <p className="text-sm text-gray-600 mt-1 mb-8">
         Already have an account?{' '}
@@ -507,8 +511,12 @@ export default function Signup() {
       {step === 'primary' && (
         <div className="space-y-6">
           <div>
-            <p className="text-sm font-medium text-gray-800 mb-3">I am signing up as a…</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <p className="text-sm font-medium text-gray-800 mb-3">
+              {tenantInviteHints.isTenantInviteFlow ? 'I am a…' : 'I am signing up as a…'}
+            </p>
+            <div
+              className={`grid grid-cols-1 gap-3 ${tenantInviteHints.isTenantInviteFlow ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
+            >
               <div className={roleCardClass('student')}>
                 <button type="button" onClick={() => pickAccountKind('student')} className="w-full text-left">
                   <span className="font-semibold text-gray-900">Student</span>
@@ -533,25 +541,34 @@ export default function Signup() {
                   What you&apos;ll need to verify →
                 </Link>
               </div>
-              <div className={roleCardClass('landlord')}>
-                <button type="button" onClick={() => pickAccountKind('landlord')} className="w-full text-left">
-                  <span className="font-semibold text-gray-900">Landlord</span>
-                  <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
-                </button>
-                <Link
-                  to="/verification#landlords"
-                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
-                >
-                  What you&apos;ll need to verify →
-                </Link>
-              </div>
+              {!tenantInviteHints.isTenantInviteFlow && (
+                <div className={roleCardClass('landlord')}>
+                  <button type="button" onClick={() => pickAccountKind('landlord')} className="w-full text-left">
+                    <span className="font-semibold text-gray-900">Landlord</span>
+                    <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
+                  </button>
+                  <Link
+                    to="/verification#landlords"
+                    className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
+                  >
+                    What you&apos;ll need to verify →
+                  </Link>
+                </div>
+              )}
             </div>
+            {!tenantInviteHints.isTenantInviteFlow ? (
             <p className="text-xs text-gray-600 mt-3">
               New to renting near campus as a professional?{' '}
               <Link to="/rent-near-campus" className="text-indigo-600 font-medium hover:text-indigo-800">
                 Preview the non-student landing page.
               </Link>
             </p>
+            ) : (
+            <p className="text-xs text-gray-600 mt-3">
+              Choose the renter type that matches how you will verify. You will complete the same verification as any
+              other tenant on Quni before booking this room.
+            </p>
+            )}
             {!accountKind && (
               <p className="text-xs text-amber-800 mt-2">Choose one option above to continue with Google or email.</p>
             )}
