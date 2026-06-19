@@ -1,5 +1,0 @@
-﻿2026-06-10T10:28:03.0740720Z Post job cleanup.
-2026-06-10T10:28:03.2539256Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/quni-living/quni-living --files-from manifest.txt --use-compress-program zstdmt
-2026-06-10T10:28:04.7393982Z Sent 0 of 198419680 (0.0%), 0.0 MBs/sec
-2026-06-10T10:28:05.5021838Z Sent 198419680 of 198419680 (100.0%), 107.4 MBs/sec
-2026-06-10T10:28:05.6843915Z Cache saved with the key: node-cache-Linux-x64-npm-01859d20598dfc4ced7c7d28559372baa0454adb9b7e3824211edb7a87716511
