@@ -8,9 +8,11 @@ import { HelmetProvider } from 'react-helmet-async'
 import { AppTree } from './AppTree'
 import { registerNativeOAuthDeepLinkHandler } from './lib/nativeOAuthDeepLink'
 import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFallback'
+import { prefetchRouteChunks } from './lib/routePrefetch'
 import './index.css'
 
 applyNativeStatusBarInsetFallback()
+prefetchRouteChunks(window.location.pathname)
 registerNativeOAuthDeepLinkHandler()
 clearChunkReloadSessionFlag()
 registerStaleChunkLoadRecovery()

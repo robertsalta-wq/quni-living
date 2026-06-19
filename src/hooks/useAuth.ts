@@ -10,6 +10,7 @@ import {
 import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
+import { clearAuthSnapshot, readAuthSnapshot, writeAuthSnapshot } from '../lib/authSnapshotCache'
 
 export type AuthState = {
   user: User | null
@@ -44,6 +45,7 @@ export function useProvideAuth(): AuthState {
       setUser(null)
       setProfile(null)
       setRole(null)
+      clearAuthSnapshot()
       return
     }
     // Session user from storage/JWT can omit `email`. Refresh via getUser() only when needed.
@@ -52,6 +54,7 @@ export function useProvideAuth(): AuthState {
       const { data, error } = await supabase.auth.getUser()
       if (error && isStaleOrInvalidJwtUserError(error.message)) {
         clearOnboardingDismissed()
+        clearAuthSnapshot()
         await supabase.auth.signOut()
         setUser(null)
         setSession(null)
@@ -65,6 +68,7 @@ export function useProvideAuth(): AuthState {
     const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
     setRole(r)
     setProfile(p)
+    writeAuthSnapshot({ userId: resolved.id, role: r, profile: p })
   }, [])
 
   const refreshProfile = useCallback(async () => {
@@ -84,9 +88,19 @@ export function useProvideAuth(): AuthState {
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       if (cancelled) return
+      const sessionUser = s?.user ?? null
       setSession(s ?? null)
-      setUser(s?.user ?? null)
-      hydrateFromUser(s?.user ?? null).finally(() => {
+      setUser(sessionUser)
+
+      const cached = readAuthSnapshot(sessionUser?.id)
+      if (cached) {
+        setRole(cached.role)
+        setProfile(cached.profile)
+        bootstrapDoneRef.current = true
+        setLoading(false)
+      }
+
+      hydrateFromUser(sessionUser).finally(() => {
         if (!cancelled) {
           bootstrapDoneRef.current = true
           setLoading(false)
@@ -102,6 +116,7 @@ export function useProvideAuth(): AuthState {
         setUser(null)
         setProfile(null)
         setRole(null)
+        clearAuthSnapshot()
         return
       }
       setUser(s?.user ?? null)
@@ -132,6 +147,7 @@ export function useProvideAuth(): AuthState {
     // ProtectedRoute can redirect to student signup before a caller's navigate('/') runs.
     navigate('/', { replace: true })
     clearOnboardingDismissed()
+    clearAuthSnapshot()
     await supabase.auth.signOut()
     setUser(null)
     setSession(null)

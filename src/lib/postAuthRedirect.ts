@@ -47,6 +47,14 @@ export function consumePostAuthRedirect(): string | null {
   return v
 }
 
+export function clearPostAuthRedirect(): void {
+  try {
+    sessionStorage.removeItem(KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
 /** On Login/Signup mount: store ?redirect= and, if absent, React Router `location.state.from`. */
 export function persistAuthReturnIntent(searchParams: URLSearchParams, locationState: unknown): void {
   rememberPostAuthRedirectFromSearch(searchParams)

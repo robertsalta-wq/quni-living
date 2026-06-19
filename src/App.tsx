@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useLayoutEffect } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -19,6 +19,7 @@ import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
 import * as Lazy from './lazyPages'
+import { prefetchRouteChunks } from './lib/routePrefetch'
 
 function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
@@ -28,6 +29,11 @@ function AdminPropertyFeesDeepLinkRedirect() {
 
 function App() {
   const location = useLocation()
+
+  useLayoutEffect(() => {
+    prefetchRouteChunks(location.pathname)
+  }, [location.pathname])
+
   const adminShell = location.pathname.startsWith('/admin')
   const aiLandingShell = location.pathname === '/landlords/ai'
   const showPublicChrome = !adminShell && !aiLandingShell
