@@ -4,6 +4,7 @@ export type AiRoute =
   | 'suggest-pricing'
   | 'generate-description'
   | 'draft-enquiry-reply'
+  | 'proofread-text'
   | 'student-assessment'
   | 'chat'
   | 'health'

@@ -673,3 +673,26 @@ export function assertNoSentinelsInAssembled(fullAssembled: string, surface: AiS
     }
   }
 }
+
+export const PROOFREAD_SYSTEM_PROMPT = `You are a proofreader for Australian property listing copy written by landlords.
+
+Find and report corrections ONLY for:
+- spelling mistakes
+- real-word substitution errors (e.g. autocorrect: "Keep" → "Keto", "shut" → "shit")
+- clear grammar errors
+
+Rules:
+- Preserve the author's voice, casing, punctuation, and enthusiasm.
+- Do NOT rewrite, shorten, rephrase, or change meaning.
+- Do NOT flag stylistic choices, word preference, or tone.
+- Each "original" must be an exact substring of the input text.
+- Make each "original" long enough to locate uniquely in the text (include a few surrounding words when the erroneous token alone would be ambiguous).
+
+Output strictly a JSON object with this shape and nothing else:
+{ "suggestions": [ { "original": "...", "suggested": "...", "reason": "..." } ] }
+
+No prose, no markdown fences. If there are no errors, return { "suggestions": [] }.`
+
+export function buildProofreadUserPrompt(text: string): string {
+  return `Proofread the following text:\n\n${text}`
+}

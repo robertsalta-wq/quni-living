@@ -29,6 +29,7 @@ import {
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
+import AIListingProofread from '../../components/AIListingProofread'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
 import {
   normalizePropertyImages,
@@ -2868,18 +2869,26 @@ export default function LandlordPropertyFormPage() {
                 )}
               </div>
               <div className="space-y-3 border-t border-gray-100 pt-6">
-                <p className="text-sm text-gray-600">
-                  These are your property's house rules. They will be shown to students and included in the tenancy
-                  agreement. Customise them to suit your property.
-                </p>
-                <textarea
-                  id="pf-house-rules"
-                  aria-label="House rules text"
-                  value={houseRules}
-                  onChange={(e) => setHouseRules(e.target.value)}
-                  rows={18}
-                  className={inputClass}
-                />
+                <AIListingProofread
+                  text={houseRules}
+                  onTextChange={setHouseRules}
+                  fieldName="house rules"
+                  headerSlot={
+                    <p className="min-w-0 flex-1 text-sm text-gray-600">
+                      These are your property's house rules. They will be shown to students and included in the tenancy
+                      agreement. Customise them to suit your property.
+                    </p>
+                  }
+                >
+                  <textarea
+                    id="pf-house-rules"
+                    aria-label="House rules text"
+                    value={houseRules}
+                    onChange={(e) => setHouseRules(e.target.value)}
+                    rows={18}
+                    className={inputClass}
+                  />
+                </AIListingProofread>
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"
@@ -3470,17 +3479,25 @@ export default function LandlordPropertyFormPage() {
             'Description',
             <div className="space-y-4">
               <div>
-                <label htmlFor="pf-desc" className={labelClass}>
-                  Listing description
-                </label>
-                <textarea
-                  id="pf-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={5}
-                  className={inputClass}
-                  placeholder="Describe the room or home the tenant will rent - not only the whole building."
-                />
+                <AIListingProofread
+                  text={description}
+                  onTextChange={setDescription}
+                  fieldName="listing description"
+                  headerSlot={
+                    <label htmlFor="pf-desc" className={labelClass}>
+                      Listing description
+                    </label>
+                  }
+                >
+                  <textarea
+                    id="pf-desc"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={5}
+                    className={inputClass}
+                    placeholder="Describe the room or home the tenant will rent - not only the whole building."
+                  />
+                </AIListingProofread>
                 <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
                   Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.
                 </p>
