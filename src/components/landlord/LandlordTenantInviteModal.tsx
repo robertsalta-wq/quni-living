@@ -36,6 +36,21 @@ function formatInviteExpiry(iso: string): string {
   }
 }
 
+function formatEmailSentAt(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  } catch {
+    return null
+  }
+}
+
 export default function LandlordTenantInviteModal({ open, property, landlordProfileId, onClose }: Props) {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -62,7 +77,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     try {
       const { data, error } = await supabase
         .from('tenant_invites')
-        .select('id, invited_email, invited_name, status, expires_at, created_at')
+        .select('id, invited_email, invited_name, status, expires_at, email_sent_at, created_at')
         .eq('property_id', property.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
@@ -342,6 +357,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                   inv.invited_email?.trim() ||
                   `Invite · ${formatInviteExpiry(inv.expires_at)}`
                 const hasEmail = Boolean(inv.invited_email?.trim())
+                const emailedAt = formatEmailSentAt(inv.email_sent_at)
                 return (
                   <li
                     key={inv.id}
@@ -350,6 +366,11 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                     <div className="min-w-0">
                       <p className="text-sm text-gray-900 truncate">{label}</p>
                       <p className="text-xs text-gray-500">Expires {formatInviteExpiry(inv.expires_at)}</p>
+                      {emailedAt ? (
+                        <p className="text-xs text-indigo-700 mt-0.5">Emailed {emailedAt}</p>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-0.5">Link only — not emailed yet</p>
+                      )}
                     </div>
                     <div className="flex gap-2 shrink-0 flex-wrap justify-end">
                       {hasEmail && (

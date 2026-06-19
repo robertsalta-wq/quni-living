@@ -239,5 +239,14 @@ export default async function handler(request) {
     )
   }
 
-  return json({ ok: true, emailedTo: recipient, rotated }, 200, origin)
+  const emailSentAt = new Date().toISOString()
+  const { error: markErr } = await admin
+    .from('tenant_invites')
+    .update({ email_sent_at: emailSentAt, updated_at: emailSentAt })
+    .eq('id', invite.id)
+  if (markErr) {
+    console.error('tenant_invites email_sent_at update', markErr)
+  }
+
+  return json({ ok: true, emailedTo: recipient, rotated, emailSentAt }, 200, origin)
 }

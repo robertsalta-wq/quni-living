@@ -1195,6 +1195,7 @@ export interface Database {
           expires_at: string
           accepted_by: string | null
           accepted_booking_id: string | null
+          email_sent_at: string | null
           created_at: string
           updated_at: string
         }
@@ -1210,6 +1211,7 @@ export interface Database {
           expires_at?: string
           accepted_by?: string | null
           accepted_booking_id?: string | null
+          email_sent_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1225,6 +1227,7 @@ export interface Database {
           expires_at?: string
           accepted_by?: string | null
           accepted_booking_id?: string | null
+          email_sent_at?: string | null
           created_at?: string
           updated_at?: string
         }
