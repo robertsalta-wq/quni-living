@@ -509,19 +509,42 @@ export default function Signup() {
           <div>
             <p className="text-sm font-medium text-gray-800 mb-3">I am signing up as a…</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button type="button" onClick={() => pickAccountKind('student')} className={roleCardClass('student')}>
-                <span className="font-semibold text-gray-900">Student</span>
-                <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
-              </button>
-              <button type="button" onClick={() => pickAccountKind('non_student')} className={roleCardClass('non_student')}>
-                <span className="font-semibold text-gray-900">Non-Student</span>
-                <p className="text-sm text-gray-600 mt-1">Find rooms near university and manage your bookings.</p>
-                <p className="text-xs text-gray-500 mt-1">Government ID verification required.</p>
-              </button>
-              <button type="button" onClick={() => pickAccountKind('landlord')} className={roleCardClass('landlord')}>
-                <span className="font-semibold text-gray-900">Landlord</span>
-                <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
-              </button>
+              <div className={roleCardClass('student')}>
+                <button type="button" onClick={() => pickAccountKind('student')} className="w-full text-left">
+                  <span className="font-semibold text-gray-900">Student</span>
+                  <p className="text-sm text-gray-600 mt-1">Find housing and manage bookings.</p>
+                </button>
+                <Link
+                  to="/verification#students"
+                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
+                >
+                  What you&apos;ll need to verify →
+                </Link>
+              </div>
+              <div className={roleCardClass('non_student')}>
+                <button type="button" onClick={() => pickAccountKind('non_student')} className="w-full text-left">
+                  <span className="font-semibold text-gray-900">Non-Student</span>
+                  <p className="text-sm text-gray-600 mt-1">Find rooms near university and manage your bookings.</p>
+                </button>
+                <Link
+                  to="/verification#working-tenants"
+                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
+                >
+                  What you&apos;ll need to verify →
+                </Link>
+              </div>
+              <div className={roleCardClass('landlord')}>
+                <button type="button" onClick={() => pickAccountKind('landlord')} className="w-full text-left">
+                  <span className="font-semibold text-gray-900">Landlord</span>
+                  <p className="text-sm text-gray-600 mt-1">List properties and manage enquiries.</p>
+                </button>
+                <Link
+                  to="/verification#landlords"
+                  className="mt-2 inline-block text-xs font-medium text-[#FF6F61] hover:underline"
+                >
+                  What you&apos;ll need to verify →
+                </Link>
+              </div>
             </div>
             <p className="text-xs text-gray-600 mt-3">
               New to renting near campus as a professional?{' '}

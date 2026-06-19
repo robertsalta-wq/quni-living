@@ -30,6 +30,11 @@ const internationalStudentsLink = (
     international students
   </Link>
 )
+const verificationLink = (
+  <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+    verification checklist
+  </Link>
+)
 
 /** Comprehensive FAQ sections for /faq - consolidated from marketing pages. */
 export const FAQ_SECTIONS: FaqSection[] = [
@@ -116,25 +121,41 @@ export const FAQ_SECTIONS: FaqSection[] = [
       {
         id: 'verification-docs',
         question: 'What documents do I need to verify?',
-        answer:
-          "A government-issued photo ID (Australian passport or driver's licence) and one supporting document - for example a utility bill, employer letter, or Medicare card.",
+        answer: (
+          <>
+            It depends whether you are a student, working tenant, or landlord — see our {verificationLink} for the
+            full step-by-step list.
+          </>
+        ),
       },
       {
         id: 'verification-time',
         question: 'How long does verification take?',
-        answer:
-          "Typically within 1–2 business days. You'll get an email when your Verified Identity badge has been applied to your profile.",
+        answer: (
+          <>
+            Most verifications are reviewed within one to two business days. See our {verificationLink} for what each
+            path involves.
+          </>
+        ),
       },
       {
         id: 'verification-cost',
         question: 'What does verification cost?',
-        answer: 'Creating an account and verifying your identity is completely free.',
+        answer: (
+          <>
+            Verification is free for renters. See our {verificationLink} for what landlords set up on Quni Listing.
+          </>
+        ),
       },
       {
         id: 'verification-listings',
         question: 'Which listings can I see after verifying?',
-        answer:
-          "Listings where the landlord accepts professional renters are visible and bookable to verified non-student accounts. Listings marked 'Students only' are restricted to verified student accounts.",
+        answer: (
+          <>
+            Student and non-student paths unlock different listings once verified. See our {verificationLink} for how
+            each path works.
+          </>
+        ),
       },
     ],
   },

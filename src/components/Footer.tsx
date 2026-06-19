@@ -133,6 +133,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/verification" className={linkClass}>
+                  Verification
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className={linkClass}>
                   Contact
                 </Link>
