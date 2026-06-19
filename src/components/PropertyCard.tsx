@@ -24,6 +24,8 @@ type Props = {
   /** Dim card when the property conflicts with the viewer's selected dates. */
   unavailableForSelectedDates?: boolean
   unavailableBadgeLabel?: string
+  /** Same card UI without navigation (e.g. tenant invite preview). */
+  staticDisplay?: boolean
 }
 
 export function PropertyCard({
@@ -33,6 +35,7 @@ export function PropertyCard({
   distanceLabel,
   unavailableForSelectedDates,
   unavailableBadgeLabel,
+  staticDisplay = false,
 }: Props) {
   const { user } = useAuthContext()
   const image = firstPropertyImageUrl(property.images)
@@ -58,13 +61,16 @@ export function PropertyCard({
       ? `/properties/${property.slug}${linkSearch.startsWith('?') ? linkSearch : `?${linkSearch}`}`
       : `/properties/${property.slug}`
 
-  return (
-    <Link
-      to={to}
-      className={`group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
-        unavailableForSelectedDates ? 'opacity-60 grayscale-[0.35]' : ''
-      }`}
-    >
+  const shellClassName = [
+    'group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-200',
+    staticDisplay ? '' : 'hover:shadow-md hover:-translate-y-0.5',
+    unavailableForSelectedDates ? 'opacity-60 grayscale-[0.35]' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const cardBody = (
+    <>
       <div className="relative h-48 bg-gray-100 overflow-hidden">
         {image ? (
           <img
@@ -256,6 +262,16 @@ export function PropertyCard({
           )}
         </div>
       </div>
+    </>
+  )
+
+  if (staticDisplay) {
+    return <div className={shellClassName}>{cardBody}</div>
+  }
+
+  return (
+    <Link to={to} className={shellClassName}>
+      {cardBody}
     </Link>
   )
 }

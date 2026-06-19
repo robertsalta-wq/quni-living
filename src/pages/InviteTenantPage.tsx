@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageRouteFallback from '../components/PageRouteFallback'
+import { PropertyCard } from '../components/PropertyCard'
 import { useAuthContext } from '../context/AuthContext'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { setQuniTenantInviteContext } from '../lib/quniTenantInvite'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { absoluteUrl } from '../lib/site'
-import { firstPropertyImageUrl } from '../lib/propertyImages'
+import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
+import type { Property } from '../lib/listings'
 
 type ResolvedInvite = {
   property_id: string
@@ -16,14 +18,6 @@ type ResolvedInvite = {
   invite_status: string
   invited_email: string | null
   invited_name: string | null
-}
-
-type PropertyPreview = {
-  title: string
-  suburb: string | null
-  rent_per_week: number
-  slug: string
-  images: string[] | null
 }
 
 function inviteErrorMessage(status: string): string {
@@ -46,7 +40,7 @@ export default function InviteTenantPage() {
   const navigate = useNavigate()
   const { user, role, loading: authLoading } = useAuthContext()
   const [resolved, setResolved] = useState<ResolvedInvite | null>(null)
-  const [propertyPreview, setPropertyPreview] = useState<PropertyPreview | null>(null)
+  const [property, setProperty] = useState<Property | null>(null)
   const [resolveError, setResolveError] = useState<string | null>(null)
   const [resolving, setResolving] = useState(true)
 
@@ -79,13 +73,13 @@ export default function InviteTenantPage() {
         }
         setResolved(row)
 
-        const { data: prop } = await supabase
+        const { data: prop, error: propErr } = await supabase
           .from('properties')
-          .select('title, suburb, rent_per_week, slug, images')
+          .select(PROPERTY_CARD_LIST_SELECT)
           .eq('id', row.property_id)
           .maybeSingle()
-        if (!cancelled && prop) {
-          setPropertyPreview(prop as PropertyPreview)
+        if (!cancelled && !propErr && prop) {
+          setProperty(prop as Property)
         }
       } catch {
         if (!cancelled) setResolveError('We could not load this invite. Please try again in a moment.')
@@ -103,7 +97,7 @@ export default function InviteTenantPage() {
     if (!resolved || !bookingPath || authLoading || resolving) return
 
     setQuniTenantInviteContext(token, resolved.property_id, {
-      propertyTitle: propertyPreview?.title ?? null,
+      propertyTitle: property?.title ?? null,
       studentOnly: resolved.student_only,
       invitedName: resolved.invited_name,
     })
@@ -112,13 +106,13 @@ export default function InviteTenantPage() {
     if (user && role !== 'landlord') {
       navigate(bookingPath, { replace: true })
     }
-  }, [resolved, bookingPath, user, role, authLoading, resolving, token, navigate, propertyPreview?.title])
+  }, [resolved, bookingPath, user, role, authLoading, resolving, token, navigate, property?.title])
 
   const continueToSignup = useCallback(() => {
     if (!resolved || !bookingPath) return
 
     setQuniTenantInviteContext(token, resolved.property_id, {
-      propertyTitle: propertyPreview?.title ?? null,
+      propertyTitle: property?.title ?? null,
       studentOnly: resolved.student_only,
       invitedName: resolved.invited_name,
     })
@@ -128,10 +122,10 @@ export default function InviteTenantPage() {
     params.set('redirect', bookingPath)
     if (resolved.invited_email?.trim()) params.set('invited_email', resolved.invited_email.trim())
     if (resolved.invited_name?.trim()) params.set('invited_name', resolved.invited_name.trim())
-    if (propertyPreview?.title?.trim()) params.set('invite_property', propertyPreview.title.trim())
+    if (property?.title?.trim()) params.set('invite_property', property.title.trim())
     if (resolved.student_only) params.set('invite_student_only', '1')
     navigate(`/signup?${params.toString()}`)
-  }, [resolved, bookingPath, token, propertyPreview?.title, navigate])
+  }, [resolved, bookingPath, token, property?.title, navigate])
 
   const loginHref = bookingPath
     ? `/login?redirect=${encodeURIComponent(bookingPath)}`
@@ -195,14 +189,12 @@ export default function InviteTenantPage() {
     )
   }
 
-  const image = propertyPreview ? firstPropertyImageUrl(propertyPreview.images) : null
-  const rent = propertyPreview?.rent_per_week
   const greeting = resolved.invited_name?.trim()
     ? `Hi ${resolved.invited_name.trim().split(/\s+/)[0]},`
     : null
 
   return (
-    <div className="max-w-lg mx-auto px-6 py-12 sm:py-16">
+    <div className="max-w-sm mx-auto px-6 py-12 sm:py-16">
       <Seo title="You're invited to book" noindex description="Landlord tenant invite on Quni Living." />
 
       <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Landlord invitation</p>
@@ -214,36 +206,22 @@ export default function InviteTenantPage() {
         compliant agreement, and e-signing on-platform.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-        {image ? (
-          <div className="h-40 sm:h-48 bg-gray-100">
-            <img src={image} alt="" className="w-full h-full object-cover" />
-          </div>
+      <div className="mt-6">
+        {property ? (
+          <PropertyCard property={property} staticDisplay />
         ) : (
-          <div className="h-32 bg-gray-100 flex items-center justify-center text-gray-300 text-sm">Listing</div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+            Loading listing details…
+          </div>
         )}
-        <div className="p-4 sm:p-5">
-          <h2 className="font-semibold text-gray-900 leading-snug">
-            {propertyPreview?.title ?? 'Private listing'}
-          </h2>
-          {propertyPreview?.suburb && (
-            <p className="text-sm text-gray-500 mt-0.5">{propertyPreview.suburb}</p>
-          )}
-          {rent != null && Number.isFinite(Number(rent)) && (
-            <p className="mt-2 text-lg font-bold text-gray-900">
-              ${Number(rent).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              <span className="text-sm font-normal text-gray-500"> /wk</span>
-            </p>
-          )}
-          {resolved.property_slug && (
-            <Link
-              to={`/properties/${resolved.property_slug}`}
-              className="mt-3 inline-block text-xs font-medium text-indigo-600 hover:text-indigo-800"
-            >
-              View listing details →
-            </Link>
-          )}
-        </div>
+        {resolved.property_slug && (
+          <Link
+            to={`/properties/${resolved.property_slug}`}
+            className="mt-3 inline-block text-xs font-medium text-indigo-600 hover:text-indigo-800"
+          >
+            View full listing details →
+          </Link>
+        )}
       </div>
 
       {resolved.student_only && (
