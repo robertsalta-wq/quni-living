@@ -60,6 +60,23 @@ import {
 import { resetWindowScrollSync } from '../lib/scrollToTop'
 import { loadPropertyDetailBySlug, peekPropertyDetailCache } from '../lib/propertyDetailCache'
 
+const PROPERTY_DETAIL_FETCH_TIMEOUT_MS = 10_000
+
+function withPropertyDetailFetchTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error(`${label} timed out. Check your connection and refresh.`),
+          ),
+        PROPERTY_DETAIL_FETCH_TIMEOUT_MS,
+      )
+    }),
+  ])
+}
+
 function haversineKm(a: GeoPoint, b: GeoPoint): number {
   const dLat = ((b.lat - a.lat) * Math.PI) / 180
   const dLon = ((b.lon - a.lon) * Math.PI) / 180
@@ -286,7 +303,7 @@ export default function PropertyDetail() {
     [setSearchParams],
   )
 
-  const { user, profile, role, session, refreshProfile } = useAuthContext()
+  const { user, profile, role, session, refreshProfile, loading: authLoading } = useAuthContext()
   const { isProfessionalRenter } = useRenterSearchPersona()
   const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference('full', {
     deferLoad: true,
@@ -320,6 +337,7 @@ export default function PropertyDetail() {
   const navigate = useNavigate()
   const thumbsScrollRef = useRef<HTMLDivElement>(null)
   const bookingCardRef = useRef<HTMLDivElement>(null)
+  const propertyFetchGenRef = useRef(0)
 
   useLayoutEffect(() => {
     if (!slug) return
@@ -366,11 +384,16 @@ export default function PropertyDetail() {
   }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
-    if (!shouldFetch) return
+    // Wait for auth bootstrap so logged-in students run the access gate on the first fetch
+    // (avoids cancel/re-fetch races on refresh that can leave the skeleton stuck).
+    if (!shouldFetch || authLoading) return
 
+    const fetchGen = ++propertyFetchGenRef.current
     let cancelled = false
+    const isStale = () => cancelled || fetchGen !== propertyFetchGenRef.current
+
     const cached = peekPropertyDetailCache(slug)
-    const showLoadingShell = !cached
+    const showLoadingShell = !cached && (!property || property.slug !== slug)
 
     if (cached) {
       setProperty(cached)
@@ -391,19 +414,19 @@ export default function PropertyDetail() {
         const accessPromise =
           userId && role === 'student'
             ? supabase.rpc('property_access_status_for_viewer', { p_slug: slug })
-            : null
+            : Promise.resolve({ data: null, error: null })
 
-        const [data, accessResult] = await Promise.all([
-          propertyPromise,
-          accessPromise ?? Promise.resolve({ data: null, error: null }),
-        ])
+        const [data, accessResult] = await withPropertyDetailFetchTimeout(
+          Promise.all([propertyPromise, accessPromise]),
+          'Listing load',
+        )
 
-        if (cancelled) return
+        if (isStale()) return
 
         if (accessResult.error) {
           setError(accessResult.error.message)
           setProperty(null)
-          setLoading(false)
+          setStudentListingBlocked(false)
           return
         }
 
@@ -412,17 +435,18 @@ export default function PropertyDetail() {
           if (st === 'not_found') {
             setProperty(null)
             setError(null)
-            setLoading(false)
+            setStudentListingBlocked(false)
             return
           }
           if (st === 'forbidden_student_only') {
             setProperty(null)
+            setError(null)
             setStudentListingBlocked(true)
-            setLoading(false)
             return
           }
         }
 
+        setStudentListingBlocked(false)
         if (!data) {
           setError(null)
           setProperty(null)
@@ -430,11 +454,14 @@ export default function PropertyDetail() {
           setProperty(data)
           if (showLoadingShell) setImageIndex(0)
         }
-        setLoading(false)
       } catch (e) {
-        if (!cancelled) {
+        if (!isStale()) {
           setError(e instanceof Error ? e.message : 'Failed to load listing')
           setProperty(null)
+          setStudentListingBlocked(false)
+        }
+      } finally {
+        if (!isStale()) {
           setLoading(false)
         }
       }
@@ -443,7 +470,7 @@ export default function PropertyDetail() {
     return () => {
       cancelled = true
     }
-  }, [slug, shouldFetch, userId, role])
+  }, [slug, shouldFetch, userId, role, authLoading])
 
   useEffect(() => {
     const root = thumbsScrollRef.current
