@@ -59,6 +59,7 @@ scripts/test-official-form-refined-b-spike.mjs
 
 # Local scratch output (do not commit)
 tmp/
+*.check
 
 # One-off design-system snapshot for Claude Design (not live source)
 claude-design-bundle/*
