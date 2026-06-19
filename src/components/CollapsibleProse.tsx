@@ -53,6 +53,7 @@ export function CollapsibleProse({
   const [expanded, setExpanded] = useState(false)
   const [canCollapse, setCanCollapse] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  const toggleRef = useRef<HTMLButtonElement>(null)
 
   const collapsedMaxHeightEm = collapsedLines * PROSE_LINE_HEIGHT
 
@@ -85,6 +86,22 @@ export function CollapsibleProse({
 
   const toggleLabel = expanded ? 'Read less' : 'Read more'
 
+  const handleToggle = () => {
+    setExpanded((wasExpanded) => {
+      const next = !wasExpanded
+      if (wasExpanded && !next) {
+        // Collapsing removes height above the fold; restore scroll so the viewport
+        // does not jump down to the next Read more on the page.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            toggleRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+          })
+        })
+      }
+      return next
+    })
+  }
+
   return (
     <div className={cn('space-y-2', className)}>
       <div
@@ -101,11 +118,12 @@ export function CollapsibleProse({
       </div>
       {canCollapse ? (
         <button
+          ref={toggleRef}
           type="button"
           className="text-sm font-medium text-[#FF6F61] hover:text-[#e85d52] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 focus-visible:ring-offset-2 rounded"
           aria-expanded={expanded}
           aria-controls={id}
-          onClick={() => setExpanded((v) => !v)}
+          onClick={handleToggle}
         >
           {toggleLabel}
         </button>
