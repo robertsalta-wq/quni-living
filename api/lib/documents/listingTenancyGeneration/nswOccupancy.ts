@@ -8,6 +8,7 @@ import type { OccupancyAgreementProps } from '../../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
@@ -195,9 +196,8 @@ async function loadNswOccupancyContext(
   const periodic = leaseLen === 'Flexible' || endDate == null
 
   const bondNum =
-    typeof prop.bond === 'number' && Number.isFinite(prop.bond)
-      ? prop.bond
-      : Math.round(weeklyRent * 4 * 100) / 100
+    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
+    Math.round(weeklyRent * 4 * 100) / 100
 
   const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const platformFeePercent =

@@ -1340,6 +1340,7 @@ export interface Database {
           rent_breakdown: Json | null
           co_tenant: Json | null
           tenant_invite_id: string | null
+          bond_amount: number | null
           created_at: string
           updated_at: string
         }
@@ -1405,6 +1406,7 @@ export interface Database {
           rent_breakdown?: Json | null
           co_tenant?: Json | null
           tenant_invite_id?: string | null
+          bond_amount?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -1470,6 +1472,7 @@ export interface Database {
           rent_breakdown?: Json | null
           co_tenant?: Json | null
           tenant_invite_id?: string | null
+          bond_amount?: number | null
           created_at?: string
           updated_at?: string
         }

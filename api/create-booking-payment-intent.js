@@ -48,6 +48,7 @@ import {
   buildListingApplyBookingRow,
   isListingServiceTier,
 } from './lib/booking/listingBookingApply.js'
+import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
 
 export const config = { runtime: 'edge' }
 
@@ -703,6 +704,8 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
+  const bondAmount = bondAmountAtApplyFromProperty(property)
+
   const row = {
     property_id: property.id,
     student_id: student.id,
@@ -711,6 +714,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     move_in_date: moveInDate,
     end_date: endDate,
     weekly_rent: weeklyRent,
+    ...(bondAmount != null ? { bond_amount: bondAmount } : {}),
     status: 'pending_confirmation',
     notes: null,
     student_message: studentMessage.trim() || null,

@@ -4,6 +4,7 @@
  */
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../booking/occupancyLeaseContext.js'
+import { resolveBookingBondAmountAud } from '../booking/bookingBondAmount.js'
 import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
 import {
@@ -105,7 +106,8 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum =
-    typeof prop.bond === 'number' && Number.isFinite(prop.bond) ? prop.bond : Math.round(weeklyRent * 4 * 100) / 100
+    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
+    Math.round(weeklyRent * 4 * 100) / 100
 
   const platformFeePercent = input.managedPlatformFeePercent ?? 0
   const totalWeekly = Math.round((weeklyRent + weeklyRent * (platformFeePercent / 100)) * 100) / 100

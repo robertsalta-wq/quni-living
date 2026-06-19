@@ -27,6 +27,7 @@ import {
   propertyUtilitiesPreflightMessages,
   resolvePropertyUtilities,
 } from '../../../../src/lib/propertyUtilitiesResolver.js'
+import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -250,9 +251,8 @@ async function loadQldForm18aContext(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum =
-    typeof prop.bond === 'number' && Number.isFinite(prop.bond)
-      ? prop.bond
-      : Math.round(weeklyRent * 4 * 100) / 100
+    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
+    Math.round(weeklyRent * 4 * 100) / 100
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {

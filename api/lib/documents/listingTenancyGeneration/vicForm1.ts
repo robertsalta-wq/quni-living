@@ -17,6 +17,7 @@ import {
   fetchPlatformBusinessIdentityForDocuments,
   fetchPlatformConfigValueMap,
 } from '../../platformConfig.js'
+import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -232,9 +233,8 @@ async function loadVicForm1Context(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum =
-    typeof prop.bond === 'number' && Number.isFinite(prop.bond)
-      ? prop.bond
-      : Math.round(weeklyRent * 4 * 100) / 100
+    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
+    Math.round(weeklyRent * 4 * 100) / 100
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {

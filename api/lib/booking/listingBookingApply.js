@@ -2,6 +2,8 @@
  * Listing-tier student apply: booking request only — no student Stripe PI, deposit, or rent collection.
  */
 
+import { bondAmountAtApplyFromProperty } from './bookingBondAmount.js'
+
 /**
  * @param {string | null | undefined} serviceTier
  */
@@ -51,6 +53,7 @@ export function buildListingApplyBookingRow({
   endDate,
   tenantInviteId = null,
 }) {
+  const bondAmount = bondAmountAtApplyFromProperty(property)
   return {
     property_id: property.id,
     student_id: student.id,
@@ -59,6 +62,7 @@ export function buildListingApplyBookingRow({
     move_in_date: moveInDate,
     end_date: endDate,
     weekly_rent: weeklyRent,
+    ...(bondAmount != null ? { bond_amount: bondAmount } : {}),
     status: 'pending_confirmation',
     notes: null,
     student_message: studentMessage?.trim() || null,

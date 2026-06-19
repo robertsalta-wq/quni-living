@@ -17,7 +17,10 @@ import {
   resolveTenancyPackage,
   tenancyGeneratorToApiPath,
 } from '../../lib/resolveTenancyPackage.js'
-import { getActivePricingSnapshotForProperty } from '../../lib/pricing/index.js'
+import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
+import {
+  getActivePricingSnapshotForProperty,
+} from '../../lib/pricing/index.js'
 import {
   isLandlordFeeExempt,
   resolveManagedApplicationFeePercent,
@@ -80,13 +83,14 @@ export async function runManagedConfirmBooking(params) {
       status,
       stripe_payment_intent_id,
       weekly_rent,
+      bond_amount,
       move_in_date,
       start_date,
       lease_length,
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier, bond ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -374,7 +378,12 @@ export async function runManagedConfirmBooking(params) {
     const studentUserId = typeof sp.user_id === 'string' && sp.user_id.trim() ? sp.user_id.trim() : null
 
     if (studentUserId && landlordUserId && booking.property_id) {
-      const bondCents = weeklyCents * 4
+      const bondAud = resolveBookingBondAmountAud(
+        booking.bond_amount,
+        propForBond.bond,
+        booking.weekly_rent,
+      )
+      const bondCents = bondAud != null ? Math.round(bondAud * 100) : 0
       const { data: existingBond } = await admin.from('bonds').select('id').eq('booking_id', booking.id).maybeSingle()
       if (!existingBond && bondCents > 0) {
         const ackStudent = booking.bond_acknowledged === true
@@ -434,7 +443,12 @@ export async function runManagedConfirmBooking(params) {
       await sendEmail({ to: studentEmail, subject: t.subject, html: t.html })
     }
 
-    const bondCentsForEmail = weeklyCents * 4
+    const bondAudForEmail = resolveBookingBondAmountAud(
+      booking.bond_amount,
+      propForBond.bond,
+      booking.weekly_rent,
+    )
+    const bondCentsForEmail = bondAudForEmail != null ? Math.round(bondAudForEmail * 100) : 0
 
     const sendLandlord = async () => {
       if (!landlordEmail) return

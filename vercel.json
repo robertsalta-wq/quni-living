@@ -21,6 +21,9 @@
     "api/booking-listing-cancel.ts": {
       "maxDuration": 30
     },
+    "api/booking-set-agreed-rent.ts": {
+      "maxDuration": 30
+    },
     "api/chat.ts": {
       "maxDuration": 60
     },

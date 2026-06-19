@@ -44,7 +44,7 @@ describe('listingBookingApply helpers', () => {
 
   it('buildListingApplyBookingRow omits deposit and payment fields', () => {
     const row = buildListingApplyBookingRow({
-      property: { id: 'p1', landlord_id: 'l1' },
+      property: { id: 'p1', landlord_id: 'l1', bond: 1600 },
       student: { id: 's1' },
       moveInDate: '2026-07-01',
       leaseLength: '6 months',
@@ -63,6 +63,7 @@ describe('listingBookingApply helpers', () => {
     expect(row.status).toBe('pending_confirmation')
     expect(row.service_tier_at_request).toBe('listing')
     expect(row.booking_fee_paid).toBe(false)
+    expect(row.bond_amount).toBe(1600)
     expect(row).not.toHaveProperty('stripe_payment_intent_id')
     expect(row).not.toHaveProperty('deposit_amount')
     expect(row).not.toHaveProperty('platform_fee_amount')

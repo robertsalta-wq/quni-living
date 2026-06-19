@@ -44,6 +44,7 @@ import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDa
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
+import LandlordBookingAgreedRentEditor from '../../components/landlord/LandlordBookingAgreedRentEditor'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -899,6 +900,17 @@ export default function LandlordBookingReviewPage() {
             coTenant={parseCoTenantSnapshot(booking.co_tenant)}
           />
 
+          <LandlordBookingAgreedRentEditor
+            bookingId={booking.id}
+            status={booking.status}
+            weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+            bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+            rentBreakdown={booking.rent_breakdown}
+            propertyBond={property?.bond != null ? Number(property.bond) : null}
+            serviceTierAtRequest={booking.service_tier_at_request}
+            onSaved={() => void reload()}
+          />
+
           <LandlordApplicantVerificationSection student={snapshot} />
         </div>
 
@@ -1098,9 +1110,11 @@ export default function LandlordBookingReviewPage() {
             <div className="flex justify-between gap-4">
               <dt className="text-gray-500">Bond (listing)</dt>
               <dd className="font-medium text-right tabular-nums">
-                {property?.bond != null
-                  ? `$${Number(property.bond).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                  : '-'}
+                {booking.bond_amount != null
+                  ? `$${Number(booking.bond_amount).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
+                  : property?.bond != null
+                    ? `$${Number(property.bond).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
+                    : '-'}
               </dd>
             </div>
             <div className="flex justify-between gap-4">

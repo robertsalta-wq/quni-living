@@ -11,6 +11,8 @@ import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../../lib/tenancy/listingBondPaymentCopy'
 import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../../lib/tenantBookingStatus'
+import BookingAgreedRentNotice from '../booking/BookingAgreedRentNotice'
+import { parseRentOverrideProvenance } from '../../lib/pricing/rentAgreedOverride'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type BookingStatus = BookingRow['status']
@@ -85,9 +87,11 @@ function ListingBondGuidanceForBooking({
   })
   if (!guidance) return null
   const bondAud =
-    typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
-      ? Math.round(property.rent_per_week * 4 * 100) / 100
-      : null
+    booking.bond_amount != null && Number.isFinite(Number(booking.bond_amount))
+      ? Number(booking.bond_amount)
+      : typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
+        ? Math.round(property.rent_per_week * 4 * 100) / 100
+        : null
   return <ListingBondPaymentGuidance guidance={guidance} bondAmountAud={bondAud} />
 }
 
@@ -108,6 +112,12 @@ export default function StudentDashboardBookingCard({
   const slug = prop?.slug
   const img = firstPropertyImageUrl(prop?.images ?? null)
   const rent = b.weekly_rent ?? prop?.rent_per_week ?? null
+  const rentOverride = parseRentOverrideProvenance(b.rent_breakdown)
+  const showAgreedRentNotice =
+    rentOverride.overrideApplied &&
+    (b.status === 'pending_confirmation' ||
+      b.status === 'awaiting_info' ||
+      b.status === 'bond_pending')
 
   return (
     <li
@@ -153,6 +163,16 @@ export default function StudentDashboardBookingCard({
         const banner = tenantBookingCardBanner(b.status)
         return banner ? <div className={banner.panelClass}>{banner.text}</div> : null
       })()}
+      {showAgreedRentNotice ? (
+        <div className="px-5 pb-4">
+          <BookingAgreedRentNotice
+            weeklyRent={b.weekly_rent}
+            rentBreakdown={b.rent_breakdown}
+            bondAmount={b.bond_amount}
+            audience="student"
+          />
+        </div>
+      ) : null}
       {(b.status === 'bond_pending' || b.status === 'confirmed' || b.status === 'active') && (
         <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
           {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
