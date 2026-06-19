@@ -1,7 +1,7 @@
 -- Landlord-initiated tenant invites: deep-link external prospects into the standard renter booking flow.
 -- Rob applies this migration to prod before deploying code that depends on it.
 
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- tenant_invites
@@ -108,7 +108,7 @@ returns table (
 language plpgsql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_hash text;
@@ -120,7 +120,7 @@ begin
     return;
   end if;
 
-  v_hash := encode(digest(trim(p_token), 'sha256'), 'hex');
+  v_hash := encode(digest(trim(p_token), 'sha256'::text), 'hex');
 
   select * into inv
   from public.tenant_invites ti
