@@ -1508,29 +1508,43 @@ export default function LandlordPropertyFormPage() {
     if (sig.length < 6) return
     if (sig === lastNearbySigRef.current) return
 
+    const addressUnchangedFromLoaded =
+      isEdit &&
+      loadedPropertyAddressSigRef.current !== '' &&
+      sig === loadedPropertyAddressSigRef.current
+    const la = latitude != null ? Number(latitude) : NaN
+    const lo = longitude != null ? Number(longitude) : NaN
+    const useSavedPropertyCoords =
+      addressUnchangedFromLoaded && Number.isFinite(la) && Number.isFinite(lo)
+    const debounceMs = useSavedPropertyCoords ? 0 : 800
+
     const timeout = window.setTimeout(() => {
       const requestId = ++nearbyRequestIdRef.current
       runNearbyLookupRef.current = false
       lastNearbySigRef.current = sig
       void (async () => {
-        setNearbyCampusLoading(true)
+        const needPropertyGeocode = !useSavedPropertyCoords
+        if (needPropertyGeocode) {
+          setNearbyCampusLoading(true)
+        }
         setNearbyCampusError(null)
         setNearbyCampusSuggestions([])
 
         const ac = new AbortController()
         try {
-          const propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
+          let propertyPoint: GeoPoint | null = useSavedPropertyCoords ? { lat: la, lon: lo } : null
           if (!propertyPoint) {
-            setNearbyCampusError(
-              'We could not find that street in this suburb. Check the street line, suburb, state and postcode - unit numbers are optional for campus suggestions.',
-            )
-            setNearbyCampusLoading(false)
-            return
+            propertyPoint = await geocodeAddressWithFallbacks(addr, sub, st, pc, ac.signal)
+            if (!propertyPoint) {
+              setNearbyCampusError(
+                'We could not find that street in this suburb. Check the street line, suburb, state and postcode - unit numbers are optional for campus suggestions.',
+              )
+              setNearbyCampusLoading(false)
+              return
+            }
+            setLatitude(propertyPoint.lat)
+            setLongitude(propertyPoint.lon)
           }
-
-          // Keep lat/lng in sync for saving (and for future map/SEO features).
-          setLatitude(propertyPoint.lat)
-          setLongitude(propertyPoint.lon)
 
           const stateNorm = state.trim().toUpperCase()
           const candidates = campusRefRows.filter((c) => {
@@ -1543,7 +1557,10 @@ export default function LandlordPropertyFormPage() {
           })
 
           // Fallback if the state match was too strict.
-          const effectiveCandidates = candidates.length > 0 ? candidates : campusRefRows.filter((c) => (c.suburb?.trim() ?? '') !== '' && c.university_id != null)
+          const effectiveCandidates =
+            candidates.length > 0
+              ? candidates
+              : campusRefRows.filter((c) => (c.suburb?.trim() ?? '') !== '' && c.university_id != null)
 
           if (effectiveCandidates.length === 0) {
             setNearbyCampusError('No campus reference data found to compare against.')
@@ -1559,33 +1576,37 @@ export default function LandlordPropertyFormPage() {
             const fromDb = campusLatLonFromRow(c)
             if (fromDb) {
               campusPointById.set(c.id, fromDb)
-            } else {
+            } else if (!useSavedPropertyCoords) {
               const cState = (c.state ?? stateNorm).trim()
               const q = `${c.name}, ${c.suburb}, ${cState}, Australia`.replace(/\s+/g, ' ').trim()
               campusGeoQueryById.set(c.id, q)
             }
           }
 
-          const uniqueGeoQueries = [...new Set([...campusGeoQueryById.values()])].slice(0, 30)
-          const coordsByQuery = new Map<string, GeoPoint>()
+          if (!useSavedPropertyCoords) {
+            const uniqueGeoQueries = [...new Set([...campusGeoQueryById.values()])].slice(0, 30)
+            const coordsByQuery = new Map<string, GeoPoint>()
 
-          for (const q of uniqueGeoQueries) {
-            if (requestId !== nearbyRequestIdRef.current) return
-            const pt = await geocodeCached(q, ac.signal)
-            if (pt) coordsByQuery.set(q, pt)
-            // Light pacing to reduce rate limit risk.
-            await new Promise((r) => window.setTimeout(r, 150))
+            for (const q of uniqueGeoQueries) {
+              if (requestId !== nearbyRequestIdRef.current) return
+              const pt = await geocodeCached(q, ac.signal)
+              if (pt) coordsByQuery.set(q, pt)
+              // Light pacing to reduce rate limit risk.
+              await new Promise((r) => window.setTimeout(r, 150))
+            }
+
+            for (const c of effectiveCandidates) {
+              if (campusPointById.has(c.id)) continue
+              const q = campusGeoQueryById.get(c.id)
+              const pt = q ? coordsByQuery.get(q) : undefined
+              if (pt) campusPointById.set(c.id, pt)
+            }
           }
 
           const suggestions: NearbyCampusSuggestion[] = []
           for (const c of effectiveCandidates) {
             if (requestId !== nearbyRequestIdRef.current) return
-            const pt =
-              campusPointById.get(c.id) ??
-              (() => {
-                const q = campusGeoQueryById.get(c.id)
-                return q ? coordsByQuery.get(q) : undefined
-              })()
+            const pt = campusPointById.get(c.id)
             if (!pt) continue
             const uName = c.university_id ? uniById.get(c.university_id) ?? '' : ''
             if (!c.university_id) continue
@@ -1600,12 +1621,14 @@ export default function LandlordPropertyFormPage() {
           }
 
           suggestions.sort((a, b) => a.distanceKm - b.distanceKm)
-          // Show a handful of nearby options so landlords can pick from a shortlist.
-          // The closest one is auto-filled if the landlord hasn't selected anything yet.
           const top = suggestions.slice(0, 5)
 
           if (top.length === 0) {
-            setNearbyCampusError('Could not determine nearby campuses from your address.')
+            setNearbyCampusError(
+              useSavedPropertyCoords
+                ? 'Could not determine nearby campuses from saved coordinates.'
+                : 'Could not determine nearby campuses from your address.',
+            )
             setNearbyCampusLoading(false)
             return
           }
@@ -1622,16 +1645,9 @@ export default function LandlordPropertyFormPage() {
             editDeferNearbyAutoFillRef.current = false
           }
 
-          const addressUnchangedFromLoaded =
-            isEdit &&
-            loadedPropertyAddressSigRef.current !== '' &&
-            sig === loadedPropertyAddressSigRef.current
-
           const deferAutoApplyNearby =
             isEdit && editDeferNearbyAutoFillRef.current && addressUnchangedFromLoaded
 
-          // Auto-select for new listings (and edits after address change / once defer cleared), unless we
-          // must preserve DB-loaded values or the user already chose something.
           if (
             !deferAutoApplyNearby &&
             !skipNearbyAutoFillOverwriteRef.current &&
@@ -1648,10 +1664,10 @@ export default function LandlordPropertyFormPage() {
           ac.abort()
         }
       })()
-    }, 800)
+    }, debounceMs)
 
     return () => window.clearTimeout(timeout)
-  }, [address, postcode, suburb, state, campusRefRows, uniRefRows, refsLoading, isEdit, nearbyLookupNonce])
+  }, [address, postcode, suburb, state, latitude, longitude, campusRefRows, uniRefRows, refsLoading, isEdit, nearbyLookupNonce])
 
   const removeImage = useCallback(
     async (url: string) => {
