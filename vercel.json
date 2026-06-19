@@ -62,6 +62,19 @@
       "maxDuration": 60
     }
   },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "quni-living.vercel.app"
+        }
+      ],
+      "destination": "https://quni.com.au/:path*",
+      "statusCode": 308
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/).+)",
