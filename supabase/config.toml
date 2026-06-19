@@ -3,6 +3,8 @@
 #
 # Email templates: used by local `supabase start`. For hosted Supabase, copy HTML into
 # Dashboard → Authentication → Email Templates → Confirm signup.
+# Uses {{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup (matches emailRedirectTo origin).
+# Deploy the /auth/callback verifyOtp handler before flipping the hosted template.
 
 [auth.email.template.confirmation]
 subject = "Confirm your Quni Living account"

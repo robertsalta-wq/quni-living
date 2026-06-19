@@ -36,6 +36,15 @@ export default function Login() {
   const urlDetail = searchParams.get('detail')
   const showPkceVerifierMissing = urlError === 'pkce_verifier_missing'
 
+  function loginErrorNeedsConfirmationResend(msg: string | null | undefined): boolean {
+    if (!msg) return false
+    const lower = msg.toLowerCase()
+    return lower.includes('confirm your email') || lower.includes('email not confirmed')
+  }
+
+  const showUnconfirmedEmailResend = loginErrorNeedsConfirmationResend(error)
+  const showConfirmationResend = showPkceVerifierMissing || showUnconfirmedEmailResend
+
   let detailText: string | null = null
   if (urlDetail) {
     try {
@@ -86,11 +95,11 @@ export default function Login() {
   }, [searchParams, location.state])
 
   useEffect(() => {
-    if (!showPkceVerifierMissing) {
+    if (!showConfirmationResend) {
       setResendError(null)
       setResendSuccess(false)
     }
-  }, [showPkceVerifierMissing])
+  }, [showConfirmationResend])
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -252,7 +261,7 @@ export default function Login() {
         </button>
       </form>
 
-      {showPkceVerifierMissing && (
+      {showConfirmationResend && (
         <div className="mt-4 space-y-2">
           <button
             type="button"
@@ -260,7 +269,6 @@ export default function Login() {
             onClick={async () => {
               setResendError(null)
               setResendSuccess(false)
-              setError(null)
               if (!isSupabaseConfigured) {
                 setResendError('Supabase is not configured.')
                 return
@@ -290,7 +298,9 @@ export default function Login() {
             {resendLoading ? 'Resending…' : 'Resend confirmation email'}
           </button>
           {resendError && (
-            <p className="text-sm text-red-600 whitespace-pre-wrap break-words">{resendError}</p>
+            <p className="text-sm text-red-600 whitespace-pre-wrap break-words" role="alert">
+              {resendError}
+            </p>
           )}
           {resendSuccess && (
             <p className="text-sm text-emerald-700" role="status">

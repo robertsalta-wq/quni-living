@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import {
   fetchRoleAndProfile,
@@ -11,11 +12,20 @@ import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyP
 import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
+import {
+  parseSignupTokenHashFromSearch,
+  stripSensitiveAuthCallbackQueryParams,
+} from '../../lib/authCallbackParams'
+
 /**
- * Auth redirect handler (email confirm, magic link, OAuth). Uses implicit flow: tokens in the URL
- * fragment are consumed during client init (`detectSessionInUrl` on this path). Optional `?code=`
- * exchange remains for edge cases.
- * Supabase → Redirect URLs must include `${origin}/auth/callback`
+ * Auth redirect handler (email confirm, magic link, OAuth).
+ *
+ * Completion order (Outlook-safe signup uses step 1):
+ * 1. `?token_hash=&type=signup` → verifyOtp (client-side; mail scanners do not run JS)
+ * 2. `?code=` → exchangeCodeForSession (PKCE when verifier exists in this browser)
+ * 3. `#access_token=` → implicit flow via detectSessionInUrl on getSession()
+ *
+ * Deploy the handler before switching the hosted email template to token_hash links.
  */
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -34,21 +44,81 @@ export default function AuthCallback() {
 
     let cancelled = false
 
-    ;(async () => {
-      // Wait for client `_initialize()` so implicit tokens in `#access_token=…` are saved first.
-      await supabase.auth.getSession()
+    async function finishWithSession(sessionUser: User) {
+      await applyPendingAccommodationRouteToStudentProfile(
+        sessionUser.id,
+        sessionUser.created_at,
+        sessionUser.user_metadata?.accommodation_verification_route,
+      )
+      await applyPendingSignupRole(sessionUser)
+
+      const { role, profile } = await fetchRoleAndProfile(sessionUser)
       if (cancelled) return
 
+      if (userNeedsEmailAddressVerification(sessionUser)) {
+        const onboardingPath =
+          role === 'student'
+            ? '/onboarding/student'
+            : role === 'landlord'
+              ? '/onboarding/landlord'
+              : '/onboarding'
+        navigate('/verify-email', {
+          replace: true,
+          state: { from: { pathname: onboardingPath } },
+        })
+        return
+      }
+
+      if (role === 'admin') {
+        navigate('/admin', { replace: true })
+        return
+      }
+
+      if (!role) {
+        navigate('/onboarding', { replace: true })
+        return
+      }
+      if (needsOnboarding(role, profile)) {
+        navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+        return
+      }
+
+      const returnTo = consumePostAuthRedirect()
+      navigate(returnTo ?? getPostLoginRedirectDestination(sessionUser, role, profile), { replace: true })
+    }
+
+    ;(async () => {
       const params = new URLSearchParams(window.location.search)
       const oauthErr = params.get('error')
       const oauthDesc = params.get('error_description')
       const code = params.get('code')
+      const tokenParams = parseSignupTokenHashFromSearch(window.location.search)
 
-      let sessionErr = null as { message: string } | null
-      if (code) {
+      let tokenHashErr: { message: string } | null = null
+      let sessionErr: { message: string } | null = null
+
+      if (tokenParams) {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenParams.token_hash,
+          type: 'signup',
+        })
+        if (error) {
+          tokenHashErr = error
+        } else {
+          stripSensitiveAuthCallbackQueryParams()
+        }
+      }
+
+      if (cancelled) return
+
+      if (!tokenHashErr && code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         sessionErr = error
       }
+
+      if (cancelled) return
+
+      await supabase.auth.getSession()
       if (cancelled) return
 
       const {
@@ -56,14 +126,13 @@ export default function AuthCallback() {
       } = await supabase.auth.getSession()
       if (cancelled) return
 
-      // Do not redirect on `?error=` alone: some mail clients prefetch links (burning the code) or
-      // Supabase may echo error params while this browser already has a valid session from the real open.
       if (session) {
-        if (oauthErr || sessionErr) {
+        if (oauthErr || sessionErr || tokenHashErr) {
           console.warn('Auth callback: continuing with session despite URL error and/or exchange error', {
             oauthErr,
             oauthDesc,
             sessionErr,
+            tokenHashErr,
           })
         }
 
@@ -87,55 +156,24 @@ export default function AuthCallback() {
           return
         }
 
-        await applyPendingAccommodationRouteToStudentProfile(
-          user.id,
-          user.created_at,
-          user.user_metadata?.accommodation_verification_route,
+        await finishWithSession(user)
+        return
+      }
+
+      if (tokenHashErr) {
+        navigate(
+          `/login?error=oauth&detail=${encodeURIComponent(
+            tokenHashErr.message ||
+              'That confirmation link could not be used. Request a new confirmation email and open only the newest link.',
+          )}`,
+          { replace: true },
         )
-        await applyPendingSignupRole(user)
-
-        const { role, profile } = await fetchRoleAndProfile(user)
-        if (cancelled) return
-
-        if (userNeedsEmailAddressVerification(user)) {
-          const onboardingPath =
-            role === 'student'
-              ? '/onboarding/student'
-              : role === 'landlord'
-                ? '/onboarding/landlord'
-                : '/onboarding'
-          navigate('/verify-email', {
-            replace: true,
-            state: { from: { pathname: onboardingPath } },
-          })
-          return
-        }
-
-        if (role === 'admin') {
-          navigate('/admin', { replace: true })
-          return
-        }
-
-        if (!role) {
-          navigate('/onboarding', { replace: true })
-          return
-        }
-        if (needsOnboarding(role, profile)) {
-          navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
-          return
-        }
-
-        const returnTo = consumePostAuthRedirect()
-        navigate(returnTo ?? getPostLoginRedirectDestination(user, role, profile), { replace: true })
         return
       }
 
       if (oauthErr) {
         const msg = oauthDesc?.replace(/\+/g, ' ') ?? oauthErr
-        navigate(
-          `/login?error=oauth&detail=${encodeURIComponent(msg)}`,
-          { replace: true },
-        )
+        navigate(`/login?error=oauth&detail=${encodeURIComponent(msg)}`, { replace: true })
         return
       }
 
@@ -155,7 +193,7 @@ export default function AuthCallback() {
       navigate(
         '/login?error=missing_code&detail=' +
           encodeURIComponent(
-            'No session after sign-in. Check Supabase Redirect URLs include this page (e.g. https://your-app.vercel.app/auth/callback).',
+            'No session after sign-in. If you opened a confirmation link, it may have expired — use “Resend confirmation email” on the log-in page and open only the newest link.',
           ),
         { replace: true },
       )

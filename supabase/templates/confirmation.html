@@ -11,7 +11,7 @@
     <p>Click the button below to confirm your email address and get started.</p>
     <p>
       <a
-        href="{{ .ConfirmationURL }}"
+        href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup"
         style="
           background: #e8583a;
           color: #fff;
@@ -25,7 +25,7 @@
     </p>
     <p>
       If the button doesn't work, copy and paste this link into your browser:<br />
-      {{ .ConfirmationURL }}
+      {{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup
     </p>
     <p>If you didn't create an account with Quni Living, you can safely ignore this email.</p>
   </body>

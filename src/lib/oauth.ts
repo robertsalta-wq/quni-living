@@ -25,6 +25,9 @@ export function formatAuthEmailErrorMessage(err: unknown): string {
     if (typeof s === 'number') msg = `${msg} (HTTP ${s})`
   }
   const lower = msg.toLowerCase()
+  if (lower.includes('rate limit') || lower.includes('too many requests') || lower.includes('429')) {
+    return 'Too many confirmation emails requested. Please wait a few minutes before trying again.'
+  }
   if (
     lower.includes('redirect') &&
     (lower.includes('not allowed') || lower.includes('invalid') || lower.includes('whitelist'))
