@@ -26,7 +26,7 @@ export default function Faq() {
         </div>
 
         <nav
-          className="sticky top-below-fixed-header z-20 -mx-6 mb-10 flex flex-wrap gap-2 bg-gray-50/95 px-6 py-3 backdrop-blur-sm md:top-24"
+          className="sticky top-below-fixed-header z-30 -mx-6 mb-10 flex flex-wrap gap-2 border-b border-gray-200 bg-gray-50 px-6 py-4 shadow-sm md:top-24"
           aria-label="FAQ sections"
         >
           {FAQ_SECTIONS.map((section) => (
