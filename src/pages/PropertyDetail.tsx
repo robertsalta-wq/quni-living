@@ -58,6 +58,7 @@ import {
   STRAIGHT_LINE_DISTANCE_NOTE,
 } from '../lib/workplaceLocation'
 import { resetWindowScrollSync } from '../lib/scrollToTop'
+import { loadPropertyDetailBySlug, peekPropertyDetailCache } from '../lib/propertyDetailCache'
 
 function haversineKm(a: GeoPoint, b: GeoPoint): number {
   const dLat = ((b.lat - a.lat) * Math.PI) / 180
@@ -283,9 +284,11 @@ export default function PropertyDetail() {
     [setSearchParams],
   )
 
-  const { user, profile, role, session, refreshProfile, loading: authLoading } = useAuthContext()
+  const { user, profile, role, session, refreshProfile } = useAuthContext()
   const { isProfessionalRenter } = useRenterSearchPersona()
-  const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference('full')
+  const { universities: uniRefRows, campuses: campusRefRows } = useUniversityCampusReference('full', {
+    deferLoad: true,
+  })
   const uniNameById = useMemo(() => {
     const m = new Map<string, string>()
     for (const u of uniRefRows) m.set(normUuid(u.id), u.name)
@@ -296,7 +299,9 @@ export default function PropertyDetail() {
     for (const c of campusRefRows) m.set(normUuid(c.id), { name: c.name, university_id: c.university_id })
     return m
   }, [campusRefRows])
-  const [property, setProperty] = useState<Property | null>(null)
+  const [property, setProperty] = useState<Property | null>(() =>
+    slug ? peekPropertyDetailCache(slug) : null,
+  )
   const listingFromForPicker = useMemo(
     () => normalizeListingBound(property?.available_from),
     [property?.available_from],
@@ -304,7 +309,7 @@ export default function PropertyDetail() {
   const listingToForPicker = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
   /** Previous route slug can remain in `property` until the next fetch settles - avoid running gates on stale rows. */
   const listingRowStale = Boolean(slug && property && property.slug !== slug)
-  const [loading, setLoading] = useState(shouldFetch)
+  const [loading, setLoading] = useState(() => shouldFetch && !peekPropertyDetailCache(slug))
   const [error, setError] = useState<string | null>(null)
   const [studentListingBlocked, setStudentListingBlocked] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
@@ -359,11 +364,18 @@ export default function PropertyDetail() {
   }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
-    // Guests: fetch immediately. Logged-in: wait until role is resolved for student-only gate.
-    if (!shouldFetch || (authLoading && userId)) return
+    if (!shouldFetch) return
 
     let cancelled = false
-    const showLoadingShell = !property || property.slug !== slug
+    const cached = peekPropertyDetailCache(slug)
+    const showLoadingShell = !cached
+
+    if (cached) {
+      setProperty(cached)
+      setLoading(false)
+      setError(null)
+      setStudentListingBlocked(false)
+    }
 
     void (async () => {
       if (showLoadingShell) {
@@ -372,65 +384,64 @@ export default function PropertyDetail() {
         setStudentListingBlocked(false)
       }
 
-      if (userId && role === 'student') {
-        const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer', {
-          p_slug: slug,
-        })
+      try {
+        const propertyPromise = loadPropertyDetailBySlug(slug)
+        const accessPromise =
+          userId && role === 'student'
+            ? supabase.rpc('property_access_status_for_viewer', { p_slug: slug })
+            : null
+
+        const [data, accessResult] = await Promise.all([
+          propertyPromise,
+          accessPromise ?? Promise.resolve({ data: null, error: null }),
+        ])
+
         if (cancelled) return
-        if (rpcErr) {
-          setError(rpcErr.message)
+
+        if (accessResult.error) {
+          setError(accessResult.error.message)
           setProperty(null)
           setLoading(false)
           return
         }
-        const st = typeof access === 'string' ? access : null
-        if (st === 'not_found') {
-          setProperty(null)
+
+        if (userId && role === 'student') {
+          const st = typeof accessResult.data === 'string' ? accessResult.data : null
+          if (st === 'not_found') {
+            setProperty(null)
+            setError(null)
+            setLoading(false)
+            return
+          }
+          if (st === 'forbidden_student_only') {
+            setProperty(null)
+            setStudentListingBlocked(true)
+            setLoading(false)
+            return
+          }
+        }
+
+        if (!data) {
           setError(null)
-          setLoading(false)
-          return
-        }
-        if (st === 'forbidden_student_only') {
           setProperty(null)
-          setStudentListingBlocked(true)
+        } else {
+          setProperty(data)
+          if (showLoadingShell) setImageIndex(0)
+        }
+        setLoading(false)
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load listing')
+          setProperty(null)
           setLoading(false)
-          return
         }
       }
-
-      const { data, error: fetchError } = await supabase
-        .from('properties')
-        .select(
-          `
-            *,
-            landlord_profiles ( id, full_name, avatar_url, verified, languages_spoken ),
-            universities ( id, name, slug ),
-            campuses ( id, name ),
-            property_features ( features ( id, name, icon ) ),
-            property_house_rules ( permitted, rule_id, house_rules_ref ( id, name, icon ) )
-          `,
-        )
-        .eq('slug', slug)
-        .maybeSingle()
-
-      if (cancelled) return
-      if (fetchError) {
-        setError(fetchError.message)
-        setProperty(null)
-      } else if (!data) {
-        setError(null)
-        setProperty(null)
-      } else {
-        setProperty(data as Property)
-        if (showLoadingShell) setImageIndex(0)
-      }
-      setLoading(false)
     })()
 
     return () => {
       cancelled = true
     }
-  }, [slug, shouldFetch, userId, role, authLoading])
+  }, [slug, shouldFetch, userId, role])
 
   useEffect(() => {
     const root = thumbsScrollRef.current

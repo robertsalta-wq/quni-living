@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import type { Property } from '../lib/listings'
+import { prefetchPropertyDetail } from '../lib/propertyDetailCache'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { formatDistanceKm } from '../lib/workplaceLocation'
@@ -60,6 +61,14 @@ export function PropertyCard({
     linkSearch && linkSearch.length > 0
       ? `/properties/${property.slug}${linkSearch.startsWith('?') ? linkSearch : `?${linkSearch}`}`
       : `/properties/${property.slug}`
+
+  const prefetchDetail = staticDisplay
+    ? undefined
+    : {
+        onMouseEnter: () => prefetchPropertyDetail(property.slug),
+        onFocus: () => prefetchPropertyDetail(property.slug),
+        onTouchStart: () => prefetchPropertyDetail(property.slug),
+      }
 
   const shellClassName = [
     'group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-200',
@@ -270,7 +279,7 @@ export function PropertyCard({
   }
 
   return (
-    <Link to={to} className={shellClassName}>
+    <Link to={to} className={shellClassName} {...prefetchDetail}>
       {cardBody}
     </Link>
   )

@@ -129,7 +129,7 @@ async function fetchNearAnchorListings(
   return { properties: rows, total: rows.length, distanceKmByPropertyId }
 }
 
-/** Single round-trip for browse (Edge-cached API when in browser, else PostgREST). */
+/** Single round-trip for browse (direct PostgREST in browser; Edge API as fallback). */
 export async function fetchListingsBrowse(
   f: ListingsQueryFilters,
   listingDay = listingIsoDateUtc(),
@@ -139,15 +139,30 @@ export async function fetchListingsBrowse(
   }
 
   if (typeof window !== 'undefined') {
+    const sort = f.sort as ListingsSort
+    let query = applyPropertyListingDateWindow(
+      supabase.from('properties').select(PROPERTY_CARD_LIST_SELECT),
+      listingDay,
+    ).eq('status', 'active')
+
+    query = applyListingsFiltersToQuery(query, f)
+    query = orderListingsQuery(query, sort)
+
+    const { data, error: fetchError } = await query
+    if (!fetchError) {
+      const rows = (data ?? []) as Property[]
+      return { properties: rows, total: rows.length, distanceKmByPropertyId: new Map() }
+    }
+
+    console.warn('[fetchListingsBrowse] direct Supabase failed, trying edge API', fetchError)
     try {
       return await fetchListingsBrowseViaEdge(f, listingDay)
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
       if (msg === 'NEAR_ANCHOR_EDGE_UNSUPPORTED') {
-        /* fall through */
-      } else {
-        console.warn('[fetchListingsBrowse] edge API failed, using direct Supabase', e)
+        throw fetchError
       }
+      throw fetchError
     }
   }
 
