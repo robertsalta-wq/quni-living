@@ -103,7 +103,7 @@ export default function AdminStudents() {
 
   const emptyDescription =
     rows.length === 0
-      ? 'Tenant profiles appear here once someone finishes signup.'
+      ? 'Renter profiles appear here once someone finishes signup.'
       : routeFilter === 'all'
         ? 'No profiles match this view.'
         : routeFilter === 'student'
@@ -113,8 +113,8 @@ export default function AdminStudents() {
   return (
     <div>
       <AdminPageHeader
-        title="Tenant profiles"
-        subtitle="Students and non-students who signed up to rent."
+        title="Renter profiles"
+        subtitle="Students and non-students who signed up to rent"
       />
 
       {error && (
@@ -159,12 +159,12 @@ export default function AdminStudents() {
 
       <div className={adminTableWrapClass}>
         {loading ? (
-          <LoadingState label="Loading tenant profiles…" />
+          <LoadingState label="Loading renter profiles…" />
         ) : rows.length === 0 ? (
           <EmptyState
             icon="graduation-cap"
-            title="No tenant profiles yet"
-            description="Tenant profiles appear here once someone finishes signup."
+            title="No renter profiles yet"
+            description="Renter profiles appear here once someone finishes signup."
           />
         ) : filteredRows.length === 0 ? (
           <EmptyState icon="graduation-cap" title="No matching profiles" description={emptyDescription} />

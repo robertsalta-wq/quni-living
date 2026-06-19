@@ -57,6 +57,9 @@ src/lib/__test_output__/
 scripts/test-official-form-docuseal-spike.mjs
 scripts/test-official-form-refined-b-spike.mjs
 
+# Local scratch output (do not commit)
+tmp/
+
 # One-off design-system snapshot for Claude Design (not live source)
 claude-design-bundle/*
 !claude-design-bundle/README.md
