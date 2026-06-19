@@ -29,12 +29,18 @@ export function writePropertyDetailCache(slug: string, property: Property): void
   memory.set(key, { at: Date.now(), property })
 }
 
-async function fetchPropertyDetailBySlug(slug: string): Promise<Property | null> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select(PROPERTY_DETAIL_SELECT)
-    .eq('slug', slug)
-    .maybeSingle()
+async function fetchPropertyDetailBySlug(slug: string, abortSignal?: AbortSignal): Promise<Property | null> {
+  if (abortSignal?.aborted) {
+    throw new DOMException('The operation was aborted.', 'AbortError')
+  }
+
+  let query = supabase.from('properties').select(PROPERTY_DETAIL_SELECT).eq('slug', slug)
+
+  if (abortSignal) {
+    query = query.abortSignal(abortSignal)
+  }
+
+  const { data, error } = await query.maybeSingle()
 
   if (error) throw error
   if (!data) return null
@@ -61,25 +67,39 @@ export function prefetchPropertyDetail(slug: string): void {
   inflightBySlug.set(key, inflight)
 }
 
-export async function loadPropertyDetailBySlug(slug: string): Promise<Property | null> {
+export async function loadPropertyDetailBySlug(
+  slug: string,
+  options?: { abortSignal?: AbortSignal },
+): Promise<Property | null> {
   const key = slug.trim()
   if (!key || !isSupabaseConfigured) return null
 
   const cached = peekPropertyDetailCache(key)
   if (cached) return cached
 
-  const existing = inflightBySlug.get(key)
-  if (existing) return existing
+  const abortSignal = options?.abortSignal
+  if (abortSignal?.aborted) {
+    throw new DOMException('The operation was aborted.', 'AbortError')
+  }
 
-  const inflight = fetchPropertyDetailBySlug(key)
+  if (!abortSignal) {
+    const existing = inflightBySlug.get(key)
+    if (existing) return existing
+  }
+
+  const inflight = fetchPropertyDetailBySlug(key, abortSignal)
     .then((property) => {
       if (property) writePropertyDetailCache(key, property)
       return property
     })
     .finally(() => {
-      inflightBySlug.delete(key)
+      if (!abortSignal) {
+        inflightBySlug.delete(key)
+      }
     })
 
-  inflightBySlug.set(key, inflight)
+  if (!abortSignal) {
+    inflightBySlug.set(key, inflight)
+  }
   return inflight
 }

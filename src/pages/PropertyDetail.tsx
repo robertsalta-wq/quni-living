@@ -346,6 +346,11 @@ export default function PropertyDetail() {
 
   const isPreview = !user
   const userId = user?.id ?? null
+  /** Stable after auth bootstrap — one listing fetch per slug + viewer identity. */
+  const viewerListingFetchKey = useMemo(() => {
+    if (authLoading) return null
+    return userId ? `${userId}\0${role ?? ''}` : 'guest'
+  }, [authLoading, userId, role])
   const listingPath = `${location.pathname}${location.search}`
   const encodedRedirect = encodeURIComponent(listingPath)
 
@@ -384,11 +389,11 @@ export default function PropertyDetail() {
   }, [property?.id, user, listingPath, encodedRedirect, navigate, openMessageThread])
 
   useEffect(() => {
-    // Wait for auth bootstrap so logged-in students run the access gate on the first fetch
-    // (avoids cancel/re-fetch races on refresh that can leave the skeleton stuck).
-    if (!shouldFetch || authLoading) return
+    // Wait for profile-ready auth (hydrate finished — snapshot may paint role early but loading stays true).
+    if (!shouldFetch || !viewerListingFetchKey) return
 
     const fetchGen = ++propertyFetchGenRef.current
+    const abort = new AbortController()
     let cancelled = false
     const isStale = () => cancelled || fetchGen !== propertyFetchGenRef.current
 
@@ -410,10 +415,12 @@ export default function PropertyDetail() {
       }
 
       try {
-        const propertyPromise = loadPropertyDetailBySlug(slug)
+        const propertyPromise = loadPropertyDetailBySlug(slug, { abortSignal: abort.signal })
         const accessPromise =
           userId && role === 'student'
-            ? supabase.rpc('property_access_status_for_viewer', { p_slug: slug })
+            ? supabase
+                .rpc('property_access_status_for_viewer', { p_slug: slug })
+                .abortSignal(abort.signal)
             : Promise.resolve({ data: null, error: null })
 
         const [data, accessResult] = await withPropertyDetailFetchTimeout(
@@ -455,11 +462,11 @@ export default function PropertyDetail() {
           if (showLoadingShell) setImageIndex(0)
         }
       } catch (e) {
-        if (!isStale()) {
-          setError(e instanceof Error ? e.message : 'Failed to load listing')
-          setProperty(null)
-          setStudentListingBlocked(false)
-        }
+        if (isStale()) return
+        if (e instanceof DOMException && e.name === 'AbortError') return
+        setError(e instanceof Error ? e.message : 'Failed to load listing')
+        setProperty(null)
+        setStudentListingBlocked(false)
       } finally {
         if (!isStale()) {
           setLoading(false)
@@ -469,8 +476,9 @@ export default function PropertyDetail() {
 
     return () => {
       cancelled = true
+      abort.abort()
     }
-  }, [slug, shouldFetch, userId, role, authLoading])
+  }, [slug, shouldFetch, viewerListingFetchKey, userId, role])
 
   useEffect(() => {
     const root = thumbsScrollRef.current

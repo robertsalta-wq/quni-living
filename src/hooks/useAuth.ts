@@ -27,6 +27,26 @@ function isSilentAuthEvent(event: string): boolean {
   return event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION'
 }
 
+/** One in-flight profile fetch per user — getSession + INITIAL_SESSION share the same promise. */
+const profileHydrateInflightByUserId = new Map<
+  string,
+  Promise<{ role: UserRole; profile: AuthProfile | null }>
+>()
+
+function fetchRoleAndProfileDeduped(user: User): Promise<{ role: UserRole; profile: AuthProfile | null }> {
+  const userId = user.id
+  const existing = profileHydrateInflightByUserId.get(userId)
+  if (existing) return existing
+
+  const inflight = fetchRoleAndProfile(user).finally(() => {
+    if (profileHydrateInflightByUserId.get(userId) === inflight) {
+      profileHydrateInflightByUserId.delete(userId)
+    }
+  })
+  profileHydrateInflightByUserId.set(userId, inflight)
+  return inflight
+}
+
 /**
  * Auth state + Supabase subscription. Intended to be called once inside `AuthProvider`.
  */
@@ -42,6 +62,7 @@ export function useProvideAuth(): AuthState {
 
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
+      profileHydrateInflightByUserId.clear()
       setUser(null)
       setProfile(null)
       setRole(null)
@@ -53,6 +74,7 @@ export function useProvideAuth(): AuthState {
     if (!authUserEmail(u)) {
       const { data, error } = await supabase.auth.getUser()
       if (error && isStaleOrInvalidJwtUserError(error.message)) {
+        profileHydrateInflightByUserId.delete(u.id)
         clearOnboardingDismissed()
         clearAuthSnapshot()
         await supabase.auth.signOut()
@@ -65,7 +87,7 @@ export function useProvideAuth(): AuthState {
       resolved = data.user ?? u
     }
     setUser(resolved)
-    const { role: r, profile: p } = await fetchRoleAndProfile(resolved)
+    const { role: r, profile: p } = await fetchRoleAndProfileDeduped(resolved)
     setRole(r)
     setProfile(p)
     writeAuthSnapshot({ userId: resolved.id, role: r, profile: p })
@@ -94,10 +116,10 @@ export function useProvideAuth(): AuthState {
 
       const cached = readAuthSnapshot(sessionUser?.id)
       if (cached) {
+        // Paint header from snapshot but keep loading=true until hydrate settles so
+        // listing pages do not fetch in parallel with redundant profile hydrates.
         setRole(cached.role)
         setProfile(cached.profile)
-        bootstrapDoneRef.current = true
-        setLoading(false)
       }
 
       hydrateFromUser(sessionUser).finally(() => {
@@ -148,6 +170,7 @@ export function useProvideAuth(): AuthState {
     navigate('/', { replace: true })
     clearOnboardingDismissed()
     clearAuthSnapshot()
+    profileHydrateInflightByUserId.clear()
     await supabase.auth.signOut()
     setUser(null)
     setSession(null)
