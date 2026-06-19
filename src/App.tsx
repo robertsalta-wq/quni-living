@@ -96,6 +96,8 @@ function App() {
           {/* Auth */}
           <Route path="/auth/callback" element={<Lazy.AuthCallback />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<Lazy.ForgotPassword />} />
+          <Route path="/reset-password" element={<Lazy.ResetPassword />} />
           <Route path="/verify-email" element={<Lazy.VerifyEmail />} />
           <Route path="/signup" element={<Lazy.Signup />} />
           <Route path="/student-signup" element={<Lazy.StudentSignup />} />

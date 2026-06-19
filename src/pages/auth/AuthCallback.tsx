@@ -15,14 +15,18 @@ import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 import {
   parseSignupTokenHashFromSearch,
+  parseRecoveryTokenHashFromSearch,
+  isPasswordRecoveryCallbackSearch,
+  isPasswordRecoveryCallbackHash,
   stripSensitiveAuthCallbackQueryParams,
+  stripAuthCallbackHashFragment,
 } from '../../lib/authCallbackParams'
 
 /**
  * Auth redirect handler (email confirm, magic link, OAuth).
  *
  * Completion order (Outlook-safe signup uses step 1):
- * 1. `?token_hash=&type=signup` → verifyOtp (client-side; mail scanners do not run JS)
+ * 1. `?token_hash=&type=signup|recovery` → verifyOtp (client-side; mail scanners do not run JS)
  * 2. `?code=` → exchangeCodeForSession (PKCE when verifier exists in this browser)
  * 3. `#access_token=` → implicit flow via detectSessionInUrl on getSession()
  *
@@ -97,12 +101,26 @@ export default function AuthCallback() {
       const oauthDesc = params.get('error_description')
       const code = params.get('code')
       const tokenParams = parseSignupTokenHashFromSearch(window.location.search)
+      const recoveryParams = parseRecoveryTokenHashFromSearch(window.location.search)
 
       let tokenHashErr: { message: string } | null = null
       let sessionErr: { message: string } | null = null
       let completedSignupEmailConfirm = false
+      let completedPasswordRecovery = false
 
-      if (tokenParams) {
+      if (recoveryParams) {
+        await supabase.auth.signOut()
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: recoveryParams.token_hash,
+          type: 'recovery',
+        })
+        if (error) {
+          tokenHashErr = error
+        } else {
+          completedPasswordRecovery = true
+          stripSensitiveAuthCallbackQueryParams()
+        }
+      } else if (tokenParams) {
         // Drop any unrelated session so a failed verify cannot continue as another user.
         await supabase.auth.signOut()
         const { error } = await supabase.auth.verifyOtp({
@@ -135,6 +153,28 @@ export default function AuthCallback() {
       if (cancelled) return
 
       if (session) {
+        const isRecoveryFlow =
+          completedPasswordRecovery ||
+          isPasswordRecoveryCallbackSearch(window.location.search) ||
+          isPasswordRecoveryCallbackHash(window.location.hash)
+
+        if (isRecoveryFlow) {
+          stripAuthCallbackHashFragment()
+          if (tokenHashErr) {
+            await supabase.auth.signOut()
+            navigate(
+              `/reset-password?error=${encodeURIComponent(
+                tokenHashErr.message ||
+                  'That reset link could not be used. Request a new password reset email.',
+              )}`,
+              { replace: true },
+            )
+            return
+          }
+          navigate('/reset-password', { replace: true })
+          return
+        }
+
         if (tokenHashErr) {
           await supabase.auth.signOut()
           navigate(
@@ -180,11 +220,17 @@ export default function AuthCallback() {
       }
 
       if (tokenHashErr) {
+        const recoveryFailed = Boolean(recoveryParams) || isPasswordRecoveryCallbackSearch(window.location.search)
         navigate(
-          `/login?error=oauth&detail=${encodeURIComponent(
-            tokenHashErr.message ||
-              'That confirmation link could not be used. Request a new confirmation email and open only the newest link.',
-          )}`,
+          recoveryFailed
+            ? `/reset-password?error=${encodeURIComponent(
+                tokenHashErr.message ||
+                  'That reset link could not be used. Request a new password reset email.',
+              )}`
+            : `/login?error=oauth&detail=${encodeURIComponent(
+                tokenHashErr.message ||
+                  'That confirmation link could not be used. Request a new confirmation email and open only the newest link.',
+              )}`,
           { replace: true },
         )
         return

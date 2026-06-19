@@ -90,9 +90,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       // Native callback: com.quni.living://auth/callback (protocol-based deep link; `auth`
       // may parse into `url.host`, so we compare `/${url.host}${url.pathname}` too).
       const isWebCallback = path.endsWith('/auth/callback')
+      const isResetPassword = path.endsWith('/reset-password')
       const nativePath = url.host ? `/${url.host}${url.pathname}`.replace(/\/$/, '') || '/' : path
       const isNativeCallback = url.protocol === 'com.quni.living:' && nativePath.endsWith('/auth/callback')
-      if (!isWebCallback && !isNativeCallback) return false
+      if (!isWebCallback && !isNativeCallback && !isResetPassword) return false
 
       return Boolean(
         params.access_token ||

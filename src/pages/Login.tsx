@@ -34,6 +34,7 @@ export default function Login() {
 
   const urlError = searchParams.get('error')
   const urlDetail = searchParams.get('detail')
+  const passwordUpdated = searchParams.get('password_updated') === '1'
   const showPkceVerifierMissing = urlError === 'pkce_verifier_missing'
 
   function loginErrorNeedsConfirmationResend(msg: string | null | undefined): boolean {
@@ -203,6 +204,12 @@ export default function Login() {
         </div>
       )}
 
+      {passwordUpdated && (
+        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          Your password was updated. Sign in with your new password.
+        </div>
+      )}
+
       {(error || errorMessage || urlDetailSecondary) && !redundantSecretBanner && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-1">
           {secretKeyError && !keyMisuse ? (
@@ -239,9 +246,17 @@ export default function Login() {
           />
         </div>
         <div>
-          <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <Link
+              to={email.trim() ? `/forgot-password?email=${encodeURIComponent(email.trim())}` : '/forgot-password'}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <input
             id="login-password"
             type="password"

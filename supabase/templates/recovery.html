@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Confirm your email</title>
+    <title>Reset your password</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif; line-height: 1.5; color: #1a1a2e">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px">
@@ -19,14 +19,14 @@
           border-radius: 0 0 8px 8px;
         "
       >
-        <h2 style="color: #1a1a2e; margin: 0 0 16px; font-size: 20px">Welcome to Quni Living</h2>
-        <p style="margin: 0 0 12px; color: #333333">Thanks for signing up.</p>
-        <p style="margin: 0 0 24px; color: #333333">
-          Click the button below to confirm your email address and get started.
+        <h2 style="color: #1a1a2e; margin: 0 0 16px; font-size: 20px">Reset your password</h2>
+        <p style="margin: 0 0 12px; color: #333333">
+          We received a request to reset the password for your Quni Living account.
         </p>
+        <p style="margin: 0 0 24px; color: #333333">Click the button below to choose a new password.</p>
         <p style="margin: 0 0 24px">
           <a
-            href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup"
+            href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery"
             style="
               background-color: #ff6f61;
               color: #ffffff;
@@ -36,17 +36,17 @@
               display: inline-block;
               font-weight: 600;
             "
-            >Confirm your email →</a
+            >Reset password →</a
           >
         </p>
         <p style="margin: 0 0 8px; color: #666666; font-size: 14px">
           If the button doesn&apos;t work, copy and paste this link into your browser:
         </p>
         <p style="margin: 0 0 24px; color: #666666; font-size: 13px; word-break: break-all">
-          {{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup
+          {{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=recovery
         </p>
         <p style="margin: 0; color: #888888; font-size: 14px">
-          If you didn&apos;t create an account with Quni Living, you can safely ignore this email.
+          If you didn&apos;t request a password reset, you can safely ignore this email.
         </p>
       </div>
       <div style="text-align: center; padding: 20px; color: #888888; font-size: 12px">

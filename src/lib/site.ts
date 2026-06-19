@@ -60,6 +60,8 @@ const PRIVATE_PREFIXES = [
   '/messages',
   '/onboarding',
   '/verify-email',
+  '/forgot-password',
+  '/reset-password',
   '/auth/callback',
 ] as const
 

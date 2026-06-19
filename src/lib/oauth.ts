@@ -17,6 +17,11 @@ export function getAuthCallbackUrl() {
   return `${window.location.origin}/auth/callback`
 }
 
+/** Same allow-listed URL as signup/OAuth — AuthCallback routes recovery sessions to `/reset-password`. */
+export function getPasswordResetRedirectUrl() {
+  return getAuthCallbackUrl()
+}
+
 /** Richer copy for resend/signup mail failures (redirect allow-list is a common cause). */
 export function formatAuthEmailErrorMessage(err: unknown): string {
   let msg = err instanceof Error ? err.message : 'Request failed.'
