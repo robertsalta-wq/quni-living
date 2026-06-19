@@ -147,20 +147,18 @@ export default function AIListingProofread({
   )
 
   const buttonRow = (
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex flex-wrap items-center gap-3">
+      {proofreadButton}
       {!canProofread ? (
         <p className="text-xs text-gray-500">Add text above to proofread, or use Reset to platform default.</p>
-      ) : (
-        <span />
-      )}
-      {proofreadButton}
+      ) : null}
     </div>
   )
 
   return (
     <div className={className}>
       {buttonPlacement === 'header' && headerSlot ? (
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-1 flex flex-wrap items-center gap-3">
           {headerSlot}
           {proofreadButton}
         </div>
