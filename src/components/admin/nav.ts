@@ -51,8 +51,8 @@ export const ADMIN_NAV_ZONES: readonly AdminNavZone[] = [
       { id: 'tier-events', label: 'Tier events', icon: 'trending-up', to: '/admin/service-tier-events' },
       { id: 'enquiries', label: 'Enquiries', icon: 'message-square', to: '/admin/enquiries' },
       { id: 'properties', label: 'Properties', icon: 'home', to: '/admin/properties' },
-      // Decision H1: students live under Marketplace.
-      { id: 'students', label: 'Students', icon: 'graduation-cap', to: '/admin/students' },
+      // Decision H1: renter profiles live under Marketplace (`/admin/students` URL unchanged).
+      { id: 'students', label: 'Renters', icon: 'graduation-cap', to: '/admin/students' },
     ],
   },
   {

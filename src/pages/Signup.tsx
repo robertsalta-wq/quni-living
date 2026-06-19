@@ -20,6 +20,7 @@ import {
   SignupLegalDocLink,
   type LegalDocumentKind,
 } from '../components/legal/LegalDocumentModal'
+import { LandlordServiceAgreementContent } from '../components/legal/LandlordServiceAgreementContent'
 import { PrivacyContent } from '../components/legal/PrivacyContent'
 import { TermsContent } from '../components/legal/TermsContent'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
@@ -66,6 +67,10 @@ const LEGAL_DOC_MODAL: Record<
 > = {
   terms: { title: 'Platform Terms of Service', content: <TermsContent /> },
   privacy: { title: 'Privacy Policy', content: <PrivacyContent /> },
+  'landlord-agreement': {
+    title: 'Landlord Service Agreement',
+    content: <LandlordServiceAgreementContent />,
+  },
 }
 
 function SignupTermsFields({
@@ -125,14 +130,9 @@ function SignupTermsFields({
           />
           <span>
             I agree to the{' '}
-            <a
-              href="/landlord-service-agreement"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
-            >
+            <SignupLegalDocLink kind="landlord-agreement" onOpen={setOpenLegalDoc}>
               Landlord Service Agreement
-            </a>
+            </SignupLegalDocLink>
           </span>
         </label>
       )}

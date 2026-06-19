@@ -112,7 +112,7 @@ export function LegalDocumentModal({ open, onClose, title, children }: LegalDocu
   )
 }
 
-export type LegalDocumentKind = 'terms' | 'privacy'
+export type LegalDocumentKind = 'terms' | 'privacy' | 'landlord-agreement'
 
 const LEGAL_DOC_LINK_CLASS =
   'text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-1 rounded-sm'

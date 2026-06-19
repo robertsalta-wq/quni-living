@@ -458,7 +458,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
           </div>
           <div>
             <Link to={`/admin/students?profile=${p.id}`} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-              View in Students →
+              View in Renters →
             </Link>
           </div>
         </div>
