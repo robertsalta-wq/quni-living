@@ -577,6 +577,7 @@ export default function LandlordPropertyFormPage() {
   const skipNearbyAutoFillOverwriteRef = useRef(false)
 
   const [showAddAnotherUniversity, setShowAddAnotherUniversity] = useState(false)
+  const [campusPickerOpen, setCampusPickerOpen] = useState(false)
   const [addAnotherUniversityHelpOpen, setAddAnotherUniversityHelpOpen] = useState(false)
   const addAnotherUniversityHelpRef = useRef<HTMLDivElement>(null)
 
@@ -593,7 +594,10 @@ export default function LandlordPropertyFormPage() {
   const geoCacheRef = useRef<Map<string, GeoPoint | null>>(new Map())
   const geoCacheLoadedRef = useRef(false)
   const nearbyRequestIdRef = useRef(0)
-  const editModeGeocodeFiredRef = useRef(false)
+  /** Edit load: run campus lookup once when address is complete but campus_id is missing. */
+  const editCampusLookupQueuedRef = useRef(false)
+  /** Allows nearby lookup without marking the address dirty (edit bootstrap only). */
+  const runNearbyLookupRef = useRef(false)
   const universityIdRef = useRef<string>(universityId)
   const campusIdRef = useRef<string>(campusId)
 
@@ -714,6 +718,32 @@ export default function LandlordPropertyFormPage() {
     const u = uniRefRows.find((x) => x.id === universityId)
     return u?.name ? [u.name] : []
   }, [universityId, uniRefRows])
+
+  const addressChangedFromLoaded = useMemo(() => {
+    if (!isEdit || loadedPropertyAddressSigRef.current === '') return false
+    const sig = [address, suburb, state, postcode]
+      .map((x) => x.trim())
+      .join('|')
+      .toLowerCase()
+    return sig !== loadedPropertyAddressSigRef.current
+  }, [isEdit, address, suburb, state, postcode])
+
+  const savedCampusDisplay = useMemo(() => {
+    if (!campusId.trim()) return null
+    const campus = campusRefRows.find((c) => c.id === campusId)
+    const uni = uniRefRows.find((u) => u.id === (universityId || campus?.university_id || ''))
+    if (!campus && !uni) return null
+    const campusLabel = campus?.suburb?.trim()
+      ? `${campus.name} (${campus.suburb})`
+      : campus?.name ?? 'Campus'
+    return {
+      universityName: uni?.name ?? 'University',
+      campusLabel,
+    }
+  }, [campusId, universityId, campusRefRows, uniRefRows])
+
+  const showSavedCampusReadOnly =
+    isEdit && Boolean(campusId.trim()) && !campusPickerOpen && !addressChangedFromLoaded
 
   const amenitiesForAi = useMemo(
     () => features.filter((f) => selectedFeatureIds.has(f.id)).map((f) => f.name),
@@ -925,12 +955,15 @@ export default function LandlordPropertyFormPage() {
     manualUniCampusSelectionRef.current = false
     skipNearbyAutoFillOverwriteRef.current = false
     editDeferNearbyAutoFillRef.current = false
+    editCampusLookupQueuedRef.current = false
+    runNearbyLookupRef.current = false
     loadedPropertyAddressSigRef.current = ''
     addressDirtyRef.current = false
     lastNearbySigRef.current = ''
     setNearbyCampusSuggestions([])
     setNearbyCampusError(null)
     setShowAddAnotherUniversity(false)
+    setCampusPickerOpen(false)
     setRentPerWeek('')
     setBond('')
     setLeaseLength('Flexible')
@@ -975,9 +1008,11 @@ export default function LandlordPropertyFormPage() {
         skipNearbyAutoFillOverwriteRef.current = false
         manualUniCampusSelectionRef.current = false
         editDeferNearbyAutoFillRef.current = false
-        editModeGeocodeFiredRef.current = false
+        editCampusLookupQueuedRef.current = false
+        runNearbyLookupRef.current = false
         loadedPropertyAddressSigRef.current = ''
         setShowAddAnotherUniversity(false)
+        setCampusPickerOpen(false)
         // Navigated from edit → new without unmounting - clear stale edit state.
         setUniversityId('')
         setCampusId('')
@@ -1083,10 +1118,11 @@ export default function LandlordPropertyFormPage() {
         setCampusId(prop.campus_id ?? '')
         universityIdRef.current = prop.university_id ?? ''
         campusIdRef.current = prop.campus_id ?? ''
-        manualUniCampusSelectionRef.current = Boolean(prop.university_id || prop.campus_id)
-        skipNearbyAutoFillOverwriteRef.current = Boolean(prop.university_id || prop.campus_id)
+        manualUniCampusSelectionRef.current = Boolean(prop.campus_id)
+        skipNearbyAutoFillOverwriteRef.current = Boolean(prop.campus_id)
         // Persisted explicit user preference (default false for older rows / new listings).
         setShowAddAnotherUniversity(Boolean(prop.show_add_another_university ?? false))
+        setCampusPickerOpen(false)
         loadedPropertyAddressSigRef.current = [
           prop.address ?? '',
           prop.suburb ?? '',
@@ -1096,21 +1132,18 @@ export default function LandlordPropertyFormPage() {
           .map((x) => x.trim())
           .join('|')
           .toLowerCase()
-        editDeferNearbyAutoFillRef.current = !prop.university_id && !prop.campus_id
-        const loadedHasCoords =
-          prop.latitude != null &&
-          prop.longitude != null &&
-          Number.isFinite(Number(prop.latitude)) &&
-          Number.isFinite(Number(prop.longitude))
-        const loadedHasUniCampus = Boolean(prop.university_id?.trim() || prop.campus_id?.trim())
-        if (loadedPropertyAddressSigRef.current && loadedHasCoords && loadedHasUniCampus) {
-          addressDirtyRef.current = false
+        editDeferNearbyAutoFillRef.current = !prop.campus_id
+        const loadedHasCampus = Boolean(prop.campus_id?.trim())
+        addressDirtyRef.current = false
+        if (loadedPropertyAddressSigRef.current && loadedHasCampus) {
           lastNearbySigRef.current = loadedPropertyAddressSigRef.current
-          editModeGeocodeFiredRef.current = true
-        } else {
-          addressDirtyRef.current = false
+          editCampusLookupQueuedRef.current = false
+        } else if (loadedPropertyAddressSigRef.current) {
           lastNearbySigRef.current = ''
-          editModeGeocodeFiredRef.current = false
+          editCampusLookupQueuedRef.current = true
+        } else {
+          lastNearbySigRef.current = ''
+          editCampusLookupQueuedRef.current = false
         }
         setRentPerWeek(String(prop.rent_per_week ?? ''))
         setMaxOccupants(String(prop.max_occupants ?? 1))
@@ -1301,52 +1334,24 @@ export default function LandlordPropertyFormPage() {
   }, [isEdit, draftSaveEnabled, loadingPage, persistLandlordPropertyDraft])
 
   useEffect(() => {
-    if (!isEdit || loadingPage) return
-    if (editModeGeocodeFiredRef.current) return
+    if (!isEdit || loadingPage || refsLoading) return
+    if (!editCampusLookupQueuedRef.current) return
 
     const addr = address.trim()
     const sub = suburb.trim()
     const st = state.trim()
     const pc = postcode.trim()
     if (!addr || !sub || !st || !pc) return
-
-    const sig = [addr, sub, st, pc].join('|').toLowerCase()
-    const addressUnchanged =
-      loadedPropertyAddressSigRef.current !== '' && sig === loadedPropertyAddressSigRef.current
-    const hasCoords =
-      latitude != null &&
-      longitude != null &&
-      Number.isFinite(Number(latitude)) &&
-      Number.isFinite(Number(longitude))
-    const hasUniCampus = Boolean(universityId.trim() || campusId.trim())
-
-    if (addressUnchanged && hasCoords && hasUniCampus) {
-      editModeGeocodeFiredRef.current = true
-      addressDirtyRef.current = false
-      lastNearbySigRef.current = sig
+    if (campusId.trim()) {
+      editCampusLookupQueuedRef.current = false
       return
     }
 
-    const t = window.setTimeout(() => {
-      if (editModeGeocodeFiredRef.current) return
-      editModeGeocodeFiredRef.current = true
-      addressDirtyRef.current = true
-      lastNearbySigRef.current = ''
-      setNearbyLookupNonce((n) => n + 1)
-    }, 500)
-    return () => window.clearTimeout(t)
-  }, [
-    isEdit,
-    loadingPage,
-    address,
-    suburb,
-    state,
-    postcode,
-    latitude,
-    longitude,
-    universityId,
-    campusId,
-  ])
+    editCampusLookupQueuedRef.current = false
+    runNearbyLookupRef.current = true
+    lastNearbySigRef.current = ''
+    setNearbyLookupNonce((n) => n + 1)
+  }, [isEdit, loadingPage, refsLoading, address, suburb, state, postcode, campusId])
 
   useEffect(() => {
     if (!addAnotherUniversityHelpOpen) return
@@ -1518,7 +1523,7 @@ export default function LandlordPropertyFormPage() {
   useEffect(() => {
     const campusCount = campusRefRows.length
     const uniCount = uniRefRows.length
-    if (!addressDirtyRef.current) return
+    if (!addressDirtyRef.current && !runNearbyLookupRef.current) return
     if (refsLoading) return
     if (campusCount === 0 || uniCount === 0) return
 
@@ -1543,6 +1548,7 @@ export default function LandlordPropertyFormPage() {
 
     const timeout = window.setTimeout(() => {
       const requestId = ++nearbyRequestIdRef.current
+      runNearbyLookupRef.current = false
       lastNearbySigRef.current = sig
       void (async () => {
         setNearbyCampusLoading(true)
@@ -2994,116 +3000,151 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div>
                 <span className={labelClass}>Nearest university campus</span>
-                <p className="text-xs text-gray-500 mb-2">
-                  We list the closest campuses from your address. <span className="font-medium text-gray-700">New</span>{' '}
-                  listings save the nearest match automatically unless you override.{' '}
-                  <span className="font-medium text-gray-700">Editing</span> a listing that has no campus saved yet: tap a
-                  suggestion to select it (or use Add another university below)-we won’t assume a campus until you choose
-                  one or save after an address change.
-                </p>
 
-                {nearbyCampusError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {nearbyCampusError}
-                  </p>
-                )}
-                {nearbyCampusSuggestions.length > 0 && (
-                  <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
-                    <div className="space-y-2">
-                      {nearbyCampusSuggestions.map((s) => (
-                        <button
-                          key={s.campusId}
-                          type="button"
-                          onClick={() => applyNearbySuggestion(s)}
-                          className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-gray-900 truncate">
-                              {s.universityLabel}: {s.campusLabel}
-                            </p>
-                            <p className="text-[11px] text-gray-500">
-                              {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
-                            </p>
-                          </div>
-                          <div className="shrink-0 text-[11px] text-gray-500">
-                            {universityId === s.universityId && campusId === s.campusId ? 'Selected' : 'Tap to select'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-2">
-                      Based on approximate geocoding from your address.
+                {showSavedCampusReadOnly && savedCampusDisplay ? (
+                  <div className="mt-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                    <p className="text-sm text-gray-900">
+                      <span className="font-medium">{savedCampusDisplay.universityName}</span>
+                      <span className="text-gray-600"> - {savedCampusDisplay.campusLabel}</span>
                     </p>
-                  </div>
-                )}
-
-                <div className="mt-4" ref={addAnotherUniversityHelpRef}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        id="pf-add-another-uni"
-                        checked={showAddAnotherUniversity}
-                        onChange={(e) => {
-                          setShowAddAnotherUniversity(e.target.checked)
-                          if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
-                        }}
-                        disabled={refsLoading || nearbyCampusLoading}
-                        className={LANDLORD_FORM_CHECKBOX_CLASS}
-                      />
-                      <span className="text-sm text-gray-700">Add another university (optional)</span>
-                    </label>
                     <button
                       type="button"
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      aria-label="Help: additional university"
-                      aria-expanded={addAnotherUniversityHelpOpen}
-                      onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
+                      onClick={() => setCampusPickerOpen(true)}
+                      className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
                     >
-                      ?
+                      Change campus
                     </button>
                   </div>
-                  {addAnotherUniversityHelpOpen && (
-                    <div
-                      role="tooltip"
-                      className="mt-2 max-w-sm rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-md"
-                    >
-                      You can choose one additional university and campus for this listing-for example if your property
-                      is a better fit for a campus other than the closest match we suggested above.
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-500 mb-2">
+                      We list the closest campuses from your address.{' '}
+                      <span className="font-medium text-gray-700">New</span> listings save the nearest match
+                      automatically unless you override.{' '}
+                      <span className="font-medium text-gray-700">Editing</span> a listing that has no campus saved yet:
+                      tap a suggestion to select it (or use Add another university below)-we won’t assume a campus
+                      until you choose one or save after an address change.
+                    </p>
 
-                {showAddAnotherUniversity && (
-                  <div className="mt-4">
-                    <UniversityCampusSelect
-                      universityId={universityId || null}
-                      campusId={campusId || null}
-                      onUniversityChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        universityIdRef.current = id
-                        setUniversityId(id)
-                        campusIdRef.current = ''
-                        setCampusId('')
-                      }}
-                      onCampusChange={(id) => {
-                        manualUniCampusSelectionRef.current = true
-                        campusIdRef.current = id
-                        setCampusId(id)
-                      }}
-                      referenceScope="full"
-                      showState
-                      disabled={refsLoading || nearbyCampusLoading}
-                      labelClassName={labelClass}
-                      universitySelectClassName={inputClass}
-                      campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
-                      universityLabel="University"
-                      campusLabel="Campus"
-                      universityIdAttr="pf-uni"
-                      campusIdAttr="pf-campus"
-                    />
-                  </div>
+                    {nearbyCampusError && (
+                      <p className="text-xs text-red-600 mt-2" role="alert">
+                        {nearbyCampusError}
+                      </p>
+                    )}
+                    {nearbyCampusSuggestions.length > 0 && (
+                      <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Suggested closest campuses</p>
+                        <div className="space-y-2">
+                          {nearbyCampusSuggestions.map((s) => (
+                            <button
+                              key={s.campusId}
+                              type="button"
+                              onClick={() => applyNearbySuggestion(s)}
+                              className="flex w-full items-start justify-between gap-3 rounded-lg border border-transparent px-2 py-2 text-left hover:bg-white hover:border-gray-200 hover:shadow-sm transition-colors"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">
+                                  {s.universityLabel}: {s.campusLabel}
+                                </p>
+                                <p className="text-[11px] text-gray-500">
+                                  {s.distanceKm < 10 ? s.distanceKm.toFixed(1) : Math.round(s.distanceKm)} km away
+                                </p>
+                              </div>
+                              <div className="shrink-0 text-[11px] text-gray-500">
+                                {universityId === s.universityId && campusId === s.campusId
+                                  ? 'Selected'
+                                  : 'Tap to select'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-2">
+                          Based on approximate geocoding from your address.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-4" ref={addAnotherUniversityHelpRef}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label htmlFor="pf-add-another-uni" className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            id="pf-add-another-uni"
+                            checked={showAddAnotherUniversity}
+                            onChange={(e) => {
+                              setShowAddAnotherUniversity(e.target.checked)
+                              if (!e.target.checked) setAddAnotherUniversityHelpOpen(false)
+                            }}
+                            disabled={refsLoading || nearbyCampusLoading}
+                            className={LANDLORD_FORM_CHECKBOX_CLASS}
+                          />
+                          <span className="text-sm text-gray-700">Add another university (optional)</span>
+                        </label>
+                        <button
+                          type="button"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          aria-label="Help: additional university"
+                          aria-expanded={addAnotherUniversityHelpOpen}
+                          onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
+                        >
+                          ?
+                        </button>
+                      </div>
+                      {addAnotherUniversityHelpOpen && (
+                        <div
+                          role="tooltip"
+                          className="mt-2 max-w-sm rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-600 shadow-md"
+                        >
+                          You can choose one additional university and campus for this listing-for example if your
+                          property is a better fit for a campus other than the closest match we suggested above.
+                        </div>
+                      )}
+                    </div>
+
+                    {(showAddAnotherUniversity || campusPickerOpen) && (
+                      <div className="mt-4">
+                        {campusPickerOpen && (
+                          <div className="mb-3 flex items-center justify-between gap-2">
+                            <p className="text-xs text-gray-600">Choose a different university or campus.</p>
+                            <button
+                              type="button"
+                              onClick={() => setCampusPickerOpen(false)}
+                              className="text-xs font-medium text-gray-500 hover:text-gray-700"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                        <UniversityCampusSelect
+                          universityId={universityId || null}
+                          campusId={campusId || null}
+                          onUniversityChange={(id) => {
+                            manualUniCampusSelectionRef.current = true
+                            universityIdRef.current = id
+                            setUniversityId(id)
+                            campusIdRef.current = ''
+                            setCampusId('')
+                          }}
+                          onCampusChange={(id) => {
+                            manualUniCampusSelectionRef.current = true
+                            campusIdRef.current = id
+                            setCampusId(id)
+                            if (campusPickerOpen) setCampusPickerOpen(false)
+                          }}
+                          referenceScope="full"
+                          showState
+                          disabled={refsLoading || nearbyCampusLoading}
+                          labelClassName={labelClass}
+                          universitySelectClassName={inputClass}
+                          campusSelectClassName={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
+                          universityLabel="University"
+                          campusLabel="Campus"
+                          universityIdAttr="pf-uni"
+                          campusIdAttr="pf-campus"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>,
