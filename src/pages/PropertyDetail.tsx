@@ -47,6 +47,7 @@ import {
   buildListingPhotoBadges,
   listingHighlightSignals,
 } from '../lib/listingDisplayHighlights'
+import { CollapsibleProse } from '../components/CollapsibleProse'
 import { propertyUtilitiesQuickBarItems } from '../lib/propertyUtilitiesDisclosure'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { useRenterSearchPersona } from '../hooks/useRenterSearchPersona'
@@ -1399,9 +1400,12 @@ export default function PropertyDetail() {
               {property.description ? (
                 <section className="space-y-3 border-t border-stone-100 pt-5">
                   <h2 className={sectionLabelClass}>About this place</h2>
-                  <p className="text-stone-700 text-base leading-[1.7] whitespace-pre-wrap max-w-prose">
-                    {property.description}
-                  </p>
+                  <CollapsibleProse
+                    id={`listing-description-${property.id}`}
+                    text={property.description}
+                    preWrap
+                    className="text-stone-700 text-sm leading-[1.6] max-w-prose"
+                  />
                 </section>
               ) : null}
 
@@ -1455,21 +1459,26 @@ export default function PropertyDetail() {
                         )}
                       </div>
                       {hasWrittenHouseRules ? (
-                        <div className="space-y-2 text-base leading-relaxed max-w-prose text-stone-700">
-                          {(property.house_rules ?? '').split(/\r?\n/).map((rawLine, i) => {
-                            const t = rawLine.trim()
-                            if (!t) return null
-                            const heading = isHouseRulesHeadingLine(t)
-                            return (
-                              <p
-                                key={`hr-line-${i}`}
-                                className={heading ? 'font-semibold text-stone-900' : undefined}
-                              >
-                                {t}
-                              </p>
-                            )
-                          })}
-                        </div>
+                        <CollapsibleProse
+                          id={`listing-house-rules-${property.id}`}
+                          className="text-sm leading-[1.6] max-w-prose text-stone-700"
+                        >
+                          <div className="space-y-2">
+                            {(property.house_rules ?? '').split(/\r?\n/).map((rawLine, i) => {
+                              const t = rawLine.trim()
+                              if (!t) return null
+                              const heading = isHouseRulesHeadingLine(t)
+                              return (
+                                <p
+                                  key={`hr-line-${i}`}
+                                  className={heading ? 'font-semibold text-stone-900' : undefined}
+                                >
+                                  {t}
+                                </p>
+                              )
+                            })}
+                          </div>
+                        </CollapsibleProse>
                       ) : null}
                   </div>
                 </section>
@@ -1547,7 +1556,7 @@ export default function PropertyDetail() {
             </div>
 
             <aside className="order-2 w-full min-w-0">
-              <div ref={bookingCardRef} className="lg:sticky lg:top-28">
+              <div ref={bookingCardRef} className="md:sticky md:top-28">
                 <div className="hidden md:block rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                   <div className="pb-4 border-b border-stone-100">
                     <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>

@@ -151,8 +151,8 @@ const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-ft6600-compliance', label: 'Compliance' },
   { id: 'section-house-rules', label: 'Rules' },
   { id: 'section-location', label: 'Location' },
-  { id: 'section-description', label: 'Description' },
   { id: 'section-pricing-availability', label: 'Pricing' },
+  { id: 'section-description', label: 'Description' },
   { id: 'section-photos', label: 'Photos' },
 ]
 
@@ -3152,36 +3152,6 @@ export default function LandlordPropertyFormPage() {
           )}
 
           {sectionClass(
-            'Description',
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="pf-desc" className={labelClass}>
-                  Listing description
-                </label>
-                <textarea
-                  id="pf-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={5}
-                  className={inputClass}
-                  placeholder="Describe the room or home the tenant will rent - not only the whole building."
-                />
-                <AIDescriptionGenerator
-                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
-                  weeklyRent={weeklyRentNum}
-                  suburb={suburb}
-                  nearbyUniversities={nearbyUniversitiesForAi}
-                  amenities={amenitiesForAi}
-                  furnished={furnished}
-                  existingDescription={description}
-                  onGenerated={setDescription}
-                />
-              </div>
-            </div>,
-            'section-description',
-          )}
-
-          {sectionClass(
             'Pricing & availability',
             <div className="space-y-4">
               <div>
@@ -3550,6 +3520,39 @@ export default function LandlordPropertyFormPage() {
               </div>
             </div>,
             'section-pricing-availability',
+          )}
+
+          {sectionClass(
+            'Description',
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="pf-desc" className={labelClass}>
+                  Listing description
+                </label>
+                <textarea
+                  id="pf-desc"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={5}
+                  className={inputClass}
+                  placeholder="Describe the room or home the tenant will rent - not only the whole building."
+                />
+                <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+                  Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.
+                </p>
+                <AIDescriptionGenerator
+                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
+                  weeklyRent={weeklyRentNum}
+                  suburb={suburb}
+                  nearbyUniversities={nearbyUniversitiesForAi}
+                  amenities={amenitiesForAi}
+                  furnished={furnished}
+                  existingDescription={description}
+                  onGenerated={setDescription}
+                />
+              </div>
+            </div>,
+            'section-description',
           )}
 
           {sectionClass(
