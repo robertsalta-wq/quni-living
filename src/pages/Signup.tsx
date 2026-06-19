@@ -386,9 +386,18 @@ export default function Signup() {
     }
     const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
     setQuniSelectedRole(authRole)
+    // DEFERRED: duplicate-identity warning at signup (same name / near-time second Google email).
+    // Fail-closed for now — do not block signup.
+    const oauthSignupContext =
+      accountKind === 'landlord'
+        ? { signupRole: 'landlord' as const }
+        : {
+            signupRole: 'student' as const,
+            signupRoute: accountKind === 'non_student' ? 'non_student' as const : 'student' as const,
+          }
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: getGoogleOAuthOptions(),
+      options: getGoogleOAuthOptions(oauthSignupContext),
     })
     if (oErr) setError(oErr.message)
   }

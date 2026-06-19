@@ -43,13 +43,42 @@ export function formatAuthEmailErrorMessage(err: unknown): string {
   return msg
 }
 
+export type GoogleOAuthSignupRoute = 'student' | 'non_student'
+export type GoogleOAuthSignupRole = 'student' | 'landlord'
+
+/** Signup-only context carried on redirectTo (not sent to Google via queryParams). */
+export type GoogleOAuthSignupContext = {
+  signupRoute?: GoogleOAuthSignupRoute
+  signupRole?: GoogleOAuthSignupRole
+}
+
+/**
+ * Auth callback URL with optional signup query params for OAuth round-trip.
+ * Landlord signups omit signup_route; tenant-side signups include student vs non_student.
+ */
+export function buildAuthCallbackUrl(signupContext?: GoogleOAuthSignupContext): string {
+  const base = getAuthCallbackUrl()
+  if (!signupContext) return base
+
+  const params = new URLSearchParams()
+  if (signupContext.signupRoute === 'student' || signupContext.signupRoute === 'non_student') {
+    params.set('signup_route', signupContext.signupRoute)
+  }
+  if (signupContext.signupRole === 'student' || signupContext.signupRole === 'landlord') {
+    params.set('signup_role', signupContext.signupRole)
+  }
+  const qs = params.toString()
+  if (!qs) return base
+  return base.includes('?') ? `${base}&${qs}` : `${base}?${qs}`
+}
+
 /**
  * Google OAuth options. Explicit openid + email + profile avoids failures for some Google / Workspace accounts.
  * @see https://supabase.com/docs/guides/troubleshooting/google-auth-fails-for-some-users
  */
-export function getGoogleOAuthOptions() {
+export function getGoogleOAuthOptions(signupContext?: GoogleOAuthSignupContext) {
   return {
-    redirectTo: getAuthCallbackUrl(),
+    redirectTo: buildAuthCallbackUrl(signupContext),
     scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     // Forces Google to show the account picker so "Log out → Log in with a different Gmail"
     // doesn't automatically reuse the previously authenticated Google session.

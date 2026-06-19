@@ -28,8 +28,12 @@ function displayNameFromUser(user: User): string {
  * Google OAuth cannot always persist signup role on first redirect. After session is established,
  * reconcile localStorage role choice with profile rows for accounts created in the last 30 minutes.
  */
-export async function applyPendingSignupRole(user: User): Promise<void> {
-  const selected = getQuniSelectedRole()
+export async function applyPendingSignupRole(
+  user: User,
+  urlRole?: 'student' | 'landlord' | null,
+  urlRoute?: 'student' | 'non_student' | null,
+): Promise<void> {
+  const selected = getQuniSelectedRole() ?? urlRole ?? null
   if (!selected) return
   if (!isRecentSignup(user.created_at)) {
     clearQuniSelectedRole()
@@ -50,6 +54,7 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
       user.id,
       user.created_at,
       user.user_metadata?.accommodation_verification_route,
+      urlRoute,
     )
   }
 
@@ -63,7 +68,7 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
         const route =
           metaRoute === 'non_student' || metaRoute === 'student'
             ? metaRoute
-            : getQuniAccommodationVerificationRoute()
+            : urlRoute ?? getQuniAccommodationVerificationRoute()
         if (route) data.accommodation_verification_route = route
       }
       await supabase.auth.updateUser({ data })
@@ -100,7 +105,13 @@ export async function applyPendingSignupRole(user: User): Promise<void> {
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return
 
-    const route = user.user_metadata?.accommodation_verification_route
+    const route =
+      user.user_metadata?.accommodation_verification_route === 'non_student' ||
+      user.user_metadata?.accommodation_verification_route === 'student'
+        ? user.user_metadata.accommodation_verification_route
+        : urlRoute === 'student' || urlRoute === 'non_student'
+          ? urlRoute
+          : null
     const { error: insErr } = await supabase.from('student_profiles').insert({
       user_id: user.id,
       email: lpRow?.email?.trim() || email,

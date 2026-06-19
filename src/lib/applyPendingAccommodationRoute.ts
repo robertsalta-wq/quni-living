@@ -20,13 +20,18 @@ function parseMetadataRoute(value: unknown): QuniAccommodationVerificationRoute 
 }
 
 /**
- * Route chosen at signup: localStorage (recent OAuth) or auth user_metadata (email signup).
- * localStorage is ignored after 30 minutes so a stale choice cannot overwrite an existing profile.
+ * Route chosen at signup: OAuth redirect URL (authoritative for that callback), then recent
+ * localStorage, then auth user_metadata (email signup). localStorage is ignored after 30 minutes
+ * so a stale choice cannot overwrite an existing profile.
  */
 export function resolvePendingAccommodationVerificationRoute(
   userCreatedAt: string | undefined,
   metadataRoute?: unknown,
+  urlRoute?: QuniAccommodationVerificationRoute | null,
 ): QuniAccommodationVerificationRoute | null {
+  const fromUrl = parseMetadataRoute(urlRoute)
+  if (fromUrl) return fromUrl
+
   const fromMeta = parseMetadataRoute(metadataRoute)
   const fromStorage = getQuniAccommodationVerificationRoute()
 
@@ -47,8 +52,9 @@ export async function applyPendingAccommodationRouteToStudentProfile(
   userId: string,
   userCreatedAt: string | undefined,
   metadataRoute?: unknown,
+  urlRoute?: QuniAccommodationVerificationRoute | null,
 ): Promise<boolean> {
-  const route = resolvePendingAccommodationVerificationRoute(userCreatedAt, metadataRoute)
+  const route = resolvePendingAccommodationVerificationRoute(userCreatedAt, metadataRoute, urlRoute)
   if (!route) return false
 
   const { data: row, error: selErr } = await supabase

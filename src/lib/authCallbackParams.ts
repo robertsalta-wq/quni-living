@@ -1,5 +1,23 @@
+import type { GoogleOAuthSignupRole, GoogleOAuthSignupRoute } from './oauth'
+
 /** Email OTP links use `type=signup` (confirm) or `type=recovery` (password reset). */
 export type AuthCallbackOtpType = 'signup' | 'recovery'
+
+export type OAuthSignupCallbackParams = {
+  signupRoute: GoogleOAuthSignupRoute | null
+  signupRole: GoogleOAuthSignupRole | null
+}
+
+/** OAuth signup redirectTo query params (survive the round trip when localStorage does not). */
+export function parseOAuthSignupParamsFromSearch(search: string): OAuthSignupCallbackParams {
+  const params = new URLSearchParams(search)
+  const route = params.get('signup_route')?.trim()
+  const role = params.get('signup_role')?.trim()
+  return {
+    signupRoute: route === 'student' || route === 'non_student' ? route : null,
+    signupRole: role === 'student' || role === 'landlord' ? role : null,
+  }
+}
 
 export type SignupConfirmationOtpType = 'signup'
 
@@ -51,6 +69,8 @@ export function stripSensitiveAuthCallbackQueryParams(): void {
   url.searchParams.delete('token_hash')
   url.searchParams.delete('type')
   url.searchParams.delete('code')
+  url.searchParams.delete('signup_route')
+  url.searchParams.delete('signup_role')
   const next = `${url.pathname}${url.search}${url.hash}`
   window.history.replaceState(window.history.state, '', next)
 }

@@ -38,6 +38,7 @@ import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyP
 import { needsStudentUniEmailVerification } from '../../lib/studentUniEmailVerification'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../../lib/studentOccupancyOptions'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
+import { setQuniAccommodationVerificationRoute } from '../../lib/quniAccommodationRoute'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { reportFormError } from '../../lib/reportFormError'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
@@ -296,6 +297,7 @@ export default function StudentOnboarding() {
   useScrollToTopOnChange(welcome ? 'welcome' : step, { anchorRef: formTopRef })
 
   const [submitting, setSubmitting] = useState(false)
+  const [routePickerBusy, setRoutePickerBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [partialSaveHint, setPartialSaveHint] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -638,7 +640,31 @@ export default function StudentOnboarding() {
   }
 
   const isIdentityPath = isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
-  const needsUniEmail = needsStudentUniEmailVerification(profile)
+  const needsRouteChoice = profile?.accommodation_verification_route == null
+  const needsUniEmail = !needsRouteChoice && needsStudentUniEmailVerification(profile)
+
+  async function handleChooseAccommodationRoute(route: 'student' | 'non_student') {
+    if (!user?.id || routePickerBusy) return
+    setFormError(null)
+    setRoutePickerBusy(true)
+    try {
+      const { error: upErr } = await withSentryMonitoring('StudentOnboarding/choose-accommodation-route', () =>
+        supabase.from('student_profiles').update({ accommodation_verification_route: route }).eq('user_id', user.id),
+      )
+      if (upErr) throw upErr
+      const { error: metaErr } = await supabase.auth.updateUser({
+        data: { role: 'student', accommodation_verification_route: route },
+      })
+      if (metaErr) throw metaErr
+      setQuniAccommodationVerificationRoute(route)
+      await reloadProfileRow()
+      await refreshProfile()
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Could not save your choice.')
+    } finally {
+      setRoutePickerBusy(false)
+    }
+  }
 
   function validateStep1(): boolean {
     const e: Record<string, string> = {}
@@ -1018,9 +1044,18 @@ export default function StudentOnboarding() {
 
   const stepLabel = welcome
     ? 'Done'
-    : needsUniEmail
-      ? 'Verify university email'
-      : `Step ${step} of 3`
+    : needsRouteChoice
+      ? 'Choose your path'
+      : needsUniEmail
+        ? 'Verify university email'
+        : `Step ${step} of 3`
+
+  const routeChoiceCardClass = (selected: boolean) =>
+    `rounded-xl border-2 p-5 text-left transition-colors w-full ${
+      selected
+        ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+        : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/80'
+    }`
 
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-stone-50 pb-16">
@@ -1085,6 +1120,44 @@ export default function StudentOnboarding() {
               >
                 Browse listings →
               </button>
+            </div>
+          ) : needsRouteChoice ? (
+            <div className="space-y-5">
+              <h2 className="text-lg font-bold text-stone-900">How will you verify?</h2>
+              <p className="text-sm text-stone-600 leading-relaxed">
+                Choose the path that matches how you&apos;ll verify on Quni. This sets up the right onboarding and
+                verification steps for your account.
+              </p>
+              {formError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  {formError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={routePickerBusy}
+                  onClick={() => handleChooseAccommodationRoute('student')}
+                  className={routeChoiceCardClass(false)}
+                >
+                  <span className="font-semibold text-stone-900">Student</span>
+                  <p className="text-sm text-stone-600 mt-1">
+                    I&apos;m enrolled at an Australian university and can verify with my official student email.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  disabled={routePickerBusy}
+                  onClick={() => handleChooseAccommodationRoute('non_student')}
+                  className={routeChoiceCardClass(false)}
+                >
+                  <span className="font-semibold text-stone-900">Non-student</span>
+                  <p className="text-sm text-stone-600 mt-1">
+                    I&apos;m not a student — verify with photo ID and a supporting document instead.
+                  </p>
+                </button>
+              </div>
+              {routePickerBusy && <p className="text-xs text-stone-500">Saving your choice…</p>}
             </div>
           ) : (
             <>

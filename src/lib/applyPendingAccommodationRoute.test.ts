@@ -34,12 +34,24 @@ describe('resolvePendingAccommodationVerificationRoute', () => {
     vi.useRealTimers()
   })
 
-  it('prefers recent localStorage over metadata', () => {
+  it('prefers OAuth redirect URL over localStorage and metadata', () => {
+    setQuniAccommodationVerificationRoute('non_student')
+    expect(
+      resolvePendingAccommodationVerificationRoute(
+        '2026-05-31T11:50:00Z',
+        'non_student',
+        'student',
+      ),
+    ).toBe('student')
+  })
+
+  it('prefers recent localStorage over metadata when URL absent', () => {
     setQuniAccommodationVerificationRoute('non_student')
     expect(
       resolvePendingAccommodationVerificationRoute(
         '2026-05-31T11:50:00Z',
         'student',
+        null,
       ),
     ).toBe('non_student')
   })
@@ -50,6 +62,7 @@ describe('resolvePendingAccommodationVerificationRoute', () => {
       resolvePendingAccommodationVerificationRoute(
         '2026-05-30T12:00:00Z',
         'non_student',
+        null,
       ),
     ).toBe('non_student')
     expect(localStorage.getItem('quni_accommodation_verification_route')).toBeNull()
@@ -57,11 +70,11 @@ describe('resolvePendingAccommodationVerificationRoute', () => {
 
   it('uses metadata for email signup without localStorage', () => {
     expect(
-      resolvePendingAccommodationVerificationRoute(undefined, 'non_student'),
+      resolvePendingAccommodationVerificationRoute(undefined, 'non_student', null),
     ).toBe('non_student')
   })
 
   it('returns null when nothing pending', () => {
-    expect(resolvePendingAccommodationVerificationRoute(undefined, null)).toBeNull()
+    expect(resolvePendingAccommodationVerificationRoute(undefined, null, null)).toBeNull()
   })
 })

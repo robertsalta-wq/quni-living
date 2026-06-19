@@ -17,6 +17,8 @@ import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerificati
 import {
   parseSignupTokenHashFromSearch,
   parseRecoveryTokenHashFromSearch,
+  parseOAuthSignupParamsFromSearch,
+  type OAuthSignupCallbackParams,
   isPasswordRecoveryCallbackSearch,
   isPasswordRecoveryCallbackHash,
   stripSensitiveAuthCallbackQueryParams,
@@ -50,7 +52,26 @@ export default function AuthCallback() {
 
     let cancelled = false
 
-    async function finishWithSession(sessionUser: User, afterSignupEmailConfirm: boolean) {
+    async function finishWithSession(
+      sessionUser: User,
+      afterSignupEmailConfirm: boolean,
+      oauthSignupParams: OAuthSignupCallbackParams,
+    ) {
+      const urlRoute = oauthSignupParams.signupRoute
+      const urlRole = oauthSignupParams.signupRole
+
+      if (urlRoute || urlRole) {
+        const data: Record<string, string> = {}
+        if (urlRole) data.role = urlRole
+        if (urlRoute && urlRole !== 'landlord') {
+          data.accommodation_verification_route = urlRoute
+        }
+        if (Object.keys(data).length > 0) {
+          await supabase.auth.updateUser({ data })
+        }
+        stripSensitiveAuthCallbackQueryParams()
+      }
+
       if (afterSignupEmailConfirm) {
         await ensureSignupProfileRowAfterEmailConfirm(sessionUser)
       }
@@ -58,9 +79,10 @@ export default function AuthCallback() {
         sessionUser.id,
         sessionUser.created_at,
         sessionUser.user_metadata?.accommodation_verification_route,
+        urlRoute,
       )
       applyPendingTenantInvitePostAuthRedirect()
-      await applyPendingSignupRole(sessionUser)
+      await applyPendingSignupRole(sessionUser, urlRole, urlRoute)
 
       const { role, profile } = await fetchRoleAndProfile(sessionUser)
       if (cancelled) return
@@ -217,7 +239,7 @@ export default function AuthCallback() {
           return
         }
 
-        await finishWithSession(user, completedSignupEmailConfirm)
+        await finishWithSession(user, completedSignupEmailConfirm, parseOAuthSignupParamsFromSearch(window.location.search))
         return
       }
 
