@@ -29,6 +29,7 @@ import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
+import LandlordTenantInviteModal from '../components/landlord/LandlordTenantInviteModal'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
@@ -67,6 +68,7 @@ type PropertySummary = Pick<
   | 'created_at'
   | 'service_tier'
   | 'authority_to_let_attested_at'
+  | 'open_to_non_students'
 >
 
 /** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
@@ -520,7 +522,7 @@ export default function LandlordDashboard() {
       const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier, authority_to_let_attested_at')
+          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
@@ -707,6 +709,13 @@ export default function LandlordDashboard() {
     showToast,
     onMutationError: (msg) => showToast({ kind: 'error', message: msg }),
   })
+
+  const [inviteModalProperty, setInviteModalProperty] = useState<{
+    id: string
+    title: string
+    slug: string
+    open_to_non_students: boolean
+  } | null>(null)
 
   const stripeConnectParam = searchParams.get('stripe_connect')
   useEffect(() => {
@@ -1105,6 +1114,17 @@ export default function LandlordDashboard() {
                           onPublish={publishDraftListing}
                           onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
                           onToggle={togglePropertyStatus}
+                          canInviteTenant={
+                            p.status === 'active' && parseLandlordServiceTier(p.service_tier) === 'listing'
+                          }
+                          onInviteTenant={(prop) =>
+                            setInviteModalProperty({
+                              id: prop.id,
+                              title: prop.title,
+                              slug: prop.slug,
+                              open_to_non_students: prop.open_to_non_students,
+                            })
+                          }
                         />
                       </div>
                     </div>
@@ -1444,6 +1464,13 @@ export default function LandlordDashboard() {
           duplicatingListingId={duplicatingListingId}
           onConfirm={() => void confirmDuplicateListing()}
           onCancel={() => setDuplicateConfirmProperty(null)}
+        />
+
+        <LandlordTenantInviteModal
+          open={inviteModalProperty != null}
+          property={inviteModalProperty}
+          landlordProfileId={profile?.id ?? null}
+          onClose={() => setInviteModalProperty(null)}
         />
 
         {stripeRequiredModalOpen && (

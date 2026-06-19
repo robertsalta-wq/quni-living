@@ -100,6 +100,7 @@ function App() {
           <Route path="/reset-password" element={<Lazy.ResetPassword />} />
           <Route path="/verify-email" element={<Lazy.VerifyEmail />} />
           <Route path="/signup" element={<Lazy.Signup />} />
+          <Route path="/invite/:token" element={<Lazy.InviteTenantPage />} />
           <Route path="/student-signup" element={<Lazy.StudentSignup />} />
           <Route path="/landlord-signup" element={<Lazy.LandlordSignup />} />
 

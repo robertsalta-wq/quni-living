@@ -10,6 +10,8 @@ type Props = {
   onPublish: (p: LandlordPropertyForListingActions) => void
   onDuplicateClick: (p: LandlordPropertyForListingActions) => void
   onToggle: (p: LandlordPropertyForListingActions) => void
+  canInviteTenant?: boolean
+  onInviteTenant?: (p: LandlordPropertyForListingActions) => void
 }
 
 export default function LandlordPropertyListingActions({
@@ -20,6 +22,8 @@ export default function LandlordPropertyListingActions({
   onPublish,
   onDuplicateClick,
   onToggle,
+  canInviteTenant,
+  onInviteTenant,
 }: Props) {
   return (
     <div className="mt-auto flex flex-col gap-2">
@@ -44,6 +48,15 @@ export default function LandlordPropertyListingActions({
         disabled={p.status === 'draft'}
         disabledTitle="Publish your listing to get a shareable link"
       />
+      {canInviteTenant && onInviteTenant && (
+        <button
+          type="button"
+          onClick={() => onInviteTenant(p)}
+          className="w-full rounded-lg border border-indigo-200 bg-indigo-50 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
+        >
+          Invite a tenant
+        </button>
+      )}
       <div className="flex gap-2 flex-wrap">
         {p.status === 'draft' && (
           <button

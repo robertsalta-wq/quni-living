@@ -162,8 +162,8 @@ export default function Signup() {
           ? 'student'
           : null,
   )
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
+  const [fullName, setFullName] = useState(() => searchParams.get('invited_name')?.trim() ?? '')
+  const [email, setEmail] = useState(() => searchParams.get('invited_email')?.trim() ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -174,6 +174,13 @@ export default function Signup() {
   const [confirmResendBusy, setConfirmResendBusy] = useState(false)
   const [confirmResendError, setConfirmResendError] = useState<string | null>(null)
   const [confirmResendSuccess, setConfirmResendSuccess] = useState(false)
+
+  useEffect(() => {
+    const invitedEmail = searchParams.get('invited_email')?.trim()
+    const invitedName = searchParams.get('invited_name')?.trim()
+    if (invitedEmail) setEmail((prev) => prev || invitedEmail)
+    if (invitedName) setFullName((prev) => prev || invitedName)
+  }, [searchParams])
 
   useEffect(() => {
     const r = searchParams.get('role')

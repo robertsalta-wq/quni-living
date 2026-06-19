@@ -56,6 +56,7 @@ const PRIVATE_PREFIXES = [
   '/landlord/dashboard',
   '/landlord-profile',
   '/landlord/property',
+  '/invite/',
   '/booking/',
   '/messages',
   '/onboarding',
@@ -74,6 +75,7 @@ export function isSeoPrivatePath(pathname: string): boolean {
 const FOCUS_FORM_FLOW_PREFIXES = [
   '/onboarding',
   '/booking/',
+  '/invite/',
   '/signup',
   '/student-signup',
   '/landlord-signup',

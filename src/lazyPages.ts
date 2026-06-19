@@ -22,6 +22,8 @@ export const LandlordProfile = lazy(() => import('./pages/LandlordProfile'))
 export const Booking = lazy(() => import('./pages/Booking'))
 export const SampleAgreementsPage = lazy(() => import('./pages/SampleAgreementsPage'))
 
+export const InviteTenantPage = lazy(() => import('./pages/InviteTenantPage'))
+
 // Landlord tools
 export const LandlordPropertyFormPage = lazy(() => import('./pages/landlord/LandlordPropertyFormPage'))
 export const LandlordBookingReviewPage = lazy(() => import('./pages/landlord/LandlordBookingReviewPage'))

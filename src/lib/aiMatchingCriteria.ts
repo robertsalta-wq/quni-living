@@ -179,6 +179,7 @@ export const BOOKING_FIELD_STATUS = {
   cancellation_reason: 'NOT_MATCHING',
   conversation_id: 'NOT_MATCHING',
   rent_breakdown: 'NOT_MATCHING',
+  tenant_invite_id: 'NOT_MATCHING',
   created_at: 'NOT_MATCHING',
   updated_at: 'NOT_MATCHING',
   id: 'NOT_MATCHING',

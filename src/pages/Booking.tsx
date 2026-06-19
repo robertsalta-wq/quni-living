@@ -25,6 +25,11 @@ import {
 } from '../lib/stripePublic'
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
 import { apiUrl } from '../lib/apiUrl'
+import {
+  clearQuniTenantInviteContext,
+  getQuniTenantInviteToken,
+  setQuniTenantInviteContext,
+} from '../lib/quniTenantInvite'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { scrollWindowToTop } from '../lib/scrollToTop'
@@ -529,6 +534,8 @@ export default function Booking() {
   const propertyId = propertyIdParam?.trim() ?? ''
   const [searchParams] = useSearchParams()
   const conversationIdFromThread = searchParams.get('conversationId')?.trim() ?? ''
+  const inviteTokenFromUrl = searchParams.get('invite')?.trim() ?? ''
+  const tenantInviteToken = inviteTokenFromUrl || getQuniTenantInviteToken() || undefined
   const { user, profile, role, loading: authLoading } = useAuthContext()
 
   const [property, setProperty] = useState<PropertyForBooking | null>(null)
@@ -849,6 +856,12 @@ export default function Booking() {
     setDraftPersistReady(false)
     draftHydrationAttemptedRef.current = false
   }, [propertyId])
+
+  useEffect(() => {
+    if (inviteTokenFromUrl && propertyId) {
+      setQuniTenantInviteContext(inviteTokenFromUrl, propertyId)
+    }
+  }, [inviteTokenFromUrl, propertyId])
 
   useEffect(() => {
     if (!propertyId || !property?.id || property.id !== propertyId) return
@@ -1262,6 +1275,7 @@ export default function Booking() {
           parkingSelected,
           ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
           ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
+          ...(tenantInviteToken ? { tenantInviteToken } : {}),
         }),
       })
 
@@ -1271,6 +1285,14 @@ export default function Booking() {
         j = JSON.parse(raw) as typeof j
       } catch {
         setSubmitError('Invalid response while saving your booking. Please try again.')
+        return
+      }
+
+      if (res.status === 403 && j.error === 'email_not_confirmed') {
+        setSubmitError(
+          j.message ??
+            'Confirm your email before submitting a booking request. Check your inbox for the confirmation link.',
+        )
         return
       }
 
@@ -1305,6 +1327,7 @@ export default function Booking() {
       }
 
       clearBookingDraft(property.id)
+      if (tenantInviteToken) clearQuniTenantInviteContext()
       setSuccessBookingId(j.bookingId)
       setSuccess(true)
     } catch (e) {
@@ -1319,6 +1342,7 @@ export default function Booking() {
     leaseLength,
     message,
     conversationIdFromThread,
+    tenantInviteToken,
     occupantCount,
     parkingSelected,
     buildCoTenantPayload,

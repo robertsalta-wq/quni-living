@@ -15,7 +15,7 @@ export type LandlordPropertyDuplicateTarget = Pick<PropertyRow, 'id' | 'title'>
 
 export type LandlordPropertyForListingActions = Pick<
   PropertyRow,
-  'id' | 'title' | 'slug' | 'status' | 'authority_to_let_attested_at'
+  'id' | 'title' | 'slug' | 'status' | 'authority_to_let_attested_at' | 'service_tier' | 'open_to_non_students'
 >
 
 export function useLandlordPropertyListingActions(args: {

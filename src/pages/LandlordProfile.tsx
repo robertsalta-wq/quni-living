@@ -12,6 +12,7 @@ import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
+import LandlordTenantInviteModal from '../components/landlord/LandlordTenantInviteModal'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
@@ -26,11 +27,23 @@ import {
   landlordNonDiscriminationAccepted,
   nonDiscriminationAcceptancePatch,
 } from '../lib/nonDiscriminationPolicy'
+import { parseLandlordServiceTier } from '../lib/landlordServiceTier'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyPick = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'rent_per_week' | 'room_type' | 'suburb' | 'images' | 'status' | 'featured' | 'authority_to_let_attested_at'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'rent_per_week'
+  | 'room_type'
+  | 'suburb'
+  | 'images'
+  | 'status'
+  | 'featured'
+  | 'authority_to_let_attested_at'
+  | 'service_tier'
+  | 'open_to_non_students'
 >
 
 /** Supabase Storage bucket id (legacy name); stores profile photos of the landlord. */
@@ -323,7 +336,7 @@ export default function LandlordProfile() {
 
       const { data: props, error: lErr } = await supabase
         .from('properties')
-        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, authority_to_let_attested_at')
+        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, authority_to_let_attested_at, service_tier, open_to_non_students')
         .eq('landlord_id', prof.id)
         .order('created_at', { ascending: false })
 
@@ -373,6 +386,13 @@ export default function LandlordProfile() {
     navigate,
     showToast: flashListingToast,
   })
+
+  const [inviteModalProperty, setInviteModalProperty] = useState<{
+    id: string
+    title: string
+    slug: string
+    open_to_non_students: boolean
+  } | null>(null)
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPhotoError(null)
@@ -1157,6 +1177,17 @@ export default function LandlordProfile() {
                       onPublish={publishDraftListing}
                       onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
                       onToggle={togglePropertyStatus}
+                      canInviteTenant={
+                        p.status === 'active' && parseLandlordServiceTier(p.service_tier) === 'listing'
+                      }
+                      onInviteTenant={(prop) =>
+                        setInviteModalProperty({
+                          id: prop.id,
+                          title: prop.title,
+                          slug: prop.slug,
+                          open_to_non_students: prop.open_to_non_students,
+                        })
+                      }
                     />
                   </div>
                 </li>
@@ -1172,6 +1203,13 @@ export default function LandlordProfile() {
         duplicatingListingId={duplicatingListingId}
         onConfirm={() => void confirmDuplicateListing()}
         onCancel={() => setDuplicateConfirmProperty(null)}
+      />
+
+      <LandlordTenantInviteModal
+        open={inviteModalProperty != null}
+        property={inviteModalProperty}
+        landlordProfileId={profile?.id ?? null}
+        onClose={() => setInviteModalProperty(null)}
       />
       </div>
     </div>

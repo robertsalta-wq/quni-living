@@ -49,6 +49,7 @@ export function buildListingApplyBookingRow({
   serviceTierAtRequest,
   expiresAt,
   endDate,
+  tenantInviteId = null,
 }) {
   return {
     property_id: property.id,
@@ -72,5 +73,6 @@ export function buildListingApplyBookingRow({
     housemates_count: occupantCount >= 2 ? 1 : 0,
     booking_fee_paid: false,
     ...(serviceTierAtRequest ? { service_tier_at_request: serviceTierAtRequest } : {}),
+    ...(tenantInviteId ? { tenant_invite_id: tenantInviteId } : {}),
   }
 }

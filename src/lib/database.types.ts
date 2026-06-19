@@ -1182,6 +1182,83 @@ export interface Database {
           },
         ]
       }
+      tenant_invites: {
+        Row: {
+          id: string
+          property_id: string
+          landlord_id: string
+          invited_email: string | null
+          invited_name: string | null
+          landlord_note: string | null
+          token_hash: string
+          status: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at: string
+          accepted_by: string | null
+          accepted_booking_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          landlord_id: string
+          invited_email?: string | null
+          invited_name?: string | null
+          landlord_note?: string | null
+          token_hash: string
+          status?: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at?: string
+          accepted_by?: string | null
+          accepted_booking_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          landlord_id?: string
+          invited_email?: string | null
+          invited_name?: string | null
+          landlord_note?: string | null
+          token_hash?: string
+          status?: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at?: string
+          accepted_by?: string | null
+          accepted_booking_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'tenant_invites_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tenant_invites_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: false
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tenant_invites_accepted_by_fkey'
+            columns: ['accepted_by']
+            isOneToOne: false
+            referencedRelation: 'student_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tenant_invites_accepted_booking_id_fkey'
+            columns: ['accepted_booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       bookings: {
         Row: {
           id: string
@@ -1244,6 +1321,7 @@ export interface Database {
           parking_selected: boolean
           rent_breakdown: Json | null
           co_tenant: Json | null
+          tenant_invite_id: string | null
           created_at: string
           updated_at: string
         }
@@ -1308,6 +1386,7 @@ export interface Database {
           parking_selected?: boolean
           rent_breakdown?: Json | null
           co_tenant?: Json | null
+          tenant_invite_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1372,6 +1451,7 @@ export interface Database {
           parking_selected?: boolean
           rent_breakdown?: Json | null
           co_tenant?: Json | null
+          tenant_invite_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -2191,6 +2271,17 @@ export interface Database {
       duplicate_property_listing: {
         Args: { p_source_id: string }
         Returns: string
+      }
+      resolve_tenant_invite: {
+        Args: { p_token: string }
+        Returns: {
+          property_id: string | null
+          property_slug: string | null
+          student_only: boolean | null
+          invite_status: string
+          invited_email: string | null
+          invited_name: string | null
+        }[]
       }
       is_conversation_participant: {
         Args: { p_conversation_id: string }

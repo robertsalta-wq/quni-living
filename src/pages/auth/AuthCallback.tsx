@@ -9,6 +9,7 @@ import {
 } from '../../lib/authProfile'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
+import { applyPendingTenantInvitePostAuthRedirect } from '../../lib/applyPendingTenantInvite'
 import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
 import { ensureSignupProfileRowAfterEmailConfirm } from '../../lib/ensureSignupProfileRowAfterEmailConfirm'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
@@ -58,6 +59,7 @@ export default function AuthCallback() {
         sessionUser.created_at,
         sessionUser.user_metadata?.accommodation_verification_route,
       )
+      applyPendingTenantInvitePostAuthRedirect()
       await applyPendingSignupRole(sessionUser)
 
       const { role, profile } = await fetchRoleAndProfile(sessionUser)

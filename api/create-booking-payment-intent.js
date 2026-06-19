@@ -29,6 +29,12 @@ import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSn
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
 import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
 import {
+  assertRenterEmailConfirmed,
+  markTenantInviteAccepted,
+  readTenantInviteTokenFromBody,
+  resolvePendingTenantInviteForBooking,
+} from './lib/booking/tenantInviteAccept.js'
+import {
   assertPiMetadataMatchesOccupancy,
   OCCUPANCY_PROPERTY_COLUMNS,
   parseOccupancyScalarsFromBody,
@@ -317,6 +323,9 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: 'Only student accounts can book' }, 403, origin)
   }
 
+  const emailBlock = assertRenterEmailConfirmed(user, json, origin)
+  if (emailBlock) return emailBlock
+
   const admin = createClient(supabaseUrl, serviceRole)
 
   const { data: student, error: stErr } = await admin
@@ -399,6 +408,12 @@ async function handleListingBookingCommit(request, origin, body) {
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
+  const tenantInviteId = await resolvePendingTenantInviteForBooking(
+    admin,
+    readTenantInviteTokenFromBody(body),
+    propertyId,
+  )
+
   const row = buildListingApplyBookingRow({
     property,
     student,
@@ -414,11 +429,15 @@ async function handleListingBookingCommit(request, origin, body) {
     serviceTierAtRequest,
     expiresAt,
     endDate,
+    tenantInviteId,
   })
 
   const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()
 
   if (!insErr && inserted?.id) {
+    if (tenantInviteId) {
+      await markTenantInviteAccepted(admin, tenantInviteId, student.id, inserted.id)
+    }
     try {
       await attachBookingToConversationOnCreate(admin, {
         bookingId: inserted.id,
@@ -520,6 +539,9 @@ async function handlePaymentIntentCommit(request, origin, body) {
   if (user.user_metadata?.role !== 'student') {
     return json({ error: 'Only student accounts can book' }, 403, origin)
   }
+
+  const emailBlockManaged = assertRenterEmailConfirmed(user, json, origin)
+  if (emailBlockManaged) return emailBlockManaged
 
   const admin = createClient(supabaseUrl, serviceRole)
   const stripe = new Stripe(stripeSecret)
@@ -870,6 +892,9 @@ export default async function handler(request) {
   if (user.user_metadata?.role !== 'student') {
     return json({ error: 'Only student accounts can book' }, 403, origin)
   }
+
+  const emailBlockPreview = assertRenterEmailConfirmed(user, json, origin)
+  if (emailBlockPreview) return emailBlockPreview
 
   const admin = createClient(supabaseUrl, serviceRole)
 
