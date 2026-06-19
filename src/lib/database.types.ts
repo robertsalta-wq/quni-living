@@ -1196,6 +1196,11 @@ export interface Database {
           accepted_by: string | null
           accepted_booking_id: string | null
           email_sent_at: string | null
+          first_opened_at: string | null
+          last_opened_at: string | null
+          signup_started_at: string | null
+          booking_started_at: string | null
+          booking_submitted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -1212,6 +1217,11 @@ export interface Database {
           accepted_by?: string | null
           accepted_booking_id?: string | null
           email_sent_at?: string | null
+          first_opened_at?: string | null
+          last_opened_at?: string | null
+          signup_started_at?: string | null
+          booking_started_at?: string | null
+          booking_submitted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1228,6 +1238,11 @@ export interface Database {
           accepted_by?: string | null
           accepted_booking_id?: string | null
           email_sent_at?: string | null
+          first_opened_at?: string | null
+          last_opened_at?: string | null
+          signup_started_at?: string | null
+          booking_started_at?: string | null
+          booking_submitted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -2285,6 +2300,10 @@ export interface Database {
           invited_email: string | null
           invited_name: string | null
         }[]
+      }
+      record_tenant_invite_funnel_event: {
+        Args: { p_token: string; p_event: string }
+        Returns: boolean
       }
       is_conversation_participant: {
         Args: { p_conversation_id: string }

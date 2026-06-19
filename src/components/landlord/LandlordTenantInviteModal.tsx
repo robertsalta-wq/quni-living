@@ -4,6 +4,7 @@ import { absoluteUrl } from '../../lib/site'
 import { generateTenantInviteTokenPair } from '../../lib/tenantInviteToken'
 import { sendTenantInviteEmail } from '../../lib/tenantInviteEmail'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
+import { formatTenantInviteFunnelAt, tenantInviteFunnelSummary } from '../../lib/tenantInviteFunnel'
 import type { Database } from '../../lib/database.types'
 
 type TenantInviteRow = Database['public']['Tables']['tenant_invites']['Row']
@@ -77,7 +78,9 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     try {
       const { data, error } = await supabase
         .from('tenant_invites')
-        .select('id, invited_email, invited_name, status, expires_at, email_sent_at, created_at')
+        .select(
+          'id, invited_email, invited_name, status, expires_at, email_sent_at, first_opened_at, signup_started_at, booking_started_at, booking_submitted_at, created_at',
+        )
         .eq('property_id', property.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
@@ -358,6 +361,12 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                   `Invite · ${formatInviteExpiry(inv.expires_at)}`
                 const hasEmail = Boolean(inv.invited_email?.trim())
                 const emailedAt = formatEmailSentAt(inv.email_sent_at)
+                const funnel = tenantInviteFunnelSummary(inv)
+                const lastActivity =
+                  formatTenantInviteFunnelAt(inv.booking_submitted_at) ||
+                  formatTenantInviteFunnelAt(inv.booking_started_at) ||
+                  formatTenantInviteFunnelAt(inv.signup_started_at) ||
+                  formatTenantInviteFunnelAt(inv.first_opened_at)
                 return (
                   <li
                     key={inv.id}
@@ -371,6 +380,10 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                       ) : (
                         <p className="text-xs text-gray-400 mt-0.5">Link only — not emailed yet</p>
                       )}
+                      <p className={`text-xs mt-0.5 ${inv.first_opened_at ? 'text-gray-700' : 'text-amber-800'}`}>
+                        {funnel}
+                        {lastActivity ? ` · ${lastActivity}` : ''}
+                      </p>
                     </div>
                     <div className="flex gap-2 shrink-0 flex-wrap justify-end">
                       {hasEmail && (

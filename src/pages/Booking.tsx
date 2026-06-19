@@ -30,6 +30,7 @@ import {
   getQuniTenantInviteToken,
   setQuniTenantInviteContext,
 } from '../lib/quniTenantInvite'
+import { recordTenantInviteFunnelEvent } from '../lib/tenantInviteFunnel'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { scrollWindowToTop } from '../lib/scrollToTop'
@@ -602,6 +603,7 @@ export default function Booking() {
   const [keyboardInsetPx, setKeyboardInsetPx] = useState(0)
   const [draftPersistReady, setDraftPersistReady] = useState(false)
   const draftHydrationAttemptedRef = useRef(false)
+  const tenantInviteBookingStartedRef = useRef(false)
   const { setElevateFloatingChrome } = useBookingFlowChrome()
 
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
@@ -611,6 +613,13 @@ export default function Booking() {
       setOccupantCount(2)
     }
   }, [studentProfile?.occupancy_type])
+
+  useEffect(() => {
+    if (!tenantInviteToken || loadingProperty || !property) return
+    if (tenantInviteBookingStartedRef.current) return
+    tenantInviteBookingStartedRef.current = true
+    recordTenantInviteFunnelEvent(tenantInviteToken, 'booking_started')
+  }, [tenantInviteToken, loadingProperty, property])
 
   const maxOccupants = Math.min(10, Math.max(1, Math.floor(Number(property?.max_occupants ?? 1))))
 
@@ -1327,7 +1336,10 @@ export default function Booking() {
       }
 
       clearBookingDraft(property.id)
-      if (tenantInviteToken) clearQuniTenantInviteContext()
+      if (tenantInviteToken) {
+        recordTenantInviteFunnelEvent(tenantInviteToken, 'booking_submitted')
+        clearQuniTenantInviteContext()
+      }
       setSuccessBookingId(j.bookingId)
       setSuccess(true)
     } catch (e) {
