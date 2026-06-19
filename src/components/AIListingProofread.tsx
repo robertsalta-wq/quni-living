@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import AiSparkleIcon from './AiSparkleIcon'
 import {
   applyProofreadSuggestion,
   assignSuggestionOccurrences,
@@ -6,7 +7,7 @@ import {
 } from '../lib/proofreadSuggestions'
 
 const proofreadBtnClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0F6E56] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-[#FF6B6B] bg-white px-4 py-2 text-sm font-semibold text-[#FF6B6B] shadow-sm hover:bg-[#FFF5F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
 
 type ProofreadPhase = 'idle' | 'loading' | 'results' | 'empty' | 'error'
 
@@ -18,6 +19,8 @@ export type AIListingProofreadProps = {
   className?: string
   /** Optional label or intro copy rendered beside the Proofread button. */
   headerSlot?: ReactNode
+  /** Place the Proofread button in the header row or below the field. */
+  buttonPlacement?: 'header' | 'footer'
   children?: ReactNode
 }
 
@@ -27,6 +30,7 @@ export default function AIListingProofread({
   fieldName,
   className,
   headerSlot,
+  buttonPlacement = 'header',
   children,
 }: AIListingProofreadProps) {
   const [phase, setPhase] = useState<ProofreadPhase>('idle')
@@ -134,23 +138,39 @@ export default function AIListingProofread({
           Proofreading…
         </>
       ) : (
-        'Proofread'
+        <>
+          <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6B6B]" />
+          Proofread
+        </>
       )}
     </button>
   )
 
+  const buttonRow = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      {!canProofread ? (
+        <p className="text-xs text-gray-500">Add text above to proofread, or use Reset to platform default.</p>
+      ) : (
+        <span />
+      )}
+      {proofreadButton}
+    </div>
+  )
+
   return (
     <div className={className}>
-      {headerSlot ? (
+      {buttonPlacement === 'header' && headerSlot ? (
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
           {headerSlot}
           {proofreadButton}
         </div>
-      ) : (
-        <div className="flex flex-wrap items-center justify-end gap-2">{proofreadButton}</div>
-      )}
+      ) : buttonPlacement === 'header' ? (
+        buttonRow
+      ) : null}
 
       {children}
+
+      {buttonPlacement === 'footer' ? <div className="mt-2">{buttonRow}</div> : null}
 
       {phase === 'empty' ? (
         <p className="mt-2 text-sm text-emerald-700" role="status">

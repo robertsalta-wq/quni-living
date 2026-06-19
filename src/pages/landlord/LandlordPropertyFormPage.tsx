@@ -2869,16 +2869,15 @@ export default function LandlordPropertyFormPage() {
                 )}
               </div>
               <div className="space-y-3 border-t border-gray-100 pt-6">
+                <p className="text-sm text-gray-600">
+                  These are your property's house rules. They will be shown to students and included in the tenancy
+                  agreement. Customise them to suit your property.
+                </p>
                 <AIListingProofread
                   text={houseRules}
                   onTextChange={setHouseRules}
                   fieldName="house rules"
-                  headerSlot={
-                    <p className="min-w-0 flex-1 text-sm text-gray-600">
-                      These are your property's house rules. They will be shown to students and included in the tenancy
-                      agreement. Customise them to suit your property.
-                    </p>
-                  }
+                  buttonPlacement="footer"
                 >
                   <textarea
                     id="pf-house-rules"
