@@ -788,7 +788,6 @@ function LicenceOccupyDocument({
 
 // src/lib/tenancy/qldBoarderLodger.ts
 var QLD_RTRA_ACT_SHORT = "Residential Tenancies and Rooming Accommodation Act 2008 (Qld)";
-var QLD_RTA_BOARDERS_LODGERS_URL = "https://www.rta.qld.gov.au/renting/boarders-and-lodgers";
 var QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS = 3;
 
 // src/lib/documents/qld/occupancyContent.ts
@@ -798,10 +797,10 @@ var QLD_LICENCE_OCCUPY_CONTENT = {
   draftFooter: "Draft - not for execution until signed",
   natureParagraphs: [
     `This document is a common-law licence to occupy a specified room within residential premises in Queensland. It is not a residential tenancy agreement (Form 18a) and is not a rooming accommodation agreement (Form R18) under the ${QLD_RTRA_ACT_SHORT} (RTRA Act).`,
-    "For boarders and lodgers in Queensland, most of the RTRA Act does not apply to the occupation arrangement itself. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities. RTA Queensland publishes guidance for boarders and lodgers at rta.qld.gov.au.",
+    "Under s 27(1) of the RTRA Act, the Act does not apply to a residential tenancy agreement if the person is a boarder or lodger. Whether a person is a boarder or lodger (rather than a tenant or rooming accommodation resident) depends on the facts, including the degree of control the owner retains over the premises and shared facilities.",
     `The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room. Where the owner lives on site and no more than ${QLD_SECTION_43_MAX_ROOMS_FOR_RESIDENTS} rooms are occupied or available for occupation by residents, the rooming accommodation provisions of the RTRA Act (including s 43) generally do not apply to this arrangement.`,
     "The resident is granted permission to occupy only the allocated room described in the schedule and to use the shared areas on the terms below. The resident is not granted exclusive possession of the premises or any part of the premises.",
-    `Although the RTRA Act does not generally apply to this boarder/lodger arrangement, s 32 requires that any bond taken must still be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt. Bond must not be kept in a personal account. Failure to lodge is an offence. See ${QLD_RTA_BOARDERS_LODGERS_URL}. A bond is not compulsory; rent in advance is a lawful alternative.`
+    "Although the RTRA Act does not generally apply to this boarder/lodger arrangement, s 27(2) requires that any bond taken from a boarder or lodger must still be lodged with the Residential Tenancies Authority (RTA Queensland) within 10 calendar days of receipt. Failure to lodge bond is an offence under the Act."
   ],
   roomSharedIntro: "The resident is licensed to occupy the allocated bedroom at the property address in the schedule. Unless otherwise agreed in writing, the kitchen, bathroom, laundry and living areas are shared with the owner and any other occupants the owner permits on the premises.",
   entryParagraphs: [
@@ -860,8 +859,7 @@ var QLD_OCCUPANCY_PDF_MARKERS = [
   "RTA Queensland",
   "10 calendar days",
   "The resident is not required to pay Quni platform fees",
-  "s 32",
-  "boarders and lodgers",
+  "s 27",
   "s 43",
   "Form R18",
   "boarder or lodger"
