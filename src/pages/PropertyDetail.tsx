@@ -8,6 +8,7 @@ import {
   type ConversationThreadNavigationState,
 } from '../lib/messaging/conversationsApi'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
+import { appendTenantInviteToBookingPath } from '../lib/quniTenantInvite'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import type { Database, LandlordProfileRow } from '../lib/database.types'
 import type { Property } from '../lib/listings'
@@ -1125,7 +1126,9 @@ export default function PropertyDetail() {
     })
   })()
 
-  const bookPath = property?.id ? `/booking/${property.id}${availabilitySearchString}` : `/listings/${slug}`
+  const bookPath = appendTenantInviteToBookingPath(
+    property?.id ? `/booking/${property.id}${availabilitySearchString}` : `/listings/${slug}`,
+  )
   const bookHref = user
     ? bookPath
     : `/signup?role=student&redirect=${encodeURIComponent(bookPath)}`

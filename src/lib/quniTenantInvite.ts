@@ -3,6 +3,62 @@ const PROPERTY_KEY = 'quni_tenant_invite_property_id'
 const TITLE_KEY = 'quni_tenant_invite_property_title'
 const STUDENT_ONLY_KEY = 'quni_tenant_invite_student_only'
 const INVITED_NAME_KEY = 'quni_tenant_invite_invited_name'
+const SET_AT_KEY = 'quni_tenant_invite_set_at'
+
+/** Match tenant_invites default expiry — persisted context older than this is abandoned. */
+const INVITE_CONTEXT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
+
+function readInviteSetAtMs(): number | null {
+  try {
+    const v = localStorage.getItem(SET_AT_KEY)
+    const n = v ? Number(v) : NaN
+    return Number.isFinite(n) ? n : null
+  } catch {
+    return null
+  }
+}
+
+/** Persisted invite from /invite/:token — still within the invite TTL window. */
+export function hasRecentQuniTenantInviteContext(): boolean {
+  const token = getQuniTenantInviteToken()
+  const propertyId = getQuniTenantInvitePropertyId()
+  if (!token || !propertyId) return false
+  const setAt = readInviteSetAtMs()
+  if (!setAt) return true
+  return Date.now() - setAt <= INVITE_CONTEXT_MAX_AGE_MS
+}
+
+/** Drop expired persisted invite (e.g. user returns weeks later). */
+export function clearStaleQuniTenantInviteContext(): void {
+  if (!getQuniTenantInviteToken()) return
+  if (hasRecentQuniTenantInviteContext()) return
+  clearQuniTenantInviteContext()
+}
+
+function bookingPathPropertyId(path: string): string | null {
+  const m = path.match(/^\/booking\/([^/?]+)/)
+  const id = m?.[1]?.trim()
+  return id || null
+}
+
+/** Keep invite token on booking links when the prospect browsed listing details mid-flow. */
+export function appendTenantInviteToBookingPath(bookingPath: string): string {
+  if (!hasRecentQuniTenantInviteContext() || bookingPath.includes('invite=')) return bookingPath
+  const token = getQuniTenantInviteToken()
+  const propertyId = getQuniTenantInvitePropertyId()
+  if (!token || !propertyId) return bookingPath
+  if (bookingPathPropertyId(bookingPath) !== propertyId) return bookingPath
+  const sep = bookingPath.includes('?') ? '&' : '?'
+  return `${bookingPath}${sep}invite=${encodeURIComponent(token)}`
+}
+
+/** Same booking path without stripping a stored invite redirect (listing detail → signup). */
+export function shouldKeepStoredInviteRedirect(existing: string, incoming: string): boolean {
+  if (!existing.includes('invite=')) return false
+  if (incoming.includes('invite=')) return false
+  const base = (p: string) => p.split('?')[0] ?? p
+  return base(existing) === base(incoming)
+}
 
 export type QuniTenantInviteDisplayContext = {
   propertyId: string
@@ -20,6 +76,7 @@ export function setQuniTenantInviteContext(
   try {
     localStorage.setItem(TOKEN_KEY, rawToken.trim())
     localStorage.setItem(PROPERTY_KEY, propertyId.trim())
+    localStorage.setItem(SET_AT_KEY, String(Date.now()))
     if (display?.propertyTitle) localStorage.setItem(TITLE_KEY, display.propertyTitle.trim())
     if (display?.studentOnly) localStorage.setItem(STUDENT_ONLY_KEY, '1')
     else localStorage.removeItem(STUDENT_ONLY_KEY)
@@ -64,6 +121,7 @@ export function getQuniTenantInvitePropertyId(): string | null {
 }
 
 export function getQuniTenantInviteBookingRedirect(): string | null {
+  if (!hasRecentQuniTenantInviteContext()) return null
   const token = getQuniTenantInviteToken()
   const propertyId = getQuniTenantInvitePropertyId()
   if (!token || !propertyId) return null
@@ -77,6 +135,7 @@ export function clearQuniTenantInviteContext(): void {
     localStorage.removeItem(TITLE_KEY)
     localStorage.removeItem(STUDENT_ONLY_KEY)
     localStorage.removeItem(INVITED_NAME_KEY)
+    localStorage.removeItem(SET_AT_KEY)
   } catch {
     /* ignore */
   }

@@ -1,4 +1,9 @@
-import { clearQuniTenantInviteContext, getQuniTenantInviteDisplayContext } from './quniTenantInvite'
+import {
+  clearQuniTenantInviteContext,
+  clearStaleQuniTenantInviteContext,
+  getQuniTenantInviteDisplayContext,
+  hasRecentQuniTenantInviteContext,
+} from './quniTenantInvite'
 import { clearPostAuthRedirect, isSafeInternalPath, peekPostAuthRedirect } from './postAuthRedirect'
 
 export type TenantInviteSignupHints = {
@@ -22,14 +27,16 @@ export function isActiveTenantInviteAuthUrl(searchParams: URLSearchParams): bool
   if (searchParams.get('invite_student_only') === '1') return true
   if (redirectHasInviteToken(searchParams.get('redirect'))) return true
   if (redirectHasInviteToken(peekPostAuthRedirect())) return true
+  if (hasRecentQuniTenantInviteContext()) return true
   return false
 }
 
 /**
  * Drop persisted invite state when the user opens generic signup/login (not from an invite link).
- * localStorage survives until booking completes; without this it sticks across unrelated visits.
+ * Recent in-flow context survives app switches and listing-detail detours; expired context is cleared.
  */
 export function abandonStaleTenantInviteUnlessActive(searchParams: URLSearchParams): void {
+  clearStaleQuniTenantInviteContext()
   if (isActiveTenantInviteAuthUrl(searchParams)) return
   clearQuniTenantInviteContext()
   const stored = peekPostAuthRedirect()
@@ -46,13 +53,15 @@ export function resolveTenantInviteSignupHints(searchParams: URLSearchParams): T
   const fromRedirect = redirectHasInviteToken(redirect)
   const fromSessionRedirect = redirectHasInviteToken(peekPostAuthRedirect())
   const stored = getQuniTenantInviteDisplayContext()
+  const hasPersistedInvite = hasRecentQuniTenantInviteContext()
 
   const isTenantInviteFlow = Boolean(
     invitedEmail ||
       invitedName ||
       searchParams.get('invite_property')?.trim() ||
       fromRedirect ||
-      fromSessionRedirect,
+      fromSessionRedirect ||
+      hasPersistedInvite,
   )
 
   const propertyTitle =

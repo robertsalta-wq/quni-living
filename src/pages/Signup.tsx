@@ -8,6 +8,7 @@ import {
 } from '../lib/supabase'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
+import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTenantInvite'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
 import {
   clearQuniAccommodationVerificationRoute,
@@ -213,6 +214,7 @@ export default function Signup() {
 
   useEffect(() => {
     persistAuthReturnIntent(searchParams, location.state)
+    applyPendingTenantInvitePostAuthRedirect()
   }, [searchParams, location.state])
 
   useEffect(() => {

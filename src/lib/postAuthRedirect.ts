@@ -1,3 +1,5 @@
+import { shouldKeepStoredInviteRedirect } from './quniTenantInvite'
+
 const KEY = 'quni_post_auth_redirect'
 
 export function isSafeInternalPath(p: string): boolean {
@@ -21,14 +23,20 @@ export function rememberPostAuthRedirectFromSearch(searchParams: URLSearchParams
   if (!raw) return
   try {
     const decoded = decodeURIComponent(raw)
-    if (isSafeInternalPath(decoded) && !isShallowReturnIntentPath(decoded)) sessionStorage.setItem(KEY, decoded)
+    if (!isSafeInternalPath(decoded) || isShallowReturnIntentPath(decoded)) return
+    const existing = peekPostAuthRedirect()
+    if (existing && shouldKeepStoredInviteRedirect(existing, decoded)) return
+    sessionStorage.setItem(KEY, decoded)
   } catch {
     /* ignore malformed */
   }
 }
 
 export function setPostAuthRedirect(path: string): void {
-  if (isSafeInternalPath(path) && !isShallowReturnIntentPath(path)) sessionStorage.setItem(KEY, path)
+  if (!isSafeInternalPath(path) || isShallowReturnIntentPath(path)) return
+  const existing = peekPostAuthRedirect()
+  if (existing && shouldKeepStoredInviteRedirect(existing, path)) return
+  sessionStorage.setItem(KEY, path)
 }
 
 export function peekPostAuthRedirect(): string | null {
