@@ -25,7 +25,13 @@ import { PrivacyContent } from '../components/legal/PrivacyContent'
 import { TermsContent } from '../components/legal/TermsContent'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { resolveTenantInviteSignupHints } from '../lib/tenantInviteSignupContext'
+import {
+  recordTenantInviteFunnelEvent,
+  resolveTenantInviteTokenForFunnel,
+} from '../lib/tenantInviteFunnel'
 import TenantInviteSignupBanner from '../components/tenantInvite/TenantInviteSignupBanner'
+import VerificationChecklistModal from '../components/verification/VerificationChecklistModal'
+import type { VerificationChecklistFocus } from '../components/verification/verificationChecklistShared'
 
 /** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
 type SignupAccountKind = 'student' | 'non_student' | 'landlord'
@@ -176,6 +182,7 @@ export default function Signup() {
   const [confirmResendBusy, setConfirmResendBusy] = useState(false)
   const [confirmResendError, setConfirmResendError] = useState<string | null>(null)
   const [confirmResendSuccess, setConfirmResendSuccess] = useState(false)
+  const [verificationModalFocus, setVerificationModalFocus] = useState<VerificationChecklistFocus | null>(null)
 
   useEffect(() => {
     const invitedEmail = searchParams.get('invited_email')?.trim()
@@ -207,6 +214,13 @@ export default function Signup() {
   useEffect(() => {
     persistAuthReturnIntent(searchParams, location.state)
   }, [searchParams, location.state])
+
+  useEffect(() => {
+    const hints = resolveTenantInviteSignupHints(searchParams)
+    if (!hints.isTenantInviteFlow) return
+    const token = resolveTenantInviteTokenForFunnel(searchParams.get('redirect'))
+    if (token) recordTenantInviteFunnelEvent(token, 'signup_started')
+  }, [searchParams])
 
   useEffect(() => {
     if (step === 'details' && !accountKind) setStep('primary')
@@ -462,7 +476,7 @@ export default function Signup() {
     }`
 
   const roleVerifyLinkClass =
-    'mt-auto pt-3 block text-xs font-medium text-[#FF6F61] hover:underline whitespace-nowrap'
+    'mt-auto pt-3 block w-full text-left text-xs font-medium text-[#FF6F61] hover:underline whitespace-nowrap'
 
   const signupKindLabel =
     accountKind === 'landlord' ? 'Landlord' : accountKind === 'non_student' ? 'Non-Student' : 'Student'
@@ -525,9 +539,13 @@ export default function Signup() {
                   <span className="font-semibold text-gray-900">Student</span>
                   <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">Find housing and manage bookings.</p>
                 </button>
-                <Link to="/verification#students" className={roleVerifyLinkClass}>
+                <button
+                  type="button"
+                  className={roleVerifyLinkClass}
+                  onClick={() => setVerificationModalFocus('students')}
+                >
                   What you&apos;ll need to verify
-                </Link>
+                </button>
               </div>
               <div className={roleCardClass('non_student')}>
                 <button type="button" onClick={() => pickAccountKind('non_student')} className="w-full flex-1 text-left">
@@ -536,9 +554,13 @@ export default function Signup() {
                     Find rooms near university and manage your bookings.
                   </p>
                 </button>
-                <Link to="/verification#working-tenants" className={roleVerifyLinkClass}>
+                <button
+                  type="button"
+                  className={roleVerifyLinkClass}
+                  onClick={() => setVerificationModalFocus('working-tenants')}
+                >
                   What you&apos;ll need to verify
-                </Link>
+                </button>
               </div>
               {!tenantInviteHints.isTenantInviteFlow && (
                 <div className={roleCardClass('landlord')}>
@@ -546,18 +568,26 @@ export default function Signup() {
                     <span className="font-semibold text-gray-900">Landlord</span>
                     <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">List properties and manage enquiries.</p>
                   </button>
-                  <Link to="/verification#landlords" className={roleVerifyLinkClass}>
+                  <button
+                    type="button"
+                    className={roleVerifyLinkClass}
+                    onClick={() => setVerificationModalFocus('landlords')}
+                  >
                     What you&apos;ll need to verify
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
             {!tenantInviteHints.isTenantInviteFlow ? (
             <p className="text-xs text-gray-600 mt-3">
               Not sure what verification involves?{' '}
-              <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+              <button
+                type="button"
+                className="font-medium text-[#FF6F61] hover:underline"
+                onClick={() => setVerificationModalFocus('overview')}
+              >
                 See what you&apos;ll verify on Quni
-              </Link>
+              </button>
               . New to renting near campus as a professional?{' '}
               <Link to="/rent-near-campus" className="text-indigo-600 font-medium hover:text-indigo-800">
                 Preview the non-student landing page.
@@ -566,9 +596,13 @@ export default function Signup() {
             ) : (
             <p className="text-xs text-gray-600 mt-3">
               Choose the renter type that matches how you will verify.{' '}
-              <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+              <button
+                type="button"
+                className="font-medium text-[#FF6F61] hover:underline"
+                onClick={() => setVerificationModalFocus('overview')}
+              >
                 See what you&apos;ll verify on Quni
-              </Link>
+              </button>
               . You will complete the same verification as any other tenant before booking this room.
             </p>
             )}
@@ -708,6 +742,14 @@ export default function Signup() {
           )}
         </>
       )}
+
+      {verificationModalFocus !== null ? (
+        <VerificationChecklistModal
+          open
+          focus={verificationModalFocus}
+          onClose={() => setVerificationModalFocus(null)}
+        />
+      ) : null}
     </div>
   )
 }

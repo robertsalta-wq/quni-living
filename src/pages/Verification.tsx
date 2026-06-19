@@ -1,7 +1,10 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import Seo from '../components/Seo'
 import PageHeroBand from '../components/PageHeroBand'
+import {
+  VerificationLandlordSection,
+  VerificationStudentSection,
+  VerificationWorkingTenantSection,
+} from '../components/verification/verificationChecklistShared'
 
 /**
  * v2 link surfaces (deferred): onboarding contextual "what this is for" links; pricing and
@@ -14,96 +17,6 @@ const NAV_ITEMS = [
   { href: '#landlords', label: 'Landlords' },
   { href: '#quick-answers', label: 'Quick answers' },
 ] as const
-
-const TABLE_WRAP = 'overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm'
-const TH =
-  'border border-gray-100 bg-gray-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 sm:text-sm'
-const TD = 'border border-gray-100 px-4 py-3 text-sm leading-relaxed text-gray-700 align-top'
-
-type VerificationStep = { step: string; what: ReactNode }
-
-function VerificationTable({ rows }: { rows: VerificationStep[] }) {
-  return (
-    <div className={TABLE_WRAP}>
-      <table className="min-w-full border-collapse">
-        <thead>
-          <tr>
-            <th className={TH} scope="col">
-              Step
-            </th>
-            <th className={TH} scope="col">
-              What it is
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.step}>
-              <td className={`${TD} font-medium text-gray-900 whitespace-nowrap`}>{row.step}</td>
-              <td className={TD}>{row.what}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-const STUDENT_STEPS: VerificationStep[] = [
-  { step: 'Confirm your email', what: 'Verify the address you signed up with.' },
-  { step: 'Verify your university email', what: 'We send a one-time code to your university address.' },
-  { step: 'Photo ID', what: "A current passport or Australian driver's licence." },
-  { step: 'Proof of enrolment', what: 'A recent enrolment confirmation letter or Confirmation of Enrolment (CoE).' },
-]
-
-const WORKING_TENANT_STEPS: VerificationStep[] = [
-  { step: 'Confirm your email', what: 'Verify the address you signed up with.' },
-  {
-    step: 'Complete your profile',
-    what: 'Your name, phone, budget, and move-in date. Required before you can send a booking request.',
-  },
-  { step: 'Photo ID', what: "A current passport or Australian driver's licence." },
-  {
-    step: 'Supporting document',
-    what: 'A recent payslip, employment letter, or bank statement.',
-  },
-]
-
-const LANDLORD_STEPS: VerificationStep[] = [
-  { step: 'Confirm your email', what: 'Verify the address you signed up with.' },
-  {
-    step: 'Complete your profile',
-    what: 'Your name, whether you\u2019re an individual, company or trust, your ABN, and contact details.',
-  },
-  {
-    step: 'Agree to the terms',
-    what: (
-      <>
-        <Link to="/terms" className="font-medium text-[#FF6F61] hover:underline">
-          Terms of Use
-        </Link>
-        ,{' '}
-        <Link to="/privacy" className="font-medium text-[#FF6F61] hover:underline">
-          Privacy Policy
-        </Link>
-        , and the{' '}
-        <Link to="/landlord-service-agreement" className="font-medium text-[#FF6F61] hover:underline">
-          Landlord Service Agreement
-        </Link>
-        .
-      </>
-    ),
-  },
-  { step: 'Confirm your insurance', what: 'Confirm you hold appropriate cover for the property.' },
-  {
-    step: 'Add a payment card',
-    what: 'For the $99-per-accepted-booking fee. You are not charged until you accept a tenant.',
-  },
-  {
-    step: 'Verify your identity',
-    what: 'Confirmed securely through payment setup before your first acceptance.',
-  },
-]
 
 const QUICK_ANSWERS = [
   {
@@ -168,82 +81,58 @@ export default function Verification() {
         </div>
 
         <div className="max-w-3xl space-y-14">
-            <section aria-labelledby="renters-heading">
-              <h2 id="renters-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                For renters
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-gray-700 sm:text-base">
-                What you complete depends on whether you&apos;re a student or a working tenant.
-              </p>
+          <section aria-labelledby="renters-heading">
+            <h2 id="renters-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
+              For renters
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-gray-700 sm:text-base">
+              What you complete depends on whether you&apos;re a student or a working tenant.
+            </p>
 
-              <div id="students" className="scroll-mt-32 md:scroll-mt-36 mt-10 space-y-4">
-                <h3 className="font-display text-lg font-bold text-gray-900">If you&apos;re a student</h3>
-                <VerificationTable rows={STUDENT_STEPS} />
-                <p className="text-sm leading-relaxed text-gray-700">
-                  Required to request to book on student-only listings. You&apos;ll also complete a short profile with
-                  your university, course, phone, budget, and move-in date before your first request.
-                </p>
-              </div>
+            <div id="students" className="scroll-mt-32 md:scroll-mt-36 mt-10 space-y-4">
+              <h3 className="font-display text-lg font-bold text-gray-900">If you&apos;re a student</h3>
+              <VerificationStudentSection />
+            </div>
 
-              <div id="working-tenants" className="scroll-mt-32 md:scroll-mt-36 mt-10 space-y-4">
-                <h3 className="font-display text-lg font-bold text-gray-900">
-                  If you&apos;re a working tenant or graduate
-                </h3>
-                <VerificationTable rows={WORKING_TENANT_STEPS} />
-                <p className="text-sm leading-relaxed text-gray-700">
-                  Complete your profile to request to book on listings open to non-students. Photo ID and a supporting
-                  document complete identity verification for landlords reviewing your application.
-                </p>
-                <p className="text-sm leading-relaxed text-gray-600">
-                  Work email verification is optional. It adds a badge to your profile but is not required to request to
-                  book.
-                </p>
-              </div>
+            <div id="working-tenants" className="scroll-mt-32 md:scroll-mt-36 mt-10 space-y-4">
+              <h3 className="font-display text-lg font-bold text-gray-900">
+                If you&apos;re a working tenant or graduate
+              </h3>
+              <VerificationWorkingTenantSection />
+            </div>
 
-              <p className="mt-8 text-sm leading-relaxed text-gray-700">
-                <strong className="font-semibold text-gray-900">Why we ask.</strong> A landlord is about to let you into
-                their home. When they can see you&apos;re verified, they say yes faster and with more confidence. The
-                work you do once carries across every listing you apply to.
-              </p>
-            </section>
+            <p className="mt-8 text-sm leading-relaxed text-gray-700">
+              <strong className="font-semibold text-gray-900">Why we ask.</strong> A landlord is about to let you into
+              their home. When they can see you&apos;re verified, they say yes faster and with more confidence. The work
+              you do once carries across every listing you apply to.
+            </p>
+          </section>
 
-            <section id="landlords" className="scroll-mt-32 md:scroll-mt-36" aria-labelledby="landlords-heading">
-              <h2 id="landlords-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                For landlords
-              </h2>
-              <p className="mt-3 text-sm font-semibold text-gray-900 sm:text-base">
-                List for free. Get verified renters. Accept in a tap.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-gray-700 sm:text-base">
-                Here is what you set up once on Quni Listing.
-              </p>
-              <div className="mt-6">
-                <VerificationTable rows={LANDLORD_STEPS} />
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-gray-700">
-                Once that&apos;s done you can publish listings, receive booking requests from verified renters, and accept
-                with the tenancy agreement and e-signing handled inside Quni.
-              </p>
-              <p className="mt-6 text-sm leading-relaxed text-gray-700">
-                <strong className="font-semibold text-gray-900">Why we ask.</strong> Verifying you protects renters and
-                keeps every agreement on the platform legally sound. It is also what lets the booking, the agreement, and
-                signing all happen in one place instead of chasing paperwork.
-              </p>
-            </section>
+          <section id="landlords" className="scroll-mt-32 md:scroll-mt-36" aria-labelledby="landlords-heading">
+            <h2 id="landlords-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
+              For landlords
+            </h2>
+            <VerificationLandlordSection />
+            <p className="mt-6 text-sm leading-relaxed text-gray-700">
+              <strong className="font-semibold text-gray-900">Why we ask.</strong> Verifying you protects renters and
+              keeps every agreement on the platform legally sound. It is also what lets the booking, the agreement, and
+              signing all happen in one place instead of chasing paperwork.
+            </p>
+          </section>
 
-            <section id="quick-answers" className="scroll-mt-32 md:scroll-mt-36" aria-labelledby="quick-answers-heading">
-              <h2 id="quick-answers-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
-                Quick answers
-              </h2>
-              <dl className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                {QUICK_ANSWERS.map((item) => (
-                  <div key={item.q} className="px-5 py-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-900 sm:text-base">{item.q}</dt>
-                    <dd className="mt-2 text-sm leading-relaxed text-gray-600">{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
+          <section id="quick-answers" className="scroll-mt-32 md:scroll-mt-36" aria-labelledby="quick-answers-heading">
+            <h2 id="quick-answers-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
+              Quick answers
+            </h2>
+            <dl className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm">
+              {QUICK_ANSWERS.map((item) => (
+                <div key={item.q} className="px-5 py-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-900 sm:text-base">{item.q}</dt>
+                  <dd className="mt-2 text-sm leading-relaxed text-gray-600">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         </div>
       </div>
     </div>

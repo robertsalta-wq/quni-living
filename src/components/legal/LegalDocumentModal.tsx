@@ -9,6 +9,8 @@ type LegalDocumentModalProps = {
   onClose: () => void
   title: string
   children: ReactNode
+  /** When set, replaces the default legal "Last updated" line in the header. */
+  subtitle?: ReactNode
 }
 
 function CloseIcon() {
@@ -19,7 +21,7 @@ function CloseIcon() {
   )
 }
 
-export function LegalDocumentModal({ open, onClose, title, children }: LegalDocumentModalProps) {
+export function LegalDocumentModal({ open, onClose, title, children, subtitle }: LegalDocumentModalProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -91,7 +93,11 @@ export function LegalDocumentModal({ open, onClose, title, children }: LegalDocu
             <h2 id={titleId} className="font-display text-xl font-bold text-[#FF6F61] tracking-tight sm:text-2xl">
               {title}
             </h2>
-            <p className="mt-1 text-sm text-stone-500">Last updated: 23 March 2026</p>
+            {subtitle !== undefined ? (
+              subtitle ? <p className="mt-1 text-sm text-stone-500">{subtitle}</p> : null
+            ) : (
+              <p className="mt-1 text-sm text-stone-500">Last updated: 23 March 2026</p>
+            )}
           </div>
           <button
             ref={closeButtonRef}
