@@ -10,7 +10,7 @@ import {
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
-import { ensureAuthUserProfileRow } from '../../lib/ensureAuthUserProfileRow'
+import { ensureSignupProfileRowAfterEmailConfirm } from '../../lib/ensureSignupProfileRowAfterEmailConfirm'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 import {
@@ -45,8 +45,10 @@ export default function AuthCallback() {
 
     let cancelled = false
 
-    async function finishWithSession(sessionUser: User) {
-      await ensureAuthUserProfileRow(sessionUser)
+    async function finishWithSession(sessionUser: User, afterSignupEmailConfirm: boolean) {
+      if (afterSignupEmailConfirm) {
+        await ensureSignupProfileRowAfterEmailConfirm(sessionUser)
+      }
       await applyPendingAccommodationRouteToStudentProfile(
         sessionUser.id,
         sessionUser.created_at,
@@ -98,6 +100,7 @@ export default function AuthCallback() {
 
       let tokenHashErr: { message: string } | null = null
       let sessionErr: { message: string } | null = null
+      let completedSignupEmailConfirm = false
 
       if (tokenParams) {
         // Drop any unrelated session so a failed verify cannot continue as another user.
@@ -109,6 +112,7 @@ export default function AuthCallback() {
         if (error) {
           tokenHashErr = error
         } else {
+          completedSignupEmailConfirm = true
           stripSensitiveAuthCallbackQueryParams()
         }
       }
@@ -171,7 +175,7 @@ export default function AuthCallback() {
           return
         }
 
-        await finishWithSession(user)
+        await finishWithSession(user, completedSignupEmailConfirm)
         return
       }
 

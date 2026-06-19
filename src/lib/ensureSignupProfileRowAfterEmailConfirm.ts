@@ -18,10 +18,10 @@ function accommodationRouteFromUser(user: User): 'student' | 'non_student' | nul
 }
 
 /**
- * Insert a student/landlord profile when auth.users exists but the signup trigger row is missing
- * (deleted row, trigger was absent at signup, etc.). Idempotent when a profile already exists.
+ * After signup email confirmation, insert a profile row only when metadata clearly
+ * indicates student or landlord. Skips ambiguous/missing roles to avoid mislabeling.
  */
-export async function ensureAuthUserProfileRow(user: User): Promise<void> {
+export async function ensureSignupProfileRowAfterEmailConfirm(user: User): Promise<void> {
   const [{ data: sp }, { data: lp }] = await Promise.all([
     supabase.from('student_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
     supabase.from('landlord_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
@@ -42,10 +42,12 @@ export async function ensureAuthUserProfileRow(user: User): Promise<void> {
     return
   }
 
-  await supabase.from('student_profiles').insert({
-    user_id: user.id,
-    email,
-    full_name: fullName,
-    accommodation_verification_route: accommodationRouteFromUser(user),
-  })
+  if (metaRole === 'student') {
+    await supabase.from('student_profiles').insert({
+      user_id: user.id,
+      email,
+      full_name: fullName,
+      accommodation_verification_route: accommodationRouteFromUser(user),
+    })
+  }
 }
