@@ -171,6 +171,13 @@ function parseSuggestion(rawText: string): SuggestedPricing | null {
   return null
 }
 
+function clientFacingAnthropicError(status: number): string {
+  if (status === 429) {
+    return 'Too many requests. Please wait a moment and try again.'
+  }
+  return 'Could not generate a pricing suggestion right now. Please try again.'
+}
+
 export default async function handler(request: Request) {
   const origin = request.headers.get('origin') || '*'
 
@@ -240,7 +247,7 @@ export default async function handler(request: Request) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 2048,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
         messages: [{ role: 'user', content: prompt }],
@@ -253,9 +260,8 @@ export default async function handler(request: Request) {
 
   const anthropicData = (await anthropicRes.json().catch(() => ({}))) as AnthropicMessagesResponse
   if (!anthropicRes.ok) {
-    const errMsg = anthropicData.error?.message || anthropicRes.statusText || 'Anthropic request failed'
     const status = anthropicRes.status === 429 ? 429 : 502
-    return json({ error: errMsg }, status, origin)
+    return json({ error: clientFacingAnthropicError(status) }, status, origin)
   }
 
   const text = (anthropicData.content ?? [])
