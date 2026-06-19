@@ -208,6 +208,46 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
 
 type TabId = 'listings' | 'bookings'
 
+const LANDLORD_INVITE_MODAL_SESSION_KEY = 'quni-landlord-invite-modal:v1'
+
+type InviteModalProperty = {
+  id: string
+  title: string
+  slug: string
+  open_to_non_students: boolean
+}
+
+function readInviteModalFromSession(): InviteModalProperty | null {
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(LANDLORD_INVITE_MODAL_SESSION_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as InviteModalProperty
+    if (!parsed?.id || !parsed.title || !parsed.slug) return null
+    return {
+      id: parsed.id,
+      title: parsed.title,
+      slug: parsed.slug,
+      open_to_non_students: Boolean(parsed.open_to_non_students),
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeInviteModalToSession(property: InviteModalProperty | null): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    if (!property) {
+      sessionStorage.removeItem(LANDLORD_INVITE_MODAL_SESSION_KEY)
+      return
+    }
+    sessionStorage.setItem(LANDLORD_INVITE_MODAL_SESSION_KEY, JSON.stringify(property))
+  } catch {
+    // Quota or private browsing — ignore.
+  }
+}
+
 /** Loaded for landlord dashboard - safe fields only (see LandlordSafeStudentSnapshot). */
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
@@ -348,6 +388,11 @@ export default function LandlordDashboard() {
   const [listingBilling, setListingBilling] = useState<LandlordListingBillingSnapshot | null>(null)
   const [listingPaymentModalOpen, setListingPaymentModalOpen] = useState(false)
   const toastTimerRef = useRef<number | null>(null)
+  const loadGenRef = useRef(0)
+  const profileLoadRetryGenRef = useRef(0)
+  const authLandlordRef = useRef(authLandlord)
+  authLandlordRef.current = authLandlord
+  const showToastRef = useRef<(t: { kind: 'success' | 'error'; message: string }) => void>(() => {})
   const [studentProfileModal, setStudentProfileModal] = useState<{
     student: LandlordSafeStudentSnapshot | null
     fallbackName: string
@@ -493,30 +538,55 @@ export default function LandlordDashboard() {
   )
 
   const load = useCallback(async () => {
-    if (!isSupabaseConfigured || !user?.id) {
-      setDataLoading(false)
+    const gen = ++loadGenRef.current
+
+    const isCurrent = () => gen === loadGenRef.current
+
+    if (!isSupabaseConfigured) {
+      if (isCurrent()) setDataLoading(false)
       return
     }
-    setDataLoading(true)
-    setError(null)
+
+    let userId = user?.id
+    if (!userId) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      userId = session?.user?.id
+    }
+    if (!userId) {
+      if (isCurrent()) setDataLoading(false)
+      return
+    }
+
+    if (isCurrent()) {
+      setDataLoading(true)
+      setError(null)
+    }
+
     try {
-      let prof: LandlordRow | null = authLandlord
+      let prof: LandlordRow | null = authLandlordRef.current
       if (!prof) {
         const { data: profRaw, error: pErr } = await supabase
           .from('landlord_profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .maybeSingle()
         if (pErr) throw pErr
         prof = profRaw as LandlordRow | null
       }
       if (!prof) {
-        setProfile(null)
-        setProperties([])
-        setBookings([])
-        setListingBilling(null)
+        // Transient during JWT refresh — keep existing dashboard data; retry once after token settles.
+        if (isCurrent() && profileLoadRetryGenRef.current !== gen) {
+          profileLoadRetryGenRef.current = gen
+          window.setTimeout(() => {
+            void load()
+          }, 750)
+        }
         return
       }
+      profileLoadRetryGenRef.current = 0
+      if (!isCurrent()) return
       setProfile(prof)
 
       const [propRes, bookRes] = await Promise.all([
@@ -656,20 +726,31 @@ export default function LandlordDashboard() {
         }
       })
 
+      if (!isCurrent()) return
       setProperties((propRes.data ?? []) as PropertySummary[])
       setBookings(mergedBookings)
 
-      void fetchLandlordListingBillingSnapshot().then(setListingBilling)
+      void fetchLandlordListingBillingSnapshot().then((snapshot) => {
+        if (isCurrent()) setListingBilling(snapshot)
+      })
     } catch (e) {
-      setError(messageFromSupabaseError(e))
-      setProfile(null)
-      setProperties([])
-      setBookings([])
-      setListingBilling(null)
+      if (!isCurrent()) return
+      const msg = messageFromSupabaseError(e)
+      setProfile((prev) => {
+        if (prev) {
+          showToastRef.current({ kind: 'error', message: msg })
+          return prev
+        }
+        setError(msg)
+        setProperties([])
+        setBookings([])
+        setListingBilling(null)
+        return null
+      })
     } finally {
-      setDataLoading(false)
+      if (isCurrent()) setDataLoading(false)
     }
-  }, [user?.id, authLandlord])
+  }, [user?.id])
 
   useEffect(() => {
     if (authLandlord) setProfile(authLandlord)
@@ -693,6 +774,7 @@ export default function LandlordDashboard() {
       toastTimerRef.current = null
     }, 4000)
   }, [])
+  showToastRef.current = showToast
 
   const {
     publishingListingId,
@@ -710,12 +792,26 @@ export default function LandlordDashboard() {
     onMutationError: (msg) => showToast({ kind: 'error', message: msg }),
   })
 
-  const [inviteModalProperty, setInviteModalProperty] = useState<{
-    id: string
-    title: string
-    slug: string
-    open_to_non_students: boolean
-  } | null>(null)
+  const [inviteModalProperty, setInviteModalProperty] = useState<InviteModalProperty | null>(
+    () => readInviteModalFromSession(),
+  )
+
+  const openInviteModal = useCallback((property: InviteModalProperty) => {
+    setInviteModalProperty(property)
+    writeInviteModalToSession(property)
+  }, [])
+
+  const closeInviteModal = useCallback(() => {
+    setInviteModalProperty(null)
+    writeInviteModalToSession(null)
+  }, [])
+
+  useEffect(() => {
+    if (!inviteModalProperty || properties.length === 0) return
+    if (!properties.some((p) => p.id === inviteModalProperty.id)) {
+      closeInviteModal()
+    }
+  }, [inviteModalProperty, properties, closeInviteModal])
 
   const stripeConnectParam = searchParams.get('stripe_connect')
   useEffect(() => {
@@ -1020,7 +1116,19 @@ export default function LandlordDashboard() {
 
         {tab === 'listings' && (
           <div>
-            {properties.length === 0 ? (
+            {dataLoading && properties.length === 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-label="Loading listings">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm animate-pulse">
+                    <div className="aspect-[4/3] bg-gray-200" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 w-3/4 rounded bg-gray-200" />
+                      <div className="h-3 w-1/2 rounded bg-gray-100" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : properties.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
                 <p className="text-gray-600 text-sm mb-4">You haven&apos;t listed any properties yet.</p>
                 {canCreateListing ? (
@@ -1118,7 +1226,7 @@ export default function LandlordDashboard() {
                             p.status === 'active' && parseLandlordServiceTier(p.service_tier) === 'listing'
                           }
                           onInviteTenant={(prop) =>
-                            setInviteModalProperty({
+                            openInviteModal({
                               id: prop.id,
                               title: prop.title,
                               slug: prop.slug,
@@ -1470,7 +1578,7 @@ export default function LandlordDashboard() {
           open={inviteModalProperty != null}
           property={inviteModalProperty}
           landlordProfileId={profile?.id ?? null}
-          onClose={() => setInviteModalProperty(null)}
+          onClose={closeInviteModal}
         />
 
         {stripeRequiredModalOpen && (

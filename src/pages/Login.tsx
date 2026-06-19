@@ -14,6 +14,7 @@ import {
   persistAuthReturnIntent,
   resolvePostLoginDestination,
 } from '../lib/postAuthRedirect'
+import { abandonStaleTenantInviteUnlessActive } from '../lib/tenantInviteSignupContext'
 import Seo from '../components/Seo'
 import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
@@ -92,6 +93,7 @@ export default function Login() {
   }
 
   useEffect(() => {
+    abandonStaleTenantInviteUnlessActive(searchParams)
     persistAuthReturnIntent(searchParams, location.state)
   }, [searchParams, location.state])
 
