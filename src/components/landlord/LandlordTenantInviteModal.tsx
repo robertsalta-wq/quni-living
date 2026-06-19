@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { absoluteUrl } from '../../lib/site'
 import { generateTenantInviteTokenPair } from '../../lib/tenantInviteToken'
+import { sendTenantInviteEmail } from '../../lib/tenantInviteEmail'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import type { Database } from '../../lib/database.types'
 
@@ -22,6 +23,7 @@ type Props = {
 }
 
 type CreatedInvite = {
+  inviteId: string
   rawToken: string
   url: string
 }
@@ -41,14 +43,18 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdInvite, setCreatedInvite] = useState<CreatedInvite | null>(null)
+  const [emailSentTo, setEmailSentTo] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState(false)
   const [pendingInvites, setPendingInvites] = useState<TenantInviteRow[]>([])
   const [loadingInvites, setLoadingInvites] = useState(false)
   const [revokingId, setRevokingId] = useState<string | null>(null)
   const [rotatingId, setRotatingId] = useState<string | null>(null)
+  const [emailingId, setEmailingId] = useState<string | null>(null)
   const [rotatedUrl, setRotatedUrl] = useState<{ inviteId: string; url: string } | null>(null)
 
   const studentOnly = property ? !property.open_to_non_students : false
+  const emailTrimmed = email.trim()
+  const canSendEmail = Boolean(emailTrimmed)
 
   const loadPendingInvites = useCallback(async () => {
     if (!property?.id) return
@@ -76,33 +82,76 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     setNote('')
     setCreateError(null)
     setCreatedInvite(null)
+    setEmailSentTo(null)
     setCopySuccess(false)
     void loadPendingInvites()
   }, [open, property, loadPendingInvites])
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    if (!property || !landlordProfileId) return
-    setCreating(true)
-    setCreateError(null)
-    setCreatedInvite(null)
-    try {
-      const { raw, hash } = await generateTenantInviteTokenPair()
-      const { error } = await supabase.from('tenant_invites').insert({
+  async function insertInvite(): Promise<CreatedInvite> {
+    if (!property || !landlordProfileId) throw new Error('Missing listing context')
+    const { raw, hash } = await generateTenantInviteTokenPair()
+    const { data: inserted, error } = await supabase
+      .from('tenant_invites')
+      .insert({
         property_id: property.id,
         landlord_id: landlordProfileId,
-        invited_email: email.trim() || null,
+        invited_email: emailTrimmed || null,
         invited_name: name.trim() || null,
         landlord_note: note.trim() || null,
         token_hash: hash,
         status: 'pending',
       })
-      if (error) throw error
-      const url = absoluteUrl(`/invite/${raw}`)
-      setCreatedInvite({ rawToken: raw, url })
+      .select('id')
+      .single()
+    if (error) throw error
+    if (!inserted?.id) throw new Error('Invite was not created.')
+    const url = absoluteUrl(`/invite/${raw}`)
+    return { inviteId: inserted.id, rawToken: raw, url }
+  }
+
+  async function handleCreateLinkOnly(e: React.FormEvent) {
+    e.preventDefault()
+    if (!property || !landlordProfileId) return
+    setCreating(true)
+    setCreateError(null)
+    setCreatedInvite(null)
+    setEmailSentTo(null)
+    try {
+      const created = await insertInvite()
+      setCreatedInvite(created)
       await loadPendingInvites()
     } catch (err) {
       setCreateError(messageFromSupabaseError(err))
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleCreateAndEmail(e: React.FormEvent) {
+    e.preventDefault()
+    if (!property || !landlordProfileId || !canSendEmail) return
+    setCreating(true)
+    setCreateError(null)
+    setCreatedInvite(null)
+    setEmailSentTo(null)
+    let created: CreatedInvite | null = null
+    try {
+      created = await insertInvite()
+      setCreatedInvite(created)
+      const sent = await sendTenantInviteEmail({
+        inviteId: created.inviteId,
+        inviteUrl: created.url,
+        toEmail: emailTrimmed,
+      })
+      setEmailSentTo(sent.emailedTo)
+      await loadPendingInvites()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : messageFromSupabaseError(err)
+      setCreateError(
+        created ? `${msg} The invite was created — you can still copy the link below.` : msg,
+      )
+      if (created) setCreatedInvite(created)
+      await loadPendingInvites()
     } finally {
       setCreating(false)
     }
@@ -135,6 +184,28 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     }
   }
 
+  async function emailAgain(invite: TenantInviteRow) {
+    const to = invite.invited_email?.trim()
+    if (!to) {
+      setCreateError('Add an email on a new invite to use email delivery.')
+      return
+    }
+    setEmailingId(invite.id)
+    setCreateError(null)
+    try {
+      const sent = await sendTenantInviteEmail({ inviteId: invite.id, toEmail: to })
+      setEmailSentTo(sent.emailedTo)
+      if (sent.rotated) {
+        setCreateError(null)
+      }
+      await loadPendingInvites()
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : messageFromSupabaseError(err))
+    } finally {
+      setEmailingId(null)
+    }
+  }
+
   async function revokeInvite(inviteId: string) {
     setRevokingId(inviteId)
     try {
@@ -155,14 +226,14 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
       <div
         className="absolute inset-0 bg-black/40"
         onClick={() => {
-          if (!creating && !revokingId) onClose()
+          if (!creating && !revokingId && !emailingId) onClose()
         }}
         aria-hidden
       />
       <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900">Invite a tenant</h3>
         <p className="mt-1 text-sm text-gray-600">
-          Generate a link for <span className="font-medium text-gray-900">{property.title}</span>. Your tenant
+          Share a link or email for <span className="font-medium text-gray-900">{property.title}</span>. Your tenant
           completes the same verification and booking steps as any other renter on Quni.
         </p>
 
@@ -172,17 +243,17 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
           </p>
         )}
 
-        <form onSubmit={(e) => void handleCreate(e)} className="mt-4 space-y-3">
+        <form className="mt-4 space-y-3" onSubmit={(e) => void handleCreateAndEmail(e)}>
           <div>
             <label htmlFor="invite-email" className="block text-xs font-medium text-gray-700 mb-1">
-              Tenant email <span className="text-gray-400 font-normal">(optional)</span>
+              Tenant email
             </label>
             <input
               id="invite-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Prefills signup — not enforced"
+              placeholder="Send invite by email, or leave blank for link only"
               className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
               autoComplete="off"
             />
@@ -213,20 +284,36 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
             />
           </div>
           {createError && <p className="text-sm text-red-600">{createError}</p>}
-          <button
-            type="submit"
-            disabled={creating || !landlordProfileId}
-            className="w-full rounded-xl bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
-          >
-            {creating ? 'Generating link…' : 'Generate invite link'}
-          </button>
+          {emailSentTo && (
+            <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+              Invite email sent to <span className="font-medium">{emailSentTo}</span>.
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="submit"
+              disabled={creating || !landlordProfileId || !canSendEmail}
+              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
+            >
+              {creating && canSendEmail ? 'Sending…' : 'Send invite email'}
+            </button>
+            <button
+              type="button"
+              disabled={creating || !landlordProfileId}
+              onClick={(e) => void handleCreateLinkOnly(e)}
+              className="flex-1 rounded-xl border border-gray-300 bg-white text-gray-800 py-2.5 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60"
+            >
+              {creating && !canSendEmail ? 'Generating…' : 'Copy link only'}
+            </button>
+          </div>
         </form>
 
         {createdInvite && (
           <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2">
             <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">Copy this link now</p>
             <p className="text-xs text-emerald-800">
-              For security we only store a hash of the token. This is the only time the full link is shown.
+              For security we only store a hash of the token. This is the only time the full link is shown unless you
+              email a fresh link from pending invites.
             </p>
             <p className="text-xs text-gray-800 break-all font-mono bg-white/80 rounded-lg px-2 py-1.5 border border-emerald-100">
               {createdInvite.url}
@@ -254,6 +341,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                   inv.invited_name?.trim() ||
                   inv.invited_email?.trim() ||
                   `Invite · ${formatInviteExpiry(inv.expires_at)}`
+                const hasEmail = Boolean(inv.invited_email?.trim())
                 return (
                   <li
                     key={inv.id}
@@ -263,7 +351,17 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                       <p className="text-sm text-gray-900 truncate">{label}</p>
                       <p className="text-xs text-gray-500">Expires {formatInviteExpiry(inv.expires_at)}</p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                      {hasEmail && (
+                        <button
+                          type="button"
+                          onClick={() => void emailAgain(inv)}
+                          disabled={emailingId === inv.id}
+                          className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-60"
+                        >
+                          {emailingId === inv.id ? 'Sending…' : 'Email again'}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => void copyAgain(inv.id)}
@@ -291,7 +389,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
             </ul>
           )}
           <p className="mt-2 text-[11px] text-gray-500">
-            Copy again issues a fresh link and invalidates the previous one. Platform email for invites is not built yet.
+            Email again sends a fresh link and invalidates the previous one. Copy again does the same for manual sharing.
           </p>
         </div>
 
@@ -299,7 +397,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
           <button
             type="button"
             onClick={onClose}
-            disabled={creating || Boolean(revokingId)}
+            disabled={creating || Boolean(revokingId) || Boolean(emailingId)}
             className="rounded-xl border border-gray-300 bg-white text-gray-700 px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60"
           >
             Close

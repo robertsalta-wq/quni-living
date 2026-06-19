@@ -464,3 +464,30 @@ export function listingCancelledByLandlordLandlord(data) {
     html: wrapContent(inner),
   }
 }
+
+/** Landlord-sourced tenant invite — prospect books through Quni verification flow. */
+export function tenantInviteProspectEmail(data) {
+  const inviteeName = escapeHtml(data.invitee_name || 'there')
+  const firstName = inviteeName === 'there' ? 'there' : inviteeName.split(/\s+/)[0]
+  const landlordName = escapeHtml(data.landlord_name || 'Your landlord')
+  const propertyTitle = escapeHtml(data.property_title || 'a room')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the listing')
+  const inviteUrl = escapeHtml(data.invite_url || 'https://quni.com.au')
+  const studentOnlyBlock = data.student_only
+    ? `<p style="background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px 14px; color: #44403c; font-size: 14px;">This room is for <strong>students only</strong>. You&apos;ll verify as a student during signup — the same requirement as anyone booking this listing on Quni.</p>`
+    : ''
+
+  const inner = `<h2 style="color: #1A1A2E;">You&apos;re invited to book on Quni</h2>
+<p>Hi ${firstName},</p>
+<p><strong>${landlordName}</strong> invited you to apply for <strong>${propertyTitle}</strong> through Quni Living.</p>
+<p>Quni handles verified tenancy, the compliant agreement, and e-signing on-platform. You&apos;ll create a renter account, complete verification, then submit your booking request for this room.</p>
+${studentOnlyBlock}
+<p style="margin: 24px 0;"><a href="${inviteUrl}" style="background-color: #FF6F61; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">View invitation &amp; get started →</a></p>
+<p style="color: #666666; font-size: 14px;">Or copy this link into your browser:<br><a href="${inviteUrl}" style="color: #FF6F61; word-break: break-all;">${inviteUrl}</a></p>
+<p style="color: #888888; font-size: 13px;">This invite link expires in 14 days. If it stops working, ask ${landlordName} to send a fresh link.</p>`
+
+  return {
+    subject: `Invitation to book ${data.property_title || 'a room'} on Quni Living`,
+    html: wrapContent(inner),
+  }
+}
