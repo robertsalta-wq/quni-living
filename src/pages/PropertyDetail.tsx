@@ -874,17 +874,41 @@ export default function PropertyDetail() {
           description={`Loading verified accommodation on Quni Living. ${LISTING_SEO_SUFFIX}`}
           canonicalPath={`/listings/${slug}`}
         />
-        <div className="max-w-site mx-auto px-4 sm:px-6 py-8 bg-stone-50 min-h-[50vh]" aria-busy="true">
-          <div className="aspect-[16/10] max-h-[420px] rounded-2xl bg-stone-200 animate-pulse mb-6" />
-          <div className="h-8 w-2/3 max-w-md rounded-lg bg-stone-200 animate-pulse mb-3" />
-          <div className="h-4 w-1/2 max-w-xs rounded bg-stone-100 animate-pulse mb-8" />
-          <div className="grid gap-3 lg:grid-cols-[1fr_320px]">
-            <div className="space-y-3">
-              <div className="h-4 w-full rounded bg-stone-100 animate-pulse" />
-              <div className="h-4 w-5/6 rounded bg-stone-100 animate-pulse" />
-              <div className="h-4 w-4/6 rounded bg-stone-100 animate-pulse" />
+        <div
+          className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#FEF9E4] pb-20 md:pb-16 min-h-[50vh]"
+          aria-busy="true"
+        >
+          <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 text-left`}>
+            <div className="flex flex-nowrap items-center gap-x-2 mb-2 sm:mb-3">
+              <div className="h-4 w-10 rounded bg-stone-200/80 animate-pulse" />
+              <div className="h-3 w-2 rounded bg-stone-100 animate-pulse" aria-hidden />
+              <div className="h-4 w-14 rounded bg-stone-200/80 animate-pulse" />
+              <div className="h-3 w-2 rounded bg-stone-100 animate-pulse" aria-hidden />
+              <div className="h-4 flex-1 max-w-[12rem] rounded bg-stone-200 animate-pulse" />
             </div>
-            <div className="hidden lg:block h-48 rounded-2xl bg-stone-200 animate-pulse" />
+          </div>
+          <div className={SITE_CONTENT_MAX_CLASS}>
+            <div className="relative w-full min-w-0 aspect-[4/3] md:aspect-video rounded-xl bg-stone-200 animate-pulse" />
+            <div className="mt-2 sm:mt-3 flex gap-2 py-1" aria-hidden>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="shrink-0 w-16 h-12 sm:w-20 sm:h-14 rounded-lg bg-stone-200/90 animate-pulse" />
+              ))}
+            </div>
+          </div>
+          <div className={`${SITE_CONTENT_MAX_CLASS} mt-5 sm:mt-6`}>
+            <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-6 lg:gap-9 xl:gap-10 items-start">
+              <div className="space-y-5 sm:space-y-6 min-w-0">
+                <div className="h-9 sm:h-10 w-2/3 max-w-lg rounded-lg bg-stone-200 animate-pulse" />
+                <div className="h-20 sm:h-24 rounded-xl bg-stone-100 animate-pulse" />
+                <div className="h-12 rounded-xl bg-stone-100/80 animate-pulse" />
+                <div className="space-y-3 pt-2">
+                  <div className="h-4 w-full rounded bg-stone-100 animate-pulse" />
+                  <div className="h-4 w-5/6 rounded bg-stone-100 animate-pulse" />
+                  <div className="h-4 w-4/6 rounded bg-stone-100 animate-pulse" />
+                </div>
+              </div>
+              <div className="hidden lg:block h-72 rounded-2xl bg-stone-200 animate-pulse" />
+            </div>
           </div>
         </div>
       </>
@@ -1332,7 +1356,7 @@ export default function PropertyDetail() {
       ) : (
         <div className={`${SITE_CONTENT_MAX_CLASS} mt-5 sm:mt-6`}>
           <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-6 lg:gap-9 xl:gap-10 items-start">
-            <div className="space-y-5 sm:space-y-6 order-2 lg:order-1 min-w-0">
+            <div className="space-y-5 sm:space-y-6 order-1 min-w-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] tracking-tight text-balance min-w-0 flex-1">
                   {property.title}
@@ -1518,7 +1542,7 @@ export default function PropertyDetail() {
               </div>
             </div>
 
-            <aside className="order-1 lg:order-2 w-full min-w-0">
+            <aside className="order-2 w-full min-w-0">
               <div ref={bookingCardRef} className="lg:sticky lg:top-28">
                 <div className="hidden md:block rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                   <div className="pb-4 border-b border-stone-100">
