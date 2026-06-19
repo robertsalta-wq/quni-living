@@ -160,7 +160,7 @@ export default async function handler(request) {
   const title = 'title' in prop ? String(prop.title ?? '') : ''
 
   const dashboardBase =
-    origin && origin !== '*' ? origin.replace(/\/$/, '') : 'https://quni-living.vercel.app'
+    origin && origin !== '*' ? origin.replace(/\/$/, '') : 'https://quni.com.au'
 
   const tpl = bookingRequestLandlord({
     landlord_name: typeof lp.full_name === 'string' ? lp.full_name.trim() || 'Host' : 'Host',

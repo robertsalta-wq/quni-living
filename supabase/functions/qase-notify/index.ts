@@ -7,18 +7,28 @@
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://quni-living.vercel.app',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-qase-internal',
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allow = new Set([
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://quni.com.au',
+    'https://quni-living.vercel.app',
+  ])
+  const allowOrigin = origin && allow.has(origin) ? origin : 'https://quni.com.au'
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-qase-internal',
+  }
 }
 
-function json(body: unknown, status: number, headers?: Record<string, string>) {
+function json(req: Request, body: unknown, status: number, headers?: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...CORS_HEADERS,
+      ...corsHeaders(req),
       ...headers,
     },
   })
@@ -43,22 +53,22 @@ function safeSubjectLine(subject: string, ticketNumber: number): string {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS_HEADERS })
+    return new Response(null, { status: 204, headers: corsHeaders(req) })
   }
 
   if (req.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405)
+    return json(req,{ error: 'Method not allowed' }, 405)
   }
 
   const secret = Deno.env.get('QASE_INTERNAL_SECRET')?.trim()
   if (!secret) {
     console.error('qase-notify: QASE_INTERNAL_SECRET not configured')
-    return json({ error: 'Server misconfigured' }, 500)
+    return json(req,{ error: 'Server misconfigured' }, 500)
   }
 
   const provided = req.headers.get('x-qase-internal')?.trim()
   if (!provided || provided !== secret) {
-    return json({ error: 'Unauthorized' }, 401)
+    return json(req,{ error: 'Unauthorized' }, 401)
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -67,24 +77,24 @@ Deno.serve(async (req) => {
 
   if (!supabaseUrl || !serviceRole) {
     console.error('qase-notify: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-    return json({ error: 'Server misconfigured' }, 500)
+    return json(req,{ error: 'Server misconfigured' }, 500)
   }
 
   if (!resendKey) {
     console.error('qase-notify: RESEND_API_KEY not set')
-    return json({ ok: true, emailed: false, reason: 'resend_not_configured' }, 200)
+    return json(req,{ ok: true, emailed: false, reason: 'resend_not_configured' }, 200)
   }
 
   let body: { message_id?: string }
   try {
     body = await req.json()
   } catch {
-    return json({ error: 'Invalid JSON' }, 400)
+    return json(req,{ error: 'Invalid JSON' }, 400)
   }
 
   const messageId = typeof body.message_id === 'string' ? body.message_id.trim() : ''
   if (!messageId) {
-    return json({ error: 'message_id required' }, 400)
+    return json(req,{ error: 'message_id required' }, 400)
   }
 
   const admin = createClient(supabaseUrl, serviceRole)
@@ -97,7 +107,7 @@ Deno.serve(async (req) => {
 
   if (msgErr) {
     console.error('qase-notify: message fetch', msgErr)
-    return json({ error: msgErr.message }, 500)
+    return json(req,{ error: msgErr.message }, 500)
   }
 
   const msg = msgRow as {
@@ -109,11 +119,11 @@ Deno.serve(async (req) => {
   } | null
 
   if (!msg) {
-    return json({ skipped: true, reason: 'message_not_found' }, 200)
+    return json(req,{ skipped: true, reason: 'message_not_found' }, 200)
   }
 
   if (msg.is_internal_note !== false || msg.author_type !== 'admin') {
-    return json({ skipped: true, reason: 'not_admin_public_reply' }, 200)
+    return json(req,{ skipped: true, reason: 'not_admin_public_reply' }, 200)
   }
 
   const { data: ticketRow, error: ticketErr } = await admin
@@ -124,7 +134,7 @@ Deno.serve(async (req) => {
 
   if (ticketErr) {
     console.error('qase-notify: ticket fetch', ticketErr)
-    return json({ error: ticketErr.message }, 500)
+    return json(req,{ error: ticketErr.message }, 500)
   }
 
   const ticket = ticketRow as {
@@ -136,14 +146,14 @@ Deno.serve(async (req) => {
   } | null
 
   if (!ticket) {
-    return json({ skipped: true, reason: 'ticket_not_found' }, 200)
+    return json(req,{ skipped: true, reason: 'ticket_not_found' }, 200)
   }
 
   const st = ticket.submitted_by_type
   const sid = ticket.submitted_by_id
 
   if (st === 'anonymous' || !sid) {
-    return json({ skipped: true, reason: 'anonymous_or_unlinked' }, 200)
+    return json(req,{ skipped: true, reason: 'anonymous_or_unlinked' }, 200)
   }
 
   let submitterEmail: string | null = null
@@ -157,11 +167,11 @@ Deno.serve(async (req) => {
     if (e) console.error('qase-notify: landlord_profiles', e)
     submitterEmail = typeof (lp as { email?: string } | null)?.email === 'string' ? (lp as { email: string }).email.trim() : null
   } else {
-    return json({ skipped: true, reason: 'unsupported_submitter_type' }, 200)
+    return json(req,{ skipped: true, reason: 'unsupported_submitter_type' }, 200)
   }
 
   if (!submitterEmail) {
-    return json({ skipped: true, reason: 'no_submitter_email' }, 200)
+    return json(req,{ skipped: true, reason: 'no_submitter_email' }, 200)
   }
 
   const ticketNum = Number(ticket.ticket_number)
@@ -215,12 +225,12 @@ Deno.serve(async (req) => {
         }
       }
       console.error('qase-notify: Resend error', res.status, detail)
-      return json({ ok: true, emailed: false, reason: 'resend_failed' }, 200)
+      return json(req,{ ok: true, emailed: false, reason: 'resend_failed' }, 200)
     }
 
-    return json({ ok: true, emailed: true }, 200)
+    return json(req,{ ok: true, emailed: true }, 200)
   } catch (e) {
     console.error('qase-notify: Resend fetch', e)
-    return json({ ok: true, emailed: false, reason: 'resend_exception' }, 200)
+    return json(req,{ ok: true, emailed: false, reason: 'resend_exception' }, 200)
   }
 })

@@ -14,7 +14,7 @@ describe('isStaleChunkLoadError', () => {
     expect(
       isStaleChunkLoadError(
         new TypeError(
-          'Failed to fetch dynamically imported module: https://quni-living.vercel.app/assets/AdminLayout-Bck3c5s4.js',
+          'Failed to fetch dynamically imported module: https://quni.com.au/assets/AdminLayout-Bck3c5s4.js',
         ),
       ),
     ).toBe(true)

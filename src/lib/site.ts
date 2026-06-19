@@ -1,6 +1,6 @@
 /** Canonical production origin (no trailing slash). Used for meta URLs and JSON-LD. */
 function normalizeSiteUrl(raw: string | undefined): string {
-  const fallback = 'https://quni-living.vercel.app'
+  const fallback = 'https://quni.com.au'
   const t = raw?.trim()
   if (!t || !/^https?:\/\//i.test(t)) return fallback
   return t.replace(/\/+$/, '')

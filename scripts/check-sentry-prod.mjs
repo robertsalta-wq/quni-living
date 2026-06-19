@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const PROD = 'https://quni-living.vercel.app/'
+const PROD = 'https://quni.com.au/'
 const LOCAL_SENTRY = 'http://localhost:5173/src/lib/sentry.ts'
 
 function summarizeBundle(text, label) {

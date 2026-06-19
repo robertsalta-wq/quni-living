@@ -357,7 +357,7 @@ export async function runManagedConfirmBooking(params) {
     const siteBase =
       origin && origin !== '*'
         ? origin.replace(/\/$/, '')
-        : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(/\/$/, '')
+        : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni.com.au').replace(/\/$/, '')
 
     if (booking.property_id) {
       await declineCompetingBookings(admin, stripe, {

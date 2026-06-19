@@ -53,7 +53,7 @@ export function bookingRequestLandlord(data) {
   const studentCourse = escapeHtml(data.student_course || '-')
   const moveInDate = escapeHtml(data.move_in_date || '-')
   const leaseLength = escapeHtml(data.lease_length || '-')
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
   const msg = (data.student_message || '').trim()
   const messageBlock =
     msg.length > 0
@@ -90,7 +90,7 @@ export function bookingConfirmedStudent(data) {
   const landlordName = escapeHtml(data.landlord_name || '-')
   const landlordPhone = escapeHtml(data.landlord_phone || '-')
   const depositAmount = data.deposit_amount_formatted || formatAudFromCents(data.deposit_amount_cents)
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/student-dashboard')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking confirmed! 🎉</h2>
 <p>Hi ${studentName},</p>
@@ -125,7 +125,7 @@ export function bookingConfirmedLandlord(data) {
     data.bond_amount_formatted ||
     (data.bond_amount_cents != null ? formatAudFromCents(data.bond_amount_cents) : '')
   const bondAuthority = escapeHtml(data.bond_authority || '')
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
   const bondBlock =
     bondAmountFormatted && bondAuthority
@@ -159,7 +159,7 @@ export function bookingMoreInfoFromLandlordStudent(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const landlordMessage = escapeHtml((data.landlord_message || '').trim()).replace(/\n/g, '<br>')
   const replyUrl = escapeHtml(
-    data.reply_url || 'https://quni-living.vercel.app/student-profile?tab=bookings',
+    data.reply_url || 'https://quni.com.au/student-profile?tab=bookings',
   )
 
   const inner = `<h2 style="color: #1A1A2E;">More information needed</h2>
@@ -182,7 +182,7 @@ export function bookingMoreInfoFromLandlordStudent(data) {
 export function bookingAutoDeclinedPropertyTakenStudent(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
   const studentName = escapeHtml(data.student_name || 'there')
-  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni.com.au/listings')
 
   const inner = `<h2 style="color: #1A1A2E;">Update on your booking request</h2>
 <p>Hi ${studentName},</p>
@@ -210,7 +210,7 @@ export function bookingDeclinedStudent(data) {
 <p>Unfortunately your booking request for <strong>${propertyAddress}</strong> was not accepted by the landlord.</p>
 <p>Your booking deposit of <strong>${escapeHtml(depositAmount)}</strong> will be automatically refunded to your original payment method within 5-7 business days.</p>
 <p>Don't be discouraged - there are plenty of great properties on Quni Living. Keep searching!</p>
-<a href="https://quni-living.vercel.app/listings" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse more properties →</a>`
+<a href="https://quni.com.au/listings" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse more properties →</a>`
 
   return {
     subject: `Booking request update - ${data.property_address || data.property_title || 'your request'}`,
@@ -227,7 +227,7 @@ export function bookingExpiredStudent(data) {
 <p>Hi ${studentName},</p>
 <p>Your booking request for <strong>${propertyAddress}</strong> has expired because the landlord did not respond within 48 hours.</p>
 <p>You have not been charged - your payment authorisation has been cancelled.</p>
-<a href="https://quni-living.vercel.app/listings" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse more properties →</a>`
+<a href="https://quni.com.au/listings" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse more properties →</a>`
 
   return {
     subject: `Your booking request has expired - ${data.property_address || data.property_title || 'your request'}`,
@@ -240,7 +240,7 @@ export function depositReleasedLandlord(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const depositAmount = data.deposit_amount_formatted || formatAudFromCents(data.deposit_amount_cents)
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
   const inner = `<h2 style="color: #1A1A2E;">Deposit released</h2>
 <p>Hi ${landlordName},</p>
@@ -260,7 +260,7 @@ export function listingBookingAcceptedRenter(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
   const bookingRef = escapeHtml(data.booking_reference || '-')
   const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
-  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
   const bondPaymentBlock =
     typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim()
       ? data.bond_payment_html
@@ -286,7 +286,7 @@ export function listingAgreementReadyRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
   const signUrl = escapeHtml(data.sign_agreement_url || data.student_dashboard_url || '#')
-  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni-living.vercel.app/student-dashboard')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
 
   const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement is ready to sign</h2>
 <p>Hi ${studentName},</p>
@@ -371,7 +371,7 @@ export function listingBondReceivedRenter(data) {
 export function listingBondReceivedLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
   const inner = `<h2 style="color: #1A1A2E;">Bond receipt recorded</h2>
 <p>Hi ${landlordName},</p>
@@ -389,7 +389,7 @@ export function listingBondReceivedLandlord(data) {
 export function listingBondPendingExpiredRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
-  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni.com.au/listings')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking lapsed - bond not received in time</h2>
 <p>Hi ${studentName},</p>
@@ -408,7 +408,7 @@ export function listingBondPendingExpiredLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
   const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking lapsed - Listing fee refunded</h2>
 <p>Hi ${landlordName},</p>
@@ -431,7 +431,7 @@ export function listingCancelledByLandlordRenter(data) {
     reasonRaw.length > 0
       ? `<p><strong>Note from host:</strong><br>${escapeHtml(reasonRaw).replace(/\n/g, '<br>')}</p>`
       : ''
-  const listingsUrl = escapeHtml(data.listings_url || 'https://quni-living.vercel.app/listings')
+  const listingsUrl = escapeHtml(data.listings_url || 'https://quni.com.au/listings')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking cancelled by host</h2>
 <p>Hi ${studentName},</p>
@@ -451,7 +451,7 @@ export function listingCancelledByLandlordLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
   const listingFee = escapeHtml(data.listing_fee_display || '$99.00')
-  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni-living.vercel.app/landlord/dashboard?tab=bookings')
+  const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking cancelled - fee refunded</h2>
 <p>Hi ${landlordName},</p>

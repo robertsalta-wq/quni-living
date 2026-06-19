@@ -26,11 +26,11 @@ describe('buildListingOgHtml', () => {
       image: 'https://cdn.example.com/photo.jpg',
       imageAlt: 'Cosy room',
       canonicalPath: '/listings/cosy-room',
-      canonicalUrl: 'https://quni-living.vercel.app/listings/cosy-room',
+      canonicalUrl: 'https://quni.com.au/listings/cosy-room',
     })
 
     expect(html).toContain('property="og:image" content="https://cdn.example.com/photo.jpg"')
-    expect(html).toContain('property="og:url" content="https://quni-living.vercel.app/listings/cosy-room"')
+    expect(html).toContain('property="og:url" content="https://quni.com.au/listings/cosy-room"')
     expect(html).toContain(escapeHtml('A "nice" room near campus.'))
   })
 })

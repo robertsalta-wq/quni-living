@@ -4,7 +4,7 @@
  */
 import { readFileSync, existsSync } from 'fs'
 
-const PROD_SITE = 'https://quni-living.vercel.app'
+const PROD_SITE = 'https://quni.com.au'
 
 const PROPERTY_CARD_LIST_SELECT = [
   'id',

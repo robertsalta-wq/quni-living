@@ -15,4 +15,4 @@ Disallow: /booking/
 Disallow: /onboarding
 Disallow: /auth/callback
 
-Sitemap: https://quni-living.vercel.app/api/sitemap.xml
+Sitemap: https://quni.com.au/api/sitemap.xml

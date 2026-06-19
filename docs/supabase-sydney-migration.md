@@ -253,7 +253,7 @@ Or deploy each under `supabase/functions/` to `NEW_REF`, including Qase (`qase-t
 
 **4.1 [ROB]** Authentication → URL configuration:
 
-- Site URL: `https://quni-living.vercel.app` (add `https://quni.com.au` when ready)
+- Site URL: `https://quni.com.au` (add `https://quni.com.au` when ready)
 - Redirect allowlist: production + preview + `com.quni.living://auth/callback` if needed
 
 **4.2 [ROB]** Google OAuth:

@@ -30,7 +30,7 @@
 - [x] **Vercel env (test mode)** - Phase 3A + Phase 5 production audit complete (25 May 2026); Stripe test keys; live flip pending Phase 4
 - [ ] **Vercel env (live mode)** - Phase 5 “Must change for live flip” + redeploy after Phase 4
 - [x] **Resend** - `quni.com.au` verified in Resend; transactional email delivered on production (25 May 2026)
-- [x] **DocuSeal (infra)** - `sign.quni.com.au` healthy; webhook `https://quni-living.vercel.app/api/webhooks/docuseal` (25 May 2026)
+- [x] **DocuSeal (infra)** - `sign.quni.com.au` healthy; webhook `https://quni.com.au/api/webhooks/docuseal` (25 May 2026)
 - [ ] **DocuSeal (E2E signing)** - full Listing signing on a booking completes in production (**G2**)
 - [ ] **G3** - live smoke test: one real $99 charge, full flow, then refund
 
@@ -417,7 +417,7 @@ Use two fresh accounts (or admin-created test users).
 **Stripe test webhook endpoint (current test origin):**
 
 ```text
-https://quni-living.vercel.app/api/stripe-webhook
+https://quni.com.au/api/stripe-webhook
 ```
 
 (After `quni.com.au` cutover, add a second endpoint or switch to `https://quni.com.au/api/stripe-webhook` for live mode.)
@@ -549,7 +549,7 @@ Verify DNS green in Resend dashboard for:
 
 - [x] Railway instance up: `https://sign.quni.com.au` - login OK (25 May 2026)
 - [x] Vercel env `DOCUSEAL_*` correct (Phase 5 audit)
-- [x] DocuSeal webhook → `https://quni-living.vercel.app/api/webhooks/docuseal` (switch to `quni.com.au` after DNS cutover)
+- [x] DocuSeal webhook → `https://quni.com.au/api/webhooks/docuseal` (switch to `quni.com.au` after DNS cutover)
 - [ ] One test Listing signing flow on production (**G2** - needs booking + listings)
 
 - [x] **Phase 7 spot-check complete** (25 May 2026) - signing E2E deferred to **G2**

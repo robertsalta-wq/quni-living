@@ -5,7 +5,7 @@
 import { chromium } from 'playwright-core'
 import { URL as NodeURL } from 'node:url'
 
-const START_URL = process.env.CHECK_URL ?? 'https://quni-living.vercel.app/listings'
+const START_URL = process.env.CHECK_URL ?? 'https://quni.com.au/listings'
 const TIMEOUT_MS = 25_000
 
 const browser = await chromium.launch({ headless: true })
@@ -24,7 +24,7 @@ let navError = null
 try {
   await page.goto(START_URL, { waitUntil: 'domcontentloaded', timeout: TIMEOUT_MS })
   await page.waitForTimeout(3000)
-  await page.goto('https://quni-living.vercel.app/', { waitUntil: 'domcontentloaded', timeout: TIMEOUT_MS })
+  await page.goto('https://quni.com.au/', { waitUntil: 'domcontentloaded', timeout: TIMEOUT_MS })
   await page.waitForTimeout(2000)
 } catch (e) {
   navError = String(e.message)

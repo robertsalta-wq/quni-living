@@ -6,7 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 
-const SITE_URL = (process.env.VITE_SITE_URL || 'https://quni-living.vercel.app').replace(
+const SITE_URL = (process.env.VITE_SITE_URL || 'https://quni.com.au').replace(
   /\/$/,
   ''
 )

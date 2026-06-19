@@ -22,7 +22,7 @@ function addDaysYmd(ymd, delta) {
 }
 
 function siteBaseUrl() {
-  const u = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').trim()
+  const u = (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni.com.au').trim()
   return u.replace(/\/$/, '')
 }
 

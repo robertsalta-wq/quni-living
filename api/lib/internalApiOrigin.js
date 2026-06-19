@@ -20,5 +20,5 @@ export function internalApiOrigin() {
     return explicit
   }
 
-  return 'https://quni-living.vercel.app'
+  return 'https://quni.com.au'
 }

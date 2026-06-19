@@ -16,9 +16,9 @@ describe('internalApiOrigin', () => {
 
   it('uses INTERNAL_API_ORIGIN when VERCEL_URL is unset', () => {
     delete process.env.VERCEL_URL
-    process.env.INTERNAL_API_ORIGIN = 'https://quni-living.vercel.app'
-    process.env.PUBLIC_SITE_URL = 'https://quni.com.au'
-    expect(internalApiOrigin()).toBe('https://quni-living.vercel.app')
+    process.env.INTERNAL_API_ORIGIN = 'https://quni.com.au'
+    process.env.PUBLIC_SITE_URL = 'https://www.quni.com.au'
+    expect(internalApiOrigin()).toBe('https://quni.com.au')
   })
 
   it('falls back to PUBLIC_SITE_URL then default', () => {
@@ -27,6 +27,6 @@ describe('internalApiOrigin', () => {
     process.env.PUBLIC_SITE_URL = 'https://www.quni.com.au'
     expect(internalApiOrigin()).toBe('https://www.quni.com.au')
     delete process.env.PUBLIC_SITE_URL
-    expect(internalApiOrigin()).toBe('https://quni-living.vercel.app')
+    expect(internalApiOrigin()).toBe('https://quni.com.au')
   })
 })

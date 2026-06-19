@@ -100,7 +100,7 @@ const TASKS_BY_ID: Record<number, TaskDef> = {
     id: 1,
     label: 'DNS cutover - quni.com.au live',
     description:
-      'Switch from quni-living.vercel.app to quni.com.au. Submit updated sitemap to Google Search Console immediately after.',
+      'Submit updated sitemap to Google Search Console after domain or URL changes.',
   },
   2: {
     id: 2,

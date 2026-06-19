@@ -144,7 +144,7 @@ async function checkResend(): Promise<HealthResult> {
 async function checkVercel(): Promise<HealthResult> {
   const service = 'vercel'
   try {
-    const res = await fetch('https://quni-living.vercel.app', {
+    const res = await fetch('https://quni.com.au', {
       method: 'GET',
       redirect: 'follow',
       signal: timeoutSignal(),

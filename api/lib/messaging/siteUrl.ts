@@ -12,7 +12,7 @@ export function resolvePublicSiteUrl(): string {
       return t.replace(/\/+$/, '')
     }
   }
-  return 'https://quni-living.vercel.app'
+  return 'https://quni.com.au'
 }
 
 export function conversationThreadUrl(conversationId: string): string {

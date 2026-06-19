@@ -59,7 +59,7 @@ Or Supabase Dashboard → Authentication → user → impersonate / magic link.
 Set:
 
 ```bash
-export SITE_URL="https://quni-living.vercel.app"
+export SITE_URL="https://quni.com.au"
 # or http://localhost:5173 with vercel dev / API proxy
 export API_BASE="${SITE_URL}"
 export TOKEN="<access_token>"

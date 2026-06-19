@@ -26,7 +26,7 @@ export async function declineCompetingBookings(admin, stripe, args) {
 
   const siteBase =
     (typeof args.siteBase === 'string' && args.siteBase.trim()) ||
-    (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(
+    (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni.com.au').replace(
       /\/$/,
       '',
     )

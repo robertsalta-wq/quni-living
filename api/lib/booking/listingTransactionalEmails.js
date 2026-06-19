@@ -31,7 +31,7 @@ export function siteBaseUrl() {
     const host = vercel.replace(/^https?:\/\//i, '')
     return `https://${host}`
   }
-  return 'https://quni-living.vercel.app'
+  return 'https://quni.com.au'
 }
 
 function bookingReferenceLabel(bookingId) {

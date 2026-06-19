@@ -43,7 +43,7 @@ function formatSignupErrorForDisplay(raw: string): string {
   ) {
     return [
       'We could not send the confirmation email. This is usually fixed in your Supabase project:',
-      '• Authentication → URL Configuration: set Site URL to your live site (e.g. https://quni-living.vercel.app) and add the same origin + /auth/callback under Redirect URLs.',
+      '• Authentication → URL Configuration: set Site URL to your live site (e.g. https://quni.com.au) and add the same origin + /auth/callback under Redirect URLs.',
       '• Project Settings → Auth: if you use custom SMTP, confirm host, port, and credentials; otherwise check Auth logs for provider errors or rate limits.',
       '• Try again in a few minutes if the mail provider rate-limits signups.',
     ].join('\n')

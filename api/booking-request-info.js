@@ -167,7 +167,7 @@ export default async function handler(request) {
   const siteBase =
     origin && origin !== '*'
       ? origin.replace(/\/$/, '')
-      : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni-living.vercel.app').replace(/\/$/, '')
+      : (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://quni.com.au').replace(/\/$/, '')
 
   if (studentEmail) {
     try {
