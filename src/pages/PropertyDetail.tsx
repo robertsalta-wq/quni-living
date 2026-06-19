@@ -322,7 +322,7 @@ export default function PropertyDetail() {
   useLayoutEffect(() => {
     if (!slug) return
     resetWindowScrollSync()
-  }, [slug])
+  }, [slug, loading])
 
   const isPreview = !user
   const userId = user?.id ?? null
