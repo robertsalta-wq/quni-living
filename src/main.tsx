@@ -11,6 +11,10 @@ import { applyNativeStatusBarInsetFallback } from './lib/nativeStatusBarInsetFal
 import { prefetchRouteChunks } from './lib/routePrefetch'
 import './index.css'
 
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual'
+}
+
 applyNativeStatusBarInsetFallback()
 prefetchRouteChunks(window.location.pathname)
 registerNativeOAuthDeepLinkHandler()

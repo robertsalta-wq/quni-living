@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
@@ -57,6 +57,7 @@ import {
   parseNearSearchAnchor,
   STRAIGHT_LINE_DISTANCE_NOTE,
 } from '../lib/workplaceLocation'
+import { resetWindowScrollSync } from '../lib/scrollToTop'
 
 function haversineKm(a: GeoPoint, b: GeoPoint): number {
   const dLat = ((b.lat - a.lat) * Math.PI) / 180
@@ -313,6 +314,11 @@ export default function PropertyDetail() {
   const thumbsScrollRef = useRef<HTMLDivElement>(null)
   const bookingCardRef = useRef<HTMLDivElement>(null)
 
+  useLayoutEffect(() => {
+    if (!slug) return
+    resetWindowScrollSync()
+  }, [slug])
+
   const isPreview = !user
   const userId = user?.id ?? null
   const listingPath = `${location.pathname}${location.search}`
@@ -430,7 +436,7 @@ export default function PropertyDetail() {
     const root = thumbsScrollRef.current
     if (!root) return
     const btn = root.querySelector<HTMLElement>(`[data-thumb-index="${imageIndex}"]`)
-    btn?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    btn?.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' })
   }, [imageIndex])
 
   const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null

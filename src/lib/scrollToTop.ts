@@ -5,9 +5,22 @@ function blurActiveElement(): void {
   }
 }
 
+/** Synchronous scroll reset before paint (route changes). Covers html/body/scrollingElement quirks on mobile WebViews. */
+export function resetWindowScrollSync(): void {
+  blurActiveElement()
+  const root = document.scrollingElement ?? document.documentElement
+  root.scrollTop = 0
+  root.scrollLeft = 0
+  if (document.body !== root) {
+    document.body.scrollTop = 0
+    document.body.scrollLeft = 0
+  }
+  window.scrollTo(0, 0)
+}
+
 /** Scroll the document to the top - retries help after layout shifts on mobile Safari. */
 export function scrollWindowToTop(behavior: ScrollBehavior = 'auto'): void {
-  blurActiveElement()
+  resetWindowScrollSync()
 
   window.scrollTo({ top: 0, left: 0, behavior })
   requestAnimationFrame(() => {
