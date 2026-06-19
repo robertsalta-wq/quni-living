@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { absoluteUrl } from '../../lib/site'
 import { generateTenantInviteTokenPair } from '../../lib/tenantInviteToken'
@@ -72,8 +72,10 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
   const emailTrimmed = email.trim()
   const canSendEmail = Boolean(emailTrimmed)
 
+  const propertyId = property?.id ?? null
+
   const loadPendingInvites = useCallback(async () => {
-    if (!property?.id) return
+    if (!propertyId) return
     setLoadingInvites(true)
     try {
       const { data, error } = await supabase
@@ -81,7 +83,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
         .select(
           'id, invited_email, invited_name, status, expires_at, email_sent_at, first_opened_at, signup_started_at, booking_started_at, booking_submitted_at, created_at',
         )
-        .eq('property_id', property.id)
+        .eq('property_id', propertyId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -91,10 +93,22 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     } finally {
       setLoadingInvites(false)
     }
-  }, [property?.id])
+  }, [propertyId])
+
+  const resetFormForOpenRef = useRef<{ open: boolean; propertyId: string | null }>({
+    open: false,
+    propertyId: null,
+  })
 
   useEffect(() => {
-    if (!open || !property) return
+    if (!open) {
+      resetFormForOpenRef.current = { open: false, propertyId }
+      return
+    }
+    const prev = resetFormForOpenRef.current
+    const shouldReset = !prev.open || prev.propertyId !== propertyId
+    resetFormForOpenRef.current = { open: true, propertyId }
+    if (!propertyId || !shouldReset) return
     setEmail('')
     setName('')
     setNote('')
@@ -102,8 +116,21 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     setCreatedInvite(null)
     setEmailSentTo(null)
     setCopySuccess(false)
+  }, [open, propertyId])
+
+  useEffect(() => {
+    if (!open || !propertyId) return
     void loadPendingInvites()
-  }, [open, property, loadPendingInvites])
+  }, [open, propertyId, loadPendingInvites])
+
+  useEffect(() => {
+    if (!open) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [open])
 
   async function insertInvite(): Promise<CreatedInvite> {
     if (!property || !landlordProfileId) throw new Error('Missing listing context')
@@ -248,7 +275,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
         }}
         aria-hidden
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900">Invite a tenant</h3>
         <p className="mt-1 text-sm text-gray-600">
           Share a link or email for <span className="font-medium text-gray-900">{property.title}</span>. Your tenant
@@ -272,7 +299,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Send invite by email, or leave blank for link only"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm"
               autoComplete="off"
             />
           </div>
@@ -285,8 +312,8 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
-              autoComplete="off"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm"
+              autoComplete="name"
             />
           </div>
           <div>
@@ -298,7 +325,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm resize-none"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm resize-none"
             />
           </div>
           {createError && <p className="text-sm text-red-600">{createError}</p>}
@@ -348,12 +375,12 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
 
         <div className="mt-6 border-t border-gray-100 pt-4">
           <h4 className="text-sm font-semibold text-gray-900">Pending invites</h4>
-          {loadingInvites ? (
+          {loadingInvites && pendingInvites.length === 0 ? (
             <p className="mt-2 text-xs text-gray-500">Loading…</p>
           ) : pendingInvites.length === 0 ? (
             <p className="mt-2 text-xs text-gray-500">No pending invites for this listing.</p>
           ) : (
-            <ul className="mt-2 space-y-2">
+            <ul className={`mt-2 space-y-2 ${loadingInvites ? 'opacity-60' : ''}`}>
               {pendingInvites.map((inv) => {
                 const label =
                   inv.invited_name?.trim() ||
