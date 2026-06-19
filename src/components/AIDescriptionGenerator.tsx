@@ -17,6 +17,8 @@ export type AIDescriptionGeneratorProps = {
   furnished?: boolean
   existingDescription?: string
   onGenerated: (description: string) => void
+  /** Extra actions rendered after Improve mine in the button row. */
+  extraActions?: React.ReactNode
 }
 
 export default function AIDescriptionGenerator({
@@ -30,6 +32,7 @@ export default function AIDescriptionGenerator({
   furnished,
   existingDescription,
   onGenerated,
+  extraActions,
 }: AIDescriptionGeneratorProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -137,6 +140,7 @@ export default function AIDescriptionGenerator({
             )}
           </button>
         )}
+        {extraActions}
         {!canSubmit && (
           <p className="text-xs text-gray-500">Add room type and suburb to use AI.</p>
         )}

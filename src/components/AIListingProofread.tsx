@@ -6,33 +6,16 @@ import {
   type ProofreadSuggestion,
 } from '../lib/proofreadSuggestions'
 
-const proofreadBtnClass =
+export const proofreadBtnClass =
   'inline-flex items-center justify-center gap-2 rounded-lg border border-[#FF6B6B] bg-white px-4 py-2 text-sm font-semibold text-[#FF6B6B] shadow-sm hover:bg-[#FFF5F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
 
 type ProofreadPhase = 'idle' | 'loading' | 'results' | 'empty' | 'error'
 
-export type AIListingProofreadProps = {
-  text: string
-  onTextChange: (text: string) => void
-  /** Shown in the proofread button aria-label. */
-  fieldName: string
-  className?: string
-  /** Optional label or intro copy rendered beside the Proofread button. */
-  headerSlot?: ReactNode
-  /** Place the Proofread button in the header row or below the field. */
-  buttonPlacement?: 'header' | 'footer'
-  children?: ReactNode
-}
-
-export default function AIListingProofread({
-  text,
-  onTextChange,
-  fieldName,
-  className,
-  headerSlot,
-  buttonPlacement = 'header',
-  children,
-}: AIListingProofreadProps) {
+export function useListingProofread(
+  text: string,
+  onTextChange: (text: string) => void,
+  fieldName: string,
+) {
   const [phase, setPhase] = useState<ProofreadPhase>('idle')
   const [suggestions, setSuggestions] = useState<ProofreadSuggestion[]>([])
   const [toast, setToast] = useState<string | null>(null)
@@ -132,7 +115,7 @@ export default function AIListingProofread({
       {phase === 'loading' ? (
         <>
           <span
-            className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
+            className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
             aria-hidden
           />
           Proofreading…
@@ -146,38 +129,16 @@ export default function AIListingProofread({
     </button>
   )
 
-  const buttonRow = (
-    <div className="flex flex-wrap items-center gap-3">
-      {proofreadButton}
-      {!canProofread ? (
-        <p className="text-xs text-gray-500">Add text above to proofread, or use Reset to platform default.</p>
-      ) : null}
-    </div>
-  )
-
-  return (
-    <div className={className}>
-      {buttonPlacement === 'header' && headerSlot ? (
-        <div className="mb-1 flex flex-wrap items-center gap-3">
-          {headerSlot}
-          {proofreadButton}
-        </div>
-      ) : buttonPlacement === 'header' ? (
-        buttonRow
-      ) : null}
-
-      {children}
-
-      {buttonPlacement === 'footer' ? <div className="mt-2">{buttonRow}</div> : null}
-
+  const feedback = (
+    <>
       {phase === 'empty' ? (
-        <p className="mt-2 text-sm text-emerald-700" role="status">
+        <p className="text-sm text-emerald-700" role="status">
           No suggestions, looks good
         </p>
       ) : null}
 
       {phase === 'results' && suggestions.length > 0 ? (
-        <ul className="mt-2 space-y-2" aria-label={`${fieldName} proofread suggestions`}>
+        <ul className="space-y-2" aria-label={`${fieldName} proofread suggestions`}>
           {suggestions.map((suggestion) => (
             <li
               key={suggestion.id}
@@ -222,6 +183,61 @@ export default function AIListingProofread({
           {toast}
         </div>
       ) : null}
+    </>
+  )
+
+  return { proofreadButton, feedback, canProofread, phase }
+}
+
+export type AIListingProofreadProps = {
+  text: string
+  onTextChange: (text: string) => void
+  /** Shown in the proofread button aria-label. */
+  fieldName: string
+  className?: string
+  /** Optional label or intro copy rendered beside the Proofread button. */
+  headerSlot?: ReactNode
+  /** Place the Proofread button in the header row or below the field. */
+  buttonPlacement?: 'header' | 'footer'
+  children?: ReactNode
+}
+
+export default function AIListingProofread({
+  text,
+  onTextChange,
+  fieldName,
+  className,
+  headerSlot,
+  buttonPlacement = 'header',
+  children,
+}: AIListingProofreadProps) {
+  const { proofreadButton, feedback, canProofread } = useListingProofread(text, onTextChange, fieldName)
+
+  const buttonRow = (
+    <div className="flex flex-wrap items-center gap-3">
+      {proofreadButton}
+      {!canProofread ? (
+        <p className="text-xs text-gray-500">Add text above to proofread, or use Reset to platform default.</p>
+      ) : null}
+    </div>
+  )
+
+  return (
+    <div className={className}>
+      {buttonPlacement === 'header' && headerSlot ? (
+        <div className="mb-1 flex flex-wrap items-center gap-3">
+          {headerSlot}
+          {proofreadButton}
+        </div>
+      ) : buttonPlacement === 'header' ? (
+        buttonRow
+      ) : null}
+
+      {children}
+
+      {buttonPlacement === 'footer' ? <div className="mt-2">{buttonRow}</div> : null}
+
+      <div className="mt-2">{feedback}</div>
     </div>
   )
 }

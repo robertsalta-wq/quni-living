@@ -29,7 +29,7 @@ import {
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
-import AIListingProofread from '../../components/AIListingProofread'
+import AIListingProofread, { useListingProofread } from '../../components/AIListingProofread'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
 import {
   normalizePropertyImages,
@@ -400,6 +400,69 @@ function pathFromPropertyImageUrl(url: string): string | null {
   const i = url.indexOf(marker)
   if (i === -1) return null
   return decodeURIComponent(url.slice(i + marker.length))
+}
+
+type ListingDescriptionAiBlockProps = {
+  description: string
+  onDescriptionChange: (value: string) => void
+  labelClass: string
+  inputClass: string
+  roomTypeLabel: string
+  weeklyRentNum: number | undefined
+  suburb: string
+  nearbyUniversities: string[]
+  amenities: string[]
+  furnished: boolean
+}
+
+function ListingDescriptionAiBlock({
+  description,
+  onDescriptionChange,
+  labelClass,
+  inputClass,
+  roomTypeLabel,
+  weeklyRentNum,
+  suburb,
+  nearbyUniversities,
+  amenities,
+  furnished,
+}: ListingDescriptionAiBlockProps) {
+  const { proofreadButton, feedback } = useListingProofread(
+    description,
+    onDescriptionChange,
+    'listing description',
+  )
+
+  return (
+    <>
+      <label htmlFor="pf-desc" className={labelClass}>
+        Listing description
+      </label>
+      <textarea
+        id="pf-desc"
+        value={description}
+        onChange={(e) => onDescriptionChange(e.target.value)}
+        rows={5}
+        className={inputClass}
+        placeholder="Describe the room or home the tenant will rent - not only the whole building."
+      />
+      <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+        Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.
+      </p>
+      <AIDescriptionGenerator
+        roomType={roomTypeLabel}
+        weeklyRent={weeklyRentNum}
+        suburb={suburb}
+        nearbyUniversities={nearbyUniversities}
+        amenities={amenities}
+        furnished={furnished}
+        existingDescription={description}
+        onGenerated={onDescriptionChange}
+        extraActions={proofreadButton}
+      />
+      <div className="mt-2 space-y-2">{feedback}</div>
+    </>
+  )
 }
 
 function sectionClass(title: string, children: ReactNode, sectionId?: string) {
@@ -3478,37 +3541,17 @@ export default function LandlordPropertyFormPage() {
             'Description',
             <div className="space-y-4">
               <div>
-                <AIListingProofread
-                  text={description}
-                  onTextChange={setDescription}
-                  fieldName="listing description"
-                  headerSlot={
-                    <label htmlFor="pf-desc" className={labelClass}>
-                      Listing description
-                    </label>
-                  }
-                >
-                  <textarea
-                    id="pf-desc"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={5}
-                    className={inputClass}
-                    placeholder="Describe the room or home the tenant will rent - not only the whole building."
-                  />
-                </AIListingProofread>
-                <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
-                  Rent and bond are shown in the booking panel. Use this space to describe the room and lifestyle.
-                </p>
-                <AIDescriptionGenerator
-                  roomType={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
-                  weeklyRent={weeklyRentNum}
+                <ListingDescriptionAiBlock
+                  description={description}
+                  onDescriptionChange={setDescription}
+                  labelClass={labelClass}
+                  inputClass={inputClass}
+                  roomTypeLabel={roomType ? ROOM_TYPE_LABELS[roomType] : ''}
+                  weeklyRentNum={weeklyRentNum}
                   suburb={suburb}
                   nearbyUniversities={nearbyUniversitiesForAi}
                   amenities={amenitiesForAi}
                   furnished={furnished}
-                  existingDescription={description}
-                  onGenerated={setDescription}
                 />
               </div>
             </div>,
