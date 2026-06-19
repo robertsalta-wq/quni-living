@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { scrollAnchorBelowHeader } from '../lib/scrollToTop'
 
 const DEFAULT_COLLAPSED_LINES = 4
 /** Matches leading-[1.6] on prose blocks */
@@ -11,6 +12,8 @@ function cn(...parts: (string | false | undefined)[]) {
 export type CollapsibleProseProps = {
   /** Stable id for aria-controls (required when multiple instances on one page) */
   id: string
+  /** Section heading element id — scrolled into view when collapsing (e.g. "About this place"). */
+  sectionHeadingId: string
   className?: string
   collapsedLines?: number
   /** When set, renders line-based pre-wrap content (blank lines hidden while collapsed). */
@@ -44,6 +47,7 @@ function PreWrapLines({ text, collapsed }: { text: string; collapsed: boolean })
 
 export function CollapsibleProse({
   id,
+  sectionHeadingId,
   className,
   collapsedLines = DEFAULT_COLLAPSED_LINES,
   text,
@@ -53,7 +57,6 @@ export function CollapsibleProse({
   const [expanded, setExpanded] = useState(false)
   const [canCollapse, setCanCollapse] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
-  const toggleRef = useRef<HTMLButtonElement>(null)
 
   const collapsedMaxHeightEm = collapsedLines * PROSE_LINE_HEIGHT
 
@@ -90,11 +93,12 @@ export function CollapsibleProse({
     setExpanded((wasExpanded) => {
       const next = !wasExpanded
       if (wasExpanded && !next) {
-        // Collapsing removes height above the fold; restore scroll so the viewport
-        // does not jump down to the next Read more on the page.
+        // Collapsing removes height above the fold; anchor to this section's heading
+        // so the viewport does not land on the next Read more on the page.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            toggleRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+            const heading = document.getElementById(sectionHeadingId)
+            scrollAnchorBelowHeader(heading)
           })
         })
       }
@@ -118,7 +122,6 @@ export function CollapsibleProse({
       </div>
       {canCollapse ? (
         <button
-          ref={toggleRef}
           type="button"
           className="text-sm font-medium text-[#FF6F61] hover:text-[#e85d52] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 focus-visible:ring-offset-2 rounded"
           aria-expanded={expanded}
