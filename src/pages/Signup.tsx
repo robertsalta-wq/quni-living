@@ -160,8 +160,6 @@ export default function Signup() {
     roleFromUrl === 'student' || roleFromUrl === 'non_student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
   )
   const formTopRef = useRef<HTMLDivElement>(null)
-
-  useScrollToTopOnChange(step, { anchorRef: formTopRef })
   const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
     roleFromUrl === 'landlord'
       ? 'landlord'
@@ -184,6 +182,8 @@ export default function Signup() {
   const [confirmResendError, setConfirmResendError] = useState<string | null>(null)
   const [confirmResendSuccess, setConfirmResendSuccess] = useState(false)
   const [verificationModalFocus, setVerificationModalFocus] = useState<VerificationChecklistFocus | null>(null)
+
+  useScrollToTopOnChange(step, { anchorRef: formTopRef })
 
   useEffect(() => {
     const invitedEmail = searchParams.get('invited_email')?.trim()
@@ -227,6 +227,8 @@ export default function Signup() {
   useEffect(() => {
     if (step === 'details' && !accountKind) setStep('primary')
   }, [step, accountKind])
+
+  const tenantInviteHints = useMemo(() => resolveTenantInviteSignupHints(searchParams), [searchParams])
 
   function pickAccountKind(k: SignupAccountKind) {
     setAccountKind(k)
@@ -470,7 +472,6 @@ export default function Signup() {
   }
 
   const redirectQ = searchParams.get('redirect')
-  const tenantInviteHints = useMemo(() => resolveTenantInviteSignupHints(searchParams), [searchParams])
   const loginHref =
     redirectQ && isSafeInternalPath(redirectQ) ? `/login?redirect=${encodeURIComponent(redirectQ)}` : '/login'
 

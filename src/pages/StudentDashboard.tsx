@@ -247,6 +247,10 @@ export default function StudentDashboard() {
     if (t === 'bookings' || t === 'saved') setTab(t)
   }, [searchParams, navigate])
 
+  useEffect(() => {
+    if (authStudent) setProfile(authStudent)
+  }, [authStudent])
+
   const pendingBookings = bookings.filter(
     (b) =>
       b.status === 'pending' ||
@@ -272,10 +276,6 @@ export default function StudentDashboard() {
       </div>
     )
   }
-
-  useEffect(() => {
-    if (authStudent) setProfile(authStudent)
-  }, [authStudent])
 
   if (dataLoading && !profile) {
     return (

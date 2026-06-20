@@ -1,4 +1,4 @@
-import { Component } from 'react'
+import { Component, type ErrorInfo } from 'react'
 import type { ReactNode } from 'react'
 import { isStaleChunkLoadError, recoverFromStaleChunkLoad } from '../lib/chunkLoadRecovery'
 
@@ -10,6 +10,7 @@ type State = {
   hasError: boolean
   errorMessage: string
   errorStack?: string
+  componentStack?: string
 }
 
 export class AppErrorBoundary extends Component<Props, State> {
@@ -33,8 +34,12 @@ export class AppErrorBoundary extends Component<Props, State> {
     }
   }
 
-  componentDidCatch(error: unknown, info: unknown) {
+  componentDidCatch(error: unknown, info: ErrorInfo) {
     if (recoverFromStaleChunkLoad(error)) return
+    this.setState((prev) => ({
+      ...prev,
+      componentStack: info.componentStack ?? undefined,
+    }))
     // eslint-disable-next-line no-console
     console.error('[AppErrorBoundary]', error, info)
   }
@@ -52,6 +57,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             <pre className="mt-2 p-3 bg-red-50 border border-red-200 text-xs text-red-900 rounded overflow-auto whitespace-pre-wrap">
               {this.state.errorMessage}
               {this.state.errorStack ? `\n\n${this.state.errorStack}` : ''}
+              {this.state.componentStack ? `\n\nComponent stack:${this.state.componentStack}` : ''}
             </pre>
           </div>
           <div className="mt-5 flex gap-3 justify-center flex-wrap">
