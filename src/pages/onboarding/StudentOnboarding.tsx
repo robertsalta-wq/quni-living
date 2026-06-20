@@ -292,12 +292,10 @@ export default function StudentOnboarding() {
   const [profile, setProfile] = useState<StudentProfileRow | null>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [welcome, setWelcome] = useState(false)
+  const [routePickerBusy, setRoutePickerBusy] = useState(false)
   const formTopRef = useRef<HTMLDivElement>(null)
 
-  useScrollToTopOnChange(welcome ? 'welcome' : step, { anchorRef: formTopRef })
-
   const [submitting, setSubmitting] = useState(false)
-  const [routePickerBusy, setRoutePickerBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [partialSaveHint, setPartialSaveHint] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -407,6 +405,19 @@ export default function StudentOnboarding() {
   const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
   const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
   const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+
+  const routeChoicePending = profile?.accommodation_verification_route == null
+  const uniEmailPending =
+    profile != null && !routeChoicePending && needsStudentUniEmailVerification(profile)
+  const onboardingScrollKey = welcome
+    ? 'welcome'
+    : routeChoicePending && profile != null
+      ? 'route-choice'
+      : uniEmailPending
+        ? 'uni-email'
+        : step
+
+  useScrollToTopOnChange(onboardingScrollKey, { anchorRef: formTopRef })
 
   const hydrateFromProfile = useCallback((p: StudentProfileRow) => {
     setFirstName(p.first_name?.trim() ?? '')
