@@ -17,7 +17,7 @@ import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerificati
 import {
   parseSignupTokenHashFromSearch,
   parseRecoveryTokenHashFromSearch,
-  parseOAuthSignupParamsFromSearch,
+  resolveOAuthSignupParams,
   type OAuthSignupCallbackParams,
   isPasswordRecoveryCallbackSearch,
   isPasswordRecoveryCallbackHash,
@@ -239,7 +239,7 @@ export default function AuthCallback() {
           return
         }
 
-        await finishWithSession(user, completedSignupEmailConfirm, parseOAuthSignupParamsFromSearch(window.location.search))
+        await finishWithSession(user, completedSignupEmailConfirm, resolveOAuthSignupParams(window.location.search))
         return
       }
 

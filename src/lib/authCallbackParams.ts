@@ -1,14 +1,66 @@
-import type { GoogleOAuthSignupRole, GoogleOAuthSignupRoute } from './oauth'
-
 /** Email OTP links use `type=signup` (confirm) or `type=recovery` (password reset). */
 export type AuthCallbackOtpType = 'signup' | 'recovery'
+
+export type GoogleOAuthSignupRoute = 'student' | 'non_student'
+export type GoogleOAuthSignupRole = 'student' | 'landlord'
 
 export type OAuthSignupCallbackParams = {
   signupRoute: GoogleOAuthSignupRoute | null
   signupRole: GoogleOAuthSignupRole | null
 }
 
-/** OAuth signup redirectTo query params (survive the round trip when localStorage does not). */
+const OAUTH_SIGNUP_CONTEXT_KEY = 'quni_oauth_signup_context'
+
+/** Persist signup role/route before OAuth — redirectTo must stay the bare allow-listed callback URL. */
+export function rememberOAuthSignupContext(params: OAuthSignupCallbackParams): void {
+  if (typeof window === 'undefined') return
+  if (!params.signupRoute && !params.signupRole) return
+  try {
+    sessionStorage.setItem(OAUTH_SIGNUP_CONTEXT_KEY, JSON.stringify(params))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+export function clearOAuthSignupContext(): void {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.removeItem(OAUTH_SIGNUP_CONTEXT_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+function consumeOAuthSignupContext(): OAuthSignupCallbackParams | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(OAUTH_SIGNUP_CONTEXT_KEY)
+    if (!raw) return null
+    sessionStorage.removeItem(OAUTH_SIGNUP_CONTEXT_KEY)
+    const parsed = JSON.parse(raw) as Partial<OAuthSignupCallbackParams>
+    const route = parsed.signupRoute
+    const role = parsed.signupRole
+    return {
+      signupRoute: route === 'student' || route === 'non_student' ? route : null,
+      signupRole: role === 'student' || role === 'landlord' ? role : null,
+    }
+  } catch {
+    clearOAuthSignupContext()
+    return null
+  }
+}
+
+/** URL params first (legacy links), then sessionStorage written before signInWithOAuth. */
+export function resolveOAuthSignupParams(search: string): OAuthSignupCallbackParams {
+  const fromUrl = parseOAuthSignupParamsFromSearch(search)
+  if (fromUrl.signupRoute || fromUrl.signupRole) {
+    clearOAuthSignupContext()
+    return fromUrl
+  }
+  return consumeOAuthSignupContext() ?? { signupRoute: null, signupRole: null }
+}
+
+/** Legacy OAuth callback links may still carry signup_route / signup_role on the query string. */
 export function parseOAuthSignupParamsFromSearch(search: string): OAuthSignupCallbackParams {
   const params = new URLSearchParams(search)
   const route = params.get('signup_route')?.trim()

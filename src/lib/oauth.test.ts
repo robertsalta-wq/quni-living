@@ -1,9 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { parseOAuthSignupParamsFromSearch } from './authCallbackParams'
-import { buildAuthCallbackUrl, getGoogleOAuthOptions } from './oauth'
+import {
+  clearOAuthSignupContext,
+  parseOAuthSignupParamsFromSearch,
+  rememberOAuthSignupContext,
+  resolveOAuthSignupParams,
+} from './authCallbackParams'
+import { getGoogleOAuthOptions } from './oauth'
 
 describe('OAuth signup redirectTo', () => {
+  const storage = new Map<string, string>()
+
   beforeEach(() => {
+    storage.clear()
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value)
+      },
+      removeItem: (key: string) => {
+        storage.delete(key)
+      },
+      clear: () => storage.clear(),
+    })
     vi.stubGlobal('window', { location: { origin: 'https://app.example' } })
   })
 
@@ -11,32 +29,41 @@ describe('OAuth signup redirectTo', () => {
     vi.unstubAllGlobals()
   })
 
-  it('login OAuth does not attach signup params', () => {
+  it('login OAuth uses bare allow-listed callback URL', () => {
     const opts = getGoogleOAuthOptions()
     expect(opts.redirectTo).toBe('https://app.example/auth/callback')
     expect(opts.queryParams).toEqual({ prompt: 'select_account' })
-    expect(parseOAuthSignupParamsFromSearch(new URL(opts.redirectTo).search).signupRoute).toBeNull()
-    expect(parseOAuthSignupParamsFromSearch(new URL(opts.redirectTo).search).signupRole).toBeNull()
+    expect(storage.get('quni_oauth_signup_context')).toBeUndefined()
   })
 
-  it('signup OAuth encodes route and role on redirectTo only', () => {
-    const redirectTo = buildAuthCallbackUrl({ signupRole: 'student', signupRoute: 'non_student' })
-    expect(redirectTo).toBe(
-      'https://app.example/auth/callback?signup_route=non_student&signup_role=student',
-    )
+  it('signup OAuth persists role/route in sessionStorage, not on redirectTo', () => {
     const opts = getGoogleOAuthOptions({ signupRole: 'student', signupRoute: 'non_student' })
-    expect(opts.redirectTo).toBe(redirectTo)
+    expect(opts.redirectTo).toBe('https://app.example/auth/callback')
     expect(opts.queryParams).toEqual({ prompt: 'select_account' })
-    const parsed = parseOAuthSignupParamsFromSearch(new URL(redirectTo).search)
-    expect(parsed.signupRoute).toBe('non_student')
-    expect(parsed.signupRole).toBe('student')
+    expect(parseOAuthSignupParamsFromSearch(new URL(opts.redirectTo).search).signupRoute).toBeNull()
+
+    const resolved = resolveOAuthSignupParams('')
+    expect(resolved.signupRoute).toBe('non_student')
+    expect(resolved.signupRole).toBe('student')
   })
 
-  it('landlord signup omits signup_route on redirectTo', () => {
-    const redirectTo = buildAuthCallbackUrl({ signupRole: 'landlord' })
-    expect(redirectTo).toBe('https://app.example/auth/callback?signup_role=landlord')
-    const parsed = parseOAuthSignupParamsFromSearch(new URL(redirectTo).search)
-    expect(parsed.signupRoute).toBeNull()
-    expect(parsed.signupRole).toBe('landlord')
+  it('landlord signup persists signup_role only', () => {
+    getGoogleOAuthOptions({ signupRole: 'landlord' })
+    const resolved = resolveOAuthSignupParams('')
+    expect(resolved.signupRoute).toBeNull()
+    expect(resolved.signupRole).toBe('landlord')
+  })
+
+  it('URL signup params take precedence over sessionStorage', () => {
+    rememberOAuthSignupContext({ signupRoute: 'student', signupRole: 'student' })
+    const resolved = resolveOAuthSignupParams('?signup_route=non_student&signup_role=student')
+    expect(resolved.signupRoute).toBe('non_student')
+    expect(storage.get('quni_oauth_signup_context')).toBeUndefined()
+  })
+
+  it('clearOAuthSignupContext removes stored context', () => {
+    rememberOAuthSignupContext({ signupRoute: 'non_student', signupRole: 'student' })
+    clearOAuthSignupContext()
+    expect(resolveOAuthSignupParams('')).toEqual({ signupRoute: null, signupRole: null })
   })
 })

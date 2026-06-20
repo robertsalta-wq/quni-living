@@ -1,4 +1,9 @@
 import { Capacitor } from '@capacitor/core'
+import {
+  rememberOAuthSignupContext,
+  type GoogleOAuthSignupRole,
+  type GoogleOAuthSignupRoute,
+} from './authCallbackParams'
 
 /**
  * OAuth return URL after Google (etc.). Web builds: add each environment’s
@@ -43,33 +48,12 @@ export function formatAuthEmailErrorMessage(err: unknown): string {
   return msg
 }
 
-export type GoogleOAuthSignupRoute = 'student' | 'non_student'
-export type GoogleOAuthSignupRole = 'student' | 'landlord'
+export type { GoogleOAuthSignupRole, GoogleOAuthSignupRoute } from './authCallbackParams'
 
-/** Signup-only context carried on redirectTo (not sent to Google via queryParams). */
+/** Signup-only context persisted in sessionStorage before OAuth (not on redirectTo). */
 export type GoogleOAuthSignupContext = {
   signupRoute?: GoogleOAuthSignupRoute
   signupRole?: GoogleOAuthSignupRole
-}
-
-/**
- * Auth callback URL with optional signup query params for OAuth round-trip.
- * Landlord signups omit signup_route; tenant-side signups include student vs non_student.
- */
-export function buildAuthCallbackUrl(signupContext?: GoogleOAuthSignupContext): string {
-  const base = getAuthCallbackUrl()
-  if (!signupContext) return base
-
-  const params = new URLSearchParams()
-  if (signupContext.signupRoute === 'student' || signupContext.signupRoute === 'non_student') {
-    params.set('signup_route', signupContext.signupRoute)
-  }
-  if (signupContext.signupRole === 'student' || signupContext.signupRole === 'landlord') {
-    params.set('signup_role', signupContext.signupRole)
-  }
-  const qs = params.toString()
-  if (!qs) return base
-  return base.includes('?') ? `${base}&${qs}` : `${base}?${qs}`
 }
 
 /**
@@ -77,8 +61,21 @@ export function buildAuthCallbackUrl(signupContext?: GoogleOAuthSignupContext): 
  * @see https://supabase.com/docs/guides/troubleshooting/google-auth-fails-for-some-users
  */
 export function getGoogleOAuthOptions(signupContext?: GoogleOAuthSignupContext) {
+  if (signupContext) {
+    rememberOAuthSignupContext({
+      signupRoute:
+        signupContext.signupRoute === 'student' || signupContext.signupRoute === 'non_student'
+          ? signupContext.signupRoute
+          : null,
+      signupRole:
+        signupContext.signupRole === 'student' || signupContext.signupRole === 'landlord'
+          ? signupContext.signupRole
+          : null,
+    })
+  }
   return {
-    redirectTo: buildAuthCallbackUrl(signupContext),
+    // Must match Supabase Redirect URLs exactly — query params on redirectTo fall back to Site URL (/).
+    redirectTo: getAuthCallbackUrl(),
     scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     // Forces Google to show the account picker so "Log out → Log in with a different Gmail"
     // doesn't automatically reuse the previously authenticated Google session.
