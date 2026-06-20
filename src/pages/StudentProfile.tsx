@@ -1240,6 +1240,9 @@ export default function StudentProfile() {
               <div>
                 <label htmlFor="st-dob" className={labelClass}>
                   Date of birth
+                  <span className="block text-xs font-normal text-gray-500 mt-0.5">
+                    Australian format: day / month / year
+                  </span>
                 </label>
                 <AUDateField
                   id="st-dob"
