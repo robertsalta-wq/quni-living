@@ -89,7 +89,7 @@ type LoadedNswOccupancyContext = {
   leaseLen: string | null
   periodic: boolean
   endDate: string | null
-  bondNum: number
+  bondNum: number | null
   serviceTier: 'managed' | 'listing'
   platformFeePercent: number
   paymentMethod: string
@@ -195,9 +195,7 @@ async function loadNswOccupancyContext(
   const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
   const periodic = leaseLen === 'Flexible' || endDate == null
 
-  const bondNum =
-    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
-    Math.round(weeklyRent * 4 * 100) / 100
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
 
   const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const platformFeePercent =

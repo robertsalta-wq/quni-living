@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { formatDisplayName } from '../lib/formatDisplayName'
@@ -76,6 +76,85 @@ const AU_STATE_OPTIONS: { value: string; label: string }[] = [
   { value: 'NT', label: 'NT' },
   { value: 'ACT', label: 'ACT' },
 ]
+
+const LANDLORD_PROFILE_DRAFT_KEY = 'landlord_profile_draft' as const
+const LANDLORD_PROFILE_DRAFT_VERSION = 1 as const
+
+const LL_LANDLORD_TYPE_SET = new Set(LANDLORD_TYPE_OPTIONS.map((o) => o.value).filter(Boolean))
+const LL_STATE_SET = new Set(AU_STATE_OPTIONS.map((o) => o.value))
+
+type LandlordProfileDraftV1 = {
+  v: typeof LANDLORD_PROFILE_DRAFT_VERSION
+  firstName: string
+  lastName: string
+  phone: string
+  companyName: string
+  abn: string
+  addressLine: string
+  suburb: string
+  addressState: string
+  postcode: string
+  residenceLocation: string
+  landlordType: string
+  bio: string
+  languagesSpoken: SpokenLanguageCode[]
+}
+
+function landlordProfileDraftFromState(s: Omit<LandlordProfileDraftV1, 'v'>): LandlordProfileDraftV1 {
+  return { v: LANDLORD_PROFILE_DRAFT_VERSION, ...s }
+}
+
+function parseLandlordProfileDraft(raw: string | null): LandlordProfileDraftV1 | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as unknown
+    if (!o || typeof o !== 'object') return null
+    const d = o as Record<string, unknown>
+    if (d.v !== LANDLORD_PROFILE_DRAFT_VERSION) return null
+    const landlordType =
+      typeof d.landlordType === 'string' && (d.landlordType === '' || LL_LANDLORD_TYPE_SET.has(d.landlordType))
+        ? d.landlordType
+        : ''
+    const addressState =
+      typeof d.addressState === 'string' && LL_STATE_SET.has(d.addressState) ? d.addressState : 'NSW'
+    return {
+      v: LANDLORD_PROFILE_DRAFT_VERSION,
+      firstName: typeof d.firstName === 'string' ? d.firstName : '',
+      lastName: typeof d.lastName === 'string' ? d.lastName : '',
+      phone: typeof d.phone === 'string' ? d.phone : '',
+      companyName: typeof d.companyName === 'string' ? d.companyName : '',
+      abn: typeof d.abn === 'string' ? d.abn : '',
+      addressLine: typeof d.addressLine === 'string' ? d.addressLine : '',
+      suburb: typeof d.suburb === 'string' ? d.suburb : '',
+      addressState,
+      postcode: typeof d.postcode === 'string' ? d.postcode : '',
+      residenceLocation: typeof d.residenceLocation === 'string' ? d.residenceLocation : '',
+      landlordType,
+      bio: typeof d.bio === 'string' ? d.bio : '',
+      languagesSpoken: normalizeLanguagesSpoken(d.languagesSpoken),
+    }
+  } catch {
+    return null
+  }
+}
+
+function isLandlordProfileDraftMeaningful(d: LandlordProfileDraftV1): boolean {
+  return (
+    d.firstName.trim() !== '' ||
+    d.lastName.trim() !== '' ||
+    d.phone.trim() !== '' ||
+    d.companyName.trim() !== '' ||
+    d.abn.trim() !== '' ||
+    d.addressLine.trim() !== '' ||
+    d.suburb.trim() !== '' ||
+    d.addressState.trim().toUpperCase() !== 'NSW' ||
+    d.postcode.trim() !== '' ||
+    d.residenceLocation.trim() !== '' ||
+    d.landlordType !== '' ||
+    d.bio.trim() !== '' ||
+    d.languagesSpoken.length > 0
+  )
+}
 
 function splitFullName(full: string | null | undefined): [string, string] {
   if (!full?.trim()) return ['', '']
@@ -320,6 +399,63 @@ export default function LandlordProfile() {
     setLanguagesSpoken(normalizeLanguagesSpoken(prof.languages_spoken))
   }, [])
 
+  const landlordProfileDraftSnapshot = useMemo(
+    () =>
+      landlordProfileDraftFromState({
+        firstName,
+        lastName,
+        phone,
+        companyName,
+        abn,
+        addressLine,
+        suburb,
+        addressState,
+        postcode,
+        residenceLocation,
+        landlordType,
+        bio,
+        languagesSpoken,
+      }),
+    [
+      firstName,
+      lastName,
+      phone,
+      companyName,
+      abn,
+      addressLine,
+      suburb,
+      addressState,
+      postcode,
+      residenceLocation,
+      landlordType,
+      bio,
+      languagesSpoken,
+    ],
+  )
+
+  const restoredLocationKeyRef = useRef<string | null>(null)
+  const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
+  const draftSavedHideTimerRef = useRef<number | null>(null)
+  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
+  const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
+  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
+
+  const handleDraftStartFresh = useCallback(() => {
+    try {
+      localStorage.removeItem(LANDLORD_PROFILE_DRAFT_KEY)
+    } catch {
+      /* ignore */
+    }
+    setShowResumeDraftBanner(false)
+    resumeDraftBannerDismissedKeyRef.current = location.key
+    if (profile) applyProfileToForm(profile)
+    setDraftSavedVisible(false)
+    if (draftSavedHideTimerRef.current) {
+      window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = null
+    }
+  }, [profile, applyProfileToForm, location.key])
+
   const load = useCallback(async () => {
     if (!user?.id) return
     const gen = ++loadGenRef.current
@@ -390,8 +526,70 @@ export default function LandlordProfile() {
   useEffect(() => {
     return () => {
       if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
+      if (draftSavedHideTimerRef.current != null) {
+        window.clearTimeout(draftSavedHideTimerRef.current)
+        draftSavedHideTimerRef.current = null
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (loading) restoredLocationKeyRef.current = null
+  }, [loading])
+
+  useEffect(() => {
+    if (loading || !profile) {
+      setDraftSaveEnabled(false)
+      return
+    }
+
+    if (restoredLocationKeyRef.current === location.key) {
+      setDraftSaveEnabled(true)
+      return
+    }
+    restoredLocationKeyRef.current = location.key
+
+    const parsed = parseLandlordProfileDraft(localStorage.getItem(LANDLORD_PROFILE_DRAFT_KEY))
+    if (parsed && isLandlordProfileDraftMeaningful(parsed)) {
+      setFirstName(parsed.firstName)
+      setLastName(parsed.lastName)
+      setPhone(parsed.phone)
+      setCompanyName(parsed.companyName)
+      setAbn(parsed.abn)
+      setAddressLine(parsed.addressLine)
+      setSuburb(parsed.suburb)
+      setAddressState(parsed.addressState)
+      setPostcode(parsed.postcode)
+      setResidenceLocation(parsed.residenceLocation)
+      setLandlordType(parsed.landlordType)
+      setBio(parsed.bio)
+      setLanguagesSpoken(parsed.languagesSpoken)
+      if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
+        setShowResumeDraftBanner(true)
+      }
+    } else {
+      setShowResumeDraftBanner(false)
+    }
+    setDraftSaveEnabled(true)
+  }, [loading, profile?.id, location.key])
+
+  useEffect(() => {
+    if (!draftSaveEnabled || loading || !profile) return
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(LANDLORD_PROFILE_DRAFT_KEY, JSON.stringify(landlordProfileDraftSnapshot))
+      } catch {
+        /* quota / private mode */
+      }
+      setDraftSavedVisible(true)
+      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
+      draftSavedHideTimerRef.current = window.setTimeout(() => {
+        setDraftSavedVisible(false)
+        draftSavedHideTimerRef.current = null
+      }, 2200)
+    }, 500)
+    return () => window.clearTimeout(id)
+  }, [landlordProfileDraftSnapshot, draftSaveEnabled, loading, profile?.id])
 
   const flashListingToast = useCallback((t: { kind: 'success' | 'error'; message: string }) => {
     if (toastTimerRef.current != null) window.clearTimeout(toastTimerRef.current)
@@ -572,6 +770,12 @@ export default function LandlordProfile() {
 
       if (uErr) throw uErr
 
+      try {
+        localStorage.removeItem(LANDLORD_PROFILE_DRAFT_KEY)
+      } catch {
+        /* ignore */
+      }
+
       setToast({ kind: 'success', message: 'Profile updated successfully ✓' })
       toastTimerRef.current = window.setTimeout(() => {
         setToast(null)
@@ -638,6 +842,39 @@ export default function LandlordProfile() {
       />
 
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
+      {showResumeDraftBanner && (
+        <div
+          className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          role="region"
+          aria-label="Saved draft"
+        >
+          <p className="text-gray-700">Resume draft? We restored your last saved profile details.</p>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                resumeDraftBannerDismissedKeyRef.current = location.key
+                setShowResumeDraftBanner(false)
+              }}
+              className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+            >
+              Continue editing
+            </button>
+            <button
+              type="button"
+              onClick={handleDraftStartFresh}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
+      {draftSavedVisible && activeTab === 'profile' && (
+        <p className="text-xs text-gray-400 text-right mb-2 tabular-nums" aria-live="polite">
+          Draft saved
+        </p>
+      )}
       {profile.verified ? (
         <div className="mb-4 flex justify-center sm:justify-start">
           <VerifiedLandlordBadge />

@@ -107,4 +107,15 @@ describe('applyOfficialNswFt6600ScheduleFill (renamed template)', () => {
     expect(form.getCheckBox(F.term_6_months_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.rent_paid_week_cb).isChecked()).toBe(true)
   })
+
+  it('does not fill bond_amount when bond is null (no-bond listing)', async () => {
+    const doc = await loadOfficialNswFt6600Template()
+    const props = { ...SAMPLE_PROPS, bond: { amount: null } }
+    const { assignments } = applyOfficialNswFt6600ScheduleFill(doc, props)
+    const byField = Object.fromEntries(assignments)
+    expect(byField[F.bond_amount]).toBeUndefined()
+    const form = doc.getForm()
+    expect(form.getTextField(F.bond_amount).getText() ?? '').toBe('')
+    expect(form.getCheckBox(F.bond_paid_to_rbo_cb).isChecked()).toBe(false)
+  })
 })

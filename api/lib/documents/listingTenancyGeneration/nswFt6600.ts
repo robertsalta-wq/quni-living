@@ -135,7 +135,7 @@ type LoadedNswFt6600Context = {
   leaseLen: string | null
   periodic: boolean
   endDate: string | null
-  bondNum: number
+  bondNum: number | null
   serviceTier: 'managed' | 'listing'
   bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   rentPaymentMethodLine: string
@@ -331,9 +331,7 @@ async function loadNswFt6600Context(
   const computedEnd = periodic ? null : leaseEndDateFromMoveIn(moveIn, leaseLen)
   const endDate = periodic ? null : bookingEnd || computedEnd
 
-  const bondNum =
-    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
-    Math.round(weeklyRent * 4 * 100) / 100
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {

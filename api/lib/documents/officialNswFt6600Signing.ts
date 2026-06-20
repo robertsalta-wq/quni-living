@@ -9,6 +9,10 @@ import {
   prepareOfficialNswFt6600ScheduleForFlatten,
   type OfficialNswFt6600FillResult,
 } from './officialNswFt6600Fill.js'
+import {
+  applyOfficialNswFt6600NoBondStrikeOutIfNeeded,
+  prepareOfficialNswFt6600NoBondStrikeBounds,
+} from './officialNswFt6600BondCrossOut.js'
 import { flattenAndCleanForm, saveNormalizedPdf } from './officialNswFt6600PdfNormalize.js'
 
 /** Production NswResidentialTenancyAgreement sigHint - refined-b-v2 spike baseline. */
@@ -226,10 +230,12 @@ export async function buildOfficialNswFt6600PdfWithSigning(
   options: { includeCoTenantSignatureTags: boolean },
 ): Promise<OfficialNswFt6600WithSigningResult> {
   const doc = await loadOfficialNswFt6600Template()
+  const noBondStrikeBounds = prepareOfficialNswFt6600NoBondStrikeBounds(doc, props.bond.amount)
   const signingWidgetsBeforeFlatten = collectOfficialNswFt6600SigningFieldWidgets(doc, options)
   const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
 
   flattenAndCleanForm(doc)
+  applyOfficialNswFt6600NoBondStrikeOutIfNeeded(doc, props.bond.amount, noBondStrikeBounds)
 
   const tagPlacements = buildWidgetTagPlacements(signingWidgetsBeforeFlatten, options.includeCoTenantSignatureTags)
   const font = await doc.embedFont(StandardFonts.Helvetica)

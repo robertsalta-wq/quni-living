@@ -6,9 +6,17 @@ import {
   loadOfficialNswFt6600Template,
   prepareOfficialNswFt6600ScheduleForFlatten,
 } from './officialNswFt6600Fill.js'
-import { QUINN_ROBERT_FT6600_LISTING_INPUT } from './quinnRobertFt6600Fixture.js'
+import {
+  QUINN_ROBERT_FT6600_BOOKING,
+  QUINN_ROBERT_FT6600_LISTING_INPUT,
+  QUINN_ROBERT_FT6600_PROPERTY,
+} from './quinnRobertFt6600Fixture.js'
 
-export { QUINN_ROBERT_FT6600_LISTING_INPUT, QUINN_ROBERT_FT6600_PROPERTY, QUINN_ROBERT_FT6600_BOOKING } from './quinnRobertFt6600Fixture.js'
+export {
+  QUINN_ROBERT_FT6600_LISTING_INPUT,
+  QUINN_ROBERT_FT6600_PROPERTY,
+  QUINN_ROBERT_FT6600_BOOKING,
+} from './quinnRobertFt6600Fixture.js'
 
 const QUINN_ROBERT_BOOKING_ROWS = {
   ...QUINN_ROBERT_FT6600_LISTING_INPUT,
@@ -78,6 +86,30 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.electricity_embedded_no_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.gas_embedded_no_cb).isChecked()).toBe(true)
     expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
+  })
+
+  it('buildNswResidentialTenancyAgreementPropsFromBooking leaves bond null when listing has no bond', () => {
+    const props = buildNswResidentialTenancyAgreementPropsFromBooking({
+      ...QUINN_ROBERT_BOOKING_ROWS,
+      property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
+      booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
+    })
+    expect(props.bond.amount).toBeNull()
+  })
+
+  it('leaves FT6600 bond_amount blank when property bond is null (no-bond listing)', async () => {
+    const props = buildNswResidentialTenancyAgreementPropsFromBooking({
+      ...QUINN_ROBERT_BOOKING_ROWS,
+      documentId: 'e2e-no-bond-ft6600',
+      property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
+      booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
+    })
+    expect(props.bond.amount).toBeNull()
+    const doc = await loadOfficialNswFt6600Template()
+    await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
+    const form = doc.getForm()
+    expect(form.getTextField(F.bond_amount).getText() ?? '').toBe('')
+    expect(form.getCheckBox(F.bond_paid_to_rbo_cb).isChecked()).toBe(false)
   })
 
   it('managed tier omits landlord service address and fills agent from platform', async () => {

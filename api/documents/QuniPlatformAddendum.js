@@ -623,6 +623,14 @@ var QUNI_MOVE_OUT_FORM_URL = "https://quni.com.au/move-out";
 function formatMoney(n) {
   return n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });
 }
+function addendumBondSummaryLabel(amount) {
+  if (amount != null && Number.isFinite(amount) && amount > 0) return formatMoney(amount);
+  return "No bond required";
+}
+function addendumSection10BondPhrase(amount) {
+  if (amount != null && Number.isFinite(amount) && amount > 0) return formatMoney(amount);
+  return "No bond is required for this tenancy";
+}
 function formatAuDate(iso) {
   const d = iso.slice(0, 10);
   const parts = d.split("-");
@@ -645,7 +653,7 @@ function Section1TenancySummary(props) {
   const { landlord, tenant, premises, term, rent, bond, utilitiesDescription } = props;
   const landlordDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
   const endDateText = term.periodic || !term.endDate ? "Periodic tenancy (no fixed end date)" : formatAuDate(term.endDate);
-  const bondText = bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : "-";
+  const bondText = addendumBondSummaryLabel(bond.amount);
   const rows = [
     { label: "Property address:", value: premises.addressLine },
     { label: "Room type:", value: premises.roomType?.trim() || "-" },
@@ -892,9 +900,8 @@ function Section10Bond(props) {
     /* @__PURE__ */ jsx3(OccupancyMatchSectionHeading, { num: 10, title: "Bond" }),
     /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Any bond paid or held for this tenancy is dealt with in accordance with the Residential Tenancies Act 2010 (NSW), the standard form agreement, and NSW Fair Trading requirements (including any applicable residential bond scheme rules)." }),
     /* @__PURE__ */ jsxs3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: [
-      "The bond amount recorded in the tenancy agreement is",
-      " ",
-      bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney(bond) : "as stated in the tenancy agreement",
+      "The bond amount recorded in the tenancy agreement is ",
+      addendumSection10BondPhrase(bond),
       ". The parties agree to complete any bond lodgement, variation, or claim steps notified through the platform or the landlord's agent, and to provide accurate bank details for refunds where required."
     ] }),
     /* @__PURE__ */ jsx3(Text3, { style: occupancyMatchPdf.bodyParagraph, children: "Where an international bank transfer administration fee applies to a bond refund (as set out in the move-out fee schedule), that fee is separate from the bond amount and is payable only where applicable and lawfully recoverable." })

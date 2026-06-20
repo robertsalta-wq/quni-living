@@ -24,6 +24,16 @@ function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
 }
 
+function addendumBondSummaryLabel(amount: number | null | undefined): string {
+  if (amount != null && Number.isFinite(amount) && amount > 0) return formatMoney(amount)
+  return 'No bond required'
+}
+
+function addendumSection10BondPhrase(amount: number | null | undefined): string {
+  if (amount != null && Number.isFinite(amount) && amount > 0) return formatMoney(amount)
+  return 'No bond is required for this tenancy'
+}
+
 function formatAuDate(iso: string) {
   const d = iso.slice(0, 10)
   const parts = d.split('-')
@@ -56,8 +66,7 @@ function Section1TenancySummary(props: QuniPlatformAddendumProps) {
   const endDateText =
     term.periodic || !term.endDate ? 'Periodic tenancy (no fixed end date)' : formatAuDate(term.endDate)
 
-  const bondText =
-    bond.amount != null && Number.isFinite(bond.amount) ? formatMoney(bond.amount) : '-'
+  const bondText = addendumBondSummaryLabel(bond.amount)
 
   const rows: { label: string; value: ReactNode }[] = [
     { label: 'Property address:', value: premises.addressLine },
@@ -469,8 +478,7 @@ function Section10Bond(props: QuniPlatformAddendumProps) {
       </Text>
 
       <Text style={occupancyMatchPdf.bodyParagraph}>
-        The bond amount recorded in the tenancy agreement is{' '}
-        {bond != null && Number.isFinite(bond) && bond > 0 ? formatMoney(bond) : 'as stated in the tenancy agreement'}. The
+        The bond amount recorded in the tenancy agreement is {addendumSection10BondPhrase(bond)}. The
         parties agree to complete any bond lodgement, variation, or claim steps notified through the platform or the
         landlord&apos;s agent, and to provide accurate bank details for refunds where required.
       </Text>

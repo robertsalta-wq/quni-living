@@ -22,22 +22,25 @@ export function bondAmountAtApplyFromProperty(property) {
 }
 
 /**
+ * Resolve bond for doc-gen / confirm: booking snapshot, then property listing bond.
+ * Never computed from weekly rent — null/0 landlord bond means no bond.
+ *
+ * Backfilled fabricated bookings.bond_amount (migration 20260620120000) is corrected by a
+ * separate data cleanup, not by discarding the snapshot here. Once override/invite is decoupled,
+ * a landlord can legitimately set bond on a no-bond listing and the snapshot must be trusted.
+ *
  * @param {unknown} bookingBond
  * @param {unknown} propertyBond
- * @param {unknown} weeklyRent
+ * @param {unknown} _weeklyRent
  * @returns {number | null}
  */
-export function resolveBookingBondAmountAud(bookingBond, propertyBond, weeklyRent) {
+export function resolveBookingBondAmountAud(bookingBond, propertyBond, _weeklyRent) {
   const fromBooking = parsePropertyBondAud(bookingBond)
   if (fromBooking != null) return fromBooking
 
   const fromProperty = parsePropertyBondAud(propertyBond)
   if (fromProperty != null) return fromProperty
 
-  const rent = Number(weeklyRent)
-  if (Number.isFinite(rent) && rent > 0) {
-    return Math.round(rent * 4 * 100) / 100
-  }
   return null
 }
 

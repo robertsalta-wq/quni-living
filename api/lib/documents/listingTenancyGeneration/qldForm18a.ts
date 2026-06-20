@@ -114,7 +114,7 @@ type LoadedQldContext = {
   leaseLen: string | null
   periodic: boolean
   endDate: string | null
-  bondNum: number
+  bondNum: number | null
   bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   rentPaymentMethodLine: string
   managedPricingCell: Awaited<ReturnType<typeof getActivePricingSnapshotForProperty>>
@@ -250,9 +250,7 @@ async function loadQldForm18aContext(
   const computedEnd = periodic ? null : leaseEndDateFromMoveIn(moveIn, leaseLen)
   const endDate = periodic ? null : bookingEnd || computedEnd
 
-  const bondNum =
-    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
-    Math.round(weeklyRent * 4 * 100) / 100
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {

@@ -77,4 +77,17 @@ describe('QuniPlatformAddendumQld', () => {
       expect(text).toContain(marker.replace(/\s+/g, ' '))
     }
   })
+
+  it('renders no-bond copy in summary and section 10 when bond amount is null', async () => {
+    const props = { ...minimalProps(), bond: { amount: null } }
+    const buf = await renderToBuffer(
+      React.createElement(QuniPlatformAddendumQld, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('No bond required')
+    expect(text).toContain('No bond is required for this tenancy')
+  })
 })

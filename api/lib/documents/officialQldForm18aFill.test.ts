@@ -122,6 +122,14 @@ describe('officialQldForm18aFill', () => {
     expect(assignmentMap.get(F.Type_of_pets_approved1)).toBe(PETS_TYPE_LINE)
   })
 
+  it('leaves rental bond amount blank when bond is null (no-bond listing)', async () => {
+    const doc = await loadOfficialQldForm18aTemplate()
+    const props = { ...minimalProps(), bond: { amount: null } }
+    const { assignments } = await applyOfficialQldForm18aScheduleFill(doc, props)
+    const assignmentMap = new Map(assignments)
+    expect(assignmentMap.has(F.Rental_bond_amount)).toBe(false)
+  })
+
   it('renders page 3 shrink-to-fit fields in full on flattened PDF', async () => {
     const { pdfBytes } = await fillOfficialQldForm18aPdf(minimalProps())
     const page3 = await pageText(pdfBytes, 3)

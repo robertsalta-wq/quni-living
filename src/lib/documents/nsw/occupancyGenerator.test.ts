@@ -76,4 +76,17 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('one-off platform fee of $99')
     expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
   })
+
+  it('renders no-bond schedule and body copy when bond amount is null', async () => {
+    const props = { ...minimalProps(), bond: { amount: null } }
+    const buf = await renderToBuffer(
+      React.createElement(NswLicenceToOccupyOnSite, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('None agreed')
+    expect(text).toContain('No security deposit is required unless otherwise agreed in writing.')
+  })
 })

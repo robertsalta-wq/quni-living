@@ -72,4 +72,17 @@ describe('QldLicenceToOccupyOnSite', () => {
     expect(text).toContain('12 Condition report')
     expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
   })
+
+  it('renders no-bond schedule and body copy when bond amount is null', async () => {
+    const props = { ...minimalProps(), bond: { amount: null } }
+    const buf = await renderToBuffer(
+      React.createElement(QldLicenceToOccupyOnSite, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('None agreed')
+    expect(text).toContain('No bond is required unless otherwise agreed in writing.')
+  })
 })

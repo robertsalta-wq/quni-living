@@ -9,6 +9,10 @@ import { FT6600_RENAMED_FIELDS as F } from './ft6600RenamedFields.js'
 import { hasManagingAgentForFt6600 } from './ft6600LandlordSchedule.js'
 import { resolveWaterUsageChargedSeparately } from './propertyFt6600Compliance.js'
 import {
+  applyOfficialNswFt6600NoBondStrikeOutIfNeeded,
+  prepareOfficialNswFt6600NoBondStrikeBounds,
+} from './officialNswFt6600BondCrossOut.js'
+import {
   flattenAndCleanForm,
   saveNormalizedPdf,
 } from './officialNswFt6600PdfNormalize.js'
@@ -457,8 +461,10 @@ export async function fillOfficialNswFt6600Pdf(
   props: NswResidentialTenancyAgreementProps,
 ): Promise<OfficialNswFt6600FillResult> {
   const doc = await loadOfficialNswFt6600Template()
+  const noBondStrikeBounds = prepareOfficialNswFt6600NoBondStrikeBounds(doc, props.bond.amount)
   const { filledFieldNames } = await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
   flattenAndCleanForm(doc)
+  applyOfficialNswFt6600NoBondStrikeOutIfNeeded(doc, props.bond.amount, noBondStrikeBounds)
   const acroFormFieldCountAfterFlatten = 0
   const pdfBytes = await saveNormalizedPdf(doc)
   return { pdfBytes, filledFieldNames, acroFormFieldCountAfterFlatten }
