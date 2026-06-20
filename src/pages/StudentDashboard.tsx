@@ -27,6 +27,7 @@ import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
 import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
+import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -34,7 +35,16 @@ type BookingStatus = BookingRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'state' | 'is_registered_rooming_house'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'suburb'
+  | 'images'
+  | 'rent_per_week'
+  | 'bond'
+  | 'property_type'
+  | 'state'
+  | 'is_registered_rooming_house'
 > & {
   landlord_profiles: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
@@ -74,10 +84,11 @@ function ListingBondGuidanceForBooking({
     ),
   })
   if (!guidance) return null
-  const bondAud =
-    typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
-      ? Math.round(property.rent_per_week * 4 * 100) / 100
-      : null
+  const bondAud = resolveBookingBondAmountAud(
+    booking.bond_amount,
+    property.bond,
+    property.rent_per_week,
+  )
   return <ListingBondPaymentGuidance guidance={guidance} bondAmountAud={bondAud} />
 }
 
@@ -182,7 +193,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, suburb, images, rent_per_week, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+          '*, properties ( id, title, slug, suburb, images, rent_per_week, bond, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })

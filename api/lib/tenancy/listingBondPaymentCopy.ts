@@ -126,10 +126,14 @@ export function listingBondPaymentLandlordObligations(
 export function listingBondPaymentEmailHtmlForTenant(
   bond: TenancyBondRules,
   stateCode: string | null | undefined,
+  resolvedBondAmountAud: number | null,
   options?: ListingBondPaymentOptions,
 ): string | null {
   const g = listingBondPaymentTenantGuidance(bond, stateCode, options)
   if (!g) return null
+  if (resolvedBondAmountAud == null || resolvedBondAmountAud <= 0) {
+    return `<p><strong>Bond:</strong> No bond is required for this stay.</p>`
+  }
   const note = g.directPayNote ? `<p style="font-size:14px;color:#555;margin-top:8px;">${escapeHtml(g.directPayNote)}</p>` : ''
   const authorityItem = `<li style="margin-bottom:8px;"><strong>Pay through ${escapeHtml(g.authorityLabel)}</strong> (offered first): <a href="${escapeHtml(g.directPayLinkUrl)}" style="color:#FF6F61;font-weight:600;">${escapeHtml(g.directPayLinkLabel)}</a></li>`
   const hostItem = `<li><strong>Pay your host directly</strong> (bank transfer, cash, or as agreed) - they must lodge with ${escapeHtml(g.authorityLabel)} within ${escapeHtml(g.lodgementDeadlinePhrase)} and give you a receipt.</li>`
@@ -144,10 +148,14 @@ export function listingBondPaymentEmailHtmlForTenant(
 export function listingBondPaymentEmailHtmlForLandlord(
   bond: TenancyBondRules,
   stateCode: string | null | undefined,
+  resolvedBondAmountAud: number | null,
   options?: ListingBondPaymentOptions,
 ): string | null {
   const o = listingBondPaymentLandlordObligations(bond, stateCode, options)
   if (!o) return null
+  if (resolvedBondAmountAud == null || resolvedBondAmountAud <= 0) {
+    return `<p><strong>Bond:</strong> No bond is required for this stay — you do not need to collect or lodge a bond for this booking.</p>`
+  }
   const qldNote = o.qldRecordReceiptNote
     ? `<li style="margin-top:8px;">${escapeHtml(o.qldRecordReceiptNote)}</li>`
     : ''

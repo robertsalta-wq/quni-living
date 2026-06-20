@@ -3,6 +3,7 @@
  */
 import { sendEmail } from '../sendEmail.js'
 import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import {
   listingBondPaymentEmailHtmlForLandlord,
   listingBondPaymentEmailHtmlForTenant,
@@ -58,11 +59,12 @@ async function loadListingEmailContext(admin, bookingId) {
       `
       id,
       weekly_rent,
+      bond_amount,
       move_in_date,
       start_date,
       lease_length,
       bond_window_expires_at,
-      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference ),
+      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference, bond ),
       student_profiles ( email, full_name, first_name, last_name ),
       landlord_profiles ( email, full_name, phone )
     `,
@@ -121,13 +123,18 @@ async function loadListingEmailContext(admin, bookingId) {
     qldBondRemittancePreference === 'landlord_collects_remits' || qldBondRemittancePreference === 'tenant_choice'
       ? { qldBondRemittancePreference: qldBondRemittancePreference }
       : undefined
+  const resolvedBondAmountAud = resolveBookingBondAmountAud(
+    booking.bond_amount,
+    'bond' in prop ? prop.bond : null,
+    booking.weekly_rent,
+  )
   const bondPaymentTenantHtml =
     bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState, bondPaymentOpts)
+      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState, resolvedBondAmountAud, bondPaymentOpts)
       : null
   const bondPaymentLandlordHtml =
     bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState, bondPaymentOpts)
+      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState, resolvedBondAmountAud, bondPaymentOpts)
       : null
 
   return {

@@ -13,13 +13,23 @@ import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemit
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../../lib/tenantBookingStatus'
 import BookingAgreedRentNotice from '../booking/BookingAgreedRentNotice'
 import { parseRentOverrideProvenance } from '../../lib/pricing/rentAgreedOverride'
+import { resolveBookingBondAmountAud } from '../../lib/booking/resolveBookingBondAmount'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type BookingStatus = BookingRow['status']
 
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
-  'id' | 'title' | 'slug' | 'suburb' | 'images' | 'rent_per_week' | 'property_type' | 'state' | 'is_registered_rooming_house'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'suburb'
+  | 'images'
+  | 'rent_per_week'
+  | 'bond'
+  | 'property_type'
+  | 'state'
+  | 'is_registered_rooming_house'
 >
 
 export type StudentDashboardBooking = BookingRow & {
@@ -86,12 +96,11 @@ function ListingBondGuidanceForBooking({
     ),
   })
   if (!guidance) return null
-  const bondAud =
-    booking.bond_amount != null && Number.isFinite(Number(booking.bond_amount))
-      ? Number(booking.bond_amount)
-      : typeof property.rent_per_week === 'number' && Number.isFinite(property.rent_per_week)
-        ? Math.round(property.rent_per_week * 4 * 100) / 100
-        : null
+  const bondAud = resolveBookingBondAmountAud(
+    booking.bond_amount,
+    property.bond,
+    property.rent_per_week,
+  )
   return <ListingBondPaymentGuidance guidance={guidance} bondAmountAud={bondAud} />
 }
 
@@ -178,7 +187,8 @@ export default function StudentDashboardBookingCard({
           {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
             <>
               <ListingBondGuidanceForBooking booking={b} property={prop} />
-              {(prop.state ?? '').trim().toUpperCase() === 'QLD' ? (
+              {(prop.state ?? '').trim().toUpperCase() === 'QLD' &&
+              resolveBookingBondAmountAud(b.bond_amount, prop.bond, prop.rent_per_week) != null ? (
                 <RtaBondRecordForm
                   bookingId={b.id}
                   compact

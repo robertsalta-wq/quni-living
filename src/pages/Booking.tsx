@@ -2114,7 +2114,8 @@ export default function Booking() {
                 <>No bond is required for this property.</>
               )}
             </p>
-            {bondRegulatoryCopy ? (
+            {bondAmountAud != null ? (
+              bondRegulatoryCopy ? (
               bondRegulatoryCopy.mode === 'landlord_held' ? (
                 <>
                   {bondRegulatoryCopy.landlordHeldParagraphs.map((para, i) => (
@@ -2169,7 +2170,8 @@ export default function Booking() {
                   </p>
                 </div>
               </>
-            )}
+            )
+            ) : null}
             {listingTypeLabel && (
               <p className="text-xs text-gray-600 pt-2 border-t border-stone-100">
                 <span className="font-medium text-gray-800">Property type: </span>
@@ -2186,13 +2188,17 @@ export default function Booking() {
               className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
             />
             <span className="text-sm text-gray-800">
-              {bondRegulatoryCopy ? (
-                bondRegulatoryCopy.acknowledgementCheckbox
+              {bondAmountAud != null ? (
+                bondRegulatoryCopy ? (
+                  bondRegulatoryCopy.acknowledgementCheckbox
+                ) : (
+                  <>
+                    I understand the bond is paid directly to my landlord and must be lodged with the relevant state
+                    authority.
+                  </>
+                )
               ) : (
-                <>
-                  I understand the bond is paid directly to my landlord and must be lodged with the relevant state
-                  authority.
-                </>
+                <>I understand no bond is required for this stay.</>
               )}
             </span>
           </label>

@@ -12,12 +12,28 @@ function formatBondAud(amount: number): string {
   return `$${amount.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
 }
 
+function hasPositiveBondAmount(bondAmountAud: number | null | undefined): bondAmountAud is number {
+  return bondAmountAud != null && Number.isFinite(bondAmountAud) && bondAmountAud > 0
+}
+
 /** Renter-facing: statutory bond scheme - pay authority (first) or pay landlord. */
 export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, className }: Props) {
-  const amountPhrase =
-    bondAmountAud != null && Number.isFinite(bondAmountAud) && bondAmountAud > 0
-      ? formatBondAud(bondAmountAud)
-      : 'the bond amount on your booking'
+  if (!hasPositiveBondAmount(bondAmountAud)) {
+    return (
+      <div
+        className={`rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 space-y-2 ${className ?? ''}`.trim()}
+        role="note"
+      >
+        <p className="font-semibold leading-snug">No bond required for this stay</p>
+        <p className="text-xs leading-relaxed text-emerald-900/95">
+          Sign your tenancy agreement on Quni when you receive the signing email — you do not need to pay or lodge a
+          bond for this booking.
+        </p>
+      </div>
+    )
+  }
+
+  const amountPhrase = formatBondAud(bondAmountAud)
 
   const authorityStep = (
     <>
