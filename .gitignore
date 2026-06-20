@@ -52,6 +52,7 @@ scripts/test-output.pdf
 scripts/*.pdf
 scripts/test-*.pdf
 scripts/test-*.mjs
+scripts/test-no-bond-chunk1/
 # Vitest snapshot / scratch output from AI verification tests
 src/lib/__test_output__/
 scripts/test-official-form-docuseal-spike.mjs

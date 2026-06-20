@@ -19,8 +19,8 @@ const BOND_STRIKE_FIELD_NAMES = [
 const CONTENT_LEFT = 34
 const CONTENT_RIGHT = 561
 
-/** Space above bond_amount widget for “(Cross out if …)” + bond amount line prefix. */
-const TOP_EXTENSION_ABOVE_AMOUNT_PT = 38
+/** Small pad above bond_amount widget top (amount line only — not the “Cross out if…” instruction). */
+const TOP_PADDING_ABOVE_AMOUNT_PT = 8
 const BOTTOM_PADDING_PT = 4
 
 /** Calibrated fallback when a bond widget is absent on a template revision. */
@@ -29,7 +29,7 @@ export const FT6600_BOND_CLAUSE_STRIKE_FALLBACK = {
   left: CONTENT_LEFT,
   right: CONTENT_RIGHT,
   bottom: 622,
-  top: 783,
+  top: 753,
 } as const
 
 export type Ft6600BondClauseStrikeBounds = {
@@ -103,7 +103,7 @@ export function collectFt6600BondClauseStrikeBounds(doc: PDFDocument): Ft6600Bon
     left: CONTENT_LEFT,
     right: CONTENT_RIGHT,
     bottom: minY - BOTTOM_PADDING_PT,
-    top: maxY + TOP_EXTENSION_ABOVE_AMOUNT_PT,
+    top: maxY + TOP_PADDING_ABOVE_AMOUNT_PT,
   }
 }
 
