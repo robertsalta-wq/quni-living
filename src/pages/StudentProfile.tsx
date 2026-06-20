@@ -22,6 +22,7 @@ import { STUDENT_OCCUPANCY_OPTIONS } from '../lib/studentOccupancyOptions'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 import { StudentWorkLocationSection } from '../components/student/StudentWorkLocationSection'
 import LanguagesSpokenSelector from '../components/profile/LanguagesSpokenSelector'
+import { AUDateField } from '../components/AUDateField'
 import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../lib/languagesSpoken'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -1240,11 +1241,11 @@ export default function StudentProfile() {
                 <label htmlFor="st-dob" className={labelClass}>
                   Date of birth
                 </label>
-                <input
+                <AUDateField
                   id="st-dob"
-                  type="date"
+                  birthDate
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  onChange={setDateOfBirth}
                   className={inputClass}
                 />
               </div>

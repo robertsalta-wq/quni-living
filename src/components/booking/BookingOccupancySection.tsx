@@ -176,6 +176,7 @@ export function BookingOccupancySection({
             </label>
             <AUDateField
               id="bk-co-dob"
+              birthDate
               value={coTenant.dateOfBirth}
               onChange={(iso) => onCoTenantChange({ dateOfBirth: iso })}
               onFocus={(e) => onFieldFocus?.(e.target)}
