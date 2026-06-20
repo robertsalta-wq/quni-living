@@ -64,7 +64,6 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
 ) {
   const fallbackId = useId()
   const inputId = id ?? fallbackId
-  const hintId = birthDate ? `${inputId}-birth-hint` : undefined
   const effectiveMax = birthDate ? (max && isIsoDateString(max) ? max : todayIsoLocal()) : max
   const effectiveMin = birthDate ? (min && isIsoDateString(min) ? min : BIRTH_DATE_MIN) : min
   const hiddenRef = useRef<HTMLInputElement>(null)
@@ -133,26 +132,6 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
 
   return (
     <div className="w-full space-y-2">
-      {birthDate ? (
-        <div
-          id={hintId}
-          className="rounded-lg border border-[#FF6F61]/30 bg-[#FFF8F0] px-3 py-2.5 text-sm text-stone-800 leading-relaxed"
-        >
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#FF6F61]">
-            How to enter your birth date
-          </p>
-          <p className="mt-1.5">
-            <span className="font-semibold text-stone-900">Easiest:</span> type in the box as{' '}
-            <span className="font-semibold">day / month / year</span> — for example{' '}
-            <span className="font-semibold tabular-nums">06/12/1996</span> for 6 December 1996.
-          </p>
-          <p className="mt-1.5 text-stone-700">
-            <span className="font-semibold text-stone-900">Or</span> tap{' '}
-            <span className="font-semibold">Pick date</span>, then tap the{' '}
-            <span className="font-semibold">year</span> at the top of the calendar to jump back to your birth year.
-          </p>
-        </div>
-      ) : null}
       <div className="flex w-full gap-1.5 items-stretch">
       <input
         ref={ref}
@@ -178,7 +157,7 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
           if (formatError) setFormatError(false)
         }}
         aria-invalid={ariaInvalid || formatError || undefined}
-        aria-describedby={[ariaDescribedBy, hintId, formatError ? formatErrorId : undefined]
+        aria-describedby={[ariaDescribedBy, formatError ? formatErrorId : undefined]
           .filter(Boolean)
           .join(' ') || undefined}
         className={className}
