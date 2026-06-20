@@ -792,7 +792,8 @@ export default function StudentProfile() {
     setSaving(true)
     try {
       const combinedName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
-      const yearNum = yearOfStudy === '' ? null : parseInt(yearOfStudy, 10)
+      const isIdentityPath = isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
+      const yearNum = isIdentityPath ? null : yearOfStudy === '' ? null : parseInt(yearOfStudy, 10)
       const bMin = budgetMin.trim() === '' ? null : Number(budgetMin)
       const bMax = budgetMax.trim() === '' ? null : Number(budgetMax)
       if (budgetMin.trim() !== '' && Number.isNaN(bMin)) {
@@ -805,7 +806,7 @@ export default function StudentProfile() {
       }
 
       let selectedCampusValid = !campusId
-      if (campusId && universityId.trim()) {
+      if (!isIdentityPath && campusId && universityId.trim()) {
         const slug = refUniversities.find((u) => u.id === universityId.trim())?.slug
         const rows = await fetchCampusesForUniversityId(universityId.trim(), slug ?? null, {
           onlyWithActiveListings: false,
@@ -824,14 +825,14 @@ export default function StudentProfile() {
           nationality: nationality.trim() || null,
           languages_spoken: languagesSpoken,
           year_of_study: yearNum,
-          course: course.trim() || null,
+          course: isIdentityPath ? null : course.trim() || null,
           emergency_contact_name: emergencyName.trim() || null,
           emergency_contact_phone: emergencyPhone.trim() || null,
           is_smoker: isSmoker,
           date_of_birth: dateOfBirth.trim() || null,
-          university_id: universityId.trim() || null,
-          campus_id: universityId && selectedCampusValid ? campusId || null : null,
-          student_type: studentType.trim() || null,
+          university_id: isIdentityPath ? null : universityId.trim() || null,
+          campus_id: isIdentityPath ? null : universityId && selectedCampusValid ? campusId || null : null,
+          student_type: isIdentityPath ? null : studentType.trim() || null,
           room_type_preference: roomPref.trim() || null,
           budget_min_per_week: bMin,
           budget_max_per_week: bMax,
@@ -905,6 +906,7 @@ export default function StudentProfile() {
   }
 
   const profilePhotoUrl = profile.avatar_url
+  const isNonStudentRoute = isNonStudentAccommodationRoute(profile.accommodation_verification_route)
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
@@ -1080,7 +1082,7 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={isNonStudentRoute ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
               <div>
                 <label htmlFor="st-nationality" className={labelClass}>
                   Nationality
@@ -1098,28 +1100,33 @@ export default function StudentProfile() {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                  Optional. We use this only in aggregate to understand our community and improve support for international
-                  students. It&apos;s never shown to landlords and plays no part in your bookings - you can leave it blank
+                  Optional. We use this only in aggregate to understand our community
+                  {isNonStudentRoute
+                    ? ' and improve support for international residents.'
+                    : ' and improve support for international students.'}
+                  It&apos;s never shown to landlords and plays no part in your bookings - you can leave it blank
                   or remove it anytime.
                 </p>
               </div>
-              <div>
-                <label htmlFor="st-year" className={labelClass}>
-                  Year of study
-                </label>
-                <select
-                  id="st-year"
-                  value={yearOfStudy}
-                  onChange={(e) => setYearOfStudy(e.target.value)}
-                  className={inputClass}
-                >
-                  {YEAR_OPTIONS.map((o) => (
-                    <option key={o.value || 'empty'} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!isNonStudentRoute ? (
+                <div>
+                  <label htmlFor="st-year" className={labelClass}>
+                    Year of study
+                  </label>
+                  <select
+                    id="st-year"
+                    value={yearOfStudy}
+                    onChange={(e) => setYearOfStudy(e.target.value)}
+                    className={inputClass}
+                  >
+                    {YEAR_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -1137,20 +1144,22 @@ export default function StudentProfile() {
               />
             </div>
 
-            <div>
-              <label htmlFor="st-course" className={labelClass}>
-                Course
-              </label>
-              <input
-                id="st-course"
-                type="text"
-                autoComplete="off"
-                placeholder="e.g. Bachelor of Arts"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+            {!isNonStudentRoute ? (
+              <div>
+                <label htmlFor="st-course" className={labelClass}>
+                  Course
+                </label>
+                <input
+                  id="st-course"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="e.g. Bachelor of Arts"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            ) : null}
 
             <div>
               <label htmlFor="st-email" className={labelClass}>
@@ -1236,7 +1245,7 @@ export default function StudentProfile() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={isNonStudentRoute ? '' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
               <div>
                 <label htmlFor="st-dob" className={labelClass}>
                   Date of birth
@@ -1252,28 +1261,30 @@ export default function StudentProfile() {
                   className={inputClass}
                 />
               </div>
-              <div>
-                <label htmlFor="st-type" className={labelClass}>
-                  Student type
-                </label>
-                <select
-                  id="st-type"
-                  value={studentType}
-                  onChange={(e) => setStudentType(e.target.value)}
-                  className={inputClass}
-                >
-                  {STUDENT_TYPE_OPTIONS.map((o) => (
-                    <option key={o.value || 'empty'} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!isNonStudentRoute ? (
+                <div>
+                  <label htmlFor="st-type" className={labelClass}>
+                    Student type
+                  </label>
+                  <select
+                    id="st-type"
+                    value={studentType}
+                    onChange={(e) => setStudentType(e.target.value)}
+                    className={inputClass}
+                  >
+                    {STUDENT_TYPE_OPTIONS.map((o) => (
+                      <option key={o.value || 'empty'} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
 
             {user &&
             profile &&
-            isNonStudentAccommodationRoute(profile.accommodation_verification_route) ? (
+            isNonStudentRoute ? (
               <StudentWorkLocationSection
                 profile={profile}
                 userId={user.id}
