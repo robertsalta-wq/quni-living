@@ -9,6 +9,11 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
+import {
+  clearVerificationOtpPending,
+  readVerificationOtpPendingEmail,
+  writeVerificationOtpPending,
+} from '../../lib/verificationOtpPendingStorage'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -16,39 +21,6 @@ const DOC_BUCKET = 'student-documents'
 const MAX_DOC_BYTES = 5 * 1024 * 1024
 const RESEND_SECONDS = 60
 const UPLOAD_ACK_MS = 12_000
-
-function workOtpPendingStorageKey(userId: string) {
-  return `quni:workOtpPending:v1:${userId}`
-}
-
-function readWorkOtpPendingEmail(userId: string): string | null {
-  try {
-    const raw = sessionStorage.getItem(workOtpPendingStorageKey(userId))
-    if (!raw) return null
-    const o = JSON.parse(raw) as { email?: unknown }
-    if (!o || typeof o.email !== 'string') return null
-    const e = o.email.trim().toLowerCase()
-    return e || null
-  } catch {
-    return null
-  }
-}
-
-function writeWorkOtpPending(userId: string, emailNorm: string) {
-  try {
-    sessionStorage.setItem(workOtpPendingStorageKey(userId), JSON.stringify({ email: emailNorm }))
-  } catch {
-    /* quota / private mode */
-  }
-}
-
-function clearWorkOtpPending(userId: string) {
-  try {
-    sessionStorage.removeItem(workOtpPendingStorageKey(userId))
-  } catch {
-    /* ignore */
-  }
-}
 
 function UploadReceivedBanner({ fileName }: { fileName: string }) {
   return (
@@ -186,11 +158,11 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
   useEffect(() => {
     if (workEmailVerified) {
-      clearWorkOtpPending(userId)
+      clearVerificationOtpPending('work', userId)
       setWorkCodeSent(false)
       return
     }
-    const pending = readWorkOtpPendingEmail(userId)
+    const pending = readVerificationOtpPendingEmail('work', userId)
     if (!pending) return
     setWorkCodeSent(true)
     setWorkEmailInput((prev) => {
@@ -239,7 +211,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         setWorkSendError(String(data.error))
         return
       }
-      writeWorkOtpPending(userId, trimmed)
+      writeVerificationOtpPending('work', userId, trimmed)
       setWorkCodeSent(true)
       setWorkOtpInput('')
       setWorkResendAt(Date.now() + RESEND_SECONDS * 1000)
@@ -277,7 +249,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         setWorkVerifyError(String(data.error))
         return
       }
-      clearWorkOtpPending(userId)
+      clearVerificationOtpPending('work', userId)
       setWorkCodeSent(false)
       setWorkOtpInput('')
       setWorkResendAt(null)
@@ -486,9 +458,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
                       const next = e.target.value
                       setWorkEmailInput(next)
                       setWorkSendError(null)
-                      const pending = readWorkOtpPendingEmail(userId)
+                      const pending = readVerificationOtpPendingEmail('work', userId)
                       if (pending && next.trim().toLowerCase() !== pending) {
-                        clearWorkOtpPending(userId)
+                        clearVerificationOtpPending('work', userId)
                         setWorkCodeSent(false)
                         setWorkOtpInput('')
                         setWorkResendAt(null)

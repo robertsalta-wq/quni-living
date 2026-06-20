@@ -6,6 +6,11 @@ import { isValidUniEmailForVerification, uniEmailDomainErrorMessage } from '../.
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { formatDate } from '../../pages/admin/adminUi'
 import { isStudentUniEmailVerified } from '../../lib/studentUniEmailVerification'
+import {
+  clearVerificationOtpPending,
+  readVerificationOtpPendingEmail,
+  writeVerificationOtpPending,
+} from '../../lib/verificationOtpPendingStorage'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -27,6 +32,7 @@ export function StudentUniEmailVerification({
   showAdminResendHint = variant === 'profile',
 }: Props) {
   const emailVerified = isStudentUniEmailVerified(profile)
+  const userId = profile.user_id
 
   const [uniEmailInput, setUniEmailInput] = useState(profile.uni_email ?? '')
   const [otpInput, setOtpInput] = useState('')
@@ -43,6 +49,24 @@ export function StudentUniEmailVerification({
       setUniEmailInput((prev) => (prev.trim() ? prev : profile.uni_email ?? ''))
     }
   }, [profile.uni_email, emailVerified])
+
+  useEffect(() => {
+    if (emailVerified) {
+      clearVerificationOtpPending('uni', userId)
+      setCodeSent(false)
+      return
+    }
+    const pending = readVerificationOtpPendingEmail('uni', userId)
+    if (!pending) return
+    setCodeSent(true)
+    setUniEmailInput((prev) => {
+      const pt = prev.trim().toLowerCase()
+      if (pt === pending) return prev
+      const prof = (profile.uni_email ?? '').trim().toLowerCase()
+      if (prof === pending && profile.uni_email) return profile.uni_email
+      return pending
+    })
+  }, [userId, emailVerified, profile.uni_email])
 
   useEffect(() => {
     if (resendAt == null || Date.now() >= resendAt) return
@@ -94,13 +118,14 @@ export function StudentUniEmailVerification({
         setSendError(String(data.error))
         return
       }
+      writeVerificationOtpPending('uni', userId, trimmed)
       setCodeSent(true)
       setOtpInput('')
       setResendAt(Date.now() + RESEND_SECONDS * 1000)
     } finally {
       setSending(false)
     }
-  }, [uniEmailInput])
+  }, [uniEmailInput, userId])
 
   const verifyCode = useCallback(async () => {
     setVerifyError(null)
@@ -131,6 +156,7 @@ export function StudentUniEmailVerification({
         setVerifyError(String(data.error))
         return
       }
+      clearVerificationOtpPending('uni', userId)
       setCodeSent(false)
       setOtpInput('')
       setResendAt(null)
@@ -138,7 +164,7 @@ export function StudentUniEmailVerification({
     } finally {
       setVerifying(false)
     }
-  }, [otpInput, onVerified])
+  }, [otpInput, onVerified, userId])
 
   if (emailVerified) {
     return (
