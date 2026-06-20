@@ -9,6 +9,8 @@ import { setQuniTenantInviteContext } from '../lib/quniTenantInvite'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { absoluteUrl } from '../lib/site'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
+import TenantInviteOfferBanner from '../components/tenantInvite/TenantInviteOfferBanner'
+import { tenantInviteOfferFromRpcRow } from '../lib/pricing/tenantInviteOffer'
 import type { Property } from '../lib/listings'
 
 type ResolvedInvite = {
@@ -18,6 +20,8 @@ type ResolvedInvite = {
   invite_status: string
   invited_email: string | null
   invited_name: string | null
+  offered_weekly_rent: number | null
+  offer_reason: string | null
 }
 
 function inviteErrorMessage(status: string): string {
@@ -100,6 +104,8 @@ export default function InviteTenantPage() {
       propertyTitle: property?.title ?? null,
       studentOnly: resolved.student_only,
       invitedName: resolved.invited_name,
+      offeredWeeklyRentAud: tenantInviteOfferFromRpcRow(resolved).offeredWeeklyRentAud,
+      offerReason: tenantInviteOfferFromRpcRow(resolved).offerReason,
     })
     setPostAuthRedirect(bookingPath)
 
@@ -115,6 +121,8 @@ export default function InviteTenantPage() {
       propertyTitle: property?.title ?? null,
       studentOnly: resolved.student_only,
       invitedName: resolved.invited_name,
+      offeredWeeklyRentAud: tenantInviteOfferFromRpcRow(resolved).offeredWeeklyRentAud,
+      offerReason: tenantInviteOfferFromRpcRow(resolved).offerReason,
     })
     setPostAuthRedirect(bookingPath)
 
@@ -192,6 +200,7 @@ export default function InviteTenantPage() {
   const greeting = resolved.invited_name?.trim()
     ? `Hi ${resolved.invited_name.trim().split(/\s+/)[0]},`
     : null
+  const inviteOffer = tenantInviteOfferFromRpcRow(resolved)
 
   return (
     <div className="max-w-sm mx-auto px-6 py-12 sm:py-16">
@@ -229,6 +238,15 @@ export default function InviteTenantPage() {
           This room is for students only — you&apos;ll need to verify as a student when you sign up.
         </p>
       )}
+
+      {inviteOffer.hasOffer && inviteOffer.offeredWeeklyRentAud != null ? (
+        <div className="mt-4">
+          <TenantInviteOfferBanner
+            offeredWeeklyRentAud={inviteOffer.offeredWeeklyRentAud}
+            offerReason={inviteOffer.offerReason}
+          />
+        </div>
+      ) : null}
 
       <ol className="mt-6 space-y-2 text-sm text-gray-600 list-decimal list-inside">
         <li>Create a renter account (student or non-student)</li>

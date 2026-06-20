@@ -12,6 +12,8 @@ export type TenantInviteSignupHints = {
   invitedName: string | null
   invitedEmail: string | null
   studentOnly: boolean
+  offeredWeeklyRentAud: number | null
+  offerReason: string | null
 }
 
 function redirectHasInviteToken(redirect: string | null): boolean {
@@ -76,5 +78,7 @@ export function resolveTenantInviteSignupHints(searchParams: URLSearchParams): T
     invitedName: invitedName || stored?.invitedName || null,
     invitedEmail,
     studentOnly,
+    offeredWeeklyRentAud: stored?.offeredWeeklyRentAud ?? null,
+    offerReason: stored?.offerReason ?? null,
   }
 }

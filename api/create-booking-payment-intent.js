@@ -32,8 +32,12 @@ import {
   assertRenterEmailConfirmed,
   markTenantInviteAccepted,
   readTenantInviteTokenFromBody,
-  resolvePendingTenantInviteForBooking,
+  fetchPendingTenantInviteForBooking,
 } from './lib/booking/tenantInviteAccept.js'
+import {
+  applyTenantInviteRentOffer,
+  insertRentInviteOfferAppliedEvent,
+} from './lib/booking/tenantInviteRentOffer.js'
 import {
   assertPiMetadataMatchesOccupancy,
   OCCUPANCY_PROPERTY_COLUMNS,
@@ -392,7 +396,32 @@ async function handleListingBookingCommit(request, origin, body) {
   if (!rentResolved.ok) {
     return json(rentResolved.body, rentResolved.status, origin)
   }
-  const { weeklyRent, breakdownAud } = rentResolved.resolved
+  const { weeklyRent: listingWeeklyRent, breakdownAud: listingBreakdownAud } = rentResolved.resolved
+  void listingWeeklyRent
+  void listingBreakdownAud
+
+  const tenantInvite = await fetchPendingTenantInviteForBooking(
+    admin,
+    readTenantInviteTokenFromBody(body),
+    propertyId,
+  )
+
+  const offerApplied = applyTenantInviteRentOffer(
+    rentResolved.resolved,
+    property,
+    tenantInvite,
+    moveInDate,
+  )
+  if (!offerApplied.ok) {
+    return json(
+      { error: offerApplied.error, message: offerApplied.message },
+      offerApplied.status,
+      origin,
+    )
+  }
+
+  const { weeklyRent, breakdownAud, bondAmount } = offerApplied
+  const tenantInviteId = tenantInvite?.id ?? null
 
   const tierContext = await fetchServiceTierResolverContext(admin)
 
@@ -408,12 +437,6 @@ async function handleListingBookingCommit(request, origin, body) {
 
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
-
-  const tenantInviteId = await resolvePendingTenantInviteForBooking(
-    admin,
-    readTenantInviteTokenFromBody(body),
-    propertyId,
-  )
 
   const row = buildListingApplyBookingRow({
     property,
@@ -431,13 +454,55 @@ async function handleListingBookingCommit(request, origin, body) {
     expiresAt,
     endDate,
     tenantInviteId,
+    bondAmount,
   })
 
-  const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id').single()
+  const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id, student_id').single()
 
   if (!insErr && inserted?.id) {
     if (tenantInviteId) {
       await markTenantInviteAccepted(admin, tenantInviteId, student.id, inserted.id)
+    }
+    if (offerApplied.inviteOfferApplied && tenantInvite) {
+      try {
+        await insertRentInviteOfferAppliedEvent(admin, {
+          booking: { id: inserted.id, property_id: propertyId, student_id: student.id },
+          property,
+          invite: tenantInvite,
+          landlordProfileId: tenantInvite.landlord_id,
+          studentId: student.id,
+          metadata: {
+            listing_weekly_rent_aud: offerApplied.listingWeeklyRentAud,
+            offered_weekly_rent_aud: offerApplied.offeredWeeklyRentAud,
+            applied_weekly_rent_aud: weeklyRent,
+            bond_amount_aud: bondAmount,
+            offer_reason: offerApplied.offerReason || null,
+          },
+        })
+      } catch (evErr) {
+        console.error('[listing-apply] rent_invite_offer_applied audit', evErr)
+        await admin.from('bookings').delete().eq('id', inserted.id)
+        if (tenantInviteId) {
+          await admin
+            .from('tenant_invites')
+            .update({
+              status: 'pending',
+              accepted_by: null,
+              accepted_booking_id: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', tenantInviteId)
+            .eq('status', 'accepted')
+        }
+        return json(
+          {
+            error: 'audit_failed',
+            message: 'Booking was not saved because the compliance audit record failed.',
+          },
+          500,
+          origin,
+        )
+      }
     }
     try {
       await attachBookingToConversationOnCreate(admin, {
@@ -979,13 +1044,39 @@ export default async function handler(request) {
   }
 
   if (propertyServiceTier === 'listing') {
-    const { weeklyRent, weeklyRentCents, breakdownAud } = rentResolved.resolved
+    const tenantInvite = await fetchPendingTenantInviteForBooking(
+      admin,
+      readTenantInviteTokenFromBody(body),
+      propertyId,
+    )
+    const offerApplied = applyTenantInviteRentOffer(
+      rentResolved.resolved,
+      property,
+      tenantInvite,
+      moveInDate,
+    )
+    if (!offerApplied.ok) {
+      return json(
+        { error: offerApplied.error, message: offerApplied.message },
+        offerApplied.status,
+        origin,
+      )
+    }
+    const weeklyRentCents = Math.round(offerApplied.weeklyRent * 100)
     return json(
       {
         listingApply: true,
-        weeklyRent,
+        weeklyRent: offerApplied.weeklyRent,
         weeklyRentCents,
-        breakdownAud,
+        breakdownAud: offerApplied.breakdownAud,
+        listingWeeklyRent: rentResolved.resolved.weeklyRent,
+        inviteOffer: offerApplied.inviteOfferApplied
+          ? {
+              offeredWeeklyRent: offerApplied.offeredWeeklyRentAud,
+              offerReason: offerApplied.offerReason || null,
+            }
+          : null,
+        bondAmountAud: offerApplied.bondAmount,
         occupantCount,
         parkingSelected,
       },

@@ -1201,6 +1201,8 @@ export interface Database {
           signup_started_at: string | null
           booking_started_at: string | null
           booking_submitted_at: string | null
+          offered_weekly_rent: number | null
+          offer_reason: string | null
           created_at: string
           updated_at: string
         }
@@ -1222,6 +1224,8 @@ export interface Database {
           signup_started_at?: string | null
           booking_started_at?: string | null
           booking_submitted_at?: string | null
+          offered_weekly_rent?: number | null
+          offer_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1243,6 +1247,8 @@ export interface Database {
           signup_started_at?: string | null
           booking_started_at?: string | null
           booking_submitted_at?: string | null
+          offered_weekly_rent?: number | null
+          offer_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -2302,6 +2308,8 @@ export interface Database {
           invite_status: string
           invited_email: string | null
           invited_name: string | null
+          offered_weekly_rent: number | null
+          offer_reason: string | null
         }[]
       }
       record_tenant_invite_funnel_event: {

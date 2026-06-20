@@ -134,7 +134,7 @@ export default async function handler(request) {
 
   const { data: invite, error: invErr } = await admin
     .from('tenant_invites')
-    .select('id, property_id, landlord_id, invited_email, invited_name, token_hash, status, expires_at')
+    .select('id, property_id, landlord_id, invited_email, invited_name, token_hash, status, expires_at, offered_weekly_rent, offer_reason')
     .eq('id', inviteId)
     .maybeSingle()
 
@@ -214,6 +214,13 @@ export default async function handler(request) {
     landlord.email?.split('@')[0] ||
     'Your landlord'
 
+  const offerAud =
+    invite.offered_weekly_rent != null && Number(invite.offered_weekly_rent) > 0
+      ? Number(invite.offered_weekly_rent)
+      : null
+  const offerReason =
+    typeof invite.offer_reason === 'string' && invite.offer_reason.trim() ? invite.offer_reason.trim() : ''
+
   const tpl = tenantInviteProspectEmail({
     invitee_name: invite.invited_name || '',
     landlord_name: landlordDisplay,
@@ -221,6 +228,8 @@ export default async function handler(request) {
     property_address: propertyAddressLine(property),
     invite_url: inviteUrl,
     student_only: property.open_to_non_students === false,
+    offered_weekly_rent_aud: offerAud,
+    offer_reason: offerReason,
   })
 
   try {

@@ -31,6 +31,12 @@ import {
   setQuniTenantInviteContext,
 } from '../lib/quniTenantInvite'
 import { recordTenantInviteFunnelEvent } from '../lib/tenantInviteFunnel'
+import TenantInviteOfferBanner from '../components/tenantInvite/TenantInviteOfferBanner'
+import {
+  effectiveWeeklyRentWithInviteOffer,
+  tenantInviteOfferFromRpcRow,
+  type TenantInviteOfferDisplay,
+} from '../lib/pricing/tenantInviteOffer'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { scrollWindowToTop } from '../lib/scrollToTop'
@@ -604,6 +610,7 @@ export default function Booking() {
   const [draftPersistReady, setDraftPersistReady] = useState(false)
   const draftHydrationAttemptedRef = useRef(false)
   const tenantInviteBookingStartedRef = useRef(false)
+  const [inviteOfferDisplay, setInviteOfferDisplay] = useState<TenantInviteOfferDisplay | null>(null)
   const { setElevateFloatingChrome } = useBookingFlowChrome()
 
   const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
@@ -867,6 +874,38 @@ export default function Booking() {
   }, [propertyId])
 
   useEffect(() => {
+    if (!tenantInviteToken || !propertyId || !isSupabaseConfigured) {
+      setInviteOfferDisplay(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc('resolve_tenant_invite', { p_token: tenantInviteToken })
+        if (cancelled || error) return
+        const row = Array.isArray(data) ? data[0] : data
+        if (!row || row.invite_status !== 'pending' || row.property_id !== propertyId) {
+          setInviteOfferDisplay(null)
+          return
+        }
+        const offer = tenantInviteOfferFromRpcRow(row)
+        setInviteOfferDisplay(offer)
+        if (offer.hasOffer) {
+          setQuniTenantInviteContext(tenantInviteToken, propertyId, {
+            offeredWeeklyRentAud: offer.offeredWeeklyRentAud,
+            offerReason: offer.offerReason,
+          })
+        }
+      } catch {
+        if (!cancelled) setInviteOfferDisplay(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [tenantInviteToken, propertyId])
+
+  useEffect(() => {
     if (inviteTokenFromUrl && propertyId) {
       setQuniTenantInviteContext(inviteTokenFromUrl, propertyId)
     }
@@ -1054,8 +1093,12 @@ export default function Booking() {
   }, [success])
 
   const baseRentDisplay = property ? Number(property.rent_per_week) : 0
-  const weeklyRent =
+  const listingWeeklyRent =
     rentResolution && 'weeklyRent' in rentResolution ? rentResolution.weeklyRent : baseRentDisplay
+  const weeklyRent = effectiveWeeklyRentWithInviteOffer(
+    listingWeeklyRent,
+    inviteOfferDisplay?.offeredWeeklyRentAud,
+  )
   const breakdownAud =
     rentResolution && 'breakdownAud' in rentResolution
       ? rentResolution.breakdownAud
@@ -1617,10 +1660,21 @@ export default function Booking() {
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
 
-  const bondAmountAud =
-    property.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
-      ? Number(property.bond)
-      : null
+  const bondAmountAud = (() => {
+    const listingBond =
+      property?.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
+        ? Number(property.bond)
+        : null
+    if (listingBond == null) return null
+    if (
+      inviteOfferDisplay?.offeredWeeklyRentAud != null &&
+      listingWeeklyRent > 0 &&
+      weeklyRent < listingWeeklyRent
+    ) {
+      return Math.round(((listingBond * weeklyRent) / listingWeeklyRent) * 100) / 100
+    }
+    return listingBond
+  })()
   const bondWeeksVsRent = bondAmountAud != null && weeklyRent > 0 ? bondAmountAud / weeklyRent : null
 
   const inputClass =
@@ -1686,6 +1740,16 @@ export default function Booking() {
           )}
         </div>
       </div>
+
+      {inviteOfferDisplay?.hasOffer && inviteOfferDisplay.offeredWeeklyRentAud != null ? (
+        <div className="mt-6">
+          <TenantInviteOfferBanner
+            offeredWeeklyRentAud={inviteOfferDisplay.offeredWeeklyRentAud}
+            listingWeeklyRentAud={listingWeeklyRent}
+            offerReason={inviteOfferDisplay.offerReason}
+          />
+        </div>
+      ) : null}
 
       <div
         ref={formTopRef}

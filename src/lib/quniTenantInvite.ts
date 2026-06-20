@@ -3,6 +3,8 @@ const PROPERTY_KEY = 'quni_tenant_invite_property_id'
 const TITLE_KEY = 'quni_tenant_invite_property_title'
 const STUDENT_ONLY_KEY = 'quni_tenant_invite_student_only'
 const INVITED_NAME_KEY = 'quni_tenant_invite_invited_name'
+const OFFERED_RENT_KEY = 'quni_tenant_invite_offered_rent'
+const OFFER_REASON_KEY = 'quni_tenant_invite_offer_reason'
 const SET_AT_KEY = 'quni_tenant_invite_set_at'
 
 /** Match tenant_invites default expiry — persisted context older than this is abandoned. */
@@ -65,6 +67,8 @@ export type QuniTenantInviteDisplayContext = {
   propertyTitle: string | null
   studentOnly: boolean
   invitedName: string | null
+  offeredWeeklyRentAud: number | null
+  offerReason: string | null
 }
 
 /** Persist invite context across signup → email confirm → onboarding → booking (mirrors accommodation route). */
@@ -82,6 +86,13 @@ export function setQuniTenantInviteContext(
     else localStorage.removeItem(STUDENT_ONLY_KEY)
     if (display?.invitedName) localStorage.setItem(INVITED_NAME_KEY, display.invitedName.trim())
     else localStorage.removeItem(INVITED_NAME_KEY)
+    if (display?.offeredWeeklyRentAud != null && Number.isFinite(Number(display.offeredWeeklyRentAud))) {
+      localStorage.setItem(OFFERED_RENT_KEY, String(display.offeredWeeklyRentAud))
+    } else {
+      localStorage.removeItem(OFFERED_RENT_KEY)
+    }
+    if (display?.offerReason) localStorage.setItem(OFFER_REASON_KEY, display.offerReason.trim())
+    else localStorage.removeItem(OFFER_REASON_KEY)
   } catch {
     /* ignore */
   }
@@ -96,9 +107,22 @@ export function getQuniTenantInviteDisplayContext(): QuniTenantInviteDisplayCont
       propertyTitle: localStorage.getItem(TITLE_KEY)?.trim() || null,
       studentOnly: localStorage.getItem(STUDENT_ONLY_KEY) === '1',
       invitedName: localStorage.getItem(INVITED_NAME_KEY)?.trim() || null,
+      offeredWeeklyRentAud: (() => {
+        const raw = localStorage.getItem(OFFERED_RENT_KEY)
+        const n = raw != null ? Number(raw) : NaN
+        return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null
+      })(),
+      offerReason: localStorage.getItem(OFFER_REASON_KEY)?.trim() || null,
     }
   } catch {
-    return { propertyId, propertyTitle: null, studentOnly: false, invitedName: null }
+    return {
+      propertyId,
+      propertyTitle: null,
+      studentOnly: false,
+      invitedName: null,
+      offeredWeeklyRentAud: null,
+      offerReason: null,
+    }
   }
 }
 
@@ -135,6 +159,8 @@ export function clearQuniTenantInviteContext(): void {
     localStorage.removeItem(TITLE_KEY)
     localStorage.removeItem(STUDENT_ONLY_KEY)
     localStorage.removeItem(INVITED_NAME_KEY)
+    localStorage.removeItem(OFFERED_RENT_KEY)
+    localStorage.removeItem(OFFER_REASON_KEY)
     localStorage.removeItem(SET_AT_KEY)
   } catch {
     /* ignore */

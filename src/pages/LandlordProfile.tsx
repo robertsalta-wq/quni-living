@@ -44,6 +44,10 @@ type PropertyPick = Pick<
   | 'authority_to_let_attested_at'
   | 'service_tier'
   | 'open_to_non_students'
+  | 'max_occupants'
+  | 'couple_surcharge_per_week'
+  | 'parking_surcharge_per_week'
+  | 'parking_available'
 >
 
 /** Supabase Storage bucket id (legacy name); stores profile photos of the landlord. */
@@ -336,7 +340,7 @@ export default function LandlordProfile() {
 
       const { data: props, error: lErr } = await supabase
         .from('properties')
-        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, authority_to_let_attested_at, service_tier, open_to_non_students')
+        .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, authority_to_let_attested_at, service_tier, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available')
         .eq('landlord_id', prof.id)
         .order('created_at', { ascending: false })
 
@@ -392,6 +396,11 @@ export default function LandlordProfile() {
     title: string
     slug: string
     open_to_non_students: boolean
+    rent_per_week: number | null
+    max_occupants?: number | null
+    couple_surcharge_per_week?: number | null
+    parking_surcharge_per_week?: number | null
+    parking_available?: boolean | null
   } | null>(null)
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1186,6 +1195,11 @@ export default function LandlordProfile() {
                           title: prop.title,
                           slug: prop.slug,
                           open_to_non_students: prop.open_to_non_students,
+                          rent_per_week: prop.rent_per_week,
+                          max_occupants: prop.max_occupants,
+                          couple_surcharge_per_week: prop.couple_surcharge_per_week,
+                          parking_surcharge_per_week: prop.parking_surcharge_per_week,
+                          parking_available: prop.parking_available,
                         })
                       }
                     />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { TenantInviteSignupHints } from '../../lib/tenantInviteSignupContext'
+import TenantInviteOfferBanner from './TenantInviteOfferBanner'
 
 type Props = {
   hints: TenantInviteSignupHints
@@ -34,6 +35,15 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
           This room is for students only — you&apos;ll need to verify as a student during onboarding.
         </p>
       )}
+      {hints.offeredWeeklyRentAud != null ? (
+        <div className="mt-3">
+          <TenantInviteOfferBanner
+            offeredWeeklyRentAud={hints.offeredWeeklyRentAud}
+            offerReason={hints.offerReason}
+            compact
+          />
+        </div>
+      ) : null}
       <p className="mt-3 text-xs text-gray-500">
         Already have a Quni account?{' '}
         <Link to={loginHref} className="font-medium text-indigo-600 hover:text-indigo-800">

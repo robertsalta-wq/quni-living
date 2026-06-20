@@ -52,8 +52,12 @@ export function buildListingApplyBookingRow({
   expiresAt,
   endDate,
   tenantInviteId = null,
+  bondAmount: bondAmountOverride = null,
 }) {
-  const bondAmount = bondAmountAtApplyFromProperty(property)
+  const bondAmount =
+    bondAmountOverride != null
+      ? bondAmountOverride
+      : bondAmountAtApplyFromProperty(property)
   return {
     property_id: property.id,
     student_id: student.id,

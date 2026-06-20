@@ -2,6 +2,7 @@ import {
   formatAudWeekly,
   parseRentOverrideProvenance,
 } from '../../lib/pricing/rentAgreedOverride'
+import { bookingHasInviteOfferProvenance } from '../../lib/pricing/tenantInviteOffer'
 
 type Props = {
   weeklyRent: number | null | undefined
@@ -54,8 +55,9 @@ export default function BookingAgreedRentNotice({
       </dl>
       {audience === 'student' ? (
         <p className="text-xs leading-relaxed opacity-90">
-          Your host set this agreed rent before accepting your application. It will appear on your tenancy agreement
-          when you sign.
+          {bookingHasInviteOfferProvenance(rentBreakdown)
+            ? 'Your host included this special rent offer in your invite. It will appear on your tenancy agreement when you sign.'
+            : 'Your host set this agreed rent before accepting your application. It will appear on your tenancy agreement when you sign.'}
         </p>
       ) : (
         <p className="text-xs leading-relaxed opacity-90">

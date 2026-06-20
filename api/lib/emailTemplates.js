@@ -476,10 +476,19 @@ export function tenantInviteProspectEmail(data) {
   const studentOnlyBlock = data.student_only
     ? `<p style="background-color: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 8px; padding: 12px 14px; color: #44403c; font-size: 14px;">This room is for <strong>students only</strong>. You&apos;ll verify as a student during signup — the same requirement as anyone booking this listing on Quni.</p>`
     : ''
+  const offerAud =
+    data.offered_weekly_rent_aud != null && Number.isFinite(Number(data.offered_weekly_rent_aud))
+      ? Number(data.offered_weekly_rent_aud)
+      : null
+  const offerBlock =
+    offerAud != null && offerAud > 0
+      ? `<p style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 14px; color: #065f46; font-size: 14px;"><strong>Special rent offer:</strong> $${offerAud.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}/week${data.offer_reason ? ` — ${escapeHtml(String(data.offer_reason))}` : ''}.</p>`
+      : ''
 
   const inner = `<h2 style="color: #1A1A2E;">You&apos;re invited to book on Quni</h2>
 <p>Hi ${firstName},</p>
 <p><strong>${landlordName}</strong> invited you to apply for <strong>${propertyTitle}</strong> through Quni Living.</p>
+${offerBlock}
 <p>Quni handles verified tenancy, the compliant agreement, and e-signing on-platform. You&apos;ll create a renter account, complete verification, then submit your booking request for this room.</p>
 ${studentOnlyBlock}
 <p style="margin: 24px 0;"><a href="${inviteUrl}" style="background-color: #FF6F61; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">View invitation &amp; get started →</a></p>

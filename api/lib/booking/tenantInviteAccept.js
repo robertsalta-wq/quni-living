@@ -31,13 +31,19 @@ export function readTenantInviteTokenFromBody(body) {
 
 /** @returns {Promise<string | null>} invite row id when token matches a pending invite for this property */
 export async function resolvePendingTenantInviteForBooking(admin, rawToken, propertyId) {
+  const row = await fetchPendingTenantInviteForBooking(admin, rawToken, propertyId)
+  return row?.id ?? null
+}
+
+/** @returns {Promise<object | null>} pending invite row including offer fields */
+export async function fetchPendingTenantInviteForBooking(admin, rawToken, propertyId) {
   const trimmed = typeof rawToken === 'string' ? rawToken.trim() : ''
   if (!trimmed || !propertyId) return null
 
   const tokenHash = await sha256Hex(trimmed)
   const { data: invite, error } = await admin
     .from('tenant_invites')
-    .select('id, property_id, status, expires_at')
+    .select('id, property_id, status, expires_at, offered_weekly_rent, offer_reason, landlord_id')
     .eq('token_hash', tokenHash)
     .maybeSingle()
 
@@ -53,7 +59,7 @@ export async function resolvePendingTenantInviteForBooking(admin, rawToken, prop
     return null
   }
 
-  return invite.id
+  return invite
 }
 
 export async function markTenantInviteAccepted(admin, inviteId, studentId, bookingId) {

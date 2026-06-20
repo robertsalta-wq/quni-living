@@ -5,6 +5,7 @@ import { generateTenantInviteTokenPair } from '../../lib/tenantInviteToken'
 import { sendTenantInviteEmail } from '../../lib/tenantInviteEmail'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { formatTenantInviteFunnelAt, tenantInviteFunnelSummary } from '../../lib/tenantInviteFunnel'
+import { maxWeeklyRentForProperty } from '../../lib/pricing/resolveWeeklyRent'
 import type { Database } from '../../lib/database.types'
 
 type TenantInviteRow = Database['public']['Tables']['tenant_invites']['Row']
@@ -14,6 +15,11 @@ type PropertyForInvite = {
   title: string
   slug: string
   open_to_non_students: boolean
+  rent_per_week: number | null
+  max_occupants?: number | null
+  couple_surcharge_per_week?: number | null
+  parking_surcharge_per_week?: number | null
+  parking_available?: boolean | null
 }
 
 type Props = {
@@ -56,6 +62,9 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [note, setNote] = useState('')
+  const [offerEnabled, setOfferEnabled] = useState(false)
+  const [offerRent, setOfferRent] = useState('')
+  const [offerReason, setOfferReason] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdInvite, setCreatedInvite] = useState<CreatedInvite | null>(null)
@@ -71,8 +80,31 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
   const studentOnly = property ? !property.open_to_non_students : false
   const emailTrimmed = email.trim()
   const canSendEmail = Boolean(emailTrimmed)
+  const maxListingRentAud = property ? maxWeeklyRentForProperty(property) : null
 
   const propertyId = property?.id ?? null
+
+  function parseOfferRentAud(): number | null {
+    if (!offerEnabled) return null
+    const n = Number(offerRent)
+    if (!Number.isFinite(n) || n <= 0) return null
+    return Math.round(n * 100) / 100
+  }
+
+  function validateOfferFields(): string | null {
+    if (!offerEnabled) return null
+    const parsed = parseOfferRentAud()
+    if (parsed == null) return 'Enter a positive special offer rent in AUD.'
+    if (maxListingRentAud != null && parsed > maxListingRentAud) {
+      return `Offer cannot exceed the listing maximum of $${maxListingRentAud.toLocaleString('en-AU')}/wk.`
+    }
+    const reason = offerReason.trim()
+    if (reason.length > 0 && reason.length < 3) {
+      return 'Offer reason must be at least 3 characters, or leave it blank.'
+    }
+    if (reason.length > 2000) return 'Offer reason is too long.'
+    return null
+  }
 
   const loadPendingInvites = useCallback(async () => {
     if (!propertyId) return
@@ -81,7 +113,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
       const { data, error } = await supabase
         .from('tenant_invites')
         .select(
-          'id, invited_email, invited_name, status, expires_at, email_sent_at, first_opened_at, signup_started_at, booking_started_at, booking_submitted_at, created_at',
+          'id, invited_email, invited_name, status, expires_at, email_sent_at, first_opened_at, signup_started_at, booking_started_at, booking_submitted_at, offered_weekly_rent, offer_reason, created_at',
         )
         .eq('property_id', propertyId)
         .eq('status', 'pending')
@@ -112,6 +144,9 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     setEmail('')
     setName('')
     setNote('')
+    setOfferEnabled(false)
+    setOfferRent('')
+    setOfferReason('')
     setCreateError(null)
     setCreatedInvite(null)
     setEmailSentTo(null)
@@ -134,6 +169,10 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
 
   async function insertInvite(): Promise<CreatedInvite> {
     if (!property || !landlordProfileId) throw new Error('Missing listing context')
+    const offerErr = validateOfferFields()
+    if (offerErr) throw new Error(offerErr)
+    const offeredWeeklyRent = parseOfferRentAud()
+    const trimmedOfferReason = offerReason.trim()
     const { raw, hash } = await generateTenantInviteTokenPair()
     const { data: inserted, error } = await supabase
       .from('tenant_invites')
@@ -143,6 +182,8 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
         invited_email: emailTrimmed || null,
         invited_name: name.trim() || null,
         landlord_note: note.trim() || null,
+        ...(offeredWeeklyRent != null ? { offered_weekly_rent: offeredWeeklyRent } : {}),
+        ...(trimmedOfferReason ? { offer_reason: trimmedOfferReason } : {}),
         token_hash: hash,
         status: 'pending',
       })
@@ -328,6 +369,61 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
               className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm resize-none"
             />
           </div>
+
+          <div className="rounded-xl border border-gray-200 bg-stone-50/80 p-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={offerEnabled}
+                onChange={(e) => setOfferEnabled(e.target.checked)}
+                className="mt-1 rounded border-gray-300"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-gray-900">Include a special rent offer</span>
+                <span className="block text-xs text-gray-600 mt-0.5 leading-relaxed">
+                  Your invitee sees this weekly rent before they apply. It becomes their booking rent when they submit.
+                </span>
+              </span>
+            </label>
+            {offerEnabled ? (
+              <div className="space-y-3 pl-7">
+                <div>
+                  <label htmlFor="invite-offer-rent" className="block text-xs font-medium text-gray-700 mb-1">
+                    Offered weekly rent (AUD)
+                  </label>
+                  <input
+                    id="invite-offer-rent"
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    max={maxListingRentAud ?? undefined}
+                    value={offerRent}
+                    onChange={(e) => setOfferRent(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm tabular-nums"
+                  />
+                  {maxListingRentAud != null ? (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Max {`$${maxListingRentAud.toLocaleString('en-AU')}`}/wk (full listing price)
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <label htmlFor="invite-offer-reason" className="block text-xs font-medium text-gray-700 mb-1">
+                    Offer note for tenant <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <textarea
+                    id="invite-offer-reason"
+                    value={offerReason}
+                    onChange={(e) => setOfferReason(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. Preferential rate for a 12-month stay"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm resize-none"
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           {createError && <p className="text-sm text-red-600">{createError}</p>}
           {emailSentTo && (
             <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
@@ -402,6 +498,11 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
                     <div className="min-w-0">
                       <p className="text-sm text-gray-900 truncate">{label}</p>
                       <p className="text-xs text-gray-500">Expires {formatInviteExpiry(inv.expires_at)}</p>
+                      {inv.offered_weekly_rent != null && Number(inv.offered_weekly_rent) > 0 ? (
+                        <p className="text-xs font-medium text-emerald-800 mt-0.5">
+                          Offer ${Number(inv.offered_weekly_rent).toLocaleString('en-AU')}/wk
+                        </p>
+                      ) : null}
                       {emailedAt ? (
                         <p className="text-xs text-indigo-700 mt-0.5">Emailed {emailedAt}</p>
                       ) : (
