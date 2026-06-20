@@ -92,10 +92,13 @@ const LANDLORD_STEPS: VerificationStep[] = [
       </>
     ),
   },
-  { step: 'Confirm your insurance', what: 'Confirm you hold appropriate cover for the property.' },
   {
     step: 'Add a payment card',
     what: 'For the $99-per-accepted-booking fee. You are not charged until you accept a tenant.',
+  },
+  {
+    step: 'Landlord insurance',
+    what: 'Review cover options for loss of rent, tenant damage, and liability. Recommended before listing; not required.',
   },
   {
     step: 'Verify your identity',
