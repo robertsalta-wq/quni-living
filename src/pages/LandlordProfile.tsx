@@ -272,6 +272,9 @@ export default function LandlordProfile() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null)
   const toastTimerRef = useRef<number | null>(null)
+  const loadGenRef = useRef(0)
+  const profileRef = useRef<LandlordRow | null>(null)
+  profileRef.current = profile
 
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
@@ -300,10 +303,32 @@ export default function LandlordProfile() {
     })
   }, [profile, location.hash])
 
+  const applyProfileToForm = useCallback((prof: LandlordRow) => {
+    const [fn, ln] = splitFullName(prof.full_name)
+    setFirstName(prof.first_name ?? fn)
+    setLastName(prof.last_name ?? ln)
+    setPhone(prof.phone ?? '')
+    setCompanyName(prof.company_name ?? '')
+    setAbn(prof.abn ?? '')
+    setAddressLine(prof.address ?? '')
+    setSuburb(prof.suburb ?? '')
+    setAddressState(prof.state?.trim() || 'NSW')
+    setPostcode(prof.postcode ?? '')
+    setResidenceLocation(prof.residence_location?.trim() ?? '')
+    setLandlordType(prof.landlord_type ?? '')
+    setBio(prof.bio ?? '')
+    setLanguagesSpoken(normalizeLanguagesSpoken(prof.languages_spoken))
+  }, [])
+
   const load = useCallback(async () => {
     if (!user?.id) return
-    setLoadError(null)
-    setLoading(true)
+    const gen = ++loadGenRef.current
+    const isCurrent = () => gen === loadGenRef.current
+    const hasExistingProfile = profileRef.current != null
+
+    if (isCurrent()) setLoadError(null)
+    if (!hasExistingProfile && isCurrent()) setLoading(true)
+
     try {
       const { data: profRaw, error: pErr } = await supabase
         .from('landlord_profiles')
@@ -314,6 +339,7 @@ export default function LandlordProfile() {
       if (pErr) throw pErr
       const prof = profRaw as LandlordRow | null
       if (!prof) {
+        if (!isCurrent()) return
         setProfile(null)
         setListings([])
         setListingBillingSnapshot(null)
@@ -321,22 +347,12 @@ export default function LandlordProfile() {
         return
       }
 
+      if (!isCurrent()) return
       setProfile(prof)
-      void fetchLandlordListingBillingSnapshot().then(setListingBillingSnapshot)
-      const [fn, ln] = splitFullName(prof.full_name)
-      setFirstName(prof.first_name ?? fn)
-      setLastName(prof.last_name ?? ln)
-      setPhone(prof.phone ?? '')
-      setCompanyName(prof.company_name ?? '')
-      setAbn(prof.abn ?? '')
-      setAddressLine(prof.address ?? '')
-      setSuburb(prof.suburb ?? '')
-      setAddressState(prof.state?.trim() || 'NSW')
-      setPostcode(prof.postcode ?? '')
-      setResidenceLocation(prof.residence_location?.trim() ?? '')
-      setLandlordType(prof.landlord_type ?? '')
-      setBio(prof.bio ?? '')
-      setLanguagesSpoken(normalizeLanguagesSpoken(prof.languages_spoken))
+      if (!hasExistingProfile) applyProfileToForm(prof)
+      void fetchLandlordListingBillingSnapshot().then((snapshot) => {
+        if (isCurrent()) setListingBillingSnapshot(snapshot)
+      })
 
       const { data: props, error: lErr } = await supabase
         .from('properties')
@@ -345,17 +361,27 @@ export default function LandlordProfile() {
         .order('created_at', { ascending: false })
 
       if (lErr) throw lErr
+      if (!isCurrent()) return
       setListings((props ?? []) as PropertyPick[])
     } catch (e: unknown) {
+      if (!isCurrent()) return
       const msg = e instanceof Error ? e.message : 'Could not load profile.'
+      if (hasExistingProfile) {
+        setToast({ kind: 'error', message: msg })
+        toastTimerRef.current = window.setTimeout(() => {
+          setToast(null)
+          toastTimerRef.current = null
+        }, 4000)
+        return
+      }
       setLoadError(msg)
       setProfile(null)
       setListings([])
       setListingBillingSnapshot(null)
     } finally {
-      setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
-  }, [user?.id])
+  }, [user?.id, applyProfileToForm])
 
   useEffect(() => {
     void load()
@@ -562,7 +588,7 @@ export default function LandlordProfile() {
 
   const displayEmail = profile?.email ?? user?.email ?? ''
 
-  if (loading) {
+  if (loading && !profile) {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
         <PageHeroBand
