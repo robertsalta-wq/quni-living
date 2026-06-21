@@ -325,10 +325,6 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
-  if (user.user_metadata?.role !== 'student') {
-    return json({ error: 'Only student accounts can book' }, 403, origin)
-  }
-
   const emailBlock = assertRenterEmailConfirmed(user, json, origin)
   if (emailBlock) return emailBlock
 
@@ -605,10 +601,6 @@ async function handlePaymentIntentCommit(request, origin, body) {
 
   if (userErr || !user) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
-  }
-
-  if (user.user_metadata?.role !== 'student') {
-    return json({ error: 'Only student accounts can book' }, 403, origin)
   }
 
   const emailBlockManaged = assertRenterEmailConfirmed(user, json, origin)
@@ -971,10 +963,6 @@ export default async function handler(request) {
 
   if (userErr || !user) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
-  }
-
-  if (user.user_metadata?.role !== 'student') {
-    return json({ error: 'Only student accounts can book' }, 403, origin)
   }
 
   const emailBlockPreview = assertRenterEmailConfirmed(user, json, origin)

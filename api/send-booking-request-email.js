@@ -78,10 +78,6 @@ export default async function handler(request) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
-  if (user.user_metadata?.role !== 'student') {
-    return json({ error: 'Only student accounts can trigger this notification' }, 403, origin)
-  }
-
   const admin = createClient(supabaseUrl, serviceRole)
 
   const { data: student, error: stErr } = await admin
