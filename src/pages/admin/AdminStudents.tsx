@@ -132,7 +132,7 @@ export default function AdminStudents() {
       <div className="min-w-0 flex-1">
         <AdminPageHeader
           title="Renter profiles"
-          subtitle="Students and non-students who signed up to rent. Click a row to view verification documents."
+          subtitle="Students and non-students who signed up to rent. Click a row to view the full profile."
         />
 
         {error && (
