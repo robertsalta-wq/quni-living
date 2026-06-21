@@ -141,15 +141,39 @@ export function isIdentityVerificationComplete(p: StudentProfileRow | null | und
   return p?.verification_type === 'identity'
 }
 
+/**
+ * Field-state renter onboarding gate — shared by post-auth routing, StudentOnboarding early-exit,
+ * and auth helpers. Does not read `onboarding_complete`.
+ */
+export function renterOnboardingIncomplete(
+  profile: StudentProfileRow | null | undefined,
+  userId?: string | null,
+): boolean {
+  if (userId && hasClientStudentOnboardingComplete(userId)) return false
+  if (!profile) return true
+  if (profile.accommodation_verification_route == null) return true
+  if (
+    !isNonStudentAccommodationRoute(profile.accommodation_verification_route) &&
+    profile.uni_email_verified !== true
+  ) {
+    return true
+  }
+  const step1Done = isNonStudentAccommodationRoute(profile.accommodation_verification_route)
+    ? isStep1SavedIdentityPath(profile)
+    : isStep1Saved(profile)
+  if (!step1Done) return true
+  if (!isStep2Saved(profile)) return true
+  if (!profile.terms_accepted_at) return true
+  return false
+}
+
 /** True when the student must complete /onboarding/student before the rest of the app. */
 export function needsStudentDetailedOnboarding(
   profile: StudentProfileRow | null | undefined,
   userId?: string | null,
 ): boolean {
   if (!profile) return false
-  if (profile.onboarding_complete === true) return false
-  if (userId && hasClientStudentOnboardingComplete(userId)) return false
-  return true
+  return renterOnboardingIncomplete(profile, userId)
 }
 
 /** Loose Australian-style phone: digits only count ≥ 9, optional +61 / 0 prefix. */

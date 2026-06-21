@@ -1,5 +1,8 @@
 import type { User } from '@supabase/supabase-js'
+import { landlordNeedsOnboardingWizard } from './landlordOnboarding'
 import { fetchIsPlatformAdmin, linkPlatformStaffUserIfNeeded } from './platformStaff'
+import { isShallowReturnIntentPath } from './postAuthRedirect'
+import { renterOnboardingIncomplete } from './studentOnboarding'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
@@ -58,12 +61,12 @@ export function getPostLoginRedirectDestination(
   if (role === 'admin') return '/admin'
   if (role === 'landlord') {
     const lp = profile as LandlordProfileRow | null
-    if (lp && lp.onboarding_complete !== true) return '/onboarding/landlord'
+    if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
     return '/landlord-dashboard'
   }
   if (role === 'student') {
     const sp = profile as StudentProfileRow | null
-    if (!sp || sp.onboarding_complete !== true) return '/onboarding/student'
+    if (renterOnboardingIncomplete(sp, _user.id)) return '/onboarding/student'
     return '/student-dashboard'
   }
   return '/onboarding'
@@ -73,16 +76,20 @@ export function getPostLoginRedirectDestination(
  * Dashboard URL for header / account nav. Unlike post-login redirect, completed students go to
  * `/student-dashboard` (not `/listings`).
  */
-export function getNavDashboardPath(role: UserRole, profile: AuthProfile | null): string {
+export function getNavDashboardPath(
+  role: UserRole,
+  profile: AuthProfile | null,
+  userId?: string | null,
+): string {
   if (role === 'admin') return '/admin'
   if (role === 'landlord') {
     const lp = profile as LandlordProfileRow | null
-    if (lp && lp.onboarding_complete !== true) return '/onboarding/landlord'
+    if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
     return '/landlord/dashboard'
   }
   if (role === 'student') {
     const sp = profile as StudentProfileRow | null
-    if (!sp || sp.onboarding_complete !== true) return '/onboarding/student'
+    if (renterOnboardingIncomplete(sp, userId)) return '/onboarding/student'
     return '/student-dashboard'
   }
   return '/onboarding'
@@ -97,12 +104,48 @@ export function getDashboardPath(role: UserRole): string {
 }
 
 /** True if user must still complete onboarding (role selection, profile row, or student onboarding). */
-export function needsOnboarding(role: UserRole, profile: AuthProfile | null): boolean {
+export function needsOnboarding(
+  role: UserRole,
+  profile: AuthProfile | null,
+  userId?: string | null,
+): boolean {
   if (role === 'admin') return false
   if (!role) return true
   if (profile === null) return true
   if (role === 'student') {
-    return (profile as StudentProfileRow).onboarding_complete !== true
+    return renterOnboardingIncomplete(profile as StudentProfileRow, userId)
+  }
+  if (role === 'landlord') {
+    return landlordNeedsOnboardingWizard(profile as LandlordProfileRow)
   }
   return false
+}
+
+/** After email confirm or verify-email continue — onboarding when incomplete, else safe return path. */
+export function getPostAuthEntryDestination(
+  user: User,
+  role: UserRole,
+  profile: AuthProfile | null,
+  fromPath?: string | null,
+): string {
+  if (role === 'admin') return '/admin'
+  if (!role) return '/onboarding'
+  if (role === 'student' && renterOnboardingIncomplete(profile as StudentProfileRow | null, user.id)) {
+    return '/onboarding/student'
+  }
+  if (
+    role === 'landlord' &&
+    (!profile || landlordNeedsOnboardingWizard(profile as LandlordProfileRow))
+  ) {
+    return '/onboarding/landlord'
+  }
+  const safeFrom =
+    fromPath &&
+    fromPath !== '/verify-email' &&
+    fromPath.startsWith('/') &&
+    !isShallowReturnIntentPath(fromPath)
+      ? fromPath
+      : null
+  if (safeFrom) return safeFrom
+  return getPostLoginRedirectDestination(user, role, profile)
 }

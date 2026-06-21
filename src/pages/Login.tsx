@@ -123,7 +123,7 @@ export default function Login() {
       navigate('/onboarding', { replace: true })
       return
     }
-    if (profile === null || needsOnboarding(role, profile)) {
+    if (profile === null || needsOnboarding(role, profile, user.id)) {
       navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
       return
     }

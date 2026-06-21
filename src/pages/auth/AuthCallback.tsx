@@ -110,7 +110,7 @@ export default function AuthCallback() {
         navigate('/onboarding', { replace: true })
         return
       }
-      if (needsOnboarding(role, profile)) {
+      if (needsOnboarding(role, profile, sessionUser.id)) {
         navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
         return
       }

@@ -22,11 +22,11 @@ import { StudentUniEmailVerification } from '../../components/student/StudentUni
 import {
   BUDGET_RANGE_OPTIONS,
   GENDER_OPTIONS,
-  hasClientStudentOnboardingComplete,
   inferStudentOnboardingStep,
   isValidAuPhone,
   LEASE_LENGTH_OPTIONS,
   markStudentOnboardingCompleteClient,
+  renterOnboardingIncomplete,
   STUDY_LEVEL_OPTIONS,
   budgetRangeToMinMax,
   minMaxToBudgetRange,
@@ -594,10 +594,7 @@ export default function StudentOnboarding() {
           return
         }
         const row = profRes.data as StudentProfileRow
-        if (
-          row.onboarding_complete === true ||
-          (user.id && hasClientStudentOnboardingComplete(user.id))
-        ) {
+        if (!renterOnboardingIncomplete(row, user.id)) {
           navigate('/listings', { replace: true })
           return
         }
@@ -1086,7 +1083,7 @@ export default function StudentOnboarding() {
     )
   }
 
-  if (profile.onboarding_complete === true || (user.id && hasClientStudentOnboardingComplete(user.id))) {
+  if (!renterOnboardingIncomplete(profile, user.id)) {
     return <Navigate to="/listings" replace />
   }
 

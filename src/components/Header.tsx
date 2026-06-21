@@ -234,7 +234,7 @@ export default function Header() {
 
   const dashboardHref =
     user && (role === 'student' || role === 'landlord' || role === 'admin')
-      ? getNavDashboardPath(role, profile)
+      ? getNavDashboardPath(role, profile, user.id)
       : '/onboarding'
   const profileHref =
     role === 'student'
@@ -450,7 +450,7 @@ export default function Header() {
                     >
                       {showDashboardInAuth ? (
                         <Link
-                          to={getNavDashboardPath(role, profile)}
+                          to={getNavDashboardPath(role, profile, user.id)}
                           role="menuitem"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden"
                           onClick={closeAccountMenu}
@@ -467,7 +467,7 @@ export default function Header() {
                         >
                           Admin dashboard
                         </Link>
-                      ) : needsOnboarding(role, profile) ? (
+                      ) : needsOnboarding(role, profile, user.id) ? (
                         <Link
                           to={finishSetupHref(role)}
                           role="menuitem"
@@ -618,7 +618,7 @@ export default function Header() {
                           Dashboard
                         </Link>
                       )}
-                      {needsOnboarding(role, profile) ? (
+                      {needsOnboarding(role, profile, user.id) ? (
                         <Link
                           to={finishSetupHref(role)}
                           className={`${mobileDrawerRowClass} text-amber-700`}

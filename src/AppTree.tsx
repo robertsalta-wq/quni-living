@@ -1,4 +1,5 @@
 import { AuthProvider } from './context/AuthContext'
+import { PostAuthOnboardingGuard } from './components/PostAuthOnboardingGuard'
 import { LegalEntityProvider } from './context/LegalEntityContext'
 import { PlatformFeaturesProvider } from './context/PlatformFeaturesContext'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
@@ -11,6 +12,7 @@ export function AppTree() {
     <>
       <AppNavigationRegistrar />
       <AuthProvider>
+        <PostAuthOnboardingGuard>
         <LegalEntityProvider>
           <PlatformFeaturesProvider>
             <AppErrorBoundary>
@@ -18,6 +20,7 @@ export function AppTree() {
             </AppErrorBoundary>
           </PlatformFeaturesProvider>
         </LegalEntityProvider>
+        </PostAuthOnboardingGuard>
       </AuthProvider>
     </>
   )

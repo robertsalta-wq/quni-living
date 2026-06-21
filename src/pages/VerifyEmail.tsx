@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl } from '../lib/oauth'
+import { fetchRoleAndProfile, getPostAuthEntryDestination } from '../lib/authProfile'
 import Seo from '../components/Seo'
 
 /**
@@ -14,7 +15,7 @@ import Seo from '../components/Seo'
 export default function VerifyEmail() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, loading, signOut, refreshProfile } = useAuthContext()
+  const { user, loading, signOut, refreshProfile, role, profile } = useAuthContext()
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -42,8 +43,7 @@ export default function VerifyEmail() {
   }
 
   if (!userNeedsEmailAddressVerification(user)) {
-    const dest =
-      fromPath && fromPath !== '/verify-email' && fromPath.startsWith('/') ? fromPath : '/'
+    const dest = getPostAuthEntryDestination(user, role, profile, fromPath)
     return <Navigate to={dest} replace />
   }
 
@@ -76,8 +76,8 @@ export default function VerifyEmail() {
       await refreshProfile()
       const { data } = await supabase.auth.getUser()
       if (data.user?.email_confirmed_at) {
-        const dest =
-          fromPath && fromPath !== '/verify-email' && fromPath.startsWith('/') ? fromPath : '/'
+        const { role: resolvedRole, profile: resolvedProfile } = await fetchRoleAndProfile(data.user)
+        const dest = getPostAuthEntryDestination(data.user, resolvedRole, resolvedProfile, fromPath)
         navigate(dest, { replace: true })
         return
       }
