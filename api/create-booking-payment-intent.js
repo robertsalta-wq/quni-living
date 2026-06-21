@@ -24,7 +24,9 @@ import {
   buildBookingRejectVisibility,
   captureBookingRejected,
   captureBookingRejectedResponse,
+  recordJourneyEvent,
 } from './lib/booking/captureBookingRejected.js'
+import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
 import {
   calculateBookingFeeCents,
   getActivePricingSnapshotForProperty,
@@ -164,6 +166,35 @@ async function rejectIfBlocked(block, visibility, fallbackErrorCode) {
   if (!block) return null
   await captureBookingRejectedResponse(block, visibility, fallbackErrorCode)
   return block
+}
+
+function journeyActor(user, attemptId) {
+  return {
+    user_id: user?.id ?? null,
+    email: user?.email ?? null,
+    attempt_id: attemptId ?? null,
+  }
+}
+
+function recordBookingSubmitAttempt(admin, user, propertyId, mode, attemptId, serviceTier) {
+  recordJourneyEvent(admin, {
+    ...journeyActor(user, attemptId),
+    property_id: propertyId,
+    event_type: 'booking_submit_attempt',
+    step: mode,
+    service_tier: serviceTier ?? null,
+  })
+}
+
+function recordBookingCompleted(admin, user, propertyId, mode, attemptId, bookingId, serviceTier) {
+  recordJourneyEvent(admin, {
+    ...journeyActor(user, attemptId),
+    property_id: propertyId,
+    event_type: 'booking_completed',
+    step: mode,
+    service_tier: serviceTier ?? null,
+    metadata: { booking_id: bookingId },
+  })
 }
 
 async function assertPropertyAvailableForBooking(admin, propertyId, origin) {
@@ -339,15 +370,17 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
+  const attemptId = readAttemptIdFromBody(body)
+  const admin = createClient(supabaseUrl, serviceRole)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'listing_commit', attemptId, null)
+
   const emailBlock = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'listing_commit'),
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId }),
   )
   if (emailBlock) return emailBlock
-
-  const admin = createClient(supabaseUrl, serviceRole)
 
   // Booking eligibility (verification_type × open_to_non_students). Visibility / abandoned-bookings logging hooks here.
   const eligibilityBlock = await assertRenterEligibleForBooking(
@@ -356,7 +389,7 @@ async function handleListingBookingCommit(request, origin, body) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'listing_commit'),
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId }),
   )
   if (eligibilityBlock) return eligibilityBlock
 
@@ -379,6 +412,7 @@ async function handleListingBookingCommit(request, origin, body) {
   const coTenant = coTenantResolved.coTenant
 
   const listingVis = buildBookingRejectVisibility(user, propertyId, 'listing_commit', {
+    attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
   })
@@ -556,6 +590,15 @@ async function handleListingBookingCommit(request, origin, body) {
     } catch (e) {
       console.error('[booking] attach conversation', e)
     }
+    recordBookingCompleted(
+      admin,
+      user,
+      propertyId,
+      'listing_commit',
+      attemptId,
+      inserted.id,
+      property.service_tier ?? null,
+    )
     return json({ ok: true, bookingId: inserted.id, listingApply: true }, 200, origin)
   }
 
@@ -650,15 +693,17 @@ async function handlePaymentIntentCommit(request, origin, body) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
+  const attemptId = readAttemptIdFromBody(body)
+  const admin = createClient(supabaseUrl, serviceRole)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'managed_commit', attemptId, null)
+
   const emailBlockManaged = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit'),
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId }),
   )
   if (emailBlockManaged) return emailBlockManaged
-
-  const admin = createClient(supabaseUrl, serviceRole)
 
   const eligibilityBlockManaged = await assertRenterEligibleForBooking(
     admin,
@@ -666,7 +711,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit'),
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId }),
   )
   if (eligibilityBlockManaged) return eligibilityBlockManaged
 
@@ -691,6 +736,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const coTenant = coTenantResolved.coTenant
 
   const managedVis = buildBookingRejectVisibility(user, propertyId, 'managed_commit', {
+    attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
   })
@@ -890,6 +936,15 @@ async function handlePaymentIntentCommit(request, origin, body) {
     } catch (e) {
       console.error('[booking] attach conversation', e)
     }
+    recordBookingCompleted(
+      admin,
+      user,
+      propertyId,
+      'managed_commit',
+      attemptId,
+      inserted.id,
+      property.service_tier ?? null,
+    )
     return json({ ok: true, bookingId: inserted.id }, 200, origin)
   }
 
@@ -1038,15 +1093,17 @@ export default async function handler(request) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
+  const attemptId = readAttemptIdFromBody(body)
+  const admin = createClient(supabaseUrl, serviceRole)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'preview', attemptId, null)
+
   const emailBlockPreview = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'preview'),
+    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId }),
   )
   if (emailBlockPreview) return emailBlockPreview
-
-  const admin = createClient(supabaseUrl, serviceRole)
 
   const eligibilityBlockPreview = await assertRenterEligibleForBooking(
     admin,
@@ -1054,7 +1111,7 @@ export default async function handler(request) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'preview'),
+    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId }),
   )
   if (eligibilityBlockPreview) return eligibilityBlockPreview
 
@@ -1069,6 +1126,7 @@ export default async function handler(request) {
   }
 
   const previewVis = buildBookingRejectVisibility(user, propertyId, 'preview', {
+    attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
   })

@@ -24,6 +24,7 @@ import {
   isStripeTestPublishableKey,
 } from '../lib/stripePublic'
 import { sendBookingRequestToLandlord } from '../lib/bookingEmail'
+import { mintBookingAttemptId, recordBookingPageOpened } from '../lib/bookingAttempt'
 import { apiUrl } from '../lib/apiUrl'
 import {
   clearQuniTenantInviteContext,
@@ -562,6 +563,8 @@ export default function Booking() {
   const propertyLoadTargetRef = useRef(propertyId)
   propertyLoadTargetRef.current = propertyId
 
+  const bookingAttemptIdRef = useRef<string | null>(null)
+
   const [myLandlordId, setMyLandlordId] = useState<string | null>(null)
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
@@ -831,6 +834,13 @@ export default function Booking() {
   useEffect(() => {
     void loadProperty()
   }, [loadProperty])
+
+  useEffect(() => {
+    if (!propertyId || !user?.id || authLoading) return
+    const attemptId = mintBookingAttemptId()
+    bookingAttemptIdRef.current = attemptId
+    recordBookingPageOpened(attemptId, propertyId)
+  }, [propertyId, user?.id, authLoading])
 
   useEffect(() => {
     if (!property) {
@@ -1212,6 +1222,7 @@ export default function Booking() {
           bondAcknowledged: true,
           occupantCount,
           parkingSelected,
+          ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
         }),
       })
 
@@ -1328,6 +1339,7 @@ export default function Booking() {
           ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
           ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
           ...(tenantInviteToken ? { tenantInviteToken } : {}),
+          ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
         }),
       })
 
@@ -1375,7 +1387,7 @@ export default function Booking() {
 
       const lp = property.landlord_profiles
       if (lp?.email?.trim() && j.bookingId) {
-        void sendBookingRequestToLandlord(j.bookingId)
+        void sendBookingRequestToLandlord(j.bookingId, bookingAttemptIdRef.current)
       }
 
       clearBookingDraft(property.id)
@@ -1442,6 +1454,7 @@ export default function Booking() {
             parkingSelected,
             ...(occupantCount === 2 ? { coTenant: buildCoTenantPayload() } : {}),
             ...(conversationIdFromThread ? { conversationId: conversationIdFromThread } : {}),
+            ...(bookingAttemptIdRef.current ? { attemptId: bookingAttemptIdRef.current } : {}),
           }),
         })
 
@@ -1481,7 +1494,7 @@ export default function Booking() {
 
         const lp = property.landlord_profiles
         if (lp?.email?.trim() && j.bookingId) {
-          void sendBookingRequestToLandlord(j.bookingId)
+          void sendBookingRequestToLandlord(j.bookingId, bookingAttemptIdRef.current)
         }
 
         clearBookingDraft(property.id)

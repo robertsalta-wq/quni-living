@@ -5,7 +5,10 @@ import { supabase } from './supabase'
  * Notify landlord of a new booking request (Resend, server-side).
  * Call after the booking row is inserted; requires an active student session.
  */
-export async function sendBookingRequestToLandlord(bookingId: string): Promise<void> {
+export async function sendBookingRequestToLandlord(
+  bookingId: string,
+  attemptId?: string | null,
+): Promise<void> {
   const id = bookingId.trim()
   if (!id) return
 
@@ -16,13 +19,17 @@ export async function sendBookingRequestToLandlord(bookingId: string): Promise<v
     return
   }
 
+  const attempt = attemptId?.trim()
   const res = await fetch(apiUrl('/api/send-booking-request-email'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ bookingId: id }),
+    body: JSON.stringify({
+      bookingId: id,
+      ...(attempt ? { attemptId: attempt } : {}),
+    }),
   })
 
   if (!res.ok) {

@@ -7,7 +7,8 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplates.js'
 import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
-import { buildBookingRejectVisibility } from './lib/booking/captureBookingRejected.js'
+import { buildBookingRejectVisibility, recordJourneyEvent } from './lib/booking/captureBookingRejected.js'
+import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
 
 export const config = { runtime: 'edge' }
 
@@ -68,6 +69,8 @@ export default async function handler(request) {
   if (!bookingId) {
     return json({ error: 'bookingId is required' }, 400, origin)
   }
+
+  const attemptId = readAttemptIdFromBody(body)
 
   const supabaseAuth = createClient(supabaseUrl, anonKey)
   const {
@@ -141,6 +144,7 @@ export default async function handler(request) {
     json,
     origin,
     buildBookingRejectVisibility(user, booking.property_id, 'booking_email', {
+      attempt_id: attemptId,
       student_profile_id: student.id,
       email: user.email ?? null,
     }),
@@ -193,6 +197,16 @@ export default async function handler(request) {
     console.error('send-booking-request-email', e)
     return json({ error: e instanceof Error ? e.message : 'Failed to send email' }, 500, origin)
   }
+
+  recordJourneyEvent(admin, {
+    user_id: user.id,
+    email: user.email ?? null,
+    attempt_id: attemptId,
+    property_id: booking.property_id,
+    event_type: 'booking_landlord_notified',
+    step: 'booking_email',
+    metadata: { booking_id: bookingId },
+  })
 
   return json({ ok: true }, 200, origin)
 }

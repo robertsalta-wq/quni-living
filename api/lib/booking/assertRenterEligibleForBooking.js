@@ -85,7 +85,7 @@ export async function assertRenterEligibleForBooking(
     await Promise.all([
       admin
         .from('student_profiles')
-        .select('id, verification_type')
+        .select('id, verification_type, accommodation_verification_route')
         .eq('user_id', uid)
         .maybeSingle(),
       admin.from('properties').select('open_to_non_students, service_tier').eq('id', pid).maybeSingle(),
@@ -110,6 +110,9 @@ export async function assertRenterEligibleForBooking(
     property_id: pid,
     student_profile_id: profile.id ?? null,
     service_tier: property.service_tier ?? visibilityContext?.service_tier ?? null,
+    verification_type: profile.verification_type ?? null,
+    accommodation_verification_route: profile.accommodation_verification_route ?? null,
+    open_to_non_students: property.open_to_non_students ?? null,
   }
 
   return renterBookingEligibilityBlock(

@@ -1,4 +1,5 @@
 import { captureSentryMessageEdge } from '../sentryEdgeCapture.js'
+import { insertJourneyEvent } from '../journey/insertJourneyEvent.js'
 
 /**
  * @typedef {Object} BookingRejectVisibility
@@ -10,11 +11,41 @@ import { captureSentryMessageEdge } from '../sentryEdgeCapture.js'
  * @property {string | null} [service_tier]
  * @property {string | null} [mode]
  * @property {string | null} [email]
+ * @property {string | null} [attempt_id]
+ * @property {string | null} [verification_type]
+ * @property {string | null} [accommodation_verification_route]
+ * @property {boolean | null} [open_to_non_students]
  */
+
+const JOURNEY_METADATA_KEYS = new Set([
+  'student_profile_id',
+  'verification_type',
+  'accommodation_verification_route',
+  'open_to_non_students',
+  'paymentIntentId',
+  'cleanup_context',
+  'supabaseMessage',
+  'piStatusAfter',
+  'booking_id',
+])
+
+/**
+ * @param {BookingRejectVisibility & Record<string, unknown>} ctx
+ */
+function journeyMetadataFromContext(ctx) {
+  /** @type {Record<string, unknown>} */
+  const metadata = {}
+  for (const [key, value] of Object.entries(ctx)) {
+    if (value == null) continue
+    if (JOURNEY_METADATA_KEYS.has(key)) metadata[key] = value
+  }
+  return metadata
+}
 
 /**
  * Best-effort Sentry event for handled booking rejections (Phase 0 visibility).
  * Eligibility 403s → warning; race/conflict 409s → error.
+ * Also appends booking_rejected to journey_events (Phase 1).
  *
  * @param {BookingRejectVisibility & Record<string, unknown>} ctx
  */
@@ -32,6 +63,7 @@ export async function captureBookingRejected(ctx) {
     service_tier: ctx.service_tier ?? null,
     mode: ctx.mode ?? null,
     email: ctx.email ?? null,
+    attempt_id: ctx.attempt_id ?? null,
   }
 
   for (const [key, value] of Object.entries(ctx)) {
@@ -39,13 +71,27 @@ export async function captureBookingRejected(ctx) {
     extra[key] = value
   }
 
-  await captureSentryMessageEdge('booking_rejected', extra, {
-    level,
-    tags: {
+  await Promise.all([
+    captureSentryMessageEdge('booking_rejected', extra, {
+      level,
+      tags: {
+        error_code,
+        ...(ctx.mode ? { booking_mode: String(ctx.mode) } : {}),
+      },
+    }),
+    insertJourneyEvent({
+      user_id: ctx.user_id ?? null,
+      email: ctx.email ?? null,
+      attempt_id: ctx.attempt_id ?? null,
+      property_id: ctx.property_id ?? null,
+      event_type: 'booking_rejected',
+      step: typeof ctx.mode === 'string' ? ctx.mode : null,
       error_code,
-      ...(ctx.mode ? { booking_mode: String(ctx.mode) } : {}),
-    },
-  })
+      http_status,
+      service_tier: ctx.service_tier ?? null,
+      metadata: journeyMetadataFromContext(ctx),
+    }),
+  ])
 }
 
 /**
@@ -90,4 +136,21 @@ export async function captureBookingRejectedResponse(res, visibility, fallbackEr
     http_status: res.status,
   })
   return res
+}
+
+/**
+ * @param {import('@supabase/supabase-js').SupabaseClient} admin
+ * @param {{
+ *   user_id?: string | null
+ *   email?: string | null
+ *   attempt_id?: string | null
+ *   property_id?: string | null
+ *   event_type: string
+ *   step?: string | null
+ *   service_tier?: string | null
+ *   metadata?: Record<string, unknown>
+ * }} row
+ */
+export function recordJourneyEvent(admin, row) {
+  void insertJourneyEvent(row, admin)
 }
