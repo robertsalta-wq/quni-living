@@ -2,6 +2,7 @@ import { Suspense, useLayoutEffect } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import { OnboardingResumeBanner } from './components/OnboardingResumeBanner'
 import ScrollToTop from './components/ScrollToTop'
 import NativePushNotificationsInitializer from './components/NativePushNotificationsInitializer'
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
@@ -53,6 +54,7 @@ function App() {
               : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
           }
         >
+          {showPublicChrome && <OnboardingResumeBanner />}
           <Routes>
           {/* Eager prerender routes sit outside Suspense so SSR HTML matches client hydration. */}
           <Route path="/guides" element={<Guides />} />

@@ -22,6 +22,9 @@ export type AuthState = {
   role: UserRole
   /** True during first session bootstrap, or while resolving role/profile after sign-in. */
   loading: boolean
+  /** Set on SIGNED_IN; cleared after one-shot post-auth onboarding redirect or exempt path. */
+  awaitingSignInOnboardingRedirect: boolean
+  clearAwaitingSignInOnboardingRedirect: () => void
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -40,8 +43,13 @@ export function useProvideAuth(): AuthState {
   const [profile, setProfile] = useState<AuthProfile | null>(null)
   const [role, setRole] = useState<UserRole>(null)
   const [loading, setLoading] = useState(isSupabaseConfigured)
+  const [awaitingSignInOnboardingRedirect, setAwaitingSignInOnboardingRedirect] = useState(false)
   const bootstrapDoneRef = useRef(false)
   const hydrateGenRef = useRef(0)
+
+  const clearAwaitingSignInOnboardingRedirect = useCallback(() => {
+    setAwaitingSignInOnboardingRedirect(false)
+  }, [])
 
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
@@ -120,6 +128,12 @@ export function useProvideAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s)
+      if (event === 'SIGNED_IN') {
+        setAwaitingSignInOnboardingRedirect(true)
+      }
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+        setAwaitingSignInOnboardingRedirect(false)
+      }
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setProfile(null)
@@ -171,6 +185,8 @@ export function useProvideAuth(): AuthState {
     profile,
     role,
     loading,
+    awaitingSignInOnboardingRedirect,
+    clearAwaitingSignInOnboardingRedirect,
     signOut,
     refreshProfile,
   }

@@ -211,6 +211,21 @@ export function needsOnboarding(
   return false
 }
 
+/** Onboarding destination when `needsOnboarding` is true. */
+export function getIncompleteOnboardingDestination(
+  role: UserRole,
+  profile: AuthProfile | null,
+  userId?: string | null,
+): string {
+  if (!needsOnboarding(role, profile, userId)) {
+    return '/onboarding'
+  }
+  if (!role) return '/onboarding'
+  if (role === 'student') return '/onboarding/student'
+  if (role === 'landlord') return '/onboarding/landlord'
+  return '/onboarding'
+}
+
 /** After email confirm or verify-email continue — onboarding when incomplete, else safe return path. */
 export function getPostAuthEntryDestination(
   user: User,
