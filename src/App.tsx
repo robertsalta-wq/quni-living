@@ -275,6 +275,7 @@ function App() {
             <Route path="domains" element={<Lazy.DomainsPage />} />
             <Route path="trust-checklist" element={<Lazy.TrustChecklist />} />
             <Route path="document-access-log" element={<Lazy.AdminDocumentAccessLog />} />
+            <Route path="support-lookup" element={<Lazy.AdminSupportLookup />} />
             <Route path="state-workflows" element={<Lazy.AdminStateWorkflows />} />
             <Route path="qase" element={<Lazy.QaseTicketList />} />
             <Route path="qase/settings" element={<Lazy.QaseSettings />} />
