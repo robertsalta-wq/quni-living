@@ -104,7 +104,6 @@ function studentToSnapshot(row: LandlordBookingReviewStudent | null | undefined)
     year_of_study: row.year_of_study,
     study_level: row.study_level,
     student_type: row.student_type,
-    nationality: row.nationality,
     languages_spoken: row.languages_spoken ?? [],
     room_type_preference: row.room_type_preference,
     budget_min_per_week: row.budget_min_per_week,
@@ -127,6 +126,8 @@ function studentToSnapshot(row: LandlordBookingReviewStudent | null | undefined)
     furnishing_preference: row.furnishing_preference,
     has_guarantor: row.has_guarantor,
     guarantor_name: row.guarantor_name,
+    preferred_lease_length: row.preferred_lease_length,
+    preferred_move_in_date: row.preferred_move_in_date,
   }
 }
 

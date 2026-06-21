@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { isRoomType, ROOM_TYPE_LABELS } from '../../lib/listings'
+import { LEASE_LENGTH_OPTIONS } from '../../lib/studentOnboarding'
 import { formatStudentOccupancyType } from '../../lib/studentOccupancyOptions'
 import { buildLandlordVerificationFromProfile } from './LandlordApplicantVerificationBadges'
 import LandlordApplicantVerificationSection from './LandlordApplicantVerificationSection'
@@ -19,7 +20,6 @@ export type LandlordSafeStudentSnapshot = {
   year_of_study: number | null
   study_level: string | null
   student_type: string | null
-  nationality: string | null
   languages_spoken: string[] | null
   room_type_preference: string | null
   budget_min_per_week: number | null
@@ -42,6 +42,8 @@ export type LandlordSafeStudentSnapshot = {
   furnishing_preference: string | null
   has_guarantor: boolean | null
   guarantor_name: string | null
+  preferred_lease_length: string | null
+  preferred_move_in_date: string | null
 }
 
 function formatStudyLevel(raw: string | null | undefined): string | null {
@@ -75,6 +77,60 @@ function roomPreferenceLabel(pref: string | null | undefined): string | null {
   if (!t) return null
   if (isRoomType(t)) return ROOM_TYPE_LABELS[t]
   return formatStudyLevel(t)
+}
+
+function formatEnumPreference(raw: string | null | undefined): string | null {
+  const t = raw?.trim()
+  if (!t) return null
+  return t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatLeaseLengthPref(raw: string | null | undefined): string | null {
+  const t = raw?.trim()
+  if (!t) return null
+  const opt = LEASE_LENGTH_OPTIONS.find((o) => o.value === t)
+  return opt?.label ?? formatEnumPreference(t)
+}
+
+function formatMoveInDatePref(iso: string | null | undefined): string | null {
+  const t = iso?.trim().slice(0, 10)
+  if (!t) return null
+  try {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(t) ? new Date(`${t}T12:00:00`) : new Date(iso!)
+    if (Number.isNaN(d.getTime())) return null
+    return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return null
+  }
+}
+
+function formatMoveInFlexibility(raw: string | null | undefined): string | null {
+  const t = raw?.trim()
+  if (!t) return null
+  if (t === 'exact') return 'Exact date'
+  if (t === 'one_week') return '± 1 week'
+  if (t === 'two_weeks') return '± 2 weeks'
+  return formatEnumPreference(t)
+}
+
+function formatBooleanPref(
+  value: boolean | null | undefined,
+  yesLabel: string,
+  noLabel: string,
+): string {
+  if (value === true) return yesLabel
+  if (value === false) return noLabel
+  return 'Not specified'
+}
+
+function formatGuarantor(has: boolean | null | undefined, name: string | null | undefined): string {
+  if (has === true) return name?.trim() || 'Yes'
+  if (has === false) return 'No'
+  return 'Not specified'
+}
+
+function preferenceOrNeutral(raw: string | null | undefined): string {
+  return formatEnumPreference(raw) ?? 'Not specified'
 }
 
 function splitDisplayName(full: string): { firstName: string; lastName: string } {
@@ -237,14 +293,20 @@ export default function LandlordStudentProfileModal({
 
   if (!open) return null
 
+  const bio = student?.bio?.trim()
+  const isStudentRoute = student?.accommodation_verification_route !== 'non_student'
   const uni = student?.universities?.name?.trim()
   const course = student?.course?.trim()
   const year = student?.year_of_study
   const studyLevel = formatStudyLevel(student?.study_level)
   const stType = formatStudentType(student?.student_type)
-  const nationality = student?.nationality?.trim()
   const roomPref = roomPreferenceLabel(student?.room_type_preference)
   const budget = formatBudgetRange(student?.budget_min_per_week, student?.budget_max_per_week)
+  const preferredMoveIn = formatMoveInDatePref(student?.preferred_move_in_date)
+  const preferredLease = formatLeaseLengthPref(student?.preferred_lease_length)
+  const moveInFlex = formatMoveInFlexibility(student?.move_in_flexibility)
+  const occupancyLabel = formatStudentOccupancyType(student?.occupancy_type)
+  const hasStudyDetails = Boolean(uni || course || year != null || studyLevel || stType)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -285,50 +347,53 @@ export default function LandlordStudentProfileModal({
           </div>
 
           <div className="mt-6 space-y-6">
-            <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Study</h3>
-              <dl className="mt-3 space-y-2 text-sm">
-                {uni && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">University</dt>
-                    <dd className="font-medium text-gray-900">{uni}</dd>
-                  </div>
-                )}
-                {course && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Course</dt>
-                    <dd className="font-medium text-gray-900">{course}</dd>
-                  </div>
-                )}
-                {year != null && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Year of study</dt>
-                    <dd className="font-medium text-gray-900">{year}</dd>
-                  </div>
-                )}
-                {studyLevel && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Study level</dt>
-                    <dd className="font-medium text-gray-900">{studyLevel}</dd>
-                  </div>
-                )}
-                {stType && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Student type</dt>
-                    <dd className="font-medium text-gray-900">{stType}</dd>
-                  </div>
-                )}
-                {nationality && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Nationality</dt>
-                    <dd className="font-medium text-gray-900">{nationality}</dd>
-                  </div>
-                )}
-                {!uni && !course && year == null && !studyLevel && !stType && !nationality && (
-                  <p className="text-sm text-gray-500">No study details shared yet.</p>
-                )}
-              </dl>
-            </section>
+            {bio && (
+              <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">About</h3>
+                <p className="mt-3 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{bio}</p>
+              </section>
+            )}
+
+            {isStudentRoute && (
+              <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Study</h3>
+                <dl className="mt-3 space-y-2 text-sm">
+                  {uni && (
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                      <dt className="text-gray-500 shrink-0 sm:w-36">University</dt>
+                      <dd className="font-medium text-gray-900">{uni}</dd>
+                    </div>
+                  )}
+                  {course && (
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                      <dt className="text-gray-500 shrink-0 sm:w-36">Course</dt>
+                      <dd className="font-medium text-gray-900">{course}</dd>
+                    </div>
+                  )}
+                  {year != null && (
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                      <dt className="text-gray-500 shrink-0 sm:w-36">Year of study</dt>
+                      <dd className="font-medium text-gray-900">{year}</dd>
+                    </div>
+                  )}
+                  {studyLevel && (
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                      <dt className="text-gray-500 shrink-0 sm:w-36">Study level</dt>
+                      <dd className="font-medium text-gray-900">{studyLevel}</dd>
+                    </div>
+                  )}
+                  {stType && (
+                    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                      <dt className="text-gray-500 shrink-0 sm:w-36">Student type</dt>
+                      <dd className="font-medium text-gray-900">{stType}</dd>
+                    </div>
+                  )}
+                  {!hasStudyDetails && (
+                    <p className="text-sm text-gray-500">No study details shared yet.</p>
+                  )}
+                </dl>
+              </section>
+            )}
 
             <LanguagesSpokenDisplay languages={student?.languages_spoken} className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3" />
 
@@ -347,61 +412,76 @@ export default function LandlordStudentProfileModal({
                     <dd className="font-medium text-gray-900">{budget}</dd>
                   </div>
                 )}
-                {formatStudentOccupancyType(student?.occupancy_type) && (
+                {occupancyLabel && (
                   <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
                     <dt className="text-gray-500 shrink-0 sm:w-36">Who will live there</dt>
-                    <dd className="font-medium text-gray-900">
-                      {formatStudentOccupancyType(student?.occupancy_type)}
-                    </dd>
+                    <dd className="font-medium text-gray-900">{occupancyLabel}</dd>
                   </div>
                 )}
-                {student?.move_in_flexibility?.trim() && (
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Preferred move-in</dt>
+                  <dd className={`font-medium ${preferredMoveIn ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {preferredMoveIn ?? 'Not specified'}
+                  </dd>
+                </div>
+                {moveInFlex && (
                   <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
                     <dt className="text-gray-500 shrink-0 sm:w-36">Move-in flexibility</dt>
-                    <dd className="font-medium text-gray-900">{student.move_in_flexibility.replace(/_/g, ' ')}</dd>
+                    <dd className="font-medium text-gray-900">{moveInFlex}</dd>
                   </div>
                 )}
-                {student?.has_pets != null && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Pets</dt>
-                    <dd className="font-medium text-gray-900">{student.has_pets ? 'Yes' : 'No'}</dd>
-                  </div>
-                )}
-                {student?.needs_parking != null && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Parking</dt>
-                    <dd className="font-medium text-gray-900">{student.needs_parking ? 'Needs parking' : 'No requirement'}</dd>
-                  </div>
-                )}
-                {student?.bills_preference?.trim() && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Bills</dt>
-                    <dd className="font-medium text-gray-900">{student.bills_preference.replace(/_/g, ' ')}</dd>
-                  </div>
-                )}
-                {student?.furnishing_preference?.trim() && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Furnishing</dt>
-                    <dd className="font-medium text-gray-900">{student.furnishing_preference.replace(/_/g, ' ')}</dd>
-                  </div>
-                )}
-                {student?.has_guarantor === true && (
-                  <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                    <dt className="text-gray-500 shrink-0 sm:w-36">Guarantor</dt>
-                    <dd className="font-medium text-gray-900">{student.guarantor_name?.trim() || 'Yes'}</dd>
-                  </div>
-                )}
-                {!roomPref &&
-                  !budget &&
-                  !student?.occupancy_type?.trim() &&
-                  !student?.move_in_flexibility?.trim() &&
-                  student?.has_pets == null &&
-                  student?.needs_parking == null &&
-                  !student?.bills_preference?.trim() &&
-                  !student?.furnishing_preference?.trim() &&
-                  student?.has_guarantor !== true && (
-                  <p className="text-sm text-gray-500">No housing preferences shared yet.</p>
-                )}
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Preferred lease</dt>
+                  <dd className={`font-medium ${preferredLease ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {preferredLease ?? 'Not specified'}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Smoking</dt>
+                  <dd
+                    className={`font-medium ${student?.is_smoker == null ? 'text-gray-500' : 'text-gray-900'}`}
+                  >
+                    {formatBooleanPref(student?.is_smoker, 'Smoker', 'Non-smoker')}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Pets</dt>
+                  <dd className={`font-medium ${student?.has_pets == null ? 'text-gray-500' : 'text-gray-900'}`}>
+                    {formatBooleanPref(student?.has_pets, 'Has pets', 'No pets')}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Parking</dt>
+                  <dd
+                    className={`font-medium ${student?.needs_parking == null ? 'text-gray-500' : 'text-gray-900'}`}
+                  >
+                    {formatBooleanPref(student?.needs_parking, 'Needs parking', 'No requirement')}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Bills</dt>
+                  <dd
+                    className={`font-medium ${student?.bills_preference?.trim() ? 'text-gray-900' : 'text-gray-500'}`}
+                  >
+                    {preferenceOrNeutral(student?.bills_preference)}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Furnishing</dt>
+                  <dd
+                    className={`font-medium ${student?.furnishing_preference?.trim() ? 'text-gray-900' : 'text-gray-500'}`}
+                  >
+                    {preferenceOrNeutral(student?.furnishing_preference)}
+                  </dd>
+                </div>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                  <dt className="text-gray-500 shrink-0 sm:w-36">Guarantor</dt>
+                  <dd
+                    className={`font-medium ${student?.has_guarantor == null ? 'text-gray-500' : 'text-gray-900'}`}
+                  >
+                    {formatGuarantor(student?.has_guarantor, student?.guarantor_name)}
+                  </dd>
+                </div>
               </dl>
             </section>
 

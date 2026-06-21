@@ -269,13 +269,13 @@ function writeInviteModalToSession(property: InviteModalProperty | null): void {
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
 const LANDLORD_DASHBOARD_STUDENT_SELECT_BASE =
-  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, bio, occupancy_type, move_in_flexibility, has_pets, needs_parking, bills_preference, furnishing_preference, has_guarantor, guarantor_name, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, bio, occupancy_type, move_in_flexibility, preferred_move_in_date, preferred_lease_length, has_pets, needs_parking, bills_preference, furnishing_preference, has_guarantor, guarantor_name, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX =
   ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_FULL =
   `${LANDLORD_DASHBOARD_STUDENT_SELECT_BASE}, work_email_verified, work_email_verified_at${LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX}`
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY =
-  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, nationality, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX =
   ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_FULL =
@@ -647,6 +647,8 @@ export default function LandlordDashboard() {
                       bio: null,
                       occupancy_type: null,
                       move_in_flexibility: null,
+                      preferred_move_in_date: null,
+                      preferred_lease_length: null,
                       has_pets: null,
                       needs_parking: null,
                       bills_preference: null,
@@ -671,6 +673,8 @@ export default function LandlordDashboard() {
                         bio: null,
                         occupancy_type: null,
                         move_in_flexibility: null,
+                        preferred_move_in_date: null,
+                        preferred_lease_length: null,
                         has_pets: null,
                         needs_parking: null,
                         bills_preference: null,
