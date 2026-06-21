@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
+import { logProfileView } from '../../lib/profileAccessLog'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { AdminStudentVerificationDrawer } from '../../components/admin/AdminStudentVerificationDrawer'
 import { DetailDrawer } from '../../components/admin/patterns'
@@ -112,6 +113,12 @@ export default function AdminStudents() {
     if (!selectedProfileId) return null
     return rows.find((row) => row.id === selectedProfileId) ?? null
   }, [selectedProfileId, rows])
+
+  useEffect(() => {
+    const profileId = selected?.id
+    if (!profileId) return
+    void logProfileView(profileId)
+  }, [selected?.id])
 
   const unchosenRouteCount = useMemo(
     () => rows.filter((row) => row.accommodation_verification_route == null).length,

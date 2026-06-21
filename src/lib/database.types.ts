@@ -166,6 +166,30 @@ export interface Database {
         }
         Relationships: []
       }
+      profile_access_log: {
+        Row: {
+          id: string
+          admin_user_id: string
+          admin_email: string
+          student_profile_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          admin_user_id: string
+          admin_email: string
+          student_profile_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          admin_user_id?: string
+          admin_email?: string
+          student_profile_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       platform_staff: {
         Row: {
           id: string

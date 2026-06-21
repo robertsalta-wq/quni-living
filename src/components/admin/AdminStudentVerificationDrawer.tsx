@@ -170,9 +170,8 @@ function KV({ rows }: { rows: Array<[string, ReactNode]> }) {
 }
 
 /**
- * Admin renter profile detail (display-only). Document opens are audit-logged via
- * {@link AdminVerificationDocLink}; profile field views are not logged yet — see
- * `document_access_log` / deferred admin profile view audit if Rob adds it later.
+ * Admin renter profile detail (display-only). Profile opens are audit-logged via
+ * profileAccessLog; document file opens via {@link AdminVerificationDocLink}.
  */
 export function AdminStudentVerificationDrawer({ row }: { row: StudentRow }) {
   const bio = row.bio?.trim()
