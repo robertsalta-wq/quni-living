@@ -20,7 +20,11 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { captureSentryMessageEdge } from './lib/sentryEdgeCapture.js'
+import {
+  buildBookingRejectVisibility,
+  captureBookingRejected,
+  captureBookingRejectedResponse,
+} from './lib/booking/captureBookingRejected.js'
 import {
   calculateBookingFeeCents,
   getActivePricingSnapshotForProperty,
@@ -134,7 +138,7 @@ function isUniqueViolation(err) {
   return /duplicate key|unique constraint/i.test(msg)
 }
 
-async function releaseAuthorisedDepositIntent(stripe, paymentIntentId, context) {
+async function releaseAuthorisedDepositIntent(stripe, paymentIntentId, context, visibility) {
   try {
     const p = await stripe.paymentIntents.retrieve(paymentIntentId)
     if (p.status === 'requires_capture' || p.status === 'requires_confirmation') {
@@ -144,12 +148,22 @@ async function releaseAuthorisedDepositIntent(stripe, paymentIntentId, context) 
     }
   } catch (e) {
     console.error('releaseAuthorisedDepositIntent', context, e)
-    await captureSentryMessageEdge('Failed to cancel/refund PI after commit guard failure', {
-      context,
+    await captureBookingRejected({
+      ...(visibility ?? {}),
+      error_code: 'stripe_cleanup_failed',
+      http_status: 500,
+      cleanup_context: context,
       paymentIntentId,
       err: e instanceof Error ? e.message : String(e),
     })
   }
+}
+
+/** Capture handled rejection JSON and return the same Response. */
+async function rejectIfBlocked(block, visibility, fallbackErrorCode) {
+  if (!block) return null
+  await captureBookingRejectedResponse(block, visibility, fallbackErrorCode)
+  return block
 }
 
 async function assertPropertyAvailableForBooking(admin, propertyId, origin) {
@@ -325,13 +339,25 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
-  const emailBlock = assertRenterEmailConfirmed(user, json, origin)
+  const emailBlock = assertRenterEmailConfirmed(
+    user,
+    json,
+    origin,
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit'),
+  )
   if (emailBlock) return emailBlock
 
   const admin = createClient(supabaseUrl, serviceRole)
 
   // Booking eligibility (verification_type × open_to_non_students). Visibility / abandoned-bookings logging hooks here.
-  const eligibilityBlock = await assertRenterEligibleForBooking(admin, user.id, propertyId, json, origin)
+  const eligibilityBlock = await assertRenterEligibleForBooking(
+    admin,
+    user.id,
+    propertyId,
+    json,
+    origin,
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit'),
+  )
   if (eligibilityBlock) return eligibilityBlock
 
   const { data: student, error: stErr } = await admin
@@ -352,10 +378,17 @@ async function handleListingBookingCommit(request, origin, body) {
   }
   const coTenant = coTenantResolved.coTenant
 
+  const listingVis = buildBookingRejectVisibility(user, propertyId, 'listing_commit', {
+    student_profile_id: student.id,
+    email: student.email ?? user.email ?? null,
+  })
+
   const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
-  if (block1) return block1
+  const blocked1 = await rejectIfBlocked(block1, listingVis, 'property_unavailable')
+  if (blocked1) return blocked1
   const block2 = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
-  if (block2) return block2
+  const blocked2 = await rejectIfBlocked(block2, listingVis, 'duplicate_booking')
+  if (blocked2) return blocked2
   const block3 = await assertNoCrossPropertyDateOverlap(
     admin,
     student.id,
@@ -364,7 +397,8 @@ async function handleListingBookingCommit(request, origin, body) {
     leaseLength,
     origin,
   )
-  if (block3) return block3
+  const blocked3 = await rejectIfBlocked(block3, listingVis, 'date_overlap')
+  if (blocked3) return blocked3
 
   const { data: property, error: propErr } = await admin
     .from('properties')
@@ -383,6 +417,12 @@ async function handleListingBookingCommit(request, origin, body) {
   }
 
   if (property.status !== 'active') {
+    await captureBookingRejected({
+      ...listingVis,
+      service_tier: property.service_tier ?? null,
+      error_code: 'property_unavailable',
+      http_status: 409,
+    })
     return json(
       {
         error: 'property_unavailable',
@@ -524,6 +564,13 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: insErr?.message || 'Could not save booking' }, 500, origin)
   }
 
+  await captureBookingRejected({
+    ...listingVis,
+    service_tier: property.service_tier ?? null,
+    error_code: 'race_condition',
+    http_status: 409,
+  })
+
   return json(
     {
       error: 'race_condition',
@@ -603,7 +650,12 @@ async function handlePaymentIntentCommit(request, origin, body) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
-  const emailBlockManaged = assertRenterEmailConfirmed(user, json, origin)
+  const emailBlockManaged = assertRenterEmailConfirmed(
+    user,
+    json,
+    origin,
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit'),
+  )
   if (emailBlockManaged) return emailBlockManaged
 
   const admin = createClient(supabaseUrl, serviceRole)
@@ -614,6 +666,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     propertyId,
     json,
     origin,
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit'),
   )
   if (eligibilityBlockManaged) return eligibilityBlockManaged
 
@@ -637,15 +690,22 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   const coTenant = coTenantResolved.coTenant
 
+  const managedVis = buildBookingRejectVisibility(user, propertyId, 'managed_commit', {
+    student_profile_id: student.id,
+    email: student.email ?? user.email ?? null,
+  })
+
   const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
   if (block1) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_unavailable_precheck')
-    return block1
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_unavailable_precheck', managedVis)
+    const blocked1 = await rejectIfBlocked(block1, managedVis, 'property_unavailable')
+    if (blocked1) return blocked1
   }
   const block2 = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
   if (block2) {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'duplicate_booking_precheck')
-    return block2
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'duplicate_booking_precheck', managedVis)
+    const blocked2 = await rejectIfBlocked(block2, managedVis, 'duplicate_booking')
+    if (blocked2) return blocked2
   }
   const block3 = await assertNoCrossPropertyDateOverlap(
     admin,
@@ -656,7 +716,10 @@ async function handlePaymentIntentCommit(request, origin, body) {
     origin,
     { stripe, paymentIntentId },
   )
-  if (block3) return block3
+  if (block3) {
+    const blocked3 = await rejectIfBlocked(block3, managedVis, 'date_overlap')
+    if (blocked3) return blocked3
+  }
 
   const { data: property, error: propErr } = await admin
     .from('properties')
@@ -671,7 +734,13 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
 
   if (property.status !== 'active') {
-    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_not_active')
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'property_not_active', managedVis)
+    await captureBookingRejected({
+      ...managedVis,
+      service_tier: property.service_tier ?? null,
+      error_code: 'property_unavailable',
+      http_status: 409,
+    })
     return json(
       {
         error: 'property_unavailable',
@@ -846,19 +915,23 @@ async function handlePaymentIntentCommit(request, origin, body) {
     }
   } catch (stripeErr) {
     console.error('race handler stripe cleanup', stripeErr)
-    await captureSentryMessageEdge('Booking race: Stripe cleanup failed after unique violation', {
+    await captureBookingRejected({
+      ...managedVis,
+      service_tier: property.service_tier ?? null,
+      error_code: 'race_stripe_cleanup_failed',
+      http_status: 500,
       paymentIntentId,
-      propertyId,
-      studentId: student.id,
       piStatus: st,
       stripeErr: stripeErr instanceof Error ? stripeErr.message : String(stripeErr),
     })
   }
 
-  await captureSentryMessageEdge('Booking insert unique violation (race)', {
+  await captureBookingRejected({
+    ...managedVis,
+    service_tier: property.service_tier ?? null,
+    error_code: 'race_condition',
+    http_status: 409,
     paymentIntentId,
-    propertyId,
-    studentId: student.id,
     supabaseMessage: insErr?.message,
     piStatusAfter: st,
   })
@@ -965,7 +1038,12 @@ export default async function handler(request) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
-  const emailBlockPreview = assertRenterEmailConfirmed(user, json, origin)
+  const emailBlockPreview = assertRenterEmailConfirmed(
+    user,
+    json,
+    origin,
+    buildBookingRejectVisibility(user, propertyId, 'preview'),
+  )
   if (emailBlockPreview) return emailBlockPreview
 
   const admin = createClient(supabaseUrl, serviceRole)
@@ -976,6 +1054,7 @@ export default async function handler(request) {
     propertyId,
     json,
     origin,
+    buildBookingRejectVisibility(user, propertyId, 'preview'),
   )
   if (eligibilityBlockPreview) return eligibilityBlockPreview
 
@@ -989,10 +1068,17 @@ export default async function handler(request) {
     return json({ error: 'Student profile not found' }, 404, origin)
   }
 
+  const previewVis = buildBookingRejectVisibility(user, propertyId, 'preview', {
+    student_profile_id: student.id,
+    email: student.email ?? user.email ?? null,
+  })
+
   const blockA = await assertPropertyAvailableForBooking(admin, propertyId, origin)
-  if (blockA) return blockA
+  const blockedA = await rejectIfBlocked(blockA, previewVis, 'property_unavailable')
+  if (blockedA) return blockedA
   const blockB = await assertStudentPipelineFree(admin, student.id, propertyId, origin)
-  if (blockB) return blockB
+  const blockedB = await rejectIfBlocked(blockB, previewVis, 'duplicate_booking')
+  if (blockedB) return blockedB
   const blockC = await assertNoCrossPropertyDateOverlap(
     admin,
     student.id,
@@ -1001,7 +1087,8 @@ export default async function handler(request) {
     leaseLength,
     origin,
   )
-  if (blockC) return blockC
+  const blockedC = await rejectIfBlocked(blockC, previewVis, 'date_overlap')
+  if (blockedC) return blockedC
 
   const { data: landlordSelf } = await admin.from('landlord_profiles').select('id').eq('user_id', user.id).maybeSingle()
 

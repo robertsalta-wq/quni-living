@@ -1,10 +1,23 @@
 import type { Integration } from '@sentry/core'
 import * as Sentry from '@sentry/react'
+import type { User } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import { isStaleChunkLoadError } from './chunkLoadRecovery'
 
 const dsn = import.meta.env.VITE_SENTRY_DSN
-if (typeof dsn === 'string' && dsn.trim() !== '') {
+const sentryEnabled = typeof dsn === 'string' && dsn.trim() !== ''
+
+/** Tie client-side Sentry events to the signed-in renter (id only — no email in Sentry user). */
+export function syncSentryUser(user: User | null): void {
+  if (!sentryEnabled) return
+  if (!user) {
+    Sentry.setUser(null)
+    return
+  }
+  Sentry.setUser({ id: user.id })
+}
+
+if (sentryEnabled) {
   const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform()
   const isMobileWeb =
     typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)

@@ -3,6 +3,8 @@
  * Deferred: platform email send, service_tier_events telemetry (Phase 3 not built).
  */
 
+import { captureBookingRejected } from './captureBookingRejected.js'
+
 export async function sha256Hex(input) {
   const data = new TextEncoder().encode(String(input).trim())
   const hash = await crypto.subtle.digest('SHA-256', data)
@@ -11,8 +13,15 @@ export async function sha256Hex(input) {
     .join('')
 }
 
-export function assertRenterEmailConfirmed(user, json, origin) {
+export function assertRenterEmailConfirmed(user, json, origin, visibilityContext) {
   if (user?.email_confirmed_at) return null
+  void captureBookingRejected({
+    ...(visibilityContext ?? {}),
+    user_id: user?.id ?? visibilityContext?.user_id ?? null,
+    email: user?.email ?? visibilityContext?.email ?? null,
+    error_code: 'email_not_confirmed',
+    http_status: 403,
+  })
   return json(
     {
       error: 'email_not_confirmed',

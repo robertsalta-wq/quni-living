@@ -11,6 +11,7 @@ import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { clearAuthSnapshot, readAuthSnapshot, writeAuthSnapshot } from '../lib/authSnapshotCache'
+import { syncSentryUser } from '../lib/sentry'
 
 export type AuthState = {
   user: User | null
@@ -67,6 +68,7 @@ export function useProvideAuth(): AuthState {
       setProfile(null)
       setRole(null)
       clearAuthSnapshot()
+      syncSentryUser(null)
       return
     }
     // Session user from storage/JWT can omit `email`. Refresh via getUser() only when needed.
@@ -82,11 +84,13 @@ export function useProvideAuth(): AuthState {
         setSession(null)
         setProfile(null)
         setRole(null)
+        syncSentryUser(null)
         return
       }
       resolved = data.user ?? u
     }
     setUser(resolved)
+    syncSentryUser(resolved)
     const { role: r, profile: p } = await fetchRoleAndProfileDeduped(resolved)
     setRole(r)
     setProfile(p)
@@ -139,6 +143,7 @@ export function useProvideAuth(): AuthState {
         setProfile(null)
         setRole(null)
         clearAuthSnapshot()
+        syncSentryUser(null)
         return
       }
       setUser(s?.user ?? null)

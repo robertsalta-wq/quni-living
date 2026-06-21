@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplates.js'
 import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
+import { buildBookingRejectVisibility } from './lib/booking/captureBookingRejected.js'
 
 export const config = { runtime: 'edge' }
 
@@ -139,6 +140,10 @@ export default async function handler(request) {
     booking.property_id,
     json,
     origin,
+    buildBookingRejectVisibility(user, booking.property_id, 'booking_email', {
+      student_profile_id: student.id,
+      email: user.email ?? null,
+    }),
   )
   if (eligibilityBlock) return eligibilityBlock
 

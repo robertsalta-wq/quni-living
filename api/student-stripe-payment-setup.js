@@ -13,6 +13,7 @@ import {
   assertRenterEligibleForBooking,
   renterBookingEligibilityBlock,
 } from './lib/booking/assertRenterEligibleForBooking.js'
+import { buildBookingRejectVisibility } from './lib/booking/captureBookingRejected.js'
 
 export const config = {
   runtime: 'edge',
@@ -107,9 +108,14 @@ export default async function handler(request) {
       return json({ error: 'Student profile not found' }, 404, origin)
     }
 
+    const stripeVis = buildBookingRejectVisibility(user, propertyId || null, 'stripe_payment_setup', {
+      student_profile_id: profile.id,
+      email: profile.email ?? user.email ?? null,
+    })
+
     const eligibilityBlock = propertyId
-      ? await assertRenterEligibleForBooking(admin, user.id, propertyId, json, origin)
-      : renterBookingEligibilityBlock(profile.verification_type, true, json, origin)
+      ? await assertRenterEligibleForBooking(admin, user.id, propertyId, json, origin, stripeVis)
+      : renterBookingEligibilityBlock(profile.verification_type, true, json, origin, stripeVis)
     if (eligibilityBlock) return eligibilityBlock
 
     const stripe = new Stripe(stripeSecret)
