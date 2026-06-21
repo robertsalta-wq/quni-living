@@ -339,11 +339,16 @@ function AccommodationRouteSwitchCallout({
 export default function StudentOnboarding() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, role, refreshProfile } = useAuthContext()
+  const { user, role, refreshProfile, profile: authProfile } = useAuthContext()
 
-  const [loading, setLoading] = useState(true)
+  const seededStudentProfile =
+    role === 'student' && authProfile != null ? (authProfile as StudentProfileRow) : null
+  const canUseSeededProfileWithoutFetch =
+    seededStudentProfile != null && seededStudentProfile.accommodation_verification_route != null
+
+  const [loading, setLoading] = useState(!canUseSeededProfileWithoutFetch)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<StudentProfileRow | null>(null)
+  const [profile, setProfile] = useState<StudentProfileRow | null>(seededStudentProfile)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [welcome, setWelcome] = useState(false)
   const [routePickerBusy, setRoutePickerBusy] = useState(false)
@@ -629,15 +634,41 @@ export default function StudentOnboarding() {
       return
     }
     let cancelled = false
+
+    function applyLoadedProfile(row: StudentProfileRow): boolean {
+      if (!user?.id) return false
+      if (!renterOnboardingIncomplete(row, user.id)) {
+        navigate('/listings', { replace: true })
+        return false
+      }
+      setProfile(row)
+      hydrateFromProfile(row)
+      return true
+    }
+
     ;(async () => {
-      setLoading(true)
       setLoadError(null)
+
+      const seeded =
+        role === 'student' && authProfile != null ? (authProfile as StudentProfileRow) : null
+
+      if (seeded?.accommodation_verification_route != null) {
+        if (cancelled) return
+        applyLoadedProfile(seeded)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
       try {
-        await applyPendingAccommodationRouteToStudentProfile(
-          user.id,
-          user.created_at,
-          user.user_metadata?.accommodation_verification_route,
-        )
+        if (seeded?.accommodation_verification_route == null) {
+          await applyPendingAccommodationRouteToStudentProfile(
+            user.id,
+            user.created_at,
+            user.user_metadata?.accommodation_verification_route,
+          )
+        }
+
         const profRes = await withSentryMonitoring('StudentOnboarding/fetch-profile', () =>
           supabase.from('student_profiles').select('*').eq('user_id', user.id).single(),
         )
@@ -648,12 +679,7 @@ export default function StudentOnboarding() {
           return
         }
         const row = profRes.data as StudentProfileRow
-        if (!renterOnboardingIncomplete(row, user.id)) {
-          navigate('/listings', { replace: true })
-          return
-        }
-        setProfile(row)
-        hydrateFromProfile(row)
+        applyLoadedProfile(row)
       } catch (e) {
         if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Could not load profile.')
       } finally {

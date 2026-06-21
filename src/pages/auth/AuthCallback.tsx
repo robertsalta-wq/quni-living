@@ -7,6 +7,7 @@ import {
   getPostLoginRedirectDestination,
   needsOnboarding,
 } from '../../lib/authProfile'
+import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { applyPendingTenantInvitePostAuthRedirect } from '../../lib/applyPendingTenantInvite'
@@ -111,7 +112,9 @@ export default function AuthCallback() {
         return
       }
       if (needsOnboarding(role, profile, sessionUser.id)) {
-        navigate(role === 'student' ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+        const onboardingPath = role === 'student' ? '/onboarding/student' : '/onboarding/landlord'
+        if (role === 'student') prefetchRouteChunks('/onboarding/student')
+        navigate(onboardingPath, { replace: true })
         return
       }
 
@@ -166,9 +169,6 @@ export default function AuthCallback() {
         sessionErr = error
       }
 
-      if (cancelled) return
-
-      await supabase.auth.getSession()
       if (cancelled) return
 
       const {
