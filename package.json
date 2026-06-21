@@ -16,6 +16,8 @@
     "lint:no-em-dash": "node scripts/replace-em-dashes.mjs --check",
     "check:anthropic-models": "node scripts/check-anthropic-model-ids.mjs",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:email-confirm": "playwright test e2e/email-confirm-path.spec.ts",
     "preview": "vite preview",
     "cap:sync": "npm run build:capacitor && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
@@ -62,6 +64,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.61.0",
     "@sentry/vite-plugin": "^4.9.1",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.12.0",

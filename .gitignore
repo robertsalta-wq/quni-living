@@ -55,6 +55,8 @@ scripts/test-*.mjs
 scripts/test-no-bond-chunk1/
 # Vitest snapshot / scratch output from AI verification tests
 src/lib/__test_output__/
+playwright-report/
+test-results/
 scripts/test-official-form-docuseal-spike.mjs
 scripts/test-official-form-refined-b-spike.mjs
 
