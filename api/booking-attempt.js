@@ -89,7 +89,7 @@ export default async function handler(request) {
 
   const admin = createClient(supabaseUrl, serviceRole)
 
-  void insertJourneyEvent(
+  await insertJourneyEvent(
     {
       user_id: user.id,
       email: user.email ?? null,

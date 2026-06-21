@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { waitUntil } from '@vercel/functions'
 import { captureSentryMessageEdge } from '../sentryEdgeCapture.js'
 
 /** @type {boolean} */
@@ -15,9 +16,6 @@ function serviceRoleAdminFromEnv() {
 }
 
 /**
- * Fire-safe insert into journey_events. Never throws (table may not exist pre-migration).
- *
- * @param {import('@supabase/supabase-js').SupabaseClient | null | undefined} [admin]
  * @param {{
  *   user_id?: string | null
  *   email?: string | null
@@ -31,8 +29,9 @@ function serviceRoleAdminFromEnv() {
  *   source?: string
  *   metadata?: Record<string, unknown>
  * }} row
+ * @param {import('@supabase/supabase-js').SupabaseClient | null | undefined} [admin]
  */
-export async function insertJourneyEvent(row, admin) {
+async function insertJourneyEventCore(row, admin) {
   if (!row?.event_type) return
 
   const client = admin ?? serviceRoleAdminFromEnv()
@@ -64,6 +63,33 @@ export async function insertJourneyEvent(row, admin) {
       })
     }
   }
+}
+
+/**
+ * Fire-safe insert into journey_events. Never throws (table may not exist pre-migration).
+ * Registers the write with waitUntil so void call sites persist after the handler returns.
+ * Callers that need the row before responding (e.g. booking-attempt) can await the promise.
+ *
+ * @param {{
+ *   user_id?: string | null
+ *   email?: string | null
+ *   attempt_id?: string | null
+ *   property_id?: string | null
+ *   event_type: string
+ *   step?: string | null
+ *   error_code?: string | null
+ *   http_status?: number | null
+ *   service_tier?: string | null
+ *   source?: string
+ *   metadata?: Record<string, unknown>
+ * }} row
+ * @param {import('@supabase/supabase-js').SupabaseClient | null | undefined} [admin]
+ * @returns {Promise<void>}
+ */
+export function insertJourneyEvent(row, admin) {
+  const work = insertJourneyEventCore(row, admin)
+  waitUntil(work)
+  return work
 }
 
 /**
