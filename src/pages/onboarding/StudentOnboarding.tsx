@@ -282,6 +282,60 @@ function RequiredFieldsNote() {
   )
 }
 
+type AccommodationRouteSwitchCalloutProps = {
+  badgeLabel: string
+  statusLine: string
+  switchLabel: string
+  onSwitch: () => void
+  disabled: boolean
+  busy: boolean
+}
+
+function AccommodationRouteSwitchCallout({
+  badgeLabel,
+  statusLine,
+  switchLabel,
+  onSwitch,
+  disabled,
+  busy,
+}: AccommodationRouteSwitchCalloutProps) {
+  return (
+    <div
+      className="rounded-xl border border-[#FF6F61]/15 bg-[#FF6F61]/5 px-4 py-3.5 space-y-3"
+      role="region"
+      aria-label={`${badgeLabel} account type`}
+    >
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <span className="inline-flex w-fit shrink-0 rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold text-stone-700 ring-1 ring-stone-200">
+          {badgeLabel}
+        </span>
+        <p className="text-sm text-stone-600 leading-relaxed min-w-0">{statusLine}</p>
+      </div>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onSwitch}
+        aria-label={switchLabel}
+        className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50 transition-colors"
+      >
+        {switchLabel}
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+          <path
+            fillRule="evenodd"
+            d="M3 10a1 1 0 011-1h10.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L14.586 11H4a1 1 0 01-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      {busy && (
+        <p className="text-xs text-stone-500" aria-live="polite">
+          Updating your path…
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function StudentOnboarding() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -672,8 +726,8 @@ export default function StudentOnboarding() {
     if (!options?.skipConfirm && normalizedCurrent != null) {
       const message =
         route === 'non_student'
-          ? "Switch to non-student? You'll verify with a regular email and ID instead."
-          : "Switch to student? You'll verify with your university email instead."
+          ? "Switch to the non-student path? You'll verify with a personal or work email and ID instead, and your university email details will be cleared."
+          : "Switch to the student path? You'll verify with your university email instead, and anything you entered here will be cleared."
       if (!window.confirm(message)) return
     }
 
@@ -1239,19 +1293,14 @@ export default function StudentOnboarding() {
                     variant="onboarding"
                     showAdminResendHint={false}
                   />
-                  <p className="text-sm text-stone-600 pt-1">
-                    <button
-                      type="button"
-                      disabled={routePickerBusy}
-                      onClick={() => handleChooseAccommodationRoute('non_student')}
-                      className="font-medium text-[#FF6F61] hover:underline disabled:opacity-50"
-                    >
-                      I&apos;m not a student
-                    </button>
-                    {routePickerBusy && (
-                      <span className="block text-xs text-stone-500 mt-1">Updating your path…</span>
-                    )}
-                  </p>
+                  <AccommodationRouteSwitchCallout
+                    badgeLabel="Student"
+                    statusLine="That's why we ask for a university email. Not a student?"
+                    switchLabel="Switch to non-student"
+                    onSwitch={() => handleChooseAccommodationRoute('non_student')}
+                    disabled={routePickerBusy}
+                    busy={routePickerBusy}
+                  />
                 </div>
               ) : (
                 <>
@@ -1276,19 +1325,14 @@ export default function StudentOnboarding() {
                       : 'Tell us a bit about yourself so we can match you with the right homes.'}
                   </p>
                   {isIdentityPath && (
-                    <p className="text-sm text-stone-600">
-                      <button
-                        type="button"
-                        disabled={routePickerBusy}
-                        onClick={() => handleChooseAccommodationRoute('student')}
-                        className="font-medium text-[#FF6F61] hover:underline disabled:opacity-50"
-                      >
-                        I am a student
-                      </button>
-                      {routePickerBusy && (
-                        <span className="block text-xs text-stone-500 mt-1">Updating your path…</span>
-                      )}
-                    </p>
+                    <AccommodationRouteSwitchCallout
+                      badgeLabel="Non-student"
+                      statusLine="You won't need a university email. Are you actually a student?"
+                      switchLabel="Switch to student"
+                      onSwitch={() => handleChooseAccommodationRoute('student')}
+                      disabled={routePickerBusy}
+                      busy={routePickerBusy}
+                    />
                   )}
                   <RequiredFieldsNote />
 
