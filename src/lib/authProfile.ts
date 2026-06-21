@@ -12,13 +12,96 @@ export type StudentProfileRow = Database['public']['Tables']['student_profiles']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 export type AuthProfile = StudentProfileRow | LandlordProfileRow
 
+/** One in-flight role/profile resolution per user — shared by AuthContext and auth callback. */
+const profileHydrateInflightByUserId = new Map<
+  string,
+  Promise<{ role: UserRole; profile: AuthProfile | null }>
+>()
+
+const profileRowsInflightByUserId = new Map<
+  string,
+  Promise<{ sp: StudentProfileRow | null; lp: LandlordProfileRow | null }>
+>()
+
+export async function fetchProfileRows(userId: string): Promise<{
+  sp: StudentProfileRow | null
+  lp: LandlordProfileRow | null
+}> {
+  const [{ data: spRaw }, { data: lpRaw }] = await Promise.all([
+    supabase.from('student_profiles').select('*').eq('user_id', userId).maybeSingle(),
+    supabase.from('landlord_profiles').select('*').eq('user_id', userId).maybeSingle(),
+  ])
+  return {
+    sp: spRaw as StudentProfileRow | null,
+    lp: lpRaw as LandlordProfileRow | null,
+  }
+}
+
+export function fetchProfileRowsDeduped(userId: string): Promise<{
+  sp: StudentProfileRow | null
+  lp: LandlordProfileRow | null
+}> {
+  const existing = profileRowsInflightByUserId.get(userId)
+  if (existing) return existing
+
+  const inflight = fetchProfileRows(userId).finally(() => {
+    if (profileRowsInflightByUserId.get(userId) === inflight) {
+      profileRowsInflightByUserId.delete(userId)
+    }
+  })
+  profileRowsInflightByUserId.set(userId, inflight)
+  return inflight
+}
+
+export function getProfileHydrateInflight(
+  userId: string,
+): Promise<{ role: UserRole; profile: AuthProfile | null }> | undefined {
+  return profileHydrateInflightByUserId.get(userId)
+}
+
+export function setProfileHydrateInflight(
+  userId: string,
+  inflight: Promise<{ role: UserRole; profile: AuthProfile | null }>,
+): void {
+  profileHydrateInflightByUserId.set(userId, inflight)
+  inflight.finally(() => {
+    if (profileHydrateInflightByUserId.get(userId) === inflight) {
+      profileHydrateInflightByUserId.delete(userId)
+    }
+  })
+}
+
+export function deleteProfileHydrateInflight(userId: string): void {
+  profileHydrateInflightByUserId.delete(userId)
+}
+
+export function clearProfileHydrateInflight(): void {
+  profileHydrateInflightByUserId.clear()
+}
+
 /**
- * Role resolution:
+ * Role resolution from already-loaded rows:
  * 1. If metadata role has a matching profile row, trust that pair.
  * 2. If metadata is stale/mismatched, trust whichever profile row exists.
  * 3. If neither profile exists, fall back to metadata role (onboarding can create row).
  */
-export async function fetchRoleAndProfile(user: User): Promise<{
+export function resolveRoleAndProfileFromRows(
+  user: User,
+  sp: StudentProfileRow | null,
+  lp: LandlordProfileRow | null,
+): { role: UserRole; profile: AuthProfile | null } {
+  const meta = user.user_metadata?.role
+  if (meta === 'student' || meta === 'landlord') {
+    if (meta === 'student' && sp) return { role: 'student', profile: sp }
+    if (meta === 'landlord' && lp) return { role: 'landlord', profile: lp }
+  }
+  if (sp) return { role: 'student', profile: sp }
+  if (lp) return { role: 'landlord', profile: lp }
+  if (meta === 'student' || meta === 'landlord') return { role: meta, profile: null }
+  return { role: null, profile: null }
+}
+
+async function loadRoleAndProfileCore(user: User): Promise<{
   role: UserRole
   profile: AuthProfile | null
 }> {
@@ -30,22 +113,29 @@ export async function fetchRoleAndProfile(user: User): Promise<{
     return { role: 'admin', profile: null }
   }
 
-  const [{ data: spRaw }, { data: lpRaw }] = await Promise.all([
-    supabase.from('student_profiles').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('landlord_profiles').select('*').eq('user_id', user.id).maybeSingle(),
-  ])
+  const { sp, lp } = await fetchProfileRowsDeduped(user.id)
+  return resolveRoleAndProfileFromRows(user, sp, lp)
+}
 
-  const sp = spRaw as StudentProfileRow | null
-  const lp = lpRaw as LandlordProfileRow | null
+export async function fetchRoleAndProfile(user: User): Promise<{
+  role: UserRole
+  profile: AuthProfile | null
+}> {
+  const hydrateInflight = profileHydrateInflightByUserId.get(user.id)
+  if (hydrateInflight) return hydrateInflight
+  return loadRoleAndProfileCore(user)
+}
 
-  if (meta === 'student' || meta === 'landlord') {
-    if (meta === 'student' && sp) return { role: 'student', profile: sp }
-    if (meta === 'landlord' && lp) return { role: 'landlord', profile: lp }
-  }
-  if (sp) return { role: 'student', profile: sp }
-  if (lp) return { role: 'landlord', profile: lp }
-  if (meta === 'student' || meta === 'landlord') return { role: meta, profile: null }
-  return { role: null, profile: null }
+export function fetchRoleAndProfileDeduped(
+  user: User,
+): Promise<{ role: UserRole; profile: AuthProfile | null }> {
+  const userId = user.id
+  const existing = profileHydrateInflightByUserId.get(userId)
+  if (existing) return existing
+
+  const inflight = loadRoleAndProfileCore(user)
+  setProfileHydrateInflight(userId, inflight)
+  return inflight
 }
 
 /**

@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
-  fetchRoleAndProfile,
+  clearProfileHydrateInflight,
+  deleteProfileHydrateInflight,
+  fetchRoleAndProfileDeduped,
   type AuthProfile,
   type UserRole,
 } from '../lib/authProfile'
@@ -28,26 +30,6 @@ function isSilentAuthEvent(event: string): boolean {
   return event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION'
 }
 
-/** One in-flight profile fetch per user — getSession + INITIAL_SESSION share the same promise. */
-const profileHydrateInflightByUserId = new Map<
-  string,
-  Promise<{ role: UserRole; profile: AuthProfile | null }>
->()
-
-function fetchRoleAndProfileDeduped(user: User): Promise<{ role: UserRole; profile: AuthProfile | null }> {
-  const userId = user.id
-  const existing = profileHydrateInflightByUserId.get(userId)
-  if (existing) return existing
-
-  const inflight = fetchRoleAndProfile(user).finally(() => {
-    if (profileHydrateInflightByUserId.get(userId) === inflight) {
-      profileHydrateInflightByUserId.delete(userId)
-    }
-  })
-  profileHydrateInflightByUserId.set(userId, inflight)
-  return inflight
-}
-
 /**
  * Auth state + Supabase subscription. Intended to be called once inside `AuthProvider`.
  */
@@ -63,7 +45,7 @@ export function useProvideAuth(): AuthState {
 
   const hydrateFromUser = useCallback(async (u: User | null) => {
     if (!u) {
-      profileHydrateInflightByUserId.clear()
+      clearProfileHydrateInflight()
       setUser(null)
       setProfile(null)
       setRole(null)
@@ -76,7 +58,7 @@ export function useProvideAuth(): AuthState {
     if (!authUserEmail(u)) {
       const { data, error } = await supabase.auth.getUser()
       if (error && isStaleOrInvalidJwtUserError(error.message)) {
-        profileHydrateInflightByUserId.delete(u.id)
+        deleteProfileHydrateInflight(u.id)
         clearOnboardingDismissed()
         clearAuthSnapshot()
         await supabase.auth.signOut()
@@ -175,7 +157,7 @@ export function useProvideAuth(): AuthState {
     navigate('/', { replace: true })
     clearOnboardingDismissed()
     clearAuthSnapshot()
-    profileHydrateInflightByUserId.clear()
+    clearProfileHydrateInflight()
     await supabase.auth.signOut()
     setUser(null)
     setSession(null)

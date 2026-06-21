@@ -2,17 +2,11 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import {
-  fetchRoleAndProfile,
-  getPostLoginRedirectDestination,
-  needsOnboarding,
-} from '../../lib/authProfile'
+import { getPostLoginRedirectDestination, needsOnboarding } from '../../lib/authProfile'
+import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
-import { applyPendingAccommodationRouteToStudentProfile } from '../../lib/applyPendingAccommodationRoute'
 import { applyPendingTenantInvitePostAuthRedirect } from '../../lib/applyPendingTenantInvite'
-import { applyPendingSignupRole } from '../../lib/applyPendingSignupRole'
-import { ensureSignupProfileRowAfterEmailConfirm } from '../../lib/ensureSignupProfileRowAfterEmailConfirm'
 import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 import {
@@ -73,19 +67,13 @@ export default function AuthCallback() {
         stripSensitiveAuthCallbackQueryParams()
       }
 
-      if (afterSignupEmailConfirm) {
-        await ensureSignupProfileRowAfterEmailConfirm(sessionUser)
-      }
-      await applyPendingAccommodationRouteToStudentProfile(
-        sessionUser.id,
-        sessionUser.created_at,
-        sessionUser.user_metadata?.accommodation_verification_route,
-        urlRoute,
-      )
       applyPendingTenantInvitePostAuthRedirect()
-      await applyPendingSignupRole(sessionUser, urlRole, urlRoute)
 
-      const { role, profile } = await fetchRoleAndProfile(sessionUser)
+      const { role, profile } = await reconcileAuthCallbackProfileDeduped(sessionUser, {
+        afterSignupEmailConfirm,
+        urlRoute,
+        urlRole,
+      })
       if (cancelled) return
 
       if (userNeedsEmailAddressVerification(sessionUser)) {
