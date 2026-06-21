@@ -139,6 +139,33 @@ export interface Database {
         }
         Relationships: []
       }
+      document_access_log: {
+        Row: {
+          id: string
+          admin_user_id: string
+          admin_email: string
+          student_profile_id: string
+          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc'
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          admin_user_id: string
+          admin_email: string
+          student_profile_id: string
+          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc'
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          admin_user_id?: string
+          admin_email?: string
+          student_profile_id?: string
+          document_type?: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc'
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       platform_staff: {
         Row: {
           id: string

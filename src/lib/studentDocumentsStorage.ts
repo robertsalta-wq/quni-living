@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/** Private bucket: renters read/write `{user_id}/…`; admins read via `is_platform_admin()` on storage.objects. */
 export const STUDENT_VERIFICATION_DOC_BUCKET = 'student-documents'
 
 async function removeUnderPrefix(client: SupabaseClient, prefix: string): Promise<void> {

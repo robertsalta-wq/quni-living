@@ -9,6 +9,7 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
+import { OwnerSubmittedVerificationDoc } from './OwnerVerificationDocPreview'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -561,15 +562,13 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <div className="mt-4 space-y-3">
             {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
             {idSubmitted ? (
-              <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-                <p className="font-semibold">
-                  <span aria-hidden>📄</span> ID on file
-                </p>
-                {profile.id_submitted_at && (
-                  <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
-              </div>
+              <OwnerSubmittedVerificationDoc
+                icon="📄"
+                title="ID on file"
+                submittedAt={profile.id_submitted_at}
+                filePath={profile.id_document_url}
+                reviewNote="Our team may review this document."
+              />
             ) : (
               <div>
                 <input
@@ -609,14 +608,12 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               <UploadReceivedBanner fileName={uploadAckByKind.identity_supporting.fileName} />
             )}
             {identitySupportingSubmitted ? (
-              <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-                <p className="font-semibold">
-                  <span aria-hidden>📎</span> Document on file
-                </p>
-                {profile.identity_supporting_submitted_at && (
-                  <p className="text-gray-600 mt-1">Submitted {formatDate(profile.identity_supporting_submitted_at)}</p>
-                )}
-              </div>
+              <OwnerSubmittedVerificationDoc
+                icon="📎"
+                title="Document on file"
+                submittedAt={profile.identity_supporting_submitted_at}
+                filePath={profile.identity_supporting_doc_url}
+              />
             ) : (
               <div>
                 <input
@@ -727,15 +724,13 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <div className="mt-4 space-y-3">
           {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
           {idSubmitted ? (
-            <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-              <p className="font-semibold">
-                <span aria-hidden>📄</span> ID on file
-              </p>
-              {profile.id_submitted_at && (
-                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.id_submitted_at)}</p>
-              )}
-              <p className="text-xs text-gray-500 mt-2">Our team may review this document.</p>
-            </div>
+            <OwnerSubmittedVerificationDoc
+              icon="📄"
+              title="ID on file"
+              submittedAt={profile.id_submitted_at}
+              filePath={profile.id_document_url}
+              reviewNote="Our team may review this document."
+            />
           ) : (
             <div>
               <input
@@ -774,14 +769,12 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <div className="mt-4 space-y-3">
           {uploadAckByKind.enrolment && <UploadReceivedBanner fileName={uploadAckByKind.enrolment.fileName} />}
           {enrolSubmitted ? (
-            <div className="rounded-xl border border-stone-200 bg-stone-50/80 px-4 py-3 text-sm text-gray-800">
-              <p className="font-semibold">
-                <span aria-hidden>🎓</span> Enrolment on file
-              </p>
-              {profile.enrolment_submitted_at && (
-                <p className="text-gray-600 mt-1">Submitted {formatDate(profile.enrolment_submitted_at)}</p>
-              )}
-            </div>
+            <OwnerSubmittedVerificationDoc
+              icon="🎓"
+              title="Enrolment on file"
+              submittedAt={profile.enrolment_submitted_at}
+              filePath={profile.enrolment_doc_url}
+            />
           ) : (
             <div>
               <input
