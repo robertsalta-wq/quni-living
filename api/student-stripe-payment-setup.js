@@ -9,6 +9,10 @@
  */
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import {
+  assertRenterEligibleForBooking,
+  renterBookingEligibilityBlock,
+} from './lib/booking/assertRenterEligibleForBooking.js'
 
 export const config = {
   runtime: 'edge',
@@ -68,6 +72,14 @@ export default async function handler(request) {
     return json({ error: 'Missing authorization' }, 401, origin)
   }
 
+  let body = {}
+  try {
+    body = await request.json()
+  } catch {
+    body = {}
+  }
+  const propertyId = typeof body.propertyId === 'string' ? body.propertyId.trim() : ''
+
   try {
     const supabaseAuth = createClient(supabaseUrl, anonKey)
     const {
@@ -86,7 +98,7 @@ export default async function handler(request) {
     const admin = createClient(supabaseUrl, serviceRole)
     const { data: profile, error: profErr } = await admin
       .from('student_profiles')
-      .select('id, user_id, email, full_name, first_name, last_name, stripe_customer_id')
+      .select('id, user_id, email, full_name, first_name, last_name, stripe_customer_id, verification_type')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -98,6 +110,11 @@ export default async function handler(request) {
     if (!profile) {
       return json({ error: 'Student profile not found' }, 404, origin)
     }
+
+    const eligibilityBlock = propertyId
+      ? await assertRenterEligibleForBooking(admin, user.id, propertyId, json, origin)
+      : renterBookingEligibilityBlock(profile.verification_type, true, json, origin)
+    if (eligibilityBlock) return eligibilityBlock
 
     const stripe = new Stripe(stripeSecret)
 

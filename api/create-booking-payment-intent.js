@@ -34,6 +34,7 @@ import {
   readTenantInviteTokenFromBody,
   fetchPendingTenantInviteForBooking,
 } from './lib/booking/tenantInviteAccept.js'
+import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
 import {
   applyTenantInviteRentOffer,
   insertRentInviteOfferAppliedEvent,
@@ -333,6 +334,10 @@ async function handleListingBookingCommit(request, origin, body) {
 
   const admin = createClient(supabaseUrl, serviceRole)
 
+  // Booking eligibility (verification_type × open_to_non_students). Visibility / abandoned-bookings logging hooks here.
+  const eligibilityBlock = await assertRenterEligibleForBooking(admin, user.id, propertyId, json, origin)
+  if (eligibilityBlock) return eligibilityBlock
+
   const { data: student, error: stErr } = await admin
     .from('student_profiles')
     .select('id, user_id, email, full_name, first_name, last_name')
@@ -610,6 +615,16 @@ async function handlePaymentIntentCommit(request, origin, body) {
   if (emailBlockManaged) return emailBlockManaged
 
   const admin = createClient(supabaseUrl, serviceRole)
+
+  const eligibilityBlockManaged = await assertRenterEligibleForBooking(
+    admin,
+    user.id,
+    propertyId,
+    json,
+    origin,
+  )
+  if (eligibilityBlockManaged) return eligibilityBlockManaged
+
   const stripe = new Stripe(stripeSecret)
 
   const { data: student, error: stErr } = await admin
@@ -966,6 +981,15 @@ export default async function handler(request) {
   if (emailBlockPreview) return emailBlockPreview
 
   const admin = createClient(supabaseUrl, serviceRole)
+
+  const eligibilityBlockPreview = await assertRenterEligibleForBooking(
+    admin,
+    user.id,
+    propertyId,
+    json,
+    origin,
+  )
+  if (eligibilityBlockPreview) return eligibilityBlockPreview
 
   const { data: student, error: stErr } = await admin
     .from('student_profiles')

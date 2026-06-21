@@ -6,6 +6,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplates.js'
+import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
 
 export const config = { runtime: 'edge' }
 
@@ -99,6 +100,7 @@ export default async function handler(request) {
       `
       id,
       student_id,
+      property_id,
       status,
       move_in_date,
       start_date,
@@ -134,6 +136,15 @@ export default async function handler(request) {
   if (booking.student_id !== student.id) {
     return json({ error: 'Forbidden' }, 403, origin)
   }
+
+  const eligibilityBlock = await assertRenterEligibleForBooking(
+    admin,
+    user.id,
+    booking.property_id,
+    json,
+    origin,
+  )
+  if (eligibilityBlock) return eligibilityBlock
 
   if (booking.status !== 'pending_confirmation') {
     return json({ error: 'Booking is not in pending confirmation' }, 400, origin)
