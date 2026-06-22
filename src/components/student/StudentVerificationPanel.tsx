@@ -71,10 +71,9 @@ function fileForVerificationImageUpload(file: File): File {
   return new File([file], file.name, { type: mime })
 }
 
-function storageExtFromPrepared(ext: string): StorageExt {
-  if (ext === 'png') return 'png'
-  if (ext === 'pdf') return 'pdf'
-  return 'jpg'
+function isVerificationPdf(file: File): boolean {
+  const rawExt = verificationExtensionFromFilename(file.name)
+  return file.type === 'application/pdf' || (rawExt === 'pdf' && !file.type.startsWith('image/'))
 }
 
 function contentTypeForVerificationUpload(file: File, storageExt: StorageExt): string {
@@ -90,12 +89,8 @@ function contentTypeForVerificationUpload(file: File, storageExt: StorageExt): s
 
 async function prepareVerificationDocForUpload(
   file: File,
-  maxBytes: number,
 ): Promise<{ blob: Blob; contentType: string; storageExt: StorageExt }> {
-  const rawExt = verificationExtensionFromFilename(file.name)
-  const isPdf = file.type === 'application/pdf' || (rawExt === 'pdf' && !file.type.startsWith('image/'))
-
-  if (isPdf) {
+  if (isVerificationPdf(file)) {
     return {
       blob: file,
       contentType: file.type || 'application/pdf',
@@ -103,18 +98,22 @@ async function prepareVerificationDocForUpload(
     }
   }
 
-  const normalized = fileForVerificationImageUpload(file)
-  const needsConversion = isVerificationHeicOrHeif(file) || normalized.size > maxBytes
-
-  if (needsConversion) {
-    const prepared = await prepareProfilePhotoForUpload(normalized, maxBytes)
+  if (isVerificationHeicOrHeif(file)) {
+    const normalized = fileForVerificationImageUpload(file)
+    // prepareProfilePhotoForUpload skips transcoding when size <= maxBytes; force the compress path for HEIC.
+    const convertMaxBytes = normalized.size > 1 ? normalized.size - 1 : 0
+    const prepared = await prepareProfilePhotoForUpload(normalized, convertMaxBytes)
+    if (prepared.ext === 'heic' || prepared.ext === 'heif') {
+      throw new Error('Could not convert HEIC image. Save as JPEG in Photos and try again.')
+    }
     return {
       blob: prepared.blob,
-      contentType: prepared.contentType,
-      storageExt: storageExtFromPrepared(prepared.ext),
+      contentType: 'image/jpeg',
+      storageExt: 'jpg',
     }
   }
 
+  const rawExt = verificationExtensionFromFilename(file.name)
   let storageExt: StorageExt = 'jpg'
   if (rawExt === 'png' || file.type === 'image/png') storageExt = 'png'
   else if (rawExt === 'jpeg' || rawExt === 'jpg' || file.type === 'image/jpeg') storageExt = 'jpg'
@@ -388,17 +387,16 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     setBusy: (b: boolean) => void,
   ) {
     setErr(null)
-    if (file.size > MAX_DOC_BYTES) {
-      setErr('File must be 15 MB or smaller.')
-      return
-    }
-    if (!isAllowedVerificationFile(file)) {
-      setErr('Use a JPEG, PNG, or PDF file.')
-      return
-    }
     setBusy(true)
     try {
-      const prepared = await prepareVerificationDocForUpload(file, MAX_DOC_BYTES)
+      if (file.size > MAX_DOC_BYTES) {
+        throw new Error('File must be 15 MB or smaller.')
+      }
+      if (!isAllowedVerificationFile(file)) {
+        throw new Error('Use a JPEG, PNG, or PDF file.')
+      }
+
+      const prepared = await prepareVerificationDocForUpload(file)
       const base =
         kind === 'id'
           ? 'id-document'
@@ -438,7 +436,11 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
       await onRefresh()
     } catch (e: unknown) {
+      console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
       let msg = messageFromSupabaseError(e)
+      if (msg === 'Something went wrong.' || msg === 'Unknown error') {
+        msg = String(e)
+      }
       if (msg.includes('Bucket not found') || msg.includes('not found')) {
         msg =
           'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
