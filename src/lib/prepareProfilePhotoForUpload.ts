@@ -1,3 +1,5 @@
+import { ensureDisplayableImage } from './convertHeicImage'
+
 function safeExtFromFilename(name: string): string {
   const ext = name.split('.').pop()?.toLowerCase()
   return ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
@@ -78,16 +80,19 @@ export async function prepareProfilePhotoForUpload(
   file: File,
   maxBytes: number,
 ): Promise<{ blob: Blob; contentType: string; ext: string }> {
-  if (!file.type.startsWith('image/')) {
+  // Convert HEIC/HEIF up front: browsers can't decode it to compress OR display,
+  // so a raw HEIC avatar would just show as a broken image.
+  const image = await ensureDisplayableImage(file)
+  if (!image.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }
-  if (file.size <= maxBytes) {
+  if (image.size <= maxBytes) {
     return {
-      blob: file,
-      contentType: file.type,
-      ext: safeExtFromFilename(file.name),
+      blob: image,
+      contentType: image.type,
+      ext: safeExtFromFilename(image.name),
     }
   }
-  const blob = await compressRasterImageToMaxBytes(file, maxBytes)
+  const blob = await compressRasterImageToMaxBytes(image, maxBytes)
   return { blob, contentType: 'image/jpeg', ext: 'jpg' }
 }

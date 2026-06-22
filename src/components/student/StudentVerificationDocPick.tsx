@@ -16,7 +16,9 @@ export function StudentVerificationDocPick({
   onFileSelected,
   onPickDiag,
 }: {
-  accept: string
+  // Optional: when undefined, the picker applies no type filter (React omits the
+  // attribute). Used for supporting docs to dodge the Android mixed-accept bug.
+  accept?: string
   busy: boolean
   label: string
   busyLabel?: string
