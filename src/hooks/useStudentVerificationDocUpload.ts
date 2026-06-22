@@ -156,16 +156,21 @@ export function useStudentVerificationDocUpload(
         }
         setDiag(`[${kind}] saved OK -> ${result.filePath}`)
 
-        setUploadedByKind((prev) => ({
-          ...prev,
-          [kind]: {
-            filePath: result.filePath,
-            submittedAt: result.submittedAt,
-            displayFileName: file.name,
-            previewUrl: prev[kind]?.previewUrl ?? instantPreview,
-            pending: false,
-          },
-        }))
+        setUploadedByKind((prev) => {
+          // Drop the instant blob and load the actual stored file via signed URL.
+          // The blob may be an un-renderable HEIC; the stored file is JPEG/PDF.
+          revokeBlobUrl(prev[kind]?.previewUrl ?? instantPreview)
+          return {
+            ...prev,
+            [kind]: {
+              filePath: result.filePath,
+              submittedAt: result.submittedAt,
+              displayFileName: file.name,
+              previewUrl: null,
+              pending: false,
+            },
+          }
+        })
         onVerificationDocUploaded(kind, result.filePath, result.submittedAt)
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
