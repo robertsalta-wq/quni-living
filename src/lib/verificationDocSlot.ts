@@ -142,6 +142,7 @@ export function completeVerificationUpload(
   file: { name: string },
   filePath: string,
   submittedAt: string,
+  previewUrl?: string | null,
 ): Partial<Record<VerificationDocKind, VerificationUploadedDoc>> {
   return {
     ...prevUploaded,
@@ -149,7 +150,7 @@ export function completeVerificationUpload(
       filePath,
       submittedAt,
       displayFileName: file.name,
-      previewUrl: null,
+      previewUrl: previewUrl ?? null,
       pending: false,
     },
   }

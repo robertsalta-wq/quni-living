@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -59,20 +59,36 @@ function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
 const verificationUploadButtonClass =
   'w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50'
 
+function formatReceivedAt(iso: string): string {
+  try {
+    const d = new Date(iso)
+    return d.toLocaleString('en-AU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  } catch {
+    return formatDate(iso)
+  }
+}
+
 function DocUploadControl({
   busy,
   uploaded,
   error,
+  inputRef,
   onPick,
   reviewNote,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
+  inputRef: RefObject<HTMLInputElement | null>
   onPick: (e: ChangeEvent<HTMLInputElement>) => void
   reviewNote?: string
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
   const pickLabel = uploaded
     ? busy
       ? 'Uploading…'
@@ -95,7 +111,6 @@ function DocUploadControl({
 
   return (
     <div className="space-y-3">
-      {error ? <UploadFailedBanner message={error} /> : null}
       <input
         ref={inputRef}
         type="file"
@@ -106,10 +121,14 @@ function DocUploadControl({
       {uploaded ? (
         <>
           <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
+          {error ? <UploadFailedBanner message={error} /> : null}
           {!uploaded.pending ? pickButton : null}
         </>
       ) : (
-        pickButton
+        <>
+          {error ? <UploadFailedBanner message={error} /> : null}
+          {pickButton}
+        </>
       )}
     </div>
   )
@@ -156,7 +175,7 @@ function DocReceivedCard({
           </p>
           {!doc.pending ? (
             <p className="text-emerald-900/90 mt-1">
-              Received {formatDate(doc.submittedAt)} · pending review (not verified yet)
+              Received {formatReceivedAt(doc.submittedAt)} · pending review (not verified yet)
             </p>
           ) : null}
           <p className="text-emerald-900/90 mt-1 break-all">
@@ -186,6 +205,10 @@ type Props = {
 }
 
 export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) {
+  const idFileInputRef = useRef<HTMLInputElement>(null)
+  const enrolFileInputRef = useRef<HTMLInputElement>(null)
+  const identitySupportFileInputRef = useRef<HTMLInputElement>(null)
+
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
@@ -426,8 +449,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       }
 
       setUploadedByKind((prev) => {
-        revokeBlobUrl(prev[kind]?.previewUrl)
-        return completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt)
+        const keepPreview = prev[kind]?.previewUrl
+        return completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt, keepPreview)
       })
       delete rollbackByKindRef.current[kind]
     } catch (e: unknown) {
@@ -701,6 +724,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
+              inputRef={idFileInputRef}
               onPick={(e) => onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
               reviewNote="Our team may review this document."
             />
@@ -719,6 +743,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
+              inputRef={identitySupportFileInputRef}
               onPick={(e) => onFileChosen(e, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)}
             />
           </div>
@@ -809,6 +834,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
+            inputRef={idFileInputRef}
             onPick={(e) => onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
             reviewNote="Our team may review this document."
           />
@@ -828,6 +854,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
+            inputRef={enrolFileInputRef}
             onPick={(e) => onFileChosen(e, 'enrolment', setEnrolUploadError, setEnrolUploading)}
           />
         </div>

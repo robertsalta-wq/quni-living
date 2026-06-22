@@ -1,7 +1,7 @@
 import { prepareProfilePhotoForUpload } from './prepareProfilePhotoForUpload'
 
 export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
-export const VERIFICATION_FILE_ACCEPT = 'image/*,application/pdf,.heic,.heif,.jpg,.jpeg,.png'
+export const VERIFICATION_FILE_ACCEPT = 'image/*,application/pdf'
 export const CHOOSE_VERIFICATION_FILE_LABEL = 'Choose file (JPEG, PNG or PDF, max 15 MB)'
 
 export type VerificationStorageExt = 'jpg' | 'png' | 'pdf'
@@ -29,6 +29,7 @@ export function isVerificationHeicOrHeif(file: File): boolean {
 
 /** Mobile browsers often leave `file.type` empty and omit file extensions. */
 export function isAllowedVerificationFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true
   if (isAllowedVerificationMime(file)) return true
   if (isVerificationHeicOrHeif(file)) return true
 
@@ -54,7 +55,7 @@ export function validateVerificationFileSize(file: File, maxBytes = MAX_VERIFICA
 
 export function validateVerificationFileType(file: File): string | null {
   if (isAllowedVerificationFile(file)) return null
-  return 'Use a JPEG, PNG, or PDF file.'
+  return 'Use a photo (JPEG, PNG, etc.) or PDF file.'
 }
 
 function fileForVerificationImageUpload(file: File): File {
@@ -74,25 +75,6 @@ export function isVerificationPdf(file: File): boolean {
   return file.type === 'application/pdf' || (rawExt === 'pdf' && !file.type.startsWith('image/'))
 }
 
-function contentTypeForVerificationUpload(file: File, storageExt: VerificationStorageExt): string {
-  if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'application/pdf') {
-    return file.type
-  }
-  if (file.type.startsWith('image/')) return file.type
-  if (storageExt === 'png') return 'image/png'
-  if (storageExt === 'pdf') return 'application/pdf'
-  if (storageExt === 'jpg') return 'image/jpeg'
-  return 'application/octet-stream'
-}
-
-function inferRasterStorageExt(file: File): VerificationStorageExt {
-  const rawExt = verificationExtensionFromFilename(file.name)
-  if (rawExt === 'png' || file.type === 'image/png') return 'png'
-  if (rawExt === 'jpeg' || rawExt === 'jpg' || file.type === 'image/jpeg') return 'jpg'
-  // Empty MIME / no extension: treat as JPEG (typical mobile camera roll).
-  return 'jpg'
-}
-
 export async function prepareVerificationDocForUpload(
   file: File,
 ): Promise<{ blob: Blob; contentType: string; storageExt: VerificationStorageExt }> {
@@ -104,24 +86,26 @@ export async function prepareVerificationDocForUpload(
     }
   }
 
-  if (isVerificationHeicOrHeif(file)) {
-    const normalized = fileForVerificationImageUpload(file)
-    const convertMaxBytes = normalized.size > 1 ? normalized.size - 1 : 0
-    const prepared = await prepareProfilePhotoForUpload(normalized, convertMaxBytes)
-    if (prepared.ext === 'heic' || prepared.ext === 'heif') {
-      throw new Error('Could not convert HEIC image. Save as JPEG in Photos and try again.')
-    }
-    return {
-      blob: prepared.blob,
-      contentType: 'image/jpeg',
-      storageExt: 'jpg',
-    }
+  const normalized = fileForVerificationImageUpload(file)
+  const prepared = await prepareProfilePhotoForUpload(normalized, MAX_VERIFICATION_DOC_BYTES)
+
+  const keepPng =
+    (normalized.type === 'image/png' || verificationExtensionFromFilename(normalized.name) === 'png') &&
+    prepared.ext === 'png' &&
+    prepared.contentType === 'image/png'
+
+  if (keepPng) {
+    return { blob: prepared.blob, contentType: 'image/png', storageExt: 'png' }
   }
 
-  const storageExt = inferRasterStorageExt(file)
-  return {
-    blob: file,
-    contentType: contentTypeForVerificationUpload(file, storageExt),
-    storageExt,
+  if (prepared.contentType === 'image/jpeg' || prepared.ext === 'jpg' || prepared.ext === 'jpeg') {
+    return { blob: prepared.blob, contentType: 'image/jpeg', storageExt: 'jpg' }
   }
+
+  const convertMaxBytes = normalized.size > 1 ? normalized.size - 1 : 0
+  const jpegPrepared = await prepareProfilePhotoForUpload(normalized, convertMaxBytes)
+  if (jpegPrepared.ext === 'heic' || jpegPrepared.ext === 'heif') {
+    throw new Error('Could not convert HEIC image. Save as JPEG in Photos and try again.')
+  }
+  return { blob: jpegPrepared.blob, contentType: 'image/jpeg', storageExt: 'jpg' }
 }

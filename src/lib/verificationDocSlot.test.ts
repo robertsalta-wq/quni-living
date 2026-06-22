@@ -66,7 +66,7 @@ describe('verificationDocSlot', () => {
     })
   })
 
-  it('completeVerificationUpload clears pending and drops blob preview for signed URL refresh', () => {
+  it('completeVerificationUpload clears pending and keeps blob preview until signed URL loads', () => {
     const prev = {
       id: {
         filePath: OLD_PATH,
@@ -78,13 +78,13 @@ describe('verificationDocSlot', () => {
     }
     const newPath = `${USER}/id-document.jpg`
     const newAt = '2026-06-22T12:01:00.000Z'
-    const next = completeVerificationUpload(prev, 'id', { name: 'passport-new.jpg' }, newPath, newAt)
+    const next = completeVerificationUpload(prev, 'id', { name: 'passport-new.jpg' }, newPath, newAt, 'blob:new-preview')
 
     expect(next.id).toEqual({
       filePath: newPath,
       submittedAt: newAt,
       displayFileName: 'passport-new.jpg',
-      previewUrl: null,
+      previewUrl: 'blob:new-preview',
       pending: false,
     })
     expect(docStepComplete(next.id ?? null)).toBe(true)

@@ -43,6 +43,12 @@ describe('isAllowedVerificationFile', () => {
     expect(isAllowedVerificationFile(file)).toBe(true)
   })
 
+  it('accepts WebP from Android Chrome', () => {
+    const file = new File([new Uint8Array([1])], 'photo.webp', { type: 'image/webp' })
+    expect(isAllowedVerificationFile(file)).toBe(true)
+    expect(validateVerificationFileType(file)).toBeNull()
+  })
+
   it('rejects unknown types with a misleading extension segment', () => {
     const file = new File([new Uint8Array([1])], 'notes.docx', { type: '' })
     expect(isAllowedVerificationFile(file)).toBe(false)
