@@ -97,8 +97,6 @@ type OwnerSubmittedVerificationDocProps = {
   submittedAt: string | null | undefined
   filePath: string | null | undefined
   reviewNote?: string
-  replaceInputId?: string
-  replaceUploading?: boolean
 }
 
 /** Confirms what the owner submitted, with a small preview of their own upload only. */
@@ -108,8 +106,6 @@ export function OwnerSubmittedVerificationDoc({
   submittedAt,
   filePath,
   reviewNote,
-  replaceInputId,
-  replaceUploading = false,
 }: OwnerSubmittedVerificationDocProps) {
   const path = filePath?.trim() ?? ''
 
@@ -121,17 +117,6 @@ export function OwnerSubmittedVerificationDoc({
       {submittedAt ? <p className="text-gray-600 mt-1">Submitted {formatDate(submittedAt)}</p> : null}
       {reviewNote ? <p className="text-xs text-gray-500 mt-2">{reviewNote}</p> : null}
       {path ? <OwnerVerificationDocPreview filePath={path} /> : null}
-      {replaceInputId ? (
-        <label
-          htmlFor={replaceUploading ? undefined : replaceInputId}
-          aria-disabled={replaceUploading}
-          className={`mt-3 inline-flex w-full sm:w-auto min-h-[2.5rem] items-center justify-center px-4 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] cursor-pointer${
-            replaceUploading ? ' pointer-events-none opacity-50' : ''
-          }`}
-        >
-          {replaceUploading ? 'Uploading…' : 'Replace document'}
-        </label>
-      ) : null}
     </div>
   )
 }

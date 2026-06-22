@@ -65,6 +65,19 @@ export function addVerificationUploadStartBreadcrumb(meta: Record<string, string
   })
 }
 
+export function addVerificationFileInputChangeBreadcrumb(
+  docType: VerificationUploadDocType,
+  hasFile: boolean,
+): void {
+  if (!isSentryEnabled()) return
+  Sentry.addBreadcrumb({
+    category: 'verification-upload',
+    message: 'Verification file input change',
+    level: 'info',
+    data: { docType, hasFile, ...bundleReleaseContext() },
+  })
+}
+
 export function captureVerificationUploadValidationReject(
   reason: VerificationUploadValidationReason,
   meta: Record<string, string | number | boolean>,

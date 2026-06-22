@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -19,10 +18,12 @@ import {
   VERIFICATION_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
+  addVerificationFileInputChangeBreadcrumb,
   addVerificationUploadStartBreadcrumb,
   buildVerificationUploadSentryMeta,
   captureVerificationUploadException,
   captureVerificationUploadValidationReject,
+  verificationUploadDocTypeFromKind,
   type VerificationUploadStage,
 } from '../../lib/verificationUploadSentry'
 import { OwnerSubmittedVerificationDoc } from './OwnerVerificationDocPreview'
@@ -37,15 +38,75 @@ type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 const DOC_BUCKET = 'student-documents'
 const RESEND_SECONDS = 60
 const UPLOAD_ACK_MS = 12_000
-const ID_FILE_INPUT_ID = 'verify-id-file'
-const ENROL_FILE_INPUT_ID = 'verify-enrol-file'
-const IDENTITY_SUPPORT_FILE_INPUT_ID = 'verify-identity-support-file'
 
 const filePickerLabelClass =
   'inline-flex w-full sm:w-auto min-h-[2.75rem] items-center justify-center px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] cursor-pointer'
 
 function filePickerLabelClassWhenBusy(busy: boolean): string {
   return `${filePickerLabelClass}${busy ? ' pointer-events-none opacity-50' : ''}`
+}
+
+type VerificationDocUploadSlotProps = {
+  inputId: string
+  inputRef: RefObject<HTMLInputElement | null>
+  busy: boolean
+  submitted: boolean
+  error: string | null
+  ackFileName?: string
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
+  submittedDoc?: ReactNode
+}
+
+/** One file input + one control so the picker always targets the input that owns onChange. */
+function VerificationDocUploadSlot({
+  inputId,
+  inputRef,
+  busy,
+  submitted,
+  error,
+  ackFileName,
+  onChange,
+  submittedDoc,
+}: VerificationDocUploadSlotProps) {
+  function openFilePicker(e: MouseEvent<HTMLLabelElement> | KeyboardEvent<HTMLLabelElement>) {
+    if (busy) {
+      e.preventDefault()
+      return
+    }
+    e.preventDefault()
+    inputRef.current?.click()
+  }
+
+  return (
+    <div className="space-y-3">
+      {ackFileName ? <UploadReceivedBanner fileName={ackFileName} /> : null}
+      {error ? <UploadFailedBanner message={error} /> : null}
+      <input
+        id={inputId}
+        ref={inputRef}
+        type="file"
+        accept={VERIFICATION_FILE_ACCEPT}
+        disabled={busy}
+        tabIndex={-1}
+        aria-hidden
+        className="sr-only"
+        onChange={onChange}
+      />
+      {submittedDoc}
+      <label
+        role="button"
+        tabIndex={busy ? -1 : 0}
+        aria-disabled={busy}
+        className={filePickerLabelClassWhenBusy(busy)}
+        onClick={openFilePicker}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
+        }}
+      >
+        {busy ? 'Uploading…' : submitted ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
+      </label>
+    </div>
+  )
 }
 
 function UploadReceivedBanner({ fileName }: { fileName: string }) {
@@ -97,6 +158,11 @@ type Props = {
 type DocKind = 'id' | 'enrolment' | 'identity_supporting'
 
 export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) {
+  const reactId = useId()
+  const idFileInputId = `${reactId}-id-file`
+  const enrolFileInputId = `${reactId}-enrol-file`
+  const identitySupportFileInputId = `${reactId}-identity-support-file`
+
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
   const idSubmitted = Boolean(profile.id_submitted_at && profile.id_document_url)
@@ -402,19 +468,29 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     })
   }
 
+  function logFileInputChange(kind: DocKind, e: ChangeEvent<HTMLInputElement>) {
+    const hasFile = Boolean(e.target.files?.[0])
+    const docType = verificationUploadDocTypeFromKind(kind)
+    console.log('[verification-upload] file input change', { docType, hasFile, inputId: e.target.id })
+    addVerificationFileInputChangeBreadcrumb(docType, hasFile)
+  }
+
   function onIdFile(e: ChangeEvent<HTMLInputElement>) {
+    logFileInputChange('id', e)
     const f = e.target.files?.[0]
     e.target.value = ''
     if (f) runUploadDoc(f, 'id', setIdUploadError, setIdUploading)
   }
 
   function onEnrolFile(e: ChangeEvent<HTMLInputElement>) {
+    logFileInputChange('enrolment', e)
     const f = e.target.files?.[0]
     e.target.value = ''
     if (f) runUploadDoc(f, 'enrolment', setEnrolUploadError, setEnrolUploading)
   }
 
   function onIdentitySupportFile(e: ChangeEvent<HTMLInputElement>) {
+    logFileInputChange('identity_supporting', e)
     const f = e.target.files?.[0]
     e.target.value = ''
     if (f) runUploadDoc(f, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)
@@ -621,36 +697,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <p className="text-sm text-gray-600 mt-1">
             Upload a clear photo of your passport or Australian driver&apos;s licence.
           </p>
-          <div className="mt-4 space-y-3">
-            {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
-            {idUploadError && <UploadFailedBanner message={idUploadError} />}
-            <input
-              id={ID_FILE_INPUT_ID}
-              ref={idInputRef}
-              type="file"
-              accept={VERIFICATION_FILE_ACCEPT}
-              className="sr-only"
+          <div className="mt-4">
+            <VerificationDocUploadSlot
+              inputId={idFileInputId}
+              inputRef={idInputRef}
+              busy={idUploading}
+              submitted={idSubmitted}
+              error={idUploadError}
+              ackFileName={uploadAckByKind.id?.fileName}
               onChange={onIdFile}
+              submittedDoc={
+                idSubmitted ? (
+                  <OwnerSubmittedVerificationDoc
+                    icon="📄"
+                    title="ID on file"
+                    submittedAt={profile.id_submitted_at}
+                    filePath={profile.id_document_url}
+                    reviewNote="Our team may review this document."
+                  />
+                ) : undefined
+              }
             />
-            {idSubmitted ? (
-              <OwnerSubmittedVerificationDoc
-                icon="📄"
-                title="ID on file"
-                submittedAt={profile.id_submitted_at}
-                filePath={profile.id_document_url}
-                reviewNote="Our team may review this document."
-                replaceInputId={ID_FILE_INPUT_ID}
-                replaceUploading={idUploading}
-              />
-            ) : (
-              <label
-                htmlFor={idUploading ? undefined : ID_FILE_INPUT_ID}
-                aria-disabled={idUploading}
-                className={filePickerLabelClassWhenBusy(idUploading)}
-              >
-                {idUploading ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
-              </label>
-            )}
           </div>
         </section>
 
@@ -661,37 +728,26 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <p className="text-sm text-gray-600 mt-1">
             Upload a recent payslip, employment letter, or bank statement (JPEG, PNG, or PDF).
           </p>
-          <div className="mt-4 space-y-3">
-            {uploadAckByKind.identity_supporting && (
-              <UploadReceivedBanner fileName={uploadAckByKind.identity_supporting.fileName} />
-            )}
-            {identitySupportUploadError && <UploadFailedBanner message={identitySupportUploadError} />}
-            <input
-              id={IDENTITY_SUPPORT_FILE_INPUT_ID}
-              ref={identitySupportInputRef}
-              type="file"
-              accept={VERIFICATION_FILE_ACCEPT}
-              className="sr-only"
+          <div className="mt-4">
+            <VerificationDocUploadSlot
+              inputId={identitySupportFileInputId}
+              inputRef={identitySupportInputRef}
+              busy={identitySupportUploading}
+              submitted={identitySupportingSubmitted}
+              error={identitySupportUploadError}
+              ackFileName={uploadAckByKind.identity_supporting?.fileName}
               onChange={onIdentitySupportFile}
+              submittedDoc={
+                identitySupportingSubmitted ? (
+                  <OwnerSubmittedVerificationDoc
+                    icon="📎"
+                    title="Document on file"
+                    submittedAt={profile.identity_supporting_submitted_at}
+                    filePath={profile.identity_supporting_doc_url}
+                  />
+                ) : undefined
+              }
             />
-            {identitySupportingSubmitted ? (
-              <OwnerSubmittedVerificationDoc
-                icon="📎"
-                title="Document on file"
-                submittedAt={profile.identity_supporting_submitted_at}
-                filePath={profile.identity_supporting_doc_url}
-                replaceInputId={IDENTITY_SUPPORT_FILE_INPUT_ID}
-                replaceUploading={identitySupportUploading}
-              />
-            ) : (
-              <label
-                htmlFor={identitySupportUploading ? undefined : IDENTITY_SUPPORT_FILE_INPUT_ID}
-                aria-disabled={identitySupportUploading}
-                className={filePickerLabelClassWhenBusy(identitySupportUploading)}
-              >
-                {identitySupportUploading ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
-              </label>
-            )}
           </div>
         </section>
       </div>
@@ -775,36 +831,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <p className="text-sm text-gray-600 mt-1">
           Upload a clear photo of your passport or Australian driver&apos;s licence.
         </p>
-        <div className="mt-4 space-y-3">
-          {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
-          {idUploadError && <UploadFailedBanner message={idUploadError} />}
-          <input
-            id={ID_FILE_INPUT_ID}
-            ref={idInputRef}
-            type="file"
-            accept={VERIFICATION_FILE_ACCEPT}
-            className="sr-only"
+        <div className="mt-4">
+          <VerificationDocUploadSlot
+            inputId={idFileInputId}
+            inputRef={idInputRef}
+            busy={idUploading}
+            submitted={idSubmitted}
+            error={idUploadError}
+            ackFileName={uploadAckByKind.id?.fileName}
             onChange={onIdFile}
+            submittedDoc={
+              idSubmitted ? (
+                <OwnerSubmittedVerificationDoc
+                  icon="📄"
+                  title="ID on file"
+                  submittedAt={profile.id_submitted_at}
+                  filePath={profile.id_document_url}
+                  reviewNote="Our team may review this document."
+                />
+              ) : undefined
+            }
           />
-          {idSubmitted ? (
-            <OwnerSubmittedVerificationDoc
-              icon="📄"
-              title="ID on file"
-              submittedAt={profile.id_submitted_at}
-              filePath={profile.id_document_url}
-              reviewNote="Our team may review this document."
-              replaceInputId={ID_FILE_INPUT_ID}
-              replaceUploading={idUploading}
-            />
-          ) : (
-            <label
-              htmlFor={idUploading ? undefined : ID_FILE_INPUT_ID}
-              aria-disabled={idUploading}
-              className={filePickerLabelClassWhenBusy(idUploading)}
-            >
-              {idUploading ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
-            </label>
-          )}
         </div>
       </section>
 
@@ -816,35 +863,26 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           Upload your university enrolment confirmation letter or Confirmation of Enrolment (CoE) for international
           students.
         </p>
-        <div className="mt-4 space-y-3">
-          {uploadAckByKind.enrolment && <UploadReceivedBanner fileName={uploadAckByKind.enrolment.fileName} />}
-          {enrolUploadError && <UploadFailedBanner message={enrolUploadError} />}
-          <input
-            id={ENROL_FILE_INPUT_ID}
-            ref={enrolInputRef}
-            type="file"
-            accept={VERIFICATION_FILE_ACCEPT}
-            className="sr-only"
+        <div className="mt-4">
+          <VerificationDocUploadSlot
+            inputId={enrolFileInputId}
+            inputRef={enrolInputRef}
+            busy={enrolUploading}
+            submitted={enrolSubmitted}
+            error={enrolUploadError}
+            ackFileName={uploadAckByKind.enrolment?.fileName}
             onChange={onEnrolFile}
+            submittedDoc={
+              enrolSubmitted ? (
+                <OwnerSubmittedVerificationDoc
+                  icon="🎓"
+                  title="Enrolment on file"
+                  submittedAt={profile.enrolment_submitted_at}
+                  filePath={profile.enrolment_doc_url}
+                />
+              ) : undefined
+            }
           />
-          {enrolSubmitted ? (
-            <OwnerSubmittedVerificationDoc
-              icon="🎓"
-              title="Enrolment on file"
-              submittedAt={profile.enrolment_submitted_at}
-              filePath={profile.enrolment_doc_url}
-              replaceInputId={ENROL_FILE_INPUT_ID}
-              replaceUploading={enrolUploading}
-            />
-          ) : (
-            <label
-              htmlFor={enrolUploading ? undefined : ENROL_FILE_INPUT_ID}
-              aria-disabled={enrolUploading}
-              className={filePickerLabelClassWhenBusy(enrolUploading)}
-            >
-              {enrolUploading ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
-            </label>
-          )}
         </div>
       </section>
     </div>
