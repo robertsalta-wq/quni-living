@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -182,14 +182,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
   const identitySupportInputRef = useRef<HTMLInputElement>(null)
+  // TEMP DIAGNOSTIC (preview only): shows picker lifecycle on the device so we can
+  // see whether the picker opens and whether `change` fires for each slot.
+  const [pickDiag, setPickDiag] = useState<string | null>(null)
 
   const handleVerificationFileChange = (kind: VerificationDocKind) => (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = e.target.files
+    const file = files?.[0]
+    setPickDiag(
+      `change fired [${kind}]: ${files?.length ?? 0} file(s)` +
+        (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · no file'),
+    )
     e.target.value = ''
     if (!file) return
     if (kind === 'id') pickIdFile(file)
     else if (kind === 'enrolment') pickEnrolFile(file)
     else pickIdentitySupportFile(file)
+  }
+
+  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement>) => () => {
+    setPickDiag(`button tapped [${kind}] → opening picker`)
+    ref.current?.click()
   }
 
   const hoistedFileInputs = (
@@ -206,6 +219,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         key="verif-input-enrolment"
         ref={enrolInputRef}
         type="file"
+        accept="image/*,application/pdf"
         className="sr-only"
         onChange={handleVerificationFileChange('enrolment')}
       />
@@ -213,11 +227,18 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         key="verif-input-identity-supporting"
         ref={identitySupportInputRef}
         type="file"
+        accept="image/*,application/pdf"
         className="sr-only"
         onChange={handleVerificationFileChange('identity_supporting')}
       />
     </>
   )
+
+  const pickDiagBanner = pickDiag ? (
+    <p className="text-[11px] leading-snug text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 font-mono break-all">
+      diagnostic: {pickDiag}
+    </p>
+  ) : null
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -423,6 +444,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     return (
       <div className="space-y-6">
         {hoistedFileInputs}
+        {pickDiagBanner}
         <section
           className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
@@ -621,7 +643,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              onPickClick={() => idInputRef.current?.click()}
+              onPickClick={openPicker('id', idInputRef)}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -639,7 +661,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              onPickClick={() => identitySupportInputRef.current?.click()}
+              onPickClick={openPicker('identity_supporting', identitySupportInputRef)}
             />
           </div>
         </section>
@@ -650,6 +672,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   return (
     <div className="space-y-6">
       {hoistedFileInputs}
+      {pickDiagBanner}
       <section
         className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
@@ -730,7 +753,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            onPickClick={() => idInputRef.current?.click()}
+            onPickClick={openPicker('id', idInputRef)}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -749,7 +772,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            onPickClick={() => enrolInputRef.current?.click()}
+            onPickClick={openPicker('enrolment', enrolInputRef)}
           />
         </div>
       </section>
