@@ -11,19 +11,16 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
-  fileLooksLikePdf,
+  isVerificationPdf,
   MAX_VERIFICATION_DOC_BYTES,
   validateVerificationFileSize,
   validateVerificationFileType,
   VERIFICATION_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
-  completeVerificationUpload,
   docFromProfile,
   docStepComplete,
-  failVerificationUpload,
   hasUploadedDoc,
-  pickVerificationFile,
   profileDocFieldsFromValues,
   resolveUploadedDoc,
   type VerificationDocKind,
@@ -205,7 +202,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
   const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
-  const rollbackByKindRef = useRef<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
   const onRefreshRef = useRef(onRefresh)
   onRefreshRef.current = onRefresh
 
@@ -265,7 +261,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     setErr(null)
     const file = e.target.files?.[0]
-    e.target.value = ''
+    if (e.target) e.target.value = ''
     if (!file) return
 
     const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
@@ -279,50 +275,65 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       return
     }
 
-    const likelyPdf = await fileLooksLikePdf(file)
-    const previewUrl = likelyPdf ? null : URL.createObjectURL(file)
+    const profileFields = profileDocFields(profile, kind)
+    const existing = resolveUploadedDoc(
+      uploadedByKind[kind],
+      docFromProfile(profileFields.url, profileFields.submittedAt),
+    )
+    const rollback: VerificationUploadedDoc | null =
+      existing && !existing.pending
+        ? {
+            filePath: existing.filePath,
+            submittedAt: existing.submittedAt,
+            displayFileName: existing.displayFileName,
+          }
+        : null
 
-    setUploadedByKind((prev) => {
-      revokeBlobUrl(prev[kind]?.previewUrl)
-      const picked = pickVerificationFile(
-        prev,
-        rollbackByKindRef.current,
-        kind,
-        file,
-        profileDocFields(profile, kind),
-        previewUrl,
-        new Date().toISOString(),
-      )
-      rollbackByKindRef.current = picked.rollbackByKind
-      return picked.uploadedByKind
-    })
+    const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
 
     setBusy(true)
+    setUploadedByKind((prev) => {
+      revokeBlobUrl(prev[kind]?.previewUrl)
+      return {
+        ...prev,
+        [kind]: {
+          filePath: existing?.filePath ?? '',
+          submittedAt: new Date().toISOString(),
+          displayFileName: file.name,
+          previewUrl,
+          pending: true,
+        },
+      }
+    })
+
     try {
       const result = await runVerificationDocUpload(supabase, userId, kind, file)
       if (!result.ok) {
-        setErr(result.message)
-        setUploadedByKind((prev) => {
-          revokeBlobUrl(prev[kind]?.previewUrl)
-          return failVerificationUpload(prev, rollbackByKindRef.current, kind)
-        })
-        delete rollbackByKindRef.current[kind]
-        return
+        throw new Error(result.message)
       }
 
-      setUploadedByKind((prev) => {
-        const keepPreview = prev[kind]?.previewUrl
-        return completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt, keepPreview)
-      })
-      delete rollbackByKindRef.current[kind]
-      void onRefreshRef.current()
+      setUploadedByKind((prev) => ({
+        ...prev,
+        [kind]: {
+          filePath: result.filePath,
+          submittedAt: result.submittedAt,
+          displayFileName: file.name,
+          previewUrl: prev[kind]?.previewUrl ?? previewUrl,
+          pending: false,
+        },
+      }))
+      await onRefreshRef.current()
     } catch (err: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
+      revokeBlobUrl(previewUrl)
       setUploadedByKind((prev) => {
-        revokeBlobUrl(prev[kind]?.previewUrl)
-        return failVerificationUpload(prev, rollbackByKindRef.current, kind)
+        if (rollback) {
+          return { ...prev, [kind]: rollback }
+        }
+        const next = { ...prev }
+        delete next[kind]
+        return next
       })
-      delete rollbackByKindRef.current[kind]
       let msg = err instanceof Error ? err.message : messageFromSupabaseError(err)
       if (msg === 'Something went wrong.' || msg === 'Unknown error') {
         msg = String(err)
