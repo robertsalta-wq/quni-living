@@ -189,10 +189,14 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const handleVerificationFileChange = (kind: VerificationDocKind) => (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     const file = files?.[0]
-    setPickDiag(
+    const msg =
       `change fired [${kind}]: ${files?.length ?? 0} file(s)` +
-        (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · no file'),
-    )
+      (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · NO FILE')
+    setPickDiag(msg)
+    // TEMP DIAGNOSTIC (preview only): a popup is impossible to miss regardless of
+    // scroll position, unlike an inline banner. Tells us definitively whether the
+    // change event fires and what the picker returned.
+    window.alert(msg)
     e.target.value = ''
     if (!file) return
     if (kind === 'id') pickIdFile(file)
@@ -235,7 +239,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   )
 
   const pickDiagBanner = pickDiag ? (
-    <p className="text-[11px] leading-snug text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 font-mono break-all">
+    <p className="fixed top-0 inset-x-0 z-[60] text-[11px] leading-snug text-amber-900 bg-amber-100 border-b border-amber-300 px-3 py-2 font-mono break-all shadow">
       diagnostic: {pickDiag}
     </p>
   ) : null
