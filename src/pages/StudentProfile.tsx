@@ -543,8 +543,12 @@ export default function StudentProfile() {
 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not load profile.'
-      setLoadError(msg)
-      setProfile(null)
+      if (background) {
+        console.error('Background profile refresh failed', e)
+      } else {
+        setLoadError(msg)
+        setProfile(null)
+      }
     } finally {
       if (!background) setLoading(false)
     }
