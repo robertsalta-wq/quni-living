@@ -32,6 +32,9 @@ export function OwnerVerificationDocPreview({
   const refreshKey = submittedAt?.trim() || path
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(!previewUrl)
+  // Mobile camera/gallery picks (HEIC/WebP) often upload fine but can't be painted
+  // by <img>. Fall back to a "received" file tile instead of a broken-image icon.
+  const [imgFailed, setImgFailed] = useState(false)
 
   useEffect(() => {
     if (previewUrl || !path) {
@@ -42,6 +45,7 @@ export function OwnerVerificationDocPreview({
 
     setLoading(true)
     setSignedUrl(null)
+    setImgFailed(false)
 
     let cancelled = false
     void (async () => {
@@ -59,18 +63,8 @@ export function OwnerVerificationDocPreview({
   }, [path, refreshKey, previewUrl])
 
   if (previewUrl) {
-    if (isPdfPath(path) || previewUrl.toLowerCase().includes('.pdf')) {
-      return (
-        <div className="mt-3 flex items-center gap-3">
-          <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white text-2xl"
-            aria-hidden
-          >
-            📄
-          </div>
-          <p className="text-sm font-medium text-gray-800 truncate">{displayFileName(path) || 'PDF document'}</p>
-        </div>
-      )
+    if (isPdfPath(path) || previewUrl.toLowerCase().includes('.pdf') || imgFailed) {
+      return <DocReceivedTile name={displayFileName(path) || 'Document'} />
     }
 
     return (
@@ -79,6 +73,7 @@ export function OwnerVerificationDocPreview({
           key={previewUrl}
           src={previewUrl}
           alt="Your uploaded document"
+          onError={() => setImgFailed(true)}
           className="max-h-24 max-w-full rounded-lg border border-stone-200 object-contain bg-white"
         />
       </div>
@@ -90,28 +85,8 @@ export function OwnerVerificationDocPreview({
   }
   if (!signedUrl) return null
 
-  if (isPdfPath(path)) {
-    return (
-      <div className="mt-3 flex items-center gap-3">
-        <div
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white text-2xl"
-          aria-hidden
-        >
-          📄
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-800 truncate">{displayFileName(path)}</p>
-          <a
-            href={signedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-[#FF6F61] hover:underline mt-0.5 inline-block"
-          >
-            Open
-          </a>
-        </div>
-      </div>
-    )
+  if (isPdfPath(path) || imgFailed) {
+    return <DocReceivedTile name={displayFileName(path)} href={signedUrl} />
   }
 
   const previewSrc = cacheBustUrl(signedUrl, refreshKey)
@@ -122,6 +97,7 @@ export function OwnerVerificationDocPreview({
         key={refreshKey}
         src={previewSrc}
         alt="Your uploaded document"
+        onError={() => setImgFailed(true)}
         className="max-h-24 max-w-full rounded-lg border border-stone-200 object-contain bg-white"
       />
       <a
@@ -132,6 +108,36 @@ export function OwnerVerificationDocPreview({
       >
         Open full size
       </a>
+    </div>
+  )
+}
+
+/**
+ * Compact "document received" tile — used for PDFs and for images the browser
+ * can't paint inline (HEIC/WebP camera picks that nonetheless uploaded fine).
+ */
+function DocReceivedTile({ name, href }: { name: string; href?: string }) {
+  return (
+    <div className="mt-3 flex items-center gap-3">
+      <div
+        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white text-2xl"
+        aria-hidden
+      >
+        📄
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-800 truncate">{name || 'Document'}</p>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-[#FF6F61] hover:underline mt-0.5 inline-block"
+          >
+            Open
+          </a>
+        ) : null}
+      </div>
     </div>
   )
 }
