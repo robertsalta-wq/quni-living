@@ -22,6 +22,10 @@ import { buildOfficialNswFt6600PdfWithSigning } from '../officialNswFt6600Signin
 import { bookingRequiresCoTenantSignature } from '../../booking/coTenantSigning.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import {
+  isListingContextLoadFail,
+  listingContextLoadFailure,
+} from '../../booking/listingContextLoad.js'
 import { sendResidentialTenancyPackageForSigning } from '../../docuseal.js'
 import { captureSentryMessageEdge } from '../../sentryEdgeCapture.js'
 import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
@@ -626,8 +630,8 @@ export async function preflightNswFt6600ListingTenancy(
   bookingId: string,
 ): Promise<ListingPreflightResult> {
   const loaded = await loadNswFt6600Context(admin, bookingId, { requireConfirmable: false })
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
   try {
     await buildNswFt6600PdfBuffers(loaded.ctx, PREFLIGHT_DOCUMENT_ID)
@@ -645,8 +649,8 @@ export async function runNswFt6600ListingTenancy(
   opts: { deferSigning: boolean },
 ): Promise<ListingDocGenResult> {
   const loaded = await loadNswFt6600Context(admin, bookingId)
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
 
   const { booking, lp, moveIn, weeklyRent, periodic, endDate, bondNum } = loaded.ctx

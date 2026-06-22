@@ -14,6 +14,10 @@ import {
 } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import {
+  isListingContextLoadFail,
+  listingContextLoadFailure,
+} from '../../booking/listingContextLoad.js'
+import {
   buildRtaRentPaymentMethodLine,
   fetchBankDetailsForRta,
   fetchPlatformBusinessIdentityForDocuments,
@@ -581,8 +585,8 @@ export async function preflightQldForm18aListingTenancy(
   bookingId: string,
 ): Promise<ListingPreflightResult> {
   const loaded = await loadQldForm18aContext(admin, bookingId, { requireConfirmable: false })
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
   const utilitiesIssues = qldUtilitiesPreflightForContext(loaded.ctx)
   if (utilitiesIssues) {
@@ -609,8 +613,8 @@ export async function runQldForm18aListingTenancy(
   opts: { deferSigning: boolean },
 ): Promise<ListingDocGenResult> {
   const loaded = await loadQldForm18aContext(admin, bookingId)
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
 
   const utilitiesIssues = qldUtilitiesPreflightForContext(loaded.ctx)

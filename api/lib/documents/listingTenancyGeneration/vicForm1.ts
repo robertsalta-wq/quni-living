@@ -12,6 +12,10 @@ import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseCon
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
 import {
+  isListingContextLoadFail,
+  listingContextLoadFailure,
+} from '../../booking/listingContextLoad.js'
+import {
   buildRtaRentPaymentMethodLine,
   fetchBankDetailsForRta,
   fetchPlatformBusinessIdentityForDocuments,
@@ -538,8 +542,8 @@ export async function preflightVicForm1ListingTenancy(
   bookingId: string,
 ): Promise<ListingPreflightResult> {
   const loaded = await loadVicForm1Context(admin, bookingId, { requireConfirmable: false })
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
   try {
     await buildVicForm1PdfBuffers(loaded.ctx, PREFLIGHT_DOCUMENT_ID)
@@ -557,8 +561,8 @@ export async function runVicForm1ListingTenancy(
   opts: { deferSigning: boolean },
 ): Promise<ListingDocGenResult> {
   const loaded = await loadVicForm1Context(admin, bookingId)
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
 
   const { booking, lp, moveIn, weeklyRent, periodic, endDate, bondNum } = loaded.ctx

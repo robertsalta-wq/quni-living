@@ -8,6 +8,10 @@ import type { OccupancyAgreementProps } from '../../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
+import {
+  isListingContextLoadFail,
+  listingContextLoadFailure,
+} from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
 
@@ -314,8 +318,8 @@ export async function preflightVicOccupancyListingTenancy(
   bookingId: string,
 ): Promise<ListingPreflightResult> {
   const loaded = await loadVicOccupancyContext(admin, bookingId, { requireConfirmable: false })
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
   try {
     await buildVicOccupancyPdfBuffer(loaded.ctx, PREFLIGHT_DOCUMENT_ID)
@@ -333,8 +337,8 @@ export async function runVicOccupancyListingTenancy(
   opts: { deferSigning: boolean },
 ): Promise<ListingDocGenResult> {
   const loaded = await loadVicOccupancyContext(admin, bookingId)
-  if (!loaded.ok) {
-    return { ok: false, status: loaded.status, error: loaded.error, detail: loaded.detail }
+  if (isListingContextLoadFail(loaded)) {
+    return listingContextLoadFailure(loaded)
   }
 
   const { booking, lp, moveIn, weeklyRent, periodic, endDate, bondNum } = loaded.ctx
