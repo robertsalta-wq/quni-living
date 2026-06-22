@@ -102,7 +102,7 @@ function DocReceivedCard({
             <span className="font-medium">{doc.displayFileName}</span>
           </p>
           {reviewNote ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
-          <OwnerVerificationDocPreview filePath={doc.filePath} />
+          <OwnerVerificationDocPreview filePath={doc.filePath} submittedAt={doc.submittedAt} />
         </div>
       </div>
     </div>

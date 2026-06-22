@@ -17,16 +17,28 @@ function displayFileName(path: string): string {
  * Owner-only preview of a verification document the renter uploaded.
  * RLS allows read on student-documents/{auth.uid()}/… only — use only on the owner's profile view.
  */
-export function OwnerVerificationDocPreview({ filePath }: { filePath: string }) {
+export function OwnerVerificationDocPreview({
+  filePath,
+  /** Changes on each upload even when storage path is unchanged (upsert replace). */
+  submittedAt,
+}: {
+  filePath: string
+  submittedAt?: string | null
+}) {
   const path = filePath.trim()
+  const refreshKey = submittedAt?.trim() || path
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!path) {
+      setSignedUrl(null)
       setLoading(false)
       return
     }
+
+    setLoading(true)
+    setSignedUrl(null)
 
     let cancelled = false
     void (async () => {
@@ -41,7 +53,7 @@ export function OwnerVerificationDocPreview({ filePath }: { filePath: string }) 
     return () => {
       cancelled = true
     }
-  }, [path])
+  }, [path, refreshKey])
 
   if (loading) {
     return <p className="text-xs text-gray-500 mt-3">Loading preview…</p>
@@ -72,10 +84,16 @@ export function OwnerVerificationDocPreview({ filePath }: { filePath: string }) 
     )
   }
 
+  const previewSrc =
+    refreshKey && signedUrl.includes('?')
+      ? `${signedUrl}&v=${encodeURIComponent(refreshKey)}`
+      : signedUrl
+
   return (
     <div className="mt-3">
       <img
-        src={signedUrl}
+        key={refreshKey}
+        src={previewSrc}
         alt="Your uploaded document"
         className="max-h-24 max-w-full rounded-lg border border-stone-200 object-contain bg-white"
       />
@@ -116,7 +134,7 @@ export function OwnerSubmittedVerificationDoc({
       </p>
       {submittedAt ? <p className="text-gray-600 mt-1">Submitted {formatDate(submittedAt)}</p> : null}
       {reviewNote ? <p className="text-xs text-gray-500 mt-2">{reviewNote}</p> : null}
-      {path ? <OwnerVerificationDocPreview filePath={path} /> : null}
+      {path ? <OwnerVerificationDocPreview filePath={path} submittedAt={submittedAt} /> : null}
     </div>
   )
 }
