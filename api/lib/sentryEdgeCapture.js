@@ -1,3 +1,5 @@
+import { waitUntil } from '@vercel/functions'
+
 /**
  * Best-effort Sentry event for Vercel Edge routes (no @sentry/node in bundle).
  * Env: SENTRY_DSN or VITE_SENTRY_DSN
@@ -7,7 +9,7 @@
  * @param {Record<string, unknown> | unknown} [extra]
  * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string> }} [options]
  */
-export async function captureSentryMessageEdge(message, extra, options) {
+async function captureSentryMessageEdgeCore(message, extra, options) {
   const dsn = (process.env.SENTRY_DSN || process.env.VITE_SENTRY_DSN || '').trim()
   if (!dsn) {
     console.error('[Sentry skipped]', message, extra)
@@ -42,4 +44,20 @@ export async function captureSentryMessageEdge(message, extra, options) {
   } catch (e) {
     console.error('Sentry capture failed', e)
   }
+}
+
+/**
+ * Fire-safe Sentry post for edge handlers. Never throws.
+ * Registers the fetch with waitUntil so void call sites persist after a fast response.
+ * Callers that await still get the same promise.
+ *
+ * @param {string} message
+ * @param {Record<string, unknown> | unknown} [extra]
+ * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string> }} [options]
+ * @returns {Promise<void>}
+ */
+export function captureSentryMessageEdge(message, extra, options) {
+  const work = captureSentryMessageEdgeCore(message, extra, options)
+  waitUntil(work)
+  return work
 }
