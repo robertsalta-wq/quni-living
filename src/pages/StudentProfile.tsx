@@ -17,6 +17,7 @@ import UniversityCampusSelect from '../components/UniversityCampusSelect'
 import { useUniversityCampusReference } from '../hooks/useUniversityCampusReference'
 import { fetchCampusesForUniversityId } from '../lib/universityCampusReference'
 import { prepareProfilePhotoForUpload } from '../lib/prepareProfilePhotoForUpload'
+import { cacheBustUrl } from '../lib/cacheBustUrl'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../lib/studentOccupancyOptions'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
@@ -394,6 +395,7 @@ export default function StudentProfile() {
 
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false)
@@ -720,6 +722,12 @@ export default function StudentProfile() {
     e.target.value = ''
     if (!file || !user?.id) return
 
+    const instantPreview = URL.createObjectURL(file)
+    setLocalPhotoUrl((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev)
+      return instantPreview
+    })
+
     setUploadingPhoto(true)
     try {
       const prepared = await prepareProfilePhotoForUpload(file, MAX_PROFILE_PHOTO_BYTES)
@@ -732,16 +740,22 @@ export default function StudentProfile() {
       if (upErr) throw upErr
 
       const { data: pub } = supabase.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path)
+      const avatarUrl = cacheBustUrl(pub.publicUrl)
 
       const { error: dbErr } = await supabase
         .from('student_profiles')
-        .update({ avatar_url: pub.publicUrl })
+        .update({ avatar_url: avatarUrl })
         .eq('user_id', user.id)
       if (dbErr) throw dbErr
 
-      await load({ background: true })
-      await refreshProfile()
+      URL.revokeObjectURL(instantPreview)
+      setLocalPhotoUrl(avatarUrl)
+      setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev))
     } catch (err: unknown) {
+      setLocalPhotoUrl((prev) => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev)
+        return null
+      })
       const msg = err instanceof Error ? err.message : 'Upload failed.'
       setPhotoError(
         msg.includes('Bucket not found') || msg.includes('not found')
@@ -909,7 +923,7 @@ export default function StudentProfile() {
     )
   }
 
-  const profilePhotoUrl = profile.avatar_url
+  const profilePhotoUrl = localPhotoUrl ?? profile.avatar_url
   const isNonStudentRoute = isNonStudentAccommodationRoute(profile.accommodation_verification_route)
   const inputClass =
     'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white'

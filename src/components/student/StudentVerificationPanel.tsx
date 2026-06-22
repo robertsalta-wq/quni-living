@@ -11,6 +11,7 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
+  isVerificationPdf,
   MAX_VERIFICATION_DOC_BYTES,
   prepareVerificationDocForUpload,
   validateVerificationFileSize,
@@ -35,6 +36,12 @@ type UploadedDoc = {
   filePath: string
   submittedAt: string
   displayFileName: string
+  previewUrl?: string | null
+  pending?: boolean
+}
+
+function revokeBlobUrl(url: string | null | undefined) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
 
 function docFromProfile(
@@ -49,6 +56,10 @@ function docFromProfile(
 
 function resolveUploadedDoc(local: UploadedDoc | undefined, profile: UploadedDoc | null): UploadedDoc | null {
   return local ?? profile
+}
+
+function docStepComplete(doc: UploadedDoc | null): boolean {
+  return Boolean(doc && !doc.pending)
 }
 
 const filePickerLabelClass =
@@ -91,18 +102,28 @@ function DocReceivedCard({
     >
       <div className="flex gap-2.5 items-start">
         <span className="text-xl leading-none text-emerald-600 shrink-0" aria-hidden>
-          ✓
+          {doc.pending ? '…' : '✓'}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-emerald-950">Document received</p>
-          <p className="text-emerald-900/90 mt-1">
-            Received {formatDate(doc.submittedAt)} · pending review (not verified yet)
+          <p className="font-semibold text-emerald-950">
+            {doc.pending ? 'Uploading your document…' : 'Document received'}
           </p>
+          {!doc.pending ? (
+            <p className="text-emerald-900/90 mt-1">
+              Received {formatDate(doc.submittedAt)} · pending review (not verified yet)
+            </p>
+          ) : null}
           <p className="text-emerald-900/90 mt-1 break-all">
             <span className="font-medium">{doc.displayFileName}</span>
           </p>
-          {reviewNote ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
-          <OwnerVerificationDocPreview filePath={doc.filePath} submittedAt={doc.submittedAt} />
+          {reviewNote && !doc.pending ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
+          {doc.previewUrl || doc.filePath ? (
+            <OwnerVerificationDocPreview
+              filePath={doc.filePath || doc.displayFileName}
+              submittedAt={doc.submittedAt}
+              previewUrl={doc.previewUrl}
+            />
+          ) : null}
         </div>
       </div>
     </div>
@@ -152,18 +173,20 @@ function DocUploadControl({
       {uploaded ? (
         <>
           <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
-          <label
-            role="button"
-            tabIndex={busy ? -1 : 0}
-            aria-disabled={busy}
-            className={filePickerLabelClassWhenBusy(busy)}
-            onClick={openFilePicker}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
-            }}
-          >
-            {busy ? 'Uploading…' : 'Replace document'}
-          </label>
+          {!uploaded.pending ? (
+            <label
+              role="button"
+              tabIndex={busy ? -1 : 0}
+              aria-disabled={busy}
+              className={filePickerLabelClassWhenBusy(busy)}
+              onClick={openFilePicker}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
+              }}
+            >
+              {busy ? 'Uploading…' : 'Replace document'}
+            </label>
+          ) : null}
         </>
       ) : (
         <label
@@ -220,8 +243,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     (profile.verification_type === 'none' && isNonStudentAccommodationRoute(profile.accommodation_verification_route))
 
   const completeCount = useIdentityFlow
-    ? [workEmailVerified, Boolean(idDoc), Boolean(identitySupportDoc)].filter(Boolean).length
-    : [emailVerified, Boolean(idDoc), Boolean(enrolDoc)].filter(Boolean).length
+    ? [workEmailVerified, docStepComplete(idDoc), docStepComplete(identitySupportDoc)].filter(Boolean).length
+    : [emailVerified, docStepComplete(idDoc), docStepComplete(enrolDoc)].filter(Boolean).length
   const progressTotal = 3
   const progressPct = Math.round((completeCount / progressTotal) * 100)
 
@@ -248,7 +271,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   useEffect(() => {
     if (profile.verification_type !== 'none') return
     if (useIdentityFlow) return
-    if (!emailVerified || !idDoc || !enrolDoc) return
+    if (!emailVerified || !idDoc || idDoc.pending || !enrolDoc || enrolDoc.pending) return
     let cancelled = false
     ;(async () => {
       const { error } = await supabase
@@ -265,7 +288,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   useEffect(() => {
     if (profile.verification_type !== 'none') return
     if (!useIdentityFlow) return
-    if (!idDoc || !identitySupportDoc) return
+    if (!idDoc || idDoc.pending || !identitySupportDoc || identitySupportDoc.pending) return
     let cancelled = false
     ;(async () => {
       const { error } = await supabase
@@ -434,10 +457,24 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
       setUploadedByKind((prev) => ({
         ...prev,
-        [kind]: { filePath: path, submittedAt, displayFileName: file.name },
+        [kind]: {
+          filePath: path,
+          submittedAt,
+          displayFileName: file.name,
+          previewUrl: prev[kind]?.previewUrl ?? null,
+          pending: false,
+        },
       }))
     } catch (e: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
+      setUploadedByKind((prev) => {
+        const current = prev[kind]
+        if (!current?.pending) return prev
+        revokeBlobUrl(current.previewUrl)
+        const next = { ...prev }
+        delete next[kind]
+        return next
+      })
       let msg = messageFromSupabaseError(e)
       if (msg === 'Something went wrong.' || msg === 'Unknown error') {
         msg = String(e)
@@ -460,7 +497,50 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (file) void uploadDoc(file, kind, setErr, setBusy)
+    if (!file) return
+
+    setErr(null)
+
+    const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
+    if (sizeError) {
+      setErr(sizeError)
+      return
+    }
+    const typeError = validateVerificationFileType(file)
+    if (typeError) {
+      setErr(typeError)
+      return
+    }
+
+    const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
+    const priorPath = uploadedByKind[kind]?.filePath ?? docFromProfile(
+      kind === 'id'
+        ? profile.id_document_url
+        : kind === 'enrolment'
+          ? profile.enrolment_doc_url
+          : profile.identity_supporting_doc_url,
+      kind === 'id'
+        ? profile.id_submitted_at
+        : kind === 'enrolment'
+          ? profile.enrolment_submitted_at
+          : profile.identity_supporting_submitted_at,
+    )?.filePath ?? ''
+
+    setUploadedByKind((prev) => {
+      revokeBlobUrl(prev[kind]?.previewUrl)
+      return {
+        ...prev,
+        [kind]: {
+          filePath: priorPath,
+          submittedAt: new Date().toISOString(),
+          displayFileName: file.name,
+          previewUrl,
+          pending: true,
+        },
+      }
+    })
+
+    void uploadDoc(file, kind, setErr, setBusy)
   }
 
   const coralBtn =
@@ -505,20 +585,20 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             <li className="flex items-center gap-2">
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                  idDoc ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
+                  docStepComplete(idDoc) ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
                 }`}
               >
-                {idDoc ? '✓' : '2'}
+                {docStepComplete(idDoc) ? '✓' : idDoc?.pending ? '…' : '2'}
               </span>
               Photo ID
             </li>
             <li className="flex items-center gap-2">
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                  identitySupportDoc ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
+                  docStepComplete(identitySupportDoc) ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
                 }`}
               >
-                {identitySupportDoc ? '✓' : '3'}
+                {docStepComplete(identitySupportDoc) ? '✓' : identitySupportDoc?.pending ? '…' : '3'}
               </span>
               Supporting document
             </li>
@@ -734,20 +814,20 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <li className="flex items-center gap-2">
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                idDoc ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
+                docStepComplete(idDoc) ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
               }`}
             >
-              {idDoc ? '✓' : '2'}
+              {docStepComplete(idDoc) ? '✓' : idDoc?.pending ? '…' : '2'}
             </span>
             Photo ID
           </li>
           <li className="flex items-center gap-2">
             <span
               className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                enrolDoc ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
+                docStepComplete(enrolDoc) ? 'bg-emerald-500 text-white' : 'bg-white border border-stone-200 text-stone-500'
               }`}
             >
-              {enrolDoc ? '✓' : '3'}
+              {docStepComplete(enrolDoc) ? '✓' : enrolDoc?.pending ? '…' : '3'}
             </span>
             Enrolment
           </li>

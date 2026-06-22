@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { cacheBustUrl } from '../../lib/cacheBustUrl'
 import { STUDENT_VERIFICATION_DOC_BUCKET } from '../../lib/studentDocumentsStorage'
 import { formatDate } from '../../pages/admin/adminUi'
 
@@ -19,19 +20,21 @@ function displayFileName(path: string): string {
  */
 export function OwnerVerificationDocPreview({
   filePath,
-  /** Changes on each upload even when storage path is unchanged (upsert replace). */
   submittedAt,
+  /** Instant preview from the picked file — no network round trip. */
+  previewUrl,
 }: {
   filePath: string
   submittedAt?: string | null
+  previewUrl?: string | null
 }) {
   const path = filePath.trim()
   const refreshKey = submittedAt?.trim() || path
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!previewUrl)
 
   useEffect(() => {
-    if (!path) {
+    if (previewUrl || !path) {
       setSignedUrl(null)
       setLoading(false)
       return
@@ -53,7 +56,33 @@ export function OwnerVerificationDocPreview({
     return () => {
       cancelled = true
     }
-  }, [path, refreshKey])
+  }, [path, refreshKey, previewUrl])
+
+  if (previewUrl) {
+    if (isPdfPath(path) || previewUrl.toLowerCase().includes('.pdf')) {
+      return (
+        <div className="mt-3 flex items-center gap-3">
+          <div
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-white text-2xl"
+            aria-hidden
+          >
+            📄
+          </div>
+          <p className="text-sm font-medium text-gray-800 truncate">{displayFileName(path) || 'PDF document'}</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="mt-3">
+        <img
+          src={previewUrl}
+          alt="Your uploaded document"
+          className="max-h-24 max-w-full rounded-lg border border-stone-200 object-contain bg-white"
+        />
+      </div>
+    )
+  }
 
   if (loading) {
     return <p className="text-xs text-gray-500 mt-3">Loading preview…</p>
@@ -84,10 +113,7 @@ export function OwnerVerificationDocPreview({
     )
   }
 
-  const previewSrc =
-    refreshKey && signedUrl.includes('?')
-      ? `${signedUrl}&v=${encodeURIComponent(refreshKey)}`
-      : signedUrl
+  const previewSrc = cacheBustUrl(signedUrl, refreshKey)
 
   return (
     <div className="mt-3">
