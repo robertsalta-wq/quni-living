@@ -66,6 +66,8 @@ function DocUploadControl({
   accept,
   onFileSelected,
   reviewNote,
+  diag,
+  onDiag,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
@@ -73,6 +75,9 @@ function DocUploadControl({
   accept: string
   onFileSelected: (file: File) => void
   reviewNote?: string
+  // TEMP DIAGNOSTIC props — surface picker/upload lifecycle on the device.
+  diag?: string | null
+  onDiag?: (msg: string) => void
 }) {
   return (
     <div className="space-y-3">
@@ -83,8 +88,14 @@ function DocUploadControl({
         busy={busy}
         label={uploaded ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
         onFileSelected={onFileSelected}
+        onPickDiag={onDiag}
         error={null}
       />
+      {diag ? (
+        <p className="text-[11px] leading-snug text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 font-mono break-all">
+          diagnostic: {diag}
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -164,6 +175,8 @@ type Props = {
 
 export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload }: Props) {
   const {
+    diag,
+    setDiag,
     uploadedByKind,
     idDoc,
     enrolDoc,
@@ -583,6 +596,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               accept={VERIFICATION_ID_FILE_ACCEPT}
               onFileSelected={pickIdFile}
               reviewNote="Our team may review this document."
+              diag={diag}
+              onDiag={setDiag}
             />
           </div>
         </section>
@@ -601,6 +616,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               error={identitySupportUploadError}
               accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
               onFileSelected={pickIdentitySupportFile}
+              diag={diag}
+              onDiag={setDiag}
             />
           </div>
         </section>
@@ -693,6 +710,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             accept={VERIFICATION_ID_FILE_ACCEPT}
             onFileSelected={pickIdFile}
             reviewNote="Our team may review this document."
+            diag={diag}
+            onDiag={setDiag}
           />
         </div>
       </section>
@@ -712,6 +731,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             error={enrolUploadError}
             accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
             onFileSelected={pickEnrolFile}
+            diag={diag}
+            onDiag={setDiag}
           />
         </div>
       </section>
