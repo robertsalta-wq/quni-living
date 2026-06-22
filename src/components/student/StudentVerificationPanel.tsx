@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -8,26 +8,21 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
-import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
-  isVerificationPdf,
-  MAX_VERIFICATION_DOC_BYTES,
-  validateVerificationFileSize,
-  validateVerificationFileType,
-  VERIFICATION_FILE_ACCEPT,
+  VERIFICATION_ID_FILE_ACCEPT,
+  VERIFICATION_SUPPORTING_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
-  docFromProfile,
   docStepComplete,
   hasUploadedDoc,
   profileDocFieldsFromValues,
-  resolveUploadedDoc,
   type VerificationDocKind,
   type VerificationUploadedDoc,
 } from '../../lib/verificationDocSlot'
-import { runVerificationDocUpload } from '../../lib/runVerificationDocUpload'
 import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
+import { StudentVerificationDocPick } from './StudentVerificationDocPick'
+import type { useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -37,10 +32,6 @@ import {
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 const RESEND_SECONDS = 60
-
-function revokeBlobUrl(url: string | null | undefined) {
-  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
-}
 
 function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
   return profileDocFieldsFromValues(kind, {
@@ -52,9 +43,6 @@ function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
     identitySupportSubmittedAt: profile.identity_supporting_submitted_at,
   })
 }
-
-const verificationUploadButtonClass =
-  'w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50'
 
 function formatReceivedAt(iso: string): string {
   try {
@@ -75,52 +63,28 @@ function DocUploadControl({
   busy,
   uploaded,
   error,
-  onPick,
+  accept,
+  onFileSelected,
   reviewNote,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
-  onPick: (e: ChangeEvent<HTMLInputElement>) => void
+  accept: string
+  onFileSelected: (file: File) => void
   reviewNote?: string
 }) {
-  const inputId = useId()
-  const [inputKey, setInputKey] = useState(0)
-
-  const pickLabel = uploaded
-    ? busy
-      ? 'Uploading…'
-      : 'Replace document'
-    : busy
-      ? 'Uploading…'
-      : CHOOSE_VERIFICATION_FILE_LABEL
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onPick(e)
-    setInputKey((k) => k + 1)
-  }
-
   return (
     <div className="space-y-3">
       {uploaded ? <DocReceivedCard doc={uploaded} reviewNote={reviewNote} /> : null}
       {error ? <UploadFailedBanner message={error} /> : null}
-      <input
-        key={inputKey}
-        id={inputId}
-        type="file"
-        accept={VERIFICATION_FILE_ACCEPT}
-        className="sr-only"
-        onChange={handleChange}
-        disabled={busy}
+      <StudentVerificationDocPick
+        accept={accept}
+        busy={busy}
+        label={uploaded ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
+        onFileSelected={onFileSelected}
+        error={null}
       />
-      <label
-        htmlFor={busy ? undefined : inputId}
-        aria-disabled={busy}
-        className={`${verificationUploadButtonClass}${busy ? ' opacity-50 pointer-events-none' : ' cursor-pointer'}`}
-      >
-        <span className="text-lg leading-none">+</span>
-        {pickLabel}
-      </label>
     </div>
   )
 }
@@ -189,19 +153,35 @@ function DocReceivedCard({
 
 const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm'
 
+type DocUploadApi = ReturnType<typeof useStudentVerificationDocUpload>
+
 type Props = {
   profile: StudentRow
   userId: string
   onRefresh: () => Promise<void>
-  onVerificationDocUploaded: (kind: VerificationDocKind, filePath: string, submittedAt: string) => void
+  docUpload: DocUploadApi
 }
 
-export function StudentVerificationPanel({ profile, userId, onRefresh, onVerificationDocUploaded }: Props) {
+export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload }: Props) {
+  const {
+    uploadedByKind,
+    idDoc,
+    enrolDoc,
+    identitySupportDoc,
+    idUploading,
+    enrolUploading,
+    identitySupportUploading,
+    idUploadError,
+    enrolUploadError,
+    identitySupportUploadError,
+    pickIdFile,
+    pickEnrolFile,
+    pickIdentitySupportFile,
+  } = docUpload
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
-  const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
   const onRefreshRef = useRef(onRefresh)
   onRefreshRef.current = onRefresh
 
@@ -211,19 +191,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
     'identity_supporting',
     uploadedByKind,
     profileDocFields(profile, 'identity_supporting'),
-  )
-
-  const idDoc = resolveUploadedDoc(
-    uploadedByKind.id,
-    docFromProfile(profile.id_document_url, profile.id_submitted_at),
-  )
-  const enrolDoc = resolveUploadedDoc(
-    uploadedByKind.enrolment,
-    docFromProfile(profile.enrolment_doc_url, profile.enrolment_submitted_at),
-  )
-  const identitySupportDoc = resolveUploadedDoc(
-    uploadedByKind.identity_supporting,
-    docFromProfile(profile.identity_supporting_doc_url, profile.identity_supporting_submitted_at),
   )
 
   const useIdentityFlow =
@@ -245,118 +212,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
   const [workVerifying, setWorkVerifying] = useState(false)
   const [workResendAt, setWorkResendAt] = useState<number | null>(null)
   const [, setWorkResendTick] = useState(0)
-
-  const [idUploadError, setIdUploadError] = useState<string | null>(null)
-  const [enrolUploadError, setEnrolUploadError] = useState<string | null>(null)
-  const [identitySupportUploadError, setIdentitySupportUploadError] = useState<string | null>(null)
-  const [idUploading, setIdUploading] = useState(false)
-  const [enrolUploading, setEnrolUploading] = useState(false)
-  const [identitySupportUploading, setIdentitySupportUploading] = useState(false)
-
-  function revertDocUpload(
-    kind: VerificationDocKind,
-    previewUrl: string | null,
-    rollback: VerificationUploadedDoc | null,
-  ) {
-    revokeBlobUrl(previewUrl)
-    setUploadedByKind((prev) => {
-      if (rollback) return { ...prev, [kind]: rollback }
-      const next = { ...prev }
-      delete next[kind]
-      return next
-    })
-  }
-
-  async function handleDocChange(
-    e: ChangeEvent<HTMLInputElement>,
-    kind: VerificationDocKind,
-    setErr: (s: string | null) => void,
-    setBusy: (b: boolean) => void,
-  ) {
-    setErr(null)
-    const file = e.target.files?.[0]
-    if (e.target) e.target.value = ''
-    if (!file) return
-
-    const profileFields = profileDocFields(profile, kind)
-    const existing = resolveUploadedDoc(
-      uploadedByKind[kind],
-      docFromProfile(profileFields.url, profileFields.submittedAt),
-    )
-    const rollback: VerificationUploadedDoc | null =
-      existing && !existing.pending
-        ? {
-            filePath: existing.filePath,
-            submittedAt: existing.submittedAt,
-            displayFileName: existing.displayFileName,
-          }
-        : null
-
-    const instantPreview = isVerificationPdf(file) ? null : URL.createObjectURL(file)
-
-    setBusy(true)
-    setUploadedByKind((prev) => {
-      revokeBlobUrl(prev[kind]?.previewUrl)
-      return {
-        ...prev,
-        [kind]: {
-          filePath: existing?.filePath ?? '',
-          submittedAt: new Date().toISOString(),
-          displayFileName: file.name,
-          previewUrl: instantPreview,
-          pending: true,
-        },
-      }
-    })
-
-    const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
-    if (sizeError) {
-      revertDocUpload(kind, instantPreview, rollback)
-      setErr(sizeError)
-      setBusy(false)
-      return
-    }
-    const typeError = validateVerificationFileType(file)
-    if (typeError) {
-      revertDocUpload(kind, instantPreview, rollback)
-      setErr(typeError)
-      setBusy(false)
-      return
-    }
-
-    try {
-      const result = await runVerificationDocUpload(supabase, userId, kind, file)
-      if (!result.ok) {
-        throw new Error(result.message)
-      }
-
-      setUploadedByKind((prev) => ({
-        ...prev,
-        [kind]: {
-          filePath: result.filePath,
-          submittedAt: result.submittedAt,
-          displayFileName: file.name,
-          previewUrl: prev[kind]?.previewUrl ?? instantPreview,
-          pending: false,
-        },
-      }))
-      onVerificationDocUploaded(kind, result.filePath, result.submittedAt)
-    } catch (err: unknown) {
-      console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
-      revertDocUpload(kind, instantPreview, rollback)
-      let msg = err instanceof Error ? err.message : messageFromSupabaseError(err)
-      if (msg === 'Something went wrong.' || msg === 'Unknown error') {
-        msg = String(err)
-      }
-      if (msg.includes('Bucket not found') || msg.includes('not found')) {
-        msg =
-          'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
-      }
-      setErr(msg)
-    } finally {
-      setBusy(false)
-    }
-  }
 
   useEffect(() => {
     if (profile.verification_type !== 'none') return
@@ -725,7 +580,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              onPick={(e) => void handleDocChange(e, 'id', setIdUploadError, setIdUploading)}
+              accept={VERIFICATION_ID_FILE_ACCEPT}
+              onFileSelected={pickIdFile}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -743,9 +599,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              onPick={(e) =>
-                void handleDocChange(e, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)
-              }
+              accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
+              onFileSelected={pickIdentitySupportFile}
             />
           </div>
         </section>
@@ -835,7 +690,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            onPick={(e) => void handleDocChange(e, 'id', setIdUploadError, setIdUploading)}
+            accept={VERIFICATION_ID_FILE_ACCEPT}
+            onFileSelected={pickIdFile}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -854,7 +710,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, onVerific
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            onPick={(e) => void handleDocChange(e, 'enrolment', setEnrolUploadError, setEnrolUploading)}
+            accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
+            onFileSelected={pickEnrolFile}
           />
         </div>
       </section>

@@ -1,7 +1,11 @@
 import { prepareProfilePhotoForUpload } from './prepareProfilePhotoForUpload'
 
 export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
-export const VERIFICATION_FILE_ACCEPT = 'image/*,application/pdf'
+/** Photo ID — images only; avoids Android Chrome bugs with mixed accept lists. */
+export const VERIFICATION_ID_FILE_ACCEPT = 'image/*'
+/** Enrolment / supporting docs may include PDF. */
+export const VERIFICATION_SUPPORTING_FILE_ACCEPT = 'image/*,.pdf,application/pdf'
+export const VERIFICATION_FILE_ACCEPT = VERIFICATION_SUPPORTING_FILE_ACCEPT
 export const CHOOSE_VERIFICATION_FILE_LABEL = 'Choose file (JPEG, PNG or PDF, max 15 MB)'
 
 export type VerificationStorageExt = 'jpg' | 'png' | 'pdf'
