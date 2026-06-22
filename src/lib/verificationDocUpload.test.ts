@@ -4,6 +4,7 @@ import {
   isVerificationHeicOrHeif,
   isVerificationPdf,
   fileLooksLikePdf,
+  prepareVerificationDocForUpload,
   validateVerificationFileType,
   verificationExtensionFromFilename,
 } from './verificationDocUpload'
@@ -60,5 +61,40 @@ describe('isAllowedVerificationFile', () => {
   it('rejects unknown types with a misleading extension segment', () => {
     const file = new File([new Uint8Array([1])], 'notes.docx', { type: '' })
     expect(isAllowedVerificationFile(file)).toBe(false)
+  })
+})
+
+describe('prepareVerificationDocForUpload', () => {
+  it('uploads JPEG under 15 MB without re-encoding', async () => {
+    const file = new File([new Uint8Array([0xff, 0xd8, 0xff])], 'id.jpg', { type: 'image/jpeg' })
+    const result = await prepareVerificationDocForUpload(file)
+    expect(result.storageExt).toBe('jpg')
+    expect(result.contentType).toBe('image/jpeg')
+    expect(result.blob).toBe(file)
+  })
+
+  it('uploads PNG under 15 MB without converting to JPEG', async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'scan.png', { type: 'image/png' })
+    const result = await prepareVerificationDocForUpload(file)
+    expect(result.storageExt).toBe('png')
+    expect(result.contentType).toBe('image/png')
+    expect(result.blob).toBe(file)
+  })
+
+  it('uploads WebP under 15 MB without forcing a decode pass', async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'photo.webp', { type: 'image/webp' })
+    const result = await prepareVerificationDocForUpload(file)
+    expect(result.storageExt).toBe('jpg')
+    expect(result.contentType).toBe('image/webp')
+    expect(result.blob).toBe(file)
+  })
+
+  it('passes PDF through unchanged', async () => {
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d])
+    const file = new File([pdfBytes], 'stmt.pdf', { type: 'application/pdf' })
+    const result = await prepareVerificationDocForUpload(file)
+    expect(result.storageExt).toBe('pdf')
+    expect(result.contentType).toBe('application/pdf')
+    expect(result.blob).toBe(file)
   })
 })

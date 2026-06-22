@@ -93,6 +93,22 @@ export async function fileLooksLikePdf(file: File): Promise<boolean> {
   }
 }
 
+function contentTypeForVerificationImage(file: File): string {
+  if (file.type.startsWith('image/')) return file.type
+  const ext = verificationExtensionFromFilename(file.name)
+  if (ext === 'png') return 'image/png'
+  if (ext === 'heic') return 'image/heic'
+  if (ext === 'heif') return 'image/heif'
+  if (ext === 'webp') return 'image/webp'
+  return 'image/jpeg'
+}
+
+function storageExtForVerificationImage(file: File): VerificationStorageExt {
+  const ext = verificationExtensionFromFilename(file.name)
+  if (ext === 'png') return 'png'
+  return 'jpg'
+}
+
 export async function prepareVerificationDocForUpload(
   file: File,
 ): Promise<{ blob: Blob; contentType: string; storageExt: VerificationStorageExt }> {
@@ -105,25 +121,21 @@ export async function prepareVerificationDocForUpload(
   }
 
   const normalized = fileForVerificationImageUpload(file)
+
+  // Under the 15 MB client cap, upload bytes as picked — same idea as profile photos under 2 MB.
+  // Avoids decode/resize passes that fail on Android gallery picks (WebP, HEIC, screenshots).
+  if (normalized.size <= MAX_VERIFICATION_DOC_BYTES) {
+    return {
+      blob: normalized,
+      contentType: contentTypeForVerificationImage(normalized),
+      storageExt: storageExtForVerificationImage(normalized),
+    }
+  }
+
   const prepared = await prepareProfilePhotoForUpload(normalized, MAX_VERIFICATION_DOC_BYTES)
-
-  const keepPng =
-    (normalized.type === 'image/png' || verificationExtensionFromFilename(normalized.name) === 'png') &&
-    prepared.ext === 'png' &&
-    prepared.contentType === 'image/png'
-
-  if (keepPng) {
-    return { blob: prepared.blob, contentType: 'image/png', storageExt: 'png' }
+  return {
+    blob: prepared.blob,
+    contentType: prepared.contentType,
+    storageExt: prepared.ext === 'png' ? 'png' : 'jpg',
   }
-
-  if (prepared.contentType === 'image/jpeg' || prepared.ext === 'jpg' || prepared.ext === 'jpeg') {
-    return { blob: prepared.blob, contentType: 'image/jpeg', storageExt: 'jpg' }
-  }
-
-  const convertMaxBytes = normalized.size > 1 ? normalized.size - 1 : 0
-  const jpegPrepared = await prepareProfilePhotoForUpload(normalized, convertMaxBytes)
-  if (jpegPrepared.ext === 'heic' || jpegPrepared.ext === 'heif') {
-    throw new Error('Could not convert HEIC image. Save as JPEG in Photos and try again.')
-  }
-  return { blob: jpegPrepared.blob, contentType: 'image/jpeg', storageExt: 'jpg' }
 }
