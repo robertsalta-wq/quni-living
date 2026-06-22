@@ -200,7 +200,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     else pickIdentitySupportFile(file)
   }
 
-  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement>) => () => {
+  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
     setPickDiag(`button tapped [${kind}] → opening picker`)
     ref.current?.click()
   }
