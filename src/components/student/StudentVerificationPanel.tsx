@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -125,15 +125,44 @@ function DocReceivedCard({
   )
 }
 
+function FilePickButton({
+  busy,
+  label,
+  onPick,
+}: {
+  busy: boolean
+  label: string
+  onPick: (e: ChangeEvent<HTMLInputElement>) => void
+}) {
+  if (busy) {
+    return (
+      <span className={filePickerLabelClassWhenBusy(true)} aria-disabled>
+        {label}
+      </span>
+    )
+  }
+
+  // Input overlays the label — reliable on iOS (htmlFor + useId colons breaks mobile Safari).
+  return (
+    <label className={`${filePickerLabelClass} relative block w-full sm:w-auto cursor-pointer`}>
+      <input
+        type="file"
+        accept={VERIFICATION_FILE_ACCEPT}
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+        onChange={onPick}
+      />
+      <span className="pointer-events-none relative z-0">{label}</span>
+    </label>
+  )
+}
+
 function DocUploadControl({
-  inputId,
   busy,
   uploaded,
   error,
   onPick,
   reviewNote,
 }: {
-  inputId: string
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
@@ -151,27 +180,15 @@ function DocUploadControl({
   return (
     <div className="space-y-3">
       {error ? <UploadFailedBanner message={error} /> : null}
-      <input
-        id={inputId}
-        type="file"
-        accept={VERIFICATION_FILE_ACCEPT}
-        disabled={busy}
-        className="sr-only"
-        onChange={onPick}
-      />
       {uploaded ? (
         <>
           <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
           {!uploaded.pending ? (
-            <label htmlFor={busy ? undefined : inputId} className={filePickerLabelClassWhenBusy(busy)}>
-              {pickLabel}
-            </label>
+            <FilePickButton busy={busy} label={pickLabel} onPick={onPick} />
           ) : null}
         </>
       ) : (
-        <label htmlFor={busy ? undefined : inputId} className={filePickerLabelClassWhenBusy(busy)}>
-          {pickLabel}
-        </label>
+        <FilePickButton busy={busy} label={pickLabel} onPick={onPick} />
       )}
     </div>
   )
@@ -186,11 +203,6 @@ type Props = {
 }
 
 export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) {
-  const reactId = useId()
-  const idFileInputId = `${reactId}-id-file`
-  const enrolFileInputId = `${reactId}-enrol-file`
-  const identitySupportFileInputId = `${reactId}-identity-support-file`
-
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
@@ -420,7 +432,15 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     setBusy(true)
     try {
       const result = await runVerificationDocUpload(supabase, userId, kind, file)
-      if (!result.ok) throw new Error(result.message)
+      if (!result.ok) {
+        setErr(result.message)
+        setUploadedByKind((prev) => {
+          revokeBlobUrl(prev[kind]?.previewUrl)
+          return failVerificationUpload(prev, rollbackByKindRef.current, kind)
+        })
+        delete rollbackByKindRef.current[kind]
+        return
+      }
 
       setUploadedByKind((prev) => {
         revokeBlobUrl(prev[kind]?.previewUrl)
@@ -456,8 +476,11 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     const input = e.target
     const file = input.files?.[0]
+    if (!file) {
+      setErr('No file was selected. Try again.')
+      return
+    }
     input.value = ''
-    if (!file) return
 
     setErr(null)
 
@@ -692,7 +715,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           </p>
           <div className="mt-4">
             <DocUploadControl
-              inputId={idFileInputId}
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
@@ -711,7 +733,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           </p>
           <div className="mt-4">
             <DocUploadControl
-              inputId={identitySupportFileInputId}
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
@@ -802,7 +823,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         </p>
         <div className="mt-4">
           <DocUploadControl
-            inputId={idFileInputId}
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
@@ -822,7 +842,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         </p>
         <div className="mt-4">
           <DocUploadControl
-            inputId={enrolFileInputId}
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}

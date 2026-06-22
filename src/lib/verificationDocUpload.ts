@@ -2,7 +2,7 @@ import { prepareProfilePhotoForUpload } from './prepareProfilePhotoForUpload'
 
 export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
 export const VERIFICATION_FILE_ACCEPT =
-  'image/jpeg,image/png,image/heic,image/heif,application/pdf,.heic,.heif'
+  'image/*,image/jpeg,image/png,image/heic,image/heif,application/pdf,.heic,.heif'
 export const CHOOSE_VERIFICATION_FILE_LABEL = 'Choose file (JPEG, PNG or PDF, max 15 MB)'
 
 export type VerificationStorageExt = 'jpg' | 'png' | 'pdf'
