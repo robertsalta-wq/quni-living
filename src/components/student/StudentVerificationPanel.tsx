@@ -9,6 +9,8 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
+import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
+import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import { OwnerSubmittedVerificationDoc } from './OwnerVerificationDocPreview'
 import {
   clearVerificationOtpPending,
@@ -19,9 +21,110 @@ import {
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 const DOC_BUCKET = 'student-documents'
-const MAX_DOC_BYTES = 5 * 1024 * 1024
+const MAX_DOC_BYTES = 15 * 1024 * 1024
 const RESEND_SECONDS = 60
 const UPLOAD_ACK_MS = 12_000
+const VERIFICATION_FILE_ACCEPT =
+  'image/jpeg,image/png,image/heic,image/heif,application/pdf,.heic,.heif'
+const CHOOSE_FILE_LABEL = 'Choose file (JPEG, PNG or PDF, max 15 MB)'
+
+type StorageExt = 'jpg' | 'png' | 'pdf'
+
+function verificationExtensionFromFilename(name: string): string {
+  return name.split('.').pop()?.toLowerCase() ?? ''
+}
+
+function isAllowedVerificationExtension(ext: string): boolean {
+  return ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'pdf' || ext === 'heic' || ext === 'heif'
+}
+
+function isAllowedVerificationMime(file: File): boolean {
+  return (
+    file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'application/pdf'
+  )
+}
+
+function isVerificationHeicOrHeif(file: File): boolean {
+  const ext = verificationExtensionFromFilename(file.name)
+  return ext === 'heic' || ext === 'heif' || file.type === 'image/heic' || file.type === 'image/heif'
+}
+
+/** Mobile browsers often leave `file.type` empty for camera-roll photos. */
+function isAllowedVerificationFile(file: File): boolean {
+  if (isAllowedVerificationMime(file)) return true
+  if (isVerificationHeicOrHeif(file)) return true
+  if (!file.type) {
+    return isAllowedVerificationExtension(verificationExtensionFromFilename(file.name))
+  }
+  return false
+}
+
+function fileForVerificationImageUpload(file: File): File {
+  if (file.type.startsWith('image/')) return file
+  const ext = verificationExtensionFromFilename(file.name)
+  const mime =
+    ext === 'png'
+      ? 'image/png'
+      : ext === 'heic' || ext === 'heif'
+        ? 'image/heic'
+        : 'image/jpeg'
+  return new File([file], file.name, { type: mime })
+}
+
+function storageExtFromPrepared(ext: string): StorageExt {
+  if (ext === 'png') return 'png'
+  if (ext === 'pdf') return 'pdf'
+  return 'jpg'
+}
+
+function contentTypeForVerificationUpload(file: File, storageExt: StorageExt): string {
+  if (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'application/pdf') {
+    return file.type
+  }
+  if (file.type.startsWith('image/')) return file.type
+  if (storageExt === 'png') return 'image/png'
+  if (storageExt === 'pdf') return 'application/pdf'
+  if (storageExt === 'jpg') return 'image/jpeg'
+  return 'application/octet-stream'
+}
+
+async function prepareVerificationDocForUpload(
+  file: File,
+  maxBytes: number,
+): Promise<{ blob: Blob; contentType: string; storageExt: StorageExt }> {
+  const rawExt = verificationExtensionFromFilename(file.name)
+  const isPdf = file.type === 'application/pdf' || (rawExt === 'pdf' && !file.type.startsWith('image/'))
+
+  if (isPdf) {
+    return {
+      blob: file,
+      contentType: file.type || 'application/pdf',
+      storageExt: 'pdf',
+    }
+  }
+
+  const normalized = fileForVerificationImageUpload(file)
+  const needsConversion = isVerificationHeicOrHeif(file) || normalized.size > maxBytes
+
+  if (needsConversion) {
+    const prepared = await prepareProfilePhotoForUpload(normalized, maxBytes)
+    return {
+      blob: prepared.blob,
+      contentType: prepared.contentType,
+      storageExt: storageExtFromPrepared(prepared.ext),
+    }
+  }
+
+  let storageExt: StorageExt = 'jpg'
+  if (rawExt === 'png' || file.type === 'image/png') storageExt = 'png'
+  else if (rawExt === 'jpeg' || rawExt === 'jpg' || file.type === 'image/jpeg') storageExt = 'jpg'
+
+  return {
+    blob: file,
+    contentType: contentTypeForVerificationUpload(file, storageExt),
+    storageExt,
+  }
+}
 
 function UploadReceivedBanner({ fileName }: { fileName: string }) {
   return (
@@ -38,6 +141,24 @@ function UploadReceivedBanner({ fileName }: { fileName: string }) {
         <p className="text-emerald-900/90 mt-1">
           Saved securely - <span className="font-medium break-all">{fileName}</span>
         </p>
+      </div>
+    </div>
+  )
+}
+
+function UploadFailedBanner({ message }: { message: string }) {
+  return (
+    <div
+      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 flex gap-2.5 items-start shadow-sm"
+      role="alert"
+      aria-live="assertive"
+    >
+      <span className="text-xl leading-none text-red-600 shrink-0" aria-hidden>
+        !
+      </span>
+      <div className="min-w-0">
+        <p className="font-semibold text-red-950">Upload failed</p>
+        <p className="text-red-900/90 mt-1 break-words">{message}</p>
       </div>
     </div>
   )
@@ -268,39 +389,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     setErr(null)
     if (file.size > MAX_DOC_BYTES) {
-      setErr('File must be 5 MB or smaller.')
+      setErr('File must be 15 MB or smaller.')
       return
     }
-    const okType =
-      file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'application/pdf'
-    if (!okType) {
+    if (!isAllowedVerificationFile(file)) {
       setErr('Use a JPEG, PNG, or PDF file.')
       return
     }
     setBusy(true)
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase()
-      const safeExt =
-        ext && /^[a-z0-9]+$/i.test(ext) && (ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'pdf')
-          ? ext === 'jpeg'
-            ? 'jpg'
-            : ext
-          : file.type === 'image/png'
-            ? 'png'
-            : file.type === 'application/pdf'
-              ? 'pdf'
-              : 'jpg'
+      const prepared = await prepareVerificationDocForUpload(file, MAX_DOC_BYTES)
       const base =
         kind === 'id'
           ? 'id-document'
           : kind === 'enrolment'
             ? 'enrolment-doc'
             : 'identity-supporting-doc'
-      const path = `${userId}/${base}.${safeExt}`
+      const path = `${userId}/${base}.${prepared.storageExt}`
 
-      const { error: upErr } = await supabase.storage.from(DOC_BUCKET).upload(path, file, {
+      const { error: upErr } = await supabase.storage.from(DOC_BUCKET).upload(path, prepared.blob, {
         upsert: true,
-        contentType: file.type,
+        contentType: prepared.contentType,
       })
       if (upErr) throw upErr
 
@@ -329,12 +438,12 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
       await onRefresh()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Upload failed.'
-      setErr(
-        msg.includes('Bucket not found') || msg.includes('not found')
-          ? 'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
-          : msg,
-      )
+      let msg = messageFromSupabaseError(e)
+      if (msg.includes('Bucket not found') || msg.includes('not found')) {
+        msg =
+          'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
+      }
+      setErr(msg)
     } finally {
       setBusy(false)
     }
@@ -561,6 +670,14 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           </p>
           <div className="mt-4 space-y-3">
             {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
+            {idUploadError && <UploadFailedBanner message={idUploadError} />}
+            <input
+              ref={idInputRef}
+              type="file"
+              accept={VERIFICATION_FILE_ACCEPT}
+              className="sr-only"
+              onChange={onIdFile}
+            />
             {idSubmitted ? (
               <OwnerSubmittedVerificationDoc
                 icon="📄"
@@ -568,30 +685,18 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
                 submittedAt={profile.id_submitted_at}
                 filePath={profile.id_document_url}
                 reviewNote="Our team may review this document."
+                onReplace={() => idInputRef.current?.click()}
+                replaceUploading={idUploading}
               />
             ) : (
-              <div>
-                <input
-                  ref={idInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  className="sr-only"
-                  onChange={onIdFile}
-                />
-                <button
-                  type="button"
-                  disabled={idUploading}
-                  onClick={() => idInputRef.current?.click()}
-                  className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-                >
-                  {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-                </button>
-                {idUploadError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {idUploadError}
-                  </p>
-                )}
-              </div>
+              <button
+                type="button"
+                disabled={idUploading}
+                onClick={() => idInputRef.current?.click()}
+                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+              >
+                {idUploading ? 'Uploading…' : CHOOSE_FILE_LABEL}
+              </button>
             )}
           </div>
         </section>
@@ -607,36 +712,32 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             {uploadAckByKind.identity_supporting && (
               <UploadReceivedBanner fileName={uploadAckByKind.identity_supporting.fileName} />
             )}
+            {identitySupportUploadError && <UploadFailedBanner message={identitySupportUploadError} />}
+            <input
+              ref={identitySupportInputRef}
+              type="file"
+              accept={VERIFICATION_FILE_ACCEPT}
+              className="sr-only"
+              onChange={onIdentitySupportFile}
+            />
             {identitySupportingSubmitted ? (
               <OwnerSubmittedVerificationDoc
                 icon="📎"
                 title="Document on file"
                 submittedAt={profile.identity_supporting_submitted_at}
                 filePath={profile.identity_supporting_doc_url}
+                onReplace={() => identitySupportInputRef.current?.click()}
+                replaceUploading={identitySupportUploading}
               />
             ) : (
-              <div>
-                <input
-                  ref={identitySupportInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  className="sr-only"
-                  onChange={onIdentitySupportFile}
-                />
-                <button
-                  type="button"
-                  disabled={identitySupportUploading}
-                  onClick={() => identitySupportInputRef.current?.click()}
-                  className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-                >
-                  {identitySupportUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-                </button>
-                {identitySupportUploadError && (
-                  <p className="text-xs text-red-600 mt-2" role="alert">
-                    {identitySupportUploadError}
-                  </p>
-                )}
-              </div>
+              <button
+                type="button"
+                disabled={identitySupportUploading}
+                onClick={() => identitySupportInputRef.current?.click()}
+                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+              >
+                {identitySupportUploading ? 'Uploading…' : CHOOSE_FILE_LABEL}
+              </button>
             )}
           </div>
         </section>
@@ -723,6 +824,14 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         </p>
         <div className="mt-4 space-y-3">
           {uploadAckByKind.id && <UploadReceivedBanner fileName={uploadAckByKind.id.fileName} />}
+          {idUploadError && <UploadFailedBanner message={idUploadError} />}
+          <input
+            ref={idInputRef}
+            type="file"
+            accept={VERIFICATION_FILE_ACCEPT}
+            className="sr-only"
+            onChange={onIdFile}
+          />
           {idSubmitted ? (
             <OwnerSubmittedVerificationDoc
               icon="📄"
@@ -730,30 +839,18 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               submittedAt={profile.id_submitted_at}
               filePath={profile.id_document_url}
               reviewNote="Our team may review this document."
+              onReplace={() => idInputRef.current?.click()}
+              replaceUploading={idUploading}
             />
           ) : (
-            <div>
-              <input
-                ref={idInputRef}
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                className="sr-only"
-                onChange={onIdFile}
-              />
-              <button
-                type="button"
-                disabled={idUploading}
-                onClick={() => idInputRef.current?.click()}
-                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-              >
-                {idUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-              </button>
-              {idUploadError && (
-                <p className="text-xs text-red-600 mt-2" role="alert">
-                  {idUploadError}
-                </p>
-              )}
-            </div>
+            <button
+              type="button"
+              disabled={idUploading}
+              onClick={() => idInputRef.current?.click()}
+              className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+            >
+              {idUploading ? 'Uploading…' : CHOOSE_FILE_LABEL}
+            </button>
           )}
         </div>
       </section>
@@ -768,36 +865,32 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         </p>
         <div className="mt-4 space-y-3">
           {uploadAckByKind.enrolment && <UploadReceivedBanner fileName={uploadAckByKind.enrolment.fileName} />}
+          {enrolUploadError && <UploadFailedBanner message={enrolUploadError} />}
+          <input
+            ref={enrolInputRef}
+            type="file"
+            accept={VERIFICATION_FILE_ACCEPT}
+            className="sr-only"
+            onChange={onEnrolFile}
+          />
           {enrolSubmitted ? (
             <OwnerSubmittedVerificationDoc
               icon="🎓"
               title="Enrolment on file"
               submittedAt={profile.enrolment_submitted_at}
               filePath={profile.enrolment_doc_url}
+              onReplace={() => enrolInputRef.current?.click()}
+              replaceUploading={enrolUploading}
             />
           ) : (
-            <div>
-              <input
-                ref={enrolInputRef}
-                type="file"
-                accept="image/jpeg,image/png,application/pdf"
-                className="sr-only"
-                onChange={onEnrolFile}
-              />
-              <button
-                type="button"
-                disabled={enrolUploading}
-                onClick={() => enrolInputRef.current?.click()}
-                className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
-              >
-                {enrolUploading ? 'Uploading…' : 'Choose file (JPEG, PNG or PDF, max 5 MB)'}
-              </button>
-              {enrolUploadError && (
-                <p className="text-xs text-red-600 mt-2" role="alert">
-                  {enrolUploadError}
-                </p>
-              )}
-            </div>
+            <button
+              type="button"
+              disabled={enrolUploading}
+              onClick={() => enrolInputRef.current?.click()}
+              className="w-full sm:w-auto min-h-[2.75rem] px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] disabled:opacity-50"
+            >
+              {enrolUploading ? 'Uploading…' : CHOOSE_FILE_LABEL}
+            </button>
           )}
         </div>
       </section>
