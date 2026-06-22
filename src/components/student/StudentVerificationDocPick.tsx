@@ -14,6 +14,7 @@ export function StudentVerificationDocPick({
   busyLabel = 'Uploading…',
   error,
   onFileSelected,
+  onPickDiag,
 }: {
   accept: string
   busy: boolean
@@ -21,11 +22,18 @@ export function StudentVerificationDocPick({
   busyLabel?: string
   error: string | null
   onFileSelected: (file: File) => void
+  // TEMP DIAGNOSTIC: reports picker lifecycle so a silent device tells us where it stalls.
+  onPickDiag?: (msg: string) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const files = e.target.files
+    const file = files?.[0]
+    onPickDiag?.(
+      `change fired: ${files?.length ?? 0} file(s)` +
+        (file ? ` name=${file.name || '(none)'} type=${file.type || '(none)'} size=${file.size}b` : ' (no file)'),
+    )
     e.target.value = ''
     if (!file) return
     onFileSelected(file)
@@ -37,7 +45,10 @@ export function StudentVerificationDocPick({
       <button
         type="button"
         disabled={busy}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => {
+          onPickDiag?.('button tapped → opening picker')
+          inputRef.current?.click()
+        }}
         className={pickButtonClass}
       >
         <span className="text-lg leading-none">+</span>

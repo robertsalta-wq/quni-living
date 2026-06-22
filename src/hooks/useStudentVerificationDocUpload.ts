@@ -46,6 +46,9 @@ export function useStudentVerificationDocUpload(
   const [idUploading, setIdUploading] = useState(false)
   const [enrolUploading, setEnrolUploading] = useState(false)
   const [identitySupportUploading, setIdentitySupportUploading] = useState(false)
+  // TEMP DIAGNOSTIC: surfaces the live upload step so a failing device shows the
+  // real reason on screen instead of "nothing happens". Remove once resolved.
+  const [diag, setDiag] = useState<string | null>(null)
 
   const idDoc = profile
     ? resolveUploadedDoc(
@@ -86,7 +89,16 @@ export function useStudentVerificationDocUpload(
       setErr: (s: string | null) => void,
       setBusy: (b: boolean) => void,
     ) => {
-      if (!profile || !userId) return
+      setDiag(
+        `[${kind}] picked: name=${file.name || '(none)'} type=${file.type || '(none)'} size=${file.size}b`,
+      )
+      console.warn('[verif-upload] picked', { kind, name: file.name, type: file.type, size: file.size })
+
+      if (!profile || !userId) {
+        setDiag(`[${kind}] blocked before upload: profile=${!!profile} userId=${!!userId}`)
+        setErr('Not ready yet — reload the page and try again.')
+        return
+      }
 
       setErr(null)
 
@@ -121,6 +133,7 @@ export function useStudentVerificationDocUpload(
 
       const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
       if (sizeError) {
+        setDiag(`[${kind}] rejected (size): ${sizeError}`)
         revertDocUpload(kind, instantPreview, rollback)
         setErr(sizeError)
         setBusy(false)
@@ -128,6 +141,7 @@ export function useStudentVerificationDocUpload(
       }
       const typeError = validateVerificationFileType(file)
       if (typeError) {
+        setDiag(`[${kind}] rejected (type): file.type="${file.type || '(none)'}" name="${file.name || '(none)'}"`)
         revertDocUpload(kind, instantPreview, rollback)
         setErr(typeError)
         setBusy(false)
@@ -135,10 +149,12 @@ export function useStudentVerificationDocUpload(
       }
 
       try {
+        setDiag(`[${kind}] uploading to storage…`)
         const result = await runVerificationDocUpload(supabase, userId, kind, file)
         if (!result.ok) {
           throw new Error(result.message)
         }
+        setDiag(`[${kind}] saved OK -> ${result.filePath}`)
 
         setUploadedByKind((prev) => ({
           ...prev,
@@ -162,6 +178,7 @@ export function useStudentVerificationDocUpload(
           msg =
             'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
         }
+        setDiag(`[${kind}] ERROR: ${msg}`)
         setErr(msg)
       } finally {
         setBusy(false)
@@ -184,6 +201,8 @@ export function useStudentVerificationDocUpload(
   )
 
   return {
+    diag,
+    setDiag,
     uploadedByKind,
     idDoc,
     enrolDoc,
