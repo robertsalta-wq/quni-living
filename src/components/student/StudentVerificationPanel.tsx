@@ -18,6 +18,13 @@ import {
   validateVerificationFileType,
   VERIFICATION_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
+import {
+  addVerificationUploadStartBreadcrumb,
+  buildVerificationUploadSentryMeta,
+  captureVerificationUploadException,
+  captureVerificationUploadValidationReject,
+  type VerificationUploadStage,
+} from '../../lib/verificationUploadSentry'
 import { OwnerSubmittedVerificationDoc } from './OwnerVerificationDocPreview'
 import {
   clearVerificationOtpPending,
@@ -302,14 +309,26 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     setErr: (s: string | null) => void,
     setBusy: (b: boolean) => void,
   ) {
+    const uploadRoute = useIdentityFlow ? 'non-student' : 'student'
+    const sentryMeta = buildVerificationUploadSentryMeta(file, kind, uploadRoute, userId)
+    addVerificationUploadStartBreadcrumb(sentryMeta)
+
     setErr(null)
     setBusy(true)
+    let stage: VerificationUploadStage = 'validation'
     try {
       const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
-      if (sizeError) throw new Error(sizeError)
+      if (sizeError) {
+        captureVerificationUploadValidationReject('file_size', sentryMeta, sizeError)
+        throw new Error(sizeError)
+      }
       const typeError = validateVerificationFileType(file)
-      if (typeError) throw new Error(typeError)
+      if (typeError) {
+        captureVerificationUploadValidationReject('file_type', sentryMeta, typeError)
+        throw new Error(typeError)
+      }
 
+      stage = 'conversion'
       const prepared = await prepareVerificationDocForUpload(file)
       const base =
         kind === 'id'
@@ -319,6 +338,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             : 'identity-supporting-doc'
       const path = `${userId}/${base}.${prepared.storageExt}`
 
+      stage = 'storage'
       const { error: upErr } = await supabase.storage.from(DOC_BUCKET).upload(path, prepared.blob, {
         upsert: true,
         contentType: prepared.contentType,
@@ -333,6 +353,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             ? { enrolment_doc_url: path, enrolment_submitted_at: nowIso }
             : { identity_supporting_doc_url: path, identity_supporting_submitted_at: nowIso }
 
+      stage = 'db'
       const { error: dbErr } = await supabase.from('student_profiles').update(patch).eq('user_id', userId)
       if (dbErr) throw dbErr
 
@@ -350,6 +371,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
       await onRefresh()
     } catch (e: unknown) {
+      if (stage !== 'validation') {
+        captureVerificationUploadException(e, stage, sentryMeta)
+      }
       console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
       let msg = messageFromSupabaseError(e)
       if (msg === 'Something went wrong.' || msg === 'Unknown error') {

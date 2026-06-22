@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => {
     }
   }
 
+  const vercelCommitSha = process.env.VERCEL_GIT_COMMIT_SHA?.trim()
+  if (vercelCommitSha) {
+    define['import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA'] = JSON.stringify(vercelCommitSha)
+  }
+
   const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim() ?? ''
   const uploadSourceMaps = sentryAuthToken.length > 0
 
