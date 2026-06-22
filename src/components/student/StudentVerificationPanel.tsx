@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -26,7 +26,7 @@ import {
   verificationUploadDocTypeFromKind,
   type VerificationUploadStage,
 } from '../../lib/verificationUploadSentry'
-import { OwnerSubmittedVerificationDoc } from './OwnerVerificationDocPreview'
+import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -37,7 +37,45 @@ type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 const DOC_BUCKET = 'student-documents'
 const RESEND_SECONDS = 60
-const UPLOAD_ACK_MS = 12_000
+
+type LocalDocReceipt = {
+  filePath: string
+  submittedAt: string
+  displayFileName: string
+}
+
+type DocSlotState = {
+  submitted: boolean
+  filePath: string | null
+  submittedAt: string | null
+  displayFileName: string | null
+}
+
+function resolveDocSlotState(
+  local: LocalDocReceipt | undefined,
+  profileUrl: string | null | undefined,
+  profileSubmittedAt: string | null | undefined,
+): DocSlotState {
+  if (local?.filePath && local.submittedAt) {
+    return {
+      submitted: true,
+      filePath: local.filePath,
+      submittedAt: local.submittedAt,
+      displayFileName: local.displayFileName,
+    }
+  }
+  const path = profileUrl?.trim() ?? ''
+  const at = profileSubmittedAt?.trim() ?? ''
+  if (path && at) {
+    return {
+      submitted: true,
+      filePath: path,
+      submittedAt: at,
+      displayFileName: path.split('/').pop() ?? 'document',
+    }
+  }
+  return { submitted: false, filePath: null, submittedAt: null, displayFileName: null }
+}
 
 const filePickerLabelClass =
   'inline-flex w-full sm:w-auto min-h-[2.75rem] items-center justify-center px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] cursor-pointer'
@@ -50,11 +88,47 @@ type VerificationDocUploadSlotProps = {
   inputId: string
   inputRef: RefObject<HTMLInputElement | null>
   busy: boolean
-  submitted: boolean
+  received: DocSlotState
   error: string | null
-  ackFileName?: string
   onChange: (e: ChangeEvent<HTMLInputElement>) => void
-  submittedDoc?: ReactNode
+  reviewNote?: string
+}
+
+function VerificationDocReceivedCard({
+  displayFileName,
+  submittedAt,
+  filePath,
+  reviewNote,
+}: {
+  displayFileName: string
+  submittedAt: string
+  filePath: string
+  reviewNote?: string
+}) {
+  return (
+    <div
+      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex gap-2.5 items-start">
+        <span className="text-xl leading-none text-emerald-600 shrink-0" aria-hidden>
+          ✓
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-emerald-950">Document received</p>
+          <p className="text-emerald-900/90 mt-1">
+            Received {formatDate(submittedAt)} · pending review (not verified yet)
+          </p>
+          <p className="text-emerald-900/90 mt-1 break-all">
+            <span className="font-medium">{displayFileName}</span>
+          </p>
+          {reviewNote ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
+          <OwnerVerificationDocPreview filePath={filePath} />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /** One file input + one control so the picker always targets the input that owns onChange. */
@@ -62,11 +136,10 @@ function VerificationDocUploadSlot({
   inputId,
   inputRef,
   busy,
-  submitted,
+  received,
   error,
-  ackFileName,
   onChange,
-  submittedDoc,
+  reviewNote,
 }: VerificationDocUploadSlotProps) {
   function openFilePicker(e: MouseEvent<HTMLLabelElement> | KeyboardEvent<HTMLLabelElement>) {
     if (busy) {
@@ -79,7 +152,6 @@ function VerificationDocUploadSlot({
 
   return (
     <div className="space-y-3">
-      {ackFileName ? <UploadReceivedBanner fileName={ackFileName} /> : null}
       {error ? <UploadFailedBanner message={error} /> : null}
       <input
         id={inputId}
@@ -92,39 +164,41 @@ function VerificationDocUploadSlot({
         className="sr-only"
         onChange={onChange}
       />
-      {submittedDoc}
-      <label
-        role="button"
-        tabIndex={busy ? -1 : 0}
-        aria-disabled={busy}
-        className={filePickerLabelClassWhenBusy(busy)}
-        onClick={openFilePicker}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
-        }}
-      >
-        {busy ? 'Uploading…' : submitted ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
-      </label>
-    </div>
-  )
-}
-
-function UploadReceivedBanner({ fileName }: { fileName: string }) {
-  return (
-    <div
-      className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 flex gap-2.5 items-start shadow-sm"
-      role="status"
-      aria-live="polite"
-    >
-      <span className="text-xl leading-none text-emerald-600 shrink-0" aria-hidden>
-        ✓
-      </span>
-      <div className="min-w-0">
-        <p className="font-semibold text-emerald-950">Document received</p>
-        <p className="text-emerald-900/90 mt-1">
-          Saved securely - <span className="font-medium break-all">{fileName}</span>
-        </p>
-      </div>
+      {received.submitted && received.filePath && received.submittedAt && received.displayFileName ? (
+        <>
+          <VerificationDocReceivedCard
+            displayFileName={received.displayFileName}
+            submittedAt={received.submittedAt}
+            filePath={received.filePath}
+            reviewNote={reviewNote}
+          />
+          <label
+            role="button"
+            tabIndex={busy ? -1 : 0}
+            aria-disabled={busy}
+            className={filePickerLabelClassWhenBusy(busy)}
+            onClick={openFilePicker}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
+            }}
+          >
+            {busy ? 'Uploading…' : 'Replace document'}
+          </label>
+        </>
+      ) : (
+        <label
+          role="button"
+          tabIndex={busy ? -1 : 0}
+          aria-disabled={busy}
+          className={filePickerLabelClassWhenBusy(busy)}
+          onClick={openFilePicker}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') openFilePicker(e)
+          }}
+        >
+          {busy ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
+        </label>
+      )}
     </div>
   )
 }
@@ -165,11 +239,28 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
-  const idSubmitted = Boolean(profile.id_submitted_at && profile.id_document_url)
-  const enrolSubmitted = Boolean(profile.enrolment_submitted_at && profile.enrolment_doc_url)
-  const identitySupportingSubmitted = Boolean(
-    profile.identity_supporting_submitted_at && profile.identity_supporting_doc_url,
+
+  const [localReceiptByKind, setLocalReceiptByKind] = useState<Partial<Record<DocKind, LocalDocReceipt>>>({})
+
+  const idSlot = resolveDocSlotState(
+    localReceiptByKind.id,
+    profile.id_document_url,
+    profile.id_submitted_at,
   )
+  const enrolSlot = resolveDocSlotState(
+    localReceiptByKind.enrolment,
+    profile.enrolment_doc_url,
+    profile.enrolment_submitted_at,
+  )
+  const identitySupportSlot = resolveDocSlotState(
+    localReceiptByKind.identity_supporting,
+    profile.identity_supporting_doc_url,
+    profile.identity_supporting_submitted_at,
+  )
+
+  const idSubmitted = idSlot.submitted
+  const enrolSubmitted = enrolSlot.submitted
+  const identitySupportingSubmitted = identitySupportSlot.submitted
 
   const useIdentityFlow =
     profile.verification_type === 'identity' ||
@@ -194,8 +285,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
   const identitySupportInputRef = useRef<HTMLInputElement>(null)
-  const uploadAckClearTimersRef = useRef<Partial<Record<DocKind, number>>>({})
-  const [uploadAckByKind, setUploadAckByKind] = useState<Partial<Record<DocKind, { fileName: string }>>>({})
   const [idUploadError, setIdUploadError] = useState<string | null>(null)
   const [enrolUploadError, setEnrolUploadError] = useState<string | null>(null)
   const [identitySupportUploadError, setIdentitySupportUploadError] = useState<string | null>(null)
@@ -256,15 +345,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     const t = window.setInterval(() => setWorkResendTick((x) => x + 1), 1000)
     return () => window.clearInterval(t)
   }, [workResendAt])
-
-  useEffect(() => {
-    return () => {
-      for (const t of Object.values(uploadAckClearTimersRef.current)) {
-        if (typeof t === 'number') window.clearTimeout(t)
-      }
-      uploadAckClearTimersRef.current = {}
-    }
-  }, [])
 
   useEffect(() => {
     if (workEmailVerified) {
@@ -423,19 +503,12 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       const { error: dbErr } = await supabase.from('student_profiles').update(patch).eq('user_id', userId)
       if (dbErr) throw dbErr
 
-      setUploadAckByKind((m) => ({ ...m, [kind]: { fileName: file.name } }))
-      const prevAckT = uploadAckClearTimersRef.current[kind]
-      if (typeof prevAckT === 'number') window.clearTimeout(prevAckT)
-      uploadAckClearTimersRef.current[kind] = window.setTimeout(() => {
-        setUploadAckByKind((m) => {
-          const next = { ...m }
-          delete next[kind]
-          return next
-        })
-        delete uploadAckClearTimersRef.current[kind]
-      }, UPLOAD_ACK_MS)
+      setLocalReceiptByKind((m) => ({
+        ...m,
+        [kind]: { filePath: path, submittedAt: nowIso, displayFileName: file.name },
+      }))
 
-      await onRefresh()
+      void onRefresh()
     } catch (e: unknown) {
       if (stage !== 'validation') {
         captureVerificationUploadException(e, stage, sentryMeta)
@@ -702,21 +775,10 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               inputId={idFileInputId}
               inputRef={idInputRef}
               busy={idUploading}
-              submitted={idSubmitted}
+              received={idSlot}
               error={idUploadError}
-              ackFileName={uploadAckByKind.id?.fileName}
               onChange={onIdFile}
-              submittedDoc={
-                idSubmitted ? (
-                  <OwnerSubmittedVerificationDoc
-                    icon="📄"
-                    title="ID on file"
-                    submittedAt={profile.id_submitted_at}
-                    filePath={profile.id_document_url}
-                    reviewNote="Our team may review this document."
-                  />
-                ) : undefined
-              }
+              reviewNote="Our team may review this document."
             />
           </div>
         </section>
@@ -733,20 +795,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               inputId={identitySupportFileInputId}
               inputRef={identitySupportInputRef}
               busy={identitySupportUploading}
-              submitted={identitySupportingSubmitted}
+              received={identitySupportSlot}
               error={identitySupportUploadError}
-              ackFileName={uploadAckByKind.identity_supporting?.fileName}
               onChange={onIdentitySupportFile}
-              submittedDoc={
-                identitySupportingSubmitted ? (
-                  <OwnerSubmittedVerificationDoc
-                    icon="📎"
-                    title="Document on file"
-                    submittedAt={profile.identity_supporting_submitted_at}
-                    filePath={profile.identity_supporting_doc_url}
-                  />
-                ) : undefined
-              }
             />
           </div>
         </section>
@@ -836,21 +887,10 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             inputId={idFileInputId}
             inputRef={idInputRef}
             busy={idUploading}
-            submitted={idSubmitted}
+            received={idSlot}
             error={idUploadError}
-            ackFileName={uploadAckByKind.id?.fileName}
             onChange={onIdFile}
-            submittedDoc={
-              idSubmitted ? (
-                <OwnerSubmittedVerificationDoc
-                  icon="📄"
-                  title="ID on file"
-                  submittedAt={profile.id_submitted_at}
-                  filePath={profile.id_document_url}
-                  reviewNote="Our team may review this document."
-                />
-              ) : undefined
-            }
+            reviewNote="Our team may review this document."
           />
         </div>
       </section>
@@ -868,20 +908,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             inputId={enrolFileInputId}
             inputRef={enrolInputRef}
             busy={enrolUploading}
-            submitted={enrolSubmitted}
+            received={enrolSlot}
             error={enrolUploadError}
-            ackFileName={uploadAckByKind.enrolment?.fileName}
             onChange={onEnrolFile}
-            submittedDoc={
-              enrolSubmitted ? (
-                <OwnerSubmittedVerificationDoc
-                  icon="🎓"
-                  title="Enrolment on file"
-                  submittedAt={profile.enrolment_submitted_at}
-                  filePath={profile.enrolment_doc_url}
-                />
-              ) : undefined
-            }
           />
         </div>
       </section>

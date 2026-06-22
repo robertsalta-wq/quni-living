@@ -17,7 +17,7 @@ function displayFileName(path: string): string {
  * Owner-only preview of a verification document the renter uploaded.
  * RLS allows read on student-documents/{auth.uid()}/… only — use only on the owner's profile view.
  */
-function OwnerVerificationDocPreview({ filePath }: { filePath: string }) {
+export function OwnerVerificationDocPreview({ filePath }: { filePath: string }) {
   const path = filePath.trim()
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
