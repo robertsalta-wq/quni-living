@@ -14,6 +14,7 @@ import {
   renterBookingEligibilityBlock,
 } from './lib/booking/assertRenterEligibleForBooking.js'
 import { buildBookingRejectVisibility } from './lib/booking/captureBookingRejected.js'
+import { requestContextFromRequest } from './lib/journey/requestContext.js'
 
 export const config = {
   runtime: 'edge',
@@ -50,6 +51,8 @@ export default async function handler(request) {
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405, origin)
   }
+
+  const deviceCtx = requestContextFromRequest(request)
 
   const stripeSecret = process.env.STRIPE_SECRET_KEY
   const supabaseUrl = process.env.SUPABASE_URL
@@ -111,6 +114,7 @@ export default async function handler(request) {
     const stripeVis = buildBookingRejectVisibility(user, propertyId || null, 'stripe_payment_setup', {
       student_profile_id: profile.id,
       email: profile.email ?? user.email ?? null,
+      ...deviceCtx,
     })
 
     const eligibilityBlock = propertyId

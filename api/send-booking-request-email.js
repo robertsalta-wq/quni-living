@@ -9,6 +9,7 @@ import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplate
 import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
 import { buildBookingRejectVisibility, recordJourneyEvent } from './lib/booking/captureBookingRejected.js'
 import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
+import { mergeDeviceContextMetadata, requestContextFromRequest } from './lib/journey/requestContext.js'
 
 export const config = { runtime: 'edge' }
 
@@ -43,6 +44,8 @@ export default async function handler(request) {
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405, origin)
   }
+
+  const deviceCtx = requestContextFromRequest(request)
 
   const supabaseUrl = process.env.SUPABASE_URL
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -147,6 +150,7 @@ export default async function handler(request) {
       attempt_id: attemptId,
       student_profile_id: student.id,
       email: user.email ?? null,
+      ...deviceCtx,
     }),
   )
   if (eligibilityBlock) return eligibilityBlock
@@ -205,7 +209,7 @@ export default async function handler(request) {
     property_id: booking.property_id,
     event_type: 'booking_landlord_notified',
     step: 'booking_email',
-    metadata: { booking_id: bookingId },
+    metadata: mergeDeviceContextMetadata({ booking_id: bookingId }, deviceCtx),
   })
 
   return json({ ok: true }, 200, origin)

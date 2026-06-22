@@ -6,6 +6,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { insertJourneyEvent, readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
+import { requestContextFromRequest } from './lib/journey/requestContext.js'
 
 export const config = { runtime: 'edge' }
 
@@ -89,6 +90,8 @@ export default async function handler(request) {
 
   const admin = createClient(supabaseUrl, serviceRole)
 
+  const deviceCtx = requestContextFromRequest(request)
+
   await insertJourneyEvent(
     {
       user_id: user.id,
@@ -97,7 +100,7 @@ export default async function handler(request) {
       property_id: propertyId,
       event_type: 'booking_page_opened',
       step: 'booking_page',
-      metadata: {},
+      metadata: { ...deviceCtx },
     },
     admin,
   )

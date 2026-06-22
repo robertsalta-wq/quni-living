@@ -27,6 +27,8 @@ const JOURNEY_METADATA_KEYS = new Set([
   'supabaseMessage',
   'piStatusAfter',
   'booking_id',
+  'user_agent',
+  'is_mobile',
 ])
 
 /**
@@ -77,6 +79,7 @@ export async function captureBookingRejected(ctx) {
       tags: {
         error_code,
         ...(ctx.mode ? { booking_mode: String(ctx.mode) } : {}),
+        ...(ctx.is_mobile != null ? { is_mobile: String(ctx.is_mobile) } : {}),
       },
     }),
     insertJourneyEvent({

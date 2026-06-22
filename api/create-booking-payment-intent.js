@@ -27,6 +27,7 @@ import {
   recordJourneyEvent,
 } from './lib/booking/captureBookingRejected.js'
 import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
+import { mergeDeviceContextMetadata, requestContextFromRequest } from './lib/journey/requestContext.js'
 import {
   calculateBookingFeeCents,
   getActivePricingSnapshotForProperty,
@@ -176,24 +177,25 @@ function journeyActor(user, attemptId) {
   }
 }
 
-function recordBookingSubmitAttempt(admin, user, propertyId, mode, attemptId, serviceTier) {
+function recordBookingSubmitAttempt(admin, user, propertyId, mode, attemptId, serviceTier, deviceCtx) {
   recordJourneyEvent(admin, {
     ...journeyActor(user, attemptId),
     property_id: propertyId,
     event_type: 'booking_submit_attempt',
     step: mode,
     service_tier: serviceTier ?? null,
+    metadata: mergeDeviceContextMetadata(undefined, deviceCtx),
   })
 }
 
-function recordBookingCompleted(admin, user, propertyId, mode, attemptId, bookingId, serviceTier) {
+function recordBookingCompleted(admin, user, propertyId, mode, attemptId, bookingId, serviceTier, deviceCtx) {
   recordJourneyEvent(admin, {
     ...journeyActor(user, attemptId),
     property_id: propertyId,
     event_type: 'booking_completed',
     step: mode,
     service_tier: serviceTier ?? null,
-    metadata: { booking_id: bookingId },
+    metadata: mergeDeviceContextMetadata({ booking_id: bookingId }, deviceCtx),
   })
 }
 
@@ -318,6 +320,7 @@ async function loadPropertyServiceTier(admin, propertyId) {
 
 /** Listing apply commit — no student PI, deposit, or rent_payment_method. */
 async function handleListingBookingCommit(request, origin, body) {
+  const deviceCtx = requestContextFromRequest(request)
   const supabaseUrl = process.env.SUPABASE_URL
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
@@ -367,13 +370,13 @@ async function handleListingBookingCommit(request, origin, body) {
 
   const attemptId = readAttemptIdFromBody(body)
   const admin = createClient(supabaseUrl, serviceRole)
-  recordBookingSubmitAttempt(admin, user, propertyId, 'listing_commit', attemptId, null)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'listing_commit', attemptId, null, deviceCtx)
 
   const emailBlock = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (emailBlock) return emailBlock
 
@@ -384,7 +387,7 @@ async function handleListingBookingCommit(request, origin, body) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'listing_commit', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (eligibilityBlock) return eligibilityBlock
 
@@ -410,6 +413,7 @@ async function handleListingBookingCommit(request, origin, body) {
     attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
+    ...deviceCtx,
   })
 
   const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
@@ -598,6 +602,7 @@ async function handleListingBookingCommit(request, origin, body) {
       attemptId,
       inserted.id,
       property.service_tier ?? null,
+      deviceCtx,
     )
     return json({ ok: true, bookingId: inserted.id, listingApply: true }, 200, origin)
   }
@@ -625,6 +630,7 @@ async function handleListingBookingCommit(request, origin, body) {
 }
 
 async function handlePaymentIntentCommit(request, origin, body) {
+  const deviceCtx = requestContextFromRequest(request)
   const stripeSecret = process.env.STRIPE_SECRET_KEY
   const supabaseUrl = process.env.SUPABASE_URL
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -690,13 +696,13 @@ async function handlePaymentIntentCommit(request, origin, body) {
 
   const attemptId = readAttemptIdFromBody(body)
   const admin = createClient(supabaseUrl, serviceRole)
-  recordBookingSubmitAttempt(admin, user, propertyId, 'managed_commit', attemptId, null)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'managed_commit', attemptId, null, deviceCtx)
 
   const emailBlockManaged = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (emailBlockManaged) return emailBlockManaged
 
@@ -706,7 +712,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'managed_commit', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (eligibilityBlockManaged) return eligibilityBlockManaged
 
@@ -734,6 +740,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
+    ...deviceCtx,
   })
 
   const block1 = await assertPropertyAvailableForBooking(admin, propertyId, origin)
@@ -945,6 +952,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
       attemptId,
       inserted.id,
       property.service_tier ?? null,
+      deviceCtx,
     )
     return json({ ok: true, bookingId: inserted.id }, 200, origin)
   }
@@ -1089,15 +1097,16 @@ export default async function handler(request) {
     return json({ error: 'Invalid or expired session' }, 401, origin)
   }
 
+  const deviceCtx = requestContextFromRequest(request)
   const attemptId = readAttemptIdFromBody(body)
   const admin = createClient(supabaseUrl, serviceRole)
-  recordBookingSubmitAttempt(admin, user, propertyId, 'preview', attemptId, null)
+  recordBookingSubmitAttempt(admin, user, propertyId, 'preview', attemptId, null, deviceCtx)
 
   const emailBlockPreview = assertRenterEmailConfirmed(
     user,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (emailBlockPreview) return emailBlockPreview
 
@@ -1107,7 +1116,7 @@ export default async function handler(request) {
     propertyId,
     json,
     origin,
-    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId }),
+    buildBookingRejectVisibility(user, propertyId, 'preview', { attempt_id: attemptId, ...deviceCtx }),
   )
   if (eligibilityBlockPreview) return eligibilityBlockPreview
 
@@ -1125,6 +1134,7 @@ export default async function handler(request) {
     attempt_id: attemptId,
     student_profile_id: student.id,
     email: student.email ?? user.email ?? null,
+    ...deviceCtx,
   })
 
   const blockA = await assertPropertyAvailableForBooking(admin, propertyId, origin)
