@@ -56,11 +56,63 @@ function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
   })
 }
 
-const filePickerLabelClass =
-  'inline-flex w-full sm:w-auto min-h-[2.75rem] items-center justify-center px-5 rounded-lg border-2 border-[#FF6F61] text-[#FF6F61] font-semibold text-sm hover:bg-[#FFF8F0] cursor-pointer'
+const verificationUploadButtonClass =
+  'w-full sm:w-auto min-h-[3rem] px-6 rounded-lg border-2 border-indigo-600 text-indigo-600 font-medium text-sm flex items-center justify-center gap-2 hover:bg-indigo-50 disabled:opacity-50'
 
-function filePickerLabelClassWhenBusy(busy: boolean): string {
-  return `${filePickerLabelClass}${busy ? ' pointer-events-none opacity-50' : ''}`
+function DocUploadControl({
+  busy,
+  uploaded,
+  error,
+  onPick,
+  reviewNote,
+}: {
+  busy: boolean
+  uploaded: VerificationUploadedDoc | null
+  error: string | null
+  onPick: (e: ChangeEvent<HTMLInputElement>) => void
+  reviewNote?: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const pickLabel = uploaded
+    ? busy
+      ? 'Uploading…'
+      : 'Replace document'
+    : busy
+      ? 'Uploading…'
+      : CHOOSE_VERIFICATION_FILE_LABEL
+
+  const pickButton = (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => inputRef.current?.click()}
+      className={verificationUploadButtonClass}
+    >
+      <span className="text-lg leading-none">+</span>
+      {pickLabel}
+    </button>
+  )
+
+  return (
+    <div className="space-y-3">
+      {error ? <UploadFailedBanner message={error} /> : null}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={VERIFICATION_FILE_ACCEPT}
+        className="sr-only"
+        onChange={onPick}
+      />
+      {uploaded ? (
+        <>
+          <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
+          {!uploaded.pending ? pickButton : null}
+        </>
+      ) : (
+        pickButton
+      )}
+    </div>
+  )
 }
 
 function UploadFailedBanner({ message }: { message: string }) {
@@ -121,75 +173,6 @@ function DocReceivedCard({
           ) : null}
         </div>
       </div>
-    </div>
-  )
-}
-
-function FilePickButton({
-  busy,
-  label,
-  onPick,
-}: {
-  busy: boolean
-  label: string
-  onPick: (e: ChangeEvent<HTMLInputElement>) => void
-}) {
-  if (busy) {
-    return (
-      <span className={filePickerLabelClassWhenBusy(true)} aria-disabled>
-        {label}
-      </span>
-    )
-  }
-
-  // Input overlays the label — reliable on iOS (htmlFor + useId colons breaks mobile Safari).
-  return (
-    <label className={`${filePickerLabelClass} relative block w-full sm:w-auto cursor-pointer`}>
-      <input
-        type="file"
-        accept={VERIFICATION_FILE_ACCEPT}
-        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-        onChange={onPick}
-      />
-      <span className="pointer-events-none relative z-0">{label}</span>
-    </label>
-  )
-}
-
-function DocUploadControl({
-  busy,
-  uploaded,
-  error,
-  onPick,
-  reviewNote,
-}: {
-  busy: boolean
-  uploaded: VerificationUploadedDoc | null
-  error: string | null
-  onPick: (e: ChangeEvent<HTMLInputElement>) => void
-  reviewNote?: string
-}) {
-  const pickLabel = uploaded
-    ? busy
-      ? 'Uploading…'
-      : 'Replace document'
-    : busy
-      ? 'Uploading…'
-      : CHOOSE_VERIFICATION_FILE_LABEL
-
-  return (
-    <div className="space-y-3">
-      {error ? <UploadFailedBanner message={error} /> : null}
-      {uploaded ? (
-        <>
-          <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
-          {!uploaded.pending ? (
-            <FilePickButton busy={busy} label={pickLabel} onPick={onPick} />
-          ) : null}
-        </>
-      ) : (
-        <FilePickButton busy={busy} label={pickLabel} onPick={onPick} />
-      )}
     </div>
   )
 }
@@ -476,11 +459,11 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     const input = e.target
     const file = input.files?.[0]
+    input.value = ''
     if (!file) {
       setErr('No file was selected. Try again.')
       return
     }
-    input.value = ''
 
     setErr(null)
 
