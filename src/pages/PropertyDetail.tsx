@@ -1053,6 +1053,11 @@ export default function PropertyDetail() {
     (propertyStatus !== 'active' || listingDateWindowStatus === 'after_end')
   const showNotYetAvailableBanner =
     propertyStatus === 'active' && listingDateWindowStatus === 'before_start'
+  const showAvailableNowBanner =
+    propertyStatus === 'active' &&
+    isListingAvailableNow(property.available_from) &&
+    !showNotYetAvailableBanner &&
+    !filterMoveIn
 
   const notYetBannerLabel = (() => {
     const raw = (property.available_from ?? '').trim().slice(0, 10)
@@ -1201,6 +1206,16 @@ export default function PropertyDetail() {
             </p>
             <p className="mt-1 text-sky-900/90 leading-relaxed">
               Earliest move-in is not before this date. You can still view the listing and plan ahead.
+            </p>
+          </div>
+        </div>
+      )}
+      {showAvailableNowBanner && (
+        <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 mb-1`} role="status">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 shadow-sm">
+            <p className="font-semibold text-emerald-900">Available now</p>
+            <p className="mt-1 text-emerald-900/90 leading-relaxed">
+              You can move in as soon as your booking is confirmed.
             </p>
           </div>
         </div>
