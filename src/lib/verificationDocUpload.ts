@@ -72,16 +72,30 @@ function fileForVerificationImageUpload(file: File): File {
 
 export function isVerificationPdf(file: File): boolean {
   const rawExt = verificationExtensionFromFilename(file.name)
-  return file.type === 'application/pdf' || (rawExt === 'pdf' && !file.type.startsWith('image/'))
+  if (file.type === 'application/pdf') return true
+  if (rawExt === 'pdf') return true
+  return false
+}
+
+/** Mobile file pickers often label PDFs as octet-stream with no extension. */
+export async function fileLooksLikePdf(file: File): Promise<boolean> {
+  if (isVerificationPdf(file)) return true
+  if (file.type.startsWith('image/')) return false
+  try {
+    const head = new Uint8Array(await file.slice(0, 4).arrayBuffer())
+    return head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46
+  } catch {
+    return false
+  }
 }
 
 export async function prepareVerificationDocForUpload(
   file: File,
 ): Promise<{ blob: Blob; contentType: string; storageExt: VerificationStorageExt }> {
-  if (isVerificationPdf(file)) {
+  if (await fileLooksLikePdf(file)) {
     return {
       blob: file,
-      contentType: file.type || 'application/pdf',
+      contentType: 'application/pdf',
       storageExt: 'pdf',
     }
   }

@@ -3,6 +3,7 @@ import {
   isAllowedVerificationFile,
   isVerificationHeicOrHeif,
   isVerificationPdf,
+  fileLooksLikePdf,
   validateVerificationFileType,
   verificationExtensionFromFilename,
 } from './verificationDocUpload'
@@ -47,6 +48,13 @@ describe('isAllowedVerificationFile', () => {
     const file = new File([new Uint8Array([1])], 'photo.webp', { type: 'image/webp' })
     expect(isAllowedVerificationFile(file)).toBe(true)
     expect(validateVerificationFileType(file)).toBeNull()
+  })
+
+  it('detects PDF by magic bytes when MIME is octet-stream', async () => {
+    const pdfBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34])
+    const file = new File([pdfBytes], 'statement', { type: 'application/octet-stream' })
+    expect(isVerificationPdf(file)).toBe(false)
+    expect(await fileLooksLikePdf(file)).toBe(true)
   })
 
   it('rejects unknown types with a misleading extension segment', () => {

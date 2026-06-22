@@ -11,7 +11,7 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { messageFromSupabaseError } from '../../lib/supabaseErrorMessage'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
-  isVerificationPdf,
+  fileLooksLikePdf,
   MAX_VERIFICATION_DOC_BYTES,
   validateVerificationFileSize,
   validateVerificationFileType,
@@ -79,6 +79,7 @@ function DocUploadControl({
   uploaded,
   error,
   inputRef,
+  inputKey,
   onPick,
   reviewNote,
 }: {
@@ -86,48 +87,54 @@ function DocUploadControl({
   uploaded: VerificationUploadedDoc | null
   error: string | null
   inputRef: RefObject<HTMLInputElement | null>
+  inputKey: number
   onPick: (e: ChangeEvent<HTMLInputElement>) => void
   reviewNote?: string
 }) {
+  const pickDisabled = busy || Boolean(uploaded?.pending)
+
   const pickLabel = uploaded
-    ? busy
+    ? busy || uploaded.pending
       ? 'Uploading…'
       : 'Replace document'
     : busy
       ? 'Uploading…'
       : CHOOSE_VERIFICATION_FILE_LABEL
 
-  const pickButton = (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={() => inputRef.current?.click()}
-      className={verificationUploadButtonClass}
+  const pickControl = (
+    <label
+      className={`${verificationUploadButtonClass} ${
+        pickDisabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'
+      }`}
     >
-      <span className="text-lg leading-none">+</span>
-      {pickLabel}
-    </button>
-  )
-
-  return (
-    <div className="space-y-3">
       <input
+        key={inputKey}
         ref={inputRef}
         type="file"
         accept={VERIFICATION_FILE_ACCEPT}
         className="sr-only"
+        disabled={pickDisabled}
         onChange={onPick}
       />
+      <span className="flex items-center justify-center gap-2">
+        <span className="text-lg leading-none">+</span>
+        {pickLabel}
+      </span>
+    </label>
+  )
+
+  return (
+    <div className="space-y-3">
       {uploaded ? (
         <>
           <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
           {error ? <UploadFailedBanner message={error} /> : null}
-          {!uploaded.pending ? pickButton : null}
+          {!uploaded.pending ? pickControl : null}
         </>
       ) : (
         <>
           {error ? <UploadFailedBanner message={error} /> : null}
-          {pickButton}
+          {pickControl}
         </>
       )}
     </div>
@@ -264,6 +271,15 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const [idUploading, setIdUploading] = useState(false)
   const [enrolUploading, setEnrolUploading] = useState(false)
   const [identitySupportUploading, setIdentitySupportUploading] = useState(false)
+  const [fileInputKeys, setFileInputKeys] = useState<Record<VerificationDocKind, number>>({
+    id: 0,
+    enrolment: 0,
+    identity_supporting: 0,
+  })
+
+  function bumpFileInputKey(kind: VerificationDocKind) {
+    setFileInputKeys((prev) => ({ ...prev, [kind]: prev[kind] + 1 }))
+  }
 
   useEffect(() => {
     if (profile.verification_type !== 'none') return
@@ -453,6 +469,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         return completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt, keepPreview)
       })
       delete rollbackByKindRef.current[kind]
+      void onRefreshRef.current()
     } catch (e: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
       setUploadedByKind((prev) => {
@@ -474,7 +491,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     }
   }
 
-  function onFileChosen(
+  async function onFileChosen(
     e: ChangeEvent<HTMLInputElement>,
     kind: VerificationDocKind,
     setErr: (s: string | null) => void,
@@ -482,9 +499,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   ) {
     const input = e.target
     const file = input.files?.[0]
-    input.value = ''
     if (!file) {
       setErr('No file was selected. Try again.')
+      bumpFileInputKey(kind)
       return
     }
 
@@ -493,15 +510,21 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
     if (sizeError) {
       setErr(sizeError)
+      bumpFileInputKey(kind)
       return
     }
     const typeError = validateVerificationFileType(file)
     if (typeError) {
       setErr(typeError)
+      bumpFileInputKey(kind)
       return
     }
 
-    const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
+    bumpFileInputKey(kind)
+    setBusy(true)
+
+    const likelyPdf = await fileLooksLikePdf(file)
+    const previewUrl = likelyPdf ? null : URL.createObjectURL(file)
     setUploadedByKind((prev) => {
       revokeBlobUrl(prev[kind]?.previewUrl)
       const picked = pickVerificationFile(
@@ -517,7 +540,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       return picked.uploadedByKind
     })
 
-    void uploadDoc(file, kind, setErr, setBusy)
+    await uploadDoc(file, kind, setErr, setBusy)
   }
 
   const coralBtn =
@@ -725,7 +748,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               uploaded={idDoc}
               error={idUploadError}
               inputRef={idFileInputRef}
-              onPick={(e) => onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
+              inputKey={fileInputKeys.id}
+              onPick={(e) => void onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -744,7 +768,10 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
               inputRef={identitySupportFileInputRef}
-              onPick={(e) => onFileChosen(e, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)}
+              inputKey={fileInputKeys.identity_supporting}
+              onPick={(e) =>
+                void onFileChosen(e, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)
+              }
             />
           </div>
         </section>
@@ -835,7 +862,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             uploaded={idDoc}
             error={idUploadError}
             inputRef={idFileInputRef}
-            onPick={(e) => onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
+            inputKey={fileInputKeys.id}
+            onPick={(e) => void onFileChosen(e, 'id', setIdUploadError, setIdUploading)}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -855,7 +883,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             uploaded={enrolDoc}
             error={enrolUploadError}
             inputRef={enrolFileInputRef}
-            onPick={(e) => onFileChosen(e, 'enrolment', setEnrolUploadError, setEnrolUploading)}
+            inputKey={fileInputKeys.enrolment}
+            onPick={(e) => void onFileChosen(e, 'enrolment', setEnrolUploadError, setEnrolUploading)}
           />
         </div>
       </section>
