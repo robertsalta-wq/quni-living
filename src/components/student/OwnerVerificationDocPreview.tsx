@@ -76,6 +76,7 @@ export function OwnerVerificationDocPreview({
     return (
       <div className="mt-3">
         <img
+          key={previewUrl}
           src={previewUrl}
           alt="Your uploaded document"
           className="max-h-24 max-w-full rounded-lg border border-stone-200 object-contain bg-white"

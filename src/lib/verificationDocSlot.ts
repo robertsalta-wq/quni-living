@@ -149,7 +149,7 @@ export function completeVerificationUpload(
       filePath,
       submittedAt,
       displayFileName: file.name,
-      previewUrl: prevUploaded[kind]?.previewUrl ?? null,
+      previewUrl: null,
       pending: false,
     },
   }

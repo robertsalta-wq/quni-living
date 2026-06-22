@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -113,6 +113,7 @@ function DocReceivedCard({
           {reviewNote && !doc.pending ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
           {doc.previewUrl || doc.filePath ? (
             <OwnerVerificationDocPreview
+              key={`${doc.filePath}-${doc.submittedAt}-${doc.previewUrl ?? ''}`}
               filePath={doc.filePath || doc.displayFileName}
               submittedAt={doc.submittedAt}
               previewUrl={doc.previewUrl}
@@ -126,7 +127,6 @@ function DocReceivedCard({
 
 function DocUploadControl({
   inputId,
-  inputRef,
   busy,
   uploaded,
   error,
@@ -134,24 +134,28 @@ function DocUploadControl({
   reviewNote,
 }: {
   inputId: string
-  inputRef: RefObject<HTMLInputElement | null>
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
   onPick: (e: ChangeEvent<HTMLInputElement>) => void
   reviewNote?: string
 }) {
+  const pickLabel = uploaded
+    ? busy
+      ? 'Uploading…'
+      : 'Replace document'
+    : busy
+      ? 'Uploading…'
+      : CHOOSE_VERIFICATION_FILE_LABEL
+
   return (
     <div className="space-y-3">
       {error ? <UploadFailedBanner message={error} /> : null}
       <input
         id={inputId}
-        ref={inputRef}
         type="file"
         accept={VERIFICATION_FILE_ACCEPT}
         disabled={busy}
-        tabIndex={-1}
-        aria-hidden
         className="sr-only"
         onChange={onPick}
       />
@@ -159,25 +163,15 @@ function DocUploadControl({
         <>
           <DocReceivedCard doc={uploaded} reviewNote={reviewNote} />
           {!uploaded.pending ? (
-            <button
-              type="button"
-              disabled={busy}
-              className={filePickerLabelClassWhenBusy(busy)}
-              onClick={() => inputRef.current?.click()}
-            >
-              {busy ? 'Uploading…' : 'Replace document'}
-            </button>
+            <label htmlFor={busy ? undefined : inputId} className={filePickerLabelClassWhenBusy(busy)}>
+              {pickLabel}
+            </label>
           ) : null}
         </>
       ) : (
-        <button
-          type="button"
-          disabled={busy}
-          className={filePickerLabelClassWhenBusy(busy)}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? 'Uploading…' : CHOOSE_VERIFICATION_FILE_LABEL}
-        </button>
+        <label htmlFor={busy ? undefined : inputId} className={filePickerLabelClassWhenBusy(busy)}>
+          {pickLabel}
+        </label>
       )}
     </div>
   )
@@ -246,9 +240,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const [workResendAt, setWorkResendAt] = useState<number | null>(null)
   const [, setWorkResendTick] = useState(0)
 
-  const idInputRef = useRef<HTMLInputElement>(null)
-  const enrolInputRef = useRef<HTMLInputElement>(null)
-  const identitySupportInputRef = useRef<HTMLInputElement>(null)
   const [idUploadError, setIdUploadError] = useState<string | null>(null)
   const [enrolUploadError, setEnrolUploadError] = useState<string | null>(null)
   const [identitySupportUploadError, setIdentitySupportUploadError] = useState<string | null>(null)
@@ -431,9 +422,10 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
       const result = await runVerificationDocUpload(supabase, userId, kind, file)
       if (!result.ok) throw new Error(result.message)
 
-      setUploadedByKind((prev) =>
-        completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt),
-      )
+      setUploadedByKind((prev) => {
+        revokeBlobUrl(prev[kind]?.previewUrl)
+        return completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt)
+      })
       delete rollbackByKindRef.current[kind]
     } catch (e: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
@@ -482,6 +474,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
     const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
     setUploadedByKind((prev) => {
+      revokeBlobUrl(prev[kind]?.previewUrl)
       const picked = pickVerificationFile(
         prev,
         rollbackByKindRef.current,
@@ -700,7 +693,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <div className="mt-4">
             <DocUploadControl
               inputId={idFileInputId}
-              inputRef={idInputRef}
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
@@ -720,7 +712,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <div className="mt-4">
             <DocUploadControl
               inputId={identitySupportFileInputId}
-              inputRef={identitySupportInputRef}
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
@@ -812,7 +803,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <div className="mt-4">
           <DocUploadControl
             inputId={idFileInputId}
-            inputRef={idInputRef}
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
@@ -833,7 +823,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         <div className="mt-4">
           <DocUploadControl
             inputId={enrolFileInputId}
-            inputRef={enrolInputRef}
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
