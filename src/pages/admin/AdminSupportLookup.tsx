@@ -149,6 +149,39 @@ function metadataString(metadata: Record<string, unknown>, key: string): string 
   return null
 }
 
+function deviceContextFromMetadata(
+  metadata: Record<string, unknown>,
+): { userAgent: string; isMobile: boolean } | null {
+  const rawUa = metadata.user_agent
+  if (typeof rawUa !== 'string') return null
+  const userAgent = rawUa.trim()
+  if (!userAgent) return null
+
+  const rawMobile = metadata.is_mobile
+  let isMobile = false
+  if (typeof rawMobile === 'boolean') {
+    isMobile = rawMobile
+  } else if (typeof rawMobile === 'string') {
+    isMobile = rawMobile.toLowerCase() === 'true'
+  }
+
+  return { userAgent, isMobile }
+}
+
+function DeviceIndicator({ metadata }: { metadata: Record<string, unknown> }) {
+  const device = deviceContextFromMetadata(metadata)
+  if (!device) return null
+
+  return (
+    <span
+      className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-600"
+      title={device.userAgent}
+    >
+      {device.isMobile ? 'Mobile' : 'Desktop'}
+    </span>
+  )
+}
+
 function RejectionDetails({ event }: { event: JourneyEvent }) {
   const meta = event.metadata ?? {}
   const verificationType = metadataString(meta, 'verification_type')
@@ -220,7 +253,10 @@ function AttemptCard({ group }: { group: AttemptGroup }) {
         {group.events.map((event) => (
           <li key={event.id} className="relative">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <span className="font-medium text-admin-ink-2">{eventTypeLabel(event.event_type)}</span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium text-admin-ink-2">{eventTypeLabel(event.event_type)}</span>
+                <DeviceIndicator metadata={event.metadata ?? {}} />
+              </div>
               <span className="text-[12px] text-admin-ink-5">{formatDateTime(event.created_at)}</span>
             </div>
             {event.step ? (
@@ -252,7 +288,12 @@ function StandaloneCard({ event }: { event: JourneyEvent }) {
   return (
     <article className={`${adminCardClass} space-y-1`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="font-medium text-admin-ink-2">{eventTypeLabel(event.event_type)}</span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium text-admin-ink-2">{eventTypeLabel(event.event_type)}</span>
+          {BOOKING_EVENT_TYPES.has(event.event_type) ? (
+            <DeviceIndicator metadata={event.metadata ?? {}} />
+          ) : null}
+        </div>
         <span className="text-[12px] text-admin-ink-5">{formatDateTime(event.created_at)}</span>
       </div>
       {event.step ? <p className="text-[12px] text-admin-ink-5">Step: {event.step}</p> : null}
