@@ -400,6 +400,61 @@ function minMoveInIso(): string {
   return addDaysIso(new Date().toISOString().slice(0, 10), 7)
 }
 
+function earliestSelectableMoveInIso(listingFromBound: string | null): string {
+  const min7 = minMoveInIso()
+  if (listingFromBound && listingFromBound > min7) return listingFromBound
+  return min7
+}
+
+function validateMoveInDateForBooking(
+  moveIn: string,
+  opts: {
+    listingFromBound: string | null
+    listingToBound: string | null
+    conflictMoveOutDate: string | null
+    bookingDateConflictBlocked: boolean
+  },
+): string | null {
+  if (!moveIn || !isIsoDateString(moveIn)) {
+    return 'Please choose a move-in date.'
+  }
+  if (moveIn < minMoveInIso()) {
+    return 'Move-in must be at least 7 days from today.'
+  }
+  if (opts.listingFromBound && moveIn < opts.listingFromBound) {
+    return `This room is available from ${formatIsoDateAuNumeric(opts.listingFromBound)} - please choose a move-in date on or after this date.`
+  }
+  if (
+    opts.listingToBound &&
+    (moveIn > opts.listingToBound ||
+      (opts.conflictMoveOutDate != null && opts.conflictMoveOutDate > opts.listingToBound))
+  ) {
+    return `This listing is available until ${formatIsoDateAuNumeric(opts.listingToBound)} - please adjust your dates.`
+  }
+  if (opts.bookingDateConflictBlocked) {
+    return 'Sorry, this property is already booked for your selected dates. Please choose different dates.'
+  }
+  return null
+}
+
+function bookingStepErrorAlert(message: string, onDismiss: () => void) {
+  return (
+    <div
+      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-2"
+      role="alert"
+    >
+      <p>{message}</p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="rounded-lg bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-900 hover:bg-red-100/80"
+      >
+        Dismiss
+      </button>
+    </div>
+  )
+}
+
 function formatBondAmountAud(n: number): string {
   return `$${n.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
 }
@@ -592,6 +647,7 @@ export default function Booking() {
   const [piError, setPiError] = useState<string | null>(null)
 
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [detailsDateError, setDetailsDateError] = useState<string | null>(null)
   const [bookingConflict, setBookingConflict] = useState<BookingConflictState | null>(null)
   const [submittingBooking, setSubmittingBooking] = useState(false)
   const moveInFieldRef = useRef<HTMLInputElement>(null)
@@ -702,11 +758,25 @@ export default function Booking() {
   )
   const listingToBound = useMemo(() => normalizeListingBound(property?.available_to), [property?.available_to])
 
-  const minMoveInForPicker = useMemo(() => {
-    const min7 = minMoveInIso()
-    if (listingFromBound && listingFromBound > min7) return listingFromBound
-    return min7
-  }, [listingFromBound])
+  const minMoveInForPicker = useMemo(
+    () => earliestSelectableMoveInIso(listingFromBound),
+    [listingFromBound],
+  )
+
+  const moveInValidationOpts = useMemo(
+    () => ({
+      listingFromBound,
+      listingToBound,
+      conflictMoveOutDate,
+      bookingDateConflictBlocked,
+    }),
+    [listingFromBound, listingToBound, conflictMoveOutDate, bookingDateConflictBlocked],
+  )
+
+  const validateMoveInStep = useCallback(
+    () => validateMoveInDateForBooking(moveIn, moveInValidationOpts),
+    [moveIn, moveInValidationOpts],
+  )
 
   const step1DateBlock: Step1DateBlock = useMemo(() => {
     if (!moveIn || !isIsoDateString(moveIn)) return 'incomplete'
@@ -830,6 +900,16 @@ export default function Booking() {
   useEffect(() => {
     if (bookingDateConflictBlocked && step > 1) setStep(1)
   }, [bookingDateConflictBlocked, step])
+
+  useEffect(() => {
+    if (!property?.id || !draftPersistReady) return
+    setMoveIn((current) => {
+      if (!current || !isIsoDateString(current) || current < minMoveInForPicker) {
+        return minMoveInForPicker
+      }
+      return current
+    })
+  }, [property?.id, draftPersistReady, minMoveInForPicker])
 
   useEffect(() => {
     void loadProperty()
@@ -1190,8 +1270,14 @@ export default function Booking() {
 
   const startPaymentStep = useCallback(async () => {
     setPiError(null)
+    setSubmitError(null)
     setBookingConflict(null)
     if (!property?.id || !studentProfile) return
+    const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
+    if (moveInErr) {
+      setSubmitError(moveInErr)
+      return
+    }
     const occErr = validateOccupancyStep()
     if (occErr) {
       setOccupancyError(occErr)
@@ -1298,7 +1384,17 @@ export default function Booking() {
     } finally {
       setPiBusy(false)
     }
-  }, [property?.id, studentProfile, moveIn, leaseLength, message, occupantCount, parkingSelected, validateOccupancyStep])
+  }, [
+    property?.id,
+    studentProfile,
+    moveIn,
+    moveInValidationOpts,
+    leaseLength,
+    message,
+    occupantCount,
+    parkingSelected,
+    validateOccupancyStep,
+  ])
 
   const isListingProperty = property?.service_tier === 'listing'
 
@@ -1306,6 +1402,11 @@ export default function Booking() {
     if (!property?.id || !property.landlord_id || !studentProfile) return
     setSubmitError(null)
     setBookingConflict(null)
+    const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
+    if (moveInErr) {
+      setSubmitError(moveInErr)
+      return
+    }
     setSubmittingBooking(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -1406,6 +1507,7 @@ export default function Booking() {
     property,
     studentProfile,
     moveIn,
+    moveInValidationOpts,
     leaseLength,
     message,
     conversationIdFromThread,
@@ -1420,6 +1522,11 @@ export default function Booking() {
       if (!property?.id || !property.landlord_id || !studentProfile) return
       setSubmitError(null)
       setBookingConflict(null)
+      const moveInErr = validateMoveInDateForBooking(moveIn, moveInValidationOpts)
+      if (moveInErr) {
+        setSubmitError(moveInErr)
+        return
+      }
       setSubmittingBooking(true)
       try {
         const { data: sessionData } = await supabase.auth.getSession()
@@ -1510,6 +1617,7 @@ export default function Booking() {
       property,
       studentProfile,
       moveIn,
+      moveInValidationOpts,
       leaseLength,
       message,
       rentPaymentMethod,
@@ -1806,6 +1914,16 @@ export default function Booking() {
             <label htmlFor="bk-move-in" className={labelClass}>
               Move-in date
             </label>
+            <p className="text-xs text-gray-600 mb-1.5 leading-relaxed">
+              {listingFromBound ? (
+                <>
+                  Available from {formatIsoDateAuNumeric(listingFromBound)}. Earliest selectable move-in:{' '}
+                  {formatIsoDateAuNumeric(minMoveInForPicker)}.
+                </>
+              ) : (
+                <>Earliest selectable move-in: {formatIsoDateAuNumeric(minMoveInForPicker)} (at least 7 days from today).</>
+              )}
+            </p>
             <AUDateField
               ref={moveInFieldRef}
               id="bk-move-in"
@@ -1816,11 +1934,19 @@ export default function Booking() {
                 setMoveIn(iso)
                 setExplicitMoveOutFromUrl(null)
                 setSubmitError(null)
+                setDetailsDateError(null)
               }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
               required
+              aria-invalid={detailsDateError ? true : undefined}
+              aria-describedby={detailsDateError ? 'bk-move-in-error' : undefined}
             />
+            {detailsDateError ? (
+              <p id="bk-move-in-error" className="mt-1.5 text-sm text-red-800" role="alert">
+                {detailsDateError}
+              </p>
+            ) : null}
           </div>
 
           <div>
@@ -1834,6 +1960,7 @@ export default function Booking() {
                 setLeaseLength(e.target.value as LeaseOption)
                 setExplicitMoveOutFromUrl(null)
                 setSubmitError(null)
+                setDetailsDateError(null)
               }}
               onFocus={(e) => scrollEditableIntoView(e.target)}
               className={inputClass}
@@ -1948,62 +2075,33 @@ export default function Booking() {
             />
           </div>
 
-          {submitError && (
-            <div
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 space-y-2"
-              role="alert"
-            >
-              <p>{submitError}</p>
-              <button
-                type="button"
-                onClick={() => setSubmitError(null)}
-                className="rounded-lg bg-white border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-900 hover:bg-red-100/80"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
+          {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
               onClick={() => {
-                if (!moveIn) {
-                  setSubmitError('Please choose a move-in date.')
-                  return
-                }
-                if (moveIn < minMoveInIso()) {
-                  setSubmitError('Move-in must be at least 7 days from today.')
-                  return
-                }
-                if (listingFromBound && moveIn < listingFromBound) {
-                  setSubmitError(
-                    `This room is available from ${formatIsoDateAuNumeric(listingFromBound)} - please choose a move-in date on or after this date.`,
-                  )
-                  return
-                }
-                if (listingToBound && (moveIn > listingToBound || (conflictMoveOutDate && conflictMoveOutDate > listingToBound))) {
-                  setSubmitError(
-                    `This listing is available until ${formatIsoDateAuNumeric(listingToBound)} - please adjust your dates.`,
-                  )
-                  return
-                }
-                if (bookingDateConflictBlocked) {
-                  setSubmitError(
-                    'Sorry, this property is already booked for your selected dates. Please choose different dates.',
-                  )
+                const moveInErr = validateMoveInStep()
+                if (moveInErr) {
+                  setDetailsDateError(moveInErr)
+                  setSubmitError(null)
+                  requestAnimationFrame(() => {
+                    moveInFieldRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+                  })
                   return
                 }
                 const occErr = validateOccupancyStep()
                 if (occErr) {
                   setOccupancyError(occErr)
+                  setDetailsDateError(null)
                   return
                 }
                 setOccupancyError(null)
+                setDetailsDateError(null)
                 setSubmitError(null)
                 setStep(isListingProperty ? 3 : 2)
               }}
-              disabled={step1DateBlock !== null || (rentResolution != null && 'error' in rentResolution)}
+              disabled={rentResolution != null && 'error' in rentResolution}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
             >
               Continue
@@ -2080,6 +2178,8 @@ export default function Booking() {
             </button>
           </div>
 
+          {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
+
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
@@ -2090,7 +2190,15 @@ export default function Booking() {
             </button>
             <button
               type="button"
-              onClick={() => setStep(3)}
+              onClick={() => {
+                const moveInErr = validateMoveInStep()
+                if (moveInErr) {
+                  setSubmitError(moveInErr)
+                  return
+                }
+                setSubmitError(null)
+                setStep(3)
+              }}
               className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52]"
             >
               Continue
@@ -2215,6 +2323,8 @@ export default function Booking() {
               )}
             </span>
           </label>
+
+          {submitError && bookingStepErrorAlert(submitError, () => setSubmitError(null))}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button
