@@ -33,7 +33,7 @@ import {
 } from './lib/pricing/index.js'
 import { computeServiceTierAtRequestSnapshot } from './lib/booking/serviceTierSnapshot.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
-import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
+import { moveInFloorError } from './lib/booking/moveInFloor.js'
 import {
   assertRenterEmailConfirmed,
   markTenantInviteAccepted,
@@ -349,11 +349,6 @@ async function handleListingBookingCommit(request, origin, body) {
     return json({ error: 'Bond acknowledgement is required' }, 400, origin)
   }
 
-  const minMoveIn = addDaysIso(todayUtcIso(), 7)
-  if (moveInDate < minMoveIn) {
-    return json({ error: 'Move-in date must be at least 7 days from today' }, 400, origin)
-  }
-
   const auth = request.headers.get('authorization') || ''
   const token = auth.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
@@ -437,13 +432,18 @@ async function handleListingBookingCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, ${OCCUPANCY_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
 
   if (propErr || !property) {
     return json({ error: 'Property not found' }, 404, origin)
+  }
+
+  const moveInFloorErr = moveInFloorError(moveInDate, property.available_from)
+  if (moveInFloorErr) {
+    return json({ error: moveInFloorErr }, 400, origin)
   }
 
   if (!isListingServiceTier(property.service_tier)) {
@@ -672,11 +672,6 @@ async function handlePaymentIntentCommit(request, origin, body) {
     )
   }
 
-  const minMoveIn = addDaysIso(todayUtcIso(), 7)
-  if (moveInDate < minMoveIn) {
-    return json({ error: 'Move-in date must be at least 7 days from today' }, 400, origin)
-  }
-
   const auth = request.headers.get('authorization') || ''
   const token = auth.replace(/^Bearer\s+/i, '').trim()
   if (!token) {
@@ -770,13 +765,19 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, ${OCCUPANCY_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
 
   if (propErr || !property) {
     return json({ error: 'Property not found' }, 404, origin)
+  }
+
+  const moveInFloorErrManaged = moveInFloorError(moveInDate, property.available_from)
+  if (moveInFloorErrManaged) {
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'invalid_move_in_date', managedVis)
+    return json({ error: moveInFloorErrManaged }, 400, origin)
   }
 
   if (property.status !== 'active') {
@@ -1072,11 +1073,6 @@ export default async function handler(request) {
     return json({ error: 'Bond acknowledgement is required' }, 400, origin)
   }
 
-  const minMoveIn = addDaysIso(todayUtcIso(), 7)
-  if (moveInDate < minMoveIn) {
-    return json({ error: 'Move-in date must be at least 7 days from today' }, 400, origin)
-  }
-
   const occupancyParsed = parseOccupancyScalarsFromBody(body)
   if (!occupancyParsed.ok) {
     return json(occupancyParsed.body, occupancyParsed.status, origin)
@@ -1163,6 +1159,7 @@ export default async function handler(request) {
       property_type,
       is_registered_rooming_house,
       service_tier,
+      available_from,
       ${OCCUPANCY_PROPERTY_COLUMNS},
       landlord_profiles (
         id,
@@ -1182,6 +1179,11 @@ export default async function handler(request) {
 
   if (property.status !== 'active') {
     return json({ error: 'This listing is not available for booking' }, 400, origin)
+  }
+
+  const moveInFloorErrPreview = moveInFloorError(moveInDate, property.available_from)
+  if (moveInFloorErrPreview) {
+    return json({ error: moveInFloorErrPreview }, 400, origin)
   }
 
   if (!property.landlord_id) {

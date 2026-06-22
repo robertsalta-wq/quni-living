@@ -55,6 +55,8 @@ import {
 import { resolveTenancyPackage } from '../lib/tenancy/resolveTenancyPackage'
 import { statutoryRentBankTransferCopy, normalizeAuStateCode } from '../lib/tenancy/jurisdictionCopy'
 import {
+  earliestSelectableMoveInIso,
+  isListingAvailableNow,
   listingIsoDateUtc,
   normalizeListingBound,
   propertyListingDateWindowStatus,
@@ -112,7 +114,7 @@ type RentPaymentMethod = 'bank_transfer' | 'quni_platform'
 type Step1DateBlock =
   | null
   | 'incomplete'
-  | 'min_lead'
+  | 'in_past'
   | { kind: 'before_from'; from: string }
   | { kind: 'after_to'; to: string }
   | { kind: 'overlap' }
@@ -389,22 +391,6 @@ function bookingPaymentUserErrorBlock(opts: {
   )
 }
 
-function addDaysIso(iso: string, days: number): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  const t = Date.UTC(y, m - 1, d) + days * 86400000
-  const x = new Date(t)
-  return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${String(x.getUTCDate()).padStart(2, '0')}`
-}
-
-function minMoveInIso(): string {
-  return addDaysIso(new Date().toISOString().slice(0, 10), 7)
-}
-
-function earliestSelectableMoveInIso(listingFromBound: string | null): string {
-  const min7 = minMoveInIso()
-  if (listingFromBound && listingFromBound > min7) return listingFromBound
-  return min7
-}
 
 function validateMoveInDateForBooking(
   moveIn: string,
@@ -418,8 +404,8 @@ function validateMoveInDateForBooking(
   if (!moveIn || !isIsoDateString(moveIn)) {
     return 'Please choose a move-in date.'
   }
-  if (moveIn < minMoveInIso()) {
-    return 'Move-in must be at least 7 days from today.'
+  if (moveIn < listingIsoDateUtc()) {
+    return 'Move-in cannot be in the past.'
   }
   if (opts.listingFromBound && moveIn < opts.listingFromBound) {
     return `This room is available from ${formatIsoDateAuNumeric(opts.listingFromBound)} - please choose a move-in date on or after this date.`
@@ -626,7 +612,7 @@ export default function Booking() {
   const formTopRef = useRef<HTMLDivElement>(null)
 
   useScrollToTopOnChange(step, { anchorRef: formTopRef })
-  const [moveIn, setMoveIn] = useState(() => minMoveInIso())
+  const [moveIn, setMoveIn] = useState(() => listingIsoDateUtc())
   const [leaseLength, setLeaseLength] = useState<LeaseOption>('6 months')
   const [message, setMessage] = useState('')
   const [rentPaymentMethod, setRentPaymentMethod] = useState<RentPaymentMethod>('quni_platform')
@@ -780,7 +766,7 @@ export default function Booking() {
 
   const step1DateBlock: Step1DateBlock = useMemo(() => {
     if (!moveIn || !isIsoDateString(moveIn)) return 'incomplete'
-    if (moveIn < minMoveInIso()) return 'min_lead'
+    if (moveIn < listingIsoDateUtc()) return 'in_past'
     if (listingFromBound && moveIn < listingFromBound) return { kind: 'before_from', from: listingFromBound }
     if (listingToBound) {
       if (moveIn > listingToBound) return { kind: 'after_to', to: listingToBound }
@@ -867,7 +853,7 @@ export default function Booking() {
       setBookingDateConflictBlocked(false)
       return
     }
-    if (!moveIn || !isIsoDateString(moveIn) || moveIn < minMoveInIso()) {
+    if (!moveIn || !isIsoDateString(moveIn) || moveIn < listingIsoDateUtc()) {
       setBookingDateConflictBlocked(false)
       return
     }
@@ -1893,8 +1879,8 @@ export default function Booking() {
               role="alert"
             >
               <span>
-                {step1DateBlock === 'min_lead'
-                  ? 'Move-in must be at least 7 days from today.'
+                {step1DateBlock === 'in_past'
+                  ? 'Move-in cannot be in the past.'
                   : step1DateBlock.kind === 'before_from'
                     ? `This room is available from ${formatIsoDateAuNumeric(step1DateBlock.from)} - please choose a move-in date on or after this date.`
                     : step1DateBlock.kind === 'after_to'
@@ -1915,14 +1901,9 @@ export default function Booking() {
               Move-in date
             </label>
             <p className="text-xs text-gray-600 mb-1.5 leading-relaxed">
-              {listingFromBound ? (
-                <>
-                  Available from {formatIsoDateAuNumeric(listingFromBound)}. Earliest selectable move-in:{' '}
-                  {formatIsoDateAuNumeric(minMoveInForPicker)}.
-                </>
-              ) : (
-                <>Earliest selectable move-in: {formatIsoDateAuNumeric(minMoveInForPicker)} (at least 7 days from today).</>
-              )}
+              {isListingAvailableNow(property?.available_from)
+                ? 'Available now'
+                : `Available from ${formatIsoDateAuNumeric(listingFromBound!)}`}
             </p>
             <AUDateField
               ref={moveInFieldRef}

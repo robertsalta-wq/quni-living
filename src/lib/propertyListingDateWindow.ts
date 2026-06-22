@@ -25,6 +25,19 @@ export function normalizeListingBound(v: string | null | undefined): string | nu
   return isIsoDateString(day) ? day : null
 }
 
+/** Earliest allowed move-in: max(available_from, today). No lead-time buffer. */
+export function earliestSelectableMoveInIso(listingFromBound: string | null): string {
+  const today = listingIsoDateUtc()
+  if (listingFromBound && listingFromBound > today) return listingFromBound
+  return today
+}
+
+/** True when `available_from` is unset or on/before today. */
+export function isListingAvailableNow(availableFrom: string | null | undefined): boolean {
+  const from = normalizeListingBound(availableFrom)
+  return !from || from <= listingIsoDateUtc()
+}
+
 export type PropertyListingDateWindowStatus = 'visible' | 'before_start' | 'after_end'
 
 /**

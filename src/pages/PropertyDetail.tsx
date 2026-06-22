@@ -29,7 +29,7 @@ import {
   isIsoDateString,
 } from '../lib/listingAvailabilityDates'
 import { fetchUnavailablePropertyIdsForDateRange } from '../lib/propertyLeaseAvailability'
-import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus } from '../lib/propertyListingDateWindow'
+import { listingIsoDateUtc, normalizeListingBound, propertyListingDateWindowStatus, isListingAvailableNow } from '../lib/propertyListingDateWindow'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
 import { PropertyCard } from '../components/PropertyCard'
 import { VerifiedLandlordBadge } from '../components/VerifiedLandlordBadge'
@@ -1117,6 +1117,7 @@ export default function PropertyDetail() {
   const rent = listingRent.primaryAmount
 
   const availableFormatted = (() => {
+    if (isListingAvailableNow(property.available_from)) return 'Available now'
     const raw = (property.available_from ?? '').trim().slice(0, 10)
     if (!isIsoDateString(raw)) return null
     return new Date(`${raw}T12:00:00`).toLocaleDateString('en-AU', {
@@ -1708,7 +1709,11 @@ export default function PropertyDetail() {
                     {!filterMoveIn && availableFormatted && (
                       <div className="flex justify-between gap-4 text-sm">
                         <span className="shrink-0 text-stone-500">Available</span>
-                        <span className="text-right font-medium text-[#FF6F61] tabular-nums">{availableFormatted}</span>
+                        <span
+                          className={`text-right font-medium tabular-nums ${availableFormatted === 'Available now' ? 'text-emerald-700' : 'text-[#FF6F61]'}`}
+                        >
+                          {availableFormatted}
+                        </span>
                       </div>
                     )}
                     {filterMoveIn && !unavailableMainForSelectedDates && (
