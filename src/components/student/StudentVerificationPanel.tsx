@@ -13,11 +13,23 @@ import {
   CHOOSE_VERIFICATION_FILE_LABEL,
   isVerificationPdf,
   MAX_VERIFICATION_DOC_BYTES,
-  prepareVerificationDocForUpload,
   validateVerificationFileSize,
   validateVerificationFileType,
   VERIFICATION_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
+import {
+  completeVerificationUpload,
+  docFromProfile,
+  docStepComplete,
+  failVerificationUpload,
+  hasUploadedDoc,
+  pickVerificationFile,
+  profileDocFieldsFromValues,
+  resolveUploadedDoc,
+  type VerificationDocKind,
+  type VerificationUploadedDoc,
+} from '../../lib/verificationDocSlot'
+import { runVerificationDocUpload } from '../../lib/runVerificationDocUpload'
 import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
 import {
   clearVerificationOtpPending,
@@ -27,64 +39,21 @@ import {
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
-const DOC_BUCKET = 'student-documents'
 const RESEND_SECONDS = 60
-
-type DocKind = 'id' | 'enrolment' | 'identity_supporting'
-
-type UploadedDoc = {
-  filePath: string
-  submittedAt: string
-  displayFileName: string
-  previewUrl?: string | null
-  pending?: boolean
-}
 
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
 
-function docFromProfile(
-  url: string | null | undefined,
-  submittedAt: string | null | undefined,
-): UploadedDoc | null {
-  const path = url?.trim() ?? ''
-  const at = submittedAt?.trim() ?? ''
-  if (!path || !at) return null
-  return { filePath: path, submittedAt: at, displayFileName: path.split('/').pop() ?? 'document' }
-}
-
-function resolveUploadedDoc(local: UploadedDoc | undefined, profile: UploadedDoc | null): UploadedDoc | null {
-  return local ?? profile
-}
-
-function docStepComplete(doc: UploadedDoc | null): boolean {
-  return Boolean(doc && !doc.pending)
-}
-
-function profileDocFields(
-  profile: StudentRow,
-  kind: DocKind,
-): { url: string | null | undefined; submittedAt: string | null | undefined } {
-  if (kind === 'id') {
-    return { url: profile.id_document_url, submittedAt: profile.id_submitted_at }
-  }
-  if (kind === 'enrolment') {
-    return { url: profile.enrolment_doc_url, submittedAt: profile.enrolment_submitted_at }
-  }
-  return { url: profile.identity_supporting_doc_url, submittedAt: profile.identity_supporting_submitted_at }
-}
-
-function hasUploadedDoc(
-  kind: DocKind,
-  uploadedByKind: Partial<Record<DocKind, UploadedDoc>>,
-  profile: StudentRow,
-): boolean {
-  const local = uploadedByKind[kind]
-  if (local?.pending) return false
-  if (local?.filePath && local.submittedAt) return true
-  const { url, submittedAt } = profileDocFields(profile, kind)
-  return Boolean(url?.trim() && submittedAt?.trim())
+function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
+  return profileDocFieldsFromValues(kind, {
+    idUrl: profile.id_document_url,
+    idSubmittedAt: profile.id_submitted_at,
+    enrolUrl: profile.enrolment_doc_url,
+    enrolSubmittedAt: profile.enrolment_submitted_at,
+    identitySupportUrl: profile.identity_supporting_doc_url,
+    identitySupportSubmittedAt: profile.identity_supporting_submitted_at,
+  })
 }
 
 const filePickerLabelClass =
@@ -116,7 +85,7 @@ function DocReceivedCard({
   doc,
   reviewNote,
 }: {
-  doc: UploadedDoc
+  doc: VerificationUploadedDoc
   reviewNote?: string
 }) {
   return (
@@ -158,7 +127,6 @@ function DocReceivedCard({
 function DocUploadControl({
   inputId,
   inputRef,
-  inputKey,
   busy,
   uploaded,
   error,
@@ -167,9 +135,8 @@ function DocUploadControl({
 }: {
   inputId: string
   inputRef: RefObject<HTMLInputElement | null>
-  inputKey: number
   busy: boolean
-  uploaded: UploadedDoc | null
+  uploaded: VerificationUploadedDoc | null
   error: string | null
   onPick: (e: ChangeEvent<HTMLInputElement>) => void
   reviewNote?: string
@@ -178,7 +145,6 @@ function DocUploadControl({
     <div className="space-y-3">
       {error ? <UploadFailedBanner message={error} /> : null}
       <input
-        key={inputKey}
         id={inputId}
         ref={inputRef}
         type="file"
@@ -234,17 +200,18 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
 
-  const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<DocKind, UploadedDoc>>>({})
-  const rollbackByKindRef = useRef<Partial<Record<DocKind, UploadedDoc>>>({})
-  const [fileInputKeys, setFileInputKeys] = useState<Record<DocKind, number>>({
-    id: 0,
-    enrolment: 0,
-    identity_supporting: 0,
-  })
+  const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
+  const rollbackByKindRef = useRef<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
+  const onRefreshRef = useRef(onRefresh)
+  onRefreshRef.current = onRefresh
 
-  const hasIdDoc = hasUploadedDoc('id', uploadedByKind, profile)
-  const hasEnrolDoc = hasUploadedDoc('enrolment', uploadedByKind, profile)
-  const hasIdentitySupportDoc = hasUploadedDoc('identity_supporting', uploadedByKind, profile)
+  const hasIdDoc = hasUploadedDoc('id', uploadedByKind, profileDocFields(profile, 'id'))
+  const hasEnrolDoc = hasUploadedDoc('enrolment', uploadedByKind, profileDocFields(profile, 'enrolment'))
+  const hasIdentitySupportDoc = hasUploadedDoc(
+    'identity_supporting',
+    uploadedByKind,
+    profileDocFields(profile, 'identity_supporting'),
+  )
 
   const idDoc = resolveUploadedDoc(
     uploadedByKind.id,
@@ -299,7 +266,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         .from('student_profiles')
         .update({ verification_type: 'student' })
         .eq('user_id', userId)
-      if (!error && !cancelled) await onRefresh()
+      if (!error && !cancelled) await onRefreshRef.current()
     })()
     return () => {
       cancelled = true
@@ -310,7 +277,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     hasIdDoc,
     hasEnrolDoc,
     userId,
-    onRefresh,
     useIdentityFlow,
   ])
 
@@ -324,7 +290,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
         .from('student_profiles')
         .update({ verification_type: 'identity' })
         .eq('user_id', userId)
-      if (!error && !cancelled) await onRefresh()
+      if (!error && !cancelled) await onRefreshRef.current()
     })()
     return () => {
       cancelled = true
@@ -335,7 +301,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     hasIdDoc,
     hasIdentitySupportDoc,
     userId,
-    onRefresh,
   ])
 
   useEffect(() => {
@@ -456,65 +421,27 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
   async function uploadDoc(
     file: File,
-    kind: DocKind,
+    kind: VerificationDocKind,
     setErr: (s: string | null) => void,
     setBusy: (b: boolean) => void,
   ) {
     setErr(null)
     setBusy(true)
     try {
-      const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
-      if (sizeError) throw new Error(sizeError)
+      const result = await runVerificationDocUpload(supabase, userId, kind, file)
+      if (!result.ok) throw new Error(result.message)
 
-      const typeError = validateVerificationFileType(file)
-      if (typeError) throw new Error(typeError)
-
-      const prepared = await prepareVerificationDocForUpload(file)
-      const base =
-        kind === 'id' ? 'id-document' : kind === 'enrolment' ? 'enrolment-doc' : 'identity-supporting-doc'
-      const path = `${userId}/${base}.${prepared.storageExt}`
-
-      const { error: upErr } = await supabase.storage.from(DOC_BUCKET).upload(path, prepared.blob, {
-        upsert: true,
-        contentType: prepared.contentType,
-      })
-      if (upErr) throw upErr
-
-      const submittedAt = new Date().toISOString()
-      const patch =
-        kind === 'id'
-          ? { id_document_url: path, id_submitted_at: submittedAt }
-          : kind === 'enrolment'
-            ? { enrolment_doc_url: path, enrolment_submitted_at: submittedAt }
-            : { identity_supporting_doc_url: path, identity_supporting_submitted_at: submittedAt }
-
-      const { error: dbErr } = await supabase.from('student_profiles').update(patch).eq('user_id', userId)
-      if (dbErr) throw dbErr
-
-      setUploadedByKind((prev) => ({
-        ...prev,
-        [kind]: {
-          filePath: path,
-          submittedAt,
-          displayFileName: file.name,
-          previewUrl: prev[kind]?.previewUrl ?? null,
-          pending: false,
-        },
-      }))
+      setUploadedByKind((prev) =>
+        completeVerificationUpload(prev, kind, file, result.filePath, result.submittedAt),
+      )
       delete rollbackByKindRef.current[kind]
     } catch (e: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: e })
       setUploadedByKind((prev) => {
-        const rollback = rollbackByKindRef.current[kind]
         revokeBlobUrl(prev[kind]?.previewUrl)
-        delete rollbackByKindRef.current[kind]
-        if (rollback) {
-          return { ...prev, [kind]: rollback }
-        }
-        const next = { ...prev }
-        delete next[kind]
-        return next
+        return failVerificationUpload(prev, rollbackByKindRef.current, kind)
       })
+      delete rollbackByKindRef.current[kind]
       let msg = messageFromSupabaseError(e)
       if (msg === 'Something went wrong.' || msg === 'Unknown error') {
         msg = String(e)
@@ -531,11 +458,13 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
 
   function onFileChosen(
     e: ChangeEvent<HTMLInputElement>,
-    kind: DocKind,
+    kind: VerificationDocKind,
     setErr: (s: string | null) => void,
     setBusy: (b: boolean) => void,
   ) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
+    input.value = ''
     if (!file) return
 
     setErr(null)
@@ -543,47 +472,29 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
     if (sizeError) {
       setErr(sizeError)
-      setFileInputKeys((keys) => ({ ...keys, [kind]: keys[kind] + 1 }))
       return
     }
     const typeError = validateVerificationFileType(file)
     if (typeError) {
       setErr(typeError)
-      setFileInputKeys((keys) => ({ ...keys, [kind]: keys[kind] + 1 }))
       return
     }
 
     const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
-
     setUploadedByKind((prev) => {
-      const { url, submittedAt } = profileDocFields(profile, kind)
-      const existing = resolveUploadedDoc(prev[kind], docFromProfile(url, submittedAt))
-      if (existing && !existing.pending) {
-        rollbackByKindRef.current[kind] = {
-          filePath: existing.filePath,
-          submittedAt: existing.submittedAt,
-          displayFileName: existing.displayFileName,
-        }
-      } else {
-        delete rollbackByKindRef.current[kind]
-      }
-
-      revokeBlobUrl(prev[kind]?.previewUrl)
-      const priorPath = existing?.filePath ?? ''
-
-      return {
-        ...prev,
-        [kind]: {
-          filePath: priorPath,
-          submittedAt: new Date().toISOString(),
-          displayFileName: file.name,
-          previewUrl,
-          pending: true,
-        },
-      }
+      const picked = pickVerificationFile(
+        prev,
+        rollbackByKindRef.current,
+        kind,
+        file,
+        profileDocFields(profile, kind),
+        previewUrl,
+        new Date().toISOString(),
+      )
+      rollbackByKindRef.current = picked.rollbackByKind
+      return picked.uploadedByKind
     })
 
-    setFileInputKeys((keys) => ({ ...keys, [kind]: keys[kind] + 1 }))
     void uploadDoc(file, kind, setErr, setBusy)
   }
 
@@ -790,7 +701,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             <DocUploadControl
               inputId={idFileInputId}
               inputRef={idInputRef}
-              inputKey={fileInputKeys.id}
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
@@ -811,7 +721,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             <DocUploadControl
               inputId={identitySupportFileInputId}
               inputRef={identitySupportInputRef}
-              inputKey={fileInputKeys.identity_supporting}
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
@@ -904,7 +813,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <DocUploadControl
             inputId={idFileInputId}
             inputRef={idInputRef}
-            inputKey={fileInputKeys.id}
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
@@ -926,7 +834,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           <DocUploadControl
             inputId={enrolFileInputId}
             inputRef={enrolInputRef}
-            inputKey={fileInputKeys.enrolment}
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
