@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -11,7 +11,6 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
   VERIFICATION_ID_FILE_ACCEPT,
-  VERIFICATION_SUPPORTING_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
   docStepComplete,
@@ -63,15 +62,13 @@ function DocUploadControl({
   busy,
   uploaded,
   error,
-  accept,
-  onFileSelected,
+  onPickClick,
   reviewNote,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
-  accept?: string
-  onFileSelected: (file: File) => void
+  onPickClick: () => void
   reviewNote?: string
 }) {
   return (
@@ -79,10 +76,9 @@ function DocUploadControl({
       {uploaded ? <DocReceivedCard doc={uploaded} reviewNote={reviewNote} /> : null}
       {error ? <UploadFailedBanner message={error} /> : null}
       <StudentVerificationDocPick
-        accept={accept}
         busy={busy}
         label={uploaded ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
-        onFileSelected={onFileSelected}
+        onPickClick={onPickClick}
         error={null}
       />
     </div>
@@ -178,6 +174,50 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     pickEnrolFile,
     pickIdentitySupportFile,
   } = docUpload
+
+  // Hoisted file inputs (see hoistedFileInputs below): each <input> lives at the
+  // panel root with a stable key so volatile card re-renders (signed-URL preview
+  // fetches, onRefresh profile refetch) never tear down / remount the input —
+  // which on Android Chrome caused the picker's `change` event to be lost.
+  const idInputRef = useRef<HTMLInputElement>(null)
+  const enrolInputRef = useRef<HTMLInputElement>(null)
+  const identitySupportInputRef = useRef<HTMLInputElement>(null)
+
+  const handleVerificationFileChange = (kind: VerificationDocKind) => (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (kind === 'id') pickIdFile(file)
+    else if (kind === 'enrolment') pickEnrolFile(file)
+    else pickIdentitySupportFile(file)
+  }
+
+  const hoistedFileInputs = (
+    <>
+      <input
+        key="verif-input-id"
+        ref={idInputRef}
+        type="file"
+        accept={VERIFICATION_ID_FILE_ACCEPT}
+        className="sr-only"
+        onChange={handleVerificationFileChange('id')}
+      />
+      <input
+        key="verif-input-enrolment"
+        ref={enrolInputRef}
+        type="file"
+        className="sr-only"
+        onChange={handleVerificationFileChange('enrolment')}
+      />
+      <input
+        key="verif-input-identity-supporting"
+        ref={identitySupportInputRef}
+        type="file"
+        className="sr-only"
+        onChange={handleVerificationFileChange('identity_supporting')}
+      />
+    </>
+  )
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -382,6 +422,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   if (useIdentityFlow) {
     return (
       <div className="space-y-6">
+        {hoistedFileInputs}
         <section
           className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
@@ -580,8 +621,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              accept={VERIFICATION_ID_FILE_ACCEPT}
-              onFileSelected={pickIdFile}
+              onPickClick={() => idInputRef.current?.click()}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -599,8 +639,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
-              onFileSelected={pickIdentitySupportFile}
+              onPickClick={() => identitySupportInputRef.current?.click()}
             />
           </div>
         </section>
@@ -610,6 +649,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
 
   return (
     <div className="space-y-6">
+      {hoistedFileInputs}
       <section
         className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
@@ -690,8 +730,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            accept={VERIFICATION_ID_FILE_ACCEPT}
-            onFileSelected={pickIdFile}
+            onPickClick={() => idInputRef.current?.click()}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -710,8 +749,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
-            onFileSelected={pickEnrolFile}
+            onPickClick={() => enrolInputRef.current?.click()}
           />
         </div>
       </section>
