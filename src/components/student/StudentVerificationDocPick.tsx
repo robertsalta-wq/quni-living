@@ -15,7 +15,10 @@ export function StudentVerificationDocPick({
   error,
   onFileSelected,
 }: {
-  accept: string
+  // Optional: when undefined the picker applies no type filter (React omits the
+  // attribute). Used for supporting/enrolment docs to avoid the Android picker
+  // bug with mixed image+PDF accept lists. JS validates the file after pick.
+  accept?: string
   busy: boolean
   label: string
   busyLabel?: string

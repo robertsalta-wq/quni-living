@@ -70,7 +70,7 @@ function DocUploadControl({
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
-  accept: string
+  accept?: string
   onFileSelected: (file: File) => void
   reviewNote?: string
 }) {
