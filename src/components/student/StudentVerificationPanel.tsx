@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -75,17 +75,18 @@ function DocUploadControl({
   busy,
   uploaded,
   error,
-  inputRef,
   onPick,
   reviewNote,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
-  inputRef: RefObject<HTMLInputElement | null>
   onPick: (e: ChangeEvent<HTMLInputElement>) => void
   reviewNote?: string
 }) {
+  const inputId = useId()
+  const [inputKey, setInputKey] = useState(0)
+
   const pickLabel = uploaded
     ? busy
       ? 'Uploading…'
@@ -94,31 +95,32 @@ function DocUploadControl({
       ? 'Uploading…'
       : CHOOSE_VERIFICATION_FILE_LABEL
 
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onPick(e)
+    setInputKey((k) => k + 1)
+  }
+
   return (
     <div className="space-y-3">
       {uploaded ? <DocReceivedCard doc={uploaded} reviewNote={reviewNote} /> : null}
       {error ? <UploadFailedBanner message={error} /> : null}
       <input
-        ref={inputRef}
+        key={inputKey}
+        id={inputId}
         type="file"
         accept={VERIFICATION_FILE_ACCEPT}
         className="sr-only"
-        onChange={onPick}
-      />
-      <button
-        type="button"
+        onChange={handleChange}
         disabled={busy}
-        onClick={() => {
-          const el = inputRef.current
-          if (!el) return
-          el.value = ''
-          el.click()
-        }}
-        className={verificationUploadButtonClass}
+      />
+      <label
+        htmlFor={busy ? undefined : inputId}
+        aria-disabled={busy}
+        className={`${verificationUploadButtonClass}${busy ? ' opacity-50 pointer-events-none' : ' cursor-pointer'}`}
       >
         <span className="text-lg leading-none">+</span>
         {pickLabel}
-      </button>
+      </label>
     </div>
   )
 }
@@ -191,12 +193,10 @@ type Props = {
   profile: StudentRow
   userId: string
   onRefresh: () => Promise<void>
+  onVerificationDocUploaded: (kind: VerificationDocKind, filePath: string, submittedAt: string) => void
 }
 
-export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) {
-  const idFileInputRef = useRef<HTMLInputElement>(null)
-  const enrolFileInputRef = useRef<HTMLInputElement>(null)
-  const identitySupportFileInputRef = useRef<HTMLInputElement>(null)
+export function StudentVerificationPanel({ profile, userId, onRefresh, onVerificationDocUploaded }: Props) {
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -253,6 +253,20 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
   const [enrolUploading, setEnrolUploading] = useState(false)
   const [identitySupportUploading, setIdentitySupportUploading] = useState(false)
 
+  function revertDocUpload(
+    kind: VerificationDocKind,
+    previewUrl: string | null,
+    rollback: VerificationUploadedDoc | null,
+  ) {
+    revokeBlobUrl(previewUrl)
+    setUploadedByKind((prev) => {
+      if (rollback) return { ...prev, [kind]: rollback }
+      const next = { ...prev }
+      delete next[kind]
+      return next
+    })
+  }
+
   async function handleDocChange(
     e: ChangeEvent<HTMLInputElement>,
     kind: VerificationDocKind,
@@ -263,17 +277,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
     const file = e.target.files?.[0]
     if (e.target) e.target.value = ''
     if (!file) return
-
-    const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
-    if (sizeError) {
-      setErr(sizeError)
-      return
-    }
-    const typeError = validateVerificationFileType(file)
-    if (typeError) {
-      setErr(typeError)
-      return
-    }
 
     const profileFields = profileDocFields(profile, kind)
     const existing = resolveUploadedDoc(
@@ -289,7 +292,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           }
         : null
 
-    const previewUrl = isVerificationPdf(file) ? null : URL.createObjectURL(file)
+    const instantPreview = isVerificationPdf(file) ? null : URL.createObjectURL(file)
 
     setBusy(true)
     setUploadedByKind((prev) => {
@@ -300,11 +303,26 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           filePath: existing?.filePath ?? '',
           submittedAt: new Date().toISOString(),
           displayFileName: file.name,
-          previewUrl,
+          previewUrl: instantPreview,
           pending: true,
         },
       }
     })
+
+    const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
+    if (sizeError) {
+      revertDocUpload(kind, instantPreview, rollback)
+      setErr(sizeError)
+      setBusy(false)
+      return
+    }
+    const typeError = validateVerificationFileType(file)
+    if (typeError) {
+      revertDocUpload(kind, instantPreview, rollback)
+      setErr(typeError)
+      setBusy(false)
+      return
+    }
 
     try {
       const result = await runVerificationDocUpload(supabase, userId, kind, file)
@@ -318,22 +336,14 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
           filePath: result.filePath,
           submittedAt: result.submittedAt,
           displayFileName: file.name,
-          previewUrl: prev[kind]?.previewUrl ?? previewUrl,
+          previewUrl: prev[kind]?.previewUrl ?? instantPreview,
           pending: false,
         },
       }))
-      await onRefreshRef.current()
+      onVerificationDocUploaded(kind, result.filePath, result.submittedAt)
     } catch (err: unknown) {
       console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
-      revokeBlobUrl(previewUrl)
-      setUploadedByKind((prev) => {
-        if (rollback) {
-          return { ...prev, [kind]: rollback }
-        }
-        const next = { ...prev }
-        delete next[kind]
-        return next
-      })
+      revertDocUpload(kind, instantPreview, rollback)
       let msg = err instanceof Error ? err.message : messageFromSupabaseError(err)
       if (msg === 'Something went wrong.' || msg === 'Unknown error') {
         msg = String(err)
@@ -715,7 +725,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              inputRef={idFileInputRef}
               onPick={(e) => void handleDocChange(e, 'id', setIdUploadError, setIdUploading)}
               reviewNote="Our team may review this document."
             />
@@ -734,7 +743,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              inputRef={identitySupportFileInputRef}
               onPick={(e) =>
                 void handleDocChange(e, 'identity_supporting', setIdentitySupportUploadError, setIdentitySupportUploading)
               }
@@ -827,7 +835,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            inputRef={idFileInputRef}
             onPick={(e) => void handleDocChange(e, 'id', setIdUploadError, setIdUploading)}
             reviewNote="Our team may review this document."
           />
@@ -847,7 +854,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh }: Props) 
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            inputRef={enrolFileInputRef}
             onPick={(e) => void handleDocChange(e, 'enrolment', setEnrolUploadError, setEnrolUploading)}
           />
         </div>

@@ -25,6 +25,7 @@ import { StudentWorkLocationSection } from '../components/student/StudentWorkLoc
 import LanguagesSpokenSelector from '../components/profile/LanguagesSpokenSelector'
 import { AUDateField } from '../components/AUDateField'
 import { normalizeLanguagesSpoken, type SpokenLanguageCode } from '../lib/languagesSpoken'
+import { dbPatchForVerificationDoc, type VerificationDocKind } from '../lib/verificationDocSlot'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -557,6 +558,10 @@ export default function StudentProfile() {
   }, [user?.id, applyProfileToForm])
 
   const refreshProfileData = useCallback(() => load({ background: true }), [load])
+
+  const onVerificationDocUploaded = useCallback((kind: VerificationDocKind, filePath: string, submittedAt: string) => {
+    setProfile((prev) => (prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt) } : prev))
+  }, [])
 
   const selectStudentTab = useCallback(
     (tab: StudentTab) => {
@@ -1624,7 +1629,12 @@ export default function StudentProfile() {
         hidden={activeTab !== 'verification'}
       >
         {user?.id && (
-          <StudentVerificationPanel profile={profile} userId={user.id} onRefresh={refreshProfileData} />
+          <StudentVerificationPanel
+            profile={profile}
+            userId={user.id}
+            onRefresh={refreshProfileData}
+            onVerificationDocUploaded={onVerificationDocUploaded}
+          />
         )}
       </div>
 
