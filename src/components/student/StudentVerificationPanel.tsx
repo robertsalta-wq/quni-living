@@ -182,21 +182,11 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
   const identitySupportInputRef = useRef<HTMLInputElement>(null)
-  // TEMP DIAGNOSTIC (preview only): shows picker lifecycle on the device so we can
-  // see whether the picker opens and whether `change` fires for each slot.
-  const [pickDiag, setPickDiag] = useState<string | null>(null)
 
   const processPickedFile = useCallback(
     (kind: VerificationDocKind, input: HTMLInputElement) => {
-      const files = input.files
-      const file = files?.[0]
-      const msg =
-        `change fired [${kind}]: ${files?.length ?? 0} file(s)` +
-        (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · NO FILE')
-      setPickDiag(msg)
-      // TEMP DIAGNOSTIC (preview only): popup is impossible to miss regardless of scroll.
-      window.alert(msg)
-      input.value = ''
+      const file = input.files?.[0]
+      input.value = '' // clear first so a duplicate change/focus event is a no-op (no double upload)
       if (!file) return
       if (kind === 'id') pickIdFile(file)
       else if (kind === 'enrolment') pickEnrolFile(file)
@@ -205,28 +195,40 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     [pickIdFile, pickEnrolFile, pickIdentitySupportFile],
   )
 
-  // Attach the change listener NATIVELY (not via React's onChange). On Android the
-  // heavier "Files" document picker can return after React's synthetic-event system
-  // has missed the change event; a listener bound directly to the DOM node catches
-  // it reliably. Covers Camera/Gallery too, so it's a superset of the React handler.
+  // Android's "Files" document picker can return without React seeing the change
+  // event (and sometimes without firing it cleanly at all). Two safeguards:
+  //   1. Bind the change listener NATIVELY on each DOM node (React's delegated
+  //      synthetic event can be missed when returning from the heavy picker).
+  //   2. On window focus (picker closed), sweep the inputs for a file the change
+  //      event may have missed. processPickedFile clears the value first, so
+  //      whichever path runs first makes the other a no-op.
   useEffect(() => {
     const entries: Array<[RefObject<HTMLInputElement | null>, VerificationDocKind]> = [
       [idInputRef, 'id'],
       [enrolInputRef, 'enrolment'],
       [identitySupportInputRef, 'identity_supporting'],
     ]
-    const cleanups = entries.map(([ref, kind]) => {
+    const changeCleanups = entries.map(([ref, kind]) => {
       const el = ref.current
       if (!el) return null
       const handler = () => processPickedFile(kind, el)
       el.addEventListener('change', handler)
       return () => el.removeEventListener('change', handler)
     })
-    return () => cleanups.forEach((fn) => fn?.())
+    const onFocus = () => {
+      for (const [ref, kind] of entries) {
+        const el = ref.current
+        if (el && el.files && el.files.length > 0) processPickedFile(kind, el)
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      changeCleanups.forEach((fn) => fn?.())
+      window.removeEventListener('focus', onFocus)
+    }
   }, [processPickedFile])
 
-  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
-    setPickDiag(`button tapped [${kind}] → opening picker`)
+  const openPicker = (ref: RefObject<HTMLInputElement | null>) => () => {
     ref.current?.click()
   }
 
@@ -255,12 +257,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       />
     </>
   )
-
-  const pickDiagBanner = pickDiag ? (
-    <p className="fixed top-0 inset-x-0 z-[60] text-[11px] leading-snug text-amber-900 bg-amber-100 border-b border-amber-300 px-3 py-2 font-mono break-all shadow">
-      diagnostic: {pickDiag}
-    </p>
-  ) : null
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -466,7 +462,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     return (
       <div className="space-y-6">
         {hoistedFileInputs}
-        {pickDiagBanner}
         <section
           className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
@@ -665,7 +660,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              onPickClick={openPicker('id', idInputRef)}
+              onPickClick={openPicker(idInputRef)}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -683,7 +678,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              onPickClick={openPicker('identity_supporting', identitySupportInputRef)}
+              onPickClick={openPicker(identitySupportInputRef)}
             />
           </div>
         </section>
@@ -694,7 +689,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   return (
     <div className="space-y-6">
       {hoistedFileInputs}
-      {pickDiagBanner}
       <section
         className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
@@ -775,7 +769,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            onPickClick={openPicker('id', idInputRef)}
+            onPickClick={openPicker(idInputRef)}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -794,7 +788,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            onPickClick={openPicker('enrolment', enrolInputRef)}
+            onPickClick={openPicker(enrolInputRef)}
           />
         </div>
       </section>
