@@ -1,6 +1,7 @@
 ﻿/**
- * Supabase public schema - matches supabase/quni_supabase_schema.sql (Claude / Wix-style model).
- * Regenerate: npx supabase gen types typescript --project-id <id> > src/lib/database.types.ts
+ * Supabase public schema - matches live Quni-Living-AU (cqakltqzqrxnmxfbqatx).
+ * Regenerate: npx supabase gen types typescript --project-id cqakltqzqrxnmxfbqatx
+ * (merge bond/schema deltas into this file; full CLI output uses a newer shape that breaks tsc.)
  */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -992,9 +993,7 @@ export interface Database {
           rooms_rented_to_residents: number | null
           furnished: boolean | null
           bond: number | null
-          bond_weeks: number | null
-          bond_is_fixed: boolean
-          bond_fixed_amount: number | null
+          bond_weeks: number
           qld_bond_remittance_preference: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length: string | null
           listing_type: 'rent' | 'homestay' | 'student_house' | null
@@ -1054,9 +1053,7 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
-          bond_weeks?: number | null
-          bond_is_fixed?: boolean
-          bond_fixed_amount?: number | null
+          bond_weeks?: number
           qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
@@ -1115,9 +1112,7 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
-          bond_weeks?: number | null
-          bond_is_fixed?: boolean
-          bond_fixed_amount?: number | null
+          bond_weeks?: number
           qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
@@ -1273,7 +1268,6 @@ export interface Database {
           offered_weekly_rent: number | null
           offer_reason: string | null
           offered_bond_weeks: number | null
-          offered_bond_fixed: number | null
           created_at: string
           updated_at: string
         }
@@ -1298,7 +1292,6 @@ export interface Database {
           offered_weekly_rent?: number | null
           offer_reason?: string | null
           offered_bond_weeks?: number | null
-          offered_bond_fixed?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -1323,7 +1316,6 @@ export interface Database {
           offered_weekly_rent?: number | null
           offer_reason?: string | null
           offered_bond_weeks?: number | null
-          offered_bond_fixed?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -2386,7 +2378,6 @@ export interface Database {
           offered_weekly_rent: number | null
           offer_reason: string | null
           offered_bond_weeks: number | null
-          offered_bond_fixed: number | null
         }[]
       }
       record_tenant_invite_funnel_event: {
