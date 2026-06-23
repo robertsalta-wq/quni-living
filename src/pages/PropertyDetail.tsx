@@ -621,6 +621,12 @@ export default function PropertyDetail() {
     return u ? `Similar homes near ${universityShortLabel(u)}` : 'Similar homes nearby'
   }, [property, uniRefRows, campusRefRows])
 
+  const listingBondAud = useMemo(() => {
+    if (!property) return null
+    const listingRent = getListingRentDisplay(property)
+    return resolveListingBondAud(property, listingRent.primaryAmount)
+  }, [property])
+
   const [listingGeoPoint, setListingGeoPoint] = useState<GeoPoint | null>(null)
   const [listingGeoLoading, setListingGeoLoading] = useState(false)
 
@@ -1121,10 +1127,6 @@ export default function PropertyDetail() {
 
   const listingRent = getListingRentDisplay(property)
   const rent = listingRent.primaryAmount
-  const listingBondAud = useMemo(
-    () => (property ? resolveListingBondAud(property, rent) : null),
-    [property, rent],
-  )
 
   const availableFormatted = (() => {
     if (isListingAvailableNow(property.available_from)) return 'Available now'

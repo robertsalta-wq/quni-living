@@ -1180,6 +1180,17 @@ export default function Booking() {
     listingWeeklyRent,
     inviteOfferDisplay?.offeredWeeklyRentAud,
   )
+  const bondAmountAud = useMemo(() => {
+    if (!property) return null
+    const invite =
+      inviteOfferDisplay?.hasBondOffer || inviteOfferDisplay?.hasOffer
+        ? {
+            offered_bond_weeks: inviteOfferDisplay.offeredBondWeeks,
+            offered_weekly_rent: inviteOfferDisplay.offeredWeeklyRentAud,
+          }
+        : null
+    return resolveInviteBondAud(property, invite, weeklyRent)
+  }, [property, inviteOfferDisplay, weeklyRent])
   const breakdownAud =
     rentResolution && 'breakdownAud' in rentResolution
       ? rentResolution.breakdownAud
@@ -1772,17 +1783,6 @@ export default function Booking() {
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
 
-  const bondAmountAud = useMemo(() => {
-    if (!property) return null
-    const invite =
-      inviteOfferDisplay?.hasBondOffer || inviteOfferDisplay?.hasOffer
-        ? {
-            offered_bond_weeks: inviteOfferDisplay.offeredBondWeeks,
-            offered_weekly_rent: inviteOfferDisplay.offeredWeeklyRentAud,
-          }
-        : null
-    return resolveInviteBondAud(property, invite, weeklyRent)
-  }, [property, inviteOfferDisplay, weeklyRent])
   const bondWeeksVsRent = bondAmountAud != null && weeklyRent > 0 ? bondAmountAud / weeklyRent : null
 
   const inputClass =
