@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import type { Database } from '../lib/database.types'
 import {
   LISTINGS_SORT_OPTIONS,
@@ -138,12 +139,12 @@ export default function Listings() {
   const distanceLabel = isProfessionalRenter ? 'your work' : 'this location'
 
   const viewerStudentProfileId =
-    role === 'student' && profile && 'id' in (profile as StudentRow)
+    isRenterRole(role) && profile && 'id' in (profile as StudentRow)
       ? (profile as StudentRow).id
       : null
 
   const studentProfile =
-    role === 'student' && profile && 'id' in profile ? (profile as StudentRow) : null
+    isRenterRole(role) && profile && 'id' in profile ? (profile as StudentRow) : null
 
   const {
     properties,
@@ -164,12 +165,12 @@ export default function Listings() {
   const verificationType = studentProfile?.verification_type ?? 'none'
   const showProfessionalVerificationHint =
     Boolean(user) &&
-    role === 'student' &&
+    isRenterRole(role) &&
     isProfessionalRenter &&
     verificationType !== 'identity'
   const showStudentVerificationHint =
     Boolean(user) &&
-    role === 'student' &&
+    isRenterRole(role) &&
     !isProfessionalRenter &&
     verificationType !== 'student'
 

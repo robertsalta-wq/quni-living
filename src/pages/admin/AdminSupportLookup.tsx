@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { fetchUserTimeline, type JourneyEvent, type UserTimelineAccount } from '../../lib/adminUserTimeline'
+import { isRenterRole } from '../../lib/authProfile'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { adminCardClass } from './adminUi'
 import { AdminPageHeader, Button, EmptyState, ErrorState, LoadingState } from '../../components/admin/primitives'
@@ -60,7 +61,7 @@ function verificationLabel(type: string | null): string {
 }
 
 function roleLabel(role: UserTimelineAccount['role']): string {
-  if (role === 'student') return 'Renter (student profile)'
+  if (isRenterRole(role)) return 'Renter (student profile)'
   if (role === 'landlord') return 'Landlord'
   if (role === 'admin') return 'Platform staff'
   return 'Unknown'

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import MessagesInbox from '../components/messaging/MessagesInbox'
 import Seo from '../components/Seo'
@@ -11,7 +12,7 @@ export default function MessagesInboxPage() {
   const navigate = useNavigate()
   const { items, loading, error, reload } = useConversationInbox(user?.id)
 
-  const dashboardRole = role === 'landlord' ? 'landlord' : 'student'
+  const dashboardRole = role === 'landlord' ? 'landlord' : isRenterRole(role) ? 'student' : 'student'
   const viewerRole = role === 'landlord' ? 'landlord' : 'tenant'
 
   return (
@@ -32,7 +33,7 @@ export default function MessagesInboxPage() {
       <div className="max-w-2xl">
         <div className="flex items-center justify-between gap-4 mb-4">
           <h1 className="font-display text-2xl font-bold text-gray-900">Messages</h1>
-          {dashboardRole === 'student' ? (
+          {isRenterRole(dashboardRole) ? (
             <button
               type="button"
               onClick={() => navigate('/listings')}

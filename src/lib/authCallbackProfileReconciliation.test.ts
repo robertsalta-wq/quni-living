@@ -73,6 +73,7 @@ describe('shouldSkipApplyPendingSignupRole', () => {
   it('skips when metadata role is student and row exists (email confirm path)', () => {
     const sp = studentRow({ user_id: 'user-1' })
     expect(shouldSkipApplyPendingSignupRole('student', sp)).toBe(true)
+    expect(shouldSkipApplyPendingSignupRole('renter', sp)).toBe(true)
   })
 
   it('does not skip when student row is missing', () => {
@@ -162,5 +163,23 @@ describe('resolveRoleAndProfileFromRows after reconciliation', () => {
     const result = resolveRoleAndProfileFromRows(user, sp, null)
     expect(result.role).toBe('student')
     expect(result.profile).toBe(sp)
+  })
+
+  it('maps renter JWT metadata to resolved student role without leaking renter', () => {
+    const user = mockUser({ user_metadata: { role: 'renter' } })
+    const sp = studentRow({
+      user_id: user.id,
+      accommodation_verification_route: 'student',
+    })
+    const result = resolveRoleAndProfileFromRows(user, sp, null)
+    expect(result.role).toBe('student')
+    expect(result.profile).toBe(sp)
+  })
+
+  it('returns student role when renter metadata has no profile row yet', () => {
+    const user = mockUser({ user_metadata: { role: 'renter' } })
+    const result = resolveRoleAndProfileFromRows(user, null, null)
+    expect(result.role).toBe('student')
+    expect(result.profile).toBeNull()
   })
 })

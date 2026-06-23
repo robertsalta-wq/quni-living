@@ -10,6 +10,7 @@ import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions 
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
 import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTenantInvite'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
+import { isRenterRole } from '../lib/authProfile'
 import {
   clearQuniAccommodationVerificationRoute,
   getQuniAccommodationVerificationRoute,
@@ -157,7 +158,12 @@ export default function Signup() {
   const roleFromUrl = searchParams.get('role')
 
   const [step, setStep] = useState<SignupStep>(() =>
-    roleFromUrl === 'student' || roleFromUrl === 'non_student' || roleFromUrl === 'landlord' ? 'details' : 'primary',
+    roleFromUrl === 'student' ||
+    roleFromUrl === 'renter' ||
+    roleFromUrl === 'non_student' ||
+    roleFromUrl === 'landlord'
+      ? 'details'
+      : 'primary',
   )
   const formTopRef = useRef<HTMLDivElement>(null)
   const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
@@ -165,7 +171,7 @@ export default function Signup() {
       ? 'landlord'
       : roleFromUrl === 'non_student'
         ? 'non_student'
-        : roleFromUrl === 'student'
+        : roleFromUrl === 'student' || roleFromUrl === 'renter'
           ? 'student'
           : null,
   )
@@ -194,7 +200,7 @@ export default function Signup() {
 
   useEffect(() => {
     const r = searchParams.get('role')
-    if (r === 'student') {
+    if (r === 'student' || r === 'renter') {
       setAccountKind('student')
       setQuniSelectedRole('student')
       setQuniAccommodationVerificationRoute('student')
@@ -253,7 +259,7 @@ export default function Signup() {
     (() => {
       const sr = getQuniSelectedRole()
       if (sr === 'landlord') return 'landlord'
-      if (sr !== 'student') return null
+      if (!isRenterRole(sr)) return null
       return getQuniAccommodationVerificationRoute() === 'non_student' ? 'non_student' : 'student'
     })()
   const showLandlordAgreement = effectiveAccountKind === 'landlord'

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Info, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { getNavDashboardPath, needsOnboarding, type UserRole } from '../lib/authProfile'
+import { getNavDashboardPath, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
@@ -14,7 +14,7 @@ import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
-  if (r === 'student') return '/onboarding/student'
+  if (isRenterRole(r)) return '/onboarding/student'
   return '/onboarding/landlord'
 }
 
@@ -207,7 +207,7 @@ export default function Header() {
 
   const displayName = (() => {
     let raw: string | undefined
-    if (profile && (role === 'student' || role === 'landlord')) {
+    if (profile && (isRenterRole(role) || role === 'landlord')) {
       const p = profile as {
         first_name?: string | null
         last_name?: string | null
@@ -233,11 +233,11 @@ export default function Header() {
   const profilePhotoUrl = profile?.avatar_url?.trim() || null
 
   const dashboardHref =
-    user && (role === 'student' || role === 'landlord' || role === 'admin')
+    user && (isRenterRole(role) || role === 'landlord' || role === 'admin')
       ? getNavDashboardPath(role, profile, user.id)
       : '/onboarding'
   const profileHref =
-    role === 'student'
+    isRenterRole(role)
       ? '/student-profile'
       : role === 'landlord'
         ? '/landlord-profile'
@@ -245,8 +245,8 @@ export default function Header() {
           ? '/admin'
           : '/onboarding'
 
-  const showDashboardInAuth = Boolean(user) && (role === 'student' || role === 'landlord')
-  const showMessagesNav = Boolean(user) && (role === 'student' || role === 'landlord')
+  const showDashboardInAuth = Boolean(user) && (isRenterRole(role) || role === 'landlord')
+  const showMessagesNav = Boolean(user) && (isRenterRole(role) || role === 'landlord')
   const unreadMessageCount = useUnreadMessageCount(showMessagesNav ? user?.id : undefined)
 
   async function handleSignOut() {

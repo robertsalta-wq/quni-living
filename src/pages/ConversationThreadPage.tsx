@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import { supabase } from '../lib/supabase'
 import {
   CONVERSATION_WITH_PROPERTY_SELECT,
@@ -34,7 +35,7 @@ export default function ConversationThreadPage() {
   const [loading, setLoading] = useState(initialPreload == null)
   const [error, setError] = useState<string | null>(null)
 
-  const dashboardRole = role === 'landlord' ? 'landlord' : 'student'
+  const dashboardRole = role === 'landlord' ? 'landlord' : isRenterRole(role) ? 'student' : 'student'
 
   useEffect(() => {
     const uid = user?.id

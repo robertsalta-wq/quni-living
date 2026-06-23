@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import type { AuthProfile, UserRole } from '../lib/authProfile'
+import { isRenterRole } from '../lib/authProfile'
 import { openConversation } from '../lib/messaging/conversationsApi'
 import { useState } from 'react'
 
@@ -30,7 +31,7 @@ export default function PropertyEnquiryForm({
   const [opening, setOpening] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const canMessage = Boolean(user) && role === 'student'
+  const canMessage = Boolean(user) && isRenterRole(role)
   const listingPath =
     typeof window !== 'undefined'
       ? `${window.location.pathname}${window.location.search}`

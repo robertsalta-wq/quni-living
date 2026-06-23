@@ -5,7 +5,7 @@ import { landlordBookingsPath } from '../../lib/userDashboardNav'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 
 type Props = {
-  role: 'student' | 'landlord'
+  role: 'student' | 'renter' | 'landlord'
   active: UserDashboardSection
   /** Landlord dashboard only - pending booking count badge on Bookings tab */
   pendingBookings?: number

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { isRenterRole } from '../../src/lib/marketplaceRole'
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from './env'
 
 export type AccommodationRoute = 'student' | 'non_student'
@@ -51,7 +52,7 @@ export async function assertStudentProfileReconciled(
   const { data: userData, error: userErr } = await admin.auth.admin.getUserById(userId)
   if (userErr) throw userErr
   const meta = userData.user?.user_metadata ?? {}
-  if (meta.role !== 'student') {
+  if (!isRenterRole(meta.role)) {
     throw new Error(`user_metadata.role expected student, got ${String(meta.role)}`)
   }
   const metaRoute = meta.accommodation_verification_route

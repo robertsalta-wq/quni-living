@@ -8,6 +8,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
+import { isRenterRole } from '../../src/lib/marketplaceRole.js'
 
 type AdminClient = SupabaseClient
 
@@ -38,7 +39,7 @@ type AccountState = {
   resolved: boolean
   user_id: string | null
   email: string | null
-  role: 'student' | 'landlord' | 'admin' | null
+  role: 'student' | 'renter' | 'landlord' | 'admin' | null
   accommodation_verification_route: string | null
   verification_type: string | null
   onboarding_complete: boolean | null
@@ -218,7 +219,7 @@ async function resolveAccount(
     const { data: authData } = await admin.auth.admin.getUserById(userId)
     if (authData?.user?.user_metadata?.role === 'admin') role = 'admin'
     else if (authData?.user?.user_metadata?.role === 'landlord') role = 'landlord'
-    else if (authData?.user?.user_metadata?.role === 'student') role = 'student'
+    else if (isRenterRole(authData?.user?.user_metadata?.role)) role = 'student'
   }
 
   if (student) {

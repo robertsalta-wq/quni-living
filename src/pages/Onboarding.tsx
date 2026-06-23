@@ -10,6 +10,7 @@ import { useAuthContext } from '../context/AuthContext'
 import {
   fetchRoleAndProfile,
   getPostLoginRedirectDestination,
+  isRenterRole,
   type AuthProfile,
   type LandlordProfileRow,
   type StudentProfileRow,
@@ -25,14 +26,14 @@ import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 
-type Choice = 'student' | 'landlord'
+type Choice = 'student' | 'renter' | 'landlord'
 
 /**
  * Skip `/onboarding` (role + terms) when the profile already reflects a finished setup.
  * Includes `onboarding_complete` so legacy rows (e.g. DB missing `terms_accepted_at` column once) still escape.
  */
-function profileTermsComplete(role: 'student' | 'landlord', profile: AuthProfile): boolean {
-  if (role === 'student') {
+function profileTermsComplete(role: Choice, profile: AuthProfile): boolean {
+  if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow
     return Boolean(
       sp.terms_accepted_at ||
@@ -157,11 +158,11 @@ export default function Onboarding() {
       // terms_accepted_at while metadata.role is missing, which previously trapped users here forever.
       if (
         profile !== null &&
-        (role === 'student' || role === 'landlord') &&
-        profileTermsComplete(role, profile)
+        (isRenterRole(role) || role === 'landlord') &&
+        profileTermsComplete(isRenterRole(role) ? 'student' : 'landlord', profile)
       ) {
         const metaRole = u.user_metadata?.role
-        if (metaRole !== role) {
+        if (metaRole !== role && !(isRenterRole(metaRole) && isRenterRole(role))) {
           const { error: metaErr } = await supabase.auth.updateUser({ data: { role } })
           if (!metaErr) await refreshProfile()
         }
@@ -220,7 +221,7 @@ export default function Onboarding() {
       }
       const acceptedAt = new Date().toISOString()
 
-      if (resolvedRole === 'student') {
+      if (isRenterRole(resolvedRole)) {
         const { error: delErr } = await withSentryMonitoring('Onboarding/delete-landlord-profile', () =>
           supabase.from('landlord_profiles').delete().eq('user_id', sessionUser.id),
         )

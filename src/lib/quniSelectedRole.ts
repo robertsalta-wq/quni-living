@@ -1,8 +1,8 @@
 const KEY = 'quni_selected_role'
 
-export type QuniSignupRole = 'student' | 'landlord'
+export type QuniSignupRole = 'student' | 'renter' | 'landlord'
 
-export function setQuniSelectedRole(role: QuniSignupRole): void {
+export function setQuniSelectedRole(role: 'student' | 'landlord'): void {
   try {
     localStorage.setItem(KEY, role)
   } catch {
@@ -14,7 +14,7 @@ export function setQuniSelectedRole(role: QuniSignupRole): void {
 export function getQuniSelectedRole(): QuniSignupRole | null {
   try {
     const v = localStorage.getItem(KEY)
-    if (v === 'student' || v === 'landlord') return v
+    if (v === 'student' || v === 'renter' || v === 'landlord') return v
     return null
   } catch {
     return null

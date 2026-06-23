@@ -3,6 +3,7 @@ import { resolvePendingAccommodationVerificationRoute } from './applyPendingAcco
 import {
   fetchProfileRowsDeduped,
   getProfileHydrateInflight,
+  isRenterRole,
   resolveRoleAndProfileFromRows,
   setProfileHydrateInflight,
   type AuthProfile,
@@ -47,7 +48,7 @@ function accommodationRouteFromUser(user: User): QuniAccommodationVerificationRo
 export type AuthCallbackReconcileOptions = {
   afterSignupEmailConfirm: boolean
   urlRoute: QuniAccommodationVerificationRoute | null
-  urlRole: 'student' | 'landlord' | null
+  urlRole: 'student' | 'renter' | 'landlord' | null
 }
 
 /** Skip OAuth role reconciliation when email signup already established a student row. */
@@ -55,7 +56,7 @@ export function shouldSkipApplyPendingSignupRole(
   metaRole: unknown,
   sp: StudentProfileRow | null,
 ): boolean {
-  return metaRole === 'student' && sp != null
+  return isRenterRole(metaRole) && sp != null
 }
 
 /**
@@ -104,7 +105,7 @@ async function ensureSignupProfileRowInMemory(
     return { sp, lp }
   }
 
-  if (metaRole === 'student') {
+  if (isRenterRole(metaRole)) {
     const { data, error } = await supabase
       .from('student_profiles')
       .insert({
@@ -146,7 +147,7 @@ async function applyPendingSignupRoleInMemory(
   user: User,
   sp: StudentProfileRow | null,
   lp: LandlordProfileRow | null,
-  urlRole: 'student' | 'landlord' | null,
+  urlRole: 'student' | 'renter' | 'landlord' | null,
   urlRoute: QuniAccommodationVerificationRoute | null,
 ): Promise<{ sp: StudentProfileRow | null; lp: LandlordProfileRow | null }> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null
@@ -158,9 +159,9 @@ async function applyPendingSignupRoleInMemory(
 
   if (!sp && !lp) {
     const metaRole = user.user_metadata?.role
-    if (metaRole !== selected) {
-      const data: Record<string, string> = { role: selected }
-      if (selected === 'student') {
+    if (metaRole !== selected && !(isRenterRole(metaRole) && isRenterRole(selected))) {
+      const data: Record<string, string> = { role: isRenterRole(selected) ? 'student' : selected }
+      if (isRenterRole(selected)) {
         const metaRoute = user.user_metadata?.accommodation_verification_route
         const route =
           metaRoute === 'non_student' || metaRoute === 'student'
@@ -197,7 +198,7 @@ async function applyPendingSignupRoleInMemory(
     return { sp: null, lp: (insData as LandlordProfileRow | null) ?? lp }
   }
 
-  if (selected === 'student' && lp && !sp) {
+  if (isRenterRole(selected) && lp && !sp) {
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return { sp, lp }
 
@@ -240,7 +241,7 @@ export async function reconcileAuthCallbackProfile(
   const { afterSignupEmailConfirm, urlRoute, urlRole } = options
 
   const meta = user.user_metadata?.role
-  const metaIsKnownRole = meta === 'student' || meta === 'landlord'
+  const metaIsKnownRole = isRenterRole(meta) || meta === 'landlord'
   const mayBePlatformAdmin = meta === 'admin' || !metaIsKnownRole
   if (mayBePlatformAdmin && (meta === 'admin' || (await fetchIsPlatformAdmin()))) {
     await linkPlatformStaffUserIfNeeded(user)

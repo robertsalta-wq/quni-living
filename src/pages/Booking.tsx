@@ -7,6 +7,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { withSentryMonitoring } from '../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import type { Property } from '../lib/listings'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import { isQldOnSiteBoarderLodgerListing, qldOnSiteTenantBondCallout } from '../lib/tenancy/qldBoarderLodger'
@@ -659,7 +660,7 @@ export default function Booking() {
   const [inviteOfferDisplay, setInviteOfferDisplay] = useState<TenantInviteOfferDisplay | null>(null)
   const { setElevateFloatingChrome } = useBookingFlowChrome()
 
-  const studentProfile = role === 'student' && profile ? (profile as StudentRow) : null
+  const studentProfile = isRenterRole(role) && profile ? (profile as StudentRow) : null
 
   useEffect(() => {
     if (studentProfile?.occupancy_type === 'couple') {
@@ -792,7 +793,7 @@ export default function Booking() {
     setLoadError(null)
     setStudentBookingBlocked(false)
     try {
-      if (user && role === 'student') {
+      if (user && isRenterRole(role)) {
         const { data: access, error: rpcErr } = await supabase.rpc('property_access_status_for_viewer_by_id', {
           p_id: propertyId,
         })

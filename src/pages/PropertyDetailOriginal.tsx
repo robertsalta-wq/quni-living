@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import type { Database } from '../lib/database.types'
@@ -180,11 +181,11 @@ export default function PropertyDetail() {
     btn?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [imageIndex])
 
-  const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null
-  const studentListingActionsOk = !user || role !== 'student' || isStudentListingActionsUnlocked(studentProfile)
+  const studentProfile = isRenterRole(role) && profile ? (profile as StudentProfileRow) : null
+  const studentListingActionsOk = !user || !isRenterRole(role) || isStudentListingActionsUnlocked(studentProfile)
 
   useEffect(() => {
-    if (!user?.id || role !== 'student' || !isSupabaseConfigured) return
+    if (!user?.id || !isRenterRole(role) || !isSupabaseConfigured) return
     const channel = supabase
       .channel(`property-detail-student-${user.id}`)
       .on(
@@ -202,7 +203,7 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === 'visible' && user && role === 'student') void refreshProfile()
+      if (document.visibilityState === 'visible' && user && isRenterRole(role)) void refreshProfile()
     }
     window.addEventListener('focus', onVis)
     document.addEventListener('visibilitychange', onVis)
@@ -902,7 +903,7 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="pt-6 flex flex-col gap-3">
-                    {role === 'student' && !studentListingActionsOk ? (
+                    {isRenterRole(role) && !studentListingActionsOk ? (
                       <div className="rounded-xl border border-[#FF6F61]/25 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
                           Complete your profile to send enquiries and request bookings

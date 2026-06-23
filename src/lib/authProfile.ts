@@ -5,8 +5,11 @@ import { isShallowReturnIntentPath } from './postAuthRedirect'
 import { renterOnboardingIncomplete } from './studentOnboarding'
 import { supabase } from './supabase'
 import type { Database } from './database.types'
+import { isRenterRole } from './marketplaceRole'
 
-export type UserRole = 'student' | 'landlord' | 'admin' | null
+export type UserRole = 'student' | 'renter' | 'landlord' | 'admin' | null
+
+export { isRenterRole }
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
@@ -91,13 +94,14 @@ export function resolveRoleAndProfileFromRows(
   lp: LandlordProfileRow | null,
 ): { role: UserRole; profile: AuthProfile | null } {
   const meta = user.user_metadata?.role
-  if (meta === 'student' || meta === 'landlord') {
-    if (meta === 'student' && sp) return { role: 'student', profile: sp }
+  if (isRenterRole(meta) || meta === 'landlord') {
+    if (isRenterRole(meta) && sp) return { role: 'student', profile: sp }
     if (meta === 'landlord' && lp) return { role: 'landlord', profile: lp }
   }
   if (sp) return { role: 'student', profile: sp }
   if (lp) return { role: 'landlord', profile: lp }
-  if (meta === 'student' || meta === 'landlord') return { role: meta, profile: null }
+  if (isRenterRole(meta)) return { role: 'student', profile: null }
+  if (meta === 'landlord') return { role: 'landlord', profile: null }
   return { role: null, profile: null }
 }
 
@@ -106,7 +110,7 @@ async function loadRoleAndProfileCore(user: User): Promise<{
   profile: AuthProfile | null
 }> {
   const meta = user.user_metadata?.role
-  const metaIsKnownRole = meta === 'student' || meta === 'landlord'
+  const metaIsKnownRole = isRenterRole(meta) || meta === 'landlord'
   const mayBePlatformAdmin = meta === 'admin' || !metaIsKnownRole
   if (mayBePlatformAdmin && (meta === 'admin' || (await fetchIsPlatformAdmin()))) {
     await linkPlatformStaffUserIfNeeded(user)
@@ -154,7 +158,7 @@ export function getPostLoginRedirectDestination(
     if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
     return '/landlord-dashboard'
   }
-  if (role === 'student') {
+  if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow | null
     if (renterOnboardingIncomplete(sp, _user.id)) return '/onboarding/student'
     return '/student-dashboard'
@@ -177,7 +181,7 @@ export function getNavDashboardPath(
     if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
     return '/landlord/dashboard'
   }
-  if (role === 'student') {
+  if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow | null
     if (renterOnboardingIncomplete(sp, userId)) return '/onboarding/student'
     return '/student-dashboard'
@@ -187,7 +191,7 @@ export function getNavDashboardPath(
 
 /** Legacy helper - prefer `getPostLoginRedirectDestination` or `getNavDashboardPath` by context. */
 export function getDashboardPath(role: UserRole): string {
-  if (role === 'student') return '/student-dashboard'
+  if (isRenterRole(role)) return '/student-dashboard'
   if (role === 'landlord') return '/landlord/dashboard'
   if (role === 'admin') return '/admin'
   return '/onboarding'
@@ -202,7 +206,7 @@ export function needsOnboarding(
   if (role === 'admin') return false
   if (!role) return true
   if (profile === null) return true
-  if (role === 'student') {
+  if (isRenterRole(role)) {
     return renterOnboardingIncomplete(profile as StudentProfileRow, userId)
   }
   if (role === 'landlord') {
@@ -221,7 +225,7 @@ export function getIncompleteOnboardingDestination(
     return '/onboarding'
   }
   if (!role) return '/onboarding'
-  if (role === 'student') return '/onboarding/student'
+  if (isRenterRole(role)) return '/onboarding/student'
   if (role === 'landlord') return '/onboarding/landlord'
   return '/onboarding'
 }
@@ -235,7 +239,7 @@ export function getPostAuthEntryDestination(
 ): string {
   if (role === 'admin') return '/admin'
   if (!role) return '/onboarding'
-  if (role === 'student' && renterOnboardingIncomplete(profile as StudentProfileRow | null, user.id)) {
+  if (isRenterRole(role) && renterOnboardingIncomplete(profile as StudentProfileRow | null, user.id)) {
     return '/onboarding/student'
   }
   if (

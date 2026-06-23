@@ -4,7 +4,7 @@ import UserDashboardSectionNav from './UserDashboardSectionNav'
 import type { UserDashboardCrumb, UserDashboardSection } from '../../lib/userDashboardNav'
 
 type Props = {
-  role: 'student' | 'landlord'
+  role: 'student' | 'renter' | 'landlord'
   breadcrumbs: UserDashboardCrumb[]
   activeSection?: UserDashboardSection
   showSectionNav?: boolean

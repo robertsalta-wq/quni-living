@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
+import { isRenterRole } from '../../lib/authProfile'
 import type { Database } from '../../lib/database.types'
 import { isValidAuPhone } from '../../lib/studentOnboarding'
 import {
@@ -783,7 +784,7 @@ export default function LandlordOnboarding() {
   }
 
   if (role && role !== 'landlord') {
-    return <Navigate to={role === 'student' ? '/onboarding/student' : '/'} replace />
+    return <Navigate to={isRenterRole(role) ? '/onboarding/student' : '/'} replace />
   }
 
   if (loading) {

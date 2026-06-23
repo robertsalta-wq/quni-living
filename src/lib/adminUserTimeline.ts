@@ -20,7 +20,7 @@ export type UserTimelineAccount = {
   resolved: boolean
   user_id: string | null
   email: string | null
-  role: 'student' | 'landlord' | 'admin' | null
+  role: 'student' | 'renter' | 'landlord' | 'admin' | null
   accommodation_verification_route: string | null
   verification_type: string | null
   onboarding_complete: boolean | null

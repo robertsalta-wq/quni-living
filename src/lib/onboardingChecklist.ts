@@ -1,4 +1,5 @@
 import type { Database } from './database.types'
+import { isRenterRole } from './authProfile'
 import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
 import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
@@ -23,11 +24,11 @@ export function getOnboardingDismissKey(): string {
 }
 
 export function isProfileDashboardOnboardingComplete(
-  role: 'student' | 'landlord',
+  role: 'student' | 'renter' | 'landlord',
   student: StudentProfileRow | null,
   landlord: LandlordProfileRow | null,
 ): boolean {
-  if (role === 'student') return student?.onboarding_complete === true
+  if (isRenterRole(role)) return student?.onboarding_complete === true
   return landlord?.onboarding_complete === true
 }
 

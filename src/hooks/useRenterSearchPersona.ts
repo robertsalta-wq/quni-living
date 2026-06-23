@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useAuthContext } from '../context/AuthContext'
 import type { Database } from '../lib/database.types'
+import { isRenterRole } from '../lib/authProfile'
 import { isNonStudentAccommodationRoute } from '../lib/studentOnboarding'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -23,7 +24,7 @@ export function renterSearchPersonaFromRoute(
   role: string | null,
   accommodationVerificationRoute: string | null | undefined,
 ): RenterSearchPersona {
-  if (role !== 'student') return 'guest'
+  if (!isRenterRole(role)) return 'guest'
   if (isNonStudentAccommodationRoute(accommodationVerificationRoute)) return 'professional'
   return 'student'
 }
@@ -36,7 +37,7 @@ export function useRenterSearchPersona() {
   const { role, profile, loading } = useAuthContext()
 
   const accommodationRoute = useMemo(() => {
-    if (role !== 'student' || !profile || !('accommodation_verification_route' in profile)) {
+    if (!isRenterRole(role) || !profile || !('accommodation_verification_route' in profile)) {
       return null
     }
     return (profile as StudentRow).accommodation_verification_route

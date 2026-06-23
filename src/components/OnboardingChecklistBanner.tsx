@@ -18,8 +18,9 @@ import {
   type LandlordProfileRow,
   type StudentProfileRow,
 } from '../lib/onboardingChecklist'
+import { isRenterRole } from '../lib/authProfile'
 
-type Role = 'student' | 'landlord'
+type Role = 'student' | 'renter' | 'landlord'
 
 type Props = {
   role: Role
@@ -80,17 +81,17 @@ export default function OnboardingChecklistBanner({
   onRefresh,
 }: Props) {
   const steps: ChecklistStep[] =
-    role === 'student'
+    isRenterRole(role)
       ? buildStudentOnboardingSteps(studentProfile)
       : buildLandlordOnboardingSteps(landlordProfile, landlordChecklistOpts ?? undefined)
 
   const isFullyComplete =
-    role === 'student' ? isStudentChecklistFullyComplete(steps) : isLandlordChecklistFullyComplete(steps)
+    isRenterRole(role) ? isStudentChecklistFullyComplete(steps) : isLandlordChecklistFullyComplete(steps)
 
   const dbOnboardingDone = isProfileDashboardOnboardingComplete(role, studentProfile, landlordProfile)
 
   const { done, total, pct } =
-    role === 'student' ? studentChecklistFraction(steps) : landlordChecklistFraction(steps)
+    isRenterRole(role) ? studentChecklistFraction(steps) : landlordChecklistFraction(steps)
 
   const [celebrating, setCelebrating] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
@@ -112,7 +113,7 @@ export default function OnboardingChecklistBanner({
     if (!isSupabaseConfigured || !userId) return
     if (!isFullyComplete || dbOnboardingDone) return
 
-    const table = role === 'student' ? 'student_profiles' : 'landlord_profiles'
+    const table = isRenterRole(role) ? 'student_profiles' : 'landlord_profiles'
 
     if (readOnboardingCompleteLocal(userId)) {
       if (!persistStartedRef.current) {
@@ -159,7 +160,7 @@ export default function OnboardingChecklistBanner({
 
   useEffect(() => {
     if (!userId || !isSupabaseConfigured) return
-    const table = role === 'student' ? 'student_profiles' : 'landlord_profiles'
+    const table = isRenterRole(role) ? 'student_profiles' : 'landlord_profiles'
     const channel = supabase
       .channel(`onboarding-checklist-${table}-${userId}`)
       .on(

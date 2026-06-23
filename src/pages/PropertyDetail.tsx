@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { resolveListingBondAud } from '../lib/booking/resolveBookingBondAmount'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import {
   openConversation,
   PENDING_MESSAGE_PROPERTY_KEY,
@@ -412,7 +413,7 @@ export default function PropertyDetail() {
       const result = await openConversation(property.id, {
         accessToken: session?.access_token,
         userId: user.id,
-        preferClient: role === 'student',
+        preferClient: isRenterRole(role),
         propertyStatus: property.status,
       })
       sessionStorage.removeItem(PENDING_MESSAGE_PROPERTY_KEY)
@@ -467,7 +468,7 @@ export default function PropertyDetail() {
       try {
         const propertyPromise = loadPropertyDetailBySlug(slug, { abortSignal: abort.signal })
         const accessPromise =
-          userId && role === 'student'
+          userId && isRenterRole(role)
             ? supabase
                 .rpc('property_access_status_for_viewer', { p_slug: slug })
                 .abortSignal(abort.signal)
@@ -487,7 +488,7 @@ export default function PropertyDetail() {
           return
         }
 
-        if (userId && role === 'student') {
+        if (userId && isRenterRole(role)) {
           const st = typeof accessResult.data === 'string' ? accessResult.data : null
           if (st === 'not_found') {
             setProperty(null)
@@ -537,18 +538,18 @@ export default function PropertyDetail() {
     btn?.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' })
   }, [imageIndex])
 
-  const studentProfile = role === 'student' && profile ? (profile as StudentProfileRow) : null
-  const studentListingActionsOk = !user || role !== 'student' || isStudentListingActionsUnlocked(studentProfile)
+  const studentProfile = isRenterRole(role) && profile ? (profile as StudentProfileRow) : null
+  const studentListingActionsOk = !user || !isRenterRole(role) || isStudentListingActionsUnlocked(studentProfile)
 
   useEffect(() => {
-    if (!user || !property?.id || role !== 'student' || !studentListingActionsOk) return
+    if (!user || !property?.id || !isRenterRole(role) || !studentListingActionsOk) return
     const pending = sessionStorage.getItem(PENDING_MESSAGE_PROPERTY_KEY)
     if (pending !== property.id) return
     void openMessageThread()
   }, [user, property?.id, role, studentListingActionsOk, openMessageThread])
 
   useEffect(() => {
-    if (user && role === 'student') {
+    if (user && isRenterRole(role)) {
       void import('./ConversationThreadPage')
     }
   }, [user, role])
@@ -556,7 +557,7 @@ export default function PropertyDetail() {
   const [activePipelineBookingId, setActivePipelineBookingId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user?.id || role !== 'student' || !property?.id || !isSupabaseConfigured) {
+    if (!user?.id || !isRenterRole(role) || !property?.id || !isSupabaseConfigured) {
       setActivePipelineBookingId(null)
       return
     }
@@ -584,7 +585,7 @@ export default function PropertyDetail() {
   }, [user?.id, role, property?.id, studentProfile?.id, isSupabaseConfigured])
 
   useEffect(() => {
-    if (!user?.id || role !== 'student' || !isSupabaseConfigured) return
+    if (!user?.id || !isRenterRole(role) || !isSupabaseConfigured) return
     const channel = supabase
       .channel(`property-detail-student-${user.id}`)
       .on(
@@ -602,7 +603,7 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === 'visible' && user && role === 'student') void refreshProfile()
+      if (document.visibilityState === 'visible' && user && isRenterRole(role)) void refreshProfile()
     }
     window.addEventListener('focus', onVis)
     document.addEventListener('visibilitychange', onVis)
@@ -613,7 +614,7 @@ export default function PropertyDetail() {
   }, [user, role, refreshProfile])
 
   const excludeStudentIdForLeaseRpc = useMemo(() => {
-    if (user && role === 'student' && studentProfile?.id) return studentProfile.id
+    if (user && isRenterRole(role) && studentProfile?.id) return studentProfile.id
     return null
   }, [user, role, studentProfile?.id])
 
@@ -835,7 +836,7 @@ export default function PropertyDetail() {
     if (fromUrl) return { lat: fromUrl.lat, lon: fromUrl.lon }
 
     if (
-      role === 'student' &&
+      isRenterRole(role) &&
       profile &&
       'accommodation_verification_route' in profile &&
       isNonStudentAccommodationRoute((profile as StudentProfileRow).accommodation_verification_route) &&
@@ -1150,7 +1151,7 @@ export default function PropertyDetail() {
 
   const bookingClosed = Boolean(filterMoveIn) && unavailableMainForSelectedDates
   const showActiveBookingLink =
-    role === 'student' && Boolean(activePipelineBookingId) && propertyStatus === 'active'
+    isRenterRole(role) && Boolean(activePipelineBookingId) && propertyStatus === 'active'
 
   const propertyImages = normalizePropertyImages(property.images)
   const activeImage = propertyImages[imageIndex] ?? propertyImages[0] ?? null
@@ -1841,7 +1842,7 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="pt-4 flex flex-col gap-3">
-                    {role === 'student' && !studentListingActionsOk ? (
+                    {isRenterRole(role) && !studentListingActionsOk ? (
                       <div className="rounded-xl border border-[#FF6F61]/25 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
                           Complete your profile to message landlords and request bookings
@@ -1942,7 +1943,7 @@ export default function PropertyDetail() {
             ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             <span className="text-sm font-semibold text-stone-500 font-sans"> / week</span>
           </p>
-          {role === 'student' && !studentListingActionsOk ? (
+          {isRenterRole(role) && !studentListingActionsOk ? (
             <Link
               to="/onboarding/student"
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shrink-0"

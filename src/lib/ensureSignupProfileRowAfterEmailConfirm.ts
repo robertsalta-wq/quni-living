@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js'
+import { isRenterRole } from './authProfile'
 import { supabase } from './supabase'
 
 function displayNameFromUser(user: User): string {
@@ -42,7 +43,7 @@ export async function ensureSignupProfileRowAfterEmailConfirm(user: User): Promi
     return
   }
 
-  if (metaRole === 'student') {
+  if (isRenterRole(metaRole)) {
     await supabase.from('student_profiles').insert({
       user_id: user.id,
       email,

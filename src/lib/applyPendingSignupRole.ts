@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js'
+import { isRenterRole } from './authProfile'
 import { supabase } from './supabase'
 import {
   applyPendingAccommodationRouteToStudentProfile,
@@ -30,7 +31,7 @@ function displayNameFromUser(user: User): string {
  */
 export async function applyPendingSignupRole(
   user: User,
-  urlRole?: 'student' | 'landlord' | null,
+  urlRole?: 'student' | 'renter' | 'landlord' | null,
   urlRoute?: 'student' | 'non_student' | null,
 ): Promise<void> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null
@@ -49,7 +50,7 @@ export async function applyPendingSignupRole(
     supabase.from('landlord_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
   ])
 
-  if (selected === 'student' && sp?.accommodation_verification_route == null) {
+  if (isRenterRole(selected) && sp?.accommodation_verification_route == null) {
     await applyPendingAccommodationRouteToStudentProfile(
       user.id,
       user.created_at,
@@ -61,9 +62,9 @@ export async function applyPendingSignupRole(
   // Google OAuth cannot attach signup role on first redirect - persist it once the session exists.
   if (!sp && !lp) {
     const metaRole = user.user_metadata?.role
-    if (metaRole !== selected) {
-      const data: Record<string, string> = { role: selected }
-      if (selected === 'student') {
+    if (metaRole !== selected && !(isRenterRole(metaRole) && isRenterRole(selected))) {
+      const data: Record<string, string> = { role: isRenterRole(selected) ? 'student' : selected }
+      if (isRenterRole(selected)) {
         const metaRoute = user.user_metadata?.accommodation_verification_route
         const route =
           metaRoute === 'non_student' || metaRoute === 'student'
@@ -96,7 +97,7 @@ export async function applyPendingSignupRole(
     return
   }
 
-  if (selected === 'student' && lp && !sp) {
+  if (isRenterRole(selected) && lp && !sp) {
     const { data: lpRow } = await supabase
       .from('landlord_profiles')
       .select('full_name, email')

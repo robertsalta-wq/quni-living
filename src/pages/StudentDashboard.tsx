@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
@@ -143,7 +144,7 @@ function PropertyThumbPlaceholder() {
 export default function StudentDashboard() {
   const { user, profile: authProfile, role } = useAuthContext()
   const authStudent =
-    role === 'student' && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
+    isRenterRole(role) && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { items: conversations } = useConversationInbox(user?.id)

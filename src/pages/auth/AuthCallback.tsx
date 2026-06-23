@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { getPostLoginRedirectDestination, needsOnboarding } from '../../lib/authProfile'
+import { getPostLoginRedirectDestination, needsOnboarding, isRenterRole } from '../../lib/authProfile'
 import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
@@ -78,7 +78,7 @@ export default function AuthCallback() {
 
       if (userNeedsEmailAddressVerification(sessionUser)) {
         const onboardingPath =
-          role === 'student'
+          isRenterRole(role)
             ? '/onboarding/student'
             : role === 'landlord'
               ? '/onboarding/landlord'
@@ -100,8 +100,8 @@ export default function AuthCallback() {
         return
       }
       if (needsOnboarding(role, profile, sessionUser.id)) {
-        const onboardingPath = role === 'student' ? '/onboarding/student' : '/onboarding/landlord'
-        if (role === 'student') prefetchRouteChunks('/onboarding/student')
+        const onboardingPath = isRenterRole(role) ? '/onboarding/student' : '/onboarding/landlord'
+        if (isRenterRole(role)) prefetchRouteChunks('/onboarding/student')
         navigate(onboardingPath, { replace: true })
         return
       }

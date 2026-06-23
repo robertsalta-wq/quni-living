@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useAuthContext } from '../../context/AuthContext'
+import { isRenterRole } from '../../lib/authProfile'
 import type { PersonaKey } from '../../lib/aiChat/chatTypes'
 
 type NameFields = {
@@ -30,7 +31,7 @@ export function usePersona(): {
     // Student role -> student_renter prompt.
     // Admins have no matching profile row in `fetchRoleAndProfile()`, so the
     // server persona will fall back to `visitor` (which requires Turnstile on the first message).
-    if (role === 'student') {
+    if (isRenterRole(role)) {
       const nf = profile as NameFields | null
       const first = (nf?.first_name?.trim() ?? '') || firstNameFromFullName(nf?.full_name)
       // As a fallback, use auth metadata name/email prefix.

@@ -68,7 +68,9 @@ export function getGoogleOAuthOptions(signupContext?: GoogleOAuthSignupContext) 
           ? signupContext.signupRoute
           : null,
       signupRole:
-        signupContext.signupRole === 'student' || signupContext.signupRole === 'landlord'
+        signupContext.signupRole === 'student' ||
+        signupContext.signupRole === 'renter' ||
+        signupContext.signupRole === 'landlord'
           ? signupContext.signupRole
           : null,
     })

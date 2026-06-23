@@ -2,7 +2,7 @@
 export type AuthCallbackOtpType = 'signup' | 'recovery'
 
 export type GoogleOAuthSignupRoute = 'student' | 'non_student'
-export type GoogleOAuthSignupRole = 'student' | 'landlord'
+export type GoogleOAuthSignupRole = 'student' | 'renter' | 'landlord'
 
 export type OAuthSignupCallbackParams = {
   signupRoute: GoogleOAuthSignupRoute | null
@@ -42,7 +42,8 @@ function consumeOAuthSignupContext(): OAuthSignupCallbackParams | null {
     const role = parsed.signupRole
     return {
       signupRoute: route === 'student' || route === 'non_student' ? route : null,
-      signupRole: role === 'student' || role === 'landlord' ? role : null,
+      signupRole:
+        role === 'student' || role === 'renter' || role === 'landlord' ? role : null,
     }
   } catch {
     clearOAuthSignupContext()
@@ -67,7 +68,8 @@ export function parseOAuthSignupParamsFromSearch(search: string): OAuthSignupCal
   const role = params.get('signup_role')?.trim()
   return {
     signupRoute: route === 'student' || route === 'non_student' ? route : null,
-    signupRole: role === 'student' || role === 'landlord' ? role : null,
+    signupRole:
+      role === 'student' || role === 'renter' || role === 'landlord' ? role : null,
   }
 }
 

@@ -2,12 +2,20 @@ import { Navigate, useLocation } from 'react-router-dom'
 import PageRouteFallback from './PageRouteFallback'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import type { LandlordProfileRow, StudentProfileRow, UserRole } from '../lib/authProfile'
+import { isRenterRole, type LandlordProfileRow, type StudentProfileRow, type UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
 type AllowedRole = Exclude<UserRole, null>
+
+function roleSatisfiesAllowed(role: AllowedRole, allowed: AllowedRole): boolean {
+  return role === allowed || (allowed === 'student' && isRenterRole(role))
+}
+
+function isRoleAllowed(role: AllowedRole, allowedRoles: AllowedRole[]): boolean {
+  return allowedRoles.some((allowed) => roleSatisfiesAllowed(role, allowed))
+}
 
 type Props = {
   children: React.ReactNode
@@ -68,7 +76,7 @@ export function ProtectedRoute({
     return <Navigate to="/onboarding" replace />
   }
 
-  if (allowedRoles?.length && (!role || !allowedRoles.includes(role))) {
+  if (allowedRoles?.length && !isRoleAllowed(role, allowedRoles)) {
     return <Navigate to="/" replace />
   }
 
@@ -80,7 +88,7 @@ export function ProtectedRoute({
     }
   }
 
-  if (requireStudentListingActions && role === 'student' && profile) {
+  if (requireStudentListingActions && isRenterRole(role) && profile) {
     const sp = profile as StudentProfileRow
     const path = location.pathname
     if (!isStudentListingActionsUnlocked(sp) && !path.startsWith('/onboarding/student')) {

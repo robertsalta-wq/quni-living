@@ -18,6 +18,7 @@
     "api/documents/QuniPlatformAddendumVic.js",
     "api/documents/VicOccupancyAgreement.js",
     "src/lib/database.types.ts",
+    "src/lib/marketplaceRole.ts",
     "src/lib/documents/OccupancyAgreement.tsx",
     "src/lib/documents/NswResidentialTenancyAgreement.tsx",
     "src/lib/documents/QuniPlatformAddendum.tsx",

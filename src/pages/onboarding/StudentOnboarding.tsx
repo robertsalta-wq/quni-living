@@ -16,6 +16,7 @@ import type { Database } from '../../lib/database.types'
 type StudentProfileInsert = Database['public']['Tables']['student_profiles']['Insert']
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
+import { isRenterRole } from '../../lib/authProfile'
 import PageHeroBand from '../../components/PageHeroBand'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { StudentUniEmailVerification } from '../../components/student/StudentUniEmailVerification'
@@ -342,7 +343,7 @@ export default function StudentOnboarding() {
   const { user, role, refreshProfile, profile: authProfile } = useAuthContext()
 
   const seededStudentProfile =
-    role === 'student' && authProfile != null ? (authProfile as StudentProfileRow) : null
+    isRenterRole(role) && authProfile != null ? (authProfile as StudentProfileRow) : null
   const canUseSeededProfileWithoutFetch =
     seededStudentProfile != null && seededStudentProfile.accommodation_verification_route != null
 
@@ -650,7 +651,7 @@ export default function StudentOnboarding() {
       setLoadError(null)
 
       const seeded =
-        role === 'student' && authProfile != null ? (authProfile as StudentProfileRow) : null
+        isRenterRole(role) && authProfile != null ? (authProfile as StudentProfileRow) : null
 
       if (seeded?.accommodation_verification_route != null) {
         if (cancelled) return
@@ -1140,7 +1141,7 @@ export default function StudentOnboarding() {
     return <Navigate to="/login" replace />
   }
 
-  if (role && role !== 'student') {
+  if (role && !isRenterRole(role)) {
     return <Navigate to={role === 'landlord' ? '/onboarding/landlord' : '/'} replace />
   }
 
