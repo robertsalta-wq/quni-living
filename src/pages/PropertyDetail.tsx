@@ -43,6 +43,7 @@ import { DEFAULT_OG_IMAGE, LISTING_SEO_SUFFIX, LISTING_TITLE_FALLBACK, SITE_CONT
 import { firstPropertyImageUrl, normalizePropertyImages } from '../lib/propertyImages'
 import { buildPropertyMetaDescription, propertyListingJsonLd } from '../lib/propertySeo'
 import { getListingRentDisplay } from '../lib/pricing/listingRentDisplay'
+import type { OccupancyPricingProperty } from '../lib/pricing/resolveWeeklyRent'
 import { isRoomListingProperty } from '../lib/listingAccommodationDisplay'
 import { ListingAccommodationStats } from '../components/ListingAccommodationStats'
 import {
@@ -273,6 +274,39 @@ export function listingNoBondQuickInfoItem(
 ): { icon: string; text: string } | null {
   if (!listingHasNoBondRequired(listingBondAud)) return null
   return { icon: '🔓', text: LISTING_NO_BOND_REQUIRED_TEXT }
+}
+
+function formatBondAudDisplay(amount: number): string {
+  return amount.toLocaleString('en-AU', { maximumFractionDigits: 0 })
+}
+
+/** Base rent + couple surcharge — matches two-occupant booking rent (no parking). */
+export function listingCoupleOccupancyWeeklyRentAud(property: OccupancyPricingProperty): number | null {
+  const maxOcc = Math.min(10, Math.max(1, Math.floor(Number(property.max_occupants) || 1)))
+  if (maxOcc < 2) return null
+  const couple = Number(property.couple_surcharge_per_week)
+  if (!Number.isFinite(couple) || couple <= 0) return null
+  const base = Number(property.rent_per_week)
+  if (!Number.isFinite(base) || base <= 0) return null
+  return Math.round((base + couple) * 100) / 100
+}
+
+export function formatListingBondDisplayLabel(
+  property: { bond_weeks?: unknown },
+  baseWeeklyRent: number,
+  coupleOccupancyWeeklyRent: number | null,
+): string | null {
+  const singleBond = resolveListingBondAud(property, baseWeeklyRent)
+  if (singleBond == null || singleBond <= 0) return null
+
+  if (coupleOccupancyWeeklyRent != null && coupleOccupancyWeeklyRent > baseWeeklyRent) {
+    const coupleBond = resolveListingBondAud(property, coupleOccupancyWeeklyRent)
+    if (coupleBond != null && coupleBond > singleBond) {
+      return `$${formatBondAudDisplay(singleBond)} (1 person) · $${formatBondAudDisplay(coupleBond)} for two`
+    }
+  }
+
+  return `$${formatBondAudDisplay(singleBond)}`
 }
 
 export default function PropertyDetail() {
@@ -639,6 +673,13 @@ export default function PropertyDetail() {
     if (!property) return null
     const listingRent = getListingRentDisplay(property)
     return resolveListingBondAud(property, listingRent.primaryAmount)
+  }, [property])
+
+  const listingBondDisplayLabel = useMemo(() => {
+    if (!property) return null
+    const listingRent = getListingRentDisplay(property)
+    const coupleRent = listingCoupleOccupancyWeeklyRentAud(property)
+    return formatListingBondDisplayLabel(property, listingRent.primaryAmount, coupleRent)
   }, [property])
 
   const [listingGeoPoint, setListingGeoPoint] = useState<GeoPoint | null>(null)
@@ -1673,7 +1714,11 @@ export default function PropertyDetail() {
 
                   <div className="py-4 space-y-2.5 border-b border-stone-100">
                     {listingBondAud != null && listingBondAud > 0 ? (
-                      <SidebarRow label="Bond">{`$${listingBondAud.toLocaleString()}`}</SidebarRow>
+                      <SidebarRow label="Bond">
+                        <span className="font-normal text-stone-700 normal-nums text-right leading-snug">
+                          {listingBondDisplayLabel}
+                        </span>
+                      </SidebarRow>
                     ) : listingHasNoBondRequired(listingBondAud) ? (
                       <p className="text-sm text-stone-700 leading-snug">{LISTING_NO_BOND_REQUIRED_TEXT}</p>
                     ) : null}
