@@ -195,37 +195,24 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     [pickIdFile, pickEnrolFile, pickIdentitySupportFile],
   )
 
-  // Android's "Files" document picker can return without React seeing the change
-  // event (and sometimes without firing it cleanly at all). Two safeguards:
-  //   1. Bind the change listener NATIVELY on each DOM node (React's delegated
-  //      synthetic event can be missed when returning from the heavy picker).
-  //   2. On window focus (picker closed), sweep the inputs for a file the change
-  //      event may have missed. processPickedFile clears the value first, so
-  //      whichever path runs first makes the other a no-op.
+  // Android's "Files" document picker can return after React's delegated synthetic
+  // event system has already missed the change event. Binding the change listener
+  // NATIVELY on each DOM node (instead of React's onChange prop) catches it
+  // reliably, and also covers Camera/Gallery — so it's a superset of onChange.
   useEffect(() => {
     const entries: Array<[RefObject<HTMLInputElement | null>, VerificationDocKind]> = [
       [idInputRef, 'id'],
       [enrolInputRef, 'enrolment'],
       [identitySupportInputRef, 'identity_supporting'],
     ]
-    const changeCleanups = entries.map(([ref, kind]) => {
+    const cleanups = entries.map(([ref, kind]) => {
       const el = ref.current
       if (!el) return null
       const handler = () => processPickedFile(kind, el)
       el.addEventListener('change', handler)
       return () => el.removeEventListener('change', handler)
     })
-    const onFocus = () => {
-      for (const [ref, kind] of entries) {
-        const el = ref.current
-        if (el && el.files && el.files.length > 0) processPickedFile(kind, el)
-      }
-    }
-    window.addEventListener('focus', onFocus)
-    return () => {
-      changeCleanups.forEach((fn) => fn?.())
-      window.removeEventListener('focus', onFocus)
-    }
+    return () => cleanups.forEach((fn) => fn?.())
   }, [processPickedFile])
 
   const openPicker = (ref: RefObject<HTMLInputElement | null>) => () => {
