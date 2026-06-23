@@ -237,6 +237,32 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     }
   }, [processPickedFile])
 
+  // Unmistakable success confirmation: when a doc finishes uploading (pending ->
+  // received), flash a prominent banner so users SEE it worked and don't retry.
+  const prevPending = useRef<Record<VerificationDocKind, boolean>>({
+    id: false,
+    enrolment: false,
+    identity_supporting: false,
+  })
+  const [uploadedFlash, setUploadedFlash] = useState<string | null>(null)
+  const flashTimer = useRef<number | null>(null)
+  useEffect(() => {
+    const docs: Array<[VerificationDocKind, VerificationUploadedDoc | null, string]> = [
+      ['id', idDoc, 'Photo ID'],
+      ['enrolment', enrolDoc, 'Enrolment document'],
+      ['identity_supporting', identitySupportDoc, 'Supporting document'],
+    ]
+    for (const [kind, doc, label] of docs) {
+      const justFinished = prevPending.current[kind] && !!doc && !doc.pending && !!doc.filePath
+      if (justFinished) {
+        setUploadedFlash(`${label} uploaded`)
+        if (flashTimer.current) window.clearTimeout(flashTimer.current)
+        flashTimer.current = window.setTimeout(() => setUploadedFlash(null), 4500)
+      }
+      prevPending.current[kind] = !!doc?.pending
+    }
+  }, [idDoc, enrolDoc, identitySupportDoc])
+
   const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
     const el = ref.current
     if (!el) return
@@ -269,6 +295,17 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       />
     </>
   )
+
+  const uploadFlashBanner = uploadedFlash ? (
+    <div
+      className="fixed top-3 inset-x-3 z-[60] rounded-xl bg-emerald-600 text-white px-4 py-3 shadow-lg text-sm font-semibold flex items-center gap-2"
+      role="status"
+      aria-live="polite"
+    >
+      <span aria-hidden>✓</span>
+      <span>{uploadedFlash} — pending review</span>
+    </div>
+  ) : null
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -474,6 +511,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     return (
       <div className="space-y-6">
         {hoistedFileInputs}
+        {uploadFlashBanner}
         <section
           className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
@@ -701,6 +739,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   return (
     <div className="space-y-6">
       {hoistedFileInputs}
+      {uploadFlashBanner}
       <section
         className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
