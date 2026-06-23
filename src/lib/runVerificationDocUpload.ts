@@ -42,7 +42,7 @@ export async function runVerificationDocUpload(
   if (upErr) return { ok: false, message: upErr.message }
 
   const submittedAt = new Date().toISOString()
-  const patch = dbPatchForVerificationDoc(kind, path, submittedAt)
+  const patch = dbPatchForVerificationDoc(kind, path, submittedAt, file.name)
 
   const { error: dbErr } = await client.from('student_profiles').update(patch).eq('user_id', userId)
   if (dbErr) return { ok: false, message: dbErr.message }

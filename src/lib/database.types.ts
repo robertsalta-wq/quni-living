@@ -533,6 +533,9 @@ export interface Database {
           verification_type: 'student' | 'identity' | 'none'
           identity_supporting_doc_url: string | null
           identity_supporting_submitted_at: string | null
+          id_document_name: string | null
+          enrolment_doc_name: string | null
+          identity_supporting_doc_name: string | null
           accommodation_verification_route: 'student' | 'non_student' | null
           bio: string | null
           occupancy_type: 'sole' | 'couple' | 'open' | null
@@ -598,6 +601,9 @@ export interface Database {
           verification_type?: 'student' | 'identity' | 'none'
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
+          id_document_name?: string | null
+          enrolment_doc_name?: string | null
+          identity_supporting_doc_name?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
           bio?: string | null
           occupancy_type?: 'sole' | 'couple' | 'open' | null
@@ -663,6 +669,9 @@ export interface Database {
           verification_type?: 'student' | 'identity' | 'none'
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
+          id_document_name?: string | null
+          enrolment_doc_name?: string | null
+          identity_supporting_doc_name?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
           bio?: string | null
           occupancy_type?: 'sole' | 'couple' | 'open' | null

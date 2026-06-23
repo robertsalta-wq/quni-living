@@ -560,9 +560,14 @@ export default function StudentProfile() {
 
   const refreshProfileData = useCallback(() => load({ background: true }), [load])
 
-  const onVerificationDocUploaded = useCallback((kind: VerificationDocKind, filePath: string, submittedAt: string) => {
-    setProfile((prev) => (prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt) } : prev))
-  }, [])
+  const onVerificationDocUploaded = useCallback(
+    (kind: VerificationDocKind, filePath: string, submittedAt: string, displayName: string) => {
+      setProfile((prev) =>
+        prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt, displayName) } : prev,
+      )
+    },
+    [],
+  )
 
   const verificationDocUpload = useStudentVerificationDocUpload(profile, user?.id, onVerificationDocUploaded)
 

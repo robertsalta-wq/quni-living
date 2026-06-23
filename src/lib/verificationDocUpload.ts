@@ -1,4 +1,5 @@
 import { prepareProfilePhotoForUpload } from './prepareProfilePhotoForUpload'
+import { ensureDisplayableImage } from './convertHeicImage'
 
 export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
 /** Photo ID — images only; avoids Android Chrome bugs with mixed accept lists. */
@@ -127,7 +128,10 @@ export async function prepareVerificationDocForUpload(
     }
   }
 
-  const normalized = fileForVerificationImageUpload(file)
+  // HEIC/HEIF can't be rendered by browsers — convert to JPEG so the stored
+  // document is viewable (and so the resize path below can decode it).
+  const displayable = await ensureDisplayableImage(file)
+  const normalized = fileForVerificationImageUpload(displayable)
 
   // Under the 15 MB client cap, upload bytes as picked — same idea as profile photos under 2 MB.
   // Avoids decode/resize passes that fail on Android gallery picks (WebP, HEIC, screenshots).

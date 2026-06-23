@@ -37,7 +37,12 @@ function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
 export function useStudentVerificationDocUpload(
   profile: StudentRow | null,
   userId: string | undefined,
-  onVerificationDocUploaded: (kind: VerificationDocKind, filePath: string, submittedAt: string) => void,
+  onVerificationDocUploaded: (
+    kind: VerificationDocKind,
+    filePath: string,
+    submittedAt: string,
+    displayName: string,
+  ) => void,
 ) {
   const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
   const [idUploadError, setIdUploadError] = useState<string | null>(null)
@@ -50,19 +55,23 @@ export function useStudentVerificationDocUpload(
   const idDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.id,
-        docFromProfile(profile.id_document_url, profile.id_submitted_at),
+        docFromProfile(profile.id_document_url, profile.id_submitted_at, profile.id_document_name),
       )
     : null
   const enrolDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.enrolment,
-        docFromProfile(profile.enrolment_doc_url, profile.enrolment_submitted_at),
+        docFromProfile(profile.enrolment_doc_url, profile.enrolment_submitted_at, profile.enrolment_doc_name),
       )
     : null
   const identitySupportDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.identity_supporting,
-        docFromProfile(profile.identity_supporting_doc_url, profile.identity_supporting_submitted_at),
+        docFromProfile(
+          profile.identity_supporting_doc_url,
+          profile.identity_supporting_submitted_at,
+          profile.identity_supporting_doc_name,
+        ),
       )
     : null
 
@@ -150,7 +159,7 @@ export function useStudentVerificationDocUpload(
             pending: false,
           },
         }))
-        onVerificationDocUploaded(kind, result.filePath, result.submittedAt)
+        onVerificationDocUploaded(kind, result.filePath, result.submittedAt, file.name)
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
         revertDocUpload(kind, instantPreview, rollback)

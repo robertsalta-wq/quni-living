@@ -1,3 +1,5 @@
+import { ensureDisplayableImage } from './convertHeicImage'
+
 function safeExtFromFilename(name: string): string {
   const ext = name.split('.').pop()?.toLowerCase()
   return ext && /^[a-z0-9]+$/i.test(ext) ? ext : 'jpg'
@@ -75,9 +77,12 @@ async function compressRasterImageToMaxBytes(file: File, maxBytes: number): Prom
  * when the original file is too large. Smaller files are returned unchanged.
  */
 export async function prepareProfilePhotoForUpload(
-  file: File,
+  fileInput: File,
   maxBytes: number,
 ): Promise<{ blob: Blob; contentType: string; ext: string }> {
+  // Convert HEIC/HEIF up front: browsers can't decode it to compress OR display,
+  // so a raw HEIC photo would just show as a broken image.
+  const file = await ensureDisplayableImage(fileInput)
   if (!file.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }

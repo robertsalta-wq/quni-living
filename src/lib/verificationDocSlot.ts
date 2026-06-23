@@ -16,11 +16,13 @@ export type VerificationProfileDocFields = {
 export function docFromProfile(
   url: string | null | undefined,
   submittedAt: string | null | undefined,
+  name?: string | null | undefined,
 ): VerificationUploadedDoc | null {
   const path = url?.trim() ?? ''
   const at = submittedAt?.trim() ?? ''
   if (!path || !at) return null
-  return { filePath: path, submittedAt: at, displayFileName: path.split('/').pop() ?? 'document' }
+  const displayFileName = name?.trim() || path.split('/').pop() || 'document'
+  return { filePath: path, submittedAt: at, displayFileName }
 }
 
 export function resolveUploadedDoc(
@@ -83,14 +85,20 @@ export function dbPatchForVerificationDoc(
   kind: VerificationDocKind,
   path: string,
   submittedAt: string,
+  displayName?: string,
 ): Record<string, string> {
+  const name = displayName?.trim() ?? ''
   if (kind === 'id') {
-    return { id_document_url: path, id_submitted_at: submittedAt }
+    return { id_document_url: path, id_submitted_at: submittedAt, id_document_name: name }
   }
   if (kind === 'enrolment') {
-    return { enrolment_doc_url: path, enrolment_submitted_at: submittedAt }
+    return { enrolment_doc_url: path, enrolment_submitted_at: submittedAt, enrolment_doc_name: name }
   }
-  return { identity_supporting_doc_url: path, identity_supporting_submitted_at: submittedAt }
+  return {
+    identity_supporting_doc_url: path,
+    identity_supporting_submitted_at: submittedAt,
+    identity_supporting_doc_name: name,
+  }
 }
 
 export type PickVerificationFileResult = {
