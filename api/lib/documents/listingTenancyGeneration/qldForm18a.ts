@@ -178,8 +178,6 @@ async function loadQldForm18aContext(
         furnished,
         bond,
         bond_weeks,
-        bond_is_fixed,
-        bond_fixed_amount,
         linen_supplied,
         weekly_cleaning_service,
         house_rules,
