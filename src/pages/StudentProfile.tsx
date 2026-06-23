@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { getValidAccessTokenForFunctions } from '../lib/supabaseEdgeInvoke'
@@ -134,157 +134,6 @@ const FURNISHING_PREF_OPTIONS: { value: string; label: string }[] = [
   { value: 'either', label: 'Either' },
 ]
 
-const STUDENT_PROFILE_DRAFT_KEY = 'student_profile_draft' as const
-const STUDENT_PROFILE_DRAFT_VERSION = 1 as const
-
-const SP_GENDER_SET = new Set(GENDER_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_YEAR_SET = new Set(YEAR_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_NATIONALITY_SET = new Set(NATIONALITY_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_STUDENT_TYPE_SET = new Set(STUDENT_TYPE_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_ROOM_PREF_SET = new Set(ROOM_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_OCC_SET = new Set(OCCUPANCY_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_MOVE_FLEX_SET = new Set(MOVE_IN_FLEX_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_BILLS_SET = new Set(BILLS_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
-const SP_FURN_SET = new Set(FURNISHING_PREF_OPTIONS.map((o) => o.value).filter(Boolean))
-
-type StudentProfileDraftV1 = {
-  v: typeof STUDENT_PROFILE_DRAFT_VERSION
-  firstName: string
-  lastName: string
-  phone: string
-  gender: string
-  nationality: string
-  languagesSpoken: SpokenLanguageCode[]
-  yearOfStudy: string
-  course: string
-  emergencyName: string
-  emergencyPhone: string
-  isSmoker: boolean
-  dateOfBirth: string
-  universityId: string
-  campusId: string
-  studentType: string
-  roomPref: string
-  budgetMin: string
-  budgetMax: string
-  bio: string
-  occupancyType: string
-  moveInFlex: string
-  hasPets: boolean
-  needsParking: boolean
-  billsPref: string
-  furnishingPref: string
-  hasGuarantor: boolean
-  guarantorName: string
-}
-
-function studentProfileDraftFromState(s: Omit<StudentProfileDraftV1, 'v'>): StudentProfileDraftV1 {
-  return { v: STUDENT_PROFILE_DRAFT_VERSION, ...s }
-}
-
-function parseStudentProfileDraft(raw: string | null): StudentProfileDraftV1 | null {
-  if (!raw) return null
-  try {
-    const o = JSON.parse(raw) as unknown
-    if (!o || typeof o !== 'object') return null
-    const d = o as Record<string, unknown>
-    if (d.v !== STUDENT_PROFILE_DRAFT_VERSION) return null
-    const gender = typeof d.gender === 'string' && (d.gender === '' || SP_GENDER_SET.has(d.gender)) ? d.gender : ''
-    const year =
-      typeof d.yearOfStudy === 'string' && (d.yearOfStudy === '' || SP_YEAR_SET.has(d.yearOfStudy))
-        ? d.yearOfStudy
-        : ''
-    const nat =
-      typeof d.nationality === 'string' && (d.nationality === '' || SP_NATIONALITY_SET.has(d.nationality))
-        ? d.nationality
-        : ''
-    const stu =
-      typeof d.studentType === 'string' && (d.studentType === '' || SP_STUDENT_TYPE_SET.has(d.studentType))
-        ? d.studentType
-        : ''
-    const room =
-      typeof d.roomPref === 'string' && (d.roomPref === '' || SP_ROOM_PREF_SET.has(d.roomPref)) ? d.roomPref : ''
-    const occ =
-      typeof d.occupancyType === 'string' && (d.occupancyType === '' || SP_OCC_SET.has(d.occupancyType))
-        ? d.occupancyType
-        : ''
-    const flex =
-      typeof d.moveInFlex === 'string' && (d.moveInFlex === '' || SP_MOVE_FLEX_SET.has(d.moveInFlex))
-        ? d.moveInFlex
-        : ''
-    const bills =
-      typeof d.billsPref === 'string' && (d.billsPref === '' || SP_BILLS_SET.has(d.billsPref)) ? d.billsPref : ''
-    const furn =
-      typeof d.furnishingPref === 'string' && (d.furnishingPref === '' || SP_FURN_SET.has(d.furnishingPref))
-        ? d.furnishingPref
-        : ''
-    return {
-      v: STUDENT_PROFILE_DRAFT_VERSION,
-      firstName: typeof d.firstName === 'string' ? d.firstName : '',
-      lastName: typeof d.lastName === 'string' ? d.lastName : '',
-      phone: typeof d.phone === 'string' ? d.phone : '',
-      gender,
-      nationality: nat,
-      languagesSpoken: normalizeLanguagesSpoken(d.languagesSpoken),
-      yearOfStudy: year,
-      course: typeof d.course === 'string' ? d.course : '',
-      emergencyName: typeof d.emergencyName === 'string' ? d.emergencyName : '',
-      emergencyPhone: typeof d.emergencyPhone === 'string' ? d.emergencyPhone : '',
-      isSmoker: Boolean(d.isSmoker),
-      dateOfBirth: typeof d.dateOfBirth === 'string' ? d.dateOfBirth : '',
-      universityId: typeof d.universityId === 'string' ? d.universityId : '',
-      campusId: typeof d.campusId === 'string' ? d.campusId : '',
-      studentType: stu,
-      roomPref: room,
-      budgetMin: typeof d.budgetMin === 'string' ? d.budgetMin : '',
-      budgetMax: typeof d.budgetMax === 'string' ? d.budgetMax : '',
-      bio: typeof d.bio === 'string' ? d.bio : '',
-      occupancyType: occ,
-      moveInFlex: flex,
-      hasPets: Boolean(d.hasPets),
-      needsParking: Boolean(d.needsParking),
-      billsPref: bills,
-      furnishingPref: furn,
-      hasGuarantor: Boolean(d.hasGuarantor),
-      guarantorName: typeof d.guarantorName === 'string' ? d.guarantorName : '',
-    }
-  } catch {
-    return null
-  }
-}
-
-function isStudentProfileDraftMeaningful(d: StudentProfileDraftV1): boolean {
-  return (
-    d.firstName.trim() !== '' ||
-    d.lastName.trim() !== '' ||
-    d.phone.trim() !== '' ||
-    d.gender !== '' ||
-    d.nationality !== '' ||
-    d.languagesSpoken.length > 0 ||
-    d.yearOfStudy !== '' ||
-    d.course.trim() !== '' ||
-    d.emergencyName.trim() !== '' ||
-    d.emergencyPhone.trim() !== '' ||
-    d.isSmoker ||
-    d.dateOfBirth.trim() !== '' ||
-    d.universityId.trim() !== '' ||
-    d.campusId.trim() !== '' ||
-    d.studentType !== '' ||
-    d.roomPref !== '' ||
-    d.budgetMin.trim() !== '' ||
-    d.budgetMax.trim() !== '' ||
-    d.bio.trim() !== '' ||
-    d.occupancyType !== '' ||
-    d.moveInFlex !== '' ||
-    d.hasPets ||
-    d.needsParking ||
-    d.billsPref !== '' ||
-    d.furnishingPref !== '' ||
-    d.hasGuarantor ||
-    d.guarantorName.trim() !== ''
-  )
-}
-
 function splitFullName(full: string | null | undefined): [string, string] {
   if (!full?.trim()) return ['', '']
   const parts = full.trim().split(/\s+/)
@@ -337,7 +186,6 @@ type StudentTab = 'profile' | 'verification' | 'bookings'
 export default function StudentProfile() {
   const { user, refreshProfile, signOut } = useAuthContext()
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const {
     universities: refUniversities,
@@ -437,90 +285,6 @@ export default function StudentProfile() {
     setGuarantorName(prof.guarantor_name?.trim() ?? '')
   }, [])
 
-  const studentProfileDraftSnapshot = useMemo(
-    () =>
-      studentProfileDraftFromState({
-        firstName,
-        lastName,
-        phone,
-        gender,
-        nationality,
-        languagesSpoken,
-        yearOfStudy,
-        course,
-        emergencyName,
-        emergencyPhone,
-        isSmoker,
-        dateOfBirth,
-        universityId,
-        campusId,
-        studentType,
-        roomPref,
-        budgetMin,
-        budgetMax,
-        bio,
-        occupancyType,
-        moveInFlex,
-        hasPets,
-        needsParking,
-        billsPref,
-        furnishingPref,
-        hasGuarantor,
-        guarantorName,
-      }),
-    [
-      firstName,
-      lastName,
-      phone,
-      gender,
-      nationality,
-      languagesSpoken,
-      yearOfStudy,
-      course,
-      emergencyName,
-      emergencyPhone,
-      isSmoker,
-      dateOfBirth,
-      universityId,
-      campusId,
-      studentType,
-      roomPref,
-      budgetMin,
-      budgetMax,
-      bio,
-      occupancyType,
-      moveInFlex,
-      hasPets,
-      needsParking,
-      billsPref,
-      furnishingPref,
-      hasGuarantor,
-      guarantorName,
-    ],
-  )
-
-  const restoredLocationKeyRef = useRef<string | null>(null)
-  const resumeDraftBannerDismissedKeyRef = useRef<string | null>(null)
-  const draftSavedHideTimerRef = useRef<number | null>(null)
-  const [draftSaveEnabled, setDraftSaveEnabled] = useState(false)
-  const [showResumeDraftBanner, setShowResumeDraftBanner] = useState(false)
-  const [draftSavedVisible, setDraftSavedVisible] = useState(false)
-
-  const handleDraftStartFresh = useCallback(() => {
-    try {
-      localStorage.removeItem(STUDENT_PROFILE_DRAFT_KEY)
-    } catch {
-      /* ignore */
-    }
-    setShowResumeDraftBanner(false)
-    resumeDraftBannerDismissedKeyRef.current = location.key
-    if (profile) applyProfileToForm(profile)
-    setDraftSavedVisible(false)
-    if (draftSavedHideTimerRef.current) {
-      window.clearTimeout(draftSavedHideTimerRef.current)
-      draftSavedHideTimerRef.current = null
-    }
-  }, [profile, applyProfileToForm, location.key])
 
   const load = useCallback(async (opts?: { background?: boolean }) => {
     if (!user?.id) return
@@ -590,86 +354,6 @@ export default function StudentProfile() {
     [setSearchParams],
   )
 
-  useEffect(() => {
-    return () => {
-      if (draftSavedHideTimerRef.current) {
-        window.clearTimeout(draftSavedHideTimerRef.current)
-        draftSavedHideTimerRef.current = null
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (loading) restoredLocationKeyRef.current = null
-  }, [loading])
-
-  useEffect(() => {
-    if (loading || !profile) {
-      setDraftSaveEnabled(false)
-      return
-    }
-
-    if (restoredLocationKeyRef.current === location.key) {
-      setDraftSaveEnabled(true)
-      return
-    }
-    restoredLocationKeyRef.current = location.key
-
-    const parsed = parseStudentProfileDraft(localStorage.getItem(STUDENT_PROFILE_DRAFT_KEY))
-    if (parsed && isStudentProfileDraftMeaningful(parsed)) {
-      setFirstName(parsed.firstName)
-      setLastName(parsed.lastName)
-      setPhone(parsed.phone)
-      setGender(parsed.gender)
-      setNationality(parsed.nationality)
-      setLanguagesSpoken(parsed.languagesSpoken)
-      setYearOfStudy(parsed.yearOfStudy)
-      setCourse(parsed.course)
-      setEmergencyName(parsed.emergencyName)
-      setEmergencyPhone(parsed.emergencyPhone)
-      setIsSmoker(parsed.isSmoker)
-      setDateOfBirth(parsed.dateOfBirth)
-      setUniversityId(parsed.universityId)
-      setCampusId(parsed.campusId)
-      setStudentType(parsed.studentType)
-      setRoomPref(parsed.roomPref)
-      setBudgetMin(parsed.budgetMin)
-      setBudgetMax(parsed.budgetMax)
-      setBio(parsed.bio)
-      setOccupancyType(parsed.occupancyType)
-      setMoveInFlex(parsed.moveInFlex)
-      setHasPets(parsed.hasPets)
-      setNeedsParking(parsed.needsParking)
-      setBillsPref(parsed.billsPref)
-      setFurnishingPref(parsed.furnishingPref)
-      setHasGuarantor(parsed.hasGuarantor)
-      setGuarantorName(parsed.guarantorName)
-      if (resumeDraftBannerDismissedKeyRef.current !== location.key) {
-        setShowResumeDraftBanner(true)
-      }
-    } else {
-      setShowResumeDraftBanner(false)
-    }
-    setDraftSaveEnabled(true)
-  }, [loading, profile?.id, location.key])
-
-  useEffect(() => {
-    if (!draftSaveEnabled || loading || !profile) return
-    const id = window.setTimeout(() => {
-      try {
-        localStorage.setItem(STUDENT_PROFILE_DRAFT_KEY, JSON.stringify(studentProfileDraftSnapshot))
-      } catch {
-        /* quota / private mode */
-      }
-      setDraftSavedVisible(true)
-      if (draftSavedHideTimerRef.current) window.clearTimeout(draftSavedHideTimerRef.current)
-      draftSavedHideTimerRef.current = window.setTimeout(() => {
-        setDraftSavedVisible(false)
-        draftSavedHideTimerRef.current = null
-      }, 2200)
-    }, 500)
-    return () => window.clearTimeout(id)
-  }, [studentProfileDraftSnapshot, draftSaveEnabled, loading, profile?.id])
 
   useEffect(() => {
     void load()
@@ -886,11 +570,6 @@ export default function StudentProfile() {
 
       if (uErr) throw uErr
 
-      try {
-        localStorage.removeItem(STUDENT_PROFILE_DRAFT_KEY)
-      } catch {
-        /* ignore */
-      }
       await load({ background: true })
       await refreshProfile()
       navigate('/student-dashboard', { replace: true })
@@ -956,39 +635,6 @@ export default function StudentProfile() {
       />
 
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
-      {showResumeDraftBanner && (
-        <div
-          className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-          role="region"
-          aria-label="Saved draft"
-        >
-          <p className="text-gray-700">Resume draft? We restored your last saved profile details.</p>
-          <div className="flex flex-wrap gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                resumeDraftBannerDismissedKeyRef.current = location.key
-                setShowResumeDraftBanner(false)
-              }}
-              className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
-            >
-              Continue editing
-            </button>
-            <button
-              type="button"
-              onClick={handleDraftStartFresh}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Start fresh
-            </button>
-          </div>
-        </div>
-      )}
-      {draftSavedVisible && activeTab === 'profile' && (
-        <p className="text-xs text-gray-400 text-right mb-2 tabular-nums" aria-live="polite">
-          Draft saved
-        </p>
-      )}
       <div
         className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
         role="tablist"
