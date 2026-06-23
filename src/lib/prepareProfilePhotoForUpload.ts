@@ -77,22 +77,22 @@ async function compressRasterImageToMaxBytes(file: File, maxBytes: number): Prom
  * when the original file is too large. Smaller files are returned unchanged.
  */
 export async function prepareProfilePhotoForUpload(
-  file: File,
+  fileInput: File,
   maxBytes: number,
 ): Promise<{ blob: Blob; contentType: string; ext: string }> {
   // Convert HEIC/HEIF up front: browsers can't decode it to compress OR display,
-  // so a raw HEIC avatar would just show as a broken image.
-  const image = await ensureDisplayableImage(file)
-  if (!image.type.startsWith('image/')) {
+  // so a raw HEIC photo would just show as a broken image.
+  const file = await ensureDisplayableImage(fileInput)
+  if (!file.type.startsWith('image/')) {
     throw new Error('Please choose an image file.')
   }
-  if (image.size <= maxBytes) {
+  if (file.size <= maxBytes) {
     return {
-      blob: image,
-      contentType: image.type,
-      ext: safeExtFromFilename(image.name),
+      blob: file,
+      contentType: file.type,
+      ext: safeExtFromFilename(file.name),
     }
   }
-  const blob = await compressRasterImageToMaxBytes(image, maxBytes)
+  const blob = await compressRasterImageToMaxBytes(file, maxBytes)
   return { blob, contentType: 'image/jpeg', ext: 'jpg' }
 }

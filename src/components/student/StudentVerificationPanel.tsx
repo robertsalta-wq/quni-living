@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -11,7 +11,6 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
   VERIFICATION_ID_FILE_ACCEPT,
-  VERIFICATION_SUPPORTING_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
   docStepComplete,
@@ -22,7 +21,7 @@ import {
 } from '../../lib/verificationDocSlot'
 import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
 import { StudentVerificationDocPick } from './StudentVerificationDocPick'
-import type { useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
+import { VERIF_UPLOAD_FLASH_KEY, type useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -63,39 +62,25 @@ function DocUploadControl({
   busy,
   uploaded,
   error,
-  accept,
-  onFileSelected,
+  onPickClick,
   reviewNote,
-  diag,
-  onDiag,
 }: {
   busy: boolean
   uploaded: VerificationUploadedDoc | null
   error: string | null
-  accept?: string
-  onFileSelected: (file: File) => void
+  onPickClick: () => void
   reviewNote?: string
-  // TEMP DIAGNOSTIC props — surface picker/upload lifecycle on the device.
-  diag?: string | null
-  onDiag?: (msg: string) => void
 }) {
   return (
     <div className="space-y-3">
       {uploaded ? <DocReceivedCard doc={uploaded} reviewNote={reviewNote} /> : null}
       {error ? <UploadFailedBanner message={error} /> : null}
       <StudentVerificationDocPick
-        accept={accept}
         busy={busy}
         label={uploaded ? 'Replace document' : CHOOSE_VERIFICATION_FILE_LABEL}
-        onFileSelected={onFileSelected}
-        onPickDiag={onDiag}
+        onPickClick={onPickClick}
         error={null}
       />
-      {diag ? (
-        <p className="text-[11px] leading-snug text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 font-mono break-all">
-          diagnostic: {diag}
-        </p>
-      ) : null}
     </div>
   )
 }
@@ -144,8 +129,8 @@ function DocReceivedCard({
               Received {formatReceivedAt(doc.submittedAt)} · pending review (not verified yet)
             </p>
           ) : null}
-          <p className="text-emerald-900/90 mt-1 break-all">
-            <span className="font-medium">{doc.displayFileName}</span>
+          <p className="text-emerald-900/90 mt-1 font-medium truncate" title={doc.displayFileName}>
+            {doc.displayFileName}
           </p>
           {reviewNote && !doc.pending ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
           {doc.previewUrl || doc.filePath ? (
@@ -175,8 +160,6 @@ type Props = {
 
 export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload }: Props) {
   const {
-    diag,
-    setDiag,
     uploadedByKind,
     idDoc,
     enrolDoc,
@@ -191,6 +174,157 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     pickEnrolFile,
     pickIdentitySupportFile,
   } = docUpload
+
+  // Hoisted file inputs (see hoistedFileInputs below): each <input> lives at the
+  // panel root with a stable key so volatile card re-renders (signed-URL preview
+  // fetches, onRefresh profile refetch) never tear down / remount the input —
+  // which on Android Chrome caused the picker's `change` event to be lost.
+  const idInputRef = useRef<HTMLInputElement>(null)
+  const enrolInputRef = useRef<HTMLInputElement>(null)
+  const identitySupportInputRef = useRef<HTMLInputElement>(null)
+  // Tracks a deliberate upload tap so the one-shot recovery below can rescue a pick
+  // the change event missed — scoped to just after a tap, never on unrelated focus.
+  const pendingPick = useRef<{ kind: VerificationDocKind; el: HTMLInputElement } | null>(null)
+
+  const processPickedFile = useCallback(
+    (kind: VerificationDocKind, input: HTMLInputElement) => {
+      pendingPick.current = null // handled; cancel any pending recovery sweep
+      const file = input.files?.[0]
+      input.value = '' // clear first so a duplicate change/focus event is a no-op (no double upload)
+      if (!file) return
+      if (kind === 'id') pickIdFile(file)
+      else if (kind === 'enrolment') pickEnrolFile(file)
+      else pickIdentitySupportFile(file)
+    },
+    [pickIdFile, pickEnrolFile, pickIdentitySupportFile],
+  )
+
+  // Android's "Files" document picker can return after React's delegated synthetic
+  // event system has already missed the change event. Binding the change listener
+  // NATIVELY on each DOM node (instead of React's onChange prop) catches it
+  // reliably, and also covers Camera/Gallery — so it's a superset of onChange.
+  useEffect(() => {
+    const entries: Array<[RefObject<HTMLInputElement | null>, VerificationDocKind]> = [
+      [idInputRef, 'id'],
+      [enrolInputRef, 'enrolment'],
+      [identitySupportInputRef, 'identity_supporting'],
+    ]
+    const cleanups = entries.map(([ref, kind]) => {
+      const el = ref.current
+      if (!el) return null
+      const handler = () => processPickedFile(kind, el)
+      el.addEventListener('change', handler)
+      return () => el.removeEventListener('change', handler)
+    })
+    // One-shot recovery: Android's Files picker occasionally returns without firing
+    // change at all. When the window regains focus AND a pick is pending (i.e. the
+    // user just tapped an upload button), check that one input shortly after for a
+    // file the change event missed. Scoped to pendingPick so it never fires on
+    // unrelated tab switches; processPickedFile clears pendingPick + value to dedupe.
+    const recoverPendingPick = () => {
+      if (!pendingPick.current) return
+      window.setTimeout(() => {
+        const p = pendingPick.current
+        if (p && p.el.files && p.el.files.length > 0) processPickedFile(p.kind, p.el)
+      }, 500)
+    }
+    window.addEventListener('focus', recoverPendingPick)
+    document.addEventListener('visibilitychange', recoverPendingPick)
+    return () => {
+      cleanups.forEach((fn) => fn?.())
+      window.removeEventListener('focus', recoverPendingPick)
+      document.removeEventListener('visibilitychange', recoverPendingPick)
+    }
+  }, [processPickedFile])
+
+  // Unmistakable success confirmation: when a doc finishes uploading (pending ->
+  // received), flash a prominent banner so users SEE it worked and don't retry.
+  const prevPending = useRef<Record<VerificationDocKind, boolean>>({
+    id: false,
+    enrolment: false,
+    identity_supporting: false,
+  })
+  const [uploadedFlash, setUploadedFlash] = useState<string | null>(null)
+  const flashTimer = useRef<number | null>(null)
+  useEffect(() => {
+    const docs: Array<[VerificationDocKind, VerificationUploadedDoc | null, string]> = [
+      ['id', idDoc, 'Photo ID'],
+      ['enrolment', enrolDoc, 'Enrolment document'],
+      ['identity_supporting', identitySupportDoc, 'Supporting document'],
+    ]
+    for (const [kind, doc, label] of docs) {
+      const justFinished = prevPending.current[kind] && !!doc && !doc.pending && !!doc.filePath
+      if (justFinished) {
+        setUploadedFlash(`${label} uploaded`)
+        if (flashTimer.current) window.clearTimeout(flashTimer.current)
+        flashTimer.current = window.setTimeout(() => setUploadedFlash(null), 4500)
+      }
+      prevPending.current[kind] = !!doc?.pending
+    }
+  }, [idDoc, enrolDoc, identitySupportDoc])
+
+  // After a post-upload reload (used on devices that don't repaint in place),
+  // show the success banner that was flagged just before the reload.
+  useEffect(() => {
+    let msg: string | null = null
+    try {
+      msg = sessionStorage.getItem(VERIF_UPLOAD_FLASH_KEY)
+      if (msg) sessionStorage.removeItem(VERIF_UPLOAD_FLASH_KEY)
+    } catch {
+      /* ignore */
+    }
+    if (!msg) return
+    setUploadedFlash(msg)
+    // The post-upload reload otherwise restores the old scroll position and dumps
+    // the user at the bottom/footer. Land them at the top, on the confirmation.
+    window.scrollTo(0, 0)
+    const t = window.setTimeout(() => setUploadedFlash(null), 4500)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
+    const el = ref.current
+    if (!el) return
+    pendingPick.current = { kind, el } // arm the one-shot recovery for this pick
+    el.click()
+  }
+
+  const hoistedFileInputs = (
+    <>
+      <input
+        key="verif-input-id"
+        ref={idInputRef}
+        type="file"
+        accept={VERIFICATION_ID_FILE_ACCEPT}
+        className="sr-only"
+      />
+      <input
+        key="verif-input-enrolment"
+        ref={enrolInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="sr-only"
+      />
+      <input
+        key="verif-input-identity-supporting"
+        ref={identitySupportInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="sr-only"
+      />
+    </>
+  )
+
+  const uploadFlashBanner = uploadedFlash ? (
+    <div
+      className="fixed top-3 inset-x-3 z-[60] rounded-xl bg-emerald-600 text-white px-4 py-3 shadow-lg text-sm font-semibold flex items-center gap-2"
+      role="status"
+      aria-live="polite"
+    >
+      <span aria-hidden>✓</span>
+      <span>{uploadedFlash} — pending review</span>
+    </div>
+  ) : null
 
   const emailVerified = isStudentUniEmailVerified(profile)
   const workEmailVerified = Boolean(profile.work_email_verified && profile.work_email)
@@ -394,7 +528,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
 
   if (useIdentityFlow) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-32">
+        {hoistedFileInputs}
+        {uploadFlashBanner}
         <section
           className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
@@ -593,11 +729,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              accept={VERIFICATION_ID_FILE_ACCEPT}
-              onFileSelected={pickIdFile}
+              onPickClick={openPicker('id', idInputRef)}
               reviewNote="Our team may review this document."
-              diag={diag}
-              onDiag={setDiag}
             />
           </div>
         </section>
@@ -614,10 +747,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
-              onFileSelected={pickIdentitySupportFile}
-              diag={diag}
-              onDiag={setDiag}
+              onPickClick={openPicker('identity_supporting', identitySupportInputRef)}
             />
           </div>
         </section>
@@ -626,7 +756,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32">
+      {hoistedFileInputs}
+      {uploadFlashBanner}
       <section
         className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
@@ -707,11 +839,8 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            accept={VERIFICATION_ID_FILE_ACCEPT}
-            onFileSelected={pickIdFile}
+            onPickClick={openPicker('id', idInputRef)}
             reviewNote="Our team may review this document."
-            diag={diag}
-            onDiag={setDiag}
           />
         </div>
       </section>
@@ -729,10 +858,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            accept={VERIFICATION_SUPPORTING_FILE_ACCEPT}
-            onFileSelected={pickEnrolFile}
-            diag={diag}
-            onDiag={setDiag}
+            onPickClick={openPicker('enrolment', enrolInputRef)}
           />
         </div>
       </section>

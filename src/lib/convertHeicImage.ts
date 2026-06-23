@@ -7,7 +7,7 @@
  * (createImageBitmap throws "Could not load image"). We convert HEIC/HEIF to
  * JPEG in the browser before upload so the stored file is viewable everywhere.
  *
- * `heic2any` (libheif WASM) is ~1.5MB, so it is lazy-loaded via dynamic import
+ * `heic2any` (libheif WASM) is ~1.3MB, so it is lazy-loaded via dynamic import
  * and only reaches users who actually pick a HEIC/HEIF file.
  */
 

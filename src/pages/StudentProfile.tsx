@@ -560,9 +560,17 @@ export default function StudentProfile() {
 
   const refreshProfileData = useCallback(() => load({ background: true }), [load])
 
-  const onVerificationDocUploaded = useCallback((kind: VerificationDocKind, filePath: string, submittedAt: string) => {
-    setProfile((prev) => (prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt) } : prev))
-  }, [])
+  const onVerificationDocUploaded = useCallback(
+    (kind: VerificationDocKind, filePath: string, submittedAt: string, displayName: string) => {
+      setProfile((prev) =>
+        prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt, displayName) } : prev,
+      )
+      // Re-pull from the DB so the card reflects the saved document immediately —
+      // does automatically what a manual page refresh did (users don't know to).
+      void refreshProfileData()
+    },
+    [refreshProfileData],
+  )
 
   const verificationDocUpload = useStudentVerificationDocUpload(profile, user?.id, onVerificationDocUploaded)
 
@@ -728,18 +736,7 @@ export default function StudentProfile() {
     setPhotoError(null)
     const file = e.target.files?.[0]
     e.target.value = ''
-    // TEMP DIAGNOSTIC: log what the picker actually returned.
-    console.warn('[photo-upload] picked', {
-      hasFile: !!file,
-      name: file?.name,
-      type: file?.type,
-      size: file?.size,
-      userId: user?.id,
-    })
-    if (!file || !user?.id) {
-      setPhotoError(`Could not start upload (file=${!!file}, signedIn=${!!user?.id}). Try again.`)
-      return
-    }
+    if (!file || !user?.id) return
 
     const instantPreview = URL.createObjectURL(file)
     setLocalPhotoUrl((prev) => {
@@ -776,14 +773,10 @@ export default function StudentProfile() {
         return null
       })
       const msg = err instanceof Error ? err.message : 'Upload failed.'
-      // TEMP DIAGNOSTIC: append the picked file's type/size so an un-decodable
-      // photo ("Could not load image") tells us exactly what was selected.
-      const fileMeta = `[${file.name || 'no-name'} · type=${file.type || '(none)'} · ${Math.round((file.size || 0) / 1024)}KB]`
-      console.warn('[photo-upload] failed', { msg, name: file.name, type: file.type, size: file.size })
       setPhotoError(
         msg.includes('Bucket not found') || msg.includes('not found')
           ? 'Photo storage is not set up yet. Create a public bucket named "student-avatars" in Supabase Storage and run supabase/storage_student_profile_photos.sql.'
-          : `${msg} ${fileMeta}`,
+          : msg,
       )
     } finally {
       setUploadingPhoto(false)

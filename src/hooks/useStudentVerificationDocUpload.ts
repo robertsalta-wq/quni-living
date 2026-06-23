@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
@@ -19,6 +20,15 @@ import {
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
+/** sessionStorage key for the post-reload "uploaded" confirmation banner. */
+export const VERIF_UPLOAD_FLASH_KEY = 'verifUploadFlash'
+
+const UPLOAD_LABELS: Record<VerificationDocKind, string> = {
+  id: 'Photo ID',
+  enrolment: 'Enrolment document',
+  identity_supporting: 'Supporting document',
+}
+
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
@@ -37,7 +47,12 @@ function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
 export function useStudentVerificationDocUpload(
   profile: StudentRow | null,
   userId: string | undefined,
-  onVerificationDocUploaded: (kind: VerificationDocKind, filePath: string, submittedAt: string) => void,
+  onVerificationDocUploaded: (
+    kind: VerificationDocKind,
+    filePath: string,
+    submittedAt: string,
+    displayName: string,
+  ) => void,
 ) {
   const [uploadedByKind, setUploadedByKind] = useState<Partial<Record<VerificationDocKind, VerificationUploadedDoc>>>({})
   const [idUploadError, setIdUploadError] = useState<string | null>(null)
@@ -46,26 +61,27 @@ export function useStudentVerificationDocUpload(
   const [idUploading, setIdUploading] = useState(false)
   const [enrolUploading, setEnrolUploading] = useState(false)
   const [identitySupportUploading, setIdentitySupportUploading] = useState(false)
-  // TEMP DIAGNOSTIC: surfaces the live upload step so a failing device shows the
-  // real reason on screen instead of "nothing happens". Remove once resolved.
-  const [diag, setDiag] = useState<string | null>(null)
 
   const idDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.id,
-        docFromProfile(profile.id_document_url, profile.id_submitted_at),
+        docFromProfile(profile.id_document_url, profile.id_submitted_at, profile.id_document_name),
       )
     : null
   const enrolDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.enrolment,
-        docFromProfile(profile.enrolment_doc_url, profile.enrolment_submitted_at),
+        docFromProfile(profile.enrolment_doc_url, profile.enrolment_submitted_at, profile.enrolment_doc_name),
       )
     : null
   const identitySupportDoc = profile
     ? resolveUploadedDoc(
         uploadedByKind.identity_supporting,
-        docFromProfile(profile.identity_supporting_doc_url, profile.identity_supporting_submitted_at),
+        docFromProfile(
+          profile.identity_supporting_doc_url,
+          profile.identity_supporting_submitted_at,
+          profile.identity_supporting_doc_name,
+        ),
       )
     : null
 
@@ -89,16 +105,7 @@ export function useStudentVerificationDocUpload(
       setErr: (s: string | null) => void,
       setBusy: (b: boolean) => void,
     ) => {
-      setDiag(
-        `[${kind}] picked: name=${file.name || '(none)'} type=${file.type || '(none)'} size=${file.size}b`,
-      )
-      console.warn('[verif-upload] picked', { kind, name: file.name, type: file.type, size: file.size })
-
-      if (!profile || !userId) {
-        setDiag(`[${kind}] blocked before upload: profile=${!!profile} userId=${!!userId}`)
-        setErr('Not ready yet — reload the page and try again.')
-        return
-      }
+      if (!profile || !userId) return
 
       setErr(null)
 
@@ -108,32 +115,37 @@ export function useStudentVerificationDocUpload(
 
       const instantPreview = isVerificationPdf(file) ? null : URL.createObjectURL(file)
 
-      setBusy(true)
-      setUploadedByKind((prev) => {
-        const existing = resolveUploadedDoc(prev[kind], profileDoc)
-        if (existing && !existing.pending) {
-          rollback = {
-            filePath: existing.filePath,
-            submittedAt: existing.submittedAt,
-            displayFileName: existing.displayFileName,
+      // flushSync: this runs from a native addEventListener-triggered flow; on
+      // Android Chrome after the file picker returns, React schedules the update
+      // but the browser doesn't repaint until the next interaction. flushSync
+      // forces a synchronous commit + layout/paint so the UI updates immediately.
+      flushSync(() => {
+        setBusy(true)
+        setUploadedByKind((prev) => {
+          const existing = resolveUploadedDoc(prev[kind], profileDoc)
+          if (existing && !existing.pending) {
+            rollback = {
+              filePath: existing.filePath,
+              submittedAt: existing.submittedAt,
+              displayFileName: existing.displayFileName,
+            }
           }
-        }
-        revokeBlobUrl(prev[kind]?.previewUrl)
-        return {
-          ...prev,
-          [kind]: {
-            filePath: existing?.filePath ?? '',
-            submittedAt: new Date().toISOString(),
-            displayFileName: file.name,
-            previewUrl: instantPreview,
-            pending: true,
-          },
-        }
+          revokeBlobUrl(prev[kind]?.previewUrl)
+          return {
+            ...prev,
+            [kind]: {
+              filePath: existing?.filePath ?? '',
+              submittedAt: new Date().toISOString(),
+              displayFileName: file.name,
+              previewUrl: instantPreview,
+              pending: true,
+            },
+          }
+        })
       })
 
       const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
       if (sizeError) {
-        setDiag(`[${kind}] rejected (size): ${sizeError}`)
         revertDocUpload(kind, instantPreview, rollback)
         setErr(sizeError)
         setBusy(false)
@@ -141,7 +153,6 @@ export function useStudentVerificationDocUpload(
       }
       const typeError = validateVerificationFileType(file)
       if (typeError) {
-        setDiag(`[${kind}] rejected (type): file.type="${file.type || '(none)'}" name="${file.name || '(none)'}"`)
         revertDocUpload(kind, instantPreview, rollback)
         setErr(typeError)
         setBusy(false)
@@ -149,29 +160,24 @@ export function useStudentVerificationDocUpload(
       }
 
       try {
-        setDiag(`[${kind}] uploading to storage…`)
         const result = await runVerificationDocUpload(supabase, userId, kind, file)
         if (!result.ok) {
           throw new Error(result.message)
         }
-        setDiag(`[${kind}] saved OK -> ${result.filePath}`)
 
-        setUploadedByKind((prev) => {
-          // Drop the instant blob and load the actual stored file via signed URL.
-          // The blob may be an un-renderable HEIC; the stored file is JPEG/PDF.
-          revokeBlobUrl(prev[kind]?.previewUrl ?? instantPreview)
-          return {
-            ...prev,
-            [kind]: {
-              filePath: result.filePath,
-              submittedAt: result.submittedAt,
-              displayFileName: file.name,
-              previewUrl: null,
-              pending: false,
-            },
-          }
-        })
-        onVerificationDocUploaded(kind, result.filePath, result.submittedAt)
+        // The card does not reliably repaint after this native-upload flow on some
+        // Android browsers (MIUI/Xiaomi): React commits the state but the device
+        // defers painting until the next interaction, so the user can't see it
+        // worked. A full reload always shows the saved state (it's what a manual
+        // refresh does). Flag a success message to show after reload, then refresh.
+        revokeBlobUrl(instantPreview)
+        try {
+          sessionStorage.setItem(VERIF_UPLOAD_FLASH_KEY, `${UPLOAD_LABELS[kind]} uploaded`)
+        } catch {
+          /* ignore storage errors */
+        }
+        window.location.reload()
+        return
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
         revertDocUpload(kind, instantPreview, rollback)
@@ -183,7 +189,6 @@ export function useStudentVerificationDocUpload(
           msg =
             'Document storage is not set up yet. Ask the team to run supabase/student_verification.sql and create the student-documents bucket.'
         }
-        setDiag(`[${kind}] ERROR: ${msg}`)
         setErr(msg)
       } finally {
         setBusy(false)
@@ -206,8 +211,6 @@ export function useStudentVerificationDocUpload(
   )
 
   return {
-    diag,
-    setDiag,
     uploadedByKind,
     idDoc,
     enrolDoc,

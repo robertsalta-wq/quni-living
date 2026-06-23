@@ -89,6 +89,9 @@ export const STUDENT_PROFILE_FIELD_STATUS = {
   workplace_latitude: 'USE',
   workplace_longitude: 'USE',
   workplace_geocoded_at: 'NOT_MATCHING',
+  id_document_name: 'NOT_MATCHING',
+  enrolment_doc_name: 'NOT_MATCHING',
+  identity_supporting_doc_name: 'NOT_MATCHING',
   created_at: 'NOT_MATCHING',
 } as const satisfies Record<StudentProfileField, AiFieldStatus>
 

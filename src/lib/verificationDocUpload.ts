@@ -5,14 +5,15 @@ export const MAX_VERIFICATION_DOC_BYTES = 15 * 1024 * 1024
 /** Photo ID — images only; avoids Android Chrome bugs with mixed accept lists. */
 export const VERIFICATION_ID_FILE_ACCEPT = 'image/*'
 /**
- * Enrolment / supporting docs accept images AND PDFs. We intentionally set NO
- * `accept` filter here: a mixed `image/*,.pdf,application/pdf` list makes Android
- * Chrome silently drop the input's `change` event when the user picks a photo
- * (PDF picks still fire). With no filter the picker offers camera/gallery/files,
- * `change` fires for every type, and JS (`validateVerificationFileType` + the PDF
- * magic-byte check) rejects anything that isn't an image or PDF after selection.
+ * Enrolment / supporting docs accept images AND PDFs. We set NO `accept` filter:
+ * Android's native picker mishandles multiple/mixed accept MIME types (only the
+ * first is honored, and the photo/camera option plus the `change` event get
+ * dropped). A plain input is the documented-reliable pattern — the picker offers
+ * camera / gallery / files, `change` fires for every type, and JS validates the
+ * file (image or PDF) after selection.
  */
 export const VERIFICATION_SUPPORTING_FILE_ACCEPT: string | undefined = undefined
+export const VERIFICATION_FILE_ACCEPT = VERIFICATION_SUPPORTING_FILE_ACCEPT
 export const CHOOSE_VERIFICATION_FILE_LABEL = 'Choose file (JPEG, PNG or PDF, max 15 MB)'
 
 export type VerificationStorageExt = 'jpg' | 'png' | 'pdf'
