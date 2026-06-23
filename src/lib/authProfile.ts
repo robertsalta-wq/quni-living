@@ -11,6 +11,9 @@ export type UserRole = 'student' | 'renter' | 'landlord' | 'admin' | null
 
 export { isRenterRole }
 
+/** Incomplete renter onboarding lands on profile (section 0 / situation picker in later stages). */
+export const INCOMPLETE_RENTER_DESTINATION = '/student-profile'
+
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 export type AuthProfile = StudentProfileRow | LandlordProfileRow
@@ -144,7 +147,7 @@ export function fetchRoleAndProfileDeduped(
 
 /**
  * Default destination after login when no explicit `?redirect=` (or other meaningful return path) is used.
- * Student: incomplete onboarding → /onboarding/student; complete → /student-dashboard.
+ * Renter: incomplete onboarding → /student-profile; complete → /student-dashboard.
  * Landlord → /onboarding/landlord until wizard complete, then /landlord-dashboard. Admin → /admin. No role → /onboarding.
  */
 export function getPostLoginRedirectDestination(
@@ -160,7 +163,7 @@ export function getPostLoginRedirectDestination(
   }
   if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow | null
-    if (renterOnboardingIncomplete(sp, _user.id)) return '/onboarding/student'
+    if (renterOnboardingIncomplete(sp, _user.id)) return INCOMPLETE_RENTER_DESTINATION
     return '/student-dashboard'
   }
   return '/onboarding'
@@ -183,7 +186,7 @@ export function getNavDashboardPath(
   }
   if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow | null
-    if (renterOnboardingIncomplete(sp, userId)) return '/onboarding/student'
+    if (renterOnboardingIncomplete(sp, userId)) return INCOMPLETE_RENTER_DESTINATION
     return '/student-dashboard'
   }
   return '/onboarding'
@@ -225,7 +228,7 @@ export function getIncompleteOnboardingDestination(
     return '/onboarding'
   }
   if (!role) return '/onboarding'
-  if (isRenterRole(role)) return '/onboarding/student'
+  if (isRenterRole(role)) return INCOMPLETE_RENTER_DESTINATION
   if (role === 'landlord') return '/onboarding/landlord'
   return '/onboarding'
 }
@@ -240,7 +243,7 @@ export function getPostAuthEntryDestination(
   if (role === 'admin') return '/admin'
   if (!role) return '/onboarding'
   if (isRenterRole(role) && renterOnboardingIncomplete(profile as StudentProfileRow | null, user.id)) {
-    return '/onboarding/student'
+    return INCOMPLETE_RENTER_DESTINATION
   }
   if (
     role === 'landlord' &&

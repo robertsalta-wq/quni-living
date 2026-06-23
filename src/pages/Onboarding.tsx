@@ -17,10 +17,6 @@ import {
 } from '../lib/authProfile'
 import { consumePostAuthRedirect } from '../lib/postAuthRedirect'
 import { clearQuniSelectedRole } from '../lib/quniSelectedRole'
-import {
-  applyPendingAccommodationRouteToStudentProfile,
-  resolvePendingAccommodationVerificationRoute,
-} from '../lib/applyPendingAccommodationRoute'
 import { applyPendingSignupRole } from '../lib/applyPendingSignupRole'
 import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
@@ -62,7 +58,6 @@ async function saveProfileRow(
   table: 'student_profiles' | 'landlord_profiles',
   payload: { user_id: string; full_name: string; email: string },
   acceptedAt: string,
-  accommodationRoute?: 'student' | 'non_student' | null,
 ): Promise<{ error: Error | null }> {
   const { data: existing, error: selErr } = await withSentryMonitoring('Onboarding/select-profile-for-terms', () =>
     supabase.from(table).select('user_id').eq('user_id', payload.user_id).maybeSingle(),
@@ -90,9 +85,7 @@ async function saveProfileRow(
   const insertPayload =
     table === 'landlord_profiles'
       ? { ...payload, terms_accepted_at: acceptedAt, landlord_terms_accepted_at: acceptedAt }
-      : accommodationRoute
-        ? { ...payload, terms_accepted_at: acceptedAt, accommodation_verification_route: accommodationRoute }
-        : { ...payload, terms_accepted_at: acceptedAt }
+      : { ...payload, terms_accepted_at: acceptedAt }
 
   const { error: insErr } = await withSentryMonitoring('Onboarding/insert-profile-terms', () =>
     supabase.from(table).insert(insertPayload),
@@ -138,11 +131,6 @@ export default function Onboarding() {
       }
       const u = data.user ?? user
       await applyPendingSignupRole(u)
-      await applyPendingAccommodationRouteToStudentProfile(
-        u.id,
-        u.created_at,
-        u.user_metadata?.accommodation_verification_route,
-      )
       const { role: choice, missingRoleChoice: noRoleDetected } = await resolveSignupRoleChoice(u)
       if (cancelled) return
       setResolvedRole(choice)
@@ -228,15 +216,10 @@ export default function Onboarding() {
           supabase.from('landlord_profiles').delete().eq('user_id', sessionUser.id),
         )
         if (delErr) throw new Error(delErr.message)
-        const accommodationRoute = resolvePendingAccommodationVerificationRoute(
-          sessionUser.created_at,
-          sessionUser.user_metadata?.accommodation_verification_route,
-        )
         const { error: saveErr } = await saveProfileRow(
           'student_profiles',
           payload,
           acceptedAt,
-          accommodationRoute,
         )
         if (saveErr) throw saveErr
       } else {

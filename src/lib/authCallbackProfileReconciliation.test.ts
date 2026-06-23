@@ -101,15 +101,16 @@ describe('applyPendingRouteInMemory', () => {
     vi.useRealTimers()
   })
 
-  it('case 3: applies route from user_metadata when row route is null', () => {
+  it('does not apply pre-auth route from metadata (Stage 1)', () => {
     const sp = studentRow({ user_id: 'user-1', accommodation_verification_route: null })
     const pending = resolvePendingAccommodationVerificationRoute(undefined, 'non_student', null)
+    expect(pending).toBeNull()
     const { sp: next, clearStorage } = applyPendingRouteInMemory(sp, pending)
-    expect(next?.accommodation_verification_route).toBe('non_student')
-    expect(clearStorage).toBe(true)
+    expect(next?.accommodation_verification_route).toBeNull()
+    expect(clearStorage).toBe(false)
   })
 
-  it('case 4: applies route from localStorage within 30 minute window', () => {
+  it('does not apply route from localStorage (Stage 1)', () => {
     setQuniAccommodationVerificationRoute('non_student')
     const sp = studentRow({ user_id: 'user-1', accommodation_verification_route: null })
     const pending = resolvePendingAccommodationVerificationRoute(
@@ -117,12 +118,12 @@ describe('applyPendingRouteInMemory', () => {
       'student',
       null,
     )
-    expect(pending).toBe('non_student')
+    expect(pending).toBeNull()
     const { sp: next } = applyPendingRouteInMemory(sp, pending)
-    expect(next?.accommodation_verification_route).toBe('non_student')
+    expect(next?.accommodation_verification_route).toBeNull()
   })
 
-  it('case 5: OAuth URL route wins over localStorage and metadata', () => {
+  it('does not apply OAuth URL route (Stage 1)', () => {
     setQuniAccommodationVerificationRoute('non_student')
     const sp = studentRow({ user_id: 'user-1', accommodation_verification_route: null })
     const pending = resolvePendingAccommodationVerificationRoute(
@@ -130,8 +131,9 @@ describe('applyPendingRouteInMemory', () => {
       'non_student',
       'student',
     )
+    expect(pending).toBeNull()
     const { sp: next } = applyPendingRouteInMemory(sp, pending)
-    expect(next?.accommodation_verification_route).toBe('student')
+    expect(next?.accommodation_verification_route).toBeNull()
   })
 
   it('case 6: does not overwrite when stored route is already set', () => {
@@ -139,8 +141,7 @@ describe('applyPendingRouteInMemory', () => {
       user_id: 'user-1',
       accommodation_verification_route: 'student',
     })
-    const pending = resolvePendingAccommodationVerificationRoute(undefined, 'non_student', 'non_student')
-    const { sp: next, clearStorage } = applyPendingRouteInMemory(sp, pending)
+    const { sp: next, clearStorage } = applyPendingRouteInMemory(sp, 'non_student')
     expect(next?.accommodation_verification_route).toBe('student')
     expect(clearStorage).toBe(true)
   })

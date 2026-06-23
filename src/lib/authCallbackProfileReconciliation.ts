@@ -14,7 +14,6 @@ import {
 import { fetchIsPlatformAdmin, linkPlatformStaffUserIfNeeded } from './platformStaff'
 import {
   clearQuniAccommodationVerificationRoute,
-  getQuniAccommodationVerificationRoute,
   type QuniAccommodationVerificationRoute,
 } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
@@ -37,13 +36,6 @@ function displayNameFromUser(user: User): string {
     user.email?.split('@')[0] ||
     ''
   )
-}
-
-function accommodationRouteFromUser(user: User): QuniAccommodationVerificationRoute | null {
-  const route = user.user_metadata?.accommodation_verification_route
-  if (route === 'student' || route === 'non_student') return route
-  if (route === 'identity') return 'non_student'
-  return null
 }
 
 export type AuthCallbackReconcileOptions = {
@@ -113,7 +105,6 @@ async function ensureSignupProfileRowInMemory(
         user_id: user.id,
         email,
         full_name: fullName,
-        accommodation_verification_route: accommodationRouteFromUser(user),
       })
       .select('*')
       .maybeSingle()
@@ -149,7 +140,7 @@ async function applyPendingSignupRoleInMemory(
   sp: StudentProfileRow | null,
   lp: LandlordProfileRow | null,
   urlRole: 'student' | 'renter' | 'landlord' | null,
-  urlRoute: QuniAccommodationVerificationRoute | null,
+  _urlRoute: QuniAccommodationVerificationRoute | null,
 ): Promise<{ sp: StudentProfileRow | null; lp: LandlordProfileRow | null }> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null
   if (!selected) return { sp, lp }
@@ -164,12 +155,7 @@ async function applyPendingSignupRoleInMemory(
     if (marketplaceRoleForWrite(metaRole) !== writeRole) {
       const data: Record<string, string> = { role: writeRole }
       if (isRenterRole(selected)) {
-        const metaRoute = user.user_metadata?.accommodation_verification_route
-        const route =
-          metaRoute === 'non_student' || metaRoute === 'student'
-            ? metaRoute
-            : urlRoute ?? getQuniAccommodationVerificationRoute()
-        if (route) data.accommodation_verification_route = route
+        /* Route deferred to profile section 0 — do not write accommodation_verification_route at signup. */
       }
       await supabase.auth.updateUser({ data })
     }
@@ -204,21 +190,12 @@ async function applyPendingSignupRoleInMemory(
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return { sp, lp }
 
-    const route =
-      user.user_metadata?.accommodation_verification_route === 'non_student' ||
-      user.user_metadata?.accommodation_verification_route === 'student'
-        ? user.user_metadata.accommodation_verification_route
-        : urlRoute === 'student' || urlRoute === 'non_student'
-          ? urlRoute
-          : null
     const { data: insData, error: insErr } = await supabase
       .from('student_profiles')
       .insert({
         user_id: user.id,
         email: lp.email?.trim() || email,
         full_name: lp.full_name?.trim() || fullName,
-        accommodation_verification_route:
-          route === 'non_student' || route === 'student' ? route : null,
       })
       .select('*')
       .maybeSingle()

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { getPostLoginRedirectDestination, needsOnboarding, isRenterRole } from '../../lib/authProfile'
+import { getPostLoginRedirectDestination, INCOMPLETE_RENTER_DESTINATION, needsOnboarding, isRenterRole } from '../../lib/authProfile'
 import { marketplaceRoleForWrite } from '../../lib/marketplaceRole'
 import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
@@ -56,15 +56,11 @@ export default function AuthCallback() {
       const urlRoute = oauthSignupParams.signupRoute
       const urlRole = oauthSignupParams.signupRole
 
-      if (urlRoute || urlRole) {
-        const data: Record<string, string> = {}
-        if (urlRole) data.role = marketplaceRoleForWrite(urlRole)!
-        if (urlRoute && urlRole !== 'landlord') {
-          data.accommodation_verification_route = urlRoute
-        }
-        if (Object.keys(data).length > 0) {
-          await supabase.auth.updateUser({ data })
-        }
+      if (urlRole) {
+        const data: Record<string, string> = { role: marketplaceRoleForWrite(urlRole)! }
+        await supabase.auth.updateUser({ data })
+        stripSensitiveAuthCallbackQueryParams()
+      } else if (urlRoute) {
         stripSensitiveAuthCallbackQueryParams()
       }
 
@@ -80,7 +76,7 @@ export default function AuthCallback() {
       if (userNeedsEmailAddressVerification(sessionUser)) {
         const onboardingPath =
           isRenterRole(role)
-            ? '/onboarding/student'
+            ? INCOMPLETE_RENTER_DESTINATION
             : role === 'landlord'
               ? '/onboarding/landlord'
               : '/onboarding'
@@ -101,8 +97,8 @@ export default function AuthCallback() {
         return
       }
       if (needsOnboarding(role, profile, sessionUser.id)) {
-        const onboardingPath = isRenterRole(role) ? '/onboarding/student' : '/onboarding/landlord'
-        if (isRenterRole(role)) prefetchRouteChunks('/onboarding/student')
+        const onboardingPath = isRenterRole(role) ? INCOMPLETE_RENTER_DESTINATION : '/onboarding/landlord'
+        if (isRenterRole(role)) prefetchRouteChunks(INCOMPLETE_RENTER_DESTINATION)
         navigate(onboardingPath, { replace: true })
         return
       }

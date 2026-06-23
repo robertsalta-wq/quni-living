@@ -1,6 +1,6 @@
 # Renter onboarding redesign — build plan
 
-**Status:** Stage 0 decisions locked; **Stage 1 not started** (2026-06-24).  
+**Status:** Stage 1 complete in repo (2026-06-24). **Rob:** apply `20260624120000_defer_accommodation_route_to_profile.sql` before relying on null-route signups in prod.  
 **Context:** Codebase audit confirmed the design holds; build is larger than it looked because three gates disagree today and route is written pre-auth in many places. Full audit findings live in the agent transcript for 2026-06-24 (renter onboarding investigation).
 
 **Goal:** Signup = Renter vs Landlord only; six-tile situation picker on profile (section 0); one collapse-on-complete profile page; **live booking-readiness** (not `onboarding_complete`).
@@ -241,7 +241,7 @@ bypasses (§2). Tests for Lucy scenario.
 | Stage | Status | Notes |
 |-------|--------|-------|
 | 0 Decisions | Done | This doc |
-| 1 Signup / route deferral | Not started | |
+| 1 Signup / route deferral | Done (code) | Migration draft for Rob |
 | 2 RenterReadiness | Not started | |
 | 3 Schema | Not started | |
 | 4 Profile UI | Not started | |

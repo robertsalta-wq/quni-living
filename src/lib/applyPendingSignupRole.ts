@@ -2,10 +2,8 @@ import type { User } from '@supabase/supabase-js'
 import { isRenterRole } from './authProfile'
 import { marketplaceRoleForWrite } from './marketplaceRole'
 import { supabase } from './supabase'
-import {
-  applyPendingAccommodationRouteToStudentProfile,
-} from './applyPendingAccommodationRoute'
-import { clearQuniAccommodationVerificationRoute, getQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
+import { applyPendingAccommodationRouteToStudentProfile } from './applyPendingAccommodationRoute'
+import { clearQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
 
 const RECENT_SIGNUP_MS = 30 * 60 * 1000
@@ -33,7 +31,7 @@ function displayNameFromUser(user: User): string {
 export async function applyPendingSignupRole(
   user: User,
   urlRole?: 'student' | 'renter' | 'landlord' | null,
-  urlRoute?: 'student' | 'non_student' | null,
+  _urlRoute?: 'student' | 'non_student' | null,
 ): Promise<void> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null
   if (!selected) return
@@ -52,29 +50,14 @@ export async function applyPendingSignupRole(
   ])
 
   if (isRenterRole(selected) && sp?.accommodation_verification_route == null) {
-    await applyPendingAccommodationRouteToStudentProfile(
-      user.id,
-      user.created_at,
-      user.user_metadata?.accommodation_verification_route,
-      urlRoute,
-    )
+    await applyPendingAccommodationRouteToStudentProfile(user.id, user.created_at)
   }
 
-  // Google OAuth cannot attach signup role on first redirect - persist it once the session exists.
   if (!sp && !lp) {
     const metaRole = user.user_metadata?.role
     const writeRole = marketplaceRoleForWrite(selected)!
     if (marketplaceRoleForWrite(metaRole) !== writeRole) {
-      const data: Record<string, string> = { role: writeRole }
-      if (isRenterRole(selected)) {
-        const metaRoute = user.user_metadata?.accommodation_verification_route
-        const route =
-          metaRoute === 'non_student' || metaRoute === 'student'
-            ? metaRoute
-            : urlRoute ?? getQuniAccommodationVerificationRoute()
-        if (route) data.accommodation_verification_route = route
-      }
-      await supabase.auth.updateUser({ data })
+      await supabase.auth.updateUser({ data: { role: writeRole } })
     }
     return
   }
@@ -108,19 +91,10 @@ export async function applyPendingSignupRole(
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return
 
-    const route =
-      user.user_metadata?.accommodation_verification_route === 'non_student' ||
-      user.user_metadata?.accommodation_verification_route === 'student'
-        ? user.user_metadata.accommodation_verification_route
-        : urlRoute === 'student' || urlRoute === 'non_student'
-          ? urlRoute
-          : null
     const { error: insErr } = await supabase.from('student_profiles').insert({
       user_id: user.id,
       email: lpRow?.email?.trim() || email,
       full_name: lpRow?.full_name?.trim() || fullName,
-      accommodation_verification_route:
-        route === 'non_student' || route === 'student' ? route : null,
     })
     if (insErr) return
 

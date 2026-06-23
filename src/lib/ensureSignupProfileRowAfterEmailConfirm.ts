@@ -11,13 +11,6 @@ function displayNameFromUser(user: User): string {
   )
 }
 
-function accommodationRouteFromUser(user: User): 'student' | 'non_student' | null {
-  const route = user.user_metadata?.accommodation_verification_route
-  if (route === 'student' || route === 'non_student') return route
-  if (route === 'identity') return 'non_student'
-  return null
-}
-
 /**
  * After signup email confirmation, insert a profile row only when metadata clearly
  * indicates student or landlord. Skips ambiguous/missing roles to avoid mislabeling.
@@ -48,7 +41,6 @@ export async function ensureSignupProfileRowAfterEmailConfirm(user: User): Promi
       user_id: user.id,
       email,
       full_name: fullName,
-      accommodation_verification_route: accommodationRouteFromUser(user),
     })
   }
 }

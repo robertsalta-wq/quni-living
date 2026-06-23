@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole, type LandlordProfileRow, type StudentProfileRow, type UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
+import { INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
 import { isLegacyMetadataAdmin } from '../lib/adminEmails'
 import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 
@@ -91,8 +92,12 @@ export function ProtectedRoute({
   if (requireStudentListingActions && isRenterRole(role) && profile) {
     const sp = profile as StudentProfileRow
     const path = location.pathname
-    if (!isStudentListingActionsUnlocked(sp) && !path.startsWith('/onboarding/student')) {
-      return <Navigate to="/onboarding/student" replace state={{ from: location }} />
+    if (
+      !isStudentListingActionsUnlocked(sp) &&
+      !path.startsWith(INCOMPLETE_RENTER_DESTINATION) &&
+      !path.startsWith('/onboarding/student')
+    ) {
+      return <Navigate to={INCOMPLETE_RENTER_DESTINATION} replace state={{ from: location }} />
     }
   }
 

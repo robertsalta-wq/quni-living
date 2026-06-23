@@ -10,12 +10,8 @@ import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions 
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
 import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTenantInvite'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
-import { isRenterRole } from '../lib/authProfile'
-import {
-  clearQuniAccommodationVerificationRoute,
-  getQuniAccommodationVerificationRoute,
-  setQuniAccommodationVerificationRoute,
-} from '../lib/quniAccommodationRoute'
+import { isRenterRole, INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
+import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
 import Seo from '../components/Seo'
 import {
   LegalDocumentModal,
@@ -35,8 +31,8 @@ import TenantInviteSignupBanner from '../components/tenantInvite/TenantInviteSig
 import VerificationChecklistModal from '../components/verification/VerificationChecklistModal'
 import type { VerificationChecklistFocus } from '../components/verification/verificationChecklistShared'
 
-/** Sign-up card: student tenant, non-student tenant (same auth role as student), or landlord. */
-type SignupAccountKind = 'student' | 'non_student' | 'landlord'
+/** Sign-up card: renter (students and non-students) or landlord. */
+type SignupAccountKind = 'renter' | 'landlord'
 
 type SignupStep = 'primary' | 'details'
 
@@ -169,11 +165,11 @@ export default function Signup() {
   const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
     roleFromUrl === 'landlord'
       ? 'landlord'
-      : roleFromUrl === 'non_student'
-        ? 'non_student'
-        : roleFromUrl === 'student' || roleFromUrl === 'renter'
-          ? 'student'
-          : null,
+      : roleFromUrl === 'student' ||
+          roleFromUrl === 'renter' ||
+          roleFromUrl === 'non_student'
+        ? 'renter'
+        : null,
   )
   const [fullName, setFullName] = useState(() => searchParams.get('invited_name')?.trim() ?? '')
   const [email, setEmail] = useState(() => searchParams.get('invited_email')?.trim() ?? '')
@@ -200,15 +196,10 @@ export default function Signup() {
 
   useEffect(() => {
     const r = searchParams.get('role')
-    if (r === 'student' || r === 'renter') {
-      setAccountKind('student')
+    if (r === 'student' || r === 'renter' || r === 'non_student') {
+      setAccountKind('renter')
       setQuniSelectedRole('renter')
-      setQuniAccommodationVerificationRoute('student')
-      setStep('details')
-    } else if (r === 'non_student') {
-      setAccountKind('non_student')
-      setQuniSelectedRole('renter')
-      setQuniAccommodationVerificationRoute('non_student')
+      clearQuniAccommodationVerificationRoute()
       setStep('details')
     } else if (r === 'landlord') {
       setAccountKind('landlord')
@@ -238,29 +229,24 @@ export default function Signup() {
 
   function pickAccountKind(k: SignupAccountKind) {
     setAccountKind(k)
+    clearQuniAccommodationVerificationRoute()
     if (k === 'landlord') {
-      clearQuniAccommodationVerificationRoute()
       setQuniSelectedRole('landlord')
       setLandlordAgreement(false)
-    } else if (k === 'student') {
-      setQuniAccommodationVerificationRoute('student')
-      setQuniSelectedRole('renter')
-      setLandlordAgreement(false)
     } else {
-      setQuniAccommodationVerificationRoute('non_student')
       setQuniSelectedRole('renter')
       setLandlordAgreement(false)
     }
   }
 
-  /** Landlord vs tenant-side account from UI or localStorage (e.g. refreshed mid-flow). */
+  /** Landlord vs renter from UI or localStorage (e.g. refreshed mid-flow). */
   const effectiveAccountKind: SignupAccountKind | null =
     accountKind ??
     (() => {
       const sr = getQuniSelectedRole()
       if (sr === 'landlord') return 'landlord'
-      if (!isRenterRole(sr)) return null
-      return getQuniAccommodationVerificationRoute() === 'non_student' ? 'non_student' : 'student'
+      if (isRenterRole(sr)) return 'renter'
+      return null
     })()
   const showLandlordAgreement = effectiveAccountKind === 'landlord'
 
@@ -310,7 +296,7 @@ export default function Signup() {
     e.preventDefault()
     setError(null)
     if (!accountKind) {
-      setError('Please choose Student, Non-Student, or Landlord above.')
+      setError('Please choose Renter or Landlord above.')
       return
     }
     if (!termsAcceptedForSignup()) {
@@ -327,8 +313,6 @@ export default function Signup() {
       role: authRole,
       full_name: fullName.trim(),
     }
-    if (accountKind === 'student') userData.accommodation_verification_route = 'student'
-    if (accountKind === 'non_student') userData.accommodation_verification_route = 'non_student'
 
     setSubmitting(true)
     try {
@@ -359,7 +343,7 @@ export default function Signup() {
       if (data.session) {
         const signupRole = accountKind === 'landlord' ? 'landlord' : 'renter'
         const onboardingPath =
-          signupRole === 'landlord' ? '/onboarding/landlord' : '/onboarding/student'
+          signupRole === 'landlord' ? '/onboarding/landlord' : INCOMPLETE_RENTER_DESTINATION
         if (userNeedsEmailAddressVerification(created)) {
           navigate('/verify-email', {
             replace: true,
@@ -383,7 +367,7 @@ export default function Signup() {
   async function handleGoogleSignup() {
     setError(null)
     if (!accountKind) {
-      setError('Choose Student, Non-Student, or Landlord above before continuing with Google.')
+      setError('Choose Renter or Landlord above before continuing with Google.')
       return
     }
     if (!termsAcceptedForSignup()) {
@@ -401,10 +385,7 @@ export default function Signup() {
     const oauthSignupContext =
       accountKind === 'landlord'
         ? { signupRole: 'landlord' as const }
-        : {
-            signupRole: 'renter' as const,
-            signupRoute: accountKind === 'non_student' ? 'non_student' as const : 'student' as const,
-          }
+        : { signupRole: 'renter' as const }
     const { error: oErr } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: getGoogleOAuthOptions(oauthSignupContext),
@@ -496,11 +477,9 @@ export default function Signup() {
   const roleVerifyLinkClass =
     'mt-auto pt-3 block w-full text-left text-xs font-medium text-[#FF6F61] hover:underline whitespace-nowrap'
 
-  const signupKindLabel =
-    accountKind === 'landlord' ? 'Landlord' : accountKind === 'non_student' ? 'Non-Student' : 'Student'
+  const signupKindLabel = accountKind === 'landlord' ? 'Landlord' : 'Renter'
 
-  const profileStepNoun =
-    accountKind === 'landlord' ? 'landlord' : accountKind === 'non_student' ? 'tenant' : 'student'
+  const profileStepNoun = accountKind === 'landlord' ? 'landlord' : 'renter'
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
@@ -550,32 +529,19 @@ export default function Signup() {
               {tenantInviteHints.isTenantInviteFlow ? 'I am a…' : 'I am signing up as a…'}
             </p>
             <div
-              className={`grid grid-cols-1 items-stretch gap-3 ${tenantInviteHints.isTenantInviteFlow ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}
+              className={`grid grid-cols-1 items-stretch gap-3 ${tenantInviteHints.isTenantInviteFlow ? 'sm:grid-cols-1' : 'sm:grid-cols-2'}`}
             >
-              <div className={roleCardClass('student')}>
-                <button type="button" onClick={() => pickAccountKind('student')} className="w-full flex-1 text-left">
-                  <span className="font-semibold text-gray-900">Student</span>
-                  <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">Find housing and manage bookings.</p>
-                </button>
-                <button
-                  type="button"
-                  className={roleVerifyLinkClass}
-                  onClick={() => setVerificationModalFocus('students')}
-                >
-                  What you&apos;ll need to verify
-                </button>
-              </div>
-              <div className={roleCardClass('non_student')}>
-                <button type="button" onClick={() => pickAccountKind('non_student')} className="w-full flex-1 text-left">
-                  <span className="font-semibold text-gray-900">Non-Student</span>
+              <div className={roleCardClass('renter')}>
+                <button type="button" onClick={() => pickAccountKind('renter')} className="w-full flex-1 text-left">
+                  <span className="font-semibold text-gray-900">Renter</span>
                   <p className="text-sm text-gray-600 mt-1 min-h-[2.5rem]">
-                    Find rooms near university and manage your bookings.
+                    Find housing and manage bookings — students and non-students.
                   </p>
                 </button>
                 <button
                   type="button"
                   className={roleVerifyLinkClass}
-                  onClick={() => setVerificationModalFocus('working-tenants')}
+                  onClick={() => setVerificationModalFocus('overview')}
                 >
                   What you&apos;ll need to verify
                 </button>
@@ -606,14 +572,11 @@ export default function Signup() {
               >
                 See what you&apos;ll verify on Quni
               </button>
-              . New to renting near campus as a professional?{' '}
-              <Link to="/rent-near-campus" className="text-indigo-600 font-medium hover:text-indigo-800">
-                Preview the non-student landing page.
-              </Link>
+              . You&apos;ll choose your situation (student, working, etc.) after sign-up on your profile.
             </p>
             ) : (
             <p className="text-xs text-gray-600 mt-3">
-              Choose the renter type that matches how you will verify.{' '}
+              Create a renter account to book this room.{' '}
               <button
                 type="button"
                 className="font-medium text-[#FF6F61] hover:underline"
@@ -621,7 +584,7 @@ export default function Signup() {
               >
                 See what you&apos;ll verify on Quni
               </button>
-              . You will complete the same verification as any other tenant before booking this room.
+              . You will complete verification before booking.
             </p>
             )}
             {!accountKind && (

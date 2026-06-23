@@ -6,7 +6,7 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import { getPostLoginRedirectDestination, isRenterRole, needsOnboarding } from '../lib/authProfile'
+import { getPostLoginRedirectDestination, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding } from '../lib/authProfile'
 import { formatAuthLoginErrorMessage } from '../lib/authErrors'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import {
@@ -124,7 +124,7 @@ export default function Login() {
       return
     }
     if (profile === null || needsOnboarding(role, profile, user.id)) {
-      navigate(isRenterRole(role) ? '/onboarding/student' : '/onboarding/landlord', { replace: true })
+      navigate(isRenterRole(role) ? INCOMPLETE_RENTER_DESTINATION : '/onboarding/landlord', { replace: true })
       return
     }
     const next = resolvePostLoginDestination(searchParams, location.state)

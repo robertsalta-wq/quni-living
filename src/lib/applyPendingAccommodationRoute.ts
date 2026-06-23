@@ -1,80 +1,26 @@
-import { supabase } from './supabase'
-import {
-  clearQuniAccommodationVerificationRoute,
-  getQuniAccommodationVerificationRoute,
-  type QuniAccommodationVerificationRoute,
-} from './quniAccommodationRoute'
+import { clearQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
 
-const RECENT_SIGNUP_MS = 30 * 60 * 1000
-
-function isRecentSignup(userCreatedAt: string | undefined): boolean {
-  if (!userCreatedAt) return true
-  const created = new Date(userCreatedAt).getTime()
-  if (!Number.isFinite(created)) return true
-  return Date.now() - created <= RECENT_SIGNUP_MS
-}
-
-function parseMetadataRoute(value: unknown): QuniAccommodationVerificationRoute | null {
-  if (value === 'student' || value === 'non_student') return value
+/**
+ * Pre-auth accommodation route resolution is retired (Stage 1).
+ * Route is chosen on the profile after signup, not at signup/OAuth.
+ */
+export function resolvePendingAccommodationVerificationRoute(
+  _userCreatedAt?: string,
+  _metadataRoute?: unknown,
+  _urlRoute?: 'student' | 'non_student' | null,
+): null {
   return null
 }
 
 /**
- * Route chosen at signup: OAuth redirect URL (authoritative for that callback), then recent
- * localStorage, then auth user_metadata (email signup). localStorage is ignored after 30 minutes
- * so a stale choice cannot overwrite an existing profile.
- */
-export function resolvePendingAccommodationVerificationRoute(
-  userCreatedAt: string | undefined,
-  metadataRoute?: unknown,
-  urlRoute?: QuniAccommodationVerificationRoute | null,
-): QuniAccommodationVerificationRoute | null {
-  const fromUrl = parseMetadataRoute(urlRoute)
-  if (fromUrl) return fromUrl
-
-  const fromMeta = parseMetadataRoute(metadataRoute)
-  const fromStorage = getQuniAccommodationVerificationRoute()
-
-  if (fromStorage) {
-    if (isRecentSignup(userCreatedAt)) return fromStorage
-    clearQuniAccommodationVerificationRoute()
-  }
-
-  return fromMeta
-}
-
-/**
- * Google (and other OAuth) sign-up cannot attach extra user_metadata from the client.
- * After the first session is established, copy the signup choice onto student_profiles when
- * the row still has a null route.
+ * No-op: clears stale signup localStorage only. Does not write route to student_profiles.
  */
 export async function applyPendingAccommodationRouteToStudentProfile(
-  userId: string,
-  userCreatedAt: string | undefined,
-  metadataRoute?: unknown,
-  urlRoute?: QuniAccommodationVerificationRoute | null,
+  _userId: string,
+  _userCreatedAt?: string,
+  _metadataRoute?: unknown,
+  _urlRoute?: 'student' | 'non_student' | null,
 ): Promise<boolean> {
-  const route = resolvePendingAccommodationVerificationRoute(userCreatedAt, metadataRoute, urlRoute)
-  if (!route) return false
-
-  const { data: row, error: selErr } = await supabase
-    .from('student_profiles')
-    .select('accommodation_verification_route')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (selErr || !row) return false
-
-  if (row.accommodation_verification_route != null) {
-    clearQuniAccommodationVerificationRoute()
-    return false
-  }
-
-  const { error: upErr } = await supabase
-    .from('student_profiles')
-    .update({ accommodation_verification_route: route })
-    .eq('user_id', userId)
-
-  if (!upErr) clearQuniAccommodationVerificationRoute()
-  return !upErr
+  clearQuniAccommodationVerificationRoute()
+  return false
 }

@@ -635,6 +635,21 @@ export default function StudentProfile() {
       />
 
       <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
+      {profile.accommodation_verification_route == null && (
+        <div
+          className="mb-6 rounded-xl border border-[#FF6F61]/25 bg-[#FFF8F0] px-4 py-4 text-sm text-stone-800"
+          role="status"
+        >
+          <p className="font-semibold text-stone-900">Choose your situation</p>
+          <p className="mt-1 text-stone-700">
+            Tell us whether you&apos;re a student, working, on a working holiday, and so on — this sets your
+            verification path.{' '}
+            <Link to="/onboarding/student" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+              Choose now →
+            </Link>
+          </p>
+        </div>
+      )}
       <div
         className="flex flex-wrap gap-2 border-b border-gray-200 pb-px mb-8"
         role="tablist"

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Info, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { getNavDashboardPath, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
+import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
@@ -14,7 +14,7 @@ import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
-  if (isRenterRole(r)) return '/onboarding/student'
+  if (isRenterRole(r)) return INCOMPLETE_RENTER_DESTINATION
   return '/onboarding/landlord'
 }
 
