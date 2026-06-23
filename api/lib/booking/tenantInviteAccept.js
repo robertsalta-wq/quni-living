@@ -52,7 +52,7 @@ export async function fetchPendingTenantInviteForBooking(admin, rawToken, proper
   const tokenHash = await sha256Hex(trimmed)
   const { data: invite, error } = await admin
     .from('tenant_invites')
-    .select('id, property_id, status, expires_at, offered_weekly_rent, offer_reason, landlord_id')
+    .select('id, property_id, status, expires_at, offered_weekly_rent, offer_reason, offered_bond_weeks, offered_bond_fixed, landlord_id')
     .eq('token_hash', tokenHash)
     .maybeSingle()
 

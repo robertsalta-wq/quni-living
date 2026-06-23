@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { apiUrl } from '../../lib/apiUrl'
+import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, parseBondWeeks, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { supabase } from '../../lib/supabase'
 import {
   formatAudWeekly,
@@ -14,7 +15,9 @@ type Props = {
   weeklyRent: number | null | undefined
   bondAmount: number | null | undefined
   rentBreakdown: unknown
-  propertyBond: number | null | undefined
+  propertyBondWeeks?: number | null
+  propertyBondIsFixed?: boolean | null
+  propertyBondFixedAmount?: number | null
   serviceTierAtRequest: string | null | undefined
   onSaved: () => void
 }
@@ -35,7 +38,9 @@ export default function LandlordBookingAgreedRentEditor({
   weeklyRent,
   bondAmount,
   rentBreakdown,
-  propertyBond,
+  propertyBondWeeks,
+  propertyBondIsFixed,
+  propertyBondFixedAmount,
   serviceTierAtRequest,
   onSaved,
 }: Props) {
@@ -53,9 +58,55 @@ export default function LandlordBookingAgreedRentEditor({
     () => (weeklyRent != null ? String(weeklyRent) : prov.agreedWeeklyRentAud != null ? String(prov.agreedWeeklyRentAud) : ''),
   )
   const [reason, setReason] = useState('')
+  const [bondOverrideEnabled, setBondOverrideEnabled] = useState(false)
+  const [bondOverrideIsFixed, setBondOverrideIsFixed] = useState(false)
+  const [bondOverrideWeeks, setBondOverrideWeeks] = useState(String(DEFAULT_BOND_WEEKS))
+  const [bondOverrideFixed, setBondOverrideFixed] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedToast, setSavedToast] = useState<string | null>(null)
+
+  const previewBondAud = useMemo(() => {
+    const rent = Number(agreedRent)
+    if (!Number.isFinite(rent) || rent <= 0) {
+      return bondAmount != null ? Number(bondAmount) : null
+    }
+    if (bondOverrideEnabled) {
+      if (bondOverrideIsFixed) {
+        const fixed = Number(bondOverrideFixed)
+        if (!Number.isFinite(fixed) || fixed <= 0) return null
+        return resolveListingBondAud(
+          { bond_is_fixed: true, bond_fixed_amount: fixed, bond_weeks: null },
+          rent,
+        )
+      }
+      const weeks = parseBondWeeks(bondOverrideWeeks)
+      if (weeks == null) return null
+      return resolveListingBondAud(
+        { bond_is_fixed: false, bond_fixed_amount: null, bond_weeks: weeks },
+        rent,
+      )
+    }
+    if (bondAmount != null) return Number(bondAmount)
+    return resolveListingBondAud(
+      {
+        bond_weeks: propertyBondWeeks,
+        bond_is_fixed: propertyBondIsFixed,
+        bond_fixed_amount: propertyBondFixedAmount,
+      },
+      rent,
+    )
+  }, [
+    agreedRent,
+    bondAmount,
+    bondOverrideEnabled,
+    bondOverrideFixed,
+    bondOverrideIsFixed,
+    bondOverrideWeeks,
+    propertyBondFixedAmount,
+    propertyBondIsFixed,
+    propertyBondWeeks,
+  ])
 
   const onSubmit = useCallback(async () => {
     setError(null)
@@ -73,6 +124,25 @@ export default function LandlordBookingAgreedRentEditor({
     if (applyCap != null && parsed > applyCap) {
       setError(`Agreed rent cannot exceed ${formatAudWeekly(applyCap)}/wk (what the student applied at).`)
       return
+    }
+
+    let bondOverride: { enabled: boolean; weeks: number | null; fixed: number | null } | undefined
+    if (bondOverrideEnabled) {
+      if (bondOverrideIsFixed) {
+        const fixed = Number(bondOverrideFixed)
+        if (!Number.isFinite(fixed) || fixed <= 0) {
+          setError('Enter a positive fixed bond amount.')
+          return
+        }
+        bondOverride = { enabled: true, weeks: null, fixed }
+      } else {
+        const weeks = parseBondWeeks(bondOverrideWeeks)
+        if (weeks == null) {
+          setError(`Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`)
+          return
+        }
+        bondOverride = { enabled: true, weeks, fixed: null }
+      }
     }
 
     setBusy(true)
@@ -94,6 +164,7 @@ export default function LandlordBookingAgreedRentEditor({
           bookingId,
           agreedWeeklyRent: parsed,
           reason: trimmedReason,
+          ...(bondOverride ? { bondOverride } : {}),
         }),
       })
 
@@ -111,7 +182,7 @@ export default function LandlordBookingAgreedRentEditor({
     } finally {
       setBusy(false)
     }
-  }, [agreedRent, applyCap, bookingId, onSaved, reason])
+  }, [agreedRent, applyCap, bondOverrideEnabled, bondOverrideFixed, bondOverrideIsFixed, bondOverrideWeeks, bookingId, onSaved, reason])
 
   if (!editable && !prov.overrideApplied) return null
 
@@ -162,18 +233,68 @@ export default function LandlordBookingAgreedRentEditor({
             </div>
             <div>
               <label htmlFor="agreed-rent-bond" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Bond (scales with rent)
+                Bond (preview)
               </label>
               <p id="agreed-rent-bond" className="mt-2 text-sm text-gray-800 tabular-nums">
-                {bondAmount != null
-                  ? formatAudWeekly(Number(bondAmount))
-                  : propertyBond != null
-                    ? formatAudWeekly(Number(propertyBond))
-                    : '-'}
+                {previewBondAud != null ? formatAudWeekly(previewBondAud) : 'No bond'}
               </p>
-              <p className="mt-1 text-xs text-gray-500">Recomputed when you save a new agreed rent.</p>
+              <p className="mt-1 text-xs text-gray-500">Updates when you save a new agreed rent or bond override.</p>
             </div>
           </div>
+
+          <div className="rounded-xl border border-gray-200 bg-stone-50/80 p-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bondOverrideEnabled}
+                onChange={(e) => setBondOverrideEnabled(e.target.checked)}
+                className="mt-1 rounded border-gray-300"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-gray-900">Override bond for this booking</span>
+                <span className="block text-xs text-gray-600 mt-0.5 leading-relaxed">
+                  Optional. Otherwise bond follows the listing default (or invite offer) and scales with agreed rent when
+                  set in weeks.
+                </span>
+              </span>
+            </label>
+            {bondOverrideEnabled ? (
+              <div className="space-y-3 pl-7">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={bondOverrideIsFixed}
+                    onChange={(e) => setBondOverrideIsFixed(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  Fixed dollar amount
+                </label>
+                {bondOverrideIsFixed ? (
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={bondOverrideFixed}
+                    onChange={(e) => setBondOverrideFixed(e.target.value)}
+                    placeholder="Bond ($)"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    min={0}
+                    max={MAX_BOND_WEEKS}
+                    step={1}
+                    value={bondOverrideWeeks}
+                    onChange={(e) => setBondOverrideWeeks(e.target.value)}
+                    placeholder="Weeks of rent"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                  />
+                )}
+              </div>
+            ) : null}
+          </div>
+
           <div>
             <label htmlFor="agreed-rent-reason" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Reason

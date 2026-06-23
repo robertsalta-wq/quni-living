@@ -4,6 +4,7 @@ import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import {
   buildRentAgreedOverridePatch,
   insertRentAgreedOverrideEvent,
+  parseBondOverrideFromRequest,
   parseWeeklyRentAud,
 } from './lib/booking/rentAgreedOverride.js'
 
@@ -56,6 +57,8 @@ export default async function handler(req, res) {
   const bookingId = typeof body.bookingId === 'string' ? body.bookingId.trim() : ''
   const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
   const agreedWeeklyRentAud = parseWeeklyRentAud(body.agreedWeeklyRent ?? body.weeklyRent)
+
+  const bondOverride = parseBondOverrideFromRequest(body.bondOverride)
 
   if (!bookingId) {
     return corsJson(res, { error: 'bookingId is required' }, 400, origin)
@@ -116,6 +119,9 @@ export default async function handler(req, res) {
         properties (
           id,
           bond,
+          bond_weeks,
+          bond_is_fixed,
+          bond_fixed_amount,
           state,
           property_type,
           is_registered_rooming_house
@@ -144,6 +150,7 @@ export default async function handler(req, res) {
       agreedWeeklyRentAud,
       reason,
       landlord.id,
+      bondOverride,
     )
 
     if (!built.ok) {

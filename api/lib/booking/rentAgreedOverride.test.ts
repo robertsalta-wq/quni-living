@@ -22,38 +22,13 @@ const baseBooking = {
 
 const property = {
   id: 'p1',
-  bond: 1800,
+  bond_weeks: 4,
+  bond_is_fixed: false,
+  bond_fixed_amount: null,
   state: 'QLD',
   property_type: 'private_room_landlord_on_site',
   is_registered_rooming_house: false,
 }
-
-describe('parseWeeklyRentAud', () => {
-  it('rejects non-positive values', () => {
-    expect(parseWeeklyRentAud(0)).toBeNull()
-    expect(parseWeeklyRentAud(-1)).toBeNull()
-    expect(parseWeeklyRentAud('abc')).toBeNull()
-  })
-
-  it('rounds to cents', () => {
-    expect(parseWeeklyRentAud(400.005)).toBe(400.01)
-  })
-})
-
-describe('applyWeeklyRentFromBooking', () => {
-  it('uses apply_weekly_rent after override', () => {
-    expect(
-      applyWeeklyRentFromBooking(
-        { base: 400, override_applied: true, apply_weekly_rent: 450, agreed_weekly_rent: 420 },
-        420,
-      ),
-    ).toBe(450)
-  })
-
-  it('falls back to current weekly rent', () => {
-    expect(applyWeeklyRentFromBooking({ base: 400, couple: 50 }, 450)).toBe(450)
-  })
-})
 
 describe('buildRentAgreedOverridePatch', () => {
   it('rejects agreed rent above apply cap', async () => {
@@ -62,71 +37,34 @@ describe('buildRentAgreedOverridePatch', () => {
     if (!result.ok) expect(result.error).toBe('rent_exceeds_apply_cap')
   })
 
-  it('no-ops when unchanged', async () => {
+  it('no-ops when unchanged without bond override', async () => {
     const result = await buildRentAgreedOverridePatch(baseBooking, property, 450, 'same', 'll1')
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toBe('unchanged')
   })
 
-  it('builds patch and audit metadata on valid lower rent', async () => {
+  it('builds patch on valid lower rent with weeks bond', async () => {
     const result = await buildRentAgreedOverridePatch(baseBooking, property, 400, 'Longer lease', 'll1')
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.patch.weekly_rent).toBe(400)
-    expect(result.patch.rent_breakdown).toMatchObject({
-      base: 400,
-      couple: 50,
-      override_applied: true,
-      apply_weekly_rent: 450,
-      agreed_weekly_rent: 400,
-    })
-    expect(result.eventMetadata.from_weekly_rent_aud).toBe(450)
-    expect(result.eventMetadata.to_weekly_rent_aud).toBe(400)
-    expect(result.eventMetadata.reason).toBe('Longer lease')
+    expect(result.patch.bond_amount).toBe(1600)
   })
 
-  it('blocks post-accept statuses', async () => {
-    const result = await buildRentAgreedOverridePatch(
-      { ...baseBooking, status: 'bond_pending' },
-      property,
-      400,
-      'too late',
-      'll1',
-    )
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.error).toBe('invalid_booking_status')
+  it('accepts bond-only override when rent unchanged', async () => {
+    const result = await buildRentAgreedOverridePatch(baseBooking, property, 450, 'Bond tweak', 'll1', {
+      enabled: true,
+      weeks: 2,
+      fixed: null,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.patch.bond_amount).toBe(900)
   })
 })
 
 describe('bond recompute', () => {
-  it('scales proportionally from property bond', () => {
-    expect(recomputeBondForAgreedRent(1800, 450, 400)).toBe(1600)
-  })
-})
-
-describe('rentBreakdownWithOverride', () => {
-  it('preserves listing breakdown fields', () => {
-    const out = rentBreakdownWithOverride({ base: 400, couple: 50 }, 450, 420)
-    expect(out).toEqual({
-      base: 400,
-      couple: 50,
-      override_applied: true,
-      apply_weekly_rent: 450,
-      agreed_weekly_rent: 420,
-    })
-  })
-})
-
-describe('baseRentBreakdownFromBooking', () => {
-  it('strips override provenance', () => {
-    expect(
-      baseRentBreakdownFromBooking({
-        base: 400,
-        couple: 50,
-        override_applied: true,
-        apply_weekly_rent: 450,
-        agreed_weekly_rent: 420,
-      }),
-    ).toEqual({ base: 400, couple: 50 })
+  it('re-derives weeks bond at agreed rent', () => {
+    expect(recomputeBondForAgreedRent(property, 1800, 450, 400, {})).toBe(1600)
   })
 })

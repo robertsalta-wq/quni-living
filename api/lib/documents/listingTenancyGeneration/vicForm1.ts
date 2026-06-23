@@ -165,6 +165,9 @@ async function loadVicForm1Context(
         is_registered_rooming_house,
         furnished,
         bond,
+        bond_weeks,
+        bond_is_fixed,
+        bond_fixed_amount,
         linen_supplied,
         weekly_cleaning_service,
         house_rules
@@ -237,7 +240,7 @@ async function loadVicForm1Context(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum =
-    resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent) ??
+    resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent) ??
     Math.round(weeklyRent * 4 * 100) / 100
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>

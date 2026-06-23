@@ -10,7 +10,7 @@ import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { absoluteUrl } from '../lib/site'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 import TenantInviteOfferBanner from '../components/tenantInvite/TenantInviteOfferBanner'
-import { tenantInviteOfferFromRpcRow } from '../lib/pricing/tenantInviteOffer'
+import { tenantInviteOfferFromRpcRow, previewInviteBondAud } from '../lib/pricing/tenantInviteOffer'
 import type { Property } from '../lib/listings'
 
 type ResolvedInvite = {
@@ -22,6 +22,8 @@ type ResolvedInvite = {
   invited_name: string | null
   offered_weekly_rent: number | null
   offer_reason: string | null
+  offered_bond_weeks: number | null
+  offered_bond_fixed: number | null
 }
 
 function inviteErrorMessage(status: string): string {
@@ -201,6 +203,11 @@ export default function InviteTenantPage() {
     ? `Hi ${resolved.invited_name.trim().split(/\s+/)[0]},`
     : null
   const inviteOffer = tenantInviteOfferFromRpcRow(resolved)
+  const listingRent = property?.rent_per_week != null ? Number(property.rent_per_week) : 0
+  const inviteBondAud =
+    property && listingRent > 0
+      ? previewInviteBondAud(property, resolved, listingRent)
+      : null
 
   return (
     <div className="max-w-sm mx-auto px-6 py-12 sm:py-16">
@@ -239,12 +246,26 @@ export default function InviteTenantPage() {
         </p>
       )}
 
-      {inviteOffer.hasOffer && inviteOffer.offeredWeeklyRentAud != null ? (
+      {inviteOffer.hasOffer || inviteOffer.hasBondOffer ? (
         <div className="mt-4">
           <TenantInviteOfferBanner
             offeredWeeklyRentAud={inviteOffer.offeredWeeklyRentAud}
+            bondAmountAud={inviteBondAud}
             offerReason={inviteOffer.offerReason}
           />
+        </div>
+      ) : property && listingRent > 0 ? (
+        <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-gray-800">
+          {inviteBondAud != null ? (
+            <p>
+              Bond for this listing:{' '}
+              <span className="font-semibold tabular-nums">
+                ${inviteBondAud.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+              </span>
+            </p>
+          ) : (
+            <p>No bond is required for this listing.</p>
+          )}
         </div>
       ) : null}
 

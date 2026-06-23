@@ -45,6 +45,7 @@ import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import LandlordBookingAgreedRentEditor from '../../components/landlord/LandlordBookingAgreedRentEditor'
+import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -834,7 +835,14 @@ export default function LandlordBookingReviewPage() {
             bookingReference={bookingReferenceLabel(booking.id)}
             propertyTitle={property?.title?.trim() ?? ''}
             propertyAddress={propertyAddressLine}
-            bondAmountAud={property?.bond != null ? Number(property.bond) : null}
+            bondAmountAud={
+              booking.bond_amount != null
+                ? Number(booking.bond_amount)
+                : resolveListingBondAud(
+                    property,
+                    booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                  )
+            }
             bondDeadlineIso={booking.bond_window_expires_at}
             listingFeeDisplay={listingFeeDisplay}
             bondObligations={listingBondObligations}
@@ -907,7 +915,11 @@ export default function LandlordBookingReviewPage() {
             weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
             bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
             rentBreakdown={booking.rent_breakdown}
-            propertyBond={property?.bond != null ? Number(property.bond) : null}
+            propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+            propertyBondIsFixed={Boolean(property?.bond_is_fixed)}
+            propertyBondFixedAmount={
+              property?.bond_fixed_amount != null ? Number(property.bond_fixed_amount) : null
+            }
             serviceTierAtRequest={booking.service_tier_at_request}
             onSaved={() => void reload()}
           />
@@ -1113,9 +1125,15 @@ export default function LandlordBookingReviewPage() {
               <dd className="font-medium text-right tabular-nums">
                 {booking.bond_amount != null
                   ? `$${Number(booking.bond_amount).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                  : property?.bond != null
-                    ? `$${Number(property.bond).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
-                    : '-'}
+                  : (() => {
+                      const resolved = resolveListingBondAud(
+                        property,
+                        booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                      )
+                      return resolved != null
+                        ? `$${resolved.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
+                        : '-'
+                    })()}
               </dd>
             </div>
             <div className="flex justify-between gap-4">

@@ -57,7 +57,7 @@ export function buildListingApplyBookingRow({
   const bondAmount =
     bondAmountOverride != null
       ? bondAmountOverride
-      : bondAmountAtApplyFromProperty(property)
+      : bondAmountAtApplyFromProperty(property, weeklyRent)
   return {
     property_id: property.id,
     student_id: student.id,

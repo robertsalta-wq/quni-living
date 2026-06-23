@@ -204,6 +204,9 @@ async function loadNswFt6600Context(
         is_registered_rooming_house,
         furnished,
         bond,
+        bond_weeks,
+        bond_is_fixed,
+        bond_fixed_amount,
         linen_supplied,
         weekly_cleaning_service,
         house_rules,
@@ -335,7 +338,7 @@ async function loadNswFt6600Context(
   const computedEnd = periodic ? null : leaseEndDateFromMoveIn(moveIn, leaseLen)
   const endDate = periodic ? null : bookingEnd || computedEnd
 
-  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {

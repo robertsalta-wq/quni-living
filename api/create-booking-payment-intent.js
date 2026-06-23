@@ -899,7 +899,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
-  const bondAmount = bondAmountAtApplyFromProperty(property)
+  const bondAmount = bondAmountAtApplyFromProperty(property, weeklyRent)
 
   const row = {
     property_id: property.id,

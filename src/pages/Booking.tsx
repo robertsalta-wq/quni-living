@@ -38,6 +38,7 @@ import {
   tenantInviteOfferFromRpcRow,
   type TenantInviteOfferDisplay,
 } from '../lib/pricing/tenantInviteOffer'
+import { resolveInviteBondAud } from '../lib/booking/resolveBookingBondAmount'
 import { useBookingFlowChrome } from '../context/BookingFlowChromeContext'
 import { useScrollToTopOnChange } from '../hooks/useScrollToTopOnChange'
 import { scrollWindowToTop } from '../lib/scrollToTop'
@@ -965,6 +966,10 @@ export default function Booking() {
           return
         }
         const offer = tenantInviteOfferFromRpcRow(row)
+        if (!offer.hasOffer && !offer.hasBondOffer) {
+          setInviteOfferDisplay(null)
+          return
+        }
         setInviteOfferDisplay(offer)
         if (offer.hasOffer) {
           setQuniTenantInviteContext(tenantInviteToken, propertyId, {
@@ -1767,21 +1772,18 @@ export default function Booking() {
       ? PROPERTY_LISTING_TYPE_LABELS[property.property_type]
       : null
 
-  const bondAmountAud = (() => {
-    const listingBond =
-      property?.bond != null && Number.isFinite(Number(property.bond)) && Number(property.bond) > 0
-        ? Number(property.bond)
+  const bondAmountAud = useMemo(() => {
+    if (!property) return null
+    const invite =
+      inviteOfferDisplay?.hasBondOffer || inviteOfferDisplay?.hasOffer
+        ? {
+            offered_bond_weeks: inviteOfferDisplay.offeredBondWeeks,
+            offered_bond_fixed: inviteOfferDisplay.offeredBondFixed,
+            offered_weekly_rent: inviteOfferDisplay.offeredWeeklyRentAud,
+          }
         : null
-    if (listingBond == null) return null
-    if (
-      inviteOfferDisplay?.offeredWeeklyRentAud != null &&
-      listingWeeklyRent > 0 &&
-      weeklyRent < listingWeeklyRent
-    ) {
-      return Math.round(((listingBond * weeklyRent) / listingWeeklyRent) * 100) / 100
-    }
-    return listingBond
-  })()
+    return resolveInviteBondAud(property, invite, weeklyRent)
+  }, [property, inviteOfferDisplay, weeklyRent])
   const bondWeeksVsRent = bondAmountAud != null && weeklyRent > 0 ? bondAmountAud / weeklyRent : null
 
   const inputClass =
@@ -1848,10 +1850,11 @@ export default function Booking() {
         </div>
       </div>
 
-      {inviteOfferDisplay?.hasOffer && inviteOfferDisplay.offeredWeeklyRentAud != null ? (
+      {(inviteOfferDisplay?.hasOffer || inviteOfferDisplay?.hasBondOffer) ? (
         <div className="mt-6">
           <TenantInviteOfferBanner
             offeredWeeklyRentAud={inviteOfferDisplay.offeredWeeklyRentAud}
+            bondAmountAud={bondAmountAud}
             listingWeeklyRentAud={listingWeeklyRent}
             offerReason={inviteOfferDisplay.offerReason}
           />

@@ -4,7 +4,7 @@
 import { ResolveWeeklyRentError, resolveWeeklyRent } from '../pricing/resolveWeeklyRent.js'
 
 export const OCCUPANCY_PROPERTY_COLUMNS =
-  'rent_per_week, bond, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available'
+  'rent_per_week, bond, bond_weeks, bond_is_fixed, bond_fixed_amount, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available'
 
 /** RTA `housemates_count` = occupants beyond tenant (1) - stored on booking at commit. */
 export function housematesCountFromOccupantCount(occupantCount) {

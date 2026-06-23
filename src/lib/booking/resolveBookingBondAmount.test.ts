@@ -3,17 +3,18 @@ import { describe, expect, it } from 'vitest'
 import { resolveBookingBondAmountAud } from './resolveBookingBondAmount'
 
 describe('dashboard bond resolution (resolveBookingBondAmountAud)', () => {
-  it('returns null for no-bond listings — never 4× weekly rent', () => {
-    expect(resolveBookingBondAmountAud(null, null, 450)).toBeNull()
-    expect(resolveBookingBondAmountAud(null, 0, 450)).toBeNull()
-    expect(resolveBookingBondAmountAud(undefined, undefined, 450)).toBeNull()
+  it('returns null for no-bond listings', () => {
+    const prop = { bond_weeks: 0, bond_is_fixed: false, bond_fixed_amount: null }
+    expect(resolveBookingBondAmountAud(null, prop, 450)).toBeNull()
   })
 
-  it('prefers booking snapshot over property bond', () => {
-    expect(resolveBookingBondAmountAud(1200, 1600, 400)).toBe(1200)
+  it('prefers booking snapshot over listing bond', () => {
+    const prop = { bond_weeks: 4, bond_is_fixed: false, bond_fixed_amount: null }
+    expect(resolveBookingBondAmountAud(1200, prop, 400)).toBe(1200)
   })
 
-  it('falls back to property bond when booking snapshot is unset', () => {
-    expect(resolveBookingBondAmountAud(null, 1600, 400)).toBe(1600)
+  it('derives from listing weeks when booking snapshot is unset', () => {
+    const prop = { bond_weeks: 4, bond_is_fixed: false, bond_fixed_amount: null }
+    expect(resolveBookingBondAmountAud(null, prop, 400)).toBe(1600)
   })
 })

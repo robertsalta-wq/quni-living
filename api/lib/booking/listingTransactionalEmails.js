@@ -64,7 +64,7 @@ async function loadListingEmailContext(admin, bookingId) {
       start_date,
       lease_length,
       bond_window_expires_at,
-      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference, bond ),
+      properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference, bond, bond_weeks, bond_is_fixed, bond_fixed_amount ),
       student_profiles ( email, full_name, first_name, last_name ),
       landlord_profiles ( email, full_name, phone )
     `,
@@ -125,7 +125,7 @@ async function loadListingEmailContext(admin, bookingId) {
       : undefined
   const resolvedBondAmountAud = resolveBookingBondAmountAud(
     booking.bond_amount,
-    'bond' in prop ? prop.bond : null,
+    prop,
     booking.weekly_rent,
   )
   const bondPaymentTenantHtml =

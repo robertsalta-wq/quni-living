@@ -44,7 +44,13 @@ describe('listingBookingApply helpers', () => {
 
   it('buildListingApplyBookingRow omits deposit and payment fields', () => {
     const row = buildListingApplyBookingRow({
-      property: { id: 'p1', landlord_id: 'l1', bond: 1600 },
+      property: {
+        id: 'p1',
+        landlord_id: 'l1',
+        bond_is_fixed: true,
+        bond_fixed_amount: 1600,
+        bond_weeks: null,
+      },
       student: { id: 's1' },
       moveInDate: '2026-07-01',
       leaseLength: '6 months',

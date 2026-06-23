@@ -90,7 +90,7 @@ export async function runManagedConfirmBooking(params) {
       expires_at,
       deposit_amount,
       bond_acknowledged,
-      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier, bond ),
+      properties ( title, address, suburb, state, postcode, rent_per_week, property_type, is_registered_rooming_house, service_tier, bond, bond_weeks, bond_is_fixed, bond_fixed_amount ),
       student_profiles ( user_id, stripe_customer_id, email, full_name, first_name, last_name ),
       landlord_profiles ( user_id, email, full_name, phone )
     `,
@@ -380,7 +380,7 @@ export async function runManagedConfirmBooking(params) {
     if (studentUserId && landlordUserId && booking.property_id) {
       const bondAud = resolveBookingBondAmountAud(
         booking.bond_amount,
-        propForBond.bond,
+        propForBond,
         booking.weekly_rent,
       )
       const bondCents = bondAud != null ? Math.round(bondAud * 100) : 0
@@ -445,7 +445,7 @@ export async function runManagedConfirmBooking(params) {
 
     const bondAudForEmail = resolveBookingBondAmountAud(
       booking.bond_amount,
-      propForBond.bond,
+      propForBond,
       booking.weekly_rent,
     )
     const bondCentsForEmail = bondAudForEmail != null ? Math.round(bondAudForEmail * 100) : 0

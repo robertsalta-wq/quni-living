@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { resolveListingBondAud } from '../lib/booking/resolveBookingBondAmount'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import {
@@ -1120,6 +1121,10 @@ export default function PropertyDetail() {
 
   const listingRent = getListingRentDisplay(property)
   const rent = listingRent.primaryAmount
+  const listingBondAud = useMemo(
+    () => (property ? resolveListingBondAud(property, rent) : null),
+    [property, rent],
+  )
 
   const availableFormatted = (() => {
     if (isListingAvailableNow(property.available_from)) return 'Available now'
@@ -1649,11 +1654,10 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="py-4 space-y-2.5 border-b border-stone-100">
-                    {property.bond != null && Number(property.bond) > 0 && (
-                      <SidebarRow label="Bond">{`$${Number(property.bond).toLocaleString()}`}</SidebarRow>
-                    )}
-                    {property.bond != null &&
-                    Number(property.bond) > 0 &&
+                    {listingBondAud != null ? (
+                      <SidebarRow label="Bond">{`$${listingBondAud.toLocaleString()}`}</SidebarRow>
+                    ) : null}
+                    {listingBondAud != null &&
                     isQldOnSiteBoarderLodgerListing(property.state, property.property_type) ? (
                       <p className="text-xs text-sky-900 leading-relaxed rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2">
                         {qldOnSiteTenantBondCallout()}

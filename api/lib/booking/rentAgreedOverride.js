@@ -2,11 +2,12 @@
  * Landlord agreed-rent override on pending bookings (pre-accept).
  */
 
-import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
 import {
+  assertBondWithinCap,
+  parseBondWeeks,
   parsePropertyBondAud,
   recomputeBondForAgreedRent,
-  statutoryBondCapAudForOverride,
+  resolveAcceptanceBondOverrideAud,
 } from './bookingBondAmount.js'
 
 export const RENT_OVERRIDE_ALLOWED_STATUSES = new Set(['pending_confirmation', 'awaiting_info'])
@@ -71,14 +72,43 @@ export function rentBreakdownWithOverride(baseBreakdown, applyWeeklyRentAud, agr
 }
 
 /**
+ * @param {unknown} raw
+ * @returns {{ enabled: boolean; weeks: number | null; fixed: number | null } | null}
+ */
+export function parseBondOverrideFromRequest(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const o = raw
+  if (!o.enabled) return null
+  if (o.fixed != null && o.fixed !== '') {
+    const fixed = parsePropertyBondAud(o.fixed)
+    if (fixed == null) return { enabled: true, weeks: null, fixed: null }
+    return { enabled: true, weeks: null, fixed }
+  }
+  if (o.weeks != null && o.weeks !== '') {
+    const weeks = parseBondWeeks(o.weeks)
+    if (weeks == null) return null
+    return { enabled: true, weeks, fixed: null }
+  }
+  return null
+}
+
+/**
  * @param {object} booking
  * @param {object} property
  * @param {number} agreedWeeklyRentAud
  * @param {string} reason
  * @param {string} landlordProfileId
+ * @param {{ enabled: boolean; weeks: number | null; fixed: number | null } | null} [bondOverride]
  * @returns {Promise<{ ok: true, patch: object; eventMetadata: object } | { ok: false; status: number; error: string; message?: string }>}
  */
-export async function buildRentAgreedOverridePatch(booking, property, agreedWeeklyRentAud, reason, landlordProfileId) {
+export async function buildRentAgreedOverridePatch(
+  booking,
+  property,
+  agreedWeeklyRentAud,
+  reason,
+  landlordProfileId,
+  bondOverride = null,
+) {
   const status = typeof booking.status === 'string' ? booking.status : ''
   if (!RENT_OVERRIDE_ALLOWED_STATUSES.has(status)) {
     return {
@@ -124,48 +154,60 @@ export async function buildRentAgreedOverridePatch(booking, property, agreedWeek
   }
 
   const currentWeekly = parseWeeklyRentAud(booking.weekly_rent)
-  if (currentWeekly != null && agreedWeeklyRentAud === currentWeekly) {
+  const rentUnchanged = currentWeekly != null && agreedWeeklyRentAud === currentWeekly
+  if (rentUnchanged && !bondOverride?.enabled) {
     return { ok: false, status: 400, error: 'unchanged', message: 'Agreed rent is unchanged.' }
   }
 
-  const propertyBond = parsePropertyBondAud(property?.bond)
-  if (propertyBond == null) {
-    return {
-      ok: false,
-      status: 400,
-      error: 'missing_property_bond',
-      message: 'Listing bond is not configured on this property.',
+  let newBondAmount
+  /** @type {Record<string, unknown>} */
+  const bondBreakdownFields = {}
+
+  if (bondOverride?.enabled) {
+    try {
+      newBondAmount = resolveAcceptanceBondOverrideAud(
+        { weeks: bondOverride.weeks, fixed: bondOverride.fixed },
+        agreedWeeklyRentAud,
+      )
+    } catch {
+      return { ok: false, status: 400, error: 'bond_override_invalid', message: 'Could not resolve bond override.' }
+    }
+    if (bondOverride.fixed != null) {
+      bondBreakdownFields.acceptance_bond_fixed = bondOverride.fixed
+      bondBreakdownFields.acceptance_bond_weeks = null
+    } else if (bondOverride.weeks != null) {
+      bondBreakdownFields.acceptance_bond_weeks = bondOverride.weeks
+      bondBreakdownFields.acceptance_bond_fixed = null
+    }
+  } else {
+    try {
+      newBondAmount = recomputeBondForAgreedRent(
+        property,
+        booking.bond_amount,
+        applyWeeklyRent,
+        agreedWeeklyRentAud,
+        booking.rent_breakdown,
+      )
+    } catch {
+      return { ok: false, status: 400, error: 'bond_recompute_failed', message: 'Could not recompute bond for agreed rent.' }
     }
   }
 
-  let newBondAmount
-  try {
-    newBondAmount = recomputeBondForAgreedRent(propertyBond, applyWeeklyRent, agreedWeeklyRentAud)
-  } catch {
-    return { ok: false, status: 400, error: 'bond_recompute_failed', message: 'Could not recompute bond for agreed rent.' }
-  }
-
-  const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
-  const tenancyPackage = resolveTenancyPackage({
-    state: typeof property.state === 'string' ? property.state : '',
-    property_type: typeof property.property_type === 'string' ? property.property_type : '',
-    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
-    date: moveIn || undefined,
-  })
-
-  const capAud = statutoryBondCapAudForOverride(tenancyPackage, agreedWeeklyRentAud)
-  if (capAud != null && newBondAmount > capAud) {
+  const capCheck = assertBondWithinCap(newBondAmount, agreedWeeklyRentAud)
+  if (!capCheck.ok) {
     return {
       ok: false,
       status: 400,
       error: 'bond_exceeds_statutory_cap',
-      message:
-        'The recomputed bond would exceed the statutory cap for this tenancy type. Reduce the agreed rent or contact support.',
+      message: capCheck.message,
     }
   }
 
   const baseBreakdown = baseRentBreakdownFromBooking(booking.rent_breakdown)
-  const rent_breakdown = rentBreakdownWithOverride(baseBreakdown, applyWeeklyRent, agreedWeeklyRentAud)
+  const rent_breakdown = {
+    ...rentBreakdownWithOverride(baseBreakdown, applyWeeklyRent, agreedWeeklyRentAud),
+    ...bondBreakdownFields,
+  }
 
   const fromWeekly = currentWeekly ?? applyWeeklyRent
 
@@ -179,11 +221,17 @@ export async function buildRentAgreedOverridePatch(booking, property, agreedWeek
     eventMetadata: {
       from_weekly_rent_aud: fromWeekly,
       to_weekly_rent_aud: agreedWeeklyRentAud,
-      from_bond_amount_aud: parseWeeklyRentAud(booking.bond_amount),
+      from_bond_amount_aud: parsePropertyBondAud(booking.bond_amount),
       to_bond_amount_aud: newBondAmount,
       apply_weekly_rent_aud: applyWeeklyRent,
       reason: reason.trim(),
       actor_landlord_id: landlordProfileId,
+      ...(bondOverride?.enabled
+        ? {
+            bond_override_weeks: bondOverride.weeks,
+            bond_override_fixed_aud: bondOverride.fixed,
+          }
+        : {}),
     },
   }
 }

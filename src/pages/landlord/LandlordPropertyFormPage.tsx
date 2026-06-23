@@ -28,6 +28,7 @@ import {
 } from '../../lib/tenancy/qldBondRemittance'
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS } from '../../lib/booking/resolveBookingBondAmount'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import AIListingProofread, { useListingProofread } from '../../components/AIListingProofread'
 import PropertyPhotoReorderGrid from '../../components/landlord/PropertyPhotoReorderGrid'
@@ -215,7 +216,9 @@ type LandlordPropertyDraftV1 = {
   coupleSurchargePerWeek: string
   parkingSurchargePerWeek: string
   parkingAvailable: boolean
-  bond: string
+  bondWeeks: string
+  bondIsFixed: boolean
+  bondFixedAmount: string
   qldBondRemittancePreference: QldBondRemittancePreference
   leaseLength: string
   availableFrom: string
@@ -310,7 +313,9 @@ function parseLandlordPropertyDraft(raw: string | null): LandlordPropertyDraftV1
       parkingSurchargePerWeek:
         typeof d.parkingSurchargePerWeek === 'string' ? d.parkingSurchargePerWeek : '',
       parkingAvailable: Boolean(d.parkingAvailable),
-      bond: typeof d.bond === 'string' ? d.bond : '',
+      bondWeeks: typeof d.bondWeeks === 'string' ? d.bondWeeks : String(DEFAULT_BOND_WEEKS),
+      bondIsFixed: Boolean(d.bondIsFixed),
+      bondFixedAmount: typeof d.bondFixedAmount === 'string' ? d.bondFixedAmount : '',
       qldBondRemittancePreference:
         parseQldBondRemittancePreference(d.qldBondRemittancePreference) ?? 'tenant_choice',
       leaseLength: parseDraftLeaseLength(d.leaseLength),
@@ -342,7 +347,9 @@ function isLandlordPropertyDraftMeaningful(d: LandlordPropertyDraftV1): boolean 
     d.suburb.trim() !== '' ||
     d.postcode.trim() !== '' ||
     d.rentPerWeek.trim() !== '' ||
-    d.bond.trim() !== '' ||
+    d.bondWeeks.trim() !== String(DEFAULT_BOND_WEEKS) ||
+    d.bondIsFixed ||
+    d.bondFixedAmount.trim() !== '' ||
     d.availableFrom.trim() !== '' ||
     d.images.length > 0 ||
     d.selectedFeatureIds.length > 0 ||
@@ -787,7 +794,9 @@ export default function LandlordPropertyFormPage() {
     [features, selectedFeatureIds],
   )
 
-  const [bond, setBond] = useState('')
+  const [bondWeeks, setBondWeeks] = useState(String(DEFAULT_BOND_WEEKS))
+  const [bondIsFixed, setBondIsFixed] = useState(false)
+  const [bondFixedAmount, setBondFixedAmount] = useState('')
   const [qldBondRemittancePreference, setQldBondRemittancePreference] =
     useState<QldBondRemittancePreference>('tenant_choice')
   const [leaseLength, setLeaseLength] = useState<string>('Flexible')
@@ -829,7 +838,9 @@ export default function LandlordPropertyFormPage() {
         coupleSurchargePerWeek,
         parkingSurchargePerWeek,
         parkingAvailable,
-        bond,
+        bondWeeks,
+        bondIsFixed,
+        bondFixedAmount,
         qldBondRemittancePreference,
         leaseLength,
         availableFrom,
@@ -871,7 +882,9 @@ export default function LandlordPropertyFormPage() {
       coupleSurchargePerWeek,
       parkingSurchargePerWeek,
       parkingAvailable,
-      bond,
+      bondWeeks,
+      bondIsFixed,
+      bondFixedAmount,
       qldBondRemittancePreference,
       leaseLength,
       availableFrom,
@@ -1001,7 +1014,9 @@ export default function LandlordPropertyFormPage() {
     setNearbyCampusError(null)
     setShowAddAnotherUniversity(false)
     setRentPerWeek('')
-    setBond('')
+    setBondWeeks(String(DEFAULT_BOND_WEEKS))
+    setBondIsFixed(false)
+    setBondFixedAmount('')
     setLeaseLength('Flexible')
     setAvailableFrom('')
     setImages([])
@@ -1184,7 +1199,22 @@ export default function LandlordPropertyFormPage() {
           prop.parking_surcharge_per_week != null ? String(prop.parking_surcharge_per_week) : '',
         )
         setParkingAvailable(Boolean(prop.parking_available))
-        setBond(prop.bond != null ? String(prop.bond) : '')
+        const propBond = prop as {
+          bond_is_fixed?: boolean | null
+          bond_fixed_amount?: number | null
+          bond_weeks?: number | null
+        }
+        if (propBond.bond_is_fixed && propBond.bond_fixed_amount != null) {
+          setBondIsFixed(true)
+          setBondFixedAmount(String(propBond.bond_fixed_amount))
+          setBondWeeks('')
+        } else {
+          setBondIsFixed(false)
+          setBondFixedAmount('')
+          setBondWeeks(
+            propBond.bond_weeks != null ? String(propBond.bond_weeks) : String(DEFAULT_BOND_WEEKS),
+          )
+        }
         setQldBondRemittancePreference(
           parseQldBondRemittancePreference(prop.qld_bond_remittance_preference) ?? 'tenant_choice',
         )
@@ -1290,7 +1320,9 @@ export default function LandlordPropertyFormPage() {
       setCoupleSurchargePerWeek(parsed.coupleSurchargePerWeek)
       setParkingSurchargePerWeek(parsed.parkingSurchargePerWeek)
       setParkingAvailable(parsed.parkingAvailable)
-      setBond(parsed.bond)
+      setBondWeeks(parsed.bondWeeks)
+      setBondIsFixed(parsed.bondIsFixed)
+      setBondFixedAmount(parsed.bondFixedAmount)
       setQldBondRemittancePreference(parsed.qldBondRemittancePreference)
       setLeaseLength(parsed.leaseLength)
       setAvailableFrom(parsed.availableFrom)
@@ -2130,7 +2162,12 @@ export default function LandlordPropertyFormPage() {
       parking_surcharge_per_week:
         parkingAvailable && parkingAmt != null && parkingAmt > 0 ? parkingAmt : null,
       parking_available: parkingAvailable,
-      bond: bond.trim() ? Number(bond) : null,
+      bond_weeks: bondIsFixed
+        ? null
+        : Math.min(MAX_BOND_WEEKS, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
+      bond_is_fixed: bondIsFixed,
+      bond_fixed_amount:
+        bondIsFixed && bondFixedAmount.trim() ? Number(bondFixedAmount) : null,
       qld_bond_remittance_preference:
         showQldBondRemittance ? qldBondRemittancePreference : null,
       lease_length: leaseLength || null,
@@ -3422,33 +3459,69 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 ) : null}
               </div>
-              <div>
-                <label htmlFor="pf-bond" className={labelClass}>
-                  Bond ($)
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={bondIsFixed}
+                    onChange={(e) => setBondIsFixed(e.target.checked)}
+                    className="mt-1 rounded border-gray-300"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">Fixed bond amount ($)</span>
+                    <span className="block text-xs text-gray-600 mt-0.5 leading-relaxed">
+                      Use a specific dollar figure instead of weeks of rent. Capped at {MAX_BOND_WEEKS} weeks of rent on
+                      save.
+                    </span>
+                  </span>
                 </label>
-                <input
-                  id="pf-bond"
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={bond}
-                  onChange={(e) => setBond(e.target.value)}
-                  className={inputClass}
-                />
+                {bondIsFixed ? (
+                  <div>
+                    <label htmlFor="pf-bond-fixed" className={labelClass}>
+                      Bond ($)
+                    </label>
+                    <input
+                      id="pf-bond-fixed"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={bondFixedAmount}
+                      onChange={(e) => setBondFixedAmount(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="pf-bond-weeks" className={labelClass}>
+                      Bond (weeks of rent)
+                    </label>
+                    <input
+                      id="pf-bond-weeks"
+                      type="number"
+                      min={0}
+                      max={MAX_BOND_WEEKS}
+                      step={1}
+                      value={bondWeeks}
+                      onChange={(e) => setBondWeeks(e.target.value)}
+                      className={inputClass}
+                    />
+                    <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
+                      Default is {DEFAULT_BOND_WEEKS} weeks. Enter 0 for no bond. Maximum {MAX_BOND_WEEKS} weeks.
+                    </p>
+                  </div>
+                )}
                 {(state.trim() || '').toUpperCase() === 'QLD' ? (
-                  <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
-                    Under Queensland law, a bond cannot exceed 4 weeks&apos; rent, regardless of the weekly rent
-                    amount.
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Under Queensland law, a bond cannot exceed {MAX_BOND_WEEKS} weeks&apos; rent.
                   </p>
                 ) : (state.trim() || '').toUpperCase() === 'NSW' && bondSuggestedMaxWeeklyRent != null ? (
-                  <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
-                    NSW residential bonds are often up to 4 weeks&apos; rent. At maximum occupancy and extras, that
-                    could be up to{' '}
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    NSW residential bonds are often up to {MAX_BOND_WEEKS} weeks&apos; rent. At maximum occupancy and
+                    extras, that could be up to{' '}
                     <span className="tabular-nums font-medium text-gray-700">
-                      ${(bondSuggestedMaxWeeklyRent * 4).toLocaleString('en-AU', { maximumFractionDigits: 0 })}
-                    </span>{' '}
-                    (4 × ${bondSuggestedMaxWeeklyRent.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
-                    /week).
+                      ${(bondSuggestedMaxWeeklyRent * MAX_BOND_WEEKS).toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                    </span>
+                    .
                   </p>
                 ) : null}
               </div>

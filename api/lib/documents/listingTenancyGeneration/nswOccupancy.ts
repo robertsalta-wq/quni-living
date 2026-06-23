@@ -139,6 +139,9 @@ async function loadNswOccupancyContext(
         is_registered_rooming_house,
         furnished,
         bond,
+        bond_weeks,
+        bond_is_fixed,
+        bond_fixed_amount,
         linen_supplied,
         weekly_cleaning_service,
         house_rules
@@ -199,7 +202,7 @@ async function loadNswOccupancyContext(
   const endDate = leaseEndDateFromMoveIn(moveIn, leaseLen)
   const periodic = leaseLen === 'Flexible' || endDate == null
 
-  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
   const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const platformFeePercent =

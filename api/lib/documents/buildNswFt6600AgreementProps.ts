@@ -105,7 +105,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
   const computedEnd = periodic ? null : leaseEndDateFromMoveIn(moveIn, leaseLen)
   const endDate = periodic ? null : bookingEnd || computedEnd
 
-  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop.bond, weeklyRent)
+  const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
   const platformFeePercent = input.managedPlatformFeePercent ?? 0
   const totalWeekly = Math.round((weeklyRent + weeklyRent * (platformFeePercent / 100)) * 100) / 100

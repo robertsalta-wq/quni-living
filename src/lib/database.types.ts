@@ -992,6 +992,9 @@ export interface Database {
           rooms_rented_to_residents: number | null
           furnished: boolean | null
           bond: number | null
+          bond_weeks: number | null
+          bond_is_fixed: boolean
+          bond_fixed_amount: number | null
           qld_bond_remittance_preference: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length: string | null
           listing_type: 'rent' | 'homestay' | 'student_house' | null
@@ -1051,6 +1054,9 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
+          bond_weeks?: number | null
+          bond_is_fixed?: boolean
+          bond_fixed_amount?: number | null
           qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
@@ -1109,6 +1115,9 @@ export interface Database {
           rooms_rented_to_residents?: number | null
           furnished?: boolean | null
           bond?: number | null
+          bond_weeks?: number | null
+          bond_is_fixed?: boolean
+          bond_fixed_amount?: number | null
           qld_bond_remittance_preference?: 'landlord_collects_remits' | 'tenant_choice' | null
           lease_length?: string | null
           listing_type?: 'rent' | 'homestay' | 'student_house' | null
@@ -1263,6 +1272,8 @@ export interface Database {
           booking_submitted_at: string | null
           offered_weekly_rent: number | null
           offer_reason: string | null
+          offered_bond_weeks: number | null
+          offered_bond_fixed: number | null
           created_at: string
           updated_at: string
         }
@@ -1286,6 +1297,8 @@ export interface Database {
           booking_submitted_at?: string | null
           offered_weekly_rent?: number | null
           offer_reason?: string | null
+          offered_bond_weeks?: number | null
+          offered_bond_fixed?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -1309,6 +1322,8 @@ export interface Database {
           booking_submitted_at?: string | null
           offered_weekly_rent?: number | null
           offer_reason?: string | null
+          offered_bond_weeks?: number | null
+          offered_bond_fixed?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -2370,6 +2385,8 @@ export interface Database {
           invited_name: string | null
           offered_weekly_rent: number | null
           offer_reason: string | null
+          offered_bond_weeks: number | null
+          offered_bond_fixed: number | null
         }[]
       }
       record_tenant_invite_funnel_event: {

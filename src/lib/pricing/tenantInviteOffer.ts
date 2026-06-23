@@ -1,5 +1,6 @@
 /** Client helpers for tenant-invite special rent offers. */
 
+import { resolveInviteBondAud } from '../booking/resolveBookingBondAmount'
 import { parseRentOverrideProvenance } from './rentAgreedOverride'
 
 export type TenantInviteOfferDisplay = {
@@ -7,6 +8,9 @@ export type TenantInviteOfferDisplay = {
   offeredWeeklyRentAud: number | null
   offerReason: string | null
   listingWeeklyRentAud: number | null
+  hasBondOffer: boolean
+  offeredBondWeeks: number | null
+  offeredBondFixed: number | null
 }
 
 function parseAud(value: unknown): number | null {
@@ -15,18 +19,33 @@ function parseAud(value: unknown): number | null {
   return Math.round(n * 100) / 100
 }
 
+function parseBondWeeksField(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const n = Math.floor(Number(value))
+  if (!Number.isFinite(n) || n < 0 || n > 4) return null
+  return n
+}
+
 export function tenantInviteOfferFromRpcRow(row: {
   offered_weekly_rent?: unknown
   offer_reason?: unknown
+  offered_bond_weeks?: unknown
+  offered_bond_fixed?: unknown
 } | null | undefined): TenantInviteOfferDisplay {
   const offeredWeeklyRentAud = parseAud(row?.offered_weekly_rent)
   const offerReason =
     typeof row?.offer_reason === 'string' && row.offer_reason.trim() ? row.offer_reason.trim() : null
+  const offeredBondFixed = parseAud(row?.offered_bond_fixed)
+  const offeredBondWeeks = parseBondWeeksField(row?.offered_bond_weeks)
+  const hasBondOffer = offeredBondFixed != null || offeredBondWeeks != null
   return {
     hasOffer: offeredWeeklyRentAud != null,
     offeredWeeklyRentAud,
     offerReason,
     listingWeeklyRentAud: null,
+    hasBondOffer,
+    offeredBondWeeks,
+    offeredBondFixed,
   }
 }
 
@@ -40,6 +59,23 @@ export function effectiveWeeklyRentWithInviteOffer(
   const offer = parseAud(offeredWeeklyRentAud)
   if (offer == null) return listing
   return Math.min(listing, offer)
+}
+
+export function previewInviteBondAud(
+  property: object | null | undefined,
+  inviteRow: {
+    offered_weekly_rent?: unknown
+    offered_bond_weeks?: unknown
+    offered_bond_fixed?: unknown
+  } | null | undefined,
+  listingWeeklyRentAud: number,
+): number | null {
+  if (!property) return null
+  const rent = effectiveWeeklyRentWithInviteOffer(
+    listingWeeklyRentAud,
+    parseAud(inviteRow?.offered_weekly_rent),
+  )
+  return resolveInviteBondAud(property, inviteRow, rent)
 }
 
 export function bookingHasInviteOfferProvenance(rentBreakdown: unknown): boolean {
@@ -65,4 +101,8 @@ export function inviteOfferNoticeFromBreakdown(rentBreakdown: unknown): {
 export function formatAudWeekly(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(Number(n))) return '-'
   return `$${Number(n).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+}
+
+export function formatBondAmountAud(n: number | null | undefined): string {
+  return formatAudWeekly(n)
 }

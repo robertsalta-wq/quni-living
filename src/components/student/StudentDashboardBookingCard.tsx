@@ -98,8 +98,8 @@ function ListingBondGuidanceForBooking({
   if (!guidance) return null
   const bondAud = resolveBookingBondAmountAud(
     booking.bond_amount,
-    property.bond,
-    property.rent_per_week,
+    property,
+    booking.weekly_rent ?? property.rent_per_week,
   )
   return <ListingBondPaymentGuidance guidance={guidance} bondAmountAud={bondAud} />
 }
@@ -188,7 +188,7 @@ export default function StudentDashboardBookingCard({
             <>
               <ListingBondGuidanceForBooking booking={b} property={prop} />
               {(prop.state ?? '').trim().toUpperCase() === 'QLD' &&
-              resolveBookingBondAmountAud(b.bond_amount, prop.bond, prop.rent_per_week) != null ? (
+              resolveBookingBondAmountAud(b.bond_amount, prop, b.weekly_rent ?? prop.rent_per_week) != null ? (
                 <RtaBondRecordForm
                   bookingId={b.id}
                   compact
