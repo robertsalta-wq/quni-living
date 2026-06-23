@@ -565,8 +565,11 @@ export default function StudentProfile() {
       setProfile((prev) =>
         prev ? { ...prev, ...dbPatchForVerificationDoc(kind, filePath, submittedAt, displayName) } : prev,
       )
+      // Re-pull from the DB so the card reflects the saved document immediately —
+      // does automatically what a manual page refresh did (users don't know to).
+      void refreshProfileData()
     },
-    [],
+    [refreshProfileData],
   )
 
   const verificationDocUpload = useStudentVerificationDocUpload(profile, user?.id, onVerificationDocUploaded)
