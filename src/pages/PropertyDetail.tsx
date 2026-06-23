@@ -261,6 +261,20 @@ function PreviewGateOverlay({
   )
 }
 
+/** Matches booking step copy (Booking.tsx). */
+export const LISTING_NO_BOND_REQUIRED_TEXT = 'No bond is required for this property.'
+
+export function listingHasNoBondRequired(listingBondAud: number | null): boolean {
+  return listingBondAud == null || listingBondAud === 0
+}
+
+export function listingNoBondQuickInfoItem(
+  listingBondAud: number | null,
+): { icon: string; text: string } | null {
+  if (!listingHasNoBondRequired(listingBondAud)) return null
+  return { icon: '🔓', text: LISTING_NO_BOND_REQUIRED_TEXT }
+}
+
 export default function PropertyDetail() {
   const { slug: slugParam } = useParams<{ slug: string }>()
   const slug = slugParam?.trim() ?? ''
@@ -1186,6 +1200,8 @@ export default function PropertyDetail() {
     if (inclusionSignals?.weeklyCleaning) items.push({ icon: '🧹', text: 'Weekly cleaning' })
     if (inclusionSignals?.billsIncluded) items.push({ icon: '💡', text: 'Bills included' })
     for (const item of utilitiesQuickBarItems) items.push(item)
+    const noBondItem = listingNoBondQuickInfoItem(listingBondAud)
+    if (noBondItem) items.push(noBondItem)
     if (inclusionSignals?.parkingAvailable) items.push({ icon: '🚗', text: 'Parking' })
     if (!isRoomListingProperty(property) && roomLabel) items.push({ icon: '🛌', text: roomLabel })
     return items
@@ -1656,10 +1672,13 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="py-4 space-y-2.5 border-b border-stone-100">
-                    {listingBondAud != null ? (
+                    {listingBondAud != null && listingBondAud > 0 ? (
                       <SidebarRow label="Bond">{`$${listingBondAud.toLocaleString()}`}</SidebarRow>
+                    ) : listingHasNoBondRequired(listingBondAud) ? (
+                      <p className="text-sm text-stone-700 leading-snug">{LISTING_NO_BOND_REQUIRED_TEXT}</p>
                     ) : null}
                     {listingBondAud != null &&
+                    listingBondAud > 0 &&
                     isQldOnSiteBoarderLodgerListing(property.state, property.property_type) ? (
                       <p className="text-xs text-sky-900 leading-relaxed rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2">
                         {qldOnSiteTenantBondCallout()}
