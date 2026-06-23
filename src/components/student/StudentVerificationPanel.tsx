@@ -129,8 +129,8 @@ function DocReceivedCard({
               Received {formatReceivedAt(doc.submittedAt)} · pending review (not verified yet)
             </p>
           ) : null}
-          <p className="text-emerald-900/90 mt-1 break-all">
-            <span className="font-medium">{doc.displayFileName}</span>
+          <p className="text-emerald-900/90 mt-1 font-medium truncate" title={doc.displayFileName}>
+            {doc.displayFileName}
           </p>
           {reviewNote && !doc.pending ? <p className="text-xs text-emerald-800/80 mt-2">{reviewNote}</p> : null}
           {doc.previewUrl || doc.filePath ? (
@@ -275,6 +275,9 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     }
     if (!msg) return
     setUploadedFlash(msg)
+    // The post-upload reload otherwise restores the old scroll position and dumps
+    // the user at the bottom/footer. Land them at the top, on the confirmation.
+    window.scrollTo(0, 0)
     const t = window.setTimeout(() => setUploadedFlash(null), 4500)
     return () => window.clearTimeout(t)
   }, [])
@@ -525,7 +528,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
 
   if (useIdentityFlow) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-32">
         {hoistedFileInputs}
         {uploadFlashBanner}
         <section
@@ -753,7 +756,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32">
       {hoistedFileInputs}
       {uploadFlashBanner}
       <section
