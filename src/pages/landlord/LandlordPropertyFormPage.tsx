@@ -187,6 +187,14 @@ const LEASE_OPTIONS = ['Flexible', '6 months', '12 months', '2 years'] as const
 const LANDLORD_PROPERTY_DRAFT_KEY = 'landlord_property_draft' as const
 const LANDLORD_PROPERTY_DRAFT_VERSION = 1 as const
 
+const BOND_WEEK_SELECTOR_OPTIONS = [
+  { value: 0, label: 'None' },
+  { value: 1, label: '1 week' },
+  { value: 2, label: '2 weeks' },
+  { value: 3, label: '3 weeks' },
+  { value: 4, label: '4 weeks' },
+] as const
+
 /** Persisted new-listing draft - property fields only (no admin landlord id or auth). */
 type LandlordPropertyDraftV1 = {
   v: typeof LANDLORD_PROPERTY_DRAFT_VERSION
@@ -3445,19 +3453,31 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div className="space-y-3">
                 <div>
-                  <label htmlFor="pf-bond-weeks" className={labelClass}>
-                    Bond (weeks of rent)
-                  </label>
-                  <input
-                    id="pf-bond-weeks"
-                    type="number"
-                    min={0}
-                    max={MAX_BOND_WEEKS}
-                    step={1}
-                    value={bondWeeks}
-                    onChange={(e) => setBondWeeks(e.target.value)}
-                    className={inputClass}
-                  />
+                  <p className={labelClass}>Bond</p>
+                  <div
+                    className="mt-1 grid grid-cols-5 gap-2"
+                    role="group"
+                    aria-label="Bond weeks"
+                  >
+                    {BOND_WEEK_SELECTOR_OPTIONS.map((opt) => {
+                      const selected = parsedBondWeeks === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => setBondWeeks(String(opt.value))}
+                          className={`rounded-lg border px-1.5 py-2.5 text-xs sm:text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]/50 ${
+                            selected
+                              ? 'border-[#FF6F61] bg-[#FF6F61]/10 text-[#FF6F61]'
+                              : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                   <p className="mt-1.5 text-xs text-gray-500 leading-relaxed">
                     Default is {DEFAULT_BOND_WEEKS} weeks. Enter 0 for no bond. Maximum {MAX_BOND_WEEKS} weeks.
                   </p>
