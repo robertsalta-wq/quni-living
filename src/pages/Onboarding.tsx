@@ -25,6 +25,7 @@ import { applyPendingSignupRole } from '../lib/applyPendingSignupRole'
 import { resolveSignupRoleChoice } from '../lib/resolveSignupRoleChoice'
 import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
+import { marketplaceRoleForWrite } from '../lib/marketplaceRole'
 
 type Choice = 'student' | 'renter' | 'landlord'
 
@@ -108,7 +109,7 @@ export default function Onboarding() {
   const [landlordAgreement, setLandlordAgreement] = useState(false)
   const [agreementError, setAgreementError] = useState(false)
 
-  const [resolvedRole, setResolvedRole] = useState<Choice>('student')
+  const [resolvedRole, setResolvedRole] = useState<Choice>('renter')
   const [missingRoleChoice, setMissingRoleChoice] = useState(false)
   const [roleReady, setRoleReady] = useState(false)
 
@@ -162,8 +163,9 @@ export default function Onboarding() {
         profileTermsComplete(isRenterRole(role) ? 'student' : 'landlord', profile)
       ) {
         const metaRole = u.user_metadata?.role
-        if (metaRole !== role && !(isRenterRole(metaRole) && isRenterRole(role))) {
-          const { error: metaErr } = await supabase.auth.updateUser({ data: { role } })
+        const writeRole = marketplaceRoleForWrite(role)
+        if (writeRole && marketplaceRoleForWrite(metaRole) !== writeRole) {
+          const { error: metaErr } = await supabase.auth.updateUser({ data: { role: writeRole } })
           if (!metaErr) await refreshProfile()
         }
         navigate(getPostLoginRedirectDestination(u, role, profile), { replace: true })
@@ -247,7 +249,7 @@ export default function Onboarding() {
       }
 
       const { error: metaErr } = await supabase.auth.updateUser({
-        data: { role: resolvedRole },
+        data: { role: marketplaceRoleForWrite(resolvedRole)! },
       })
       if (metaErr) throw metaErr
 

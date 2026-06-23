@@ -154,32 +154,32 @@ describe('applyPendingRouteInMemory', () => {
 })
 
 describe('resolveRoleAndProfileFromRows after reconciliation', () => {
-  it('case 1: email signup with existing student row resolves student role', () => {
+  it('case 1: email signup with existing student row resolves renter role', () => {
     const user = mockUser({ user_metadata: { role: 'student' } })
     const sp = studentRow({
       user_id: user.id,
       accommodation_verification_route: 'student',
     })
     const result = resolveRoleAndProfileFromRows(user, sp, null)
-    expect(result.role).toBe('student')
+    expect(result.role).toBe('renter')
     expect(result.profile).toBe(sp)
   })
 
-  it('maps renter JWT metadata to resolved student role without leaking renter', () => {
+  it('maps renter JWT metadata to resolved renter role', () => {
     const user = mockUser({ user_metadata: { role: 'renter' } })
     const sp = studentRow({
       user_id: user.id,
       accommodation_verification_route: 'student',
     })
     const result = resolveRoleAndProfileFromRows(user, sp, null)
-    expect(result.role).toBe('student')
+    expect(result.role).toBe('renter')
     expect(result.profile).toBe(sp)
   })
 
-  it('returns student role when renter metadata has no profile row yet', () => {
+  it('returns renter role when renter metadata has no profile row yet', () => {
     const user = mockUser({ user_metadata: { role: 'renter' } })
     const result = resolveRoleAndProfileFromRows(user, null, null)
-    expect(result.role).toBe('student')
+    expect(result.role).toBe('renter')
     expect(result.profile).toBeNull()
   })
 })

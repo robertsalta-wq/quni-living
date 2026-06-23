@@ -18,6 +18,7 @@ import {
   type QuniAccommodationVerificationRoute,
 } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
+import { marketplaceRoleForWrite } from './marketplaceRole'
 import { supabase } from './supabase'
 
 const RECENT_SIGNUP_MS = 30 * 60 * 1000
@@ -159,8 +160,9 @@ async function applyPendingSignupRoleInMemory(
 
   if (!sp && !lp) {
     const metaRole = user.user_metadata?.role
-    if (metaRole !== selected && !(isRenterRole(metaRole) && isRenterRole(selected))) {
-      const data: Record<string, string> = { role: isRenterRole(selected) ? 'student' : selected }
+    const writeRole = marketplaceRoleForWrite(selected)!
+    if (marketplaceRoleForWrite(metaRole) !== writeRole) {
+      const data: Record<string, string> = { role: writeRole }
       if (isRenterRole(selected)) {
         const metaRoute = user.user_metadata?.accommodation_verification_route
         const route =
@@ -222,7 +224,7 @@ async function applyPendingSignupRoleInMemory(
       .maybeSingle()
     if (insErr) return { sp, lp }
 
-    await supabase.auth.updateUser({ data: { role: 'student' } })
+    await supabase.auth.updateUser({ data: { role: 'renter' } })
     clearQuniSelectedRole()
     return { sp: (insData as StudentProfileRow | null) ?? sp, lp: null }
   }

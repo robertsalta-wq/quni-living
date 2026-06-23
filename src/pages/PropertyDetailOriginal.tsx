@@ -547,7 +547,7 @@ export default function PropertyDetail() {
   const bookPath = property?.id ? `/booking/${property.id}` : `/listings/${slug}`
   const bookHref = user
     ? bookPath
-    : `/signup?role=student&redirect=${encodeURIComponent(bookPath)}`
+    : `/signup?role=renter&redirect=${encodeURIComponent(bookPath)}`
   const bookState = user ? undefined : { from: { pathname: listingPath } }
 
   const landlordInitial = landlord?.full_name?.trim()?.[0]?.toUpperCase() ?? '?'

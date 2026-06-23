@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getPostLoginRedirectDestination, needsOnboarding, isRenterRole } from '../../lib/authProfile'
+import { marketplaceRoleForWrite } from '../../lib/marketplaceRole'
 import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
@@ -57,7 +58,7 @@ export default function AuthCallback() {
 
       if (urlRoute || urlRole) {
         const data: Record<string, string> = {}
-        if (urlRole) data.role = urlRole
+        if (urlRole) data.role = marketplaceRoleForWrite(urlRole)!
         if (urlRoute && urlRole !== 'landlord') {
           data.accommodation_verification_route = urlRoute
         }

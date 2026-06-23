@@ -1,3 +1,5 @@
+import { marketplaceRoleForWrite } from './marketplaceRole'
+
 /** Email OTP links use `type=signup` (confirm) or `type=recovery` (password reset). */
 export type AuthCallbackOtpType = 'signup' | 'recovery'
 
@@ -16,7 +18,13 @@ export function rememberOAuthSignupContext(params: OAuthSignupCallbackParams): v
   if (typeof window === 'undefined') return
   if (!params.signupRoute && !params.signupRole) return
   try {
-    sessionStorage.setItem(OAUTH_SIGNUP_CONTEXT_KEY, JSON.stringify(params))
+    const stored: OAuthSignupCallbackParams = {
+      signupRoute: params.signupRoute,
+      signupRole: params.signupRole
+        ? (marketplaceRoleForWrite(params.signupRole) as GoogleOAuthSignupRole | null)
+        : null,
+    }
+    sessionStorage.setItem(OAUTH_SIGNUP_CONTEXT_KEY, JSON.stringify(stored))
   } catch {
     /* ignore quota / private mode */
   }

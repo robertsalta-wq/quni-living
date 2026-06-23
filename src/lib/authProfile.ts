@@ -95,12 +95,12 @@ export function resolveRoleAndProfileFromRows(
 ): { role: UserRole; profile: AuthProfile | null } {
   const meta = user.user_metadata?.role
   if (isRenterRole(meta) || meta === 'landlord') {
-    if (isRenterRole(meta) && sp) return { role: 'student', profile: sp }
+    if (isRenterRole(meta) && sp) return { role: 'renter', profile: sp }
     if (meta === 'landlord' && lp) return { role: 'landlord', profile: lp }
   }
-  if (sp) return { role: 'student', profile: sp }
+  if (sp) return { role: 'renter', profile: sp }
   if (lp) return { role: 'landlord', profile: lp }
-  if (isRenterRole(meta)) return { role: 'student', profile: null }
+  if (isRenterRole(meta)) return { role: 'renter', profile: null }
   if (meta === 'landlord') return { role: 'landlord', profile: null }
   return { role: null, profile: null }
 }

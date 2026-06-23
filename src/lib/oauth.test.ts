@@ -44,7 +44,7 @@ describe('OAuth signup redirectTo', () => {
 
     const resolved = resolveOAuthSignupParams('')
     expect(resolved.signupRoute).toBe('non_student')
-    expect(resolved.signupRole).toBe('student')
+    expect(resolved.signupRole).toBe('renter')
   })
 
   it('landlord signup persists signup_role only', () => {
@@ -58,6 +58,7 @@ describe('OAuth signup redirectTo', () => {
     rememberOAuthSignupContext({ signupRoute: 'student', signupRole: 'student' })
     const resolved = resolveOAuthSignupParams('?signup_route=non_student&signup_role=student')
     expect(resolved.signupRoute).toBe('non_student')
+    expect(resolved.signupRole).toBe('student')
     expect(storage.get('quni_oauth_signup_context')).toBeUndefined()
   })
 

@@ -21,7 +21,7 @@ type Props = {
   children: React.ReactNode
   /** If set, user must have this resolved role or they are sent to `/`. */
   allowedRoles?: AllowedRole[]
-  /** When unauthenticated, send to `/signup?role=student&redirect=…` instead of login. */
+  /** When unauthenticated, send to `/signup?role=renter&redirect=…` instead of login. */
   redirectUnauthenticatedToStudentSignup?: boolean
   /** Student routes: require core profile (university, course, phone, budget) before access. */
   requireStudentListingActions?: boolean
@@ -56,7 +56,7 @@ export function ProtectedRoute({
   if (!user) {
     if (redirectUnauthenticatedToStudentSignup) {
       const next = encodeURIComponent(`${location.pathname}${location.search}`)
-      return <Navigate to={`/signup?role=student&redirect=${next}`} replace />
+      return <Navigate to={`/signup?role=renter&redirect=${next}`} replace />
     }
     return <Navigate to="/login" state={{ from: location }} replace />
   }

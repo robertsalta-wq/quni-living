@@ -2,7 +2,7 @@ const KEY = 'quni_selected_role'
 
 export type QuniSignupRole = 'student' | 'renter' | 'landlord'
 
-export function setQuniSelectedRole(role: 'student' | 'landlord'): void {
+export function setQuniSelectedRole(role: 'renter' | 'landlord'): void {
   try {
     localStorage.setItem(KEY, role)
   } catch {

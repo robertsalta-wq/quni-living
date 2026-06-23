@@ -212,14 +212,14 @@ async function resolveAccount(
   if (isStaff) {
     role = 'admin'
   } else if (student) {
-    role = 'student'
+    role = 'renter'
   } else if (landlord) {
     role = 'landlord'
   } else if (userId) {
     const { data: authData } = await admin.auth.admin.getUserById(userId)
     if (authData?.user?.user_metadata?.role === 'admin') role = 'admin'
     else if (authData?.user?.user_metadata?.role === 'landlord') role = 'landlord'
-    else if (isRenterRole(authData?.user?.user_metadata?.role)) role = 'student'
+    else if (isRenterRole(authData?.user?.user_metadata?.role)) role = 'renter'
   }
 
   if (student) {
@@ -227,7 +227,7 @@ async function resolveAccount(
       resolved: true,
       user_id: student.user_id,
       email: email ?? (student.email ? normalizeEmail(student.email) : null),
-      role: role ?? 'student',
+      role: role ?? 'renter',
       accommodation_verification_route: student.accommodation_verification_route,
       verification_type: student.verification_type,
       onboarding_complete: student.onboarding_complete,

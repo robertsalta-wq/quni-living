@@ -779,7 +779,7 @@ export default function StudentOnboarding() {
       )
       if (upErr) throw upErr
       const { error: metaErr } = await supabase.auth.updateUser({
-        data: { role: 'student', accommodation_verification_route: route },
+        data: { role: 'renter', accommodation_verification_route: route },
       })
       if (metaErr) throw metaErr
       clearQuniAccommodationVerificationRoute()

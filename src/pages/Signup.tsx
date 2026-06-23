@@ -202,12 +202,12 @@ export default function Signup() {
     const r = searchParams.get('role')
     if (r === 'student' || r === 'renter') {
       setAccountKind('student')
-      setQuniSelectedRole('student')
+      setQuniSelectedRole('renter')
       setQuniAccommodationVerificationRoute('student')
       setStep('details')
     } else if (r === 'non_student') {
       setAccountKind('non_student')
-      setQuniSelectedRole('student')
+      setQuniSelectedRole('renter')
       setQuniAccommodationVerificationRoute('non_student')
       setStep('details')
     } else if (r === 'landlord') {
@@ -244,11 +244,11 @@ export default function Signup() {
       setLandlordAgreement(false)
     } else if (k === 'student') {
       setQuniAccommodationVerificationRoute('student')
-      setQuniSelectedRole('student')
+      setQuniSelectedRole('renter')
       setLandlordAgreement(false)
     } else {
       setQuniAccommodationVerificationRoute('non_student')
-      setQuniSelectedRole('student')
+      setQuniSelectedRole('renter')
       setLandlordAgreement(false)
     }
   }
@@ -321,7 +321,7 @@ export default function Signup() {
       setError('Supabase is not configured.')
       return
     }
-    const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
+    const authRole = accountKind === 'landlord' ? 'landlord' : 'renter'
     setQuniSelectedRole(authRole)
     const userData: Record<string, string> = {
       role: authRole,
@@ -357,7 +357,7 @@ export default function Signup() {
         return
       }
       if (data.session) {
-        const signupRole = accountKind === 'landlord' ? 'landlord' : 'student'
+        const signupRole = accountKind === 'landlord' ? 'landlord' : 'renter'
         const onboardingPath =
           signupRole === 'landlord' ? '/onboarding/landlord' : '/onboarding/student'
         if (userNeedsEmailAddressVerification(created)) {
@@ -394,7 +394,7 @@ export default function Signup() {
       setError('Supabase is not configured.')
       return
     }
-    const authRole = accountKind === 'landlord' ? 'landlord' : 'student'
+    const authRole = accountKind === 'landlord' ? 'landlord' : 'renter'
     setQuniSelectedRole(authRole)
     // DEFERRED: duplicate-identity warning at signup (same name / near-time second Google email).
     // Fail-closed for now — do not block signup.
@@ -402,7 +402,7 @@ export default function Signup() {
       accountKind === 'landlord'
         ? { signupRole: 'landlord' as const }
         : {
-            signupRole: 'student' as const,
+            signupRole: 'renter' as const,
             signupRoute: accountKind === 'non_student' ? 'non_student' as const : 'student' as const,
           }
     const { error: oErr } = await supabase.auth.signInWithOAuth({
