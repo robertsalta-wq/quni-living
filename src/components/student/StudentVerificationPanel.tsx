@@ -21,7 +21,7 @@ import {
 } from '../../lib/verificationDocSlot'
 import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
 import { StudentVerificationDocPick } from './StudentVerificationDocPick'
-import type { useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
+import { VERIF_UPLOAD_FLASH_KEY, type useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -262,6 +262,22 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       prevPending.current[kind] = !!doc?.pending
     }
   }, [idDoc, enrolDoc, identitySupportDoc])
+
+  // After a post-upload reload (used on devices that don't repaint in place),
+  // show the success banner that was flagged just before the reload.
+  useEffect(() => {
+    let msg: string | null = null
+    try {
+      msg = sessionStorage.getItem(VERIF_UPLOAD_FLASH_KEY)
+      if (msg) sessionStorage.removeItem(VERIF_UPLOAD_FLASH_KEY)
+    } catch {
+      /* ignore */
+    }
+    if (!msg) return
+    setUploadedFlash(msg)
+    const t = window.setTimeout(() => setUploadedFlash(null), 4500)
+    return () => window.clearTimeout(t)
+  }, [])
 
   const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
     const el = ref.current

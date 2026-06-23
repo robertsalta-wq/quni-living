@@ -20,6 +20,15 @@ import {
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
+/** sessionStorage key for the post-reload "uploaded" confirmation banner. */
+export const VERIF_UPLOAD_FLASH_KEY = 'verifUploadFlash'
+
+const UPLOAD_LABELS: Record<VerificationDocKind, string> = {
+  id: 'Photo ID',
+  enrolment: 'Enrolment document',
+  identity_supporting: 'Supporting document',
+}
+
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
 }
@@ -156,20 +165,19 @@ export function useStudentVerificationDocUpload(
           throw new Error(result.message)
         }
 
-        // On success, clear the optimistic slot and patch/refetch the profile in a
-        // single synchronous flush. Clearing the slot makes resolveUploadedDoc fall
-        // back to the freshly-patched profile (real filename + the converted JPEG
-        // loaded via signed URL, not the un-renderable HEIC blob). flushSync forces
-        // the repaint so the card updates without a manual refresh.
-        flushSync(() => {
-          setUploadedByKind((prev) => {
-            const next = { ...prev }
-            delete next[kind]
-            return next
-          })
-          onVerificationDocUploaded(kind, result.filePath, result.submittedAt, file.name)
-        })
+        // The card does not reliably repaint after this native-upload flow on some
+        // Android browsers (MIUI/Xiaomi): React commits the state but the device
+        // defers painting until the next interaction, so the user can't see it
+        // worked. A full reload always shows the saved state (it's what a manual
+        // refresh does). Flag a success message to show after reload, then refresh.
         revokeBlobUrl(instantPreview)
+        try {
+          sessionStorage.setItem(VERIF_UPLOAD_FLASH_KEY, `${UPLOAD_LABELS[kind]} uploaded`)
+        } catch {
+          /* ignore storage errors */
+        }
+        window.location.reload()
+        return
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
         revertDocUpload(kind, instantPreview, rollback)
