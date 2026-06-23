@@ -193,7 +193,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, suburb, images, rent_per_week, bond, bond_weeks, bond_is_fixed, bond_fixed_amount, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+          '*, properties ( id, title, slug, suburb, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })

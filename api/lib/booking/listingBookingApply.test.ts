@@ -47,9 +47,7 @@ describe('listingBookingApply helpers', () => {
       property: {
         id: 'p1',
         landlord_id: 'l1',
-        bond_is_fixed: true,
-        bond_fixed_amount: 1600,
-        bond_weeks: null,
+        bond_weeks: 4,
       },
       student: { id: 's1' },
       moveInDate: '2026-07-01',

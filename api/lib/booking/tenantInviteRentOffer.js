@@ -11,7 +11,6 @@ import {
   assertBondWithinCap,
   bondAmountAtApplyFromProperty,
   parseBondWeeks,
-  parsePropertyBondAud,
 } from './bookingBondAmount.js'
 
 export const RENT_INVITE_OFFER_APPLIED_EVENT = 'rent_invite_offer_applied'
@@ -26,10 +25,6 @@ export function parseInviteOfferWeeklyRentAud(raw) {
 
 function inviteBondProvenanceFields(invite) {
   if (!invite) return {}
-  if (invite.offered_bond_fixed != null && invite.offered_bond_fixed !== '') {
-    const fixed = parsePropertyBondAud(invite.offered_bond_fixed)
-    if (fixed != null) return { invite_bond_fixed: fixed }
-  }
   if (invite.offered_bond_weeks != null && invite.offered_bond_weeks !== '') {
     const weeks = parseBondWeeks(invite.offered_bond_weeks)
     if (weeks != null) return { invite_bond_weeks: weeks }
@@ -40,7 +35,7 @@ function inviteBondProvenanceFields(invite) {
 /**
  * @param {object} listingResolved — output of resolveWeeklyRentForBooking.resolved
  * @param {object} property
- * @param {{ offered_weekly_rent?: unknown; offer_reason?: unknown; offered_bond_weeks?: unknown; offered_bond_fixed?: unknown } | null | undefined} invite
+ * @param {{ offered_weekly_rent?: unknown; offer_reason?: unknown; offered_bond_weeks?: unknown } | null | undefined} invite
  * @param {string | undefined} moveInDate
  */
 export function applyTenantInviteRentOffer(listingResolved, property, invite, moveInDate) {

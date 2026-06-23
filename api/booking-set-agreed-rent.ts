@@ -120,8 +120,6 @@ export default async function handler(req, res) {
           id,
           bond,
           bond_weeks,
-          bond_is_fixed,
-          bond_fixed_amount,
           state,
           property_type,
           is_registered_rooming_house

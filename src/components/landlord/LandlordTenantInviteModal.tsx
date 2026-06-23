@@ -18,8 +18,6 @@ type PropertyForInvite = {
   open_to_non_students: boolean
   rent_per_week: number | null
   bond_weeks?: number | null
-  bond_is_fixed?: boolean | null
-  bond_fixed_amount?: number | null
   max_occupants?: number | null
   couple_surcharge_per_week?: number | null
   parking_surcharge_per_week?: number | null
@@ -70,9 +68,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
   const [offerRent, setOfferRent] = useState('')
   const [offerReason, setOfferReason] = useState('')
   const [bondOfferEnabled, setBondOfferEnabled] = useState(false)
-  const [bondOfferIsFixed, setBondOfferIsFixed] = useState(false)
   const [bondOfferWeeks, setBondOfferWeeks] = useState(String(DEFAULT_BOND_WEEKS))
-  const [bondOfferFixed, setBondOfferFixed] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createdInvite, setCreatedInvite] = useState<CreatedInvite | null>(null)
@@ -114,30 +110,15 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     return null
   }
 
-  function parseBondOfferFields(): { weeks: number | null; fixed: number | null } | null {
+  function parseBondOfferWeeks(): number | null {
     if (!bondOfferEnabled) return null
-    if (bondOfferIsFixed) {
-      const n = Number(bondOfferFixed)
-      if (!Number.isFinite(n) || n <= 0) return null
-      return { weeks: null, fixed: Math.round(n * 100) / 100 }
-    }
-    const weeks = parseBondWeeks(bondOfferWeeks)
-    if (weeks == null) return null
-    return { weeks, fixed: null }
+    return parseBondWeeks(bondOfferWeeks)
   }
 
   function validateBondOfferFields(): string | null {
     if (!bondOfferEnabled) return null
-    const parsed = parseBondOfferFields()
-    if (parsed == null) {
-      return bondOfferIsFixed
-        ? 'Enter a positive fixed bond amount in AUD.'
-        : `Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`
-    }
-    const rent = offerEnabled ? parseOfferRentAud() : property?.rent_per_week
-    if (rent != null && rent > 0 && parsed.fixed != null && parsed.fixed > rent * MAX_BOND_WEEKS) {
-      return `Bond cannot exceed ${MAX_BOND_WEEKS} weeks of the applicable rent.`
-    }
+    const weeks = parseBondOfferWeeks()
+    if (weeks == null) return `Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`
     return null
   }
 
@@ -183,9 +164,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     setOfferRent('')
     setOfferReason('')
     setBondOfferEnabled(false)
-    setBondOfferIsFixed(false)
     setBondOfferWeeks(String(DEFAULT_BOND_WEEKS))
-    setBondOfferFixed('')
     setCreateError(null)
     setCreatedInvite(null)
     setEmailSentTo(null)
@@ -213,7 +192,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
     const bondErr = validateBondOfferFields()
     if (bondErr) throw new Error(bondErr)
     const offeredWeeklyRent = parseOfferRentAud()
-    const bondOffer = parseBondOfferFields()
+    const offeredBondWeeks = parseBondOfferWeeks()
     const trimmedOfferReason = offerReason.trim()
     const { raw, hash } = await generateTenantInviteTokenPair()
     const { data: inserted, error } = await supabase
@@ -226,8 +205,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
         landlord_note: note.trim() || null,
         ...(offeredWeeklyRent != null ? { offered_weekly_rent: offeredWeeklyRent } : {}),
         ...(trimmedOfferReason ? { offer_reason: trimmedOfferReason } : {}),
-        ...(bondOffer?.fixed != null ? { offered_bond_fixed: bondOffer.fixed } : {}),
-        ...(bondOffer?.weeks != null ? { offered_bond_weeks: bondOffer.weeks } : {}),
+        ...(offeredBondWeeks != null ? { offered_bond_weeks: offeredBondWeeks } : {}),
         token_hash: hash,
         status: 'pending',
       })
@@ -484,48 +462,21 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
               </span>
             </label>
             {bondOfferEnabled ? (
-              <div className="space-y-3 pl-7">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={bondOfferIsFixed}
-                    onChange={(e) => setBondOfferIsFixed(e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                  Fixed dollar amount
+              <div className="pl-7">
+                <label htmlFor="invite-bond-weeks" className="block text-xs font-medium text-gray-700 mb-1">
+                  Bond (weeks of rent)
                 </label>
-                {bondOfferIsFixed ? (
-                  <div>
-                    <label htmlFor="invite-bond-fixed" className="block text-xs font-medium text-gray-700 mb-1">
-                      Bond ($)
-                    </label>
-                    <input
-                      id="invite-bond-fixed"
-                      type="number"
-                      min={0.01}
-                      step={0.01}
-                      value={bondOfferFixed}
-                      onChange={(e) => setBondOfferFixed(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm tabular-nums"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label htmlFor="invite-bond-weeks" className="block text-xs font-medium text-gray-700 mb-1">
-                      Bond (weeks)
-                    </label>
-                    <input
-                      id="invite-bond-weeks"
-                      type="number"
-                      min={0}
-                      max={MAX_BOND_WEEKS}
-                      step={1}
-                      value={bondOfferWeeks}
-                      onChange={(e) => setBondOfferWeeks(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm tabular-nums"
-                    />
-                  </div>
-                )}
+                <input
+                  id="invite-bond-weeks"
+                  type="number"
+                  min={0}
+                  max={MAX_BOND_WEEKS}
+                  step={1}
+                  value={bondOfferWeeks}
+                  onChange={(e) => setBondOfferWeeks(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-base sm:text-sm tabular-nums"
+                />
+                <p className="mt-1 text-xs text-gray-500">Enter 0 for no bond.</p>
               </div>
             ) : null}
           </div>

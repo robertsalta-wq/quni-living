@@ -10,7 +10,6 @@ export type TenantInviteOfferDisplay = {
   listingWeeklyRentAud: number | null
   hasBondOffer: boolean
   offeredBondWeeks: number | null
-  offeredBondFixed: number | null
 }
 
 function parseAud(value: unknown): number | null {
@@ -30,14 +29,12 @@ export function tenantInviteOfferFromRpcRow(row: {
   offered_weekly_rent?: unknown
   offer_reason?: unknown
   offered_bond_weeks?: unknown
-  offered_bond_fixed?: unknown
 } | null | undefined): TenantInviteOfferDisplay {
   const offeredWeeklyRentAud = parseAud(row?.offered_weekly_rent)
   const offerReason =
     typeof row?.offer_reason === 'string' && row.offer_reason.trim() ? row.offer_reason.trim() : null
-  const offeredBondFixed = parseAud(row?.offered_bond_fixed)
   const offeredBondWeeks = parseBondWeeksField(row?.offered_bond_weeks)
-  const hasBondOffer = offeredBondFixed != null || offeredBondWeeks != null
+  const hasBondOffer = offeredBondWeeks != null
   return {
     hasOffer: offeredWeeklyRentAud != null,
     offeredWeeklyRentAud,
@@ -45,7 +42,6 @@ export function tenantInviteOfferFromRpcRow(row: {
     listingWeeklyRentAud: null,
     hasBondOffer,
     offeredBondWeeks,
-    offeredBondFixed,
   }
 }
 
@@ -66,7 +62,6 @@ export function previewInviteBondAud(
   inviteRow: {
     offered_weekly_rent?: unknown
     offered_bond_weeks?: unknown
-    offered_bond_fixed?: unknown
   } | null | undefined,
   listingWeeklyRentAud: number,
 ): number | null {

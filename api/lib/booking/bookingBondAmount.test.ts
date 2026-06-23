@@ -4,7 +4,6 @@ import {
   maxBondCapAud,
   parsePropertyBondAud,
   recomputeBondForAgreedRent,
-  recapFixedBondAud,
   resolveBookingBondAmountAud,
   resolveInviteBondAud,
   resolveListingBondAud,
@@ -12,14 +11,6 @@ import {
 
 const weeksProperty = {
   bond_weeks: 4,
-  bond_is_fixed: false,
-  bond_fixed_amount: null,
-}
-
-const fixedProperty = {
-  bond_weeks: null,
-  bond_is_fixed: true,
-  bond_fixed_amount: 1800,
 }
 
 describe('resolveListingBondAud', () => {
@@ -28,17 +19,13 @@ describe('resolveListingBondAud', () => {
   })
 
   it('returns null for zero weeks', () => {
-    expect(resolveListingBondAud({ ...weeksProperty, bond_weeks: 0 }, 450)).toBeNull()
-  })
-
-  it('caps fixed bond at four weeks rent', () => {
-    expect(resolveListingBondAud(fixedProperty, 400)).toBe(1600)
+    expect(resolveListingBondAud({ bond_weeks: 0 }, 450)).toBeNull()
   })
 })
 
 describe('resolveBookingBondAmountAud', () => {
   it('returns null when no snapshot and listing has no bond', () => {
-    expect(resolveBookingBondAmountAud(null, { bond_weeks: 0, bond_is_fixed: false }, 450)).toBeNull()
+    expect(resolveBookingBondAmountAud(null, { bond_weeks: 0 }, 450)).toBeNull()
   })
 
   it('prefers booking snapshot', () => {
@@ -64,6 +51,10 @@ describe('resolveInviteBondAud', () => {
       resolveInviteBondAud(weeksProperty, { offered_weekly_rent: 400, offered_bond_weeks: 4 }, 400),
     ).toBe(1600)
   })
+
+  it('returns null for zero weeks override', () => {
+    expect(resolveInviteBondAud(weeksProperty, { offered_bond_weeks: 0 }, 400)).toBeNull()
+  })
 })
 
 describe('recomputeBondForAgreedRent', () => {
@@ -71,16 +62,10 @@ describe('recomputeBondForAgreedRent', () => {
     expect(recomputeBondForAgreedRent(weeksProperty, 1800, 450, 400, {})).toBe(1600)
   })
 
-  it('re-caps fixed bond without proportional scaling', () => {
+  it('returns null when effective weeks is zero', () => {
     expect(
-      recomputeBondForAgreedRent(fixedProperty, 1800, 450, 400, {}),
-    ).toBe(1600)
-  })
-})
-
-describe('recapFixedBondAud', () => {
-  it('leaves fixed bond when under cap', () => {
-    expect(recapFixedBondAud(850, 450)).toBe(850)
+      recomputeBondForAgreedRent({ bond_weeks: 0 }, null, 450, 400, {}),
+    ).toBeNull()
   })
 })
 

@@ -1778,7 +1778,6 @@ export default function Booking() {
       inviteOfferDisplay?.hasBondOffer || inviteOfferDisplay?.hasOffer
         ? {
             offered_bond_weeks: inviteOfferDisplay.offeredBondWeeks,
-            offered_bond_fixed: inviteOfferDisplay.offeredBondFixed,
             offered_weekly_rent: inviteOfferDisplay.offeredWeeklyRentAud,
           }
         : null

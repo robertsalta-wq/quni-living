@@ -916,10 +916,6 @@ export default function LandlordBookingReviewPage() {
             bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
             rentBreakdown={booking.rent_breakdown}
             propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-            propertyBondIsFixed={Boolean(property?.bond_is_fixed)}
-            propertyBondFixedAmount={
-              property?.bond_fixed_amount != null ? Number(property.bond_fixed_amount) : null
-            }
             serviceTierAtRequest={booking.service_tier_at_request}
             onSaved={() => void reload()}
           />

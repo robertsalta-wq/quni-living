@@ -15,8 +15,6 @@ export const PROPERTY_CARD_LIST_SELECT = `
   parking_available,
   bond,
   bond_weeks,
-  bond_is_fixed,
-  bond_fixed_amount,
   lease_length,
   listing_type,
   featured,

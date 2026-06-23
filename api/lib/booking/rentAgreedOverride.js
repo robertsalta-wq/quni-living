@@ -73,21 +73,16 @@ export function rentBreakdownWithOverride(baseBreakdown, applyWeeklyRentAud, agr
 
 /**
  * @param {unknown} raw
- * @returns {{ enabled: boolean; weeks: number | null; fixed: number | null } | null}
+ * @returns {{ enabled: boolean; weeks: number | null } | null}
  */
 export function parseBondOverrideFromRequest(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
   const o = raw
   if (!o.enabled) return null
-  if (o.fixed != null && o.fixed !== '') {
-    const fixed = parsePropertyBondAud(o.fixed)
-    if (fixed == null) return { enabled: true, weeks: null, fixed: null }
-    return { enabled: true, weeks: null, fixed }
-  }
   if (o.weeks != null && o.weeks !== '') {
     const weeks = parseBondWeeks(o.weeks)
     if (weeks == null) return null
-    return { enabled: true, weeks, fixed: null }
+    return { enabled: true, weeks }
   }
   return null
 }
@@ -98,7 +93,7 @@ export function parseBondOverrideFromRequest(raw) {
  * @param {number} agreedWeeklyRentAud
  * @param {string} reason
  * @param {string} landlordProfileId
- * @param {{ enabled: boolean; weeks: number | null; fixed: number | null } | null} [bondOverride]
+ * @param {{ enabled: boolean; weeks: number | null } | null} [bondOverride]
  * @returns {Promise<{ ok: true, patch: object; eventMetadata: object } | { ok: false; status: number; error: string; message?: string }>}
  */
 export async function buildRentAgreedOverridePatch(
@@ -164,20 +159,9 @@ export async function buildRentAgreedOverridePatch(
   const bondBreakdownFields = {}
 
   if (bondOverride?.enabled) {
-    try {
-      newBondAmount = resolveAcceptanceBondOverrideAud(
-        { weeks: bondOverride.weeks, fixed: bondOverride.fixed },
-        agreedWeeklyRentAud,
-      )
-    } catch {
-      return { ok: false, status: 400, error: 'bond_override_invalid', message: 'Could not resolve bond override.' }
-    }
-    if (bondOverride.fixed != null) {
-      bondBreakdownFields.acceptance_bond_fixed = bondOverride.fixed
-      bondBreakdownFields.acceptance_bond_weeks = null
-    } else if (bondOverride.weeks != null) {
+    newBondAmount = resolveAcceptanceBondOverrideAud({ weeks: bondOverride.weeks }, agreedWeeklyRentAud)
+    if (bondOverride.weeks != null) {
       bondBreakdownFields.acceptance_bond_weeks = bondOverride.weeks
-      bondBreakdownFields.acceptance_bond_fixed = null
     }
   } else {
     try {
@@ -229,7 +213,6 @@ export async function buildRentAgreedOverridePatch(
       ...(bondOverride?.enabled
         ? {
             bond_override_weeks: bondOverride.weeks,
-            bond_override_fixed_aud: bondOverride.fixed,
           }
         : {}),
     },

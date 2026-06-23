@@ -23,7 +23,6 @@ type ResolvedInvite = {
   offered_weekly_rent: number | null
   offer_reason: string | null
   offered_bond_weeks: number | null
-  offered_bond_fixed: number | null
 }
 
 function inviteErrorMessage(status: string): string {

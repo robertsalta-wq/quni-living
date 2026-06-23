@@ -23,8 +23,6 @@ const baseBooking = {
 const property = {
   id: 'p1',
   bond_weeks: 4,
-  bond_is_fixed: false,
-  bond_fixed_amount: null,
   state: 'QLD',
   property_type: 'private_room_landlord_on_site',
   is_registered_rooming_house: false,
@@ -55,7 +53,6 @@ describe('buildRentAgreedOverridePatch', () => {
     const result = await buildRentAgreedOverridePatch(baseBooking, property, 450, 'Bond tweak', 'll1', {
       enabled: true,
       weeks: 2,
-      fixed: null,
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return

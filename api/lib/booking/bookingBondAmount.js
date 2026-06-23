@@ -1,5 +1,5 @@
 /**
- * Bond resolution: listing weeks/fixed config, invite/acceptance overrides, booking snapshot.
+ * Bond resolution: listing weeks config, invite/acceptance overrides, booking snapshot.
  */
 
 /** Statutory cap in weeks for live states (NSW, QLD). VIC multipliers parked. */
@@ -66,15 +66,7 @@ export function assertBondWithinCap(bondAmountAud, weeklyRentAud) {
 }
 
 /**
- * @param {object | null | undefined} property
- * @returns {boolean}
- */
-export function isPropertyBondFixed(property) {
-  return Boolean(property?.bond_is_fixed) && property?.bond_fixed_amount != null
-}
-
-/**
- * Listing bond in AUD from weeks or fixed config (pre-booking / fallback).
+ * Listing bond in AUD from weeks config (pre-booking / fallback).
  * @param {object | null | undefined} property
  * @param {unknown} applicableWeeklyRent
  * @returns {number | null}
@@ -83,38 +75,21 @@ export function resolveListingBondAud(property, applicableWeeklyRent) {
   const rent = Number(applicableWeeklyRent)
   if (!property || !Number.isFinite(rent) || rent <= 0) return null
 
-  if (isPropertyBondFixed(property)) {
-    const fixed = parsePropertyBondAud(property.bond_fixed_amount)
-    if (fixed == null) return null
-    const cap = maxBondCapAud(rent)
-    return cap != null ? roundBondAud(Math.min(fixed, cap)) : fixed
-  }
-
-  const weeks = property.bond_weeks
-  if (weeks === null || weeks === undefined) return null
-  const w = Number(weeks)
-  if (!Number.isFinite(w) || w <= 0) return null
-  if (w > MAX_BOND_WEEKS) return null
-  return roundBondAud(w * rent)
+  const weeks = parseBondWeeks(property.bond_weeks)
+  if (weeks == null || weeks === 0) return null
+  return roundBondAud(weeks * rent)
 }
 
 /**
- * Invite bond: invite override when set, else listing default.
+ * Invite bond: invite weeks override when set, else listing default.
  * @param {object | null | undefined} property
- * @param {{ offered_bond_weeks?: unknown; offered_bond_fixed?: unknown } | null | undefined} invite
+ * @param {{ offered_bond_weeks?: unknown } | null | undefined} invite
  * @param {unknown} applicableWeeklyRent
  * @returns {number | null}
  */
 export function resolveInviteBondAud(property, invite, applicableWeeklyRent) {
   const rent = Number(applicableWeeklyRent)
   if (!Number.isFinite(rent) || rent <= 0) return null
-
-  if (invite?.offered_bond_fixed != null && invite.offered_bond_fixed !== '') {
-    const fixed = parsePropertyBondAud(invite.offered_bond_fixed)
-    if (fixed == null) return resolveListingBondAud(property, rent)
-    const cap = maxBondCapAud(rent)
-    return cap != null ? roundBondAud(Math.min(fixed, cap)) : fixed
-  }
 
   if (invite?.offered_bond_weeks != null && invite.offered_bond_weeks !== '') {
     const w = parseBondWeeks(invite.offered_bond_weeks)
@@ -130,15 +105,13 @@ export function resolveInviteBondAud(property, invite, applicableWeeklyRent) {
  * Bond at apply from listing + optional invite override.
  * @param {object} property
  * @param {unknown} applicableWeeklyRent
- * @param {{ offered_bond_weeks?: unknown; offered_bond_fixed?: unknown } | null | undefined} [invite]
+ * @param {{ offered_bond_weeks?: unknown } | null | undefined} [invite]
  * @returns {number | null}
  */
 export function bondAmountAtApplyFromProperty(property, applicableWeeklyRent, invite = null) {
   const hasInviteBond =
     invite != null &&
-    (invite.offered_bond_weeks != null ||
-      invite.offered_bond_fixed != null ||
-      invite.offered_bond_weeks === 0)
+    (invite.offered_bond_weeks != null || invite.offered_bond_weeks === 0)
   if (hasInviteBond) {
     return resolveInviteBondAud(property, invite, applicableWeeklyRent)
   }
@@ -146,7 +119,7 @@ export function bondAmountAtApplyFromProperty(property, applicableWeeklyRent, in
 }
 
 /**
- * Booking snapshot wins; else derive from listing config at applicable rent.
+ * Booking snapshot wins; else derive from listing weeks at applicable rent.
  * @param {unknown} bookingBond
  * @param {object | null | undefined} property
  * @param {unknown} applicableWeeklyRent
@@ -159,62 +132,32 @@ export function resolveBookingBondAmountAud(bookingBond, property, applicableWee
 }
 
 /**
- * @param {unknown} fixedAud
- * @param {unknown} applicableWeeklyRentAud
- * @returns {number}
- */
-export function recapFixedBondAud(fixedAud, applicableWeeklyRentAud) {
-  const fixed = parsePropertyBondAud(fixedAud)
-  const rent = Number(applicableWeeklyRentAud)
-  if (fixed == null || !Number.isFinite(rent) || rent <= 0) {
-    throw new Error('Invalid fixed bond recap inputs')
-  }
-  const cap = maxBondCapAud(rent)
-  return cap != null ? roundBondAud(Math.min(fixed, cap)) : fixed
-}
-
-/**
+ * Effective bond weeks: acceptance override → invite override → listing default.
  * @param {object} property
  * @param {unknown} rentBreakdown
- * @returns {{ mode: 'weeks' | 'fixed' | 'none'; weeks?: number; fixedAmount?: number }}
+ * @returns {number | null}
  */
-export function effectiveBondConfigFromBreakdown(property, rentBreakdown) {
+export function effectiveBondWeeksFromBreakdown(property, rentBreakdown) {
   const rb =
     rentBreakdown && typeof rentBreakdown === 'object' && !Array.isArray(rentBreakdown)
       ? rentBreakdown
       : {}
 
-  if (rb.acceptance_bond_fixed != null && rb.acceptance_bond_fixed !== '') {
-    const fixed = parsePropertyBondAud(rb.acceptance_bond_fixed)
-    if (fixed != null) return { mode: 'fixed', fixedAmount: fixed }
-  }
   if (rb.acceptance_bond_weeks != null && rb.acceptance_bond_weeks !== '') {
     const w = parseBondWeeks(rb.acceptance_bond_weeks)
-    if (w != null) return w === 0 ? { mode: 'none' } : { mode: 'weeks', weeks: w }
-  }
-  if (rb.invite_bond_fixed != null && rb.invite_bond_fixed !== '') {
-    const fixed = parsePropertyBondAud(rb.invite_bond_fixed)
-    if (fixed != null) return { mode: 'fixed', fixedAmount: fixed }
+    if (w != null) return w
   }
   if (rb.invite_bond_weeks != null && rb.invite_bond_weeks !== '') {
     const w = parseBondWeeks(rb.invite_bond_weeks)
-    if (w != null) return w === 0 ? { mode: 'none' } : { mode: 'weeks', weeks: w }
+    if (w != null) return w
   }
-
-  if (isPropertyBondFixed(property)) {
-    const fixed = parsePropertyBondAud(property.bond_fixed_amount)
-    if (fixed != null) return { mode: 'fixed', fixedAmount: fixed }
-  }
-
-  const w = parseBondWeeks(property?.bond_weeks)
-  if (w == null || w === 0) return { mode: 'none' }
-  return { mode: 'weeks', weeks: w }
+  return parseBondWeeks(property?.bond_weeks)
 }
 
 /**
- * Re-resolve bond when agreed rent changes (weeks self-scale; fixed re-caps only).
+ * Re-resolve bond when agreed rent changes (weeks × rent self-scales).
  * @param {object} property
- * @param {unknown} bookingBondAmount
+ * @param {unknown} _bookingBondAmount
  * @param {unknown} _applyWeeklyRentAud
  * @param {unknown} agreedWeeklyRentAud
  * @param {unknown} rentBreakdown
@@ -222,7 +165,7 @@ export function effectiveBondConfigFromBreakdown(property, rentBreakdown) {
  */
 export function recomputeBondForAgreedRent(
   property,
-  bookingBondAmount,
+  _bookingBondAmount,
   _applyWeeklyRentAud,
   agreedWeeklyRentAud,
   rentBreakdown,
@@ -232,27 +175,14 @@ export function recomputeBondForAgreedRent(
     throw new Error('Invalid bond recompute inputs')
   }
 
-  const config = effectiveBondConfigFromBreakdown(property, rentBreakdown)
-
-  if (config.mode === 'fixed') {
-    const base = config.fixedAmount ?? parsePropertyBondAud(bookingBondAmount)
-    if (base == null) return null
-    return recapFixedBondAud(base, rent)
-  }
-
-  if (config.mode === 'weeks' && config.weeks != null && config.weeks > 0) {
-    return resolveListingBondAud(
-      { ...property, bond_is_fixed: false, bond_weeks: config.weeks, bond_fixed_amount: null },
-      rent,
-    )
-  }
-
-  return null
+  const weeks = effectiveBondWeeksFromBreakdown(property, rentBreakdown)
+  if (weeks == null || weeks === 0) return null
+  return roundBondAud(weeks * rent)
 }
 
 /**
- * Resolve explicit acceptance bond override to dollars.
- * @param {{ weeks?: number | null; fixed?: number | null }} override
+ * Resolve explicit acceptance bond override (weeks) to dollars.
+ * @param {{ weeks?: number | null }} override
  * @param {unknown} applicableWeeklyRentAud
  * @returns {number | null}
  */
@@ -260,9 +190,6 @@ export function resolveAcceptanceBondOverrideAud(override, applicableWeeklyRentA
   const rent = Number(applicableWeeklyRentAud)
   if (!Number.isFinite(rent) || rent <= 0) return null
 
-  if (override.fixed != null) {
-    return recapFixedBondAud(override.fixed, rent)
-  }
   if (override.weeks != null) {
     if (override.weeks === 0) return null
     const w = parseBondWeeks(override.weeks)

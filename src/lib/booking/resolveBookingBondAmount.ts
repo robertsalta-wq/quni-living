@@ -4,7 +4,6 @@ export {
   MAX_BOND_WEEKS,
   assertBondWithinCap,
   bondAmountAtApplyFromProperty,
-  isPropertyBondFixed,
   maxBondCapAud,
   parseBondWeeks,
   parsePropertyBondAud,

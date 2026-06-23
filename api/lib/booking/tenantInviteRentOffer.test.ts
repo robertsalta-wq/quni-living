@@ -3,8 +3,6 @@ import { applyTenantInviteRentOffer } from './tenantInviteRentOffer.js'
 
 const property = {
   bond_weeks: 4,
-  bond_is_fixed: false,
-  bond_fixed_amount: null,
   state: 'QLD',
   property_type: 'private_room_landlord_on_site',
   is_registered_rooming_house: false,
@@ -25,7 +23,7 @@ describe('applyTenantInviteRentOffer', () => {
   })
 
   it('allows no-bond listing at apply', () => {
-    const noBond = { ...property, bond_weeks: 0, bond_is_fixed: false, bond_fixed_amount: null }
+    const noBond = { ...property, bond_weeks: 0 }
     const result = applyTenantInviteRentOffer(
       { weeklyRent: 450, breakdownAud: { base: 450 } },
       noBond,

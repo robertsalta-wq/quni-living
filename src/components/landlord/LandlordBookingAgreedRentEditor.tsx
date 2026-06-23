@@ -16,8 +16,6 @@ type Props = {
   bondAmount: number | null | undefined
   rentBreakdown: unknown
   propertyBondWeeks?: number | null
-  propertyBondIsFixed?: boolean | null
-  propertyBondFixedAmount?: number | null
   serviceTierAtRequest: string | null | undefined
   onSaved: () => void
 }
@@ -39,8 +37,6 @@ export default function LandlordBookingAgreedRentEditor({
   bondAmount,
   rentBreakdown,
   propertyBondWeeks,
-  propertyBondIsFixed,
-  propertyBondFixedAmount,
   serviceTierAtRequest,
   onSaved,
 }: Props) {
@@ -59,9 +55,7 @@ export default function LandlordBookingAgreedRentEditor({
   )
   const [reason, setReason] = useState('')
   const [bondOverrideEnabled, setBondOverrideEnabled] = useState(false)
-  const [bondOverrideIsFixed, setBondOverrideIsFixed] = useState(false)
   const [bondOverrideWeeks, setBondOverrideWeeks] = useState(String(DEFAULT_BOND_WEEKS))
-  const [bondOverrideFixed, setBondOverrideFixed] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedToast, setSavedToast] = useState<string | null>(null)
@@ -72,41 +66,13 @@ export default function LandlordBookingAgreedRentEditor({
       return bondAmount != null ? Number(bondAmount) : null
     }
     if (bondOverrideEnabled) {
-      if (bondOverrideIsFixed) {
-        const fixed = Number(bondOverrideFixed)
-        if (!Number.isFinite(fixed) || fixed <= 0) return null
-        return resolveListingBondAud(
-          { bond_is_fixed: true, bond_fixed_amount: fixed, bond_weeks: null },
-          rent,
-        )
-      }
       const weeks = parseBondWeeks(bondOverrideWeeks)
       if (weeks == null) return null
-      return resolveListingBondAud(
-        { bond_is_fixed: false, bond_fixed_amount: null, bond_weeks: weeks },
-        rent,
-      )
+      return resolveListingBondAud({ bond_weeks: weeks }, rent)
     }
     if (bondAmount != null) return Number(bondAmount)
-    return resolveListingBondAud(
-      {
-        bond_weeks: propertyBondWeeks,
-        bond_is_fixed: propertyBondIsFixed,
-        bond_fixed_amount: propertyBondFixedAmount,
-      },
-      rent,
-    )
-  }, [
-    agreedRent,
-    bondAmount,
-    bondOverrideEnabled,
-    bondOverrideFixed,
-    bondOverrideIsFixed,
-    bondOverrideWeeks,
-    propertyBondFixedAmount,
-    propertyBondIsFixed,
-    propertyBondWeeks,
-  ])
+    return resolveListingBondAud({ bond_weeks: propertyBondWeeks }, rent)
+  }, [agreedRent, bondAmount, bondOverrideEnabled, bondOverrideWeeks, propertyBondWeeks])
 
   const onSubmit = useCallback(async () => {
     setError(null)
@@ -126,23 +92,14 @@ export default function LandlordBookingAgreedRentEditor({
       return
     }
 
-    let bondOverride: { enabled: boolean; weeks: number | null; fixed: number | null } | undefined
+    let bondOverride: { enabled: boolean; weeks: number | null } | undefined
     if (bondOverrideEnabled) {
-      if (bondOverrideIsFixed) {
-        const fixed = Number(bondOverrideFixed)
-        if (!Number.isFinite(fixed) || fixed <= 0) {
-          setError('Enter a positive fixed bond amount.')
-          return
-        }
-        bondOverride = { enabled: true, weeks: null, fixed }
-      } else {
-        const weeks = parseBondWeeks(bondOverrideWeeks)
-        if (weeks == null) {
-          setError(`Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`)
-          return
-        }
-        bondOverride = { enabled: true, weeks, fixed: null }
+      const weeks = parseBondWeeks(bondOverrideWeeks)
+      if (weeks == null) {
+        setError(`Enter bond weeks from 0 to ${MAX_BOND_WEEKS}.`)
+        return
       }
+      bondOverride = { enabled: true, weeks }
     }
 
     setBusy(true)
@@ -182,7 +139,7 @@ export default function LandlordBookingAgreedRentEditor({
     } finally {
       setBusy(false)
     }
-  }, [agreedRent, applyCap, bondOverrideEnabled, bondOverrideFixed, bondOverrideIsFixed, bondOverrideWeeks, bookingId, onSaved, reason])
+  }, [agreedRent, applyCap, bondOverrideEnabled, bondOverrideWeeks, bookingId, onSaved, reason])
 
   if (!editable && !prov.overrideApplied) return null
 
@@ -253,44 +210,27 @@ export default function LandlordBookingAgreedRentEditor({
               <span>
                 <span className="block text-sm font-semibold text-gray-900">Override bond for this booking</span>
                 <span className="block text-xs text-gray-600 mt-0.5 leading-relaxed">
-                  Optional. Otherwise bond follows the listing default (or invite offer) and scales with agreed rent when
-                  set in weeks.
+                  Optional. Otherwise bond follows the listing default (or invite offer) and scales with agreed rent.
                 </span>
               </span>
             </label>
             {bondOverrideEnabled ? (
-              <div className="space-y-3 pl-7">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={bondOverrideIsFixed}
-                    onChange={(e) => setBondOverrideIsFixed(e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                  Fixed dollar amount
+              <div className="pl-7">
+                <label htmlFor="agreed-rent-bond-weeks" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Bond (weeks of rent)
                 </label>
-                {bondOverrideIsFixed ? (
-                  <input
-                    type="number"
-                    min={0.01}
-                    step={0.01}
-                    value={bondOverrideFixed}
-                    onChange={(e) => setBondOverrideFixed(e.target.value)}
-                    placeholder="Bond ($)"
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
-                  />
-                ) : (
-                  <input
-                    type="number"
-                    min={0}
-                    max={MAX_BOND_WEEKS}
-                    step={1}
-                    value={bondOverrideWeeks}
-                    onChange={(e) => setBondOverrideWeeks(e.target.value)}
-                    placeholder="Weeks of rent"
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
-                  />
-                )}
+                <input
+                  id="agreed-rent-bond-weeks"
+                  type="number"
+                  min={0}
+                  max={MAX_BOND_WEEKS}
+                  step={1}
+                  value={bondOverrideWeeks}
+                  onChange={(e) => setBondOverrideWeeks(e.target.value)}
+                  placeholder="Weeks of rent"
+                  className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                />
+                <p className="mt-1 text-xs text-gray-500">Enter 0 for no bond.</p>
               </div>
             ) : null}
           </div>
