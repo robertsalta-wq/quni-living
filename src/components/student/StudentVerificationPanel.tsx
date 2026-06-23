@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -186,23 +186,44 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   // see whether the picker opens and whether `change` fires for each slot.
   const [pickDiag, setPickDiag] = useState<string | null>(null)
 
-  const handleVerificationFileChange = (kind: VerificationDocKind) => (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    const file = files?.[0]
-    const msg =
-      `change fired [${kind}]: ${files?.length ?? 0} file(s)` +
-      (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · NO FILE')
-    setPickDiag(msg)
-    // TEMP DIAGNOSTIC (preview only): a popup is impossible to miss regardless of
-    // scroll position, unlike an inline banner. Tells us definitively whether the
-    // change event fires and what the picker returned.
-    window.alert(msg)
-    e.target.value = ''
-    if (!file) return
-    if (kind === 'id') pickIdFile(file)
-    else if (kind === 'enrolment') pickEnrolFile(file)
-    else pickIdentitySupportFile(file)
-  }
+  const processPickedFile = useCallback(
+    (kind: VerificationDocKind, input: HTMLInputElement) => {
+      const files = input.files
+      const file = files?.[0]
+      const msg =
+        `change fired [${kind}]: ${files?.length ?? 0} file(s)` +
+        (file ? ` · ${file.name || '(no name)'} · ${file.type || '(no type)'} · ${file.size}b` : ' · NO FILE')
+      setPickDiag(msg)
+      // TEMP DIAGNOSTIC (preview only): popup is impossible to miss regardless of scroll.
+      window.alert(msg)
+      input.value = ''
+      if (!file) return
+      if (kind === 'id') pickIdFile(file)
+      else if (kind === 'enrolment') pickEnrolFile(file)
+      else pickIdentitySupportFile(file)
+    },
+    [pickIdFile, pickEnrolFile, pickIdentitySupportFile],
+  )
+
+  // Attach the change listener NATIVELY (not via React's onChange). On Android the
+  // heavier "Files" document picker can return after React's synthetic-event system
+  // has missed the change event; a listener bound directly to the DOM node catches
+  // it reliably. Covers Camera/Gallery too, so it's a superset of the React handler.
+  useEffect(() => {
+    const entries: Array<[RefObject<HTMLInputElement | null>, VerificationDocKind]> = [
+      [idInputRef, 'id'],
+      [enrolInputRef, 'enrolment'],
+      [identitySupportInputRef, 'identity_supporting'],
+    ]
+    const cleanups = entries.map(([ref, kind]) => {
+      const el = ref.current
+      if (!el) return null
+      const handler = () => processPickedFile(kind, el)
+      el.addEventListener('change', handler)
+      return () => el.removeEventListener('change', handler)
+    })
+    return () => cleanups.forEach((fn) => fn?.())
+  }, [processPickedFile])
 
   const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
     setPickDiag(`button tapped [${kind}] → opening picker`)
@@ -217,7 +238,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         type="file"
         accept={VERIFICATION_ID_FILE_ACCEPT}
         className="sr-only"
-        onChange={handleVerificationFileChange('id')}
       />
       <input
         key="verif-input-enrolment"
@@ -225,7 +245,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         type="file"
         accept="image/*,application/pdf"
         className="sr-only"
-        onChange={handleVerificationFileChange('enrolment')}
       />
       <input
         key="verif-input-identity-supporting"
@@ -233,7 +252,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         type="file"
         accept="image/*,application/pdf"
         className="sr-only"
-        onChange={handleVerificationFileChange('identity_supporting')}
       />
     </>
   )
