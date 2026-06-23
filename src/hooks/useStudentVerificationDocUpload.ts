@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 import { messageFromSupabaseError } from '../lib/supabaseErrorMessage'
@@ -105,27 +106,33 @@ export function useStudentVerificationDocUpload(
 
       const instantPreview = isVerificationPdf(file) ? null : URL.createObjectURL(file)
 
-      setBusy(true)
-      setUploadedByKind((prev) => {
-        const existing = resolveUploadedDoc(prev[kind], profileDoc)
-        if (existing && !existing.pending) {
-          rollback = {
-            filePath: existing.filePath,
-            submittedAt: existing.submittedAt,
-            displayFileName: existing.displayFileName,
+      // flushSync: this runs from a native addEventListener-triggered flow; on
+      // Android Chrome after the file picker returns, React schedules the update
+      // but the browser doesn't repaint until the next interaction. flushSync
+      // forces a synchronous commit + layout/paint so the UI updates immediately.
+      flushSync(() => {
+        setBusy(true)
+        setUploadedByKind((prev) => {
+          const existing = resolveUploadedDoc(prev[kind], profileDoc)
+          if (existing && !existing.pending) {
+            rollback = {
+              filePath: existing.filePath,
+              submittedAt: existing.submittedAt,
+              displayFileName: existing.displayFileName,
+            }
           }
-        }
-        revokeBlobUrl(prev[kind]?.previewUrl)
-        return {
-          ...prev,
-          [kind]: {
-            filePath: existing?.filePath ?? '',
-            submittedAt: new Date().toISOString(),
-            displayFileName: file.name,
-            previewUrl: instantPreview,
-            pending: true,
-          },
-        }
+          revokeBlobUrl(prev[kind]?.previewUrl)
+          return {
+            ...prev,
+            [kind]: {
+              filePath: existing?.filePath ?? '',
+              submittedAt: new Date().toISOString(),
+              displayFileName: file.name,
+              previewUrl: instantPreview,
+              pending: true,
+            },
+          }
+        })
       })
 
       const sizeError = validateVerificationFileSize(file, MAX_VERIFICATION_DOC_BYTES)
@@ -149,17 +156,20 @@ export function useStudentVerificationDocUpload(
           throw new Error(result.message)
         }
 
-        setUploadedByKind((prev) => ({
-          ...prev,
-          [kind]: {
-            filePath: result.filePath,
-            submittedAt: result.submittedAt,
-            displayFileName: file.name,
-            previewUrl: prev[kind]?.previewUrl ?? instantPreview,
-            pending: false,
-          },
-        }))
-        onVerificationDocUploaded(kind, result.filePath, result.submittedAt, file.name)
+        // On success, clear the optimistic slot and patch/refetch the profile in a
+        // single synchronous flush. Clearing the slot makes resolveUploadedDoc fall
+        // back to the freshly-patched profile (real filename + the converted JPEG
+        // loaded via signed URL, not the un-renderable HEIC blob). flushSync forces
+        // the repaint so the card updates without a manual refresh.
+        flushSync(() => {
+          setUploadedByKind((prev) => {
+            const next = { ...prev }
+            delete next[kind]
+            return next
+          })
+          onVerificationDocUploaded(kind, result.filePath, result.submittedAt, file.name)
+        })
+        revokeBlobUrl(instantPreview)
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
         revertDocUpload(kind, instantPreview, rollback)
