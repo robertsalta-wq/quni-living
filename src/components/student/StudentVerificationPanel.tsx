@@ -182,9 +182,13 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const idInputRef = useRef<HTMLInputElement>(null)
   const enrolInputRef = useRef<HTMLInputElement>(null)
   const identitySupportInputRef = useRef<HTMLInputElement>(null)
+  // Tracks a deliberate upload tap so the one-shot recovery below can rescue a pick
+  // the change event missed — scoped to just after a tap, never on unrelated focus.
+  const pendingPick = useRef<{ kind: VerificationDocKind; el: HTMLInputElement } | null>(null)
 
   const processPickedFile = useCallback(
     (kind: VerificationDocKind, input: HTMLInputElement) => {
+      pendingPick.current = null // handled; cancel any pending recovery sweep
       const file = input.files?.[0]
       input.value = '' // clear first so a duplicate change/focus event is a no-op (no double upload)
       if (!file) return
@@ -212,11 +216,32 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       el.addEventListener('change', handler)
       return () => el.removeEventListener('change', handler)
     })
-    return () => cleanups.forEach((fn) => fn?.())
+    // One-shot recovery: Android's Files picker occasionally returns without firing
+    // change at all. When the window regains focus AND a pick is pending (i.e. the
+    // user just tapped an upload button), check that one input shortly after for a
+    // file the change event missed. Scoped to pendingPick so it never fires on
+    // unrelated tab switches; processPickedFile clears pendingPick + value to dedupe.
+    const recoverPendingPick = () => {
+      if (!pendingPick.current) return
+      window.setTimeout(() => {
+        const p = pendingPick.current
+        if (p && p.el.files && p.el.files.length > 0) processPickedFile(p.kind, p.el)
+      }, 500)
+    }
+    window.addEventListener('focus', recoverPendingPick)
+    document.addEventListener('visibilitychange', recoverPendingPick)
+    return () => {
+      cleanups.forEach((fn) => fn?.())
+      window.removeEventListener('focus', recoverPendingPick)
+      document.removeEventListener('visibilitychange', recoverPendingPick)
+    }
   }, [processPickedFile])
 
-  const openPicker = (ref: RefObject<HTMLInputElement | null>) => () => {
-    ref.current?.click()
+  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
+    const el = ref.current
+    if (!el) return
+    pendingPick.current = { kind, el } // arm the one-shot recovery for this pick
+    el.click()
   }
 
   const hoistedFileInputs = (
@@ -647,7 +672,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              onPickClick={openPicker(idInputRef)}
+              onPickClick={openPicker('id', idInputRef)}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -665,7 +690,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              onPickClick={openPicker(identitySupportInputRef)}
+              onPickClick={openPicker('identity_supporting', identitySupportInputRef)}
             />
           </div>
         </section>
@@ -756,7 +781,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            onPickClick={openPicker(idInputRef)}
+            onPickClick={openPicker('id', idInputRef)}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -775,7 +800,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            onPickClick={openPicker(enrolInputRef)}
+            onPickClick={openPicker('enrolment', enrolInputRef)}
           />
         </div>
       </section>
