@@ -28,6 +28,23 @@ function landlordHostIdentityReadyForConfirm(args: {
   return args.stripeChargesEnabled
 }
 
+/** Profile UI display — same predicate as confirm-time host identity (not a separate gate). */
+export function landlordProfileHostIdentityVerified(
+  profile: Pick<
+    Database['public']['Tables']['landlord_profiles']['Row'],
+    'stripe_charges_enabled' | 'admin_override_verified'
+  > | null
+  | undefined,
+  selectedConfirmTier: 'listing' | 'managed' = 'listing',
+): boolean {
+  if (!profile) return false
+  return landlordHostIdentityReadyForConfirm({
+    selectedConfirmTier,
+    stripeChargesEnabled: profile.stripe_charges_enabled === true,
+    adminOverrideVerified: profile.admin_override_verified === true,
+  })
+}
+
 export function landlordBookingConfirmAllowed(args: {
   bookingStatus: string
   /** Tier the landlord will confirm (three-button flow); drives Listing vs Managed gates. */

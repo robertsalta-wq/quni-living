@@ -17,11 +17,12 @@ import LandlordStudentProfileModal, {
 } from '../components/landlord/LandlordStudentProfileModal'
 import AiSparkleIcon from '../components/AiSparkleIcon'
 import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
+import { canLandlordCreateListing } from '../lib/onboardingChecklist'
 import {
-  canLandlordCreateListing,
-  landlordDisplayNameComplete,
-} from '../lib/onboardingChecklist'
-import { landlordNonDiscriminationAccepted } from '../lib/nonDiscriminationPolicy'
+  computeLandlordReadiness,
+  landlordProfileStatCardCopy,
+  landlordPublishFirstIncompleteAction,
+} from '../lib/landlordProfileReadiness'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
 import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
@@ -911,30 +912,15 @@ export default function LandlordDashboard() {
     return '/landlord/dashboard?tab=bookings'
   }, [pendingConfirmation])
 
-  const checklistTotal = 7
-  const nameOk = landlordDisplayNameComplete(profile)
-  const phoneOk = Boolean(profile?.phone?.trim())
-  const bioOk = Boolean(profile?.bio?.trim() && profile.bio.trim().length > 20)
-  const avatarOk = Boolean(profile?.avatar_url?.trim())
-  const termsOk = Boolean(profile?.terms_accepted_at)
-  const landlordTermsOk = Boolean(profile?.landlord_terms_accepted_at)
-  const nonDiscriminationOk = landlordNonDiscriminationAccepted(profile)
-
-  const checklistDone = [termsOk, landlordTermsOk, nonDiscriminationOk, nameOk, phoneOk, bioOk, avatarOk].filter(
-    Boolean,
-  ).length
-  const checklistPct = Math.round((checklistDone / checklistTotal) * 100)
-
-  const firstIncomplete = (() => {
-    if (!termsOk) return { label: 'Accept terms of service →', href: '/landlord-profile#account-agreements' }
-    if (!landlordTermsOk) return { label: 'Accept landlord service agreement →', href: '/landlord-profile#account-agreements' }
-    if (!nonDiscriminationOk) return { label: 'Accept non-discrimination policy →', href: '/landlord-profile#account-agreements' }
-    if (!nameOk) return { label: 'Add your name →', href: '/landlord/profile' }
-    if (!phoneOk) return { label: 'Add your phone →', href: '/landlord/profile' }
-    if (!bioOk) return { label: 'Add a bio →', href: '/landlord/profile' }
-    if (!avatarOk) return { label: 'Add a profile photo →', href: '/landlord/profile' }
-    return null
-  })()
+  const landlordReadiness = useMemo(() => computeLandlordReadiness(profile), [profile])
+  const profileStatCard = useMemo(
+    () => landlordProfileStatCardCopy(landlordReadiness),
+    [landlordReadiness],
+  )
+  const firstIncomplete = useMemo(
+    () => landlordPublishFirstIncompleteAction(profile),
+    [profile],
+  )
   const canCreateListing = canLandlordCreateListing(profile)
 
   if (!isSupabaseConfigured) {
@@ -1079,37 +1065,38 @@ export default function LandlordDashboard() {
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
             <div className="mt-2 flex flex-col flex-1 min-h-0">
-              {checklistDone === checklistTotal ? (
-                <>
-                  <p className="text-sm font-semibold text-emerald-700">Profile complete ✓</p>
-                  <p className="text-xs text-gray-500 mt-auto pt-2 leading-snug">
-                    Students can trust your listing with confidence.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold text-gray-900">{checklistPct}% complete</p>
-                  <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{ width: `${checklistPct}%`, backgroundColor: '#FF6F61' }}
-                      aria-label={`Profile completion ${checklistPct}%`}
-                      role="progressbar"
-                      aria-valuenow={checklistPct}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                    />
-                  </div>
-                  {firstIncomplete ? (
-                    <Link
-                      to={firstIncomplete.href}
-                      className="mt-auto pt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
-                    >
-                      {firstIncomplete.label}
-                    </Link>
-                  ) : null}
-                </>
-              )}
+              <p
+                className={`text-sm font-semibold ${
+                  landlordReadiness.phase === 'complete' ? 'text-emerald-700' : 'text-gray-900'
+                }`}
+              >
+                {profileStatCard.headline}
+              </p>
+              {profileStatCard.showPublishProgress ? (
+                <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${profileStatCard.publishPct}%`, backgroundColor: '#FF6F61' }}
+                    aria-label={`Profile completion ${profileStatCard.publishPct}%`}
+                    role="progressbar"
+                    aria-valuenow={profileStatCard.publishPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  />
+                </div>
+              ) : null}
+              {landlordReadiness.phase === 'complete' ? (
+                <p className="text-xs text-gray-500 mt-auto pt-2 leading-snug">
+                  Students can trust your listing with confidence.
+                </p>
+              ) : firstIncomplete ? (
+                <Link
+                  to={firstIncomplete.href}
+                  className="mt-auto pt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                >
+                  {firstIncomplete.label}
+                </Link>
+              ) : null}
             </div>
           </div>
 

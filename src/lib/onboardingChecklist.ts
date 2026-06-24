@@ -1,5 +1,6 @@
 import type { Database } from './database.types'
 import { isRenterRole } from './authProfile'
+import { isLandlordPublishComplete } from './landlordProfileReadiness'
 import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
 import {
   buildRenterReadinessChecklistSteps,
@@ -130,15 +131,9 @@ export function isLandlordStripePayoutsComplete(p: LandlordProfileRow | null | u
   return p?.stripe_charges_enabled === true && p?.stripe_payouts_enabled === true
 }
 
-/** Terms + profile basics - enough to create and edit property listings. */
+/** Personal details, address, bio, and agreements — enough to create and edit property listings. */
 export function canLandlordCreateListing(p: LandlordProfileRow | null | undefined): boolean {
-  if (!p) return false
-  return Boolean(
-    p.terms_accepted_at &&
-      p.landlord_terms_accepted_at &&
-      landlordNonDiscriminationAccepted(p) &&
-      isLandlordProfileBasicsComplete(p),
-  )
+  return isLandlordPublishComplete(p)
 }
 
 /** Full operational unlock (payouts ready). Paid booking acceptance still checks Stripe in API. */
