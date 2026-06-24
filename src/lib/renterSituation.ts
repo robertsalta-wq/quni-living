@@ -13,6 +13,40 @@ export const RENTER_SITUATION_VALUES = [
   'between_jobs',
 ] as const satisfies readonly RenterSituation[]
 
+export const RENTER_SITUATION_OPTIONS = [
+  {
+    value: 'student' as const,
+    label: 'Student',
+    description:
+      'Enrolled at an Australian university — verify with your student email, photo ID, and enrolment.',
+  },
+  {
+    value: 'working' as const,
+    label: 'Working',
+    description: 'Employed in Australia — add employment details, photo ID, and a supporting document.',
+  },
+  {
+    value: 'working_holiday' as const,
+    label: 'Working holiday',
+    description: 'On a working holiday visa — add visa details, photo ID, and a supporting document.',
+  },
+  {
+    value: 'backpacker' as const,
+    label: 'Backpacker',
+    description: 'Travelling — add visa details if applicable, photo ID, and a supporting document.',
+  },
+  {
+    value: 'retired' as const,
+    label: 'Retired',
+    description: 'Not in paid work — photo ID, supporting document, and income source.',
+  },
+  {
+    value: 'between_jobs' as const,
+    label: 'Between jobs',
+    description: 'Between roles — photo ID, supporting document, and income source.',
+  },
+] as const
+
 /** Derive verification route from section-0 situation (Stage 4 save will persist both). */
 export function deriveAccommodationRouteFromSituation(
   situation: RenterSituation | string | null | undefined,

@@ -17,6 +17,8 @@ import {
   type QuniAccommodationVerificationRoute,
 } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
+import { applyPendingSignupTerms, mergeSignupTermsIntoInsert } from './applyPendingSignupTerms'
+import { consumeSignupTermsAcceptedAt } from './quniSignupTerms'
 import { marketplaceRoleForWrite } from './marketplaceRole'
 import { supabase } from './supabase'
 
@@ -85,30 +87,38 @@ async function ensureSignupProfileRowInMemory(
   const metaRole = user.user_metadata?.role
 
   if (metaRole === 'landlord') {
+    const insertRow = mergeSignupTermsIntoInsert('landlord', {
+      user_id: user.id,
+      email,
+      full_name: fullName,
+    })
     const { data, error } = await supabase
       .from('landlord_profiles')
-      .insert({
-        user_id: user.id,
-        email,
-        full_name: fullName,
-      })
+      .insert(insertRow)
       .select('*')
       .maybeSingle()
-    if (!error && data) return { sp, lp: data as LandlordProfileRow }
+    if (!error && data) {
+      if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
+      return { sp, lp: data as LandlordProfileRow }
+    }
     return { sp, lp }
   }
 
   if (isRenterRole(metaRole)) {
+    const insertRow = mergeSignupTermsIntoInsert('renter', {
+      user_id: user.id,
+      email,
+      full_name: fullName,
+    })
     const { data, error } = await supabase
       .from('student_profiles')
-      .insert({
-        user_id: user.id,
-        email,
-        full_name: fullName,
-      })
+      .insert(insertRow)
       .select('*')
       .maybeSingle()
-    if (!error && data) return { sp: data as StudentProfileRow, lp }
+    if (!error && data) {
+      if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
+      return { sp: data as StudentProfileRow, lp }
+    }
     return { sp, lp }
   }
 
@@ -169,16 +179,18 @@ async function applyPendingSignupRoleInMemory(
     const { error: delErr } = await supabase.from('student_profiles').delete().eq('user_id', user.id)
     if (delErr) return { sp, lp }
 
+    const insertRow = mergeSignupTermsIntoInsert('landlord', {
+      user_id: user.id,
+      email,
+      full_name: fullName,
+    })
     const { data: insData, error: insErr } = await supabase
       .from('landlord_profiles')
-      .insert({
-        user_id: user.id,
-        email,
-        full_name: fullName,
-      })
+      .insert(insertRow)
       .select('*')
       .maybeSingle()
     if (insErr) return { sp, lp }
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
 
     await supabase.auth.updateUser({ data: { role: 'landlord' } })
     clearQuniSelectedRole()
@@ -190,16 +202,18 @@ async function applyPendingSignupRoleInMemory(
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return { sp, lp }
 
+    const insertRow = mergeSignupTermsIntoInsert('renter', {
+      user_id: user.id,
+      email: lp.email?.trim() || email,
+      full_name: lp.full_name?.trim() || fullName,
+    })
     const { data: insData, error: insErr } = await supabase
       .from('student_profiles')
-      .insert({
-        user_id: user.id,
-        email: lp.email?.trim() || email,
-        full_name: lp.full_name?.trim() || fullName,
-      })
+      .insert(insertRow)
       .select('*')
       .maybeSingle()
     if (insErr) return { sp, lp }
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
 
     await supabase.auth.updateUser({ data: { role: 'renter' } })
     clearQuniSelectedRole()
@@ -242,6 +256,18 @@ export async function reconcileAuthCallbackProfile(
 
   if (!shouldSkipApplyPendingSignupRole(user.user_metadata?.role, sp)) {
     ;({ sp, lp } = await applyPendingSignupRoleInMemory(user, sp, lp, urlRole, urlRoute))
+  }
+
+  if (sp && !sp.terms_accepted_at) {
+    await applyPendingSignupTerms(user.id, 'renter')
+    const refreshed = await fetchProfileRowsDeduped(user.id)
+    sp = refreshed.sp
+    lp = refreshed.lp
+  } else if (lp && !lp.terms_accepted_at) {
+    await applyPendingSignupTerms(user.id, 'landlord')
+    const refreshed = await fetchProfileRowsDeduped(user.id)
+    sp = refreshed.sp
+    lp = refreshed.lp
   }
 
   return resolveRoleAndProfileFromRows(user, sp, lp)

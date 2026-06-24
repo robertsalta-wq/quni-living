@@ -535,6 +535,12 @@ export interface Database {
           identity_supporting_doc_url: string | null
           identity_supporting_submitted_at: string | null
           id_document_name: string | null
+          id_document_verified_at: string | null
+          id_document_review_status: string | null
+          enrolment_doc_verified_at: string | null
+          enrolment_doc_review_status: string | null
+          identity_supporting_doc_verified_at: string | null
+          identity_supporting_doc_review_status: string | null
           enrolment_doc_name: string | null
           identity_supporting_doc_name: string | null
           accommodation_verification_route: 'student' | 'non_student' | null
@@ -580,6 +586,8 @@ export interface Database {
           visa_doc_url: string | null
           visa_submitted_at: string | null
           visa_doc_name: string | null
+          visa_doc_verified_at: string | null
+          visa_doc_review_status: string | null
           created_at: string
         }
         Insert: {
@@ -628,6 +636,12 @@ export interface Database {
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
           id_document_name?: string | null
+          id_document_verified_at?: string | null
+          id_document_review_status?: string | null
+          enrolment_doc_verified_at?: string | null
+          enrolment_doc_review_status?: string | null
+          identity_supporting_doc_verified_at?: string | null
+          identity_supporting_doc_review_status?: string | null
           enrolment_doc_name?: string | null
           identity_supporting_doc_name?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
@@ -673,6 +687,8 @@ export interface Database {
           visa_doc_url?: string | null
           visa_submitted_at?: string | null
           visa_doc_name?: string | null
+          visa_doc_verified_at?: string | null
+          visa_doc_review_status?: string | null
           created_at?: string
         }
         Update: {
@@ -721,6 +737,12 @@ export interface Database {
           identity_supporting_doc_url?: string | null
           identity_supporting_submitted_at?: string | null
           id_document_name?: string | null
+          id_document_verified_at?: string | null
+          id_document_review_status?: string | null
+          enrolment_doc_verified_at?: string | null
+          enrolment_doc_review_status?: string | null
+          identity_supporting_doc_verified_at?: string | null
+          identity_supporting_doc_review_status?: string | null
           enrolment_doc_name?: string | null
           identity_supporting_doc_name?: string | null
           accommodation_verification_route?: 'student' | 'non_student' | null
@@ -766,6 +788,8 @@ export interface Database {
           visa_doc_url?: string | null
           visa_submitted_at?: string | null
           visa_doc_name?: string | null
+          visa_doc_verified_at?: string | null
+          visa_doc_review_status?: string | null
           created_at?: string
         }
         Relationships: [

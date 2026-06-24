@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   completeVerificationUpload,
+  dbClearPatchForVerificationDoc,
   dbPatchForVerificationDoc,
   docFromProfile,
   docStepComplete,
   failVerificationUpload,
   hasUploadedDoc,
+  isVerificationDocVerified,
   pickVerificationFile,
   resolveUploadedDoc,
   storagePathForVerificationDoc,
@@ -118,6 +120,52 @@ describe('verificationDocSlot', () => {
     expect(dbPatchForVerificationDoc('id', `${USER}/id-document.pdf`, '2026-06-22T12:00:00.000Z')).toEqual({
       id_document_url: `${USER}/id-document.pdf`,
       id_submitted_at: '2026-06-22T12:00:00.000Z',
+      id_document_name: '',
+      id_document_verified_at: null,
+      id_document_review_status: null,
     })
+  })
+
+  it('dbClearPatchForVerificationDoc nulls stored fields for each kind', () => {
+    expect(dbClearPatchForVerificationDoc('id')).toEqual({
+      id_document_url: null,
+      id_submitted_at: null,
+      id_document_name: null,
+      id_document_verified_at: null,
+      id_document_review_status: null,
+    })
+    expect(dbClearPatchForVerificationDoc('enrolment')).toEqual({
+      enrolment_doc_url: null,
+      enrolment_submitted_at: null,
+      enrolment_doc_name: null,
+      enrolment_doc_verified_at: null,
+      enrolment_doc_review_status: null,
+    })
+    expect(dbClearPatchForVerificationDoc('identity_supporting')).toEqual({
+      identity_supporting_doc_url: null,
+      identity_supporting_submitted_at: null,
+      identity_supporting_doc_name: null,
+      identity_supporting_doc_verified_at: null,
+      identity_supporting_doc_review_status: null,
+    })
+  })
+
+  it('isVerificationDocVerified is false while replace is pending', () => {
+    const verified = docFromProfile(OLD_PATH, OLD_AT)
+    expect(isVerificationDocVerified(verified)).toBe(true)
+    expect(
+      isVerificationDocVerified({
+        filePath: OLD_PATH,
+        submittedAt: OLD_AT,
+        displayFileName: 'replace.jpg',
+        pending: true,
+      }),
+    ).toBe(false)
+  })
+
+  it('hasUploadedDoc is false after clear patch fields', () => {
+    const cleared = { url: null, submittedAt: null }
+    expect(hasUploadedDoc('id', {}, cleared)).toBe(false)
+    expect(docStepComplete(docFromProfile(null, null))).toBe(false)
   })
 })

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+</style>
+</helmet>
+<template id="__bundler_thumbnail"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#FEF9E4"/><rect x="30" y="26" width="40" height="48" rx="6" fill="#fff" stroke="#FF6F61" stroke-width="2"/><circle cx="50" cy="41" r="7" fill="none" stroke="#FF6F61" stroke-width="2"/><rect x="40" y="54" width="20" height="3" rx="1.5" fill="#FF6F61"/><rect x="37" y="61" width="26" height="3" rx="1.5" fill="#E8E0CC"/></svg></template>
+<div style="min-width:100%;min-height:100vh;width:max-content;box-sizing:border-box;padding:48px;background:#E7E5DF;font-family:'Inter',system-ui,sans-serif">
+  <div style="margin-bottom:30px;max-width:780px">
+    <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#FF6F61">Quni Living · Renter</div>
+    <div style="margin-top:8px;font-family:'Playfair Display',serif;font-size:34px;font-weight:700;color:#08060D;letter-spacing:-.02em">Onboarding & profile</div>
+    <div style="margin-top:8px;font-size:14px;color:#5A5460;line-height:1.55">Sign-up only splits renter from landlord. The situation picker is section 0 of the profile — it sets which route-specific section is asked for, stays editable, and confirms before clearing entered route data. Shown at web and app widths; mobile is the priority.</div>
+  </div>
+
+  <!-- =================== CREATE AN ACCOUNT =================== -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7A7480;margin-bottom:14px">1 · Create an account</div>
+  <div style="display:flex;gap:40px;align-items:flex-start;margin-bottom:54px">
+
+    <!-- ACCOUNT DESKTOP -->
+    <div style="flex:none;width:1120px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Desktop · web</div>
+      <div style="background:#fff;border:1px solid #ECEAE4;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden">
+        <div style="background:#FEF9E4;border-bottom:1px solid #E8E0CC;padding:14px 30px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#FF6F61;letter-spacing:-.02em">Quni</span>
+            <div style="width:34px;height:34px;border-radius:9px;border:1px solid #F2C9C2;display:flex;align-items:center;justify-content:center;color:#FF6F61"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6z"/></svg></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:24px;font-size:13.5px;font-weight:500;color:#4A4253">
+            <span>Listings</span><span>For students</span><span>Pricing</span><span style="color:#C9C4CE">|</span><span>For landlords</span><span>Universities</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-size:13.5px;font-weight:600;color:#2A2433">Log in</span>
+            <span style="background:#FF6F61;color:#fff;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:10px">Sign up →</span>
+          </div>
+        </div>
+        <div style="padding:40px 0 56px">
+          <div style="max-width:560px;margin:0 auto;padding:0 24px">
+            <div style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#08060D;letter-spacing:-.02em">Create an account</div>
+            <div style="margin-top:10px;font-size:14px;color:#6B6375">Already have an account? <span style="color:#FF6F61;font-weight:600">Log in</span></div>
+            <div style="margin-top:26px;font-size:14px;font-weight:600;color:#2A2433">I am signing up as a…</div>
+            <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div style="border:1px solid #E5E4E7;border-radius:16px;padding:20px;background:#fff">
+                <div style="font-size:17px;font-weight:700;color:#08060D">Renter</div>
+                <div style="margin-top:8px;font-size:14px;color:#6B6375;line-height:1.55">Find housing and manage bookings.</div>
+                <div style="margin-top:16px;font-size:13px;font-weight:600;color:#FF6F61">What you'll need to verify</div>
+              </div>
+              <div style="border:1px solid #E5E4E7;border-radius:16px;padding:20px;background:#fff">
+                <div style="font-size:17px;font-weight:700;color:#08060D">Landlord</div>
+                <div style="margin-top:8px;font-size:14px;color:#6B6375;line-height:1.55">List properties and manage enquiries.</div>
+                <div style="margin-top:16px;font-size:13px;font-weight:600;color:#FF6F61">What you'll need to verify</div>
+              </div>
+            </div>
+            <div style="margin-top:16px;font-size:13px;color:#6B6375;line-height:1.55">Not sure what verification involves? <span style="color:#FF6F61;font-weight:600">See what you'll verify on Quni.</span></div>
+            <div style="margin-top:6px;font-size:13px;color:#B7791F">Choose one option above to continue with Google or email.</div>
+            <div style="margin-top:18px;display:flex;align-items:center;gap:10px;font-size:13.5px;color:#4A4253">
+              <div style="flex:none;width:18px;height:18px;border:1.5px solid #C9C4CE;border-radius:5px;background:#fff"></div>
+              <span>I agree to the <span style="color:#FF6F61;font-weight:600;text-decoration:underline">Terms of Service</span> and <span style="color:#FF6F61;font-weight:600;text-decoration:underline">Privacy Policy</span></span>
+            </div>
+            <div style="margin-top:18px;border:1px solid #E5E4E7;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;color:#A39CAC;font-size:14.5px;font-weight:600;background:#F8F6F1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#C9C4CE"><path d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.2c1.9-1.7 3-4.3 3-7.5z"/><path d="M12 22c2.7 0 5-.9 6.7-2.4l-3.2-2.5c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H3v2.6A10 10 0 0 0 12 22z"/></svg>Continue with Google
+            </div>
+            <div style="margin:18px 0;display:flex;align-items:center;gap:14px"><div style="flex:1;height:1px;background:#E5E4E7"></div><span style="font-size:12px;color:#A39CAC">OR</span><div style="flex:1;height:1px;background:#E5E4E7"></div></div>
+            <div style="background:#FF6F61;color:#fff;border-radius:12px;padding:15px;text-align:center;font-size:15px;font-weight:600">Sign up with email</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT MOBILE -->
+    <div style="flex:none;width:390px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Mobile · app</div>
+      <div style="background:#fff;border:1px solid #ECEAE4;border-radius:30px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden">
+        <div style="background:#FEF9E4;padding:9px 24px 0;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#08060D">
+          <span>9:41</span>
+          <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="11" viewBox="0 0 18 12" fill="#08060D"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="4.5" width="3" height="7.5" rx="1"/><rect x="9" y="2" width="3" height="10" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg><svg width="22" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="#08060D" stroke-width="1.2"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.2" fill="#08060D"/><rect x="22" y="4" width="1.6" height="4" rx=".8" fill="#08060D"/></svg></div>
+        </div>
+        <div style="background:#FEF9E4;border-bottom:1px solid #E8E0CC;padding:8px 18px 13px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#FF6F61;letter-spacing:-.02em">Quni</span>
+          <span style="background:#FF6F61;color:#fff;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:9px">Sign up →</span>
+        </div>
+        <div style="padding:22px 18px 26px">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#08060D;letter-spacing:-.02em">Create an account</div>
+          <div style="margin-top:8px;font-size:13.5px;color:#6B6375">Already have an account? <span style="color:#FF6F61;font-weight:600">Log in</span></div>
+          <div style="margin-top:22px;font-size:13.5px;font-weight:600;color:#2A2433">I am signing up as a…</div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+            <div style="border:1px solid #E5E4E7;border-radius:16px;padding:17px 18px;background:#fff">
+              <div style="font-size:16px;font-weight:700;color:#08060D">Renter</div>
+              <div style="margin-top:6px;font-size:13.5px;color:#6B6375;line-height:1.5">Find housing and manage bookings.</div>
+              <div style="margin-top:13px;font-size:13px;font-weight:600;color:#FF6F61">What you'll need to verify</div>
+            </div>
+            <div style="border:1px solid #E5E4E7;border-radius:16px;padding:17px 18px;background:#fff">
+              <div style="font-size:16px;font-weight:700;color:#08060D">Landlord</div>
+              <div style="margin-top:6px;font-size:13.5px;color:#6B6375;line-height:1.5">List properties and manage enquiries.</div>
+              <div style="margin-top:13px;font-size:13px;font-weight:600;color:#FF6F61">What you'll need to verify</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-size:12.5px;color:#6B6375;line-height:1.5">Not sure what verification involves? <span style="color:#FF6F61;font-weight:600">See what you'll verify on Quni.</span></div>
+          <div style="margin-top:5px;font-size:12.5px;color:#B7791F">Choose one option above to continue with Google or email.</div>
+          <div style="margin-top:15px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4A4253">
+            <div style="flex:none;width:18px;height:18px;border:1.5px solid #C9C4CE;border-radius:5px;background:#fff"></div>
+            <span>I agree to the <span style="color:#FF6F61;font-weight:600;text-decoration:underline">Terms of Service</span> and <span style="color:#FF6F61;font-weight:600;text-decoration:underline">Privacy Policy</span></span>
+          </div>
+          <div style="margin-top:15px;border:1px solid #E5E4E7;border-radius:12px;padding:13px;display:flex;align-items:center;justify-content:center;gap:10px;color:#A39CAC;font-size:14px;font-weight:600;background:#F8F6F1">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="#C9C4CE"><path d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.2c1.9-1.7 3-4.3 3-7.5z"/><path d="M12 22c2.7 0 5-.9 6.7-2.4l-3.2-2.5c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H3v2.6A10 10 0 0 0 12 22z"/></svg>Continue with Google
+          </div>
+          <div style="margin:16px 0;display:flex;align-items:center;gap:14px"><div style="flex:1;height:1px;background:#E5E4E7"></div><span style="font-size:12px;color:#A39CAC">OR</span><div style="flex:1;height:1px;background:#E5E4E7"></div></div>
+          <div style="background:#FF6F61;color:#fff;border-radius:12px;padding:14px;text-align:center;font-size:14.5px;font-weight:600">Sign up with email</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== PROFILE · SITUATION UNSET =================== -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7A7480;margin-bottom:14px">2 · Profile — situation unset (tiles expanded, route slot locked)</div>
+  <div style="display:flex;gap:40px;align-items:flex-start;margin-bottom:54px">
+    <div style="flex:none;width:1120px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Desktop · web</div>
+      <dc-import name="ProfilePage" state="unset" device="web" hint-size="100%,1280px"></dc-import>
+    </div>
+    <div style="flex:none;width:390px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Mobile · app</div>
+      <dc-import name="ProfilePage" state="unset" device="app" hint-size="100%,1180px"></dc-import>
+    </div>
+  </div>
+
+  <!-- =================== PROFILE · WORKING CHOSEN =================== -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7A7480;margin-bottom:14px">3 · Profile — Working chosen (route populated, guarantor triggered by low income)</div>
+  <div style="display:flex;gap:40px;align-items:flex-start;margin-bottom:54px">
+    <div style="flex:none;width:1120px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Desktop · web</div>
+      <dc-import name="ProfilePage" state="working" device="web" hint-size="100%,1280px"></dc-import>
+    </div>
+    <div style="flex:none;width:390px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Mobile · app</div>
+      <dc-import name="ProfilePage" state="working" device="app" hint-size="100%,1180px"></dc-import>
+    </div>
+  </div>
+
+  <!-- =================== CONFIRM DIALOG =================== -->
+  <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7A7480;margin-bottom:14px">4 · Switching situation — confirm fires only because the route section holds entered data</div>
+  <div style="display:flex;gap:40px;align-items:flex-start">
+    <div style="flex:none;width:390px">
+      <div style="font-size:12px;font-weight:600;color:#8A8490;margin-bottom:10px">Mobile · app — Working → Retired</div>
+      <div style="position:relative;border-radius:30px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <dc-import name="ProfilePage" state="switching" device="app" hint-size="100%,1180px"></dc-import>
+        <div style="position:absolute;inset:0;background:rgba(8,6,13,.5);display:flex;align-items:center;justify-content:center;padding:22px">
+          <div style="width:100%;max-width:320px;background:#fff;border-radius:18px;box-shadow:0 12px 40px rgba(8,6,13,.28);padding:22px 22px 18px">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="flex:none;width:38px;height:38px;border-radius:11px;background:rgba(255,111,97,0.10);display:flex;align-items:center;justify-content:center;color:#FF6F61"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></div>
+              <div style="font-size:17px;font-weight:700;color:#08060D">Switch your situation?</div>
+            </div>
+            <div style="margin-top:13px;font-size:13.5px;color:#4A4253;line-height:1.55">Switching to <strong style="color:#08060D;font-weight:600">Retired</strong> clears the details in your <strong style="color:#08060D;font-weight:600">Employment &amp; income</strong> section. About you, verification and emergency contact stay as they are.</div>
+            <div style="margin-top:20px;display:flex;gap:10px">
+              <button style="flex:1;background:#fff;color:#2A2433;border:1px solid #E5E4E7;padding:12px;border-radius:11px;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer">Cancel</button>
+              <button style="flex:1;background:#FF6F61;color:#fff;border:0;padding:12px;border-radius:11px;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer">Switch</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

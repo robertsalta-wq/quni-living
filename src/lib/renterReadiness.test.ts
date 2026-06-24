@@ -4,6 +4,7 @@ import {
   computeVerificationTierEligible,
   effectiveVerificationTier,
   tierToPromote,
+  tierToSync,
 } from './renterReadiness'
 import type { StudentProfileRow } from './studentOnboarding'
 import { isStudentListingActionsUnlocked } from './onboardingChecklist'
@@ -74,6 +75,61 @@ describe('tierToPromote', () => {
 
   it('returns null when already promoted', () => {
     expect(tierToPromote(lucyProfile({ verification_type: 'student' }))).toBe(null)
+  })
+})
+
+describe('tierToSync', () => {
+  it('promotes when eligible and column is none', () => {
+    const p = lucyProfile({
+      id_document_url: 'student-id/user/doc.pdf',
+      id_submitted_at: '2026-01-02T00:00:00Z',
+      enrolment_doc_url: 'student-enrol/user/doc.pdf',
+      enrolment_submitted_at: '2026-01-02T00:00:00Z',
+    })
+    expect(tierToSync(p)).toBe('student')
+  })
+
+  it('returns null when stored tier matches eligibility', () => {
+    const p = lucyProfile({
+      verification_type: 'student',
+      id_document_url: 'student-id/user/doc.pdf',
+      id_submitted_at: '2026-01-02T00:00:00Z',
+      enrolment_doc_url: 'student-enrol/user/doc.pdf',
+      enrolment_submitted_at: '2026-01-02T00:00:00Z',
+    })
+    expect(tierToSync(p)).toBe(null)
+  })
+
+  it('demotes student to none when ID doc is cleared on replace', () => {
+    const p = lucyProfile({
+      verification_type: 'student',
+      id_document_url: null,
+      id_submitted_at: null,
+      enrolment_doc_url: 'student-enrol/user/doc.pdf',
+      enrolment_submitted_at: '2026-01-02T00:00:00Z',
+    })
+    expect(computeVerificationTierEligible(p)).toBe('none')
+    expect(tierToSync(p)).toBe('none')
+  })
+
+  it('demotes identity to none when supporting doc is cleared on replace', () => {
+    const p = {
+      renter_situation: 'working',
+      accommodation_verification_route: 'non_student',
+      verification_type: 'identity',
+      terms_accepted_at: '2026-01-01T00:00:00Z',
+      first_name: 'Casey',
+      last_name: 'Doe',
+      gender: 'female',
+      phone: '0412345678',
+      emergency_contact_name: 'Pat Doe',
+      emergency_contact_phone: '0498765432',
+      id_document_url: 'id/user/doc.pdf',
+      id_submitted_at: '2026-01-02T00:00:00Z',
+      identity_supporting_doc_url: null,
+      identity_supporting_submitted_at: null,
+    } as StudentProfileRow
+    expect(tierToSync(p)).toBe('none')
   })
 })
 

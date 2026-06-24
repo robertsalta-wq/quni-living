@@ -5,6 +5,8 @@ import { supabase } from './supabase'
 import { applyPendingAccommodationRouteToStudentProfile } from './applyPendingAccommodationRoute'
 import { clearQuniAccommodationVerificationRoute } from './quniAccommodationRoute'
 import { clearQuniSelectedRole, getQuniSelectedRole } from './quniSelectedRole'
+import { mergeSignupTermsIntoInsert } from './applyPendingSignupTerms'
+import { consumeSignupTermsAcceptedAt } from './quniSignupTerms'
 
 const RECENT_SIGNUP_MS = 30 * 60 * 1000
 
@@ -69,12 +71,14 @@ export async function applyPendingSignupRole(
     const { error: delErr } = await supabase.from('student_profiles').delete().eq('user_id', user.id)
     if (delErr) return
 
-    const { error: insErr } = await supabase.from('landlord_profiles').insert({
+    const insertRow = mergeSignupTermsIntoInsert('landlord', {
       user_id: user.id,
       email,
       full_name: fullName,
     })
+    const { error: insErr } = await supabase.from('landlord_profiles').insert(insertRow)
     if (insErr) return
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
 
     await supabase.auth.updateUser({ data: { role: 'landlord' } })
     clearQuniSelectedRole()
@@ -91,12 +95,14 @@ export async function applyPendingSignupRole(
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return
 
-    const { error: insErr } = await supabase.from('student_profiles').insert({
+    const insertRow = mergeSignupTermsIntoInsert('renter', {
       user_id: user.id,
       email: lpRow?.email?.trim() || email,
       full_name: lpRow?.full_name?.trim() || fullName,
     })
+    const { error: insErr } = await supabase.from('student_profiles').insert(insertRow)
     if (insErr) return
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
 
     await supabase.auth.updateUser({ data: { role: 'renter' } })
     clearQuniSelectedRole()

@@ -17,17 +17,12 @@ import {
   type VerificationDocKind,
   type VerificationUploadedDoc,
 } from '../lib/verificationDocSlot'
+import { verificationDocReplaceAllowed } from '../lib/verificationItemState'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
-/** sessionStorage key for the post-reload "uploaded" confirmation banner. */
+/** sessionStorage key for the post-reload "uploaded" confirmation banner (legacy). */
 export const VERIF_UPLOAD_FLASH_KEY = 'verifUploadFlash'
-
-const UPLOAD_LABELS: Record<VerificationDocKind, string> = {
-  id: 'Photo ID',
-  enrolment: 'Enrolment document',
-  identity_supporting: 'Supporting document',
-}
 
 function revokeBlobUrl(url: string | null | undefined) {
   if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
@@ -111,7 +106,19 @@ export function useStudentVerificationDocUpload(
 
       const profileFields = profileDocFields(profile, kind)
       const profileDoc = docFromProfile(profileFields.url, profileFields.submittedAt)
-      let rollback: VerificationUploadedDoc | null = null
+      const existingDoc = resolveUploadedDoc(uploadedByKind[kind], profileDoc)
+      if (existingDoc && !existingDoc.pending && !verificationDocReplaceAllowed(profile, kind)) {
+        setErr('This document is verified or in review and cannot be replaced.')
+        return
+      }
+      const rollback: VerificationUploadedDoc | null =
+        existingDoc && !existingDoc.pending
+          ? {
+              filePath: existingDoc.filePath,
+              submittedAt: existingDoc.submittedAt,
+              displayFileName: existingDoc.displayFileName,
+            }
+          : null
 
       const instantPreview = isVerificationPdf(file) ? null : URL.createObjectURL(file)
 
@@ -123,13 +130,6 @@ export function useStudentVerificationDocUpload(
         setBusy(true)
         setUploadedByKind((prev) => {
           const existing = resolveUploadedDoc(prev[kind], profileDoc)
-          if (existing && !existing.pending) {
-            rollback = {
-              filePath: existing.filePath,
-              submittedAt: existing.submittedAt,
-              displayFileName: existing.displayFileName,
-            }
-          }
           revokeBlobUrl(prev[kind]?.previewUrl)
           return {
             ...prev,
@@ -165,18 +165,20 @@ export function useStudentVerificationDocUpload(
           throw new Error(result.message)
         }
 
-        // The card does not reliably repaint after this native-upload flow on some
-        // Android browsers (MIUI/Xiaomi): React commits the state but the device
-        // defers painting until the next interaction, so the user can't see it
-        // worked. A full reload always shows the saved state (it's what a manual
-        // refresh does). Flag a success message to show after reload, then refresh.
         revokeBlobUrl(instantPreview)
-        try {
-          sessionStorage.setItem(VERIF_UPLOAD_FLASH_KEY, `${UPLOAD_LABELS[kind]} uploaded`)
-        } catch {
-          /* ignore storage errors */
-        }
-        window.location.reload()
+        flushSync(() => {
+          setUploadedByKind((prev) => ({
+            ...prev,
+            [kind]: {
+              filePath: result.filePath,
+              submittedAt: result.submittedAt,
+              displayFileName: file.name,
+              previewUrl: null,
+              pending: false,
+            },
+          }))
+        })
+        onVerificationDocUploaded(kind, result.filePath, result.submittedAt, file.name)
         return
       } catch (err: unknown) {
         console.error('Verification document upload failed', { kind, fileName: file.name, error: err })
@@ -194,7 +196,7 @@ export function useStudentVerificationDocUpload(
         setBusy(false)
       }
     },
-    [profile, userId, onVerificationDocUploaded, revertDocUpload],
+    [profile, userId, uploadedByKind, onVerificationDocUploaded, revertDocUpload],
   )
 
   const pickIdFile = useCallback(

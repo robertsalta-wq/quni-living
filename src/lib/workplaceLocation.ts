@@ -3,6 +3,8 @@ import { buildGeocodeQueryCandidates, streetLineForGeocode } from './normalizeAu
 export const NEAR_RADIUS_OPTIONS_KM = [5, 10, 15, 25] as const
 export const DEFAULT_NEAR_RADIUS_KM = 15
 
+export const AU_WORKPLACE_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const
+
 export const STRAIGHT_LINE_DISTANCE_NOTE =
   'Distances are approximate straight-line km, not driving time.'
 

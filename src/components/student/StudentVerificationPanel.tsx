@@ -8,7 +8,7 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
-import { tierToPromote } from '../../lib/renterReadiness'
+import { tierToSync } from '../../lib/renterReadiness'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
   VERIFICATION_ID_FILE_ACCEPT,
@@ -340,7 +340,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const [, setWorkResendTick] = useState(0)
 
   useEffect(() => {
-    const next = tierToPromote(profile)
+    const next = tierToSync(profile)
     if (!next) return
     let cancelled = false
     ;(async () => {

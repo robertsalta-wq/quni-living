@@ -107,9 +107,17 @@ export const STUDENT_PROFILE_FIELD_STATUS = {
   visa_doc_url: 'NOT_MATCHING',
   visa_submitted_at: 'NOT_MATCHING',
   visa_doc_name: 'NOT_MATCHING',
+  visa_doc_verified_at: 'NOT_MATCHING',
+  visa_doc_review_status: 'NOT_MATCHING',
   id_document_name: 'NOT_MATCHING',
+  id_document_verified_at: 'NOT_MATCHING',
+  id_document_review_status: 'NOT_MATCHING',
   enrolment_doc_name: 'NOT_MATCHING',
+  enrolment_doc_verified_at: 'NOT_MATCHING',
+  enrolment_doc_review_status: 'NOT_MATCHING',
   identity_supporting_doc_name: 'NOT_MATCHING',
+  identity_supporting_doc_verified_at: 'NOT_MATCHING',
+  identity_supporting_doc_review_status: 'NOT_MATCHING',
   created_at: 'NOT_MATCHING',
 } as const satisfies Record<StudentProfileField, AiFieldStatus>
 

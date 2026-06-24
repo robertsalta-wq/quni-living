@@ -12,6 +12,7 @@ import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTen
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
 import { isRenterRole, INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
 import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
+import { stashSignupTermsAcceptedAt } from '../lib/quniSignupTerms'
 import Seo from '../components/Seo'
 import {
   LegalDocumentModal,
@@ -253,6 +254,10 @@ export default function Signup() {
     return true
   }
 
+  function recordSignupTermsAccepted(): void {
+    stashSignupTermsAcceptedAt(new Date().toISOString())
+  }
+
   const signupTermsFieldsProps: SignupTermsFieldsProps = {
     showLandlordAgreement,
     termsPrivacy,
@@ -300,6 +305,7 @@ export default function Signup() {
       setTermsError(true)
       return
     }
+    recordSignupTermsAccepted()
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
@@ -371,6 +377,7 @@ export default function Signup() {
       setTermsError(true)
       return
     }
+    recordSignupTermsAccepted()
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
@@ -589,7 +596,7 @@ export default function Signup() {
             )}
           </div>
 
-          {accountKind ? <SignupTermsFields {...signupTermsFieldsProps} /> : null}
+          <SignupTermsFields {...signupTermsFieldsProps} />
 
           {googleButton(
             `w-full rounded-lg border border-gray-200 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
@@ -692,7 +699,6 @@ export default function Signup() {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
-            <SignupTermsFields {...signupTermsFieldsProps} />
             <button
               type="submit"
               disabled={submitting}

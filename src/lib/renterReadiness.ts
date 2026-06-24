@@ -5,10 +5,9 @@ import {
   effectiveAccommodationRoute,
   hasRenterSituationChosen,
 } from './renterSituation'
+import { isPersonalDetailsComplete } from './renterProfileSection'
 import {
   isNonStudentAccommodationRoute,
-  isStep1Saved,
-  isStep1SavedIdentityPath,
   isStep2Saved,
   type StudentProfileRow,
 } from './studentOnboarding'
@@ -84,11 +83,16 @@ export function tierToPromote(
   return eligible === 'none' ? null : eligible
 }
 
-function personalComplete(profile: StudentProfileRow, route: NonNullable<ReturnType<typeof effectiveAccommodationRoute>>): boolean {
-  if (isNonStudentAccommodationRoute(route)) {
-    return isStep1SavedIdentityPath(profile)
-  }
-  return isStep1Saved(profile)
+/** Target verification_type from live eligibility, or null if already aligned (promote or demote). */
+export function tierToSync(profile: StudentProfileRow | null | undefined): VerificationTier | null {
+  if (!profile) return null
+  const target = computeVerificationTierEligible(profile)
+  return profile.verification_type === target ? null : target
+}
+
+/** Personal section (§01): name, phone, gender per design handoff. */
+function personalComplete(profile: StudentProfileRow): boolean {
+  return isPersonalDetailsComplete(profile)
 }
 
 function studentRouteEmailComplete(profile: StudentProfileRow, route: ReturnType<typeof effectiveAccommodationRoute>): boolean {
@@ -120,7 +124,7 @@ export function computeRenterReadiness(
 
   const situationChosen = hasRenterSituationChosen(profile)
   const route = effectiveAccommodationRoute(profile)
-  const personal = route ? personalComplete(profile, route) : false
+  const personal = route ? personalComplete(profile) : false
   const terms = Boolean(profile.terms_accepted_at)
   const emergency = isStep2Saved(profile)
   const verificationTierEligible = computeVerificationTierEligible(profile)
@@ -196,7 +200,7 @@ export function renterReadinessActionHref(readiness: RenterReadiness): string {
     return INCOMPLETE_RENTER_DESTINATION
   }
   if (!readiness.sections.emergency) return INCOMPLETE_RENTER_DESTINATION
-  if (!readiness.sections.verification) return '/student-profile?tab=verification'
+  if (!readiness.sections.verification) return '/student-profile#renter-section-verification'
   return INCOMPLETE_RENTER_DESTINATION
 }
 
@@ -237,7 +241,7 @@ export function buildRenterReadinessChecklistSteps(
       id: 'uni_email',
       label: 'Verify your university email',
       complete: readiness.sections.situationRoute && isStudentUniEmailVerified(p),
-      href: '/onboarding/student',
+      href: '/student-profile#renter-section-verification',
       actionLabel: 'Verify →',
     })
     if (readiness.sections.situationRoute) {
@@ -245,7 +249,7 @@ export function buildRenterReadinessChecklistSteps(
         id: 'student_verify',
         label: 'Complete student verification (ID and enrolment)',
         complete: readiness.sections.verification,
-        href: '/student-profile?tab=verification',
+        href: '/student-profile#renter-section-verification',
         actionLabel: 'Verify →',
       })
     }

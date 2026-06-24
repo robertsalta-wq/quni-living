@@ -86,19 +86,67 @@ export function dbPatchForVerificationDoc(
   path: string,
   submittedAt: string,
   displayName?: string,
-): Record<string, string> {
+): Record<string, string | null> {
   const name = displayName?.trim() ?? ''
   if (kind === 'id') {
-    return { id_document_url: path, id_submitted_at: submittedAt, id_document_name: name }
+    return {
+      id_document_url: path,
+      id_submitted_at: submittedAt,
+      id_document_name: name,
+      id_document_verified_at: null,
+      id_document_review_status: null,
+    }
   }
   if (kind === 'enrolment') {
-    return { enrolment_doc_url: path, enrolment_submitted_at: submittedAt, enrolment_doc_name: name }
+    return {
+      enrolment_doc_url: path,
+      enrolment_submitted_at: submittedAt,
+      enrolment_doc_name: name,
+      enrolment_doc_verified_at: null,
+      enrolment_doc_review_status: null,
+    }
   }
   return {
     identity_supporting_doc_url: path,
     identity_supporting_submitted_at: submittedAt,
     identity_supporting_doc_name: name,
+    identity_supporting_doc_verified_at: null,
+    identity_supporting_doc_review_status: null,
   }
+}
+
+/** Clears a verification doc from the profile when the user starts a replace upload. */
+export function dbClearPatchForVerificationDoc(kind: VerificationDocKind): Record<string, null> {
+  if (kind === 'id') {
+    return {
+      id_document_url: null,
+      id_submitted_at: null,
+      id_document_name: null,
+      id_document_verified_at: null,
+      id_document_review_status: null,
+    }
+  }
+  if (kind === 'enrolment') {
+    return {
+      enrolment_doc_url: null,
+      enrolment_submitted_at: null,
+      enrolment_doc_name: null,
+      enrolment_doc_verified_at: null,
+      enrolment_doc_review_status: null,
+    }
+  }
+  return {
+    identity_supporting_doc_url: null,
+    identity_supporting_submitted_at: null,
+    identity_supporting_doc_name: null,
+    identity_supporting_doc_verified_at: null,
+    identity_supporting_doc_review_status: null,
+  }
+}
+
+/** True when the doc counts as verified/on-file (not mid-replace). */
+export function isVerificationDocVerified(doc: VerificationUploadedDoc | null): boolean {
+  return docStepComplete(doc)
 }
 
 export type PickVerificationFileResult = {

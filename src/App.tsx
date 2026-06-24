@@ -148,7 +148,7 @@ function App() {
             path="/onboarding/student"
             element={
               <ProtectedRoute allowedRoles={['renter']}>
-                <Lazy.StudentOnboarding />
+                <Navigate to="/student-profile" replace />
               </ProtectedRoute>
             }
           />

@@ -11,6 +11,8 @@ import {
   readVerificationOtpPendingEmail,
   writeVerificationOtpPending,
 } from '../../lib/verificationOtpPendingStorage'
+import { verificationEmailRowSlot } from '../../lib/verificationItemState'
+import { RenterProfileVerificationRow } from './profile/RenterProfileVerificationRow'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -19,17 +21,22 @@ const RESEND_SECONDS = 60
 type Props = {
   profile: StudentRow
   onVerified: () => Promise<void>
+  onProfilePatch?: (patch: Partial<StudentRow>) => void
   /** Onboarding uses stone styling; profile page uses gray card styling. */
-  variant?: 'onboarding' | 'profile'
+  variant?: 'onboarding' | 'profile' | 'renter-profile'
   /** Hide admin Resend dashboard link (onboarding). */
   showAdminResendHint?: boolean
+  /** Parent grid supplies the field label (§02 Verification). */
+  hideFieldLabel?: boolean
 }
 
 export function StudentUniEmailVerification({
   profile,
   onVerified,
+  onProfilePatch: _onProfilePatch,
   variant = 'profile',
   showAdminResendHint = variant === 'profile',
+  hideFieldLabel = false,
 }: Props) {
   const emailVerified = isStudentUniEmailVerified(profile)
   const userId = profile.user_id
@@ -43,6 +50,7 @@ export function StudentUniEmailVerification({
   const [verifying, setVerifying] = useState(false)
   const [resendAt, setResendAt] = useState<number | null>(null)
   const [, setResendTick] = useState(0)
+  const [editingEmail, setEditingEmail] = useState(false)
 
   useEffect(() => {
     if (!emailVerified) {
@@ -78,15 +86,29 @@ export function StudentUniEmailVerification({
     resendAt != null && Date.now() < resendAt ? Math.ceil((resendAt - Date.now()) / 1000) : 0
 
   const inputClass =
-    variant === 'onboarding'
-      ? 'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
-      : 'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
+    variant === 'renter-profile'
+      ? 'renter-profile-input'
+      : variant === 'onboarding'
+        ? 'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
+        : 'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
   const labelClass =
-    variant === 'onboarding'
-      ? 'block text-sm font-medium text-gray-700 mb-1'
-      : 'block text-sm font-semibold text-gray-900 mb-1'
+    variant === 'renter-profile'
+      ? 'renter-profile-field-label'
+      : variant === 'onboarding'
+        ? 'block text-sm font-medium text-gray-700 mb-1'
+        : 'block text-sm font-semibold text-gray-900 mb-1'
   const coralBtn =
-    'inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[#e85d52] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-2 disabled:opacity-50'
+    variant === 'renter-profile'
+      ? 'renter-profile-btn-primary'
+      : 'inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[#e85d52] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-2 disabled:opacity-50'
+  const blockClass = variant === 'renter-profile' ? 'renter-profile-email-block' : 'space-y-4'
+  const hintClass = variant === 'renter-profile' ? 'renter-profile-email-hint' : 'text-xs text-stone-500 mt-1.5'
+  const errorClass = variant === 'renter-profile' ? 'renter-profile-error' : 'text-xs text-red-600 mt-2'
+  const waitBoxClass =
+    variant === 'renter-profile'
+      ? 'renter-profile-email-wait-box'
+      : 'rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4'
+  const actionsClass = variant === 'renter-profile' ? 'renter-profile-email-actions' : 'flex flex-wrap items-center gap-3 mt-3'
 
   const sendCode = useCallback(async () => {
     setSendError(null)
@@ -161,12 +183,37 @@ export function StudentUniEmailVerification({
       setOtpInput('')
       setResendAt(null)
       await onVerified()
+      setEditingEmail(false)
     } finally {
       setVerifying(false)
     }
   }, [otpInput, onVerified, userId])
 
+  const embeddedFilledEmail =
+    variant === 'renter-profile' && hideFieldLabel && profile.uni_email?.trim()
+      ? verificationEmailRowSlot(profile, 'uni')
+      : null
+
+  const restartUniEmailEdit = useCallback(() => {
+    clearVerificationOtpPending('uni', userId)
+    setCodeSent(false)
+    setOtpInput('')
+    setResendAt(null)
+    setVerifyError(null)
+  }, [userId])
+
   if (emailVerified) {
+    if (variant === 'renter-profile') {
+      const slot = verificationEmailRowSlot(profile, 'uni')
+      if (slot) {
+        return (
+          <RenterProfileVerificationRow
+            value={profile.uni_email ?? ''}
+            rightSlot={slot}
+          />
+        )
+      }
+    }
     return (
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
         <span className="text-lg" aria-hidden>
@@ -183,13 +230,28 @@ export function StudentUniEmailVerification({
     )
   }
 
+  if (embeddedFilledEmail?.kind === 'action' && !editingEmail) {
+    return (
+      <RenterProfileVerificationRow
+        value={profile.uni_email ?? ''}
+        rightSlot={embeddedFilledEmail}
+        onAction={() => {
+          restartUniEmailEdit()
+          setEditingEmail(true)
+        }}
+      />
+    )
+  }
+
   return (
-    <div className="space-y-4">
+    <div className={blockClass}>
       {!codeSent ? (
-        <div>
-          <label htmlFor="uni-email-verify" className={labelClass}>
-            University email <span className="text-red-500">*</span>
-          </label>
+        <div className={variant === 'renter-profile' ? 'renter-profile-email-block' : undefined}>
+          {!hideFieldLabel ? (
+            <label htmlFor="uni-email-verify" className={labelClass}>
+              University email <span className="text-red-500">*</span>
+            </label>
+          ) : null}
           <input
             id="uni-email-verify"
             type="email"
@@ -203,15 +265,20 @@ export function StudentUniEmailVerification({
             placeholder="you@student.unsw.edu.au"
             className={inputClass}
           />
-          <p className="text-xs text-stone-500 mt-1.5">
+          <p className={hintClass}>
             Use your official student address (e.g. @student.unsw.edu.au), not your personal Gmail.
           </p>
           {sendError && (
-            <p className="text-xs text-red-600 mt-2" role="alert">
+            <p className={errorClass} role="alert">
               {sendError}
             </p>
           )}
-          <button type="button" className={`${coralBtn} mt-3`} disabled={sending} onClick={() => void sendCode()}>
+          <button
+            type="button"
+            className={variant === 'renter-profile' ? coralBtn : `${coralBtn} mt-3`}
+            disabled={sending}
+            onClick={() => void sendCode()}
+          >
             {sending ? 'Sending…' : 'Send code'}
           </button>
         </div>
@@ -222,7 +289,7 @@ export function StudentUniEmailVerification({
             <strong className="font-semibold text-stone-700">Gmail and other providers sometimes delay</strong>{' '}
             the first messages from a new sender (greylisting) - <strong>5–10 minutes</strong> is still normal.
           </p>
-          <div className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2.5 text-xs text-stone-700 space-y-1.5 mb-4">
+          <div className={waitBoxClass}>
             <p className="font-semibold text-stone-800">While you wait</p>
             <ul className="list-disc pl-4 space-y-1">
               <li>
@@ -253,7 +320,7 @@ export function StudentUniEmailVerification({
             )}
           </div>
           <label htmlFor="uni-otp" className={labelClass}>
-            6-digit code <span className="text-red-500">*</span>
+            6-digit code{variant !== 'renter-profile' ? <span className="text-red-500"> *</span> : null}
           </label>
           <input
             id="uni-otp"
@@ -271,11 +338,11 @@ export function StudentUniEmailVerification({
             placeholder="000000"
           />
           {verifyError && (
-            <p className="text-xs text-red-600 mt-2" role="alert">
+            <p className={errorClass} role="alert">
               {verifyError}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
+          <div className={actionsClass}>
             <button type="button" className={coralBtn} disabled={verifying} onClick={() => void verifyCode()}>
               {verifying ? 'Checking…' : 'Verify code'}
             </button>

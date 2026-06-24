@@ -1,6 +1,8 @@
 import type { User } from '@supabase/supabase-js'
 import { isRenterRole } from './authProfile'
 import { supabase } from './supabase'
+import { mergeSignupTermsIntoInsert } from './applyPendingSignupTerms'
+import { consumeSignupTermsAcceptedAt } from './quniSignupTerms'
 
 function displayNameFromUser(user: User): string {
   return (
@@ -28,19 +30,23 @@ export async function ensureSignupProfileRowAfterEmailConfirm(user: User): Promi
   const metaRole = user.user_metadata?.role
 
   if (metaRole === 'landlord') {
-    await supabase.from('landlord_profiles').insert({
+    const insertRow = mergeSignupTermsIntoInsert('landlord', {
       user_id: user.id,
       email,
       full_name: fullName,
     })
+    await supabase.from('landlord_profiles').insert(insertRow)
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
     return
   }
 
   if (isRenterRole(metaRole)) {
-    await supabase.from('student_profiles').insert({
+    const insertRow = mergeSignupTermsIntoInsert('renter', {
       user_id: user.id,
       email,
       full_name: fullName,
     })
+    await supabase.from('student_profiles').insert(insertRow)
+    if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()
   }
 }

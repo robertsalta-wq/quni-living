@@ -784,7 +784,7 @@ export default function LandlordOnboarding() {
   }
 
   if (role && role !== 'landlord') {
-    return <Navigate to={isRenterRole(role) ? '/onboarding/student' : '/'} replace />
+    return <Navigate to={isRenterRole(role) ? '/student-profile' : '/'} replace />
   }
 
   if (loading) {

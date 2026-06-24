@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="{{ shellStyle }}">
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#FEF9E4;padding:9px 24px 0;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#08060D">
+      <span>9:41</span>
+      <div style="display:flex;align-items:center;gap:5px"><svg width="16" height="11" viewBox="0 0 18 12" fill="#08060D"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="4.5" width="3" height="7.5" rx="1"/><rect x="9" y="2" width="3" height="10" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg><svg width="22" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="#08060D" stroke-width="1.2"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.2" fill="#08060D"/><rect x="22" y="4" width="1.6" height="4" rx=".8" fill="#08060D"/></svg></div>
+    </div>
+    <div style="background:#FEF9E4;border-bottom:1px solid #E8E0CC;padding:6px 18px 13px;display:flex;align-items:center;gap:12px">
+      <svg style="color:#2A2433" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span style="font-size:16px;font-weight:600;color:#08060D">Complete your profile</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isWeb }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#FEF9E4;border-bottom:1px solid #E8E0CC;padding:14px 30px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:30px">
+        <span style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#FF6F61;letter-spacing:-.02em">Quni</span>
+        <div style="display:flex;gap:22px;font-size:13.5px;font-weight:500;color:#4A4253">
+          <span>Browse</span><span>Saved</span><span>Bookings</span><span style="color:#08060D;font-weight:600">Profile</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:999px;background:#FF6F61;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">SP</div>
+        <span style="font-size:13.5px;font-weight:600;color:#2A2433">Sam</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="{{ outerStyle }}"><div style="{{ innerStyle }}">
+
+    <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);padding:16px 18px;display:flex;flex-direction:column;gap:11px;position:sticky;top:0">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897">Complete your profile</div>
+          <div style="margin-top:5px;font-size:22px;font-weight:700;color:#08060D;letter-spacing:-.01em">Profile <span style="color:#FF6F61">{{ pct }}</span> complete</div>
+        </div>
+        <div style="flex:none;text-align:right">
+          <div style="font-size:13px;font-weight:600;color:#2A2433">{{ rightTop }}</div>
+          <div style="font-size:12px;color:#908897;margin-top:2px">{{ rightSub }}</div>
+        </div>
+      </div>
+      <div style="height:8px;border-radius:999px;background:#F1EEEA;overflow:hidden"><div style="height:100%;background:#FF6F61;border-radius:999px;width:{{ barWidth }}"></div></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#4A4253;line-height:1.5">
+        <svg style="flex:none;margin-top:1px;color:#FF6F61" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <span>{{ driverText }}</span>
+      </div>
+    </div>
+
+    <dc-import name="SituationSection" collapsed="{{ collapsedVal }}" selected="{{ selectedVal }}" device="{{ device }}" hint-size="100%,140px"></dc-import>
+
+    <sc-for list="{{ sharedTop }}" as="s" hint-placeholder-count="2">
+      <dc-import name="ProfileSection" num="{{ s.num }}" icon="{{ s.icon }}" title="{{ s.title }}" status="{{ s.status }}" stack="{{ s.stack }}" summary="{{ s.summary }}" note="{{ s.note }}" fields="{{ s.fields }}" hint-size="100%,120px"></dc-import>
+    </sc-for>
+
+    <sc-if value="{{ isUnset }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff;border:1px dashed #DAD8DC;border-radius:16px;padding:17px 20px;display:flex;align-items:center;gap:14px">
+        <div style="flex:none;width:42px;height:42px;border-radius:12px;background:#F1EEEA;display:flex;align-items:center;justify-content:center;color:#A39CAC"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:baseline;gap:9px"><span style="font-size:12px;font-weight:700;color:#C9C4CE">03</span><span style="font-size:16px;font-weight:600;color:#908897">Your route details</span></div>
+          <div style="margin-top:3px;font-size:13px;color:#A39CAC">Choose your situation to unlock</div>
+        </div>
+        <span style="flex:none;display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;background:rgba(31,42,68,0.06);color:#908897;font-size:11px;font-weight:600;white-space:nowrap">Locked</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasRoute }}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{ routeSections }}" as="s" hint-placeholder-count="2">
+        <dc-import name="ProfileSection" num="{{ s.num }}" icon="{{ s.icon }}" title="{{ s.title }}" status="{{ s.status }}" stack="{{ s.stack }}" summary="{{ s.summary }}" note="{{ s.note }}" fields="{{ s.fields }}" hint-size="100%,120px"></dc-import>
+      </sc-for>
+    </sc-if>
+
+    <sc-for list="{{ sharedBottom }}" as="s" hint-placeholder-count="1">
+      <dc-import name="ProfileSection" num="{{ s.num }}" icon="{{ s.icon }}" title="{{ s.title }}" status="{{ s.status }}" stack="{{ s.stack }}" summary="{{ s.summary }}" note="{{ s.note }}" fields="{{ s.fields }}" hint-size="100%,120px"></dc-import>
+    </sc-for>
+
+    <div style="display:flex;align-items:center;gap:13px;margin:6px 2px 2px">
+      <div style="flex:1;height:1px;background:#E5E4E7"></div>
+      <span style="font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#A39CAC;white-space:nowrap;text-align:center">Optional · helps landlords match you</span>
+      <div style="flex:1;height:1px;background:#E5E4E7"></div>
+    </div>
+    <dc-import name="ProfileSection" num="{{ optionalAbout.num }}" icon="{{ optionalAbout.icon }}" title="{{ optionalAbout.title }}" status="{{ optionalAbout.status }}" stack="{{ optionalAbout.stack }}" summary="{{ optionalAbout.summary }}" fields="{{ optionalAbout.fields }}" hint-size="100%,80px"></dc-import>
+    <dc-import name="ProfileSection" num="{{ optionalPrefs.num }}" icon="{{ optionalPrefs.icon }}" title="{{ optionalPrefs.title }}" status="{{ optionalPrefs.status }}" summary="{{ optionalPrefs.summary }}" fields="{{ optionalPrefs.fields }}" hint-size="100%,80px"></dc-import>
+
+    <div style="margin-top:6px;display:flex;flex-direction:column;gap:10px;align-items:center">
+      <button disabled style="width:100%;background:#FF6F61;color:#fff;border:0;padding:14px;border-radius:12px;font-weight:600;font-size:15px;font-family:inherit;opacity:.45;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:9px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Request a booking</button>
+      <div style="font-size:12.5px;color:#908897">{{ footerText }}</div>
+    </div>
+
+  </div></div>
+
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#fff;border-top:1px solid #EFEDE9;padding:10px 36px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#A39CAC"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span style="font-size:10px;font-weight:500">Home</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#A39CAC"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span style="font-size:10px;font-weight:500">Search</span></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#FF6F61"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/></svg><span style="font-size:10px;font-weight:600">Profile</span></div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:820},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;unset&quot;,&quot;working&quot;,&quot;switching&quot;],&quot;default&quot;:&quot;unset&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;device&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;web&quot;,&quot;app&quot;],&quot;default&quot;:&quot;app&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const state = p.state || 'unset';
+    const device = p.device || 'app';
+    const isWeb = device === 'web';
+    const isApp = device === 'app';
+    const isUnset = state === 'unset';
+    const isWorking = state === 'working';
+    const isSwitching = state === 'switching';
+    const hasRoute = isWorking || isSwitching;
+
+    const f = (label, value, missing, type) => ({ label, value: value || '', missing: !!missing, type: type || 'text' });
+    const up = (label, value, missing) => ({ label, value: value || '', missing: !!missing, type: 'upload' });
+
+    const about = { num:'01', icon:'user', title:'Personal details', status:'done', summary:'Sam Patel · 26 · +61 423 110 904 · Indian', fields:[f('First name','Sam'),f('Last name','Patel'),f('Date of birth','09/06/2000'),f('Phone','+61 423 110 904'),f('Gender','Male'),f('Nationality','Indian'),up('Profile photo','sam-p.jpg')] };
+    const verifyEmail = isUnset
+      ? f('Personal email', 'sam.patel@gmail.com')
+      : f('Work email', 'sam.patel@brewco.com.au');
+    const verifySummary = isUnset
+      ? 'Government photo ID · Supporting document · Personal email'
+      : 'Government photo ID · Supporting document · Work email verified';
+    const verify = { num:'02', icon:'verify', title:'Verification', status:'done', stack:true, summary:verifySummary, fields:[up('Government photo ID','sam-licence.jpg'),up('Supporting document','medicare-card.jpg'),verifyEmail] };
+    const emergencyDone = { num:'04', icon:'emergency', title:'Emergency contact', status:'done', summary:'Priya Patel · Sibling · +61 423 556 110', fields:[f('Full name','Priya Patel'),f('Phone','+61 423 556 110'),f('Relationship','Sibling'),f('Email','priya.patel@gmail.com')] };
+    const emergencyTodo = { num:'04', icon:'emergency', title:'Emergency contact', status:'todo', fields:[f('Full name','Priya Patel'),f('Phone','',true),f('Relationship','Sibling'),f('Email','',true)] };
+
+    const employment = { num:'03', icon:'work', title:'Employment & income', status:'todo', fields:[f('Employer','Brew & Co Café'),f('Job title','Barista'),f('Employment type','Part-time'),f('Income band','Under $500 /wk'),f('Work location','',true)] };
+    const guarantor = { num:'', icon:'guarantor', title:'Guarantor', status:'todo', stack:true, note:'Shown because your declared income is low or not yet verified. A guarantor agrees to cover the rent if you can\u2019t.', fields:[f('Full name','',true),f('Relationship','Parent'),f('Income band','',true),{ label:'Consent', type:'checkbox', checked:false, missing:true, text:'I confirm this person agrees to act as my guarantor' }] };
+
+    const optionalAbout = { num:'05', icon:'bio', title:'About you', status:'optional', stack:true, summary:'A short intro and the languages you speak', fields:[{label:'Bio',value:'',type:'textarea'}, f('Languages spoken','')] };
+    const optionalPrefs = { num:'06', icon:'prefs', title:'Living preferences', status:'optional', summary:'Budget, room type, move-in & lifestyle — 12 optional details', fields:[f('Room type preference',''),f('Weekly budget — min',''),f('Weekly budget — max',''),f('Occupancy type',''),f('Preferred move-in date',''),f('Move-in flexibility',''),f('Preferred lease length',''),f('Smoker',''),f('Pets',''),f('Parking needed',''),f('Bills preference',''),f('Furnishing preference','')] };
+
+    const routeSections = hasRoute ? [employment, guarantor] : [];
+    const sharedTop = [about, verify];
+    const sharedBottom = [hasRoute ? emergencyDone : emergencyTodo];
+
+    let pct, rightTop, rightSub, driverText, footerText;
+    if (isUnset) {
+      pct = '50%'; rightTop = '2 of 4 required done'; rightSub = 'Choose your situation';
+      driverText = 'Choose your situation to unlock the rest of your profile.';
+      footerText = 'Pick your situation to continue';
+    } else {
+      pct = '70%'; rightTop = '3 of 4 required done'; rightSub = '1 section to go';
+      driverText = 'Finish Employment & income and add a guarantor to request a booking.';
+      footerText = '1 required section left';
+    }
+
+    const shellStyle = isWeb
+      ? 'background:#fff;border:1px solid #ECEAE4;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;font-family:\'Inter\',system-ui,sans-serif'
+      : 'background:#F8F6F1;border:1px solid #ECEAE4;border-radius:30px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;font-family:\'Inter\',system-ui,sans-serif';
+    const outerStyle = isWeb ? 'background:#F8F6F1;padding:34px 0 42px' : 'background:transparent;padding:0';
+    const innerStyle = isWeb ? 'max-width:744px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column;gap:16px' : 'padding:16px 16px 20px;display:flex;flex-direction:column;gap:14px';
+
+    return {
+      isWeb, isApp, isUnset, isWorking, isSwitching, hasRoute, device,
+      collapsedVal: isWorking,
+      selectedVal: isWorking ? 'working' : (isSwitching ? 'retired' : ''),
+      routeSections, sharedTop, sharedBottom, optionalAbout, optionalPrefs,
+      pct, rightTop, rightSub, driverText, footerText, barWidth: pct,
+      shellStyle, outerStyle, innerStyle
+    };
+  }
+}
+</script>
+</body>
+</html>
