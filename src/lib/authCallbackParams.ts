@@ -124,6 +124,17 @@ export function isPasswordRecoveryCallbackHash(hash: string): boolean {
   return params.get('type') === 'recovery'
 }
 
+/**
+ * Supabase may substitute `.RedirectTo` with Site URL (no path) when `emailRedirectTo` is not
+ * allow-listed — links then land on `/?token_hash=…`. Forward those to `/auth/callback`.
+ */
+export function apexAuthTokenRedirectPath(pathname: string, search: string): string | null {
+  const path = pathname.replace(/\/$/, '') || '/'
+  if (path !== '/') return null
+  if (!parseAuthTokenHashFromSearch(search)) return null
+  return `/auth/callback${search}`
+}
+
 /** Remove one-time auth params so refresh does not retry verification. */
 export function stripSensitiveAuthCallbackQueryParams(): void {
   if (typeof window === 'undefined') return

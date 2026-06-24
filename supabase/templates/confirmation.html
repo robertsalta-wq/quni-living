@@ -26,7 +26,7 @@
         </p>
         <p style="margin: 0 0 24px">
           <a
-            href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup"
+            href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup"
             style="
               background-color: #ff6f61;
               color: #ffffff;
@@ -43,7 +43,7 @@
           If the button doesn&apos;t work, copy and paste this link into your browser:
         </p>
         <p style="margin: 0 0 24px; color: #666666; font-size: 13px; word-break: break-all">
-          {{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=signup
+          {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=signup
         </p>
         <p style="margin: 0; color: #888888; font-size: 14px">
           If you didn&apos;t create an account with Quni Living, you can safely ignore this email.

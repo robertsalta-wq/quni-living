@@ -1,5 +1,6 @@
 import { Suspense, useLayoutEffect } from 'react'
-import { Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { apexAuthTokenRedirectPath } from './lib/authCallbackParams'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { OnboardingResumeBanner } from './components/OnboardingResumeBanner'
@@ -30,10 +31,16 @@ function AdminPropertyFeesDeepLinkRedirect() {
 
 function App() {
   const location = useLocation()
+  const navigate = useNavigate()
 
   useLayoutEffect(() => {
+    const authRedirect = apexAuthTokenRedirectPath(location.pathname, location.search)
+    if (authRedirect) {
+      navigate(authRedirect, { replace: true })
+      return
+    }
     prefetchRouteChunks(location.pathname)
-  }, [location.pathname])
+  }, [location.pathname, location.search, navigate])
 
   const adminShell = location.pathname.startsWith('/admin')
   const aiLandingShell = location.pathname === '/landlords/ai'

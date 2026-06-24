@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  apexAuthTokenRedirectPath,
   isPasswordRecoveryCallbackHash,
   isPasswordRecoveryCallbackSearch,
   parseAuthTokenHashFromSearch,
@@ -45,6 +46,19 @@ describe('parseAuthTokenHashFromSearch', () => {
       token_hash: 'b',
       type: 'recovery',
     })
+  })
+})
+
+describe('apexAuthTokenRedirectPath', () => {
+  it('forwards apex token_hash links to /auth/callback', () => {
+    expect(apexAuthTokenRedirectPath('/', '?token_hash=abc&type=signup')).toBe(
+      '/auth/callback?token_hash=abc&type=signup',
+    )
+  })
+
+  it('ignores non-apex paths and unrelated query strings', () => {
+    expect(apexAuthTokenRedirectPath('/listings', '?token_hash=abc&type=signup')).toBeNull()
+    expect(apexAuthTokenRedirectPath('/', '?foo=bar')).toBeNull()
   })
 })
 
