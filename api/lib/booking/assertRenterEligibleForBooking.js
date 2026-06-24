@@ -60,6 +60,7 @@ export function renterBookingEligibilityBlock(
 
 const READINESS_PROFILE_SELECT = [
   'id',
+  'renter_situation',
   'verification_type',
   'accommodation_verification_route',
   'terms_accepted_at',

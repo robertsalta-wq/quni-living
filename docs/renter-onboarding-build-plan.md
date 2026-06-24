@@ -243,7 +243,7 @@ bypasses (§2). Tests for Lucy scenario.
 | 0 Decisions | Done | This doc |
 | 1 Signup / route deferral | Done (code) | Migration draft for Rob |
 | 2 RenterReadiness | Done (code) | Unified gates + Lucy tests |
-| 3 Schema | Not started | |
+| 3 Schema | Done (code) | Migration applied on prod |
 | 4 Profile UI | Not started | |
 | 5 Search persona | Not started | |
 | 6 Landlord + booking lock | Not started | |

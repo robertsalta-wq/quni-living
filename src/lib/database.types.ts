@@ -555,6 +555,31 @@ export interface Database {
           workplace_latitude: number | null
           workplace_longitude: number | null
           workplace_geocoded_at: string | null
+          renter_situation:
+            | 'student'
+            | 'working'
+            | 'working_holiday'
+            | 'backpacker'
+            | 'retired'
+            | 'between_jobs'
+            | null
+          employment_status: string | null
+          employer_name: string | null
+          job_title: string | null
+          employment_type: string | null
+          income_band: string | null
+          income_source: string | null
+          guarantor_relationship: string | null
+          guarantor_phone: string | null
+          guarantor_email: string | null
+          guarantor_income_band: string | null
+          guarantor_consent: boolean | null
+          visa_status: string | null
+          visa_subclass: string | null
+          visa_expiry: string | null
+          visa_doc_url: string | null
+          visa_submitted_at: string | null
+          visa_doc_name: string | null
           created_at: string
         }
         Insert: {
@@ -623,6 +648,31 @@ export interface Database {
           workplace_latitude?: number | null
           workplace_longitude?: number | null
           workplace_geocoded_at?: string | null
+          renter_situation?:
+            | 'student'
+            | 'working'
+            | 'working_holiday'
+            | 'backpacker'
+            | 'retired'
+            | 'between_jobs'
+            | null
+          employment_status?: string | null
+          employer_name?: string | null
+          job_title?: string | null
+          employment_type?: string | null
+          income_band?: string | null
+          income_source?: string | null
+          guarantor_relationship?: string | null
+          guarantor_phone?: string | null
+          guarantor_email?: string | null
+          guarantor_income_band?: string | null
+          guarantor_consent?: boolean | null
+          visa_status?: string | null
+          visa_subclass?: string | null
+          visa_expiry?: string | null
+          visa_doc_url?: string | null
+          visa_submitted_at?: string | null
+          visa_doc_name?: string | null
           created_at?: string
         }
         Update: {
@@ -691,6 +741,31 @@ export interface Database {
           workplace_latitude?: number | null
           workplace_longitude?: number | null
           workplace_geocoded_at?: string | null
+          renter_situation?:
+            | 'student'
+            | 'working'
+            | 'working_holiday'
+            | 'backpacker'
+            | 'retired'
+            | 'between_jobs'
+            | null
+          employment_status?: string | null
+          employer_name?: string | null
+          job_title?: string | null
+          employment_type?: string | null
+          income_band?: string | null
+          income_source?: string | null
+          guarantor_relationship?: string | null
+          guarantor_phone?: string | null
+          guarantor_email?: string | null
+          guarantor_income_band?: string | null
+          guarantor_consent?: boolean | null
+          visa_status?: string | null
+          visa_subclass?: string | null
+          visa_expiry?: string | null
+          visa_doc_url?: string | null
+          visa_submitted_at?: string | null
+          visa_doc_name?: string | null
           created_at?: string
         }
         Relationships: [

@@ -2,6 +2,10 @@ import type { Database } from './database.types'
 import { INCOMPLETE_RENTER_DESTINATION } from './authProfile'
 import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
+  effectiveAccommodationRoute,
+  hasRenterSituationChosen,
+} from './renterSituation'
+import {
   isNonStudentAccommodationRoute,
   isStep1Saved,
   isStep1SavedIdentityPath,
@@ -43,11 +47,13 @@ function hasDoc(url: string | null | undefined, submittedAt: string | null | und
 export function computeVerificationTierEligible(
   profile: StudentProfileRow | null | undefined,
 ): VerificationTier {
-  if (!profile?.accommodation_verification_route) return 'none'
+  if (!profile) return 'none'
+  const route = effectiveAccommodationRoute(profile)
+  if (!route) return 'none'
 
   const idOk = hasDoc(profile.id_document_url, profile.id_submitted_at)
 
-  if (!isNonStudentAccommodationRoute(profile.accommodation_verification_route)) {
+  if (!isNonStudentAccommodationRoute(route)) {
     if (!isStudentUniEmailVerified(profile) || !idOk) return 'none'
     if (!hasDoc(profile.enrolment_doc_url, profile.enrolment_submitted_at)) return 'none'
     return 'student'
@@ -78,15 +84,15 @@ export function tierToPromote(
   return eligible === 'none' ? null : eligible
 }
 
-function personalComplete(profile: StudentProfileRow): boolean {
-  if (isNonStudentAccommodationRoute(profile.accommodation_verification_route)) {
+function personalComplete(profile: StudentProfileRow, route: NonNullable<ReturnType<typeof effectiveAccommodationRoute>>): boolean {
+  if (isNonStudentAccommodationRoute(route)) {
     return isStep1SavedIdentityPath(profile)
   }
   return isStep1Saved(profile)
 }
 
-function studentRouteEmailComplete(profile: StudentProfileRow): boolean {
-  if (isNonStudentAccommodationRoute(profile.accommodation_verification_route)) return true
+function studentRouteEmailComplete(profile: StudentProfileRow, route: ReturnType<typeof effectiveAccommodationRoute>): boolean {
+  if (!route || isNonStudentAccommodationRoute(route)) return true
   return isStudentUniEmailVerified(profile)
 }
 
@@ -112,22 +118,23 @@ export function computeRenterReadiness(
     }
   }
 
-  const situationRoute = profile.accommodation_verification_route != null
-  const personal = personalComplete(profile)
+  const situationChosen = hasRenterSituationChosen(profile)
+  const route = effectiveAccommodationRoute(profile)
+  const personal = route ? personalComplete(profile, route) : false
   const terms = Boolean(profile.terms_accepted_at)
   const emergency = isStep2Saved(profile)
   const verificationTierEligible = computeVerificationTierEligible(profile)
   const effectiveTier = effectiveVerificationTier(profile)
   const verification = effectiveTier !== 'none'
 
-  const studentRoute = situationRoute && !isNonStudentAccommodationRoute(profile.accommodation_verification_route)
-  const uniEmailOk = studentRouteEmailComplete(profile)
+  const studentRoute = situationChosen && route != null && !isNonStudentAccommodationRoute(route)
+  const uniEmailOk = studentRouteEmailComplete(profile, route)
 
   const profileSetupComplete =
-    situationRoute && personal && terms && emergency && uniEmailOk
+    situationChosen && route != null && personal && terms && emergency && uniEmailOk
 
   const blocksBooking: string[] = []
-  if (!situationRoute) blocksBooking.push('Choose your situation')
+  if (!situationChosen) blocksBooking.push('Choose your situation')
   if (!personal) blocksBooking.push('Complete personal details')
   if (!terms) blocksBooking.push('Accept Terms of Service')
   if (!emergency) blocksBooking.push('Add emergency contact')
@@ -144,9 +151,9 @@ export function computeRenterReadiness(
   const canBrowseListings = Boolean(profile.user_id)
 
   return {
-    route: profile.accommodation_verification_route,
+    route,
     sections: {
-      situationRoute,
+      situationRoute: situationChosen,
       personal,
       terms,
       emergency,
@@ -207,7 +214,8 @@ export function buildRenterReadinessChecklistSteps(
 ): RenterChecklistStep[] {
   const readiness = computeRenterReadiness(profile)
   const p = profile ?? null
-  const studentRoute = p != null && !isNonStudentAccommodationRoute(p.accommodation_verification_route)
+  const route = p ? effectiveAccommodationRoute(p) : null
+  const studentRoute = route != null && !isNonStudentAccommodationRoute(route)
   const photoOk = Boolean(p?.avatar_url?.trim())
 
   const steps: RenterChecklistStep[] = [
@@ -241,7 +249,7 @@ export function buildRenterReadinessChecklistSteps(
         actionLabel: 'Verify →',
       })
     }
-  } else if (p?.accommodation_verification_route != null) {
+  } else if (route != null && isNonStudentAccommodationRoute(route)) {
     steps.push({
       id: 'identity_verify',
       label: 'Verify your identity (photo ID + supporting document)',
@@ -297,6 +305,7 @@ export function isRenterChecklistFullyComplete(steps: RenterChecklistStep[]): bo
 /** Minimal profile shape for API booking eligibility (live tier computation). */
 export type RenterReadinessProfileSnapshot = Pick<
   Database['public']['Tables']['student_profiles']['Row'],
+  | 'renter_situation'
   | 'accommodation_verification_route'
   | 'verification_type'
   | 'terms_accepted_at'

@@ -18,6 +18,7 @@ function mockLocalStorage() {
 
 function baseProfile(overrides: Partial<StudentProfileRow> = {}): StudentProfileRow {
   return {
+    renter_situation: 'student',
     accommodation_verification_route: 'student',
     uni_email_verified: true,
     uni_email: 'alex@uni.edu.au',
@@ -51,9 +52,18 @@ describe('renterOnboardingIncomplete', () => {
   })
 
   it('is incomplete when route is unset', () => {
-    expect(renterOnboardingIncomplete(baseProfile({ accommodation_verification_route: null }), 'user-1')).toBe(
+    expect(renterOnboardingIncomplete(baseProfile({ accommodation_verification_route: null, renter_situation: null }), 'user-1')).toBe(
       true,
     )
+  })
+
+  it('is incomplete when situation is unset even if legacy route remains', () => {
+    expect(
+      renterOnboardingIncomplete(
+        baseProfile({ renter_situation: null, accommodation_verification_route: 'non_student' }),
+        'user-1',
+      ),
+    ).toBe(true)
   })
 
   it('is incomplete when student route lacks uni email verification', () => {
@@ -95,6 +105,7 @@ describe('renterOnboardingIncomplete', () => {
 
   it('uses identity-path step 1 for non-student route', () => {
     const p = baseProfile({
+      renter_situation: 'working',
       accommodation_verification_route: 'non_student',
       university_id: null,
       course: null,

@@ -13,6 +13,23 @@ function isNonStudentRoute(route) {
   return route === 'non_student' || route === 'identity'
 }
 
+function deriveAccommodationRouteFromSituation(situation) {
+  const s = typeof situation === 'string' ? situation.trim() : ''
+  if (!s) return null
+  return s === 'student' ? 'student' : 'non_student'
+}
+
+function effectiveAccommodationRoute(profile) {
+  if (profile?.accommodation_verification_route != null) {
+    return profile.accommodation_verification_route
+  }
+  return deriveAccommodationRouteFromSituation(profile?.renter_situation)
+}
+
+function hasRenterSituationChosen(profile) {
+  return profile?.renter_situation != null
+}
+
 function isStudentUniEmailVerified(profile) {
   return Boolean(profile?.uni_email_verified && profile?.uni_email)
 }
@@ -53,11 +70,13 @@ function isStep2Saved(p) {
  * @returns {'student' | 'identity' | 'none'}
  */
 export function computeVerificationTierEligible(profile) {
-  if (!profile?.accommodation_verification_route) return 'none'
+  if (!profile) return 'none'
+  const route = effectiveAccommodationRoute(profile)
+  if (!route) return 'none'
 
   const idOk = hasDoc(profile.id_document_url, profile.id_submitted_at)
 
-  if (!isNonStudentRoute(profile.accommodation_verification_route)) {
+  if (!isNonStudentRoute(route)) {
     if (!isStudentUniEmailVerified(profile) || !idOk) return 'none'
     if (!hasDoc(profile.enrolment_doc_url, profile.enrolment_submitted_at)) return 'none'
     return 'student'
@@ -94,22 +113,25 @@ export function computeRenterReadiness(profile) {
     }
   }
 
-  const situationRoute = profile.accommodation_verification_route != null
-  const personal = isNonStudentRoute(profile.accommodation_verification_route)
-    ? isStep1SavedIdentityPath(profile)
-    : isStep1Saved(profile)
+  const situationChosen = hasRenterSituationChosen(profile)
+  const route = effectiveAccommodationRoute(profile)
+  const personal = route
+    ? isNonStudentRoute(route)
+      ? isStep1SavedIdentityPath(profile)
+      : isStep1Saved(profile)
+    : false
   const terms = Boolean(profile.terms_accepted_at)
   const emergency = isStep2Saved(profile)
-  const studentRoute = situationRoute && !isNonStudentRoute(profile.accommodation_verification_route)
+  const studentRoute = situationChosen && route != null && !isNonStudentRoute(route)
   const uniEmailOk = !studentRoute || isStudentUniEmailVerified(profile)
   const effectiveTier = effectiveVerificationTier(profile)
   const verification = effectiveTier !== 'none'
 
   const profileSetupComplete =
-    situationRoute && personal && terms && emergency && uniEmailOk
+    situationChosen && route != null && personal && terms && emergency && uniEmailOk
 
   const blocksBooking = []
-  if (!situationRoute) blocksBooking.push('Choose your situation')
+  if (!situationChosen) blocksBooking.push('Choose your situation')
   if (!personal) blocksBooking.push('Complete personal details')
   if (!terms) blocksBooking.push('Accept Terms of Service')
   if (!emergency) blocksBooking.push('Add emergency contact')

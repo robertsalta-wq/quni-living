@@ -10,6 +10,7 @@ import { isStudentListingActionsUnlocked } from './onboardingChecklist'
 
 function lucyProfile(overrides: Partial<StudentProfileRow> = {}): StudentProfileRow {
   return {
+    renter_situation: 'student',
     accommodation_verification_route: 'student',
     verification_type: 'none',
     onboarding_complete: true,
@@ -79,6 +80,7 @@ describe('tierToPromote', () => {
 describe('non-student route readiness', () => {
   function nonStudentBase(overrides: Partial<StudentProfileRow> = {}): StudentProfileRow {
     return {
+      renter_situation: 'working',
       accommodation_verification_route: 'non_student',
       verification_type: 'none',
       terms_accepted_at: '2026-01-01T00:00:00Z',
@@ -112,5 +114,16 @@ describe('non-student route readiness', () => {
     })
     expect(computeRenterReadiness(p).canRequestBooking).toBe(true)
     expect(tierToPromote(p)).toBe(null)
+  })
+
+  it('blocks legacy non_student rows until situation is chosen', () => {
+    const legacy = nonStudentBase({
+      renter_situation: null,
+      accommodation_verification_route: 'non_student',
+    })
+    const readiness = computeRenterReadiness(legacy)
+    expect(readiness.sections.situationRoute).toBe(false)
+    expect(readiness.blocksBooking).toContain('Choose your situation')
+    expect(readiness.canRequestBooking).toBe(false)
   })
 })

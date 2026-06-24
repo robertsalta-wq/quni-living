@@ -8,6 +8,7 @@ import { isTenantCoreProfileComplete } from './studentOnboarding'
 
 function baseProfile(overrides: Partial<StudentProfileRow> = {}): StudentProfileRow {
   return {
+    renter_situation: 'working',
     accommodation_verification_route: 'non_student',
     verification_type: 'none',
     terms_accepted_at: '2026-01-01T00:00:00Z',
