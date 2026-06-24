@@ -12,7 +12,7 @@ import { runExpireListingBondPendingBooking } from '../lib/booking/expireListing
 import {
   landlordResponseExpiryLabel,
   resolveLandlordResponseExpiryTier,
-} from '../src/lib/booking/landlordResponseExpiry.js'
+} from '../lib/booking/landlordResponseExpiry.js'
 
 export const config = { runtime: 'edge' }
 

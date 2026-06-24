@@ -9,7 +9,7 @@ import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplate
 import {
   landlordResponseExpiryLabel,
   resolveLandlordResponseExpiryTier,
-} from '../src/lib/booking/landlordResponseExpiry.js'
+} from './lib/booking/landlordResponseExpiry.js'
 import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
 import { buildBookingRejectVisibility, recordJourneyEvent } from './lib/booking/captureBookingRejected.js'
 import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'

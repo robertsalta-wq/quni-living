@@ -61,7 +61,7 @@ import {
   isListingServiceTier,
 } from './lib/booking/listingBookingApply.js'
 import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
-import { landlordResponseExpiresAtIso } from '../src/lib/booking/landlordResponseExpiry.js'
+import { landlordResponseExpiresAtIso } from './lib/booking/landlordResponseExpiry.js'
 
 export const config = { runtime: 'edge' }
 
