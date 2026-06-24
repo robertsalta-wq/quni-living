@@ -101,6 +101,17 @@ export function effectiveVerificationTier(profile) {
 }
 
 /**
+ * Target verification_type from live eligibility, or null if already aligned.
+ * @param {import('./renterReadiness.js').RenterReadinessProfileSnapshot | null | undefined} profile
+ * @returns {'student' | 'identity' | 'none' | null}
+ */
+export function tierToSync(profile) {
+  if (!profile) return null
+  const target = computeVerificationTierEligible(profile)
+  return profile.verification_type === target ? null : target
+}
+
+/**
  * @param {import('./renterReadiness.js').RenterReadinessProfileSnapshot | null | undefined} profile
  */
 export function computeRenterReadiness(profile) {

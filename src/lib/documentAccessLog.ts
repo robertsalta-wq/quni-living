@@ -1,7 +1,8 @@
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
-export type VerificationDocumentType = Database['public']['Tables']['document_access_log']['Row']['document_type']
+export type VerificationDocumentType =
+  Database['public']['Tables']['document_access_log']['Row']['document_type']
 
 export function verificationDocumentTypeLabel(type: VerificationDocumentType): string {
   switch (type) {
@@ -11,6 +12,8 @@ export function verificationDocumentTypeLabel(type: VerificationDocumentType): s
       return 'Enrolment'
     case 'identity_supporting_doc':
       return 'Supporting document'
+    case 'visa_doc':
+      return 'Visa document'
   }
 }
 

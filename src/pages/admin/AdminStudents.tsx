@@ -114,6 +114,15 @@ export default function AdminStudents() {
     return rows.find((row) => row.id === selectedProfileId) ?? null
   }, [selectedProfileId, rows])
 
+  const handleProfileUpdated = useCallback(
+    (profile: Database['public']['Tables']['student_profiles']['Row']) => {
+      setRows((prev) =>
+        prev.map((row) => (row.id === profile.id ? { ...row, ...profile } : row)),
+      )
+    },
+    [],
+  )
+
   useEffect(() => {
     const profileId = selected?.id
     if (!profileId) return
@@ -264,7 +273,9 @@ export default function AdminStudents() {
           ) : null
         }
       >
-        {selected ? <AdminStudentVerificationDrawer row={selected} /> : null}
+        {selected ? (
+          <AdminStudentVerificationDrawer row={selected} onProfileUpdated={handleProfileUpdated} />
+        ) : null}
       </DetailDrawer>
     </div>
   )

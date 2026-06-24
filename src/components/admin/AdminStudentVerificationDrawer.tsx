@@ -5,7 +5,7 @@ import { formatLanguagesSpoken, normalizeLanguagesSpoken } from '../../lib/langu
 import { LEASE_LENGTH_OPTIONS, isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { formatStudentOccupancyType } from '../../lib/studentOccupancyOptions'
 import { Eyebrow } from './primitives'
-import { AdminVerificationDocLink } from './AdminVerificationDocLink'
+import { AdminVerificationReviewItem } from './AdminVerificationReviewItem'
 import { formatDate } from '../../pages/admin/adminUi'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row'] & {
@@ -170,10 +170,16 @@ function KV({ rows }: { rows: Array<[string, ReactNode]> }) {
 }
 
 /**
- * Admin renter profile detail (display-only). Profile opens are audit-logged via
- * profileAccessLog; document file opens via {@link AdminVerificationDocLink}.
+ * Admin renter profile detail. Profile opens are audit-logged via profileAccessLog;
+ * document file opens via {@link AdminVerificationDocLink} inside review items.
  */
-export function AdminStudentVerificationDrawer({ row }: { row: StudentRow }) {
+export function AdminStudentVerificationDrawer({
+  row,
+  onProfileUpdated,
+}: {
+  row: StudentRow
+  onProfileUpdated: (profile: Database['public']['Tables']['student_profiles']['Row']) => void
+}) {
   const bio = row.bio?.trim()
 
   return (
@@ -268,29 +274,49 @@ export function AdminStudentVerificationDrawer({ row }: { row: StudentRow }) {
 
         <p className="mt-4 mb-0 text-[12px] leading-relaxed text-admin-ink-4">Verification documents</p>
         <p className="mt-1 mb-0 text-[12px] leading-relaxed text-admin-ink-4">
-          Private files in Australian storage. Open links expire after one hour.
+          Private files in Australian storage. Open links expire after one hour. Staff actions update
+          the same per-document columns renters see in §02/§03.
         </p>
         <div className="mt-3 flex flex-col gap-2">
-          <AdminVerificationDocLink
+          <AdminVerificationReviewItem
+            row={row}
+            item="id_document"
             label="Photo ID"
-            filePath={row.id_document_url}
-            submittedAt={row.id_submitted_at}
-            studentProfileId={row.id}
-            documentType="id_document"
+            onProfileUpdated={onProfileUpdated}
           />
-          <AdminVerificationDocLink
+          <AdminVerificationReviewItem
+            row={row}
+            item="enrolment_doc"
             label="Proof of enrolment"
-            filePath={row.enrolment_doc_url}
-            submittedAt={row.enrolment_submitted_at}
-            studentProfileId={row.id}
-            documentType="enrolment_doc"
+            onProfileUpdated={onProfileUpdated}
           />
-          <AdminVerificationDocLink
+          <AdminVerificationReviewItem
+            row={row}
+            item="identity_supporting_doc"
             label="Supporting identity document"
-            filePath={row.identity_supporting_doc_url}
-            submittedAt={row.identity_supporting_submitted_at}
-            studentProfileId={row.id}
-            documentType="identity_supporting_doc"
+            onProfileUpdated={onProfileUpdated}
+          />
+          <AdminVerificationReviewItem
+            row={row}
+            item="visa_doc"
+            label="Visa document"
+            onProfileUpdated={onProfileUpdated}
+          />
+        </div>
+
+        <p className="mt-4 mb-0 text-[12px] leading-relaxed text-admin-ink-4">Verifiable emails</p>
+        <div className="mt-3 flex flex-col gap-2">
+          <AdminVerificationReviewItem
+            row={row}
+            item="uni_email"
+            label="University email"
+            onProfileUpdated={onProfileUpdated}
+          />
+          <AdminVerificationReviewItem
+            row={row}
+            item="work_email"
+            label="Work email"
+            onProfileUpdated={onProfileUpdated}
           />
         </div>
       </div>

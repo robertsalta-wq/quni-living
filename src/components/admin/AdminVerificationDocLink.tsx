@@ -12,6 +12,8 @@ type Props = {
   submittedAt: string | null | undefined
   studentProfileId: string
   documentType: VerificationDocumentType
+  /** When true, render only the Open control (for embedding in review cards). */
+  compact?: boolean
 }
 
 /**
@@ -25,6 +27,7 @@ export function AdminVerificationDocLink({
   submittedAt,
   studentProfileId,
   documentType,
+  compact = false,
 }: Props) {
   const path = filePath?.trim() ?? ''
   const hasDoc = path.length > 0 && submittedAt != null && String(submittedAt).trim() !== ''
@@ -65,6 +68,31 @@ export function AdminVerificationDocLink({
     }
   }
 
+  const openControl = !hasDoc ? (
+    <span className="shrink-0 text-[12px] text-admin-ink-5">Not submitted</span>
+  ) : openError ? (
+    <button
+      type="button"
+      onClick={() => void handleOpen()}
+      className="shrink-0 text-[12px] font-medium text-admin-danger-fg hover:underline"
+    >
+      Retry
+    </button>
+  ) : (
+    <button
+      type="button"
+      disabled={opening}
+      onClick={() => void handleOpen()}
+      className="shrink-0 rounded-admin-sm border border-admin-line bg-white px-2.5 py-1 text-[12px] font-semibold text-indigo-800 hover:bg-indigo-50 disabled:opacity-60"
+    >
+      {opening ? 'Opening…' : 'Open'}
+    </button>
+  )
+
+  if (compact) {
+    return openControl
+  }
+
   return (
     <div className="rounded-admin-sm border border-admin-line bg-admin-surface-2 px-3 py-2.5">
       <div className="flex items-start justify-between gap-3">
@@ -74,26 +102,7 @@ export function AdminVerificationDocLink({
             <p className="m-0 mt-0.5 text-[12px] text-admin-ink-5">Submitted {formatDate(submittedAt)}</p>
           ) : null}
         </div>
-        {!hasDoc ? (
-          <span className="shrink-0 text-[12px] text-admin-ink-5">Not submitted</span>
-        ) : openError ? (
-          <button
-            type="button"
-            onClick={() => void handleOpen()}
-            className="shrink-0 text-[12px] font-medium text-admin-danger-fg hover:underline"
-          >
-            Retry
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={opening}
-            onClick={() => void handleOpen()}
-            className="shrink-0 rounded-admin-sm border border-admin-line bg-white px-2.5 py-1 text-[12px] font-semibold text-indigo-800 hover:bg-indigo-50 disabled:opacity-60"
-          >
-            {opening ? 'Opening…' : 'Open'}
-          </button>
-        )}
+        {openControl}
       </div>
     </div>
   )

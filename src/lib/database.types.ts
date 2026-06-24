@@ -146,7 +146,7 @@ export interface Database {
           admin_user_id: string
           admin_email: string
           student_profile_id: string
-          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc'
+          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc' | 'visa_doc'
           viewed_at: string
         }
         Insert: {
@@ -154,7 +154,7 @@ export interface Database {
           admin_user_id: string
           admin_email: string
           student_profile_id: string
-          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc'
+          document_type: 'id_document' | 'enrolment_doc' | 'identity_supporting_doc' | 'visa_doc'
           viewed_at?: string
         }
         Update: {
