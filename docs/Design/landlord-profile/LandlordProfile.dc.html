@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+</helmet>
+<div style="width:100%;max-width:760px;margin:0 auto;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;color:#4A4253;-webkit-font-smoothing:antialiased">
+
+  <!-- ============ PINNED DRIVER ============ -->
+  <div style="position:sticky;top:0;z-index:5;background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);padding:20px 22px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+      <div style="min-width:0">
+        <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0">{{ driverEyebrow }}</p>
+        <p style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:#08060D;letter-spacing:-.02em;margin:5px 0 0;line-height:1.12;text-wrap:balance">{{ driverTitle }}</p>
+      </div>
+      <div style="text-align:right;flex:none">
+        <p style="font-family:'Inter',sans-serif;font-size:19px;font-weight:700;color:#08060D;margin:0;font-variant-numeric:tabular-nums">{{ activeFrac }}</p>
+        <p style="font-size:11px;color:#908897;margin:2px 0 0;max-width:120px">{{ activeFracLabel }}</p>
+      </div>
+    </div>
+
+    <!-- two-step milestone track -->
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+      <div style="{{ pubChipStyle }}">
+        <span style="{{ pubDotStyle }}"><sc-if value="{{ gatePublishDone }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></sc-if><sc-if value="{{ publishOpen }}" hint-placeholder-val="{{ true }}">1</sc-if></span>
+        <span>Publish a listing</span>
+      </div>
+      <span style="flex:1;height:2px;border-radius:2px;background:{{ connectorColor }};min-width:18px"></span>
+      <div style="{{ accChipStyle }}">
+        <span style="{{ accDotStyle }}"><sc-if value="{{ gateAcceptDone }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></sc-if><sc-if value="{{ acceptOpen }}" hint-placeholder-val="{{ true }}">2</sc-if></span>
+        <span>Accept bookings</span>
+      </div>
+    </div>
+
+    <div style="height:8px;background:#F4F3EC;border-radius:999px;margin:14px 0 12px;overflow:hidden"><div style="{{ barFillStyle }}"></div></div>
+
+    <sc-if value="{{ phase1 }}" hint-placeholder-val="{{ true }}">
+      <p style="display:flex;align-items:flex-start;gap:8px;font-size:14px;font-weight:600;color:#B7791F;margin:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>{{ driverLine }}</span>
+      </p>
+    </sc-if>
+    <sc-if value="{{ phase2 }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <p style="display:flex;align-items:flex-start;gap:8px;font-size:14px;font-weight:700;color:#0F6E56;margin:0 0 6px">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="flex:none;margin-top:1px"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>
+          <span>You can publish a listing now.</span>
+        </p>
+        <p style="display:flex;align-items:flex-start;gap:8px;font-size:13.5px;color:#6B6375;margin:0;padding-left:24px">{{ driverLine }}</p>
+      </div>
+    </sc-if>
+    <sc-if value="{{ phase3 }}" hint-placeholder-val="{{ false }}">
+      <p style="display:flex;align-items:flex-start;gap:8px;font-size:14px;font-weight:600;color:#0F6E56;margin:0">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="flex:none;margin-top:1px"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>
+        <span>{{ driverLine }}</span>
+      </p>
+    </sc-if>
+  </div>
+
+  <!-- ============ STEP 1 GROUP HEADER ============ -->
+  <div style="display:flex;align-items:center;gap:10px;margin:4px 2px 10px">
+    <span style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#08060D">Step 1 · Required to publish a listing</span>
+    <sc-if value="{{ gatePublishDone }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#0F6E56"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Complete</span></sc-if>
+    <span style="flex:1;height:1px;background:#E5E4E7"></span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+
+    <!-- 1 · PERSONAL -->
+    <div style="background:#fff;border:1px solid {{ S.personal.cardBorder }};border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.personal.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#4A4253;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">1</span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,111,97,.08);color:#FF6F61;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Personal details</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">{{ S.personal.sub }}</span></span>
+        <sc-if value="{{ S.personal.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+        <sc-if value="{{ S.personal.todo }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:600;white-space:nowrap">To do</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.personal.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.personal.open }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Landlord type</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ types }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button></sc-for></div>
+          </div>
+          <sc-if value="{{ showCompanyFields }}" hint-placeholder-val="{{ false }}">
+            <div style="background:rgba(255,111,97,.05);border:1px solid rgba(255,111,97,.18);border-radius:12px;padding:14px 14px 4px;margin-bottom:16px">
+              <p style="font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#CC4A3C;margin:0 0 10px">Required for {{ typeLabel }} landlords</p>
+              <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+                <div style="flex:1;min-width:190px">
+                  <label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">{{ companyLabel }}<sc-if value="{{ companyInvalid }}" hint-placeholder-val="{{ true }}"><span style="text-transform:none;letter-spacing:0;color:#92400E;background:#FEF3C7;padding:1px 7px;border-radius:999px;font-size:10px">Required</span></sc-if></label>
+                  <input data-k="company" value="{{ fields.company }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid {{ companyBorderColor }};border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" />
+                </div>
+                <div style="flex:1;min-width:190px">
+                  <label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">ABN<sc-if value="{{ abnInvalid }}" hint-placeholder-val="{{ true }}"><span style="text-transform:none;letter-spacing:0;color:#92400E;background:#FEF3C7;padding:1px 7px;border-radius:999px;font-size:10px">Required</span></sc-if></label>
+                  <input data-k="abn" value="{{ fields.abn }}" onChange="{{ onField }}" placeholder="00 000 000 000" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid {{ abnBorderColor }};border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" />
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="flex:1;min-width:190px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">First name</label><input data-k="firstName" value="{{ fields.firstName }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+            <div style="flex:1;min-width:190px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Last name</label><input data-k="lastName" value="{{ fields.lastName }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+          </div>
+          <div style="margin-bottom:18px;max-width:340px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Phone</label><input data-k="phone" value="{{ fields.phone }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+          <button onClick="{{ S.personal.onSave }}" disabled="{{ personalSaveDisabled }}" style="{{ personalSaveStyle }}">Save details</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.personal.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.personal }}</span><button onClick="{{ S.personal.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Edit</button></div>
+      </sc-if>
+    </div>
+
+    <!-- 2 · ADDRESS -->
+    <div style="background:#fff;border:1px solid {{ S.address.cardBorder }};border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.address.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#4A4253;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">2</span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,111,97,.08);color:#FF6F61;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Address</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Where you're based</span></span>
+        <sc-if value="{{ S.address.done }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+        <sc-if value="{{ S.address.todo }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:600;white-space:nowrap">To do</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.address.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.address.open }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <div style="margin-bottom:14px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Street address</label><input data-k="street" value="{{ fields.street }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="flex:2;min-width:150px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Suburb</label><input data-k="suburb" value="{{ fields.suburb }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+            <div style="flex:1;min-width:100px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Postcode</label><input data-k="postcode" value="{{ fields.postcode }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px">
+            <div style="flex:1;min-width:150px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">State</label>
+              <select data-k="stateAU" value="{{ fields.stateAU }}" onChange="{{ onField }}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff"><option>NSW</option><option>VIC</option><option>QLD</option><option>WA</option><option>SA</option><option>TAS</option><option>ACT</option><option>NT</option></select>
+            </div>
+            <sc-if value="{{ showResidence }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:1;min-width:150px"><label style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Residence location<sc-if value="{{ resInvalid }}" hint-placeholder-val="{{ true }}"><span style="text-transform:none;letter-spacing:0;color:#92400E;background:#FEF3C7;padding:1px 7px;border-radius:999px;font-size:10px">Required</span></sc-if></label><input data-k="residence" value="{{ fields.residence }}" onChange="{{ onField }}" placeholder="Suburb where you live" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid {{ resBorderColor }};border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff" /></div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ showResidence }}" hint-placeholder-val="{{ false }}"><p style="font-size:12px;color:#908897;margin:-8px 0 16px">Required for landlords outside NSW so we apply the right state tenancy rules.</p></sc-if>
+          <button onClick="{{ S.address.onSave }}" disabled="{{ addressSaveDisabled }}" style="{{ addressSaveStyle }}">Save details</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.address.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.address }}</span><button onClick="{{ S.address.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Edit</button></div>
+      </sc-if>
+    </div>
+
+    <!-- 3 · ABOUT YOU -->
+    <div style="background:#fff;border:1px solid {{ S.about.cardBorder }};border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.about.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#4A4253;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">3</span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,111,97,.08);color:#FF6F61;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">About you</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Photo and a short bio for students</span></span>
+        <sc-if value="{{ S.about.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+        <sc-if value="{{ S.about.todo }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:600;white-space:nowrap">To do</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.about.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.about.open }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+            <span style="flex:none;width:64px;height:64px;border-radius:999px;background:#FEF9E4;border:1px solid #E8E0CC;color:#CC4A3C;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:24px;font-weight:700">MW</span>
+            <div><button style="border:1px solid #E5E4E7;background:#fff;padding:9px 15px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:#08060D;cursor:pointer">Change photo</button><p style="font-size:12px;color:#908897;margin:8px 0 0">JPG or PNG, at least 400×400px</p></div>
+          </div>
+          <div style="margin-bottom:18px"><label style="display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin-bottom:7px">Short bio</label><textarea data-k="bio" onChange="{{ onField }}" rows="3" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #E5E4E7;border-radius:10px;font-family:inherit;font-size:14px;color:#08060D;background:#fff;resize:vertical;line-height:1.55">{{ fields.bio }}</textarea></div>
+          <button onClick="{{ S.about.onSave }}" style="border:0;padding:11px 18px;border-radius:10px;background:#FF6F61;color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">Save details</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.about.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><span style="flex:none;width:30px;height:30px;border-radius:999px;background:#FEF9E4;border:1px solid #E8E0CC;color:#CC4A3C;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:13px;font-weight:700">MW</span><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.about }}</span><button onClick="{{ S.about.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Edit</button></div>
+      </sc-if>
+    </div>
+
+    <!-- 4 · AGREEMENTS -->
+    <div style="background:#fff;border:1px solid {{ S.agreements.cardBorder }};border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.agreements.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#4A4253;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">4</span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,111,97,.08);color:#FF6F61;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Agreements</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Accept Quni's landlord agreements</span></span>
+        <sc-if value="{{ S.agreements.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+        <sc-if value="{{ S.agreements.todo }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:600;white-space:nowrap">To do</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.agreements.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.agreements.open }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+            <button onClick="{{ agree.onTos }}" style="display:flex;align-items:center;gap:12px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:inherit"><span style="{{ agree.tosBox }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></span><span style="font-size:14px;color:#2A2433">I accept the <span style="color:#FF6F61;font-weight:600">Terms of Service</span></span></button>
+            <button onClick="{{ agree.onLsa }}" style="display:flex;align-items:center;gap:12px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:inherit"><span style="{{ agree.lsaBox }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></span><span style="font-size:14px;color:#2A2433">I accept the <span style="color:#FF6F61;font-weight:600">Landlord Service Agreement</span></span></button>
+            <button onClick="{{ agree.onNondisc }}" style="display:flex;align-items:center;gap:12px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:inherit"><span style="{{ agree.nondiscBox }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></span><span style="font-size:14px;color:#2A2433">I accept the <span style="color:#FF6F61;font-weight:600">Non-discrimination policy</span></span></button>
+          </div>
+          <button onClick="{{ agree.onSave }}" disabled="{{ agree.saveDisabled }}" style="{{ agree.saveStyle }}">Accept agreements</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.agreements.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.agreements }}</span><button onClick="{{ S.agreements.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">View</button></div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- ============ THRESHOLD MARKER ============ -->
+  <sc-if value="{{ publishOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;gap:12px;margin:18px 2px;padding:14px 16px;border:1.5px dashed #D8CDBB;border-radius:14px;background:#FBFAF6">
+      <span style="flex:none;width:30px;height:30px;border-radius:999px;background:#F4F3EC;color:#B7791F;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+      <div style="min-width:0"><p style="font-size:13.5px;font-weight:600;color:#08060D;margin:0">Publish threshold</p><p style="font-size:12.5px;color:#6B6375;margin:2px 0 0">Complete Step 1 above to unlock <strong>Add a listing</strong>. The section below is only needed later, to accept bookings.</p></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ gatePublishDone }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:12px;margin:18px 2px;padding:14px 16px;border:1px solid rgba(29,158,117,.35);border-radius:14px;background:#E6F4EE">
+      <span style="flex:none;width:30px;height:30px;border-radius:999px;background:#1D9E75;color:#fff;display:inline-flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></span>
+      <div style="min-width:0"><p style="font-size:13.5px;font-weight:700;color:#0F6E56;margin:0">Publish threshold cleared — you can list now</p><p style="font-size:12.5px;color:#0F6E56;margin:2px 0 0;opacity:.85">Finish the section below to accept bookings and generate tenancy agreements (RTA).</p></div>
+    </div>
+  </sc-if>
+
+  <!-- ============ STEP 2 GROUP HEADER ============ -->
+  <div style="display:flex;align-items:center;gap:10px;margin:4px 2px 10px">
+    <span style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#08060D">Step 2 · Required to accept bookings</span>
+    <sc-if value="{{ gateAcceptDone }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#0F6E56"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Complete</span></sc-if>
+    <span style="flex:1;height:1px;background:#E5E4E7"></span>
+  </div>
+
+  <!-- 5 · PAYOUTS & IDENTITY -->
+  <div style="background:#fff;border:1px solid {{ S.payouts.cardBorder }};border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+    <button onClick="{{ S.payouts.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+      <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#4A4253;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">5</span>
+      <span style="flex:none;width:36px;height:36px;border-radius:10px;background:rgba(255,111,97,.08);color:#FF6F61;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Payouts &amp; identity</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Get paid and verify your identity</span></span>
+      <sc-if value="{{ S.payouts.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+      <sc-if value="{{ S.payouts.todo }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:600;white-space:nowrap">To do</span></sc-if>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.payouts.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <sc-if value="{{ S.payouts.open }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+        <div style="display:flex;gap:12px;align-items:flex-start;background:#F8F6F1;border:1px solid #EFEDE9;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B6375" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <p style="font-size:13.5px;color:#4A4253;margin:0;line-height:1.55">Payouts run through <strong style="color:#08060D">Stripe Connect</strong>, which also verifies your identity — <strong style="color:#08060D">no documents to upload</strong>, and Quni never stores your ID.</p>
+        </div>
+        <!-- requirement rows -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:12px;border:1px solid #EFEDE9;border-radius:12px;padding:13px 15px">
+            <span style="{{ stripeRowDot }}"><sc-if value="{{ stripeDone }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></sc-if></span>
+            <div style="flex:1;min-width:0"><p style="font-size:14px;font-weight:600;color:#08060D;margin:0">Stripe Connect — payouts &amp; identity</p><p style="font-size:12.5px;color:#6B6375;margin:2px 0 0">Receive rent and verify who you are.</p></div>
+            <sc-if value="{{ stripeDone }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:12px;font-weight:600;color:#0F6E56">Connected</span></sc-if>
+            <sc-if value="{{ stripeOpen }}" hint-placeholder-val="{{ true }}"><button onClick="{{ onConnect }}" style="flex:none;display:inline-flex;align-items:center;gap:8px;border:0;padding:9px 15px;border-radius:10px;background:#1F2A44;color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Connect Stripe</button></sc-if>
+          </div>
+          <sc-if value="{{ tierListing }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:12px;border:1px solid #EFEDE9;border-radius:12px;padding:13px 15px">
+              <span style="{{ cardRowDot }}"><sc-if value="{{ cardDone }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></sc-if></span>
+              <div style="flex:1;min-width:0"><p style="font-size:14px;font-weight:600;color:#08060D;margin:0">Saved payment card <span style="font-weight:600;color:#B7791F;background:#FEF3C7;font-size:10.5px;padding:1px 7px;border-radius:999px;vertical-align:middle;margin-left:4px">Listing tier</span></p><p style="font-size:12.5px;color:#6B6375;margin:2px 0 0">Covers the $99 fee per accepted booking. Not charged until you accept one.</p></div>
+              <sc-if value="{{ cardDone }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:12px;font-weight:600;color:#0F6E56">Visa ••4242</span></sc-if>
+              <sc-if value="{{ cardOpen }}" hint-placeholder-val="{{ true }}"><button onClick="{{ onAddCard }}" style="flex:none;border:1px solid #E5E4E7;background:#fff;padding:9px 15px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:#08060D;cursor:pointer">Add card</button></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tierManaged }}" hint-placeholder-val="{{ false }}">
+            <p style="font-size:12.5px;color:#908897;margin:0;padding:2px 4px">Your <strong>Managed tier</strong> needs only Stripe Connect — no saved card required.</p>
+          </sc-if>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:rgba(31,42,68,.08);color:#1F2A44;font-size:12px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>{{ identityStatus }}</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ S.payouts.showSummary }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top:1px solid #EFEDE9;padding:14px 20px 16px">
+        <div style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.payouts }}</span><button onClick="{{ S.payouts.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Manage</button></div>
+        <span style="display:inline-flex;align-items:center;gap:5px;margin:10px 0 0 26px;padding:3px 10px;border-radius:999px;background:rgba(31,42,68,.10);color:#1F2A44;font-size:12px;font-weight:600"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Identity verified</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ============ OPTIONAL DIVIDER ============ -->
+  <div style="display:flex;align-items:center;gap:12px;margin:22px 2px 12px">
+    <span style="height:1px;background:#E5E4E7;flex:1"></span>
+    <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;white-space:nowrap">Optional · won't affect publishing or bookings</span>
+    <span style="height:1px;background:#E5E4E7;flex:1"></span>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <!-- INSURANCE (optional) -->
+    <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.insurance.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#908897;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:#F4F3EC;color:#6B6375;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Insurance</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Optional — for your own protection, not a Quni requirement</span></span>
+        <sc-if value="{{ S.insurance.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Confirmed</span></sc-if>
+        <sc-if value="{{ S.insurance.optional }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#F4F3EC;color:#6B6375;font-size:12px;font-weight:600;white-space:nowrap">Optional</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.insurance.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.insurance.open }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <p style="font-size:13.5px;color:#4A4253;margin:0 0 12px;line-height:1.55">Landlord insurance isn't required to list or take bookings on Quni, but many landlords choose to hold it. Compare specialist policies:</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+            <a href="#" style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid #E5E4E7;background:#fff;color:#08060D;font-size:13px;font-weight:600;text-decoration:none">EBM RentCover<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+            <a href="#" style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid #E5E4E7;background:#fff;color:#08060D;font-size:13px;font-weight:600;text-decoration:none">Terri Scheer<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+            <a href="#" style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid #E5E4E7;background:#fff;color:#08060D;font-size:13px;font-weight:600;text-decoration:none">AAMI Landlord<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+          </div>
+          <button onClick="{{ ins.onToggle }}" style="display:flex;align-items:flex-start;gap:12px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:inherit"><span style="{{ ins.box }}"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg></span><span style="font-size:14px;color:#2A2433;line-height:1.5">I confirm I hold landlord insurance for my listed properties</span></button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.insurance.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.insurance }}</span><button onClick="{{ S.insurance.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Edit</button></div>
+      </sc-if>
+    </div>
+
+    <!-- LANGUAGES (optional) -->
+    <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05);overflow:hidden">
+      <button onClick="{{ S.languages.onToggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:transparent;border:0;cursor:pointer;text-align:left;font-family:inherit">
+        <span style="flex:none;width:24px;height:24px;border-radius:999px;background:#F4F3EC;color:#908897;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></span>
+        <span style="flex:none;width:36px;height:36px;border-radius:10px;background:#F4F3EC;color:#6B6375;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#08060D">Languages spoken</span><span style="display:block;font-size:12.5px;color:#6B6375;margin-top:2px">Languages you can help students in</span></span>
+        <sc-if value="{{ S.languages.done }}" hint-placeholder-val="{{ false }}"><span style="flex:none;display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:12px;font-weight:600;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>Done</span></sc-if>
+        <sc-if value="{{ S.languages.optional }}" hint-placeholder-val="{{ true }}"><span style="flex:none;display:inline-flex;padding:4px 11px;border-radius:999px;background:#F4F3EC;color:#6B6375;font-size:12px;font-weight:600;white-space:nowrap">Optional</span></sc-if>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ S.languages.chev }};transition:transform .2s"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{ S.languages.open }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 20px 22px;border-top:1px solid #EFEDE9">
+          <p style="font-size:13.5px;color:#4A4253;margin:0 0 14px">Select any languages you speak — shown to students browsing your listings.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ langChips }}" as="l" hint-placeholder-count="6"><button onClick="{{ l.onClick }}" style="{{ l.style }}">{{ l.label }}</button></sc-for></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ S.languages.showSummary }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 16px;border-top:1px solid #EFEDE9"><svg width="16" height="16" viewBox="0 0 20 20" fill="#1D9E75" style="flex:none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg><span style="font-size:14px;color:#4A4253;min-width:0">{{ summaries.languages }}</span><button onClick="{{ S.languages.onToggle }}" style="margin-left:auto;background:transparent;border:0;color:#FF6F61;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none">Edit</button></div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <div style="margin-top:18px;padding:18px 20px;background:#FBFAF6;border:1px solid #EFEDE9;border-radius:16px">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <button disabled="{{ addDisabled }}" style="{{ addBtnStyle }}">Add a listing</button>
+      <sc-if value="{{ phase1 }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:#6B6375"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>{{ leftHelper }}</span></sc-if>
+      <sc-if value="{{ phase2 }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:#0F6E56;font-weight:600;display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>You can publish a listing</span></sc-if>
+      <sc-if value="{{ phase3 }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:#0F6E56;font-weight:600;display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z"/></svg>{{ leftHelper }}</span></sc-if>
+    </div>
+    <sc-if value="{{ phase2 }}" hint-placeholder-val="{{ false }}"><p style="font-size:12.5px;color:#6B6375;margin:12px 0 0;display:flex;align-items:flex-start;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Bookings and tenancy agreements (RTA) stay locked until <strong style="color:#08060D">Payouts &amp; identity</strong> is complete.</span></p></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:640,&quot;height&quot;:900},&quot;landlordType&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;individual&quot;,&quot;company&quot;,&quot;trust&quot;],&quot;default&quot;:&quot;individual&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tier&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;listing&quot;,&quot;managed&quot;],&quot;default&quot;:&quot;listing&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;seed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;publish&quot;,&quot;listed&quot;,&quot;complete&quot;],&quot;default&quot;:&quot;publish&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const type = props.landlordType || 'individual';
+    const tier = props.tier || 'listing';
+    const seed = props.seed || 'publish';
+    this.tier = tier;
+    const isCo = type !== 'individual';
+
+    let d;
+    if (seed === 'complete' || seed === 'listed') d = {personal:1,address:1,about:1,agreements:1};
+    else if (type === 'individual') d = {personal:1,address:1,about:0,agreements:0};
+    else d = {personal:0,address:1,about:1,agreements:1}; // company mid: personal blocked by blank ABN
+
+    const mk = (done) => ({ done: !!done, open: !done });
+    const sections = {
+      personal: mk(d.personal), address: mk(d.address), about: mk(d.about), agreements: mk(d.agreements),
+      payouts: { done:false, open:false }, insurance: { done:false, open:false }, languages: { done:false, open:false },
+    };
+    let stripe = false, card = false;
+    if (seed === 'complete') { stripe = true; card = true; }
+    const acceptDone = stripe && (tier === 'listing' ? card : true);
+    sections.payouts.done = acceptDone;
+    const pubDone = ['personal','address','about','agreements'].every(k => sections[k].done);
+    sections.payouts.open = pubDone && !acceptDone;
+
+    this.state = {
+      type, stripe, card,
+      sections,
+      fields: this.seedFields(type, seed, isCo),
+      agree: (seed==='complete'||seed==='listed') ? {tos:true,lsa:true,nondisc:true} : {tos:false,lsa:false,nondisc:false},
+      insurance: false,
+      langs: seed === 'complete' ? ['English','Mandarin'] : [],
+    };
+  }
+  seedFields(type, seed, isCo){
+    const filledCo = (seed === 'complete' || seed === 'listed');
+    return {
+      firstName:'Marcus', lastName:'Webb', phone:'0412 884 220',
+      company: !isCo ? '' : (type==='trust' ? 'Webb Family Trust' : 'Webb Property Holdings Pty Ltd'),
+      abn: (isCo && filledCo) ? '61 824 753 556' : '',
+      street:'14 Rosslyn Street',
+      suburb: type==='individual' ? 'Glebe' : 'Carlton',
+      postcode: type==='individual' ? '2037' : '3053',
+      stateAU: type==='individual' ? 'NSW' : 'VIC',
+      residence: type==='individual' ? '' : 'Melbourne, VIC',
+      bio:'Local landlord renting bright, well-kept rooms a short walk from campus. I respond quickly and am happy to help students settle in.',
+    };
+  }
+  setSec(k, patch){ this.setState(s => ({ sections: { ...s.sections, [k]: { ...s.sections[k], ...patch } } })); }
+  toggle(k){ this.setSec(k, { open: !this.state.sections[k].open }); }
+  markDone(k){
+    this.setState(s => {
+      const sections = { ...s.sections, [k]: { ...s.sections[k], done:true, open:false } };
+      const pubDone = ['personal','address','about','agreements'].every(x => sections[x].done);
+      const acc = s.stripe && (this.tier==='listing' ? s.card : true);
+      if (pubDone && !acc) sections.payouts = { ...sections.payouts, open:true };
+      return { sections };
+    });
+  }
+  personalValid(type, f){ const t = type || this.state.type, g = f || this.state.fields; return !!(g.firstName && g.lastName && g.phone && (t==='individual' || (g.company && g.abn))); }
+  addressValid(f){ const g = f || this.state.fields; const base = g.street && g.suburb && g.postcode && g.stateAU; return !!(g.stateAU==='NSW' ? base : (base && g.residence)); }
+  setType(t){
+    this.setState(s => {
+      const valid = this.personalValid(t, s.fields);
+      return { type:t, sections: { ...s.sections, personal: { ...s.sections.personal, done:valid, open:!valid } } };
+    });
+  }
+  onField = (e) => { const k = e.target.dataset.k, v = e.target.value; this.setState(s => ({ fields: { ...s.fields, [k]: v } })); };
+  setAgree(k){ this.setState(s => ({ agree: { ...s.agree, [k]: !s.agree[k] } })); }
+  toggleInsurance(){ this.setState(s => ({ insurance: !s.insurance })); }
+  toggleLang(l){ this.setState(s => { const has = s.langs.includes(l); return { langs: has ? s.langs.filter(x => x !== l) : [...s.langs, l] }; }); }
+  syncPayouts(){ const done = this.state.stripe && (this.tier==='listing' ? this.state.card : true); if (done) this.setSec('payouts', { done:true, open:false }); }
+  onConnect = () => this.setState({ stripe:true }, () => this.syncPayouts());
+  onAddCard = () => this.setState({ card:true }, () => this.syncPayouts());
+
+  renderVals(){
+    const st = this.state, f = st.fields, tier = this.tier;
+    const pub = ['personal','address','about','agreements'];
+    const labels = {personal:'Personal details',address:'Address',about:'About you',agreements:'Agreements'};
+    const sec = st.sections;
+    const publishDoneCount = pub.filter(k => sec[k].done).length;
+    const gatePublishDone = publishDoneCount === 4;
+    const acceptTotal = tier === 'listing' ? 2 : 1;
+    const acceptCount = (st.stripe?1:0) + ((tier==='listing' && st.card)?1:0);
+    const gateAcceptDone = st.stripe && (tier==='listing' ? st.card : true);
+    sec.payouts.done = gateAcceptDone;
+
+    const phase1 = !gatePublishDone, phase2 = gatePublishDone && !gateAcceptDone, phase3 = gatePublishDone && gateAcceptDone;
+    const blockingPub = pub.filter(k => !sec[k].done).map(k => labels[k]);
+    const join = (a) => a.length<=1 ? a.join('') : a.slice(0,-1).join(', ') + ' and ' + a[a.length-1];
+
+    const driverEyebrow = phase1 ? 'Step 1 of 2 · Publish a listing' : (phase2 ? 'Step 2 of 2 · Accept bookings' : 'Setup complete');
+    const driverTitle = phase1 ? (Math.round(publishDoneCount/4*100) + '% ready to list') : (phase2 ? 'You can list now' : "You're fully set up");
+    const activeFrac = phase1 ? (publishDoneCount + ' / 4') : (phase2 ? (acceptCount + ' / ' + acceptTotal) : 'All done');
+    const activeFracLabel = phase1 ? 'sections to publish a listing' : (phase2 ? 'to accept bookings' : 'listing & bookings enabled');
+    const barPct = phase1 ? (publishDoneCount/4*100) : (phase2 ? (acceptCount/acceptTotal*100) : 100);
+    const barColor = phase3 ? '#1D9E75' : '#FF6F61';
+    const barFillStyle = 'background:'+barColor+';height:100%;border-radius:999px;width:'+barPct+'%;transition:width .45s cubic-bezier(.2,0,0,1);';
+    const driverLine = phase1
+      ? ('Finish ' + join(blockingPub) + ' to publish a listing.')
+      : (phase2 ? 'Finish Payouts & identity to accept bookings and generate tenancy agreements (RTA).'
+                : 'Listing and bookings enabled. Tenancy agreements (RTA) generate automatically.');
+
+    // milestone chips
+    const chipStyle = (s) => ({
+      done:    'display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;background:#E6F4EE;color:#0F6E56;font-size:13px;font-weight:600;',
+      active:  'display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;background:rgba(255,111,97,.10);color:#CC4A3C;font-size:13px;font-weight:600;',
+      pending: 'display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;background:#F4F3EC;color:#A29AAC;font-size:13px;font-weight:600;',
+    }[s]);
+    const dotStyle = (s) => ({
+      done:    'flex:none;width:22px;height:22px;border-radius:999px;background:#1D9E75;color:#fff;display:inline-flex;align-items:center;justify-content:center;',
+      active:  'flex:none;width:22px;height:22px;border-radius:999px;background:#FF6F61;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;',
+      pending: 'flex:none;width:22px;height:22px;border-radius:999px;background:#E0DEE3;color:#A29AAC;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;',
+    }[s]);
+    const pubState = gatePublishDone ? 'done' : 'active';
+    const accState = gateAcceptDone ? 'done' : (phase2 ? 'active' : 'pending');
+
+    // per-section view objects
+    const S = {};
+    const cardBorder = (kind, b) => (kind!=='optional' && !b.done) ? '#F2D9A8' : '#E5E4E7';
+    const mkSec = (k, kind) => {
+      const b = sec[k];
+      S[k] = {
+        done: b.done, open: b.open, showSummary: b.done && !b.open,
+        todo: (kind!=='optional') && !b.done, optional: (kind==='optional') && !b.done,
+        chev: b.open ? 'rotate(0deg)' : 'rotate(-90deg)',
+        cardBorder: cardBorder(kind, b),
+        onToggle: () => this.toggle(k), onSave: () => this.markDone(k),
+      };
+    };
+    pub.forEach(k => mkSec(k,'pub'));
+    mkSec('payouts','accept');
+    mkSec('insurance','optional'); mkSec('languages','optional');
+    S.personal.onSave = () => { if (this.personalValid()) this.markDone('personal'); };
+    S.address.onSave = () => { if (this.addressValid()) this.markDone('address'); };
+    const isCo = st.type !== 'individual';
+    S.personal.sub = isCo ? 'Name, contact, ' + (st.type==='trust'?'trust':'company') + ' name & ABN' : 'Your name, contact and landlord type';
+    // optional done states
+    const langDone = st.langs.length > 0;
+    S.languages.done = langDone; S.languages.optional = !langDone; S.languages.showSummary = langDone && !sec.languages.open;
+    S.insurance.done = st.insurance; S.insurance.optional = !st.insurance; S.insurance.showSummary = st.insurance && !sec.insurance.open;
+
+    const types = [['individual','Individual'],['company','Company'],['trust','Trust']].map(([k,label]) => ({
+      label, style: "padding:9px 16px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;" + (st.type===k ? "background:#FF6F61;color:#fff;border:1px solid #FF6F61;" : "background:#fff;color:#4A4253;border:1px solid #E5E4E7;"),
+      onClick: () => this.setType(k),
+    }));
+
+    const allLangs = ['English','Mandarin','Cantonese','Arabic','Korean','Vietnamese','Hindi','Spanish'];
+    const langChips = allLangs.map(l => ({
+      label: l, style: "padding:8px 14px;border-radius:999px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;" + (st.langs.includes(l) ? "background:#FF6F61;color:#fff;border:1px solid #FF6F61;" : "background:#fff;color:#4A4253;border:1px solid #E5E4E7;"),
+      onClick: () => this.toggleLang(l),
+    }));
+
+    const boxStyle = (on) => "flex:none;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;" + (on ? "background:#FF6F61;border:1.5px solid #FF6F61;color:#fff;" : "background:#fff;border:1.5px solid #CBC9CF;color:transparent;");
+    const allAgree = st.agree.tos && st.agree.lsa && st.agree.nondisc;
+    const agree = {
+      tosBox: boxStyle(st.agree.tos), lsaBox: boxStyle(st.agree.lsa), nondiscBox: boxStyle(st.agree.nondisc),
+      onTos: () => this.setAgree('tos'), onLsa: () => this.setAgree('lsa'), onNondisc: () => this.setAgree('nondisc'),
+      onSave: () => { if (allAgree) this.markDone('agreements'); }, saveDisabled: !allAgree,
+      saveStyle: "border:0;padding:11px 18px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;" + (allAgree ? "background:#FF6F61;color:#fff;cursor:pointer;" : "background:#F4F3EC;color:#A9A4B0;cursor:not-allowed;"),
+    };
+    const ins = { box: boxStyle(st.insurance), onToggle: () => this.toggleInsurance() };
+
+    const typeLabelMap = {individual:'Individual',company:'Company',trust:'Trust'};
+    const showResidence = f.stateAU !== 'NSW';
+    const companyInvalid = isCo && !String(f.company).trim();
+    const abnInvalid = isCo && !String(f.abn).trim();
+    const resInvalid = showResidence && !String(f.residence).trim();
+    const personalSaveOk = this.personalValid();
+    const addressSaveOk = this.addressValid();
+
+    const personalSummary = !isCo
+      ? (f.firstName + ' ' + f.lastName + ' · Individual · ' + f.phone)
+      : (f.company + ' · ' + typeLabelMap[st.type] + ' · ABN ' + (f.abn || '—'));
+    const addressSummary = f.street + ', ' + f.suburb + ' ' + f.stateAU + ' ' + f.postcode + (showResidence && f.residence ? ' · Resides ' + f.residence : '');
+    const payoutsSummary = tier==='listing' ? 'Stripe payouts enabled · Visa ••4242' : 'Stripe payouts enabled';
+    const summaries = {
+      personal: personalSummary, address: addressSummary,
+      about: 'Photo added · Bio written', agreements: 'All three agreements accepted',
+      payouts: payoutsSummary, insurance: 'Landlord insurance confirmed', languages: st.langs.join(', '),
+    };
+
+    const addEnabled = gatePublishDone;
+    const addBtnStyle = "border:0;padding:13px 22px;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;" + (addEnabled ? "background:#FF6F61;color:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(8,6,13,.05);" : "background:#EFEDE9;color:#A9A4B0;cursor:not-allowed;");
+    const leftCount = blockingPub.length;
+    const leftHelper = phase1 ? (leftCount + (leftCount===1 ? ' required section left to publish' : ' required sections left to publish')) : 'You can publish listings and accept bookings.';
+
+    return {
+      driverEyebrow, driverTitle, activeFrac, activeFracLabel, barFillStyle, driverLine,
+      phase1, phase2, phase3, gatePublishDone, gateAcceptDone, publishOpen: !gatePublishDone, acceptOpen: !gateAcceptDone,
+      pubChipStyle: chipStyle(pubState), pubDotStyle: dotStyle(pubState),
+      accChipStyle: chipStyle(accState), accDotStyle: dotStyle(accState),
+      connectorColor: gatePublishDone ? '#1D9E75' : '#E0DEE3',
+      S, fields: f, onField: this.onField, types,
+      showCompanyFields: isCo, typeLabel: typeLabelMap[st.type], companyLabel: st.type==='trust' ? 'Trust name' : 'Company name',
+      companyInvalid, abnInvalid, resInvalid, showResidence,
+      companyBorderColor: companyInvalid ? '#F59E0B' : '#E5E4E7',
+      abnBorderColor: abnInvalid ? '#F59E0B' : '#E5E4E7',
+      resBorderColor: resInvalid ? '#F59E0B' : '#E5E4E7',
+      personalSaveDisabled: !personalSaveOk,
+      personalSaveStyle: "border:0;padding:11px 18px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;" + (personalSaveOk ? "background:#FF6F61;color:#fff;cursor:pointer;" : "background:#F4F3EC;color:#A9A4B0;cursor:not-allowed;"),
+      addressSaveDisabled: !addressSaveOk,
+      addressSaveStyle: "border:0;padding:11px 18px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;" + (addressSaveOk ? "background:#FF6F61;color:#fff;cursor:pointer;" : "background:#F4F3EC;color:#A9A4B0;cursor:not-allowed;"),
+      onConnect: this.onConnect, onAddCard: this.onAddCard,
+      tierListing: tier==='listing', tierManaged: tier!=='listing',
+      stripeDone: st.stripe, stripeOpen: !st.stripe, cardDone: st.card, cardOpen: !st.card,
+      stripeRowDot: "flex:none;width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;" + (st.stripe ? "background:#1D9E75;color:#fff;" : "background:#F4F3EC;border:1.5px solid #E0DEE3;color:transparent;"),
+      cardRowDot: "flex:none;width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;" + (st.card ? "background:#1D9E75;color:#fff;" : "background:#F4F3EC;border:1.5px solid #E0DEE3;color:transparent;"),
+      identityStatus: st.stripe ? 'Identity verified via Stripe' : 'Identity verified once Stripe is connected',
+      agree, ins, langChips, summaries,
+      addDisabled: !addEnabled, addBtnStyle, leftHelper,
+    };
+  }
+}
+</script>
+</body>
+</html>
