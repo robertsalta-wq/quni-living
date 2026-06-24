@@ -627,7 +627,7 @@ export default function StudentProfile() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('student', { label: 'Profile' })} />
+        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter', { label: 'Profile' })} />
       </div>
       <PageHeroBand
         title="My Profile"

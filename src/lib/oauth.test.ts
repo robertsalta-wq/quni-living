@@ -55,15 +55,15 @@ describe('OAuth signup redirectTo', () => {
   })
 
   it('URL signup params take precedence over sessionStorage', () => {
-    rememberOAuthSignupContext({ signupRoute: 'student', signupRole: 'student' })
+    rememberOAuthSignupContext({ signupRoute: 'student', signupRole: 'renter' })
     const resolved = resolveOAuthSignupParams('?signup_route=non_student&signup_role=student')
     expect(resolved.signupRoute).toBe('non_student')
-    expect(resolved.signupRole).toBe('student')
+    expect(resolved.signupRole).toBe('renter')
     expect(storage.get('quni_oauth_signup_context')).toBeUndefined()
   })
 
   it('clearOAuthSignupContext removes stored context', () => {
-    rememberOAuthSignupContext({ signupRoute: 'non_student', signupRole: 'student' })
+    rememberOAuthSignupContext({ signupRoute: 'non_student', signupRole: 'renter' })
     clearOAuthSignupContext()
     expect(resolveOAuthSignupParams('')).toEqual({ signupRoute: null, signupRole: null })
   })

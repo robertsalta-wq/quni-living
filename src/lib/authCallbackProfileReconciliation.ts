@@ -41,7 +41,7 @@ function displayNameFromUser(user: User): string {
 export type AuthCallbackReconcileOptions = {
   afterSignupEmailConfirm: boolean
   urlRoute: QuniAccommodationVerificationRoute | null
-  urlRole: 'student' | 'renter' | 'landlord' | null
+  urlRole: 'renter' | 'landlord' | null
 }
 
 /** Skip OAuth role reconciliation when email signup already established a student row. */
@@ -139,7 +139,7 @@ async function applyPendingSignupRoleInMemory(
   user: User,
   sp: StudentProfileRow | null,
   lp: LandlordProfileRow | null,
-  urlRole: 'student' | 'renter' | 'landlord' | null,
+  urlRole: 'renter' | 'landlord' | null,
   _urlRoute: QuniAccommodationVerificationRoute | null,
 ): Promise<{ sp: StudentProfileRow | null; lp: LandlordProfileRow | null }> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null

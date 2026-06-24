@@ -23,7 +23,7 @@ import { reportFormError } from '../lib/reportFormError'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { marketplaceRoleForWrite } from '../lib/marketplaceRole'
 
-type Choice = 'student' | 'renter' | 'landlord'
+type Choice = 'renter' | 'landlord'
 
 /**
  * Skip `/onboarding` (role + terms) when the profile already reflects a finished setup.
@@ -148,7 +148,7 @@ export default function Onboarding() {
       if (
         profile !== null &&
         (isRenterRole(role) || role === 'landlord') &&
-        profileTermsComplete(isRenterRole(role) ? 'student' : 'landlord', profile)
+        profileTermsComplete(isRenterRole(role) ? 'renter' : 'landlord', profile)
       ) {
         const metaRole = u.user_metadata?.role
         const writeRole = marketplaceRoleForWrite(role)

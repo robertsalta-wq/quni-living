@@ -12,7 +12,7 @@ export default function MessagesInboxPage() {
   const navigate = useNavigate()
   const { items, loading, error, reload } = useConversationInbox(user?.id)
 
-  const dashboardRole = role === 'landlord' ? 'landlord' : isRenterRole(role) ? 'student' : 'student'
+  const dashboardRole = role === 'landlord' ? 'landlord' : 'renter'
   const viewerRole = role === 'landlord' ? 'landlord' : 'tenant'
 
   return (

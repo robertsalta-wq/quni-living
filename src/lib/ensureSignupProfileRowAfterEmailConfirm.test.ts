@@ -9,10 +9,13 @@ export function shouldBootstrapSignupProfile(user: Pick<User, 'user_metadata'>):
 }
 
 describe('shouldBootstrapSignupProfile', () => {
-  it('allows student and landlord metadata', () => {
-    expect(shouldBootstrapSignupProfile({ user_metadata: { role: 'student' } })).toBe(true)
+  it('allows renter and landlord metadata', () => {
     expect(shouldBootstrapSignupProfile({ user_metadata: { role: 'renter' } })).toBe(true)
     expect(shouldBootstrapSignupProfile({ user_metadata: { role: 'landlord' } })).toBe(true)
+  })
+
+  it('rejects legacy student metadata on axis 1', () => {
+    expect(shouldBootstrapSignupProfile({ user_metadata: { role: 'student' } })).toBe(false)
   })
 
   it('skips missing or ambiguous roles', () => {

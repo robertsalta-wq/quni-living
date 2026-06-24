@@ -11,7 +11,7 @@ import { userNeedsEmailAddressVerification } from '../lib/authEmailVerification'
 type AllowedRole = Exclude<UserRole, null>
 
 function roleSatisfiesAllowed(role: AllowedRole, allowed: AllowedRole): boolean {
-  return role === allowed || (allowed === 'student' && isRenterRole(role))
+  return role === allowed
 }
 
 function isRoleAllowed(role: AllowedRole, allowedRoles: AllowedRole[]): boolean {

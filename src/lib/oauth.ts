@@ -4,6 +4,7 @@ import {
   type GoogleOAuthSignupRole,
   type GoogleOAuthSignupRoute,
 } from './authCallbackParams'
+import { marketplaceRoleForWrite } from './marketplaceRole'
 
 /**
  * OAuth return URL after Google (etc.). Web builds: add each environment’s
@@ -50,10 +51,10 @@ export function formatAuthEmailErrorMessage(err: unknown): string {
 
 export type { GoogleOAuthSignupRole, GoogleOAuthSignupRoute } from './authCallbackParams'
 
-/** Signup-only context persisted in sessionStorage before OAuth (not on redirectTo). */
+/** Legacy `'student'` accepted at OAuth write boundary only; persisted as `'renter'`. */
 export type GoogleOAuthSignupContext = {
   signupRoute?: GoogleOAuthSignupRoute
-  signupRole?: GoogleOAuthSignupRole
+  signupRole?: GoogleOAuthSignupRole | 'student'
 }
 
 /**
@@ -67,12 +68,9 @@ export function getGoogleOAuthOptions(signupContext?: GoogleOAuthSignupContext) 
         signupContext.signupRoute === 'student' || signupContext.signupRoute === 'non_student'
           ? signupContext.signupRoute
           : null,
-      signupRole:
-        signupContext.signupRole === 'student' ||
-        signupContext.signupRole === 'renter' ||
-        signupContext.signupRole === 'landlord'
-          ? signupContext.signupRole
-          : null,
+      signupRole: signupContext.signupRole
+        ? (marketplaceRoleForWrite(signupContext.signupRole) as GoogleOAuthSignupRole | null)
+        : null,
     })
   }
   return {

@@ -7,7 +7,7 @@ import { supabase } from './supabase'
 import type { Database } from './database.types'
 import { isRenterRole } from './marketplaceRole'
 
-export type UserRole = 'student' | 'renter' | 'landlord' | 'admin' | null
+export type UserRole = 'renter' | 'landlord' | 'admin' | null
 
 export { isRenterRole }
 

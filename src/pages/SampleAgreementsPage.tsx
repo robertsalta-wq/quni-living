@@ -47,7 +47,7 @@ export default function SampleAgreementsPage() {
           segments={
             role === 'landlord'
               ? userDashboardBreadcrumbs('landlord', { label: 'Sample agreements' })
-              : userDashboardBreadcrumbs('student', { label: 'Sample agreements' })
+              : userDashboardBreadcrumbs('renter', { label: 'Sample agreements' })
           }
           className="mb-4"
         />

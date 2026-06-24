@@ -4,7 +4,16 @@ import { marketplaceRoleForWrite } from './marketplaceRole'
 export type AuthCallbackOtpType = 'signup' | 'recovery'
 
 export type GoogleOAuthSignupRoute = 'student' | 'non_student'
-export type GoogleOAuthSignupRole = 'student' | 'renter' | 'landlord'
+export type GoogleOAuthSignupRole = 'renter' | 'landlord'
+
+function normalizeOAuthSignupRole(role: unknown): GoogleOAuthSignupRole | null {
+  if (typeof role !== 'string') return null
+  const trimmed = role.trim()
+  if (trimmed === 'student' || trimmed === 'renter' || trimmed === 'landlord') {
+    return marketplaceRoleForWrite(trimmed) as GoogleOAuthSignupRole | null
+  }
+  return null
+}
 
 export type OAuthSignupCallbackParams = {
   signupRoute: GoogleOAuthSignupRoute | null
@@ -47,11 +56,9 @@ function consumeOAuthSignupContext(): OAuthSignupCallbackParams | null {
     sessionStorage.removeItem(OAUTH_SIGNUP_CONTEXT_KEY)
     const parsed = JSON.parse(raw) as Partial<OAuthSignupCallbackParams>
     const route = parsed.signupRoute
-    const role = parsed.signupRole
     return {
       signupRoute: route === 'student' || route === 'non_student' ? route : null,
-      signupRole:
-        role === 'student' || role === 'renter' || role === 'landlord' ? role : null,
+      signupRole: normalizeOAuthSignupRole(parsed.signupRole),
     }
   } catch {
     clearOAuthSignupContext()
@@ -76,8 +83,7 @@ export function parseOAuthSignupParamsFromSearch(search: string): OAuthSignupCal
   const role = params.get('signup_role')?.trim()
   return {
     signupRoute: route === 'student' || route === 'non_student' ? route : null,
-    signupRole:
-      role === 'student' || role === 'renter' || role === 'landlord' ? role : null,
+    signupRole: normalizeOAuthSignupRole(role),
   }
 }
 

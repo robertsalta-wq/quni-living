@@ -30,7 +30,7 @@ function displayNameFromUser(user: User): string {
  */
 export async function applyPendingSignupRole(
   user: User,
-  urlRole?: 'student' | 'renter' | 'landlord' | null,
+  urlRole?: 'renter' | 'landlord' | null,
   _urlRoute?: 'student' | 'non_student' | null,
 ): Promise<void> {
   const selected = getQuniSelectedRole() ?? urlRole ?? null

@@ -1,7 +1,6 @@
 import type { AuthProfile, UserRole } from './authProfile'
-import { isRenterRole } from './authProfile'
 
-const STORAGE_KEY = 'quni-auth-snapshot:v1'
+const STORAGE_KEY = 'quni-auth-snapshot:v2'
 
 export type AuthSnapshot = {
   userId: string
@@ -14,12 +13,7 @@ function canUseStorage(): boolean {
 }
 
 function isValidSnapshotRole(role: unknown): role is UserRole {
-  return (
-    isRenterRole(role) ||
-    role === 'landlord' ||
-    role === 'admin' ||
-    role === null
-  )
+  return role === 'renter' || role === 'landlord' || role === 'admin' || role === null
 }
 
 export function readAuthSnapshot(userId: string | undefined): AuthSnapshot | null {

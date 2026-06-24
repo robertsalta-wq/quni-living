@@ -1,6 +1,6 @@
-/** JWT marketplace renter on the role axis (expand phase: legacy + new values). */
+/** JWT marketplace renter on the role axis. */
 export function isRenterRole(role: unknown): boolean {
-  return role === 'student' || role === 'renter'
+  return role === 'renter'
 }
 
 /** Canonical marketplace role for JWT / storage writes (contract phase). */

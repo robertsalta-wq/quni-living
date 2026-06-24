@@ -1,6 +1,5 @@
 // @ts-nocheck - Vercel Node handler
 import { createClient } from '@supabase/supabase-js'
-import { isRenterRole } from '../../src/lib/marketplaceRole.js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { runRecordRtaBondLodgement } from './lib/booking/recordRtaBondLodgement.js'
 
@@ -96,7 +95,7 @@ export default async function handler(req, res) {
       return corsJson(res, { ok: true, booking: result.booking }, 200, origin)
     }
 
-    if (isRenterRole(role)) {
+    if (role === 'renter') {
       const { data: student, error: stErr } = await admin
         .from('student_profiles')
         .select('id')

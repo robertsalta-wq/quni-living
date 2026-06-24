@@ -24,7 +24,7 @@ export function getOnboardingDismissKey(): string {
 }
 
 export function isProfileDashboardOnboardingComplete(
-  role: 'student' | 'renter' | 'landlord',
+  role: 'renter' | 'landlord',
   student: StudentProfileRow | null,
   landlord: LandlordProfileRow | null,
 ): boolean {

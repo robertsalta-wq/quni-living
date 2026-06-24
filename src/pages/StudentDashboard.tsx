@@ -315,10 +315,10 @@ export default function StudentDashboard() {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
     <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-      <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('student')} className="mb-4" />
+      <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter')} className="mb-4" />
       {profile && user?.id && (
         <OnboardingChecklistBanner
-          role="student"
+          role="renter"
           userId={user.id}
           studentProfile={profile}
           landlordProfile={null}
@@ -430,7 +430,7 @@ export default function StudentDashboard() {
       </div>
 
       <UserDashboardSectionNav
-        role="student"
+        role="renter"
         active={tab}
         onSelect={(section) => {
           if (section === 'bookings' || section === 'saved') setTab(section)

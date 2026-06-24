@@ -53,7 +53,7 @@ export async function assertStudentProfileReconciled(
   if (userErr) throw userErr
   const meta = userData.user?.user_metadata ?? {}
   if (!isRenterRole(meta.role)) {
-    throw new Error(`user_metadata.role expected student, got ${String(meta.role)}`)
+    throw new Error(`user_metadata.role expected renter, got ${String(meta.role)}`)
   }
   const metaRoute = meta.accommodation_verification_route
   if (metaRoute !== expectedRoute) {

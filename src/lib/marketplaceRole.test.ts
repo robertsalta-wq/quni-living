@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { marketplaceRoleForWrite } from './marketplaceRole'
+import { isRenterRole, marketplaceRoleForWrite } from './marketplaceRole'
+
+describe('isRenterRole', () => {
+  it.each([
+    { input: 'renter', expected: true },
+    { input: 'student', expected: false },
+    { input: 'landlord', expected: false },
+    { input: 'admin', expected: false },
+    { input: null, expected: false },
+    { input: undefined, expected: false },
+  ] as const)('returns $expected for $input', ({ input, expected }) => {
+    expect(isRenterRole(input)).toBe(expected)
+  })
+})
 
 describe('marketplaceRoleForWrite', () => {
   it.each([

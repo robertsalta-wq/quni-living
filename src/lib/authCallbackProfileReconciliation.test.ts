@@ -62,7 +62,7 @@ function mockUser(overrides: Partial<User> = {}): User {
     id: 'user-1',
     email: 's@test.com',
     created_at: '2026-05-31T11:50:00Z',
-    user_metadata: { role: 'student' },
+    user_metadata: { role: 'renter' },
     app_metadata: {},
     aud: 'authenticated',
     ...overrides,
@@ -70,14 +70,18 @@ function mockUser(overrides: Partial<User> = {}): User {
 }
 
 describe('shouldSkipApplyPendingSignupRole', () => {
-  it('skips when metadata role is student and row exists (email confirm path)', () => {
+  it('skips when metadata role is renter and row exists (email confirm path)', () => {
     const sp = studentRow({ user_id: 'user-1' })
-    expect(shouldSkipApplyPendingSignupRole('student', sp)).toBe(true)
     expect(shouldSkipApplyPendingSignupRole('renter', sp)).toBe(true)
   })
 
+  it('does not skip legacy student metadata after contract phase', () => {
+    const sp = studentRow({ user_id: 'user-1' })
+    expect(shouldSkipApplyPendingSignupRole('student', sp)).toBe(false)
+  })
+
   it('does not skip when student row is missing', () => {
-    expect(shouldSkipApplyPendingSignupRole('student', null)).toBe(false)
+    expect(shouldSkipApplyPendingSignupRole('renter', null)).toBe(false)
   })
 
   it('does not skip for OAuth landlord mismatch', () => {
@@ -156,7 +160,7 @@ describe('applyPendingRouteInMemory', () => {
 
 describe('resolveRoleAndProfileFromRows after reconciliation', () => {
   it('case 1: email signup with existing student row resolves renter role', () => {
-    const user = mockUser({ user_metadata: { role: 'student' } })
+    const user = mockUser({ user_metadata: { role: 'renter' } })
     const sp = studentRow({
       user_id: user.id,
       accommodation_verification_route: 'student',

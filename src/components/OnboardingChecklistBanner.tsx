@@ -20,7 +20,7 @@ import {
 } from '../lib/onboardingChecklist'
 import { isRenterRole } from '../lib/authProfile'
 
-type Role = 'student' | 'renter' | 'landlord'
+type Role = 'renter' | 'landlord'
 
 type Props = {
   role: Role

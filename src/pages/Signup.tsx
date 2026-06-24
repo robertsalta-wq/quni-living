@@ -154,7 +154,6 @@ export default function Signup() {
   const roleFromUrl = searchParams.get('role')
 
   const [step, setStep] = useState<SignupStep>(() =>
-    roleFromUrl === 'student' ||
     roleFromUrl === 'renter' ||
     roleFromUrl === 'non_student' ||
     roleFromUrl === 'landlord'
@@ -165,9 +164,7 @@ export default function Signup() {
   const [accountKind, setAccountKind] = useState<SignupAccountKind | null>(() =>
     roleFromUrl === 'landlord'
       ? 'landlord'
-      : roleFromUrl === 'student' ||
-          roleFromUrl === 'renter' ||
-          roleFromUrl === 'non_student'
+      : roleFromUrl === 'renter' || roleFromUrl === 'non_student'
         ? 'renter'
         : null,
   )
@@ -196,7 +193,7 @@ export default function Signup() {
 
   useEffect(() => {
     const r = searchParams.get('role')
-    if (r === 'student' || r === 'renter' || r === 'non_student') {
+    if (r === 'renter' || r === 'non_student') {
       setAccountKind('renter')
       setQuniSelectedRole('renter')
       clearQuniAccommodationVerificationRoute()

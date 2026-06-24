@@ -147,7 +147,7 @@ function App() {
           <Route
             path="/onboarding/student"
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={['renter']}>
                 <Lazy.StudentOnboarding />
               </ProtectedRoute>
             }
@@ -165,7 +165,7 @@ function App() {
           <Route
             path="/student-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={['renter']}>
                 <Lazy.StudentDashboard />
               </ProtectedRoute>
             }
@@ -173,7 +173,7 @@ function App() {
           <Route
             path="/student-profile"
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={['renter']}>
                 <Lazy.StudentProfile />
               </ProtectedRoute>
             }
@@ -181,7 +181,7 @@ function App() {
           <Route
             path="/student/profile"
             element={
-              <ProtectedRoute allowedRoles={['student']}>
+              <ProtectedRoute allowedRoles={['renter']}>
                 <Lazy.StudentProfile />
               </ProtectedRoute>
             }
@@ -239,7 +239,7 @@ function App() {
             path="/booking/:propertyId"
             element={
               <ProtectedRoute
-                allowedRoles={['student']}
+                allowedRoles={['renter']}
                 redirectUnauthenticatedToStudentSignup
                 requireStudentListingActions
               >
@@ -250,7 +250,7 @@ function App() {
           <Route
             path="/sample-agreements"
             element={
-              <ProtectedRoute allowedRoles={['student', 'landlord', 'admin']}>
+              <ProtectedRoute allowedRoles={['renter', 'landlord', 'admin']}>
                 <Lazy.SampleAgreementsPage />
               </ProtectedRoute>
             }
