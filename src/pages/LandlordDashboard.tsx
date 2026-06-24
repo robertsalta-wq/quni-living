@@ -49,6 +49,7 @@ import {
   parseLandlordServiceTier,
 } from '../lib/landlordServiceTier'
 import { signedTenancyAgreementDownloadFilename } from '../lib/tenancy/jurisdictionCopy'
+import { landlordResponseExpiryLabel } from '../lib/booking/landlordResponseExpiry'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -1360,7 +1361,8 @@ export default function LandlordDashboard() {
                             <>
                               <ExpiresIn expiresAt={b.expires_at} />
                               <p className="mt-1 max-w-full break-words text-xs text-amber-900/80 sm:ml-auto">
-                                You have 48 hours to respond before this request expires.
+                                You have {landlordResponseExpiryLabel(bookingServiceTier(b) ?? 'managed')} to respond
+                                before this request expires.
                               </p>
                             </>
                           )}

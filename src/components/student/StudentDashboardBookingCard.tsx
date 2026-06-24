@@ -169,7 +169,7 @@ export default function StudentDashboardBookingCard({
         </div>
       </div>
       {(() => {
-        const banner = tenantBookingCardBanner(b.status)
+        const banner = tenantBookingCardBanner(b.status, b.service_tier_at_request)
         return banner ? <div className={banner.panelClass}>{banner.text}</div> : null
       })()}
       {showAgreedRentNotice ? (

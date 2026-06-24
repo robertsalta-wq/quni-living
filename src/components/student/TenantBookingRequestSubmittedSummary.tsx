@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatIsoDateAuNumeric } from '../../lib/listingAvailabilityDates'
 import { bookingReferenceLabel } from '../../lib/bookingReference'
+import { landlordResponseExpiryLabel } from '../../lib/booking/landlordResponseExpiry'
 import PaymentsSecuredByStripe from '../PaymentsSecuredByStripe'
 
 type Props = {
@@ -23,6 +24,8 @@ export default function TenantBookingRequestSubmittedSummary({
 }: Props) {
   const locationLine = [propertyTitle.trim() || 'Your listing', propertySuburb?.trim()].filter(Boolean).join(' · ')
   const moveInDisplay = formatIsoDateAuNumeric(moveInDate) || moveInDate
+
+  const responseWindow = landlordResponseExpiryLabel(isListing ? 'listing' : 'managed')
 
   return (
     <div className="max-w-lg mx-auto px-4 sm:px-6 py-10 sm:py-14">
@@ -60,7 +63,7 @@ export default function TenantBookingRequestSubmittedSummary({
             </span>
             <span>
               <span className="font-semibold">We received your application.</span> Your host has up to{' '}
-              <span className="font-semibold">48 hours</span> to accept or decline.
+              <span className="font-semibold">{responseWindow}</span> to accept or decline.
             </span>
           </li>
           <li className="flex gap-2">

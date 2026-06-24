@@ -9,6 +9,10 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../lib/sendEmail.js'
 import { bookingExpiredStudent, propertyAddressLine } from '../lib/emailTemplates.js'
 import { runExpireListingBondPendingBooking } from '../lib/booking/expireListingBondPending.js'
+import {
+  landlordResponseExpiryLabel,
+  resolveLandlordResponseExpiryTier,
+} from '../src/lib/booking/landlordResponseExpiry.js'
 
 export const config = { runtime: 'edge' }
 
@@ -42,6 +46,7 @@ export default async function handler(request) {
       `
       id,
       stripe_payment_intent_id,
+      service_tier_at_request,
       student_id,
       landlord_id,
       property_id,
@@ -92,6 +97,9 @@ export default async function handler(request) {
             student_name: studentName,
             property_address: addr || title,
             property_title: title,
+            response_window_label: landlordResponseExpiryLabel(
+              resolveLandlordResponseExpiryTier(b.service_tier_at_request),
+            ),
           })
           await sendEmail({ to: studentEmail, subject: t.subject, html: t.html })
         } catch (e) {

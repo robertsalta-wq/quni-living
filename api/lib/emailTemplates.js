@@ -54,6 +54,7 @@ export function bookingRequestLandlord(data) {
   const moveInDate = escapeHtml(data.move_in_date || '-')
   const leaseLength = escapeHtml(data.lease_length || '-')
   const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
+  const responseWindow = escapeHtml(data.response_window_label || '5 days')
   const msg = (data.student_message || '').trim()
   const messageBlock =
     msg.length > 0
@@ -71,7 +72,7 @@ export function bookingRequestLandlord(data) {
   <tr><td style="padding: 8px; border-bottom: 1px solid #f0f0f0; color: #666;">Lease length</td><td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">${leaseLength}</td></tr>
 </table>
 ${messageBlock}
-<p style="color: #FF6F61;"><strong>⏰ You have 48 hours to respond before this request expires.</strong></p>
+<p style="color: #FF6F61;"><strong>⏰ You have ${responseWindow} to respond before this request expires.</strong></p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Review booking request →</a>`
 
   return {
@@ -222,10 +223,11 @@ export function bookingDeclinedStudent(data) {
 export function bookingExpiredStudent(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
   const studentName = escapeHtml(data.student_name || 'there')
+  const responseWindow = escapeHtml(data.response_window_label || '5 days')
 
   const inner = `<h2 style="color: #1A1A2E;">Booking request expired</h2>
 <p>Hi ${studentName},</p>
-<p>Your booking request for <strong>${propertyAddress}</strong> has expired because the landlord did not respond within 48 hours.</p>
+<p>Your booking request for <strong>${propertyAddress}</strong> has expired because the landlord did not respond within ${responseWindow}.</p>
 <p>You have not been charged - your payment authorisation has been cancelled.</p>
 <a href="https://quni.com.au/listings" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Browse more properties →</a>`
 

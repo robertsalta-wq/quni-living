@@ -61,6 +61,7 @@ import {
   isListingServiceTier,
 } from './lib/booking/listingBookingApply.js'
 import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
+import { landlordResponseExpiresAtIso } from '../src/lib/booking/landlordResponseExpiry.js'
 
 export const config = { runtime: 'edge' }
 
@@ -514,7 +515,7 @@ async function handleListingBookingCommit(request, origin, body) {
     propertyServiceTier: property.service_tier,
   })
 
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+  const expiresAt = landlordResponseExpiresAtIso('listing')
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
   const row = buildListingApplyBookingRow({
@@ -896,7 +897,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
     propertyServiceTier: property.service_tier,
   })
 
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+  const expiresAt = landlordResponseExpiresAtIso('managed')
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
   const bondAmount = bondAmountAtApplyFromProperty(property, weeklyRent)

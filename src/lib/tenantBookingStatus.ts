@@ -1,4 +1,8 @@
 import type { TenantBookingStatus } from './tenantCurrentBooking'
+import {
+  landlordResponseExpiryLabel,
+  resolveLandlordResponseExpiryTier,
+} from './booking/landlordResponseExpiry'
 
 export type TenantBookingAtAGlanceKind =
   | 'request_submitted'
@@ -60,13 +64,16 @@ export function tenantBookingStatusLabel(status: TenantBookingStatus): string {
 
 export function tenantBookingCardBanner(
   status: TenantBookingStatus,
+  serviceTierAtRequest?: string | null,
 ): { text: string; panelClass: string } | null {
   switch (status) {
     case 'pending_confirmation':
     case 'pending':
     case 'pending_payment':
       return {
-        text: 'Application submitted - your host will review within 48 hours',
+        text: `Application submitted - your host will review within ${landlordResponseExpiryLabel(
+          resolveLandlordResponseExpiryTier(serviceTierAtRequest),
+        )}`,
         panelClass: 'border-t border-amber-100 bg-amber-50 px-5 py-3 text-sm text-amber-900',
       }
     case 'awaiting_info':

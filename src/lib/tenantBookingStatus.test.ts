@@ -23,8 +23,9 @@ describe('tenantBookingAtAGlanceKind', () => {
 
 describe('tenantBookingCardBanner', () => {
   it('returns banner for pending_confirmation', () => {
-    const b = tenantBookingCardBanner('pending_confirmation')
+    const b = tenantBookingCardBanner('pending_confirmation', 'listing')
     expect(b?.text).toMatch(/Application submitted/)
+    expect(b?.text).toMatch(/7 days/)
   })
 
   it('returns banner for bond_pending', () => {

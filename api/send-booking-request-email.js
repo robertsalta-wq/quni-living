@@ -6,6 +6,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from './lib/sendEmail.js'
 import { bookingRequestLandlord, propertyAddressLine } from './lib/emailTemplates.js'
+import {
+  landlordResponseExpiryLabel,
+  resolveLandlordResponseExpiryTier,
+} from '../src/lib/booking/landlordResponseExpiry.js'
 import { assertRenterEligibleForBooking } from './lib/booking/assertRenterEligibleForBooking.js'
 import { buildBookingRejectVisibility, recordJourneyEvent } from './lib/booking/captureBookingRejected.js'
 import { readAttemptIdFromBody } from './lib/journey/insertJourneyEvent.js'
@@ -109,6 +113,7 @@ export default async function handler(request) {
       start_date,
       lease_length,
       student_message,
+      service_tier_at_request,
       properties (
         title,
         address,
@@ -193,6 +198,9 @@ export default async function handler(request) {
     lease_length: booking.lease_length || '-',
     student_message: typeof booking.student_message === 'string' ? booking.student_message : '',
     dashboard_url: `${dashboardBase}/landlord/bookings/${bookingId}/review#applicant-review`,
+    response_window_label: landlordResponseExpiryLabel(
+      resolveLandlordResponseExpiryTier(booking.service_tier_at_request),
+    ),
   })
 
   try {
