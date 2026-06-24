@@ -113,7 +113,15 @@ export default function OnboardingChecklistBanner({
     if (!isSupabaseConfigured || !userId) return
     if (!isFullyComplete || dbOnboardingDone) return
 
-    const table = isRenterRole(role) ? 'student_profiles' : 'landlord_profiles'
+    if (isRenterRole(role)) {
+      if (!readOnboardingCompleteLocal(userId)) {
+        writeOnboardingCompleteLocal(userId)
+        setCelebrating(true)
+      }
+      return
+    }
+
+    const table = 'landlord_profiles'
 
     if (readOnboardingCompleteLocal(userId)) {
       if (!persistStartedRef.current) {

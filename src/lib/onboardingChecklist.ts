@@ -1,15 +1,24 @@
 import type { Database } from './database.types'
 import { isRenterRole } from './authProfile'
 import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
-import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
-  isIdentityVerificationComplete,
-  isNonStudentAccommodationRoute,
-  isTenantCoreProfileComplete,
-} from './studentOnboarding'
+  buildRenterReadinessChecklistSteps,
+  computeRenterReadiness,
+  isRenterChecklistFullyComplete,
+  renterChecklistFraction,
+  type RenterChecklistStep,
+} from './renterReadiness'
 
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
+
+export type ChecklistStep = RenterChecklistStep & {
+  /** Secondary line under the title (e.g. Listing billing copy). */
+  subtitle?: string
+  /** Use a button instead of a Link (e.g. open Stripe modal). */
+  actionKind?: 'link' | 'button'
+  onAction?: () => void
+}
 
 const ONBOARDING_DISMISS_KEY = 'quni_onboarding_dismissed'
 
@@ -28,7 +37,10 @@ export function isProfileDashboardOnboardingComplete(
   student: StudentProfileRow | null,
   landlord: LandlordProfileRow | null,
 ): boolean {
-  if (isRenterRole(role)) return student?.onboarding_complete === true
+  if (isRenterRole(role)) {
+    const steps = buildRenterReadinessChecklistSteps(student)
+    return isRenterChecklistFullyComplete(steps)
+  }
   return landlord?.onboarding_complete === true
 }
 
@@ -97,9 +109,9 @@ export function isStudentCoreProfileComplete(p: StudentProfileRow | null | undef
   )
 }
 
-/** Tenant can send enquiries and booking requests (student or non-student route). */
+/** Tenant can send enquiries and booking requests when live readiness allows. */
 export function isStudentListingActionsUnlocked(p: StudentProfileRow | null | undefined): boolean {
-  return isTenantCoreProfileComplete(p)
+  return computeRenterReadiness(p).canRequestBooking
 }
 
 export function landlordDisplayNameComplete(p: LandlordProfileRow | null | undefined): boolean {
@@ -134,73 +146,16 @@ export function isLandlordListingUnlocked(p: LandlordProfileRow | null | undefin
   return canLandlordCreateListing(p) && isLandlordStripePayoutsComplete(p)
 }
 
-export type ChecklistStep = {
-  id: string
-  label: string
-  /** Secondary line under the title (e.g. Listing billing copy). */
-  subtitle?: string
-  complete: boolean
-  href?: string
-  actionLabel?: string
-  /** Use a button instead of a Link (e.g. open Stripe modal). */
-  actionKind?: 'link' | 'button'
-  onAction?: () => void
-  optional?: boolean
+export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefined): ChecklistStep[] {
+  return buildRenterReadinessChecklistSteps(p)
 }
 
-export function buildStudentOnboardingSteps(p: StudentProfileRow | null | undefined): ChecklistStep[] {
-  const profile = p ?? null
-  const termsOk = Boolean(profile?.terms_accepted_at)
-  const coreOk = isTenantCoreProfileComplete(profile)
-  const photoOk = Boolean(profile?.avatar_url?.trim())
-  const studentRoute = !isNonStudentAccommodationRoute(profile?.accommodation_verification_route)
-  const uniEmailOk = !studentRoute || isStudentUniEmailVerified(profile)
-  const identityOk = isIdentityVerificationComplete(profile)
+export function studentChecklistFraction(steps: ChecklistStep[]): { done: number; total: number; pct: number } {
+  return renterChecklistFraction(steps)
+}
 
-  return [
-    { id: 'account', label: 'Account created', complete: true },
-    ...(studentRoute
-      ? [
-          {
-            id: 'uni_email',
-            label: 'Verify your university email',
-            complete: uniEmailOk,
-            href: '/onboarding/student',
-            actionLabel: 'Verify →',
-          } satisfies ChecklistStep,
-        ]
-      : [
-          {
-            id: 'identity_verify',
-            label: 'Verify your identity (photo ID + supporting document)',
-            complete: identityOk,
-            href: '/student-profile?tab=verification',
-            actionLabel: 'Verify →',
-          } satisfies ChecklistStep,
-        ]),
-    {
-      id: 'terms',
-      label: 'Accept Terms of Service and Privacy Policy',
-      complete: termsOk,
-      href: '/onboarding/student',
-      actionLabel: 'Accept →',
-    },
-    {
-      id: 'profile',
-      label: 'Complete your profile',
-      complete: coreOk,
-      href: '/onboarding/student',
-      actionLabel: 'Complete →',
-    },
-    {
-      id: 'photo',
-      label: 'Add profile photo',
-      complete: photoOk,
-      optional: true,
-      href: '/student-profile',
-      actionLabel: 'Add →',
-    },
-  ]
+export function isStudentChecklistFullyComplete(steps: ChecklistStep[]): boolean {
+  return isRenterChecklistFullyComplete(steps)
 }
 
 export type LandlordOnboardingListingBillingOpts = {
@@ -296,22 +251,11 @@ export function buildLandlordOnboardingSteps(
   return core
 }
 
-export function studentChecklistFraction(steps: ChecklistStep[]): { done: number; total: number; pct: number } {
-  const total = steps.length
-  const done = steps.filter((s) => s.complete).length
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0
-  return { done, total, pct }
-}
-
 export function landlordChecklistFraction(steps: ChecklistStep[]): { done: number; total: number; pct: number } {
   const total = steps.length
   const done = steps.filter((s) => s.complete).length
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   return { done, total, pct }
-}
-
-export function isStudentChecklistFullyComplete(steps: ChecklistStep[]): boolean {
-  return steps.every((s) => s.complete)
 }
 
 export function isLandlordChecklistFullyComplete(steps: ChecklistStep[]): boolean {

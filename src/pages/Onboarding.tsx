@@ -27,17 +27,11 @@ type Choice = 'renter' | 'landlord'
 
 /**
  * Skip `/onboarding` (role + terms) when the profile already reflects a finished setup.
- * Includes `onboarding_complete` so legacy rows (e.g. DB missing `terms_accepted_at` column once) still escape.
  */
 function profileTermsComplete(role: Choice, profile: AuthProfile): boolean {
   if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow
-    return Boolean(
-      sp.terms_accepted_at ||
-        sp.onboarding_complete === true ||
-        /* Profile verification flow - don’t block users who already proved a uni email */
-        sp.uni_email_verified === true,
-    )
+    return Boolean(sp.terms_accepted_at)
   }
   const lp = profile as LandlordProfileRow
   if (lp.onboarding_complete === true) return true

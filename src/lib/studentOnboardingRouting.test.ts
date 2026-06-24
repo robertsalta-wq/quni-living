@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { markStudentOnboardingCompleteClient, renterOnboardingIncomplete } from './studentOnboarding'
+import { renterOnboardingIncomplete } from './studentOnboarding'
 import type { StudentProfileRow } from './studentOnboarding'
 
 function mockLocalStorage() {
@@ -20,6 +20,7 @@ function baseProfile(overrides: Partial<StudentProfileRow> = {}): StudentProfile
   return {
     accommodation_verification_route: 'student',
     uni_email_verified: true,
+    uni_email: 'alex@uni.edu.au',
     first_name: 'Alex',
     last_name: 'Smith',
     university_id: '00000000-0000-0000-0000-000000000001',
@@ -90,12 +91,6 @@ describe('renterOnboardingIncomplete', () => {
     expect(
       renterOnboardingIncomplete(baseProfile({ onboarding_complete: true, terms_accepted_at: null }), 'user-1'),
     ).toBe(true)
-  })
-
-  it('respects client onboarding escape hatch', () => {
-    const userId = 'legacy-db-user'
-    markStudentOnboardingCompleteClient(userId)
-    expect(renterOnboardingIncomplete(baseProfile({ terms_accepted_at: null }), userId)).toBe(false)
   })
 
   it('uses identity-path step 1 for non-student route', () => {

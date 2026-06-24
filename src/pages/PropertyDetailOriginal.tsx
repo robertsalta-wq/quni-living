@@ -4,7 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import { isRenterRole } from '../lib/authProfile'
 import PropertyEnquiryForm from '../components/PropertyEnquiryForm'
-import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
+import { computeRenterReadiness, renterReadinessActionHref } from '../lib/renterReadiness'
 import type { Database } from '../lib/database.types'
 import type { Property } from '../lib/listings'
 import { isRoomType, ROOM_TYPE_LABELS, ROOM_TYPE_SHORT_LABELS } from '../lib/listings'
@@ -182,7 +182,18 @@ export default function PropertyDetail() {
   }, [imageIndex])
 
   const studentProfile = isRenterRole(role) && profile ? (profile as StudentProfileRow) : null
-  const studentListingActionsOk = !user || !isRenterRole(role) || isStudentListingActionsUnlocked(studentProfile)
+  const renterReadiness = useMemo(
+    () => (studentProfile ? computeRenterReadiness(studentProfile) : null),
+    [studentProfile],
+  )
+  const studentListingActionsOk =
+    !user || !isRenterRole(role) || (renterReadiness?.canRequestBooking ?? false)
+  const renterReadinessCtaHref = renterReadiness
+    ? renterReadinessActionHref(renterReadiness)
+    : '/student-profile'
+  const renterReadinessBlockMessage =
+    renterReadiness?.blocksBooking[0] ??
+    'Complete your profile to send enquiries and request bookings'
 
   useEffect(() => {
     if (!user?.id || !isRenterRole(role) || !isSupabaseConfigured) return
@@ -906,10 +917,10 @@ export default function PropertyDetail() {
                     {isRenterRole(role) && !studentListingActionsOk ? (
                       <div className="rounded-xl border border-[#FF6F61]/25 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
-                          Complete your profile to send enquiries and request bookings
+                          {renterReadinessBlockMessage}
                         </p>
                         <Link
-                          to="/onboarding/student"
+                          to={renterReadinessCtaHref}
                           className="inline-flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors"
                         >
                           Complete profile →

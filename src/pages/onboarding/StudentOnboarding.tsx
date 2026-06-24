@@ -26,7 +26,6 @@ import {
   inferStudentOnboardingStep,
   isValidAuPhone,
   LEASE_LENGTH_OPTIONS,
-  markStudentOnboardingCompleteClient,
   renterOnboardingIncomplete,
   STUDY_LEVEL_OPTIONS,
   budgetRangeToMinMax,
@@ -351,7 +350,7 @@ export default function StudentOnboarding() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentProfileRow | null>(seededStudentProfile)
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [welcome, setWelcome] = useState(false)
+  const [welcome] = useState(false)
   const [routePickerBusy, setRoutePickerBusy] = useState(false)
   const formTopRef = useRef<HTMLDivElement>(null)
 
@@ -1056,46 +1055,16 @@ export default function StudentOnboarding() {
     try {
       const now = new Date().toISOString()
       const fullPayload = {
-        onboarding_complete: true,
         terms_accepted_at: now,
       }
-      let { error } = await saveStudentProfileByUserId(
+      const { error } = await saveStudentProfileByUserId(
         user,
         fullPayload,
         'StudentOnboarding/complete-onboarding-full',
         profile?.accommodation_verification_route ?? undefined,
       )
 
-      if (error && looksLikeMissingDbColumn(error)) {
-        const r = await saveStudentProfileByUserId(
-          user,
-          { onboarding_complete: true },
-          'StudentOnboarding/complete-onboarding-minimal',
-          profile?.accommodation_verification_route ?? undefined,
-        )
-        error = r.error
-        if (!error) {
-          setPartialSaveHint(
-            '`terms_accepted_at` will record after `supabase/student_onboarding.sql` adds that column.',
-          )
-        }
-      }
-
       if (error) {
-        if (looksLikeMissingDbColumn(error)) {
-          markStudentOnboardingCompleteClient(user.id)
-          setPartialSaveHint(
-            'The database is missing onboarding columns. Run `supabase/student_onboarding.sql` in Supabase → SQL Editor so completion and terms acceptance are stored. You can continue using the site on this device for now.',
-          )
-          await refreshProfile()
-          try {
-            localStorage.removeItem(STUDENT_ONBOARDING_DRAFT_KEY)
-          } catch {
-            /* ignore */
-          }
-          setWelcome(true)
-          return
-        }
         const formErrMsg = messageFromSupabaseError(error)
         setFormError(formErrMsg)
         if (formErrMsg) reportFormError('StudentOnboarding', 'formError', formErrMsg, { sentry: true })

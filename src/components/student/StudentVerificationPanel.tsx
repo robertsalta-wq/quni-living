@@ -8,14 +8,13 @@ import { isValidWorkEmailForVerification, workEmailDomainErrorMessage } from '..
 import { formatDate } from '../../pages/admin/adminUi'
 import { readSupabaseFunctionInvokeError } from '../../lib/readSupabaseFunctionInvokeError'
 import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
+import { tierToPromote } from '../../lib/renterReadiness'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
   VERIFICATION_ID_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
   docStepComplete,
-  hasUploadedDoc,
-  profileDocFieldsFromValues,
   type VerificationDocKind,
   type VerificationUploadedDoc,
 } from '../../lib/verificationDocSlot'
@@ -31,17 +30,6 @@ import {
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
 const RESEND_SECONDS = 60
-
-function profileDocFields(profile: StudentRow, kind: VerificationDocKind) {
-  return profileDocFieldsFromValues(kind, {
-    idUrl: profile.id_document_url,
-    idSubmittedAt: profile.id_submitted_at,
-    enrolUrl: profile.enrolment_doc_url,
-    enrolSubmittedAt: profile.enrolment_submitted_at,
-    identitySupportUrl: profile.identity_supporting_doc_url,
-    identitySupportSubmittedAt: profile.identity_supporting_submitted_at,
-  })
-}
 
 function formatReceivedAt(iso: string): string {
   try {
@@ -160,7 +148,6 @@ type Props = {
 
 export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload }: Props) {
   const {
-    uploadedByKind,
     idDoc,
     enrolDoc,
     identitySupportDoc,
@@ -332,14 +319,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const onRefreshRef = useRef(onRefresh)
   onRefreshRef.current = onRefresh
 
-  const hasIdDoc = hasUploadedDoc('id', uploadedByKind, profileDocFields(profile, 'id'))
-  const hasEnrolDoc = hasUploadedDoc('enrolment', uploadedByKind, profileDocFields(profile, 'enrolment'))
-  const hasIdentitySupportDoc = hasUploadedDoc(
-    'identity_supporting',
-    uploadedByKind,
-    profileDocFields(profile, 'identity_supporting'),
-  )
-
   const useIdentityFlow =
     profile.verification_type === 'identity' ||
     (profile.verification_type === 'none' && isNonStudentAccommodationRoute(profile.accommodation_verification_route))
@@ -361,14 +340,13 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   const [, setWorkResendTick] = useState(0)
 
   useEffect(() => {
-    if (profile.verification_type !== 'none') return
-    if (useIdentityFlow) return
-    if (!emailVerified || !hasIdDoc || !hasEnrolDoc) return
+    const next = tierToPromote(profile)
+    if (!next) return
     let cancelled = false
     ;(async () => {
       const { error } = await supabase
         .from('student_profiles')
-        .update({ verification_type: 'student' })
+        .update({ verification_type: next })
         .eq('user_id', userId)
       if (!error && !cancelled) await onRefreshRef.current()
     })()
@@ -376,35 +354,17 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       cancelled = true
     }
   }, [
-    profile.verification_type,
-    emailVerified,
-    hasIdDoc,
-    hasEnrolDoc,
+    profile,
     userId,
-    useIdentityFlow,
-  ])
-
-  useEffect(() => {
-    if (profile.verification_type !== 'none') return
-    if (!useIdentityFlow) return
-    if (!hasIdDoc || !hasIdentitySupportDoc) return
-    let cancelled = false
-    ;(async () => {
-      const { error } = await supabase
-        .from('student_profiles')
-        .update({ verification_type: 'identity' })
-        .eq('user_id', userId)
-      if (!error && !cancelled) await onRefreshRef.current()
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [
     profile.verification_type,
-    useIdentityFlow,
-    hasIdDoc,
-    hasIdentitySupportDoc,
-    userId,
+    profile.accommodation_verification_route,
+    profile.uni_email_verified,
+    profile.id_document_url,
+    profile.id_submitted_at,
+    profile.enrolment_doc_url,
+    profile.enrolment_submitted_at,
+    profile.identity_supporting_doc_url,
+    profile.identity_supporting_submitted_at,
   ])
 
   useEffect(() => {
