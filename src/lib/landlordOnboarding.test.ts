@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { NON_DISCRIMINATION_POLICY_VERSION } from './nonDiscriminationPolicy'
 import {
   inferLandlordWizardStep,
   landlordListingBillingStepComplete,
@@ -23,6 +24,8 @@ function baseProfile(overrides: Partial<LandlordRow> = {}): LandlordRow {
     state: 'NSW',
     terms_accepted_at: '2026-01-01T00:00:00Z',
     landlord_terms_accepted_at: '2026-01-01T00:00:00Z',
+    non_discrimination_policy_accepted_at: '2026-01-01T00:00:00Z',
+    non_discrimination_policy_version: NON_DISCRIMINATION_POLICY_VERSION,
     insurance_acknowledged_at: null,
     onboarding_complete: false,
     stripe_charges_enabled: false,

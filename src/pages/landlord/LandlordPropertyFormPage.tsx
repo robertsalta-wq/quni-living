@@ -72,6 +72,7 @@ import {
 } from '../../lib/landlordServiceTier'
 import UserDashboardBreadcrumb from '../../components/dashboard/UserDashboardBreadcrumb'
 import { userDashboardBreadcrumbs } from '../../lib/userDashboardNav'
+import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
 import LandlordPropertyFt6600ComplianceFields, {
   emptyLandlordFt6600ComplianceFormState,
   ft6600ComplianceColumnsFromFormState,
@@ -2335,7 +2336,7 @@ export default function LandlordPropertyFormPage() {
   if (role === 'landlord' && !landlordProfile) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-sm text-gray-600">
-        <Link to="/landlord-profile" className="text-indigo-600 font-medium">
+        <Link to={landlordDashboardProfilePath()} className="text-indigo-600 font-medium">
           Complete your landlord profile
         </Link>{' '}
         before creating a listing.

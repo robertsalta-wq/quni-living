@@ -4,6 +4,7 @@ import { Info, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
+import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import SiteBrandLockup from './SiteBrandLockup'
@@ -15,7 +16,7 @@ import { warmListingsBrowseCache } from '../lib/listingsBrowseCache'
 function finishSetupHref(r: UserRole): string {
   if (r === null) return '/onboarding'
   if (isRenterRole(r)) return INCOMPLETE_RENTER_DESTINATION
-  return '/onboarding/landlord'
+  return landlordDashboardProfilePath()
 }
 
 const LANDLORD_NAV_TO = '/for-landlords'
@@ -223,6 +224,14 @@ export default function Header() {
     return formatted || 'Account'
   })()
 
+  const accountFirstName = (() => {
+    if (profile && (isRenterRole(role) || role === 'landlord')) {
+      const fn = (profile as { first_name?: string | null }).first_name?.trim()
+      if (fn) return formatDisplayName(fn).split(/\s+/)[0] || displayName.split(/\s+/)[0]
+    }
+    return displayName.split(/\s+/)[0] || 'Account'
+  })()
+
   const initials = displayName
     .split(/\s+/)
     .map((s) => s[0])
@@ -240,7 +249,7 @@ export default function Header() {
     isRenterRole(role)
       ? '/student-profile'
       : role === 'landlord'
-        ? '/landlord-profile'
+        ? landlordDashboardProfilePath()
         : role === 'admin'
           ? '/admin'
           : '/onboarding'
@@ -426,6 +435,9 @@ export default function Header() {
                       {initials}
                     </span>
                   )}
+                  <span className="hidden sm:inline max-w-[7rem] truncate text-sm font-medium text-gray-800 pl-0.5">
+                    {accountFirstName}
+                  </span>
                   <svg
                     className="w-4 h-4 text-gray-500 mr-1 hidden sm:block"
                     fill="none"

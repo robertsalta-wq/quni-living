@@ -6,7 +6,8 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import { getPostLoginRedirectDestination, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding } from '../lib/authProfile'
+import { getIncompleteOnboardingDestination, getPostLoginRedirectDestination, needsOnboarding } from '../lib/authProfile'
+import { stashLoginWelcomePending } from '../lib/loginWelcomeToast'
 import { formatAuthLoginErrorMessage } from '../lib/authErrors'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
 import {
@@ -124,14 +125,15 @@ export default function Login() {
       return
     }
     if (profile === null || needsOnboarding(role, profile, user.id)) {
-      navigate(isRenterRole(role) ? INCOMPLETE_RENTER_DESTINATION : '/onboarding/landlord', { replace: true })
+      if (role === 'landlord') stashLoginWelcomePending()
+      navigate(getIncompleteOnboardingDestination(role, profile, user.id), { replace: true })
       return
     }
     const next = resolvePostLoginDestination(searchParams, location.state)
-    navigate(
-      next && next !== '/login' ? next : getPostLoginRedirectDestination(user, role, profile),
-      { replace: true },
-    )
+    const destination =
+      next && next !== '/login' ? next : getPostLoginRedirectDestination(user, role, profile)
+    if (role === 'landlord') stashLoginWelcomePending()
+    navigate(destination, { replace: true })
   }, [user, profile, role, authLoading, navigate, location.state, searchParams])
 
   async function handleEmailLogin(e: React.FormEvent) {

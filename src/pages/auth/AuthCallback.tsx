@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
-import { getPostLoginRedirectDestination, INCOMPLETE_RENTER_DESTINATION, needsOnboarding, isRenterRole } from '../../lib/authProfile'
+import { getPostLoginRedirectDestination, getIncompleteOnboardingDestination, INCOMPLETE_RENTER_DESTINATION, needsOnboarding, isRenterRole } from '../../lib/authProfile'
+import { stashLoginWelcomePending } from '../../lib/loginWelcomeToast'
 import { marketplaceRoleForWrite } from '../../lib/marketplaceRole'
 import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
@@ -78,7 +79,7 @@ export default function AuthCallback() {
           isRenterRole(role)
             ? INCOMPLETE_RENTER_DESTINATION
             : role === 'landlord'
-              ? '/onboarding/landlord'
+              ? getIncompleteOnboardingDestination(role, profile, sessionUser.id)
               : '/onboarding'
         navigate('/verify-email', {
           replace: true,
@@ -97,14 +98,17 @@ export default function AuthCallback() {
         return
       }
       if (needsOnboarding(role, profile, sessionUser.id)) {
-        const onboardingPath = isRenterRole(role) ? INCOMPLETE_RENTER_DESTINATION : '/onboarding/landlord'
+        const onboardingPath = getIncompleteOnboardingDestination(role, profile, sessionUser.id)
         if (isRenterRole(role)) prefetchRouteChunks(INCOMPLETE_RENTER_DESTINATION)
+        if (role === 'landlord') stashLoginWelcomePending()
         navigate(onboardingPath, { replace: true })
         return
       }
 
       const returnTo = consumePostAuthRedirect()
-      navigate(returnTo ?? getPostLoginRedirectDestination(sessionUser, role, profile), { replace: true })
+      const destination = returnTo ?? getPostLoginRedirectDestination(sessionUser, role, profile)
+      if (role === 'landlord') stashLoginWelcomePending()
+      navigate(destination, { replace: true })
     }
 
     ;(async () => {

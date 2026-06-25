@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { NON_DISCRIMINATION_POLICY_VERSION } from './nonDiscriminationPolicy'
 import { landlordProfileHostIdentityVerified } from './landlordBookingConfirmGate'
+import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 import {
   computeLandlordReadiness,
+  isLandlordPersonalSectionComplete,
   isLandlordPublishComplete,
   landlordPublishFirstIncompleteAction,
 } from './landlordProfileReadiness'
@@ -73,6 +75,41 @@ describe('landlordProfileReadiness publish gate', () => {
     expect(computeLandlordReadiness(p).publish.complete).toBe(true)
   })
 
+  it('individual landlord passes personal without company fields', () => {
+    const p = baseProfile({ landlord_type: 'individual', company_name: null, abn: null })
+    expect(isLandlordPersonalSectionComplete(p)).toBe(true)
+    expect(computeLandlordReadiness(p).publish.sections.personal).toBe(true)
+  })
+
+  it('company landlord requires company_name and ABN', () => {
+    const incomplete = baseProfile({
+      landlord_type: 'company',
+      company_name: null,
+      abn: null,
+    })
+    expect(isLandlordPersonalSectionComplete(incomplete)).toBe(false)
+    expect(computeLandlordReadiness(incomplete).publish.complete).toBe(false)
+
+    const complete = baseProfile({
+      landlord_type: 'company',
+      company_name: 'Acme Pty Ltd',
+      abn: '12345678901',
+    })
+    expect(isLandlordPersonalSectionComplete(complete)).toBe(true)
+  })
+
+  it('trust landlord requires company_name and ABN', () => {
+    const incomplete = baseProfile({ landlord_type: 'trust', company_name: 'Family Trust', abn: null })
+    expect(isLandlordPersonalSectionComplete(incomplete)).toBe(false)
+
+    const complete = baseProfile({
+      landlord_type: 'trust',
+      company_name: 'Family Trust',
+      abn: '98765432109',
+    })
+    expect(isLandlordPersonalSectionComplete(complete)).toBe(true)
+  })
+
   it('orders missing keys personal → address → about → agreements', () => {
     const p = baseProfile({
       first_name: null,
@@ -92,7 +129,7 @@ describe('landlordProfileReadiness publish gate', () => {
     const action = landlordPublishFirstIncompleteAction(baseProfile({ suburb: '' }))
     expect(action).toEqual({
       label: 'Complete your address →',
-      href: '/landlord/profile',
+      href: landlordDashboardProfilePath('address'),
     })
   })
 })

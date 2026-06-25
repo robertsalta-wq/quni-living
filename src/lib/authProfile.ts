@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js'
-import { landlordNeedsOnboardingWizard } from './landlordOnboarding'
+import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
+import { isLandlordPublishComplete } from './landlordProfileReadiness'
 import { fetchIsPlatformAdmin, linkPlatformStaffUserIfNeeded } from './platformStaff'
 import { isShallowReturnIntentPath } from './postAuthRedirect'
 import { renterOnboardingIncomplete } from './studentOnboarding'
@@ -148,7 +149,7 @@ export function fetchRoleAndProfileDeduped(
 /**
  * Default destination after login when no explicit `?redirect=` (or other meaningful return path) is used.
  * Renter: incomplete onboarding → /student-profile; complete → /student-dashboard.
- * Landlord → /onboarding/landlord until wizard complete, then /landlord-dashboard. Admin → /admin. No role → /onboarding.
+ * Landlord → /landlord/dashboard (Profile tab when publish incomplete). Admin → /admin. No role → /onboarding.
  */
 export function getPostLoginRedirectDestination(
   _user: User,
@@ -158,8 +159,8 @@ export function getPostLoginRedirectDestination(
   if (role === 'admin') return '/admin'
   if (role === 'landlord') {
     const lp = profile as LandlordProfileRow | null
-    if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
-    return '/landlord-dashboard'
+    if (!lp || !isLandlordPublishComplete(lp)) return landlordDashboardProfilePath()
+    return '/landlord/dashboard'
   }
   if (isRenterRole(role)) {
     const sp = profile as StudentProfileRow | null
@@ -180,8 +181,6 @@ export function getNavDashboardPath(
 ): string {
   if (role === 'admin') return '/admin'
   if (role === 'landlord') {
-    const lp = profile as LandlordProfileRow | null
-    if (!lp || landlordNeedsOnboardingWizard(lp)) return '/onboarding/landlord'
     return '/landlord/dashboard'
   }
   if (isRenterRole(role)) {
@@ -213,7 +212,8 @@ export function needsOnboarding(
     return renterOnboardingIncomplete(profile as StudentProfileRow, userId)
   }
   if (role === 'landlord') {
-    return landlordNeedsOnboardingWizard(profile as LandlordProfileRow)
+    if (!profile) return true
+    return !isLandlordPublishComplete(profile as LandlordProfileRow)
   }
   return false
 }
@@ -229,7 +229,7 @@ export function getIncompleteOnboardingDestination(
   }
   if (!role) return '/onboarding'
   if (isRenterRole(role)) return INCOMPLETE_RENTER_DESTINATION
-  if (role === 'landlord') return '/onboarding/landlord'
+  if (role === 'landlord') return landlordDashboardProfilePath()
   return '/onboarding'
 }
 
@@ -247,9 +247,9 @@ export function getPostAuthEntryDestination(
   }
   if (
     role === 'landlord' &&
-    (!profile || landlordNeedsOnboardingWizard(profile as LandlordProfileRow))
+    (!profile || !isLandlordPublishComplete(profile as LandlordProfileRow))
   ) {
-    return '/onboarding/landlord'
+    return landlordDashboardProfilePath()
   }
   const safeFrom =
     fromPath &&

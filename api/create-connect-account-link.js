@@ -52,19 +52,22 @@ export default async function handler(request) {
     return json({ error: 'Method not allowed' }, 405, origin)
   }
 
-  let returnPath = '/landlord/dashboard?stripe_connect=return'
-  let refreshPath = '/landlord/dashboard?stripe_connect=refresh'
+  let returnPath = '/landlord/dashboard?tab=profile&stripe_connect=return'
+  let refreshPath = '/landlord/dashboard?tab=profile&stripe_connect=refresh'
   try {
     const text = await request.text()
     if (text.trim()) {
       const body = JSON.parse(text)
-      if (body?.returnContext === 'landlord_onboarding') {
-        returnPath = '/onboarding/landlord?stripe_connect=success'
-        refreshPath = '/onboarding/landlord?stripe_connect=refresh'
+      if (body?.returnContext === 'landlord_onboarding' || body?.returnContext === 'landlord_profile') {
+        returnPath = '/landlord/dashboard?tab=profile&stripe_connect=return'
+        refreshPath = '/landlord/dashboard?tab=profile&stripe_connect=refresh'
+      } else if (body?.returnContext === 'landlord_dashboard') {
+        returnPath = '/landlord/dashboard?tab=profile&stripe_connect=return'
+        refreshPath = '/landlord/dashboard?tab=profile&stripe_connect=refresh'
       }
     }
   } catch {
-    /* invalid body - use dashboard defaults */
+    /* invalid body - use profile tab defaults */
   }
 
   const stripeSecret = process.env.STRIPE_SECRET_KEY

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
+import type { LandlordProfileRow } from '../lib/authProfile'
 import { supabase } from '../lib/supabase'
 import {
   CONVERSATION_WITH_PROPERTY_SELECT,
@@ -10,6 +11,7 @@ import {
 import ConversationThread from '../components/messaging/ConversationThread'
 import Seo from '../components/Seo'
 import UserDashboardShell from '../components/dashboard/UserDashboardShell'
+import { LandlordMessagesTabShell } from '../components/landlord/LandlordDashboardPageHeader'
 import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 
 function preloadedForRoute(
@@ -27,7 +29,7 @@ export default function ConversationThreadPage() {
   const { conversationId } = useParams<{ conversationId: string }>()
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, role } = useAuthContext()
+  const { user, role, profile } = useAuthContext()
   const initialPreload =
     conversationId != null ? preloadedForRoute(location.state, conversationId) : null
   const [conversation, setConversation] = useState<ConversationWithProperty | null>(initialPreload)
@@ -35,6 +37,7 @@ export default function ConversationThreadPage() {
   const [error, setError] = useState<string | null>(null)
 
   const dashboardRole = role === 'landlord' ? 'landlord' : 'renter'
+  const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
 
   useEffect(() => {
     const uid = user?.id
@@ -85,6 +88,40 @@ export default function ConversationThreadPage() {
     return null
   }
 
+  if (landlordProfile) {
+    if (loading) {
+      return (
+        <LandlordMessagesTabShell profile={landlordProfile} contentClassName="py-4 md:py-6">
+          <p className="text-sm text-gray-500">Loading conversation…</p>
+        </LandlordMessagesTabShell>
+      )
+    }
+
+    if (error || !conversation) {
+      return (
+        <LandlordMessagesTabShell profile={landlordProfile} contentClassName="py-4 md:py-6">
+          <p className="text-sm text-red-700">{error ?? 'Conversation not found'}</p>
+          <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[#FF6F61] hover:underline">
+            Back to messages
+          </Link>
+        </LandlordMessagesTabShell>
+      )
+    }
+
+    const viewerRole = conversation.tenant_user_id === user.id ? 'tenant' : 'landlord'
+
+    return (
+      <LandlordMessagesTabShell profile={landlordProfile} contentClassName="py-4 md:py-6">
+        <Seo title="Conversation" canonicalPath={`/messages/${conversation.id}`} />
+        <ConversationThread
+          conversation={conversation}
+          currentUserId={user.id}
+          viewerRole={viewerRole}
+        />
+      </LandlordMessagesTabShell>
+    )
+  }
+
   if (loading) {
     return (
       <UserDashboardShell
@@ -93,10 +130,6 @@ export default function ConversationThreadPage() {
         showSectionNav
         activeSection="messages"
         onSectionSelect={(section) => {
-          if (dashboardRole === 'landlord') {
-            navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
-            return
-          }
           navigate(`/student-dashboard?tab=${section}`)
         }}
       >
@@ -113,10 +146,6 @@ export default function ConversationThreadPage() {
         showSectionNav
         activeSection="messages"
         onSectionSelect={(section) => {
-          if (dashboardRole === 'landlord') {
-            navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
-            return
-          }
           navigate(`/student-dashboard?tab=${section}`)
         }}
       >
@@ -129,23 +158,14 @@ export default function ConversationThreadPage() {
   }
 
   const viewerRole = conversation.tenant_user_id === user.id ? 'tenant' : 'landlord'
-  const threadLabel = conversation.property?.title?.trim() || 'Conversation'
 
   return (
     <UserDashboardShell
       role={dashboardRole}
-      breadcrumbs={userDashboardBreadcrumbs(
-        dashboardRole,
-        { label: 'Messages', to: '/messages' },
-        { label: threadLabel },
-      )}
+      breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: conversation.property?.title?.trim() || 'Conversation' })}
       showSectionNav
       activeSection="messages"
       onSectionSelect={(section) => {
-        if (dashboardRole === 'landlord') {
-          navigate(section === 'bookings' ? '/landlord/dashboard?tab=bookings' : '/landlord/dashboard')
-          return
-        }
         navigate(`/student-dashboard?tab=${section}`)
       }}
       contentClassName="py-4 md:py-6"

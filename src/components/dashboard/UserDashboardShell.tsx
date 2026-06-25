@@ -10,7 +10,7 @@ type Props = {
   showSectionNav?: boolean
   pendingBookings?: number
   totalBookings?: number
-  onSectionSelect?: (section: Exclude<UserDashboardSection, 'messages' | 'profile'>) => void
+  onSectionSelect?: (section: Exclude<UserDashboardSection, 'messages'>) => void
   children: ReactNode
   /** Extra classes on the inner content wrapper */
   contentClassName?: string

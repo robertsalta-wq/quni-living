@@ -6,6 +6,7 @@ import { startLandlordStripeConnect } from '../../lib/startLandlordStripeConnect
 import { resetLandlordStripeConnect } from '../../lib/resetLandlordStripeConnect'
 import { stripeConnectLandlordTypeHint } from '../../lib/stripeConnectLandlordTypeHint'
 import type { StripeConnectRequirementsSummary } from '../../lib/stripeConnectRequirements'
+import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
 import { Link } from 'react-router-dom'
 import type { Database } from '../../lib/database.types'
 
@@ -262,7 +263,7 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
       {landlordTypeHint && (
         <p className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
           {landlordTypeHint}{' '}
-          <Link to="/landlord/profile" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+          <Link to={landlordDashboardProfilePath('personal')} className="font-semibold text-[#FF6F61] underline underline-offset-2">
             Update profile type
           </Link>
         </p>

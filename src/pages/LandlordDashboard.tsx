@@ -16,13 +16,14 @@ import LandlordStudentProfileModal, {
   type LandlordSafeStudentSnapshot,
 } from '../components/landlord/LandlordStudentProfileModal'
 import AiSparkleIcon from '../components/AiSparkleIcon'
-import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
 import { canLandlordCreateListing } from '../lib/onboardingChecklist'
 import {
   computeLandlordReadiness,
   landlordProfileStatCardCopy,
   landlordPublishFirstIncompleteAction,
 } from '../lib/landlordProfileReadiness'
+import { consumeLoginWelcomePending } from '../lib/loginWelcomeToast'
+import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import { looksLikeMissingDbColumn, messageFromSupabaseError } from '../lib/supabaseErrorMessage'
 import { apiUrl } from '../lib/apiUrl'
 import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
@@ -31,13 +32,14 @@ import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplic
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
 import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
 import LandlordTenantInviteModal from '../components/landlord/LandlordTenantInviteModal'
+import LandlordDashboardProfileTab from '../components/landlord/LandlordDashboardProfileTab'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
-import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
-import UserDashboardSectionNav from '../components/dashboard/UserDashboardSectionNav'
-import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import LandlordDashboardPageHeader, {
+  landlordDashboardPageInsetClass,
+} from '../components/landlord/LandlordDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   fetchLandlordListingBillingSnapshot,
@@ -212,7 +214,7 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
   return out
 }
 
-type TabId = 'listings' | 'bookings'
+type TabId = 'overview' | 'listings' | 'bookings' | 'profile'
 
 const LANDLORD_INVITE_MODAL_SESSION_KEY = 'quni-landlord-invite-modal:v1'
 
@@ -396,7 +398,9 @@ export default function LandlordDashboard() {
   const [profile, setProfile] = useState<LandlordRow | null>(authLandlord)
   const [properties, setProperties] = useState<PropertySummary[]>([])
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [tab, setTab] = useState<TabId>('listings')
+  const [tab, setTab] = useState<TabId>('overview')
+  const [welcomeToast, setWelcomeToast] = useState<string | null>(null)
+  const welcomeToastTimerRef = useRef<number | null>(null)
   const { items: conversations } = useConversationInbox(user?.id)
   const unreadMessageCount = useUnreadMessageCount(user?.id)
   const [connectLoading, setConnectLoading] = useState(false)
@@ -839,10 +843,29 @@ export default function LandlordDashboard() {
   const stripeConnectParam = searchParams.get('stripe_connect')
   useEffect(() => {
     if (stripeConnectParam !== 'return' && stripeConnectParam !== 'refresh') return
-    void load().then(() => {
-      setSearchParams({}, { replace: true })
+    void load().then(async () => {
+      if (stripeConnectParam === 'return') {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession()
+          const token = sessionData.session?.access_token
+          if (token) {
+            await fetch('/api/sync-stripe-connect-status', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          }
+        } catch {
+          /* non-fatal */
+        }
+      }
+      setTab('profile')
+      const next = new URLSearchParams(searchParams)
+      next.set('tab', 'profile')
+      next.delete('stripe_connect')
+      if (!next.get('section')) next.set('section', 'payouts')
+      setSearchParams(next, { replace: true })
     })
-  }, [stripeConnectParam, load, setSearchParams])
+  }, [stripeConnectParam, load, setSearchParams, searchParams])
 
   useEffect(() => {
     const t = searchParams.get('tab')
@@ -850,8 +873,50 @@ export default function LandlordDashboard() {
       navigate('/messages', { replace: true })
       return
     }
-    if (t === 'bookings' || t === 'listings') setTab(t)
+    if (t === 'bookings' || t === 'listings' || t === 'profile') {
+      setTab(t)
+      return
+    }
+    setTab('overview')
   }, [searchParams, navigate])
+
+  useEffect(() => {
+    if (!profile) return
+    if (!consumeLoginWelcomePending()) return
+    const name = firstNameFromLandlord(profile)
+    setWelcomeToast(`Welcome back, ${name}`)
+    if (welcomeToastTimerRef.current != null) window.clearTimeout(welcomeToastTimerRef.current)
+    welcomeToastTimerRef.current = window.setTimeout(() => {
+      setWelcomeToast(null)
+      welcomeToastTimerRef.current = null
+    }, 4500)
+  }, [profile?.id])
+
+  useEffect(() => {
+    return () => {
+      if (welcomeToastTimerRef.current != null) window.clearTimeout(welcomeToastTimerRef.current)
+    }
+  }, [])
+
+  const selectDashboardTab = useCallback(
+    (next: TabId) => {
+      setTab(next)
+      const params = new URLSearchParams(searchParams)
+      if (next === 'overview') {
+        params.delete('tab')
+        params.delete('section')
+      } else if (next === 'listings') {
+        params.set('tab', 'listings')
+        params.delete('section')
+      } else {
+        params.set('tab', next)
+        if (next !== 'profile') params.delete('section')
+      }
+      const q = params.toString()
+      navigate(q ? `/landlord/dashboard?${q}` : '/landlord/dashboard', { replace: true })
+    },
+    [navigate, searchParams],
+  )
 
   useEffect(() => {
     if (!profile || window.location.hash.replace(/^#/, '') !== 'rent-payouts') return
@@ -905,13 +970,6 @@ export default function LandlordDashboard() {
     [bookings],
   )
 
-  const bookingsLinkTo = useMemo(() => {
-    if (pendingConfirmation.length === 1) {
-      return `/landlord/bookings/${pendingConfirmation[0].id}/review`
-    }
-    return '/landlord/dashboard?tab=bookings'
-  }, [pendingConfirmation])
-
   const landlordReadiness = useMemo(() => computeLandlordReadiness(profile), [profile])
   const profileStatCard = useMemo(
     () => landlordProfileStatCardCopy(landlordReadiness),
@@ -943,188 +1001,187 @@ export default function LandlordDashboard() {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 px-6 py-12 max-w-lg mx-auto">
         <p className="text-red-700 text-sm">{error ?? 'Landlord profile not found.'}</p>
-        <Link to="/landlord-profile" className="mt-4 inline-block text-sm font-medium text-indigo-600">
+        <Link to={landlordDashboardProfilePath()} className="mt-4 inline-block text-sm font-medium text-indigo-600">
           Go to profile
         </Link>
       </div>
     )
   }
 
-  const welcomeName = firstNameFromLandlord(profile)
-
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-      <div className="max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('landlord')} className="mb-4" />
-        {user?.id && (
-          <OnboardingChecklistBanner
-            role="landlord"
-            userId={user.id}
-            studentProfile={null}
-            landlordProfile={profile}
-            landlordChecklistOpts={{
-              onStripeConnect: () => void startStripeConnect(),
-              listingBilling: listingBilling
-                ? {
-                    listingModuleEnabled: listingBilling.moduleEnabled,
-                    hasListingPaymentMethod: listingBilling.hasPaymentMethod,
-                    onAddListingPaymentMethod: () => setListingPaymentModalOpen(true),
-                  }
-                : null,
-            }}
-            onRefresh={load}
-          />
-        )}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Welcome back, {welcomeName}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Here’s what’s happening with your listings, messages, and booking requests.
-            </p>
-          </div>
-          {canCreateListing ? (
-            <Link
-              to="/landlord/property/new"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm shrink-0"
-            >
-              Add new listing
-            </Link>
-          ) : (
-            <Link
-              to={firstIncomplete?.href ?? '/landlord/profile'}
-              className="inline-flex items-center justify-center rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-700 px-5 py-2.5 text-sm font-medium hover:bg-stone-50 shadow-sm shrink-0"
-              title={firstIncomplete?.label ?? 'Complete your account setup to add listings'}
-            >
-              Add new listing
-            </Link>
-          )}
+      {welcomeToast ? (
+        <div
+          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"
+          role="status"
+        >
+          <p className="text-sm font-semibold text-emerald-900">{welcomeToast}</p>
+          <p className="text-xs text-emerald-700/80 mt-0.5">Dismisses on its own · login only</p>
         </div>
-        <div className="mb-6">
-          <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-            View sample agreements →
-          </Link>
-        </div>
+      ) : null}
 
-        {connectSetupError && (
-          <div
-            className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-            role="alert"
-          >
-            {connectSetupError}
-          </div>
-        )}
-
-        <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
-
-        {listingTierProperties > 0 && managedTierProperties > 0 && (
-          <p className="mb-6 text-sm text-gray-600">
-            <span className="font-medium text-gray-900">Mixed service models:</span>{' '}
-            {listingTierProperties} self-managed and {managedTierProperties} Quni Managed - each property keeps its own
-            tier.
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
-            <p className="text-xs text-gray-500 mt-auto pt-1">Published as active</p>
-          </div>
-          <Link
-            to="/messages"
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{conversations.length}</p>
-            <p className="text-xs mt-auto pt-1">
-              {unreadMessageCount > 0 ? (
-                <span className="font-semibold text-amber-700">
-                  {unreadMessageCount} unread
-                </span>
-              ) : (
-                <span className="text-gray-500">All caught up</span>
-              )}
-            </p>
-          </Link>
-          <Link
-            to={bookingsLinkTo}
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
-            <p className="text-xs mt-auto pt-1">
-              {pendingBookings > 0 ? (
-                <span className="font-semibold text-amber-700">{pendingBookings} pending</span>
-              ) : (
-                <span className="text-gray-500">Nothing pending</span>
-              )}
-            </p>
-          </Link>
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
-            <div className="mt-2 flex flex-col flex-1 min-h-0">
-              <p
-                className={`text-sm font-semibold ${
-                  landlordReadiness.phase === 'complete' ? 'text-emerald-700' : 'text-gray-900'
-                }`}
-              >
-                {profileStatCard.headline}
-              </p>
-              {profileStatCard.showPublishProgress ? (
-                <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{ width: `${profileStatCard.publishPct}%`, backgroundColor: '#FF6F61' }}
-                    aria-label={`Profile completion ${profileStatCard.publishPct}%`}
-                    role="progressbar"
-                    aria-valuenow={profileStatCard.publishPct}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                  />
-                </div>
-              ) : null}
-              {landlordReadiness.phase === 'complete' ? (
-                <p className="text-xs text-gray-500 mt-auto pt-2 leading-snug">
-                  Students can trust your listing with confidence.
-                </p>
-              ) : firstIncomplete ? (
-                <Link
-                  to={firstIncomplete.href}
-                  className="mt-auto pt-2 inline-block text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
-                >
-                  {firstIncomplete.label}
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setQaseOpen(true)}
-            className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help</p>
-            <p className="text-xs text-gray-500 mt-1 leading-snug">
-              Submit a support request and we&apos;ll get back to you.
-            </p>
-            <span className="text-xs font-semibold text-[#FF6F61] mt-auto pt-2 inline-block group-hover:text-[#e85d52]">
-              Contact support →
-            </span>
-          </button>
-        </div>
-
-        <UserDashboardSectionNav
-          role="landlord"
-          active={tab}
+      <div className={landlordDashboardPageInsetClass}>
+        <LandlordDashboardPageHeader
+          profile={profile}
+          activeTab={tab}
           pendingBookings={pendingBookings}
           totalBookings={bookings.length}
-          onSelect={(section) => setTab(section === 'bookings' ? 'bookings' : 'listings')}
+          onTabSelect={(section) => {
+            if (section === 'overview' || section === 'bookings' || section === 'listings' || section === 'profile') {
+              selectDashboardTab(section)
+            }
+          }}
         />
+
+        {tab === 'overview' && (
+          <>
+            {connectSetupError && (
+              <div
+                className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                role="alert"
+              >
+                {connectSetupError}
+              </div>
+            )}
+
+            <LandlordStripePayoutsCard profile={profile} onRefresh={load} />
+
+            {listingTierProperties > 0 && managedTierProperties > 0 && (
+              <p className="mb-6 text-sm text-gray-600">
+                <span className="font-medium text-gray-900">Mixed service models:</span>{' '}
+                {listingTierProperties} self-managed and {managedTierProperties} Quni Managed - each property keeps its
+                own tier.
+              </p>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+              <button
+                type="button"
+                onClick={() => selectDashboardTab('listings')}
+                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all text-left"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
+                <p className="text-xs text-gray-500 mt-auto pt-1">
+                  {activeListings > 0 ? 'Published as active' : 'None published yet'}
+                </p>
+              </button>
+              <Link
+                to="/messages"
+                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{conversations.length}</p>
+                <p className="text-xs mt-auto pt-1">
+                  {unreadMessageCount > 0 ? (
+                    <span className="font-semibold text-amber-700">{unreadMessageCount} unread</span>
+                  ) : (
+                    <span className="text-gray-500">All caught up</span>
+                  )}
+                </p>
+              </Link>
+              <button
+                type="button"
+                onClick={() => selectDashboardTab('bookings')}
+                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all text-left"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
+                <p className="text-xs mt-auto pt-1">
+                  {pendingBookings > 0 ? (
+                    <span className="font-semibold text-amber-700">{pendingBookings} pending</span>
+                  ) : (
+                    <span className="text-gray-500">Nothing pending</span>
+                  )}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectDashboardTab('profile')}
+                className={[
+                  'rounded-2xl border bg-white p-5 shadow-sm flex flex-col h-full hover:shadow-md transition-all text-left',
+                  landlordReadiness.phase === 'complete'
+                    ? 'border-emerald-200 hover:border-emerald-300'
+                    : 'border-[#FF6F61]/30 hover:border-[#FF6F61]/50',
+                ].join(' ')}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
+                <div className="mt-2 flex flex-col flex-1 min-h-0">
+                  <p
+                    className={`text-sm font-semibold leading-snug ${
+                      landlordReadiness.phase === 'complete' ? 'text-emerald-700' : 'text-gray-900'
+                    }`}
+                  >
+                    {profileStatCard.line}
+                  </p>
+                  {profileStatCard.showPublishProgress ? (
+                    <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${profileStatCard.publishPct}%`, backgroundColor: '#FF6F61' }}
+                        aria-label={`Profile completion ${profileStatCard.publishPct}%`}
+                        role="progressbar"
+                        aria-valuenow={profileStatCard.publishPct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setQaseOpen(true)}
+                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help?</p>
+                <p className="text-xs text-gray-500 mt-1 leading-snug">
+                  Submit a support request and we&apos;ll get back to you.
+                </p>
+                <span className="text-xs font-semibold text-[#FF6F61] mt-auto pt-2 inline-block group-hover:text-[#e85d52]">
+                  Contact support →
+                </span>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+                View sample agreements →
+              </Link>
+            </div>
+          </>
+        )}
+
+        {tab === 'profile' && profile ? (
+          <LandlordDashboardProfileTab
+            profile={profile}
+            onRefresh={load}
+            sectionParam={searchParams.get('section')}
+            listingBilling={listingBilling}
+          />
+        ) : null}
 
         {tab === 'listings' && (
           <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-6">
+              {canCreateListing ? (
+                <Link
+                  to="/landlord/property/new"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm shrink-0"
+                >
+                  Add new listing
+                </Link>
+              ) : (
+                <Link
+                  to={firstIncomplete?.href ?? landlordDashboardProfilePath()}
+                  className="inline-flex items-center justify-center rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-700 px-5 py-2.5 text-sm font-medium hover:bg-stone-50 shadow-sm shrink-0"
+                  title={firstIncomplete?.label ?? 'Complete your account setup to add listings'}
+                >
+                  Add new listing
+                </Link>
+              )}
+            </div>
             {dataLoading && properties.length === 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-label="Loading listings">
                 {[0, 1, 2].map((i) => (
@@ -1149,7 +1206,7 @@ export default function LandlordDashboard() {
                   </Link>
                 ) : (
                   <Link
-                    to={firstIncomplete?.href ?? '/landlord/profile'}
+                    to={firstIncomplete?.href ?? landlordDashboardProfilePath()}
                     className="inline-flex rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-800 px-5 py-2.5 text-sm font-medium hover:bg-stone-50"
                   >
                     Complete setup to add a listing

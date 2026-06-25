@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import PageRouteFallback from './PageRouteFallback'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
-import { isRenterRole, type LandlordProfileRow, type StudentProfileRow, type UserRole } from '../lib/authProfile'
+import { isRenterRole, type StudentProfileRow, type UserRole } from '../lib/authProfile'
 import { isStudentListingActionsUnlocked } from '../lib/onboardingChecklist'
 import { INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
 import { isLegacyMetadataAdmin } from '../lib/adminEmails'
@@ -79,14 +79,6 @@ export function ProtectedRoute({
 
   if (allowedRoles?.length && !isRoleAllowed(role, allowedRoles)) {
     return <Navigate to="/" replace />
-  }
-
-  if (role === 'landlord' && profile) {
-    const lp = profile as LandlordProfileRow
-    const path = location.pathname
-    if (lp.onboarding_complete !== true && !path.startsWith('/onboarding/landlord')) {
-      return <Navigate to="/onboarding/landlord" replace />
-    }
   }
 
   if (requireStudentListingActions && isRenterRole(role) && profile) {

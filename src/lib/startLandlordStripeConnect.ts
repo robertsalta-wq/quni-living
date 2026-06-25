@@ -11,7 +11,7 @@ export type StartLandlordStripeConnectResult =
  * Create a Stripe Connect Account Link and open Stripe hosted onboarding (or account update).
  */
 export async function startLandlordStripeConnect(
-  returnContext: 'landlord_dashboard' | 'landlord_onboarding' = 'landlord_dashboard',
+  returnContext: 'landlord_dashboard' | 'landlord_onboarding' | 'landlord_profile' = 'landlord_dashboard',
 ): Promise<StartLandlordStripeConnectResult> {
   const { data: sessionData, error: sessErr } = await supabase.auth.getSession()
   if (sessErr) {

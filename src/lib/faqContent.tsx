@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 import { BOND_FAQ_HOSTED_VS_PRIVATE, BOND_FAQ_HOW_HANDLED } from './bondPublicCopy'
 
 export type FaqItem = { id: string; question: string; answer: ReactNode }
@@ -180,7 +181,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         answer: (
           <>
             Create a landlord account via{' '}
-            <Link to="/onboarding/landlord" className="font-medium text-[#FF6F61] hover:underline">
+            <Link to={landlordDashboardProfilePath()} className="font-medium text-[#FF6F61] hover:underline">
               landlord onboarding
             </Link>
             , then add your property from the landlord dashboard. See{' '}

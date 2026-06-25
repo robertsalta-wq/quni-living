@@ -10,7 +10,7 @@ type Props = {
   /** Landlord dashboard only - pending booking count badge on Bookings tab */
   pendingBookings?: number
   totalBookings?: number
-  onSelect?: (section: Exclude<UserDashboardSection, 'messages' | 'profile'>) => void
+  onSelect?: (section: Exclude<UserDashboardSection, 'messages'>) => void
 }
 
 export default function UserDashboardSectionNav({
@@ -29,12 +29,24 @@ export default function UserDashboardSectionNav({
 
     return (
       <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-1 -mb-px" aria-label="Dashboard sections">
+        <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Dashboard sections">
+          <button
+            type="button"
+            onClick={() => onSelect?.('overview')}
+            className={[
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2 shrink-0',
+              active === 'overview'
+                ? 'border-indigo-600 text-indigo-700 bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+            ].join(' ')}
+          >
+            Overview
+          </button>
           <button
             type="button"
             onClick={() => onSelect?.('listings')}
             className={[
-              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2 shrink-0',
               active === 'listings'
                 ? 'border-indigo-600 text-indigo-700 bg-white'
                 : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
@@ -45,7 +57,7 @@ export default function UserDashboardSectionNav({
           <Link
             to="/messages"
             className={[
-              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2 shrink-0',
               active === 'messages'
                 ? 'border-indigo-600 text-indigo-700 bg-white'
                 : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
@@ -53,7 +65,7 @@ export default function UserDashboardSectionNav({
           >
             Messages
             {unreadMessageCount > 0 && (
-              <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+              <span className="tabular-nums rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[1.25rem] text-center">
                 {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
               </span>
             )}
@@ -61,7 +73,7 @@ export default function UserDashboardSectionNav({
           <Link
             to={landlordBookingsPath()}
             className={[
-              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2',
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2 shrink-0',
               active === 'bookings'
                 ? 'border-indigo-600 text-indigo-700 bg-white'
                 : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
@@ -69,11 +81,23 @@ export default function UserDashboardSectionNav({
           >
             Bookings
             {bookingsBadge != null && (
-              <span className="tabular-nums rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                {bookingsBadge}
+              <span className="tabular-nums rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[1.25rem] text-center">
+                {bookingsBadge > 9 ? '9+' : bookingsBadge}
               </span>
             )}
           </Link>
+          <button
+            type="button"
+            onClick={() => onSelect?.('profile')}
+            className={[
+              'px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors inline-flex items-center gap-2 shrink-0',
+              active === 'profile'
+                ? 'border-indigo-600 text-indigo-700 bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100/80',
+            ].join(' ')}
+          >
+            Profile
+          </button>
         </nav>
       </div>
     )

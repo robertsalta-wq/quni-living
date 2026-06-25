@@ -11,6 +11,7 @@ import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedi
 import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTenantInvite'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
 import { isRenterRole, INCOMPLETE_RENTER_DESTINATION } from '../lib/authProfile'
+import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import { clearQuniAccommodationVerificationRoute } from '../lib/quniAccommodationRoute'
 import { stashSignupTermsAcceptedAt } from '../lib/quniSignupTerms'
 import Seo from '../components/Seo'
@@ -346,7 +347,7 @@ export default function Signup() {
       if (data.session) {
         const signupRole = accountKind === 'landlord' ? 'landlord' : 'renter'
         const onboardingPath =
-          signupRole === 'landlord' ? '/onboarding/landlord' : INCOMPLETE_RENTER_DESTINATION
+          signupRole === 'landlord' ? landlordDashboardProfilePath() : INCOMPLETE_RENTER_DESTINATION
         if (userNeedsEmailAddressVerification(created)) {
           navigate('/verify-email', {
             replace: true,

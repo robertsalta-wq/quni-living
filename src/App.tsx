@@ -17,6 +17,8 @@ import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { isFocusFormFlowPath } from './lib/site'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
+import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
+import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
@@ -107,7 +109,7 @@ function App() {
           <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
           <Route path="/for-landlords" element={<Navigate to="/services/landlord-partnerships" replace />} />
           <Route path="/landlords/ai" element={<Lazy.LandlordAIFeaturePage />} />
-          <Route path="/landlord/onboarding" element={<Navigate to="/onboarding/landlord" replace />} />
+          <Route path="/landlord/onboarding" element={<Navigate to="/landlord/dashboard?tab=profile" replace />} />
 
           {/* Auth */}
           <Route path="/auth/callback" element={<Lazy.AuthCallback />} />
@@ -156,7 +158,7 @@ function App() {
             path="/onboarding/landlord"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <Lazy.LandlordOnboarding />
+                <Navigate to={landlordDashboardProfilePath()} replace />
               </ProtectedRoute>
             }
           />
@@ -207,7 +209,7 @@ function App() {
             path="/landlord-profile"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <Lazy.LandlordProfile />
+                <LandlordProfileRedirect />
               </ProtectedRoute>
             }
           />
@@ -215,7 +217,7 @@ function App() {
             path="/landlord/profile"
             element={
               <ProtectedRoute allowedRoles={['landlord']}>
-                <Lazy.LandlordProfile />
+                <LandlordProfileRedirect />
               </ProtectedRoute>
             }
           />

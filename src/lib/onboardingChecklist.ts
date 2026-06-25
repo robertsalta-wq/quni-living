@@ -1,6 +1,7 @@
 import type { Database } from './database.types'
 import { isRenterRole } from './authProfile'
 import { isLandlordPublishComplete } from './landlordProfileReadiness'
+import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
 import { landlordNonDiscriminationAccepted } from './nonDiscriminationPolicy'
 import {
   buildRenterReadinessChecklistSteps,
@@ -192,28 +193,28 @@ export function buildLandlordOnboardingSteps(
       id: 'terms',
       label: 'Accept Terms of Service and Privacy Policy',
       complete: termsOk,
-      href: '/landlord-profile#account-agreements',
+      href: landlordDashboardProfilePath('agreements'),
       actionLabel: 'Accept →',
     },
     {
       id: 'landlord_terms',
       label: 'Accept Landlord Service Agreement',
       complete: landlordTermsOk,
-      href: '/landlord-profile#account-agreements',
+      href: landlordDashboardProfilePath('agreements'),
       actionLabel: 'Accept →',
     },
     {
       id: 'non_discrimination',
       label: "Accept Quni's Non-Discrimination Policy",
       complete: nonDiscriminationOk,
-      href: '/landlord-profile#account-agreements',
+      href: landlordDashboardProfilePath('agreements'),
       actionLabel: 'Accept →',
     },
     {
       id: 'profile',
       label: 'Complete your profile',
       complete: basicsOk,
-      href: '/landlord/profile',
+      href: landlordDashboardProfilePath(),
       actionLabel: 'Complete →',
     },
     {

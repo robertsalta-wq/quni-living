@@ -17,6 +17,7 @@ type StudentProfileInsert = Database['public']['Tables']['student_profiles']['In
 import { withSentryMonitoring } from '../../lib/supabaseErrorMonitor'
 import { useAuthContext } from '../../context/AuthContext'
 import { isRenterRole } from '../../lib/authProfile'
+import { landlordDashboardProfilePath } from '../../lib/landlordDashboardProfilePaths'
 import PageHeroBand from '../../components/PageHeroBand'
 import UniversityCampusSelect from '../../components/UniversityCampusSelect'
 import { StudentUniEmailVerification } from '../../components/student/StudentUniEmailVerification'
@@ -1111,7 +1112,7 @@ export default function StudentOnboarding() {
   }
 
   if (role && !isRenterRole(role)) {
-    return <Navigate to={role === 'landlord' ? '/onboarding/landlord' : '/'} replace />
+    return <Navigate to={role === 'landlord' ? landlordDashboardProfilePath() : '/'} replace />
   }
 
   if (loading) {

@@ -19,7 +19,7 @@ export function isLandlordWizardComplete(p: LandlordProfileRow | null | undefine
   return p?.onboarding_complete === true
 }
 
-/** Redirect landlords to /onboarding/landlord until the wizard is complete. */
+/** Legacy wizard flag — routing uses live publish readiness; column kept for analytics/banner. */
 export function landlordNeedsOnboardingWizard(p: LandlordProfileRow | null | undefined): boolean {
   if (!p) return false
   return !isLandlordWizardComplete(p)
