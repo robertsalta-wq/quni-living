@@ -17,6 +17,10 @@ import { formatLanguagesSpoken, normalizeLanguagesSpoken, type SpokenLanguageCod
 import {
   buildLandlordReadinessDriverContent,
   computeLandlordReadiness,
+  isLandlordAboutSectionComplete,
+  isLandlordAddressSectionComplete,
+  isLandlordAgreementsSectionComplete,
+  isLandlordPersonalSectionComplete,
   landlordProfileDefaultExpandedSection,
   landlordTypeRequiresCompanyDetails,
 } from '../../lib/landlordProfileReadiness'
@@ -60,8 +64,130 @@ const BIO_PLACEHOLDER =
 const inputClass =
   'w-full rounded-admin-md border border-admin-line px-3 py-2.5 text-sm text-admin-ink bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:border-admin-coral'
 const labelClass = 'block text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5 mb-1.5'
+const errClass = 'text-red-600 text-xs mt-1'
 const saveBtnClass =
   'inline-flex items-center justify-center rounded-admin-md bg-admin-coral px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:opacity-50 transition-colors'
+
+const SAVE_WRITE_FAILURE = "Couldn't save — try again"
+
+const FIELD_HINT_LABELS: Partial<Record<string, string>> = {
+  landlordType: 'landlord type',
+  firstName: 'first name',
+  lastName: 'last name',
+  phone: 'phone number',
+  companyName: 'company name',
+  abn: 'ABN',
+  addressLine: 'street address',
+  suburb: 'suburb',
+  postcode: 'postcode',
+  residenceLocation: 'residence location',
+  bio: 'bio',
+  agreeTerms: 'Terms of Service acceptance',
+  agreeLandlordTerms: 'Landlord Service Agreement acceptance',
+  agreeNonDiscrimination: 'Non-discrimination policy acceptance',
+}
+
+const PERSONAL_FIELD_KEYS = ['landlordType', 'firstName', 'lastName', 'phone', 'companyName', 'abn'] as const
+const ADDRESS_FIELD_KEYS = ['addressLine', 'suburb', 'postcode', 'addressState', 'residenceLocation'] as const
+const ABOUT_FIELD_KEYS = ['bio'] as const
+const AGREEMENT_FIELD_KEYS = ['agreeTerms', 'agreeLandlordTerms', 'agreeNonDiscrimination'] as const
+
+function inputClassForError(hasError: boolean): string {
+  return hasError
+    ? `${inputClass} border-red-500 focus:border-red-500 focus:ring-red-400/40`
+    : inputClass
+}
+
+function buildSectionSaveHint(fieldErrors: Record<string, string>): string {
+  const labels = Object.keys(fieldErrors)
+    .map((key) => FIELD_HINT_LABELS[key])
+    .filter((label): label is string => Boolean(label))
+  if (labels.length === 0) return 'Complete the required fields to save.'
+  if (labels.length === 1) return `Add your ${labels[0]} to save.`
+  if (labels.length === 2) return `Add your ${labels[0]} and ${labels[1]} to save.`
+  const last = labels[labels.length - 1]
+  const rest = labels.slice(0, -1).join(', ')
+  return `Add your ${rest}, and ${last} to save.`
+}
+
+/** Field-level gaps mirror isLandlordPersonalSectionComplete (+ AU phone format). */
+function personalSectionFieldErrors(
+  draft: Pick<LandlordRow, 'first_name' | 'last_name' | 'phone' | 'landlord_type' | 'company_name' | 'abn'>,
+  phoneRaw: string,
+): Record<string, string> {
+  if (isLandlordPersonalSectionComplete(draft as LandlordRow) && isValidAuPhone(phoneRaw.trim())) {
+    return {}
+  }
+  const fieldErrors: Record<string, string> = {}
+  if (!draft.landlord_type?.trim()) fieldErrors.landlordType = 'Landlord type is required.'
+  if (!draft.first_name?.trim()) fieldErrors.firstName = 'First name is required.'
+  if (!draft.last_name?.trim()) fieldErrors.lastName = 'Last name is required.'
+  if (!draft.phone?.trim()) fieldErrors.phone = 'Phone is required.'
+  else if (!isValidAuPhone(phoneRaw)) fieldErrors.phone = 'Enter a valid Australian phone number.'
+  if (landlordTypeRequiresCompanyDetails(draft.landlord_type)) {
+    if (!draft.company_name?.trim()) fieldErrors.companyName = 'Company name is required.'
+    if (!draft.abn?.trim()) fieldErrors.abn = 'ABN is required.'
+  }
+  return fieldErrors
+}
+
+/** Field-level gaps mirror isLandlordAddressSectionComplete (+ 4-digit postcode). */
+function addressSectionFieldErrors(
+  draft: Pick<LandlordRow, 'address' | 'suburb' | 'postcode' | 'state' | 'residence_location'>,
+  postcodeRaw: string,
+): Record<string, string> {
+  if (isLandlordAddressSectionComplete(draft as LandlordRow) && /^\d{4}$/.test(postcodeRaw.trim())) {
+    return {}
+  }
+  const fieldErrors: Record<string, string> = {}
+  if (!draft.address?.trim()) fieldErrors.addressLine = 'Street address is required.'
+  if (!draft.suburb?.trim()) fieldErrors.suburb = 'Suburb is required.'
+  if (!draft.postcode?.trim()) fieldErrors.postcode = 'Postcode is required.'
+  else if (!/^\d{4}$/.test(postcodeRaw.trim())) fieldErrors.postcode = 'Use a 4-digit postcode.'
+  if (!draft.state?.trim()) fieldErrors.addressState = 'State is required.'
+  const state = draft.state?.trim().toUpperCase() ?? ''
+  if (state !== 'NSW' && !draft.residence_location?.trim()) {
+    fieldErrors.residenceLocation = 'Residence location is required.'
+  }
+  return fieldErrors
+}
+
+/** Field-level gaps mirror isLandlordAboutSectionComplete (bio only; photo optional). */
+function aboutSectionFieldErrors(draft: Pick<LandlordRow, 'bio'>): Record<string, string> {
+  if (isLandlordAboutSectionComplete(draft as LandlordRow)) return {}
+  return draft.bio?.trim() ? {} : { bio: 'Bio is required.' }
+}
+
+/** Field-level gaps mirror isLandlordAgreementsSectionComplete for unchecked agreements. */
+function agreementsSectionFieldErrors(
+  profile: LandlordRow,
+  agreeTerms: boolean,
+  agreeLandlordTerms: boolean,
+  agreeNonDiscrimination: boolean,
+): Record<string, string> {
+  if (isLandlordAgreementsSectionComplete(profile)) return {}
+  const fieldErrors: Record<string, string> = {}
+  if (!profile.terms_accepted_at && !agreeTerms) {
+    fieldErrors.agreeTerms = 'Terms of Service acceptance is required.'
+  }
+  if (!profile.landlord_terms_accepted_at && !agreeLandlordTerms) {
+    fieldErrors.agreeLandlordTerms = 'Landlord Service Agreement acceptance is required.'
+  }
+  if (!landlordNonDiscriminationAccepted(profile) && !agreeNonDiscrimination) {
+    fieldErrors.agreeNonDiscrimination = 'Non-discrimination policy acceptance is required.'
+  }
+  return fieldErrors
+}
+
+function mergeSectionFieldErrors(
+  prev: Record<string, string>,
+  sectionKeys: readonly string[],
+  nextSectionErrors: Record<string, string>,
+): Record<string, string> {
+  const merged = { ...prev }
+  for (const key of sectionKeys) delete merged[key]
+  return { ...merged, ...nextSectionErrors }
+}
 
 type Props = {
   profile: LandlordRow
@@ -200,6 +326,9 @@ export default function LandlordDashboardProfileTab({
 
   const [savingSection, setSavingSection] = useState<string | null>(null)
   const [sectionError, setSectionError] = useState<string | null>(null)
+  const [sectionSaveHint, setSectionSaveHint] = useState<string | null>(null)
+  const [validationSection, setValidationSection] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [connectLoading, setConnectLoading] = useState(false)
@@ -276,6 +405,46 @@ export default function LandlordDashboardProfileTab({
   const toggleSection = (key: ExpandKey) => {
     setExpanded((prev) => (prev === key ? defaultExpanded : key))
     setSectionError(null)
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    setFieldErrors({})
+  }
+
+  function applyValidationErrors(section: string, errors: Record<string, string>) {
+    setFieldErrors((prev) => {
+      const sectionKeys =
+        section === 'personal'
+          ? PERSONAL_FIELD_KEYS
+          : section === 'address'
+            ? ADDRESS_FIELD_KEYS
+            : section === 'about'
+              ? ABOUT_FIELD_KEYS
+              : AGREEMENT_FIELD_KEYS
+      return mergeSectionFieldErrors(prev, sectionKeys, errors)
+    })
+    if (Object.keys(errors).length === 0) return
+    const hint = buildSectionSaveHint(errors)
+    setSectionError(hint)
+    setSectionSaveHint(hint)
+    setValidationSection(section)
+  }
+
+  function clearFieldError(field: string) {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      if (Object.keys(next).length === 0) {
+        setSectionError(null)
+        setSectionSaveHint(null)
+        setValidationSection(null)
+      } else {
+        const hint = buildSectionSaveHint(next)
+        setSectionError(hint)
+        setSectionSaveHint(hint)
+      }
+      return next
+    })
   }
 
   async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
@@ -311,20 +480,20 @@ export default function LandlordDashboardProfileTab({
     ev.preventDefault()
     if (!user?.id) return
     setSectionError(null)
-    if (!firstName.trim() || !lastName.trim()) {
-      setSectionError('Enter your first and last name.')
-      return
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    const needsBusinessDetails = landlordTypeRequiresCompanyDetails(landlordType)
+    const draft: Pick<LandlordRow, 'first_name' | 'last_name' | 'phone' | 'landlord_type' | 'company_name' | 'abn'> = {
+      first_name: firstName,
+      last_name: lastName,
+      phone,
+      landlord_type: landlordType,
+      company_name: needsBusinessDetails ? companyName : null,
+      abn: needsBusinessDetails ? abn : null,
     }
-    if (!phone.trim() || !isValidAuPhone(phone)) {
-      setSectionError('Enter a valid Australian phone number.')
-      return
-    }
-    if (!landlordType) {
-      setSectionError('Select landlord type.')
-      return
-    }
-    if (needsBiz && (!companyName.trim() || !abn.trim())) {
-      setSectionError('Company name and ABN are required for company/trust landlords.')
+    const errors = personalSectionFieldErrors(draft, phone)
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors('personal', errors)
       return
     }
     setSavingSection('personal')
@@ -340,8 +509,8 @@ export default function LandlordDashboardProfileTab({
             full_name: [fnNorm, lnNorm].join(' '),
             phone: phone.trim(),
             landlord_type: landlordType,
-            company_name: needsBiz ? companyName.trim() : null,
-            abn: needsBiz ? abn.trim() : null,
+            company_name: needsBusinessDetails ? companyName.trim() : null,
+            abn: needsBusinessDetails ? abn.trim() : null,
           })
           .eq('user_id', user.id),
       )
@@ -353,8 +522,11 @@ export default function LandlordDashboardProfileTab({
       }
       await onRefresh()
       await refreshProfile()
-    } catch (e) {
-      setSectionError(messageFromSupabaseError(e))
+    } catch {
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, PERSONAL_FIELD_KEYS, {}))
+      setSectionError(SAVE_WRITE_FAILURE)
+      setSectionSaveHint(null)
+      setValidationSection(null)
     } finally {
       setSavingSection(null)
     }
@@ -364,16 +536,19 @@ export default function LandlordDashboardProfileTab({
     ev.preventDefault()
     if (!user?.id) return
     setSectionError(null)
-    if (!addressLine.trim() || !suburb.trim() || !postcode.trim() || !addressState.trim()) {
-      setSectionError('Complete all address fields.')
-      return
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    const stateNorm = addressState.trim()
+    const draft: Pick<LandlordRow, 'address' | 'suburb' | 'postcode' | 'state' | 'residence_location'> = {
+      address: addressLine,
+      suburb,
+      postcode,
+      state: stateNorm,
+      residence_location: stateNorm.toUpperCase() !== 'NSW' ? residenceLocation : null,
     }
-    if (!/^\d{4}$/.test(postcode.trim())) {
-      setSectionError('Use a 4-digit postcode.')
-      return
-    }
-    if (showResidence && !residenceLocation.trim()) {
-      setSectionError('Residence location is required outside NSW.')
+    const errors = addressSectionFieldErrors(draft, postcode)
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors('address', errors)
       return
     }
     setSavingSection('address')
@@ -384,15 +559,18 @@ export default function LandlordDashboardProfileTab({
           address: addressLine.trim(),
           suburb: suburb.trim(),
           postcode: postcode.trim(),
-          state: addressState.trim(),
+          state: stateNorm,
           residence_location: showResidence ? residenceLocation.trim() : null,
         })
         .eq('user_id', user.id)
       if (error) throw error
       await onRefresh()
       await refreshProfile()
-    } catch (e) {
-      setSectionError(messageFromSupabaseError(e))
+    } catch {
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, ADDRESS_FIELD_KEYS, {}))
+      setSectionError(SAVE_WRITE_FAILURE)
+      setSectionSaveHint(null)
+      setValidationSection(null)
     } finally {
       setSavingSection(null)
     }
@@ -402,8 +580,11 @@ export default function LandlordDashboardProfileTab({
     ev.preventDefault()
     if (!user?.id) return
     setSectionError(null)
-    if (!bio.trim()) {
-      setSectionError('Add a short bio for renters.')
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    const errors = aboutSectionFieldErrors({ bio })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors('about', errors)
       return
     }
     setSavingSection('about')
@@ -415,8 +596,11 @@ export default function LandlordDashboardProfileTab({
       if (error) throw error
       await onRefresh()
       await refreshProfile()
-    } catch (e) {
-      setSectionError(messageFromSupabaseError(e))
+    } catch {
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, ABOUT_FIELD_KEYS, {}))
+      setSectionError(SAVE_WRITE_FAILURE)
+      setSectionSaveHint(null)
+      setValidationSection(null)
     } finally {
       setSavingSection(null)
     }
@@ -425,6 +609,13 @@ export default function LandlordDashboardProfileTab({
   async function saveAgreements() {
     if (!user?.id) return
     setSectionError(null)
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    const errors = agreementsSectionFieldErrors(profile, agreeTerms, agreeLandlordTerms, agreeNonDiscrimination)
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors('agreements', errors)
+      return
+    }
     const now = new Date().toISOString()
     const patch: Record<string, string> = {}
     if (!profile.terms_accepted_at && agreeTerms) patch.terms_accepted_at = now
@@ -432,10 +623,7 @@ export default function LandlordDashboardProfileTab({
     if (!landlordNonDiscriminationAccepted(profile) && agreeNonDiscrimination) {
       Object.assign(patch, nonDiscriminationAcceptancePatch(now))
     }
-    if (Object.keys(patch).length === 0) {
-      setSectionError('Tick each agreement you want to record.')
-      return
-    }
+    if (Object.keys(patch).length === 0) return
     setSavingSection('agreements')
     try {
       const { error } = await supabase.from('landlord_profiles').update(patch).eq('user_id', user.id)
@@ -445,8 +633,11 @@ export default function LandlordDashboardProfileTab({
       setAgreeNonDiscrimination(false)
       await onRefresh()
       await refreshProfile()
-    } catch (e) {
-      setSectionError(messageFromSupabaseError(e))
+    } catch {
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, AGREEMENT_FIELD_KEYS, {}))
+      setSectionError(SAVE_WRITE_FAILURE)
+      setSectionSaveHint(null)
+      setValidationSection(null)
     } finally {
       setSavingSection(null)
     }
@@ -563,13 +754,28 @@ export default function LandlordDashboardProfileTab({
           >
             <form onSubmit={(e) => void savePersonal(e)} className="space-y-4">
               <div>
-                <p className={labelClass}>Landlord type</p>
-                <div className="flex flex-wrap gap-2">
+                <p id="ldp-landlord-type-label" className={labelClass}>
+                  Landlord type
+                </p>
+                <div
+                  className={`flex flex-wrap gap-2 rounded-admin-md ${fieldErrors.landlordType ? 'ring-1 ring-red-500 p-1 -m-1' : ''}`}
+                  role="group"
+                  aria-labelledby="ldp-landlord-type-label"
+                  aria-invalid={fieldErrors.landlordType ? true : undefined}
+                  aria-describedby={fieldErrors.landlordType ? 'ldp-landlord-type-error' : undefined}
+                >
                   {LANDLORD_TYPE_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setLandlordType(opt.value)}
+                      onClick={() => {
+                        setLandlordType(opt.value)
+                        clearFieldError('landlordType')
+                        if (!landlordTypeRequiresCompanyDetails(opt.value)) {
+                          clearFieldError('companyName')
+                          clearFieldError('abn')
+                        }
+                      }}
                       className={[
                         'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                         landlordType === opt.value
@@ -581,6 +787,11 @@ export default function LandlordDashboardProfileTab({
                     </button>
                   ))}
                 </div>
+                {fieldErrors.landlordType ? (
+                  <p id="ldp-landlord-type-error" className={errClass} role="alert">
+                    {fieldErrors.landlordType}
+                  </p>
+                ) : null}
               </div>
               {needsBiz ? (
                 <div className="rounded-xl border border-admin-coral/20 bg-admin-coral-tint/50 p-3.5 space-y-3">
@@ -589,30 +800,122 @@ export default function LandlordDashboardProfileTab({
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label className={labelClass}>Company name</label>
-                      <input className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                      <label htmlFor="ldp-company-name" className={labelClass}>
+                        Company name
+                      </label>
+                      <input
+                        id="ldp-company-name"
+                        className={inputClassForError(Boolean(fieldErrors.companyName))}
+                        value={companyName}
+                        onChange={(e) => {
+                          setCompanyName(e.target.value)
+                          clearFieldError('companyName')
+                        }}
+                        aria-invalid={fieldErrors.companyName ? true : undefined}
+                        aria-describedby={fieldErrors.companyName ? 'ldp-company-name-error' : undefined}
+                      />
+                      {fieldErrors.companyName ? (
+                        <p id="ldp-company-name-error" className={errClass} role="alert">
+                          {fieldErrors.companyName}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
-                      <label className={labelClass}>ABN</label>
-                      <input className={inputClass} value={abn} onChange={(e) => setAbn(e.target.value)} placeholder="00 000 000 000" />
+                      <label htmlFor="ldp-abn" className={labelClass}>
+                        ABN
+                      </label>
+                      <input
+                        id="ldp-abn"
+                        className={inputClassForError(Boolean(fieldErrors.abn))}
+                        value={abn}
+                        onChange={(e) => {
+                          setAbn(e.target.value)
+                          clearFieldError('abn')
+                        }}
+                        placeholder="00 000 000 000"
+                        aria-invalid={fieldErrors.abn ? true : undefined}
+                        aria-describedby={fieldErrors.abn ? 'ldp-abn-error' : undefined}
+                      />
+                      {fieldErrors.abn ? (
+                        <p id="ldp-abn-error" className={errClass} role="alert">
+                          {fieldErrors.abn}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
               ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className={labelClass}>First name</label>
-                  <input className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <label htmlFor="ldp-first-name" className={labelClass}>
+                    First name
+                  </label>
+                  <input
+                    id="ldp-first-name"
+                    className={inputClassForError(Boolean(fieldErrors.firstName))}
+                    value={firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value)
+                      clearFieldError('firstName')
+                    }}
+                    aria-invalid={fieldErrors.firstName ? true : undefined}
+                    aria-describedby={fieldErrors.firstName ? 'ldp-first-name-error' : undefined}
+                  />
+                  {fieldErrors.firstName ? (
+                    <p id="ldp-first-name-error" className={errClass} role="alert">
+                      {fieldErrors.firstName}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
-                  <label className={labelClass}>Last name</label>
-                  <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  <label htmlFor="ldp-last-name" className={labelClass}>
+                    Last name
+                  </label>
+                  <input
+                    id="ldp-last-name"
+                    className={inputClassForError(Boolean(fieldErrors.lastName))}
+                    value={lastName}
+                    onChange={(e) => {
+                      setLastName(e.target.value)
+                      clearFieldError('lastName')
+                    }}
+                    aria-invalid={fieldErrors.lastName ? true : undefined}
+                    aria-describedby={fieldErrors.lastName ? 'ldp-last-name-error' : undefined}
+                  />
+                  {fieldErrors.lastName ? (
+                    <p id="ldp-last-name-error" className={errClass} role="alert">
+                      {fieldErrors.lastName}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="max-w-xs">
-                <label className={labelClass}>Phone</label>
-                <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <label htmlFor="ldp-phone" className={labelClass}>
+                  Phone
+                </label>
+                <input
+                  id="ldp-phone"
+                  type="tel"
+                  className={inputClassForError(Boolean(fieldErrors.phone))}
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value)
+                    clearFieldError('phone')
+                  }}
+                  aria-invalid={fieldErrors.phone ? true : undefined}
+                  aria-describedby={fieldErrors.phone ? 'ldp-phone-error' : undefined}
+                />
+                {fieldErrors.phone ? (
+                  <p id="ldp-phone-error" className={errClass} role="alert">
+                    {fieldErrors.phone}
+                  </p>
+                ) : null}
               </div>
+              {validationSection === 'personal' && sectionSaveHint ? (
+                <p className="text-sm text-red-700" role="alert">
+                  {sectionSaveHint}
+                </p>
+              ) : null}
               <button type="submit" disabled={savingSection === 'personal'} className={saveBtnClass}>
                 {savingSection === 'personal' ? 'Saving…' : 'Save details'}
               </button>
@@ -633,45 +936,135 @@ export default function LandlordDashboardProfileTab({
           >
             <form onSubmit={(e) => void saveAddress(e)} className="space-y-4">
               <div>
-                <label className={labelClass}>Street address</label>
-                <input className={inputClass} value={addressLine} onChange={(e) => setAddressLine(e.target.value)} />
+                <label htmlFor="ldp-address" className={labelClass}>
+                  Street address
+                </label>
+                <input
+                  id="ldp-address"
+                  className={inputClassForError(Boolean(fieldErrors.addressLine))}
+                  value={addressLine}
+                  onChange={(e) => {
+                    setAddressLine(e.target.value)
+                    clearFieldError('addressLine')
+                  }}
+                  aria-invalid={fieldErrors.addressLine ? true : undefined}
+                  aria-describedby={fieldErrors.addressLine ? 'ldp-address-error' : undefined}
+                />
+                {fieldErrors.addressLine ? (
+                  <p id="ldp-address-error" className={errClass} role="alert">
+                    {fieldErrors.addressLine}
+                  </p>
+                ) : null}
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="sm:col-span-2">
-                  <label className={labelClass}>Suburb</label>
-                  <input className={inputClass} value={suburb} onChange={(e) => setSuburb(e.target.value)} />
+                  <label htmlFor="ldp-suburb" className={labelClass}>
+                    Suburb
+                  </label>
+                  <input
+                    id="ldp-suburb"
+                    className={inputClassForError(Boolean(fieldErrors.suburb))}
+                    value={suburb}
+                    onChange={(e) => {
+                      setSuburb(e.target.value)
+                      clearFieldError('suburb')
+                    }}
+                    aria-invalid={fieldErrors.suburb ? true : undefined}
+                    aria-describedby={fieldErrors.suburb ? 'ldp-suburb-error' : undefined}
+                  />
+                  {fieldErrors.suburb ? (
+                    <p id="ldp-suburb-error" className={errClass} role="alert">
+                      {fieldErrors.suburb}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
-                  <label className={labelClass}>Postcode</label>
-                  <input className={inputClass} value={postcode} onChange={(e) => setPostcode(e.target.value)} />
+                  <label htmlFor="ldp-postcode" className={labelClass}>
+                    Postcode
+                  </label>
+                  <input
+                    id="ldp-postcode"
+                    className={inputClassForError(Boolean(fieldErrors.postcode))}
+                    value={postcode}
+                    onChange={(e) => {
+                      setPostcode(e.target.value)
+                      clearFieldError('postcode')
+                    }}
+                    aria-invalid={fieldErrors.postcode ? true : undefined}
+                    aria-describedby={fieldErrors.postcode ? 'ldp-postcode-error' : undefined}
+                  />
+                  {fieldErrors.postcode ? (
+                    <p id="ldp-postcode-error" className={errClass} role="alert">
+                      {fieldErrors.postcode}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className={labelClass}>State</label>
-                  <select className={inputClass} value={addressState} onChange={(e) => setAddressState(e.target.value)}>
+                  <label htmlFor="ldp-state" className={labelClass}>
+                    State
+                  </label>
+                  <select
+                    id="ldp-state"
+                    className={inputClassForError(Boolean(fieldErrors.addressState))}
+                    value={addressState}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      setAddressState(next)
+                      clearFieldError('addressState')
+                      if (next.trim().toUpperCase() === 'NSW') {
+                        clearFieldError('residenceLocation')
+                      }
+                    }}
+                    aria-invalid={fieldErrors.addressState ? true : undefined}
+                    aria-describedby={fieldErrors.addressState ? 'ldp-state-error' : undefined}
+                  >
                     {AU_STATE_OPTIONS.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.addressState ? (
+                    <p id="ldp-state-error" className={errClass} role="alert">
+                      {fieldErrors.addressState}
+                    </p>
+                  ) : null}
                 </div>
                 {showResidence ? (
                   <div>
-                    <label className={labelClass}>Residence location</label>
+                    <label htmlFor="ldp-residence" className={labelClass}>
+                      Residence location
+                    </label>
                     <input
-                      className={inputClass}
+                      id="ldp-residence"
+                      className={inputClassForError(Boolean(fieldErrors.residenceLocation))}
                       value={residenceLocation}
-                      onChange={(e) => setResidenceLocation(e.target.value)}
+                      onChange={(e) => {
+                        setResidenceLocation(e.target.value)
+                        clearFieldError('residenceLocation')
+                      }}
                       placeholder="Suburb where you live"
+                      aria-invalid={fieldErrors.residenceLocation ? true : undefined}
+                      aria-describedby={fieldErrors.residenceLocation ? 'ldp-residence-error' : undefined}
                     />
+                    {fieldErrors.residenceLocation ? (
+                      <p id="ldp-residence-error" className={errClass} role="alert">
+                        {fieldErrors.residenceLocation}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
               {showResidence ? (
                 <p className="text-xs text-admin-ink-5">
                   Required for landlords outside NSW so we apply the right state tenancy rules.
+                </p>
+              ) : null}
+              {validationSection === 'address' && sectionSaveHint ? (
+                <p className="text-sm text-red-700" role="alert">
+                  {sectionSaveHint}
                 </p>
               ) : null}
               <button type="submit" disabled={savingSection === 'address'} className={saveBtnClass}>
@@ -715,15 +1108,33 @@ export default function LandlordDashboardProfileTab({
                 </div>
               </div>
               <div>
-                <label className={labelClass}>Short bio</label>
+                <label htmlFor="ldp-bio" className={labelClass}>
+                  Short bio
+                </label>
                 <textarea
-                  className={`${inputClass} min-h-[88px] resize-y leading-relaxed`}
+                  id="ldp-bio"
+                  className={`${inputClassForError(Boolean(fieldErrors.bio))} min-h-[88px] resize-y leading-relaxed`}
                   value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  onChange={(e) => {
+                    setBio(e.target.value)
+                    clearFieldError('bio')
+                  }}
                   placeholder={BIO_PLACEHOLDER}
                   rows={3}
+                  aria-invalid={fieldErrors.bio ? true : undefined}
+                  aria-describedby={fieldErrors.bio ? 'ldp-bio-error' : undefined}
                 />
+                {fieldErrors.bio ? (
+                  <p id="ldp-bio-error" className={errClass} role="alert">
+                    {fieldErrors.bio}
+                  </p>
+                ) : null}
               </div>
+              {validationSection === 'about' && sectionSaveHint ? (
+                <p className="text-sm text-red-700" role="alert">
+                  {sectionSaveHint}
+                </p>
+              ) : null}
               <button type="submit" disabled={savingSection === 'about'} className={saveBtnClass}>
                 {savingSection === 'about' ? 'Saving…' : 'Save details'}
               </button>
@@ -745,20 +1156,54 @@ export default function LandlordDashboardProfileTab({
           >
             <div className="space-y-3">
               {!profile.terms_accepted_at ? (
-                <AgreementCheckbox checked={agreeTerms} onChange={setAgreeTerms} label={<TermsLabel />} />
+                <AgreementCheckbox
+                  checked={agreeTerms}
+                  onChange={(v) => {
+                    setAgreeTerms(v)
+                    clearFieldError('agreeTerms')
+                  }}
+                  label={<TermsLabel />}
+                  error={fieldErrors.agreeTerms}
+                  errorId="ldp-agree-terms-error"
+                />
               ) : null}
               {!profile.landlord_terms_accepted_at ? (
-                <AgreementCheckbox checked={agreeLandlordTerms} onChange={setAgreeLandlordTerms} label={<LsaLabel />} />
+                <AgreementCheckbox
+                  checked={agreeLandlordTerms}
+                  onChange={(v) => {
+                    setAgreeLandlordTerms(v)
+                    clearFieldError('agreeLandlordTerms')
+                  }}
+                  label={<LsaLabel />}
+                  error={fieldErrors.agreeLandlordTerms}
+                  errorId="ldp-agree-lsa-error"
+                />
               ) : null}
               {!landlordNonDiscriminationAccepted(profile) ? (
-                <AgreementCheckbox checked={agreeNonDiscrimination} onChange={setAgreeNonDiscrimination} label={<NondiscLabel />} />
+                <AgreementCheckbox
+                  checked={agreeNonDiscrimination}
+                  onChange={(v) => {
+                    setAgreeNonDiscrimination(v)
+                    clearFieldError('agreeNonDiscrimination')
+                  }}
+                  label={<NondiscLabel />}
+                  error={fieldErrors.agreeNonDiscrimination}
+                  errorId="ldp-agree-nondisc-error"
+                />
               ) : null}
               {readiness.publish.sections.agreements ? (
                 <p className="text-sm text-admin-ink-4">All agreements accepted.</p>
               ) : (
-                <button type="button" onClick={() => void saveAgreements()} disabled={savingSection === 'agreements'} className={saveBtnClass}>
-                  {savingSection === 'agreements' ? 'Saving…' : 'Accept agreements'}
-                </button>
+                <>
+                  {validationSection === 'agreements' && sectionSaveHint ? (
+                    <p className="text-sm text-red-700" role="alert">
+                      {sectionSaveHint}
+                    </p>
+                  ) : null}
+                  <button type="button" onClick={() => void saveAgreements()} disabled={savingSection === 'agreements'} className={saveBtnClass}>
+                    {savingSection === 'agreements' ? 'Saving…' : 'Accept agreements'}
+                  </button>
+                </>
               )}
             </div>
           </CollapsibleProfileSection>
@@ -992,16 +1437,38 @@ function AgreementCheckbox({
   checked,
   onChange,
   label,
+  error,
+  errorId,
 }: {
   checked: boolean
   onChange: (v: boolean) => void
   label: ReactNode
+  error?: string
+  errorId?: string
 }) {
   return (
-    <label className="flex gap-3 items-start cursor-pointer text-sm text-admin-ink-2 leading-relaxed">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-4 w-4 accent-admin-coral" />
-      <span>{label}</span>
-    </label>
+    <div>
+      <label
+        className={`flex gap-3 items-start cursor-pointer text-sm leading-relaxed ${
+          error ? 'text-red-800 rounded-admin-md ring-1 ring-red-500 p-2 -m-2' : 'text-admin-ink-2'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="mt-1 h-4 w-4 accent-admin-coral"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error && errorId ? errorId : undefined}
+        />
+        <span>{label}</span>
+      </label>
+      {error && errorId ? (
+        <p id={errorId} className={errClass} role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   )
 }
 
