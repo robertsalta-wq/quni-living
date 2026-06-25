@@ -7,7 +7,7 @@ import { waitUntil } from '@vercel/functions'
 /**
  * @param {string} message
  * @param {Record<string, unknown> | unknown} [extra]
- * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string> }} [options]
+ * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string>; fingerprint?: string[] }} [options]
  */
 async function captureSentryMessageEdgeCore(message, extra, options) {
   const dsn = (process.env.SENTRY_DSN || process.env.VITE_SENTRY_DSN || '').trim()
@@ -34,6 +34,9 @@ async function captureSentryMessageEdgeCore(message, extra, options) {
       message: { formatted: String(message) },
       extra: extra && typeof extra === 'object' ? extra : { detail: extra },
       ...(options?.tags && typeof options.tags === 'object' ? { tags: options.tags } : {}),
+      ...(Array.isArray(options?.fingerprint) && options.fingerprint.length > 0
+        ? { fingerprint: options.fingerprint }
+        : {}),
     }
     const storeUrl = `https://${host}/api/${projectId}/store/?sentry_version=7&sentry_key=${encodeURIComponent(key)}&sentry_client=quni-edge/1.0`
     await fetch(storeUrl, {
@@ -53,7 +56,7 @@ async function captureSentryMessageEdgeCore(message, extra, options) {
  *
  * @param {string} message
  * @param {Record<string, unknown> | unknown} [extra]
- * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string> }} [options]
+ * @param {{ level?: 'warning' | 'error' | 'info'; tags?: Record<string, string>; fingerprint?: string[] }} [options]
  * @returns {Promise<void>}
  */
 export function captureSentryMessageEdge(message, extra, options) {

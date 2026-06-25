@@ -5,21 +5,15 @@
  * logic without requiring a TypeScript loader.
  */
 import { PDFDocument } from 'pdf-lib'
+import { getDocusealApiBase, getDocusealAuthHeaders } from './docusealClient.js'
+
+export { getDocusealApiBase, getDocusealAuthHeaders } from './docusealClient.js'
 
 export function getDocusealSubmissionsUrl() {
-  const rawBase = (process.env.DOCUSEAL_API_URL || '').trim().replace(/\/$/, '')
-  const base = rawBase.replace(/\/api$/i, '')
+  const base = getDocusealApiBase()
   const path = (process.env.DOCUSEAL_SUBMISSIONS_PATH || '/api/submissions/pdf').trim()
   const p = path.startsWith('/') ? path : `/${path}`
-  return `${base}${p}`
-}
-
-function docusealHeaders() {
-  const token = (process.env.DOCUSEAL_API_TOKEN || '').trim()
-  return {
-    'Content-Type': 'application/json',
-    'X-Auth-Token': token,
-  }
+  return `${base ?? ''}${p}`
 }
 
 function asBooleanEnv(name, defaultValue = false) {
@@ -138,7 +132,7 @@ export async function createDocusealSubmissionFromPdf(params) {
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: docusealHeaders(),
+    headers: getDocusealAuthHeaders({ includeContentType: true }),
     body: JSON.stringify(body),
   })
 
