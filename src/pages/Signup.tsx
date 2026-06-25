@@ -7,6 +7,7 @@ import {
   getSupabaseBrowserKeyMisuseMessage,
 } from '../lib/supabase'
 import { formatAuthEmailErrorMessage, getAuthCallbackUrl, getGoogleOAuthOptions } from '../lib/oauth'
+import { isValidEmailAddress, SIGNUP_EMAIL_INVALID_MESSAGE } from '../lib/emailValidation'
 import { isSafeInternalPath, persistAuthReturnIntent } from '../lib/postAuthRedirect'
 import { applyPendingTenantInvitePostAuthRedirect } from '../lib/applyPendingTenantInvite'
 import { getQuniSelectedRole, setQuniSelectedRole } from '../lib/quniSelectedRole'
@@ -41,20 +42,55 @@ type SignupStep = 'primary' | 'details'
 const SIGNUP_TERMS_CHECKBOX_CLASS =
   'mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-0 accent-[#FF6F61]'
 
-/** Supabase often returns a generic message when Auth cannot send the confirmation email. */
-function formatSignupErrorForDisplay(raw: string): string {
+function isSignupAuthRateLimitError(raw: string, err?: unknown): boolean {
   const lower = raw.toLowerCase()
   if (
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('too many signups') ||
+    lower.includes('429')
+  ) {
+    return true
+  }
+  if (err && typeof err === 'object') {
+    const status = (err as { status?: number }).status
+    if (status === 429) return true
+    const code = String((err as { code?: string }).code ?? '').toLowerCase()
+    if (code.includes('rate_limit') || code.includes('too_many')) return true
+  }
+  return false
+}
+
+/** Supabase often returns a generic message when Auth cannot send the confirmation email. */
+function formatSignupErrorForDisplay(raw: string, err?: unknown): ReactNode {
+  const lower = raw.toLowerCase()
+  const isSendFailure =
     lower.includes('confirmation email') ||
     lower.includes('sending confirmation') ||
     lower.includes('error sending magic link')
-  ) {
-    return [
-      'We could not send the confirmation email. This is usually fixed in your Supabase project:',
-      '• Authentication → URL Configuration: set Site URL to your live site (e.g. https://quni.com.au) and add the same origin + /auth/callback under Redirect URLs.',
-      '• Project Settings → Auth: if you use custom SMTP, confirm host, port, and credentials; otherwise check Auth logs for provider errors or rate limits.',
-      '• Try again in a few minutes if the mail provider rate-limits signups.',
-    ].join('\n')
+
+  if (isSendFailure) {
+    console.warn('[signup] confirmation email send failed — operator checklist', {
+      message: raw,
+      err,
+      hints: [
+        'Authentication → URL Configuration: set Site URL to your live site and add {origin}/auth/callback under Redirect URLs.',
+        'Project Settings → Auth: if you use custom SMTP, confirm host, port, and credentials; otherwise check Auth logs for provider errors or rate limits.',
+      ],
+    })
+    if (isSignupAuthRateLimitError(raw, err)) {
+      return 'Too many signups just now — try again in a few minutes.'
+    }
+    return (
+      <>
+        We couldn&apos;t send your confirmation email. Please check the address is correct and try again in a few
+        minutes. If it keeps happening,{' '}
+        <Link to="/contact" className="font-medium text-red-900 underline underline-offset-2">
+          contact support
+        </Link>
+        .
+      </>
+    )
   }
   return raw
 }
@@ -173,7 +209,8 @@ export default function Signup() {
   const [fullName, setFullName] = useState(() => searchParams.get('invited_name')?.trim() ?? '')
   const [email, setEmail] = useState(() => searchParams.get('invited_email')?.trim() ?? '')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ReactNode>(null)
+  const [emailFormatError, setEmailFormatError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [checkEmail, setCheckEmail] = useState(false)
   const [termsPrivacy, setTermsPrivacy] = useState(false)
@@ -307,6 +344,10 @@ export default function Signup() {
       return
     }
     recordSignupTermsAccepted()
+    if (!isValidEmailAddress(email)) {
+      setEmailFormatError(true)
+      return
+    }
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured.')
       return
@@ -361,8 +402,7 @@ export default function Signup() {
       setCheckEmail(true)
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : 'Could not sign up.'
-      const msg = formatSignupErrorForDisplay(raw)
-      setError(msg)
+      setError(formatSignupErrorForDisplay(raw, e))
     } finally {
       setSubmitting(false)
     }
@@ -468,7 +508,7 @@ export default function Signup() {
     redirectQ && isSafeInternalPath(redirectQ) ? `/login?redirect=${encodeURIComponent(redirectQ)}` : '/login'
 
   const keyMisuse = getSupabaseBrowserKeyMisuseMessage()
-  const errLower = (error ?? '').toLowerCase()
+  const errLower = typeof error === 'string' ? error.toLowerCase() : ''
   const secretKeyError =
     errLower.includes('forbidden') && errLower.includes('secret')
 
@@ -521,8 +561,10 @@ export default function Signup() {
                 <code className="bg-red-100/80 px-1 rounded">VITE_SUPABASE_ANON_KEY</code>.
               </p>
             </>
-          ) : (
+          ) : typeof error === 'string' ? (
             <div className="whitespace-pre-line">{error}</div>
+          ) : (
+            <div>{error}</div>
           )}
         </div>
       )}
@@ -680,10 +722,24 @@ export default function Signup() {
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setEmailFormatError(false)
+                }}
                 required
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                aria-invalid={emailFormatError}
+                aria-describedby={emailFormatError ? 'su-email-error' : undefined}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  emailFormatError
+                    ? 'border-red-500 focus:ring-red-400'
+                    : 'border-gray-200 focus:ring-indigo-400'
+                }`}
               />
+              {emailFormatError ? (
+                <p id="su-email-error" className="mt-1 text-sm text-red-600">
+                  {SIGNUP_EMAIL_INVALID_MESSAGE}
+                </p>
+              ) : null}
             </div>
             <div>
               <label htmlFor="su-password" className="block text-sm font-medium text-gray-700 mb-1">
