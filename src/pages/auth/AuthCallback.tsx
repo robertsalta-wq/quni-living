@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { getPostLoginRedirectDestination, getIncompleteOnboardingDestination, INCOMPLETE_RENTER_DESTINATION, needsOnboarding, isRenterRole } from '../../lib/authProfile'
+import { writeAuthSnapshot } from '../../lib/authSnapshotCache'
+import { publishAuthReconcile } from '../../lib/authReconcileBridge'
 import { stashLoginWelcomePending } from '../../lib/loginWelcomeToast'
 import { marketplaceRoleForWrite } from '../../lib/marketplaceRole'
 import { reconcileAuthCallbackProfileDeduped } from '../../lib/authCallbackProfileReconciliation'
 import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { consumePostAuthRedirect } from '../../lib/postAuthRedirect'
 import { applyPendingTenantInvitePostAuthRedirect } from '../../lib/applyPendingTenantInvite'
-import { isStaleOrInvalidJwtUserError } from '../../lib/authErrors'
 import { userNeedsEmailAddressVerification } from '../../lib/authEmailVerification'
 import {
   parseSignupTokenHashFromSearch,
@@ -74,6 +75,9 @@ export default function AuthCallback() {
       })
       if (cancelled) return
 
+      writeAuthSnapshot({ userId: sessionUser.id, role, profile })
+      publishAuthReconcile({ userId: sessionUser.id, role, profile })
+
       if (userNeedsEmailAddressVerification(sessionUser)) {
         const onboardingPath =
           isRenterRole(role)
@@ -100,14 +104,20 @@ export default function AuthCallback() {
       if (needsOnboarding(role, profile, sessionUser.id)) {
         const onboardingPath = getIncompleteOnboardingDestination(role, profile, sessionUser.id)
         if (isRenterRole(role)) prefetchRouteChunks(INCOMPLETE_RENTER_DESTINATION)
-        if (role === 'landlord') stashLoginWelcomePending()
+        if (role === 'landlord') {
+          stashLoginWelcomePending()
+          prefetchRouteChunks(onboardingPath)
+        }
         navigate(onboardingPath, { replace: true })
         return
       }
 
       const returnTo = consumePostAuthRedirect()
       const destination = returnTo ?? getPostLoginRedirectDestination(sessionUser, role, profile)
-      if (role === 'landlord') stashLoginWelcomePending()
+      if (role === 'landlord') {
+        stashLoginWelcomePending()
+        prefetchRouteChunks(destination)
+      }
       navigate(destination, { replace: true })
     }
 
@@ -208,27 +218,7 @@ export default function AuthCallback() {
           })
         }
 
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser()
-        if (cancelled) return
-
-        if (userError && isStaleOrInvalidJwtUserError(userError.message)) {
-          await supabase.auth.signOut()
-          navigate('/login?error=invalid_session', { replace: true })
-          return
-        }
-
-        if (userError || !user) {
-          navigate(
-            `/login?error=auth_failed&detail=${encodeURIComponent(userError?.message ?? 'No user after session')}`,
-            { replace: true },
-          )
-          return
-        }
-
-        await finishWithSession(user, completedSignupEmailConfirm, resolveOAuthSignupParams(window.location.search))
+        await finishWithSession(session.user, completedSignupEmailConfirm, resolveOAuthSignupParams(window.location.search))
         return
       }
 

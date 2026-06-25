@@ -13,6 +13,8 @@ import { clearOnboardingDismissed } from '../lib/onboardingChecklist'
 import { authUserEmail } from '../lib/adminEmails'
 import { isStaleOrInvalidJwtUserError } from '../lib/authErrors'
 import { clearAuthSnapshot, readAuthSnapshot, writeAuthSnapshot } from '../lib/authSnapshotCache'
+import { isAuthCallbackRoute } from '../lib/authCallbackRoute'
+import { subscribeAuthReconcile } from '../lib/authReconcileBridge'
 import { syncSentryUser } from '../lib/sentry'
 
 export type AuthState = {
@@ -100,6 +102,14 @@ export function useProvideAuth(): AuthState {
       return
     }
 
+    const unsubscribeReconcile = subscribeAuthReconcile(({ userId, role: r, profile: p }) => {
+      setRole(r)
+      setProfile(p)
+      writeAuthSnapshot({ userId, role: r, profile: p })
+      bootstrapDoneRef.current = true
+      setLoading(false)
+    })
+
     let cancelled = false
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -107,6 +117,11 @@ export function useProvideAuth(): AuthState {
       const sessionUser = s?.user ?? null
       setSession(s ?? null)
       setUser(sessionUser)
+
+      if (isAuthCallbackRoute()) {
+        setLoading(Boolean(sessionUser))
+        return
+      }
 
       const cached = readAuthSnapshot(sessionUser?.id)
       if (cached) {
@@ -143,6 +158,12 @@ export function useProvideAuth(): AuthState {
         return
       }
       setUser(s?.user ?? null)
+
+      if (isAuthCallbackRoute()) {
+        if (s?.user) setLoading(true)
+        return
+      }
+
       // Silent events: refresh profile without remounting protected routes (onboarding wizard, etc.).
       if (isSilentAuthEvent(event)) {
         void hydrateFromUser(s?.user ?? null)
@@ -161,6 +182,7 @@ export function useProvideAuth(): AuthState {
 
     return () => {
       cancelled = true
+      unsubscribeReconcile()
       subscription.unsubscribe()
     }
   }, [hydrateFromUser])

@@ -2,7 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { resolvePendingAccommodationVerificationRoute } from './applyPendingAccommodationRoute'
 import {
   fetchProfileRowsDeduped,
-  getProfileHydrateInflight,
+  deleteProfileHydrateInflight,
   isRenterRole,
   resolveRoleAndProfileFromRows,
   setProfileHydrateInflight,
@@ -247,27 +247,37 @@ export async function reconcileAuthCallbackProfile(
     ;({ sp, lp } = await ensureSignupProfileRowInMemory(user, sp, lp))
   }
 
-  const pendingRoute = resolvePendingAccommodationVerificationRoute(
-    user.created_at,
-    user.user_metadata?.accommodation_verification_route,
-    urlRoute,
-  )
-  sp = await persistRouteUpdateIfNeeded(user.id, sp, pendingRoute)
+  if (sp) {
+    const pendingRoute = resolvePendingAccommodationVerificationRoute(
+      user.created_at,
+      user.user_metadata?.accommodation_verification_route,
+      urlRoute,
+    )
+    sp = await persistRouteUpdateIfNeeded(user.id, sp, pendingRoute)
+  }
 
-  if (!shouldSkipApplyPendingSignupRole(user.user_metadata?.role, sp)) {
+  const skipRoleFlip =
+    afterSignupEmailConfirm && meta === 'landlord' && lp != null && !sp
+  if (!shouldSkipApplyPendingSignupRole(user.user_metadata?.role, sp) && !skipRoleFlip) {
     ;({ sp, lp } = await applyPendingSignupRoleInMemory(user, sp, lp, urlRole, urlRoute))
   }
 
   if (sp && !sp.terms_accepted_at) {
     await applyPendingSignupTerms(user.id, 'renter')
-    const refreshed = await fetchProfileRowsDeduped(user.id)
-    sp = refreshed.sp
-    lp = refreshed.lp
+    const { data: refreshedSp } = await supabase
+      .from('student_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (refreshedSp) sp = refreshedSp as StudentProfileRow
   } else if (lp && !lp.terms_accepted_at) {
     await applyPendingSignupTerms(user.id, 'landlord')
-    const refreshed = await fetchProfileRowsDeduped(user.id)
-    sp = refreshed.sp
-    lp = refreshed.lp
+    const { data: refreshedLp } = await supabase
+      .from('landlord_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (refreshedLp) lp = refreshedLp as LandlordProfileRow
   }
 
   return resolveRoleAndProfileFromRows(user, sp, lp)
@@ -278,9 +288,7 @@ export function reconcileAuthCallbackProfileDeduped(
   user: User,
   options: AuthCallbackReconcileOptions,
 ): Promise<{ role: UserRole; profile: AuthProfile | null }> {
-  const existing = getProfileHydrateInflight(user.id)
-  if (existing) return existing
-
+  deleteProfileHydrateInflight(user.id)
   const inflight = reconcileAuthCallbackProfile(user, options)
   setProfileHydrateInflight(user.id, inflight)
   return inflight
