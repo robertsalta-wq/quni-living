@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/quni-living-design-system-019e10fb-be2e-71f3-a904-e7b9b020f45c/colors_and_type.css">
+<script src="_ds/quni-living-design-system-019e10fb-be2e-71f3-a904-e7b9b020f45c/_ds_bundle.js"></script>
+<style>
+  html,body{margin:0;background:#F8F6F1;}
+  .bk-grid{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:28px;align-items:start;}
+  .bk-rail{position:sticky;top:24px;display:flex;flex-direction:column;gap:20px;}
+  @media (max-width:900px){.bk-grid{grid-template-columns:1fr;}.bk-rail{position:static;order:-1;}}
+  @media (max-width:600px){.bk-fitrow{grid-template-columns:1fr 1fr!important;gap:6px 12px!important;}.bk-fithead{display:none!important;}.bk-keyfacts{grid-template-columns:1fr!important;}}
+  @keyframes bk-spin{to{transform:rotate(360deg)}}
+  image-slot#primary-photo{width:88px!important;height:88px!important;display:block;}
+  .bk-strip{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:28px;margin-bottom:26px;align-items:stretch;}
+  .bk-strip-left{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:900px){.bk-strip{grid-template-columns:1fr;}}
+  @media (max-width:560px){.bk-strip-left{grid-template-columns:1fr;}}
+</style>
+</helmet>
+<div data-screen-label="Booking confirmed" style="font-family:'Inter',system-ui,sans-serif;color:#2A2433;min-height:100vh;box-sizing:border-box;padding:28px 24px 72px;">
+  <div style="max-width:1180px;margin:0 auto;">
+
+    <!-- top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;">
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:22px;color:#FF6F61;letter-spacing:-0.02em;">Quni</span>
+        <span style="font-size:13px;color:#908897;">Bookings</span>
+      </div>
+      <span style="font-size:13px;color:#908897;">Landlord · Quinn</span>
+    </div>
+
+    <!-- main two-column layout -->
+    <div class="bk-grid">
+
+      <!-- ============ LEFT ============ -->
+      <div style="display:flex;flex-direction:column;gap:20px;min-width:0;">
+
+      <div class="bk-strip-left">
+
+      <!-- box 1: booking confirmed -->
+      <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:20px;display:flex;flex-direction:column;">
+        <h1 style="font-family:'Inter',sans-serif;font-size:23px;line-height:1.15;letter-spacing:-0.015em;font-weight:700;color:#08060D;margin:0 0 12px;">Booking confirmed</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;background:{{ statusBg }};color:{{ statusFg }};">
+            <span style="width:7px;height:7px;border-radius:50%;background:currentColor;"></span>{{ statusLabel }}
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(31,42,68,.08);color:#1F2A44;">Self-managed (Quni Listing)</span>
+        </div>
+        <p style="margin:auto 0 0;padding-top:14px;font-size:13px;color:#6B6375;">Reference <strong style="font-weight:600;color:#2A2433;font-family:ui-monospace,monospace;">D414F981</strong> · Received 5 days ago</p>
+      </div>
+
+      <!-- box 2: property -->
+      <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:20px;display:flex;flex-direction:column;">
+        <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 12px;">Property</p>
+        <div style="display:flex;align-items:center;gap:14px;margin:auto 0;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <p style="margin:0;font-size:16px;font-weight:600;color:#08060D;line-height:1.35;">18 Malvina Street</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#6B6375;">Ryde, NSW 2112 · Private room</p>
+          </div>
+          <div style="flex:0 0 auto;width:88px;height:88px;">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="primary-photo" shape="rounded" radius="10" placeholder="Photo" style="width:88px;height:88px;border:1px solid #E8E0CC;" hint-size="88px,88px"></x-import>
+          </div>
+        </div>
+      </div>
+
+      </div>
+
+        <!-- what happens next -->
+        <section style="background:#E6F4EE;border:1px solid rgba(29,158,117,.28);border-radius:16px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+            <h2 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:600;color:#0F6E56;margin:0;">What happens next</h2>
+          </div>
+          <p style="margin:0 0 16px;font-size:13px;color:#0F6E56;opacity:.85;">On a Quni Listing you manage everything yourself — Quni holds nothing and charges the renter nothing.</p>
+          <div style="display:flex;flex-direction:column;gap:12px;max-width:580px;">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <span style="flex:0 0 auto;margin-top:1px;color:#1D9E75;">&#10003;</span>
+              <p style="margin:0;font-size:14px;line-height:1.5;color:#2A2433;"><strong style="color:#08060D;">$0 listing fee.</strong> Listing and booking on a Quni Listing is free for you.</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <span style="flex:0 0 auto;margin-top:1px;color:#1D9E75;">&#10003;</span>
+              <p style="margin:0;font-size:14px;line-height:1.5;color:#2A2433;"><strong style="color:#08060D;">$800 bond, off-platform.</strong> Collect the bond directly from Geonho. Quni never holds the bond.</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <span style="flex:0 0 auto;margin-top:1px;color:#1D9E75;">&#10003;</span>
+              <p style="margin:0;font-size:14px;line-height:1.5;color:#2A2433;"><strong style="color:#08060D;">Confirm by 1 July 2026.</strong> Mark the bond as received before the deadline to secure the booking.</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <span style="flex:0 0 auto;margin-top:1px;color:#1D9E75;">&#10003;</span>
+              <p style="margin:0;font-size:14px;line-height:1.5;color:#2A2433;"><strong style="color:#08060D;">Renter deposit released.</strong> Any holding deposit Geonho paid is returned to them automatically.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- tenancy agreement -->
+        <section style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 8px;">Tenancy agreement</p>
+          <h2 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:600;color:#08060D;margin:0 0 8px;">Legally binding NSW occupancy agreement</h2>
+          <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#4A4253;max-width:580px;">Review and sign the residential occupancy agreement for 18 Malvina Street. Signing is handled securely through DocuSeal.</p>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
+            <a href="#" style="display:inline-flex;align-items:center;gap:8px;background:#1F2A44;color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;" style-hover="background:#161E33;color:#fff;text-decoration:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+              Review &amp; sign via DocuSeal
+            </a>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#92400E;background:#FEF3C7;padding:5px 11px;border-radius:999px;">Not yet signed</span>
+          </div>
+        </section>
+
+        <!-- message from student -->
+        <section style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 14px;">Message from the student</p>
+          <blockquote style="margin:0;padding:16px 18px;background:#F8F6F1;border-left:3px solid #FF6F61;border-radius:8px;font-size:15px;line-height:1.65;color:#2A2433;max-width:620px;">&ldquo;Hi Quinn, I'm a second-year Professional Accounting student at Macquarie, hoping to move in around the 7th of July. I'm quiet and tidy, don't smoke, and I'm happy to provide references or have a quick call. Thanks for considering my application!&rdquo;</blockquote>
+          <p style="margin:12px 0 0;font-size:13px;color:#908897;">&mdash; Geonho Lee</p>
+        </section>
+
+        <!-- fit summary -->
+        <section style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 8px;">Fit summary</p>
+          <h2 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:600;color:#08060D;margin:0 0 18px;">How Geonho matches your listing</h2>
+
+          <div class="bk-fithead bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:10px 14px;padding:0 0 10px;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Criteria</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Applicant</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Listing</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;text-align:right;">Status</span>
+          </div>
+
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Move-in date</span>
+            <span style="font-size:14px;color:#4A4253;">7 Jul 2026</span>
+            <span style="font-size:14px;color:#4A4253;">Available 1 Jul 2026</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Lease length</span>
+            <span style="font-size:14px;color:#4A4253;">6 months</span>
+            <span style="font-size:14px;color:#4A4253;">6&ndash;12 months</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Occupancy</span>
+            <span style="font-size:14px;color:#4A4253;">Single occupant</span>
+            <span style="font-size:14px;color:#4A4253;">1 person</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Pets</span>
+            <span style="font-size:14px;color:#4A4253;">Not specified</span>
+            <span style="font-size:14px;color:#4A4253;">No pets</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Unknown</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Bills</span>
+            <span style="font-size:14px;color:#4A4253;">Expects bills included</span>
+            <span style="font-size:14px;color:#4A4253;">Bills excluded</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#FEF2F2;color:#991B1B;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Mismatch</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Furnishing</span>
+            <span style="font-size:14px;color:#4A4253;">Furnished preferred</span>
+            <span style="font-size:14px;color:#4A4253;">Furnished</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+        </section>
+
+        <!-- AI assessment -->
+        <section style="background:#fff;border:1px solid rgba(170,59,255,.28);border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#AA3BFF"><path d="M12 2l1.9 5.6L19.5 9 14 11.4 12 17l-2-5.6L4.5 9l5.6-1.4L12 2z"/></svg>
+            <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#AA3BFF;margin:0;">AI assessment</p>
+          </div>
+          <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#2A2433;max-width:600px;">Geonho looks like a strong fit for this room. His requested move-in of 7 July aligns with the listing's availability, and a 6-month term sits comfortably within your 6&ndash;12 month range. He's a verified Macquarie student with a quiet, single-occupancy profile. The one thing worth clarifying is bills: his enquiry suggests he expects bills included, while this listing has them excluded &mdash; confirm this directly before you finalise.</p>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:14px;border-top:1px solid #EFEDE9;">
+            <button onClick="{{ onRefresh }}" style="display:inline-flex;align-items:center;gap:8px;background:rgba(170,59,255,.10);color:#AA3BFF;border:1px solid rgba(170,59,255,.45);padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:rgba(170,59,255,.16);">
+              <sc-if value="{{ aiRefreshing }}" hint-placeholder-val="{{ false }}"><span style="width:13px;height:13px;border:2px solid #AA3BFF;border-top-color:transparent;border-radius:50%;display:inline-block;animation:bk-spin 1s linear infinite;"></span></sc-if>
+              Refresh assessment
+            </button>
+            <span style="font-size:12px;color:#908897;">{{ aiUpdated }}</span>
+          </div>
+          <p style="margin:14px 0 0;font-size:12px;line-height:1.5;color:#908897;">AI assessments are a guide only and can be wrong. Confirm the details directly with Geonho before deciding.</p>
+        </section>
+
+      </div>
+
+      <!-- ============ RIGHT COLUMN (sticky: applicant + actions) ============ -->
+      <div class="bk-rail">
+
+        <!-- single summary + action card -->
+        <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 4px 12px rgba(8,6,13,.06),0 2px 4px rgba(8,6,13,.04);padding:20px;">
+
+          <!-- applicant -->
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 12px;">Applicant</p>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:rgba(31,42,68,.08);color:#1F2A44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">GL</span>
+            <div style="min-width:0;">
+              <p style="margin:0;font-size:15px;font-weight:600;color:#08060D;">Geonho Lee</p>
+              <span style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:rgba(31,42,68,.10);color:#1F2A44;">
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Verified Student
+              </span>
+            </div>
+          </div>
+          <p style="margin:12px 0 0;font-size:13px;color:#6B6375;line-height:1.45;">Macquarie University · Bachelor of Professional Accounting · Year 2</p>
+
+          <div style="height:1px;background:#EFEDE9;margin:16px 0;"></div>
+
+          <!-- verification -->
+          <div>
+            <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 8px;">Verification</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #EFEDE9;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span style="font-size:13px;color:#2A2433;">University email</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;">Verified</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #EFEDE9;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span style="font-size:13px;color:#4A4253;">ID document</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;">Not provided</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span style="font-size:13px;color:#4A4253;">Enrolment</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;">Not provided</span>
+            </div>
+          </div>
+
+          <div style="height:1px;background:#EFEDE9;margin:14px 0;"></div>
+
+          <!-- key facts -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;">
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Move-in</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">7 Jul 2026</p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Lease</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">6 months</p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Bond</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">$800 <span style="font-weight:400;font-size:12px;color:#6B6375;">off-platform</span></p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Platform fee</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">$0</p></div>
+            <div style="grid-column:1 / -1;"><p style="margin:0 0 2px;font-size:11px;color:#908897;">Service model</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">Self-managed (Quni Listing)</p></div>
+          </div>
+
+          <!-- deadline highlight -->
+          <div style="margin-top:14px;display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:{{ deadlineBg }};border:1px solid {{ deadlineBorder }};">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ deadlineAccent }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <div style="min-width:0;">
+              <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:{{ deadlineAccent }};">{{ deadlineKicker }}</p>
+              <p style="margin:1px 0 0;font-size:15px;font-weight:700;color:#08060D;">{{ deadlineDate }}</p>
+            </div>
+          </div>
+
+          <!-- actions -->
+          <button onClick="{{ onPrimary }}" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:{{ primaryBg }};color:#fff;border:0;padding:12px 18px;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="filter:brightness(0.95);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            {{ primaryLabel }}
+          </button>
+          <a href="#" style="margin-top:10px;width:100%;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:#08060D;border:1px solid #E5E4E7;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;" style-hover="background:#F8F6F1;color:#08060D;text-decoration:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            Sign tenancy agreement
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:1400}}">
+class Component extends DCLogic {
+  state = { bondReceived: false, aiRefreshing: false, aiUpdated: 'Updated just now' };
+
+  markBond() { this.setState({ bondReceived: true }); }
+
+  refreshAi() {
+    if (this.state.aiRefreshing) return;
+    this.setState({ aiRefreshing: true });
+    setTimeout(() => this.setState({ aiRefreshing: false, aiUpdated: 'Updated just now' }), 1200);
+  }
+
+  renderVals() {
+    const b = this.state.bondReceived;
+    return {
+      statusBg: b ? '#E6F4EE' : '#FEF3C7',
+      statusFg: b ? '#0F6E56' : '#92400E',
+      statusLabel: b ? 'Bond received' : 'Bond pending',
+      deadlineBg: b ? 'rgba(29,158,117,.10)' : 'rgba(255,111,97,.08)',
+      deadlineBorder: b ? 'rgba(29,158,117,.32)' : 'rgba(255,111,97,.25)',
+      deadlineAccent: b ? '#0F6E56' : '#CC4A3C',
+      deadlineKicker: b ? 'Bond confirmed' : 'Confirm bond received by',
+      deadlineDate: b ? 'Recorded off-platform' : '1 July 2026',
+      primaryBg: b ? '#1D9E75' : '#FF6F61',
+      primaryLabel: b ? 'Bond received' : 'Bond received from renter',
+      onPrimary: () => this.markBond(),
+      aiRefreshing: this.state.aiRefreshing,
+      aiUpdated: this.state.aiUpdated,
+      onRefresh: () => this.refreshAi(),
+    };
+  }
+}
+</script>
+</body>
+</html>

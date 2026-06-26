@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:wght@500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_ds/quni-living-design-system-019e10fb-be2e-71f3-a904-e7b9b020f45c/colors_and_type.css">
+<script src="_ds/quni-living-design-system-019e10fb-be2e-71f3-a904-e7b9b020f45c/_ds_bundle.js"></script>
+<style>
+  html,body{margin:0;background:#F8F6F1;}
+  .bk-grid{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:28px;align-items:start;}
+  .bk-rail{position:sticky;top:24px;display:flex;flex-direction:column;gap:20px;}
+  @media (max-width:900px){.bk-grid{grid-template-columns:1fr;}.bk-rail{position:static;order:-1;}}
+  @media (max-width:600px){.bk-fitrow{grid-template-columns:1fr 1fr!important;gap:6px 12px!important;}.bk-fithead{display:none!important;}.bk-keyfacts{grid-template-columns:1fr!important;}}
+  @keyframes bk-spin{to{transform:rotate(360deg)}}
+  image-slot#primary-photo{width:88px!important;height:88px!important;display:block;}
+  .bk-strip-left{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:560px){.bk-strip-left{grid-template-columns:1fr;}}
+</style>
+</helmet>
+<div data-screen-label="Review request" style="font-family:'Inter',system-ui,sans-serif;color:#2A2433;min-height:100vh;box-sizing:border-box;padding:28px 24px 72px;">
+  <div style="max-width:1180px;margin:0 auto;">
+
+    <!-- top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;">
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:22px;color:#FF6F61;letter-spacing:-0.02em;">Quni</span>
+        <span style="font-size:13px;color:#908897;">Bookings · Review request</span>
+      </div>
+      <span style="font-size:13px;color:#908897;">Landlord · Quinn</span>
+    </div>
+
+    <!-- main two-column layout -->
+    <div class="bk-grid">
+
+      <!-- ============ LEFT ============ -->
+      <div style="display:flex;flex-direction:column;gap:20px;min-width:0;">
+
+      <div class="bk-strip-left">
+
+      <!-- box 1: request header -->
+      <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:20px;display:flex;flex-direction:column;">
+        <h1 style="font-family:'Inter',sans-serif;font-size:23px;line-height:1.15;letter-spacing:-0.015em;font-weight:700;color:#08060D;margin:0 0 12px;">Booking request</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;background:{{ statusBg }};color:{{ statusFg }};">
+            <span style="width:7px;height:7px;border-radius:50%;background:currentColor;"></span>{{ statusLabel }}
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(31,42,68,.08);color:#1F2A44;">Self-managed (Quni Listing)</span>
+        </div>
+        <p style="margin:auto 0 0;padding-top:14px;font-size:13px;color:#6B6375;">Reference <strong style="font-weight:600;color:#2A2433;font-family:ui-monospace,monospace;">D414F981</strong> · Received 5 days ago</p>
+      </div>
+
+      <!-- box 2: property -->
+      <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:20px;display:flex;flex-direction:column;">
+        <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 12px;">Property</p>
+        <div style="display:flex;align-items:center;gap:14px;margin:auto 0;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <p style="margin:0;font-size:16px;font-weight:600;color:#08060D;line-height:1.35;">18 Malvina Street</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#6B6375;">Ryde, NSW 2112 · Private room</p>
+          </div>
+          <div style="flex:0 0 auto;width:88px;height:88px;">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="primary-photo" shape="rounded" radius="10" placeholder="Photo" style="width:88px;height:88px;border:1px solid #E8E0CC;" hint-size="88px,88px"></x-import>
+          </div>
+        </div>
+      </div>
+
+      </div>
+
+        <!-- AI assessment (decision support — most prominent) -->
+        <section style="background:rgba(170,59,255,.035);border:1px solid rgba(170,59,255,.35);border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#AA3BFF"><path d="M12 2l1.9 5.6L19.5 9 14 11.4 12 17l-2-5.6L4.5 9l5.6-1.4L12 2z"/></svg>
+            <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#AA3BFF;margin:0;">AI assessment</p>
+          </div>
+          <h2 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:600;color:#08060D;margin:0 0 12px;">Should you accept Geonho's request?</h2>
+          <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#2A2433;max-width:600px;">Geonho is a promising fit, but a couple of things are worth checking before you accept. His requested move-in of 7 July aligns with the listing's availability, a 6-month term sits within your 6&ndash;12 month range, and he's a verified Macquarie student with a quiet, single-occupancy profile. Two gaps to weigh: he hasn't yet provided an ID or enrolment document, and his enquiry suggests he expects bills included while this listing has them excluded. Consider asking him to confirm both before you accept.</p>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:14px;border-top:1px solid rgba(170,59,255,.18);">
+            <button onClick="{{ onRefresh }}" style="display:inline-flex;align-items:center;gap:8px;background:rgba(170,59,255,.10);color:#AA3BFF;border:1px solid rgba(170,59,255,.45);padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:rgba(170,59,255,.16);">
+              <sc-if value="{{ aiRefreshing }}" hint-placeholder-val="{{ false }}"><span style="width:13px;height:13px;border:2px solid #AA3BFF;border-top-color:transparent;border-radius:50%;display:inline-block;animation:bk-spin 1s linear infinite;"></span></sc-if>
+              Refresh assessment
+            </button>
+            <span style="font-size:12px;color:#908897;">{{ aiUpdated }}</span>
+          </div>
+          <p style="margin:14px 0 0;font-size:12px;line-height:1.5;color:#908897;">AI assessments are a guide only and can be wrong. Confirm the details directly with Geonho before deciding.</p>
+        </section>
+
+        <!-- fit summary -->
+        <section style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 8px;">Fit summary</p>
+          <h2 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:600;color:#08060D;margin:0 0 18px;">How Geonho matches your listing</h2>
+
+          <div class="bk-fithead bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:10px 14px;padding:0 0 10px;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Criteria</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Applicant</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;">Listing</span>
+            <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;text-align:right;">Status</span>
+          </div>
+
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Move-in date</span>
+            <span style="font-size:14px;color:#4A4253;">7 Jul 2026</span>
+            <span style="font-size:14px;color:#4A4253;">Available 1 Jul 2026</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Lease length</span>
+            <span style="font-size:14px;color:#4A4253;">6 months</span>
+            <span style="font-size:14px;color:#4A4253;">6&ndash;12 months</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Occupancy</span>
+            <span style="font-size:14px;color:#4A4253;">Single occupant</span>
+            <span style="font-size:14px;color:#4A4253;">1 person</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Pets</span>
+            <span style="font-size:14px;color:#4A4253;">Not specified</span>
+            <span style="font-size:14px;color:#4A4253;">No pets</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Unknown</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;border-bottom:1px solid #EFEDE9;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Bills</span>
+            <span style="font-size:14px;color:#4A4253;">Expects bills included</span>
+            <span style="font-size:14px;color:#4A4253;">Bills excluded</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#FEF2F2;color:#991B1B;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Mismatch</span>
+          </div>
+          <div class="bk-fitrow" style="display:grid;grid-template-columns:1.3fr 1fr 1fr 104px;gap:8px 14px;align-items:center;padding:13px 0;">
+            <span style="font-size:14px;font-weight:600;color:#2A2433;">Furnishing</span>
+            <span style="font-size:14px;color:#4A4253;">Furnished preferred</span>
+            <span style="font-size:14px;color:#4A4253;">Furnished</span>
+            <span style="justify-self:end;display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Match</span>
+          </div>
+        </section>
+
+        <!-- message from student -->
+        <section style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 1px 2px rgba(8,6,13,.05),0 1px 1px rgba(8,6,13,.03);padding:24px;">
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 14px;">Message from the student</p>
+          <blockquote style="margin:0;padding:16px 18px;background:#F8F6F1;border-left:3px solid #FF6F61;border-radius:8px;font-size:15px;line-height:1.65;color:#2A2433;max-width:620px;">&ldquo;Hi Quinn, I'm a second-year Professional Accounting student at Macquarie, hoping to move in around the 7th of July. I'm quiet and tidy, don't smoke, and I'm happy to provide references or have a quick call. Thanks for considering my application!&rdquo;</blockquote>
+          <p style="margin:12px 0 0;font-size:13px;color:#908897;">&mdash; Geonho Lee</p>
+        </section>
+
+      </div>
+
+      <!-- ============ RIGHT COLUMN (sticky: applicant + decision) ============ -->
+      <div class="bk-rail">
+
+        <!-- single summary + decision card -->
+        <div style="background:#fff;border:1px solid #E5E4E7;border-radius:16px;box-shadow:0 4px 12px rgba(8,6,13,.06),0 2px 4px rgba(8,6,13,.04);padding:20px;">
+
+          <!-- applicant -->
+          <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 12px;">Applicant</p>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:rgba(31,42,68,.08);color:#1F2A44;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">GL</span>
+            <div style="min-width:0;">
+              <p style="margin:0;font-size:15px;font-weight:600;color:#08060D;">Geonho Lee</p>
+              <span style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:rgba(31,42,68,.10);color:#1F2A44;">
+                <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Verified Student
+              </span>
+            </div>
+          </div>
+          <p style="margin:12px 0 0;font-size:13px;color:#6B6375;line-height:1.45;">Macquarie University · Bachelor of Professional Accounting · Year 2</p>
+
+          <div style="height:1px;background:#EFEDE9;margin:16px 0;"></div>
+
+          <!-- verification -->
+          <div>
+            <p style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#908897;margin:0 0 8px;">Verification</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #EFEDE9;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span style="font-size:13px;color:#2A2433;">University email</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#E6F4EE;color:#0F6E56;">Verified</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #EFEDE9;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span style="font-size:13px;color:#4A4253;">ID document</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;">Not provided</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;">
+              <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#908897" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span style="font-size:13px;color:#4A4253;">Enrolment</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:#F1EEEA;color:#6B6375;">Not provided</span>
+            </div>
+          </div>
+
+          <div style="height:1px;background:#EFEDE9;margin:14px 0;"></div>
+
+          <!-- key facts (proposed, pre-acceptance) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;">
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Move-in</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">7 Jul 2026</p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Lease</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">6 months</p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Bond</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">$800</p></div>
+            <div><p style="margin:0 0 2px;font-size:11px;color:#908897;">Platform fee</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">$0</p></div>
+            <div style="grid-column:1 / -1;"><p style="margin:0 0 2px;font-size:11px;color:#908897;">Service model</p><p style="margin:0;font-size:14px;font-weight:600;color:#08060D;">Self-managed (Quni Listing)</p></div>
+          </div>
+          <p style="margin:10px 0 0;font-size:11px;color:#908897;line-height:1.45;">Bond is collected off-platform, directly from the renter, after you accept. Quni holds nothing.</p>
+
+          <div style="height:1px;background:#EFEDE9;margin:16px 0;"></div>
+
+          <!-- decision actions -->
+          <sc-if value="{{ showActions }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <button onClick="{{ onAccept }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#FF6F61;color:#fff;border:0;padding:12px 18px;border-radius:10px;font-weight:600;font-size:15px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:#F2604F;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Accept request
+              </button>
+              <button onClick="{{ onDecline }}" style="width:100%;display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#6B6375;border:1px solid #E5E4E7;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:#F8F6F1;color:#4A4253;">Decline</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showConfirm }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #FECACA;background:#FEF2F2;border-radius:12px;padding:14px;">
+              <p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#991B1B;">Decline this request? Geonho will be notified and the room stays listed for other students.</p>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button onClick="{{ onConfirmDecline }}" style="width:100%;background:#DC2626;color:#fff;border:0;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:#B91C1C;">Confirm decline</button>
+                <button onClick="{{ onCancelDecline }}" style="width:100%;background:transparent;color:#08060D;border:1px solid #E5E4E7;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;" style-hover="background:#F8F6F1;">Keep request</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showAccepted }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid rgba(29,158,117,.32);background:rgba(29,158,117,.10);border-radius:12px;padding:13px 14px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;margin-top:1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#0F6E56;"><strong style="color:#08060D;">Request accepted.</strong> The tenancy agreement and bond steps are now unlocked.</p>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showDeclined }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #E5E4E7;background:#F8F6F1;border-radius:12px;padding:13px 14px;">
+              <p style="margin:0;font-size:13px;line-height:1.5;color:#4A4253;"><strong style="color:#08060D;">Request declined.</strong> The room remains listed for other students.</p>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:1300}}">
+class Component extends DCLogic {
+  // decision: 'pending' | 'confirmDecline' | 'accepted' | 'declined'
+  state = { decision: 'pending', aiRefreshing: false, aiUpdated: 'Updated just now' };
+
+  setDecision(d) { this.setState({ decision: d }); }
+
+  refreshAi() {
+    if (this.state.aiRefreshing) return;
+    this.setState({ aiRefreshing: true });
+    setTimeout(() => this.setState({ aiRefreshing: false, aiUpdated: 'Updated just now' }), 1200);
+  }
+
+  renderVals() {
+    const d = this.state.decision;
+    const accepted = d === 'accepted';
+    const declined = d === 'declined';
+    // status pill: info (awaiting) by default, success once accepted, danger once declined
+    let statusBg = '#E0F2FE', statusFg = '#075985', statusLabel = 'Awaiting your response';
+    if (accepted) { statusBg = '#E6F4EE'; statusFg = '#0F6E56'; statusLabel = 'Request accepted'; }
+    else if (declined) { statusBg = '#FEF2F2'; statusFg = '#991B1B'; statusLabel = 'Request declined'; }
+    return {
+      statusBg, statusFg, statusLabel,
+      showActions: d === 'pending',
+      showConfirm: d === 'confirmDecline',
+      showAccepted: accepted,
+      showDeclined: declined,
+      onAccept: () => this.setDecision('accepted'),
+      onDecline: () => this.setDecision('confirmDecline'),
+      onConfirmDecline: () => this.setDecision('declined'),
+      onCancelDecline: () => this.setDecision('pending'),
+      aiRefreshing: this.state.aiRefreshing,
+      aiUpdated: this.state.aiUpdated,
+      onRefresh: () => this.refreshAi(),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+/* =============================================================================
+   Quni Living — Foundations
+   Colour, type, spacing, radius, shadow, motion tokens.
+   Light-only by design (color-scheme: light).
+   ============================================================================= */
+
+:root {
+  color-scheme: light only;
+
+  /* ---------------------------------------------------------------- COLOURS */
+
+  /* Brand — coral (primary), cream (panel), navy (text/secondary).
+     #FF6F61 is canonical. The footer #FF7261 in src/components is a known drift
+     and should be migrated to --quni-coral. */
+  --quni-coral:           #FF6F61;
+  --quni-coral-hover:     #F2604F;   /* button hover (darker, same hue) */
+  --quni-coral-active:    #CC4A3C;   /* press / strong border (already used in PageHeroBand) */
+  --quni-coral-tint:      rgba(255, 111, 97, 0.08);
+  --quni-coral-tint-15:   rgba(255, 111, 97, 0.15);
+  --quni-coral-border:    rgba(255, 111, 97, 0.25);
+
+  --quni-cream:           #FEF9E4;   /* sidebar / header panel */
+  --quni-cream-border:    #E8E0CC;   /* paired border */
+
+  --quni-navy:            #1F2A44;   /* secondary brand / chart series */
+  --quni-navy-hover:      #161E33;
+  --quni-navy-tint:       rgba(31, 42, 68, 0.08);
+
+  /* AI accent — reserved exclusively for AI/Sparkle moments
+     (SiteBrandLockup AI entry, AI-generated content callouts). */
+  --quni-ai:              #AA3BFF;
+  --quni-ai-tint:         rgba(170, 59, 255, 0.10);
+  --quni-ai-border:       rgba(170, 59, 255, 0.50);
+
+  /* Neutral ramp — warm, derived from cream. NOT cool slate.
+     Use these instead of Tailwind's `gray-*` going forward. */
+  --quni-ink:             #08060D;   /* === --text-h, page headings */
+  --quni-ink-2:           #2A2433;   /* body strong */
+  --quni-ink-3:           #4A4253;   /* body */
+  --quni-ink-4:           #6B6375;   /* === --text, secondary text */
+  --quni-ink-5:           #908897;   /* tertiary / placeholder */
+  --quni-line:            #E5E4E7;   /* === --border, default rule */
+  --quni-line-soft:       #EFEDE9;   /* table-row divider */
+  --quni-surface-2:       #F8F6F1;   /* warm off-white panel */
+  --quni-surface-3:       #F4F3EC;   /* === --code-bg */
+  --quni-surface-1:       #FFFFFF;   /* === --bg, default surface */
+
+  /* Semantic — STATUS ONLY. Never primary action / never brand-substitute. */
+  --quni-success:         #1D9E75;   /* mid green (CTA on pricing) */
+  --quni-success-strong:  #0F6E56;   /* dark green for emphasis */
+  --quni-success-bg:      #E6F4EE;   /* emerald-50/100 equivalent */
+  --quni-success-fg:      #0F6E56;
+
+  --quni-warning:         #B7791F;
+  --quni-warning-bg:      #FEF3C7;   /* amber-100 */
+  --quni-warning-fg:      #92400E;   /* amber-800 */
+
+  --quni-danger:          #DC2626;
+  --quni-danger-bg:       #FEF2F2;   /* red-50 */
+  --quni-danger-fg:       #991B1B;   /* red-800 */
+
+  --quni-info:            #0369A1;
+  --quni-info-bg:         #E0F2FE;   /* sky-100 */
+  --quni-info-fg:         #075985;   /* sky-900 */
+
+  /* Tier 1 / Tier 2 / Tier 3 lifecycle pills (from AdminPricing.tsx) */
+  --quni-lifecycle-live-bg:     var(--quni-success-bg);
+  --quni-lifecycle-live-fg:     var(--quni-success-strong);
+  --quni-lifecycle-phase2-bg:   var(--quni-info-bg);
+  --quni-lifecycle-phase2-fg:   var(--quni-info-fg);
+  --quni-lifecycle-deferred-bg: #F1EEEA;        /* warm stone-100 */
+  --quni-lifecycle-deferred-fg: #6B6375;
+
+  /* Surface levels (composability) */
+  --surface-0: var(--quni-cream);     /* the brand panel */
+  --surface-1: var(--quni-surface-1); /* default page */
+  --surface-2: var(--quni-surface-2); /* subtle elevated */
+  --surface-3: var(--quni-surface-3); /* code / chip background */
+
+  /* Chart / data-viz tokens (gap-fill — codebase has none yet)
+     Categorical ramp: coral first, navy second, then desaturated supporting. */
+  --chart-grid:        rgba(8, 6, 13, 0.06);
+  --chart-axis:        var(--quni-ink-5);
+  --chart-tooltip-bg:  #1F1A28;
+  --chart-tooltip-fg:  #FFFFFF;
+  --chart-1: #FF6F61;   /* coral — primary series */
+  --chart-2: #1F2A44;   /* navy — secondary series */
+  --chart-3: #1D9E75;   /* green */
+  --chart-4: #B7791F;   /* mustard */
+  --chart-5: #6B6375;   /* warm grey */
+  --chart-6: #AA3BFF;   /* AI purple — only when AI-related */
+
+  /* ----------------------------------------------------------- TYPOGRAPHY */
+
+  --font-display: 'Playfair Display', Georgia, 'Iowan Old Style', serif;  /* hero + h1 */
+  --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif:   'Lora', Georgia, serif;     /* pricing, long-form editorial */
+  --font-footer:  'Open Sans', system-ui, sans-serif; /* footer body only */
+  --font-mono:    ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', monospace;
+
+  /* Type scale — single intentional scale.
+     Display = Playfair, body/UI = Inter, semantic = Lora for pricing/editorial.
+     Pixel sizes assume 16px root; use rem in component classes. */
+  --text-display-xl-size:   clamp(56px, 6.4vw, 72px);
+  --text-display-xl-lh:     1.04;
+  --text-display-xl-track:  -0.03em;
+
+  --text-display-lg-size:   56px;     /* === existing h1 */
+  --text-display-lg-lh:     1.06;
+  --text-display-lg-track:  -0.03em;  /* −1.68px @56 */
+
+  --text-display-md-size:   40px;
+  --text-display-md-lh:     1.10;
+  --text-display-md-track:  -0.025em;
+
+  --text-display-sm-size:   32px;     /* hero band on /student-accommodation */
+  --text-display-sm-lh:     1.15;
+  --text-display-sm-track:  -0.02em;
+
+  --text-h1-size:           28px;     /* page-level Inter heading (admin) */
+  --text-h1-lh:             1.18;
+  --text-h1-track:          -0.015em;
+
+  --text-h2-size:           24px;
+  --text-h2-lh:             1.18;
+  --text-h2-track:          -0.01em;
+
+  --text-h3-size:           20px;
+  --text-h3-lh:             1.25;
+
+  --text-h4-size:           17px;
+  --text-h4-lh:             1.35;
+
+  --text-body-lg-size:      18px;
+  --text-body-lg-lh:        1.55;
+
+  --text-body-size:         16px;
+  --text-body-lh:           1.55;
+
+  --text-body-sm-size:      14px;
+  --text-body-sm-lh:        1.50;
+
+  --text-caption-size:      13px;
+  --text-caption-lh:        1.45;
+
+  --text-micro-size:        11px;
+  --text-micro-lh:          1.40;
+  --text-micro-track:       0.04em;   /* uppercase eyebrow */
+
+  --text-price-size:        24px;     /* PropertyCard rent */
+  --text-price-track:       -0.005em;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ----------------------------------------------------------- SPACING */
+  /* 4-px base. Use these instead of ad-hoc rem values. */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ----------------------------------------------------------- RADII (3-step) */
+  --radius-sm:   6px;    /* chips, small inputs */
+  --radius-md:   10px;   /* buttons, fields */
+  --radius-lg:   16px;   /* cards (canonical = rounded-2xl) */
+  --radius-pill: 999px;  /* pills, badges, avatars */
+
+  /* ----------------------------------------------------------- ELEVATION (3-step) */
+  /* Soft, low-contrast. Calm/editorial vibe — never harsh drop shadows. */
+  --shadow-1: 0 1px 2px rgba(8, 6, 13, 0.05), 0 1px 1px rgba(8, 6, 13, 0.03);   /* card resting */
+  --shadow-2: 0 4px 12px rgba(8, 6, 13, 0.06), 0 2px 4px rgba(8, 6, 13, 0.04);  /* card hover */
+  --shadow-3: 0 16px 32px rgba(8, 6, 13, 0.10), 0 4px 8px rgba(8, 6, 13, 0.05); /* modal / popover */
+  --shadow-focus:  0 0 0 3px rgba(255, 111, 97, 0.35);
+  --shadow-focus-navy: 0 0 0 3px rgba(31, 42, 68, 0.30);
+
+  /* ----------------------------------------------------------- LAYOUT */
+  --layout-site-max:   1200px;   /* === Tailwind theme.maxWidth.site */
+  --layout-admin-max:  1600px;   /* === AdminLayout px-6/lg:px-10 max-w-[1600px] */
+  --layout-sidebar-w:  224px;    /* === Tailwind w-56 */
+  --layout-gutter:     24px;
+  --layout-gutter-lg:  40px;
+
+  /* ----------------------------------------------------------- BREAKPOINTS (ref) */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;   /* index.css drops base font 18→16 below this */
+  --bp-xl: 1280px;
+
+  /* ----------------------------------------------------------- MOTION */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);    /* default */
+  --ease-emphasis: cubic-bezier(0.2, 0, 0.1, 1);
+  --ease-soft:     cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;   /* PropertyCard hover */
+  --dur-slow:   300ms;   /* image scale */
+
+  /* ----------------------------------------------------------- BACKWARDS COMPAT */
+  /* Aliases retained for files migrating from index.css's :root vars. */
+  --text:    var(--quni-ink-4);
+  --text-h:  var(--quni-ink);
+  --bg:      var(--quni-surface-1);
+  --border:  var(--quni-line);
+  --code-bg: var(--quni-surface-3);
+  --brand-header-bg:     var(--quni-cream);
+  --brand-header-border: var(--quni-cream-border);
+}
+
+/* =============================================================================
+   Semantic element defaults
+   ============================================================================= */
+
+html, body {
+  background: var(--quni-surface-1);
+  color: var(--quni-ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-lh);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display headings use Playfair for marketing surfaces (hero, h1) */
+.display, h1.display {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  color: var(--quni-ink);
+  font-size: var(--text-display-lg-size);
+  line-height: var(--text-display-lg-lh);
+  letter-spacing: var(--text-display-lg-track);
+}
+
+/* Default h1/h2/h3 — Inter for in-app pages (admin, dashboards) */
+h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h1-size);
+  line-height: var(--text-h1-lh);
+  letter-spacing: var(--text-h1-track);
+  font-weight: var(--weight-bold);
+  color: var(--quni-ink);
+  margin: 0 0 var(--space-2);
+}
+h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h2-size);
+  line-height: var(--text-h2-lh);
+  letter-spacing: var(--text-h2-track);
+  font-weight: var(--weight-semibold);
+  color: var(--quni-ink);
+  margin: 0 0 var(--space-2);
+}
+h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h3-size);
+  line-height: var(--text-h3-lh);
+  font-weight: var(--weight-semibold);
+  color: var(--quni-ink);
+  margin: 0 0 var(--space-2);
+}
+p { margin: 0; }
+
+.eyebrow {
+  font-size: var(--text-micro-size);
+  line-height: var(--text-micro-lh);
+  letter-spacing: var(--text-micro-track);
+  text-transform: uppercase;
+  font-weight: var(--weight-semibold);
+  color: var(--quni-ink-5);
+}
+
+.price {
+  font-family: var(--font-serif);     /* Lora — pricing & long-form */
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-price-size);
+  letter-spacing: var(--text-price-track);
+  color: var(--quni-ink);
+}
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--quni-surface-3);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  color: var(--quni-ink);
+}
+
+a { color: var(--quni-coral); text-decoration: none; }
+a:hover { color: var(--quni-coral-active); text-decoration: underline; }
+
+::selection { background: var(--quni-coral-tint-15); color: var(--quni-ink); }
