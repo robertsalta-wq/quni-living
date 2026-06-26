@@ -57,4 +57,6 @@ export type LicenceOccupyContent = {
   platformSectionTitle?: string
   platformWarrantyParagraph?: string
   executionIntro: string
+  /** Embed DocuSeal width/height on signature/date tags (NSW). */
+  docusealSizedSignatureFields?: boolean
 }

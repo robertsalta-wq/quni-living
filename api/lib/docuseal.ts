@@ -298,7 +298,7 @@ export { createDocusealSubmissionFromPdf }
 /** After draft PDF exists in Storage: send to DocuSeal and notify both parties. */
 export async function sendForSigning(
   documentId: string,
-  opts?: { documentPdfName?: string },
+  opts?: { documentPdfName?: string; removeTags?: boolean },
 ): Promise<void> {
   const admin = adminClient()
 
@@ -379,6 +379,7 @@ export async function sendForSigning(
       : `Lease - ${landlordName} / ${tenantName}`,
     pdfBase64,
     documentPdfName: opts?.documentPdfName,
+    removeTags: opts?.removeTags,
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
     coTenant: coTenantSigner,

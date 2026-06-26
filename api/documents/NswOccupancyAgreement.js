@@ -576,6 +576,19 @@ function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisp
   return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`;
 }
 
+// src/lib/documents/licenceOccupy/docusealTags.ts
+var LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE = { width: 220, height: 72 };
+var LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE = { width: 120, height: 28 };
+var LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN = {
+  fontSize: 1,
+  color: "#FAF6EE"
+};
+function licenceOccupyDocusealTag(fieldName, role, type, size) {
+  const base = `${fieldName};role=${role};type=${type}`;
+  if (!size) return `{{${base}}}`;
+  return `{{${base};width=${size.width};height=${size.height}}}`;
+}
+
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
 import { Fragment, jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 function formatMoney(n) {
@@ -624,6 +637,26 @@ function LicenceFooter({
       )
     ] })
   ] });
+}
+function DocusealField({
+  label,
+  tag,
+  boxStyle,
+  sized
+}) {
+  if (sized) {
+    return /* @__PURE__ */ jsxs2(View2, { style: boxStyle, children: [
+      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: label }),
+      /* @__PURE__ */ jsx2(Text2, { style: LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN, children: tag })
+    ] });
+  }
+  return /* @__PURE__ */ jsx2(View2, { style: boxStyle, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.sigLabel, children: [
+      label,
+      " "
+    ] }),
+    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: tag })
+  ] }) });
 }
 function BodyParagraph({ children }) {
   return /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children });
@@ -731,6 +764,31 @@ function LicenceOccupyDocument({
   const platformSectionTitle = content.platformSectionTitle ?? "Quni platform and owner service fee";
   const houseRulesIntro = content.houseRulesIntro ?? `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`;
   const pageShellProps = { content, documentId, generatedAt, footerText };
+  const docusealSized = content.docusealSizedSignatureFields === true;
+  const principalSignatureTag = licenceOccupyDocusealTag(
+    `${partyLabel} Signature`,
+    "First Party",
+    "signature",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : void 0
+  );
+  const principalDateTag = licenceOccupyDocusealTag(
+    `${partyLabel} Sign Date`,
+    "First Party",
+    "date",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
+  );
+  const residentSignatureTag = licenceOccupyDocusealTag(
+    "Resident Signature",
+    "Second Party",
+    "signature",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : void 0
+  );
+  const residentDateTag = licenceOccupyDocusealTag(
+    "Resident Sign Date",
+    "Second Party",
+    "date",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
+  );
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
@@ -822,25 +880,45 @@ function LicenceOccupyDocument({
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigBodyRow, children: [
           /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigCol, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: ownerDisplay }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: `{{${partyLabel} Signature;role=First Party;type=signature}}` })
-            ] }) }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: `{{${partyLabel} Sign Date;role=First Party;type=date}}` })
-            ] }) })
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Signature",
+                tag: principalSignatureTag,
+                boxStyle: occupancyMatchPdf.docusealSignatureFieldBox,
+                sized: docusealSized
+              }
+            ),
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Date",
+                tag: principalDateTag,
+                boxStyle: occupancyMatchPdf.docusealDateFieldBox,
+                sized: docusealSized
+              }
+            )
           ] }),
           /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: tenant.fullName }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Resident Signature;role=Second Party;type=signature}}" })
-            ] }) }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Resident Sign Date;role=Second Party;type=date}}" })
-            ] }) })
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Signature",
+                tag: residentSignatureTag,
+                boxStyle: occupancyMatchPdf.docusealSignatureFieldBox,
+                sized: docusealSized
+              }
+            ),
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Date",
+                tag: residentDateTag,
+                boxStyle: occupancyMatchPdf.docusealDateFieldBox,
+                sized: docusealSized
+              }
+            )
           ] })
         ] })
       ] })
@@ -960,7 +1038,8 @@ var NSW_LICENCE_OCCUPY_CONTENT = {
   platformIntroPrefix: "operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The Principal remains responsible for the allocated room, shared areas and this licence.",
   platformSectionTitle: "Quni platform, Principal's warranty and service fee",
   platformWarrantyParagraph: "Principal's warranty. The Principal warrants that they have the right to grant this licence and, where they are not the registered proprietor of the premises, that they hold any consent required from the registered owner, any co-owners, or the Principal's own landlord to grant it. The resident acknowledges that their right to occupy depends on the Principal's continuing right to grant it.",
-  executionIntro: "The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow."
+  executionIntro: "The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow.",
+  docusealSizedSignatureFields: true
 };
 var NSW_OCCUPANCY_PDF_MARKERS = [
   "Licence to Occupy",

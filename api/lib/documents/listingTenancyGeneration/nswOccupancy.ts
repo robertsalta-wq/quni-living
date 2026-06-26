@@ -444,7 +444,10 @@ export async function runNswOccupancyListingTenancy(
   let docusealSubmissionId: string | null = null
   if (hasDocuseal && !opts.deferSigning) {
     try {
-      await sendForSigning(documentId, { documentPdfName: 'Quni Licence to Occupy.pdf' })
+      await sendForSigning(documentId, {
+        documentPdfName: 'Quni Licence to Occupy.pdf',
+        removeTags: true,
+      })
       const { data: docRow } = await admin
         .from('tenancy_documents')
         .select('docuseal_submission_id, status')

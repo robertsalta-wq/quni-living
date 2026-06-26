@@ -17,6 +17,12 @@ import {
   ownerServiceFeeParagraphForTier,
   type LicenceOccupyServiceTier,
 } from './utils.js'
+import {
+  LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE,
+  LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE,
+  LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN,
+  licenceOccupyDocusealTag,
+} from './docusealTags.js'
 
 function formatMoney(n: number) {
   return n.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
@@ -77,6 +83,35 @@ function LicenceFooter({
             `Page ${pageNumber}${totalPages ? ` of ${totalPages}` : ''}`
           }
         />
+      </View>
+    </View>
+  )
+}
+
+function DocusealField({
+  label,
+  tag,
+  boxStyle,
+  sized,
+}: {
+  label: string
+  tag: string
+  boxStyle: typeof occupancyMatchPdf.docusealSignatureFieldBox
+  sized: boolean
+}) {
+  if (sized) {
+    return (
+      <View style={boxStyle}>
+        <Text style={occupancyMatchPdf.sigLabel}>{label}</Text>
+        <Text style={LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN}>{tag}</Text>
+      </View>
+    )
+  }
+  return (
+    <View style={boxStyle}>
+      <View style={occupancyMatchPdf.sigLabelRow}>
+        <Text style={occupancyMatchPdf.sigLabel}>{label} </Text>
+        <Text style={occupancyMatchPdf.docusealTagOa}>{tag}</Text>
       </View>
     </View>
   )
@@ -234,6 +269,31 @@ export function LicenceOccupyDocument({
     `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`
 
   const pageShellProps = { content, documentId, generatedAt, footerText }
+  const docusealSized = content.docusealSizedSignatureFields === true
+  const principalSignatureTag = licenceOccupyDocusealTag(
+    `${partyLabel} Signature`,
+    'First Party',
+    'signature',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : undefined,
+  )
+  const principalDateTag = licenceOccupyDocusealTag(
+    `${partyLabel} Sign Date`,
+    'First Party',
+    'date',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : undefined,
+  )
+  const residentSignatureTag = licenceOccupyDocusealTag(
+    'Resident Signature',
+    'Second Party',
+    'signature',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : undefined,
+  )
+  const residentDateTag = licenceOccupyDocusealTag(
+    'Resident Sign Date',
+    'Second Party',
+    'date',
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : undefined,
+  )
 
   return (
     <Document>
@@ -373,41 +433,33 @@ export function LicenceOccupyDocument({
           <View style={occupancyMatchPdf.sigBodyRow}>
             <View style={occupancyMatchPdf.sigCol}>
               <Text style={occupancyMatchPdf.sigNameBold}>{ownerDisplay}</Text>
-              <View style={occupancyMatchPdf.docusealSignatureFieldBox}>
-                <View style={occupancyMatchPdf.sigLabelRow}>
-                  <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
-                  <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {`{{${partyLabel} Signature;role=First Party;type=signature}}`}
-                  </Text>
-                </View>
-              </View>
-              <View style={occupancyMatchPdf.docusealDateFieldBox}>
-                <View style={occupancyMatchPdf.sigLabelRow}>
-                  <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
-                  <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {`{{${partyLabel} Sign Date;role=First Party;type=date}}`}
-                  </Text>
-                </View>
-              </View>
+              <DocusealField
+                label="Signature"
+                tag={principalSignatureTag}
+                boxStyle={occupancyMatchPdf.docusealSignatureFieldBox}
+                sized={docusealSized}
+              />
+              <DocusealField
+                label="Date"
+                tag={principalDateTag}
+                boxStyle={occupancyMatchPdf.docusealDateFieldBox}
+                sized={docusealSized}
+              />
             </View>
             <View style={occupancyMatchPdf.sigColLast}>
               <Text style={occupancyMatchPdf.sigNameBold}>{tenant.fullName}</Text>
-              <View style={occupancyMatchPdf.docusealSignatureFieldBox}>
-                <View style={occupancyMatchPdf.sigLabelRow}>
-                  <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
-                  <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {'{{Resident Signature;role=Second Party;type=signature}}'}
-                  </Text>
-                </View>
-              </View>
-              <View style={occupancyMatchPdf.docusealDateFieldBox}>
-                <View style={occupancyMatchPdf.sigLabelRow}>
-                  <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
-                  <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {'{{Resident Sign Date;role=Second Party;type=date}}'}
-                  </Text>
-                </View>
-              </View>
+              <DocusealField
+                label="Signature"
+                tag={residentSignatureTag}
+                boxStyle={occupancyMatchPdf.docusealSignatureFieldBox}
+                sized={docusealSized}
+              />
+              <DocusealField
+                label="Date"
+                tag={residentDateTag}
+                boxStyle={occupancyMatchPdf.docusealDateFieldBox}
+                sized={docusealSized}
+              />
             </View>
           </View>
         </View>

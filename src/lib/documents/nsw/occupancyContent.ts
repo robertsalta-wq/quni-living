@@ -124,6 +124,7 @@ export const NSW_LICENCE_OCCUPY_CONTENT: LicenceOccupyContent = {
     "Principal's warranty. The Principal warrants that they have the right to grant this licence and, where they are not the registered proprietor of the premises, that they hold any consent required from the registered owner, any co-owners, or the Principal's own landlord to grant it. The resident acknowledges that their right to occupy depends on the Principal's continuing right to grant it.",
   executionIntro:
     'The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow.',
+  docusealSizedSignatureFields: true,
 }
 
 /** PDF generation tests search for these strings in the rendered buffer. */

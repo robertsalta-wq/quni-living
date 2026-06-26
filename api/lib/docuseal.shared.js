@@ -73,6 +73,7 @@ async function readErrorBody(res) {
  *   coTenant?: {name: string, email: string} | null,
  *   submitterSignReason?: boolean,
  *   documentPdfName?: string
+ *   removeTags?: boolean
  * }} params
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
@@ -121,6 +122,7 @@ export async function createDocusealSubmissionFromPdf(params) {
     name: params.name,
     order: 'preserved',
     send_email: asBooleanEnv('DOCUSEAL_SEND_EMAIL', false),
+    ...(params.removeTags ? { remove_tags: true } : {}),
     documents,
     submitters,
   }

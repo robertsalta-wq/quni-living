@@ -80,6 +80,8 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('is not the owner')
     const watermarkMatches = text.match(/Subject to final legal review/g) ?? []
     expect(watermarkMatches.length).toBe(6)
+    expect(text).toContain('width=220;height=72')
+    expect(text).toContain('width=120;height=28')
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {
