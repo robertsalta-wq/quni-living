@@ -815,8 +815,8 @@ export default function LandlordBookingReviewPage() {
 
   return (
     <div className="min-h-full bg-admin-surface-2">
-      <div className="mx-auto max-w-[1180px] px-6 pt-7 pb-[72px]">
-        <UserDashboardBreadcrumb segments={breadcrumbSegments} className="mb-6 text-[13px] text-admin-ink-5" />
+      <div className="mx-auto max-w-[1180px] px-6 py-7 pb-[72px]">
+        <UserDashboardBreadcrumb segments={breadcrumbSegments} className="mb-[26px] text-[13px] text-admin-ink-5" />
 
         <div className="grid grid-cols-1 items-start gap-7 min-[901px]:grid-cols-[minmax(0,1fr)_372px]">
           {/* —— Left column —— */}
@@ -935,8 +935,8 @@ export default function LandlordBookingReviewPage() {
               />
             )}
 
-            <section className="space-y-2">
-              <h2 className="text-lg font-semibold text-admin-ink">Fit summary</h2>
+            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
+              <h2 className="mb-2 text-lg font-semibold text-admin-ink">Fit summary</h2>
               <BookingFitSummaryTable rows={fitRows} />
             </section>
 
@@ -1139,15 +1139,24 @@ export default function LandlordBookingReviewPage() {
             )}
           </div>
 
-          {/* —— Sticky right rail —— */}
-          <aside className="order-first flex flex-col gap-5 min-[901px]:order-none min-[901px]:sticky min-[901px]:top-6">
-            <div id="applicant-review" className="scroll-mt-4">
-              <LandlordApplicantReviewHeader student={snapshot} displayName={displayName} bio={data.student?.bio} />
-            </div>
-
-            <LandlordApplicantVerificationSection student={snapshot} />
-
+          {/* —— Sticky right rail: one consolidated card —— */}
+          <aside className="order-first self-start min-[901px]:order-none min-[901px]:sticky min-[901px]:top-24">
             <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card-hover">
+              <div id="applicant-review" className="scroll-mt-4">
+                <LandlordApplicantReviewHeader
+                  student={snapshot}
+                  displayName={displayName}
+                  bio={data.student?.bio}
+                  embedded
+                />
+              </div>
+
+              <hr className="my-4 border-admin-line-soft" aria-hidden />
+
+              <LandlordApplicantVerificationSection student={snapshot} embedded />
+
+              <hr className="my-4 border-admin-line-soft" aria-hidden />
+
               <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                 <div>
                   <p className="text-[11px] text-admin-ink-5">Move-in</p>
@@ -1282,7 +1291,9 @@ export default function LandlordBookingReviewPage() {
                 </div>
               ) : null}
 
-              <div className="mt-4 space-y-2 border-t border-admin-line-soft pt-4">
+              <hr className="my-4 border-admin-line-soft" aria-hidden />
+
+              <div className="space-y-2">
                 {actionError && (
                   <div className="rounded-lg border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
                     {actionError}

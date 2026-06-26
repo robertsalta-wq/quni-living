@@ -38,7 +38,7 @@ export default function LandlordApplicantAIAssessmentPanel({
   showGenerate,
 }: Props) {
   return (
-    <section id={anchorId} className="scroll-mt-4 rounded-xl border border-gray-100 bg-white px-4 py-4">
+    <section id={anchorId} className="scroll-mt-4 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
         <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]" />
         AI assessment
@@ -69,9 +69,9 @@ export default function LandlordApplicantAIAssessmentPanel({
       )}
 
       {assessment && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 max-w-[600px] space-y-3">
           <div className="rounded-xl border border-stone-200/90 bg-[#FFF8F0] px-3 py-3 text-left text-sm leading-relaxed text-gray-800">
-            <p className="whitespace-pre-wrap">{assessment}</p>
+            <p className="max-w-[600px] whitespace-pre-wrap">{assessment}</p>
             {assessmentAt && (
               <p className="mt-2 text-[11px] text-gray-500">Generated {formatAssessmentAt(assessmentAt)}</p>
             )}

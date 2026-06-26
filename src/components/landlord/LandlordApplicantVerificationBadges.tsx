@@ -132,8 +132,10 @@ export function LandlordApplicantVerificationBadges({
 
 export function LandlordApplicantVerificationDetail({
   verification,
+  embedded = false,
 }: {
   verification: LandlordSeenStudentVerification | null | undefined
+  embedded?: boolean
 }) {
   const v = verification
   const identityLike =
@@ -170,14 +172,14 @@ export function LandlordApplicantVerificationDetail({
       ]
 
   return (
-    <ul className="space-y-2 text-sm">
-      {rows.map((r) => {
+    <ul className={embedded ? 'space-y-0' : 'space-y-2 text-sm'}>
+      {rows.map((r, index) => {
         let okLine: string | null = null
         if (r.ok) {
           if (r.label === 'Uni email') {
             okLine = r.at ? `Uni email verified ${formatDate(r.at)}` : 'Uni email verified'
-        } else if (r.label === 'Work email') {
-          okLine = r.at ? `Work email verified ${formatDate(r.at)}` : 'Work email verified'
+          } else if (r.label === 'Work email') {
+            okLine = r.at ? `Work email verified ${formatDate(r.at)}` : 'Work email verified'
           } else if (r.label === 'ID document') {
             okLine = r.at ? `ID provided ${formatDate(r.at)}` : 'ID provided'
           } else if (r.label === 'Supporting document') {
@@ -186,9 +188,30 @@ export function LandlordApplicantVerificationDetail({
             okLine = r.at ? `Enrolment provided ${formatDate(r.at)}` : 'Enrolment provided'
           }
         }
+        if (embedded) {
+          return (
+            <li
+              key={r.label}
+              className={`flex items-center justify-between gap-2.5 py-1.5 ${
+                index < rows.length - 1 ? 'border-b border-admin-line-soft' : ''
+              }`}
+            >
+              <span className="text-[13px] text-admin-ink-2">{r.label}</span>
+              {okLine ? (
+                <span className="shrink-0 rounded-admin-pill bg-admin-success-bg px-2 py-0.5 text-[11px] font-semibold text-admin-success-fg">
+                  {okLine}
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-admin-pill bg-[#F1EEEA] px-2 py-0.5 text-[11px] font-semibold text-admin-ink-4">
+                  Not provided
+                </span>
+              )}
+            </li>
+          )
+        }
         return (
           <li key={r.label} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-            <span className="font-medium text-gray-900 min-w-[10rem]">{r.label}</span>
+            <span className="min-w-[10rem] font-medium text-gray-900">{r.label}</span>
             {okLine ? (
               <span className="text-emerald-800">{okLine}</span>
             ) : (

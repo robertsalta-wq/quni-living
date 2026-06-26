@@ -8,13 +8,25 @@ import type { LandlordSafeStudentSnapshot } from './LandlordStudentProfileModal'
 type Props = {
   student: LandlordSafeStudentSnapshot | null
   verificationAnchorId?: string
+  /** Strip outer card chrome — for embedding in the right summary card. */
+  embedded?: boolean
 }
 
 export default function LandlordApplicantVerificationSection({
   student,
   verificationAnchorId = 'landlord-applicant-verification',
+  embedded = false,
 }: Props) {
   const verification = buildLandlordVerificationFromProfile(student)
+
+  if (embedded) {
+    return (
+      <div id={verificationAnchorId} className="scroll-mt-4">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Verification</p>
+        <LandlordApplicantVerificationDetail verification={verification} embedded />
+      </div>
+    )
+  }
 
   return (
     <section

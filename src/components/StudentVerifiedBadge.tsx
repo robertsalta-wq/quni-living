@@ -24,7 +24,7 @@ export function StudentVerifiedBadge({
   if (!studentIsVerifiedForTrust(student)) return null
   return (
     <span
-      className={`inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-tight text-emerald-700 ${className}`.trim()}
+      className={`inline-flex items-center gap-1 rounded-full bg-admin-navy-tint px-2 py-0.5 text-[11px] font-semibold leading-tight text-admin-navy ${className}`.trim()}
     >
       <svg className="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
         <path
