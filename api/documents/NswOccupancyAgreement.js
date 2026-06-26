@@ -614,7 +614,7 @@ function LicenceFooter({
   return /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerWrapOa, fixed: true, children: [
     /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.footerRuleOa }),
     /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerRowOa, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt} \xB7 ${footerText}` }),
+      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt}${footerText ? ` \xB7 ${footerText}` : ""}` }),
       /* @__PURE__ */ jsx2(
         Text2,
         {
@@ -709,7 +709,8 @@ function LicenceOccupyDocument({
   const { documentId, generatedAt, landlord, tenant, rent, bond, houseRules, specialConditions, bookingNotes } = props;
   const partyLabel = content.partyLabel ?? "Owner";
   const partyLabelLower = partyLabel.toLowerCase();
-  const footerText = content.watermark ?? content.draftFooter;
+  const headerWatermark = content.watermark;
+  const footerText = headerWatermark ? "" : content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
   const entityName = resolvePlatformLegalEntityName(null);
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
@@ -732,7 +733,7 @@ function LicenceOccupyDocument({
   const pageShellProps = { content, documentId, generatedAt, footerText };
   return /* @__PURE__ */ jsxs2(Document, { children: [
     /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: footerText }),
+      !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
       /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),

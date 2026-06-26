@@ -71,7 +71,8 @@ async function readErrorBody(res) {
  *   landlord: {name: string, email: string},
  *   tenant: {name: string, email: string},
  *   coTenant?: {name: string, email: string} | null,
- *   submitterSignReason?: boolean
+ *   submitterSignReason?: boolean,
+ *   documentPdfName?: string
  * }} params
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
@@ -93,7 +94,7 @@ export async function createDocusealSubmissionFromPdf(params) {
     const normalizedPdfBase64 = await reencodePdfBase64(params.pdfBase64)
     documents = [
       {
-        name: 'Residential Tenancy Agreement.pdf',
+        name: params.documentPdfName?.trim() || 'Residential Tenancy Agreement.pdf',
         file: normalizedPdfBase64,
       },
     ]

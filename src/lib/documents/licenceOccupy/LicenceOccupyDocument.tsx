@@ -69,7 +69,7 @@ function LicenceFooter({
       <View style={occupancyMatchPdf.footerRuleOa} />
       <View style={occupancyMatchPdf.footerRowOa}>
         <Text style={occupancyMatchPdf.footerLeftCoral}>
-          {`Quni Living · ${content.docTitle} · ${documentId} · ${generatedAt} · ${footerText}`}
+          {`Quni Living · ${content.docTitle} · ${documentId} · ${generatedAt}${footerText ? ` · ${footerText}` : ''}`}
         </Text>
         <Text
           style={occupancyMatchPdf.footerPageCoral}
@@ -194,7 +194,8 @@ export function LicenceOccupyDocument({
 
   const partyLabel = content.partyLabel ?? 'Owner'
   const partyLabelLower = partyLabel.toLowerCase()
-  const footerText = content.watermark ?? content.draftFooter
+  const headerWatermark = content.watermark
+  const footerText = headerWatermark ? '' : content.draftFooter
 
   const ownerDisplay = landlord.companyName
     ? `${landlord.fullName} (${landlord.companyName})`
@@ -237,7 +238,9 @@ export function LicenceOccupyDocument({
   return (
     <Document>
       <PageShell {...pageShellProps}>
-        <Text style={[occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }]}>{footerText}</Text>
+        {!headerWatermark ? (
+          <Text style={[occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }]}>{content.draftFooter}</Text>
+        ) : null}
         <ScheduleSummary content={content} props={props} partyLabel={partyLabel} />
         <OccupancyMatchSectionHeading num={1} title="Nature of arrangement" />
         {content.natureParagraphs.map((p, i) => (

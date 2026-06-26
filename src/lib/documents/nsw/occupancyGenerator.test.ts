@@ -43,7 +43,7 @@ function minimalProps(): OccupancyAgreementProps {
       weeklyRent: 300,
       platformFeePercent: 0,
       totalWeekly: 300,
-      paymentMethod: 'Direct credit to owner account (fee-free)',
+      paymentMethod: 'Direct credit to Principal account (fee-free)',
     },
     bond: { amount: 1200 },
     specialConditions: [],
@@ -78,6 +78,8 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('one-off platform fee of $99')
     expect(text).not.toMatch(/deducted from amounts payable to the principal/i)
     expect(text).toContain('is not the owner')
+    const watermarkMatches = text.match(/Subject to final legal review/g) ?? []
+    expect(watermarkMatches.length).toBe(6)
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {

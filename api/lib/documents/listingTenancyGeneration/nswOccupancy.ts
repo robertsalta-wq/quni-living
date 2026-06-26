@@ -209,7 +209,7 @@ async function loadNswOccupancyContext(
       : 0
   const paymentMethod =
     serviceTier === 'listing'
-      ? 'Direct credit to owner account (fee-free). Reference: resident name and property address.'
+      ? 'Direct credit to Principal account (fee-free). Reference: resident name and property address.'
       : 'Via Quni Living platform (quni.com.au)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
@@ -287,9 +287,9 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
     },
     bond: { amount: ctx.bondNum },
     specialConditions: [
-      'This agreement is facilitated through the Quni Living platform (quni.com.au).',
-      'Bond handling is the responsibility of the landlord. Quni Living does not hold or manage bond payments.',
-      "Rent payments are processed through Quni Living's secure payment system powered by Stripe.",
+      'This licence is facilitated through the Quni Living platform (quni.com.au).',
+      'Any security deposit is held directly by the Principal. Quni Living does not hold or manage security deposits.',
+      'The weekly licence fee is paid directly to the Principal by fee-free direct credit and is not collected through the platform.',
       ...ctx.coTenantSpecialConditions,
     ],
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
@@ -444,7 +444,7 @@ export async function runNswOccupancyListingTenancy(
   let docusealSubmissionId: string | null = null
   if (hasDocuseal && !opts.deferSigning) {
     try {
-      await sendForSigning(documentId)
+      await sendForSigning(documentId, { documentPdfName: 'Quni Licence to Occupy.pdf' })
       const { data: docRow } = await admin
         .from('tenancy_documents')
         .select('docuseal_submission_id, status')

@@ -296,7 +296,10 @@ export async function downloadSignedResidentialTenancyPackagePartsFromDocuseal(
 export { createDocusealSubmissionFromPdf }
 
 /** After draft PDF exists in Storage: send to DocuSeal and notify both parties. */
-export async function sendForSigning(documentId: string): Promise<void> {
+export async function sendForSigning(
+  documentId: string,
+  opts?: { documentPdfName?: string },
+): Promise<void> {
   const admin = adminClient()
 
   const { data: row, error: rowErr } = await admin
@@ -375,6 +378,7 @@ export async function sendForSigning(documentId: string): Promise<void> {
       ? `Lease - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
       : `Lease - ${landlordName} / ${tenantName}`,
     pdfBase64,
+    documentPdfName: opts?.documentPdfName,
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
     coTenant: coTenantSigner,
