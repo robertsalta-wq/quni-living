@@ -513,9 +513,11 @@ const TENANCY_AGREEMENT_BOLD_OPENERS: readonly string[] = [
 export function OccupancyMatchFixedHeader({
   documentTitle,
   subtitle,
+  watermark,
 }: {
   documentTitle: string
   subtitle: string
+  watermark?: string
 }) {
   return (
     <View style={occupancyMatchPdf.headerWrap} fixed>
@@ -524,6 +526,7 @@ export function OccupancyMatchFixedHeader({
         <View style={occupancyMatchPdf.headerRightBlock}>
           <Text style={occupancyMatchPdf.headerDocTitle}>{documentTitle}</Text>
           <Text style={occupancyMatchPdf.headerSubtitle}>{subtitle}</Text>
+          {watermark ? <Text style={occupancyMatchPdf.noteItalicMuted}>{watermark}</Text> : null}
         </View>
       </View>
       <View style={occupancyMatchPdf.oaHeaderRule} />

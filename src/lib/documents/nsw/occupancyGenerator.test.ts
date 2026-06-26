@@ -11,7 +11,7 @@ function minimalProps(): OccupancyAgreementProps {
     generatedAt: '1 Jan 2026, 12:00:00 pm',
     serviceTier: 'listing',
     landlord: {
-      fullName: 'Jane Owner',
+      fullName: 'Jane Principal',
       companyName: null,
       addressLine: '1 Example St, Sydney NSW 2000',
       email: 'jane@example.com',
@@ -68,13 +68,16 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).not.toMatch(/Platform fee \(/i)
     expect(text).not.toMatch(/Platform fee component/i)
     expect(text).not.toMatch(/total weekly payment/i)
-    expect(text).toContain('not lodged with NSW Fair Trading')
+    expect(text).not.toContain('Draft for legal review')
     expect(text).not.toMatch(/must be lodged with NSW Fair Trading/i)
     expect(text).toContain('15/07/2025')
     expect(text).toContain('15/01/2026')
     expect(text).toContain('12 Condition report')
+    expect(text).toContain('13 Continuation after fixed period')
+    expect(text).toContain('14 Execution')
     expect(text).toContain('one-off platform fee of $99')
-    expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
+    expect(text).not.toMatch(/deducted from amounts payable to the principal/i)
+    expect(text).toContain('is not the owner')
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {

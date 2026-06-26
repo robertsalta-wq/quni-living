@@ -494,14 +494,16 @@ var occupancyMatchPdf = StyleSheet.create({
 });
 function OccupancyMatchFixedHeader({
   documentTitle,
-  subtitle
+  subtitle,
+  watermark
 }) {
   return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerWrap, fixed: true, children: [
     /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.oaHeaderRow, children: [
       /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.brandQuni, children: "Quni" }),
       /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerRightBlock, children: [
         /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerDocTitle, children: documentTitle }),
-        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle })
+        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle }),
+        watermark ? /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.noteItalicMuted, children: watermark }) : null
       ] })
     ] }),
     /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.oaHeaderRule })
@@ -565,12 +567,13 @@ function formatManagedFeePercent(percent) {
   if (!Number.isFinite(n) || n <= 0) return "7%";
   return `${n.toLocaleString("en-AU", { maximumFractionDigits: 2 })}%`;
 }
-function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY) {
+function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY, partyLabel = "Owner") {
+  const party = partyLabel === "Principal" ? "Principal" : partyLabel.toLowerCase();
   if (tier === "managed") {
     const pct = formatManagedFeePercent(managedFeePercent);
-    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`;
+    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the ${party} before payout to the ${party}, as disclosed in the ${party} service agreement and listing terms.`;
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
+  return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`;
 }
 
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
@@ -591,15 +594,27 @@ function yn(v) {
   if (v === false) return "No";
   return "-";
 }
+function renderTerminationBlocks(blocks) {
+  return blocks.map((block, i) => {
+    if (block.kind === "paragraph") {
+      return /* @__PURE__ */ jsx2(BodyParagraph, { children: block.text }, `tb-p-${i}`);
+    }
+    return /* @__PURE__ */ jsxs2(View2, { children: [
+      block.intro ? /* @__PURE__ */ jsx2(BodyParagraph, { children: block.intro }) : null,
+      block.items.map((item, j) => /* @__PURE__ */ jsx2(Bullet, { children: item }, `tb-b-${i}-${j}`))
+    ] }, `tb-b-${i}`);
+  });
+}
 function LicenceFooter({
   content,
   documentId,
-  generatedAt
+  generatedAt,
+  footerText
 }) {
   return /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerWrapOa, fixed: true, children: [
     /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.footerRuleOa }),
     /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerRowOa, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt} \xB7 ${content.draftFooter}` }),
+      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt} \xB7 ${footerText}` }),
       /* @__PURE__ */ jsx2(
         Text2,
         {
@@ -623,17 +638,34 @@ function PageShell({
   content,
   documentId,
   generatedAt,
+  footerText,
   children
 }) {
   return /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchFixedHeader, { documentTitle: content.docTitle, subtitle: content.docSubtitle }),
-    /* @__PURE__ */ jsx2(LicenceFooter, { content, documentId, generatedAt }),
+    /* @__PURE__ */ jsx2(
+      OccupancyMatchFixedHeader,
+      {
+        documentTitle: content.docTitle,
+        subtitle: content.docSubtitle,
+        watermark: content.watermark
+      }
+    ),
+    /* @__PURE__ */ jsx2(
+      LicenceFooter,
+      {
+        content,
+        documentId,
+        generatedAt,
+        footerText
+      }
+    ),
     children
   ] });
 }
 function ScheduleSummary({
   content,
-  props
+  props,
+  partyLabel
 }) {
   const { landlord, tenant, premises, term, rent, bond } = props;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
@@ -648,9 +680,9 @@ function ScheduleSummary({
         value: String(premises.roomsRentedToResidents)
       }
     ] : [],
-    { label: "Owner:", value: ownerDisplay },
-    { label: "Owner email:", value: landlord.email },
-    { label: "Owner phone:", value: landlord.phone },
+    { label: `${partyLabel}:`, value: ownerDisplay },
+    { label: `${partyLabel} email:`, value: landlord.email },
+    { label: `${partyLabel} phone:`, value: landlord.phone },
     { label: "Resident:", value: tenant.fullName },
     { label: "Resident email:", value: tenant.email },
     { label: "Resident phone:", value: tenant.phone },
@@ -675,6 +707,9 @@ function LicenceOccupyDocument({
   props
 }) {
   const { documentId, generatedAt, landlord, tenant, rent, bond, houseRules, specialConditions, bookingNotes } = props;
+  const partyLabel = content.partyLabel ?? "Owner";
+  const partyLabelLower = partyLabel.toLowerCase();
+  const footerText = content.watermark ?? content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
   const entityName = resolvePlatformLegalEntityName(null);
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
@@ -685,20 +720,27 @@ function LicenceOccupyDocument({
   ];
   const serviceTier = props.serviceTier === "managed" ? "managed" : "listing";
   const hasExtraTerms = extraLines.length > 0;
+  const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0;
   const conditionReportClauseNum = 12;
-  const additionalTermsClauseNum = 13;
-  const executionClauseNum = hasExtraTerms ? 14 : 13;
+  const continuationClauseNum = hasContinuation ? 13 : null;
+  const additionalTermsClauseNum = hasContinuation ? 14 : 13;
+  const executionClauseNum = hasContinuation ? hasExtraTerms ? 15 : 14 : hasExtraTerms ? 14 : 13;
+  const entrySectionTitle = content.entrySectionTitle ?? "Owner's right of entry";
+  const terminationSectionTitle = content.terminationSectionTitle ?? "Termination";
+  const platformSectionTitle = content.platformSectionTitle ?? "Quni platform and owner service fee";
+  const houseRulesIntro = content.houseRulesIntro ?? `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`;
+  const pageShellProps = { content, documentId, generatedAt, footerText };
   return /* @__PURE__ */ jsxs2(Document, { children: [
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }),
-      /* @__PURE__ */ jsx2(ScheduleSummary, { content, props }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: footerText }),
+      /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Room and shared areas" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.roomSharedIntro })
+      content.roomSharedParagraphs ? content.roomSharedParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `r-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.roomSharedIntro })
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: "Owner's right of entry" }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: entrySectionTitle }),
       content.entryParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `e-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 4, title: "Financial terms" }),
       /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
@@ -711,41 +753,60 @@ function LicenceOccupyDocument({
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 5, title: content.bond.sectionTitle }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bond.intro }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: bondAmountLine }),
-      content.bond.bullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `b-${i}`))
+      content.bond.bullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `b-${i}`)),
+      content.bond.afterBullets?.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `ba-${i}`))
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: "Termination" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationIntro }),
-      /* @__PURE__ */ jsx2(Bullet, { children: licenceTerminationNoticePhrase(rent.paymentMethod) }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: "Either party may end the licence immediately where:" }),
-      content.terminationGrounds.map((g, i) => /* @__PURE__ */ jsx2(Bullet, { children: g }, `t-${i}`)),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: terminationSectionTitle }),
+      content.terminationBlocks ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        renderTerminationBlocks(content.terminationBlocks),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory })
+      ] }) : /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationIntro }),
+        /* @__PURE__ */ jsx2(Bullet, { children: licenceTerminationNoticePhrase(rent.paymentMethod) }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: "Either party may end the licence immediately where:" }),
+        content.terminationGrounds.map((g, i) => /* @__PURE__ */ jsx2(Bullet, { children: g }, `t-${i}`)),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory })
+      ] }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 7, title: "Australian Consumer Law" }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.aclParagraph }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 8, title: "House rules" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: "The resident must comply with the following house rules. Additional rules may be notified by the owner in writing." }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: houseRulesIntro }),
+      content.houseRulesPrecedenceParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.houseRulesPrecedenceParagraph }) : null,
       houseRulesLines.map((r, i) => /* @__PURE__ */ jsx2(Bullet, { children: r }, `h-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 9, title: "Care of room and shared areas" }),
       content.careBullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `c-${i}`))
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 10, title: "Disputes" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: "Quni platform and owner service fee" }),
+      content.disputesParagraphs ? content.disputesParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `d-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: platformSectionTitle }),
       /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
         entityName,
         ' (the "Platform") ',
         content.platformIntroPrefix
       ] }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(serviceTier, rent.platformFeePercent) }),
+      content.platformWarrantyParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.platformWarrantyParagraph }) : null,
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(
+        serviceTier,
+        rent.platformFeePercent,
+        void 0,
+        partyLabel
+      ) }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.feeFreeBankTransfer }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bankDetailsTemplate })
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: conditionReportClauseNum, title: "Condition report" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing }),
+      content.conditionReportParagraphs ? content.conditionReportParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `cr-${i}`)) : /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing })
+      ] }),
+      hasContinuation && content.continuationParagraphs ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: continuationClauseNum, title: "Continuation after fixed period" }),
+        content.continuationParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `cont-${i}`))
+      ] }) : null,
       hasExtraTerms ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: additionalTermsClauseNum, title: "Additional terms" }),
         extraLines.map((line, i) => /* @__PURE__ */ jsx2(Bullet, { children: line }, `x-${i}`))
@@ -754,7 +815,7 @@ function LicenceOccupyDocument({
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.executionIntro }),
       /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigTable, children: [
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigHeaderRow, children: [
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Owner" }) }),
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: partyLabel }) }),
           /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCellLast, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Resident" }) })
         ] }),
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigBodyRow, children: [
@@ -762,11 +823,11 @@ function LicenceOccupyDocument({
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: ownerDisplay }),
             /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
               /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Owner Signature;role=First Party;type=signature}}" })
+              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: `{{${partyLabel} Signature;role=First Party;type=signature}}` })
             ] }) }),
             /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
               /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Owner Sign Date;role=First Party;type=date}}" })
+              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: `{{${partyLabel} Sign Date;role=First Party;type=date}}` })
             ] }) })
           ] }),
           /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
@@ -786,64 +847,118 @@ function LicenceOccupyDocument({
   ] });
 }
 
+// src/lib/documents/licenceOccupy/watermark.ts
+var LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF = "Subject to final legal review; terms may be updated with written notice";
+var LICENCE_OCCUPY_WATERMARK = LICENCE_OCCUPY_WATERMARK_PRE_SIGNOFF;
+
 // src/lib/documents/nsw/occupancyContent.ts
 var NSW_LICENCE_OCCUPY_CONTENT = {
   docTitle: "Licence to Occupy",
   docSubtitle: "New South Wales - Licence to occupy (on-site accommodation)",
-  draftFooter: "Draft for legal review - not for execution",
+  draftFooter: LICENCE_OCCUPY_WATERMARK,
+  watermark: LICENCE_OCCUPY_WATERMARK,
+  partyLabel: "Principal",
   natureParagraphs: [
     "This document is a common-law licence to occupy a specified room within residential premises in New South Wales. It is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW).",
-    "The owner named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
+    'In this licence, "Principal" means the person named as Principal in the schedule, being a person who resides on the premises and who either owns the premises or otherwise has a lawful right to grant occupation of the allocated room or space and to retain control of the premises.',
+    "The Principal named in the schedule resides on the premises and retains overall control, possession and management of the whole property, including shared areas and the allocated room.",
     "The resident is granted permission to occupy only the allocated room described in the schedule and to use the shared areas on the terms below. The resident is not granted exclusive possession of the premises or any part of the premises.",
-    "The Residential Tenancies Act 2010 (NSW) does not apply to this boarder/lodger arrangement. Any security deposit is held directly by the owner and is not lodged with NSW Fair Trading or Rental Bonds Online."
+    "The Residential Tenancies Act 2010 (NSW) does not apply to this boarder/lodger arrangement. Any security deposit is held directly by the Principal and is not lodged with NSW Fair Trading or Rental Bonds Online."
   ],
-  roomSharedIntro: "The resident is licensed to occupy the allocated bedroom at the property address in the schedule. Unless otherwise agreed in writing, the kitchen, bathroom, laundry and living areas are shared with the owner and any other occupants the owner permits on the premises.",
+  roomSharedIntro: "",
+  roomSharedParagraphs: [
+    "The resident is licensed to occupy the allocated room or, where the schedule specifies a shared room, the allocated bed or space within that room. Where the room is shared, the resident shares it with other residents the Principal permits, and the Principal may place another resident in the same room.",
+    "Unless otherwise agreed in writing, the kitchen, bathroom, laundry and living areas are shared with the Principal and any other occupants the Principal permits on the premises."
+  ],
+  entrySectionTitle: "Principal's right of entry",
   entryParagraphs: [
-    "Because the resident does not have exclusive possession, the owner may enter the allocated room at reasonable times for cleaning, maintenance, inspection or to fulfil the owner's obligations under this licence, without the notice requirements that apply to residential tenancies.",
-    "The owner retains keys or other means of access to the allocated room. The resident must not change locks or security devices without the owner's prior written consent.",
-    "The resident must not represent that they have sole or exclusive occupation of the premises or exclude the owner from the allocated room or shared areas."
+    "Because the resident does not have exclusive possession, the Principal may enter the allocated room at reasonable times for cleaning, maintenance, inspection or to fulfil the Principal's obligations under this licence, without the notice requirements that apply to residential tenancies.",
+    "The Principal retains keys or other means of access to the allocated room. The resident must not change locks or security devices without the Principal's prior written consent.",
+    "The resident must not represent that they have sole or exclusive occupation of the premises or exclude the Principal from the allocated room or shared areas."
   ],
-  utilitiesDefault: "Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water, internet and waste services for the premises are as described on the property listing or in move-in information. Shared utilities are allocated fairly between occupants as the owner directs.",
+  utilitiesDefault: "Unless otherwise agreed in writing or stated in the schedule, electricity, gas, water, internet and waste services for the premises are as described on the property listing or in move-in information. Shared utilities are allocated fairly between occupants as the Principal directs.",
   bond: {
     scheduleLabel: "Security deposit",
     sectionTitle: "Security deposit",
-    intro: "Where a security deposit is agreed, it is held directly by the owner and is not lodged with NSW Fair Trading or any statutory bond service.",
+    intro: "Where a security deposit is agreed, it is held directly by the Principal and is not lodged with NSW Fair Trading or any statutory bond service.",
     bullets: [
-      "The owner must give the resident a written receipt when the security deposit is paid.",
-      "The security deposit may be applied against amounts owing under this licence, damage beyond fair wear and tear, or cleaning required to restore the allocated room and the resident's share of shared areas, subject to any agreement between the parties.",
-      "Unused amounts of the security deposit must be returned to the resident within a reasonable time after the licence ends and the resident has vacated, less lawful deductions."
+      "The Principal must give the resident a written receipt when the security deposit is paid.",
+      "The security deposit may be applied against amounts owing under this licence, damage beyond fair wear and tear, or cleaning required to restore the allocated room and the resident's share of shared areas, subject to any agreement between the parties."
+    ],
+    afterBullets: [
+      "The Principal must refund the security deposit (less any amount lawfully applied under this clause) within 14 days after the later of: the date the resident vacates the room or space and returns all keys; or the date the outgoing condition report is completed.",
+      "If the Principal proposes to apply any part of the deposit, the Principal must give the resident an itemised written statement of the proposed deductions within 14 days after the later of those same events.",
+      "If the resident disputes a proposed deduction, the parties must attempt to resolve the matter in accordance with clause 10."
     ]
   },
-  terminationIntro: "Either party may end this licence by giving the other party written notice. The notice period must be reasonable and aligned to how the weekly licence fee is paid:",
-  terminationGrounds: [
-    "Non-payment of the licence fee or other agreed charges after written reminder.",
-    "Serious breach of this licence or the house rules (including damage, nuisance, or unsafe conduct).",
-    "Mutual agreement in writing.",
-    "Where the owner requires the premises for genuine change of circumstances, subject to the agreed notice period."
+  terminationIntro: "",
+  terminationGrounds: [],
+  terminationSectionTitle: "Term and termination",
+  terminationBlocks: [
+    {
+      kind: "paragraph",
+      text: "This licence is for the fixed period stated in the schedule. Subject to the early-termination provisions below, each party commits to the licence for that period."
+    },
+    {
+      kind: "bullets",
+      intro: "Either party may end the licence immediately where:",
+      items: [
+        "the licence fee or other agreed charges remain unpaid and the resident has not paid them within 3 days after a written reminder;",
+        "there is a serious breach of this licence or the house rules (including damage, nuisance or unsafe conduct); or",
+        "the parties agree in writing."
+      ]
+    },
+    {
+      kind: "paragraph",
+      text: "Early termination by the resident. The resident may end this licence before the end of the fixed period by giving the Principal at least two weeks' written notice. The resident remains liable for the weekly licence fee until the earlier of the end of that notice period and the date a replacement resident begins paying for the allocated room or space. The Principal must take reasonable steps to re-licence the room or space and must not unreasonably refuse a suitable replacement."
+    },
+    {
+      kind: "paragraph",
+      text: "Early termination by the Principal. The Principal may end this licence before the end of the fixed period on at least four weeks' written notice where the Principal requires the premises because of a genuine change of circumstances."
+    }
   ],
   terminationNoStatutory: "This licence is not governed by the Residential Tenancies Act 2010 (NSW). The parties do not rely on prescribed residential tenancy notice periods or NCAT pathways under that Act.",
   aclParagraph: "Although the Residential Tenancies Act 2010 (NSW) does not apply, this licence is a consumer contract for the purposes of the Australian Consumer Law (Cth) as applied in New South Wales. Terms that are unfair within the meaning of that law may be void. Neither party may engage in misleading or deceptive conduct in connection with this licence.",
+  houseRulesIntro: "The resident must comply with the following house rules. Additional rules may be notified by the Principal in writing.",
+  houseRulesPrecedenceParagraph: "The House Rules are operational only. They form part of this licence but are subordinate to its operative clauses, and do not create rights or obligations inconsistent with the licence. If anything in the House Rules conflicts with the operative clauses, the operative clauses prevail.",
   defaultHouseRules: [
-    "Guests and overnight visitors: reasonable notice to the owner; no guest may stay more than 7 consecutive nights without the owner's written consent.",
+    "Guests and overnight visitors: reasonable notice to the Principal; no guest may stay more than 7 consecutive nights without the Principal's written consent.",
     "Noise: respect quiet hours (typically 10:00 pm \u2013 7:00 am) and other occupants.",
     "Cleaning: keep the allocated room clean; leave shared areas tidy after use; follow any weekly cleaning arrangement stated in the schedule.",
-    "Smoking: only where permitted by the owner and outside shared enclosed areas unless otherwise agreed.",
-    "Pets: only with the owner's prior written consent.",
+    "Smoking: only where permitted by the Principal and outside shared enclosed areas unless otherwise agreed.",
+    "Pets: only with the Principal's prior written consent.",
     "Common areas: shared fairly; do not monopolise kitchen, bathroom or living areas.",
-    "Utilities: use services responsibly; report faults promptly to the owner."
+    "Utilities: use services responsibly; report faults promptly to the Principal."
   ],
   careBullets: [
     "Keep the allocated room and shared areas the resident uses in a reasonably clean condition.",
-    "Report damage, maintenance needs or safety concerns to the owner promptly.",
-    "Must not intentionally or negligently damage the premises or cause nuisance to the owner or other occupants."
+    "Report damage, maintenance needs or safety concerns to the Principal promptly.",
+    "Must not intentionally or negligently damage the premises or cause nuisance to the Principal or other occupants."
   ],
-  disputesParagraph: "The parties will attempt to resolve any dispute about this licence in good faith. If the dispute is not resolved within 14 days, either party may refer the matter to a court of New South Wales with jurisdiction. Nothing in this clause requires application to NCAT under the Residential Tenancies Act 2010 (NSW).",
-  conditionReportIntro: "The parties acknowledge that an ingoing condition report may be prepared for the allocated room and shared areas. The resident will be given a reasonable opportunity to review and comment on the report and to attach photographs where appropriate.",
-  conditionReportReturn: "The resident should return a signed copy or written comments within the timeframe notified by the owner or the platform, failing which the report may be taken as accepted except for manifest errors or items the resident could not reasonably have inspected.",
-  conditionReportOutgoing: "At the end of the licence, an outgoing condition report may be used to compare the state of the allocated room and shared areas with the ingoing report, fair wear and tear excepted.",
-  feeFreeBankTransfer: "A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the owner-side service fee described below.",
-  bankDetailsTemplate: "Direct credit details for payment of the weekly licence fee will be provided by the owner (account name, BSB and account number). Use your name and the property address as the payment reference.",
-  platformIntroPrefix: "operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The owner remains responsible for the allocated room, shared areas and this licence.",
+  disputesParagraph: "",
+  disputesParagraphs: [
+    "If a dispute arises about this licence, the parties will use their best efforts to resolve it through good faith discussion within 14 days of one party notifying the other in writing.",
+    "This licence is not a residential tenancy agreement under the Residential Tenancies Act 2010 (NSW), and neither party may apply to the NSW Civil and Administrative Tribunal in respect of this licence.",
+    "Nothing in this clause limits any right a party would otherwise have at law."
+  ],
+  conditionReportIntro: "",
+  conditionReportReturn: "",
+  conditionReportOutgoing: "",
+  conditionReportParagraphs: [
+    "The Principal will prepare an ingoing condition report for the allocated room or space and shared areas, supported by photographs, at or before the start of the licence. The resident will be given a reasonable opportunity to review and comment on the report and to attach their own photographs where appropriate.",
+    "The resident should return a signed copy or written comments within the timeframe notified by the Principal or the Platform, failing which the report may be taken as accepted except for manifest errors or items the resident could not reasonably have inspected. At the end of the licence, an outgoing condition report will be used to compare the state of the allocated room or space and shared areas with the ingoing report, fair wear and tear excepted. Any deduction from the security deposit for damage should be supported by these reports."
+  ],
+  continuationParagraphs: [
+    "If neither party gives written notice to end this licence before the expiry of the fixed period, the licence continues on a periodic weekly basis on the same terms and conditions.",
+    "During any periodic continuation, either party may end this licence by giving written notice in accordance with clause 6 (two weeks for the resident; four weeks for the Principal).",
+    "The weekly licence fee and all other obligations under this licence remain unchanged during any periodic continuation unless varied by written agreement of both parties.",
+    "For the avoidance of doubt, during any periodic continuation the resident's liability on termination is limited to the applicable notice period; the mitigation and re-letting obligations in clause 6 apply only during the fixed period."
+  ],
+  feeFreeBankTransfer: "A fee-free direct bank transfer option remains available at all times for payment of the weekly licence fee. The resident is not required to pay Quni platform fees, booking fees or resident service fees, and the agreed weekly licence fee is not increased by the Principal-side service fee described below.",
+  bankDetailsTemplate: "Direct credit details for payment of the weekly licence fee will be provided by the Principal (account name, BSB and account number). Use your name and the property address as the payment reference.",
+  platformIntroPrefix: "operates an online marketplace and payment facilitation service. The Platform is not the owner, property manager or agent for the premises unless separately appointed in writing. The Principal remains responsible for the allocated room, shared areas and this licence.",
+  platformSectionTitle: "Quni platform, Principal's warranty and service fee",
+  platformWarrantyParagraph: "Principal's warranty. The Principal warrants that they have the right to grant this licence and, where they are not the registered proprietor of the premises, that they hold any consent required from the registered owner, any co-owners, or the Principal's own landlord to grant it. The resident acknowledges that their right to occupy depends on the Principal's continuing right to grant it.",
   executionIntro: "The parties intend that electronic signing, where used, is valid and binding under the Electronic Transactions Act 2000 (NSW) and related law. Signature and date fields may be completed through the signing workflow."
 };
 var NSW_OCCUPANCY_PDF_MARKERS = [
@@ -852,7 +967,11 @@ var NSW_OCCUPANCY_PDF_MARKERS = [
   "Security deposit",
   "Residential Tenancies Act 2010",
   "not lodged with NSW Fair Trading",
-  "The resident is not required to pay Quni platform fees"
+  "Quni platform fees, booking fees or resident service fees",
+  "Subject to final legal review",
+  "Principal",
+  "Term and termination",
+  "Continuation after fixed period"
 ];
 
 // src/lib/documents/nsw/occupancyGenerator.tsx

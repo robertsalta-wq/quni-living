@@ -11,7 +11,7 @@ import {
   occupancyMatchPdf,
 } from '../quniDocumentPdfTheme.js'
 import { resolvePlatformLegalEntityName } from '../../platformIdentity.js'
-import type { LicenceOccupyContent } from './contentTypes.js'
+import type { LicenceOccupyContent, LicenceOccupyTerminationBlock } from './contentTypes.js'
 import {
   licenceTerminationNoticePhrase,
   ownerServiceFeeParagraphForTier,
@@ -37,21 +37,39 @@ function yn(v: boolean | null) {
   return '-'
 }
 
+function renderTerminationBlocks(blocks: readonly LicenceOccupyTerminationBlock[]) {
+  return blocks.map((block, i) => {
+    if (block.kind === 'paragraph') {
+      return <BodyParagraph key={`tb-p-${i}`}>{block.text}</BodyParagraph>
+    }
+    return (
+      <View key={`tb-b-${i}`}>
+        {block.intro ? <BodyParagraph>{block.intro}</BodyParagraph> : null}
+        {block.items.map((item, j) => (
+          <Bullet key={`tb-b-${i}-${j}`}>{item}</Bullet>
+        ))}
+      </View>
+    )
+  })
+}
+
 function LicenceFooter({
   content,
   documentId,
   generatedAt,
+  footerText,
 }: {
   content: LicenceOccupyContent
   documentId: string
   generatedAt: string
+  footerText: string
 }) {
   return (
     <View style={occupancyMatchPdf.footerWrapOa} fixed>
       <View style={occupancyMatchPdf.footerRuleOa} />
       <View style={occupancyMatchPdf.footerRowOa}>
         <Text style={occupancyMatchPdf.footerLeftCoral}>
-          {`Quni Living · ${content.docTitle} · ${documentId} · ${generatedAt} · ${content.draftFooter}`}
+          {`Quni Living · ${content.docTitle} · ${documentId} · ${generatedAt} · ${footerText}`}
         </Text>
         <Text
           style={occupancyMatchPdf.footerPageCoral}
@@ -80,17 +98,28 @@ function PageShell({
   content,
   documentId,
   generatedAt,
+  footerText,
   children,
 }: {
   content: LicenceOccupyContent
   documentId: string
   generatedAt: string
+  footerText: string
   children: ReactNode
 }) {
   return (
     <Page size="A4" style={occupancyMatchPdf.page}>
-      <OccupancyMatchFixedHeader documentTitle={content.docTitle} subtitle={content.docSubtitle} />
-      <LicenceFooter content={content} documentId={documentId} generatedAt={generatedAt} />
+      <OccupancyMatchFixedHeader
+        documentTitle={content.docTitle}
+        subtitle={content.docSubtitle}
+        watermark={content.watermark}
+      />
+      <LicenceFooter
+        content={content}
+        documentId={documentId}
+        generatedAt={generatedAt}
+        footerText={footerText}
+      />
       {children}
     </Page>
   )
@@ -99,9 +128,11 @@ function PageShell({
 function ScheduleSummary({
   content,
   props,
+  partyLabel,
 }: {
   content: LicenceOccupyContent
   props: OccupancyAgreementProps
+  partyLabel: string
 }) {
   const { landlord, tenant, premises, term, rent, bond } = props
   const ownerDisplay = landlord.companyName
@@ -125,9 +156,9 @@ function ScheduleSummary({
           },
         ]
       : []),
-    { label: 'Owner:', value: ownerDisplay },
-    { label: 'Owner email:', value: landlord.email },
-    { label: 'Owner phone:', value: landlord.phone },
+    { label: `${partyLabel}:`, value: ownerDisplay },
+    { label: `${partyLabel} email:`, value: landlord.email },
+    { label: `${partyLabel} phone:`, value: landlord.phone },
     { label: 'Resident:', value: tenant.fullName },
     { label: 'Resident email:', value: tenant.email },
     { label: 'Resident phone:', value: tenant.phone },
@@ -161,6 +192,10 @@ export function LicenceOccupyDocument({
   const { documentId, generatedAt, landlord, tenant, rent, bond, houseRules, specialConditions, bookingNotes } =
     props
 
+  const partyLabel = content.partyLabel ?? 'Owner'
+  const partyLabelLower = partyLabel.toLowerCase()
+  const footerText = content.watermark ?? content.draftFooter
+
   const ownerDisplay = landlord.companyName
     ? `${landlord.fullName} (${landlord.companyName})`
     : landlord.fullName
@@ -183,25 +218,39 @@ export function LicenceOccupyDocument({
 
   const serviceTier: LicenceOccupyServiceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
   const hasExtraTerms = extraLines.length > 0
+  const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0
+
   const conditionReportClauseNum = 12
-  const additionalTermsClauseNum = 13
-  const executionClauseNum = hasExtraTerms ? 14 : 13
+  const continuationClauseNum = hasContinuation ? 13 : null
+  const additionalTermsClauseNum = hasContinuation ? 14 : 13
+  const executionClauseNum = hasContinuation ? (hasExtraTerms ? 15 : 14) : hasExtraTerms ? 14 : 13
+
+  const entrySectionTitle = content.entrySectionTitle ?? "Owner's right of entry"
+  const terminationSectionTitle = content.terminationSectionTitle ?? 'Termination'
+  const platformSectionTitle = content.platformSectionTitle ?? 'Quni platform and owner service fee'
+  const houseRulesIntro =
+    content.houseRulesIntro ??
+    `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`
+
+  const pageShellProps = { content, documentId, generatedAt, footerText }
 
   return (
     <Document>
-      <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
-        <Text style={[occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }]}>{content.draftFooter}</Text>
-        <ScheduleSummary content={content} props={props} />
+      <PageShell {...pageShellProps}>
+        <Text style={[occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }]}>{footerText}</Text>
+        <ScheduleSummary content={content} props={props} partyLabel={partyLabel} />
         <OccupancyMatchSectionHeading num={1} title="Nature of arrangement" />
         {content.natureParagraphs.map((p, i) => (
           <BodyParagraph key={`n-${i}`}>{p}</BodyParagraph>
         ))}
         <OccupancyMatchSectionHeading num={2} title="Room and shared areas" />
-        <BodyParagraph>{content.roomSharedIntro}</BodyParagraph>
+        {content.roomSharedParagraphs
+          ? content.roomSharedParagraphs.map((p, i) => <BodyParagraph key={`r-${i}`}>{p}</BodyParagraph>)
+          : <BodyParagraph>{content.roomSharedIntro}</BodyParagraph>}
       </PageShell>
 
-      <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
-        <OccupancyMatchSectionHeading num={3} title="Owner's right of entry" />
+      <PageShell {...pageShellProps}>
+        <OccupancyMatchSectionHeading num={3} title={entrySectionTitle} />
         {content.entryParagraphs.map((p, i) => (
           <BodyParagraph key={`e-${i}`}>{p}</BodyParagraph>
         ))}
@@ -217,24 +266,36 @@ export function LicenceOccupyDocument({
         {content.bond.bullets.map((b, i) => (
           <Bullet key={`b-${i}`}>{b}</Bullet>
         ))}
+        {content.bond.afterBullets?.map((p, i) => (
+          <BodyParagraph key={`ba-${i}`}>{p}</BodyParagraph>
+        ))}
       </PageShell>
 
-      <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
-        <OccupancyMatchSectionHeading num={6} title="Termination" />
-        <BodyParagraph>{content.terminationIntro}</BodyParagraph>
-        <Bullet>{licenceTerminationNoticePhrase(rent.paymentMethod)}</Bullet>
-        <BodyParagraph>Either party may end the licence immediately where:</BodyParagraph>
-        {content.terminationGrounds.map((g, i) => (
-          <Bullet key={`t-${i}`}>{g}</Bullet>
-        ))}
-        <BodyParagraph>{content.terminationNoStatutory}</BodyParagraph>
+      <PageShell {...pageShellProps}>
+        <OccupancyMatchSectionHeading num={6} title={terminationSectionTitle} />
+        {content.terminationBlocks ? (
+          <>
+            {renderTerminationBlocks(content.terminationBlocks)}
+            <BodyParagraph>{content.terminationNoStatutory}</BodyParagraph>
+          </>
+        ) : (
+          <>
+            <BodyParagraph>{content.terminationIntro}</BodyParagraph>
+            <Bullet>{licenceTerminationNoticePhrase(rent.paymentMethod)}</Bullet>
+            <BodyParagraph>Either party may end the licence immediately where:</BodyParagraph>
+            {content.terminationGrounds.map((g, i) => (
+              <Bullet key={`t-${i}`}>{g}</Bullet>
+            ))}
+            <BodyParagraph>{content.terminationNoStatutory}</BodyParagraph>
+          </>
+        )}
         <OccupancyMatchSectionHeading num={7} title="Australian Consumer Law" />
         <BodyParagraph>{content.aclParagraph}</BodyParagraph>
         <OccupancyMatchSectionHeading num={8} title="House rules" />
-        <BodyParagraph>
-          The resident must comply with the following house rules. Additional rules may be notified by the owner in
-          writing.
-        </BodyParagraph>
+        <BodyParagraph>{houseRulesIntro}</BodyParagraph>
+        {content.houseRulesPrecedenceParagraph ? (
+          <BodyParagraph>{content.houseRulesPrecedenceParagraph}</BodyParagraph>
+        ) : null}
         {houseRulesLines.map((r, i) => (
           <Bullet key={`h-${i}`}>{r}</Bullet>
         ))}
@@ -244,25 +305,49 @@ export function LicenceOccupyDocument({
         ))}
       </PageShell>
 
-      <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
+      <PageShell {...pageShellProps}>
         <OccupancyMatchSectionHeading num={10} title="Disputes" />
-        <BodyParagraph>{content.disputesParagraph}</BodyParagraph>
-        <OccupancyMatchSectionHeading num={11} title="Quni platform and owner service fee" />
+        {content.disputesParagraphs
+          ? content.disputesParagraphs.map((p, i) => <BodyParagraph key={`d-${i}`}>{p}</BodyParagraph>)
+          : <BodyParagraph>{content.disputesParagraph}</BodyParagraph>}
+        <OccupancyMatchSectionHeading num={11} title={platformSectionTitle} />
         <BodyParagraph>
           {entityName} (the &quot;Platform&quot;) {content.platformIntroPrefix}
         </BodyParagraph>
+        {content.platformWarrantyParagraph ? (
+          <BodyParagraph>{content.platformWarrantyParagraph}</BodyParagraph>
+        ) : null}
         <BodyParagraph>
-          {ownerServiceFeeParagraphForTier(serviceTier, rent.platformFeePercent)}
+          {ownerServiceFeeParagraphForTier(
+            serviceTier,
+            rent.platformFeePercent,
+            undefined,
+            partyLabel,
+          )}
         </BodyParagraph>
         <BodyParagraph>{content.feeFreeBankTransfer}</BodyParagraph>
         <BodyParagraph>{content.bankDetailsTemplate}</BodyParagraph>
       </PageShell>
 
-      <PageShell content={content} documentId={documentId} generatedAt={generatedAt}>
+      <PageShell {...pageShellProps}>
         <OccupancyMatchSectionHeading num={conditionReportClauseNum} title="Condition report" />
-        <BodyParagraph>{content.conditionReportIntro}</BodyParagraph>
-        <BodyParagraph>{content.conditionReportReturn}</BodyParagraph>
-        <BodyParagraph>{content.conditionReportOutgoing}</BodyParagraph>
+        {content.conditionReportParagraphs ? (
+          content.conditionReportParagraphs.map((p, i) => <BodyParagraph key={`cr-${i}`}>{p}</BodyParagraph>)
+        ) : (
+          <>
+            <BodyParagraph>{content.conditionReportIntro}</BodyParagraph>
+            <BodyParagraph>{content.conditionReportReturn}</BodyParagraph>
+            <BodyParagraph>{content.conditionReportOutgoing}</BodyParagraph>
+          </>
+        )}
+        {hasContinuation && content.continuationParagraphs ? (
+          <>
+            <OccupancyMatchSectionHeading num={continuationClauseNum!} title="Continuation after fixed period" />
+            {content.continuationParagraphs.map((p, i) => (
+              <BodyParagraph key={`cont-${i}`}>{p}</BodyParagraph>
+            ))}
+          </>
+        ) : null}
         {hasExtraTerms ? (
           <>
             <OccupancyMatchSectionHeading num={additionalTermsClauseNum} title="Additional terms" />
@@ -276,7 +361,7 @@ export function LicenceOccupyDocument({
         <View style={occupancyMatchPdf.sigTable}>
           <View style={occupancyMatchPdf.sigHeaderRow}>
             <View style={occupancyMatchPdf.sigHeaderCell}>
-              <Text style={occupancyMatchPdf.thText}>Owner</Text>
+              <Text style={occupancyMatchPdf.thText}>{partyLabel}</Text>
             </View>
             <View style={occupancyMatchPdf.sigHeaderCellLast}>
               <Text style={occupancyMatchPdf.thText}>Resident</Text>
@@ -289,7 +374,7 @@ export function LicenceOccupyDocument({
                 <View style={occupancyMatchPdf.sigLabelRow}>
                   <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
                   <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {'{{Owner Signature;role=First Party;type=signature}}'}
+                    {`{{${partyLabel} Signature;role=First Party;type=signature}}`}
                   </Text>
                 </View>
               </View>
@@ -297,7 +382,7 @@ export function LicenceOccupyDocument({
                 <View style={occupancyMatchPdf.sigLabelRow}>
                   <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
                   <Text style={occupancyMatchPdf.docusealTagOa}>
-                    {'{{Owner Sign Date;role=First Party;type=date}}'}
+                    {`{{${partyLabel} Sign Date;role=First Party;type=date}}`}
                   </Text>
                 </View>
               </View>

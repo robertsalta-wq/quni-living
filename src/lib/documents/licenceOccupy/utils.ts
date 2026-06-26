@@ -26,10 +26,12 @@ export function ownerServiceFeeParagraphForTier(
   tier: LicenceOccupyServiceTier,
   managedFeePercent: number,
   listingFeeDisplay: string = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY,
+  partyLabel: string = 'Owner',
 ): string {
+  const party = partyLabel === 'Principal' ? 'Principal' : partyLabel.toLowerCase()
   if (tier === 'managed') {
     const pct = formatManagedFeePercent(managedFeePercent)
-    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`
+    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the ${party} before payout to the ${party}, as disclosed in the ${party} service agreement and listing terms.`
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`
+  return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`
 }
