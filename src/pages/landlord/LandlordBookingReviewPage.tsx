@@ -822,17 +822,17 @@ export default function LandlordBookingReviewPage() {
           {/* —— Left column —— */}
           <div className="flex min-w-0 flex-col gap-5">
             {/* Summary strip: title + property */}
-            <div className="grid grid-cols-1 gap-5 min-[561px]:grid-cols-2">
-              <div className="flex flex-col rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+            <div className="grid grid-cols-1 gap-5 min-[561px]:grid-cols-2 min-[561px]:items-start">
+              <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
                 <h1 className="text-[23px] font-bold leading-[1.15] tracking-[-0.015em] text-admin-ink">
                   {isListingBondPending ? 'Booking confirmed' : 'Review booking request'}
                 </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <Pill tone={statusPillTone(booking.status)}>{booking.status.replace(/_/g, ' ')}</Pill>
                   <Pill tone="navy">{landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}</Pill>
                   {flowLabel ? <Pill tone="neutral">{flowLabel}</Pill> : null}
                 </div>
-                <p className="mt-auto pt-3.5 text-[13px] text-admin-ink-4">
+                <p className="mt-2.5 text-[13px] text-admin-ink-4">
                   Reference{' '}
                   <span className="font-mono font-semibold text-admin-ink-2">{bookingReferenceLabel(booking.id)}</span>
                   {receivedAgo ? (
@@ -845,9 +845,9 @@ export default function LandlordBookingReviewPage() {
               </div>
 
               {property ? (
-                <div className="flex flex-col rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
-                  <div className="mt-auto flex items-center gap-3.5">
+                <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
+                  <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       {propertyStreetLine ? (
                         <p className="text-base font-semibold leading-snug text-admin-ink">{propertyStreetLine}</p>
@@ -1151,11 +1151,11 @@ export default function LandlordBookingReviewPage() {
                 />
               </div>
 
-              <hr className="my-4 border-admin-line-soft" aria-hidden />
+              <hr className="my-3 border-admin-line-soft" aria-hidden />
 
               <LandlordApplicantVerificationSection student={snapshot} embedded />
 
-              <hr className="my-4 border-admin-line-soft" aria-hidden />
+              <hr className="my-3 border-admin-line-soft" aria-hidden />
 
               <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                 <div>
@@ -1291,7 +1291,7 @@ export default function LandlordBookingReviewPage() {
                 </div>
               ) : null}
 
-              <hr className="my-4 border-admin-line-soft" aria-hidden />
+              <hr className="my-3 border-admin-line-soft" aria-hidden />
 
               <div className="space-y-2">
                 {actionError && (

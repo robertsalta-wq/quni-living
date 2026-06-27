@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { LandlordSafeStudentSnapshot } from './LandlordStudentProfileModal'
 import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
 import LanguagesSpokenDisplay from '../profile/LanguagesSpokenDisplay'
@@ -18,53 +19,81 @@ export default function LandlordApplicantReviewHeader({
   bio,
   embedded = false,
 }: Props) {
+  const [bioOpen, setBioOpen] = useState(false)
   const uni = student?.universities?.name?.trim()
   const course = student?.course?.trim()
   const year = student?.year_of_study
   const nameFitRef = useFitText(displayName)
 
   const courseLine = [uni, course, year != null ? `Year ${year}` : null].filter(Boolean).join(' · ')
+  const bioText = bio?.trim() ?? ''
 
   if (embedded) {
     return (
-      <div>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Applicant</p>
-        <div className="flex items-start gap-3">
-          {student?.avatar_url ? (
-            <img
-              src={student.avatar_url}
-              alt=""
-              className="h-[42px] w-[42px] shrink-0 rounded-full object-cover ring-2 ring-[#FEF9E4]"
-            />
-          ) : (
-            <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-admin-navy-tint text-[15px] font-semibold text-admin-navy">
-              {displayName.charAt(0).toUpperCase() || '?'}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p
-              ref={nameFitRef}
-              className="font-semibold text-admin-ink"
-              style={{ fontSize: '15px', whiteSpace: 'nowrap' }}
-            >
-              {displayName}
-            </p>
-            <div className="mt-0.5">
-              <StudentVerifiedBadge student={student} />
-            </div>
-            {courseLine ? (
-              <p className="mt-3 text-[13px] leading-snug text-admin-ink-4">{courseLine}</p>
-            ) : null}
-            {bio?.trim() ? (
-              <div className="mt-3 rounded-lg border border-admin-cream-border bg-[#FEF9E4]/60 px-3 py-2 text-left">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-admin-ink-5">Bio</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-admin-ink-2">{bio.trim()}</p>
+      <>
+        <div>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Applicant</p>
+          <div className="flex items-center gap-3">
+            {student?.avatar_url ? (
+              <img
+                src={student.avatar_url}
+                alt=""
+                className="h-[42px] w-[42px] shrink-0 rounded-full object-cover ring-2 ring-[#FEF9E4]"
+              />
+            ) : (
+              <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-admin-navy-tint text-[15px] font-semibold text-admin-navy">
+                {displayName.charAt(0).toUpperCase() || '?'}
               </div>
-            ) : null}
-            <LanguagesSpokenDisplay languages={student?.languages_spoken} className="mt-3 text-left" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p
+                ref={nameFitRef}
+                className="font-semibold text-admin-ink"
+                style={{ fontSize: '15px', whiteSpace: 'nowrap' }}
+              >
+                {displayName}
+              </p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                <StudentVerifiedBadge student={student} />
+                {bioText ? (
+                  <button
+                    type="button"
+                    onClick={() => setBioOpen(true)}
+                    className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-2 py-0.5 text-[11px] font-semibold text-admin-ink-3 hover:bg-admin-surface-3"
+                  >
+                    View bio
+                  </button>
+                ) : null}
+              </div>
+              {courseLine ? (
+                <p className="mt-1.5 text-[13px] leading-snug text-admin-ink-4">{courseLine}</p>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
+
+        {bioOpen && bioText ? (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/40"
+              aria-label="Close"
+              onClick={() => setBioOpen(false)}
+            />
+            <div className="relative z-10 w-full max-w-md rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-modal">
+              <h3 className="text-base font-semibold text-admin-ink">Bio — {displayName}</h3>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-admin-ink-2">{bioText}</p>
+              <button
+                type="button"
+                onClick={() => setBioOpen(false)}
+                className="mt-4 w-full rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-3"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </>
     )
   }
 
@@ -92,12 +121,12 @@ export default function LandlordApplicantReviewHeader({
             {course && <p>{course}</p>}
             {year != null && <p>Year {year}</p>}
           </div>
-          {bio?.trim() && (
+          {bioText ? (
             <div className="mt-4 rounded-xl border border-[#e8e0cc]/80 bg-[#FEF9E4]/60 px-4 py-3 text-left">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Bio</p>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{bio.trim()}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{bioText}</p>
             </div>
-          )}
+          ) : null}
           <LanguagesSpokenDisplay languages={student?.languages_spoken} className="mt-4 text-left" />
         </div>
       </div>

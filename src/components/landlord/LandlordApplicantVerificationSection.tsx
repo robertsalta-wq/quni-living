@@ -22,7 +22,7 @@ export default function LandlordApplicantVerificationSection({
   if (embedded) {
     return (
       <div id={verificationAnchorId} className="scroll-mt-4">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Verification</p>
+        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Verification</p>
         <LandlordApplicantVerificationDetail verification={verification} embedded />
       </div>
     )
