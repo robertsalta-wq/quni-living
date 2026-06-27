@@ -221,7 +221,7 @@ async function loadQldOccupancyContext(
       : 0
   const paymentMethod =
     serviceTier === 'listing'
-      ? 'Direct credit to owner account (fee-free). Reference: resident name and property address.'
+      ? "Direct credit to Principal's account (fee-free). Reference: resident name and property address."
       : 'Via Quni Living platform (quni.com.au)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
@@ -307,9 +307,8 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
     bond: { amount: ctx.bondNum },
     specialConditions: [
       'This licence is facilitated through the Quni Living platform (quni.com.au).',
-      'Any bond must be lodged with RTA Queensland within 10 calendar days of receipt (RTRA Act 2008 (Qld) s 32). The owner cannot hold bond as a private deposit; Quni Living does not hold or manage bond payments.',
+      "Where a bond is required under this Licence, it must not exceed the equivalent of four (4) weeks' licence fee. The bond must be lodged with the Residential Tenancies Authority (RTA) and may be lodged either by the resident directly through RTA Web Services, or by the Principal within 10 days of receiving it. The bond is held by the RTA — not by the Principal and not by Quni; where Quni's payment facilities are used, Quni acts only as a conduit for transmission and is never the custodian of any bond. At the end of the occupancy the bond is dealt with through the RTA's Refund of Rental Bond process. Any claim by the Principal against the bond will be supported by evidence (including the condition reports and photographs) provided to the resident, and unresolved claims are dealt with through the RTA's dispute resolution service and, if necessary, QCAT.",
       ...(ctx.roomsForResidents != null ? [qldSection43PdfAcknowledgement(ctx.roomsForResidents)] : []),
-      "Licence fee payments are processed through Quni Living's secure payment system powered by Stripe.",
       ...ctx.coTenantSpecialConditions,
     ],
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
@@ -464,7 +463,10 @@ export async function runQldOccupancyListingTenancy(
   let docusealSubmissionId: string | null = null
   if (hasDocuseal && !opts.deferSigning) {
     try {
-      await sendForSigning(documentId)
+      await sendForSigning(documentId, {
+        documentPdfName: 'Quni Licence to Occupy.pdf',
+        removeTags: true,
+      })
       const { data: docRow } = await admin
         .from('tenancy_documents')
         .select('docuseal_submission_id, status')
