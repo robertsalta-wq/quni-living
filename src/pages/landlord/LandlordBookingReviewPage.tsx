@@ -821,10 +821,10 @@ export default function LandlordBookingReviewPage() {
         <div className="grid grid-cols-1 items-start gap-7 min-[901px]:grid-cols-[minmax(0,1fr)_372px]">
           {/* —— Left column —— */}
           <div className="flex min-w-0 flex-col gap-5">
-            {/* Summary strip: title + property — equal height, content stacked from top */}
-            <div className="grid grid-cols-1 items-stretch gap-5 min-[561px]:grid-cols-2">
-              <div className="flex h-full flex-col justify-start gap-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                <h1 className="text-[23px] font-bold leading-[1.15] tracking-[-0.015em] text-admin-ink">
+            {/* Summary strip: Review + Property — equal height, content top-stacked */}
+            <div className="flex flex-col gap-5 min-[561px]:flex-row min-[561px]:items-stretch">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-start gap-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+                <h1 className="m-0 text-[23px] font-bold leading-[1.15] tracking-[-0.015em] text-admin-ink">
                   {isListingBondPending ? 'Booking confirmed' : 'Review booking request'}
                 </h1>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -832,7 +832,7 @@ export default function LandlordBookingReviewPage() {
                   <Pill tone="navy">{landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}</Pill>
                   {flowLabel ? <Pill tone="neutral">{flowLabel}</Pill> : null}
                 </div>
-                <p className="text-[13px] text-admin-ink-4">
+                <p className="m-0 text-[13px] text-admin-ink-4">
                   Reference{' '}
                   <span className="font-mono font-semibold text-admin-ink-2">{bookingReferenceLabel(booking.id)}</span>
                   {receivedAgo ? (
@@ -845,8 +845,8 @@ export default function LandlordBookingReviewPage() {
               </div>
 
               {property ? (
-                <div className="flex h-full flex-col justify-start gap-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-start gap-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+                  <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       {propertyStreetLine ? (
