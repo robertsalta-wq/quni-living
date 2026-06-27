@@ -822,8 +822,8 @@ export default function LandlordBookingReviewPage() {
           {/* —— Left column —— */}
           <div className="flex min-w-0 flex-col gap-5">
             {/* Summary strip: title + property */}
-            <div className="grid grid-cols-1 gap-5 min-[561px]:grid-cols-2 min-[561px]:items-start">
-              <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+            <div className="grid grid-cols-1 gap-5 min-[561px]:grid-cols-2 min-[561px]:items-stretch">
+              <div className="flex h-full flex-col rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
                 <h1 className="text-[23px] font-bold leading-[1.15] tracking-[-0.015em] text-admin-ink">
                   {isListingBondPending ? 'Booking confirmed' : 'Review booking request'}
                 </h1>
@@ -832,7 +832,7 @@ export default function LandlordBookingReviewPage() {
                   <Pill tone="navy">{landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}</Pill>
                   {flowLabel ? <Pill tone="neutral">{flowLabel}</Pill> : null}
                 </div>
-                <p className="mt-2.5 text-[13px] text-admin-ink-4">
+                <p className="mt-auto pt-2.5 text-[13px] text-admin-ink-4">
                   Reference{' '}
                   <span className="font-mono font-semibold text-admin-ink-2">{bookingReferenceLabel(booking.id)}</span>
                   {receivedAgo ? (
@@ -845,9 +845,9 @@ export default function LandlordBookingReviewPage() {
               </div>
 
               {property ? (
-                <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
-                  <div className="flex items-center gap-3">
+                <div className="flex h-full flex-col rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
+                  <p className="mb-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Property</p>
+                  <div className="mt-auto flex items-center gap-3 pt-2">
                     <div className="min-w-0 flex-1">
                       {propertyStreetLine ? (
                         <p className="text-base font-semibold leading-snug text-admin-ink">{propertyStreetLine}</p>
