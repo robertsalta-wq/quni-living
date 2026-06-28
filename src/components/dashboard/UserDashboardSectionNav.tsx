@@ -26,6 +26,18 @@ function landlordTabClass(isActive: boolean): string {
   ].join(' ')
 }
 
+const renterTabBaseClass =
+  'inline-flex items-center justify-center gap-1.5 min-h-[44px] sm:min-h-0 px-1 sm:px-2 py-3 text-sm border-b-2 transition-colors shrink-0'
+
+function renterTabClass(isActive: boolean): string {
+  return [
+    renterTabBaseClass,
+    isActive
+      ? 'border-[#FF6F61] text-[#08060D] font-semibold -mb-px'
+      : 'border-transparent text-[#6B6375] font-medium hover:text-[#08060D]',
+  ].join(' ')
+}
+
 export default function UserDashboardSectionNav({
   role,
   active,
@@ -92,50 +104,30 @@ export default function UserDashboardSectionNav({
   }
 
   return (
-    <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Dashboard sections">
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active === 'bookings'}
-        onClick={() => onSelect?.('bookings')}
-        className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-          active === 'bookings'
-            ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-        }`}
+    <div className="border-b border-[#E5E4E7] mb-6">
+      <nav
+        className="flex w-full min-w-0 items-end gap-5 sm:gap-7 -mb-px overflow-x-auto"
+        aria-label="Dashboard sections"
       >
-        Bookings
-      </button>
-      <Link
-        to="/messages"
-        role="tab"
-        aria-selected={active === 'messages'}
-        className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors inline-flex items-center gap-2 ${
-          active === 'messages'
-            ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-        }`}
-      >
-        Messages
-        {unreadMessageCount > 0 && (
-          <span className="tabular-nums rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-amber-900">
-            {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-          </span>
-        )}
-      </Link>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active === 'saved'}
-        onClick={() => onSelect?.('saved')}
-        className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-          active === 'saved'
-            ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-        }`}
-      >
-        Saved
-      </button>
+        <button
+          type="button"
+          onClick={() => onSelect?.('bookings')}
+          className={renterTabClass(active === 'bookings')}
+        >
+          Bookings
+        </button>
+        <Link to="/messages" className={renterTabClass(active === 'messages')}>
+          Messages
+          {unreadMessageCount > 0 && (
+            <span className="tabular-nums inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6F61] text-[11px] font-bold text-white">
+              {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+            </span>
+          )}
+        </Link>
+        <Link to="/student-profile" className={renterTabClass(active === 'profile')}>
+          Profile
+        </Link>
+      </nav>
     </div>
   )
 }

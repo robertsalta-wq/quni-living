@@ -14,17 +14,7 @@ type Props = {
   onSaved: () => Promise<void>
 }
 
-export function isGuarantorSectionComplete(profile: StudentRow): boolean {
-  if (profile.has_guarantor === false) return true
-  return Boolean(
-    profile.guarantor_name?.trim() &&
-      profile.guarantor_relationship?.trim() &&
-      profile.guarantor_phone?.trim() &&
-      profile.guarantor_email?.trim() &&
-      profile.guarantor_income_band?.trim() &&
-      profile.guarantor_consent === true,
-  )
-}
+export { isGuarantorSectionComplete } from '../../../lib/renterReadiness'
 
 type GuarantorDraft = {
   guarantorName: string

@@ -4,8 +4,16 @@ import { isStudentUniEmailVerified } from './studentUniEmailVerification'
 import {
   effectiveAccommodationRoute,
   hasRenterSituationChosen,
+  type RenterSituation,
 } from './renterSituation'
 import { isPersonalDetailsComplete } from './renterProfileSection'
+import { isRouteSectionComplete } from './renterRouteSection'
+import { incomeBandSuggestsGuarantor } from './renterIncomeBands'
+import {
+  docFromProfile,
+  docStepComplete,
+  type VerificationUploadedDoc,
+} from './verificationDocSlot'
 import {
   isNonStudentAccommodationRoute,
   isStep2Saved,
@@ -193,6 +201,107 @@ export function needsStudentDetailedOnboarding(
 ): boolean {
   if (!profile) return false
   return renterOnboardingIncomplete(profile)
+}
+
+export function isGuarantorSectionComplete(profile: StudentProfileRow): boolean {
+  if (profile.has_guarantor === false) return true
+  return Boolean(
+    profile.guarantor_name?.trim() &&
+      profile.guarantor_relationship?.trim() &&
+      profile.guarantor_phone?.trim() &&
+      profile.guarantor_email?.trim() &&
+      profile.guarantor_income_band?.trim() &&
+      profile.guarantor_consent === true,
+  )
+}
+
+function renterRouteFlowNeedsGuarantor(
+  profile: StudentProfileRow,
+  situation: RenterSituation | null,
+): boolean {
+  if (!situation) return false
+  if (profile.has_guarantor === true) return true
+  if (situation === 'student' || situation === 'working_holiday' || situation === 'backpacker') return false
+  if (situation === 'working') {
+    return !profile.income_band?.trim() || incomeBandSuggestsGuarantor(profile.income_band)
+  }
+  return incomeBandSuggestsGuarantor(profile.income_band)
+}
+
+export function isRenterRouteFlowComplete(
+  profile: StudentProfileRow,
+  situation: RenterSituation | null,
+): boolean {
+  if (!situation || !isRouteSectionComplete(situation, profile)) return false
+  const needsGuarantor = renterRouteFlowNeedsGuarantor(profile, situation)
+  return !needsGuarantor || isGuarantorSectionComplete(profile)
+}
+
+/** Profile-page driver and dashboard stat card — same 4-section fraction. */
+export function computeRenterProfileDriverProgress(
+  profile: StudentProfileRow,
+  situation: RenterSituation | null,
+  verificationComplete: boolean,
+): { done: number; total: number; pct: number } {
+  const total = 4
+  if (!situation) {
+    return { done: 0, total, pct: 0 }
+  }
+  let done = 0
+  if (isPersonalDetailsComplete(profile)) done += 1
+  if (verificationComplete) done += 1
+  if (isRenterRouteFlowComplete(profile, situation)) done += 1
+  if (isStep2Saved(profile)) done += 1
+  const pct = Math.round((done / total) * 100)
+  return { done, total, pct }
+}
+
+export function isRenterUniversalVerificationComplete(
+  profile: StudentProfileRow,
+  situation: RenterSituation,
+  docs?: {
+    idDoc?: VerificationUploadedDoc | null
+    identitySupportDoc?: VerificationUploadedDoc | null
+  },
+): boolean {
+  const idDoc =
+    docs?.idDoc ??
+    docFromProfile(profile.id_document_url, profile.id_submitted_at, profile.id_document_name)
+  const identitySupportDoc =
+    docs?.identitySupportDoc ??
+    docFromProfile(
+      profile.identity_supporting_doc_url,
+      profile.identity_supporting_submitted_at,
+      profile.identity_supporting_doc_name,
+    )
+  const idOk = docStepComplete(idDoc)
+  const supportOk = docStepComplete(identitySupportDoc)
+  if (!idOk || !supportOk) return false
+  if (situation === 'student') return isStudentUniEmailVerified(profile)
+  if (situation === 'working') return Boolean(profile.work_email_verified && profile.work_email)
+  return true
+}
+
+export function renterProfileStatCardCopy(
+  profile: StudentProfileRow,
+  verificationComplete: boolean,
+): {
+  done: number
+  total: number
+  pct: number
+  complete: boolean
+  showFinishSetup: boolean
+} {
+  const situation = profile.renter_situation ?? null
+  const { done, total, pct } = computeRenterProfileDriverProgress(profile, situation, verificationComplete)
+  const complete = done === total && total > 0
+  return {
+    done,
+    total,
+    pct,
+    complete,
+    showFinishSetup: !complete,
+  }
 }
 
 export function renterReadinessActionHref(readiness: RenterReadiness): string {

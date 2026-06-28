@@ -9,8 +9,10 @@ import { formatDisplayName } from '../lib/formatDisplayName'
 import { formatDate } from './admin/adminUi'
 import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
-import OnboardingChecklistBanner from '../components/OnboardingChecklistBanner'
-import { isTenantCoreProfileComplete } from '../lib/studentOnboarding'
+import {
+  isRenterUniversalVerificationComplete,
+  renterProfileStatCardCopy,
+} from '../lib/renterReadiness'
 import { isBondPaymentReceiptContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
@@ -19,7 +21,7 @@ import ListingBondPaymentGuidance from '../components/booking/ListingBondPayment
 import { resolveTenancyPackage } from '../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../lib/tenancy/listingBondPaymentCopy'
 import { parseQldBondRemittancePreference } from '../lib/tenancy/qldBondRemittance'
-import { useConversationInbox } from '../hooks/useConversationInbox'
+import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
 import UserDashboardSectionNav from '../components/dashboard/UserDashboardSectionNav'
@@ -57,9 +59,15 @@ type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
 }
 
-type TabId = 'bookings' | 'saved'
+type TabId = 'bookings'
 
-const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'
+const statCardClass =
+  'flex flex-col rounded-2xl border border-[#E5E4E7] bg-white p-4 sm:p-[18px] shadow-[0_1px_2px_rgba(8,6,13,0.05)] min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md'
+
+const profileStatCardClass =
+  'flex flex-col rounded-2xl border border-[rgba(255,111,97,0.35)] bg-[rgba(255,111,97,0.06)] p-4 sm:p-[18px] shadow-[0_1px_2px_rgba(8,6,13,0.05)] min-w-0 lg:min-h-[10rem]'
+
+const cardClass = 'rounded-2xl border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
 
 function ListingBondGuidanceForBooking({
   booking,
@@ -147,7 +155,7 @@ export default function StudentDashboard() {
     isRenterRole(role) && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { items: conversations } = useConversationInbox(user?.id)
+  const unreadMessageCount = useUnreadMessageCount(user?.id)
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentRow | null>(authStudent)
@@ -256,30 +264,30 @@ export default function StudentDashboard() {
       navigate('/messages', { replace: true })
       return
     }
-    if (t === 'bookings' || t === 'saved') setTab(t)
+    if (t === 'saved') {
+      navigate('/student-profile', { replace: true })
+      return
+    }
+    if (t === 'bookings') setTab('bookings')
   }, [searchParams, navigate])
 
   useEffect(() => {
     if (authStudent) setProfile(authStudent)
   }, [authStudent])
 
-  const pendingBookings = bookings.filter(
-    (b) =>
-      b.status === 'pending' ||
-      b.status === 'pending_confirmation' ||
-      b.status === 'pending_payment' ||
-      b.status === 'awaiting_info',
-  ).length
-  const bondPendingBookings = bookings.filter((b) => b.status === 'bond_pending').length
-  const confirmedBookings = bookings.filter((b) => b.status === 'confirmed' || b.status === 'active').length
   const currentBooking = useMemo(() => pickCurrentTenantBooking(bookings), [bookings])
-  const profileComplete = isTenantCoreProfileComplete(profile)
+  const profileStatCard = useMemo(() => {
+    if (!profile) {
+      return { pct: 0, done: 0, total: 4, complete: false, showFinishSetup: true }
+    }
+    const situation = profile.renter_situation
+    const verificationComplete =
+      situation != null ? isRenterUniversalVerificationComplete(profile, situation) : false
+    return renterProfileStatCardCopy(profile, verificationComplete)
+  }, [profile])
 
   const primaryBtnClass =
-    'inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2'
-
-  const secondaryBtnClass =
-    'inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-800 text-sm font-semibold px-4 py-2.5 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2'
+    'inline-flex items-center justify-center rounded-[10px] bg-[#FF6F61] text-white text-sm font-semibold px-[18px] py-[11px] shadow-sm hover:bg-[#F2604F] active:bg-[#CC4A3C] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2 w-full sm:w-auto'
 
   if (!isSupabaseConfigured) {
     return (
@@ -291,7 +299,7 @@ export default function StudentDashboard() {
 
   if (dataLoading && !profile) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA]">
         <DashboardPageSkeleton />
       </div>
     )
@@ -313,135 +321,162 @@ export default function StudentDashboard() {
   const welcomeName = profile ? firstNameFromStudent(profile) : 'there'
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
-    <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-      <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter')} className="mb-4" />
-      {profile && user?.id && (
-        <OnboardingChecklistBanner
-          role="renter"
-          userId={user.id}
-          studentProfile={profile}
-          landlordProfile={null}
-          onRefresh={load}
-        />
-      )}
-      {error && profile && (
-        <div
-          className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] pb-16 overflow-x-hidden">
+      <div className="max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-7 sm:py-10">
+        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter')} className="mb-4 sm:mb-5" />
+        {error && profile && (
+          <div
+            className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
 
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
-            Welcome back, {welcomeName}
-          </h1>
-          <p className="text-gray-500 mt-2 text-base max-w-2xl">
-            Here’s a quick look at your bookings and messages - everything in one place.
-          </p>
-        </div>
-        <Link to="/listings" className={primaryBtnClass}>
-          Browse listings
-        </Link>
-      </div>
-
-      {currentBooking && (
-        <div className="mb-6">
-          <StudentDashboardBookingStatusStrip status={currentBooking.status} />
-        </div>
-      )}
-
-      <div className="mb-6">
-        <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-          View sample agreements →
-        </Link>
-      </div>
-
-      {profile && <StudentStripePaymentsCard profile={profile} onRefresh={load} />}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <div className={cardClass}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Bookings</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{bookings.length}</p>
-          {bondPendingBookings > 0 ? (
-            <p className="text-sm text-emerald-800 mt-2 font-medium">
-              {bondPendingBookings === 1 ? 'Host accepted' : `${bondPendingBookings} accepted`} - complete bond &
-              agreement
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 mb-7 sm:mb-8">
+          <div className="min-w-0">
+            <h1 className="font-display text-[30px] sm:text-[40px] font-bold text-[#08060D] tracking-tight leading-[1.1]">
+              Welcome back, {welcomeName}
+            </h1>
+            <p className="text-[#6B6375] mt-2 sm:mt-2.5 text-[15px] sm:text-base max-w-xl leading-relaxed">
+              Here&apos;s a quick look at your bookings and messages — everything in one place.
             </p>
-          ) : pendingBookings > 0 ? (
-            <p className="text-sm text-amber-800 mt-2 font-medium">
-              {pendingBookings === 1 ? 'Request submitted' : `${pendingBookings} submitted`} - waiting for host
-            </p>
-          ) : confirmedBookings > 0 ? (
-            <p className="text-sm text-green-800 mt-2 font-medium">
-              {confirmedBookings === 1 ? 'Booking confirmed' : `${confirmedBookings} confirmed`}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500 mt-2">No active requests</p>
-          )}
+          </div>
+          <Link to="/listings" className={primaryBtnClass}>
+            Browse listings
+          </Link>
         </div>
 
-        <Link to="/messages" className={`${cardClass} block hover:border-indigo-200 hover:shadow-md transition-all`}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Messages</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{conversations.length}</p>
-          <p className="text-sm text-gray-500 mt-2">Conversations with landlords</p>
-        </Link>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5 mb-6 min-w-0">
+          <div className={`${statCardClass} lg:min-h-[10rem]`}>
+            <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Bookings</p>
+            <p className="text-[30px] sm:text-[34px] font-bold text-[#08060D] mt-1.5 sm:mt-2 tabular-nums leading-none">
+              {bookings.length}
+            </p>
+            <p className="text-[13px] text-[#6B6375] mt-auto pt-2">
+              {bookings.length === 0 ? 'No requests' : `${bookings.length} total`}
+            </p>
+          </div>
 
-        <div className={cardClass}>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Your profile</p>
-          {profileComplete ? (
-            <>
-              <p className="text-sm font-semibold text-green-800 mt-2">Profile complete</p>
-              <p className="text-sm text-gray-500 mt-1">Nice work - hosts see you as ready to go.</p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-semibold text-stone-800 mt-2">Complete your profile</p>
-              <p className="text-sm text-gray-600 mt-1">Add a few details so landlords can get to know you.</p>
-              <Link to="/student-profile" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 mt-3 inline-block">
+          <Link to="/messages" className={`${statCardClass} lg:min-h-[10rem] hover:border-[rgba(255,111,97,0.35)]`}>
+            <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Messages</p>
+            <p className="text-[30px] sm:text-[34px] font-bold text-[#08060D] mt-1.5 sm:mt-2 tabular-nums leading-none">
+              {unreadMessageCount}
+            </p>
+            <p
+              className={`text-[13px] mt-auto pt-2 ${
+                unreadMessageCount > 0 ? 'font-semibold text-[#CC4A3C]' : 'text-[#6B6375]'
+              }`}
+            >
+              {unreadMessageCount > 0
+                ? `${unreadMessageCount} unread`
+                : 'No new messages'}
+            </p>
+          </Link>
+
+          <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
+            <div className="flex items-start justify-between gap-3 sm:block">
+              <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-[0.04em]">Your profile</p>
+              {profileStatCard.showFinishSetup ? (
+                <Link
+                  to="/student-profile"
+                  className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
+                >
+                  Finish setup →
+                </Link>
+              ) : null}
+            </div>
+            <p className="mt-2 leading-none">
+              <span className="text-[30px] sm:text-[34px] font-bold text-[#08060D] tabular-nums">
+                {profileStatCard.pct}%
+              </span>
+              <span className="text-[13px] text-[#6B6375] ml-1.5">complete</span>
+            </p>
+            <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                style={{ width: `${profileStatCard.pct}%` }}
+                role="progressbar"
+                aria-valuenow={profileStatCard.pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Profile completion ${profileStatCard.pct}%`}
+              />
+            </div>
+            {profileStatCard.showFinishSetup ? (
+              <Link
+                to="/student-profile"
+                className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
+              >
                 Finish setup →
               </Link>
-            </>
-          )}
+            ) : null}
+          </div>
+
+          <Link
+            to="/listings"
+            className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] hover:border-[rgba(255,111,97,0.35)] group`}
+          >
+            <div className="flex items-center justify-between gap-3 sm:block min-w-0">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">
+                  Find accommodation
+                </p>
+                <p className="text-sm text-[#4A4253] mt-2 leading-snug sm:hidden">Browse rooms near your uni</p>
+                <p className="hidden sm:block text-sm text-[#4A4253] mt-2.5 leading-snug">
+                  Browse student-friendly rooms near your uni.
+                </p>
+              </div>
+              <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                →
+              </span>
+            </div>
+            <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+              Browse listings →
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setQaseOpen(true)}
+            className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] w-full text-left hover:border-[rgba(255,111,97,0.35)] group`}
+          >
+            <div className="flex items-center justify-between gap-3 sm:block min-w-0">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Get support</p>
+                <p className="text-sm text-[#4A4253] mt-2 leading-snug sm:hidden">We&apos;ll get back to you</p>
+                <p className="hidden sm:block text-sm text-[#4A4253] mt-2.5 leading-snug">
+                  Submit a request and we&apos;ll get back to you.
+                </p>
+              </div>
+              <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                →
+              </span>
+            </div>
+            <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+              Contact support →
+            </span>
+          </button>
         </div>
 
-        <Link
-          to="/listings"
-          className={`${cardClass} block hover:border-indigo-200 hover:shadow-md transition-all group`}
-        >
-          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Find accommodation</p>
-          <p className="text-lg font-bold text-gray-900 mt-2 group-hover:text-indigo-900">Browse student-friendly properties near your uni</p>
-          <span className="text-sm font-semibold text-indigo-600 mt-3 inline-block">Explore listings →</span>
-        </Link>
+        <UserDashboardSectionNav
+          role="renter"
+          active={tab}
+          onSelect={(section) => {
+            if (section === 'bookings') setTab('bookings')
+          }}
+        />
 
-        <button
-          type="button"
-          onClick={() => setQaseOpen(true)}
-          className={`${cardClass} w-full text-left hover:border-indigo-200 hover:shadow-md transition-all group`}
-        >
-          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Need help?</p>
-          <p className="text-lg font-bold text-gray-900 mt-2">Get support</p>
-          <p className="text-sm text-gray-500 mt-1">Submit a support request and we&apos;ll get back to you.</p>
-          <span className="text-sm font-semibold text-indigo-600 mt-3 inline-block">Contact support →</span>
-        </button>
-      </div>
-
-      <UserDashboardSectionNav
-        role="renter"
-        active={tab}
-        onSelect={(section) => {
-          if (section === 'bookings' || section === 'saved') setTab(section)
-        }}
-      />
-
-      {tab === 'bookings' && (
-        <section aria-labelledby="bookings-heading">
-          <h2 id="bookings-heading" className="sr-only">
-            Your bookings
-          </h2>
+        {tab === 'bookings' && (
+          <section aria-labelledby="bookings-heading" className="mb-6 min-w-0">
+            <h2 id="bookings-heading" className="sr-only">
+              Your bookings
+            </h2>
+            {currentBooking && (
+              <div className="mb-4">
+                <StudentDashboardBookingStatusStrip status={currentBooking.status} />
+              </div>
+            )}
           {bookings.length === 0 ? (
             <div className={`${cardClass} text-center py-12`}>
               <p className="text-gray-800 font-medium">No bookings yet</p>
@@ -560,29 +595,30 @@ export default function StudentDashboard() {
             </ul>
           )}
         </section>
-      )}
+        )}
 
-      {tab === 'saved' && (
-        <div className={`${cardClass} text-center py-14`}>
-          <p className="text-gray-800 font-medium">Save your favourite properties - coming soon.</p>
-          <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
-            Soon you&apos;ll be able to shortlist homes and come back to them anytime.
-          </p>
-          <Link to="/listings" className={`${secondaryBtnClass} mt-6`}>
-            Browse listings
-          </Link>
-        </div>
-      )}
+        {profile && (
+          <div className="mb-5">
+            <StudentStripePaymentsCard profile={profile} onRefresh={load} />
+          </div>
+        )}
 
-      {profile && (
-        <QaseSubmitModal
-          isOpen={qaseOpen}
-          onClose={() => setQaseOpen(false)}
-          submitterType="student"
-          submitterId={profile.id}
-        />
-      )}
-    </div>
+        <Link
+          to="/sample-agreements"
+          className="inline-block text-sm font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline"
+        >
+          View sample agreements →
+        </Link>
+
+        {profile && (
+          <QaseSubmitModal
+            isOpen={qaseOpen}
+            onClose={() => setQaseOpen(false)}
+            submitterType="student"
+            submitterId={profile.id}
+          />
+        )}
+      </div>
     </div>
   )
 }

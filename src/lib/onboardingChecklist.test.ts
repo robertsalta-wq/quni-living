@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildStudentOnboardingSteps,
-  isStudentListingActionsUnlocked,
-} from './onboardingChecklist'
-import type { StudentProfileRow } from './onboardingChecklist'
+import { buildRenterReadinessChecklistSteps } from './renterReadiness'
+import { isStudentListingActionsUnlocked } from './onboardingChecklist'
+import type { StudentProfileRow } from './studentOnboarding'
 import { isTenantCoreProfileComplete } from './studentOnboarding'
 
 function baseProfile(overrides: Partial<StudentProfileRow> = {}): StudentProfileRow {
@@ -34,7 +32,7 @@ describe('non-student tenant onboarding', () => {
   })
 
   it('checklist includes identity verification, not uni email', () => {
-    const steps = buildStudentOnboardingSteps(baseProfile())
+    const steps = buildRenterReadinessChecklistSteps(baseProfile())
     const ids = steps.map((s) => s.id)
     expect(ids).toContain('identity_verify')
     expect(ids).not.toContain('uni_email')
@@ -44,7 +42,7 @@ describe('non-student tenant onboarding', () => {
   })
 
   it('marks identity step complete when verification_type is identity', () => {
-    const steps = buildStudentOnboardingSteps(
+    const steps = buildRenterReadinessChecklistSteps(
       baseProfile({ verification_type: 'identity' }),
     )
     expect(steps.find((s) => s.id === 'identity_verify')?.complete).toBe(true)

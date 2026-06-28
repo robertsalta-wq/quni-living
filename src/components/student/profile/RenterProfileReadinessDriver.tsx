@@ -1,12 +1,10 @@
 import { Lock } from 'lucide-react'
-import type { RenterReadiness } from '../../../lib/renterReadiness'
-import { isRouteSectionComplete } from '../../../lib/renterRouteSection'
-import { isPersonalDetailsComplete } from '../../../lib/renterProfileSection'
-import { isStep2Saved } from '../../../lib/studentOnboarding'
+import {
+  computeRenterProfileDriverProgress,
+  type RenterReadiness,
+} from '../../../lib/renterReadiness'
 import type { Database } from '../../../lib/database.types'
 import type { RenterSituation } from '../../../lib/renterSituation'
-import { isGuarantorSectionComplete } from './RenterGuarantorSection'
-import { incomeBandSuggestsGuarantor } from '../../../lib/renterIncomeBands'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -17,42 +15,8 @@ type Props = {
   verificationComplete: boolean
 }
 
-function routeFlowNeedsGuarantor(profile: StudentRow, situation: RenterSituation | null): boolean {
-  if (!situation) return false
-  if (profile.has_guarantor === true) return true
-  if (situation === 'student' || situation === 'working_holiday' || situation === 'backpacker') return false
-  if (situation === 'working') {
-    return !profile.income_band?.trim() || incomeBandSuggestsGuarantor(profile.income_band)
-  }
-  return incomeBandSuggestsGuarantor(profile.income_band)
-}
-
-function isRouteFlowComplete(profile: StudentRow, situation: RenterSituation | null): boolean {
-  if (!situation || !isRouteSectionComplete(situation, profile)) return false
-  const needsGuarantor = routeFlowNeedsGuarantor(profile, situation)
-  return !needsGuarantor || isGuarantorSectionComplete(profile)
-}
-
-function requiredSectionsComplete(
-  profile: StudentRow,
-  situation: RenterSituation | null,
-  verificationComplete: boolean,
-): { done: number; total: number } {
-  const total = 4
-  if (!situation) {
-    return { done: 0, total }
-  }
-  let done = 0
-  if (isPersonalDetailsComplete(profile)) done += 1
-  if (verificationComplete) done += 1
-  if (isRouteFlowComplete(profile, situation)) done += 1
-  if (isStep2Saved(profile)) done += 1
-  return { done, total }
-}
-
 export function RenterProfileReadinessDriver({ readiness, profile, situation, verificationComplete }: Props) {
-  const { done, total } = requiredSectionsComplete(profile, situation, verificationComplete)
-  const pct = Math.round((done / total) * 100)
+  const { done, total, pct } = computeRenterProfileDriverProgress(profile, situation, verificationComplete)
   const driverText = readiness.blocksBooking[0] ?? 'Complete your profile to request bookings'
 
   return (

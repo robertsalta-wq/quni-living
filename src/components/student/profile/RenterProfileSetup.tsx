@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import { useRenterSituationSave } from '../../../hooks/useRenterSituationSave'
 import { useStudentVerificationDocUpload } from '../../../hooks/useStudentVerificationDocUpload'
-import { computeRenterReadiness, tierToSync } from '../../../lib/renterReadiness'
+import { computeRenterReadiness, isRenterUniversalVerificationComplete, tierToSync } from '../../../lib/renterReadiness'
 import { isRouteSectionComplete } from '../../../lib/renterRouteSection'
 import { incomeBandSuggestsGuarantor } from '../../../lib/renterIncomeBands'
 import type { RenterSituation } from '../../../lib/renterSituation'
@@ -39,19 +39,6 @@ function routeSectionIcon(situation: RenterSituation): 'study' | 'work' | 'verif
   if (situation === 'student') return 'study'
   if (situation === 'working') return 'work'
   return 'verify'
-}
-
-function isUniversalVerificationComplete(
-  profile: StudentRow,
-  situation: RenterSituation,
-  docUpload: ReturnType<typeof useStudentVerificationDocUpload>,
-): boolean {
-  const idOk = docStepComplete(docUpload.idDoc)
-  const supportOk = docStepComplete(docUpload.identitySupportDoc)
-  if (!idOk || !supportOk) return false
-  if (situation === 'student') return isStudentUniEmailVerified(profile)
-  if (situation === 'working') return Boolean(profile.work_email_verified && profile.work_email)
-  return true
 }
 
 function verificationSummary(
@@ -162,7 +149,10 @@ export function RenterProfileSetup({ profile, userId, displayEmail, onRefresh, o
 
   const personalComplete = isPersonalDetailsComplete(profile)
   const verificationComplete = situation
-    ? isUniversalVerificationComplete(profile, situation, docUpload)
+    ? isRenterUniversalVerificationComplete(profile, situation, {
+        idDoc: docUpload.idDoc,
+        identitySupportDoc: docUpload.identitySupportDoc,
+      })
     : false
   const routeComplete = situation ? isRouteSectionComplete(situation, profile) : false
   const emergencyComplete = isStep2Saved(profile)
