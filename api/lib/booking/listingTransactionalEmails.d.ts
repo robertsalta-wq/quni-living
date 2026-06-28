@@ -23,3 +23,13 @@ export function sendListingCancelledByLandlordEmails(
   bookingId: string,
   meta: { cancellation_reason?: string | null },
 ): Promise<void>
+
+export function buildListingRenterPaymentEmailPayload(
+  ctx: Record<string, unknown>,
+  opts: { bondDeadlineDisplay: string; studentDashboardUrl?: string; bookingReference?: string },
+): Record<string, unknown>
+
+export function sendListingPaymentInstructionsRenter(
+  admin: SupabaseClient,
+  bookingId: string,
+): Promise<{ ok: true } | { ok: false; code: string; message: string }>

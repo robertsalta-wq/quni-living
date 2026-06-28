@@ -20,6 +20,7 @@ import {
   listingBondReceivedRenter,
   listingCancelledByLandlordLandlord,
   listingCancelledByLandlordRenter,
+  listingPaymentInstructionsRenter,
   propertyAddressLine,
 } from '../emailTemplates.js'
 
@@ -60,6 +61,9 @@ async function loadListingEmailContext(admin, bookingId) {
       `
       id,
       property_id,
+      status,
+      service_tier_final,
+      confirmed_at,
       weekly_rent,
       bond_amount,
       move_in_date,
@@ -187,7 +191,59 @@ async function loadListingEmailContext(admin, bookingId) {
     isBoarderLodger,
     payout,
     paymentReference,
+    qldBondRemittancePreference,
+    bookingStatus: typeof booking.status === 'string' ? booking.status : '',
+    serviceTierFinal:
+      typeof booking.service_tier_final === 'string' ? booking.service_tier_final : null,
+    confirmedAt: typeof booking.confirmed_at === 'string' ? booking.confirmed_at : null,
   }
+}
+
+/**
+ * @param {NonNullable<Awaited<ReturnType<typeof loadListingEmailContext>>>} ctx
+ * @param {{ bondDeadlineDisplay: string; studentDashboardUrl?: string; bookingReference?: string }} opts
+ */
+export function buildListingRenterPaymentEmailPayload(ctx, opts) {
+  const base = siteBaseUrl()
+  const studentDash = opts.studentDashboardUrl ?? `${base}/student-dashboard?tab=bookings`
+  return {
+    student_name: ctx.studentName,
+    property_address: ctx.propertyAddress,
+    property_title: ctx.propertyTitle,
+    booking_reference: opts.bookingReference,
+    bond_deadline_display: opts.bondDeadlineDisplay,
+    student_dashboard_url: studentDash,
+    bond_payment_html: ctx.bondPaymentTenantHtml,
+    bond_scheme_applies: ctx.bondSchemeApplies,
+    is_boarder_lodger: ctx.isBoarderLodger,
+    payout: ctx.payout,
+    weekly_rent: ctx.weeklyRent,
+    bond_amount_aud: ctx.bondAmountAud,
+    move_in_date: ctx.moveInDate,
+    payment_reference: ctx.paymentReference,
+  }
+}
+
+/**
+ * User-initiated payment instructions email (landlord resend). Propagates send failures.
+ * @param {import('@supabase/supabase-js').SupabaseClient} admin
+ * @param {string} bookingId
+ * @returns {Promise<{ ok: true } | { ok: false; code: string; message: string }>}
+ */
+export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
+  const ctx = await loadListingEmailContext(admin, bookingId)
+  if (!ctx) {
+    return { ok: false, code: 'not_found', message: 'Booking not found.' }
+  }
+  if (!ctx.studentEmail) {
+    return { ok: false, code: 'no_student_email', message: 'Renter email is not available.' }
+  }
+
+  const bondDeadline = formatAuLongDate(ctx.bondWindowExpiresAt)
+  const payload = buildListingRenterPaymentEmailPayload(ctx, { bondDeadlineDisplay: bondDeadline })
+  const t = listingPaymentInstructionsRenter(payload)
+  await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+  return { ok: true }
 }
 
 /**
@@ -209,22 +265,13 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
 
     const sendRenter = async () => {
       if (!ctx.studentEmail) return
-      const t = listingBookingAcceptedRenter({
-        student_name: ctx.studentName,
-        property_address: ctx.propertyAddress,
-        property_title: ctx.propertyTitle,
-        booking_reference: bookingRef,
-        bond_deadline_display: bondDeadline,
-        student_dashboard_url: studentDash,
-        bond_payment_html: ctx.bondPaymentTenantHtml,
-        bond_scheme_applies: ctx.bondSchemeApplies,
-        is_boarder_lodger: ctx.isBoarderLodger,
-        payout: ctx.payout,
-        weekly_rent: ctx.weeklyRent,
-        bond_amount_aud: ctx.bondAmountAud,
-        move_in_date: ctx.moveInDate,
-        payment_reference: ctx.paymentReference,
-      })
+      const t = listingBookingAcceptedRenter(
+        buildListingRenterPaymentEmailPayload(ctx, {
+          bondDeadlineDisplay: bondDeadline,
+          studentDashboardUrl: studentDash,
+          bookingReference: bookingRef,
+        }),
+      )
       await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
     }
 
