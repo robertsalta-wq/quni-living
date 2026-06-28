@@ -54,6 +54,30 @@ export function useProfileSectionDraft(userId: string, section: string) {
     [userId, section],
   )
 
+  /** Apply draft merged with profile; discard storage when merge equals profile (stale empty draft). */
+  const restoreDraftMerged = useCallback(
+    <T,>(
+      fromProfile: T,
+      merge: (draft: T, profile: T) => T,
+      apply: (fields: T) => void,
+    ): boolean => {
+      const draft = readProfileSectionDraft<T>(userId, section)
+      if (!draft) return false
+      const merged = merge(draft, fromProfile)
+      if (JSON.stringify(merged) === JSON.stringify(fromProfile)) {
+        clearProfileSectionDraft(userId, section)
+        return false
+      }
+      apply(merged)
+      baselineRef.current = JSON.stringify(fromProfile)
+      draftActiveRef.current = true
+      readyRef.current = true
+      writeProfileSectionDraft(userId, section, merged)
+      return true
+    },
+    [userId, section],
+  )
+
   const syncDraft = useCallback(
     (data: unknown) => {
       if (!readyRef.current) return
@@ -78,6 +102,7 @@ export function useProfileSectionDraft(userId: string, section: string) {
 
   return {
     restoreDraft,
+    restoreDraftMerged,
     syncDraft,
     setBaseline,
     clearDraft,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
@@ -11,7 +11,6 @@ import { isNonStudentAccommodationRoute } from '../../lib/studentOnboarding'
 import { tierToSync } from '../../lib/renterReadiness'
 import {
   CHOOSE_VERIFICATION_FILE_LABEL,
-  VERIFICATION_ID_FILE_ACCEPT,
 } from '../../lib/verificationDocUpload'
 import {
   docStepComplete,
@@ -21,6 +20,7 @@ import {
 import { OwnerVerificationDocPreview } from './OwnerVerificationDocPreview'
 import { StudentVerificationDocPick } from './StudentVerificationDocPick'
 import { VERIF_UPLOAD_FLASH_KEY, type useStudentVerificationDocUpload } from '../../hooks/useStudentVerificationDocUpload'
+import { useHoistedVerificationFileInputs } from '../../hooks/useHoistedVerificationFileInputs'
 import {
   clearVerificationOtpPending,
   readVerificationOtpPendingEmail,
@@ -162,67 +162,15 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     pickIdentitySupportFile,
   } = docUpload
 
-  // Hoisted file inputs (see hoistedFileInputs below): each <input> lives at the
-  // panel root with a stable key so volatile card re-renders (signed-URL preview
-  // fetches, onRefresh profile refetch) never tear down / remount the input —
-  // which on Android Chrome caused the picker's `change` event to be lost.
-  const idInputRef = useRef<HTMLInputElement>(null)
-  const enrolInputRef = useRef<HTMLInputElement>(null)
-  const identitySupportInputRef = useRef<HTMLInputElement>(null)
-  // Tracks a deliberate upload tap so the one-shot recovery below can rescue a pick
-  // the change event missed — scoped to just after a tap, never on unrelated focus.
-  const pendingPick = useRef<{ kind: VerificationDocKind; el: HTMLInputElement } | null>(null)
-
-  const processPickedFile = useCallback(
-    (kind: VerificationDocKind, input: HTMLInputElement) => {
-      pendingPick.current = null // handled; cancel any pending recovery sweep
-      const file = input.files?.[0]
-      input.value = '' // clear first so a duplicate change/focus event is a no-op (no double upload)
-      if (!file) return
-      if (kind === 'id') pickIdFile(file)
-      else if (kind === 'enrolment') pickEnrolFile(file)
-      else pickIdentitySupportFile(file)
-    },
+  const pickSlots = useMemo(
+    () => [
+      { kind: 'id' as const, pick: pickIdFile },
+      { kind: 'enrolment' as const, pick: pickEnrolFile },
+      { kind: 'identity_supporting' as const, pick: pickIdentitySupportFile },
+    ],
     [pickIdFile, pickEnrolFile, pickIdentitySupportFile],
   )
-
-  // Android's "Files" document picker can return after React's delegated synthetic
-  // event system has already missed the change event. Binding the change listener
-  // NATIVELY on each DOM node (instead of React's onChange prop) catches it
-  // reliably, and also covers Camera/Gallery — so it's a superset of onChange.
-  useEffect(() => {
-    const entries: Array<[RefObject<HTMLInputElement | null>, VerificationDocKind]> = [
-      [idInputRef, 'id'],
-      [enrolInputRef, 'enrolment'],
-      [identitySupportInputRef, 'identity_supporting'],
-    ]
-    const cleanups = entries.map(([ref, kind]) => {
-      const el = ref.current
-      if (!el) return null
-      const handler = () => processPickedFile(kind, el)
-      el.addEventListener('change', handler)
-      return () => el.removeEventListener('change', handler)
-    })
-    // One-shot recovery: Android's Files picker occasionally returns without firing
-    // change at all. When the window regains focus AND a pick is pending (i.e. the
-    // user just tapped an upload button), check that one input shortly after for a
-    // file the change event missed. Scoped to pendingPick so it never fires on
-    // unrelated tab switches; processPickedFile clears pendingPick + value to dedupe.
-    const recoverPendingPick = () => {
-      if (!pendingPick.current) return
-      window.setTimeout(() => {
-        const p = pendingPick.current
-        if (p && p.el.files && p.el.files.length > 0) processPickedFile(p.kind, p.el)
-      }, 500)
-    }
-    window.addEventListener('focus', recoverPendingPick)
-    document.addEventListener('visibilitychange', recoverPendingPick)
-    return () => {
-      cleanups.forEach((fn) => fn?.())
-      window.removeEventListener('focus', recoverPendingPick)
-      document.removeEventListener('visibilitychange', recoverPendingPick)
-    }
-  }, [processPickedFile])
+  const { hoistedFileInputs, openPicker } = useHoistedVerificationFileInputs(pickSlots)
 
   // Unmistakable success confirmation: when a doc finishes uploading (pending ->
   // received), flash a prominent banner so users SEE it worked and don't retry.
@@ -268,39 +216,6 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     const t = window.setTimeout(() => setUploadedFlash(null), 4500)
     return () => window.clearTimeout(t)
   }, [])
-
-  const openPicker = (kind: VerificationDocKind, ref: RefObject<HTMLInputElement | null>) => () => {
-    const el = ref.current
-    if (!el) return
-    pendingPick.current = { kind, el } // arm the one-shot recovery for this pick
-    el.click()
-  }
-
-  const hoistedFileInputs = (
-    <>
-      <input
-        key="verif-input-id"
-        ref={idInputRef}
-        type="file"
-        accept={VERIFICATION_ID_FILE_ACCEPT}
-        className="sr-only"
-      />
-      <input
-        key="verif-input-enrolment"
-        ref={enrolInputRef}
-        type="file"
-        accept="image/*,application/pdf"
-        className="sr-only"
-      />
-      <input
-        key="verif-input-identity-supporting"
-        ref={identitySupportInputRef}
-        type="file"
-        accept="image/*,application/pdf"
-        className="sr-only"
-      />
-    </>
-  )
 
   const uploadFlashBanner = uploadedFlash ? (
     <div
@@ -689,7 +604,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={idUploading}
               uploaded={idDoc}
               error={idUploadError}
-              onPickClick={openPicker('id', idInputRef)}
+              onPickClick={openPicker('id')}
               reviewNote="Our team may review this document."
             />
           </div>
@@ -707,7 +622,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
               busy={identitySupportUploading}
               uploaded={identitySupportDoc}
               error={identitySupportUploadError}
-              onPickClick={openPicker('identity_supporting', identitySupportInputRef)}
+              onPickClick={openPicker('identity_supporting')}
             />
           </div>
         </section>
@@ -799,7 +714,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={idUploading}
             uploaded={idDoc}
             error={idUploadError}
-            onPickClick={openPicker('id', idInputRef)}
+            onPickClick={openPicker('id')}
             reviewNote="Our team may review this document."
           />
         </div>
@@ -818,7 +733,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
             busy={enrolUploading}
             uploaded={enrolDoc}
             error={enrolUploadError}
-            onPickClick={openPicker('enrolment', enrolInputRef)}
+            onPickClick={openPicker('enrolment')}
           />
         </div>
       </section>

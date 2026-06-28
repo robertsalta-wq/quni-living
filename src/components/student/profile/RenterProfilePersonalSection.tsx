@@ -98,15 +98,41 @@ type PersonalDraft = {
   dateOfBirth: string
 }
 
+function personalFieldsFromProfile(prof: StudentRow): PersonalDraft {
+  const [fn, ln] = splitFullName(prof.full_name)
+  return {
+    firstName: prof.first_name ?? fn,
+    lastName: prof.last_name ?? ln,
+    phone: prof.phone ?? '',
+    gender: prof.gender ?? '',
+    nationality: prof.nationality ?? '',
+    dateOfBirth: prof.date_of_birth ? prof.date_of_birth.slice(0, 10) : '',
+  }
+}
+
+/** Per-field: empty draft strings fall back to saved profile (stale empty draft must not win). */
+function mergePersonalDraftWithProfile(draft: PersonalDraft, fromProfile: PersonalDraft): PersonalDraft {
+  const pick = (draftVal: string, profileVal: string) => (draftVal.trim() !== '' ? draftVal : profileVal)
+  return {
+    firstName: pick(draft.firstName, fromProfile.firstName),
+    lastName: pick(draft.lastName, fromProfile.lastName),
+    phone: pick(draft.phone, fromProfile.phone),
+    gender: pick(draft.gender, fromProfile.gender),
+    nationality: pick(draft.nationality, fromProfile.nationality),
+    dateOfBirth: pick(draft.dateOfBirth, fromProfile.dateOfBirth),
+  }
+}
+
 export function RenterProfilePersonalSection({ profile, userId, displayEmail, onSaved }: Props) {
-  const { restoreDraft, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
+  const initialFields = personalFieldsFromProfile(profile)
+  const { restoreDraftMerged, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, 'personal')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [gender, setGender] = useState('')
-  const [nationality, setNationality] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [firstName, setFirstName] = useState(initialFields.firstName)
+  const [lastName, setLastName] = useState(initialFields.lastName)
+  const [phone, setPhone] = useState(initialFields.phone)
+  const [gender, setGender] = useState(initialFields.gender)
+  const [nationality, setNationality] = useState(initialFields.nationality)
+  const [dateOfBirth, setDateOfBirth] = useState(initialFields.dateOfBirth)
   const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
@@ -124,18 +150,6 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
     beginSaveAttempt,
   } = useRenterProfileSectionValidation(PERSONAL_HINT_LABELS)
 
-  const applyFromProfile = useCallback((prof: StudentRow): PersonalDraft => {
-    const [fn, ln] = splitFullName(prof.full_name)
-    return {
-      firstName: prof.first_name ?? fn,
-      lastName: prof.last_name ?? ln,
-      phone: prof.phone ?? '',
-      gender: prof.gender ?? '',
-      nationality: prof.nationality ?? '',
-      dateOfBirth: prof.date_of_birth ? prof.date_of_birth.slice(0, 10) : '',
-    }
-  }, [])
-
   const applyFields = useCallback((fields: PersonalDraft) => {
     setFirstName(fields.firstName)
     setLastName(fields.lastName)
@@ -146,13 +160,13 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   }, [])
 
   useEffect(() => {
-    if (restoreDraft<PersonalDraft>(applyFields)) return
+    const fromProf = personalFieldsFromProfile(profile)
+    if (restoreDraftMerged(fromProf, mergePersonalDraftWithProfile, applyFields)) return
     if (!shouldApplyProfile()) return
-    const fromProf = applyFromProfile(profile)
     applyFields(fromProf)
     setBaseline(fromProf)
     markReady()
-  }, [profile, applyFromProfile, applyFields, restoreDraft, shouldApplyProfile, setBaseline, markReady])
+  }, [profile, applyFields, restoreDraftMerged, shouldApplyProfile, setBaseline, markReady])
 
   useEffect(() => {
     syncDraft({ firstName, lastName, phone, gender, nationality, dateOfBirth })

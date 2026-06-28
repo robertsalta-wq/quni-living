@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, type RefObject } from 'react'
+import { useMemo } from 'react'
 import type { Database } from '../../../lib/database.types'
 import { StudentUniEmailVerification } from '../StudentUniEmailVerification'
 import { StudentWorkEmailVerification } from '../StudentWorkEmailVerification'
 import { StudentVerificationDocPick } from '../StudentVerificationDocPick'
-import { VERIFICATION_ID_FILE_ACCEPT } from '../../../lib/verificationDocUpload'
 import { docStepComplete, type VerificationDocKind, type VerificationUploadedDoc } from '../../../lib/verificationDocSlot'
 import {
   situationShowsVerificationEmail,
@@ -11,6 +10,7 @@ import {
 } from '../../../lib/renterVerificationEmail'
 import { verificationDocRowSlot } from '../../../lib/verificationItemState'
 import type { useStudentVerificationDocUpload } from '../../../hooks/useStudentVerificationDocUpload'
+import { useHoistedVerificationFileInputs } from '../../../hooks/useHoistedVerificationFileInputs'
 import type { RenterSituation } from '../../../lib/renterSituation'
 import { RenterProfileVerificationRow } from './RenterProfileVerificationRow'
 
@@ -38,7 +38,7 @@ type DocRowProps = {
   fileName: string | null
   uploading: boolean
   error: string | null
-  inputRef: RefObject<HTMLInputElement | null>
+  onPickClick: () => void
 }
 
 function VerificationDocField({
@@ -48,26 +48,25 @@ function VerificationDocField({
   fileName,
   uploading,
   error,
-  inputRef,
+  onPickClick,
 }: DocRowProps) {
   const complete = docStepComplete(doc)
   const slot = complete && fileName ? verificationDocRowSlot(profile, kind) : null
 
   return (
     <>
-      <input ref={inputRef} type="file" accept={kind === 'id' ? VERIFICATION_ID_FILE_ACCEPT : 'image/*,application/pdf'} className="sr-only" />
       {complete && fileName && slot ? (
         <RenterProfileVerificationRow
           value={fileName}
           rightSlot={slot}
-          onAction={slot.kind === 'action' ? () => inputRef.current?.click() : undefined}
+          onAction={slot.kind === 'action' ? onPickClick : undefined}
           actionDisabled={uploading}
         />
       ) : (
         <StudentVerificationDocPick
           busy={uploading}
           label="Upload file"
-          onPickClick={() => inputRef.current?.click()}
+          onPickClick={onPickClick}
           error={error}
           variant="renter-profile"
         />
@@ -95,34 +94,21 @@ export function RenterUniversalVerificationSection({
     pickIdentitySupportFile,
   } = docUpload
 
-  const idInputRef = useRef<HTMLInputElement>(null)
-  const supportInputRef = useRef<HTMLInputElement>(null)
-
-  const bindPick = useCallback(
-    (ref: RefObject<HTMLInputElement | null>, pick: (f: File) => void) => {
-      const el = ref.current
-      if (!el) return
-      const handler = () => {
-        const file = el.files?.[0]
-        el.value = ''
-        if (file) pick(file)
-      }
-      el.addEventListener('change', handler)
-      return () => el.removeEventListener('change', handler)
-    },
-    [],
+  const pickSlots = useMemo(
+    () => [
+      { kind: 'id' as const, pick: pickIdFile },
+      { kind: 'identity_supporting' as const, pick: pickIdentitySupportFile },
+    ],
+    [pickIdFile, pickIdentitySupportFile],
   )
 
-  useEffect(() => bindPick(idInputRef, pickIdFile), [bindPick, pickIdFile])
-  useEffect(() => bindPick(supportInputRef, pickIdentitySupportFile), [
-    bindPick,
-    pickIdentitySupportFile,
-  ])
+  const { hoistedFileInputs, openPicker } = useHoistedVerificationFileInputs(pickSlots)
 
   const showEmail = situationShowsVerificationEmail(situation)
 
   return (
     <div className="renter-profile-form-grid renter-profile-form-grid--stack">
+      {hoistedFileInputs}
       <div className="renter-profile-field">
         <span className="renter-profile-field-label">Government photo ID</span>
         <VerificationDocField
@@ -132,7 +118,7 @@ export function RenterUniversalVerificationSection({
           fileName={uploadFileName(idDoc)}
           uploading={idUploading}
           error={idUploadError}
-          inputRef={idInputRef}
+          onPickClick={openPicker('id')}
         />
       </div>
 
@@ -145,7 +131,7 @@ export function RenterUniversalVerificationSection({
           fileName={uploadFileName(identitySupportDoc)}
           uploading={identitySupportUploading}
           error={identitySupportUploadError}
-          inputRef={supportInputRef}
+          onPickClick={openPicker('identity_supporting')}
         />
       </div>
 
