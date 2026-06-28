@@ -22,6 +22,7 @@ import {
   isLandlordAgreementsSectionComplete,
   isLandlordPersonalSectionComplete,
   landlordProfileDefaultExpandedSection,
+  landlordPayoutDetailsComplete,
   landlordTypeRequiresCompanyDetails,
 } from '../../lib/landlordProfileReadiness'
 import type { LandlordDashboardProfileSectionKey } from '../../lib/landlordDashboardProfilePaths'
@@ -39,6 +40,7 @@ import {
 import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
+type LandlordPayoutDetailsRow = Database['public']['Tables']['landlord_payout_details']['Row']
 
 const PROFILE_PHOTO_BUCKET = 'landlord-avatars'
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024
@@ -85,12 +87,52 @@ const FIELD_HINT_LABELS: Partial<Record<string, string>> = {
   agreeTerms: 'Terms of Service acceptance',
   agreeLandlordTerms: 'Landlord Service Agreement acceptance',
   agreeNonDiscrimination: 'Non-discrimination policy acceptance',
+  accountName: 'account name',
+  bsb: 'BSB',
+  accountNumber: 'account number',
 }
 
 const PERSONAL_FIELD_KEYS = ['landlordType', 'firstName', 'lastName', 'phone', 'companyName', 'abn'] as const
 const ADDRESS_FIELD_KEYS = ['addressLine', 'suburb', 'postcode', 'addressState', 'residenceLocation'] as const
 const ABOUT_FIELD_KEYS = ['bio'] as const
 const AGREEMENT_FIELD_KEYS = ['agreeTerms', 'agreeLandlordTerms', 'agreeNonDiscrimination'] as const
+const PAYEE_FIELD_KEYS = ['accountName', 'bsb', 'accountNumber'] as const
+
+function normalizePayeeBsb(raw: string): string {
+  return raw.replace(/[\s-]/g, '')
+}
+
+function formatPayeeBsbDisplay(raw: string): string {
+  const digits = normalizePayeeBsb(raw)
+  if (digits.length !== 6) return raw.trim()
+  return `${digits.slice(0, 3)}-${digits.slice(3)}`
+}
+
+/** Field-level gaps for payee bank details (BSB 6 digits; account 5–10 digits). */
+function payeeDetailsFieldErrors(draft: {
+  accountName: string
+  bsb: string
+  accountNumber: string
+}): Record<string, string> {
+  const errors: Record<string, string> = {}
+  if (!draft.accountName.trim()) errors.accountName = 'Account name is required'
+  const bsbNorm = normalizePayeeBsb(draft.bsb)
+  if (!bsbNorm) errors.bsb = 'BSB is required'
+  else if (!/^\d{6}$/.test(bsbNorm)) errors.bsb = 'BSB must be 6 digits'
+  const acctNorm = draft.accountNumber.replace(/\s/g, '')
+  if (!acctNorm) errors.accountNumber = 'Account number is required'
+  else if (!/^\d+$/.test(acctNorm)) errors.accountNumber = 'Account number must contain digits only'
+  else if (acctNorm.length < 5 || acctNorm.length > 10) {
+    errors.accountNumber = 'Account number must be 5–10 digits'
+  }
+  return errors
+}
+
+function formatPayeeDetailsSummary(payout: LandlordPayoutDetailsRow | null | undefined): string | undefined {
+  if (!landlordPayoutDetailsComplete(payout)) return undefined
+  const last4 = payout!.account_number.slice(-4)
+  return `${payout!.account_name.trim()} · BSB ${formatPayeeBsbDisplay(payout!.bsb)} · ····${last4}`
+}
 
 function inputClassForError(hasError: boolean): string {
   return hasError
@@ -300,8 +342,18 @@ export default function LandlordDashboardProfileTab({
   const readiness = useMemo(() => computeLandlordReadiness(profile), [profile])
   const driverContent = useMemo(() => buildLandlordReadinessDriverContent(readiness), [readiness])
 
-  const defaultExpanded = landlordProfileDefaultExpandedSection(readiness)
+  const [payoutDetails, setPayoutDetails] = useState<LandlordPayoutDetailsRow | null>(null)
+  const [payoutDetailsLoading, setPayoutDetailsLoading] = useState(true)
+  const payoutDetailsComplete = landlordPayoutDetailsComplete(payoutDetails)
+
+  const defaultExpanded = landlordProfileDefaultExpandedSection(readiness, {
+    payoutDetailsComplete,
+  })
   const [expanded, setExpanded] = useState<ExpandKey>(defaultExpanded)
+
+  const [accountName, setAccountName] = useState('')
+  const [payeeBsb, setPayeeBsb] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
 
   const [firstName, setFirstName] = useState(profile.first_name?.trim() ?? '')
   const [lastName, setLastName] = useState(profile.last_name?.trim() ?? '')
@@ -344,6 +396,36 @@ export default function LandlordDashboardProfileTab({
   useEffect(() => {
     setExpanded(defaultExpanded)
   }, [profile.id, defaultExpanded])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadPayoutDetails() {
+      setPayoutDetailsLoading(true)
+      const { data, error } = await supabase
+        .from('landlord_payout_details')
+        .select('id, landlord_id, account_name, bsb, account_number, created_at, updated_at')
+        .eq('landlord_id', profile.id)
+        .maybeSingle()
+      if (cancelled) return
+      if (error) {
+        console.error('[LandlordProfileTab] load payout details', error)
+        setPayoutDetails(null)
+        setAccountName('')
+        setPayeeBsb('')
+        setAccountNumber('')
+      } else {
+        setPayoutDetails(data as LandlordPayoutDetailsRow | null)
+        setAccountName(data?.account_name?.trim() ?? '')
+        setPayeeBsb(data?.bsb?.trim() ? formatPayeeBsbDisplay(data.bsb) : '')
+        setAccountNumber(data?.account_number?.trim() ?? '')
+      }
+      setPayoutDetailsLoading(false)
+    }
+    void loadPayoutDetails()
+    return () => {
+      cancelled = true
+    }
+  }, [profile.id])
 
   useEffect(() => {
     if (!sectionParam) return
@@ -419,7 +501,9 @@ export default function LandlordDashboardProfileTab({
             ? ADDRESS_FIELD_KEYS
             : section === 'about'
               ? ABOUT_FIELD_KEYS
-              : AGREEMENT_FIELD_KEYS
+              : section === 'payeeDetails'
+                ? PAYEE_FIELD_KEYS
+                : AGREEMENT_FIELD_KEYS
       return mergeSectionFieldErrors(prev, sectionKeys, errors)
     })
     if (Object.keys(errors).length === 0) return
@@ -680,6 +764,56 @@ export default function LandlordDashboardProfileTab({
       await refreshProfile()
     } catch (e) {
       setSectionError(messageFromSupabaseError(e))
+    } finally {
+      setSavingSection(null)
+    }
+  }
+
+  async function savePayeeDetails(ev: FormEvent) {
+    ev.preventDefault()
+    if (!profile.id) return
+    setSectionError(null)
+    setSectionSaveHint(null)
+    setValidationSection(null)
+    const errors = payeeDetailsFieldErrors({ accountName, bsb: payeeBsb, accountNumber })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors('payeeDetails', errors)
+      return
+    }
+    const bsbNorm = normalizePayeeBsb(payeeBsb)
+    const acctNorm = accountNumber.replace(/\s/g, '')
+    setSavingSection('payeeDetails')
+    try {
+      const { data, error } = await withSentryMonitoring('LandlordProfileTab/save-payee-details', () =>
+        supabase
+          .from('landlord_payout_details')
+          .upsert(
+            {
+              landlord_id: profile.id,
+              account_name: accountName.trim(),
+              bsb: bsbNorm,
+              account_number: acctNorm,
+            },
+            { onConflict: 'landlord_id' },
+          )
+          .select('id, landlord_id, account_name, bsb, account_number, created_at, updated_at')
+          .single(),
+      )
+      if (error) throw error
+      const row = data as LandlordPayoutDetailsRow
+      setPayoutDetails(row)
+      setAccountName(row.account_name.trim())
+      setPayeeBsb(formatPayeeBsbDisplay(row.bsb))
+      setAccountNumber(row.account_number.trim())
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, PAYEE_FIELD_KEYS, {}))
+      setSectionError(null)
+      setSectionSaveHint(null)
+      setValidationSection(null)
+    } catch {
+      setFieldErrors((prev) => mergeSectionFieldErrors(prev, PAYEE_FIELD_KEYS, {}))
+      setSectionError(SAVE_WRITE_FAILURE)
+      setSectionSaveHint(null)
+      setValidationSection(null)
     } finally {
       setSavingSection(null)
     }
@@ -1283,6 +1417,115 @@ export default function LandlordDashboardProfileTab({
             ) : null}
             {connectError ? <p className="text-sm text-red-700">{connectError}</p> : null}
           </div>
+        </CollapsibleProfileSection>
+      </div>
+
+      <div id="landlord-section-payee-details" className="mb-3">
+        <CollapsibleProfileSection
+          ordinal={6}
+          icon={<BankIcon />}
+          title="Payee bank details"
+          subtitle="Required to accept Quni Listing bookings"
+          status={payoutDetailsComplete ? 'done' : 'todo'}
+          summary={formatPayeeDetailsSummary(payoutDetails)}
+          expanded={expanded === 'payeeDetails'}
+          onToggle={() => toggleSection('payeeDetails')}
+        >
+          <form onSubmit={(e) => void savePayeeDetails(e)} className="space-y-4">
+            <p className="text-[13.5px] leading-relaxed text-admin-ink-3">
+              On Quni Listing stays, renters pay bond and weekly rent directly to this account by fee-free bank transfer.
+              Ask them to use their name and the property address as the payment reference.
+            </p>
+            {payoutDetailsLoading ? (
+              <p className="text-sm text-admin-ink-4">Loading saved details…</p>
+            ) : null}
+            <div>
+              <label htmlFor="ldp-payee-account-name" className={labelClass}>
+                Account name
+              </label>
+              <input
+                id="ldp-payee-account-name"
+                className={inputClassForError(Boolean(fieldErrors.accountName))}
+                value={accountName}
+                onChange={(e) => {
+                  setAccountName(e.target.value)
+                  clearFieldError('accountName')
+                }}
+                autoComplete="off"
+                disabled={payoutDetailsLoading}
+                aria-invalid={fieldErrors.accountName ? true : undefined}
+                aria-describedby={fieldErrors.accountName ? 'ldp-payee-account-name-error' : undefined}
+              />
+              {fieldErrors.accountName ? (
+                <p id="ldp-payee-account-name-error" className={errClass} role="alert">
+                  {fieldErrors.accountName}
+                </p>
+              ) : null}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="ldp-payee-bsb" className={labelClass}>
+                  BSB
+                </label>
+                <input
+                  id="ldp-payee-bsb"
+                  className={inputClassForError(Boolean(fieldErrors.bsb))}
+                  value={payeeBsb}
+                  onChange={(e) => {
+                    setPayeeBsb(e.target.value)
+                    clearFieldError('bsb')
+                  }}
+                  placeholder="000-000"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  disabled={payoutDetailsLoading}
+                  aria-invalid={fieldErrors.bsb ? true : undefined}
+                  aria-describedby={fieldErrors.bsb ? 'ldp-payee-bsb-error' : undefined}
+                />
+                {fieldErrors.bsb ? (
+                  <p id="ldp-payee-bsb-error" className={errClass} role="alert">
+                    {fieldErrors.bsb}
+                  </p>
+                ) : null}
+              </div>
+              <div>
+                <label htmlFor="ldp-payee-account-number" className={labelClass}>
+                  Account number
+                </label>
+                <input
+                  id="ldp-payee-account-number"
+                  className={inputClassForError(Boolean(fieldErrors.accountNumber))}
+                  value={accountNumber}
+                  onChange={(e) => {
+                    setAccountNumber(e.target.value)
+                    clearFieldError('accountNumber')
+                  }}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  disabled={payoutDetailsLoading}
+                  aria-invalid={fieldErrors.accountNumber ? true : undefined}
+                  aria-describedby={fieldErrors.accountNumber ? 'ldp-payee-account-number-error' : undefined}
+                />
+                {fieldErrors.accountNumber ? (
+                  <p id="ldp-payee-account-number-error" className={errClass} role="alert">
+                    {fieldErrors.accountNumber}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            {validationSection === 'payeeDetails' && sectionSaveHint ? (
+              <p className="text-sm text-red-700" role="alert">
+                {sectionSaveHint}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={savingSection === 'payeeDetails' || payoutDetailsLoading}
+              className={saveBtnClass}
+            >
+              {savingSection === 'payeeDetails' ? 'Saving…' : 'Save details'}
+            </button>
+          </form>
         </CollapsibleProfileSection>
       </div>
 
