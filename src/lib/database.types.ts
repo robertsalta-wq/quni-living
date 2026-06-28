@@ -488,10 +488,10 @@ export interface Database {
         }
         Relationships: []
       }
-      landlord_payout_details: {
+      property_payout_details: {
         Row: {
           id: string
-          landlord_id: string
+          property_id: string
           account_name: string
           bsb: string
           account_number: string
@@ -500,7 +500,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          landlord_id: string
+          property_id: string
           account_name: string
           bsb: string
           account_number: string
@@ -509,7 +509,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          landlord_id?: string
+          property_id?: string
           account_name?: string
           bsb?: string
           account_number?: string
@@ -518,10 +518,10 @@ export interface Database {
         }
         Relationships: [
           {
-            foreignKeyName: 'landlord_payout_details_landlord_id_fkey'
-            columns: ['landlord_id']
+            foreignKeyName: 'property_payout_details_property_id_fkey'
+            columns: ['property_id']
             isOneToOne: true
-            referencedRelation: 'landlord_profiles'
+            referencedRelation: 'properties'
             referencedColumns: ['id']
           },
         ]

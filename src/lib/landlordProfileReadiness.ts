@@ -85,17 +85,6 @@ export function isLandlordAgreementsSectionComplete(p: LandlordProfileRow | null
   )
 }
 
-export function landlordPayoutDetailsComplete(
-  payout:
-    | { account_name?: string | null; bsb?: string | null; account_number?: string | null }
-    | null
-    | undefined,
-): boolean {
-  return Boolean(
-    payout?.account_name?.trim() && payout?.bsb?.trim() && payout?.account_number?.trim(),
-  )
-}
-
 export function isLandlordPublishComplete(p: LandlordProfileRow | null | undefined): boolean {
   return computeLandlordReadiness(p).publish.complete
 }
@@ -290,13 +279,11 @@ export function buildLandlordReadinessDriverContent(
 
 export function landlordProfileDefaultExpandedSection(
   readiness: LandlordReadiness,
-  opts?: { payoutDetailsComplete?: boolean },
-): LandlordPublishSectionKey | 'payouts' | 'payeeDetails' {
+): LandlordPublishSectionKey | 'payouts' {
   if (!readiness.publish.complete) {
     return readiness.publish.missing[0] ?? 'personal'
   }
   if (!readiness.accept.complete) return 'payouts'
-  if (opts?.payoutDetailsComplete === false) return 'payeeDetails'
   return 'personal'
 }
 
