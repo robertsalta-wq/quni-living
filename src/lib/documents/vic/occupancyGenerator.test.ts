@@ -1,24 +1,19 @@
-/**
- * Manual visual check — run: npx vitest run src/lib/documents/qld/occupancyGenerator.raster.test.ts
- */
 import { describe, expect, it } from 'vitest'
 import React from 'react'
-import { writeFileSync, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
-import { execSync } from 'node:child_process'
+import { PDFParse } from 'pdf-parse'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { QldLicenceToOccupyOnSite } from './occupancyGenerator.tsx'
+import { VicLicenceToOccupyOnSite } from './occupancyGenerator.tsx'
 import type { OccupancyAgreementProps } from '../../../api/documents/rtaTypes.js'
 
 function minimalProps(): OccupancyAgreementProps {
   return {
-    documentId: 'visual-check-qld',
-    generatedAt: '15 Jun 2026, 12:00:00 pm',
+    documentId: 'test-vic-licence',
+    generatedAt: '1 Jan 2026, 12:00:00 pm',
     serviceTier: 'listing',
     landlord: {
       fullName: 'Jane Owner',
       companyName: null,
-      addressLine: '1 Example St, Brisbane QLD 4000',
+      addressLine: '1 Example St, Melbourne VIC 3000',
       email: 'jane@example.com',
       phone: '0400 000 000',
     },
@@ -31,7 +26,7 @@ function minimalProps(): OccupancyAgreementProps {
       emergencyContactPhone: null,
     },
     premises: {
-      addressLine: '2 Demo Rd, Brisbane QLD 4001',
+      addressLine: '2 Demo Rd, Melbourne VIC 3001',
       propertyType: 'private_room_landlord_on_site',
       roomType: 'Private room',
       furnished: true,
@@ -59,26 +54,35 @@ function minimalProps(): OccupancyAgreementProps {
       bsb: '123456',
       account_number: '987654321',
     },
-    paymentReference: 'Alex Resident — 2 Demo Rd, Brisbane QLD 4001',
-    schemeApplies: true,
-    qldBondRemittancePreference: 'landlord_collects_remits',
-    specialConditions: [],
+    paymentReference: 'Alex Resident — 2 Demo Rd, Melbourne VIC 3001',
+    schemeApplies: false,
+    qldBondRemittancePreference: null,
+    specialConditions: [
+      'Licence fee payments are made by direct credit to the owner account as set out in clause 11.',
+    ],
     bookingNotes: null,
     houseRules: null,
   }
 }
 
-describe('QldLicenceToOccupyOnSite raster', () => {
-  it('writes PDF + PNG pages for visual s 32 / RTA review', async () => {
+describe('VicLicenceToOccupyOnSite', () => {
+  it('renders payee block and bond+rent account cross-references', async () => {
     const buf = await renderToBuffer(
-      React.createElement(QldLicenceToOccupyOnSite, minimalProps()) as Parameters<typeof renderToBuffer>[0],
+      React.createElement(VicLicenceToOccupyOnSite, minimalProps()) as Parameters<typeof renderToBuffer>[0],
     )
-    const outDir = join(process.cwd(), 'scripts/test-official-form-spike')
-    mkdirSync(outDir, { recursive: true })
-    const pdfPath = join(outDir, 'qld-occupancy-s32-visual-check.pdf')
-    writeFileSync(pdfPath, buf)
-    const pngBase = join(outDir, 'qld-occupancy-s32-visual-check')
-    execSync(`pdftoppm -png -r 150 "${pdfPath}" "${pngBase}"`, { stdio: 'inherit' })
     expect(buf.subarray(0, 5).toString('ascii')).toBe('%PDF-')
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('Jane Owner Trust')
+    expect(text).toContain('123-456')
+    expect(text).toContain('987654321')
+    expect(text).toContain('Alex Resident — 2 Demo Rd, Melbourne VIC 3001')
+    expect(text).toContain('paid to the account set out in clause 11')
+    expect(text).toContain('paid to the same account set out in clause 11')
+    expect(text).toContain('direct credit to the owner account as set out in clause 11')
+    expect(text).not.toContain('powered by Stripe')
+    expect(text).not.toContain('will be provided by the owner')
   })
 })

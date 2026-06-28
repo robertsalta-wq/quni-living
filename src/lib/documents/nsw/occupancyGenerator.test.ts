@@ -49,6 +49,14 @@ function minimalProps(): OccupancyAgreementProps {
     platformLegalName: 'Quinnvestments Pty Ltd',
     platformAcn: '675 990 968',
     platformTradingName: 'Quni Living',
+    payout: {
+      account_name: 'Jane Principal Trust',
+      bsb: '123456',
+      account_number: '987654321',
+    },
+    paymentReference: 'Alex Resident — 2 Demo Rd, Sydney NSW 2001',
+    schemeApplies: false,
+    qldBondRemittancePreference: null,
     specialConditions: [],
     bookingNotes: null,
     houseRules: null,
@@ -87,6 +95,13 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(text).toContain('width=120;height=28')
     expect(text).toContain('Quinnvestments Pty Ltd (ACN 675 990 968) trading as Quni Living')
     expect(text).not.toContain('Quni Living Pty Ltd')
+    expect(text).toContain('Jane Principal Trust')
+    expect(text).toContain('123-456')
+    expect(text).toContain('987654321')
+    expect(text).toContain('Alex Resident — 2 Demo Rd, Sydney NSW 2001')
+    expect(text).toContain('paid to the account set out in clause 11')
+    expect(text).toContain('paid to the same account set out in clause 11')
+    expect(text).not.toContain('will be provided by the Principal')
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {
@@ -100,5 +115,17 @@ describe('NswLicenceToOccupyOnSite', () => {
     const text = parsed.text.replace(/\s+/g, ' ')
     expect(text).toContain('None agreed')
     expect(text).toContain('No security deposit is required unless otherwise agreed in writing.')
+  })
+
+  it('falls back to placeholder bank details when payout is absent', async () => {
+    const props = { ...minimalProps(), payout: null, paymentReference: undefined }
+    const buf = await renderToBuffer(
+      React.createElement(NswLicenceToOccupyOnSite, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    expect(text).toContain('will be provided by the Principal')
   })
 })

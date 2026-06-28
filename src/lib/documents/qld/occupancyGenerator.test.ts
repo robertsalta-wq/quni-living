@@ -49,6 +49,14 @@ function minimalProps(): OccupancyAgreementProps {
     platformLegalName: 'Quinnvestments Pty Ltd',
     platformAcn: '675 990 968',
     platformTradingName: 'Quni Living',
+    payout: {
+      account_name: 'Jane Owner Trust',
+      bsb: '123456',
+      account_number: '987654321',
+    },
+    paymentReference: 'Alex Resident — 2 Demo Rd, Brisbane QLD 4001',
+    schemeApplies: true,
+    qldBondRemittancePreference: 'landlord_collects_remits',
     specialConditions: [],
     bookingNotes: null,
     houseRules: null,
@@ -76,6 +84,12 @@ describe('QldLicenceToOccupyOnSite', () => {
     expect(text).not.toMatch(/deducted from amounts payable to the owner/i)
     expect(text).toContain('Quinnvestments Pty Ltd (ACN 675 990 968) trading as Quni Living')
     expect(text).not.toContain('Quni Living Pty Ltd')
+    expect(text).toContain('Jane Owner Trust')
+    expect(text).toContain('123-456')
+    expect(text).toContain('Bond payment — your choice')
+    expect(text).toContain('Pay your host directly')
+    expect(text).toContain('10 days')
+    expect(text).toContain('lodge with')
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {
@@ -89,5 +103,23 @@ describe('QldLicenceToOccupyOnSite', () => {
     const text = parsed.text.replace(/\s+/g, ' ')
     expect(text).toContain('None agreed')
     expect(text).toContain('No bond is required unless otherwise agreed in writing.')
+  })
+
+  it('orders RTA-direct before host step for tenant_choice preference', async () => {
+    const props = {
+      ...minimalProps(),
+      qldBondRemittancePreference: 'tenant_choice' as const,
+    }
+    const buf = await renderToBuffer(
+      React.createElement(QldLicenceToOccupyOnSite, props) as Parameters<typeof renderToBuffer>[0],
+    )
+    const parser = new PDFParse({ data: buf })
+    const parsed = await parser.getText()
+    await parser.destroy()
+    const text = parsed.text.replace(/\s+/g, ' ')
+    const rtaIdx = text.indexOf('Pay through')
+    const hostIdx = text.indexOf('Pay your host directly')
+    expect(rtaIdx).toBeGreaterThan(-1)
+    expect(hostIdx).toBeGreaterThan(rtaIdx)
   })
 })
