@@ -11,7 +11,7 @@ type Props = {
 }
 
 export const renterDashboardPageInsetClass =
-  'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-7 sm:py-10'
+  'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-5 sm:pb-10'
 
 export default function RenterDashboardPageHeader({ activeTab, onTabSelect }: Props) {
   return (

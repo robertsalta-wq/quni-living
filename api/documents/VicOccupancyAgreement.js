@@ -494,14 +494,16 @@ var occupancyMatchPdf = StyleSheet.create({
 });
 function OccupancyMatchFixedHeader({
   documentTitle,
-  subtitle
+  subtitle,
+  watermark
 }) {
   return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerWrap, fixed: true, children: [
     /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.oaHeaderRow, children: [
       /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.brandQuni, children: "Quni" }),
       /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerRightBlock, children: [
         /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerDocTitle, children: documentTitle }),
-        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle })
+        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle }),
+        watermark ? /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.noteItalicMuted, children: watermark }) : null
       ] })
     ] }),
     /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.oaHeaderRule })
@@ -542,10 +544,16 @@ function OccupancyMatchScheduleTable({
 }
 
 // src/lib/platformIdentity.ts
-var DEFAULT_PLATFORM_LEGAL_NAME = "Quni Living Pty Ltd";
-function resolvePlatformLegalEntityName(legalName) {
-  const t = typeof legalName === "string" ? legalName.trim() : "";
-  return t || DEFAULT_PLATFORM_LEGAL_NAME;
+var PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED = "platform legal entity not configured in Business settings";
+function buildLicencePlatformEntityDisplay(fields) {
+  const legal = typeof fields.legalName === "string" ? fields.legalName.trim() : "";
+  if (!legal) throw new Error(PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED);
+  const acn = typeof fields.acn === "string" ? fields.acn.trim() : "";
+  const trading = typeof fields.tradingName === "string" ? fields.tradingName.trim() : "";
+  let display = legal;
+  if (acn) display = `${legal} (ACN ${acn})`;
+  if (trading) display = `${display} trading as ${trading}`;
+  return display;
 }
 
 // src/lib/documents/licenceOccupy/utils.ts
@@ -565,12 +573,26 @@ function formatManagedFeePercent(percent) {
   if (!Number.isFinite(n) || n <= 0) return "7%";
   return `${n.toLocaleString("en-AU", { maximumFractionDigits: 2 })}%`;
 }
-function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY) {
+function ownerServiceFeeParagraphForTier(tier, managedFeePercent, listingFeeDisplay = LISTING_TIER_ACCEPTANCE_FEE_DISPLAY, partyLabel = "Owner") {
+  const party = partyLabel === "Principal" ? "Principal" : partyLabel.toLowerCase();
   if (tier === "managed") {
     const pct = formatManagedFeePercent(managedFeePercent);
-    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the owner before payout to the owner, as disclosed in the owner service agreement and listing terms.`;
+    return `Quni facilitates payment of the weekly licence fee through the Platform. A Managed service fee of ${pct} of the gross weekly licence fee is deducted from amounts payable to the ${party} before payout to the ${party}, as disclosed in the ${party} service agreement and listing terms.`;
   }
-  return `The owner has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the owner separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the owner by the resident, fee-free.`;
+  return `The ${party} has accepted this booking under the Quni Listing service tier. A one-off platform fee of ${listingFeeDisplay} (AUD) is charged to the ${party} separately when the booking is accepted - it is not deducted from the weekly licence fee. The weekly licence fee is paid directly to the ${party} by the resident, fee-free.`;
+}
+
+// src/lib/documents/licenceOccupy/docusealTags.ts
+var LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE = { width: 220, height: 72 };
+var LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE = { width: 120, height: 28 };
+var LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN = {
+  fontSize: 1,
+  color: "#FAF6EE"
+};
+function licenceOccupyDocusealTag(fieldName, role, type, size) {
+  const base = `${fieldName};role=${role};type=${type}`;
+  if (!size) return `{{${base}}}`;
+  return `{{${base};width=${size.width};height=${size.height}}}`;
 }
 
 // src/lib/documents/licenceOccupy/LicenceOccupyDocument.tsx
@@ -591,15 +613,27 @@ function yn(v) {
   if (v === false) return "No";
   return "-";
 }
+function renderTerminationBlocks(blocks) {
+  return blocks.map((block, i) => {
+    if (block.kind === "paragraph") {
+      return /* @__PURE__ */ jsx2(BodyParagraph, { children: block.text }, `tb-p-${i}`);
+    }
+    return /* @__PURE__ */ jsxs2(View2, { children: [
+      block.intro ? /* @__PURE__ */ jsx2(BodyParagraph, { children: block.intro }) : null,
+      block.items.map((item, j) => /* @__PURE__ */ jsx2(Bullet, { children: item }, `tb-b-${i}-${j}`))
+    ] }, `tb-b-${i}`);
+  });
+}
 function LicenceFooter({
   content,
   documentId,
-  generatedAt
+  generatedAt,
+  footerText
 }) {
   return /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerWrapOa, fixed: true, children: [
     /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.footerRuleOa }),
     /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.footerRowOa, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt} \xB7 ${content.draftFooter}` }),
+      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.footerLeftCoral, children: `Quni Living \xB7 ${content.docTitle} \xB7 ${documentId} \xB7 ${generatedAt}${footerText ? ` \xB7 ${footerText}` : ""}` }),
       /* @__PURE__ */ jsx2(
         Text2,
         {
@@ -609,6 +643,26 @@ function LicenceFooter({
       )
     ] })
   ] });
+}
+function DocusealField({
+  label,
+  tag,
+  boxStyle,
+  sized
+}) {
+  if (sized) {
+    return /* @__PURE__ */ jsxs2(View2, { style: boxStyle, children: [
+      /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: label }),
+      /* @__PURE__ */ jsx2(Text2, { style: LICENCE_OCCUPY_DOCUSEAL_TAG_HIDDEN, children: tag })
+    ] });
+  }
+  return /* @__PURE__ */ jsx2(View2, { style: boxStyle, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
+    /* @__PURE__ */ jsxs2(Text2, { style: occupancyMatchPdf.sigLabel, children: [
+      label,
+      " "
+    ] }),
+    /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: tag })
+  ] }) });
 }
 function BodyParagraph({ children }) {
   return /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.bodyParagraph, children });
@@ -623,17 +677,34 @@ function PageShell({
   content,
   documentId,
   generatedAt,
+  footerText,
   children
 }) {
   return /* @__PURE__ */ jsxs2(Page, { size: "A4", style: occupancyMatchPdf.page, children: [
-    /* @__PURE__ */ jsx2(OccupancyMatchFixedHeader, { documentTitle: content.docTitle, subtitle: content.docSubtitle }),
-    /* @__PURE__ */ jsx2(LicenceFooter, { content, documentId, generatedAt }),
+    /* @__PURE__ */ jsx2(
+      OccupancyMatchFixedHeader,
+      {
+        documentTitle: content.docTitle,
+        subtitle: content.docSubtitle,
+        watermark: content.watermark
+      }
+    ),
+    /* @__PURE__ */ jsx2(
+      LicenceFooter,
+      {
+        content,
+        documentId,
+        generatedAt,
+        footerText
+      }
+    ),
     children
   ] });
 }
 function ScheduleSummary({
   content,
-  props
+  props,
+  partyLabel
 }) {
   const { landlord, tenant, premises, term, rent, bond } = props;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
@@ -648,9 +719,9 @@ function ScheduleSummary({
         value: String(premises.roomsRentedToResidents)
       }
     ] : [],
-    { label: "Owner:", value: ownerDisplay },
-    { label: "Owner email:", value: landlord.email },
-    { label: "Owner phone:", value: landlord.phone },
+    { label: `${partyLabel}:`, value: ownerDisplay },
+    { label: `${partyLabel} email:`, value: landlord.email },
+    { label: `${partyLabel} phone:`, value: landlord.phone },
     { label: "Resident:", value: tenant.fullName },
     { label: "Resident email:", value: tenant.email },
     { label: "Resident phone:", value: tenant.phone },
@@ -675,8 +746,16 @@ function LicenceOccupyDocument({
   props
 }) {
   const { documentId, generatedAt, landlord, tenant, rent, bond, houseRules, specialConditions, bookingNotes } = props;
+  const partyLabel = content.partyLabel ?? "Owner";
+  const partyLabelLower = partyLabel.toLowerCase();
+  const headerWatermark = content.watermark;
+  const footerText = headerWatermark ? "" : content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
-  const entityName = resolvePlatformLegalEntityName(null);
+  const platformEntityDisplay = buildLicencePlatformEntityDisplay({
+    legalName: props.platformLegalName,
+    acn: props.platformAcn,
+    tradingName: props.platformTradingName
+  });
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
   const houseRulesLines = houseRules?.trim() ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean) : [...content.defaultHouseRules];
   const extraLines = [
@@ -685,20 +764,52 @@ function LicenceOccupyDocument({
   ];
   const serviceTier = props.serviceTier === "managed" ? "managed" : "listing";
   const hasExtraTerms = extraLines.length > 0;
+  const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0;
   const conditionReportClauseNum = 12;
-  const additionalTermsClauseNum = 13;
-  const executionClauseNum = hasExtraTerms ? 14 : 13;
+  const continuationClauseNum = hasContinuation ? 13 : null;
+  const additionalTermsClauseNum = hasContinuation ? 14 : 13;
+  const executionClauseNum = hasContinuation ? hasExtraTerms ? 15 : 14 : hasExtraTerms ? 14 : 13;
+  const entrySectionTitle = content.entrySectionTitle ?? "Owner's right of entry";
+  const terminationSectionTitle = content.terminationSectionTitle ?? "Termination";
+  const platformSectionTitle = content.platformSectionTitle ?? "Quni platform and owner service fee";
+  const houseRulesIntro = content.houseRulesIntro ?? `The resident must comply with the following house rules. Additional rules may be notified by the ${partyLabelLower} in writing.`;
+  const pageShellProps = { content, documentId, generatedAt, footerText };
+  const docusealSized = content.docusealSizedSignatureFields === true;
+  const principalSignatureTag = licenceOccupyDocusealTag(
+    `${partyLabel} Signature`,
+    "First Party",
+    "signature",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : void 0
+  );
+  const principalDateTag = licenceOccupyDocusealTag(
+    `${partyLabel} Sign Date`,
+    "First Party",
+    "date",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
+  );
+  const residentSignatureTag = licenceOccupyDocusealTag(
+    "Resident Signature",
+    "Second Party",
+    "signature",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_SIGNATURE_SIZE : void 0
+  );
+  const residentDateTag = licenceOccupyDocusealTag(
+    "Resident Sign Date",
+    "Second Party",
+    "date",
+    docusealSized ? LICENCE_OCCUPY_DOCUSEAL_DATE_SIZE : void 0
+  );
   return /* @__PURE__ */ jsxs2(Document, { children: [
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }),
-      /* @__PURE__ */ jsx2(ScheduleSummary, { content, props }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      !headerWatermark ? /* @__PURE__ */ jsx2(Text2, { style: [occupancyMatchPdf.noteItalicMuted, { marginBottom: 8 }], children: content.draftFooter }) : null,
+      /* @__PURE__ */ jsx2(ScheduleSummary, { content, props, partyLabel }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 1, title: "Nature of arrangement" }),
       content.natureParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `n-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 2, title: "Room and shared areas" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.roomSharedIntro })
+      content.roomSharedParagraphs ? content.roomSharedParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `r-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.roomSharedIntro })
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: "Owner's right of entry" }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 3, title: entrySectionTitle }),
       content.entryParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `e-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 4, title: "Financial terms" }),
       /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
@@ -711,41 +822,60 @@ function LicenceOccupyDocument({
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 5, title: content.bond.sectionTitle }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bond.intro }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: bondAmountLine }),
-      content.bond.bullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `b-${i}`))
+      content.bond.bullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `b-${i}`)),
+      content.bond.afterBullets?.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `ba-${i}`))
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: "Termination" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationIntro }),
-      /* @__PURE__ */ jsx2(Bullet, { children: licenceTerminationNoticePhrase(rent.paymentMethod) }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: "Either party may end the licence immediately where:" }),
-      content.terminationGrounds.map((g, i) => /* @__PURE__ */ jsx2(Bullet, { children: g }, `t-${i}`)),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory }),
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 6, title: terminationSectionTitle }),
+      content.terminationBlocks ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        renderTerminationBlocks(content.terminationBlocks),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory })
+      ] }) : /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationIntro }),
+        /* @__PURE__ */ jsx2(Bullet, { children: licenceTerminationNoticePhrase(rent.paymentMethod) }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: "Either party may end the licence immediately where:" }),
+        content.terminationGrounds.map((g, i) => /* @__PURE__ */ jsx2(Bullet, { children: g }, `t-${i}`)),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.terminationNoStatutory })
+      ] }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 7, title: "Australian Consumer Law" }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.aclParagraph }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 8, title: "House rules" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: "The resident must comply with the following house rules. Additional rules may be notified by the owner in writing." }),
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: houseRulesIntro }),
+      content.houseRulesPrecedenceParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.houseRulesPrecedenceParagraph }) : null,
       houseRulesLines.map((r, i) => /* @__PURE__ */ jsx2(Bullet, { children: r }, `h-${i}`)),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 9, title: "Care of room and shared areas" }),
       content.careBullets.map((b, i) => /* @__PURE__ */ jsx2(Bullet, { children: b }, `c-${i}`))
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 10, title: "Disputes" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
-      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: "Quni platform and owner service fee" }),
+      content.disputesParagraphs ? content.disputesParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `d-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
+      /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: platformSectionTitle }),
       /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
-        entityName,
+        platformEntityDisplay,
         ' (the "Platform") ',
         content.platformIntroPrefix
       ] }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(serviceTier, rent.platformFeePercent) }),
+      content.platformWarrantyParagraph ? /* @__PURE__ */ jsx2(BodyParagraph, { children: content.platformWarrantyParagraph }) : null,
+      /* @__PURE__ */ jsx2(BodyParagraph, { children: ownerServiceFeeParagraphForTier(
+        serviceTier,
+        rent.platformFeePercent,
+        void 0,
+        partyLabel
+      ) }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.feeFreeBankTransfer }),
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.bankDetailsTemplate })
     ] }),
-    /* @__PURE__ */ jsxs2(PageShell, { content, documentId, generatedAt, children: [
+    /* @__PURE__ */ jsxs2(PageShell, { ...pageShellProps, children: [
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: conditionReportClauseNum, title: "Condition report" }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
-      /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing }),
+      content.conditionReportParagraphs ? content.conditionReportParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `cr-${i}`)) : /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportIntro }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportReturn }),
+        /* @__PURE__ */ jsx2(BodyParagraph, { children: content.conditionReportOutgoing })
+      ] }),
+      hasContinuation && content.continuationParagraphs ? /* @__PURE__ */ jsxs2(Fragment, { children: [
+        /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: continuationClauseNum, title: "Continuation after fixed period" }),
+        content.continuationParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `cont-${i}`))
+      ] }) : null,
       hasExtraTerms ? /* @__PURE__ */ jsxs2(Fragment, { children: [
         /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: additionalTermsClauseNum, title: "Additional terms" }),
         extraLines.map((line, i) => /* @__PURE__ */ jsx2(Bullet, { children: line }, `x-${i}`))
@@ -754,31 +884,51 @@ function LicenceOccupyDocument({
       /* @__PURE__ */ jsx2(BodyParagraph, { children: content.executionIntro }),
       /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigTable, children: [
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigHeaderRow, children: [
-          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Owner" }) }),
+          /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCell, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: partyLabel }) }),
           /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.sigHeaderCellLast, children: /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.thText, children: "Resident" }) })
         ] }),
         /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigBodyRow, children: [
           /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigCol, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: ownerDisplay }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Owner Signature;role=First Party;type=signature}}" })
-            ] }) }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Owner Sign Date;role=First Party;type=date}}" })
-            ] }) })
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Signature",
+                tag: principalSignatureTag,
+                boxStyle: occupancyMatchPdf.docusealSignatureFieldBox,
+                sized: docusealSized
+              }
+            ),
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Date",
+                tag: principalDateTag,
+                boxStyle: occupancyMatchPdf.docusealDateFieldBox,
+                sized: docusealSized
+              }
+            )
           ] }),
           /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigColLast, children: [
             /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: tenant.fullName }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealSignatureFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Resident Signature;role=Second Party;type=signature}}" })
-            ] }) }),
-            /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-              /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Resident Sign Date;role=Second Party;type=date}}" })
-            ] }) })
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Signature",
+                tag: residentSignatureTag,
+                boxStyle: occupancyMatchPdf.docusealSignatureFieldBox,
+                sized: docusealSized
+              }
+            ),
+            /* @__PURE__ */ jsx2(
+              DocusealField,
+              {
+                label: "Date",
+                tag: residentDateTag,
+                boxStyle: occupancyMatchPdf.docusealDateFieldBox,
+                sized: docusealSized
+              }
+            )
           ] })
         ] })
       ] })

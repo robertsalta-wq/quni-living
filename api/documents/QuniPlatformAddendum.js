@@ -494,14 +494,16 @@ var occupancyMatchPdf = StyleSheet.create({
 });
 function OccupancyMatchFixedHeader({
   documentTitle,
-  subtitle
+  subtitle,
+  watermark
 }) {
   return /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerWrap, fixed: true, children: [
     /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.oaHeaderRow, children: [
       /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.brandQuni, children: "Quni" }),
       /* @__PURE__ */ jsxs(View, { style: occupancyMatchPdf.headerRightBlock, children: [
         /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerDocTitle, children: documentTitle }),
-        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle })
+        /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.headerSubtitle, children: subtitle }),
+        watermark ? /* @__PURE__ */ jsx(Text, { style: occupancyMatchPdf.noteItalicMuted, children: watermark }) : null
       ] })
     ] }),
     /* @__PURE__ */ jsx(View, { style: occupancyMatchPdf.oaHeaderRule })

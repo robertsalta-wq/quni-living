@@ -27,7 +27,7 @@ function landlordTabClass(isActive: boolean): string {
 }
 
 const renterTabBaseClass =
-  'inline-flex items-center justify-center gap-1 min-h-[44px] sm:min-h-0 px-0 sm:px-2 py-2.5 text-[13px] sm:text-sm border-b-2 transition-colors shrink-0'
+  'flex w-full sm:inline-flex sm:w-auto items-center justify-center gap-0.5 min-h-[44px] sm:min-h-0 min-w-0 px-0 sm:px-2 py-2.5 text-[12px] sm:text-sm border-b-2 transition-colors whitespace-nowrap'
 
 function renterTabClass(isActive: boolean): string {
   return [
@@ -104,9 +104,9 @@ export default function UserDashboardSectionNav({
   }
 
   return (
-    <div className="border-b border-[#E5E4E7] mb-6">
+    <div className="border-b border-[#E5E4E7] mb-6 -mx-4 overflow-hidden sm:mx-0">
       <nav
-        className="flex w-full min-w-0 items-end justify-between -mb-px overflow-x-hidden sm:justify-start sm:gap-5"
+        className="grid w-full min-w-0 grid-cols-4 items-end -mb-px sm:flex sm:justify-start sm:gap-5"
         aria-label="Dashboard sections"
       >
         <button
@@ -114,25 +114,25 @@ export default function UserDashboardSectionNav({
           onClick={() => onSelect?.('overview')}
           className={renterTabClass(active === 'overview')}
         >
-          Overview
+          <span className="truncate">Overview</span>
         </button>
         <button
           type="button"
           onClick={() => onSelect?.('bookings')}
           className={renterTabClass(active === 'bookings')}
         >
-          Bookings
+          <span className="truncate">Bookings</span>
         </button>
         <Link to="/messages" className={renterTabClass(active === 'messages')}>
-          Messages
+          <span className="truncate">Messages</span>
           {unreadMessageCount > 0 && (
-            <span className="tabular-nums inline-flex items-center justify-center min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#FF6F61] text-[10px] font-bold text-white">
+            <span className="tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#FF6F61] text-[9px] font-bold text-white leading-none">
               {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
             </span>
           )}
         </Link>
         <Link to="/student-profile" className={renterTabClass(active === 'profile')}>
-          Profile
+          <span className="truncate">Profile</span>
         </Link>
       </nav>
     </div>

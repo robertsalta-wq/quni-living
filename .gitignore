@@ -52,6 +52,7 @@ scripts/test-output.pdf
 scripts/*.pdf
 scripts/test-*.pdf
 scripts/test-*.mjs
+scripts/test-*.png
 scripts/test-no-bond-chunk1/
 # Vitest snapshot / scratch output from AI verification tests
 src/lib/__test_output__/
@@ -73,3 +74,4 @@ supabase/.temp/
 
 # Tokyo migration reference dumps (local only; Sydney is production)
 supabase/tokyo_*.sql
+scripts/test-official-form-spike/*.pdf
