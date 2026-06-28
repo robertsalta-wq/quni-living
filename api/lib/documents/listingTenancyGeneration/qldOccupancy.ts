@@ -14,6 +14,13 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { fetchPlatformBusinessIdentityForDocuments } from '../../platformConfig.js'
+import type { PlatformBusinessIdentity } from '../../platformConfig.js'
+import {
+  licenceFacilitatedThroughLine,
+  licenceManagedPaymentMethod,
+} from './occupancyPlatformProse.js'
+import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 import {
   isQldOnSiteBoarderLodgerListing,
   parseRoomsRentedToResidents,
@@ -104,6 +111,7 @@ type LoadedQldOccupancyContext = {
   paymentMethod: string
   coTenantSpecialConditions: string[]
   roomsForResidents: number | null
+  platformIdentity: PlatformBusinessIdentity
 }
 
 async function loadQldOccupancyContext(
@@ -214,6 +222,11 @@ async function loadQldOccupancyContext(
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
+  const platformIdentity = await fetchPlatformBusinessIdentityForDocuments(admin)
+  if (!platformIdentity.legalName.trim()) {
+    return { ok: false, status: 500, error: PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED }
+  }
+
   const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const platformFeePercent =
     serviceTier === 'managed'
@@ -222,7 +235,7 @@ async function loadQldOccupancyContext(
   const paymentMethod =
     serviceTier === 'listing'
       ? "Direct credit to Principal's account (fee-free). Reference: resident name and property address."
-      : 'Via Quni Living platform (quni.com.au)'
+      : licenceManagedPaymentMethod(platformIdentity.tradingName)
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
@@ -249,6 +262,7 @@ async function loadQldOccupancyContext(
       paymentMethod,
       coTenantSpecialConditions,
       roomsForResidents,
+      platformIdentity,
     },
   }
 }
@@ -305,8 +319,11 @@ function buildQldOccupancyPdfProps(ctx: LoadedQldOccupancyContext, documentId: s
       paymentMethod: ctx.paymentMethod,
     },
     bond: { amount: ctx.bondNum },
+    platformLegalName: ctx.platformIdentity.legalName,
+    platformAcn: ctx.platformIdentity.acn || undefined,
+    platformTradingName: ctx.platformIdentity.tradingName || undefined,
     specialConditions: [
-      'This licence is facilitated through the Quni Living platform (quni.com.au).',
+      licenceFacilitatedThroughLine(ctx.platformIdentity.tradingName),
       "Where a bond is required under this Licence, it must not exceed the equivalent of four (4) weeks' licence fee. The bond must be lodged with the Residential Tenancies Authority (RTA) and may be lodged either by the resident directly through RTA Web Services, or by the Principal within 10 days of receiving it. The bond is held by the RTA — not by the Principal and not by Quni; where Quni's payment facilities are used, Quni acts only as a conduit for transmission and is never the custodian of any bond. At the end of the occupancy the bond is dealt with through the RTA's Refund of Rental Bond process. Any claim by the Principal against the bond will be supported by evidence (including the condition reports and photographs) provided to the resident, and unresolved claims are dealt with through the RTA's dispute resolution service and, if necessary, QCAT.",
       ...(ctx.roomsForResidents != null ? [qldSection43PdfAcknowledgement(ctx.roomsForResidents)] : []),
       ...ctx.coTenantSpecialConditions,

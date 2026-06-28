@@ -10,7 +10,7 @@ import {
   OccupancyMatchSectionHeading,
   occupancyMatchPdf,
 } from '../quniDocumentPdfTheme.js'
-import { resolvePlatformLegalEntityName } from '../../platformIdentity.js'
+import { buildLicencePlatformEntityDisplay } from '../../platformIdentity.js'
 import type { LicenceOccupyContent, LicenceOccupyTerminationBlock } from './contentTypes.js'
 import {
   licenceTerminationNoticePhrase,
@@ -236,7 +236,11 @@ export function LicenceOccupyDocument({
     ? `${landlord.fullName} (${landlord.companyName})`
     : landlord.fullName
 
-  const entityName = resolvePlatformLegalEntityName(null)
+  const platformEntityDisplay = buildLicencePlatformEntityDisplay({
+    legalName: props.platformLegalName,
+    acn: props.platformAcn,
+    tradingName: props.platformTradingName,
+  })
 
   const bondAmountLine =
     bond.amount != null && Number.isFinite(bond.amount)
@@ -375,7 +379,7 @@ export function LicenceOccupyDocument({
           : <BodyParagraph>{content.disputesParagraph}</BodyParagraph>}
         <OccupancyMatchSectionHeading num={11} title={platformSectionTitle} />
         <BodyParagraph>
-          {entityName} (the &quot;Platform&quot;) {content.platformIntroPrefix}
+          {platformEntityDisplay} (the &quot;Platform&quot;) {content.platformIntroPrefix}
         </BodyParagraph>
         {content.platformWarrantyParagraph ? (
           <BodyParagraph>{content.platformWarrantyParagraph}</BodyParagraph>

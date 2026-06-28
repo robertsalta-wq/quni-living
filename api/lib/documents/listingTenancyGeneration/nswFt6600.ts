@@ -418,6 +418,7 @@ async function loadNswFt6600Context(
 
   let platformIdentity = {
     legalName: '',
+    tradingName: '',
     abn: '',
     acn: '',
     directorName: '',

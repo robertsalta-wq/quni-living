@@ -14,6 +14,14 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { fetchPlatformBusinessIdentityForDocuments } from '../../platformConfig.js'
+import type { PlatformBusinessIdentity } from '../../platformConfig.js'
+import {
+  licenceFacilitatedThroughLine,
+  licenceManagedPaymentMethod,
+  licencePlatformBrandShort,
+} from './occupancyPlatformProse.js'
+import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
@@ -98,6 +106,7 @@ type LoadedNswOccupancyContext = {
   platformFeePercent: number
   paymentMethod: string
   coTenantSpecialConditions: string[]
+  platformIdentity: PlatformBusinessIdentity
 }
 
 async function loadNswOccupancyContext(
@@ -202,6 +211,11 @@ async function loadNswOccupancyContext(
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
 
+  const platformIdentity = await fetchPlatformBusinessIdentityForDocuments(admin)
+  if (!platformIdentity.legalName.trim()) {
+    return { ok: false, status: 500, error: PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED }
+  }
+
   const serviceTier = booking.service_tier_final === 'managed' ? 'managed' : 'listing'
   const platformFeePercent =
     serviceTier === 'managed'
@@ -210,7 +224,7 @@ async function loadNswOccupancyContext(
   const paymentMethod =
     serviceTier === 'listing'
       ? 'Direct credit to Principal account (fee-free). Reference: resident name and property address.'
-      : 'Via Quni Living platform (quni.com.au)'
+      : licenceManagedPaymentMethod(platformIdentity.tradingName)
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
 
@@ -231,6 +245,7 @@ async function loadNswOccupancyContext(
       platformFeePercent,
       paymentMethod,
       coTenantSpecialConditions,
+      platformIdentity,
     },
   }
 }
@@ -286,9 +301,12 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
       paymentMethod: ctx.paymentMethod,
     },
     bond: { amount: ctx.bondNum },
+    platformLegalName: ctx.platformIdentity.legalName,
+    platformAcn: ctx.platformIdentity.acn || undefined,
+    platformTradingName: ctx.platformIdentity.tradingName || undefined,
     specialConditions: [
-      'This licence is facilitated through the Quni Living platform (quni.com.au).',
-      'Any security deposit is held directly by the Principal. Quni Living does not hold or manage security deposits.',
+      licenceFacilitatedThroughLine(ctx.platformIdentity.tradingName),
+      `Any security deposit is held directly by the Principal. ${licencePlatformBrandShort(ctx.platformIdentity.tradingName)} does not hold or manage security deposits.`,
       'The weekly licence fee is paid directly to the Principal by fee-free direct credit and is not collected through the platform.',
       ...ctx.coTenantSpecialConditions,
     ],

@@ -37,3 +37,31 @@ export function resolvePlatformLegalEntityName(legalName?: string | null): strin
   const t = typeof legalName === 'string' ? legalName.trim() : ''
   return t || DEFAULT_PLATFORM_LEGAL_NAME
 }
+
+/** Thrown when `business.legal_name` is missing at licence PDF generation. */
+export const PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED =
+  'platform legal entity not configured in Business settings'
+
+export type LicencePlatformEntityFields = {
+  legalName?: string | null
+  acn?: string | null
+  tradingName?: string | null
+}
+
+/**
+ * Inline platform entity for Licence to Occupy clause 11, e.g.
+ * "Quinnvestments Pty Ltd (ACN 675 990 968) trading as Quni Living".
+ * ACN is rendered as stored in platform_config (no normalisation).
+ */
+export function buildLicencePlatformEntityDisplay(fields: LicencePlatformEntityFields): string {
+  const legal = typeof fields.legalName === 'string' ? fields.legalName.trim() : ''
+  if (!legal) throw new Error(PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED)
+
+  const acn = typeof fields.acn === 'string' ? fields.acn.trim() : ''
+  const trading = typeof fields.tradingName === 'string' ? fields.tradingName.trim() : ''
+
+  let display = legal
+  if (acn) display = `${legal} (ACN ${acn})`
+  if (trading) display = `${display} trading as ${trading}`
+  return display
+}

@@ -46,6 +46,9 @@ function minimalProps(): OccupancyAgreementProps {
       paymentMethod: 'Direct credit to Principal account (fee-free)',
     },
     bond: { amount: 1200 },
+    platformLegalName: 'Quinnvestments Pty Ltd',
+    platformAcn: '675 990 968',
+    platformTradingName: 'Quni Living',
     specialConditions: [],
     bookingNotes: null,
     houseRules: null,
@@ -82,6 +85,8 @@ describe('NswLicenceToOccupyOnSite', () => {
     expect(watermarkMatches.length).toBe(6)
     expect(text).toContain('width=220;height=72')
     expect(text).toContain('width=120;height=28')
+    expect(text).toContain('Quinnvestments Pty Ltd (ACN 675 990 968) trading as Quni Living')
+    expect(text).not.toContain('Quni Living Pty Ltd')
   })
 
   it('renders no-bond schedule and body copy when bond amount is null', async () => {

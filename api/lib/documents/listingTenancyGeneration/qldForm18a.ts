@@ -312,6 +312,7 @@ async function loadQldForm18aContext(
 
   let platformIdentity = {
     legalName: '',
+    tradingName: '',
     abn: '',
     acn: '',
     directorName: '',

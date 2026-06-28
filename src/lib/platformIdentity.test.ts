@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildLicencePlatformEntityDisplay,
   buildPlatformIdentificationLine,
   DEFAULT_PLATFORM_LEGAL_NAME,
   formatAustralianAbn,
+  PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED,
   resolvePlatformLegalEntityName,
 } from './platformIdentity.js'
 
@@ -40,5 +42,50 @@ describe('resolvePlatformLegalEntityName', () => {
 
   it('uses provided name', () => {
     expect(resolvePlatformLegalEntityName('  Acme Co Pty Ltd  ')).toBe('Acme Co Pty Ltd')
+  })
+})
+
+describe('buildLicencePlatformEntityDisplay', () => {
+  it('throws when legal name is empty (strict)', () => {
+    expect(() => buildLicencePlatformEntityDisplay({ legalName: '' })).toThrow(
+      PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED,
+    )
+    expect(() => buildLicencePlatformEntityDisplay({ legalName: null, tradingName: 'Quni Living' })).toThrow(
+      PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED,
+    )
+  })
+
+  it('renders legal name only', () => {
+    expect(buildLicencePlatformEntityDisplay({ legalName: 'Quinnvestments Pty Ltd' })).toBe(
+      'Quinnvestments Pty Ltd',
+    )
+  })
+
+  it('renders legal name and ACN as stored', () => {
+    expect(
+      buildLicencePlatformEntityDisplay({
+        legalName: 'Quinnvestments Pty Ltd',
+        acn: '675 990 968',
+      }),
+    ).toBe('Quinnvestments Pty Ltd (ACN 675 990 968)')
+  })
+
+  it('renders legal name and trading name', () => {
+    expect(
+      buildLicencePlatformEntityDisplay({
+        legalName: 'Quinnvestments Pty Ltd',
+        tradingName: 'Quni Living',
+      }),
+    ).toBe('Quinnvestments Pty Ltd trading as Quni Living')
+  })
+
+  it('renders legal name, ACN, and trading name', () => {
+    expect(
+      buildLicencePlatformEntityDisplay({
+        legalName: 'Quinnvestments Pty Ltd',
+        acn: '675 990 968',
+        tradingName: 'Quni Living',
+      }),
+    ).toBe('Quinnvestments Pty Ltd (ACN 675 990 968) trading as Quni Living')
   })
 })

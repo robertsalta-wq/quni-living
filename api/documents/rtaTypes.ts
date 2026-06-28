@@ -70,6 +70,10 @@ export type OccupancyAgreementProps = {
   term: RtaTermPdf
   rent: RtaRentPdf
   bond: RtaBondPdf
+  /** From platform_config (Business settings) — required for clause 11 entity line. */
+  platformLegalName?: string | null
+  platformAcn?: string | null
+  platformTradingName?: string | null
   specialConditions: string[]
   bookingNotes: string | null
   /** Property house rules text; omit PDF section when null or whitespace-only. */

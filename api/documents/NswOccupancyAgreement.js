@@ -544,10 +544,16 @@ function OccupancyMatchScheduleTable({
 }
 
 // src/lib/platformIdentity.ts
-var DEFAULT_PLATFORM_LEGAL_NAME = "Quni Living Pty Ltd";
-function resolvePlatformLegalEntityName(legalName) {
-  const t = typeof legalName === "string" ? legalName.trim() : "";
-  return t || DEFAULT_PLATFORM_LEGAL_NAME;
+var PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED = "platform legal entity not configured in Business settings";
+function buildLicencePlatformEntityDisplay(fields) {
+  const legal = typeof fields.legalName === "string" ? fields.legalName.trim() : "";
+  if (!legal) throw new Error(PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED);
+  const acn = typeof fields.acn === "string" ? fields.acn.trim() : "";
+  const trading = typeof fields.tradingName === "string" ? fields.tradingName.trim() : "";
+  let display = legal;
+  if (acn) display = `${legal} (ACN ${acn})`;
+  if (trading) display = `${display} trading as ${trading}`;
+  return display;
 }
 
 // src/lib/documents/licenceOccupy/utils.ts
@@ -745,7 +751,11 @@ function LicenceOccupyDocument({
   const headerWatermark = content.watermark;
   const footerText = headerWatermark ? "" : content.draftFooter;
   const ownerDisplay = landlord.companyName ? `${landlord.fullName} (${landlord.companyName})` : landlord.fullName;
-  const entityName = resolvePlatformLegalEntityName(null);
+  const platformEntityDisplay = buildLicencePlatformEntityDisplay({
+    legalName: props.platformLegalName,
+    acn: props.platformAcn,
+    tradingName: props.platformTradingName
+  });
   const bondAmountLine = bond.amount != null && Number.isFinite(bond.amount) ? `The agreed ${content.bond.scheduleLabel.toLowerCase()} is ${formatMoney(bond.amount)}.` : `No ${content.bond.scheduleLabel.toLowerCase()} is required unless otherwise agreed in writing.`;
   const houseRulesLines = houseRules?.trim() ? houseRules.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean) : [...content.defaultHouseRules];
   const extraLines = [
@@ -841,7 +851,7 @@ function LicenceOccupyDocument({
       content.disputesParagraphs ? content.disputesParagraphs.map((p, i) => /* @__PURE__ */ jsx2(BodyParagraph, { children: p }, `d-${i}`)) : /* @__PURE__ */ jsx2(BodyParagraph, { children: content.disputesParagraph }),
       /* @__PURE__ */ jsx2(OccupancyMatchSectionHeading, { num: 11, title: platformSectionTitle }),
       /* @__PURE__ */ jsxs2(BodyParagraph, { children: [
-        entityName,
+        platformEntityDisplay,
         ' (the "Platform") ',
         content.platformIntroPrefix
       ] }),

@@ -296,6 +296,7 @@ async function loadVicForm1Context(
 
   let platformIdentity = {
     legalName: '',
+    tradingName: '',
     abn: '',
     acn: '',
     directorName: '',

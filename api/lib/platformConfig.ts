@@ -95,6 +95,7 @@ const BANK_KEYS_FOR_RTA = [
 
 const BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS = [
   PLATFORM_CONFIG_KEYS.BUSINESS_LEGAL_NAME,
+  PLATFORM_CONFIG_KEYS.BUSINESS_TRADING_NAME,
   PLATFORM_CONFIG_KEYS.BUSINESS_ABN,
   PLATFORM_CONFIG_KEYS.BUSINESS_ACN,
   PLATFORM_CONFIG_KEYS.BUSINESS_DIRECTOR_NAME,
@@ -102,6 +103,7 @@ const BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS = [
 
 export type PlatformBusinessIdentity = {
   legalName: string
+  tradingName: string
   abn: string
   acn: string
   directorName: string
@@ -131,6 +133,7 @@ export async function fetchPlatformBusinessIdentityForDocuments(
   const map = await fetchPlatformConfigValueMap(client, [...BUSINESS_IDENTITY_KEYS_FOR_DOCUMENTS])
   return {
     legalName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_LEGAL_NAME] ?? '').trim(),
+    tradingName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_TRADING_NAME] ?? '').trim(),
     abn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ABN] ?? '').trim(),
     acn: (map[PLATFORM_CONFIG_KEYS.BUSINESS_ACN] ?? '').trim(),
     directorName: (map[PLATFORM_CONFIG_KEYS.BUSINESS_DIRECTOR_NAME] ?? '').trim(),
