@@ -59,6 +59,12 @@ export type RtaBondPdf = {
   amount: number | null
 }
 
+export type OccupancyPayeePdf = {
+  account_name: string
+  bsb: string
+  account_number: string
+}
+
 export type OccupancyAgreementProps = {
   documentId: string
   generatedAt: string
@@ -78,6 +84,14 @@ export type OccupancyAgreementProps = {
   bookingNotes: string | null
   /** Property house rules text; omit PDF section when null or whitespace-only. */
   houseRules: string | null
+  /** Listing boarder/lodger payee account (property_payout_details at generation time). */
+  payout?: OccupancyPayeePdf | null
+  /** Bank transfer reference: renter name — property address. */
+  paymentReference?: string
+  /** QLD T1 bond remittance preference (effective; null when not QLD). */
+  qldBondRemittancePreference?: 'landlord_collects_remits' | 'tenant_choice' | null
+  /** Whether statutory bond scheme applies (QLD T1 boarder/lodger). */
+  schemeApplies?: boolean
 }
 
 /** Landlord's agent row on the FT6600 schedule (optional). */

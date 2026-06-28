@@ -4,7 +4,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import { OccupancyAgreement } from '../../../documents/NswOccupancyAgreement.js'
-import type { OccupancyAgreementProps } from '../../../documents/rtaTypes.js'
+import type { OccupancyAgreementProps, OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
@@ -21,6 +21,7 @@ import {
   licenceManagedPaymentMethod,
   licencePlatformBrandShort,
 } from './occupancyPlatformProse.js'
+import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
@@ -107,6 +108,10 @@ type LoadedNswOccupancyContext = {
   paymentMethod: string
   coTenantSpecialConditions: string[]
   platformIdentity: PlatformBusinessIdentity
+  payout: OccupancyPayeePdf | null
+  paymentReference: string
+  qldBondRemittancePreference: 'landlord_collects_remits' | 'tenant_choice' | null
+  schemeApplies: boolean
 }
 
 async function loadNswOccupancyContext(
@@ -151,7 +156,8 @@ async function loadNswOccupancyContext(
         bond_weeks,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        qld_bond_remittance_preference
       )
     `,
     )
@@ -223,10 +229,19 @@ async function loadNswOccupancyContext(
       : 0
   const paymentMethod =
     serviceTier === 'listing'
-      ? 'Direct credit to Principal account (fee-free). Reference: resident name and property address.'
+      ? 'Direct credit (see clause 11)'
       : licenceManagedPaymentMethod(platformIdentity.tradingName)
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
+
+  const payeeFields = await loadOccupancyListingPayeeFields(admin, {
+    serviceTier,
+    propertyId: booking.property_id,
+    prop,
+    moveIn,
+    sp,
+    propertyAddressLine: propertyAddressLine(prop),
+  })
 
   return {
     ok: true,
@@ -246,6 +261,10 @@ async function loadNswOccupancyContext(
       paymentMethod,
       coTenantSpecialConditions,
       platformIdentity,
+      payout: payeeFields.payout,
+      paymentReference: payeeFields.paymentReference,
+      qldBondRemittancePreference: payeeFields.qldBondRemittancePreference,
+      schemeApplies: payeeFields.schemeApplies,
     },
   }
 }
@@ -312,6 +331,10 @@ function buildNswOccupancyPdfProps(ctx: LoadedNswOccupancyContext, documentId: s
     ],
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
+    payout: ctx.payout,
+    paymentReference: ctx.paymentReference,
+    qldBondRemittancePreference: ctx.qldBondRemittancePreference,
+    schemeApplies: ctx.schemeApplies,
   }
 }
 

@@ -4,7 +4,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../../../../src/lib/database.types.js'
 import { VicLicenceToOccupyOnSite } from '../../../documents/VicOccupancyAgreement.js'
-import type { OccupancyAgreementProps } from '../../../documents/rtaTypes.js'
+import type { OccupancyAgreementProps, OccupancyPayeePdf } from '../../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../../booking/occupancyLeaseContext.js'
 import { bookingAllowsTenancyDocumentGeneration } from '../../booking/listingDocumentGenerationEligibility.js'
 import type { ListingDocGenResult, ListingPreflightResult } from '../../booking/listingAgreementTypes.js'
@@ -14,6 +14,7 @@ import {
 } from '../../booking/listingContextLoad.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
 import { getManagedLandlordFeePercentForProperty, sendForSigning } from '../../docuseal.js'
+import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
 
@@ -98,6 +99,10 @@ type LoadedVicOccupancyContext = {
   platformFeePercent: number
   paymentMethod: string
   coTenantSpecialConditions: string[]
+  payout: OccupancyPayeePdf | null
+  paymentReference: string
+  qldBondRemittancePreference: 'landlord_collects_remits' | 'tenant_choice' | null
+  schemeApplies: boolean
 }
 
 async function loadVicOccupancyContext(
@@ -142,7 +147,8 @@ async function loadVicOccupancyContext(
         bond_weeks,
         linen_supplied,
         weekly_cleaning_service,
-        house_rules
+        house_rules,
+        qld_bond_remittance_preference
       )
     `,
     )
@@ -216,10 +222,19 @@ async function loadVicOccupancyContext(
       : 0
   const paymentMethod =
     serviceTier === 'listing'
-      ? 'Direct credit to owner account (fee-free). Reference: resident name and property address.'
+      ? 'Direct credit (see clause 11)'
       : 'Via Quni Living platform (quni.com.au)'
 
   const { specialConditions: coTenantSpecialConditions } = occupancyLeaseFieldsFromBooking(booking, prop)
+
+  const payeeFields = await loadOccupancyListingPayeeFields(admin, {
+    serviceTier,
+    propertyId: booking.property_id,
+    prop,
+    moveIn,
+    sp,
+    propertyAddressLine: propertyAddressLine(prop),
+  })
 
   return {
     ok: true,
@@ -238,6 +253,10 @@ async function loadVicOccupancyContext(
       platformFeePercent,
       paymentMethod,
       coTenantSpecialConditions,
+      payout: payeeFields.payout,
+      paymentReference: payeeFields.paymentReference,
+      qldBondRemittancePreference: payeeFields.qldBondRemittancePreference,
+      schemeApplies: payeeFields.schemeApplies,
     },
   }
 }
@@ -296,11 +315,17 @@ function buildVicOccupancyPdfProps(ctx: LoadedVicOccupancyContext, documentId: s
     specialConditions: [
       'This licence is facilitated through the Quni Living platform (quni.com.au).',
       'Any security deposit under this licence is held directly by the owner and is not lodged with the Residential Tenancies Bond Authority (RTBA). Quni Living does not hold or manage security deposits.',
-      "Licence fee payments are processed through Quni Living's secure payment system powered by Stripe.",
+      ...(ctx.serviceTier === 'listing'
+        ? ['Licence fee payments are made by direct credit to the owner account as set out in clause 11.']
+        : ["Licence fee payments are processed through Quni Living's secure payment system powered by Stripe."]),
       ...ctx.coTenantSpecialConditions,
     ],
     houseRules: typeof prop.house_rules === 'string' ? prop.house_rules : null,
     bookingNotes: typeof booking.notes === 'string' && booking.notes.trim() ? booking.notes.trim() : null,
+    payout: ctx.payout,
+    paymentReference: ctx.paymentReference,
+    qldBondRemittancePreference: ctx.qldBondRemittancePreference,
+    schemeApplies: ctx.schemeApplies,
   }
 }
 
