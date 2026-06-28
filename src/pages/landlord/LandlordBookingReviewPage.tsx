@@ -196,6 +196,13 @@ export default function LandlordBookingReviewPage() {
   const [listingCancelError, setListingCancelError] = useState<string | null>(null)
   const [listingCancelReason, setListingCancelReason] = useState('')
 
+  const [resendPaymentOpen, setResendPaymentOpen] = useState(false)
+  const [resendPaymentBusy, setResendPaymentBusy] = useState(false)
+  const [resendPaymentError, setResendPaymentError] = useState<string | null>(null)
+  const [resendPaymentNotice, setResendPaymentNotice] = useState<{ message: string; tone: 'success' | 'error' } | null>(
+    null,
+  )
+
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
 
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
@@ -633,6 +640,44 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, reload])
 
+  const onConfirmResendPaymentInstructions = useCallback(async () => {
+    if (!bookingId) return
+    setResendPaymentError(null)
+    setResendPaymentBusy(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+      if (!token) {
+        setResendPaymentError('You need to be signed in.')
+        return
+      }
+      const res = await fetch(apiUrl('/api/booking-resend-payment-instructions'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId }),
+      })
+      const j = (await readJsonApiResponse(res)) as { error?: string; code?: string }
+      if (!res.ok) {
+        const message =
+          typeof j.error === 'string' ? j.error : 'Could not send payment instructions to the renter.'
+        setResendPaymentOpen(false)
+        setResendPaymentNotice({ message, tone: 'error' })
+        window.setTimeout(() => setResendPaymentNotice(null), 6000)
+        return
+      }
+      setResendPaymentOpen(false)
+      setResendPaymentNotice({ message: 'Payment instructions sent to the renter.', tone: 'success' })
+      window.setTimeout(() => setResendPaymentNotice(null), 4500)
+    } catch {
+      setResendPaymentError('Something went wrong.')
+    } finally {
+      setResendPaymentBusy(false)
+    }
+  }, [bookingId])
+
   const onConfirmCancelListing = useCallback(async () => {
     if (!bookingId) return
     setListingCancelBusy(true)
@@ -740,6 +785,12 @@ export default function LandlordBookingReviewPage() {
     bookingLandlordId: booking.landlord_id,
     viewerLandlordProfileId: landlordProfileId,
   })
+
+  const showResendPaymentInstructions =
+    booking.service_tier_final === 'listing' &&
+    listingUsesOccupancyAgreement &&
+    propertyPayoutComplete &&
+    (booking.status === 'bond_pending' || booking.status === 'confirmed' || booking.status === 'active')
 
   const canCancelListingBondPending =
     booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
@@ -1367,6 +1418,25 @@ export default function LandlordBookingReviewPage() {
                   </p>
                 )}
 
+                {showResendPaymentInstructions ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={resendPaymentBusy}
+                      onClick={() => {
+                        setResendPaymentError(null)
+                        setResendPaymentOpen(true)
+                      }}
+                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
+                    >
+                      Resend payment instructions to renter
+                    </button>
+                    <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
+                      Email the renter the current bond and rent payment details (same as at acceptance).
+                    </p>
+                  </div>
+                ) : null}
+
                 {showBondReceivedPrimary ? (
                   <div className="space-y-2">
                     <button
@@ -1588,6 +1658,47 @@ export default function LandlordBookingReviewPage() {
         </div>
       )}
 
+      {resendPaymentOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/40"
+            aria-label="Close"
+            onClick={() => !resendPaymentBusy && setResendPaymentOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900">Resend payment instructions?</h3>
+            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+              Resend payment instructions to {displayName}? They&apos;ll get an email with the bond and rent payment
+              details.
+            </p>
+            {resendPaymentError && (
+              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                {resendPaymentError}
+              </p>
+            )}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void onConfirmResendPaymentInstructions()}
+                disabled={resendPaymentBusy}
+                className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#F2604F] disabled:opacity-50"
+              >
+                {resendPaymentBusy ? 'Sending…' : 'Send email'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setResendPaymentOpen(false)}
+                disabled={resendPaymentBusy}
+                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {declineOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => setDeclineOpen(false)} />
@@ -1736,6 +1847,18 @@ export default function LandlordBookingReviewPage() {
         <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
           <div className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg bg-emerald-600">
             {bondReceivedToast}
+          </div>
+        </div>
+      )}
+
+      {resendPaymentNotice && (
+        <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
+          <div
+            className={`rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
+              resendPaymentNotice.tone === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+            }`}
+          >
+            {resendPaymentNotice.message}
           </div>
         </div>
       )}
