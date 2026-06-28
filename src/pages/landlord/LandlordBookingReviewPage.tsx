@@ -341,6 +341,8 @@ export default function LandlordBookingReviewPage() {
       stripeChargesEnabled: data.stripeChargesEnabled,
       adminOverrideVerified: data.adminOverrideVerified,
       listingFeeExempt: data.landlordFeeExempt,
+      listingUsesOccupancyAgreement: data.listingUsesOccupancyAgreement,
+      propertyPayoutComplete: data.propertyPayoutComplete,
       property: data.property,
       booking: data.booking,
     })
@@ -712,6 +714,8 @@ export default function LandlordBookingReviewPage() {
     otherPendingPipelineCount,
     tenancy,
     landlordFeeExempt,
+    listingUsesOccupancyAgreement,
+    propertyPayoutComplete,
   } = data
 
   const isListingBondPending =
@@ -748,6 +752,8 @@ export default function LandlordBookingReviewPage() {
     stripeChargesEnabled,
     adminOverrideVerified,
     listingFeeExempt: landlordFeeExempt,
+    listingUsesOccupancyAgreement,
+    propertyPayoutComplete,
     property: property ?? undefined,
     booking,
   })
@@ -1109,6 +1115,25 @@ export default function LandlordBookingReviewPage() {
               </div>
             )}
 
+            {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
+              <div
+                id="confirm-requirements"
+                className="scroll-mt-4 rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+              >
+                <p className="font-medium">Add payee bank details to accept</p>
+                <p className="mt-1 text-admin-warning-fg/90">
+                  This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
+                  weekly rent directly to this account by fee-free bank transfer.
+                </p>
+                <Link
+                  to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
+                  className="mt-2 inline-block text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
+                >
+                  Add payee bank details →
+                </Link>
+              </div>
+            ) : null}
+
             {confirmBlockedBanner === 'listing_billing_unavailable' && (
               <div className="rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
                 <p className="font-medium">Could not verify Listing billing</p>
@@ -1331,6 +1356,14 @@ export default function LandlordBookingReviewPage() {
                         Add a card →
                       </button>
                     )}
+                    {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
+                      <Link
+                        to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
+                        className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                      >
+                        Add payee bank details →
+                      </Link>
+                    ) : null}
                   </p>
                 )}
 

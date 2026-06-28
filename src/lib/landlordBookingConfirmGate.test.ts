@@ -104,6 +104,34 @@ describe('landlordBookingConfirmAllowed', () => {
     ).toBe(true)
   })
 
+  it('listing: blocks boarder/lodger when payout details incomplete', () => {
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
+        listingUsesOccupancyAgreement: true,
+        propertyPayoutComplete: false,
+      }),
+    ).toBe(false)
+
+    expect(
+      landlordBookingConfirmAllowed({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: readyListing,
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
+        listingUsesOccupancyAgreement: true,
+        propertyPayoutComplete: true,
+      }),
+    ).toBe(true)
+  })
+
   it('listing: fee-exempt landlord can accept without a saved card', () => {
     expect(
       landlordBookingConfirmAllowed({
@@ -196,6 +224,21 @@ describe('landlordBookingConfirmBlockedBanner', () => {
         adminOverrideVerified: true,
       }),
     ).toBe('listing_no_payment_method')
+  })
+
+  it('listing payout missing shows payout banner before billing', () => {
+    expect(
+      landlordBookingConfirmBlockedBanner({
+        bookingStatus: pipeline,
+        selectedConfirmTier: 'listing',
+        listingBillingLoaded: true,
+        listingBilling: { moduleEnabled: true, hasPaymentMethod: false, card: null },
+        stripeChargesEnabled: true,
+        adminOverrideVerified: false,
+        listingUsesOccupancyAgreement: true,
+        propertyPayoutComplete: false,
+      }),
+    ).toBe('listing_payout_details_missing')
   })
 
   it('listing fee-exempt skips card requirement banner', () => {

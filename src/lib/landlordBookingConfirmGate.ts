@@ -14,6 +14,7 @@ export type ConfirmBlockedBanner =
   | 'listing_billing_unavailable'
   | 'listing_module_disabled'
   | 'listing_no_payment_method'
+  | 'listing_payout_details_missing'
   | 'host_identity_required'
   | 'ft6600_compliance_incomplete'
 
@@ -55,6 +56,9 @@ export function landlordBookingConfirmAllowed(args: {
   adminOverrideVerified: boolean
   /** When true, Listing acceptance fee is $0 — saved card is not required. */
   listingFeeExempt?: boolean
+  /** Listing + boarder/lodger (occupancy agreement) — requires complete property payout row. */
+  listingUsesOccupancyAgreement?: boolean
+  propertyPayoutComplete?: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -89,6 +93,9 @@ export function landlordBookingConfirmAllowed(args: {
   }
 
   if (args.selectedConfirmTier === 'listing') {
+    if (args.listingUsesOccupancyAgreement && args.propertyPayoutComplete !== true) {
+      return false
+    }
     if (!args.listingBillingLoaded) return false
     const lb = args.listingBilling
     if (!lb) return false
@@ -108,6 +115,8 @@ export function landlordBookingConfirmBlockedBanner(args: {
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
   listingFeeExempt?: boolean
+  listingUsesOccupancyAgreement?: boolean
+  propertyPayoutComplete?: boolean
   property?: LandlordBookingReviewProperty | null
   booking?: Pick<
     Database['public']['Tables']['bookings']['Row'],
@@ -140,6 +149,10 @@ export function landlordBookingConfirmBlockedBanner(args: {
     return null
   }
 
+  if (args.listingUsesOccupancyAgreement && args.propertyPayoutComplete !== true) {
+    return 'listing_payout_details_missing'
+  }
+
   if (!args.listingBillingLoaded) return null
   if (!args.listingBilling) return 'listing_billing_unavailable'
 
@@ -160,6 +173,8 @@ export function landlordBookingConfirmBlockedUserMessage(
       return 'Complete Stripe identity verification on your dashboard before you can accept.'
     case 'listing_no_payment_method':
       return 'Add a saved card for the Listing acceptance fee before you can accept.'
+    case 'listing_payout_details_missing':
+      return 'Add payee bank details for this listing before you can accept.'
     case 'listing_module_disabled':
       return 'Listing bookings are temporarily paused. Try again in a few minutes.'
     case 'listing_billing_unavailable':

@@ -6,6 +6,8 @@ import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
+import { bookingUsesOccupancyAgreement } from '../../api/lib/resolveTenancyPackage'
+import { propertyPayoutDetailsComplete } from '../lib/propertyPayoutDetails'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -39,6 +41,10 @@ export type LandlordBookingReviewData = {
   /** Present once a tenancy row exists for this booking (e.g. after confirmation / lease flow). */
   tenancy: LandlordBookingReviewTenancy | null
   landlordFeeExempt: boolean
+  /** Listing + boarder/lodger (occupancy agreement) for this property/booking. */
+  listingUsesOccupancyAgreement: boolean
+  /** True when property_payout_details row is complete (account name, BSB, account number). */
+  propertyPayoutComplete: boolean
 }
 
 function formatReceivedAgo(iso: string): string {
@@ -144,6 +150,20 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         booking.properties && typeof booking.properties === 'object'
           ? (booking.properties as LandlordBookingReviewProperty)
           : null
+      const listingUsesOccupancyAgreement = prop
+        ? bookingUsesOccupancyAgreement(booking as Record<string, unknown>, prop as Record<string, unknown>)
+        : false
+
+      let propertyPayoutComplete = false
+      if (prop?.id) {
+        const { data: payoutRow } = await supabase
+          .from('property_payout_details')
+          .select('account_name, bsb, account_number')
+          .eq('property_id', prop.id)
+          .maybeSingle()
+        propertyPayoutComplete = propertyPayoutDetailsComplete(payoutRow)
+      }
+
       const st =
         booking.student_profiles && typeof booking.student_profiles === 'object'
           ? (booking.student_profiles as StudentRow & { universities?: { name: string } | null })
@@ -192,6 +212,8 @@ export function useLandlordBookingReview(bookingId: string | undefined, landlord
         otherPendingPipelineCount,
         tenancy: (tenancyRow as LandlordBookingReviewTenancy | null) ?? null,
         landlordFeeExempt: lp.fee_exempt === true,
+        listingUsesOccupancyAgreement,
+        propertyPayoutComplete,
       })
       setReceivedAgo(formatReceivedAgo(booking.created_at))
     } catch (e) {

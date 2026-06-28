@@ -301,6 +301,21 @@ export function bookingUsesNswFt6600Generator(
   return resolvesToNswFt6600(tenancyPackageInputFromBooking(booking, prop))
 }
 
+/**
+ * True when resolveTenancyPackage would route to an occupancy agreement (boarder/lodger).
+ * Same predicate as triggerListingDocumentGeneration for T1 / occupancy generators.
+ */
+export function tenancyPackageUsesOccupancyAgreement(pkg: TenancyPackageResult): boolean {
+  return pkg.supported && pkg.pdfKind === 'occupancy_agreement'
+}
+
+export function bookingUsesOccupancyAgreement(
+  booking: Record<string, unknown> | null | undefined,
+  prop: Record<string, unknown> | null | undefined,
+): boolean {
+  return tenancyPackageUsesOccupancyAgreement(resolveTenancyPackage(tenancyPackageInputFromBooking(booking, prop)))
+}
+
 /** Property row only (no booking date) - use bookingUsesNswFt6600Generator when a booking exists. */
 export function propertyUsesNswFt6600T2FromRow(
   prop: Record<string, unknown> | null | undefined,
