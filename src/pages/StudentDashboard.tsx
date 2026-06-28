@@ -33,6 +33,10 @@ import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenant
 import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
+import {
+  normalizePropertyPayoutEmbed,
+  propertyPayoutDetailsComplete,
+} from '../lib/propertyPayoutDetails'
 import ListingPaymentInstructions, {
   shouldShowListingPaymentInstructions,
 } from '../components/student/ListingPaymentInstructions'
@@ -61,6 +65,7 @@ type PropertyBookingEmbed = Pick<
   | 'property_type'
   | 'state'
   | 'is_registered_rooming_house'
+  | 'qld_bond_remittance_preference'
 > & {
   property_payout_details: PropertyPayoutEmbed | PropertyPayoutEmbed[] | null
   landlord_profiles: Pick<
@@ -83,12 +88,22 @@ const profileStatCardClass =
 
 const cardClass = 'rounded-2xl border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
 
+function propertyAddressLine(property: PropertyBookingEmbed): string {
+  return (
+    [property.address, property.suburb, property.state, property.postcode].filter(Boolean).join(', ') ||
+    property.title?.trim() ||
+    ''
+  )
+}
+
 function ListingBondGuidanceForBooking({
   booking,
   property,
+  renterDisplayName,
 }: {
   booking: BookingRow
   property: PropertyBookingEmbed
+  renterDisplayName: string
 }) {
   const moveIn =
     (typeof booking.move_in_date === 'string' && booking.move_in_date.trim()) ||
@@ -101,10 +116,12 @@ function ListingBondGuidanceForBooking({
     date: moveIn,
   })
   if (!pkg.supported || !pkg.rules.bond.schemeApplies) return null
+  const payout = normalizePropertyPayoutEmbed(property.property_payout_details)
+  const paymentReference = `${renterDisplayName.trim()} — ${propertyAddressLine(property)}`.trim()
   const guidance = listingBondPaymentTenantGuidance(pkg.rules.bond, property.state, {
-    qldBondRemittancePreference: parseQldBondRemittancePreference(
-      (property as { qld_bond_remittance_preference?: string | null }).qld_bond_remittance_preference,
-    ),
+    qldBondRemittancePreference: parseQldBondRemittancePreference(property.qld_bond_remittance_preference),
+    payee: propertyPayoutDetailsComplete(payout) ? payout : null,
+    paymentReference,
   })
   if (!guidance) return null
   const bondAud = resolveBookingBondAmountAud(
@@ -226,7 +243,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, qld_bond_remittance_preference, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
@@ -654,8 +671,12 @@ export default function StudentDashboard() {
                             renterDisplayName={renterDisplayName(profile)}
                           />
                         ) : null}
-                        {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
-                          <ListingBondGuidanceForBooking booking={b} property={prop} />
+                        {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && profile && (
+                          <ListingBondGuidanceForBooking
+                            booking={b}
+                            property={prop}
+                            renterDisplayName={renterDisplayName(profile)}
+                          />
                         )}
                         <TenancyAgreementExplainer
                           state={prop?.state ?? ''}
