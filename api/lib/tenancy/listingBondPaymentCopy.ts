@@ -9,7 +9,7 @@ import {
   type ListingBondPaymentOptions,
   type QldBondRemittancePreference,
 } from './qldBondRemittance.js'
-import { qldRtaLodgementStepsHtml } from './qldRtaBondCopy.js'
+import { QLD_RTA_LODGEMENT_STEPS, qldRtaLodgementStepsHtml } from './qldRtaBondCopy.js'
 import {
   formatPropertyPayoutBsbDisplay,
   propertyPayoutDetailsComplete,
@@ -76,6 +76,66 @@ function hostPayeeFieldsFromOptions(options?: ListingBondPaymentOptions): Pick<
     hostPayeeBsbDisplay: formatPropertyPayoutBsbDisplay(p.bsb!),
     hostPayeeAccountNumber: p.account_number!.trim(),
     paymentReference: options?.paymentReference?.trim() || null,
+  }
+}
+
+function buildHostStepProse(g: ListingBondPaymentTenantGuidance): string {
+  const prefSuffix = g.preferLandlordCollection ? " (your host's stated preference)" : ''
+  let content = `Pay your host directly${prefSuffix}`
+  if (g.hostPayeeAccountName && g.hostPayeeBsbDisplay && g.hostPayeeAccountNumber && g.paymentReference) {
+    content += ` by fee-free bank transfer: Account name: ${g.hostPayeeAccountName}; BSB: ${g.hostPayeeBsbDisplay}; Account number: ${g.hostPayeeAccountNumber}; Reference: ${g.paymentReference}.`
+  } else {
+    content += ' (bank transfer, cash, or as agreed)'
+  }
+  content += ` They must lodge with ${g.authorityLabel} within ${g.lodgementDeadlinePhrase} and give you a receipt.`
+  if (g.hostPayeeAccountName && g.paymentReference) {
+    content += ' You may also pay by cash or another method as agreed with your host.'
+  }
+  return content
+}
+
+function buildAuthorityStepProse(g: ListingBondPaymentTenantGuidance): string {
+  const offeredFirst = g.preferLandlordCollection ? '' : ' (offered first)'
+  return `Pay through ${g.authorityLabel}${offeredFirst}: ${g.directPayLinkLabel} (${g.directPayLinkUrl}).`
+}
+
+export type ListingBondPaymentOccupancyProse = {
+  paragraphs: string[]
+  bullets: string[]
+  offenceNote?: string
+}
+
+/** QLD occupancy PDF: bond payment routes from existing tenant guidance copy. */
+export function listingBondPaymentOccupancyProse(
+  bond: TenancyBondRules,
+  stateCode: string | null | undefined,
+  options?: ListingBondPaymentOptions,
+): ListingBondPaymentOccupancyProse | null {
+  const g = listingBondPaymentTenantGuidance(bond, stateCode, options)
+  if (!g) return null
+
+  const hostStep = buildHostStepProse(g)
+  const authorityStep = buildAuthorityStepProse(g)
+  const routeBullets = g.preferLandlordCollection ? [hostStep, authorityStep] : [authorityStep, hostStep]
+
+  const paragraphs: string[] = []
+  if (g.directPayNote && (g.preferLandlordCollection || g.stateLabel === 'QLD')) {
+    paragraphs.push(g.directPayNote)
+  }
+  if (g.stateLabel === 'QLD') {
+    paragraphs.push('QLD — after bond is received or paid:')
+  }
+
+  const qldLodgementBullets = g.stateLabel === 'QLD' ? [...QLD_RTA_LODGEMENT_STEPS] : []
+  const offenceNote =
+    g.stateLabel === 'QLD'
+      ? 'Not lodging bond within 10 days, or keeping it in a personal account, is an offence under Queensland law. A bond is not compulsory — rent in advance is a lawful alternative.'
+      : undefined
+
+  return {
+    paragraphs,
+    bullets: [...routeBullets, ...qldLodgementBullets],
+    offenceNote,
   }
 }
 
@@ -224,4 +284,19 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+/** NSW/VIC occupancy PDF: landlord-held bond + rent payee account lines (same facts as email/panel). */
+export function listingLandlordHeldPayeeOccupancyLines(
+  payee: { account_name?: string | null; bsb?: string | null; account_number?: string | null },
+  paymentReference: string,
+): string[] | null {
+  if (!propertyPayoutDetailsComplete(payee)) return null
+  return [
+    `Account name: ${payee.account_name!.trim()}`,
+    `BSB: ${formatPropertyPayoutBsbDisplay(payee.bsb!)}`,
+    `Account number: ${payee.account_number!.trim()}`,
+    `Reference: ${paymentReference.trim()}`,
+    'Method: Fee-free bank transfer.',
+  ]
 }

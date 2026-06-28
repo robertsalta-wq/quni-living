@@ -4,7 +4,9 @@ import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
 import {
   listingBondPaymentEmailHtmlForLandlord,
   listingBondPaymentEmailHtmlForTenant,
+  listingBondPaymentOccupancyProse,
   listingBondPaymentTenantGuidance,
+  listingLandlordHeldPayeeOccupancyLines,
 } from './listingBondPaymentCopy.js'
 
 const NSW_T2_BOND_RULES = resolveTenancyPackage({
@@ -71,5 +73,56 @@ describe('listingBondPaymentEmailHtml', () => {
     expect(html).toContain('987654321')
     expect(html).toContain('Alex — 1 Main St')
     expect(html).toContain('Pay your host directly')
+  })
+})
+
+describe('listingBondPaymentOccupancyProse', () => {
+  const payee = {
+    account_name: 'Host Trust',
+    bsb: '123456',
+    account_number: '987654321',
+  }
+
+  it('includes payee account and 10-day lodgement wording for landlord_collects_remits', () => {
+    const prose = listingBondPaymentOccupancyProse(QLD_T1_BOND_RULES, 'QLD', {
+      qldBondRemittancePreference: 'landlord_collects_remits',
+      payee,
+      paymentReference: 'Alex — 1 Main St',
+    })
+    expect(prose).not.toBeNull()
+    const joined = [...(prose?.paragraphs ?? []), ...(prose?.bullets ?? []), prose?.offenceNote ?? ''].join(' ')
+    expect(joined).toContain('Host Trust')
+    expect(joined).toContain('123-456')
+    expect(joined).toContain('987654321')
+    expect(joined).toContain('Alex — 1 Main St')
+    expect(joined).toContain('10 days')
+    expect(joined).toContain('lodge with')
+    expect(joined).toMatch(/Pay your host directly.*Pay through/i)
+  })
+
+  it('lists RTA-direct before host step for tenant_choice', () => {
+    const prose = listingBondPaymentOccupancyProse(QLD_T1_BOND_RULES, 'QLD', {
+      qldBondRemittancePreference: 'tenant_choice',
+      payee,
+      paymentReference: 'Alex — 1 Main St',
+    })
+    expect(prose?.bullets[0]).toMatch(/^Pay through/)
+    expect(prose?.bullets[1]).toMatch(/^Pay your host directly/)
+  })
+})
+
+describe('listingLandlordHeldPayeeOccupancyLines', () => {
+  it('returns account lines for NSW/VIC landlord-held payee block', () => {
+    const lines = listingLandlordHeldPayeeOccupancyLines(
+      { account_name: 'Jane Owner', bsb: '123456', account_number: '12345678' },
+      'Alex — 2 Demo Rd',
+    )
+    expect(lines).toEqual([
+      'Account name: Jane Owner',
+      'BSB: 123-456',
+      'Account number: 12345678',
+      'Reference: Alex — 2 Demo Rd',
+      'Method: Fee-free bank transfer.',
+    ])
   })
 })
