@@ -81,6 +81,15 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
   const payout = normalizePropertyPayoutEmbed(property.property_payout_details)
   if (!propertyPayoutDetailsComplete(payout)) return null
 
+  const moveInRaw = bookingMoveInIso(booking)
+  const pkg = resolveTenancyPackage({
+    state: property.state ?? 'NSW',
+    property_type: property.property_type ?? '',
+    is_registered_rooming_house: Boolean(property.is_registered_rooming_house),
+    date: moveInRaw,
+  })
+  const schemeApplies = pkg.supported && pkg.rules.bond.schemeApplies
+
   const bondAmountAud = resolveBookingBondAmountAud(
     booking.bond_amount,
     property,
@@ -92,25 +101,27 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
       : property.rent_per_week != null && Number.isFinite(Number(property.rent_per_week))
         ? Number(property.rent_per_week)
         : null
-  const moveInRaw = bookingMoveInIso(booking)
   const moveInLabel = moveInRaw ? formatDate(moveInRaw.slice(0, 10)) : '-'
   const bondDeadlineLabel = booking.bond_window_expires_at?.trim()
     ? formatDate(booking.bond_window_expires_at.slice(0, 10))
     : '-'
-  const showBondLine = booking.bond_received_by_landlord_at == null
+  const showBondSection = !schemeApplies && booking.bond_received_by_landlord_at == null
   const addressLine = propertyAddressLine(property)
   const paymentReference = `${renterDisplayName.trim()} — ${addressLine}`.trim()
+  const heading = showBondSection ? 'How to pay your bond and rent' : 'How to pay your rent'
 
   return (
     <div
       className="rounded-xl border border-indigo-200/90 bg-white px-4 py-3 text-sm text-indigo-950 space-y-2"
       role="note"
     >
-      <p className="font-semibold leading-snug">How to pay your bond and rent</p>
+      <p className="font-semibold leading-snug">{heading}</p>
       <p className="text-xs leading-relaxed text-indigo-900/95">
-        Pay your host directly by fee-free bank transfer. Use the reference below so they can match your payment.
+        {showBondSection
+          ? 'Pay your host directly by fee-free bank transfer. Use the reference below so they can match your payment.'
+          : 'Pay your rent to your host by fee-free bank transfer. Use the reference below so they can match your payment.'}
       </p>
-      {showBondLine ? (
+      {showBondSection ? (
         <p>
           <span className="font-semibold">Bond:</span> {formatAud(bondAmountAud)} due by{' '}
           <span className="font-semibold">{bondDeadlineLabel}</span>.
