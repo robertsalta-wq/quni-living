@@ -28,6 +28,11 @@ import {
 } from '../../lib/tenancy/qldBondRemittance'
 import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
+import {
+  formatPropertyPayoutBsbDisplay,
+  propertyPayoutDetailsComplete,
+  propertyPayoutDetailsFieldErrors,
+} from '../../lib/propertyPayoutDetails'
 import { DEFAULT_BOND_WEEKS, MAX_BOND_WEEKS, resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import AIDescriptionGenerator from '../../components/AIDescriptionGenerator'
 import AIListingProofread, { useListingProofread } from '../../components/AIListingProofread'
@@ -737,6 +742,15 @@ export default function LandlordPropertyFormPage() {
     })
     return pkg.supported && pkg.rules.bond.schemeApplies
   }, [state, propertyListingType, isRegisteredRoomingHouse])
+  const showListingPayeeBankDetails = useMemo(() => {
+    if (serviceTier !== 'listing') return false
+    const pkg = resolveTenancyPackage({
+      state: state.trim() || 'NSW',
+      property_type: propertyListingType,
+      is_registered_rooming_house: isRegisteredRoomingHouse,
+    })
+    return pkg.supported && pkg.pdfKind === 'occupancy_agreement'
+  }, [serviceTier, state, propertyListingType, isRegisteredRoomingHouse])
   const managedTierAvailable = serviceTierAvailability.managed === 'available'
   const managedTierUnavailableReason =
     serviceTierAvailability.managed === 'gated'
@@ -798,6 +812,9 @@ export default function LandlordPropertyFormPage() {
   )
 
   const [bondWeeks, setBondWeeks] = useState(String(DEFAULT_BOND_WEEKS))
+  const [payeeAccountName, setPayeeAccountName] = useState('')
+  const [payeeBsb, setPayeeBsb] = useState('')
+  const [payeeAccountNumber, setPayeeAccountNumber] = useState('')
   const parsedBondWeeks = useMemo(() => {
     const w = parseInt(bondWeeks, 10)
     if (!Number.isFinite(w) || w < 0 || w > MAX_BOND_WEEKS) return null
@@ -1232,6 +1249,14 @@ export default function LandlordPropertyFormPage() {
         setSelectedRules(nextRules)
         setHouseRules(typeof prop.house_rules === 'string' ? prop.house_rules : '')
         setFt6600Compliance(ft6600ComplianceFormStateFromProperty(prop))
+        const { data: payoutRow } = await supabase
+          .from('property_payout_details')
+          .select('account_name, bsb, account_number')
+          .eq('property_id', propertyId)
+          .maybeSingle()
+        setPayeeAccountName(payoutRow?.account_name?.trim() ?? '')
+        setPayeeBsb(payoutRow?.bsb ? formatPropertyPayoutBsbDisplay(payoutRow.bsb) : '')
+        setPayeeAccountNumber(payoutRow?.account_number?.trim() ?? '')
       }
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Could not load form.')
@@ -2038,6 +2063,19 @@ export default function LandlordPropertyFormPage() {
       return
     }
 
+    if (showListingPayeeBankDetails) {
+      const payeeErrs = propertyPayoutDetailsFieldErrors({
+        account_name: payeeAccountName,
+        bsb: payeeBsb,
+        account_number: payeeAccountNumber,
+      })
+      if (payeeErrs.length > 0) {
+        setSubmitError(payeeErrs.join(' '))
+        document.getElementById('section-pricing-availability')?.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -2241,6 +2279,25 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(propertyId, featureIds)
         await savePropertyHouseRules(propertyId, selectedRules)
+        if (
+          showListingPayeeBankDetails &&
+          propertyPayoutDetailsComplete({
+            account_name: payeeAccountName,
+            bsb: payeeBsb,
+            account_number: payeeAccountNumber,
+          })
+        ) {
+          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
+            {
+              property_id: propertyId,
+              account_name: payeeAccountName.trim(),
+              bsb: payeeBsb.replace(/[\s-]/g, ''),
+              account_number: payeeAccountNumber.trim(),
+            },
+            { onConflict: 'property_id' },
+          )
+          if (payoutErr) throw payoutErr
+        }
         if (waterAttestationPatch.water_separately_metered_efficient_attested_at) {
           setWaterSeparatelyMeteredAttestedAt(
             waterAttestationPatch.water_separately_metered_efficient_attested_at,
@@ -2291,6 +2348,25 @@ export default function LandlordPropertyFormPage() {
         }
         await savePropertyFeatures(newId, featureIds)
         await savePropertyHouseRules(newId, selectedRules)
+        if (
+          showListingPayeeBankDetails &&
+          propertyPayoutDetailsComplete({
+            account_name: payeeAccountName,
+            bsb: payeeBsb,
+            account_number: payeeAccountNumber,
+          })
+        ) {
+          const { error: payoutErr } = await supabase.from('property_payout_details').upsert(
+            {
+              property_id: newId,
+              account_name: payeeAccountName.trim(),
+              bsb: payeeBsb.replace(/[\s-]/g, ''),
+              account_number: payeeAccountNumber.trim(),
+            },
+            { onConflict: 'property_id' },
+          )
+          if (payoutErr) throw payoutErr
+        }
         try {
           localStorage.removeItem(LANDLORD_PROPERTY_DRAFT_KEY)
         } catch {
@@ -3526,6 +3602,67 @@ export default function LandlordPropertyFormPage() {
                   </p>
                 ) : null}
               </div>
+              {showListingPayeeBankDetails ? (
+                <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Payee bank details</h3>
+                    <p className="mt-1 text-xs text-gray-600 leading-relaxed">
+                      Renters pay bond and rent directly to this account by fee-free bank transfer, using their name
+                      and the property address as the reference.
+                    </p>
+                    {!propertyPayoutDetailsComplete({
+                      account_name: payeeAccountName,
+                      bsb: payeeBsb,
+                      account_number: payeeAccountNumber,
+                    }) ? (
+                      <p className="mt-2 text-xs text-amber-800/90">
+                        Required to accept Quni Listing bookings on this property.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label htmlFor="pf-payee-account-name" className={labelClass}>
+                      Account name
+                    </label>
+                    <input
+                      id="pf-payee-account-name"
+                      value={payeeAccountName}
+                      onChange={(e) => setPayeeAccountName(e.target.value)}
+                      autoComplete="off"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="pf-payee-bsb" className={labelClass}>
+                        BSB
+                      </label>
+                      <input
+                        id="pf-payee-bsb"
+                        value={payeeBsb}
+                        onChange={(e) => setPayeeBsb(e.target.value)}
+                        placeholder="000-000"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="pf-payee-account-number" className={labelClass}>
+                        Account number
+                      </label>
+                      <input
+                        id="pf-payee-account-number"
+                        value={payeeAccountNumber}
+                        onChange={(e) => setPayeeAccountNumber(e.target.value)}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               {showQldBondRemittance ? (
                 <fieldset className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
                   <legend className="text-sm font-semibold text-gray-900 px-1">QLD bond payment preference</legend>
