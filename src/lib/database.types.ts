@@ -488,6 +488,44 @@ export interface Database {
         }
         Relationships: []
       }
+      landlord_payout_details: {
+        Row: {
+          id: string
+          landlord_id: string
+          account_name: string
+          bsb: string
+          account_number: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          landlord_id: string
+          account_name: string
+          bsb: string
+          account_number: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          landlord_id?: string
+          account_name?: string
+          bsb?: string
+          account_number?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'landlord_payout_details_landlord_id_fkey'
+            columns: ['landlord_id']
+            isOneToOne: true
+            referencedRelation: 'landlord_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       student_profiles: {
         Row: {
           id: string

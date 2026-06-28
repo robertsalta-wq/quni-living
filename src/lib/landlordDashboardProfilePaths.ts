@@ -3,6 +3,7 @@ import type { LandlordPublishSectionKey } from './landlordProfileReadiness'
 export type LandlordDashboardProfileSectionKey =
   | LandlordPublishSectionKey
   | 'payouts'
+  | 'payeeDetails'
   | 'insurance'
   | 'languages'
 
