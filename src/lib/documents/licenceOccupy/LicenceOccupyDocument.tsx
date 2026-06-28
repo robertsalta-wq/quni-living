@@ -14,6 +14,11 @@ import { buildLicencePlatformEntityDisplay } from '../../platformIdentity.js'
 import type { LicenceOccupyContent, LicenceOccupyTerminationBlock } from './contentTypes.js'
 import {
   licenceTerminationNoticePhrase,
+  occupancyBondSectionPayeeNote,
+  occupancyClause11BankDetailsIntro,
+  occupancyClause11PayeeLines,
+  occupancyFinancialTermsPayeeNote,
+  occupancyQldBondPaymentSupplement,
   ownerServiceFeeParagraphForTier,
   type LicenceOccupyServiceTier,
 } from './utils.js'
@@ -259,6 +264,11 @@ export function LicenceOccupyDocument({
   const serviceTier: LicenceOccupyServiceTier = props.serviceTier === 'managed' ? 'managed' : 'listing'
   const hasExtraTerms = extraLines.length > 0
   const hasContinuation = (content.continuationParagraphs?.length ?? 0) > 0
+  const financialTermsPayeeNote = occupancyFinancialTermsPayeeNote(props)
+  const bondSectionPayeeNote = occupancyBondSectionPayeeNote(props)
+  const clause11BankIntro = occupancyClause11BankDetailsIntro(content, props)
+  const clause11PayeeLines = occupancyClause11PayeeLines(props)
+  const qldBondSupplement = occupancyQldBondPaymentSupplement(props)
 
   const conditionReportClauseNum = 12
   const continuationClauseNum = hasContinuation ? 13 : null
@@ -326,9 +336,11 @@ export function LicenceOccupyDocument({
           The resident must pay the weekly licence fee of {formatMoney(rent.weeklyRent)} in advance, by the payment
           method stated in the schedule: {rent.paymentMethod}
         </BodyParagraph>
+        {financialTermsPayeeNote ? <BodyParagraph>{financialTermsPayeeNote}</BodyParagraph> : null}
         <BodyParagraph>{content.utilitiesDefault}</BodyParagraph>
         <OccupancyMatchSectionHeading num={5} title={content.bond.sectionTitle} />
         <BodyParagraph>{content.bond.intro}</BodyParagraph>
+        {bondSectionPayeeNote ? <BodyParagraph>{bondSectionPayeeNote}</BodyParagraph> : null}
         <BodyParagraph>{bondAmountLine}</BodyParagraph>
         {content.bond.bullets.map((b, i) => (
           <Bullet key={`b-${i}`}>{b}</Bullet>
@@ -336,6 +348,23 @@ export function LicenceOccupyDocument({
         {content.bond.afterBullets?.map((p, i) => (
           <BodyParagraph key={`ba-${i}`}>{p}</BodyParagraph>
         ))}
+        {qldBondSupplement ? (
+          <>
+            <BodyParagraph>Bond payment — your choice:</BodyParagraph>
+            {qldBondSupplement.bullets.slice(0, 2).map((b, i) => (
+              <Bullet key={`qld-route-${i}`}>{b}</Bullet>
+            ))}
+            {qldBondSupplement.paragraphs.map((p, i) => (
+              <BodyParagraph key={`qld-p-${i}`}>{p}</BodyParagraph>
+            ))}
+            {qldBondSupplement.bullets.slice(2).map((b, i) => (
+              <Bullet key={`qld-step-${i}`}>{b}</Bullet>
+            ))}
+            {qldBondSupplement.offenceNote ? (
+              <BodyParagraph>{qldBondSupplement.offenceNote}</BodyParagraph>
+            ) : null}
+          </>
+        ) : null}
       </PageShell>
 
       <PageShell {...pageShellProps}>
@@ -393,7 +422,10 @@ export function LicenceOccupyDocument({
           )}
         </BodyParagraph>
         <BodyParagraph>{content.feeFreeBankTransfer}</BodyParagraph>
-        <BodyParagraph>{content.bankDetailsTemplate}</BodyParagraph>
+        <BodyParagraph>{clause11BankIntro}</BodyParagraph>
+        {clause11PayeeLines.map((line, i) => (
+          <BodyParagraph key={`payee-${i}`}>{line}</BodyParagraph>
+        ))}
       </PageShell>
 
       <PageShell {...pageShellProps}>
