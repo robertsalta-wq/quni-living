@@ -121,23 +121,6 @@ async function loadListingEmailContext(admin, bookingId) {
   const bondRules = tenancyPackage.supported ? tenancyPackage.rules.bond : null
   const qldBondRemittancePreference =
     typeof prop.qld_bond_remittance_preference === 'string' ? prop.qld_bond_remittance_preference : null
-  const bondPaymentOpts =
-    qldBondRemittancePreference === 'landlord_collects_remits' || qldBondRemittancePreference === 'tenant_choice'
-      ? { qldBondRemittancePreference: qldBondRemittancePreference }
-      : undefined
-  const resolvedBondAmountAud = resolveBookingBondAmountAud(
-    booking.bond_amount,
-    prop,
-    booking.weekly_rent,
-  )
-  const bondPaymentTenantHtml =
-    bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForTenant(bondRules, propState, resolvedBondAmountAud, bondPaymentOpts)
-      : null
-  const bondPaymentLandlordHtml =
-    bondRules && bondRules.schemeApplies
-      ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState, resolvedBondAmountAud, bondPaymentOpts)
-      : null
 
   const isBoarderLodger = tenancyPackageUsesOccupancyAgreement(tenancyPackage)
   let payout = null
@@ -155,6 +138,35 @@ async function loadListingEmailContext(admin, bookingId) {
       payout = payoutRow
     }
   }
+
+  const paymentReference = `${studentName} — ${addr || title}`.trim()
+  const bondPaymentOpts = {
+    qldBondRemittancePreference,
+    ...(payout ? { payee: payout, paymentReference } : {}),
+  }
+  const resolvedBondAmountAud = resolveBookingBondAmountAud(
+    booking.bond_amount,
+    prop,
+    booking.weekly_rent,
+  )
+  const bondPaymentTenantHtml =
+    bondRules && bondRules.schemeApplies
+      ? listingBondPaymentEmailHtmlForTenant(
+          bondRules,
+          propState,
+          resolvedBondAmountAud,
+          bondPaymentOpts,
+        )
+      : null
+  const bondPaymentLandlordHtml =
+    bondRules && bondRules.schemeApplies
+      ? listingBondPaymentEmailHtmlForLandlord(
+          bondRules,
+          propState,
+          resolvedBondAmountAud,
+          bondPaymentOpts,
+        )
+      : null
 
   return {
     bookingId,
@@ -174,7 +186,7 @@ async function loadListingEmailContext(admin, bookingId) {
     bondSchemeApplies: Boolean(bondRules?.schemeApplies),
     isBoarderLodger,
     payout,
-    paymentReference: `${studentName} — ${addr || title}`.trim(),
+    paymentReference,
   }
 }
 
@@ -205,6 +217,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         bond_deadline_display: bondDeadline,
         student_dashboard_url: studentDash,
         bond_payment_html: ctx.bondPaymentTenantHtml,
+        bond_scheme_applies: ctx.bondSchemeApplies,
         is_boarder_lodger: ctx.isBoarderLodger,
         payout: ctx.payout,
         weekly_rent: ctx.weeklyRent,
