@@ -9,8 +9,7 @@ import type { Database } from '../lib/database.types'
 import { RenterProfileSetup } from '../components/student/profile/RenterProfileSetup'
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import PageHeroBand from '../components/PageHeroBand'
-import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
-import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -236,14 +235,14 @@ export default function StudentProfile() {
       )
     }
     return (
-      <div className="renter-profile-page flex-1 flex flex-col min-h-0 w-full">
-        <div className="renter-profile-page-outer flex flex-1 items-center justify-center min-h-[40vh]">
+      <RenterDashboardTabShell activeTab="profile">
+        <div className="flex flex-1 items-center justify-center min-h-[40vh]">
           <div
             className="h-10 w-10 border-2 border-t-transparent rounded-full animate-spin"
             style={{ borderColor: 'var(--quni-coral)', borderTopColor: 'transparent' }}
           />
         </div>
-      </div>
+      </RenterDashboardTabShell>
     )
   }
 
@@ -262,23 +261,18 @@ export default function StudentProfile() {
       )
     }
     return (
-      <div className="renter-profile-page flex-1 flex flex-col min-h-0 w-full">
-        <div className="renter-profile-page-outer max-w-site mx-auto w-full py-10">
-          <p className="renter-profile-error">{loadError ?? 'Profile unavailable.'}</p>
-          <Link to="/student-dashboard" className="renter-profile-edit-btn" style={{ marginTop: 16, display: 'inline-flex' }}>
-            Go to dashboard
-          </Link>
-        </div>
-      </div>
+      <RenterDashboardTabShell activeTab="profile">
+        <p className="renter-profile-error">{loadError ?? 'Profile unavailable.'}</p>
+        <Link to="/student-dashboard" className="renter-profile-edit-btn" style={{ marginTop: 16, display: 'inline-flex' }}>
+          Go to dashboard
+        </Link>
+      </RenterDashboardTabShell>
     )
   }
 
   if (activeTab === 'bookings') {
     return (
       <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-        <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 pt-6">
-          <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter', { label: 'Bookings' })} />
-        </div>
         <PageHeroBand title="Your bookings" subtitle="Properties you have booked or applied for" />
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
           <section className="w-full">
@@ -485,68 +479,66 @@ export default function StudentProfile() {
   }
 
   return (
-    <div className="renter-profile-page flex-1 flex flex-col min-h-0 w-full">
-      <div className="renter-profile-page-outer">
-        {user?.id ? (
-          <RenterProfileSetup
-            profile={profile}
-            userId={user.id}
-            displayEmail={user.email ?? profile.email ?? ''}
-            onRefresh={refreshProfileData}
-            onProfilePatch={(patch) => setProfile((prev) => (prev ? { ...prev, ...patch } : prev))}
+    <RenterDashboardTabShell activeTab="profile">
+      {user?.id ? (
+        <RenterProfileSetup
+          profile={profile}
+          userId={user.id}
+          displayEmail={user.email ?? profile.email ?? ''}
+          onRefresh={refreshProfileData}
+          onProfilePatch={(patch) => setProfile((prev) => (prev ? { ...prev, ...patch } : prev))}
+        >
+          <button
+            type="button"
+            id="toggle-student-danger-zone"
+            aria-expanded={dangerZoneVisible}
+            aria-controls="student-profile-danger-zone"
+            onClick={() => {
+              setDangerZoneVisible((prev) => {
+                const next = !prev
+                if (next) {
+                  window.setTimeout(() => {
+                    dangerZoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                  }, 0)
+                }
+                return next
+              })
+            }}
+            className="renter-profile-edit-btn"
+            style={{ justifyContent: 'center', width: '100%' }}
           >
-            <button
-              type="button"
-              id="toggle-student-danger-zone"
-              aria-expanded={dangerZoneVisible}
-              aria-controls="student-profile-danger-zone"
-              onClick={() => {
-                setDangerZoneVisible((prev) => {
-                  const next = !prev
-                  if (next) {
-                    window.setTimeout(() => {
-                      dangerZoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-                    }, 0)
-                  }
-                  return next
-                })
-              }}
-              className="renter-profile-edit-btn"
-              style={{ justifyContent: 'center', width: '100%' }}
-            >
-              {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
-            </button>
+            {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
+          </button>
 
-            {dangerZoneVisible ? (
-              <section
-                ref={dangerZoneRef}
-                id="student-profile-danger-zone"
-                className="renter-profile-card"
-                style={{ padding: '20px' }}
-                aria-labelledby="danger-zone-heading"
+          {dangerZoneVisible ? (
+            <section
+              ref={dangerZoneRef}
+              id="student-profile-danger-zone"
+              className="renter-profile-card"
+              style={{ padding: '20px' }}
+              aria-labelledby="danger-zone-heading"
+            >
+              <h2 id="danger-zone-heading" className="renter-profile-section-title">
+                Danger zone
+              </h2>
+              <p style={{ marginTop: 8, fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
+                Permanently delete your student account and all verification documents stored for your profile.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteAccountError(null)
+                  setDeleteAccountOpen(true)
+                }}
+                className="renter-profile-btn-secondary"
+                style={{ marginTop: 16, width: 'auto', color: 'var(--quni-danger-fg)', borderColor: 'var(--quni-danger-bg)' }}
               >
-                <h2 id="danger-zone-heading" className="renter-profile-section-title">
-                  Danger zone
-                </h2>
-                <p style={{ marginTop: 8, fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
-                  Permanently delete your student account and all verification documents stored for your profile.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeleteAccountError(null)
-                    setDeleteAccountOpen(true)
-                  }}
-                  className="renter-profile-btn-secondary"
-                  style={{ marginTop: 16, width: 'auto', color: 'var(--quni-danger-fg)', borderColor: 'var(--quni-danger-bg)' }}
-                >
-                  Delete account
-                </button>
-              </section>
-            ) : null}
-          </RenterProfileSetup>
-        ) : null}
-      </div>
+                Delete account
+              </button>
+            </section>
+          ) : null}
+        </RenterProfileSetup>
+      ) : null}
 
       <StudentDeleteAccountModal
         open={deleteAccountOpen}
@@ -555,6 +547,6 @@ export default function StudentProfile() {
         deleting={deleteAccountBusy}
         error={deleteAccountError}
       />
-    </div>
+    </RenterDashboardTabShell>
   )
 }

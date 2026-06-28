@@ -17,7 +17,21 @@ type Props = {
 
 export function RenterProfileReadinessDriver({ readiness, profile, situation, verificationComplete }: Props) {
   const { done, total, pct } = computeRenterProfileDriverProgress(profile, situation, verificationComplete)
+  const complete = done === total && total > 0
   const driverText = readiness.blocksBooking[0] ?? 'Complete your profile to request bookings'
+
+  if (complete) {
+    return (
+      <div className="renter-profile-driver" role="status">
+        <p className="text-sm font-semibold text-[#08060D] leading-snug">
+          Profile {pct}% Complete
+        </p>
+        <div className="renter-profile-progress-track mt-3" aria-hidden>
+          <div className="renter-profile-progress-fill" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="renter-profile-driver" role="status">

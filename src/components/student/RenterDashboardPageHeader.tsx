@@ -1,12 +1,9 @@
+import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import UserDashboardSectionNav from '../dashboard/UserDashboardSectionNav'
-import type { UserDashboardSection } from '../../lib/userDashboardNav'
+import { studentDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
 
 export type RenterDashboardTab = 'overview' | 'bookings'
-
-const TAB_SUBTITLES: Record<RenterDashboardTab, string> = {
-  overview: "Here's what's happening with your bookings, messages and saved rooms.",
-  bookings: 'Track your booking requests and stays.',
-}
 
 type Props = {
   activeTab: RenterDashboardTab | 'messages' | 'profile'
@@ -16,20 +13,41 @@ type Props = {
 export const renterDashboardPageInsetClass =
   'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-7 sm:py-10'
 
-export function renterDashboardTabSubtitle(tab: RenterDashboardTab): string {
-  return TAB_SUBTITLES[tab]
-}
-
 export default function RenterDashboardPageHeader({ activeTab, onTabSelect }: Props) {
-  const subtitleTab: RenterDashboardTab = activeTab === 'bookings' ? 'bookings' : 'overview'
-
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-[28px] font-bold text-[#08060D] tracking-tight leading-tight">Dashboard</h1>
-        <p className="text-sm text-[#6B6375] mt-1">{renterDashboardTabSubtitle(subtitleTab)}</p>
-      </div>
+      <h1 className="text-[28px] font-bold text-[#08060D] tracking-tight leading-tight mb-4">Dashboard</h1>
       <UserDashboardSectionNav role="renter" active={activeTab} onSelect={onTabSelect} />
     </>
+  )
+}
+
+type RenterDashboardTabShellProps = {
+  activeTab: RenterDashboardTab | 'messages' | 'profile'
+  children: ReactNode
+  contentClassName?: string
+}
+
+/** Shared chrome for /student-dashboard, /messages, /student-profile (Profile tab). */
+export function RenterDashboardTabShell({
+  activeTab,
+  children,
+  contentClassName = '',
+}: RenterDashboardTabShellProps) {
+  const navigate = useNavigate()
+  return (
+    <div className={`flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] pb-16 ${contentClassName}`}>
+      <div className={renterDashboardPageInsetClass}>
+        <RenterDashboardPageHeader
+          activeTab={activeTab}
+          onTabSelect={(section) => {
+            if (section === 'overview' || section === 'bookings') {
+              navigate(studentDashboardTabPath(section))
+            }
+          }}
+        />
+        {children}
+      </div>
+    </div>
   )
 }

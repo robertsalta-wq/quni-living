@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import type { LandlordProfileRow } from '../lib/authProfile'
 import { supabase } from '../lib/supabase'
@@ -10,15 +10,8 @@ import {
 } from '../lib/messaging/conversationsApi'
 import ConversationThread from '../components/messaging/ConversationThread'
 import Seo from '../components/Seo'
-import UserDashboardShell from '../components/dashboard/UserDashboardShell'
 import { LandlordMessagesTabShell } from '../components/landlord/LandlordDashboardPageHeader'
-import { studentDashboardTabPath, userDashboardBreadcrumbs, type UserDashboardSection } from '../lib/userDashboardNav'
-
-function navigateRenterDashboardSection(navigate: ReturnType<typeof useNavigate>, section: UserDashboardSection) {
-  if (section === 'overview' || section === 'bookings') {
-    navigate(studentDashboardTabPath(section))
-  }
-}
+import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 
 function preloadedForRoute(
   state: unknown,
@@ -34,7 +27,6 @@ function preloadedForRoute(
 export default function ConversationThreadPage() {
   const { conversationId } = useParams<{ conversationId: string }>()
   const location = useLocation()
-  const navigate = useNavigate()
   const { user, role, profile } = useAuthContext()
   const initialPreload =
     conversationId != null ? preloadedForRoute(location.state, conversationId) : null
@@ -42,7 +34,6 @@ export default function ConversationThreadPage() {
   const [loading, setLoading] = useState(initialPreload == null)
   const [error, setError] = useState<string | null>(null)
 
-  const dashboardRole = role === 'landlord' ? 'landlord' : 'renter'
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
 
   useEffect(() => {
@@ -130,52 +121,33 @@ export default function ConversationThreadPage() {
 
   if (loading) {
     return (
-      <UserDashboardShell
-        role={dashboardRole}
-        breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: '…' })}
-        showSectionNav
-        activeSection="messages"
-        onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
-      >
+      <RenterDashboardTabShell activeTab="messages" contentClassName="py-4 md:py-6">
         <p className="text-sm text-gray-500">Loading conversation…</p>
-      </UserDashboardShell>
+      </RenterDashboardTabShell>
     )
   }
 
   if (error || !conversation) {
     return (
-      <UserDashboardShell
-        role={dashboardRole}
-        breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: 'Not found' })}
-        showSectionNav
-        activeSection="messages"
-        onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
-      >
+      <RenterDashboardTabShell activeTab="messages" contentClassName="py-4 md:py-6">
         <p className="text-sm text-red-700">{error ?? 'Conversation not found'}</p>
         <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[#FF6F61] hover:underline">
           Back to messages
         </Link>
-      </UserDashboardShell>
+      </RenterDashboardTabShell>
     )
   }
 
   const viewerRole = conversation.tenant_user_id === user.id ? 'tenant' : 'landlord'
 
   return (
-    <UserDashboardShell
-      role={dashboardRole}
-      breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: conversation.property?.title?.trim() || 'Conversation' })}
-      showSectionNav
-      activeSection="messages"
-      onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
-      contentClassName="py-4 md:py-6"
-    >
+    <RenterDashboardTabShell activeTab="messages" contentClassName="py-4 md:py-6">
       <Seo title="Conversation" canonicalPath={`/messages/${conversation.id}`} />
       <ConversationThread
         conversation={conversation}
         currentUserId={user.id}
         viewerRole={viewerRole}
       />
-    </UserDashboardShell>
+    </RenterDashboardTabShell>
   )
 }

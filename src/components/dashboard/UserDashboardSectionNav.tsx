@@ -27,7 +27,7 @@ function landlordTabClass(isActive: boolean): string {
 }
 
 const renterTabBaseClass =
-  'inline-flex items-center justify-center gap-1.5 min-h-[44px] sm:min-h-0 px-1 sm:px-2 py-3 text-sm border-b-2 transition-colors shrink-0'
+  'inline-flex items-center justify-center gap-1 min-h-[44px] sm:min-h-0 px-0 sm:px-2 py-2.5 text-[13px] sm:text-sm border-b-2 transition-colors shrink-0'
 
 function renterTabClass(isActive: boolean): string {
   return [
@@ -106,7 +106,7 @@ export default function UserDashboardSectionNav({
   return (
     <div className="border-b border-[#E5E4E7] mb-6">
       <nav
-        className="flex w-full min-w-0 items-end gap-5 sm:gap-7 -mb-px overflow-x-auto"
+        className="flex w-full min-w-0 items-end justify-between -mb-px overflow-x-hidden sm:justify-start sm:gap-5"
         aria-label="Dashboard sections"
       >
         <button
@@ -126,7 +126,7 @@ export default function UserDashboardSectionNav({
         <Link to="/messages" className={renterTabClass(active === 'messages')}>
           Messages
           {unreadMessageCount > 0 && (
-            <span className="tabular-nums inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6F61] text-[11px] font-bold text-white">
+            <span className="tabular-nums inline-flex items-center justify-center min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#FF6F61] text-[10px] font-bold text-white">
               {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
             </span>
           )}

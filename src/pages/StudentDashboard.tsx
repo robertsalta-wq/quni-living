@@ -24,8 +24,7 @@ import { listingBondPaymentTenantGuidance } from '../lib/tenancy/listingBondPaym
 import { parseQldBondRemittancePreference } from '../lib/tenancy/qldBondRemittance'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
-import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
-import { studentDashboardTabPath, userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import { studentDashboardTabPath } from '../lib/userDashboardNav'
 import RenterDashboardPageHeader, {
   renterDashboardPageInsetClass,
 } from '../components/student/RenterDashboardPageHeader'
@@ -371,7 +370,6 @@ export default function StudentDashboard() {
       ) : null}
 
       <div className={renterDashboardPageInsetClass}>
-        <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter')} className="mb-4 sm:mb-5" />
         {error && profile && (
           <div
             className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
@@ -420,42 +418,59 @@ export default function StudentDashboard() {
               </Link>
 
               <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
-                <div className="flex items-start justify-between gap-3 sm:block">
-                  <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-wide">Your profile</p>
-                  {profileStatCard.showFinishSetup ? (
+                {profileStatCard.complete ? (
+                  <>
+                    <p className="text-sm font-semibold text-gray-900 leading-snug">
+                      Profile {profileStatCard.pct}% Complete
+                    </p>
+                    <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                        style={{ width: `${profileStatCard.pct}%` }}
+                        role="progressbar"
+                        aria-valuenow={profileStatCard.pct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Profile completion ${profileStatCard.pct}%`}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-3 sm:block">
+                      <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-wide">Your profile</p>
+                      <Link
+                        to="/student-profile"
+                        className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
+                      >
+                        Finish setup →
+                      </Link>
+                    </div>
+                    <p className="mt-2 leading-none">
+                      <span className="text-[30px] sm:text-[34px] font-bold text-gray-900 tabular-nums">
+                        {profileStatCard.pct}%
+                      </span>
+                      <span className="text-[13px] text-gray-500 ml-1.5">complete</span>
+                    </p>
+                    <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                        style={{ width: `${profileStatCard.pct}%` }}
+                        role="progressbar"
+                        aria-valuenow={profileStatCard.pct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`Profile completion ${profileStatCard.pct}%`}
+                      />
+                    </div>
                     <Link
                       to="/student-profile"
-                      className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
+                      className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
                     >
                       Finish setup →
                     </Link>
-                  ) : null}
-                </div>
-                <p className="mt-2 leading-none">
-                  <span className="text-[30px] sm:text-[34px] font-bold text-gray-900 tabular-nums">
-                    {profileStatCard.pct}%
-                  </span>
-                  <span className="text-[13px] text-gray-500 ml-1.5">complete</span>
-                </p>
-                <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
-                    style={{ width: `${profileStatCard.pct}%` }}
-                    role="progressbar"
-                    aria-valuenow={profileStatCard.pct}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`Profile completion ${profileStatCard.pct}%`}
-                  />
-                </div>
-                {profileStatCard.showFinishSetup ? (
-                  <Link
-                    to="/student-profile"
-                    className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
-                  >
-                    Finish setup →
-                  </Link>
-                ) : null}
+                  </>
+                )}
               </div>
 
               <Link
