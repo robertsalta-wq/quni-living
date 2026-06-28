@@ -15,7 +15,10 @@ type Props = {
 }
 
 const landlordTabBaseClass =
-  'inline-flex items-center justify-center gap-1 min-h-[44px] sm:min-h-0 px-1 sm:px-4 py-2.5 text-[13px] sm:text-sm border-b-2 transition-colors shrink-0 sm:rounded-t-lg'
+  'flex w-full sm:inline-flex sm:w-auto items-center justify-center gap-0.5 min-h-[44px] sm:min-h-0 min-w-0 px-0 sm:px-4 py-2.5 text-[11px] sm:text-sm border-b-2 transition-colors whitespace-nowrap sm:rounded-t-lg'
+
+const landlordTabBadgeClass =
+  'tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-[9px] font-bold text-white leading-none'
 
 function landlordTabClass(isActive: boolean): string {
   return [
@@ -53,9 +56,9 @@ export default function UserDashboardSectionNav({
       pendingBookings > 0 ? pendingBookings : totalBookings > 0 ? totalBookings : null
 
     return (
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 mb-6 -mx-4 overflow-hidden sm:mx-0">
         <nav
-          className="flex w-full items-end justify-between -mb-px overflow-x-hidden sm:justify-start sm:gap-1 sm:overflow-x-auto"
+          className="grid w-full min-w-0 grid-cols-5 items-end -mb-px sm:flex sm:justify-start sm:gap-1 sm:overflow-x-auto"
           aria-label="Dashboard sections"
         >
           <button
@@ -63,27 +66,27 @@ export default function UserDashboardSectionNav({
             onClick={() => onSelect?.('overview')}
             className={landlordTabClass(active === 'overview')}
           >
-            Overview
+            <span className="truncate">Overview</span>
           </button>
           <button
             type="button"
             onClick={() => onSelect?.('listings')}
             className={landlordTabClass(active === 'listings')}
           >
-            Listings
+            <span className="truncate">Listings</span>
           </button>
           <Link to="/messages" className={landlordTabClass(active === 'messages')}>
-            Messages
+            <span className="truncate">Messages</span>
             {unreadMessageCount > 0 && (
-              <span className="tabular-nums rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[1.25rem] text-center">
+              <span className={landlordTabBadgeClass}>
                 {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
               </span>
             )}
           </Link>
           <Link to={landlordBookingsPath()} className={landlordTabClass(active === 'bookings')}>
-            Bookings
+            <span className="truncate">Bookings</span>
             {bookingsBadge != null && (
-              <span className="tabular-nums rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white min-w-[1.25rem] text-center">
+              <span className={landlordTabBadgeClass}>
                 {bookingsBadge > 9 ? '9+' : bookingsBadge}
               </span>
             )}
@@ -95,7 +98,7 @@ export default function UserDashboardSectionNav({
             aria-label="Profile"
             title="Profile"
           >
-            <User className="h-[19px] w-[19px] sm:hidden" strokeWidth={1.9} aria-hidden />
+            <User className="h-[18px] w-[18px] sm:hidden shrink-0" strokeWidth={1.9} aria-hidden />
             <span className="hidden sm:inline">Profile</span>
           </button>
         </nav>
