@@ -38,4 +38,10 @@ export function isQldSchemeListingProperty(state: string | null | undefined): bo
 
 export type ListingBondPaymentOptions = {
   qldBondRemittancePreference?: QldBondRemittancePreference | null
+  payee?: {
+    account_name?: string | null
+    bsb?: string | null
+    account_number?: string | null
+  } | null
+  paymentReference?: string | null
 }

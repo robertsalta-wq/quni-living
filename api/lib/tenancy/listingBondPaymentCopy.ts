@@ -10,6 +10,10 @@ import {
   type QldBondRemittancePreference,
 } from './qldBondRemittance.js'
 import { qldRtaLodgementStepsHtml } from './qldRtaBondCopy.js'
+import {
+  formatPropertyPayoutBsbDisplay,
+  propertyPayoutDetailsComplete,
+} from '../../../src/lib/propertyPayoutDetails.js'
 
 export type { ListingBondPaymentOptions, QldBondRemittancePreference }
 
@@ -27,6 +31,11 @@ export type ListingBondPaymentTenantGuidance = {
   qldRemittancePreference: QldBondRemittancePreference | null
   /** When true, list pay-host option before authority (landlord preference). */
   preferLandlordCollection: boolean
+  /** Present when complete property_payout_details supplied — enriches the pay-host step. */
+  hostPayeeAccountName: string | null
+  hostPayeeBsbDisplay: string | null
+  hostPayeeAccountNumber: string | null
+  paymentReference: string | null
 }
 
 export type ListingBondPaymentLandlordObligations = {
@@ -48,6 +57,46 @@ function lodgementDeadlinePhrase(bond: Extract<TenancyBondRules, { schemeApplies
 
 const NSW_TENANT_RBO_URL =
   'https://www.nsw.gov.au/housing-and-construction/renting/rental-bonds'
+
+function hostPayeeFieldsFromOptions(options?: ListingBondPaymentOptions): Pick<
+  ListingBondPaymentTenantGuidance,
+  'hostPayeeAccountName' | 'hostPayeeBsbDisplay' | 'hostPayeeAccountNumber' | 'paymentReference'
+> {
+  const p = options?.payee
+  if (!p || !propertyPayoutDetailsComplete(p)) {
+    return {
+      hostPayeeAccountName: null,
+      hostPayeeBsbDisplay: null,
+      hostPayeeAccountNumber: null,
+      paymentReference: null,
+    }
+  }
+  return {
+    hostPayeeAccountName: p.account_name!.trim(),
+    hostPayeeBsbDisplay: formatPropertyPayoutBsbDisplay(p.bsb!),
+    hostPayeeAccountNumber: p.account_number!.trim(),
+    paymentReference: options?.paymentReference?.trim() || null,
+  }
+}
+
+function buildHostStepEmailListItem(g: ListingBondPaymentTenantGuidance): string {
+  const prefSuffix = g.preferLandlordCollection ? ' (your host&apos;s stated preference)' : ''
+  let content = `<strong>Pay your host directly</strong>${prefSuffix}`
+  if (g.hostPayeeAccountName && g.hostPayeeBsbDisplay && g.hostPayeeAccountNumber && g.paymentReference) {
+    content += ` by fee-free bank transfer:<br>
+Account name: ${escapeHtml(g.hostPayeeAccountName)}<br>
+BSB: ${escapeHtml(g.hostPayeeBsbDisplay)}<br>
+Account number: ${escapeHtml(g.hostPayeeAccountNumber)}<br>
+Reference: ${escapeHtml(g.paymentReference)}.`
+  } else {
+    content += ` (bank transfer, cash, or as agreed)`
+  }
+  content += ` - they must lodge with ${escapeHtml(g.authorityLabel)} within ${escapeHtml(g.lodgementDeadlinePhrase)} and give you a receipt.`
+  if (g.hostPayeeAccountName && g.paymentReference) {
+    content += ` You may also pay by cash or another method as agreed with your host.`
+  }
+  return `<li>${content}</li>`
+}
 
 export function listingBondPaymentTenantGuidance(
   bond: TenancyBondRules,
@@ -79,6 +128,7 @@ export function listingBondPaymentTenantGuidance(
     directPayLinkUrl: st === 'NSW' ? NSW_TENANT_RBO_URL : bond.authorityUrl,
     qldRemittancePreference: qldPref,
     preferLandlordCollection,
+    ...hostPayeeFieldsFromOptions(options),
   }
 }
 
@@ -135,8 +185,9 @@ export function listingBondPaymentEmailHtmlForTenant(
     return `<p><strong>Bond:</strong> No bond is required for this stay.</p>`
   }
   const note = g.directPayNote ? `<p style="font-size:14px;color:#555;margin-top:8px;">${escapeHtml(g.directPayNote)}</p>` : ''
-  const authorityItem = `<li style="margin-bottom:8px;"><strong>Pay through ${escapeHtml(g.authorityLabel)}</strong> (offered first): <a href="${escapeHtml(g.directPayLinkUrl)}" style="color:#FF6F61;font-weight:600;">${escapeHtml(g.directPayLinkLabel)}</a></li>`
-  const hostItem = `<li><strong>Pay your host directly</strong> (bank transfer, cash, or as agreed) - they must lodge with ${escapeHtml(g.authorityLabel)} within ${escapeHtml(g.lodgementDeadlinePhrase)} and give you a receipt.</li>`
+  const authorityOfferedFirst = g.preferLandlordCollection ? '' : ' (offered first)'
+  const authorityItem = `<li style="margin-bottom:8px;"><strong>Pay through ${escapeHtml(g.authorityLabel)}</strong>${authorityOfferedFirst}: <a href="${escapeHtml(g.directPayLinkUrl)}" style="color:#FF6F61;font-weight:600;">${escapeHtml(g.directPayLinkLabel)}</a></li>`
+  const hostItem = buildHostStepEmailListItem(g)
   const ordered = g.preferLandlordCollection ? `${hostItem}${authorityItem}` : `${authorityItem}${hostItem}`
   const qldBlock = g.stateLabel === 'QLD' ? qldRtaLodgementStepsHtml() : ''
   return `<p><strong>Bond - your choice:</strong></p>

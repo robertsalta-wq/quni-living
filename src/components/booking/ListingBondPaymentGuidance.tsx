@@ -59,9 +59,34 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
   const hostStep = (
     <>
       <span className="font-semibold">Pay your host directly</span>
-      {guidance.preferLandlordCollection ? ' (your host\'s stated preference)' : ''} (bank transfer, cash, or as
-      agreed) - they must lodge with {guidance.authorityLabel} within {guidance.lodgementDeadlinePhrase} and give you
-      a receipt.
+      {guidance.preferLandlordCollection ? ' (your host\'s stated preference)' : ''}
+      {guidance.hostPayeeAccountName &&
+      guidance.hostPayeeBsbDisplay &&
+      guidance.hostPayeeAccountNumber &&
+      guidance.paymentReference ? (
+        <>
+          {' '}
+          by fee-free bank transfer:
+          <div className="mt-1 pl-4 tabular-nums text-xs leading-relaxed">
+            Account name: {guidance.hostPayeeAccountName}
+            <br />
+            BSB: {guidance.hostPayeeBsbDisplay}
+            <br />
+            Account number: {guidance.hostPayeeAccountNumber}
+            <br />
+            Reference: {guidance.paymentReference}
+          </div>
+        </>
+      ) : (
+        <> (bank transfer, cash, or as agreed)</>
+      )}{' '}
+      - they must lodge with {guidance.authorityLabel} within {guidance.lodgementDeadlinePhrase} and give you a
+      receipt.
+      {guidance.hostPayeeAccountName && guidance.paymentReference ? (
+        <span className="block mt-1 pl-4 text-amber-900/90">
+          You may also pay by cash or another method as agreed with your host.
+        </span>
+      ) : null}
     </>
   )
 
