@@ -7,7 +7,7 @@ import MessagesInbox from '../components/messaging/MessagesInbox'
 import Seo from '../components/Seo'
 import UserDashboardShell from '../components/dashboard/UserDashboardShell'
 import { LandlordMessagesTabShell } from '../components/landlord/LandlordDashboardPageHeader'
-import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import { studentDashboardTabPath, userDashboardBreadcrumbs } from '../lib/userDashboardNav'
 
 export default function MessagesInboxPage() {
   const { user, role, profile } = useAuthContext()
@@ -43,7 +43,9 @@ export default function MessagesInboxPage() {
       showSectionNav
       activeSection="messages"
       onSectionSelect={(section) => {
-        navigate(`/student-dashboard?tab=${section}`)
+        if (section === 'overview' || section === 'bookings') {
+          navigate(studentDashboardTabPath(section))
+        }
       }}
     >
       <Seo title="Messages" canonicalPath="/messages" />

@@ -12,7 +12,13 @@ import ConversationThread from '../components/messaging/ConversationThread'
 import Seo from '../components/Seo'
 import UserDashboardShell from '../components/dashboard/UserDashboardShell'
 import { LandlordMessagesTabShell } from '../components/landlord/LandlordDashboardPageHeader'
-import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import { studentDashboardTabPath, userDashboardBreadcrumbs, type UserDashboardSection } from '../lib/userDashboardNav'
+
+function navigateRenterDashboardSection(navigate: ReturnType<typeof useNavigate>, section: UserDashboardSection) {
+  if (section === 'overview' || section === 'bookings') {
+    navigate(studentDashboardTabPath(section))
+  }
+}
 
 function preloadedForRoute(
   state: unknown,
@@ -129,9 +135,7 @@ export default function ConversationThreadPage() {
         breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: '…' })}
         showSectionNav
         activeSection="messages"
-        onSectionSelect={(section) => {
-          navigate(`/student-dashboard?tab=${section}`)
-        }}
+        onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
       >
         <p className="text-sm text-gray-500">Loading conversation…</p>
       </UserDashboardShell>
@@ -145,9 +149,7 @@ export default function ConversationThreadPage() {
         breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: 'Not found' })}
         showSectionNav
         activeSection="messages"
-        onSectionSelect={(section) => {
-          navigate(`/student-dashboard?tab=${section}`)
-        }}
+        onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
       >
         <p className="text-sm text-red-700">{error ?? 'Conversation not found'}</p>
         <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[#FF6F61] hover:underline">
@@ -165,9 +167,7 @@ export default function ConversationThreadPage() {
       breadcrumbs={userDashboardBreadcrumbs(dashboardRole, { label: 'Messages', to: '/messages' }, { label: conversation.property?.title?.trim() || 'Conversation' })}
       showSectionNav
       activeSection="messages"
-      onSectionSelect={(section) => {
-        navigate(`/student-dashboard?tab=${section}`)
-      }}
+      onSectionSelect={(section) => navigateRenterDashboardSection(navigate, section)}
       contentClassName="py-4 md:py-6"
     >
       <Seo title="Conversation" canonicalPath={`/messages/${conversation.id}`} />

@@ -111,6 +111,13 @@ export default function UserDashboardSectionNav({
       >
         <button
           type="button"
+          onClick={() => onSelect?.('overview')}
+          className={renterTabClass(active === 'overview')}
+        >
+          Overview
+        </button>
+        <button
+          type="button"
           onClick={() => onSelect?.('bookings')}
           className={renterTabClass(active === 'bookings')}
         >

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
@@ -13,6 +13,7 @@ import {
   isRenterUniversalVerificationComplete,
   renterProfileStatCardCopy,
 } from '../lib/renterReadiness'
+import { consumeLoginWelcomePending } from '../lib/loginWelcomeToast'
 import { isBondPaymentReceiptContext } from '../lib/listings'
 import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
@@ -24,8 +25,10 @@ import { parseQldBondRemittancePreference } from '../lib/tenancy/qldBondRemittan
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 import UserDashboardBreadcrumb from '../components/dashboard/UserDashboardBreadcrumb'
-import UserDashboardSectionNav from '../components/dashboard/UserDashboardSectionNav'
-import { userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import { studentDashboardTabPath, userDashboardBreadcrumbs } from '../lib/userDashboardNav'
+import RenterDashboardPageHeader, {
+  renterDashboardPageInsetClass,
+} from '../components/student/RenterDashboardPageHeader'
 import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
 import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
 import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
@@ -59,13 +62,13 @@ type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
 }
 
-type TabId = 'bookings'
+type TabId = 'overview' | 'bookings'
 
 const statCardClass =
-  'flex flex-col rounded-2xl border border-[#E5E4E7] bg-white p-4 sm:p-[18px] shadow-[0_1px_2px_rgba(8,6,13,0.05)] min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md'
+  'rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md hover:border-[rgba(255,111,97,0.35)] text-left'
 
 const profileStatCardClass =
-  'flex flex-col rounded-2xl border border-[rgba(255,111,97,0.35)] bg-[rgba(255,111,97,0.06)] p-4 sm:p-[18px] shadow-[0_1px_2px_rgba(8,6,13,0.05)] min-w-0 lg:min-h-[10rem]'
+  'flex flex-col rounded-2xl border border-[rgba(255,111,97,0.35)] bg-[rgba(255,111,97,0.06)] p-4 sm:p-5 shadow-sm min-w-0 lg:min-h-[10rem] h-full'
 
 const cardClass = 'rounded-2xl border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
 
@@ -160,7 +163,9 @@ export default function StudentDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentRow | null>(authStudent)
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
-  const [tab, setTab] = useState<TabId>('bookings')
+  const [tab, setTab] = useState<TabId>('overview')
+  const [welcomeToast, setWelcomeToast] = useState<string | null>(null)
+  const welcomeToastTimerRef = useRef<number | null>(null)
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
   const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
   const [qaseOpen, setQaseOpen] = useState(false)
@@ -269,7 +274,34 @@ export default function StudentDashboard() {
       return
     }
     if (t === 'bookings') setTab('bookings')
+    else setTab('overview')
   }, [searchParams, navigate])
+
+  const selectDashboardTab = useCallback(
+    (next: TabId) => {
+      setTab(next)
+      navigate(studentDashboardTabPath(next), { replace: true })
+    },
+    [navigate],
+  )
+
+  useEffect(() => {
+    if (!profile) return
+    if (!consumeLoginWelcomePending()) return
+    const name = firstNameFromStudent(profile)
+    setWelcomeToast(`Welcome back, ${name}`)
+    if (welcomeToastTimerRef.current != null) window.clearTimeout(welcomeToastTimerRef.current)
+    welcomeToastTimerRef.current = window.setTimeout(() => {
+      setWelcomeToast(null)
+      welcomeToastTimerRef.current = null
+    }, 4500)
+  }, [profile?.id])
+
+  useEffect(() => {
+    return () => {
+      if (welcomeToastTimerRef.current != null) window.clearTimeout(welcomeToastTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (authStudent) setProfile(authStudent)
@@ -318,11 +350,27 @@ export default function StudentDashboard() {
     )
   }
 
-  const welcomeName = profile ? firstNameFromStudent(profile) : 'there'
-
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] pb-16 overflow-x-hidden">
-      <div className="max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-7 sm:py-10">
+      {welcomeToast ? (
+        <div
+          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg flex gap-3 items-start"
+          role="status"
+        >
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold"
+            aria-hidden
+          >
+            ✓
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900">{welcomeToast}</p>
+            <p className="text-xs text-gray-500 mt-0.5">Dismisses on its own · login only</p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className={renterDashboardPageInsetClass}>
         <UserDashboardBreadcrumb segments={userDashboardBreadcrumbs('renter')} className="mb-4 sm:mb-5" />
         {error && profile && (
           <div
@@ -333,139 +381,143 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 mb-7 sm:mb-8">
-          <div className="min-w-0">
-            <h1 className="font-display text-[30px] sm:text-[40px] font-bold text-[#08060D] tracking-tight leading-[1.1]">
-              Welcome back, {welcomeName}
-            </h1>
-            <p className="text-[#6B6375] mt-2 sm:mt-2.5 text-[15px] sm:text-base max-w-xl leading-relaxed">
-              Here&apos;s a quick look at your bookings and messages — everything in one place.
-            </p>
-          </div>
-          <Link to="/listings" className={primaryBtnClass}>
-            Browse listings
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5 mb-6 min-w-0">
-          <div className={`${statCardClass} lg:min-h-[10rem]`}>
-            <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Bookings</p>
-            <p className="text-[30px] sm:text-[34px] font-bold text-[#08060D] mt-1.5 sm:mt-2 tabular-nums leading-none">
-              {bookings.length}
-            </p>
-            <p className="text-[13px] text-[#6B6375] mt-auto pt-2">
-              {bookings.length === 0 ? 'No requests' : `${bookings.length} total`}
-            </p>
-          </div>
-
-          <Link to="/messages" className={`${statCardClass} lg:min-h-[10rem] hover:border-[rgba(255,111,97,0.35)]`}>
-            <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Messages</p>
-            <p className="text-[30px] sm:text-[34px] font-bold text-[#08060D] mt-1.5 sm:mt-2 tabular-nums leading-none">
-              {unreadMessageCount}
-            </p>
-            <p
-              className={`text-[13px] mt-auto pt-2 ${
-                unreadMessageCount > 0 ? 'font-semibold text-[#CC4A3C]' : 'text-[#6B6375]'
-              }`}
-            >
-              {unreadMessageCount > 0
-                ? `${unreadMessageCount} unread`
-                : 'No new messages'}
-            </p>
-          </Link>
-
-          <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
-            <div className="flex items-start justify-between gap-3 sm:block">
-              <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-[0.04em]">Your profile</p>
-              {profileStatCard.showFinishSetup ? (
-                <Link
-                  to="/student-profile"
-                  className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
-                >
-                  Finish setup →
-                </Link>
-              ) : null}
-            </div>
-            <p className="mt-2 leading-none">
-              <span className="text-[30px] sm:text-[34px] font-bold text-[#08060D] tabular-nums">
-                {profileStatCard.pct}%
-              </span>
-              <span className="text-[13px] text-[#6B6375] ml-1.5">complete</span>
-            </p>
-            <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
-                style={{ width: `${profileStatCard.pct}%` }}
-                role="progressbar"
-                aria-valuenow={profileStatCard.pct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`Profile completion ${profileStatCard.pct}%`}
-              />
-            </div>
-            {profileStatCard.showFinishSetup ? (
-              <Link
-                to="/student-profile"
-                className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
-              >
-                Finish setup →
-              </Link>
-            ) : null}
-          </div>
-
-          <Link
-            to="/listings"
-            className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] hover:border-[rgba(255,111,97,0.35)] group`}
-          >
-            <div className="flex items-center justify-between gap-3 sm:block min-w-0">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">
-                  Find accommodation
-                </p>
-                <p className="text-sm text-[#4A4253] mt-2 leading-snug sm:hidden">Browse rooms near your uni</p>
-                <p className="hidden sm:block text-sm text-[#4A4253] mt-2.5 leading-snug">
-                  Browse student-friendly rooms near your uni.
-                </p>
-              </div>
-              <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
-                →
-              </span>
-            </div>
-            <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
-              Browse listings →
-            </span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setQaseOpen(true)}
-            className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] w-full text-left hover:border-[rgba(255,111,97,0.35)] group`}
-          >
-            <div className="flex items-center justify-between gap-3 sm:block min-w-0">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-[#908897] uppercase tracking-[0.04em]">Get support</p>
-                <p className="text-sm text-[#4A4253] mt-2 leading-snug sm:hidden">We&apos;ll get back to you</p>
-                <p className="hidden sm:block text-sm text-[#4A4253] mt-2.5 leading-snug">
-                  Submit a request and we&apos;ll get back to you.
-                </p>
-              </div>
-              <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
-                →
-              </span>
-            </div>
-            <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
-              Contact support →
-            </span>
-          </button>
-        </div>
-
-        <UserDashboardSectionNav
-          role="renter"
-          active={tab}
-          onSelect={(section) => {
-            if (section === 'bookings') setTab('bookings')
+        <RenterDashboardPageHeader
+          activeTab={tab}
+          onTabSelect={(section) => {
+            if (section === 'overview' || section === 'bookings') selectDashboardTab(section)
           }}
         />
+
+        {tab === 'overview' && (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5 mb-6 min-w-0">
+              <button
+                type="button"
+                onClick={() => selectDashboardTab('bookings')}
+                className={`${statCardClass} lg:min-h-[10rem]`}
+              >
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Bookings</p>
+                <p className="text-[30px] sm:text-[34px] font-bold text-gray-900 mt-2 tabular-nums leading-none">
+                  {bookings.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-auto pt-2">
+                  {bookings.length === 0 ? 'No requests' : `${bookings.length} total`}
+                </p>
+              </button>
+
+              <Link to="/messages" className={`${statCardClass} lg:min-h-[10rem]`}>
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Messages</p>
+                <p className="text-[30px] sm:text-[34px] font-bold text-gray-900 mt-2 tabular-nums leading-none">
+                  {unreadMessageCount}
+                </p>
+                <p
+                  className={`text-xs mt-auto pt-2 ${
+                    unreadMessageCount > 0 ? 'font-semibold text-[#CC4A3C]' : 'text-gray-500'
+                  }`}
+                >
+                  {unreadMessageCount > 0 ? `${unreadMessageCount} unread` : 'No new messages'}
+                </p>
+              </Link>
+
+              <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
+                <div className="flex items-start justify-between gap-3 sm:block">
+                  <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-wide">Your profile</p>
+                  {profileStatCard.showFinishSetup ? (
+                    <Link
+                      to="/student-profile"
+                      className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
+                    >
+                      Finish setup →
+                    </Link>
+                  ) : null}
+                </div>
+                <p className="mt-2 leading-none">
+                  <span className="text-[30px] sm:text-[34px] font-bold text-gray-900 tabular-nums">
+                    {profileStatCard.pct}%
+                  </span>
+                  <span className="text-[13px] text-gray-500 ml-1.5">complete</span>
+                </p>
+                <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                    style={{ width: `${profileStatCard.pct}%` }}
+                    role="progressbar"
+                    aria-valuenow={profileStatCard.pct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Profile completion ${profileStatCard.pct}%`}
+                  />
+                </div>
+                {profileStatCard.showFinishSetup ? (
+                  <Link
+                    to="/student-profile"
+                    className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
+                  >
+                    Finish setup →
+                  </Link>
+                ) : null}
+              </div>
+
+              <Link
+                to="/listings"
+                className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] group`}
+              >
+                <div className="flex items-center justify-between gap-3 sm:block min-w-0">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                      Find accommodation
+                    </p>
+                    <p className="text-sm text-gray-600 mt-2 leading-snug sm:hidden">Browse rooms near your uni</p>
+                    <p className="hidden sm:block text-sm text-gray-600 mt-2 leading-snug">
+                      Browse student-friendly rooms near your uni.
+                    </p>
+                  </div>
+                  <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                    →
+                  </span>
+                </div>
+                <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+                  Browse listings →
+                </span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setQaseOpen(true)}
+                className={`${statCardClass} col-span-2 lg:col-span-1 lg:min-h-[10rem] group`}
+              >
+                <div className="flex items-center justify-between gap-3 sm:block min-w-0">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Get support</p>
+                    <p className="text-sm text-gray-600 mt-2 leading-snug sm:hidden">We&apos;ll get back to you</p>
+                    <p className="hidden sm:block text-sm text-gray-600 mt-2 leading-snug">
+                      Submit a request and we&apos;ll get back to you.
+                    </p>
+                  </div>
+                  <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                    →
+                  </span>
+                </div>
+                <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+                  Contact support →
+                </span>
+              </button>
+            </div>
+
+            {profile && (
+              <div className="mb-5">
+                <StudentStripePaymentsCard profile={profile} onRefresh={load} />
+              </div>
+            )}
+
+            <Link
+              to="/sample-agreements"
+              className="inline-block text-sm font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline"
+            >
+              View sample agreements →
+            </Link>
+          </>
+        )}
 
         {tab === 'bookings' && (
           <section aria-labelledby="bookings-heading" className="mb-6 min-w-0">
@@ -596,19 +648,6 @@ export default function StudentDashboard() {
           )}
         </section>
         )}
-
-        {profile && (
-          <div className="mb-5">
-            <StudentStripePaymentsCard profile={profile} onRefresh={load} />
-          </div>
-        )}
-
-        <Link
-          to="/sample-agreements"
-          className="inline-block text-sm font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline"
-        >
-          View sample agreements →
-        </Link>
 
         {profile && (
           <QaseSubmitModal

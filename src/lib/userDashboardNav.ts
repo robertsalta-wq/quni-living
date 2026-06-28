@@ -27,6 +27,11 @@ export function userDashboardBreadcrumbs(
   return [home, ...segments]
 }
 
+export function studentDashboardTabPath(section: 'overview' | 'bookings'): string {
+  if (section === 'overview') return userDashboardHomePath('renter')
+  return `${userDashboardHomePath('renter')}?tab=${section}`
+}
+
 export function landlordBookingsPath(): string {
   return '/landlord/dashboard?tab=bookings'
 }
