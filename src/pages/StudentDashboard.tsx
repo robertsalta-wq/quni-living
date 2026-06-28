@@ -38,19 +38,28 @@ type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
 type BookingStatus = BookingRow['status']
 
+type PropertyPayoutEmbed = Pick<
+  Database['public']['Tables']['property_payout_details']['Row'],
+  'account_name' | 'bsb' | 'account_number'
+>
+
 type PropertyBookingEmbed = Pick<
   Database['public']['Tables']['properties']['Row'],
   | 'id'
   | 'title'
   | 'slug'
+  | 'address'
   | 'suburb'
+  | 'postcode'
   | 'images'
   | 'rent_per_week'
   | 'bond'
+  | 'bond_weeks'
   | 'property_type'
   | 'state'
   | 'is_registered_rooming_house'
 > & {
+  property_payout_details: PropertyPayoutEmbed | PropertyPayoutEmbed[] | null
   landlord_profiles: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
     'full_name' | 'avatar_url' | 'verified' | 'languages_spoken'
@@ -206,7 +215,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, suburb, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
