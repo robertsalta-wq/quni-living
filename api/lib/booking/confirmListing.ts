@@ -14,6 +14,8 @@ import {
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
+import { bookingUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
+import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 
 const LISTING_FEE_CENTS = 9900
 const LISTING_PRODUCT_ID =
@@ -88,7 +90,10 @@ export async function runListingConfirmBooking(
       property_id,
       status,
       stripe_payment_intent_id,
-      service_tier_at_request
+      service_tier_at_request,
+      move_in_date,
+      start_date,
+      properties ( state, property_type, is_registered_rooming_house )
     `,
     )
     .eq('id', bookingId)
@@ -116,6 +121,39 @@ export async function runListingConfirmBooking(
       error: 'host_identity_not_ready',
       message: 'Complete Stripe identity verification before accepting bookings.',
     })
+  }
+
+  const prop =
+    booking.properties && typeof booking.properties === 'object' && !Array.isArray(booking.properties)
+      ? booking.properties
+      : null
+  if (bookingUsesOccupancyAgreement(booking, prop)) {
+    const propertyId =
+      typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
+    if (!propertyId) {
+      return jsonFail(400, {
+        error: 'listing_payout_details_missing',
+        message: 'Add payout bank details for this property before accepting.',
+      })
+    }
+    const { data: payoutRow, error: payoutErr } = await admin
+      .from('property_payout_details')
+      .select('account_name, bsb, account_number')
+      .eq('property_id', propertyId)
+      .maybeSingle()
+    if (payoutErr) {
+      console.error('[confirm-listing] load payout details', payoutErr)
+      return jsonFail(503, {
+        error: 'listing_payout_details_unavailable',
+        message: 'Could not verify payout bank details. Try again shortly.',
+      })
+    }
+    if (!propertyPayoutDetailsComplete(payoutRow)) {
+      return jsonFail(400, {
+        error: 'listing_payout_details_missing',
+        message: 'Add payout bank details for this property before accepting.',
+      })
+    }
   }
 
   const preflight = await preflightListingTenancyDocument(admin, booking.id)

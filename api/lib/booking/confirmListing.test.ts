@@ -45,15 +45,21 @@ const baseBooking = {
 }
 
 function mockAdmin(opts: {
-  booking?: typeof baseBooking
+  booking?: typeof baseBooking & {
+    properties?: { state: string; property_type: string; is_registered_rooming_house: boolean }
+    move_in_date?: string | null
+    start_date?: string | null
+  }
   updateRows?: unknown[] | null
   eventError?: Error | null
   feeExempt?: boolean
+  payoutRow?: { account_name: string; bsb: string; account_number: string } | null
 }) {
   const booking = opts.booking ?? baseBooking
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
   const eventError = opts.eventError ?? null
   const feeExempt = opts.feeExempt ?? false
+  const payoutRow = opts.payoutRow ?? null
 
   const from = vi.fn((table: string) => {
     if (table === 'landlord_profiles') {
@@ -87,6 +93,15 @@ function mockAdmin(opts: {
     if (table === 'service_tier_events') {
       return {
         insert: async () => ({ error: eventError }),
+      }
+    }
+    if (table === 'property_payout_details') {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: payoutRow, error: null }),
+          }),
+        }),
       }
     }
     return {}
@@ -236,6 +251,34 @@ describe('runListingConfirmBooking', () => {
     expect(result.listing_fee_payment_intent_id).toBeNull()
     expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
+  })
+
+  it('blocks boarder/lodger Listing accept when payout details are missing', async () => {
+    const occupancyBooking = {
+      ...baseBooking,
+      move_in_date: '2026-07-01',
+      properties: {
+        state: 'QLD',
+        property_type: 'private_room_landlord_on_site',
+        is_registered_rooming_house: false,
+      },
+    }
+    const stripe = stripeHappy()
+    const admin = mockAdmin({ booking: occupancyBooking, payoutRow: null })
+
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.body.error).toBe('listing_payout_details_missing')
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
+    expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
   })
 
   it('confirm Listing triggers document generation with signing at accept (defer_signing=false)', async () => {
