@@ -6,13 +6,35 @@ import { geocodeFirstMatch } from '../../../lib/geocodeClient'
 import { isWorkingRouteSectionComplete } from '../../../lib/renterRouteSection'
 import { WEEKLY_INCOME_BAND_OPTIONS } from '../../../lib/renterIncomeBands'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
 import { AU_WORKPLACE_STATES, workplaceGeocodeQueries } from '../../../lib/workplaceLocation'
 import {
-  validateWorkplaceLocationFields,
   workplaceLocationFieldsTouched,
   workplaceLocationUpdatePayload,
   type WorkplaceLocationFields,
 } from '../../../lib/workplaceLocationSave'
+import {
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+  workingRouteSectionFieldErrors,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const WORKING_ROUTE_HINT_LABELS = {
+  employmentStatus: 'employment status',
+  employerName: 'employer name',
+  jobTitle: 'job title',
+  employmentType: 'employment type',
+  incomeBand: 'weekly income band',
+  workplaceSuburb: 'work location suburb',
+  workplaceState: 'work location state',
+  workplacePostcode: 'work location postcode',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -79,9 +101,18 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
   const [workplaceSuburb, setWorkplaceSuburb] = useState(profile.workplace_suburb ?? '')
   const [workplaceState, setWorkplaceState] = useState(profile.workplace_state ?? 'NSW')
   const [workplacePostcode, setWorkplacePostcode] = useState(profile.workplace_postcode ?? '')
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(WORKING_ROUTE_HINT_LABELS)
 
   const applyFields = (fields: WorkingRouteDraft) => {
     setEmploymentStatus(fields.employmentStatus)
@@ -134,29 +165,8 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaveError(null)
+    beginSaveAttempt()
     setSaveNotice(null)
-
-    if (!employmentStatus.trim()) {
-      setSaveError('Please select your employment status.')
-      return
-    }
-    if (!employerName.trim()) {
-      setSaveError('Employer name is required.')
-      return
-    }
-    if (!jobTitle.trim()) {
-      setSaveError('Job title is required.')
-      return
-    }
-    if (!employmentType.trim()) {
-      setSaveError('Please select your employment type.')
-      return
-    }
-    if (!incomeBand.trim()) {
-      setSaveError('Please select your weekly income band.')
-      return
-    }
 
     const workplaceFields: WorkplaceLocationFields = {
       label: workplaceLabel,
@@ -166,12 +176,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
       postcode: workplacePostcode,
     }
 
-    if (workplaceLocationFieldsTouched(workplaceFields)) {
-      const workplaceError = validateWorkplaceLocationFields(workplaceFields)
-      if (workplaceError) {
-        setSaveError(workplaceError)
-        return
-      }
+    const errors = workingRouteSectionFieldErrors(
+      { employmentStatus, employerName, jobTitle, employmentType, incomeBand },
+      workplaceFields,
+    )
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
+      return
     }
 
     setSaving(true)
@@ -251,7 +262,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
       setBaseline(savedFields)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save employment details.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -262,6 +273,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
   return (
     <>
       <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+        <RenterProfileSectionErrorBanner message={sectionError} />
         <div className="renter-profile-field">
           <label htmlFor="rw-status" className="renter-profile-field-label">
             Employment status
@@ -269,8 +281,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <select
             id="rw-status"
             value={employmentStatus}
-            onChange={(e) => setEmploymentStatus(e.target.value)}
-            className="renter-profile-select"
+            onChange={(e) => {
+              setEmploymentStatus(e.target.value)
+              clearFieldError('employmentStatus')
+            }}
+            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.employmentStatus))}
+            aria-invalid={fieldErrors.employmentStatus ? true : undefined}
+            aria-describedby={fieldErrors.employmentStatus ? 'rw-status-error' : undefined}
           >
             {EMPLOYMENT_STATUS_OPTIONS.map((o) => (
               <option key={o.value || 'empty'} value={o.value}>
@@ -278,6 +295,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               </option>
             ))}
           </select>
+          <RenterProfileFieldErrorMsg id="rw-status-error" message={fieldErrors.employmentStatus} />
         </div>
 
         <div className="renter-profile-field">
@@ -287,10 +305,16 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <input
             id="rw-employer"
             value={employerName}
-            onChange={(e) => setEmployerName(e.target.value)}
+            onChange={(e) => {
+              setEmployerName(e.target.value)
+              clearFieldError('employerName')
+            }}
             placeholder="e.g. Acme Pty Ltd"
-            className="renter-profile-input"
+            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.employerName))}
+            aria-invalid={fieldErrors.employerName ? true : undefined}
+            aria-describedby={fieldErrors.employerName ? 'rw-employer-error' : undefined}
           />
+          <RenterProfileFieldErrorMsg id="rw-employer-error" message={fieldErrors.employerName} />
         </div>
 
         <div className="renter-profile-field">
@@ -300,10 +324,16 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <input
             id="rw-title"
             value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
+            onChange={(e) => {
+              setJobTitle(e.target.value)
+              clearFieldError('jobTitle')
+            }}
             placeholder="e.g. Software engineer"
-            className="renter-profile-input"
+            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.jobTitle))}
+            aria-invalid={fieldErrors.jobTitle ? true : undefined}
+            aria-describedby={fieldErrors.jobTitle ? 'rw-title-error' : undefined}
           />
+          <RenterProfileFieldErrorMsg id="rw-title-error" message={fieldErrors.jobTitle} />
         </div>
 
         <div className="renter-profile-field">
@@ -313,8 +343,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <select
             id="rw-type"
             value={employmentType}
-            onChange={(e) => setEmploymentType(e.target.value)}
-            className="renter-profile-select"
+            onChange={(e) => {
+              setEmploymentType(e.target.value)
+              clearFieldError('employmentType')
+            }}
+            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.employmentType))}
+            aria-invalid={fieldErrors.employmentType ? true : undefined}
+            aria-describedby={fieldErrors.employmentType ? 'rw-type-error' : undefined}
           >
             {EMPLOYMENT_TYPE_OPTIONS.map((o) => (
               <option key={o.value || 'empty'} value={o.value}>
@@ -322,6 +357,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               </option>
             ))}
           </select>
+          <RenterProfileFieldErrorMsg id="rw-type-error" message={fieldErrors.employmentType} />
         </div>
 
         <div className="renter-profile-field">
@@ -331,8 +367,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <select
             id="rw-income"
             value={incomeBand}
-            onChange={(e) => setIncomeBand(e.target.value)}
-            className="renter-profile-select"
+            onChange={(e) => {
+              setIncomeBand(e.target.value)
+              clearFieldError('incomeBand')
+            }}
+            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeBand))}
+            aria-invalid={fieldErrors.incomeBand ? true : undefined}
+            aria-describedby={fieldErrors.incomeBand ? 'rw-income-error' : undefined}
           >
             <option value="">Select income band</option>
             {WEEKLY_INCOME_BAND_OPTIONS.map((o) => (
@@ -341,6 +382,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               </option>
             ))}
           </select>
+          <RenterProfileFieldErrorMsg id="rw-income-error" message={fieldErrors.incomeBand} />
         </div>
 
         <h3 className="renter-profile-field-group-heading">Work location (optional)</h3>
@@ -379,10 +421,16 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <input
             id="rw-wl-sub"
             value={workplaceSuburb}
-            onChange={(e) => setWorkplaceSuburb(e.target.value)}
-            className="renter-profile-input"
+            onChange={(e) => {
+              setWorkplaceSuburb(e.target.value)
+              clearFieldError('workplaceSuburb')
+            }}
+            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.workplaceSuburb))}
             autoComplete="address-level2"
+            aria-invalid={fieldErrors.workplaceSuburb ? true : undefined}
+            aria-describedby={fieldErrors.workplaceSuburb ? 'rw-wl-sub-error' : undefined}
           />
+          <RenterProfileFieldErrorMsg id="rw-wl-sub-error" message={fieldErrors.workplaceSuburb} />
         </div>
 
         <div className="renter-profile-field">
@@ -392,8 +440,13 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <select
             id="rw-wl-st"
             value={workplaceState}
-            onChange={(e) => setWorkplaceState(e.target.value)}
-            className="renter-profile-select"
+            onChange={(e) => {
+              setWorkplaceState(e.target.value)
+              clearFieldError('workplaceState')
+            }}
+            className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.workplaceState))}
+            aria-invalid={fieldErrors.workplaceState ? true : undefined}
+            aria-describedby={fieldErrors.workplaceState ? 'rw-wl-st-error' : undefined}
           >
             {AU_WORKPLACE_STATES.map((s) => (
               <option key={s} value={s}>
@@ -401,6 +454,7 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
               </option>
             ))}
           </select>
+          <RenterProfileFieldErrorMsg id="rw-wl-st-error" message={fieldErrors.workplaceState} />
         </div>
 
         <div className="renter-profile-field">
@@ -410,18 +464,20 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           <input
             id="rw-wl-pc"
             value={workplacePostcode}
-            onChange={(e) => setWorkplacePostcode(e.target.value)}
+            onChange={(e) => {
+              setWorkplacePostcode(e.target.value)
+              clearFieldError('workplacePostcode')
+            }}
             inputMode="numeric"
-            className="renter-profile-input"
+            className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.workplacePostcode))}
             autoComplete="postal-code"
+            aria-invalid={fieldErrors.workplacePostcode ? true : undefined}
+            aria-describedby={fieldErrors.workplacePostcode ? 'rw-wl-pc-error' : undefined}
           />
+          <RenterProfileFieldErrorMsg id="rw-wl-pc-error" message={fieldErrors.workplacePostcode} />
         </div>
 
-        {saveError ? (
-          <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-            {saveError}
-          </p>
-        ) : null}
+        <RenterProfileWriteError message={saveError} />
 
         {saveNotice && !saveError ? (
           <p className="renter-profile-note" style={{ gridColumn: '1 / -1', marginTop: 0 }} role="status">
@@ -429,8 +485,9 @@ export function RenterWorkingRouteSection({ profile, userId, onSaved }: Props) {
           </p>
         ) : null}
 
-        <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-          <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+        <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+          <RenterProfileSaveHint message={sectionSaveHint} />
+          <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
             {saving ? 'Saving…' : 'Save section'}
           </button>
         </div>

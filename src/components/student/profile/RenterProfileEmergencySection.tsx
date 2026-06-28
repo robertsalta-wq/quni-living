@@ -2,8 +2,24 @@ import { useEffect, useState, type FormEvent } from 'react'
 import type { Database } from '../../../lib/database.types'
 import { supabase } from '../../../lib/supabase'
 import { withSentryMonitoring } from '../../../lib/supabaseErrorMonitor'
-import { isValidAuPhone } from '../../../lib/studentOnboarding'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import {
+  emergencySectionFieldErrors,
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const EMERGENCY_HINT_LABELS = {
+  emergencyName: 'emergency contact name',
+  emergencyPhone: 'emergency contact phone',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -38,9 +54,18 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
   )
   const [emergencyPhone, setEmergencyPhone] = useState(profile.emergency_contact_phone ?? '')
   const [emergencyEmail, setEmergencyEmail] = useState(profile.emergency_contact_email ?? '')
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(EMERGENCY_HINT_LABELS)
 
   const applyFields = (fields: EmergencyDraft) => {
     setEmergencyName(fields.emergencyName)
@@ -64,19 +89,12 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaveError(null)
+    beginSaveAttempt()
     setSavedFlash(false)
 
-    if (!emergencyName.trim()) {
-      setSaveError('Emergency contact name is required.')
-      return
-    }
-    if (!emergencyPhone.trim()) {
-      setSaveError('Emergency contact phone is required.')
-      return
-    }
-    if (!isValidAuPhone(emergencyPhone)) {
-      setSaveError('Enter a valid emergency contact phone number.')
+    const errors = emergencySectionFieldErrors({ emergencyName, emergencyPhone })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
       return
     }
 
@@ -105,7 +123,7 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
       setSavedFlash(true)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save emergency contact.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -113,6 +131,7 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
         <label htmlFor="renter-em-name" className="renter-profile-field-label">
           Full name
@@ -121,10 +140,15 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
           id="renter-em-name"
           type="text"
           value={emergencyName}
-          onChange={(e) => setEmergencyName(e.target.value)}
-          className="renter-profile-input"
-          required
+          onChange={(e) => {
+            setEmergencyName(e.target.value)
+            clearFieldError('emergencyName')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.emergencyName))}
+          aria-invalid={fieldErrors.emergencyName ? true : undefined}
+          aria-describedby={fieldErrors.emergencyName ? 'renter-em-name-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="renter-em-name-error" message={fieldErrors.emergencyName} />
       </div>
       <div>
         <label htmlFor="renter-em-rel" className="renter-profile-field-label">
@@ -147,10 +171,15 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
           id="renter-em-phone"
           type="tel"
           value={emergencyPhone}
-          onChange={(e) => setEmergencyPhone(e.target.value)}
-          className="renter-profile-input"
-          required
+          onChange={(e) => {
+            setEmergencyPhone(e.target.value)
+            clearFieldError('emergencyPhone')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.emergencyPhone))}
+          aria-invalid={fieldErrors.emergencyPhone ? true : undefined}
+          aria-describedby={fieldErrors.emergencyPhone ? 'renter-em-phone-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="renter-em-phone-error" message={fieldErrors.emergencyPhone} />
       </div>
       <div>
         <label htmlFor="renter-em-email" className="renter-profile-field-label">
@@ -164,18 +193,15 @@ export function RenterProfileEmergencySection({ profile, userId, onSaved }: Prop
           className="renter-profile-input"
         />
       </div>
-      {saveError ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-          {saveError}
-        </p>
-      ) : null}
       {savedFlash ? (
         <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
           Emergency contact saved.
         </p>
       ) : null}
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <RenterProfileWriteError message={saveError} />
+      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

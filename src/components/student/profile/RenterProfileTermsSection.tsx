@@ -8,6 +8,18 @@ import {
 } from '../../legal/LegalDocumentModal'
 import { TermsContent } from '../../legal/TermsContent'
 import { PrivacyContent } from '../../legal/PrivacyContent'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import { RENTER_SAVE_WRITE_FAILURE, termsSectionFieldErrors } from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const TERMS_HINT_LABELS = {
+  agreeTerms: 'terms acceptance',
+} as const
 
 type StudentLegalDocumentKind = Extract<LegalDocumentKind, 'terms' | 'privacy'>
 
@@ -25,18 +37,30 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
   const [accepted, setAccepted] = useState(false)
   const [openLegalDoc, setOpenLegalDoc] = useState<LegalDocumentKind | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(TERMS_HINT_LABELS)
 
   const activeLegalDoc =
     openLegalDoc === 'terms' || openLegalDoc === 'privacy' ? STUDENT_LEGAL_DOC_MODAL[openLegalDoc] : null
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!accepted) {
-      setError('Please accept the Terms of Service and Privacy Policy to continue.')
+    beginSaveAttempt()
+
+    const errors = termsSectionFieldErrors(accepted)
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
       return
     }
-    setError(null)
+
     setSubmitting(true)
     try {
       const now = new Date().toISOString()
@@ -46,7 +70,7 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
       if (upErr) throw upErr
       await onAccepted()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not save acceptance.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSubmitting(false)
     }
@@ -54,49 +78,53 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-stack">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <p style={{ fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
         Accept our policies before you browse listings or request bookings.
       </p>
-      <label
-        htmlFor="renter-profile-terms"
-        style={{
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-start',
-          cursor: 'pointer',
-          fontSize: 'var(--text-body-sm-size)',
-          color: 'var(--quni-ink-2)',
-          lineHeight: 1.5,
-        }}
-      >
-        <input
-          id="renter-profile-terms"
-          type="checkbox"
-          checked={accepted}
-          onChange={(ev) => {
-            setAccepted(ev.target.checked)
-            setError(null)
+      <div>
+        <label
+          htmlFor="renter-profile-terms"
+          style={{
+            display: 'flex',
+            gap: 12,
+            alignItems: 'flex-start',
+            cursor: 'pointer',
+            fontSize: 'var(--text-body-sm-size)',
+            color: 'var(--quni-ink-2)',
+            lineHeight: 1.5,
           }}
-          style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
-        />
-        <span>
-          I agree to the{' '}
-          <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
-            Terms of Service
-          </SignupLegalDocLink>{' '}
-          and{' '}
-          <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
-            Privacy Policy
-          </SignupLegalDocLink>
-        </span>
-      </label>
-      {error ? (
-        <p className="renter-profile-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <div className="renter-profile-form-actions">
-        <button type="submit" disabled={submitting} className="renter-profile-btn-primary">
+        >
+          <input
+            id="renter-profile-terms"
+            type="checkbox"
+            checked={accepted}
+            onChange={(ev) => {
+              setAccepted(ev.target.checked)
+              clearFieldError('agreeTerms')
+            }}
+            className={fieldErrors.agreeTerms ? 'renter-profile-checkbox--error' : undefined}
+            style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
+            aria-invalid={fieldErrors.agreeTerms ? true : undefined}
+            aria-describedby={fieldErrors.agreeTerms ? 'renter-profile-terms-error' : undefined}
+          />
+          <span>
+            I agree to the{' '}
+            <SignupLegalDocLink kind="terms" onOpen={setOpenLegalDoc}>
+              Terms of Service
+            </SignupLegalDocLink>{' '}
+            and{' '}
+            <SignupLegalDocLink kind="privacy" onOpen={setOpenLegalDoc}>
+              Privacy Policy
+            </SignupLegalDocLink>
+          </span>
+        </label>
+        <RenterProfileFieldErrorMsg id="renter-profile-terms-error" message={fieldErrors.agreeTerms} />
+      </div>
+      <RenterProfileWriteError message={saveError} />
+      <div className="renter-profile-form-actions" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={submitting} className="renter-profile-btn-primary self-start">
           {submitting ? 'Saving…' : 'Accept and continue'}
         </button>
       </div>

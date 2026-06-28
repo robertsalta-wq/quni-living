@@ -3,8 +3,28 @@ import type { Database } from '../../../lib/database.types'
 import { supabase } from '../../../lib/supabase'
 import { withSentryMonitoring } from '../../../lib/supabaseErrorMonitor'
 import { GUARANTOR_INCOME_BAND_OPTIONS } from '../../../lib/renterIncomeBands'
-import { isValidAuPhone } from '../../../lib/studentOnboarding'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import {
+  guarantorSectionFieldErrors,
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const GUARANTOR_HINT_LABELS = {
+  guarantorName: 'guarantor name',
+  guarantorRelationship: 'guarantor relationship',
+  guarantorPhone: 'guarantor phone',
+  guarantorEmail: 'guarantor email',
+  guarantorIncomeBand: 'guarantor income band',
+  guarantorConsent: 'guarantor consent',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -45,8 +65,17 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
   const [guarantorEmail, setGuarantorEmail] = useState(profile.guarantor_email ?? '')
   const [guarantorIncomeBand, setGuarantorIncomeBand] = useState(profile.guarantor_income_band ?? '')
   const [guarantorConsent, setGuarantorConsent] = useState(profile.guarantor_consent === true)
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(GUARANTOR_HINT_LABELS)
 
   const applyFields = (fields: GuarantorDraft) => {
     setGuarantorName(fields.guarantorName)
@@ -87,30 +116,18 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaveError(null)
+    beginSaveAttempt()
 
-    if (!guarantorName.trim()) {
-      setSaveError('Guarantor name is required.')
-      return
-    }
-    if (!guarantorRelationship.trim()) {
-      setSaveError('Guarantor relationship is required.')
-      return
-    }
-    if (!guarantorPhone.trim() || !isValidAuPhone(guarantorPhone)) {
-      setSaveError('Enter a valid guarantor phone number.')
-      return
-    }
-    if (!guarantorEmail.trim()) {
-      setSaveError('Guarantor email is required.')
-      return
-    }
-    if (!guarantorIncomeBand.trim()) {
-      setSaveError('Please select guarantor income band.')
-      return
-    }
-    if (!guarantorConsent) {
-      setSaveError('Please confirm your guarantor has consented.')
+    const errors = guarantorSectionFieldErrors({
+      guarantorName,
+      guarantorRelationship,
+      guarantorPhone,
+      guarantorEmail,
+      guarantorIncomeBand,
+      guarantorConsent,
+    })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
       return
     }
 
@@ -143,7 +160,7 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
       setBaseline(savedFields)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save guarantor details.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -151,6 +168,7 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid renter-profile-form-grid--stack">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
         <label htmlFor="rg-name" className="renter-profile-field-label">
           Full name
@@ -158,9 +176,15 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
         <input
           id="rg-name"
           value={guarantorName}
-          onChange={(e) => setGuarantorName(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setGuarantorName(e.target.value)
+            clearFieldError('guarantorName')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorName))}
+          aria-invalid={fieldErrors.guarantorName ? true : undefined}
+          aria-describedby={fieldErrors.guarantorName ? 'rg-name-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="rg-name-error" message={fieldErrors.guarantorName} />
       </div>
       <div>
         <label htmlFor="rg-rel" className="renter-profile-field-label">
@@ -169,10 +193,15 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
         <input
           id="rg-rel"
           value={guarantorRelationship}
-          onChange={(e) => setGuarantorRelationship(e.target.value)}
-          placeholder="e.g. Parent"
-          className="renter-profile-input"
+          onChange={(e) => {
+            setGuarantorRelationship(e.target.value)
+            clearFieldError('guarantorRelationship')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorRelationship))}
+          aria-invalid={fieldErrors.guarantorRelationship ? true : undefined}
+          aria-describedby={fieldErrors.guarantorRelationship ? 'rg-rel-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="rg-rel-error" message={fieldErrors.guarantorRelationship} />
       </div>
       <div>
         <label htmlFor="rg-phone" className="renter-profile-field-label">
@@ -182,9 +211,15 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
           id="rg-phone"
           type="tel"
           value={guarantorPhone}
-          onChange={(e) => setGuarantorPhone(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setGuarantorPhone(e.target.value)
+            clearFieldError('guarantorPhone')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorPhone))}
+          aria-invalid={fieldErrors.guarantorPhone ? true : undefined}
+          aria-describedby={fieldErrors.guarantorPhone ? 'rg-phone-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="rg-phone-error" message={fieldErrors.guarantorPhone} />
       </div>
       <div>
         <label htmlFor="rg-email" className="renter-profile-field-label">
@@ -194,9 +229,15 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
           id="rg-email"
           type="email"
           value={guarantorEmail}
-          onChange={(e) => setGuarantorEmail(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setGuarantorEmail(e.target.value)
+            clearFieldError('guarantorEmail')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.guarantorEmail))}
+          aria-invalid={fieldErrors.guarantorEmail ? true : undefined}
+          aria-describedby={fieldErrors.guarantorEmail ? 'rg-email-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="rg-email-error" message={fieldErrors.guarantorEmail} />
       </div>
       <div style={{ gridColumn: '1 / -1' }}>
         <label htmlFor="rg-income" className="renter-profile-field-label">
@@ -205,8 +246,13 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
         <select
           id="rg-income"
           value={guarantorIncomeBand}
-          onChange={(e) => setGuarantorIncomeBand(e.target.value)}
-          className="renter-profile-select"
+          onChange={(e) => {
+            setGuarantorIncomeBand(e.target.value)
+            clearFieldError('guarantorIncomeBand')
+          }}
+          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.guarantorIncomeBand))}
+          aria-invalid={fieldErrors.guarantorIncomeBand ? true : undefined}
+          aria-describedby={fieldErrors.guarantorIncomeBand ? 'rg-income-error' : undefined}
         >
           <option value="">Select income band</option>
           {GUARANTOR_INCOME_BAND_OPTIONS.map((o) => (
@@ -215,35 +261,41 @@ export function RenterGuarantorSection({ profile, userId, onSaved }: Props) {
             </option>
           ))}
         </select>
+        <RenterProfileFieldErrorMsg id="rg-income-error" message={fieldErrors.guarantorIncomeBand} />
       </div>
-      <label
-        style={{
-          gridColumn: '1 / -1',
-          display: 'flex',
-          gap: 10,
-          alignItems: 'flex-start',
-          fontSize: 'var(--text-body-sm-size)',
-          color: 'var(--quni-ink-2)',
-          cursor: 'pointer',
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={guarantorConsent}
-          onChange={(e) => setGuarantorConsent(e.target.checked)}
-          style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
-        />
-        <span>I confirm this person agrees to act as my guarantor</span>
-      </label>
+      <div style={{ gridColumn: '1 / -1' }}>
+        <label
+          style={{
+            display: 'flex',
+            gap: 10,
+            alignItems: 'flex-start',
+            fontSize: 'var(--text-body-sm-size)',
+            color: 'var(--quni-ink-2)',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={guarantorConsent}
+            onChange={(e) => {
+              setGuarantorConsent(e.target.checked)
+              clearFieldError('guarantorConsent')
+            }}
+            className={fieldErrors.guarantorConsent ? 'renter-profile-checkbox--error' : undefined}
+            style={{ marginTop: 3, accentColor: 'var(--quni-coral)' }}
+            aria-invalid={fieldErrors.guarantorConsent ? true : undefined}
+            aria-describedby={fieldErrors.guarantorConsent ? 'rg-consent-error' : undefined}
+          />
+          <span>I confirm this person agrees to act as my guarantor</span>
+        </label>
+        <RenterProfileFieldErrorMsg id="rg-consent-error" message={fieldErrors.guarantorConsent} />
+      </div>
 
-      {saveError ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-          {saveError}
-        </p>
-      ) : null}
+      <RenterProfileWriteError message={saveError} />
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

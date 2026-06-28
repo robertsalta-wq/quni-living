@@ -5,6 +5,23 @@ import { withSentryMonitoring } from '../../../lib/supabaseErrorMonitor'
 import { LEASE_LENGTH_OPTIONS } from '../../../lib/studentOnboarding'
 import { STUDENT_OCCUPANCY_OPTIONS } from '../../../lib/studentOccupancyOptions'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import {
+  livingPreferencesSectionFieldErrors,
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const LIVING_PREFS_HINT_LABELS = {
+  budgetMin: 'budget minimum',
+  budgetMax: 'budget maximum',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -92,8 +109,17 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
   const [billsPref, setBillsPref] = useState(profile.bills_preference ?? '')
   const [furnishingPref, setFurnishingPref] = useState(profile.furnishing_preference ?? '')
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(LIVING_PREFS_HINT_LABELS)
 
   const applyFields = (fields: LivingPrefsDraft) => {
     setRoomPref(fields.roomPref)
@@ -152,19 +178,17 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaveError(null)
+    beginSaveAttempt()
     setSavedFlash(false)
+
+    const errors = livingPreferencesSectionFieldErrors({ budgetMin, budgetMax })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
+      return
+    }
 
     const bMin = budgetMin.trim() ? Number(budgetMin) : null
     const bMax = budgetMax.trim() ? Number(budgetMax) : null
-    if (budgetMin.trim() && Number.isNaN(bMin)) {
-      setSaveError('Budget minimum must be a number.')
-      return
-    }
-    if (budgetMax.trim() && Number.isNaN(bMax)) {
-      setSaveError('Budget maximum must be a number.')
-      return
-    }
 
     setSaving(true)
     try {
@@ -209,7 +233,7 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
       setSavedFlash(true)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save preferences.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -217,6 +241,7 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
         <label htmlFor="renter-room" className="renter-profile-field-label">
           Room type preference
@@ -246,13 +271,39 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
         <label htmlFor="renter-bmin" className="renter-profile-field-label">
           Weekly budget — min
         </label>
-        <input id="renter-bmin" type="text" inputMode="decimal" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} className="renter-profile-input" />
+        <input
+          id="renter-bmin"
+          type="text"
+          inputMode="decimal"
+          value={budgetMin}
+          onChange={(e) => {
+            setBudgetMin(e.target.value)
+            clearFieldError('budgetMin')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.budgetMin))}
+          aria-invalid={fieldErrors.budgetMin ? true : undefined}
+          aria-describedby={fieldErrors.budgetMin ? 'renter-bmin-error' : undefined}
+        />
+        <RenterProfileFieldErrorMsg id="renter-bmin-error" message={fieldErrors.budgetMin} />
       </div>
       <div>
         <label htmlFor="renter-bmax" className="renter-profile-field-label">
           Weekly budget — max
         </label>
-        <input id="renter-bmax" type="text" inputMode="decimal" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} className="renter-profile-input" />
+        <input
+          id="renter-bmax"
+          type="text"
+          inputMode="decimal"
+          value={budgetMax}
+          onChange={(e) => {
+            setBudgetMax(e.target.value)
+            clearFieldError('budgetMax')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.budgetMax))}
+          aria-invalid={fieldErrors.budgetMax ? true : undefined}
+          aria-describedby={fieldErrors.budgetMax ? 'renter-bmax-error' : undefined}
+        />
+        <RenterProfileFieldErrorMsg id="renter-bmax-error" message={fieldErrors.budgetMax} />
       </div>
       <div>
         <label htmlFor="renter-move-in" className="renter-profile-field-label">
@@ -322,18 +373,15 @@ export function RenterProfileLivingPreferencesSection({ profile, userId, onSaved
           ))}
         </select>
       </div>
-      {saveError ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-          {saveError}
-        </p>
-      ) : null}
       {savedFlash ? (
         <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
           Living preferences saved.
         </p>
       ) : null}
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <RenterProfileWriteError message={saveError} />
+      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

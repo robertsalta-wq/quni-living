@@ -6,6 +6,25 @@ import { prepareProfilePhotoForUpload } from '../../../lib/prepareProfilePhotoFo
 import { cacheBustUrl } from '../../../lib/cacheBustUrl'
 import { AUDateField } from '../../AUDateField'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import {
+  personalSectionFieldErrors,
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const PERSONAL_HINT_LABELS = {
+  firstName: 'first name',
+  lastName: 'last name',
+  phone: 'phone number',
+  gender: 'gender',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -89,12 +108,21 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   const [nationality, setNationality] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(PERSONAL_HINT_LABELS)
 
   const applyFromProfile = useCallback((prof: StudentRow): PersonalDraft => {
     const [fn, ln] = splitFullName(prof.full_name)
@@ -176,19 +204,12 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setError(null)
+    beginSaveAttempt()
     setSavedFlash(false)
 
-    if (!firstName.trim() || !lastName.trim()) {
-      setError('First and last name are required.')
-      return
-    }
-    if (!phone.trim()) {
-      setError('Phone number is required.')
-      return
-    }
-    if (!gender.trim()) {
-      setError('Select your gender.')
+    const errors = personalSectionFieldErrors({ firstName, lastName, phone, gender })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
       return
     }
 
@@ -223,7 +244,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
       setSavedFlash(true)
       await onSaved()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not save personal details.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -231,6 +252,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <div>
         <label htmlFor="renter-first" className="renter-profile-field-label">
           First name
@@ -240,9 +262,15 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           type="text"
           autoComplete="given-name"
           value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setFirstName(e.target.value)
+            clearFieldError('firstName')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.firstName))}
+          aria-invalid={fieldErrors.firstName ? true : undefined}
+          aria-describedby={fieldErrors.firstName ? 'renter-first-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="renter-first-error" message={fieldErrors.firstName} />
       </div>
       <div>
         <label htmlFor="renter-last" className="renter-profile-field-label">
@@ -253,9 +281,15 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           type="text"
           autoComplete="family-name"
           value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setLastName(e.target.value)
+            clearFieldError('lastName')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.lastName))}
+          aria-invalid={fieldErrors.lastName ? true : undefined}
+          aria-describedby={fieldErrors.lastName ? 'renter-last-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="renter-last-error" message={fieldErrors.lastName} />
       </div>
       <div>
         <label htmlFor="renter-dob" className="renter-profile-field-label">
@@ -278,9 +312,15 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           type="tel"
           autoComplete="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="renter-profile-input"
+          onChange={(e) => {
+            setPhone(e.target.value)
+            clearFieldError('phone')
+          }}
+          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.phone))}
+          aria-invalid={fieldErrors.phone ? true : undefined}
+          aria-describedby={fieldErrors.phone ? 'renter-phone-error' : undefined}
         />
+        <RenterProfileFieldErrorMsg id="renter-phone-error" message={fieldErrors.phone} />
       </div>
       <div>
         <label htmlFor="renter-gender" className="renter-profile-field-label">
@@ -289,8 +329,13 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
         <select
           id="renter-gender"
           value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="renter-profile-select"
+          onChange={(e) => {
+            setGender(e.target.value)
+            clearFieldError('gender')
+          }}
+          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.gender))}
+          aria-invalid={fieldErrors.gender ? true : undefined}
+          aria-describedby={fieldErrors.gender ? 'renter-gender-error' : undefined}
         >
           {GENDER_OPTIONS.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
@@ -298,6 +343,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             </option>
           ))}
         </select>
+        <RenterProfileFieldErrorMsg id="renter-gender-error" message={fieldErrors.gender} />
       </div>
       <div>
         <label htmlFor="renter-nationality" className="renter-profile-field-label">
@@ -354,18 +400,15 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
           </div>
         </div>
       </div>
-      {error ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-          {error}
-        </p>
-      ) : null}
       {savedFlash ? (
         <p className="renter-profile-success-flash" style={{ gridColumn: '1 / -1' }} role="status">
           Personal details saved.
         </p>
       ) : null}
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <RenterProfileWriteError message={saveError} />
+      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

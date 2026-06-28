@@ -6,6 +6,23 @@ import { WEEKLY_INCOME_BAND_OPTIONS } from '../../../lib/renterIncomeBands'
 import type { RenterSituation } from '../../../lib/renterSituation'
 import { isGeneralRouteSectionComplete } from '../../../lib/renterRouteSection'
 import { useProfileSectionDraft } from '../../../hooks/useProfileSectionDraft'
+import { useRenterProfileSectionValidation } from '../../../hooks/useRenterProfileSectionValidation'
+import {
+  generalRouteSectionFieldErrors,
+  renterFieldClass,
+  RENTER_SAVE_WRITE_FAILURE,
+} from '../../../lib/renterProfileFieldValidation'
+import {
+  RenterProfileFieldErrorMsg,
+  RenterProfileSaveHint,
+  RenterProfileSectionErrorBanner,
+  RenterProfileWriteError,
+} from './RenterProfileValidationUi'
+
+const GENERAL_ROUTE_HINT_LABELS = {
+  incomeBand: 'weekly income band',
+  incomeSource: 'income source',
+} as const
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -51,8 +68,17 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
     useProfileSectionDraft(userId, draftKey)
   const [incomeBand, setIncomeBand] = useState(profile.income_band ?? '')
   const [incomeSource, setIncomeSource] = useState(profile.income_source ?? '')
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const {
+    fieldErrors,
+    sectionError,
+    sectionSaveHint,
+    saveError,
+    setSaveError,
+    applyValidationErrors,
+    clearFieldError,
+    beginSaveAttempt,
+  } = useRenterProfileSectionValidation(GENERAL_ROUTE_HINT_LABELS)
 
   const sourceOptions = incomeSourceOptions(situation)
 
@@ -76,14 +102,11 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaveError(null)
+    beginSaveAttempt()
 
-    if (!incomeBand.trim()) {
-      setSaveError('Please select your weekly income band.')
-      return
-    }
-    if (!incomeSource.trim()) {
-      setSaveError('Please select your income source.')
+    const errors = generalRouteSectionFieldErrors({ incomeBand, incomeSource })
+    if (Object.keys(errors).length > 0) {
+      applyValidationErrors(errors)
       return
     }
 
@@ -107,7 +130,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
       setBaseline(savedFields)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Could not save income details.')
+      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
     } finally {
       setSaving(false)
     }
@@ -117,6 +140,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
 
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
+      <RenterProfileSectionErrorBanner message={sectionError} />
       <div className="renter-profile-field">
         <label htmlFor="rg-income" className="renter-profile-field-label">
           Income band
@@ -124,8 +148,13 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
         <select
           id="rg-income"
           value={incomeBand}
-          onChange={(e) => setIncomeBand(e.target.value)}
-          className="renter-profile-select"
+          onChange={(e) => {
+            setIncomeBand(e.target.value)
+            clearFieldError('incomeBand')
+          }}
+          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeBand))}
+          aria-invalid={fieldErrors.incomeBand ? true : undefined}
+          aria-describedby={fieldErrors.incomeBand ? 'rg-income-error' : undefined}
         >
           <option value="">Select income band</option>
           {WEEKLY_INCOME_BAND_OPTIONS.map((o) => (
@@ -134,6 +163,7 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
             </option>
           ))}
         </select>
+        <RenterProfileFieldErrorMsg id="rg-income-error" message={fieldErrors.incomeBand} />
       </div>
 
       <div className="renter-profile-field">
@@ -143,8 +173,13 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
         <select
           id="rg-source"
           value={incomeSource}
-          onChange={(e) => setIncomeSource(e.target.value)}
-          className="renter-profile-select"
+          onChange={(e) => {
+            setIncomeSource(e.target.value)
+            clearFieldError('incomeSource')
+          }}
+          className={renterFieldClass('renter-profile-select', Boolean(fieldErrors.incomeSource))}
+          aria-invalid={fieldErrors.incomeSource ? true : undefined}
+          aria-describedby={fieldErrors.incomeSource ? 'rg-source-error' : undefined}
         >
           {sourceOptions.map((o) => (
             <option key={o.value || 'empty'} value={o.value}>
@@ -152,16 +187,14 @@ export function RenterGeneralRouteSection({ profile, userId, situation, onSaved 
             </option>
           ))}
         </select>
+        <RenterProfileFieldErrorMsg id="rg-source-error" message={fieldErrors.incomeSource} />
       </div>
 
-      {saveError ? (
-        <p className="renter-profile-error" style={{ gridColumn: '1 / -1' }} role="alert">
-          {saveError}
-        </p>
-      ) : null}
+      <RenterProfileWriteError message={saveError} />
 
-      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1' }}>
-        <button type="submit" disabled={saving} className="renter-profile-btn-primary">
+      <div className="renter-profile-form-actions" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'stretch' }}>
+        <RenterProfileSaveHint message={sectionSaveHint} />
+        <button type="submit" disabled={saving} className="renter-profile-btn-primary self-start">
           {saving ? 'Saving…' : 'Save section'}
         </button>
       </div>

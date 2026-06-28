@@ -230,6 +230,43 @@
   border-color: var(--quni-coral);
 }
 
+.renter-profile-field--error {
+  border-color: var(--quni-danger-fg) !important;
+  box-shadow: 0 0 0 1px var(--quni-danger-fg);
+}
+
+.renter-profile-field--error:focus {
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25);
+  border-color: var(--quni-danger-fg);
+}
+
+.renter-profile-section-error {
+  font-size: var(--text-body-sm-size);
+  color: var(--quni-danger-fg);
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.renter-profile-field-error {
+  font-size: 12px;
+  color: var(--quni-danger-fg);
+  margin: 4px 0 0;
+}
+
+.renter-profile-save-hint {
+  font-size: 12px;
+  color: var(--quni-danger-fg);
+  margin: 0;
+}
+
+.renter-profile-checkbox--error {
+  outline: 2px solid var(--quni-danger-fg);
+  outline-offset: 2px;
+}
+
 .renter-profile-btn-primary {
   background: var(--quni-coral);
   color: var(--quni-surface-1);
