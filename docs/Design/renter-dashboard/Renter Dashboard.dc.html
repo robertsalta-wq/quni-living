@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;color:#4A4253}
+</style>
+</helmet>
+
+<!-- ============================ DESKTOP FRAME ============================ -->
+<div style="position:absolute; left:0; top:0; width:1240px">
+  <div data-drags-parent="1" style="font:600 12px/1.4 'Inter',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin-bottom:12px">Desktop — 1240px</div>
+
+  <div data-screen-label="Renter dashboard — desktop" style="width:1240px; background:#F7F8FA; border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden">
+
+    <!-- Cream header -->
+    <header style="background:#FEF9E4; border-bottom:1px solid #E8E0CC">
+      <div style="display:flex; align-items:center; gap:28px; padding:14px 32px">
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="font-family:'Playfair Display',serif; font-weight:700; font-size:28px; color:#FF6F61; letter-spacing:-.02em; line-height:1">Quni</span>
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,111,97,.25); background:rgba(255,111,97,.08); color:#FF6F61">
+            <svg width="18" height="18" viewBox="0 0 28 28" fill="currentColor"><path d="M16 4 L17.6 11.4 L25 13 L17.6 14.6 L16 22 L14.4 14.6 L7 13 L14.4 11.4 Z"></path></svg>
+          </span>
+        </div>
+        <nav style="display:flex; align-items:center; gap:4px; flex:1">
+          <a href="#" style="padding:8px 12px; border-radius:8px; font-weight:500; font-size:14px; color:#08060D; text-decoration:none">Listings</a>
+          <a href="#" style="padding:8px 12px; border-radius:8px; font-weight:500; font-size:14px; color:#6B6375; text-decoration:none">For students ▾</a>
+          <a href="#" style="padding:8px 12px; border-radius:8px; font-weight:500; font-size:14px; color:#6B6375; text-decoration:none">Pricing</a>
+          <span style="width:1px; height:18px; background:#E8E0CC; margin:0 6px"></span>
+          <a href="#" style="padding:8px 12px; border-radius:8px; font-weight:500; font-size:14px; color:#6B6375; text-decoration:none">For landlords</a>
+          <a href="#" style="padding:8px 12px; border-radius:8px; font-weight:500; font-size:14px; color:#6B6375; text-decoration:none">Universities</a>
+        </nav>
+        <div style="display:flex; align-items:center; gap:18px">
+          <a href="#" style="font-weight:500; font-size:14px; color:#4A4253; text-decoration:none">Messages</a>
+          <a href="#" style="font-weight:600; font-size:14px; color:#08060D; text-decoration:none">Dashboard</a>
+          <button style="display:flex; align-items:center; gap:6px; padding:4px 8px 4px 4px; border:1px solid #E8E0CC; background:#fff; border-radius:999px; cursor:pointer">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:999px; background:rgba(31,42,68,.10); color:#1F2A44; font-size:12px; font-weight:700">RS</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#6B6375" stroke-width="2"><path d="M5 8l5 5 5-5"></path></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page body -->
+    <div style="max-width:1176px; margin:0 auto; padding:28px 32px 44px">
+      <p style="font-size:13px; font-weight:600; color:#FF6F61; margin:0 0 22px">Dashboard</p>
+
+      <!-- Welcome -->
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:28px">
+        <div>
+          <h1 style="font-family:'Playfair Display',serif; font-weight:700; font-size:40px; line-height:1.1; letter-spacing:-.02em; color:#08060D; margin:0">Welcome back, {{ name }}</h1>
+          <p style="font-size:16px; color:#6B6375; margin:10px 0 0; max-width:560px">Here's a quick look at your bookings and messages — everything in one place.</p>
+        </div>
+        <a href="#" style="flex-shrink:0; display:inline-flex; align-items:center; background:#FF6F61; color:#fff; font-weight:600; font-size:14px; padding:11px 18px; border-radius:10px; text-decoration:none">Browse listings</a>
+      </div>
+
+      <!-- Stat cards row — the dashboard spine -->
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px">
+
+        <!-- Bookings -->
+        <div style="display:flex; flex-direction:column; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; min-height:160px">
+          <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Bookings</p>
+          <p style="font-size:34px; font-weight:700; color:#08060D; margin:8px 0 0; font-variant-numeric:tabular-nums; line-height:1">{{ bookings }}</p>
+          <p style="font-size:13px; color:#6B6375; margin:auto 0 0">No requests</p>
+        </div>
+
+        <!-- Messages -->
+        <div style="display:flex; flex-direction:column; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; min-height:160px">
+          <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Messages</p>
+          <p style="font-size:34px; font-weight:700; color:#08060D; margin:8px 0 0; font-variant-numeric:tabular-nums; line-height:1">{{ messages }}</p>
+          <p style="font-size:13px; color:{{ messagesColor }}; font-weight:{{ messagesWeight }}; margin:auto 0 0">{{ messagesSub }}</p>
+        </div>
+
+        <!-- Your profile (single completion representation — highlighted) -->
+        <div style="display:flex; flex-direction:column; background:rgba(255,111,97,.06); border:1px solid rgba(255,111,97,.35); border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; min-height:160px">
+          <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#B25548; margin:0">Your profile</p>
+          <p style="margin:8px 0 0; line-height:1"><span style="font-size:34px; font-weight:700; color:#08060D; font-variant-numeric:tabular-nums">{{ percent }}%</span><span style="font-size:13px; color:#6B6375; margin-left:6px">complete</span></p>
+          <div style="height:6px; border-radius:999px; background:rgba(255,111,97,.18); margin:12px 0 0; overflow:hidden">
+            <div style="height:100%; border-radius:999px; background:#FF6F61; width:{{ barWidth }}"></div>
+          </div>
+          <a href="#" style="font-size:13px; font-weight:600; color:#FF6F61; text-decoration:none; margin:auto 0 0">Finish setup →</a>
+        </div>
+
+        <!-- Find accommodation -->
+        <div style="display:flex; flex-direction:column; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; min-height:160px">
+          <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Find accommodation</p>
+          <p style="font-size:14px; color:#4A4253; margin:10px 0 0; line-height:1.45">Browse student-friendly rooms near your uni.</p>
+          <a href="#" style="font-size:13px; font-weight:600; color:#FF6F61; text-decoration:none; margin:auto 0 0">Browse listings →</a>
+        </div>
+
+        <!-- Get support -->
+        <div style="display:flex; flex-direction:column; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; min-height:160px">
+          <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Get support</p>
+          <p style="font-size:14px; color:#4A4253; margin:10px 0 0; line-height:1.45">Submit a request and we'll get back to you.</p>
+          <a href="#" style="font-size:13px; font-weight:600; color:#FF6F61; text-decoration:none; margin:auto 0 0">Contact support →</a>
+        </div>
+      </div>
+
+      <!-- Section tabs -->
+      <div style="display:flex; align-items:center; gap:28px; border-bottom:1px solid #E5E4E7; margin-bottom:24px">
+        <a href="#" style="display:inline-flex; align-items:center; gap:7px; padding:0 2px 12px; font-size:14px; font-weight:600; color:#08060D; text-decoration:none; border-bottom:2px solid #FF6F61; margin-bottom:-1px">Bookings</a>
+        <a href="#" style="display:inline-flex; align-items:center; gap:7px; padding:0 2px 12px; font-size:14px; font-weight:500; color:#6B6375; text-decoration:none">Messages<span style="display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:#FF6F61; color:#fff; font-size:11px; font-weight:700">{{ messages }}</span></a>
+        <a href="#" style="display:inline-flex; align-items:center; gap:7px; padding:0 2px 12px; font-size:14px; font-weight:500; color:#6B6375; text-decoration:none">Profile</a>
+      </div>
+
+      <!-- Rent billing -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:24px; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:22px 24px">
+        <div style="max-width:620px">
+          <h3 style="font-size:17px; font-weight:600; color:#08060D; margin:0 0 6px">Rent billing</h3>
+          <p style="font-size:14px; color:#6B6375; margin:0; line-height:1.5">Save a card securely with Stripe for when you pay rent through Quni. You can update it anytime; we don't store card numbers on our servers.</p>
+        </div>
+        <a href="#" style="flex-shrink:0; display:inline-flex; align-items:center; background:#FF6F61; color:#fff; font-weight:600; font-size:14px; padding:11px 18px; border-radius:10px; text-decoration:none">Save a card for rent</a>
+      </div>
+
+      <a href="#" style="display:inline-block; font-size:14px; font-weight:600; color:#FF6F61; text-decoration:none; margin-top:18px">View sample agreements →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ MOBILE FRAME ============================ -->
+<div style="position:absolute; left:1320px; top:0; width:390px">
+  <div data-drags-parent="1" style="font:600 12px/1.4 'Inter',sans-serif; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin-bottom:12px">Mobile app — 390px</div>
+
+  <div data-screen-label="Renter dashboard — mobile" style="width:390px; background:#F7F8FA; border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden">
+
+    <!-- Cream mobile header -->
+    <header style="background:#FEF9E4; border-bottom:1px solid #E8E0CC">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px">
+        <div style="display:flex; align-items:center; gap:8px">
+          <span style="font-family:'Playfair Display',serif; font-weight:700; font-size:24px; color:#FF6F61; letter-spacing:-.02em; line-height:1">Quni</span>
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; border:1px solid rgba(255,111,97,.25); background:rgba(255,111,97,.08); color:#FF6F61">
+            <svg width="16" height="16" viewBox="0 0 28 28" fill="currentColor"><path d="M16 4 L17.6 11.4 L25 13 L17.6 14.6 L16 22 L14.4 14.6 L7 13 L14.4 11.4 Z"></path></svg>
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:999px; background:rgba(31,42,68,.10); color:#1F2A44; font-size:12px; font-weight:700">RS</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A4253" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+        </div>
+      </div>
+    </header>
+
+    <div style="padding:20px 16px 36px">
+      <p style="font-size:13px; font-weight:600; color:#FF6F61; margin:0 0 14px">Dashboard</p>
+
+      <!-- Welcome -->
+      <h1 style="font-family:'Playfair Display',serif; font-weight:700; font-size:30px; line-height:1.12; letter-spacing:-.02em; color:#08060D; margin:0">Welcome back, {{ name }}</h1>
+      <p style="font-size:15px; color:#6B6375; margin:8px 0 18px; line-height:1.5">Here's a quick look at your bookings and messages — everything in one place.</p>
+      <a href="#" style="display:block; text-align:center; background:#FF6F61; color:#fff; font-weight:600; font-size:15px; padding:13px; border-radius:10px; text-decoration:none; margin-bottom:24px">Browse listings</a>
+
+      <!-- Stat cards stacked -->
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px">
+
+        <div style="display:flex; gap:16px">
+          <div style="flex:1; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:16px">
+            <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Bookings</p>
+            <p style="font-size:30px; font-weight:700; color:#08060D; margin:6px 0 4px; font-variant-numeric:tabular-nums; line-height:1">{{ bookings }}</p>
+            <p style="font-size:12px; color:#6B6375; margin:0">No requests</p>
+          </div>
+          <div style="flex:1; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:16px">
+            <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897; margin:0">Messages</p>
+            <p style="font-size:30px; font-weight:700; color:#08060D; margin:6px 0 4px; font-variant-numeric:tabular-nums; line-height:1">{{ messages }}</p>
+            <p style="font-size:12px; color:{{ messagesColor }}; font-weight:{{ messagesWeight }}; margin:0">{{ messagesSubShort }}</p>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,111,97,.06); border:1px solid rgba(255,111,97,.35); border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:16px">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <p style="font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#B25548; margin:0">Your profile</p>
+            <a href="#" style="font-size:13px; font-weight:600; color:#FF6F61; text-decoration:none">Finish setup →</a>
+          </div>
+          <p style="margin:8px 0 0; line-height:1"><span style="font-size:30px; font-weight:700; color:#08060D; font-variant-numeric:tabular-nums">{{ percent }}%</span><span style="font-size:13px; color:#6B6375; margin-left:6px">complete</span></p>
+          <div style="height:6px; border-radius:999px; background:rgba(255,111,97,.18); margin:12px 0 0; overflow:hidden">
+            <div style="height:100%; border-radius:999px; background:#FF6F61; width:{{ barWidth }}"></div>
+          </div>
+        </div>
+
+        <a href="#" style="display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:16px; text-decoration:none">
+          <span>
+            <span style="display:block; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897">Find accommodation</span>
+            <span style="display:block; font-size:14px; color:#4A4253; margin-top:4px">Browse rooms near your uni</span>
+          </span>
+          <span style="color:#FF6F61; font-weight:600; font-size:18px">→</span>
+        </a>
+
+        <a href="#" style="display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:16px; text-decoration:none">
+          <span>
+            <span style="display:block; font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#908897">Get support</span>
+            <span style="display:block; font-size:14px; color:#4A4253; margin-top:4px">We'll get back to you</span>
+          </span>
+          <span style="color:#FF6F61; font-weight:600; font-size:18px">→</span>
+        </a>
+      </div>
+
+      <!-- Section tabs -->
+      <div style="display:flex; align-items:center; gap:22px; border-bottom:1px solid #E5E4E7; margin-bottom:20px">
+        <a href="#" style="display:inline-flex; align-items:center; gap:6px; padding:0 1px 11px; font-size:14px; font-weight:600; color:#08060D; text-decoration:none; border-bottom:2px solid #FF6F61; margin-bottom:-1px">Bookings</a>
+        <a href="#" style="display:inline-flex; align-items:center; gap:6px; padding:0 1px 11px; font-size:14px; font-weight:500; color:#6B6375; text-decoration:none">Messages<span style="display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:#FF6F61; color:#fff; font-size:11px; font-weight:700">{{ messages }}</span></a>
+        <a href="#" style="display:inline-flex; align-items:center; gap:6px; padding:0 1px 11px; font-size:14px; font-weight:500; color:#6B6375; text-decoration:none">Profile</a>
+      </div>
+
+      <!-- Rent billing -->
+      <div style="background:#fff; border:1px solid #E5E4E7; border-radius:16px; box-shadow:0 1px 2px rgba(8,6,13,.05); padding:18px; margin-bottom:16px">
+        <h3 style="font-size:16px; font-weight:600; color:#08060D; margin:0 0 6px">Rent billing</h3>
+        <p style="font-size:13px; color:#6B6375; margin:0 0 14px; line-height:1.5">Save a card securely with Stripe for when you pay rent through Quni. We don't store card numbers on our servers.</p>
+        <a href="#" style="display:block; text-align:center; background:#FF6F61; color:#fff; font-weight:600; font-size:14px; padding:12px; border-radius:10px; text-decoration:none">Save a card for rent</a>
+      </div>
+
+      <a href="#" style="display:inline-block; font-size:14px; font-weight:600; color:#FF6F61; text-decoration:none">View sample agreements →</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1740,&quot;height&quot;:760},&quot;name&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Rob&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;percent&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:80,&quot;min&quot;:0,&quot;max&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;bookings&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;},&quot;messages&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const percent = this.props.percent ?? 80;
+    const messages = this.props.messages ?? 1;
+    const hasUnread = messages > 0;
+    return {
+      name: this.props.name ?? 'Rob',
+      bookings: this.props.bookings ?? 0,
+      messages,
+      messagesColor: hasUnread ? '#CC4A3C' : '#6B6375',
+      messagesWeight: hasUnread ? 600 : 400,
+      messagesSub: hasUnread ? (messages + ' unread') : 'No new messages',
+      messagesSubShort: hasUnread ? (messages + ' unread') : 'No new messages',
+      percent,
+      barWidth: Math.max(0, Math.min(100, percent)) + '%',
+    };
+  }
+}
+</script>
+</body>
+</html>
