@@ -2,8 +2,9 @@
  * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort.
  */
 import { sendEmail } from '../sendEmail.js'
-import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
+import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import {
   listingBondPaymentEmailHtmlForLandlord,
   listingBondPaymentEmailHtmlForTenant,
@@ -58,6 +59,7 @@ async function loadListingEmailContext(admin, bookingId) {
     .select(
       `
       id,
+      property_id,
       weekly_rent,
       bond_amount,
       move_in_date,
@@ -137,6 +139,23 @@ async function loadListingEmailContext(admin, bookingId) {
       ? listingBondPaymentEmailHtmlForLandlord(bondRules, propState, resolvedBondAmountAud, bondPaymentOpts)
       : null
 
+  const isBoarderLodger = tenancyPackageUsesOccupancyAgreement(tenancyPackage)
+  let payout = null
+  const propertyId =
+    typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
+  if (isBoarderLodger && propertyId) {
+    const { data: payoutRow, error: payoutErr } = await admin
+      .from('property_payout_details')
+      .select('account_name, bsb, account_number')
+      .eq('property_id', propertyId)
+      .maybeSingle()
+    if (payoutErr) {
+      console.error('[listing-emails] load payout details', payoutErr)
+    } else if (propertyPayoutDetailsComplete(payoutRow)) {
+      payout = payoutRow
+    }
+  }
+
   return {
     bookingId,
     studentEmail,
@@ -149,9 +168,13 @@ async function loadListingEmailContext(admin, bookingId) {
     leaseLength,
     bondWindowExpiresAt: booking.bond_window_expires_at,
     weeklyRent: booking.weekly_rent,
+    bondAmountAud: resolvedBondAmountAud,
     bondPaymentTenantHtml,
     bondPaymentLandlordHtml,
     bondSchemeApplies: Boolean(bondRules?.schemeApplies),
+    isBoarderLodger,
+    payout,
+    paymentReference: `${studentName} — ${addr || title}`.trim(),
   }
 }
 
@@ -182,6 +205,12 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         bond_deadline_display: bondDeadline,
         student_dashboard_url: studentDash,
         bond_payment_html: ctx.bondPaymentTenantHtml,
+        is_boarder_lodger: ctx.isBoarderLodger,
+        payout: ctx.payout,
+        weekly_rent: ctx.weeklyRent,
+        bond_amount_aud: ctx.bondAmountAud,
+        move_in_date: ctx.moveInDate,
+        payment_reference: ctx.paymentReference,
       })
       await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
     }

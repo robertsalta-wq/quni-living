@@ -256,6 +256,12 @@ export function depositReleasedLandlord(data) {
   }
 }
 
+function formatPayoutBsbDisplay(raw) {
+  const digits = String(raw ?? '').replace(/[\s-]/g, '')
+  if (digits.length !== 6) return String(raw ?? '').trim()
+  return `${digits.slice(0, 3)}-${digits.slice(3)}`
+}
+
 /** Listing tier - renter: landlord accepted; pay bond off-platform; deadline (no signing CTA). */
 export function listingBookingAcceptedRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
@@ -263,10 +269,37 @@ export function listingBookingAcceptedRenter(data) {
   const bookingRef = escapeHtml(data.booking_reference || '-')
   const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
   const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
-  const bondPaymentBlock =
-    typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim()
-      ? data.bond_payment_html
-      : `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
+  const isBoarderLodger = data.is_boarder_lodger === true
+  const payout =
+    data.payout && typeof data.payout === 'object' && data.payout.account_name && data.payout.bsb && data.payout.account_number
+      ? data.payout
+      : null
+  const bondAmountDisplay = formatAudFromDollars(data.bond_amount_aud)
+  const weeklyRentDisplay = formatAudFromDollars(data.weekly_rent)
+  const moveInDisplay = escapeHtml(data.move_in_date || '-')
+  const paymentReference = escapeHtml(data.payment_reference || `${data.student_name || ''} — ${data.property_address || ''}`.trim())
+
+  let bondPaymentBlock
+  if (isBoarderLodger && payout) {
+    const accountName = escapeHtml(payout.account_name.trim())
+    const bsb = escapeHtml(formatPayoutBsbDisplay(payout.bsb))
+    const accountNumber = escapeHtml(payout.account_number.trim())
+    bondPaymentBlock = `<div style="margin:16px 0;padding:16px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;">
+<p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1A1A2E;">How to pay your bond and rent</p>
+<p style="margin:0 0 8px;"><strong>Bond:</strong> ${escapeHtml(bondAmountDisplay)} due by <strong>${bondDeadline}</strong>.</p>
+<p style="margin:0 0 8px;"><strong>Rent:</strong> ${escapeHtml(weeklyRentDisplay)} per week, paid weekly in advance from your move-in date (<strong>${moveInDisplay}</strong>).</p>
+<p style="margin:0 0 8px;"><strong>Pay to:</strong><br>
+Account name: ${accountName}<br>
+BSB: ${bsb}<br>
+Account number: ${accountNumber}</p>
+<p style="margin:0 0 8px;"><strong>Reference:</strong> ${paymentReference}</p>
+<p style="margin:0;"><strong>Method:</strong> Fee-free bank transfer.</p>
+</div>`
+  } else if (typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim()) {
+    bondPaymentBlock = data.bond_payment_html
+  } else {
+    bondPaymentBlock = `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
+  }
 
   const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed - arrange bond</h2>
 <p>Hi ${studentName},</p>
