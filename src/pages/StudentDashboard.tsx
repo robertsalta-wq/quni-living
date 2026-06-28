@@ -33,6 +33,9 @@ import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenant
 import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
+import ListingPaymentInstructions, {
+  shouldShowListingPaymentInstructions,
+} from '../components/student/ListingPaymentInstructions'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -122,6 +125,14 @@ function firstNameFromStudent(p: StudentRow): string {
   }
   const local = p.email?.split('@')[0]
   return local ? formatDisplayName(local) : 'there'
+}
+
+function renterDisplayName(profile: StudentRow): string {
+  return (
+    [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
+    profile.full_name?.trim() ||
+    'Student'
+  )
 }
 
 function bookingStatusClass(s: BookingStatus) {
@@ -634,6 +645,15 @@ export default function StudentDashboard() {
                       b.status === 'confirmed' ||
                       b.status === 'active') && (
                       <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
+                        {profile &&
+                        prop &&
+                        shouldShowListingPaymentInstructions({ booking: b, property: prop }) ? (
+                          <ListingPaymentInstructions
+                            booking={b}
+                            property={prop}
+                            renterDisplayName={renterDisplayName(profile)}
+                          />
+                        ) : null}
                         {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && (
                           <ListingBondGuidanceForBooking booking={b} property={prop} />
                         )}

@@ -28,3 +28,11 @@ export function formatPropertyPayoutBsbDisplay(raw: string): string {
   if (digits.length !== 6) return raw.trim()
   return `${digits.slice(0, 3)}-${digits.slice(3)}`
 }
+
+export function normalizePropertyPayoutEmbed(
+  raw: PropertyPayoutDetailsInput | PropertyPayoutDetailsInput[] | null | undefined,
+): PropertyPayoutDetailsInput | null {
+  if (!raw) return null
+  if (Array.isArray(raw)) return raw[0] ?? null
+  return raw
+}
