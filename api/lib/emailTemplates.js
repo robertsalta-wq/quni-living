@@ -256,7 +256,7 @@ export function depositReleasedLandlord(data) {
   }
 }
 
-function formatPayoutBsbDisplay(raw) {
+export function formatPayoutBsbDisplay(raw) {
   const digits = String(raw ?? '').replace(/[\s-]/g, '')
   if (digits.length !== 6) return String(raw ?? '').trim()
   return `${digits.slice(0, 3)}-${digits.slice(3)}`
@@ -293,13 +293,8 @@ Account number: ${accountNumber}</p>
 </div>`
 }
 
-/** Listing tier - renter: landlord accepted; pay bond off-platform; deadline (no signing CTA). */
-export function listingBookingAcceptedRenter(data) {
-  const studentName = escapeHtml(data.student_name || 'there')
-  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
-  const bookingRef = escapeHtml(data.booking_reference || '-')
-  const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
-  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
+/** Scheme-aware bond + rent payment block (shared by acceptance and payment-instructions emails). */
+export function listingRenterPaymentInstructionsBlockHtml(data) {
   const isBoarderLodger = data.is_boarder_lodger === true
   const schemeApplies = data.bond_scheme_applies === true
   const payout =
@@ -309,17 +304,46 @@ export function listingBookingAcceptedRenter(data) {
   const statutoryBondHtml =
     typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim() ? data.bond_payment_html : ''
 
-  let bondPaymentBlock
   if (isBoarderLodger && payout && schemeApplies) {
     const rentBlock = listingRentPayeeBlockHtml({ ...data, rent_only_heading: true })
-    bondPaymentBlock = `${statutoryBondHtml}${rentBlock}`
-  } else if (isBoarderLodger && payout) {
-    bondPaymentBlock = listingRentPayeeBlockHtml({ ...data, rent_only_heading: false })
-  } else if (statutoryBondHtml) {
-    bondPaymentBlock = statutoryBondHtml
-  } else {
-    bondPaymentBlock = `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
+    return `${statutoryBondHtml}${rentBlock}`
   }
+  if (isBoarderLodger && payout) {
+    return listingRentPayeeBlockHtml({ ...data, rent_only_heading: false })
+  }
+  if (statutoryBondHtml) {
+    return statutoryBondHtml
+  }
+  return `<p><strong>Bond payment:</strong> Pay your bond <strong>directly to your host</strong> outside Quni (bank transfer, cash, or as agreed). Quni does not hold bond on Listing stays.</p>`
+}
+
+/** Listing tier - renter: slim payment-instructions resend (no acceptance / DocuSeal copy). */
+export function listingPaymentInstructionsRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
+  const paymentBlock = listingRenterPaymentInstructionsBlockHtml(data)
+
+  const inner = `<h2 style="color: #1A1A2E;">Payment instructions for your booking</h2>
+<p>Hi ${studentName},</p>
+<p>Here are the payment details for your booking at <strong>${propertyAddress}</strong>.</p>
+${paymentBlock}
+<a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
+
+  return {
+    subject: `Payment instructions - ${data.property_address || data.property_title || 'your booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Listing tier - renter: landlord accepted; pay bond off-platform; deadline (no signing CTA). */
+export function listingBookingAcceptedRenter(data) {
+  const studentName = escapeHtml(data.student_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
+  const bookingRef = escapeHtml(data.booking_reference || '-')
+  const bondDeadline = escapeHtml(data.bond_deadline_display || '-')
+  const dashboardUrl = escapeHtml(data.student_dashboard_url || 'https://quni.com.au/student-dashboard')
+  const bondPaymentBlock = listingRenterPaymentInstructionsBlockHtml(data)
 
   const inner = `<h2 style="color: #1A1A2E;">Your booking is confirmed - arrange bond</h2>
 <p>Hi ${studentName},</p>
