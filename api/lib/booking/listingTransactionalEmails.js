@@ -243,7 +243,13 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
   const bondDeadline = formatAuLongDate(ctx.bondWindowExpiresAt)
   const payload = buildListingRenterPaymentEmailPayload(ctx, { bondDeadlineDisplay: bondDeadline })
   const t = listingPaymentInstructionsRenter(payload)
-  await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+  const landlordCc = ctx.landlordEmail?.trim() || ''
+  await sendEmail({
+    to: ctx.studentEmail,
+    subject: t.subject,
+    html: t.html,
+    ...(landlordCc ? { cc: landlordCc } : {}),
+  })
   return { ok: true }
 }
 

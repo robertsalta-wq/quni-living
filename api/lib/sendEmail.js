@@ -6,8 +6,9 @@
  * @param {string} args.subject
  * @param {string} args.html
  * @param {string} [args.replyTo] - shown as Reply-To on the outbound message
+ * @param {string|string[]} [args.cc]
  */
-export async function sendEmail({ to, subject, html, replyTo }) {
+export async function sendEmail({ to, subject, html, replyTo, cc }) {
   const key = (process.env.RESEND_API_KEY || '').trim()
   if (!key) {
     console.error('Resend: missing RESEND_API_KEY')
@@ -25,6 +26,12 @@ export async function sendEmail({ to, subject, html, replyTo }) {
   const rt = typeof replyTo === 'string' ? replyTo.trim() : ''
   if (rt) {
     payload.reply_to = rt
+  }
+  if (cc) {
+    const ccList = (Array.isArray(cc) ? cc : [cc]).map((e) => String(e).trim()).filter(Boolean)
+    if (ccList.length) {
+      payload.cc = ccList
+    }
   }
 
   const response = await fetch('https://api.resend.com/emails', {
