@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { landlordDashboardProfilePath } from './landlordDashboardProfilePaths'
-import { BOND_FAQ_HOSTED_VS_PRIVATE, BOND_FAQ_HOW_HANDLED } from './bondPublicCopy'
+import {
+  BOND_FAQ_HOSTED_VS_PRIVATE,
+  BOND_FAQ_HOW_HANDLED,
+  BOND_FAQ_NO_BOND_REQUIRED,
+} from './bondPublicCopy'
 
 export type FaqItem = { id: string; question: string; answer: ReactNode }
 export type FaqSection = { id: string; label: string; items: FaqItem[] }
@@ -286,6 +290,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
         question: 'Who sets bond refund rules?',
         answer:
           'Cash bond refunds and disputes follow state or territory residential laws and bond authorities - not Quni’s refund policy for platform fees.',
+      },
+      {
+        id: 'bond-no-bond-required',
+        question: 'What if no bond is required?',
+        answer: BOND_FAQ_NO_BOND_REQUIRED,
       },
     ],
   },

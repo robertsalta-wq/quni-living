@@ -24,3 +24,7 @@ export const BOND_FAQ_HOW_HANDLED =
 /** FAQ - hosted room vs private room bond distinction. */
 export const BOND_FAQ_HOSTED_VS_PRIVATE =
   'Hosted rooms are where the owner lives on-site (boarder/lodger-style). In NSW, bond for hosted rooms may be held by the landlord. In Queensland, any bond taken must be lodged with the RTA within 10 days — bond is not compulsory; rent in advance is a lawful alternative. Private rooms are standard residential tenancies where bond (if required) is lodged with your state\'s bond authority under the relevant rules.'
+
+/** FAQ - listing with no bond (bond weeks set to 0). */
+export const BOND_FAQ_NO_BOND_REQUIRED =
+  'On Quni Listing, landlords set bond as a number of weeks of rent (default 2 weeks, maximum 4). Enter 0 weeks for no bond — the bond line is hidden on the property page and renters see “No bond is required for this property” when they apply. In Queensland, a bond is not compulsory for boarder/lodger-style arrangements; rent in advance is a lawful alternative. After a landlord accepts a Listing booking, the booking still moves through the bond confirmation step on Quni even when no money is due — the landlord records that no bond was collected (or confirms the arrangement) so the tenancy can proceed to signing. Quni does not collect bond money on Listing. Landlords can still set agreed rent or an invite special offer on a no-bond listing; bond weeks can be set to 0 on the invite or when editing agreed rent before accept. Tenancy agreements and the platform addendum state clearly when no bond applies.'

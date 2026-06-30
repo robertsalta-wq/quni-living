@@ -210,6 +210,13 @@
     "content": "Queensland boarder/lodger arrangements (owner on-site, typically Tier 1 on Quni): most of the Residential Tenancies and Rooming Accommodation Act 2008 does not apply, but if a bond is taken it must be lodged with the Residential Tenancies Authority (RTA) within 10 calendar days (max 4 weeks rent). There is no lawful landlord-held bond endpoint in QLD — bond must not be kept in a personal account. Either tenant or landlord may lodge via RTA Web Services (Queensland Digital Identity required) or paper Form 2; RTA issues an Acknowledgement of Rental Bond to both parties. A bond is not compulsory; rent in advance is lawful. NSW hosted-room bonds may be held by the landlord — that is not the QLD rule. Quni does not hold or remit bonds."
   },
   {
+    "id": "6fad4b80-0027-4000-8000-000000000027",
+    "title": "Quni Listing: no bond required (0 weeks bond)",
+    "category": "platform_policy",
+    "state": null,
+    "content": "Quni Listing bond is configured as weeks of rent on the property (default 2 weeks, maximum 4 weeks). Set bond weeks to 0 for no bond. On the listing form: \"Enter 0 for no bond.\" When bond weeks are 0, the property page hides the bond amount and renters applying see \"No bond is required for this property\" (or \"No bond is required for this stay\" on the booking step). Queensland: bond is not compulsory for boarder/lodger-style arrangements; rent in advance is lawful. After landlord accept on Listing, booking status becomes bond_pending even when no bond is owed — the landlord must complete the bond confirmation step on Quni (record that no bond was collected / confirm the arrangement) before signing proceeds; this is a platform handshake, not proof that money changed hands. Quni does not collect bond on Listing. Agreed-rent override before accept and tenant-invite special offers can use 0 bond weeks on a no-bond listing. Signed tenancy PDFs and the platform addendum state when no bond applies (do not invent a dollar bond figure). Managed tier: no bond record is created when bond weeks are 0. Support line: \"no bond on the listing\" does not mean skipping Quni's post-accept bond confirmation step — it means no bond money is due between the parties."
+  },
+  {
     "id": "6fad4b80-001d-4000-8000-00000000001d",
     "title": "Quni sample agreement previews (landlords and students)",
     "category": "platform_policy",
