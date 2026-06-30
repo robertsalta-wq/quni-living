@@ -66,6 +66,7 @@ export function shouldShowListingPaymentInstructions(args: {
 type Props = {
   booking: Pick<
     BookingRow,
+    | 'status'
     | 'bond_amount'
     | 'weekly_rent'
     | 'bond_window_expires_at'
@@ -106,6 +107,10 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
     ? formatDate(booking.bond_window_expires_at.slice(0, 10))
     : '-'
   const showBondSection = !schemeApplies && booking.bond_received_by_landlord_at == null
+  const isBondPending = booking.status === 'bond_pending'
+  const hasWeeklyRent = weeklyRentAud != null && Number.isFinite(weeklyRentAud) && weeklyRentAud > 0
+  const hasBond = bondAmountAud != null && Number.isFinite(bondAmountAud) && bondAmountAud > 0
+  const showUpfrontTotal = isBondPending && showBondSection && hasBond && hasWeeklyRent
   const addressLine = propertyAddressLine(property)
   const paymentReference = `${renterDisplayName.trim()} — ${addressLine}`.trim()
   const heading = showBondSection ? 'How to pay your bond and rent' : 'How to pay your rent'
@@ -125,6 +130,20 @@ export default function ListingPaymentInstructions({ booking, property, renterDi
         <p>
           <span className="font-semibold">Bond:</span> {formatAud(bondAmountAud)} due by{' '}
           <span className="font-semibold">{bondDeadlineLabel}</span>.
+        </p>
+      ) : null}
+      {isBondPending && hasWeeklyRent ? (
+        <p>
+          <span className="font-semibold">First week&apos;s rent:</span> {formatAud(weeklyRentAud)}, due by your
+          move-in date (<span className="font-semibold">{moveInLabel}</span>).
+        </p>
+      ) : null}
+      {showUpfrontTotal ? (
+        <p>
+          Up front you&apos;ll need{' '}
+          <span className="font-semibold">{formatAud(bondAmountAud! + weeklyRentAud!)} in total</span> — bond{' '}
+          {formatAud(bondAmountAud)} (by <span className="font-semibold">{bondDeadlineLabel}</span>) and your first
+          week&apos;s rent {formatAud(weeklyRentAud)} (by <span className="font-semibold">{moveInLabel}</span>).
         </p>
       ) : null}
       <p>
