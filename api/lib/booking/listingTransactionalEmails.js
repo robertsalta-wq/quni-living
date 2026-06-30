@@ -221,6 +221,7 @@ export function buildListingRenterPaymentEmailPayload(ctx, opts) {
     bond_amount_aud: ctx.bondAmountAud,
     move_in_date: ctx.moveInDate,
     payment_reference: ctx.paymentReference,
+    status: ctx.bookingStatus,
   }
 }
 

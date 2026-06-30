@@ -272,18 +272,33 @@ function listingRentPayeeBlockHtml(data) {
   const bsb = escapeHtml(formatPayoutBsbDisplay(payout.bsb))
   const accountNumber = escapeHtml(payout.account_number.trim())
   const weeklyRentDisplay = formatAudFromDollars(data.weekly_rent)
+  const weeklyRentNum = Number(data.weekly_rent)
+  const bondAmountNum = Number(data.bond_amount_aud)
   const moveInDisplay = escapeHtml(data.move_in_date || '-')
+  const bondDeadlineDisplay = escapeHtml(data.bond_deadline_display || '-')
   const paymentReference = escapeHtml(
     data.payment_reference || `${data.student_name || ''} — ${data.property_address || ''}`.trim(),
   )
   const heading = data.rent_only_heading === true ? 'How to pay your rent' : 'How to pay your bond and rent'
+  const isBondPending = data.status === 'bond_pending'
+  const hasWeeklyRent = Number.isFinite(weeklyRentNum) && weeklyRentNum > 0
+  const hasBond = Number.isFinite(bondAmountNum) && bondAmountNum > 0
   const bondLine =
     data.rent_only_heading === true
       ? ''
-      : `<p style="margin:0 0 8px;"><strong>Bond:</strong> ${escapeHtml(formatAudFromDollars(data.bond_amount_aud))} due by <strong>${escapeHtml(data.bond_deadline_display || '-')}</strong>.</p>`
+      : `<p style="margin:0 0 8px;"><strong>Bond:</strong> ${escapeHtml(formatAudFromDollars(data.bond_amount_aud))} due by <strong>${bondDeadlineDisplay}</strong>.</p>`
+  const firstWeekLine =
+    isBondPending && hasWeeklyRent
+      ? `<p style="margin:0 0 8px;"><strong>First week&apos;s rent:</strong> ${escapeHtml(formatAudFromDollars(weeklyRentNum))}, due by your move-in date (<strong>${moveInDisplay}</strong>).</p>`
+      : ''
+  const upfrontTotalLine =
+    isBondPending && data.rent_only_heading !== true && hasBond && hasWeeklyRent
+      ? `<p style="margin:0 0 8px;">Up front you&apos;ll need <strong>${escapeHtml(formatAudFromDollars(bondAmountNum + weeklyRentNum))} in total</strong> — bond ${escapeHtml(formatAudFromDollars(bondAmountNum))} (by <strong>${bondDeadlineDisplay}</strong>) and your first week&apos;s rent ${escapeHtml(formatAudFromDollars(weeklyRentNum))} (by <strong>${moveInDisplay}</strong>).</p>`
+      : ''
+  const rentLine = `<p style="margin:0 0 8px;"><strong>Rent:</strong> ${escapeHtml(weeklyRentDisplay)} per week, paid weekly in advance from your move-in date (<strong>${moveInDisplay}</strong>).</p>`
   return `<div style="margin:16px 0;padding:16px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;">
 <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1A1A2E;">${escapeHtml(heading)}</p>
-${bondLine}<p style="margin:0 0 8px;"><strong>Rent:</strong> ${escapeHtml(weeklyRentDisplay)} per week, paid weekly in advance from your move-in date (<strong>${moveInDisplay}</strong>).</p>
+${bondLine}${firstWeekLine}${upfrontTotalLine}${rentLine}
 <p style="margin:0 0 8px;"><strong>Pay to:</strong><br>
 Account name: ${accountName}<br>
 BSB: ${bsb}<br>
