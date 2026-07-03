@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet, useLocation, useNavigate, useParams } 
 import { apexAuthTokenRedirectPath } from './lib/authCallbackParams'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import FocusFormLegalStrip from './components/FocusFormLegalStrip'
 import { OnboardingResumeBanner } from './components/OnboardingResumeBanner'
 import ScrollToTop from './components/ScrollToTop'
 import NativePushNotificationsInitializer from './components/NativePushNotificationsInitializer'
@@ -296,6 +297,7 @@ function App() {
           </Routes>
         </main>
         {showPublicChrome && !hideFooterForFormFlow && <Footer />}
+        {showPublicChrome && hideFooterForFormFlow && <FocusFormLegalStrip />}
         <AIChatWidget />
         </>
       </BookingFlowChromeProvider>

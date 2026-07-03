@@ -31,6 +31,7 @@ import {
   resolveTenantInviteTokenForFunnel,
 } from '../lib/tenantInviteFunnel'
 import TenantInviteSignupBanner from '../components/tenantInvite/TenantInviteSignupBanner'
+import RenterPlatformTrustPanel from '../components/RenterPlatformTrustPanel'
 import VerificationChecklistModal from '../components/verification/VerificationChecklistModal'
 import type { VerificationChecklistFocus } from '../components/verification/verificationChecklistShared'
 
@@ -790,6 +791,12 @@ export default function Signup() {
           focus={verificationModalFocus}
           onClose={() => setVerificationModalFocus(null)}
         />
+      ) : null}
+
+      {tenantInviteHints.isTenantInviteFlow ? (
+        <div className="mt-10">
+          <RenterPlatformTrustPanel compact />
+        </div>
       ) : null}
     </div>
   )

@@ -13,21 +13,21 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
   const greeting = hints.invitedName ? `Hi ${hints.invitedName.split(/\s+/)[0]}, ` : ''
 
   return (
-    <div className="mb-8 rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 to-white p-5 sm:p-6 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Landlord invitation</p>
+    <div className="mb-8 rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Landlord invitation</p>
       <h2 className="mt-1 text-lg font-semibold text-gray-900 leading-snug">
-        {greeting}you&apos;re invited to book on Quni
+        {greeting}you&apos;re invited to apply on Quni
       </h2>
       {hints.propertyTitle ? (
         <p className="mt-2 text-sm text-gray-700">
-          Your landlord shared a link for{' '}
-          <span className="font-medium text-gray-900">{hints.propertyTitle}</span>. Create a renter account to
-          verify and complete the booking on-platform — same process as any other tenant on Quni.
+          Your landlord shared the official application link for{' '}
+          <span className="font-medium text-gray-900">{hints.propertyTitle}</span> on quni.com.au. Create a renter
+          account to continue — the same process used for other listings on the platform.
         </p>
       ) : (
         <p className="mt-2 text-sm text-gray-700">
-          Your landlord shared a private booking link. Create a renter account to verify and complete the booking
-          on-platform.
+          Your landlord shared the official application link for this room on quni.com.au. Create a renter account
+          to continue.
         </p>
       )}
       {hints.studentOnly && (
@@ -46,7 +46,7 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
       ) : null}
       <p className="mt-3 text-xs text-gray-500">
         Already have a Quni account?{' '}
-        <Link to={loginHref} className="font-medium text-indigo-600 hover:text-indigo-800">
+        <Link to={loginHref} className="font-medium text-[#376256] hover:text-[#2a4a42]">
           Log in
         </Link>{' '}
         to continue to the booking.

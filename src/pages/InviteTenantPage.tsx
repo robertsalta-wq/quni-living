@@ -10,6 +10,7 @@ import { setPostAuthRedirect } from '../lib/postAuthRedirect'
 import { absoluteUrl } from '../lib/site'
 import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 import TenantInviteOfferBanner from '../components/tenantInvite/TenantInviteOfferBanner'
+import RenterPlatformTrustPanel from '../components/RenterPlatformTrustPanel'
 import { tenantInviteOfferFromRpcRow, previewInviteBondAud } from '../lib/pricing/tenantInviteOffer'
 import type { Property } from '../lib/listings'
 
@@ -212,13 +213,13 @@ export default function InviteTenantPage() {
     <div className="max-w-sm mx-auto px-6 py-12 sm:py-16">
       <Seo title="You're invited to book" noindex description="Landlord tenant invite on Quni Living." />
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Landlord invitation</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Landlord invitation</p>
       <h1 className="mt-2 text-2xl font-bold text-gray-900 leading-tight">
         {greeting ? `${greeting} you're invited to book` : "You're invited to book on Quni"}
       </h1>
       <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-        Your landlord sent you this link so you can apply for their room through Quni — verified tenancy,
-        compliant agreement, and e-signing on-platform.
+        Your landlord uses Quni to handle applications and tenancy paperwork for this room. Review the listing below
+        first — you can see how verification works before sharing ID documents.
       </p>
 
       <div className="mt-6">
@@ -274,7 +275,11 @@ export default function InviteTenantPage() {
         <li>Submit your booking request for this room</li>
       </ol>
 
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-8">
+        <RenterPlatformTrustPanel />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-3">
         <button
           type="button"
           onClick={continueToSignup}
