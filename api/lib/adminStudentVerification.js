@@ -91,3 +91,5 @@ export function buildAdminVerificationPatch(item, action, nowIso) {
     [reviewKey[item]]: null,
   }
 }
+
+export { tierToSync } from '../../src/lib/renterReadiness.js'

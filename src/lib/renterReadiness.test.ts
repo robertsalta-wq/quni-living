@@ -182,4 +182,41 @@ describe('non-student route readiness', () => {
     expect(readiness.blocksBooking).toContain('Choose your situation')
     expect(readiness.canRequestBooking).toBe(false)
   })
+
+  it('unlocks working-holiday booking without budget (optional living prefs)', () => {
+    const p = nonStudentBase({
+      renter_situation: 'working_holiday',
+      budget_min_per_week: null,
+      budget_max_per_week: null,
+      verification_type: 'identity',
+      id_document_url: 'user-id/doc/id-document.pdf',
+      id_submitted_at: '2026-01-02T00:00:00Z',
+      identity_supporting_doc_url: 'user-id/doc/identity-supporting-doc.pdf',
+      identity_supporting_submitted_at: '2026-01-02T00:00:00Z',
+    })
+    const readiness = computeRenterReadiness(p)
+    expect(readiness.sections.personal).toBe(true)
+    expect(readiness.profileSetupComplete).toBe(true)
+    expect(readiness.canRequestBooking).toBe(true)
+    expect(readiness.blocksBooking).not.toContain('Complete personal details')
+  })
+})
+
+describe('student route personal gate (unified with client)', () => {
+  it('profile setup complete with §01 only — uni/course/budget not in personal gate', () => {
+    const p = lucyProfile({
+      university_id: null,
+      course: null,
+      study_level: null,
+      year_of_study: null,
+      budget_min_per_week: null,
+      budget_max_per_week: null,
+    })
+    const readiness = computeRenterReadiness(p)
+    expect(readiness.sections.personal).toBe(true)
+    expect(readiness.profileSetupComplete).toBe(true)
+    expect(readiness.canRequestBooking).toBe(false)
+    expect(readiness.blocksBooking).toContain('Complete student verification (ID and enrolment)')
+    expect(readiness.blocksBooking).not.toContain('Complete personal details')
+  })
 })

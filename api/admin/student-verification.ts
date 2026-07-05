@@ -5,12 +5,12 @@
 import { createClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
-import { tierToSync } from '../lib/renterReadiness.js'
 import {
   adminVerificationItemSupportsInReview,
   buildAdminVerificationPatch,
   parseAdminVerificationAction,
   parseAdminVerificationItem,
+  tierToSync,
 } from '../lib/adminStudentVerification.js'
 
 export const config = { runtime: 'edge' }

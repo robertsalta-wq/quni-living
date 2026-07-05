@@ -3,7 +3,7 @@
  */
 
 import { captureBookingRejected } from './captureBookingRejected.js'
-import { computeRenterReadiness } from '../renterReadiness.js'
+import { computeRenterReadiness } from '../../../src/lib/renterReadiness.js'
 
 /**
  * @param {'student' | 'identity' | 'none' | null | undefined} verificationType

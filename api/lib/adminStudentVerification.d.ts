@@ -19,3 +19,7 @@ export function buildAdminVerificationPatch(
   action: AdminVerificationAction,
   nowIso: string,
 ): Record<string, unknown>
+
+export function tierToSync(
+  profile: Record<string, unknown> | null | undefined,
+): 'student' | 'identity' | 'none' | null
