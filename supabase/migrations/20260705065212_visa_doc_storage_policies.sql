@@ -2,11 +2,11 @@
 -- Baseline student-documents policies require foldername[1] = auth.uid(); visa paths need segment 2.
 -- Already applied in production (hotfix); idempotent for ledger sync on staging/local.
 
-drop policy if exists "Students upload own visa student-documents" on storage.objects;
-drop policy if exists "Students update own visa student-documents" on storage.objects;
-drop policy if exists "Students read own visa student-documents" on storage.objects;
+drop policy if exists "Students upload own visa docs" on storage.objects;
+drop policy if exists "Students update own visa docs" on storage.objects;
+drop policy if exists "Students read own visa docs" on storage.objects;
 
-create policy "Students upload own visa student-documents"
+create policy "Students upload own visa docs"
   on storage.objects for insert
   to authenticated
   with check (
@@ -15,7 +15,7 @@ create policy "Students upload own visa student-documents"
     and (storage.foldername(name))[2] = auth.uid()::text
   );
 
-create policy "Students update own visa student-documents"
+create policy "Students update own visa docs"
   on storage.objects for update
   to authenticated
   using (
@@ -29,7 +29,7 @@ create policy "Students update own visa student-documents"
     and (storage.foldername(name))[2] = auth.uid()::text
   );
 
-create policy "Students read own visa student-documents"
+create policy "Students read own visa docs"
   on storage.objects for select
   to authenticated
   using (
