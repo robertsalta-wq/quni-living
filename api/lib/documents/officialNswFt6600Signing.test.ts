@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  OFFICIAL_FT6600_PARSER_ANCHOR_STYLE,
   OFFICIAL_FT6600_SIGNATURE_WIDGET_ALLOWLIST,
   OFFICIAL_FT6600_TIS_PAGE_INDEX,
   OFFICIAL_FT6600_WIDGET_TAG_STYLE,
@@ -75,5 +76,14 @@ describe('OFFICIAL_FT6600_WIDGET_TAG_STYLE', () => {
     expect(OFFICIAL_FT6600_WIDGET_TAG_STYLE.color.red).toBeCloseTo(0.42, 2)
     expect(OFFICIAL_FT6600_WIDGET_TAG_STYLE.color.green).toBeCloseTo(0.45, 2)
     expect(OFFICIAL_FT6600_WIDGET_TAG_STYLE.color.blue).toBeCloseTo(0.5, 2)
+  })
+})
+
+describe('OFFICIAL_FT6600_PARSER_ANCHOR_STYLE', () => {
+  it('uses 14pt black margin anchors per refined-b recipe', () => {
+    expect(OFFICIAL_FT6600_PARSER_ANCHOR_STYLE.size).toBe(14)
+    expect(OFFICIAL_FT6600_PARSER_ANCHOR_STYLE.color.red).toBe(0)
+    expect(OFFICIAL_FT6600_PARSER_ANCHOR_STYLE.color.green).toBe(0)
+    expect(OFFICIAL_FT6600_PARSER_ANCHOR_STYLE.color.blue).toBe(0)
   })
 })

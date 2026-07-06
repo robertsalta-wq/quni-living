@@ -2,7 +2,7 @@
  * DocuSeal signing tags on the official NSW FT6600 after schedule fill + flatten.
  * Widget style matches production sigHint (refined-b-v2 baseline): 7pt #6b7280.
  */
-import { StandardFonts, rgb, type PDFDocument as PDFDoc, type PDFFont, type RGB } from 'pdf-lib'
+import { StandardFonts, rgb, PDFDocument, type PDFDocument as PDFDoc, type PDFFont, type RGB } from 'pdf-lib'
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import {
   loadOfficialNswFt6600Template,
@@ -50,6 +50,40 @@ export const OFFICIAL_FT6600_TIS_DATE_ANCHOR = {
   y: 407.3,
   width: 102.3,
   height: 19.1,
+} as const
+
+/** Page index for landlord/tenant signature spread (human page 17). */
+export const OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX = 16
+
+/**
+ * DocuSeal parser unlock anchors — bottom-left margin of page 16.
+ * Duplicate landlord/tenant signature names are intentional; see TECH_DEBT.md.
+ */
+export const OFFICIAL_FT6600_PARSER_ANCHOR_STYLE = {
+  size: 14,
+  color: rgb(0, 0, 0),
+} as const
+
+export const OFFICIAL_FT6600_PARSER_ANCHORS = [
+  {
+    tag: '{{Landlord Signature;role=First Party;type=signature}}',
+    pageIndex: OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX,
+    x: 12,
+    y: 18,
+  },
+  {
+    tag: '{{Tenant Signature;role=Second Party;type=signature}}',
+    pageIndex: OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX,
+    x: 12,
+    y: 34,
+  },
+] as const
+
+export const OFFICIAL_FT6600_CO_TENANT_PARSER_ANCHOR = {
+  tag: '{{Tenant 2 Signature;role=Co-tenant;type=signature}}',
+  pageIndex: OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX,
+  x: 12,
+  y: 50,
 } as const
 
 export type SignatureWidgetPlacement = {
@@ -205,6 +239,30 @@ export function drawWidgetDocusealTags(
   }
 }
 
+/** 14pt black margin anchors that unlock DocuSeal field detection on the official FT6600. */
+export function drawParserAnchorTags(
+  doc: PDFDoc,
+  options: { includeCoTenantSignatureTags: boolean },
+  font: PDFFont,
+): void {
+  const style = OFFICIAL_FT6600_PARSER_ANCHOR_STYLE
+  const pages = doc.getPages()
+  const anchors = options.includeCoTenantSignatureTags
+    ? [...OFFICIAL_FT6600_PARSER_ANCHORS, OFFICIAL_FT6600_CO_TENANT_PARSER_ANCHOR]
+    : OFFICIAL_FT6600_PARSER_ANCHORS
+  for (const anchor of anchors) {
+    const page = pages[anchor.pageIndex]
+    if (!page) continue
+    page.drawText(anchor.tag, {
+      x: anchor.x,
+      y: anchor.y,
+      size: style.size,
+      font,
+      color: style.color,
+    })
+  }
+}
+
 /**
  * Best-effort check that overlay tags made it into the PDF bytes.
  * Full `{{…;role=…}}` strings are usually compressed (not latin1-plaintext); `{{` alone is reliable.
@@ -242,7 +300,11 @@ export async function buildOfficialNswFt6600PdfWithSigning(
   drawWidgetDocusealTags(doc, tagPlacements, font)
 
   const acroFormFieldCountAfterFlatten = 0
-  const pdfBytes = await saveNormalizedPdf(doc)
+  // Phase 1: widget tags only. Phase 2: reload + margin anchors (single-pass anchors do not unlock DocuSeal).
+  const phase1Bytes = await saveNormalizedPdf(doc)
+  const docWithAnchors = await PDFDocument.load(phase1Bytes, { ignoreEncryption: true, updateMetadata: false })
+  drawParserAnchorTags(docWithAnchors, options, font)
+  const pdfBytes = await saveNormalizedPdf(docWithAnchors)
   const minWidgetTags = WIDGET_TAG_DEFS.filter(
     (d) => !d.coTenantOnly || options.includeCoTenantSignatureTags,
   ).length
