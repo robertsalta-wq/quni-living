@@ -40,8 +40,22 @@ export const OFFICIAL_FT6600_TIS_PAGE_INDEX = 17
 /** Human page 17 (0-based index 16) — landlord/tenant signature spread. */
 export const OFFICIAL_FT6600_SIGNATURE_PAGE_INDEX = 16
 
-/** AU date format for DocuSeal date widgets on the official FT6600. */
+/** @deprecated Spanning dates removed — use OFFICIAL_FT6600_DATE_COMPONENT_DEFS. */
 export const OFFICIAL_FT6600_DATE_FORMAT = 'DD/MM/YYYY' as const
+
+/** Target ink height class on executed PDFs (submission 146 browser baseline). */
+export const OFFICIAL_FT6600_SIGNATURE_INK_HEIGHT_PT = 32.4 as const
+
+/** Dry-run test signature raster aspect (400×143px canvas in nsw-ft6600-execution-dry-run.mjs). */
+export const OFFICIAL_FT6600_SPIKE_TEST_SIGNATURE_IMAGE_ASPECT = 400 / 143
+
+/** Left edge of day/month/year boxes — signature ink must not extend past this. */
+export const OFFICIAL_FT6600_DATE_COLUMN_X_PT = 251.9 as const
+
+/** DocuSeal text field sized for drawn inner box (not full AcroForm widget height). */
+export const OFFICIAL_FT6600_DATE_FIELD_HEIGHT_PT = 11 as const
+export const OFFICIAL_FT6600_DATE_FIELD_TOP_MARGIN_PT = 2 as const
+export const OFFICIAL_FT6600_DATE_FIELD_LEFT_INSET_PT = 4 as const
 
 export type SignatureWidgetPlacement = {
   fieldName: string
@@ -52,14 +66,83 @@ export type SignatureWidgetPlacement = {
   height: number
 }
 
-/** Day + month + year AcroForm fields → one spanning DocuSeal date per signature row. */
-export const OFFICIAL_FT6600_DATE_FIELD_TRIPLETS: Record<string, readonly [string, string, string]> = {
-  landlord_sig_date: ['landlord_sig_day', 'landlord_sig_month', 'landlord_sig_year'],
-  landlord_lis_sig_date: ['landlord_lis_sig_day', 'landlord_lis_sig_month', 'landlord_lis_sig_year'],
-  tenant_1_sig_date: ['tenant_1_sig_day', 'tenant_1_sig_month', 'tenant_1_sig_year'],
-  tenant_2_sig_date: ['tenant_2_sig_day', 'tenant_2_sig_month', 'tenant_2_sig_year'],
-  tenant_tis_sig_date: ['tenant_tis_sig_day', 'tenant_tis_sig_month', 'tenant_tis_sig_year'],
+export type Ft6600DateComponentDef = {
+  acro: string
+  label: string
 }
+
+export type Ft6600DateRowDef = {
+  dateRowKey: string
+  role: 'First Party' | 'Second Party' | 'Co-tenant'
+  coTenantOnly?: boolean
+  components: readonly Ft6600DateComponentDef[]
+}
+
+/** Three text fields per execution date row — day numeral, month name, 2-digit year. */
+export const OFFICIAL_FT6600_DATE_ROW_DEFS: readonly Ft6600DateRowDef[] = [
+  {
+    dateRowKey: 'landlord_sig_date',
+    role: 'First Party',
+    components: [
+      { acro: 'landlord_sig_day', label: 'Landlord Sign Day' },
+      { acro: 'landlord_sig_month', label: 'Landlord Sign Month' },
+      { acro: 'landlord_sig_year', label: 'Landlord Sign Year' },
+    ],
+  },
+  {
+    dateRowKey: 'landlord_lis_sig_date',
+    role: 'First Party',
+    components: [
+      { acro: 'landlord_lis_sig_day', label: 'Landlord LIS Sign Day' },
+      { acro: 'landlord_lis_sig_month', label: 'Landlord LIS Sign Month' },
+      { acro: 'landlord_lis_sig_year', label: 'Landlord LIS Sign Year' },
+    ],
+  },
+  {
+    dateRowKey: 'tenant_1_sig_date',
+    role: 'Second Party',
+    components: [
+      { acro: 'tenant_1_sig_day', label: 'Tenant Sign Day' },
+      { acro: 'tenant_1_sig_month', label: 'Tenant Sign Month' },
+      { acro: 'tenant_1_sig_year', label: 'Tenant Sign Year' },
+    ],
+  },
+  {
+    dateRowKey: 'tenant_2_sig_date',
+    role: 'Co-tenant',
+    coTenantOnly: true,
+    components: [
+      { acro: 'tenant_2_sig_day', label: 'Tenant 2 Sign Day' },
+      { acro: 'tenant_2_sig_month', label: 'Tenant 2 Sign Month' },
+      { acro: 'tenant_2_sig_year', label: 'Tenant 2 Sign Year' },
+    ],
+  },
+  {
+    dateRowKey: 'tenant_tis_sig_date',
+    role: 'Second Party',
+    components: [
+      { acro: 'tenant_tis_sig_day', label: 'Tenant TIS Sign Day' },
+      { acro: 'tenant_tis_sig_month', label: 'Tenant TIS Sign Month' },
+      { acro: 'tenant_tis_sig_year', label: 'Tenant TIS Sign Year' },
+    ],
+  },
+]
+
+/** Spike / API dry-run values for three-field date proof. */
+export const OFFICIAL_FT6600_SPIKE_DATE_COMPONENT_VALUES = {
+  day: '6',
+  month: 'July',
+  year: '26',
+} as const
+
+/** @deprecated Use OFFICIAL_FT6600_DATE_ROW_DEFS */
+export const OFFICIAL_FT6600_DATE_FIELD_TRIPLETS: Record<string, readonly [string, string, string]> =
+  Object.fromEntries(
+    OFFICIAL_FT6600_DATE_ROW_DEFS.map((row) => [
+      row.dateRowKey,
+      row.components.map((c) => c.acro) as [string, string, string],
+    ]),
+  )
 
 /**
  * DocuSeal parser unlock anchors — sole 14pt tag for primary landlord/tenant signatures.
@@ -71,9 +154,14 @@ export const OFFICIAL_FT6600_PARSER_ANCHOR_STYLE = {
 } as const
 
 const PARSER_ANCHOR_FIELD_DEFS = [
-  { fieldName: 'sig_landlord', tag: '{{Landlord Signature;role=First Party;type=signature}}' },
-  { fieldName: 'sig_tenant_1', tag: '{{Tenant Signature;role=Second Party;type=signature}}' },
-  { fieldName: 'sig_tenant_2', tag: '{{Tenant 2 Signature;role=Co-tenant;type=signature}}', coTenantOnly: true },
+  { fieldName: 'sig_landlord', label: 'Landlord Signature', role: 'First Party' as const },
+  { fieldName: 'sig_tenant_1', label: 'Tenant Signature', role: 'Second Party' as const },
+  {
+    fieldName: 'sig_tenant_2',
+    label: 'Tenant 2 Signature',
+    role: 'Co-tenant' as const,
+    coTenantOnly: true,
+  },
 ] as const
 
 const PARSER_ONLY_SIGNATURE_FIELD_NAMES: Set<string> = new Set(
@@ -90,72 +178,84 @@ export type DocusealTagPlacement = {
   color: RGB
 }
 
-type WidgetTagDef = {
+type WidgetSignatureDef = {
   fieldName: string
+  label: string
+  role: 'First Party' | 'Second Party' | 'Co-tenant'
   coTenantOnly?: boolean
-  kind: 'signature' | 'date'
-  tag?: string
-  dateLabel?: string
-  dateRole?: string
 }
 
-function ft6600DateTag(label: string, role: string, width: number, height: number): string {
+const WIDGET_SIGNATURE_DEFS: WidgetSignatureDef[] = [
+  { fieldName: 'sig_landlord', label: 'Landlord Signature', role: 'First Party' },
+  { fieldName: 'sig_landlord_lis', label: 'Landlord LIS Signature', role: 'First Party' },
+  { fieldName: 'sig_tenant_1', label: 'Tenant Signature', role: 'Second Party' },
+  {
+    fieldName: 'sig_tenant_2',
+    label: 'Tenant 2 Signature',
+    role: 'Co-tenant',
+    coTenantOnly: true,
+  },
+  { fieldName: 'sig_tenant_tis', label: 'Tenant TIS Signature', role: 'Second Party' },
+]
+
+function ft6600SignatureTag(label: string, role: string, widthPt: number, heightPt: number): string {
+  const w = Math.round(widthPt)
+  const h = Math.round(heightPt * 10) / 10
+  return `{{${label};role=${role};type=signature;width=${w};height=${h}}}`
+}
+
+function ft6600DateComponentTag(label: string, role: string, width: number, height: number): string {
   const w = Math.round(width)
   const h = Math.round(height)
-  return `{{${label};role=${role};type=date;format=${OFFICIAL_FT6600_DATE_FORMAT};width=${w};height=${h}}}`
+  return `{{${label};role=${role};type=text;width=${w};height=${h}}}`
 }
 
-const WIDGET_TAG_DEFS: WidgetTagDef[] = [
-  { kind: 'signature', tag: '{{Landlord Signature;role=First Party;type=signature}}', fieldName: 'sig_landlord' },
-  {
-    kind: 'date',
-    dateLabel: 'Landlord Sign Date',
-    dateRole: 'First Party',
-    fieldName: 'landlord_sig_date',
-  },
-  {
-    kind: 'signature',
-    tag: '{{Landlord LIS Signature;role=First Party;type=signature}}',
-    fieldName: 'sig_landlord_lis',
-  },
-  {
-    kind: 'date',
-    dateLabel: 'Landlord LIS Date',
-    dateRole: 'First Party',
-    fieldName: 'landlord_lis_sig_date',
-  },
-  { kind: 'signature', tag: '{{Tenant Signature;role=Second Party;type=signature}}', fieldName: 'sig_tenant_1' },
-  {
-    kind: 'date',
-    dateLabel: 'Tenant Sign Date',
-    dateRole: 'Second Party',
-    fieldName: 'tenant_1_sig_date',
-  },
-  {
-    kind: 'signature',
-    tag: '{{Tenant 2 Signature;role=Co-tenant;type=signature}}',
-    fieldName: 'sig_tenant_2',
-    coTenantOnly: true,
-  },
-  {
-    kind: 'date',
-    dateLabel: 'Tenant 2 Sign Date',
-    dateRole: 'Co-tenant',
-    fieldName: 'tenant_2_sig_date',
-    coTenantOnly: true,
-  },
-  {
-    kind: 'signature',
-    tag: '{{Tenant TIS Signature;role=Second Party;type=signature}}',
-    fieldName: 'sig_tenant_tis',
-  },
-  {
-    kind: 'date',
-    dateLabel: 'Tenant TIS Date',
-    dateRole: 'Second Party',
-    fieldName: 'tenant_tis_sig_date',
-  },
-]
+export function officialFt6600DateFieldDimensions(widget: SignatureWidgetPlacement): {
+  widthPt: number
+  heightPt: number
+  xPt: number
+  yPt: number
+} {
+  const widthPt = Math.round(widget.width - OFFICIAL_FT6600_DATE_FIELD_LEFT_INSET_PT)
+  const heightPt = OFFICIAL_FT6600_DATE_FIELD_HEIGHT_PT
+  const xPt = widget.x + OFFICIAL_FT6600_DATE_FIELD_LEFT_INSET_PT
+  const yPt = widget.y + widget.height - OFFICIAL_FT6600_DATE_FIELD_TOP_MARGIN_PT - heightPt
+  return { widthPt, heightPt, xPt, yPt }
+}
+
+export function officialFt6600SignatureTagDimensions(widget: SignatureWidgetPlacement): {
+  widthPt: number
+  heightPt: number
+} {
+  return {
+    widthPt: widget.width,
+    heightPt: OFFICIAL_FT6600_SIGNATURE_INK_HEIGHT_PT,
+  }
+}
+
+/** DocuSeal API burn-in uses ~50% of field width for signature image placement. */
+export const OFFICIAL_FT6600_DOCUSEAL_SIG_IMAGE_WIDTH_FRACTION = 0.5 as const
+
+/** Aspect-fit ink height: min(rect height, effective width ÷ image aspect). */
+export function predictFt6600AspectFitInkHeight(
+  rectWidthPt: number,
+  rectHeightPt: number,
+  imageAspect: number = OFFICIAL_FT6600_SPIKE_TEST_SIGNATURE_IMAGE_ASPECT,
+  widthFraction: number = OFFICIAL_FT6600_DOCUSEAL_SIG_IMAGE_WIDTH_FRACTION,
+): number {
+  const effectiveWidth = rectWidthPt * widthFraction
+  return Math.min(rectHeightPt, effectiveWidth / imageAspect)
+}
+
+export function countExpectedFt6600WidgetTags(includeCoTenantSignatureTags: boolean): number {
+  const sigCount = WIDGET_SIGNATURE_DEFS.filter(
+    (d) => !d.coTenantOnly || includeCoTenantSignatureTags,
+  ).filter((d) => !PARSER_ONLY_SIGNATURE_FIELD_NAMES.has(d.fieldName)).length
+  const dateCount = OFFICIAL_FT6600_DATE_ROW_DEFS.filter(
+    (d) => !d.coTenantOnly || includeCoTenantSignatureTags,
+  ).reduce((n, row) => n + row.components.length, 0)
+  return sigCount + dateCount
+}
 
 function collectFieldWidgets(doc: PDFDoc, fieldNames: readonly string[]): SignatureWidgetPlacement[] {
   const wanted = new Set(fieldNames)
@@ -204,22 +304,19 @@ export function unionSignatureWidgetPlacements(
   }
 }
 
-/** All signing placements from live AcroForm widgets (signatures + date spans). */
+/** All signing placements from live AcroForm widgets (signatures + date components). */
 export function collectOfficialNswFt6600SigningPlacements(
   doc: PDFDoc,
   options: { includeCoTenantSignatureTags: boolean },
 ): SignatureWidgetPlacement[] {
-  const sigFieldNames = WIDGET_TAG_DEFS.filter(
-    (d) => d.kind === 'signature' && (!d.coTenantOnly || options.includeCoTenantSignatureTags),
-  ).map((d) => d.fieldName)
-  const dateFieldNames = WIDGET_TAG_DEFS.filter(
-    (d) => d.kind === 'date' && (!d.coTenantOnly || options.includeCoTenantSignatureTags),
+  const sigFieldNames = WIDGET_SIGNATURE_DEFS.filter(
+    (d) => !d.coTenantOnly || options.includeCoTenantSignatureTags,
   ).map((d) => d.fieldName)
 
   const acroNames = new Set<string>(sigFieldNames)
-  for (const dateField of dateFieldNames) {
-    const triplet = OFFICIAL_FT6600_DATE_FIELD_TRIPLETS[dateField]
-    if (triplet) for (const part of triplet) acroNames.add(part)
+  for (const row of OFFICIAL_FT6600_DATE_ROW_DEFS) {
+    if (row.coTenantOnly && !options.includeCoTenantSignatureTags) continue
+    for (const part of row.components) acroNames.add(part.acro)
   }
 
   const byField = new Map<string, SignatureWidgetPlacement>()
@@ -232,11 +329,12 @@ export function collectOfficialNswFt6600SigningPlacements(
     const w = byField.get(name)
     if (w) out.push(w)
   }
-  for (const dateField of dateFieldNames) {
-    const triplet = OFFICIAL_FT6600_DATE_FIELD_TRIPLETS[dateField]
-    if (!triplet) continue
-    const parts = triplet.map((n) => byField.get(n)).filter((w): w is SignatureWidgetPlacement => !!w)
-    if (parts.length === 3) out.push(unionSignatureWidgetPlacements(dateField, parts))
+  for (const row of OFFICIAL_FT6600_DATE_ROW_DEFS) {
+    if (row.coTenantOnly && !options.includeCoTenantSignatureTags) continue
+    for (const { acro } of row.components) {
+      const w = byField.get(acro)
+      if (w) out.push(w)
+    }
   }
   return out
 }
@@ -257,26 +355,50 @@ export function collectOfficialNswFt6600SigningFieldWidgets(
   )
 }
 
-function placementFromWidget(
+function placementFromDateDrawnBox(
   w: SignatureWidgetPlacement,
   style: typeof OFFICIAL_FT6600_WIDGET_TAG_STYLE,
   tag: string,
-  kind: 'signature' | 'date',
 ): DocusealTagPlacement {
-  const yOffset = kind === 'date' ? w.height * 0.2 : w.height * 0.35
+  const { xPt, yPt } = officialFt6600DateFieldDimensions(w)
   return {
     tag,
     fieldName: w.fieldName,
     pageIndex: w.pageIndex,
-    x: w.x + (kind === 'signature' ? 4 : 0),
+    x: xPt,
+    y: yPt,
+    size: style.size,
+    color: style.color,
+  }
+}
+
+function placementFromWidget(
+  w: SignatureWidgetPlacement,
+  style: typeof OFFICIAL_FT6600_WIDGET_TAG_STYLE,
+  tag: string,
+  kind: 'signature' | 'date_component',
+): DocusealTagPlacement {
+  if (kind === 'date_component') {
+    return placementFromDateDrawnBox(w, style, tag)
+  }
+  const yOffset = w.height * 0.35
+  return {
+    tag,
+    fieldName: w.fieldName,
+    pageIndex: w.pageIndex,
+    x: w.x + 4,
     y: w.y + yOffset,
     size: style.size,
     color: style.color,
   }
 }
 
-function widgetTagDefForField(fieldName: string): WidgetTagDef | undefined {
-  return WIDGET_TAG_DEFS.find((d) => d.fieldName === fieldName)
+const DATE_COMPONENT_ACROS = new Set(
+  OFFICIAL_FT6600_DATE_ROW_DEFS.flatMap((row) => row.components.map((c) => c.acro)),
+)
+
+function placementKindForField(fieldName: string): 'signature' | 'date_component' {
+  return DATE_COMPONENT_ACROS.has(fieldName) ? 'date_component' : 'signature'
 }
 
 /** Widget-level tags — placements must come from collectOfficialNswFt6600SigningPlacements. */
@@ -292,19 +414,45 @@ export function buildWidgetTagPlacements(
   const style = OFFICIAL_FT6600_WIDGET_TAG_STYLE
   const placements: DocusealTagPlacement[] = []
 
-  for (const def of WIDGET_TAG_DEFS) {
+  for (const def of WIDGET_SIGNATURE_DEFS) {
     if (def.coTenantOnly && !includeCoTenantSignatureTags) continue
-    if (def.kind === 'signature' && PARSER_ONLY_SIGNATURE_FIELD_NAMES.has(def.fieldName)) continue
+    if (PARSER_ONLY_SIGNATURE_FIELD_NAMES.has(def.fieldName)) continue
     const w = byField.get(def.fieldName)
     if (!w) continue
-    const tag =
-      def.kind === 'date'
-        ? ft6600DateTag(def.dateLabel!, def.dateRole!, w.width, w.height)
-        : def.tag!
-    placements.push(placementFromWidget(w, style, tag, def.kind))
+    const { widthPt, heightPt } = officialFt6600SignatureTagDimensions(w)
+    const tag = ft6600SignatureTag(def.label, def.role, widthPt, heightPt)
+    placements.push(placementFromWidget(w, style, tag, 'signature'))
+  }
+
+  for (const row of OFFICIAL_FT6600_DATE_ROW_DEFS) {
+    if (row.coTenantOnly && !includeCoTenantSignatureTags) continue
+    for (const component of row.components) {
+      const w = byField.get(component.acro)
+      if (!w) continue
+      const { widthPt, heightPt } = officialFt6600DateFieldDimensions(w)
+      const tag = ft6600DateComponentTag(component.label, row.role, widthPt, heightPt)
+      placements.push(placementFromWidget(w, style, tag, 'date_component'))
+    }
   }
 
   return placements
+}
+
+/** Signature tag rects must end before the printed date column (stamp containment). */
+export function assertFt6600SignatureTagsClearDateColumn(placements: DocusealTagPlacement[]): void {
+  const marginPt = 8
+  for (const p of placements) {
+    if (!p.tag.includes('type=signature')) continue
+    const widthMatch = p.tag.match(/width=(\d+(?:\.\d+)?)/)
+    if (!widthMatch) continue
+    const tagWidth = Number(widthMatch[1])
+    const rightEdge = p.x + tagWidth
+    if (rightEdge > OFFICIAL_FT6600_DATE_COLUMN_X_PT - marginPt) {
+      throw new Error(
+        `Signature tag ${p.fieldName} right edge ${rightEdge} overlaps date column at x=${OFFICIAL_FT6600_DATE_COLUMN_X_PT}`,
+      )
+    }
+  }
 }
 
 /** Regression guard: every drawn tag anchor must sit inside its source widget rect. */
@@ -318,17 +466,30 @@ export function assertDocusealTagPlacementsWithinSourceWidgets(
     if (!source) {
       throw new Error(`assertDocusealTagPlacementsWithinSourceWidgets: no source widget for ${p.fieldName}`)
     }
-    const def = widgetTagDefForField(p.fieldName)
-    const kind = def?.kind ?? 'signature'
+    const kind = placementKindForField(p.fieldName)
+    const sourceForAssert =
+      kind === 'date_component'
+        ? (() => {
+            const dims = officialFt6600DateFieldDimensions(source)
+            return {
+              fieldName: source.fieldName,
+              pageIndex: source.pageIndex,
+              x: dims.xPt,
+              y: dims.yPt,
+              width: dims.widthPt,
+              height: dims.heightPt,
+            }
+          })()
+        : source
     const tol = kind === 'signature' ? 6 : 2
-    if (p.x < source.x - tol || p.x > source.x + source.width + tol) {
+    if (p.x < sourceForAssert.x - tol || p.x > sourceForAssert.x + sourceForAssert.width + tol) {
       throw new Error(
-        `Tag ${p.fieldName} x=${p.x} outside source x=[${source.x}, ${source.x + source.width}]`,
+        `Tag ${p.fieldName} x=${p.x} outside source x=[${sourceForAssert.x}, ${sourceForAssert.x + sourceForAssert.width}]`,
       )
     }
-    if (p.y < source.y - tol || p.y > source.y + source.height + tol) {
+    if (p.y < sourceForAssert.y - tol || p.y > sourceForAssert.y + sourceForAssert.height + tol) {
       throw new Error(
-        `Tag ${p.fieldName} y=${p.y} outside source y=[${source.y}, ${source.y + source.height}]`,
+        `Tag ${p.fieldName} y=${p.y} outside source y=[${sourceForAssert.y}, ${sourceForAssert.y + sourceForAssert.height}]`,
       )
     }
   }
@@ -353,23 +514,43 @@ export function drawParserAnchorTags(
   options: { includeCoTenantSignatureTags: boolean },
   font: PDFFont,
 ): void {
+  for (const p of buildParserAnchorTagPlacements(sourceWidgets, options)) {
+    const page = doc.getPages()[p.pageIndex]
+    if (!page) continue
+    page.drawText(p.tag, {
+      x: p.x,
+      y: p.y,
+      size: p.size,
+      font,
+      color: p.color,
+    })
+  }
+}
+
+export function buildParserAnchorTagPlacements(
+  sourceWidgets: SignatureWidgetPlacement[],
+  options: { includeCoTenantSignatureTags: boolean },
+): DocusealTagPlacement[] {
   const style = OFFICIAL_FT6600_PARSER_ANCHOR_STYLE
-  const pages = doc.getPages()
   const byField = new Map(sourceWidgets.map((w) => [w.fieldName, w]))
+  const placements: DocusealTagPlacement[] = []
   for (const def of PARSER_ANCHOR_FIELD_DEFS) {
     if ('coTenantOnly' in def && def.coTenantOnly && !options.includeCoTenantSignatureTags) continue
     const w = byField.get(def.fieldName)
     if (!w) continue
-    const page = pages[w.pageIndex]
-    if (!page) continue
-    page.drawText(def.tag, {
+    const { widthPt, heightPt } = officialFt6600SignatureTagDimensions(w)
+    const tag = ft6600SignatureTag(def.label, def.role, widthPt, heightPt)
+    placements.push({
+      tag,
+      fieldName: def.fieldName,
+      pageIndex: w.pageIndex,
       x: w.x + 4,
       y: w.y + w.height * 0.35,
       size: style.size,
-      font,
       color: style.color,
     })
   }
+  return placements
 }
 
 export function pdfBufferHasDocusealTags(buf: Uint8Array | Buffer): boolean {
@@ -398,7 +579,12 @@ export async function buildOfficialNswFt6600PdfWithSigning(
   applyOfficialNswFt6600NoBondStrikeOutIfNeeded(doc, props.bond.amount, noBondStrikeBounds)
 
   const tagPlacements = buildWidgetTagPlacements(signingPlacementsBeforeFlatten, options.includeCoTenantSignatureTags)
+  const parserTagPlacements = buildParserAnchorTagPlacements(
+    signingPlacementsBeforeFlatten,
+    options,
+  )
   assertDocusealTagPlacementsWithinSourceWidgets(tagPlacements, signingPlacementsBeforeFlatten)
+  assertFt6600SignatureTagsClearDateColumn([...tagPlacements, ...parserTagPlacements])
 
   const font = await doc.embedFont(StandardFonts.Helvetica)
   drawWidgetDocusealTags(doc, tagPlacements, font)
@@ -408,9 +594,7 @@ export async function buildOfficialNswFt6600PdfWithSigning(
   const docWithAnchors = await PDFDocument.load(phase1Bytes, { ignoreEncryption: true, updateMetadata: false })
   drawParserAnchorTags(docWithAnchors, signingPlacementsBeforeFlatten, options, font)
   const pdfBytes = await saveNormalizedPdf(docWithAnchors)
-  const minWidgetTags = WIDGET_TAG_DEFS.filter(
-    (d) => !d.coTenantOnly || options.includeCoTenantSignatureTags,
-  ).filter((d) => !(d.kind === 'signature' && PARSER_ONLY_SIGNATURE_FIELD_NAMES.has(d.fieldName))).length
+  const minWidgetTags = countExpectedFt6600WidgetTags(options.includeCoTenantSignatureTags)
   const hasDocusealTags = tagPlacements.length >= minWidgetTags && pdfBufferHasDocusealTags(pdfBytes)
 
   return {
