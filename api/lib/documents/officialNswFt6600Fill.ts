@@ -377,6 +377,12 @@ function buildFillAssignments(props: NswResidentialTenancyAgreementProps): FillA
   if (coTenants[1]) pushText(text, F.tenant_name_3, coTenants[1])
   if (coTenants.length > 2) pushText(text, F.tenant_all_others, coTenants.slice(2).join('; '))
 
+  pushText(text, F.landlord_printed_name, landlord.fullName)
+  pushText(text, F.tenant_1_printed_name, tenant.fullName)
+  if (coTenants[0]) pushText(text, F.tenant_2_printed_name, coTenants[0])
+  if (coTenants[1]) pushText(text, F.tenant_3_printed_name, coTenants[1])
+  if (coTenants[2]) pushText(text, F.tenant_4_printed_name, coTenants[2])
+
   if (tenant.addressForServiceLine) {
     const tenantService = parseAustralianAddressLine(tenant.addressForServiceLine)
     if (tenantService.street) pushText(text, F.tenant_service_street, tenantService.street)

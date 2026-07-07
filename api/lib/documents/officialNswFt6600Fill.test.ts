@@ -100,7 +100,10 @@ describe('applyOfficialNswFt6600ScheduleFill (renamed template)', () => {
     expect(byField[F.agreement_made_on]).toBe('02/06/2026')
     expect(byField[F.landlord_name_1]).toBe('Alex Rental Provider')
     expect(byField[F.tenant_name_1]).toBe('Jordan Tenant')
-    expect(byField[F.tenant_name_2]).toBe('Casey Co-Renter')
+    expect(byField[F.tenant_name_2]).toBe('Casey Co Renter')
+    expect(byField[F.landlord_printed_name]).toBe('Alex Rental Provider')
+    expect(byField[F.tenant_1_printed_name]).toBe('Jordan Tenant')
+    expect(byField[F.tenant_2_printed_name]).toBe('Casey Co Renter')
     expect(byField[F.bond_amount]).toBe('1,680.00')
 
     const form = doc.getForm()
