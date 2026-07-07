@@ -1,5 +1,6 @@
 import { Text, View } from '@react-pdf/renderer'
 import { occupancyMatchPdf } from './quniDocumentPdfTheme.js'
+import { platformAddendumDocusealTag } from './platformAddendumDocusealTags.js'
 
 /** Co-tenant name on addendum summary when `additionalTenantNames[0]` is set. */
 export function coTenantNameFromAddendumProps(additionalTenantNames?: string[]): string {
@@ -24,7 +25,7 @@ export function AddendumCoTenantSignatureBlock({ coTenantName }: { coTenantName:
         <View style={occupancyMatchPdf.sigLabelRow}>
           <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
           <Text style={occupancyMatchPdf.docusealTagOa}>
-            {'{{Addendum Co-tenant Signature;role=Co-tenant;type=signature}}'}
+            {platformAddendumDocusealTag('Addendum Co-tenant Signature', 'Co-tenant', 'signature')}
           </Text>
         </View>
       </View>
@@ -32,7 +33,7 @@ export function AddendumCoTenantSignatureBlock({ coTenantName }: { coTenantName:
         <View style={occupancyMatchPdf.sigLabelRow}>
           <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
           <Text style={occupancyMatchPdf.docusealTagOa}>
-            {'{{Addendum Co-tenant Date;role=Co-tenant;type=date}}'}
+            {platformAddendumDocusealTag('Addendum Co-tenant Date', 'Co-tenant', 'date')}
           </Text>
         </View>
       </View>

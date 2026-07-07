@@ -16,6 +16,7 @@ import {
   AddendumCoTenantSignatureBlock,
   coTenantNameFromAddendumProps,
 } from './addendumCoTenantExecution.js'
+import { platformAddendumDocusealTag } from './platformAddendumDocusealTags.js'
 
 const QUNI_MAINTENANCE_PORTAL_URL = 'https://quni.com.au/maintenance'
 const QUNI_MOVE_OUT_FORM_URL = 'https://quni.com.au/move-out'
@@ -781,7 +782,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
               <View style={occupancyMatchPdf.sigLabelRow}>
                 <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
                 <Text style={occupancyMatchPdf.docusealTagOa}>
-                  {'{{Addendum Landlord Signature;role=First Party;type=signature}}'}
+                  {platformAddendumDocusealTag('Addendum Landlord Signature', 'First Party', 'signature')}
                 </Text>
               </View>
             </View>
@@ -789,7 +790,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
               <View style={occupancyMatchPdf.sigLabelRow}>
                 <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
                 <Text style={occupancyMatchPdf.docusealTagOa}>
-                  {'{{Addendum Landlord Date;role=First Party;type=date}}'}
+                  {platformAddendumDocusealTag('Addendum Landlord Date', 'First Party', 'date')}
                 </Text>
               </View>
             </View>
@@ -800,7 +801,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
               <View style={occupancyMatchPdf.sigLabelRow}>
                 <Text style={occupancyMatchPdf.sigLabel}>Signature </Text>
                 <Text style={occupancyMatchPdf.docusealTagOa}>
-                  {'{{Addendum Tenant Signature;role=Second Party;type=signature}}'}
+                  {platformAddendumDocusealTag('Addendum Tenant Signature', 'Second Party', 'signature')}
                 </Text>
               </View>
             </View>
@@ -808,7 +809,7 @@ function Section17Execution(props: QuniPlatformAddendumProps) {
               <View style={occupancyMatchPdf.sigLabelRow}>
                 <Text style={occupancyMatchPdf.sigLabel}>Date </Text>
                 <Text style={occupancyMatchPdf.docusealTagOa}>
-                  {'{{Addendum Tenant Date;role=Second Party;type=date}}'}
+                  {platformAddendumDocusealTag('Addendum Tenant Date', 'Second Party', 'date')}
                 </Text>
               </View>
             </View>
