@@ -135,6 +135,109 @@ export const OFFICIAL_FT6600_SPIKE_DATE_COMPONENT_VALUES = {
   year: '26',
 } as const
 
+/** A DocuSeal field value pre-filled and locked so the signer never has to enter it. */
+export type Ft6600PrefilledField = { name: string; default_value: string; readonly: true }
+
+/** Addendum execution date field names (react-pdf addendum tags), by signing party. */
+export const OFFICIAL_FT6600_ADDENDUM_DATE_FIELDS = {
+  firstParty: 'Addendum Landlord Date',
+  secondParty: 'Addendum Tenant Date',
+} as const
+
+const FT6600_MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const
+
+/**
+ * Split a signing date into the FT6600 three-box components (day numeral, full
+ * month name, 2-digit year) plus the addendum DD/MM/YYYY string. Computed in the
+ * Australia/Sydney calendar so it matches the execution date the signer sees.
+ */
+export function officialFt6600SigningDateParts(date: Date = new Date()): {
+  day: string
+  month: string
+  year: string
+  ddmmyyyy: string
+} {
+  const dtf = new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Sydney',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const parts = dtf.formatToParts(date)
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? ''
+  const day = get('day')
+  const month = get('month')
+  const yearFull = get('year')
+  const monthIndex = FT6600_MONTH_NAMES.indexOf(month as (typeof FT6600_MONTH_NAMES)[number])
+  const dd = day.padStart(2, '0')
+  const mm = String(monthIndex + 1).padStart(2, '0')
+  return { day, month, year: yearFull.slice(-2), ddmmyyyy: `${dd}/${mm}/${yearFull}` }
+}
+
+/**
+ * Read-only, pre-filled execution-date field values so signers only sign — the
+ * date is stamped for them. Keyed by DocuSeal party (First Party = landlord,
+ * Second Party = tenant, Co-tenant). Covers all four FT6600 rows plus the
+ * addendum date on each party's side. Geometry is untouched — this only supplies
+ * values for the existing frozen fields.
+ */
+export function officialFt6600ReadonlyDateFieldValues(
+  date: Date = new Date(),
+  options: { includeCoTenant: boolean } = { includeCoTenant: false },
+): {
+  firstParty: Ft6600PrefilledField[]
+  secondParty: Ft6600PrefilledField[]
+  coTenant: Ft6600PrefilledField[]
+} {
+  const { day, month, year, ddmmyyyy } = officialFt6600SigningDateParts(date)
+  const firstParty: Ft6600PrefilledField[] = []
+  const secondParty: Ft6600PrefilledField[] = []
+  const coTenant: Ft6600PrefilledField[] = []
+
+  const bucketFor = (role: Ft6600DateRowDef['role']) =>
+    role === 'First Party' ? firstParty : role === 'Second Party' ? secondParty : coTenant
+
+  for (const row of OFFICIAL_FT6600_DATE_ROW_DEFS) {
+    if (row.coTenantOnly && !options.includeCoTenant) continue
+    const bucket = bucketFor(row.role)
+    for (const component of row.components) {
+      const value = component.acro.endsWith('_day')
+        ? day
+        : component.acro.endsWith('_month')
+          ? month
+          : year
+      bucket.push({ name: component.label, default_value: value, readonly: true })
+    }
+  }
+
+  firstParty.push({
+    name: OFFICIAL_FT6600_ADDENDUM_DATE_FIELDS.firstParty,
+    default_value: ddmmyyyy,
+    readonly: true,
+  })
+  secondParty.push({
+    name: OFFICIAL_FT6600_ADDENDUM_DATE_FIELDS.secondParty,
+    default_value: ddmmyyyy,
+    readonly: true,
+  })
+
+  return { firstParty, secondParty, coTenant }
+}
+
 /** @deprecated Use OFFICIAL_FT6600_DATE_ROW_DEFS */
 export const OFFICIAL_FT6600_DATE_FIELD_TRIPLETS: Record<string, readonly [string, string, string]> =
   Object.fromEntries(
