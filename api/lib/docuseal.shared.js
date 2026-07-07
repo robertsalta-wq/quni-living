@@ -71,10 +71,17 @@ async function readErrorBody(res) {
  *   landlord: {name: string, email: string},
  *   tenant: {name: string, email: string},
  *   coTenant?: {name: string, email: string} | null,
+ *   landlordFields?: Array<{name: string, default_value: string|number, readonly?: boolean}>,
+ *   tenantFields?: Array<{name: string, default_value: string|number, readonly?: boolean}>,
+ *   coTenantFields?: Array<{name: string, default_value: string|number, readonly?: boolean}>,
+ *   landlordRole?: string,
+ *   tenantRole?: string,
+ *   coTenantRole?: string,
  *   submitterSignReason?: boolean,
  *   documentPdfName?: string
  *   removeTags?: boolean
  * }} params
+ * `*Fields` pre-fill and (when readonly) lock field values so the signer never has to enter them.
  * When `submitterSignReason` is false, each submitter includes `sign_reason: false` (hides DocuSeal “reason for signing” UI).
  * @returns {Promise<{ id?: number, submitters?: Array<{id?: number, email?: string, name?: string, role?: string, embed_src?: string, completed_at?: string|null}> }>}
  */
@@ -102,20 +109,28 @@ export async function createDocusealSubmissionFromPdf(params) {
   }
 
   const signReasonOff = params.submitterSignReason === false
-  const submitterFields = (email, name, role) => ({
+  const submitterFields = (email, name, role, prefilledFields) => ({
     role,
     email,
     name,
     ...(signReasonOff ? { sign_reason: false } : {}),
+    ...(Array.isArray(prefilledFields) && prefilledFields.length ? { fields: prefilledFields } : {}),
   })
 
+  // Roles default to Landlord/Tenant/Co-tenant (DocuSeal maps positionally when no
+  // per-submitter fields are sent). When pre-filled `fields` are supplied, DocuSeal
+  // requires the role to match the template's parsed roles, so callers can override.
+  const landlordRole = params.landlordRole || 'Landlord'
+  const tenantRole = params.tenantRole || 'Tenant'
+  const coTenantRole = params.coTenantRole || 'Co-tenant'
+
   const submitters = [
-    submitterFields(params.landlord.email, params.landlord.name, 'Landlord'),
-    submitterFields(params.tenant.email, params.tenant.name, 'Tenant'),
+    submitterFields(params.landlord.email, params.landlord.name, landlordRole, params.landlordFields),
+    submitterFields(params.tenant.email, params.tenant.name, tenantRole, params.tenantFields),
   ]
   const co = params.coTenant
   if (co && typeof co.email === 'string' && co.email.trim() && typeof co.name === 'string' && co.name.trim()) {
-    submitters.push(submitterFields(co.email.trim(), co.name.trim(), 'Co-tenant'))
+    submitters.push(submitterFields(co.email.trim(), co.name.trim(), coTenantRole, params.coTenantFields))
   }
 
   const body = {

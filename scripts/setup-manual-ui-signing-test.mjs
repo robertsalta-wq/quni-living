@@ -29,7 +29,7 @@ const { buildNswResidentialTenancyAgreementPropsFromBooking } = await import(
 const { QUINN_ROBERT_FT6600_LISTING_INPUT } = await import(
   '../api/lib/documents/quinnRobertFt6600Fixture.ts'
 )
-const { buildOfficialNswFt6600PdfWithSigning } = await import(
+const { buildOfficialNswFt6600PdfWithSigning, officialFt6600ReadonlyDateFieldValues } = await import(
   '../api/lib/documents/officialNswFt6600Signing.ts'
 )
 const { createDocusealSubmissionFromPdf } = await import('../api/lib/docuseal.shared.js')
@@ -97,6 +97,9 @@ const built = await buildOfficialNswFt6600PdfWithSigning(rtaProps, { includeCoTe
 const addendumProps = buildAddendumPropsFromRta(rtaProps)
 const addendumBuffer = await renderToBuffer(React.createElement(QuniPlatformAddendum, addendumProps))
 
+// Auto-stamp the signing date so the signer only signs — never types the date.
+const readonlyDateFields = officialFt6600ReadonlyDateFieldValues(new Date(), { includeCoTenant: false })
+
 let submission
 let lastErr
 for (let attempt = 1; attempt <= 4; attempt++) {
@@ -109,6 +112,10 @@ for (let attempt = 1; attempt <= 4; attempt++) {
       ],
       landlord: FIRST_PARTY,
       tenant: SECOND_PARTY,
+      landlordRole: 'First Party',
+      tenantRole: 'Second Party',
+      landlordFields: readonlyDateFields.firstParty,
+      tenantFields: readonlyDateFields.secondParty,
       submitterSignReason: false,
     })
     break
@@ -131,7 +138,8 @@ const report = {
   ranAt: new Date().toISOString(),
   submissionId: submission.id,
   signerEmail: ROB_EMAIL,
-  note: 'Rob signs both parties in browser via embed_src links below. No production changes.',
+  note: 'Rob signs both parties in browser via embed_src links below. Dates are pre-filled read-only — signer should be prompted for signatures ONLY, no date entry.',
+  prefilledReadonlyDates: readonlyDateFields,
   fieldDiscovery:
     'Fields snapshotted from POST /submissions/pdf response only — GET submitter returns template=null for one-off PDFs.',
   requirednessGate: {

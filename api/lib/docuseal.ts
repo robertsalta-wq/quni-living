@@ -12,6 +12,7 @@ import {
   createDocusealSubmissionFromPdf,
   getDocusealSubmissionsUrl as getDocusealSubmissionsUrlImpl,
 } from './docuseal.shared.js'
+import { officialFt6600ReadonlyDateFieldValues } from './documents/officialNswFt6600Signing.js'
 import { getActivePricingSnapshotForProperty } from './pricing/index.js'
 import {
   isLandlordFeeExempt,
@@ -561,6 +562,13 @@ export async function sendResidentialTenancyPackageForSigning(
 
   const coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
 
+  // NSW FT6600 execution dates are stamped read-only so signers only sign — never type the date.
+  // QLD Form 18a and VIC Form 1 use different date fields and are left untouched.
+  const isNswFt6600 = !isQldResidential && !isVicResidential
+  const nswReadonlyDates = isNswFt6600
+    ? officialFt6600ReadonlyDateFieldValues(new Date(), { includeCoTenant: Boolean(coTenantSigner) })
+    : null
+
   const submission = await createDocusealSubmissionFromPdf({
     name: isVicResidential
       ? coTenantSigner
@@ -587,6 +595,16 @@ export async function sendResidentialTenancyPackageForSigning(
     landlord: { name: landlordName, email: landlordEmail },
     tenant: { name: tenantName, email: tenantEmail },
     coTenant: coTenantSigner,
+    ...(nswReadonlyDates
+      ? {
+          landlordRole: 'First Party',
+          tenantRole: 'Second Party',
+          coTenantRole: 'Co-tenant',
+          landlordFields: nswReadonlyDates.firstParty,
+          tenantFields: nswReadonlyDates.secondParty,
+          coTenantFields: nswReadonlyDates.coTenant,
+        }
+      : {}),
     ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
   })
 
