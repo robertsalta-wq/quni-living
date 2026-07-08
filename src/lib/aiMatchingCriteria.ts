@@ -32,6 +32,8 @@ export const STUDENT_PROFILE_FIELD_STATUS = {
   full_name: 'NOT_MATCHING',
   first_name: 'NOT_MATCHING',
   last_name: 'NOT_MATCHING',
+  preferred_name: 'NOT_MATCHING',
+  legal_name_locked_at: 'NOT_MATCHING',
   email: 'NOT_MATCHING',
   phone: 'NOT_MATCHING',
   gender: 'EXCLUDE',

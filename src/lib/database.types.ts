@@ -533,6 +533,8 @@ export interface Database {
           full_name: string | null
           first_name: string | null
           last_name: string | null
+          preferred_name: string | null
+          legal_name_locked_at: string | null
           email: string | null
           phone: string | null
           gender: string | null
@@ -634,6 +636,8 @@ export interface Database {
           full_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          preferred_name?: string | null
+          legal_name_locked_at?: string | null
           email?: string | null
           phone?: string | null
           gender?: string | null
@@ -735,6 +739,8 @@ export interface Database {
           full_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          preferred_name?: string | null
+          legal_name_locked_at?: string | null
           email?: string | null
           phone?: string | null
           gender?: string | null

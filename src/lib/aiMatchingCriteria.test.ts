@@ -27,6 +27,8 @@ describe('aiMatchingCriteria classification drift', () => {
       'full_name',
       'first_name',
       'last_name',
+      'preferred_name',
+      'legal_name_locked_at',
       'email',
       'phone',
       'gender',
