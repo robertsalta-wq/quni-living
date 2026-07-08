@@ -75,6 +75,9 @@
     },
     "api/sign/[token].ts": {
       "maxDuration": 30
+    },
+    "api/dev/mint-sign-links.ts": {
+      "maxDuration": 15
     }
   },
   "redirects": [

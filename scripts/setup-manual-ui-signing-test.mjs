@@ -128,7 +128,19 @@ for (let attempt = 1; attempt <= 4; attempt++) {
 }
 if (!submission?.id) throw lastErr ?? new Error('DocuSeal create failed')
 
-const wrapped = wrapSubmissionSubmitters(submission, true)
+let wrapped = submission
+try {
+  wrapped = wrapSubmissionSubmitters(submission, true)
+} catch (e) {
+  const msg = e instanceof Error ? e.message : String(e)
+  if (msg.includes('DOCUSEAL_SIGN_LINK_SECRET')) {
+    console.warn(
+      '[setup] DOCUSEAL_SIGN_LINK_SECRET not in process env — Vercel CLI leaves sensitive vars empty in .env.vercel. Add the real value to .env.local and re-run to mint wrapped links.',
+    )
+  } else {
+    throw e
+  }
+}
 const submitters = wrapped.submitters ?? []
 const firstParty = submitters.find((s) => s.role === 'First Party')
 const secondParty = submitters.find((s) => s.role === 'Second Party')
