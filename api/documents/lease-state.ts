@@ -24,6 +24,10 @@ import { createClient } from '@supabase/supabase-js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 import { deriveLeaseDocState } from '../lib/leaseState.js'
 import { bookingRequiresCoTenantSignature } from '../lib/booking/coTenantSigning.js'
+import {
+  resolveSigningLinkUrl,
+  signingPackageNeedsDateRefresh,
+} from '../lib/docuseal/signLinkWrap.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -233,7 +237,24 @@ export default async function handler(req, res) {
         ? meta.docuseal_response
         : null
     const submitters = docusealResp && Array.isArray(docusealResp.submitters) ? docusealResp.submitters : []
-    const signingUrl = pickEmbedSrc(submitters, viewerRole)
+    const signingPkg =
+      typeof meta.signing_package === 'string' ? meta.signing_package : null
+    const refreshDates = signingPackageNeedsDateRefresh(signingPkg)
+    const rawSigningUrl = pickEmbedSrc(submitters, viewerRole)
+    const matched =
+      viewerRole === 'landlord'
+        ? submitters.find((s) => {
+            const r = typeof s?.role === 'string' ? s.role.toLowerCase() : ''
+            return r.includes('landlord')
+          }) ?? submitters[0]
+        : submitters.find((s) => {
+            const r = typeof s?.role === 'string' ? s.role.toLowerCase() : ''
+            return r.includes('tenant')
+          }) ?? submitters[1] ?? submitters[0]
+    const signingUrl =
+      rawSigningUrl && matched
+        ? resolveSigningLinkUrl(matched, refreshDates) ?? rawSigningUrl
+        : rawSigningUrl
     if (signingUrl) result.signing_url = signingUrl
   }
 
