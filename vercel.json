@@ -72,6 +72,9 @@
     },
     "api/webhooks/docuseal.ts": {
       "maxDuration": 60
+    },
+    "api/sign/[token].ts": {
+      "maxDuration": 30
     }
   },
   "redirects": [
