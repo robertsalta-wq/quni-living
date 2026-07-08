@@ -13,6 +13,10 @@ import {
   getDocusealSubmissionsUrl as getDocusealSubmissionsUrlImpl,
 } from './docuseal.shared.js'
 import { officialFt6600ReadonlyDateFieldValues } from './documents/officialNswFt6600Signing.js'
+import {
+  signingPackageNeedsDateRefresh,
+  wrapSubmissionSubmitters,
+} from './docuseal/signLinkWrap.js'
 import { getActivePricingSnapshotForProperty } from './pricing/index.js'
 import {
   isLandlordFeeExempt,
@@ -374,7 +378,7 @@ export async function sendForSigning(
     throw e instanceof Error ? e : new Error(String(e))
   }
 
-  const submission = await createDocusealSubmissionFromPdf({
+  const submissionRaw = await createDocusealSubmissionFromPdf({
     name: coTenantSigner
       ? `Lease - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
       : `Lease - ${landlordName} / ${tenantName}`,
@@ -385,6 +389,7 @@ export async function sendForSigning(
     tenant: { name: tenantName, email: tenantEmail },
     coTenant: coTenantSigner,
   })
+  const submission = wrapSubmissionSubmitters(submissionRaw, false)
 
   const submissionId = submission.id != null ? String(submission.id) : null
   if (!submissionId) {
@@ -569,7 +574,9 @@ export async function sendResidentialTenancyPackageForSigning(
     ? officialFt6600ReadonlyDateFieldValues(new Date(), { includeCoTenant: Boolean(coTenantSigner) })
     : null
 
-  const submission = await createDocusealSubmissionFromPdf({
+  const nswDateRefresh = signingPackageNeedsDateRefresh(signingPkg)
+
+  const submissionRaw = await createDocusealSubmissionFromPdf({
     name: isVicResidential
       ? coTenantSigner
         ? `VIC Form 1 - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
@@ -607,6 +614,7 @@ export async function sendResidentialTenancyPackageForSigning(
       : {}),
     ...(docusealOpts?.submitterSignReason === false ? { submitterSignReason: false } : {}),
   })
+  const submission = wrapSubmissionSubmitters(submissionRaw, nswDateRefresh)
 
   const submissionId = submission.id != null ? String(submission.id) : null
   if (!submissionId) {
