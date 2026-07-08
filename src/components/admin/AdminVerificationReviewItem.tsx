@@ -85,14 +85,39 @@ type Props = {
 export function AdminVerificationReviewItem({ row, item, label, onProfileUpdated }: Props) {
   const [busyAction, setBusyAction] = useState<AdminVerificationAction | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [legalFirstName, setLegalFirstName] = useState('')
+  const [legalLastName, setLegalLastName] = useState('')
 
   const state = getVerificationItemDisplayState(row, item)
   const isDoc = item !== 'uni_email' && item !== 'work_email'
   const canAct = state.kind === 'submitted' || state.kind === 'in_review' || state.kind === 'verified'
+  const isPhotoIdVerify = item === 'id_document'
+  const trimmedLegalFirst = legalFirstName.trim()
+  const trimmedLegalLast = legalLastName.trim()
+  const photoIdVerifyReady = !isPhotoIdVerify || (trimmedLegalFirst.length > 0 && trimmedLegalLast.length > 0)
+  const studentEnteredPreferred = row.preferred_name?.trim() || null
 
   const runAction = useCallback(
     async (action: AdminVerificationAction) => {
       if (busyAction) return
+
+      const body: Record<string, string> = {
+        studentProfileId: row.id,
+        item,
+        action,
+      }
+
+      if (item === 'id_document' && action === 'verify') {
+        const first = legalFirstName.trim()
+        const last = legalLastName.trim()
+        if (!first || !last) {
+          setError('Legal first name and legal last name are required')
+          return
+        }
+        body.legalFirstName = first
+        body.legalLastName = last
+      }
+
       setBusyAction(action)
       setError(null)
 
@@ -110,11 +135,7 @@ export function AdminVerificationReviewItem({ row, item, label, onProfileUpdated
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            studentProfileId: row.id,
-            item,
-            action,
-          }),
+          body: JSON.stringify(body),
         })
 
         const json = (await res.json()) as { profile?: StudentRow; error?: string }
@@ -130,7 +151,7 @@ export function AdminVerificationReviewItem({ row, item, label, onProfileUpdated
         setBusyAction(null)
       }
     },
-    [busyAction, item, onProfileUpdated, row.id],
+    [busyAction, item, legalFirstName, legalLastName, onProfileUpdated, row.id],
   )
 
   if (state.kind === 'not_applicable') {
@@ -194,25 +215,63 @@ export function AdminVerificationReviewItem({ row, item, label, onProfileUpdated
       </div>
 
       {canAct ? (
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <ActionButton
-            label="Mark verified"
-            disabled={busyAction != null || state.kind === 'verified'}
-            onClick={() => void runAction('verify')}
-          />
-          {adminVerificationItemSupportsInReview(item) ? (
-            <ActionButton
-              label="Mark in review"
-              disabled={busyAction != null || state.kind === 'in_review'}
-              onClick={() => void runAction('in_review')}
-            />
+        <div className="mt-2.5 flex flex-col gap-2">
+          {isPhotoIdVerify && state.kind !== 'verified' ? (
+            <div className="flex flex-col gap-1.5">
+              {studentEnteredPreferred ? (
+                <p className="m-0 text-[11px] text-admin-ink-5">
+                  Student entered: <span className="text-admin-ink-3">{studentEnteredPreferred}</span>
+                </p>
+              ) : null}
+              <p className="m-0 text-[11px] text-admin-ink-5">
+                Enter exactly as shown on the ID document.
+              </p>
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                <label className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-medium text-admin-ink-4">Legal first name</span>
+                  <input
+                    type="text"
+                    value={legalFirstName}
+                    onChange={(e) => setLegalFirstName(e.target.value)}
+                    autoComplete="off"
+                    disabled={busyAction != null}
+                    className="rounded-admin-sm border border-admin-line bg-white px-2 py-1 text-[12px] text-admin-ink-2 outline-none focus:border-admin-ink-4"
+                  />
+                </label>
+                <label className="flex flex-col gap-0.5">
+                  <span className="text-[11px] font-medium text-admin-ink-4">Legal last name</span>
+                  <input
+                    type="text"
+                    value={legalLastName}
+                    onChange={(e) => setLegalLastName(e.target.value)}
+                    autoComplete="off"
+                    disabled={busyAction != null}
+                    className="rounded-admin-sm border border-admin-line bg-white px-2 py-1 text-[12px] text-admin-ink-2 outline-none focus:border-admin-ink-4"
+                  />
+                </label>
+              </div>
+            </div>
           ) : null}
-          <ActionButton
-            label="Reject / clear"
-            variant="danger"
-            disabled={busyAction != null || state.kind === 'submitted'}
-            onClick={() => void runAction('clear')}
-          />
+          <div className="flex flex-wrap gap-1.5">
+            <ActionButton
+              label="Mark verified"
+              disabled={busyAction != null || state.kind === 'verified' || !photoIdVerifyReady}
+              onClick={() => void runAction('verify')}
+            />
+            {adminVerificationItemSupportsInReview(item) ? (
+              <ActionButton
+                label="Mark in review"
+                disabled={busyAction != null || state.kind === 'in_review'}
+                onClick={() => void runAction('in_review')}
+              />
+            ) : null}
+            <ActionButton
+              label="Reject / clear"
+              variant="danger"
+              disabled={busyAction != null || state.kind === 'submitted'}
+              onClick={() => void runAction('clear')}
+            />
+          </div>
         </div>
       ) : null}
 
