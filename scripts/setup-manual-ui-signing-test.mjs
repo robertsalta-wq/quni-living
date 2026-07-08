@@ -33,6 +33,7 @@ const { buildOfficialNswFt6600PdfWithSigning, officialFt6600ReadonlyDateFieldVal
   '../api/lib/documents/officialNswFt6600Signing.ts'
 )
 const { createDocusealSubmissionFromPdf } = await import('../api/lib/docuseal.shared.js')
+const { wrapSubmissionSubmitters } = await import('../api/lib/docuseal/signLinkWrap.ts')
 const { renderToBuffer } = await import('@react-pdf/renderer')
 const { QuniPlatformAddendum } = await import('../src/lib/documents/QuniPlatformAddendum.tsx')
 
@@ -127,7 +128,8 @@ for (let attempt = 1; attempt <= 4; attempt++) {
 }
 if (!submission?.id) throw lastErr ?? new Error('DocuSeal create failed')
 
-const submitters = submission.submitters ?? []
+const wrapped = wrapSubmissionSubmitters(submission, true)
+const submitters = wrapped.submitters ?? []
 const firstParty = submitters.find((s) => s.role === 'First Party')
 const secondParty = submitters.find((s) => s.role === 'Second Party')
 
@@ -138,7 +140,7 @@ const report = {
   ranAt: new Date().toISOString(),
   submissionId: submission.id,
   signerEmail: ROB_EMAIL,
-  note: 'Rob signs both parties in browser via embed_src links below. Dates are pre-filled read-only — signer should be prompted for signatures ONLY, no date entry.',
+  note: 'Rob signs both parties in browser via wrapped /api/sign/ links (JIT date refresh on open). Dates are pre-filled read-only — signer should be prompted for signatures ONLY, no date entry.',
   prefilledReadonlyDates: readonlyDateFields,
   fieldDiscovery:
     'Fields snapshotted from POST /submissions/pdf response only — GET submitter returns template=null for one-off PDFs.',
@@ -154,6 +156,7 @@ const report = {
       role: 'First Party',
       name: FIRST_PARTY.name,
       embed_src: firstParty?.embed_src ?? null,
+      wrapped_sign_url: firstParty?.embed_src ?? null,
       submitterId: firstParty?.id ?? null,
       instruction: 'Sign as landlord FIRST (preserved order). Draw signature; observe each date field.',
     },
@@ -161,6 +164,7 @@ const report = {
       role: 'Second Party',
       name: SECOND_PARTY.name,
       embed_src: secondParty?.embed_src ?? null,
+      wrapped_sign_url: secondParty?.embed_src ?? null,
       submitterId: secondParty?.id ?? null,
       instruction: 'After First Party completes, open this link. Sign as tenant; observe date auto-fill/format.',
     },

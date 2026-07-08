@@ -488,6 +488,24 @@ export default function LandlordDashboard() {
     return j
   }, [])
 
+  const fetchLeaseSigningUrlViaApi = useCallback(async (bookingId: string) => {
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (!token) return null
+    const res = await fetch(apiUrl('/api/documents/lease-state'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ booking_id: bookingId }),
+    })
+    const j = (await res.json()) as { signing_url?: string; state?: string; error?: string }
+    if (!res.ok) return null
+    const url = typeof j.signing_url === 'string' ? j.signing_url.trim() : ''
+    return url || null
+  }, [])
+
   const handleLandlordAgreement = useCallback(
     async (b: BookingWithRelations) => {
       setLeaseDownloadErrorId(null)
@@ -534,7 +552,8 @@ export default function LandlordDashboard() {
           return
         }
 
-        const url = b.landlord_agreement_signing_url?.trim()
+        const urlFromApi = await fetchLeaseSigningUrlViaApi(b.id)
+        const url = urlFromApi || b.landlord_agreement_signing_url?.trim()
         if (url) {
           window.open(url, '_blank', 'noopener,noreferrer')
           return
@@ -557,7 +576,7 @@ export default function LandlordDashboard() {
         setAgreementActionBusyId(null)
       }
     },
-    [downloadAgreementFromSignedUrls, fetchLeaseSignedUrlsViaApi],
+    [downloadAgreementFromSignedUrls, fetchLeaseSignedUrlsViaApi, fetchLeaseSigningUrlViaApi],
   )
 
   const load = useCallback(async () => {
