@@ -128,6 +128,7 @@ describe('aiMatchingCriteria classification drift', () => {
       'full_name',
       'first_name',
       'last_name',
+      'legal_name_locked_at',
       'company_name',
       'abn',
       'landlord_type',

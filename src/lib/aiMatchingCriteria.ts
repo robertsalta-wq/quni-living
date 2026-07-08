@@ -129,6 +129,7 @@ export const LANDLORD_PROFILE_FIELD_STATUS = {
   full_name: 'NOT_MATCHING',
   first_name: 'NOT_MATCHING',
   last_name: 'NOT_MATCHING',
+  legal_name_locked_at: 'NOT_MATCHING',
   company_name: 'NOT_MATCHING',
   abn: 'NOT_MATCHING',
   landlord_type: 'NOT_MATCHING',

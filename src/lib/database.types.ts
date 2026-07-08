@@ -381,6 +381,7 @@ export interface Database {
           full_name: string | null
           first_name: string | null
           last_name: string | null
+          legal_name_locked_at: string | null
           company_name: string | null
           abn: string | null
           landlord_type: string | null
@@ -418,6 +419,7 @@ export interface Database {
           full_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          legal_name_locked_at?: string | null
           company_name?: string | null
           abn?: string | null
           landlord_type?: string | null
@@ -455,6 +457,7 @@ export interface Database {
           full_name?: string | null
           first_name?: string | null
           last_name?: string | null
+          legal_name_locked_at?: string | null
           company_name?: string | null
           abn?: string | null
           landlord_type?: string | null
