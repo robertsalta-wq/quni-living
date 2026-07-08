@@ -20,6 +20,22 @@ export function buildAdminVerificationPatch(
   nowIso: string,
 ): Record<string, unknown>
 
+export function parseAdminVerificationLegalNames(
+  item: AdminVerificationItem,
+  action: AdminVerificationAction,
+  legalFirstName: unknown,
+  legalLastName: unknown,
+):
+  | { ok: true; firstName?: string; lastName?: string }
+  | { ok: false; error: string; status: number }
+
+export function buildLegalNameLockPatch(
+  firstName: string,
+  lastName: string,
+  nowIso: string,
+  setByUserId: string,
+): Record<string, unknown>
+
 export function tierToSync(
   profile: Record<string, unknown> | null | undefined,
 ): 'student' | 'identity' | 'none' | null

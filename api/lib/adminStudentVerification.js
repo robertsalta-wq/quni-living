@@ -92,4 +92,58 @@ export function buildAdminVerificationPatch(item, action, nowIso) {
   }
 }
 
+const LEGAL_NAME_MAX_LEN = 100
+
+/**
+ * Legal name is required only for Photo ID verify. Other item/action combos ignore the fields.
+ *
+ * @param {AdminVerificationItem} item
+ * @param {AdminVerificationAction} action
+ * @param {unknown} legalFirstName
+ * @param {unknown} legalLastName
+ * @returns {{ ok: true, firstName?: string, lastName?: string } | { ok: false, error: string, status: number }}
+ */
+export function parseAdminVerificationLegalNames(item, action, legalFirstName, legalLastName) {
+  if (item !== 'id_document' || action !== 'verify') {
+    return { ok: true }
+  }
+
+  const firstName = typeof legalFirstName === 'string' ? legalFirstName.trim() : ''
+  const lastName = typeof legalLastName === 'string' ? legalLastName.trim() : ''
+
+  if (!firstName || !lastName) {
+    return {
+      ok: false,
+      error: 'legalFirstName and legalLastName are required when verifying Photo ID',
+      status: 400,
+    }
+  }
+  if (firstName.length > LEGAL_NAME_MAX_LEN || lastName.length > LEGAL_NAME_MAX_LEN) {
+    return {
+      ok: false,
+      error: 'legalFirstName and legalLastName must be at most 100 characters',
+      status: 400,
+    }
+  }
+
+  return { ok: true, firstName, lastName }
+}
+
+/**
+ * @param {string} firstName
+ * @param {string} lastName
+ * @param {string} nowIso
+ * @param {string} setByUserId
+ * @returns {Record<string, unknown>}
+ */
+export function buildLegalNameLockPatch(firstName, lastName, nowIso, setByUserId) {
+  return {
+    first_name: firstName,
+    last_name: lastName,
+    legal_name_locked_at: nowIso,
+    legal_name_set_at: nowIso,
+    legal_name_set_by: setByUserId,
+  }
+}
+
 export { tierToSync } from '../../src/lib/renterReadiness.js'

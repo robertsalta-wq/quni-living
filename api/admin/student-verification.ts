@@ -8,8 +8,10 @@ import { requireAdminUser } from '../lib/adminAuth.js'
 import {
   adminVerificationItemSupportsInReview,
   buildAdminVerificationPatch,
+  buildLegalNameLockPatch,
   parseAdminVerificationAction,
   parseAdminVerificationItem,
+  parseAdminVerificationLegalNames,
   tierToSync,
 } from '../lib/adminStudentVerification.js'
 
@@ -83,6 +85,16 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: 'in_review is not supported for this item' }, 400, origin)
   }
 
+  const legalNames = parseAdminVerificationLegalNames(
+    item,
+    action,
+    record?.legalFirstName,
+    record?.legalLastName,
+  )
+  if (!legalNames.ok) {
+    return json({ error: legalNames.error }, legalNames.status, origin)
+  }
+
   const admin = createClient(supabaseUrl, serviceRole)
   const nowIso = new Date().toISOString()
   const patch = buildAdminVerificationPatch(item, action, nowIso)
@@ -103,8 +115,25 @@ export default async function handler(request: Request): Promise<Response> {
 
   let updatePatch: Record<string, unknown> = { ...patch }
 
+  if (
+    item === 'id_document' &&
+    action === 'verify' &&
+    legalNames.firstName &&
+    legalNames.lastName
+  ) {
+    updatePatch = {
+      ...updatePatch,
+      ...buildLegalNameLockPatch(
+        legalNames.firstName,
+        legalNames.lastName,
+        nowIso,
+        authResult.user.id,
+      ),
+    }
+  }
+
   if (action === 'verify') {
-    const merged = { ...existing, ...patch }
+    const merged = { ...existing, ...updatePatch }
     const nextTier = tierToSync(merged)
     if (nextTier) {
       updatePatch = { ...updatePatch, verification_type: nextTier }
