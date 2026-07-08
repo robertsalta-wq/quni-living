@@ -49,6 +49,7 @@ import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmoun
 import { Pill, type PillTone } from '../../components/admin/primitives/Pill'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { isRoomType, ROOM_TYPE_LABELS } from '../../lib/listings'
+import { studentDisplayName } from '../../lib/nameResolution'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -103,6 +104,9 @@ function studentToSnapshot(row: LandlordBookingReviewStudent | null | undefined)
     verification_type: row.verification_type,
     accommodation_verification_route: row.accommodation_verification_route,
     full_name: row.full_name,
+    preferred_name: row.preferred_name,
+    first_name: row.first_name,
+    last_name: row.last_name,
     avatar_url: row.avatar_url,
     course: row.course,
     year_of_study: row.year_of_study,
@@ -252,10 +256,15 @@ export default function LandlordBookingReviewPage() {
   }, [data?.booking?.id, data?.booking?.ai_assessment, data?.booking?.ai_assessment_at])
 
   const snapshot = useMemo(() => studentToSnapshot(data?.student ?? null), [data?.student])
-  const displayName =
-    snapshot?.full_name?.trim() ||
-    [data?.student?.first_name, data?.student?.last_name].filter(Boolean).join(' ').trim() ||
-    'Student'
+  const displayName = studentDisplayName(
+    {
+      preferred_name: snapshot?.preferred_name ?? data?.student?.preferred_name,
+      full_name: snapshot?.full_name ?? data?.student?.full_name,
+      first_name: snapshot?.first_name ?? data?.student?.first_name,
+      last_name: snapshot?.last_name ?? data?.student?.last_name,
+    },
+    'Student',
+  )
 
   const tierModel = useMemo(() => {
     if (!data?.property || !data.listingBillingLoaded) return null

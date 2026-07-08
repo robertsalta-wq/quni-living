@@ -12,6 +12,7 @@ import {
   renterFieldClass,
   RENTER_SAVE_WRITE_FAILURE,
 } from '../../../lib/renterProfileFieldValidation'
+import { studentDisplayName } from '../../../lib/nameResolution'
 import {
   RenterProfileFieldErrorMsg,
   RenterProfileSaveHint,
@@ -66,15 +67,8 @@ function splitFullName(full: string | null | undefined): [string, string] {
   return [parts[0]!, parts.slice(1).join(' ')]
 }
 
-function initialsFrom(first: string, last: string, fullFallback: string | null, email: string | null | undefined) {
-  const f = first.trim()
-  const l = last.trim()
-  if (f || l) {
-    const a = f[0] ?? ''
-    const b = l[0] ?? f[1] ?? ''
-    return `${a}${b}`.toUpperCase() || '?'
-  }
-  const s = (fullFallback?.trim() || email?.split('@')[0] || '?').split(/\s+/)
+function initialsFromDisplay(display: string, email: string | null | undefined) {
+  const s = (display.trim() || email?.split('@')[0] || '?').split(/\s+/)
   return s
     .map((w) => w[0])
     .join('')
@@ -395,7 +389,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
                   fontWeight: 600,
                 }}
               >
-                {initialsFrom(firstName, lastName, profile.full_name, displayEmail)}
+                {initialsFromDisplay(studentDisplayName(profile), displayEmail)}
               </div>
             )}
           </div>

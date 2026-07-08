@@ -7,6 +7,7 @@ import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needs
 import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
+import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
 import SiteBrandLockup from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 import SiteSocialLinks from './SiteSocialLinks'
@@ -207,28 +208,22 @@ export default function Header() {
   const listingsNavWarm = { onMouseEnter: warmListingsNav, onFocus: warmListingsNav, onTouchStart: warmListingsNav }
 
   const displayName = (() => {
-    let raw: string | undefined
-    if (profile && (isRenterRole(role) || role === 'landlord')) {
-      const p = profile as {
-        first_name?: string | null
-        last_name?: string | null
-        full_name?: string | null
-      }
-      const parts = [p.first_name?.trim(), p.last_name?.trim()].filter(Boolean)
-      raw = parts.length > 0 ? parts.join(' ') : p.full_name?.trim()
+    const metaFallback =
+      (user?.user_metadata?.full_name as string | undefined)?.trim() ||
+      (user?.user_metadata?.name as string | undefined)?.trim() ||
+      user?.email?.split('@')[0] ||
+      'Account'
+
+    if (profile && isRenterRole(role)) {
+      return formatDisplayName(studentDisplayName(profile, metaFallback)) || 'Account'
     }
-    if (!raw) raw = (user?.user_metadata?.full_name as string | undefined)?.trim()
-    if (!raw) raw = (user?.user_metadata?.name as string | undefined)?.trim()
-    if (!raw) raw = user?.email?.split('@')[0]
-    const formatted = formatDisplayName(raw)
-    return formatted || 'Account'
+    if (profile && role === 'landlord') {
+      return formatDisplayName(landlordDisplayName(profile, metaFallback)) || 'Account'
+    }
+    return formatDisplayName(metaFallback) || 'Account'
   })()
 
   const accountFirstName = (() => {
-    if (profile && (isRenterRole(role) || role === 'landlord')) {
-      const fn = (profile as { first_name?: string | null }).first_name?.trim()
-      if (fn) return formatDisplayName(fn).split(/\s+/)[0] || displayName.split(/\s+/)[0]
-    }
     return displayName.split(/\s+/)[0] || 'Account'
   })()
 

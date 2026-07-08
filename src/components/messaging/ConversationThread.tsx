@@ -15,6 +15,7 @@ import ContactUnlockActions from './ContactUnlockActions'
 import MessageBubble from './MessageBubble'
 import SystemEventLine from './SystemEventLine'
 import MessageComposer from './MessageComposer'
+import { landlordDisplayName, studentDisplayName } from '../../lib/nameResolution'
 
 type DisplayMessage = ConversationMessageRow & {
   displayBody: string
@@ -137,29 +138,29 @@ export default function ConversationThread({ conversation, currentUserId, viewer
       const [{ data: lp }, { data: sp }] = await Promise.all([
         supabase
           .from('landlord_profiles')
-          .select('full_name, email, phone')
+          .select('full_name, first_name, last_name, company_name, email, phone')
           .eq('id', conversation.landlord_profile_id)
           .maybeSingle(),
         conversation.tenant_profile_id
           ? supabase
               .from('student_profiles')
-              .select('full_name, email, phone')
+              .select('preferred_name, full_name, first_name, last_name, email, phone')
               .eq('id', conversation.tenant_profile_id)
               .maybeSingle()
           : supabase
               .from('student_profiles')
-              .select('full_name, email, phone')
+              .select('preferred_name, full_name, first_name, last_name, email, phone')
               .eq('user_id', conversation.tenant_user_id)
               .maybeSingle(),
       ])
       setLandlordContact(
         lp
-          ? { fullName: lp.full_name, email: lp.email, phone: lp.phone }
+          ? { fullName: landlordDisplayName(lp), email: lp.email, phone: lp.phone }
           : null,
       )
       setTenantContact(
         sp
-          ? { fullName: sp.full_name, email: sp.email, phone: sp.phone }
+          ? { fullName: studentDisplayName(sp), email: sp.email, phone: sp.phone }
           : null,
       )
     }

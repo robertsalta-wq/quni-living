@@ -6,6 +6,7 @@ import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
 import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { formatDisplayName } from '../lib/formatDisplayName'
+import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
 import { formatDate } from './admin/adminUi'
 import { LandlordStripePayoutsCard } from '../components/landlord/LandlordStripePayoutsCard'
 import {
@@ -273,13 +274,13 @@ function writeInviteModalToSession(property: InviteModalProperty | null): void {
 type LandlordLoadedStudentRow = LandlordSafeStudentSnapshot
 
 const LANDLORD_DASHBOARD_STUDENT_SELECT_BASE =
-  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, bio, occupancy_type, move_in_flexibility, preferred_move_in_date, preferred_lease_length, has_pets, needs_parking, bills_preference, furnishing_preference, has_guarantor, guarantor_name, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+  'id, verification_type, preferred_name, full_name, first_name, last_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, bio, occupancy_type, move_in_flexibility, preferred_move_in_date, preferred_lease_length, has_pets, needs_parking, bills_preference, furnishing_preference, has_guarantor, guarantor_name, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX =
   ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_FULL =
   `${LANDLORD_DASHBOARD_STUDENT_SELECT_BASE}, work_email_verified, work_email_verified_at${LANDLORD_DASHBOARD_STUDENT_SELECT_SUFFIX}`
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY =
-  'id, verification_type, full_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
+  'id, verification_type, preferred_name, full_name, first_name, last_name, avatar_url, course, year_of_study, study_level, student_type, languages_spoken, room_type_preference, budget_min_per_week, budget_max_per_week, accommodation_verification_route, uni_email_verified, uni_email_verified_at'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX =
   ', id_submitted_at, enrolment_submitted_at, identity_supporting_submitted_at, is_smoker, universities ( name )'
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_FULL =
@@ -287,11 +288,9 @@ const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_FULL =
 const LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_CORE = `${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY}${LANDLORD_DASHBOARD_STUDENT_SELECT_LEGACY_SUFFIX}`
 
 function firstNameFromLandlord(p: LandlordRow): string {
-  const fn = p.first_name?.trim()
-  if (fn) return formatDisplayName(fn).split(/\s+/)[0] || 'there'
-  const full = p.full_name?.trim()
-  if (full) {
-    const w = formatDisplayName(full).split(/\s+/)[0]
+  const display = landlordDisplayName(p, '')
+  if (display) {
+    const w = formatDisplayName(display).split(/\s+/)[0]
     return w || 'there'
   }
   const local = p.email?.split('@')[0]
@@ -314,8 +313,7 @@ function bookingServiceTier(b: BookingWithRelations): 'listing' | 'managed' | nu
 function studentDisplayFromBooking(b: BookingWithRelations): string {
   const sp = b.student_profiles
   if (!sp) return '-'
-  if (sp.full_name?.trim()) return sp.full_name.trim()
-  return '-'
+  return studentDisplayName(sp, '-')
 }
 
 /** Stable key for session UI (e.g. AI assessment nudge) per booking request (not per student - same student can have multiple listings). */
@@ -1650,11 +1648,11 @@ export default function LandlordDashboard() {
               const k = studentProfileModal.sessionKey
               setAiAssessmentGeneratedSessionKeys((prev) => new Set(prev).add(k))
             }}
-            landlordFirstName={
-              profile?.first_name?.trim() ||
-              profile?.full_name?.trim()?.split(/\s+/).filter(Boolean)[0] ||
-              null
-            }
+            landlordFirstName={(() => {
+              if (!profile) return null
+              const display = landlordDisplayName(profile, '')
+              return display.trim().split(/\s+/)[0] || null
+            })()}
           />
         )}
 

@@ -8,6 +8,7 @@ import LandlordApplicantAIAssessmentPanel from './LandlordApplicantAIAssessmentP
 import { supabase } from '../../lib/supabase'
 import { StudentVerifiedBadge } from '../StudentVerifiedBadge'
 import LanguagesSpokenDisplay from '../profile/LanguagesSpokenDisplay'
+import { studentDisplayName } from '../../lib/nameResolution'
 
 /** Fields landlords may load for applicants (no email, phone, DOB, emergency, document URLs). */
 export type LandlordSafeStudentSnapshot = {
@@ -15,6 +16,9 @@ export type LandlordSafeStudentSnapshot = {
   verification_type: 'student' | 'identity' | 'none' | null
   accommodation_verification_route: 'student' | 'non_student' | null
   full_name: string | null
+  preferred_name?: string | null
+  first_name?: string | null
+  last_name?: string | null
   avatar_url: string | null
   course: string | null
   year_of_study: number | null
@@ -180,8 +184,9 @@ export default function LandlordStudentProfileModal({
   const [aiError, setAiError] = useState(false)
   const assessmentIdentityRef = useRef<string | undefined>(undefined)
 
-  const displayName =
-    student?.full_name?.trim() || fallbackName.trim() || 'Student'
+  const displayName = student
+    ? studentDisplayName(student, fallbackName.trim() || 'Student')
+    : fallbackName.trim() || 'Student'
   const verification = buildLandlordVerificationFromProfile(student)
 
   useEffect(() => {

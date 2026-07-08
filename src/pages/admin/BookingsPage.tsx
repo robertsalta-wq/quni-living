@@ -27,6 +27,7 @@ interface BookingRow {
   student_id: string | null
   property_id: string | null
   student_profiles: {
+    preferred_name: string | null
     full_name: string | null
     first_name: string | null
     last_name: string | null
@@ -241,7 +242,7 @@ export default function BookingsPage() {
           bond_received_by_landlord_at, rent_payment_method,
           student_id, property_id,
           student_profiles (
-            full_name, first_name, last_name, email, university_id,
+            preferred_name, full_name, first_name, last_name, email, university_id,
             universities ( id, name, short_name )
           ),
           properties ( id, title, suburb )

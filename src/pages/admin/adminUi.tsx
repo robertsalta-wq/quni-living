@@ -1,4 +1,5 @@
 import type { Database } from '../../lib/database.types'
+import { studentDisplayName as resolveStudentDisplayName } from '../../lib/nameResolution'
 
 export const adminCardClass =
   'rounded-admin-lg border border-admin-line bg-white p-5 shadow-admin-card'
@@ -12,15 +13,14 @@ export const adminTdClass =
 export type StudentProfileRow = Database['public']['Tables']['student_profiles']['Row']
 export type LandlordProfileRow = Database['public']['Tables']['landlord_profiles']['Row']
 
+/** Admin list/table helper — routes through shared display resolver; blank profiles show '-'. */
 export function studentDisplayName(row: {
+  preferred_name?: string | null
   full_name?: string | null
   first_name?: string | null
   last_name?: string | null
 }): string {
-  const fn = row.first_name?.trim() ?? ''
-  const ln = row.last_name?.trim() ?? ''
-  if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
-  return row.full_name?.trim() || '-'
+  return resolveStudentDisplayName(row, '-')
 }
 
 export function formatDate(iso: string | null | undefined): string {

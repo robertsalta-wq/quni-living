@@ -6,6 +6,7 @@ import { isRenterRole } from '../lib/authProfile'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
 import { formatDisplayName } from '../lib/formatDisplayName'
+import { studentDisplayName } from '../lib/nameResolution'
 import { formatDate } from './admin/adminUi'
 import { apiUrl } from '../lib/apiUrl'
 import { StudentStripePaymentsCard } from '../components/student/StudentStripePaymentsCard'
@@ -133,23 +134,13 @@ function ListingBondGuidanceForBooking({
 }
 
 function firstNameFromStudent(p: StudentRow): string {
-  const fn = p.first_name?.trim()
-  if (fn) return formatDisplayName(fn).split(/\s+/)[0] || 'there'
-  const full = p.full_name?.trim()
-  if (full) {
-    const w = formatDisplayName(full).split(/\s+/)[0]
+  const display = studentDisplayName(p, '')
+  if (display) {
+    const w = formatDisplayName(display).split(/\s+/)[0]
     return w || 'there'
   }
   const local = p.email?.split('@')[0]
   return local ? formatDisplayName(local) : 'there'
-}
-
-function renterDisplayName(profile: StudentRow): string {
-  return (
-    [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
-    profile.full_name?.trim() ||
-    'Student'
-  )
 }
 
 function bookingStatusClass(s: BookingStatus) {
@@ -668,14 +659,14 @@ export default function StudentDashboard() {
                           <ListingPaymentInstructions
                             booking={b}
                             property={prop}
-                            renterDisplayName={renterDisplayName(profile)}
+                            renterDisplayName={studentDisplayName(profile)}
                           />
                         ) : null}
                         {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && profile && (
                           <ListingBondGuidanceForBooking
                             booking={b}
                             property={prop}
-                            renterDisplayName={renterDisplayName(profile)}
+                            renterDisplayName={studentDisplayName(profile)}
                           />
                         )}
                         <TenancyAgreementExplainer

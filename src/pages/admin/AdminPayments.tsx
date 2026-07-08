@@ -21,6 +21,7 @@ import {
   formatDate,
   studentDisplayName,
 } from './adminUi'
+import { landlordDisplayName as resolveLandlordDisplayName } from '../../lib/nameResolution'
 import { AdminPageHeader } from '../../components/admin/primitives'
 
 type PaymentRow = Database['public']['Tables']['payments']['Row'] & {
@@ -33,6 +34,7 @@ type PaymentRow = Database['public']['Tables']['payments']['Row'] & {
     student_profiles: {
       id: string
       user_id: string
+      preferred_name: string | null
       full_name: string | null
       first_name: string | null
       last_name: string | null
@@ -58,6 +60,7 @@ type BookingSubRow = Database['public']['Tables']['bookings']['Row'] & {
   student_profiles: {
     id: string
     user_id: string
+    preferred_name: string | null
     full_name: string | null
     first_name: string | null
     last_name: string | null
@@ -81,6 +84,7 @@ type BookingSubRow = Database['public']['Tables']['bookings']['Row'] & {
 type BondRow = Database['public']['Tables']['bonds']['Row'] & {
   student_profiles: {
     id: string
+    preferred_name: string | null
     full_name: string | null
     first_name: string | null
     last_name: string | null
@@ -121,12 +125,7 @@ function landlordDisplayName(row: {
   last_name?: string | null
   company_name?: string | null
 }): string {
-  const fn = row.first_name?.trim() ?? ''
-  const ln = row.last_name?.trim() ?? ''
-  if (fn || ln) return [fn, ln].filter(Boolean).join(' ')
-  if (row.full_name?.trim()) return row.full_name.trim()
-  if (row.company_name?.trim()) return row.company_name.trim()
-  return '-'
+  return resolveLandlordDisplayName(row, '-')
 }
 
 function propertyLine(p: {
@@ -427,7 +426,7 @@ function TransactionsTab() {
             end_date,
             move_in_date,
             weekly_rent,
-            student_profiles ( id, user_id, full_name, first_name, last_name ),
+            student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
             landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
             properties ( address, suburb, state, postcode )
           )
@@ -736,7 +735,7 @@ function SubscriptionsTab() {
       .select(
         `
           *,
-          student_profiles ( id, user_id, full_name, first_name, last_name ),
+          student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
           landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
           properties ( address, suburb, state, postcode )
         `,
@@ -996,7 +995,7 @@ function RefundsTab() {
           .select(
             `
             *,
-            student_profiles ( id, user_id, full_name, first_name, last_name ),
+            student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
             landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
             properties ( address, suburb, state, postcode )
           `,
@@ -1011,7 +1010,7 @@ function RefundsTab() {
             .select(
               `
             *,
-            student_profiles ( id, user_id, full_name, first_name, last_name ),
+            student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
             landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
             properties ( address, suburb, state, postcode )
           `,
@@ -1028,7 +1027,7 @@ function RefundsTab() {
               .select(
                 `
             *,
-            student_profiles ( id, user_id, full_name, first_name, last_name ),
+            student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
             landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
             properties ( address, suburb, state, postcode )
           `,
@@ -1058,7 +1057,7 @@ function RefundsTab() {
           .select(
             `
             *,
-            student_profiles ( id, user_id, full_name, first_name, last_name ),
+            student_profiles ( id, user_id, preferred_name, full_name, first_name, last_name ),
             landlord_profiles ( id, user_id, full_name, first_name, last_name, company_name ),
             properties ( address, suburb, state, postcode )
           `,
@@ -1341,7 +1340,7 @@ function BondsTab() {
       .select(
         `
         *,
-        student_profiles ( id, full_name, first_name, last_name ),
+        student_profiles ( id, preferred_name, full_name, first_name, last_name ),
         landlord_profiles ( id, full_name, company_name ),
         properties ( address, suburb, state )
       `,

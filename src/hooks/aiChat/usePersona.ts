@@ -2,18 +2,7 @@ import { useMemo } from 'react'
 import { useAuthContext } from '../../context/AuthContext'
 import { isRenterRole } from '../../lib/authProfile'
 import type { PersonaKey } from '../../lib/aiChat/chatTypes'
-
-type NameFields = {
-  first_name?: string | null
-  full_name?: string | null
-}
-
-function firstNameFromFullName(fullName: string | null | undefined): string {
-  const t = (fullName ?? '').trim().replace(/\s+/g, ' ')
-  if (!t) return ''
-  const [first] = t.split(' ')
-  return first?.trim() ?? ''
-}
+import { landlordDisplayName, studentDisplayName } from '../../lib/nameResolution'
 
 export function usePersona(): {
   personaKey: PersonaKey
@@ -23,8 +12,8 @@ export function usePersona(): {
 
   return useMemo(() => {
     if (role === 'landlord') {
-      const nf = profile as NameFields | null
-      const first = (nf?.first_name?.trim() ?? '') || firstNameFromFullName(nf?.full_name)
+      const display = landlordDisplayName((profile as Record<string, unknown> | null) ?? {}, '')
+      const first = display.trim().split(/\s+/)[0] || ''
       return { personaKey: 'landlord', firstName: first || null }
     }
 
@@ -32,8 +21,8 @@ export function usePersona(): {
     // Admins have no matching profile row in `fetchRoleAndProfile()`, so the
     // server persona will fall back to `visitor` (which requires Turnstile on the first message).
     if (isRenterRole(role)) {
-      const nf = profile as NameFields | null
-      const first = (nf?.first_name?.trim() ?? '') || firstNameFromFullName(nf?.full_name)
+      const display = studentDisplayName((profile as Record<string, unknown> | null) ?? {}, '')
+      const first = display.trim().split(/\s+/)[0] || ''
       // As a fallback, use auth metadata name/email prefix.
       const metaFirst =
         (typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim().split(/\s+/)[0]) || ''
@@ -44,4 +33,3 @@ export function usePersona(): {
     return { personaKey: 'visitor', firstName: null }
   }, [role, profile, user?.user_metadata?.name])
 }
-

@@ -14,6 +14,7 @@ import type {
   QaseTicketWithContext,
 } from '../../types/qase'
 import { adminCardClass, formatDate, formatRelativeTime } from './adminUi'
+import { landlordDisplayName, studentDisplayName } from '../../lib/nameResolution'
 import { AdminPageHeader } from '../../components/admin/primitives'
 
 const MAX_ATTACHMENT_FILES = 10
@@ -89,6 +90,7 @@ function asProperty(row: unknown): QaseTicketContextProperty | null {
 
 type QaseStudentSubmitterProfile = {
   id: string
+  preferred_name: string | null
   full_name: string | null
   first_name: string | null
   last_name: string | null
@@ -100,6 +102,9 @@ type QaseStudentSubmitterProfile = {
 type QaseLandlordSubmitterProfile = {
   id: string
   full_name: string | null
+  first_name: string | null
+  last_name: string | null
+  company_name: string | null
   email: string | null
   phone: string | null
   created_at: string
@@ -148,12 +153,10 @@ function messageAuthorDisplayLabel(authorType: string): string {
   return formatSubmitterTypeLabel(authorType as QaseSubmitterType)
 }
 
-function studentSubmitterDisplayName(p: Pick<QaseStudentSubmitterProfile, 'full_name' | 'first_name' | 'last_name'>): string {
-  if (p.full_name?.trim()) return p.full_name.trim()
-  const fn = p.first_name?.trim() ?? ''
-  const ln = p.last_name?.trim() ?? ''
-  const combined = `${fn} ${ln}`.trim()
-  return combined || 'Anonymous'
+function studentSubmitterDisplayName(
+  p: Pick<QaseStudentSubmitterProfile, 'preferred_name' | 'full_name' | 'first_name' | 'last_name'>,
+): string {
+  return studentDisplayName(p, 'Anonymous')
 }
 
 function parseStudentSubmitterRow(row: unknown): QaseStudentSubmitterProfile {
@@ -162,6 +165,7 @@ function parseStudentSubmitterRow(row: unknown): QaseStudentSubmitterProfile {
   const uniName = uni && typeof uni === 'object' && typeof uni.name === 'string' ? uni.name : null
   return {
     id: String(r.id),
+    preferred_name: r.preferred_name == null ? null : String(r.preferred_name),
     full_name: r.full_name == null ? null : String(r.full_name),
     first_name: r.first_name == null ? null : String(r.first_name),
     last_name: r.last_name == null ? null : String(r.last_name),
@@ -176,6 +180,9 @@ function parseLandlordSubmitterRow(row: unknown): QaseLandlordSubmitterProfile {
   return {
     id: String(r.id),
     full_name: r.full_name == null ? null : String(r.full_name),
+    first_name: r.first_name == null ? null : String(r.first_name),
+    last_name: r.last_name == null ? null : String(r.last_name),
+    company_name: r.company_name == null ? null : String(r.company_name),
     email: r.email == null ? null : String(r.email),
     phone: r.phone == null ? null : String(r.phone),
     created_at: String(r.created_at),
@@ -466,7 +473,7 @@ function SubmitterPanelBody({ state }: { state: SubmitterPanelState }) {
     }
     case 'landlord': {
       const p = state.profile
-      const name = p.full_name?.trim() || 'Anonymous'
+      const name = landlordDisplayName(p, 'Anonymous')
       const emailTrim = p.email?.trim() ?? ''
       const phoneTrim = p.phone?.trim() ?? ''
       return (
@@ -630,7 +637,7 @@ export default function QaseTicketDetail() {
       } else {
         const { data: spRow, error: spErr } = await supabase
           .from('student_profiles')
-          .select('id, full_name, first_name, last_name, email, created_at, universities ( name )')
+          .select('id, preferred_name, full_name, first_name, last_name, email, created_at, universities ( name )')
           .eq('id', ticket.submitted_by_id)
           .maybeSingle()
         if (spErr) {
@@ -647,7 +654,7 @@ export default function QaseTicketDetail() {
       } else {
         const { data: lpRow, error: lpErr } = await supabase
           .from('landlord_profiles')
-          .select('id, full_name, email, phone, created_at')
+          .select('id, full_name, first_name, last_name, company_name, email, phone, created_at')
           .eq('id', ticket.submitted_by_id)
           .maybeSingle()
         if (lpErr) {

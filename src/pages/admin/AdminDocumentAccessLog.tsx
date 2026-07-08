@@ -10,7 +10,7 @@ type AccessLogRow = Database['public']['Tables']['document_access_log']['Row']
 
 type StudentProfileSlice = Pick<
   Database['public']['Tables']['student_profiles']['Row'],
-  'id' | 'full_name' | 'first_name' | 'last_name' | 'email'
+  'id' | 'preferred_name' | 'full_name' | 'first_name' | 'last_name' | 'email'
 >
 
 type DisplayRow = AccessLogRow & {
@@ -49,7 +49,7 @@ export default function AdminDocumentAccessLog() {
     if (profileIds.length > 0) {
       const { data: profiles, error: profileError } = await supabase
         .from('student_profiles')
-        .select('id, full_name, first_name, last_name, email')
+        .select('id, preferred_name, full_name, first_name, last_name, email')
         .in('id', profileIds)
 
       if (profileError) {
