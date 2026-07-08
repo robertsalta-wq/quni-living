@@ -67,7 +67,12 @@ async function saveProfileRow(
           terms_accepted_at: acceptedAt,
           landlord_terms_accepted_at: acceptedAt,
         }
-      : { full_name: payload.full_name, email: payload.email, terms_accepted_at: acceptedAt }
+      : {
+          full_name: payload.full_name,
+          preferred_name: payload.full_name,
+          email: payload.email,
+          terms_accepted_at: acceptedAt,
+        }
 
   if (existing) {
     const { error: upErr } = await withSentryMonitoring('Onboarding/update-profile-terms', () =>
@@ -79,7 +84,11 @@ async function saveProfileRow(
   const insertPayload =
     table === 'landlord_profiles'
       ? { ...payload, terms_accepted_at: acceptedAt, landlord_terms_accepted_at: acceptedAt }
-      : { ...payload, terms_accepted_at: acceptedAt }
+      : {
+          ...payload,
+          preferred_name: payload.full_name,
+          terms_accepted_at: acceptedAt,
+        }
 
   const { error: insErr } = await withSentryMonitoring('Onboarding/insert-profile-terms', () =>
     supabase.from(table).insert(insertPayload),

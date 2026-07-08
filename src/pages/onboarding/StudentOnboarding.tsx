@@ -838,6 +838,7 @@ export default function StudentOnboarding() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           full_name: combined,
+          preferred_name: combined,
           university_id: null,
           campus_id: null,
           course: null,
@@ -852,6 +853,7 @@ export default function StudentOnboarding() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           full_name: combined,
+          preferred_name: combined,
           university_id: universityId,
           campus_id: universityId ? campusId.trim() || null : null,
           course: course.trim(),
@@ -876,6 +878,7 @@ export default function StudentOnboarding() {
     const bootstrapPayload = isIdentityPath
       ? {
           full_name: combined,
+          preferred_name: combined,
           university_id: null,
           campus_id: null,
           course: null,
@@ -884,6 +887,7 @@ export default function StudentOnboarding() {
         }
       : {
           full_name: combined,
+          preferred_name: combined,
           university_id: universityId,
           campus_id: universityId ? campusId.trim() || null : null,
           course: course.trim(),

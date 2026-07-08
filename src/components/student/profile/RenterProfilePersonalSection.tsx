@@ -231,6 +231,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             full_name: combinedName,
+            preferred_name: combinedName,
             phone: phone.trim(),
             gender: gender.trim(),
             nationality: nationality.trim() || null,

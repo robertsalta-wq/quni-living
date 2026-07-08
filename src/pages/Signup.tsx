@@ -358,6 +358,7 @@ export default function Signup() {
     const userData: Record<string, string> = {
       role: authRole,
       full_name: fullName.trim(),
+      preferred_name: fullName.trim(),
     }
 
     setSubmitting(true)

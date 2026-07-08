@@ -45,6 +45,7 @@ export async function ensureSignupProfileRowAfterEmailConfirm(user: User): Promi
       user_id: user.id,
       email,
       full_name: fullName,
+      preferred_name: fullName,
     })
     await supabase.from('student_profiles').insert(insertRow)
     if (insertRow.terms_accepted_at) consumeSignupTermsAcceptedAt()

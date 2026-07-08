@@ -109,6 +109,7 @@ async function ensureSignupProfileRowInMemory(
       user_id: user.id,
       email,
       full_name: fullName,
+      preferred_name: fullName,
     })
     const { data, error } = await supabase
       .from('student_profiles')
@@ -202,10 +203,12 @@ async function applyPendingSignupRoleInMemory(
     const { error: delErr } = await supabase.from('landlord_profiles').delete().eq('user_id', user.id)
     if (delErr) return { sp, lp }
 
+    const socialName = lp.full_name?.trim() || fullName
     const insertRow = mergeSignupTermsIntoInsert('renter', {
       user_id: user.id,
       email: lp.email?.trim() || email,
-      full_name: lp.full_name?.trim() || fullName,
+      full_name: socialName,
+      preferred_name: socialName,
     })
     const { data: insData, error: insErr } = await supabase
       .from('student_profiles')
