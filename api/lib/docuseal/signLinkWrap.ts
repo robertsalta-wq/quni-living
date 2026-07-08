@@ -16,6 +16,7 @@ import {
 export type DocusealSubmitterLinkSource = {
   id?: number
   role?: string
+  slug?: string
   embed_src?: string
   completed_at?: string | null
   status?: string
@@ -113,6 +114,20 @@ export function isSubmitterSigningComplete(submitter: DocusealSubmitterLinkSourc
   return st === 'completed'
 }
 
+/** DocuSeal GET submitter often omits embed_src; derive /s/{slug} from the API host. */
+export function docusealEmbedSrcFromSubmitter(submitter: {
+  embed_src?: string
+  slug?: string
+}): string | null {
+  const embed = typeof submitter.embed_src === 'string' ? submitter.embed_src.trim() : ''
+  if (embed) return embed
+  const slug = typeof submitter.slug === 'string' ? submitter.slug.trim() : ''
+  if (!slug) return null
+  const base = getDocusealApiBase()
+  if (!base) return null
+  return `${base}/s/${slug}`
+}
+
 export function pickNswFt6600DateFieldsForRole(role: string): Ft6600PrefilledField[] {
   const r = (role || '').trim().toLowerCase()
   const isCoTenant = r.includes('co-tenant') || r.includes('cotenant')
@@ -174,12 +189,9 @@ export async function resolveSignLinkRedirect(
     return null
   }
 
-  const embed =
-    typeof submitter.embed_src === 'string' && submitter.embed_src.trim()
-      ? submitter.embed_src.trim()
-      : null
+  const embed = docusealEmbedSrcFromSubmitter(submitter)
   if (!embed) {
-    await captureSentryMessageEdge('sign_link: submitter missing embed_src', { submitterId })
+    await captureSentryMessageEdge('sign_link: submitter missing embed_src and slug', { submitterId })
     return null
   }
 

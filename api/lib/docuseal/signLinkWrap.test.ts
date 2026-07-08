@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import {
+  docusealEmbedSrcFromSubmitter,
   mintSignLinkToken,
   parseSignLinkToken,
   pickNswFt6600DateFieldsForRole,
@@ -101,6 +102,28 @@ describe('pickNswFt6600DateFieldsForRole', () => {
   it('includes addendum date for Second Party', () => {
     const fields = pickNswFt6600DateFieldsForRole('Second Party')
     expect(fields.some((f) => f.name === 'Addendum Tenant Date')).toBe(true)
+  })
+})
+
+describe('docusealEmbedSrcFromSubmitter', () => {
+  afterEach(() => {
+    delete process.env.DOCUSEAL_API_URL
+  })
+
+  it('builds /s/{slug} when embed_src is absent', () => {
+    process.env.DOCUSEAL_API_URL = 'https://sign.quni.com.au'
+    expect(docusealEmbedSrcFromSubmitter({ slug: 'MvExDdioXt6bmZ' })).toBe(
+      'https://sign.quni.com.au/s/MvExDdioXt6bmZ',
+    )
+  })
+
+  it('prefers embed_src when present', () => {
+    expect(
+      docusealEmbedSrcFromSubmitter({
+        slug: 'x',
+        embed_src: 'https://sign.quni.com.au/s/y',
+      }),
+    ).toBe('https://sign.quni.com.au/s/y')
   })
 })
 
