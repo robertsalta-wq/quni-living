@@ -37,3 +37,11 @@ export async function completeEmailSignupUi(
 
   await page.getByRole('heading', { name: 'Check your email' }).waitFor({ state: 'visible' })
 }
+
+export async function signInRenter(page: Page, email: string, password: string): Promise<void> {
+  await page.goto('/login')
+  await page.locator('#login-email').fill(email)
+  await page.locator('#login-password').fill(password)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 60_000 })
+}
