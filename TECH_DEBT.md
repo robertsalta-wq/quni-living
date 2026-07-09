@@ -2,6 +2,8 @@
 
 Items that are acceptable for now but must be revisited before related work ships or dependencies upgrade.
 
+- ESLint: 188 errors on clean checkout (react-hooks, unused-vars, prefer-const across src/). Lint step in CI is non-blocking until cleaned up.
+
 ## DocuSeal - duplicate signature tags on official FT6600 (NSW)
 
 **Added:** 2026-06-03  
