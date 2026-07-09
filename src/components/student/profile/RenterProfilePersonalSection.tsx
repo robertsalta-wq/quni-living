@@ -20,6 +20,21 @@ import {
   RenterProfileWriteError,
 } from './RenterProfileValidationUi'
 
+const LEGAL_NAME_LOCKED_SAVE_MESSAGE =
+  "Your legal name is verified and can't be edited here."
+
+function isLegalNameLockedSaveError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { message?: string; code?: string }
+  const message = e.message ?? ''
+  return e.code === '23514' || message.includes('legal_name_locked')
+}
+
+function formatSaveError(err: unknown): string {
+  if (isLegalNameLockedSaveError(err)) return LEGAL_NAME_LOCKED_SAVE_MESSAGE
+  return err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE
+}
+
 const PERSONAL_HINT_LABELS = {
   firstName: 'first name',
   lastName: 'last name',
@@ -86,6 +101,7 @@ type Props = {
 type PersonalDraft = {
   firstName: string
   lastName: string
+  preferredName: string
   phone: string
   gender: string
   nationality: string
@@ -97,6 +113,7 @@ function personalFieldsFromProfile(prof: StudentRow): PersonalDraft {
   return {
     firstName: prof.first_name ?? fn,
     lastName: prof.last_name ?? ln,
+    preferredName: prof.preferred_name ?? '',
     phone: prof.phone ?? '',
     gender: prof.gender ?? '',
     nationality: prof.nationality ?? '',
@@ -106,10 +123,12 @@ function personalFieldsFromProfile(prof: StudentRow): PersonalDraft {
 
 /** Per-field: empty draft strings fall back to saved profile (stale empty draft must not win). */
 function mergePersonalDraftWithProfile(draft: PersonalDraft, fromProfile: PersonalDraft): PersonalDraft {
-  const pick = (draftVal: string, profileVal: string) => (draftVal.trim() !== '' ? draftVal : profileVal)
+  const pick = (draftVal: string | undefined, profileVal: string) =>
+    typeof draftVal === 'string' && draftVal.trim() !== '' ? draftVal : profileVal
   return {
     firstName: pick(draft.firstName, fromProfile.firstName),
     lastName: pick(draft.lastName, fromProfile.lastName),
+    preferredName: pick(draft.preferredName, fromProfile.preferredName),
     phone: pick(draft.phone, fromProfile.phone),
     gender: pick(draft.gender, fromProfile.gender),
     nationality: pick(draft.nationality, fromProfile.nationality),
@@ -118,11 +137,13 @@ function mergePersonalDraftWithProfile(draft: PersonalDraft, fromProfile: Person
 }
 
 export function RenterProfilePersonalSection({ profile, userId, displayEmail, onSaved }: Props) {
+  const legalNameLocked = Boolean(profile.legal_name_locked_at)
   const initialFields = personalFieldsFromProfile(profile)
   const { restoreDraftMerged, syncDraft, setBaseline, clearDraft, shouldApplyProfile, markReady } =
     useProfileSectionDraft(userId, 'personal')
   const [firstName, setFirstName] = useState(initialFields.firstName)
   const [lastName, setLastName] = useState(initialFields.lastName)
+  const [preferredName, setPreferredName] = useState(initialFields.preferredName)
   const [phone, setPhone] = useState(initialFields.phone)
   const [gender, setGender] = useState(initialFields.gender)
   const [nationality, setNationality] = useState(initialFields.nationality)
@@ -147,6 +168,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   const applyFields = useCallback((fields: PersonalDraft) => {
     setFirstName(fields.firstName)
     setLastName(fields.lastName)
+    setPreferredName(fields.preferredName)
     setPhone(fields.phone)
     setGender(fields.gender)
     setNationality(fields.nationality)
@@ -163,8 +185,8 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   }, [profile, applyFields, restoreDraftMerged, shouldApplyProfile, setBaseline, markReady])
 
   useEffect(() => {
-    syncDraft({ firstName, lastName, phone, gender, nationality, dateOfBirth })
-  }, [firstName, lastName, phone, gender, nationality, dateOfBirth, syncDraft])
+    syncDraft({ firstName, lastName, preferredName, phone, gender, nationality, dateOfBirth })
+  }, [firstName, lastName, preferredName, phone, gender, nationality, dateOfBirth, syncDraft])
 
   const profilePhotoUrl = localPhotoUrl ?? profile.avatar_url
 
@@ -216,6 +238,10 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
     setSavedFlash(false)
 
     const errors = personalSectionFieldErrors({ firstName, lastName, phone, gender })
+    if (legalNameLocked) {
+      delete errors.firstName
+      delete errors.lastName
+    }
     if (Object.keys(errors).length > 0) {
       applyValidationErrors(errors)
       return
@@ -224,10 +250,15 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
     setSaving(true)
     try {
       const combinedName = `${firstName.trim()} ${lastName.trim()}`.trim()
-      const { error: upErr } = await withSentryMonitoring('RenterProfilePersonalSection/save', () =>
-        supabase
-          .from('student_profiles')
-          .update({
+      const updatePayload = legalNameLocked
+        ? {
+            preferred_name: preferredName.trim() || null,
+            phone: phone.trim(),
+            gender: gender.trim(),
+            nationality: nationality.trim() || null,
+            date_of_birth: dateOfBirth.trim() || null,
+          }
+        : {
             first_name: firstName.trim(),
             last_name: lastName.trim(),
             full_name: combinedName,
@@ -236,13 +267,16 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
             gender: gender.trim(),
             nationality: nationality.trim() || null,
             date_of_birth: dateOfBirth.trim() || null,
-          })
-          .eq('user_id', userId),
+          }
+
+      const { error: upErr } = await withSentryMonitoring('RenterProfilePersonalSection/save', () =>
+        supabase.from('student_profiles').update(updatePayload).eq('user_id', userId),
       )
       if (upErr) throw upErr
       const savedFields: PersonalDraft = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        preferredName: preferredName.trim(),
         phone: phone.trim(),
         gender: gender.trim(),
         nationality: nationality.trim(),
@@ -253,7 +287,7 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
       setSavedFlash(true)
       await onSaved()
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : RENTER_SAVE_WRITE_FAILURE)
+      setSaveError(formatSaveError(err))
     } finally {
       setSaving(false)
     }
@@ -262,44 +296,95 @@ export function RenterProfilePersonalSection({ profile, userId, displayEmail, on
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-grid">
       <RenterProfileSectionErrorBanner message={sectionError} />
-      <div>
-        <label htmlFor="renter-first" className="renter-profile-field-label">
-          First name
-        </label>
-        <input
-          id="renter-first"
-          type="text"
-          autoComplete="given-name"
-          value={firstName}
-          onChange={(e) => {
-            setFirstName(e.target.value)
-            clearFieldError('firstName')
-          }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.firstName))}
-          aria-invalid={fieldErrors.firstName ? true : undefined}
-          aria-describedby={fieldErrors.firstName ? 'renter-first-error' : undefined}
-        />
-        <RenterProfileFieldErrorMsg id="renter-first-error" message={fieldErrors.firstName} />
-      </div>
-      <div>
-        <label htmlFor="renter-last" className="renter-profile-field-label">
-          Last name
-        </label>
-        <input
-          id="renter-last"
-          type="text"
-          autoComplete="family-name"
-          value={lastName}
-          onChange={(e) => {
-            setLastName(e.target.value)
-            clearFieldError('lastName')
-          }}
-          className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.lastName))}
-          aria-invalid={fieldErrors.lastName ? true : undefined}
-          aria-describedby={fieldErrors.lastName ? 'renter-last-error' : undefined}
-        />
-        <RenterProfileFieldErrorMsg id="renter-last-error" message={fieldErrors.lastName} />
-      </div>
+      {legalNameLocked ? (
+        <>
+          <div>
+            <label htmlFor="renter-legal-first" className="renter-profile-field-label">
+              Legal first name (verified)
+            </label>
+            <input
+              id="renter-legal-first"
+              type="text"
+              value={firstName}
+              readOnly
+              disabled
+              className="renter-profile-input"
+              aria-describedby="renter-legal-name-hint"
+            />
+          </div>
+          <div>
+            <label htmlFor="renter-legal-last" className="renter-profile-field-label">
+              Legal last name (verified)
+            </label>
+            <input
+              id="renter-legal-last"
+              type="text"
+              value={lastName}
+              readOnly
+              disabled
+              className="renter-profile-input"
+              aria-describedby="renter-legal-name-hint"
+            />
+            <p id="renter-legal-name-hint" className="renter-profile-email-hint" style={{ marginTop: 6 }}>
+              From your verified ID. Contact support to change.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="renter-preferred" className="renter-profile-field-label">
+              Preferred name
+            </label>
+            <input
+              id="renter-preferred"
+              type="text"
+              autoComplete="nickname"
+              value={preferredName}
+              onChange={(e) => setPreferredName(e.target.value)}
+              className="renter-profile-input"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div>
+            <label htmlFor="renter-first" className="renter-profile-field-label">
+              First name
+            </label>
+            <input
+              id="renter-first"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value)
+                clearFieldError('firstName')
+              }}
+              className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.firstName))}
+              aria-invalid={fieldErrors.firstName ? true : undefined}
+              aria-describedby={fieldErrors.firstName ? 'renter-first-error' : undefined}
+            />
+            <RenterProfileFieldErrorMsg id="renter-first-error" message={fieldErrors.firstName} />
+          </div>
+          <div>
+            <label htmlFor="renter-last" className="renter-profile-field-label">
+              Last name
+            </label>
+            <input
+              id="renter-last"
+              type="text"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value)
+                clearFieldError('lastName')
+              }}
+              className={renterFieldClass('renter-profile-input', Boolean(fieldErrors.lastName))}
+              aria-invalid={fieldErrors.lastName ? true : undefined}
+              aria-describedby={fieldErrors.lastName ? 'renter-last-error' : undefined}
+            />
+            <RenterProfileFieldErrorMsg id="renter-last-error" message={fieldErrors.lastName} />
+          </div>
+        </>
+      )}
       <div>
         <label htmlFor="renter-dob" className="renter-profile-field-label">
           Date of birth
