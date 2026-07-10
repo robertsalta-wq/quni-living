@@ -1,0 +1,518 @@
+/**
+ * Shared DocuSeal completion sync (webhook + admin reconcile).
+ * reinstateBookingAfterDocusealReconcile is admin-only.
+ */
+// @ts-nocheck - Vercel isolated API TS pass.
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Json } from '../../../src/lib/database.types.js'
+import { fetchCoTenantSignerForTenancy } from '../booking/coTenantSigning.js'
+import { setListingAgreementStatus } from '../booking/listingAgreementStatus.js'
+import { getDocusealApiBase, getDocusealAuthHeaders } from '../docusealClient.js'
+import {
+  downloadSignedResidentialTenancyPackagePartsFromDocuseal,
+  downloadSignedSubmissionPdfFromDocuseal,
+  extractCompletedAt,
+} from '../docuseal.js'
+
+export const LISTING_BOND_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
+export type TenancyDocumentSyncRow = {
+  id: string
+  tenancy_id: string | null
+  docuseal_submission_id: string | null
+  metadata: Json | null
+  status: string
+  landlord_signed_at: string | null
+  student_signed_at: string | null
+  co_tenant_signed_at: string | null
+  file_path: string | null
+}
+
+export type BookingReinstateRow = {
+  id: string
+  status: string
+  bond_received_by_landlord_at: string | null
+  service_tier_final: string | null
+  listing_agreement_status: string | null
+  property_id: string | null
+  landlord_id: string | null
+  student_id: string | null
+  expired_at: string | null
+}
+
+export type TenancyReinstateRow = {
+  id: string
+  status: string
+}
+
+export type SyncFullySignedResult = {
+  fullySigned: boolean
+  signedPath: string | null
+  signedUrl: string | null
+  isResidentialTenancyPackage: boolean
+  isQldResidentialPackage: boolean
+  isVicResidentialPackage: boolean
+  nextLandlordAt: string | null
+  nextStudentAt: string | null
+  nextCoTenantAt: string | null
+}
+
+export type SubmitterStatusSummary = {
+  name: string | null
+  role: string | null
+  status: string | null
+  opened_at: string | null
+  completed_at: string | null
+}
+
+function parseDocMetadata(row: TenancyDocumentSyncRow) {
+  const rowMeta =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : {}
+  const signingPkgEarly = rowMeta.signing_package
+  const isResidentialTenancyPackage =
+    signingPkgEarly === 'residential_tenancy' ||
+    signingPkgEarly === 'residential_tenancy_qld' ||
+    signingPkgEarly === 'residential_tenancy_vic'
+  const isQldResidentialPackage = signingPkgEarly === 'residential_tenancy_qld'
+  const isVicResidentialPackage = signingPkgEarly === 'residential_tenancy_vic'
+  return {
+    rowMeta,
+    isResidentialTenancyPackage,
+    isQldResidentialPackage,
+    isVicResidentialPackage,
+  }
+}
+
+/** Webhook event_type fallback, then DocuSeal GET submission root completed_at. */
+export function extractSubmissionCompletedAtFromPayload(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+  const o = payload as Record<string, unknown>
+  const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
+  if (evt === 'submission.completed' || evt === 'form.completed') {
+    const data = o.data
+    const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
+    const completedAt = root.completed_at
+    if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
+    return new Date().toISOString()
+  }
+  const data = o.data
+  const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
+  const completedAt = root.completed_at
+  if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
+  return null
+}
+
+export function summarizeSubmitters(payload: unknown): SubmitterStatusSummary[] {
+  if (!payload || typeof payload !== 'object') return []
+  const o = payload as Record<string, unknown>
+  const data = o.data
+  const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
+  const submitters = root.submitters
+  if (!Array.isArray(submitters)) return []
+  return submitters.map((s) => {
+    if (!s || typeof s !== 'object') {
+      return { name: null, role: null, status: null, opened_at: null, completed_at: null }
+    }
+    const row = s as Record<string, unknown>
+    return {
+      name: typeof row.name === 'string' ? row.name : null,
+      role: typeof row.role === 'string' ? row.role : null,
+      status: typeof row.status === 'string' ? row.status : null,
+      opened_at: typeof row.opened_at === 'string' ? row.opened_at : null,
+      completed_at: typeof row.completed_at === 'string' ? row.completed_at : null,
+    }
+  })
+}
+
+export function submissionStatusFromPayload(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null
+  const o = payload as Record<string, unknown>
+  const data = o.data
+  const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
+  const status = root.status
+  return typeof status === 'string' ? status : null
+}
+
+export async function fetchDocusealSubmission(submissionId: string): Promise<unknown> {
+  const base = getDocusealApiBase()
+  if (!base) throw new Error('DocuSeal is not configured')
+  const url = `${base}/api/submissions/${encodeURIComponent(submissionId)}`
+  const res = await fetch(url, { headers: getDocusealAuthHeaders() })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`DocuSeal GET ${url}: ${res.status} ${text}`)
+  }
+  return res.json()
+}
+
+export function listingBondWindowExpiresAt(fromMs = Date.now()): string {
+  return new Date(fromMs + LISTING_BOND_WINDOW_MS).toISOString()
+}
+
+export function targetBookingStatusAfterReinstate(
+  bondReceivedAt: string | null | undefined,
+): 'active' | 'bond_pending' {
+  const bond =
+    typeof bondReceivedAt === 'string' && bondReceivedAt.trim() ? bondReceivedAt.trim() : null
+  return bond ? 'active' : 'bond_pending'
+}
+
+export async function isCoTenantRequiredForTenancy(
+  admin: SupabaseClient,
+  tenancyId: string,
+  isResidentialTenancyPackage: boolean,
+): Promise<boolean> {
+  return (
+    isResidentialTenancyPackage && Boolean(await fetchCoTenantSignerForTenancy(admin, tenancyId))
+  )
+}
+
+export function computeSignatureTimestamps(args: {
+  docRow: TenancyDocumentSyncRow
+  submissionPayload: unknown
+  coTenantRequired: boolean
+}): {
+  nextLandlordAt: string | null
+  nextStudentAt: string | null
+  nextCoTenantAt: string | null
+  fullySigned: boolean
+  nextStatus: 'signed' | 'sent_for_signing'
+} {
+  const { docRow, submissionPayload, coTenantRequired } = args
+
+  const existingLandlordAt =
+    typeof docRow.landlord_signed_at === 'string' && docRow.landlord_signed_at.trim()
+      ? docRow.landlord_signed_at
+      : null
+  const existingStudentAt =
+    typeof docRow.student_signed_at === 'string' && docRow.student_signed_at.trim()
+      ? docRow.student_signed_at
+      : null
+  const existingCoTenantAt =
+    typeof docRow.co_tenant_signed_at === 'string' && docRow.co_tenant_signed_at.trim()
+      ? docRow.co_tenant_signed_at
+      : null
+
+  const incomingLandlordAt = extractCompletedAt(submissionPayload, 'landlord')
+  const incomingStudentAt = extractCompletedAt(submissionPayload, 'tenant')
+  const incomingCoTenantAt = extractCompletedAt(submissionPayload, 'co_tenant')
+  const submissionCompletedAt = extractSubmissionCompletedAtFromPayload(submissionPayload)
+
+  const nextLandlordAt = existingLandlordAt ?? incomingLandlordAt ?? submissionCompletedAt
+  const nextStudentAt = existingStudentAt ?? incomingStudentAt ?? submissionCompletedAt
+  const nextCoTenantAt =
+    existingCoTenantAt ?? incomingCoTenantAt ?? (coTenantRequired ? null : submissionCompletedAt)
+  const fullySigned =
+    Boolean(nextLandlordAt) &&
+    Boolean(nextStudentAt) &&
+    (!coTenantRequired || Boolean(nextCoTenantAt))
+
+  const previousStatus = typeof docRow.status === 'string' ? docRow.status : 'sent_for_signing'
+  const nextStatus = fullySigned ? 'signed' : previousStatus === 'signed' ? 'signed' : 'sent_for_signing'
+
+  return { nextLandlordAt, nextStudentAt, nextCoTenantAt, fullySigned, nextStatus }
+}
+
+export function isSubmissionFullySignedOnDocuseal(
+  submissionPayload: unknown,
+  coTenantRequired: boolean,
+): boolean {
+  const status = submissionStatusFromPayload(submissionPayload)
+  if (status !== 'completed') return false
+  const { fullySigned } = computeSignatureTimestamps({
+    docRow: {
+      id: '',
+      tenancy_id: null,
+      docuseal_submission_id: null,
+      metadata: null,
+      status: 'sent_for_signing',
+      landlord_signed_at: null,
+      student_signed_at: null,
+      co_tenant_signed_at: null,
+      file_path: null,
+    },
+    submissionPayload,
+    coTenantRequired,
+  })
+  return fullySigned
+}
+
+function timestampsMatchDocuseal(
+  localAt: string | null,
+  docusealAt: string | null,
+): boolean {
+  if (!localAt || !docusealAt) return false
+  return localAt.trim() === docusealAt.trim()
+}
+
+export async function storageObjectExists(
+  admin: SupabaseClient,
+  filePath: string | null | undefined,
+): Promise<boolean> {
+  const path = typeof filePath === 'string' ? filePath.trim() : ''
+  if (!path) return false
+  const { error } = await admin.storage.from('tenancy-documents').download(path)
+  return !error
+}
+
+export async function isDocusealReconcileInSync(args: {
+  admin: SupabaseClient
+  docRow: TenancyDocumentSyncRow
+  submissionPayload: unknown
+  booking: BookingReinstateRow
+  coTenantRequired: boolean
+}): Promise<boolean> {
+  const { admin, docRow, submissionPayload, booking, coTenantRequired } = args
+  const incomingLandlordAt = extractCompletedAt(submissionPayload, 'landlord')
+  const incomingStudentAt = extractCompletedAt(submissionPayload, 'tenant')
+  const incomingCoTenantAt = extractCompletedAt(submissionPayload, 'co_tenant')
+
+  if (docRow.status !== 'signed') return false
+  if (
+    !timestampsMatchDocuseal(docRow.landlord_signed_at, incomingLandlordAt) ||
+    !timestampsMatchDocuseal(docRow.student_signed_at, incomingStudentAt)
+  ) {
+    return false
+  }
+  if (coTenantRequired && !timestampsMatchDocuseal(docRow.co_tenant_signed_at, incomingCoTenantAt)) {
+    return false
+  }
+
+  const fileOk = await storageObjectExists(admin, docRow.file_path)
+  if (!fileOk) return false
+
+  const targetStatus = targetBookingStatusAfterReinstate(booking.bond_received_by_landlord_at)
+  if (booking.status === 'expired') return false
+  if (booking.status !== targetStatus) return false
+
+  return true
+}
+
+export async function syncFullySignedDocusealSubmission(args: {
+  admin: SupabaseClient
+  docRow: TenancyDocumentSyncRow
+  submissionId: string
+  submissionPayload: unknown
+  metadataExtra?: Record<string, unknown>
+}): Promise<SyncFullySignedResult> {
+  const { admin, docRow, submissionId, submissionPayload, metadataExtra = {} } = args
+  if (!docRow.tenancy_id) {
+    throw new Error('tenancy_document missing tenancy_id')
+  }
+
+  const { rowMeta, isResidentialTenancyPackage, isQldResidentialPackage, isVicResidentialPackage } =
+    parseDocMetadata(docRow)
+
+  const coTenantRequired = await isCoTenantRequiredForTenancy(
+    admin,
+    docRow.tenancy_id,
+    isResidentialTenancyPackage,
+  )
+
+  const { nextLandlordAt, nextStudentAt, nextCoTenantAt, fullySigned, nextStatus } =
+    computeSignatureTimestamps({
+      docRow,
+      submissionPayload,
+      coTenantRequired,
+    })
+
+  let signedPath: string
+  let nextMetadata: Record<string, unknown> = { ...rowMeta, ...metadataExtra }
+
+  if (isResidentialTenancyPackage) {
+    const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
+    const rtaPath = isVicResidentialPackage
+      ? `${docRow.tenancy_id}/residential_tenancy/vic_residential_rental_agreement_signed.pdf`
+      : isQldResidentialPackage
+        ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
+        : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
+    const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
+
+    if (dual) {
+      const { error: upRta } = await admin.storage
+        .from('tenancy-documents')
+        .upload(rtaPath, dual.rta, { contentType: 'application/pdf', upsert: true })
+      const { error: upAdd } = await admin.storage
+        .from('tenancy-documents')
+        .upload(addendumPath, dual.addendum, { contentType: 'application/pdf', upsert: true })
+      if (upRta) throw upRta
+      if (upAdd) throw upAdd
+      signedPath = rtaPath
+      nextMetadata = {
+        ...nextMetadata,
+        signed_rta_file_path: rtaPath,
+        signed_addendum_file_path: addendumPath,
+      }
+    } else {
+      const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, true)
+      signedPath = `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
+      const { error: upStorageErr } = await admin.storage
+        .from('tenancy-documents')
+        .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+      if (upStorageErr) throw upStorageErr
+    }
+  } else {
+    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
+    signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
+    const { error: upStorageErr } = await admin.storage
+      .from('tenancy-documents')
+      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
+    if (upStorageErr) throw upStorageErr
+  }
+
+  const { data: signedUrlData } = await admin.storage
+    .from('tenancy-documents')
+    .createSignedUrl(signedPath, 60 * 60 * 24 * 7)
+
+  const { error: upDocErr } = await admin
+    .from('tenancy_documents')
+    .update({
+      status: nextStatus,
+      file_path: signedPath,
+      landlord_signed_at: nextLandlordAt,
+      student_signed_at: nextStudentAt,
+      co_tenant_signed_at: coTenantRequired ? nextCoTenantAt : null,
+      metadata: nextMetadata as Json,
+    })
+    .eq('id', docRow.id)
+
+  if (upDocErr) throw upDocErr
+
+  return {
+    fullySigned,
+    signedPath,
+    signedUrl: signedUrlData?.signedUrl ?? null,
+    isResidentialTenancyPackage,
+    isQldResidentialPackage,
+    isVicResidentialPackage,
+    nextLandlordAt,
+    nextStudentAt,
+    nextCoTenantAt,
+  }
+}
+
+export type ReinstateResult = {
+  changes: string[]
+  bookingStatusBefore: string
+  bookingStatusAfter: string
+}
+
+export async function reinstateBookingAfterDocusealReconcile(args: {
+  admin: SupabaseClient
+  booking: BookingReinstateRow
+  tenancy: TenancyReinstateRow | null
+}): Promise<ReinstateResult> {
+  const { admin, booking, tenancy } = args
+  const changes: string[] = []
+  const bookingStatusBefore = booking.status
+  let bookingStatusAfter = booking.status
+
+  if (tenancy?.status === 'ended') {
+    const { error: tenancyErr } = await admin
+      .from('tenancies')
+      .update({ status: 'active' })
+      .eq('id', tenancy.id)
+      .eq('status', 'ended')
+    if (tenancyErr) throw tenancyErr
+    changes.push('tenancy: ended → active')
+  }
+
+  if (booking.status !== 'expired') {
+    return { changes, bookingStatusBefore, bookingStatusAfter }
+  }
+
+  const targetStatus = targetBookingStatusAfterReinstate(booking.bond_received_by_landlord_at)
+  const patch: Record<string, unknown> = {
+    status: targetStatus,
+    expired_at: null,
+  }
+  if (targetStatus === 'bond_pending') {
+    patch.bond_window_expires_at = listingBondWindowExpiresAt()
+  }
+
+  const { error: bookingErr } = await admin.from('bookings').update(patch).eq('id', booking.id)
+  if (bookingErr) throw bookingErr
+  bookingStatusAfter = targetStatus
+  changes.push(`booking: expired → ${targetStatus}`)
+  if (targetStatus === 'bond_pending') {
+    changes.push('bond_window_expires_at refreshed (+7 days)')
+  }
+
+  if (
+    booking.service_tier_final === 'listing' &&
+    booking.listing_agreement_status === 'voided'
+  ) {
+    await setListingAgreementStatus(admin, booking.id, 'ready', null)
+    changes.push('listing_agreement_status: voided → ready')
+  }
+
+  return { changes, bookingStatusBefore, bookingStatusAfter }
+}
+
+export function isWithdrawnBookingStatus(status: string | null | undefined): boolean {
+  const s = (status ?? '').trim()
+  return s === 'cancelled' || s === 'declined'
+}
+
+export async function findBondPendingExpiredRefundMarker(
+  admin: SupabaseClient,
+  bookingId: string,
+): Promise<{ found: boolean; metadata: Record<string, unknown> | null }> {
+  const { data, error } = await admin
+    .from('service_tier_events')
+    .select('metadata')
+    .eq('booking_id', bookingId)
+    .eq('event_type', 'bond_pending_expired')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return { found: false, metadata: null }
+  const metadata =
+    data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
+      ? (data.metadata as Record<string, unknown>)
+      : null
+  return { found: true, metadata }
+}
+
+const LEASE_DOC_TYPES = ['lease', 'residential_tenancy'] as const
+
+export async function loadLatestLeaseDocForBooking(
+  admin: SupabaseClient,
+  bookingId: string,
+): Promise<{ tenancy: TenancyReinstateRow | null; doc: TenancyDocumentSyncRow | null }> {
+  const { data: tenancy, error: tenancyErr } = await admin
+    .from('tenancies')
+    .select('id, status')
+    .eq('booking_id', bookingId)
+    .maybeSingle()
+
+  if (tenancyErr) throw tenancyErr
+  if (!tenancy?.id) return { tenancy: null, doc: null }
+
+  const { data: docs, error: docErr } = await admin
+    .from('tenancy_documents')
+    .select(
+      'id, tenancy_id, docuseal_submission_id, metadata, status, landlord_signed_at, student_signed_at, co_tenant_signed_at, file_path, created_at',
+    )
+    .eq('tenancy_id', tenancy.id)
+    .in('document_type', [...LEASE_DOC_TYPES])
+    .not('docuseal_submission_id', 'is', null)
+    .order('created_at', { ascending: false })
+
+  if (docErr) throw docErr
+
+  const doc =
+    (docs ?? []).find((d) => {
+      const sid = typeof d.docuseal_submission_id === 'string' ? d.docuseal_submission_id.trim() : ''
+      return Boolean(sid)
+    }) ?? null
+
+  return {
+    tenancy: { id: tenancy.id, status: tenancy.status },
+    doc: doc as TenancyDocumentSyncRow | null,
+  }
+}

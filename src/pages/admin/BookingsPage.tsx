@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
+import { getValidAccessTokenForFunctions } from '../../lib/supabaseEdgeInvoke'
 import type { Database } from '../../lib/database.types'
 import { Button, Card, Eyebrow, EmptyState, ErrorState, LoadingState, Pill, type PillTone } from '../../components/admin/primitives'
 import { Icon, type IconName } from '../../components/admin/Icon'
@@ -610,13 +611,13 @@ export default function BookingsPage() {
           ) : null
         }
       >
-        {selected ? <DrawerBody booking={selected} /> : null}
+        {selected ? <DrawerBody booking={selected} onBookingUpdated={() => void load()} /> : null}
       </DetailDrawer>
     </div>
   )
 }
 
-function DrawerBody({ booking }: { booking: BookingRow }) {
+function DrawerBody({ booking, onBookingUpdated }: { booking: BookingRow; onBookingUpdated: () => void }) {
   const tier = booking.service_tier_final ?? booking.service_tier_at_request
   const events = buildTimeline(booking)
   const checklist = trustChecklist(booking)
@@ -644,6 +645,8 @@ function DrawerBody({ booking }: { booking: BookingRow }) {
           ['Rent via', booking.rent_payment_method === 'quni_platform' ? 'Quni platform' : booking.rent_payment_method === 'bank_transfer' ? 'Bank transfer' : '-'],
         ]}
       />
+
+      <DocuSealReconcileSection bookingId={booking.id} onReconciled={onBookingUpdated} />
 
       <div>
         <Eyebrow>Trust checklist</Eyebrow>
@@ -715,6 +718,211 @@ function KV({ rows }: { rows: Array<[string, React.ReactNode]> }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+interface LeaseDocSummary {
+  id: string
+  status: string
+  docuseal_submission_id: string
+  landlord_signed_at: string | null
+  student_signed_at: string | null
+}
+
+interface ReconcileApiResponse {
+  ok?: boolean
+  message?: string
+  error?: string
+  warning?: string
+  changes?: string[]
+  submitters?: Array<{
+    name: string | null
+    role: string | null
+    status: string | null
+    completed_at: string | null
+  }>
+}
+
+function DocuSealReconcileSection({
+  bookingId,
+  onReconciled,
+}: {
+  bookingId: string
+  onReconciled: () => void
+}) {
+  const [leaseDoc, setLeaseDoc] = useState<LeaseDocSummary | null>(null)
+  const [docLoading, setDocLoading] = useState(true)
+  const [docError, setDocError] = useState<string | null>(null)
+  const [reconciling, setReconciling] = useState(false)
+  const [summary, setSummary] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  const loadLeaseDoc = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setDocError('Supabase is not configured.')
+      setDocLoading(false)
+      return
+    }
+    setDocLoading(true)
+    setDocError(null)
+    try {
+      const { data: tenancy, error: tenancyErr } = await supabase
+        .from('tenancies')
+        .select('id')
+        .eq('booking_id', bookingId)
+        .maybeSingle()
+
+      if (tenancyErr) throw tenancyErr
+      if (!tenancy?.id) {
+        setLeaseDoc(null)
+        return
+      }
+
+      const { data: docs, error: docsErr } = await supabase
+        .from('tenancy_documents')
+        .select('id, status, docuseal_submission_id, landlord_signed_at, student_signed_at, created_at')
+        .eq('tenancy_id', tenancy.id)
+        .in('document_type', ['lease', 'residential_tenancy'])
+        .not('docuseal_submission_id', 'is', null)
+        .order('created_at', { ascending: false })
+
+      if (docsErr) throw docsErr
+
+      const row =
+        (docs ?? []).find((d) => {
+          const sid = typeof d.docuseal_submission_id === 'string' ? d.docuseal_submission_id.trim() : ''
+          return Boolean(sid)
+        }) ?? null
+
+      if (!row?.docuseal_submission_id) {
+        setLeaseDoc(null)
+        return
+      }
+
+      setLeaseDoc({
+        id: row.id,
+        status: row.status,
+        docuseal_submission_id: row.docuseal_submission_id.trim(),
+        landlord_signed_at: row.landlord_signed_at,
+        student_signed_at: row.student_signed_at,
+      })
+    } catch (e) {
+      setDocError(e instanceof Error ? e.message : 'Could not load lease document.')
+      setLeaseDoc(null)
+    } finally {
+      setDocLoading(false)
+    }
+  }, [bookingId])
+
+  useEffect(() => {
+    void loadLeaseDoc()
+  }, [loadLeaseDoc])
+
+  async function reconcileFromDocuseal() {
+    setReconciling(true)
+    setActionError(null)
+    setSummary(null)
+    setWarning(null)
+
+    const auth = await getValidAccessTokenForFunctions()
+    if ('error' in auth) {
+      setActionError(auth.error)
+      setReconciling(false)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/admin/reconcile-docuseal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ bookingId }),
+      })
+
+      const body = (await res.json().catch(() => ({}))) as ReconcileApiResponse
+
+      if (res.status === 401 || res.status === 403) {
+        setActionError(body.error ?? `Admin access required (${res.status}).`)
+        return
+      }
+
+      if (!res.ok) {
+        setActionError(body.error ?? `Reconcile failed (${res.status}).`)
+        return
+      }
+
+      const changeLines = Array.isArray(body.changes) ? body.changes.filter(Boolean) : []
+      const parts = [body.message ?? 'Done.']
+      if (changeLines.length > 0) {
+        parts.push(changeLines.join('; '))
+      }
+      if (Array.isArray(body.submitters) && body.submitters.length > 0 && body.ok === false) {
+        const submitterSummary = body.submitters
+          .map((s) => `${s.role ?? 'Party'}: ${s.status ?? 'unknown'}`)
+          .join(', ')
+        parts.push(submitterSummary)
+      }
+      setSummary(parts.join(' '))
+
+      if (typeof body.warning === 'string' && body.warning.trim()) {
+        setWarning(body.warning.trim())
+      }
+
+      await loadLeaseDoc()
+      onReconciled()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Network error.')
+    } finally {
+      setReconciling(false)
+    }
+  }
+
+  if (docLoading) {
+    return (
+      <div>
+        <Eyebrow>DocuSeal</Eyebrow>
+        <p className="m-0 mt-2 text-[12px] text-admin-ink-4">Loading signing document…</p>
+      </div>
+    )
+  }
+
+  if (docError) {
+    return (
+      <div>
+        <Eyebrow>DocuSeal</Eyebrow>
+        <p className="m-0 mt-2 text-[12px] text-admin-danger">{docError}</p>
+      </div>
+    )
+  }
+
+  if (!leaseDoc) return null
+
+  return (
+    <div className="rounded-admin-md border border-admin-line bg-admin-surface-1 p-3.5">
+      <Eyebrow>DocuSeal</Eyebrow>
+      <p className="m-0 mt-2 text-[12px] text-admin-ink-3">
+        Submission <span className="font-mono text-admin-ink-2">{leaseDoc.docuseal_submission_id}</span>
+        {' · '}
+        Doc <span className="text-admin-ink-2">{leaseDoc.status}</span>
+      </p>
+      <div className="mt-3">
+        <Button
+          kind="primary"
+          size="md"
+          className="w-full justify-center"
+          disabled={reconciling}
+          onClick={() => void reconcileFromDocuseal()}
+        >
+          {reconciling ? 'Reconciling…' : 'Reconcile from DocuSeal'}
+        </Button>
+      </div>
+      {summary ? <p className="m-0 mt-2.5 text-[12px] text-admin-success-fg">{summary}</p> : null}
+      {warning ? <p className="m-0 mt-2 text-[12px] font-medium text-admin-warning-fg">{warning}</p> : null}
+      {actionError ? <p className="m-0 mt-2 text-[12px] text-admin-danger">{actionError}</p> : null}
+    </div>
   )
 }
 
