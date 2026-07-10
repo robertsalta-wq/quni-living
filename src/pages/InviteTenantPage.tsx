@@ -210,89 +210,97 @@ export default function InviteTenantPage() {
       : null
 
   return (
-    <div className="max-w-sm mx-auto px-6 py-12 sm:py-16">
+    <div className="max-w-sm lg:max-w-5xl mx-auto px-6 lg:px-8 py-12 sm:py-16">
       <Seo title="You're invited to book" noindex description="Landlord tenant invite on Quni Living." />
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Landlord invitation</p>
-      <h1 className="mt-2 text-2xl font-bold text-gray-900 leading-tight">
-        {greeting ? `${greeting} you're invited to book` : "You're invited to book on Quni"}
-      </h1>
-      <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-        Your landlord uses Quni to handle applications and tenancy paperwork for this room. Review the listing below
-        first — you can see how verification works before sharing ID documents.
-      </p>
-
-      <div className="mt-6">
-        {property ? (
-          <PropertyCard property={property} staticDisplay />
-        ) : (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
-            Loading listing details…
-          </div>
-        )}
-        {resolved.property_slug && (
-          <Link
-            to={`/properties/${resolved.property_slug}`}
-            className="mt-3 inline-block text-xs font-medium text-indigo-600 hover:text-indigo-800"
-          >
-            View full listing details →
-          </Link>
-        )}
-      </div>
-
-      {resolved.student_only && (
-        <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-gray-700">
-          This room is for students only — you&apos;ll need to verify as a student when you sign up.
-        </p>
-      )}
-
-      {inviteOffer.hasOffer || inviteOffer.hasBondOffer ? (
-        <div className="mt-4">
-          <TenantInviteOfferBanner
-            offeredWeeklyRentAud={inviteOffer.offeredWeeklyRentAud}
-            bondAmountAud={inviteBondAud}
-            offerReason={inviteOffer.offerReason}
-          />
+      <div className="lg:grid lg:grid-cols-2 lg:gap-x-14 lg:items-start">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Landlord invitation</p>
+          <h1 className="mt-2 text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+            {greeting ? `${greeting} you're invited to book` : "You're invited to book on Quni"}
+          </h1>
+          <p className="mt-2 text-sm lg:text-base text-gray-600 leading-relaxed">
+            Your landlord uses Quni to handle applications and tenancy paperwork for this room. Review the listing below
+            first — you can see how verification works before sharing ID documents.
+          </p>
         </div>
-      ) : property && listingRent > 0 ? (
-        <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-gray-800">
-          {inviteBondAud != null ? (
-            <p>
-              Bond for this listing:{' '}
-              <span className="font-semibold tabular-nums">
-                ${inviteBondAud.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
-              </span>
-            </p>
+
+        <div className="mt-6 lg:mt-0 lg:col-start-2 lg:row-start-1 lg:row-span-6">
+          {property ? (
+            <PropertyCard property={property} staticDisplay />
           ) : (
-            <p>No bond is required for this listing.</p>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 shadow-sm">
+              Loading listing details…
+            </div>
+          )}
+          {resolved.property_slug && (
+            <Link
+              to={`/properties/${resolved.property_slug}`}
+              className="mt-3 inline-block text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              View full listing details →
+            </Link>
           )}
         </div>
-      ) : null}
 
-      <ol className="mt-6 space-y-2 text-sm text-gray-600 list-decimal list-inside">
-        <li>Create a renter account (student or non-student)</li>
-        <li>Confirm your email and complete verification</li>
-        <li>Submit your booking request for this room</li>
-      </ol>
+        <div className="mt-6 lg:mt-8 lg:col-start-1">
+          {resolved.student_only && (
+            <p className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm text-gray-700">
+              This room is for students only — you&apos;ll need to verify as a student when you sign up.
+            </p>
+          )}
 
-      <div className="mt-8">
-        <RenterPlatformTrustPanel />
-      </div>
+          {inviteOffer.hasOffer || inviteOffer.hasBondOffer ? (
+            <div className={resolved.student_only ? 'mt-4' : ''}>
+              <TenantInviteOfferBanner
+                offeredWeeklyRentAud={inviteOffer.offeredWeeklyRentAud}
+                bondAmountAud={inviteBondAud}
+                offerReason={inviteOffer.offerReason}
+              />
+            </div>
+          ) : property && listingRent > 0 ? (
+            <div
+              className={`rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-gray-800${resolved.student_only ? ' mt-4' : ''}`}
+            >
+              {inviteBondAud != null ? (
+                <p>
+                  Bond for this listing:{' '}
+                  <span className="font-semibold tabular-nums">
+                    ${inviteBondAud.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
+                  </span>
+                </p>
+              ) : (
+                <p>No bond is required for this listing.</p>
+              )}
+            </div>
+          ) : null}
 
-      <div className="mt-6 flex flex-col gap-3">
-        <button
-          type="button"
-          onClick={continueToSignup}
-          className="w-full rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] shadow-sm"
-        >
-          Create account to continue
-        </button>
-        <Link
-          to={loginHref}
-          className="w-full text-center rounded-xl border border-gray-300 bg-white text-gray-800 py-3 text-sm font-semibold hover:bg-gray-50"
-        >
-          I already have an account
-        </Link>
+          <ol className="mt-6 space-y-2 text-sm text-gray-600 list-decimal list-inside">
+            <li>Create a renter account (student or non-student)</li>
+            <li>Confirm your email and complete verification</li>
+            <li>Submit your booking request for this room</li>
+          </ol>
+
+          <div className="mt-8">
+            <RenterPlatformTrustPanel />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={continueToSignup}
+              className="w-full rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] shadow-sm"
+            >
+              Create account to continue
+            </button>
+            <Link
+              to={loginHref}
+              className="w-full text-center rounded-xl border border-gray-300 bg-white text-gray-800 py-3 text-sm font-semibold hover:bg-gray-50"
+            >
+              I already have an account
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
