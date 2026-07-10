@@ -303,7 +303,7 @@ export { createDocusealSubmissionFromPdf }
 /** After draft PDF exists in Storage: send to DocuSeal and notify both parties. */
 export async function sendForSigning(
   documentId: string,
-  opts?: { documentPdfName?: string; removeTags?: boolean },
+  opts?: { documentPdfName?: string; removeTags?: boolean; skipCoTenantSigner?: boolean },
 ): Promise<void> {
   const admin = adminClient()
 
@@ -372,16 +372,16 @@ export async function sendForSigning(
   const pdfBase64 = buf.toString('base64')
 
   let coTenantSigner: { name: string; email: string } | null = null
-  try {
-    coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
-  } catch (e) {
-    throw e instanceof Error ? e : new Error(String(e))
+  if (!opts?.skipCoTenantSigner) {
+    try {
+      coTenantSigner = await resolveCoTenantSignerForSubmission(row.tenancy_id, tenantEmail)
+    } catch (e) {
+      throw e instanceof Error ? e : new Error(String(e))
+    }
   }
 
   const submissionRaw = await createDocusealSubmissionFromPdf({
-    name: coTenantSigner
-      ? `Lease - ${landlordName} / ${tenantName} / ${coTenantSigner.name}`
-      : `Lease - ${landlordName} / ${tenantName}`,
+    name: `Lease - ${landlordName} / ${tenantName}`,
     pdfBase64,
     documentPdfName: opts?.documentPdfName,
     removeTags: opts?.removeTags,
@@ -871,7 +871,9 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
       ? docRow.co_tenant_signed_at
       : null
 
-  const coTenantRequired = Boolean(await fetchCoTenantSignerForTenancy(admin, docRow.tenancy_id))
+  const coTenantRequired =
+    isResidentialTenancyPackage &&
+    Boolean(await fetchCoTenantSignerForTenancy(admin, docRow.tenancy_id))
 
   const incomingLandlordAt = extractCompletedAt(payload, 'landlord')
   const incomingStudentAt = extractCompletedAt(payload, 'tenant')
@@ -965,7 +967,7 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     .select('booking_id')
     .eq('id', docRow.tenancy_id)
     .maybeSingle()
-  if (tenancyRow?.booking_id) {
+  if (isResidentialTenancyPackage && tenancyRow?.booking_id) {
     const coDone = await fetchCoTenantSignerForBooking(admin, tenancyRow.booking_id)
     if (coDone?.email && link) {
       await sendEmail({

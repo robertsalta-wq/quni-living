@@ -488,6 +488,7 @@ export async function runNswOccupancyListingTenancy(
       await sendForSigning(documentId, {
         documentPdfName: 'Quni Licence to Occupy.pdf',
         removeTags: true,
+        skipCoTenantSigner: true,
       })
       const { data: docRow } = await admin
         .from('tenancy_documents')
