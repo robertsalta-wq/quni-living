@@ -5,6 +5,7 @@
 import type { NswResidentialTenancyAgreementProps } from '../../documents/rtaTypes.js'
 import { occupancyLeaseFieldsFromBooking } from '../booking/occupancyLeaseContext.js'
 import { resolveBookingBondAmountAud } from '../booking/bookingBondAmount.js'
+import { tenantLegalNameForDocuments } from '../booking/tenantLegalNameForDocuments.js'
 import { buildRtaRentPaymentMethodLine } from '../platformConfig.js'
 import { featureNamesFromPropertyRow, propertyBillsIncluded } from '../../../src/lib/propertyFeatureSignals.js'
 import {
@@ -154,9 +155,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
       residenceLocation: residenceLine || null,
     },
     tenant: {
-      fullName:
-        [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
-        (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
+      fullName: tenantLegalNameForDocuments(sp, 'Tenant'),
       email: typeof sp.email === 'string' ? sp.email.trim() : '',
       phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '',
       dateOfBirth:

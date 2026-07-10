@@ -22,6 +22,7 @@ import {
   fetchPlatformConfigValueMap,
 } from '../../platformConfig.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
+import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
 import {
   formatFeeForDisplay,
   getActivePricingSnapshotForProperty,
@@ -210,7 +211,7 @@ async function loadVicForm1Context(
   const { data: sp, error: spErr } = await admin
     .from('student_profiles')
     .select(
-      'id, user_id, full_name, first_name, last_name, email, phone, date_of_birth, emergency_contact_name, emergency_contact_phone',
+      'id, user_id, full_name, first_name, last_name, email, phone, date_of_birth, emergency_contact_name, emergency_contact_phone, verification_type, legal_name_locked_at',
     )
     .eq('id', booking.student_id)
     .maybeSingle()
@@ -380,9 +381,7 @@ function buildVicForm1PdfProps(ctx: LoadedVicForm1Context, documentId: string) {
     typeof spRec.emergency_contact_phone === 'string' ? spRec.emergency_contact_phone.trim() : ''
 
   const sharedTenant = {
-    fullName:
-      [sp.first_name, sp.last_name].filter(Boolean).join(' ').trim() ||
-      (typeof sp.full_name === 'string' ? sp.full_name : 'Tenant'),
+    fullName: tenantLegalNameForDocuments(sp, 'Tenant'),
     email: typeof sp.email === 'string' ? sp.email : '-',
     phone: typeof sp.phone === 'string' && sp.phone.trim() ? sp.phone.trim() : '-',
     dateOfBirth:
