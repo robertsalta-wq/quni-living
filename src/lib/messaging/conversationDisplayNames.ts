@@ -47,3 +47,28 @@ export function senderDisplayNameForMessage(
   if (senderRole === 'landlord') return names.landlord
   return null
 }
+
+/** Up to two initials from a display name (no image fetch). */
+export function initialsFromDisplayName(displayName: string): string {
+  const words = displayName.trim().split(/\s+/).filter(Boolean)
+  if (!words.length) return '?'
+  if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase()
+  return `${words[0]![0] ?? ''}${words[1]![0] ?? ''}`.toUpperCase()
+}
+
+const AVATAR_PALETTE = [
+  'bg-indigo-100 text-indigo-800',
+  'bg-emerald-100 text-emerald-800',
+  'bg-amber-100 text-amber-900',
+  'bg-sky-100 text-sky-800',
+  'bg-rose-100 text-rose-800',
+  'bg-violet-100 text-violet-800',
+] as const
+
+export function avatarColorClassForName(displayName: string): string {
+  let hash = 0
+  for (let i = 0; i < displayName.length; i++) {
+    hash = (hash + displayName.charCodeAt(i)) % 9973
+  }
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]!
+}
