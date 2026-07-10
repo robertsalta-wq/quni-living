@@ -114,6 +114,7 @@
   "crons": [
     { "path": "/api/cron/expire-bookings", "schedule": "0 * * * *" },
     { "path": "/api/cron/release-deposits", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/docuseal-health", "schedule": "30 * * * *" }
+    { "path": "/api/cron/docuseal-health", "schedule": "30 * * * *" },
+    { "path": "/api/cron/github-health", "schedule": "45 * * * *" }
   ]
 }

@@ -67,6 +67,7 @@ function vendorRowToHealthService(row: VendorHealthRow): string | null {
   if (href.includes('dash.cloudflare.com') || href.includes('cloudflare.com')) return 'cloudflare'
   if (href.includes('console.anthropic.com') || href.includes('anthropic.com')) return 'anthropic'
 
+  if (href.includes('github.com')) return 'github'
   if (t.includes('cloudflare')) return 'cloudflare'
   if (t.includes('anthropic')) return 'anthropic'
   if (t.includes('supabase') && t.includes('quni living')) return 'supabase'
@@ -74,28 +75,41 @@ function vendorRowToHealthService(row: VendorHealthRow): string | null {
   if (t.includes('docuseal') || t.includes('railway')) return 'docuseal'
   if (t.includes('stripe')) return 'stripe'
   if (t.includes('vercel')) return 'vercel'
+  if (t.includes('github')) return 'github'
   if (t.includes('resend')) return 'resend'
   if (t.includes('tpp') || t.includes('wholesale')) return 'tpp_domains'
   return null
 }
 
-function HealthStatusDot({ serviceKey, results }: { serviceKey: string | null; results: HealthResult[] }) {
+function HealthStatusDot({
+  serviceKey,
+  results,
+  opsByService,
+}: {
+  serviceKey: string | null
+  results: HealthResult[]
+  opsByService?: Map<string, OperationalStatusRow>
+}) {
   if (!serviceKey) return null
   const h = results.find((r) => r.service === serviceKey)
-  if (!h) return null
+  const ops = !h ? opsByService?.get(serviceKey) : undefined
+  const status = h?.status ?? ops?.status
+  const message = h?.message ?? ops?.message ?? ''
+  const label = h?.service ?? ops?.service_name ?? serviceKey
+  if (!status) return null
   const base = 'absolute top-3 right-11 z-10 h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-white shadow-sm'
-  if (h.status === 'operational') {
-    return <span className={`${base} bg-green-500`} title={h.message} aria-hidden />
+  if (status === 'operational') {
+    return <span className={`${base} bg-green-500`} title={message} aria-hidden />
   }
-  if (h.status === 'degraded') {
-    return <span className={`${base} bg-amber-500`} title={h.message} aria-hidden />
+  if (status === 'degraded') {
+    return <span className={`${base} bg-amber-500`} title={message} aria-hidden />
   }
   return (
     <span
       className={`${base} bg-red-500 animate-pulse`}
-      title={h.message}
+      title={message}
       role="status"
-      aria-label={`${h.service} is down`}
+      aria-label={`${label} is down`}
     />
   )
 }
@@ -191,6 +205,7 @@ const MONITORED_SERVICE_NAMES = [
   'cloudflare',
   'docuseal',
   'firebase',
+  'github',
   'quni_ai',
   'resend',
   'sentry',
@@ -205,6 +220,7 @@ const SERVICE_DISPLAY_LABEL: Record<(typeof MONITORED_SERVICE_NAMES)[number], st
   cloudflare: 'Cloudflare',
   docuseal: 'DocuSeal',
   firebase: 'Firebase',
+  github: 'GitHub Actions (main CI)',
   quni_ai: 'Quni AI (Claude integration)',
   resend: 'Resend',
   sentry: 'Sentry',
@@ -1457,7 +1473,11 @@ export default function AdminApps() {
                     key={row.id}
                     className={`${adminCardClass} flex flex-col transition-shadow hover:shadow-md hover:border-indigo-100 relative`}
                   >
-                    <HealthStatusDot serviceKey={vendorRowToHealthService(row)} results={healthResults} />
+                    <HealthStatusDot
+                      serviceKey={vendorRowToHealthService(row)}
+                      results={healthResults}
+                      opsByService={opsByService}
+                    />
                     <div className="flex items-start gap-3 flex-1">
                       <BrandLogo title={row.title} href={row.href} logoSrc={row.logo_src} />
                       <div className="min-w-0 flex-1">
