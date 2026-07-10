@@ -275,7 +275,6 @@ export default function ConversationThread({ conversation, currentUserId, viewer
       <ConversationHeader property={conversation.property} contactUnlocked={contactUnlocked} />
 
       <div className="px-4 py-3 space-y-3 bg-gray-50 border-b border-gray-100">
-        {!contactUnlocked && <ContactUnlockBanner />}
         {contactUnlocked && (
           <ContactUnlockActions
             landlord={landlordContact}
@@ -300,6 +299,7 @@ export default function ConversationThread({ conversation, currentUserId, viewer
             {error}
           </p>
         )}
+        {!loading && !contactUnlocked && <ContactUnlockBanner />}
         {!loading &&
           messages.map((m, index) => {
             if (m.kind === 'system') {
