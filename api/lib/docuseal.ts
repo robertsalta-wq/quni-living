@@ -793,124 +793,22 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     }
   }
 
-  const rowMetaEarly =
-    docRow.metadata && typeof docRow.metadata === 'object' && !Array.isArray(docRow.metadata)
-      ? (docRow.metadata as Record<string, unknown>)
-      : {}
-  const signingPkgEarly = rowMetaEarly.signing_package
-  const isResidentialTenancyPackage =
-    signingPkgEarly === 'residential_tenancy' ||
-    signingPkgEarly === 'residential_tenancy_qld' ||
-    signingPkgEarly === 'residential_tenancy_vic'
-  const isQldResidentialPackage = signingPkgEarly === 'residential_tenancy_qld'
-  const isVicResidentialPackage = signingPkgEarly === 'residential_tenancy_vic'
+  const { syncFullySignedDocusealSubmission } = await import('./docuseal/reconcileFromDocuseal.js')
+  const syncResult = await syncFullySignedDocusealSubmission({
+    admin,
+    docRow,
+    submissionId,
+    submissionPayload: payload,
+    metadataExtra: { last_webhook: payload as unknown as Json },
+  })
 
-  const rowMeta = rowMetaEarly
-
-  let signedPath: string
-  let nextMetadata: Record<string, unknown> = { ...rowMeta }
-
-  if (isResidentialTenancyPackage) {
-    const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
-    const rtaPath = isVicResidentialPackage
-      ? `${docRow.tenancy_id}/residential_tenancy/vic_residential_rental_agreement_signed.pdf`
-      : isQldResidentialPackage
-        ? `${docRow.tenancy_id}/residential_tenancy/qld_form18a_general_tenancy_agreement_signed.pdf`
-        : `${docRow.tenancy_id}/residential_tenancy/nsw_residential_tenancy_agreement_signed.pdf`
-    const addendumPath = `${docRow.tenancy_id}/residential_tenancy/quni_platform_addendum_signed.pdf`
-
-    if (dual) {
-      const { error: upRta } = await admin.storage
-        .from('tenancy-documents')
-        .upload(rtaPath, dual.rta, { contentType: 'application/pdf', upsert: true })
-      const { error: upAdd } = await admin.storage
-        .from('tenancy-documents')
-        .upload(addendumPath, dual.addendum, { contentType: 'application/pdf', upsert: true })
-      if (upRta) throw upRta
-      if (upAdd) throw upAdd
-      signedPath = rtaPath
-      nextMetadata = {
-        ...nextMetadata,
-        signed_rta_file_path: rtaPath,
-        signed_addendum_file_path: addendumPath,
-      }
-    } else {
-      const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, true)
-      signedPath = `${docRow.tenancy_id}/residential_tenancy/residential_tenancy_agreement_and_addendum_signed.pdf`
-      const { error: upStorageErr } = await admin.storage
-        .from('tenancy-documents')
-        .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
-      if (upStorageErr) throw upStorageErr
-    }
-  } else {
-    const pdfBuf = await downloadSignedSubmissionPdfFromDocuseal(submissionId, false)
-    signedPath = `${docRow.tenancy_id}/lease/lease_signed.pdf`
-    const { error: upStorageErr } = await admin.storage
-      .from('tenancy-documents')
-      .upload(signedPath, pdfBuf, { contentType: 'application/pdf', upsert: true })
-    if (upStorageErr) throw upStorageErr
-  }
-
-  const { data: signedUrlData } = await admin.storage
-    .from('tenancy-documents')
-    .createSignedUrl(signedPath, 60 * 60 * 24 * 7)
-
-  /**
-   * Phase 3 / Task J: keep per-party timestamps accurate.
-   * - Don't overwrite an existing landlord_signed_at / student_signed_at when a later
-   *   webhook fires that doesn't carry that role's completed_at.
-   * - Only flip status to 'signed' once BOTH parties have a real signed-at timestamp.
-   *   While only one party has signed we keep status as 'sent_for_signing' so the
-   *   "Download signed agreement" UI gate (which requires fully-signed) does not flip
-   *   prematurely.
-   */
-  const existingLandlordAt =
-    typeof docRow.landlord_signed_at === 'string' && docRow.landlord_signed_at.trim()
-      ? docRow.landlord_signed_at
-      : null
-  const existingStudentAt =
-    typeof docRow.student_signed_at === 'string' && docRow.student_signed_at.trim()
-      ? docRow.student_signed_at
-      : null
-  const existingCoTenantAt =
-    typeof docRow.co_tenant_signed_at === 'string' && docRow.co_tenant_signed_at.trim()
-      ? docRow.co_tenant_signed_at
-      : null
-
-  const coTenantRequired =
-    isResidentialTenancyPackage &&
-    Boolean(await fetchCoTenantSignerForTenancy(admin, docRow.tenancy_id))
-
-  const incomingLandlordAt = extractCompletedAt(payload, 'landlord')
-  const incomingStudentAt = extractCompletedAt(payload, 'tenant')
-  const incomingCoTenantAt = extractCompletedAt(payload, 'co_tenant')
-  const submissionCompletedAt = extractSubmissionCompletedAt(payload)
-
-  const nextLandlordAt = existingLandlordAt ?? incomingLandlordAt ?? submissionCompletedAt
-  const nextStudentAt = existingStudentAt ?? incomingStudentAt ?? submissionCompletedAt
-  const nextCoTenantAt =
-    existingCoTenantAt ?? incomingCoTenantAt ?? (coTenantRequired ? null : submissionCompletedAt)
-  const fullySigned =
-    Boolean(nextLandlordAt) &&
-    Boolean(nextStudentAt) &&
-    (!coTenantRequired || Boolean(nextCoTenantAt))
-
-  const previousStatus = typeof docRow.status === 'string' ? docRow.status : 'sent_for_signing'
-  const nextStatus = fullySigned ? 'signed' : previousStatus === 'signed' ? 'signed' : 'sent_for_signing'
-
-  const { error: upDocErr } = await admin
-    .from('tenancy_documents')
-    .update({
-      status: nextStatus,
-      file_path: signedPath,
-      landlord_signed_at: nextLandlordAt,
-      student_signed_at: nextStudentAt,
-      co_tenant_signed_at: coTenantRequired ? nextCoTenantAt : null,
-      metadata: { ...nextMetadata, last_webhook: payload as unknown as Json } as Json,
-    })
-    .eq('id', docRow.id)
-
-  if (upDocErr) throw upDocErr
+  const {
+    fullySigned,
+    signedUrl: link,
+    isResidentialTenancyPackage,
+    isQldResidentialPackage,
+    isVicResidentialPackage,
+  } = syncResult
 
   if (!fullySigned) {
     return { ok: true, message: 'Webhook stored; awaiting remaining signatures' }
@@ -947,7 +845,6 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     [sp?.first_name, sp?.last_name].filter(Boolean).join(' ').trim() ||
     (typeof sp?.full_name === 'string' ? sp.full_name : 'Tenant')
 
-  const link = signedUrlData?.signedUrl || ''
   const signedDocLabel = isResidentialTenancyPackage
     ? 'Download signed agreement package (7-day link)'
     : 'Download signed lease (7-day link)'
