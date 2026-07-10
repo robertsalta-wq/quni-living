@@ -16,9 +16,17 @@ import MessageBubble from './MessageBubble'
 import SystemEventLine from './SystemEventLine'
 import MessageComposer from './MessageComposer'
 import { landlordDisplayName, studentDisplayName } from '../../lib/nameResolution'
+import {
+  LANDLORD_DISPLAY_NAME_SELECT,
+  STUDENT_DISPLAY_NAME_SELECT,
+  resolveParticipantDisplayNames,
+  senderDisplayNameForMessage,
+  type ParticipantDisplayNames,
+} from '../../lib/messaging/conversationDisplayNames'
 
 type DisplayMessage = ConversationMessageRow & {
   displayBody: string
+  senderDisplayName: string | null
   pending?: boolean
   failed?: boolean
 }
@@ -49,6 +57,8 @@ export default function ConversationThread({ conversation, currentUserId, viewer
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [maskingEnabled, setMaskingEnabled] = useState(true)
+  const [participantDisplayNames, setParticipantDisplayNames] =
+    useState<ParticipantDisplayNames | null>(null)
   const [landlordContact, setLandlordContact] = useState<ContactDetails | null>(null)
   const [tenantContact, setTenantContact] = useState<ContactDetails | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -70,6 +80,9 @@ export default function ConversationThread({ conversation, currentUserId, viewer
         (data ?? []).map((row) => ({
           ...row,
           displayBody: mapDisplay(row, contactUnlocked, maskingEnabled),
+          senderDisplayName: participantDisplayNames
+            ? senderDisplayNameForMessage(row.sender_role, participantDisplayNames)
+            : null,
         })),
       )
     } catch (e) {
@@ -77,7 +90,7 @@ export default function ConversationThread({ conversation, currentUserId, viewer
     } finally {
       setLoading(false)
     }
-  }, [conversation.id, contactUnlocked, maskingEnabled])
+  }, [conversation.id, contactUnlocked, maskingEnabled, participantDisplayNames])
 
   useEffect(() => {
     void loadMessages()
@@ -112,6 +125,9 @@ export default function ConversationThread({ conversation, currentUserId, viewer
               ? {
                   ...row,
                   displayBody: mapDisplay(row, contactUnlocked, maskingEnabled),
+                  senderDisplayName: participantDisplayNames
+                    ? senderDisplayNameForMessage(row.sender_role, participantDisplayNames)
+                    : null,
                 }
               : m,
           )
@@ -122,49 +138,59 @@ export default function ConversationThread({ conversation, currentUserId, viewer
           {
             ...row,
             displayBody: mapDisplay(row, contactUnlocked, maskingEnabled),
+            senderDisplayName: participantDisplayNames
+              ? senderDisplayNameForMessage(row.sender_role, participantDisplayNames)
+              : null,
           },
         ]
       })
       void markConversationRead(conversation.id).catch(() => {})
     },
-    [contactUnlocked, conversation.id, maskingEnabled],
+    [contactUnlocked, conversation.id, maskingEnabled, participantDisplayNames],
   )
 
   useConversationRealtime(conversation.id, onRealtimeInsert)
 
   useEffect(() => {
-    if (!contactUnlocked) return
-    async function loadContacts() {
+    async function loadParticipants() {
       const [{ data: lp }, { data: sp }] = await Promise.all([
         supabase
           .from('landlord_profiles')
-          .select('full_name, first_name, last_name, company_name, email, phone')
+          .select(`${LANDLORD_DISPLAY_NAME_SELECT}, email, phone`)
           .eq('id', conversation.landlord_profile_id)
           .maybeSingle(),
         conversation.tenant_profile_id
           ? supabase
               .from('student_profiles')
-              .select('preferred_name, full_name, first_name, last_name, email, phone')
+              .select(`${STUDENT_DISPLAY_NAME_SELECT}, email, phone`)
               .eq('id', conversation.tenant_profile_id)
               .maybeSingle()
           : supabase
               .from('student_profiles')
-              .select('preferred_name, full_name, first_name, last_name, email, phone')
+              .select(`${STUDENT_DISPLAY_NAME_SELECT}, email, phone`)
               .eq('user_id', conversation.tenant_user_id)
               .maybeSingle(),
       ])
-      setLandlordContact(
-        lp
-          ? { fullName: landlordDisplayName(lp), email: lp.email, phone: lp.phone }
-          : null,
-      )
-      setTenantContact(
-        sp
-          ? { fullName: studentDisplayName(sp), email: sp.email, phone: sp.phone }
-          : null,
-      )
+
+      setParticipantDisplayNames(resolveParticipantDisplayNames(lp, sp))
+
+      if (contactUnlocked) {
+        setLandlordContact(
+          lp
+            ? { fullName: landlordDisplayName(lp), email: lp.email, phone: lp.phone }
+            : null,
+        )
+        setTenantContact(
+          sp
+            ? { fullName: studentDisplayName(sp), email: sp.email, phone: sp.phone }
+            : null,
+        )
+      } else {
+        setLandlordContact(null)
+        setTenantContact(null)
+      }
     }
-    void loadContacts()
+    void loadParticipants()
   }, [contactUnlocked, conversation])
 
   async function handleSend(body: string) {
@@ -192,6 +218,9 @@ export default function ConversationThread({ conversation, currentUserId, viewer
         contactUnlocked,
         maskingEnabled,
       ),
+      senderDisplayName: participantDisplayNames
+        ? senderDisplayNameForMessage(viewerRole, participantDisplayNames)
+        : null,
       pending: true,
     }
     setMessages((prev) => [...prev, optimistic])
@@ -215,6 +244,9 @@ export default function ConversationThread({ conversation, currentUserId, viewer
                 metadata: {},
                 created_at: result.createdAt,
                 displayBody: result.displayBody,
+                senderDisplayName: participantDisplayNames
+                  ? senderDisplayNameForMessage(viewerRole, participantDisplayNames)
+                  : null,
               }
             : m,
         )

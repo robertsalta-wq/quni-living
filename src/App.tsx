@@ -124,18 +124,10 @@ function App() {
           <Route path="/landlord-signup" element={<Lazy.LandlordSignup />} />
 
           <Route
-            path="/messages"
+            path="/messages/:conversationId?"
             element={
               <RequireUser>
-                <Lazy.MessagesInboxPage />
-              </RequireUser>
-            }
-          />
-          <Route
-            path="/messages/:conversationId"
-            element={
-              <RequireUser>
-                <Lazy.ConversationThreadPage />
+                <Lazy.MessagesPage />
               </RequireUser>
             }
           />
