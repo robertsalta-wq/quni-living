@@ -21,7 +21,10 @@ export const routeImports = {
   inviteTenantPage: () => import('./pages/InviteTenantPage'),
   landlordPropertyFormPage: () => import('./pages/landlord/LandlordPropertyFormPage'),
   landlordBookingReviewPage: () => import('./pages/landlord/LandlordBookingReviewPage'),
+  messagesPage: () => import('./pages/MessagesPage'),
+  /** @deprecated — re-exports MessagesPage */
   messagesInboxPage: () => import('./pages/MessagesInboxPage'),
+  /** @deprecated — re-exports MessagesPage */
   conversationThreadPage: () => import('./pages/ConversationThreadPage'),
   rentNearCampus: () => import('./pages/RentNearCampus'),
   internationalStudents: () => import('./pages/InternationalStudents'),
@@ -102,7 +105,10 @@ export const LandlordPropertyFormPage = lazy(routeImports.landlordPropertyFormPa
 export const LandlordBookingReviewPage = lazy(routeImports.landlordBookingReviewPage)
 
 // Messaging
+export const MessagesPage = lazy(routeImports.messagesPage)
+/** @deprecated Use MessagesPage */
 export const MessagesInboxPage = lazy(routeImports.messagesInboxPage)
+/** @deprecated Use MessagesPage */
 export const ConversationThreadPage = lazy(routeImports.conversationThreadPage)
 
 // Marketing & SEO (secondary traffic)

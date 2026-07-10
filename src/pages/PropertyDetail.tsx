@@ -561,7 +561,7 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     if (user && isRenterRole(role)) {
-      void import('./ConversationThreadPage')
+      void import('./MessagesPage')
     }
   }, [user, role])
 

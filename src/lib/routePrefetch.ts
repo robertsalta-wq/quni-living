@@ -55,7 +55,7 @@ const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/signup': [routeImports.signup],
   '/student-signup': [routeImports.studentSignup],
   '/landlord-signup': [routeImports.landlordSignup],
-  '/messages': [routeImports.messagesInboxPage],
+  '/messages': [routeImports.messagesPage],
   '/onboarding': [routeImports.onboarding],
   '/onboarding/student': [routeImports.studentOnboarding],
   '/onboarding/landlord': [routeImports.landlordDashboard],
@@ -118,7 +118,7 @@ export function prefetchRouteChunks(pathname: string): void {
   }
 
   if (path.startsWith('/messages/')) {
-    prefetch([routeImports.conversationThreadPage])
+    prefetch([routeImports.messagesPage])
     return
   }
 
