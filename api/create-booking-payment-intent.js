@@ -62,6 +62,7 @@ import {
 } from './lib/booking/listingBookingApply.js'
 import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
 import { landlordResponseExpiresAtIso } from './lib/booking/landlordResponseExpiry.js'
+import { attachBookingToConversationOnCreate } from './lib/messaging/bookingConversation.js'
 
 export const config = { runtime: 'edge' }
 
