@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { ConversationRow } from '../lib/messaging/conversationTypes'
+import {
+  LANDLORD_DISPLAY_NAME_SELECT,
+  STUDENT_DISPLAY_NAME_SELECT,
+  resolveCounterpartyDisplayName,
+} from '../lib/messaging/conversationDisplayNames'
+import type { NameProfile } from '../lib/nameResolution'
 
 export type InboxProperty = {
   id: string
@@ -11,9 +17,48 @@ export type InboxProperty = {
   images: string[] | null
 }
 
+type InboxStudentProfile = NameProfile & { user_id?: string }
+type InboxLandlordProfile = NameProfile
+
+type InboxConversationRow = ConversationRow & {
+  property: InboxProperty | null
+  landlord_profile: InboxLandlordProfile | null
+  tenant_profile: InboxStudentProfile | null
+}
+
 export type InboxConversation = ConversationRow & {
   property: InboxProperty | null
   unread: boolean
+  counterpartyDisplayName: string
+}
+
+async function loadStudentProfilesByUserId(
+  userIds: string[],
+): Promise<Map<string, InboxStudentProfile>> {
+  const unique = [...new Set(userIds.filter(Boolean))]
+  if (!unique.length) return new Map()
+
+  const { data, error } = await supabase
+    .from('student_profiles')
+    .select(`${STUDENT_DISPLAY_NAME_SELECT}, user_id`)
+    .in('user_id', unique)
+
+  if (error) throw error
+  const map = new Map<string, InboxStudentProfile>()
+  for (const row of data ?? []) {
+    const uid = typeof row.user_id === 'string' ? row.user_id : ''
+    if (uid) map.set(uid, row as InboxStudentProfile)
+  }
+  return map
+}
+
+function studentProfileForConversation(
+  row: InboxConversationRow,
+  studentsByUserId: Map<string, InboxStudentProfile>,
+): NameProfile | null {
+  if (row.tenant_profile) return row.tenant_profile
+  const uid = row.tenant_user_id
+  return uid ? studentsByUserId.get(uid) ?? null : null
 }
 
 export function useConversationInbox(userId: string | undefined) {
@@ -42,6 +87,12 @@ export function useConversationInbox(userId: string | undefined) {
             rent_per_week,
             slug,
             images
+          ),
+          landlord_profile:landlord_profiles!conversations_landlord_profile_id_fkey (
+            ${LANDLORD_DISPLAY_NAME_SELECT}
+          ),
+          tenant_profile:student_profiles!conversations_tenant_profile_id_fkey (
+            ${STUDENT_DISPLAY_NAME_SELECT}
           )
         `,
         )
@@ -50,14 +101,27 @@ export function useConversationInbox(userId: string | undefined) {
 
       if (qErr) throw qErr
 
-      const rows: InboxConversation[] = (data ?? []).map((row) => {
-        const c = row as ConversationRow & { property: InboxProperty | null }
-        const isLandlord = c.landlord_user_id === userId
-        const lastRead = isLandlord ? c.landlord_last_read_at : c.tenant_last_read_at
+      const rawRows = (data ?? []) as InboxConversationRow[]
+      const missingTenantUserIds = rawRows
+        .filter((row) => !row.tenant_profile && row.tenant_user_id)
+        .map((row) => row.tenant_user_id)
+      const studentsByUserId = await loadStudentProfilesByUserId(missingTenantUserIds)
+
+      const rows: InboxConversation[] = rawRows.map((row) => {
+        const isLandlord = row.landlord_user_id === userId
+        const lastRead = isLandlord ? row.landlord_last_read_at : row.tenant_last_read_at
         const unread =
-          Boolean(c.last_message_at) &&
-          (!lastRead || new Date(c.last_message_at) > new Date(lastRead))
-        return { ...c, unread }
+          Boolean(row.last_message_at) &&
+          (!lastRead || new Date(row.last_message_at) > new Date(lastRead))
+        const studentProfile = studentProfileForConversation(row, studentsByUserId)
+        const counterpartyDisplayName = resolveCounterpartyDisplayName(
+          userId,
+          row,
+          row.landlord_profile,
+          studentProfile,
+        )
+        const { landlord_profile: _lp, tenant_profile: _tp, ...conversation } = row
+        return { ...conversation, unread, counterpartyDisplayName }
       })
       setItems(rows)
     } catch (e) {
