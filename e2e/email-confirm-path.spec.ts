@@ -1,13 +1,12 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, type Page } from '@playwright/test'
 import { getBaseUrl } from './helpers/env'
 import {
-  assertStudentProfileReconciled,
   createSupabaseAdmin,
   deleteTestUser,
   generateSignupConfirmCallbackUrl,
   type AccommodationRoute,
 } from './helpers/supabaseAdmin'
-import { completeEmailSignupUi } from './helpers/signupUi'
+import { assertEmailConfirmPathReady, completeEmailSignupUi } from './helpers/signupUi'
 
 const ROUTES: AccommodationRoute[] = ['student', 'non_student']
 
@@ -49,13 +48,6 @@ function attachCallbackStudentProfileReadCounter(page: Page): {
   }
 }
 
-function onboardingInteractiveLocator(page: Page, route: AccommodationRoute) {
-  if (route === 'student') {
-    return page.getByRole('heading', { name: 'Verify your university email' })
-  }
-  return page.getByRole('heading', { name: 'About you' })
-}
-
 for (const route of ROUTES) {
   test(`email confirm (${route}): single deduped profile read and route/role reconciliation`, async ({
     page,
@@ -75,24 +67,16 @@ for (const route of ROUTES) {
       userId = link.userId
 
       const callbackStart = Date.now()
-      await page.goto(link.confirmUrl)
+      await page.goto(link.confirmUrl, { waitUntil: 'domcontentloaded' })
 
-      await expect(page).toHaveURL(/\/onboarding\/student/)
-      const interactive = onboardingInteractiveLocator(page, route)
-      await interactive.waitFor({ state: 'visible' })
-      const interactiveMs = Date.now() - callbackStart
-
-      const studentProfileReads = readCounter.getCount()
-      console.log(
-        `[e2e email-confirm route=${route}] callback → onboarding interactive: ${interactiveMs}ms`,
+      await assertEmailConfirmPathReady(
+        page,
+        admin,
+        userId,
+        route,
+        readCounter.getCount,
+        callbackStart,
       )
-      console.log(
-        `[e2e email-confirm route=${route}] student_profiles GETs during /auth/callback: ${studentProfileReads}`,
-      )
-
-      expect(studentProfileReads).toBe(1)
-
-      await assertStudentProfileReconciled(admin, userId, route)
     } finally {
       readCounter.stop()
       if (userId) {
