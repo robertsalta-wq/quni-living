@@ -94,6 +94,17 @@ Section hooks for "you can't vary the prescribed form": NSW `s.15`/`s.21` `[VERI
 
 ---
 
+### Q-009 — T1 couples: one licensee, partner as authorised occupant
+**Status:** Open
+**Area:** T1 occupancy agreements
+**Tier/scope:** T1
+
+**Question.** T1 occupancy agreements with couples: confirm one licensee signs and the partner is named as authorised occupant (not a co-signatory) — current platform behaviour as of Jul 2026.
+
+**Answer.** _(pending)_
+
+---
+
 ## STANDING ITEMS ALREADY WITH JENNY
 _(pre-existing, tracked here so there's one register)_
 
