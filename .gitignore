@@ -54,6 +54,8 @@ scripts/test-*.pdf
 scripts/test-*.mjs
 scripts/test-*.png
 scripts/test-no-bond-chunk1/
+scripts/__pycache__/
+scripts/test-official-form-spike/
 # Vitest snapshot / scratch output from AI verification tests
 src/lib/__test_output__/
 playwright-report/
@@ -74,4 +76,3 @@ supabase/.temp/
 
 # Tokyo migration reference dumps (local only; Sydney is production)
 supabase/tokyo_*.sql
-scripts/test-official-form-spike/*.pdf
