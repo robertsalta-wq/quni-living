@@ -301,18 +301,30 @@ export default function ConversationThread({ conversation, currentUserId, viewer
           </p>
         )}
         {!loading &&
-          messages.map((m) =>
-            m.kind === 'system' ? (
-              <SystemEventLine key={m.id} message={m} />
-            ) : (
+          messages.map((m, index) => {
+            if (m.kind === 'system') {
+              return <SystemEventLine key={m.id} message={m} />
+            }
+
+            const isOwn = m.sender_user_id === currentUserId
+            const prev = index > 0 ? messages[index - 1] : null
+            const showSenderIdentity =
+              !isOwn &&
+              (prev == null ||
+                prev.kind === 'system' ||
+                prev.sender_user_id !== m.sender_user_id)
+
+            return (
               <MessageBubble
                 key={m.id}
                 message={m}
                 displayBody={m.displayBody}
-                isOwn={m.sender_user_id === currentUserId}
+                isOwn={isOwn}
+                senderDisplayName={m.senderDisplayName}
+                showSenderIdentity={showSenderIdentity}
               />
-            ),
-          )}
+            )
+          })}
         <div ref={bottomRef} />
       </div>
 
