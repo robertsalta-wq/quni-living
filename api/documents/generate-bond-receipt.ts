@@ -16,6 +16,12 @@ import type { Database } from '../../src/lib/database.types'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
 import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
 import { headerString, readJsonBody } from '../lib/nodeHandler.js'
+import {
+  assertStudentLegalNameForSigningByTenancyId,
+  TENANT_LEGAL_NAME_NOT_READY_CODE,
+  TenantLegalNameNotReadyError,
+} from '../lib/booking/assertStudentLegalNameForSigning.js'
+import { tenantLegalNameForDocuments } from '../lib/booking/tenantLegalNameForDocuments.js'
 
 function isBoardingLodgerBondContext(propertyType: string | null | undefined): boolean {
   const pt = typeof propertyType === 'string' ? propertyType.trim() : ''
@@ -238,6 +244,18 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'Bond receipts are only for boarding/lodger or homestay listings' })
   }
 
+  try {
+    await assertStudentLegalNameForSigningByTenancyId(admin, tenancyId)
+  } catch (e) {
+    if (e instanceof TenantLegalNameNotReadyError) {
+      return res.status(409).json({
+        error: TENANT_LEGAL_NAME_NOT_READY_CODE,
+        message: e.message,
+      })
+    }
+    throw e
+  }
+
   const { data: landlord, error: llErr } = await admin
     .from('landlord_profiles')
     .select('full_name, first_name, last_name, email')
@@ -246,7 +264,7 @@ export default async function handler(req: any, res: any) {
 
   const { data: student, error: stErr } = await admin
     .from('student_profiles')
-    .select('full_name, first_name, last_name, email')
+    .select('full_name, first_name, last_name, email, verification_type, legal_name_locked_at')
     .eq('id', tenancy.student_profile_id)
     .maybeSingle()
 
@@ -257,7 +275,7 @@ export default async function handler(req: any, res: any) {
   const llRec = landlord as Record<string, unknown>
   const stRec = student as Record<string, unknown>
   const landlordName = personFullName(llRec)
-  const tenantName = personFullName(stRec)
+  const tenantName = tenantLegalNameForDocuments(stRec, '-')
   const landlordEmail = typeof llRec.email === 'string' && llRec.email.trim() ? llRec.email.trim() : ''
   const studentEmail = typeof stRec.email === 'string' && stRec.email.trim() ? stRec.email.trim() : ''
 

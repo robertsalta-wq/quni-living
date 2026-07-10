@@ -13,6 +13,7 @@ import {
 } from '../pricing/resolvePlatformFee.js'
 import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
+import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
 import { bookingUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
@@ -158,11 +159,13 @@ export async function runListingConfirmBooking(
 
   const preflight = await preflightListingTenancyDocument(admin, booking.id)
   if (!preflight.ok) {
+    const legalNameGate = preflight.error === TENANT_LEGAL_NAME_NOT_READY_CODE
     return jsonFail(preflight.status >= 500 ? 503 : preflight.status, {
-      error: 'agreement_preflight_failed',
-      message:
-        preflight.error ||
-        'We could not prepare your tenancy agreement. Fix the issue below and try again.',
+      error: legalNameGate ? TENANT_LEGAL_NAME_NOT_READY_CODE : 'agreement_preflight_failed',
+      message: legalNameGate
+        ? 'Tenant legal name must be verified and locked before signing.'
+        : preflight.error ||
+          'We could not prepare your tenancy agreement. Fix the issue below and try again.',
       detail: preflight.detail,
     })
   }

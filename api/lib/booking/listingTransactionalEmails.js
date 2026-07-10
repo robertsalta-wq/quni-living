@@ -5,6 +5,7 @@ import { sendEmail } from '../sendEmail.js'
 import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
+import { tenantLegalNameForDocuments } from './tenantLegalNameForDocuments.js'
 import {
   listingBondPaymentEmailHtmlForLandlord,
   listingBondPaymentEmailHtmlForTenant,
@@ -71,7 +72,7 @@ async function loadListingEmailContext(admin, bookingId) {
       lease_length,
       bond_window_expires_at,
       properties ( title, address, suburb, state, postcode, property_type, is_registered_rooming_house, qld_bond_remittance_preference, bond, bond_weeks ),
-      student_profiles ( email, full_name, first_name, last_name ),
+      student_profiles ( email, full_name, first_name, last_name, verification_type, legal_name_locked_at ),
       landlord_profiles ( email, full_name, phone )
     `,
     )
@@ -143,7 +144,7 @@ async function loadListingEmailContext(admin, bookingId) {
     }
   }
 
-  const paymentReference = `${studentName} — ${addr || title}`.trim()
+  const paymentReference = `${tenantLegalNameForDocuments(sp, 'Student')} — ${addr || title}`.trim()
   const bondPaymentOpts = {
     qldBondRemittancePreference,
     ...(payout ? { payee: payout, paymentReference } : {}),

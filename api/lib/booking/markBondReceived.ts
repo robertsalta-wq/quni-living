@@ -3,6 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { declineCompetingBookings } from './declineCompetingBookings.js'
+import {
+  assertStudentLegalNameForSigningByBookingId,
+  TenantLegalNameNotReadyError,
+} from './assertStudentLegalNameForSigning.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
@@ -204,6 +208,7 @@ export async function runMarkBondReceivedLandlord(args: {
     try {
       const signingAlreadySent = await listingLeaseSigningAlreadyInitiated(admin, bookingId)
       if (!signingAlreadySent) {
+        await assertStudentLegalNameForSigningByBookingId(admin, bookingId)
         await triggerListingDocumentGeneration({
           admin,
           bookingId,
@@ -212,7 +217,11 @@ export async function runMarkBondReceivedLandlord(args: {
         })
       }
     } catch (e) {
-      warn(logger, '[mark-bond-received] listing signing trigger', e)
+      if (e instanceof TenantLegalNameNotReadyError) {
+        warn(logger, '[mark-bond-received] tenant legal name gate', e)
+      } else {
+        warn(logger, '[mark-bond-received] listing signing trigger', e)
+      }
     }
   }
 

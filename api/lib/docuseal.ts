@@ -28,6 +28,11 @@ import {
   fetchCoTenantSignerForBooking,
 } from './booking/coTenantSigning.js'
 import { isTerminalBookingStatus } from './booking/terminalBookingStatus.js'
+import { assertStudentLegalNameForSigning } from './booking/assertStudentLegalNameForSigning.js'
+import {
+  legacyStudentNameFromProfile,
+  tenantLegalNameForDocuments,
+} from './booking/tenantLegalNameForDocuments.js'
 
 export function getDocusealSubmissionsUrl(): string {
   return getDocusealSubmissionsUrlImpl()
@@ -337,7 +342,7 @@ export async function sendForSigning(
 
   const { data: spRow, error: spErr } = await admin
     .from('student_profiles')
-    .select('full_name, first_name, last_name, email')
+    .select('full_name, first_name, last_name, email, verification_type, legal_name_locked_at')
     .eq('id', tenancy.student_profile_id)
     .maybeSingle()
 
@@ -345,14 +350,14 @@ export async function sendForSigning(
   if (spErr) throw spErr
   if (!lpRow || !spRow) throw new Error('Could not load landlord or student profile')
 
+  await assertStudentLegalNameForSigning(admin, spRow)
+
   const landlordName =
     [lpRow.first_name, lpRow.last_name].filter(Boolean).join(' ').trim() ||
     (typeof lpRow.full_name === 'string' ? lpRow.full_name.trim() : '') ||
     'Landlord'
-  const tenantName =
-    [spRow.first_name, spRow.last_name].filter(Boolean).join(' ').trim() ||
-    (typeof spRow.full_name === 'string' ? spRow.full_name.trim() : '') ||
-    'Tenant'
+  const tenantSalutationName = legacyStudentNameFromProfile(spRow, 'Tenant')
+  const tenantSubmitterName = tenantLegalNameForDocuments(spRow, 'Tenant')
   const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
   const tenantEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
 
@@ -381,12 +386,12 @@ export async function sendForSigning(
   }
 
   const submissionRaw = await createDocusealSubmissionFromPdf({
-    name: `Lease - ${landlordName} / ${tenantName}`,
+    name: `Lease - ${landlordName} / ${tenantSalutationName}`,
     pdfBase64,
     documentPdfName: opts?.documentPdfName,
     removeTags: opts?.removeTags,
     landlord: { name: landlordName, email: landlordEmail },
-    tenant: { name: tenantName, email: tenantEmail },
+    tenant: { name: tenantSubmitterName, email: tenantEmail },
     coTenant: coTenantSigner,
   })
   const submission = wrapSubmissionSubmitters(submissionRaw, false)
@@ -441,7 +446,7 @@ export async function sendForSigning(
       ? sendEmail({
           to: tenantEmail,
           subject: 'Your Quni Living lease is ready to sign',
-          html: signHtml(tenantName, tenantLink),
+          html: signHtml(tenantSalutationName, tenantLink),
         })
       : Promise.resolve(),
     coTenantSigner && coTenantLink
@@ -527,7 +532,7 @@ export async function sendResidentialTenancyPackageForSigning(
 
   const { data: spRow, error: spErr } = await admin
     .from('student_profiles')
-    .select('full_name, first_name, last_name, email')
+    .select('full_name, first_name, last_name, email, verification_type, legal_name_locked_at')
     .eq('id', tenancy.student_profile_id)
     .maybeSingle()
 
@@ -535,14 +540,15 @@ export async function sendResidentialTenancyPackageForSigning(
   if (spErr) throw spErr
   if (!lpRow || !spRow) throw new Error('Could not load landlord or student profile')
 
+  await assertStudentLegalNameForSigning(admin, spRow)
+
   const landlordName =
     [lpRow.first_name, lpRow.last_name].filter(Boolean).join(' ').trim() ||
     (typeof lpRow.full_name === 'string' ? lpRow.full_name.trim() : '') ||
     'Landlord'
-  const tenantName =
-    [spRow.first_name, spRow.last_name].filter(Boolean).join(' ').trim() ||
-    (typeof spRow.full_name === 'string' ? spRow.full_name.trim() : '') ||
-    'Tenant'
+  const tenantSalutationName = legacyStudentNameFromProfile(spRow, 'Tenant')
+  const tenantSubmitterName = tenantLegalNameForDocuments(spRow, 'Tenant')
+  const tenantName = tenantSalutationName
   const landlordEmail = typeof lpRow.email === 'string' ? lpRow.email.trim() : ''
   const tenantEmail = typeof spRow.email === 'string' ? spRow.email.trim() : ''
 
@@ -600,7 +606,7 @@ export async function sendResidentialTenancyPackageForSigning(
       { name: 'Quni Platform Addendum.pdf', file: addendumBase64 },
     ],
     landlord: { name: landlordName, email: landlordEmail },
-    tenant: { name: tenantName, email: tenantEmail },
+    tenant: { name: tenantSubmitterName, email: tenantEmail },
     coTenant: coTenantSigner,
     ...(nswReadonlyDates
       ? {
@@ -694,7 +700,7 @@ export async function sendResidentialTenancyPackageForSigning(
       ? sendEmail({
           to: tenantEmail,
           subject: readySubject,
-          html: signHtml(tenantName, tenantLink),
+          html: signHtml(tenantSalutationName, tenantLink),
         })
       : Promise.resolve(),
     coTenantSigner && coTenantLink

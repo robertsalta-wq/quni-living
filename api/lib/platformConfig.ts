@@ -34,6 +34,8 @@ export const PLATFORM_CONFIG_KEYS = {
   UTILITIES_RESOLVER_VIC_ENABLED: 'utilities_resolver_vic_enabled',
   UTILITIES_RESOLVER_ADDENDUM_ENABLED: 'utilities_resolver_addendum_enabled',
   UTILITIES_RESOLVER_LISTING_DISCLOSURE_ENABLED: 'utilities_resolver_listing_disclosure_enabled',
+  /** When true, tenant signing/bond/doc-gen requires locked legal name (student only). */
+  LEGAL_NAME_SIGNING_GATE_ENABLED: 'legal_name_signing_gate_enabled',
 } as const
 
 export type ServiceTierPlatformFlags = {
@@ -199,6 +201,16 @@ export function parseBooleanConfig(value: string | null | undefined, fallback = 
   if (v === 'true') return true
   if (v === 'false') return false
   return fallback
+}
+
+/** Live read — do not cache; admin flips gate in platform_config without redeploy. */
+export async function fetchLegalNameSigningGateEnabled(
+  client: SupabaseClient<Database>,
+): Promise<boolean> {
+  const map = await fetchPlatformConfigValueMap(client, [
+    PLATFORM_CONFIG_KEYS.LEGAL_NAME_SIGNING_GATE_ENABLED,
+  ])
+  return parseBooleanConfig(map[PLATFORM_CONFIG_KEYS.LEGAL_NAME_SIGNING_GATE_ENABLED], false)
 }
 
 export function parseIntegerCentsConfig(value: string | null | undefined, fallback = 0): number {
