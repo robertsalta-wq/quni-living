@@ -12,6 +12,10 @@ import { PROPERTY_CARD_LIST_SELECT } from '../lib/propertyCardSelect'
 import TenantInviteOfferBanner from '../components/tenantInvite/TenantInviteOfferBanner'
 import RenterPlatformTrustPanel from '../components/RenterPlatformTrustPanel'
 import { tenantInviteOfferFromRpcRow, previewInviteBondAud } from '../lib/pricing/tenantInviteOffer'
+import {
+  formatListingBondDisplayLabel,
+  listingCoupleOccupancyWeeklyRentAud,
+} from './PropertyDetail'
 import type { Property } from '../lib/listings'
 
 type ResolvedInvite = {
@@ -204,6 +208,18 @@ export default function InviteTenantPage() {
     : null
   const inviteOffer = tenantInviteOfferFromRpcRow(resolved)
   const listingRent = property?.rent_per_week != null ? Number(property.rent_per_week) : 0
+  const bondPropertyForDisplay =
+    property && inviteOffer.offeredBondWeeks != null
+      ? { ...property, bond_weeks: inviteOffer.offeredBondWeeks }
+      : property
+  const listingBondDisplayLabel =
+    bondPropertyForDisplay && listingRent > 0
+      ? formatListingBondDisplayLabel(
+          bondPropertyForDisplay,
+          listingRent,
+          listingCoupleOccupancyWeeklyRentAud(bondPropertyForDisplay),
+        )
+      : null
   const inviteBondAud =
     property && listingRent > 0
       ? previewInviteBondAud(property, resolved, listingRent)
@@ -262,12 +278,10 @@ export default function InviteTenantPage() {
             <div
               className={`rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-gray-800${resolved.student_only ? ' mt-4' : ''}`}
             >
-              {inviteBondAud != null ? (
+              {listingBondDisplayLabel != null ? (
                 <p>
                   Bond for this listing:{' '}
-                  <span className="font-semibold tabular-nums">
-                    ${inviteBondAud.toLocaleString('en-AU', { maximumFractionDigits: 0 })}
-                  </span>
+                  <span className="font-semibold tabular-nums">{listingBondDisplayLabel}</span>
                 </p>
               ) : (
                 <p>No bond is required for this listing.</p>
