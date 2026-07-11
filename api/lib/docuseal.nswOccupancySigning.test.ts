@@ -106,10 +106,19 @@ function buildSendForSigningAdmin() {
                   first_name: 'Alex',
                   last_name: 'Renter',
                   email: 'alex@example.com',
+                  verification_type: 'identity',
+                  legal_name_locked_at: '2026-01-01T00:00:00.000Z',
                 },
                 error: null,
               }),
             }),
+          }),
+        }
+      }
+      if (table === 'platform_config') {
+        return {
+          select: () => ({
+            in: async () => ({ data: [], error: null }),
           }),
         }
       }
