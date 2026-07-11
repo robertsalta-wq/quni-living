@@ -1,16 +1,13 @@
 import { Link } from 'react-router-dom'
 
+/** Quiet inline system note when contact details are still masked. */
 export default function ContactUnlockBanner() {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-      <p className="font-medium">Contact details are hidden until booking is accepted</p>
-      <p className="mt-1 text-amber-900/90 leading-relaxed">
-        Keep all communication on Quni. Sharing phone numbers or email in messages is masked until the
-        landlord accepts your booking and listing fee is confirmed.
-      </p>
-      <p className="mt-2 text-xs">
-        <Link to="/terms" className="font-medium underline underline-offset-2">
-          Terms of use
+    <div className="flex justify-center py-2">
+      <p className="max-w-md rounded-full bg-gray-100 px-3 py-1.5 text-center text-xs text-gray-500">
+        🔒 Contact details unlock once the booking is accepted.{' '}
+        <Link to="/terms" className="text-gray-600 underline underline-offset-2 hover:text-gray-800">
+          Terms
         </Link>
       </p>
     </div>
