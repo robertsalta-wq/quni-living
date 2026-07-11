@@ -3,9 +3,11 @@ import { useState, type FormEvent } from 'react'
 type Props = {
   disabled?: boolean
   onSend: (body: string) => Promise<void>
+  onTypingActivity?: () => void
+  onTypingStop?: () => void
 }
 
-export default function MessageComposer({ disabled, onSend }: Props) {
+export default function MessageComposer({ disabled, onSend, onTypingActivity, onTypingStop }: Props) {
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -15,6 +17,7 @@ export default function MessageComposer({ disabled, onSend }: Props) {
     const text = body.trim()
     if (!text || sending || disabled) return
     setError(null)
+    onTypingStop?.()
     setBody('')
     setSending(true)
     try {
@@ -40,7 +43,15 @@ export default function MessageComposer({ disabled, onSend }: Props) {
       <div className="flex gap-2 items-end">
         <textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value
+            setBody(next)
+            if (next.trim()) onTypingActivity?.()
+            else onTypingStop?.()
+          }}
+          onBlur={() => {
+            if (!body.trim()) onTypingStop?.()
+          }}
           rows={2}
           placeholder="Write a message…"
           disabled={disabled}

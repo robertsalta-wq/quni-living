@@ -5,9 +5,14 @@ import { firstPropertyImageUrl } from '../../lib/propertyImages'
 type Props = {
   property: InboxProperty | null
   contactUnlocked: boolean
+  counterpartyOnline?: boolean
 }
 
-export default function ConversationHeader({ property, contactUnlocked }: Props) {
+export default function ConversationHeader({
+  property,
+  contactUnlocked,
+  counterpartyOnline = false,
+}: Props) {
   if (!property) {
     return (
       <div className="border-b border-gray-100 bg-white px-3 py-2">
@@ -48,15 +53,23 @@ export default function ConversationHeader({ property, contactUnlocked }: Props)
           <p className="truncate text-xs text-gray-500">{subtitle}</p>
         ) : null}
       </div>
-      <span
-        className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
-          contactUnlocked
-            ? 'bg-emerald-50 text-emerald-700'
-            : 'bg-amber-50 text-amber-800'
-        }`}
-      >
-        {contactUnlocked ? 'Unlocked' : 'Masked'}
-      </span>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {counterpartyOnline ? (
+          <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            Online
+          </span>
+        ) : null}
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+            contactUnlocked
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-amber-50 text-amber-800'
+          }`}
+        >
+          {contactUnlocked ? 'Unlocked' : 'Masked'}
+        </span>
+      </div>
     </div>
   )
 }

@@ -11,6 +11,7 @@ type Props = {
   isOwn: boolean
   senderDisplayName?: string | null
   showSenderIdentity?: boolean
+  showReadReceipt?: boolean
 }
 
 export default function MessageBubble({
@@ -19,6 +20,7 @@ export default function MessageBubble({
   isOwn,
   senderDisplayName,
   showSenderIdentity = false,
+  showReadReceipt = false,
 }: Props) {
   const displayName = senderDisplayName?.trim() || 'Unknown'
   const initials = initialsFromDisplayName(displayName)
@@ -33,6 +35,9 @@ export default function MessageBubble({
           </div>
           <p className="mt-1 text-right text-[10px] tabular-nums text-gray-400">
             {formatMessageTime(message.created_at)}
+            {showReadReceipt ? (
+              <span className="ml-1.5 text-gray-400">· Read</span>
+            ) : null}
           </p>
         </div>
       </div>
