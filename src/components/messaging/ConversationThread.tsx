@@ -8,6 +8,12 @@ import {
   sendConversationMessage,
 } from '../../lib/messaging/conversationsApi'
 import { useConversationRealtime } from '../../hooks/useConversationRealtime'
+import { useConversationPresence } from '../../hooks/useConversationPresence'
+import { useConversationTyping } from '../../hooks/useConversationTyping'
+import {
+  useConversationRowRealtime,
+  type ConversationLiveFields,
+} from '../../hooks/useConversationRowRealtime'
 import type { InboxProperty } from '../../hooks/useConversationInbox'
 import ConversationHeader from './ConversationHeader'
 import ContactUnlockBanner from './ContactUnlockBanner'
@@ -15,6 +21,7 @@ import ContactUnlockActions from './ContactUnlockActions'
 import MessageBubble from './MessageBubble'
 import SystemEventLine from './SystemEventLine'
 import MessageComposer from './MessageComposer'
+import TypingIndicator from './TypingIndicator'
 import { landlordDisplayName, studentDisplayName } from '../../lib/nameResolution'
 import {
   LANDLORD_DISPLAY_NAME_SELECT,
@@ -61,9 +68,52 @@ export default function ConversationThread({ conversation, currentUserId, viewer
     useState<ParticipantDisplayNames | null>(null)
   const [landlordContact, setLandlordContact] = useState<ContactDetails | null>(null)
   const [tenantContact, setTenantContact] = useState<ContactDetails | null>(null)
+  const [conversationLive, setConversationLive] = useState<ConversationLiveFields>(() => ({
+    landlord_last_read_at: conversation.landlord_last_read_at,
+    tenant_last_read_at: conversation.tenant_last_read_at,
+    contact_unlocked_at: conversation.contact_unlocked_at,
+  }))
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const contactUnlocked = conversation.contact_unlocked_at != null
+  const contactUnlocked = conversationLive.contact_unlocked_at != null
+
+  const counterpartyUserId = useMemo(() => {
+    if (currentUserId === conversation.landlord_user_id) return conversation.tenant_user_id
+    if (currentUserId === conversation.tenant_user_id) return conversation.landlord_user_id
+    return undefined
+  }, [conversation.landlord_user_id, conversation.tenant_user_id, currentUserId])
+
+  useEffect(() => {
+    setConversationLive({
+      landlord_last_read_at: conversation.landlord_last_read_at,
+      tenant_last_read_at: conversation.tenant_last_read_at,
+      contact_unlocked_at: conversation.contact_unlocked_at,
+    })
+  }, [
+    conversation.id,
+    conversation.landlord_last_read_at,
+    conversation.tenant_last_read_at,
+    conversation.contact_unlocked_at,
+  ])
+
+  const onConversationLiveUpdate = useCallback((fields: ConversationLiveFields) => {
+    setConversationLive(fields)
+  }, [])
+
+  useConversationRowRealtime(conversation.id, onConversationLiveUpdate)
+
+  const counterpartyOnline = useConversationPresence(
+    conversation.id,
+    currentUserId,
+    counterpartyUserId,
+  )
+
+  const {
+    counterpartyTyping,
+    notifyTyping,
+    stopTyping,
+    dismissCounterpartyTyping,
+  } = useConversationTyping(conversation.id, currentUserId)
 
   const loadMessages = useCallback(async () => {
     setLoading(true)
@@ -104,10 +154,35 @@ export default function ConversationThread({ conversation, currentUserId, viewer
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  }, [messages.length, counterpartyTyping])
+
+  const lastOwnMessageId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]!
+      if (m.kind === 'user' && m.sender_user_id === currentUserId && !m.pending && !m.failed) {
+        return m.id
+      }
+    }
+    return null
+  }, [messages, currentUserId])
+
+  const counterpartyLastReadAt =
+    viewerRole === 'landlord'
+      ? conversationLive.tenant_last_read_at
+      : conversationLive.landlord_last_read_at
+
+  const showReadOnLastOwn = useMemo(() => {
+    if (!lastOwnMessageId || !counterpartyLastReadAt) return false
+    const lastOwn = messages.find((m) => m.id === lastOwnMessageId)
+    if (!lastOwn) return false
+    return new Date(counterpartyLastReadAt).getTime() >= new Date(lastOwn.created_at).getTime()
+  }, [lastOwnMessageId, counterpartyLastReadAt, messages])
 
   const onRealtimeInsert = useCallback(
     (row: ConversationMessageRow) => {
+      if (row.sender_user_id === counterpartyUserId) {
+        dismissCounterpartyTyping()
+      }
       setMessages((prev) => {
         if (prev.some((m) => m.id === row.id)) return prev
 
@@ -146,7 +221,7 @@ export default function ConversationThread({ conversation, currentUserId, viewer
       })
       void markConversationRead(conversation.id).catch(() => {})
     },
-    [contactUnlocked, conversation.id, maskingEnabled, participantDisplayNames],
+    [contactUnlocked, conversation.id, counterpartyUserId, dismissCounterpartyTyping, maskingEnabled, participantDisplayNames],
   )
 
   useConversationRealtime(conversation.id, onRealtimeInsert)
@@ -194,6 +269,7 @@ export default function ConversationThread({ conversation, currentUserId, viewer
   }, [contactUnlocked, conversation])
 
   async function handleSend(body: string) {
+    stopTyping()
     const tempId = `pending-${Date.now()}`
     const optimistic: DisplayMessage = {
       id: tempId,
@@ -272,7 +348,11 @@ export default function ConversationThread({ conversation, currentUserId, viewer
         </Link>
       </div>
 
-      <ConversationHeader property={conversation.property} contactUnlocked={contactUnlocked} />
+      <ConversationHeader
+        property={conversation.property}
+        contactUnlocked={contactUnlocked}
+        counterpartyOnline={counterpartyOnline}
+      />
 
       <div className="px-4 py-3 space-y-3 bg-gray-50 border-b border-gray-100">
         {contactUnlocked && (
@@ -322,13 +402,19 @@ export default function ConversationThread({ conversation, currentUserId, viewer
                 isOwn={isOwn}
                 senderDisplayName={m.senderDisplayName}
                 showSenderIdentity={showSenderIdentity}
+                showReadReceipt={isOwn && showReadOnLastOwn && m.id === lastOwnMessageId}
               />
             )
           })}
+        {!loading && counterpartyTyping ? <TypingIndicator /> : null}
         <div ref={bottomRef} />
       </div>
 
-      <MessageComposer onSend={handleSend} />
+      <MessageComposer
+        onSend={handleSend}
+        onTypingActivity={notifyTyping}
+        onTypingStop={stopTyping}
+      />
     </div>
   )
 }
