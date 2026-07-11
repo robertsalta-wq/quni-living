@@ -24,22 +24,9 @@ import {
 } from './occupancyPlatformProse.js'
 import { loadOccupancyListingPayeeFields } from './occupancyListingPayee.js'
 import { PLATFORM_LEGAL_ENTITY_NOT_CONFIGURED } from '../../../../src/lib/platformIdentity.js'
+import { leaseEndDateFromMoveIn } from '../../booking/leaseEndDate.js'
 
 const PREFLIGHT_DOCUMENT_ID = '00000000-0000-4000-8000-000000000000'
-
-function leaseEndDateFromMoveIn(moveInIso: string, leaseLength: string | null): string | null {
-  const raw = moveInIso.slice(0, 10)
-  const [y, m, d] = raw.split('-').map(Number)
-  if (!y || !m || !d) return null
-  const start = new Date(Date.UTC(y, m - 1, d))
-  let weeks = 52
-  if (leaseLength === '3 months') weeks = 13
-  else if (leaseLength === '6 months') weeks = 26
-  else if (leaseLength === '12 months') weeks = 52
-  else if (leaseLength === 'Flexible') weeks = 104
-  const end = new Date(start.getTime() + weeks * 7 * 86400000)
-  return end.toISOString().slice(0, 10)
-}
 
 function propertyAddressLine(p: Record<string, unknown>): string {
   const parts = [
