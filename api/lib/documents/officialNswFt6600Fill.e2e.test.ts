@@ -88,28 +88,25 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
     expect(form.getCheckBox(F.water_usage_no_cb).isChecked()).toBe(true)
   })
 
-  it('buildNswResidentialTenancyAgreementPropsFromBooking leaves bond null when listing has no bond', () => {
-    const props = buildNswResidentialTenancyAgreementPropsFromBooking({
-      ...QUINN_ROBERT_BOOKING_ROWS,
-      property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
-      booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
-    })
-    expect(props.bond.amount).toBeNull()
+  it('rejects props build when bond is unresolved (no-bond listing)', () => {
+    expect(() =>
+      buildNswResidentialTenancyAgreementPropsFromBooking({
+        ...QUINN_ROBERT_BOOKING_ROWS,
+        property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
+        booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
+      }),
+    ).toThrow(/Bond amount must be resolved/)
   })
 
-  it('leaves FT6600 bond_amount blank when property bond is null (no-bond listing)', async () => {
-    const props = buildNswResidentialTenancyAgreementPropsFromBooking({
-      ...QUINN_ROBERT_BOOKING_ROWS,
-      documentId: 'e2e-no-bond-ft6600',
-      property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
-      booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
-    })
-    expect(props.bond.amount).toBeNull()
-    const doc = await loadOfficialNswFt6600Template()
-    await prepareOfficialNswFt6600ScheduleForFlatten(doc, props)
-    const form = doc.getForm()
-    expect(form.getTextField(F.bond_amount).getText() ?? '').toBe('')
-    expect(form.getCheckBox(F.bond_paid_to_rbo_cb).isChecked()).toBe(false)
+  it('rejects FT6600 fill when bond is unresolved (no-bond listing)', () => {
+    expect(() =>
+      buildNswResidentialTenancyAgreementPropsFromBooking({
+        ...QUINN_ROBERT_BOOKING_ROWS,
+        documentId: 'e2e-no-bond-ft6600',
+        property: { ...QUINN_ROBERT_FT6600_PROPERTY, bond: null },
+        booking: { ...QUINN_ROBERT_FT6600_BOOKING, bond_amount: null },
+      }),
+    ).toThrow(/Bond amount must be resolved/)
   })
 
   it('managed tier omits landlord service address and fills agent from platform', async () => {
