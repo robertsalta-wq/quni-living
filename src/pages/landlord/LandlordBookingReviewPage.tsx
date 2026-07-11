@@ -45,6 +45,9 @@ import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import LandlordBookingAgreedRentEditor from '../../components/landlord/LandlordBookingAgreedRentEditor'
+import LandlordBookingTermsEditor, {
+  listingBookingTermsEditorEligible,
+} from '../../components/landlord/LandlordBookingTermsEditor'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { Pill, type PillTone } from '../../components/admin/primitives/Pill'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
@@ -775,6 +778,12 @@ export default function LandlordBookingReviewPage() {
   const isListingBondPending =
     booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
 
+  const showListingTermsEditor = listingBookingTermsEditorEligible(
+    booking.status,
+    booking.service_tier_at_request,
+    booking.service_tier_final,
+  )
+
   const isListingPropertyContext =
     property?.service_tier === 'listing' ||
     booking.service_tier_at_request === 'listing' ||
@@ -1014,16 +1023,39 @@ export default function LandlordBookingReviewPage() {
               coTenant={parseCoTenantSnapshot(booking.co_tenant)}
             />
 
-            <LandlordBookingAgreedRentEditor
-              bookingId={booking.id}
-              status={booking.status}
-              weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-              bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-              rentBreakdown={booking.rent_breakdown}
-              propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-              serviceTierAtRequest={booking.service_tier_at_request}
-              onSaved={() => void reload()}
-            />
+            {showListingTermsEditor ? (
+              <LandlordBookingTermsEditor
+                bookingId={booking.id}
+                status={booking.status}
+                serviceTierAtRequest={booking.service_tier_at_request}
+                serviceTierFinal={booking.service_tier_final}
+                weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                rentBreakdown={booking.rent_breakdown}
+                propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                moveInDate={booking.move_in_date}
+                startDate={booking.start_date}
+                leaseLength={booking.lease_length}
+                occupantCount={booking.occupant_count}
+                notes={booking.notes}
+                coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                onSaved={() => {
+                  void reload()
+                  setLeasePanelRefreshKey((k) => k + 1)
+                }}
+              />
+            ) : (
+              <LandlordBookingAgreedRentEditor
+                bookingId={booking.id}
+                status={booking.status}
+                weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                rentBreakdown={booking.rent_breakdown}
+                propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                serviceTierAtRequest={booking.service_tier_at_request}
+                onSaved={() => void reload()}
+              />
+            )}
 
             {isListingBondPending && (
               <LandlordApplicantAIAssessmentPanel

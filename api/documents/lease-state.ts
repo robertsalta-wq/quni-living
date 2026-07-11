@@ -137,6 +137,7 @@ export default async function handler(req, res) {
       viewer_role: viewerRole,
       viewer_signed: false,
       counterparty_signed: false,
+      any_party_signed: false,
       listing_agreement_status: agreementStatus,
       listing_agreement_error:
         typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
@@ -175,6 +176,7 @@ export default async function handler(req, res) {
       viewer_role: viewerRole,
       viewer_signed: false,
       counterparty_signed: false,
+      any_party_signed: false,
       listing_agreement_status: agreementStatus,
       listing_agreement_error:
         typeof booking.listing_agreement_error === 'string' ? booking.listing_agreement_error : null,
@@ -204,6 +206,9 @@ export default async function handler(req, res) {
     viewer_role: viewerRole,
     co_tenant_signing_required: coTenantSigningRequired,
     co_tenant_signed: Boolean(doc.co_tenant_signed_at),
+    any_party_signed: Boolean(
+      doc.landlord_signed_at || doc.student_signed_at || doc.co_tenant_signed_at,
+    ),
     viewer_signed:
       viewerRole === 'landlord'
         ? Boolean(doc.landlord_signed_at)
