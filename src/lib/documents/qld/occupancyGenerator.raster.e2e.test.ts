@@ -1,5 +1,5 @@
 /**
- * Manual visual check — run: npx vitest run src/lib/documents/qld/occupancyGenerator.raster.test.ts
+ * Manual visual check — run: npm run test:integration -- src/lib/documents/qld/occupancyGenerator.raster.e2e.test.ts
  */
 import { describe, expect, it } from 'vitest'
 import React from 'react'

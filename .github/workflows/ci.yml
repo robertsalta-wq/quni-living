@@ -31,9 +31,7 @@ jobs:
       - name: Check Anthropic model IDs
         run: npm run check:anthropic-models
 
-      # TODO: Non-blocking until the 12 pre-existing failures on main are fixed; then remove continue-on-error.
       - name: Unit tests
-        continue-on-error: true
         run: npm test
 
       - name: Integration tests

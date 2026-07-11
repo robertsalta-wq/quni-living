@@ -61,7 +61,7 @@ describe('FT6600 fill E2E (generate-residential-tenancy props path)', () => {
 
     expect(form.getTextField(F.rent_amount).getText()).toBe('400.00')
     expect(form.getTextField(F.rent_due_day_text).getText()).toBe('Wednesday')
-    expect(form.getTextField(F.rent_payment_details).getText()).toContain('939-200')
+    expect(form.getTextField(F.rent_payment_details).getText()).toContain('939 200')
 
     expect(form.getTextField(F.max_occupants).getText()).toBe('2')
     expect(form.getTextField(F.bond_amount).getText()).toBe('800.00')

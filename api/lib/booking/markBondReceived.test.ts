@@ -54,49 +54,71 @@ function mockAdmin(opts: {
   const againRow = opts.againRow
   const eventError = opts.eventError ?? null
 
-  let bookingsN = 0
+  let bookingsMaybeSingleCall = 0
 
   const from = vi.fn((table: string) => {
     if (table === 'bookings') {
-      bookingsN += 1
-      if (bookingsN === 1) {
-        return {
-          select: () => ({
-            eq: () => ({
-              maybeSingle: async () =>
-                loadError ? { data: null, error: loadError } : { data: booking, error: null },
-            }),
-          }),
-        }
-      }
-      if (bookingsN === 2) {
-        return {
-          update: () => ({
-            eq: () => ({
+      return {
+        select: (columns?: string) => {
+          if (columns === 'student_id') {
+            return {
               eq: () => ({
-                select: async () => {
-                  if (updateError) return { data: null, error: updateError }
-                  return { data: updateRows, error: null }
-                },
+                maybeSingle: async () => ({
+                  data: { student_id: (booking as { student_id?: string }).student_id ?? 'st1' },
+                  error: null,
+                }),
               }),
-            }),
-          }),
-        }
-      }
-      if (bookingsN === 3) {
-        return {
-          select: () => ({
+            }
+          }
+          bookingsMaybeSingleCall += 1
+          if (bookingsMaybeSingleCall === 1) {
+            return {
+              eq: () => ({
+                maybeSingle: async () =>
+                  loadError ? { data: null, error: loadError } : { data: booking, error: null },
+              }),
+            }
+          }
+          if (bookingsMaybeSingleCall === 2) {
+            return {
+              eq: () => ({
+                maybeSingle: async () => ({ data: againRow ?? null, error: null }),
+              }),
+            }
+          }
+          throw new Error(`unexpected bookings select maybeSingle call count ${bookingsMaybeSingleCall}`)
+        },
+        update: () => ({
+          eq: () => ({
             eq: () => ({
-              maybeSingle: async () => ({ data: againRow ?? null, error: null }),
+              select: async () => {
+                if (updateError) return { data: null, error: updateError }
+                return { data: updateRows, error: null }
+              },
             }),
           }),
-        }
+        }),
       }
-      throw new Error(`unexpected bookings from() call count ${bookingsN}`)
     }
     if (table === 'service_tier_events') {
       return {
         insert: async () => ({ error: eventError }),
+      }
+    }
+    if (table === 'platform_config') {
+      return {
+        select: () => ({
+          in: async () => ({ data: [], error: null }),
+        }),
+      }
+    }
+    if (table === 'student_profiles') {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+        }),
       }
     }
     if (table === 'tenancies') {

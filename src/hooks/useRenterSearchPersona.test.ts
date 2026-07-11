@@ -8,12 +8,12 @@ describe('renterSearchPersonaFromRoute', () => {
   })
 
   it('returns professional for non_student route', () => {
-    expect(renterSearchPersonaFromRoute('student', 'non_student')).toBe('professional')
-    expect(renterSearchPersonaFromRoute('student', 'identity')).toBe('professional')
+    expect(renterSearchPersonaFromRoute('renter', 'non_student')).toBe('professional')
+    expect(renterSearchPersonaFromRoute('renter', 'identity')).toBe('professional')
   })
 
   it('returns student for student route', () => {
-    expect(renterSearchPersonaFromRoute('student', 'student')).toBe('student')
-    expect(renterSearchPersonaFromRoute('student', null)).toBe('student')
+    expect(renterSearchPersonaFromRoute('renter', 'student')).toBe('student')
+    expect(renterSearchPersonaFromRoute('renter', null)).toBe('student')
   })
 })

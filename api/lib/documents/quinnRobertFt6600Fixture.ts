@@ -27,6 +27,7 @@ export const QUINN_ROBERT_FT6600_BOOKING = {
   end_date: '2026-12-10',
   lease_length: '6 months',
   weekly_rent: 400,
+  bond_amount: 800,
   notes: null,
   occupant_count: 2,
 } as const
