@@ -88,6 +88,9 @@ export function parseBondOverrideFromRequest(raw) {
 }
 
 /**
+ * Rent/bond patch slice without booking-status guard.
+ * Caller (booking-update-terms) validates status + signatures.
+ *
  * @param {object} booking
  * @param {object} property
  * @param {number} agreedWeeklyRentAud
@@ -96,7 +99,7 @@ export function parseBondOverrideFromRequest(raw) {
  * @param {{ enabled: boolean; weeks: number | null } | null} [bondOverride]
  * @returns {Promise<{ ok: true, patch: object; eventMetadata: object } | { ok: false; status: number; error: string; message?: string }>}
  */
-export async function buildRentAgreedOverridePatch(
+export async function buildRentBondPatchSlice(
   booking,
   property,
   agreedWeeklyRentAud,
@@ -104,36 +107,6 @@ export async function buildRentAgreedOverridePatch(
   landlordProfileId,
   bondOverride = null,
 ) {
-  const status = typeof booking.status === 'string' ? booking.status : ''
-  if (!RENT_OVERRIDE_ALLOWED_STATUSES.has(status)) {
-    return {
-      ok: false,
-      status: 409,
-      error: 'invalid_booking_status',
-      message: 'Agreed rent can only be changed before you accept this booking.',
-    }
-  }
-
-  if (booking.service_tier_at_request === 'managed') {
-    return {
-      ok: false,
-      status: 400,
-      error: 'managed_booking',
-      message: 'Agreed rent override is not available for managed bookings yet.',
-    }
-  }
-
-  const pi =
-    typeof booking.stripe_payment_intent_id === 'string' ? booking.stripe_payment_intent_id.trim() : ''
-  if (pi && booking.service_tier_at_request !== 'listing') {
-    return {
-      ok: false,
-      status: 400,
-      error: 'deposit_captured',
-      message: 'Agreed rent cannot be changed after a deposit authorization exists.',
-    }
-  }
-
   const applyWeeklyRent = applyWeeklyRentFromBooking(booking.rent_breakdown, booking.weekly_rent)
   if (applyWeeklyRent == null) {
     return { ok: false, status: 400, error: 'invalid_apply_rent', message: 'Booking is missing apply-time rent.' }
@@ -217,6 +190,63 @@ export async function buildRentAgreedOverridePatch(
         : {}),
     },
   }
+}
+
+/**
+ * @param {object} booking
+ * @param {object} property
+ * @param {number} agreedWeeklyRentAud
+ * @param {string} reason
+ * @param {string} landlordProfileId
+ * @param {{ enabled: boolean; weeks: number | null } | null} [bondOverride]
+ * @returns {Promise<{ ok: true, patch: object; eventMetadata: object } | { ok: false; status: number; error: string; message?: string }>}
+ */
+export async function buildRentAgreedOverridePatch(
+  booking,
+  property,
+  agreedWeeklyRentAud,
+  reason,
+  landlordProfileId,
+  bondOverride = null,
+) {
+  const status = typeof booking.status === 'string' ? booking.status : ''
+  if (!RENT_OVERRIDE_ALLOWED_STATUSES.has(status)) {
+    return {
+      ok: false,
+      status: 409,
+      error: 'invalid_booking_status',
+      message: 'Agreed rent can only be changed before you accept this booking.',
+    }
+  }
+
+  if (booking.service_tier_at_request === 'managed') {
+    return {
+      ok: false,
+      status: 400,
+      error: 'managed_booking',
+      message: 'Agreed rent override is not available for managed bookings yet.',
+    }
+  }
+
+  const pi =
+    typeof booking.stripe_payment_intent_id === 'string' ? booking.stripe_payment_intent_id.trim() : ''
+  if (pi && booking.service_tier_at_request !== 'listing') {
+    return {
+      ok: false,
+      status: 400,
+      error: 'deposit_captured',
+      message: 'Agreed rent cannot be changed after a deposit authorization exists.',
+    }
+  }
+
+  return buildRentBondPatchSlice(
+    booking,
+    property,
+    agreedWeeklyRentAud,
+    reason,
+    landlordProfileId,
+    bondOverride,
+  )
 }
 
 /**

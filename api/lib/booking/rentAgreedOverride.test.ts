@@ -3,6 +3,7 @@ import {
   applyWeeklyRentFromBooking,
   baseRentBreakdownFromBooking,
   buildRentAgreedOverridePatch,
+  buildRentBondPatchSlice,
   parseWeeklyRentAud,
   rentBreakdownWithOverride,
 } from './rentAgreedOverride.js'
@@ -57,6 +58,24 @@ describe('buildRentAgreedOverridePatch', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.patch.bond_amount).toBe(900)
+  })
+})
+
+describe('buildRentBondPatchSlice', () => {
+  it('allows rent patch when booking status is bond_pending (no status guard)', async () => {
+    const booking = { ...baseBooking, status: 'bond_pending' }
+    const result = await buildRentBondPatchSlice(booking, property, 400, 'Post-accept tweak', 'll1')
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.patch.weekly_rent).toBe(400)
+  })
+
+  it('rejects bond_pending via buildRentAgreedOverridePatch status guard', async () => {
+    const booking = { ...baseBooking, status: 'bond_pending' }
+    const result = await buildRentAgreedOverridePatch(booking, property, 400, 'Post-accept tweak', 'll1')
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toBe('invalid_booking_status')
   })
 })
 
