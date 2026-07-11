@@ -37,6 +37,11 @@ import {
   fetchPlatformRegisteredContactForDocuments,
 } from '../../platformConfig.js'
 import { resolveBookingBondAmountAud } from '../../booking/bookingBondAmount.js'
+import {
+  FT6600_BOND_UNRESOLVED_CODE,
+  FT6600_BOND_UNRESOLVED_MESSAGE,
+  isFt6600BondResolved,
+} from '../ft6600BondRequired.js'
 import { tenantLegalNameForDocuments } from '../../booking/tenantLegalNameForDocuments.js'
 import {
   formatFeeForDisplay,
@@ -338,6 +343,14 @@ async function loadNswFt6600Context(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
+  if (!isFt6600BondResolved(bondNum)) {
+    return {
+      ok: false,
+      status: 400,
+      error: FT6600_BOND_UNRESOLVED_CODE,
+      detail: FT6600_BOND_UNRESOLVED_MESSAGE,
+    }
+  }
 
   let bankDetails: Awaited<ReturnType<typeof fetchBankDetailsForRta>>
   try {
