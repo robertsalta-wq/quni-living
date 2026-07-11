@@ -3,7 +3,7 @@
 **Living register. Add to the bottom of "Open"; move items to "Resolved" once answered.**
 
 Maintained by: Rob · Counsel: Jenny
-Last updated: 8 July 2026
+Last updated: 10 July 2026
 
 ---
 
@@ -102,6 +102,94 @@ Section hooks for "you can't vary the prescribed form": NSW `s.15`/`s.21` `[VERI
 **Question.** T1 occupancy agreements with couples: confirm one licensee signs and the partner is named as authorised occupant (not a co-signatory) — current platform behaviour as of Jul 2026.
 
 **Answer.** _(pending)_
+
+---
+
+### Q-010 — Authority-to-let attestation: sufficient, or must consent be sighted pre-publish?
+Status: With Jenny (June 2026 sub-letting brief)
+Area: Platform liability · sub-letting
+Question. Is the required tick-box attestation (owner, or tenant with landlord's written consent, producible on request) sufficient to publish a listing, or must Quni sight the consent document before a head-tenant listing goes live?
+Answer. (pending)
+
+---
+
+### Q-011 — Facilitation liability and ACL s18 exposure on live sub-let wording
+Status: With Jenny (June 2026 sub-letting brief)
+Area: ACL s18 · facilitation liability
+Question. Does hosting head-tenant listings on attestation alone expose Quni to facilitation liability or misleading-conduct risk under ACL s18, given the verification and template wording already live in the product?
+Answer. (pending)
+
+---
+
+### Q-012 — Hosted consent-request templates: representation risk
+Status: With Jenny (June 2026 sub-letting brief)
+Area: Hosted templates · sub-letting
+Question. Do the state-aware (NSW/VIC/QLD) editable consent-request letter templates Quni displays — copied and sent by the user from their own address — create any representation or advice liability for Quni?
+Answer. (pending)
+
+---
+
+### Q-013 — Sub-let tier classification and bond handling
+Status: With Jenny (June 2026 sub-letting brief)
+Area: Tier classification · bond
+Question. How is a head-tenant sub-let classified within the T1/T2 tier structure, and does bond handling differ from an owner-listed tenancy (Quni remains never bond custodian)?
+Answer. (pending)
+
+---
+
+### Q-014 — QLD platform-fee disclosure obligation
+Status: With Jenny (June 2026 sub-letting brief)
+Area: QLD state-specific
+Question. What platform-fee disclosure is Quni required to make to QLD renters and landlords, and where must it appear?
+Answer. (pending)
+
+---
+
+### Q-015 — VIC s.30D renter-facing disclosure
+Status: With Jenny (June 2026 sub-letting brief) · deferred pending VIC launch
+Area: VIC RTA s.30D
+Question. What renter-facing disclosure does VIC s.30D require of Quni, and does it apply before VIC listings go live or only at booking?
+Answer. (pending)
+
+---
+
+### Q-016 — Landlord Service Agreement authority warranty
+Status: With Jenny (June 2026 sub-letting brief)
+Area: LSA · contractual backing
+Question. Should the Landlord Service Agreement carry an express authority-to-let warranty and indemnity backing the listing attestation, and what should it say?
+Answer. (pending)
+
+---
+
+### Q-017 — Future guided sub-let stream
+Status: Parked (June 2026 sub-letting brief)
+Area: Product roadmap · sub-letting
+Question. If Quni later builds a guided sub-let stream (generating the sub-letting agreement itself), what changes legally versus the current copy-a-template model?
+Answer. (pending)
+
+---
+
+### Q-018 — Signing sequence: preview at confirm, execution gated on bond receipt
+Status: Open (flagged May 2026, not yet sent)
+Area: Booking flow · document execution
+Question. Renter sees a draft/preview of the tenancy agreement at booking confirmation, but signing is unlocked only after bond receipt — does this sequence raise any concern?
+Answer. (pending)
+
+---
+
+### Q-019 — NSW T1 Managed scope: outside RTA/PSAA characterisation?
+Status: Open (flagged May 2026, not yet sent)
+Area: PSAA s.3A · tier scope
+Question. Confirm that NSW T1 boarder/lodger arrangements sit outside the RTA and therefore outside the s.3A PSAA characterisation question (Q-007), so NSW T1 Managed can remain live while only T2 Managed stays gated.
+Answer. (pending)
+
+---
+
+### Q-020 — Tier 3 Boarding Houses Act framework
+Status: Parked (April 2026 brief Q6a–6d, carried over; Tier 3 deferred)
+Area: Boarding Houses Act 2012 · Tier 3
+Question. For 5+ resident properties: what must the T3 occupancy agreement contain, is landlord registration verification required at onboarding, and what are Quni's obligations as a facilitating platform?
+Answer. (pending)
 
 ---
 
