@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES } from '../../api/lib/booking/tenantBookingPipelineStatuses.js'
 import { isRenterRole } from '../../src/lib/marketplaceRole'
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from './env'
 
@@ -169,14 +170,35 @@ export async function seedStudentProfileForBookingGate(
 }
 
 export async function findActiveListingPropertyId(admin: SupabaseClient): Promise<string> {
-  const { data, error } = await admin
+  const { data: properties, error: propErr } = await admin
     .from('properties')
     .select('id')
     .eq('status', 'active')
     .eq('service_tier', 'listing')
-    .limit(1)
-    .maybeSingle()
-  if (error) throw error
-  if (!data?.id) throw new Error('No active listing-tier property found for e2e booking apply')
-  return data.id
+  if (propErr) throw propErr
+  if (!properties?.length) {
+    throw new Error('No active listing-tier property found for e2e booking apply')
+  }
+
+  const candidateIds = properties.map((p) => p.id).filter((id): id is string => Boolean(id))
+  const { data: reservedRows, error: reservedErr } = await admin
+    .from('bookings')
+    .select('property_id')
+    .in('property_id', candidateIds)
+    .in('status', [...PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES])
+  if (reservedErr) throw reservedErr
+
+  const reservedIds = new Set(
+    (reservedRows ?? [])
+      .map((r) => r.property_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  )
+
+  const available = properties.find((p) => p.id && !reservedIds.has(p.id))
+  if (!available?.id) {
+    throw new Error(
+      'No unreserved active listing-tier property found for e2e booking apply (all candidates have a confirmed, active, or bond_pending booking)',
+    )
+  }
+  return available.id
 }
