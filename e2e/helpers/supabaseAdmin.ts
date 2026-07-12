@@ -169,6 +169,42 @@ export async function seedStudentProfileForBookingGate(
   if (error) throw error
 }
 
+export type StudentVerificationDocUrlColumn =
+  | 'id_document_url'
+  | 'identity_supporting_doc_url'
+  | 'enrolment_doc_url'
+
+/**
+ * Storage upload can succeed before the subsequent student_profiles UPDATE lands.
+ * Poll until the profile column is non-null so e2e assertions are not order/race dependent.
+ */
+export async function waitForStudentProfileDocUrl(
+  admin: SupabaseClient,
+  userId: string,
+  column: StudentVerificationDocUrlColumn,
+  opts?: { timeoutMs?: number; pollMs?: number },
+): Promise<string> {
+  const timeoutMs = opts?.timeoutMs ?? 30_000
+  const pollMs = opts?.pollMs ?? 250
+  const deadline = Date.now() + timeoutMs
+
+  while (Date.now() < deadline) {
+    const { data, error } = await admin
+      .from('student_profiles')
+      .select('id_document_url, identity_supporting_doc_url, enrolment_doc_url')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    const value = data?.[column]
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim()
+    await new Promise((r) => setTimeout(r, pollMs))
+  }
+
+  throw new Error(
+    `Timed out after ${timeoutMs}ms waiting for student_profiles.${column} after verification doc upload (user ${userId})`,
+  )
+}
+
 export async function findActiveListingPropertyId(admin: SupabaseClient): Promise<string> {
   const { data: properties, error: propErr } = await admin
     .from('properties')

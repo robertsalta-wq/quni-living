@@ -9,8 +9,11 @@ import {
   findActiveListingPropertyId,
   getStudentProfileId,
   seedStudentProfileForBookingGate,
+  waitForStudentProfileDocUrl,
+  type StudentVerificationDocUrlColumn,
 } from './helpers/supabaseAdmin'
 import { signInRenter } from './helpers/signupUi'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const TEST_DOC_PATH = path.join(__dirname, 'fixtures', 'e2e-test-doc.pdf')
@@ -18,9 +21,12 @@ const TEST_ID_IMAGE_PATH = path.join(__dirname, 'fixtures', 'e2e-test-id.jpg')
 
 async function uploadDashboardDoc(
   page: Page,
+  admin: SupabaseClient,
+  userId: string,
   regionName: RegExp,
   fileInputIndex: number,
   filePath: string,
+  profileUrlColumn: StudentVerificationDocUrlColumn,
 ): Promise<void> {
   const region = page.getByRole('region', { name: regionName })
   const input = region.locator('input[type="file"]').nth(fileInputIndex)
@@ -34,6 +40,7 @@ async function uploadDashboardDoc(
     input.setInputFiles(filePath),
   ])
   await expect(page.getByRole('alert').filter({ hasText: 'Upload failed' })).toHaveCount(0)
+  await waitForStudentProfileDocUrl(admin, userId, profileUrlColumn)
 }
 
 test.describe('booking apply', () => {
@@ -61,9 +68,25 @@ test.describe('booking apply', () => {
     await page.goto('/student-profile')
     await expect(page.getByText('Government photo ID')).toBeVisible({ timeout: 60_000 })
 
-    await uploadDashboardDoc(page, /02 Verification/, 0, TEST_ID_IMAGE_PATH)
-    await uploadDashboardDoc(page, /02 Verification/, 1, TEST_DOC_PATH)
-    await uploadDashboardDoc(page, /03 Study & funding/, 0, TEST_DOC_PATH)
+    await uploadDashboardDoc(page, admin, userId, /02 Verification/, 0, TEST_ID_IMAGE_PATH, 'id_document_url')
+    await uploadDashboardDoc(
+      page,
+      admin,
+      userId,
+      /02 Verification/,
+      1,
+      TEST_DOC_PATH,
+      'identity_supporting_doc_url',
+    )
+    await uploadDashboardDoc(
+      page,
+      admin,
+      userId,
+      /03 Study & funding/,
+      0,
+      TEST_DOC_PATH,
+      'enrolment_doc_url',
+    )
     await expect(page.getByRole('alert').filter({ hasText: 'Upload failed' })).toHaveCount(0)
 
     const { data: profileAfterUpload, error: profileErr } = await admin
