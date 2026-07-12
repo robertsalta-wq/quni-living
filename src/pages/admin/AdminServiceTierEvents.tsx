@@ -28,6 +28,16 @@ function truncateJson(metadata: unknown, max = 160): string {
   }
 }
 
+/** Human-readable labels for known `service_tier_events.event_type` values. */
+export function tierEventTypeLabel(eventType: string): string {
+  switch (eventType) {
+    case 'booking_terms_update':
+      return 'Booking terms updated'
+    default:
+      return eventType
+  }
+}
+
 export default function AdminServiceTierEvents() {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -152,7 +162,7 @@ export default function AdminServiceTierEvents() {
             <option value="">All</option>
             {eventTypes.map((t) => (
               <option key={t} value={t}>
-                {t}
+                {tierEventTypeLabel(t)}
               </option>
             ))}
           </select>
@@ -237,7 +247,7 @@ export default function AdminServiceTierEvents() {
                   <tr key={row.id}>
                     <td className={`${adminTdClass} whitespace-nowrap`}>{formatDateTime(row.created_at)}</td>
                     <td className={adminTdClass}>
-                      <span className="font-mono text-xs">{row.event_type}</span>
+                      <span className="text-sm text-admin-ink-2">{tierEventTypeLabel(row.event_type)}</span>
                     </td>
                     <td className={adminTdClass}>{row.service_tier ?? '-'}</td>
                     <td className={adminTdClass}>
