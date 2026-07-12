@@ -268,14 +268,18 @@ When no doc / no tenancy: `any_party_signed: false`.
 - [ ] `npx vitest run api/lib/booking/leaseEndDate.test.ts api/lib/booking/bookingTermsUpdate.test.ts api/lib/booking/rentAgreedOverride.test.ts`
 - [ ] Unknown patch key → 400
 - [ ] Edit blocked at `bond_pending` when landlord has signed
+- [x] Edit allowed at `bond_pending` when unsigned (prod: Sahil booking)
 - [ ] Edit allowed at `pending_confirmation` with no tenancy doc
 - [ ] `co_tenant: null` → `occupant_count = 1`, `housemates_count = 0`
 - [ ] Co-tenant email = primary email → 400
 - [ ] `lease_length: 'Flexible'` → `end_date` null on booking + tenancy sync
 - [ ] Notes-only save → `end_date` unchanged
+- [x] Conditional `end_date` recompute on lease-length change (prod: 6 months → 3 months, 2027-01-16 → 2026-10-16; only those fields)
+- [x] Reason enforced (prod: "Tenant request")
 - [ ] Managed booking review page → agreed-rent editor still visible
 - [ ] Student dashboard `BookingLeasePanel` — no edit form visible
-- [ ] Audit row in `service_tier_events` with `event_type = 'booking_terms_update'`
+- [x] Audit row in `service_tier_events` with `event_type = 'booking_terms_update'` (prod: actor + clean old/new diff)
+- [x] Regenerate agreement reissues DocuSeal submission (prod: 164 → 165)
 
 ---
 
