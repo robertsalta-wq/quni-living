@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES } from '../../api/lib/booking/tenantBookingPipelineStatuses.js'
 import { isRenterRole } from '../../src/lib/marketplaceRole'
 import { getSupabaseServiceRoleKey, getSupabaseUrl } from './env'
 
@@ -168,15 +169,72 @@ export async function seedStudentProfileForBookingGate(
   if (error) throw error
 }
 
+export type StudentVerificationDocUrlColumn =
+  | 'id_document_url'
+  | 'identity_supporting_doc_url'
+  | 'enrolment_doc_url'
+
+/**
+ * Storage upload can succeed before the subsequent student_profiles UPDATE lands.
+ * Poll until the profile column is non-null so e2e assertions are not order/race dependent.
+ */
+export async function waitForStudentProfileDocUrl(
+  admin: SupabaseClient,
+  userId: string,
+  column: StudentVerificationDocUrlColumn,
+  opts?: { timeoutMs?: number; pollMs?: number },
+): Promise<string> {
+  const timeoutMs = opts?.timeoutMs ?? 30_000
+  const pollMs = opts?.pollMs ?? 250
+  const deadline = Date.now() + timeoutMs
+
+  while (Date.now() < deadline) {
+    const { data, error } = await admin
+      .from('student_profiles')
+      .select('id_document_url, identity_supporting_doc_url, enrolment_doc_url')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    const value = data?.[column]
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim()
+    await new Promise((r) => setTimeout(r, pollMs))
+  }
+
+  throw new Error(
+    `Timed out after ${timeoutMs}ms waiting for student_profiles.${column} after verification doc upload (user ${userId})`,
+  )
+}
+
 export async function findActiveListingPropertyId(admin: SupabaseClient): Promise<string> {
-  const { data, error } = await admin
+  const { data: properties, error: propErr } = await admin
     .from('properties')
     .select('id')
     .eq('status', 'active')
     .eq('service_tier', 'listing')
-    .limit(1)
-    .maybeSingle()
-  if (error) throw error
-  if (!data?.id) throw new Error('No active listing-tier property found for e2e booking apply')
-  return data.id
+  if (propErr) throw propErr
+  if (!properties?.length) {
+    throw new Error('No active listing-tier property found for e2e booking apply')
+  }
+
+  const candidateIds = properties.map((p) => p.id).filter((id): id is string => Boolean(id))
+  const { data: reservedRows, error: reservedErr } = await admin
+    .from('bookings')
+    .select('property_id')
+    .in('property_id', candidateIds)
+    .in('status', [...PROPERTY_RESERVED_FOR_NEW_APPLICATIONS_STATUSES])
+  if (reservedErr) throw reservedErr
+
+  const reservedIds = new Set(
+    (reservedRows ?? [])
+      .map((r) => r.property_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  )
+
+  const available = properties.find((p) => p.id && !reservedIds.has(p.id))
+  if (!available?.id) {
+    throw new Error(
+      'No unreserved active listing-tier property found for e2e booking apply (all candidates have a confirmed, active, or bond_pending booking)',
+    )
+  }
+  return available.id
 }
