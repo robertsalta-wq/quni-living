@@ -9,6 +9,7 @@ describe('landlordAcceptTierUiModel', () => {
       isRegisteredRoomingHouse: false,
       moduleEnabled: true,
       propertyServiceTier: 'listing',
+      studentDepositAuthorized: true,
     })
     expect(m.showListing).toBe(true)
     expect(m.showManaged).toBe(true)
@@ -63,6 +64,7 @@ describe('landlordAcceptTierUiModel', () => {
       isRegisteredRoomingHouse: false,
       moduleEnabled: true,
       propertyServiceTier: 'listing',
+      studentDepositAuthorized: true,
     })
     const listingOnly = landlordAcceptTierUiModel({
       state: 'NSW',

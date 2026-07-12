@@ -16,6 +16,7 @@ import {
   nswFt6600ComplianceFromPropertyRow,
   nswFt6600PremisesInclusionsFromPropertyRow,
 } from './propertyFt6600Compliance.js'
+import { assertFt6600BondResolved } from './ft6600BondRequired.js'
 
 export type Ft6600BankDetails = {
   bsb: string
@@ -107,6 +108,7 @@ export function buildNswResidentialTenancyAgreementPropsFromBooking(
   const endDate = periodic ? null : bookingEnd || computedEnd
 
   const bondNum = resolveBookingBondAmountAud(booking.bond_amount, prop, weeklyRent)
+  assertFt6600BondResolved(bondNum)
 
   const platformFeePercent = input.managedPlatformFeePercent ?? 0
   const totalWeekly = Math.round((weeklyRent + weeklyRent * (platformFeePercent / 100)) * 100) / 100

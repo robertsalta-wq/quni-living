@@ -61,6 +61,7 @@ describe('renter post-auth routing (Stage 1)', () => {
   it('sends complete renters to dashboard', () => {
     const sp = {
       accommodation_verification_route: 'non_student',
+      renter_situation: 'working',
       first_name: 'A',
       last_name: 'B',
       gender: 'female',

@@ -25,7 +25,7 @@ describe('resolveServiceTierAvailability', () => {
     expect(resolveServiceTierAvailability('NSW', 't2')).toEqual({
       listing: 'available',
       managed: 'gated',
-      notes: 'Managed gated pending Jenny legal clearance',
+      notes: 'Managed currently unavailable in NSW Tier 2',
     })
   })
 
