@@ -43,6 +43,10 @@ jobs:
   e2e:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: read
+      statuses: read
     steps:
       - uses: actions/checkout@v4
 
@@ -57,12 +61,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # Replaces patrickedqvist/wait-for-vercel-preview: that action filters on
+      # creator login vercel[bot], which misses redeploys after force-push (actor is
+      # often the pusher). Poll GitHub Deployments API for this SHA with no actor filter.
       - name: Wait for Vercel preview
         id: vercel_preview
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 600
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          MAX_TIMEOUT: "600"
+          CHECK_INTERVAL: "5"
+        run: bash .github/scripts/wait-for-vercel-preview.sh
 
       - name: Run Playwright tests
         run: npx playwright test
