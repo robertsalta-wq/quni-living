@@ -29,6 +29,7 @@ import {
   isWithdrawnBookingStatus,
   listingBondWindowExpiresAt,
   reinstateBookingAfterDocusealReconcile,
+  syncFullySignedDocusealSubmission,
   targetBookingStatusAfterReinstate,
 } from './reconcileFromDocuseal.js'
 
@@ -105,6 +106,75 @@ describe('reconcileFromDocuseal helpers', () => {
       coTenantRequired: true,
     })
     expect(withCo.fullySigned).toBe(true)
+  })
+
+  it('syncFullySignedDocusealSubmission persists partial signed_at without downloading PDFs', async () => {
+    mocks.extractCompletedAt.mockImplementation((_payload, role: string) => {
+      if (role === 'landlord') return '2026-07-12T08:12:51.867Z'
+      return null
+    })
+    mocks.fetchCoTenantSignerForTenancy.mockResolvedValue(null)
+
+    const updates: Record<string, unknown>[] = []
+    const admin = {
+      from: (table: string) => {
+        if (table === 'tenancy_documents') {
+          return {
+            update: (patch: Record<string, unknown>) => ({
+              eq: async () => {
+                updates.push(patch)
+                return { error: null }
+              },
+            }),
+          }
+        }
+        throw new Error(`unexpected table ${table}`)
+      },
+      storage: {
+        from: () => ({
+          upload: async () => {
+            throw new Error('PDF download/upload must not run for partial signatures')
+          },
+        }),
+      },
+    }
+
+    const result = await syncFullySignedDocusealSubmission({
+      admin: admin as never,
+      docRow: {
+        id: 'doc-1',
+        tenancy_id: 'ten-1',
+        docuseal_submission_id: '165',
+        metadata: null,
+        status: 'sent_for_signing',
+        landlord_signed_at: null,
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+        file_path: 'ten-1/lease/lease_draft.pdf',
+      },
+      submissionId: '165',
+      submissionPayload: {
+        event_type: 'form.completed',
+        data: {
+          role: 'First Party',
+          completed_at: '2026-07-12T08:12:51.867Z',
+          submission: { id: 165 },
+        },
+      },
+      metadataExtra: { last_webhook: { event_type: 'form.completed' } },
+    })
+
+    expect(result.fullySigned).toBe(false)
+    expect(result.nextLandlordAt).toBe('2026-07-12T08:12:51.867Z')
+    expect(result.nextStudentAt).toBeNull()
+    expect(mocks.downloadSignedSubmissionPdfFromDocuseal).not.toHaveBeenCalled()
+    expect(mocks.downloadSignedResidentialTenancyPackagePartsFromDocuseal).not.toHaveBeenCalled()
+    expect(updates).toHaveLength(1)
+    expect(updates[0]).toMatchObject({
+      status: 'sent_for_signing',
+      landlord_signed_at: '2026-07-12T08:12:51.867Z',
+      student_signed_at: null,
+    })
   })
 
   it('reinstateBookingAfterDocusealReconcile repairs expired listing booking', async () => {

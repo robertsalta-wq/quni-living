@@ -318,8 +318,37 @@ export async function syncFullySignedDocusealSubmission(args: {
       coTenantRequired,
     })
 
-  let signedPath: string
   let nextMetadata: Record<string, unknown> = { ...rowMeta, ...metadataExtra }
+
+  // Always persist per-party timestamps (and keep sent_for_signing until fully signed).
+  // Do not require PDF download for partial signatures — that blocked *_signed_at writes.
+  if (!fullySigned) {
+    const { error: partialErr } = await admin
+      .from('tenancy_documents')
+      .update({
+        status: nextStatus,
+        landlord_signed_at: nextLandlordAt,
+        student_signed_at: nextStudentAt,
+        co_tenant_signed_at: coTenantRequired ? nextCoTenantAt : null,
+        metadata: nextMetadata as Json,
+      })
+      .eq('id', docRow.id)
+    if (partialErr) throw partialErr
+
+    return {
+      fullySigned: false,
+      signedPath: typeof docRow.file_path === 'string' ? docRow.file_path : null,
+      signedUrl: null,
+      isResidentialTenancyPackage,
+      isQldResidentialPackage,
+      isVicResidentialPackage,
+      nextLandlordAt,
+      nextStudentAt,
+      nextCoTenantAt,
+    }
+  }
+
+  let signedPath: string
 
   if (isResidentialTenancyPackage) {
     const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)
