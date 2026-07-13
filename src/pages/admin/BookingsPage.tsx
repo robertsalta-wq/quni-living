@@ -7,6 +7,7 @@ import { Button, Card, Eyebrow, EmptyState, ErrorState, LoadingState, Pill, type
 import { Icon, type IconName } from '../../components/admin/Icon'
 import { ChipFilter, DetailDrawer, type ChipFilterOption } from '../../components/admin/patterns'
 import { formatDate, formatMoney, studentDisplayName } from './adminUi'
+import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
 
@@ -168,24 +169,6 @@ function StudentCell({ row }: { row: BookingRow }) {
 function getSearchValue(sp: URLSearchParams, key: string, fallback: string): string {
   const v = sp.get(key)
   return v ?? fallback
-}
-
-interface TimelineEvent {
-  label: string
-  detail?: string
-  iso: string
-  accent?: 'coral' | 'neutral'
-}
-
-function buildTimeline(b: BookingRow): TimelineEvent[] {
-  const out: TimelineEvent[] = []
-  out.push({ label: 'Booking created', iso: b.created_at, accent: 'neutral' })
-  if (b.confirmed_at) out.push({ label: 'Confirmed', iso: b.confirmed_at, accent: 'coral' })
-  if (b.bond_received_by_landlord_at) out.push({ label: 'Bond received', iso: b.bond_received_by_landlord_at, accent: 'neutral' })
-  if (b.declined_at) out.push({ label: 'Declined', iso: b.declined_at, accent: 'coral' })
-  if (b.cancelled_at) out.push({ label: 'Cancelled', iso: b.cancelled_at, accent: 'coral' })
-  if (b.expired_at) out.push({ label: 'Expired', iso: b.expired_at, accent: 'coral' })
-  return out.sort((a, b2) => new Date(b2.iso).getTime() - new Date(a.iso).getTime())
 }
 
 function trustChecklist(b: BookingRow): Array<{ label: string; done: boolean; stub?: boolean }> {
@@ -619,7 +602,6 @@ export default function BookingsPage() {
 
 function DrawerBody({ booking, onBookingUpdated }: { booking: BookingRow; onBookingUpdated: () => void }) {
   const tier = booking.service_tier_final ?? booking.service_tier_at_request
-  const events = buildTimeline(booking)
   const checklist = trustChecklist(booking)
   return (
     <div className="flex flex-col gap-5">
@@ -670,29 +652,9 @@ function DrawerBody({ booking, onBookingUpdated }: { booking: BookingRow; onBook
 
       <div>
         <Eyebrow>Activity</Eyebrow>
-        <ul className="mt-2.5 flex list-none flex-col p-0 text-[12px] leading-[1.5] text-admin-ink-3">
-          {events.map((e, i) => (
-            <li
-              key={i}
-              className={
-                'relative pl-3.5 ' +
-                (i === events.length - 1 ? 'pb-0' : 'pb-2.5') +
-                ' ' +
-                (i === events.length - 1 ? '' : 'border-l border-admin-line')
-              }
-            >
-              <span
-                aria-hidden
-                className={
-                  'absolute -left-[3px] top-[5px] h-[7px] w-[7px] rounded-full ' +
-                  (e.accent === 'coral' ? 'bg-admin-coral' : 'bg-admin-ink-5')
-                }
-              />
-              <strong className="text-admin-ink-2">{e.label}</strong>
-              {e.detail ? ` - ${e.detail}` : ''} · <span className="tabular-nums">{formatDate(e.iso)}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2.5">
+          <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
+        </div>
       </div>
 
       <div>

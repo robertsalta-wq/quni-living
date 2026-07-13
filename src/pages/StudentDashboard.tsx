@@ -41,6 +41,8 @@ import {
 import ListingPaymentInstructions, {
   shouldShowListingPaymentInstructions,
 } from '../components/student/ListingPaymentInstructions'
+import BookingActivityTimeline from '../components/booking/BookingActivityTimeline'
+import RenterBookingObligationBand from '../components/booking/RenterBookingObligationBand'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -568,7 +570,11 @@ export default function StudentDashboard() {
               Your bookings
             </h2>
             {currentBooking && (
-              <div className="mb-4">
+              <div className="mb-4 space-y-3">
+                <RenterBookingObligationBand
+                  booking={currentBooking}
+                  property={currentBooking.properties}
+                />
                 <StudentDashboardBookingStatusStrip status={currentBooking.status} />
               </div>
             )}
@@ -697,6 +703,9 @@ export default function StudentDashboard() {
                           </button>
                         </div>
                       )}
+                    <div className="border-t border-gray-100 px-5 py-4">
+                      <BookingActivityTimeline bookingId={b.id} mode="renter" />
+                    </div>
                   </li>
                 )
               })}
