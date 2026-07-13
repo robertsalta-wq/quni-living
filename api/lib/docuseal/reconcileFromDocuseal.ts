@@ -610,22 +610,13 @@ export async function findBondPendingExpiredRefundMarker(
   admin: SupabaseClient,
   bookingId: string,
 ): Promise<{ found: boolean; metadata: Record<string, unknown> | null }> {
-  const { data, error } = await admin
-    .from('service_tier_events')
-    .select('metadata')
-    .eq('booking_id', bookingId)
-    .eq('event_type', 'bond_pending_expired')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (error) throw error
-  if (!data) return { found: false, metadata: null }
-  const metadata =
-    data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
-      ? (data.metadata as Record<string, unknown>)
-      : null
-  return { found: true, metadata }
+  const { findLatestLifecycleEvent } = await import('../booking/events/findLatestLifecycleEvent.js')
+  const ev = await findLatestLifecycleEvent(admin, {
+    bookingId,
+    bookingEventType: 'bond.pending_expired',
+    steEventType: 'bond_pending_expired',
+  })
+  return { found: ev.found, metadata: ev.metadata }
 }
 
 const LEASE_DOC_TYPES = ['lease', 'residential_tenancy'] as const

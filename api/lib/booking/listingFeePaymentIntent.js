@@ -1,9 +1,15 @@
 /**
- * Resolve the Stripe PaymentIntent id for the Listing AUD $99 fee (persisted on booking or legacy telemetry).
+ * Resolve the Stripe PaymentIntent id for the Listing AUD $99 fee
+ * (persisted on booking, then booking_events, then legacy STE).
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
  * @returns {Promise<string | null>}
  */
+import {
+  findLatestLifecycleEvent,
+  stripePaymentIntentIdFromMetadata,
+} from './events/findLatestLifecycleEvent.js'
+
 export async function fetchListingFeePaymentIntentId(admin, bookingId) {
   const { data: b, error } = await admin
     .from('bookings')
@@ -22,26 +28,17 @@ export async function fetchListingFeePaymentIntentId(admin, bookingId) {
       : ''
   if (direct) return direct
 
-  const { data: evs, error: evErr } = await admin
-    .from('service_tier_events')
-    .select('metadata')
-    .eq('booking_id', bookingId)
-    .eq('event_type', 'booking_confirmed')
-    .eq('service_tier', 'listing')
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  if (evErr) {
-    console.error('[listing-fee-pi] service_tier_events select', evErr)
+  try {
+    const ev = await findLatestLifecycleEvent(admin, {
+      bookingId,
+      bookingEventType: 'booking.confirmed',
+      steEventType: 'booking_confirmed',
+    })
+    return stripePaymentIntentIdFromMetadata(ev.metadata)
+  } catch (e) {
+    console.error('[listing-fee-pi] lifecycle event select', e)
     return null
   }
-
-  const meta = evs?.[0]?.metadata
-  const fromMeta =
-    meta && typeof meta === 'object' && meta !== null && 'stripe_payment_intent_id' in meta
-      ? String(meta.stripe_payment_intent_id ?? '').trim()
-      : ''
-  return fromMeta || null
 }
 
 /**
