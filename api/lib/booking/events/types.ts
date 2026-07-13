@@ -43,6 +43,7 @@ export const BOOKING_EVENT_TYPES = [
   'email.delivered',
   'email.bounced',
   'email.complained',
+  'email.opened',
   // Domain (Stage 6 cutover from STE)
   'booking.confirmed',
   'booking.created',
@@ -94,6 +95,7 @@ export const BOOKING_EVENT_DEFAULTS: Record<BookingEventType, BookingEventDefaul
   'email.delivered': { audience: 'internal', outcome: 'success' },
   'email.bounced': { audience: 'internal', outcome: 'failure' },
   'email.complained': { audience: 'internal', outcome: 'failure' },
+  'email.opened': { audience: 'internal', outcome: 'success' },
   'booking.confirmed': { audience: 'both', outcome: 'success' },
   'booking.created': { audience: 'both', outcome: 'success' },
   'booking.cancelled': { audience: 'both', outcome: 'n/a' },

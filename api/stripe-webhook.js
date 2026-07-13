@@ -161,6 +161,13 @@ export default async function handler(req, res) {
 
   const admin = createClient(supabaseUrl, serviceRole)
 
+  try {
+    const { touchProviderWebhookHealth } = await import('./lib/booking/events/touchProviderWebhookHealth.js')
+    await touchProviderWebhookHealth(admin, 'stripe', event?.type || 'stripe')
+  } catch (healthErr) {
+    console.error('[stripe-webhook] health touch', healthErr)
+  }
+
 
 
   const { data: existing } = await admin.from('stripe_webhook_events').select('id').eq('id', event.id).maybeSingle()

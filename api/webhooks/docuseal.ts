@@ -9,6 +9,8 @@
  */
 import { handleSigningWebhook } from '../lib/docuseal.js'
 import { readJsonBody } from '../lib/nodeHandler.js'
+import { createClient } from '@supabase/supabase-js'
+import { touchProviderWebhookHealth } from '../lib/booking/events/touchProviderWebhookHealth.js'
 
 export const config = {
   runtime: 'nodejs',
@@ -29,6 +31,20 @@ export default async function handler(req: any, res: any) {
 
   try {
     const result = await handleSigningWebhook(payload)
+    try {
+      const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
+      const serviceRole = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
+      if (supabaseUrl && serviceRole) {
+        const admin = createClient(supabaseUrl, serviceRole)
+        const eventType =
+          payload && typeof payload === 'object' && typeof (payload as { event_type?: unknown }).event_type === 'string'
+            ? (payload as { event_type: string }).event_type
+            : 'docuseal'
+        await touchProviderWebhookHealth(admin, 'docuseal', eventType)
+      }
+    } catch (healthErr) {
+      console.error('[docuseal-webhook] health touch', healthErr)
+    }
     return res.status(200).json(result)
   } catch (e) {
     console.error('docuseal webhook', e)

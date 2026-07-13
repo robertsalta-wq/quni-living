@@ -1,7 +1,10 @@
 /**
- * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort.
+ * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort
+ * except sendListingPaymentInstructionsRenter (propagates). Payment-instruction paths use
+ * sendBookingEmail so attempt/accept/fail land in booking_events.
  */
 import { sendEmail } from '../sendEmail.js'
+import { sendBookingEmail } from './sendBookingEmail.js'
 import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
@@ -62,6 +65,8 @@ async function loadListingEmailContext(admin, bookingId) {
       `
       id,
       property_id,
+      landlord_id,
+      student_id,
       status,
       service_tier_final,
       confirmed_at,
@@ -174,7 +179,9 @@ async function loadListingEmailContext(admin, bookingId) {
       : null
 
   return {
-    bookingId,
+    bookingId: typeof booking.id === 'string' ? booking.id : bookingId,
+    landlordId: typeof booking.landlord_id === 'string' ? booking.landlord_id : null,
+    studentId: typeof booking.student_id === 'string' ? booking.student_id : null,
     studentEmail,
     landlordEmail,
     studentName,
@@ -245,11 +252,16 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
   const payload = buildListingRenterPaymentEmailPayload(ctx, { bondDeadlineDisplay: bondDeadline })
   const t = listingPaymentInstructionsRenter(payload)
   const landlordCc = ctx.landlordEmail?.trim() || ''
-  await sendEmail({
+  await sendBookingEmail(admin, {
+    bookingId: ctx.bookingId,
+    templateKey: 'listing_payment_instructions',
     to: ctx.studentEmail,
     subject: t.subject,
     html: t.html,
     ...(landlordCc ? { cc: landlordCc } : {}),
+    landlordId: ctx.landlordId,
+    studentId: ctx.studentId,
+    actorType: 'landlord',
   })
   return { ok: true }
 }
@@ -280,7 +292,16 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
           bookingReference: bookingRef,
         }),
       )
-      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_booking_accepted_renter',
+        to: ctx.studentEmail,
+        subject: t.subject,
+        html: t.html,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+      })
     }
 
     const sendLl = async () => {
