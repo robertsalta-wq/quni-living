@@ -284,6 +284,52 @@ export async function isDocusealReconcileInSync(args: {
   return true
 }
 
+export function localLeaseDocLooksUnsigned(doc: {
+  landlord_signed_at?: string | null
+  student_signed_at?: string | null
+  co_tenant_signed_at?: string | null
+}): boolean {
+  const set = (v: unknown) => Boolean(v && String(v).trim())
+  return !set(doc.landlord_signed_at) && !set(doc.student_signed_at) && !set(doc.co_tenant_signed_at)
+}
+
+/**
+ * Defense-in-depth: when local *_signed_at columns are all null but a DocuSeal submission
+ * exists, GET the submission and write through timestamps (and finalize PDF if fully signed).
+ */
+export async function refreshUnsignedLeaseSignaturesFromDocuseal(
+  admin: SupabaseClient,
+  docRow: TenancyDocumentSyncRow,
+): Promise<{ doc: TenancyDocumentSyncRow; refreshed: boolean }> {
+  const submissionId =
+    typeof docRow.docuseal_submission_id === 'string' ? docRow.docuseal_submission_id.trim() : ''
+  if (!submissionId) return { doc: docRow, refreshed: false }
+  if (!localLeaseDocLooksUnsigned(docRow)) return { doc: docRow, refreshed: false }
+
+  const submissionPayload = await fetchDocusealSubmission(submissionId)
+  const sync = await syncFullySignedDocusealSubmission({
+    admin,
+    docRow,
+    submissionId,
+    submissionPayload,
+    metadataExtra: {
+      last_signature_refresh_at: new Date().toISOString(),
+    },
+  })
+
+  return {
+    refreshed: true,
+    doc: {
+      ...docRow,
+      status: sync.fullySigned ? 'signed' : docRow.status === 'signed' ? 'signed' : 'sent_for_signing',
+      landlord_signed_at: sync.nextLandlordAt,
+      student_signed_at: sync.nextStudentAt,
+      co_tenant_signed_at: sync.nextCoTenantAt,
+      file_path: sync.signedPath ?? docRow.file_path,
+    },
+  }
+}
+
 export async function syncFullySignedDocusealSubmission(args: {
   admin: SupabaseClient
   docRow: TenancyDocumentSyncRow

@@ -28,6 +28,7 @@ import {
   isSubmissionFullySignedOnDocuseal,
   isWithdrawnBookingStatus,
   listingBondWindowExpiresAt,
+  localLeaseDocLooksUnsigned,
   reinstateBookingAfterDocusealReconcile,
   syncFullySignedDocusealSubmission,
   targetBookingStatusAfterReinstate,
@@ -351,6 +352,23 @@ describe('reconcileFromDocuseal helpers', () => {
   it('listingBondWindowExpiresAt is seven days ahead', () => {
     const now = Date.parse('2026-07-10T12:00:00.000Z')
     expect(listingBondWindowExpiresAt(now)).toBe('2026-07-17T12:00:00.000Z')
+  })
+
+  it('localLeaseDocLooksUnsigned is true only when all signed_at columns are empty', () => {
+    expect(
+      localLeaseDocLooksUnsigned({
+        landlord_signed_at: null,
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+      }),
+    ).toBe(true)
+    expect(
+      localLeaseDocLooksUnsigned({
+        landlord_signed_at: '2026-07-12T08:12:51.867Z',
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+      }),
+    ).toBe(false)
   })
 })
 
