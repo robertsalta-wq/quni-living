@@ -38,3 +38,21 @@ export {
   handleResendEmailOutcome,
   type ResendWebhookEvent,
 } from './handleResendEmailOutcome.js'
+
+export {
+  emitDocusealSyncBookingEvents,
+  emitDocumentArchiveFailed,
+  emitDocumentFullySigned,
+  emitDocumentGenerated,
+  emitDocumentReconciled,
+  emitDocumentRegenerated,
+  emitDocumentSentForSigning,
+  emitDocumentSignatureRecorded,
+  emitDocumentVoided,
+  emitSignatureOnTerminalBooking,
+  loadBookingIdsForTenancy,
+  maxSignatureOccurredAt,
+  type DocusealEventActor,
+  type DocusealEventSource,
+  type DocusealSignatureParty,
+} from './emitDocusealDocumentEvents.js'
