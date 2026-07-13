@@ -156,27 +156,27 @@ export async function runResendPaymentInstructionsLandlord(args: {
     }
   }
 
-  const { data: lastEvent, error: evErr } = await admin
-    .from('service_tier_events')
-    .select('created_at')
-    .eq('booking_id', bookingId)
-    .eq('event_type', 'payment_instructions_resent')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (evErr) {
+  let lastCreatedAt: string | null = null
+  try {
+    const { findLatestLifecycleEvent } = await import('./events/findLatestLifecycleEvent.js')
+    const lastEvent = await findLatestLifecycleEvent(admin, {
+      bookingId,
+      bookingEventType: 'payment_instructions.resent',
+      steEventType: 'payment_instructions_resent',
+    })
+    lastCreatedAt = lastEvent.createdAt
+  } catch (evErr) {
     warn(logger, '[resend-payment-instructions] rate-limit query', evErr)
     return { ok: false, status: 500, code: 'db_error', message: 'Could not check resend cooldown.' }
   }
 
-  if (lastEvent?.created_at) {
-    const lastMs = new Date(lastEvent.created_at as string).getTime()
+  if (lastCreatedAt) {
+    const lastMs = new Date(lastCreatedAt).getTime()
     if (Number.isFinite(lastMs)) {
       const elapsedMs = Date.now() - lastMs
       const cooldownMs = RESEND_COOLDOWN_MINUTES * 60_000
       if (elapsedMs < cooldownMs) {
-        const retryAfter = formatRetryAfter(lastEvent.created_at as string)
+        const retryAfter = formatRetryAfter(lastCreatedAt)
         return {
           ok: false,
           status: 429,
@@ -218,24 +218,26 @@ export async function runResendPaymentInstructionsLandlord(args: {
   const studentEmail =
     studentProfile && typeof studentProfile.email === 'string' ? studentProfile.email.trim() : ''
 
-  const { error: insertErr } = await admin.from('service_tier_events').insert({
-    booking_id: booking.id,
-    property_id: booking.property_id,
-    landlord_id: booking.landlord_id,
-    student_id: booking.student_id,
-    event_type: 'payment_instructions_resent',
-    service_tier: 'listing',
-    metadata: {
-      triggered_by: 'landlord',
-      student_email: studentEmail || null,
-      payout_present: true,
-      scheme_applies: schemeApplies,
-      qld_preference: qldPreference,
-    },
-  })
-
-  if (insertErr) {
-    warn(logger, '[resend-payment-instructions] service_tier_events insert', insertErr)
+  try {
+    const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+    await recordBookingEvent(admin, {
+      bookingId: booking.id as string,
+      landlordId: booking.landlord_id as string | null,
+      studentId: booking.student_id as string | null,
+      eventType: 'payment_instructions.resent',
+      actorType: 'landlord',
+      deviceCtx,
+      metadata: {
+        triggered_by: 'landlord',
+        student_email: studentEmail || null,
+        payout_present: true,
+        scheme_applies: schemeApplies,
+        qld_preference: qldPreference,
+        service_tier: 'listing',
+      },
+    })
+  } catch (insertErr) {
+    warn(logger, '[resend-payment-instructions] payment_instructions.resent event', insertErr)
   }
 
   return { ok: true }
