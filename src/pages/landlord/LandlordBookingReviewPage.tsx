@@ -48,6 +48,7 @@ import LandlordBookingAgreedRentEditor from '../../components/landlord/LandlordB
 import LandlordBookingTermsEditor, {
   listingBookingTermsEditorEligible,
 } from '../../components/landlord/LandlordBookingTermsEditor'
+import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { Pill, type PillTone } from '../../components/admin/primitives/Pill'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
@@ -1013,6 +1014,11 @@ export default function LandlordBookingReviewPage() {
             <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
               <h2 className="mb-2 text-lg font-semibold text-admin-ink">Fit summary</h2>
               <BookingFitSummaryTable rows={fitRows} />
+            </section>
+
+            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
+              <h2 className="mb-3 text-lg font-semibold text-admin-ink">Activity</h2>
+              <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
             </section>
 
             <LandlordBookingOccupancySummary
