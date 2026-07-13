@@ -420,6 +420,24 @@ export async function sendForSigning(
 
   if (upErr) throw upErr
 
+  try {
+    const { emitDocumentSentForSigning, loadBookingIdsForTenancy } = await import(
+      './booking/events/emitDocusealDocumentEvents.js'
+    )
+    const bookingIds = await loadBookingIdsForTenancy(admin, row.tenancy_id)
+    if (bookingIds) {
+      await emitDocumentSentForSigning(admin, {
+        ...bookingIds,
+        documentId,
+        submissionId,
+        actorType: 'system',
+        source: 'send',
+      })
+    }
+  } catch (evErr) {
+    console.error('[docuseal] document.sent_for_signing', documentId, evErr)
+  }
+
   const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
   const landlordLink =
     submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
@@ -651,6 +669,24 @@ export async function sendResidentialTenancyPackageForSigning(
 
   if (upErr) throw upErr
 
+  try {
+    const { emitDocumentSentForSigning, loadBookingIdsForTenancy } = await import(
+      './booking/events/emitDocusealDocumentEvents.js'
+    )
+    const bookingIds = await loadBookingIdsForTenancy(admin, row.tenancy_id)
+    if (bookingIds) {
+      await emitDocumentSentForSigning(admin, {
+        ...bookingIds,
+        documentId,
+        submissionId,
+        actorType: 'system',
+        source: 'send',
+      })
+    }
+  } catch (evErr) {
+    console.error('[docuseal] document.sent_for_signing (package)', documentId, evErr)
+  }
+
   const submitters = Array.isArray(submission.submitters) ? submission.submitters : []
   const landlordLink =
     submitters.find((s) => (s.role || '').toLowerCase().includes('landlord'))?.embed_src ||
@@ -779,22 +815,20 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
         bookingStatus: bookingRow.status,
       })
 
-      const { error: evErr } = await admin.from('service_tier_events').insert({
-        booking_id: bookingRow.id,
-        property_id: bookingRow.property_id,
-        landlord_id: bookingRow.landlord_id,
-        student_id: bookingRow.student_id,
-        event_type: 'signature_on_terminal_booking',
-        service_tier: bookingRow.service_tier_final,
-        metadata: {
-          docuseal_submission_id: submissionId,
-          tenancy_document_id: docRow.id,
-          booking_status: bookingRow.status,
-        },
-      })
-
-      if (evErr) {
-        console.error('[docuseal-webhook] signature_on_terminal_booking telemetry', evErr)
+      try {
+        const { emitSignatureOnTerminalBooking } = await import(
+          './booking/events/emitDocusealDocumentEvents.js'
+        )
+        await emitSignatureOnTerminalBooking(admin, {
+          bookingId: bookingRow.id,
+          landlordId: bookingRow.landlord_id,
+          studentId: bookingRow.student_id,
+          documentId: docRow.id,
+          submissionId,
+          bookingStatus: bookingRow.status,
+        })
+      } catch (evErr) {
+        console.error('[docuseal-webhook] signature.on_terminal_booking telemetry', evErr)
       }
 
       return { ok: true, message: 'Booking terminal; signature ignored' }
@@ -808,6 +842,10 @@ export async function handleSigningWebhook(payload: unknown): Promise<{ ok: bool
     submissionId,
     submissionPayload: payload,
     metadataExtra: { last_webhook: payload as unknown as Json },
+    eventOptions: {
+      source: 'webhook',
+      actorType: 'webhook',
+    },
   })
 
   const {

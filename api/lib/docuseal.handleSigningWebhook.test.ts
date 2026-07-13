@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   fetchCoTenantSignerForTenancy: vi.fn(),
   fetchCoTenantSignerForBooking: vi.fn(),
   createClient: vi.fn(),
+  emitSignatureOnTerminalBooking: vi.fn(),
 }))
 
 vi.mock('./sendEmail.js', () => ({
@@ -19,6 +20,13 @@ vi.mock('./booking/coTenantSigning.js', () => ({
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: mocks.createClient,
+}))
+
+vi.mock('./booking/events/emitDocusealDocumentEvents.js', () => ({
+  emitSignatureOnTerminalBooking: (...args: unknown[]) =>
+    mocks.emitSignatureOnTerminalBooking(...args),
+  emitDocumentSentForSigning: vi.fn(),
+  loadBookingIdsForTenancy: vi.fn(),
 }))
 
 import { handleSigningWebhook } from './docuseal.js'
@@ -39,13 +47,8 @@ const docRow = {
   co_tenant_signed_at: null,
 }
 
-function buildAdmin(options: {
-  bookingStatus: string
-  trackDocUpdate?: boolean
-  trackEventInsert?: boolean
-}) {
+function buildAdmin(options: { bookingStatus: string; trackDocUpdate?: boolean }) {
   let docUpdated = false
-  let eventInserted: Record<string, unknown> | null = null
 
   const admin = {
     from: (table: string) => {
@@ -92,12 +95,13 @@ function buildAdmin(options: {
           }),
         }
       }
-      if (table === 'service_tier_events') {
+      if (table === 'booking_events') {
         return {
-          insert: async (row: Record<string, unknown>) => {
-            if (options.trackEventInsert !== false) eventInserted = row
-            return { error: null }
-          },
+          insert: () => ({
+            select: () => ({
+              single: async () => ({ data: { id: 'evt-sig' }, error: null }),
+            }),
+          }),
         }
       }
       return {}
@@ -109,7 +113,6 @@ function buildAdmin(options: {
       }),
     },
     _docUpdated: () => docUpdated,
-    _eventInserted: () => eventInserted,
   }
 
   return admin
@@ -124,6 +127,7 @@ describe('handleSigningWebhook terminal booking guard', () => {
     process.env.DOCUSEAL_API_TOKEN = 'token'
     mocks.fetchCoTenantSignerForTenancy.mockResolvedValue(null)
     mocks.fetchCoTenantSignerForBooking.mockResolvedValue(null)
+    mocks.emitSignatureOnTerminalBooking.mockResolvedValue({ ok: true, id: 'evt-1' })
   })
 
   it('no-ops on cancelled booking: 200, anomaly event, no doc update, no emails', async () => {
@@ -144,15 +148,15 @@ describe('handleSigningWebhook terminal booking guard', () => {
     expect(result).toEqual({ ok: true, message: 'Booking terminal; signature ignored' })
     expect(admin._docUpdated()).toBe(false)
     expect(mocks.sendEmail).not.toHaveBeenCalled()
-    expect(admin._eventInserted()).toMatchObject({
-      event_type: 'signature_on_terminal_booking',
-      booking_id: bookingId,
-      metadata: {
-        docuseal_submission_id: submissionId,
-        tenancy_document_id: docId,
-        booking_status: 'cancelled',
-      },
-    })
+    expect(mocks.emitSignatureOnTerminalBooking).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({
+        bookingId,
+        documentId: docId,
+        submissionId,
+        bookingStatus: 'cancelled',
+      }),
+    )
   })
 
   it('processes bond_pending booking: updates tenancy_documents, no anomaly event', async () => {
@@ -191,7 +195,7 @@ describe('handleSigningWebhook terminal booking guard', () => {
 
     expect(result.ok).toBe(true)
     expect(admin._docUpdated()).toBe(true)
-    expect(admin._eventInserted()).toBeNull()
+    expect(mocks.emitSignatureOnTerminalBooking).not.toHaveBeenCalled()
     expect(mocks.sendEmail).not.toHaveBeenCalled()
 
     vi.unstubAllGlobals()

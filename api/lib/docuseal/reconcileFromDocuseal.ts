@@ -6,6 +6,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Json } from '../../../src/lib/database.types.js'
 import { fetchCoTenantSignerForTenancy } from '../booking/coTenantSigning.js'
+import {
+  emitDocusealSyncBookingEvents,
+  loadBookingIdsForTenancy,
+  type DocusealEventActor,
+  type DocusealEventSource,
+} from '../booking/events/emitDocusealDocumentEvents.js'
 import { setListingAgreementStatus } from '../booking/listingAgreementStatus.js'
 import { getDocusealApiBase, getDocusealAuthHeaders } from '../docusealClient.js'
 import {
@@ -315,6 +321,11 @@ export async function refreshUnsignedLeaseSignaturesFromDocuseal(
     metadataExtra: {
       last_signature_refresh_at: new Date().toISOString(),
     },
+    eventOptions: {
+      source: 'refresh',
+      actorType: 'system',
+      ensureMissing: true,
+    },
   })
 
   return {
@@ -330,14 +341,24 @@ export async function refreshUnsignedLeaseSignaturesFromDocuseal(
   }
 }
 
+export type SyncDocusealEventOptions = DocusealEventActor & {
+  source: DocusealEventSource
+  /** Fill missing booking_events when columns already match DocuSeal (historical). */
+  ensureMissing?: boolean
+  /** Fail-closed for signature / fully_signed inserts (default true). */
+  required?: boolean
+}
+
 export async function syncFullySignedDocusealSubmission(args: {
   admin: SupabaseClient
   docRow: TenancyDocumentSyncRow
   submissionId: string
   submissionPayload: unknown
   metadataExtra?: Record<string, unknown>
+  /** When set, emit document.signature_recorded / document.fully_signed (same shapes as webhook). */
+  eventOptions?: SyncDocusealEventOptions | null
 }): Promise<SyncFullySignedResult> {
-  const { admin, docRow, submissionId, submissionPayload, metadataExtra = {} } = args
+  const { admin, docRow, submissionId, submissionPayload, metadataExtra = {}, eventOptions } = args
   if (!docRow.tenancy_id) {
     throw new Error('tenancy_document missing tenancy_id')
   }
@@ -351,6 +372,13 @@ export async function syncFullySignedDocusealSubmission(args: {
     isResidentialTenancyPackage,
   )
 
+  const before = {
+    landlordSignedAt: docRow.landlord_signed_at,
+    studentSignedAt: docRow.student_signed_at,
+    coTenantSignedAt: docRow.co_tenant_signed_at,
+  }
+  const wasFullySigned = docRow.status === 'signed'
+
   const { nextLandlordAt, nextStudentAt, nextCoTenantAt, fullySigned, nextStatus } =
     computeSignatureTimestamps({
       docRow,
@@ -359,6 +387,35 @@ export async function syncFullySignedDocusealSubmission(args: {
     })
 
   let nextMetadata: Record<string, unknown> = { ...rowMeta, ...metadataExtra }
+
+  const emitSyncEvents = async (signedPath: string | null) => {
+    if (!eventOptions || !docRow.tenancy_id) return
+    const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
+    if (!bookingIds) return
+    await emitDocusealSyncBookingEvents(
+      admin,
+      {
+        ...bookingIds,
+        documentId: docRow.id,
+        submissionId,
+        before,
+        after: {
+          landlordSignedAt: nextLandlordAt,
+          studentSignedAt: nextStudentAt,
+          coTenantSignedAt: coTenantRequired ? nextCoTenantAt : null,
+        },
+        fullySigned,
+        wasFullySigned,
+        source: eventOptions.source,
+        signedPath,
+        ensureMissing: eventOptions.ensureMissing,
+        actorType: eventOptions.actorType,
+        actorId: eventOptions.actorId,
+        actorLabel: eventOptions.actorLabel,
+      },
+      { required: eventOptions.required !== false },
+    )
+  }
 
   // Always persist per-party timestamps (and keep sent_for_signing until fully signed).
   // Do not require PDF download for partial signatures — that blocked *_signed_at writes.
@@ -375,9 +432,12 @@ export async function syncFullySignedDocusealSubmission(args: {
       .eq('id', docRow.id)
     if (partialErr) throw partialErr
 
+    const signedPath = typeof docRow.file_path === 'string' ? docRow.file_path : null
+    await emitSyncEvents(signedPath)
+
     return {
       fullySigned: false,
-      signedPath: typeof docRow.file_path === 'string' ? docRow.file_path : null,
+      signedPath,
       signedUrl: null,
       isResidentialTenancyPackage,
       isQldResidentialPackage,
@@ -448,6 +508,8 @@ export async function syncFullySignedDocusealSubmission(args: {
     .eq('id', docRow.id)
 
   if (upDocErr) throw upDocErr
+
+  await emitSyncEvents(signedPath)
 
   return {
     fullySigned,
