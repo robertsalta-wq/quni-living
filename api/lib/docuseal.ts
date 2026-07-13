@@ -61,26 +61,34 @@ export function extractSubmissionIdFromWebhook(payload: unknown): string | null 
     return null
   }
 
-  const direct = tryVal(o.id) ?? tryVal(o.submission_id)
-  if (direct) return direct
+  const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
+  const isFormEvent = evt.startsWith('form.')
 
   const data = o.data
   if (data && typeof data === 'object') {
     const d = data as Record<string, unknown>
+    const nestedSubmission =
+      d.submission && typeof d.submission === 'object'
+        ? tryVal((d.submission as Record<string, unknown>).id)
+        : null
+    // form.* payloads use data.id as the submitter id; submission id is data.submission.id.
+    if (isFormEvent && nestedSubmission) return nestedSubmission
+    // Heuristic when event_type is missing: submitter-shaped data with nested submission.
+    const looksLikeFormSubmitter =
+      typeof d.role === 'string' && nestedSubmission != null && !Array.isArray(d.submitters)
+    if (looksLikeFormSubmitter && nestedSubmission) return nestedSubmission
+
     const fromData = tryVal(d.id) ?? tryVal(d.submission_id)
     if (fromData) return fromData
-    const sub = d.submission
-    if (sub && typeof sub === 'object') {
-      const s = sub as Record<string, unknown>
-      const fromSub = tryVal(s.id)
-      if (fromSub) return fromSub
-    }
+    if (nestedSubmission) return nestedSubmission
   }
+
+  const direct = tryVal(o.id) ?? tryVal(o.submission_id)
+  if (direct) return direct
 
   const submission = o.submission
   if (submission && typeof submission === 'object') {
-    const s = submission as Record<string, unknown>
-    const fromSub = tryVal(s.id)
+    const fromSub = tryVal((submission as Record<string, unknown>).id)
     if (fromSub) return fromSub
   }
 
@@ -920,16 +928,24 @@ export function extractCompletedAt(
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const submitters = root.submitters
-  if (!Array.isArray(submitters)) return null
-  for (const s of submitters) {
-    if (!s || typeof s !== 'object') continue
-    const r = (s as Record<string, unknown>).role
-    const roleStr = typeof r === 'string' ? r.toLowerCase() : ''
-    if (!submitterRoleMatches(roleStr, role)) continue
-    const c = (s as Record<string, unknown>).completed_at
-    if (typeof c === 'string' && c.trim()) return c
+  if (Array.isArray(submitters)) {
+    for (const s of submitters) {
+      if (!s || typeof s !== 'object') continue
+      const r = (s as Record<string, unknown>).role
+      const roleStr = typeof r === 'string' ? r.toLowerCase() : ''
+      if (!submitterRoleMatches(roleStr, role)) continue
+      const c = (s as Record<string, unknown>).completed_at
+      if (typeof c === 'string' && c.trim()) return c
+      return null
+    }
     return null
   }
+
+  // form.completed: `data` is a single submitter (role + completed_at), not a submitters[].
+  const roleStr = typeof root.role === 'string' ? root.role.toLowerCase() : ''
+  if (!roleStr || !submitterRoleMatches(roleStr, role)) return null
+  const c = root.completed_at
+  if (typeof c === 'string' && c.trim()) return c
   return null
 }
 
