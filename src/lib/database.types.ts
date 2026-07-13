@@ -2719,6 +2719,14 @@ export interface Database {
         }
         Returns: undefined
       }
+      set_booking_event_actor: {
+        Args: {
+          p_actor_type?: string
+          p_actor_id?: string | null
+          p_actor_label?: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

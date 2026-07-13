@@ -23,3 +23,10 @@ export {
   type RecordBookingEventOptions,
   type RecordBookingEventResult,
 } from './recordBookingEvent.js'
+
+export {
+  BOOKING_EVENT_TRIGGER_WATCHED_COLUMNS,
+  setBookingEventActor,
+  type BookingEventTriggerWatchedColumn,
+  type SetBookingEventActorInput,
+} from './setBookingEventActor.js'
