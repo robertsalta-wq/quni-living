@@ -264,22 +264,28 @@ When no doc / no tenancy: `any_party_signed: false`.
 
 ## Verification checklist (run after Stage 4)
 
-- [ ] `npx tsc -b --noEmit`
-- [ ] `npx vitest run api/lib/booking/leaseEndDate.test.ts api/lib/booking/bookingTermsUpdate.test.ts api/lib/booking/rentAgreedOverride.test.ts`
-- [ ] Unknown patch key → 400
-- [ ] Edit blocked at `bond_pending` when landlord has signed
+- [x] `npx tsc -b --noEmit` (CI + local)
+- [x] `npx vitest run` booking-terms unit suite (CI; includes `bookingTermsUpdate` / `leaseEndDate` / endpoint guards)
+- [x] Unknown patch key → 400 (`api/booking-update-terms.test.ts`)
+- [x] Reason missing or under 3 chars → 400 (`api/booking-update-terms.test.ts`; also prod: "Tenant request")
+- [x] Managed booking → 400 (`api/booking-update-terms.test.ts`)
+- [x] Status outside allowed set → 409 (`api/booking-update-terms.test.ts`)
+- [x] Edit blocked when any party has signed (`landlord_signed_at` / `student_signed_at` / `co_tenant_signed_at`) → 409 (`api/booking-update-terms.test.ts`)
 - [x] Edit allowed at `bond_pending` when unsigned (prod: Sahil booking)
-- [ ] Edit allowed at `pending_confirmation` with no tenancy doc
-- [ ] `co_tenant: null` → `occupant_count = 1`, `housemates_count = 0`
-- [ ] Co-tenant email = primary email → 400
-- [ ] `lease_length: 'Flexible'` → `end_date` null on booking + tenancy sync
-- [ ] Notes-only save → `end_date` unchanged
+- [x] Edit allowed at `pending_confirmation` with no tenancy doc → 200 (`api/booking-update-terms.test.ts`)
+- [x] `co_tenant: null` → `occupant_count = 1`, `housemates_count = 0` (builder + endpoint)
+- [x] Co-tenant email = primary email → 400 (builder + endpoint)
+- [x] `lease_length: 'Flexible'` → `end_date` null on booking + tenancy sync (endpoint)
+- [x] Notes-only save → `end_date` unchanged (builder + endpoint)
 - [x] Conditional `end_date` recompute on lease-length change (prod: 6 months → 3 months, 2027-01-16 → 2026-10-16; only those fields)
-- [x] Reason enforced (prod: "Tenant request")
-- [ ] Managed booking review page → agreed-rent editor still visible
-- [ ] Student dashboard `BookingLeasePanel` — no edit form visible
 - [x] Audit row in `service_tier_events` with `event_type = 'booking_terms_update'` (prod: actor + clean old/new diff)
 - [x] Regenerate agreement reissues DocuSeal submission (prod: 164 → 165)
+- [x] Student dashboard `BookingLeasePanel` — no edit form visible (`landlordBookingTermsEditorPrivilege.test.ts`)
+
+### Still manual (UI / product smoke)
+
+- [ ] Managed booking review page → agreed-rent editor still visible (UI; not booking-update-terms)
+- [ ] Full landlord smoke: edit terms → Regenerate agreement → all parties sign (beyond Sahil partial path)
 
 ---
 
