@@ -367,23 +367,28 @@ export async function runListingConfirmBooking(
     })
   }
 
-  const { error: evErr } = await admin.from('service_tier_events').insert({
-    booking_id: booking.id,
-    property_id: booking.property_id,
-    landlord_id: booking.landlord_id,
-    student_id: booking.student_id,
-    event_type: 'booking_confirmed',
-    service_tier: 'listing',
-    metadata: {
-      stripe_payment_intent_id: chargePi?.id ?? null,
-      amount_cents: listingFeeCents,
-      fee_exempt: feeExempt,
-      bond_window_expires_at: bondWindow,
-    },
-  })
-
-  if (evErr) {
-    console.error('[confirm-listing] service_tier_events insert', evErr)
+  try {
+    const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+    await recordBookingEvent(admin, {
+      bookingId: booking.id,
+      landlordId: booking.landlord_id,
+      studentId: booking.student_id,
+      eventType: 'booking.confirmed',
+      actorType: 'landlord',
+      actorId: landlord.id,
+      provider: chargePi?.id ? 'stripe' : null,
+      providerRef: chargePi?.id ?? null,
+      deviceCtx,
+      metadata: {
+        stripe_payment_intent_id: chargePi?.id ?? null,
+        amount_cents: listingFeeCents,
+        fee_exempt: feeExempt,
+        bond_window_expires_at: bondWindow,
+        service_tier: 'listing',
+      },
+    })
+  } catch (evErr) {
+    console.error('[confirm-listing] booking.confirmed event', evErr)
   }
 
   let listingAgreementStatus: 'pending' | 'ready' | 'failed' = 'pending'

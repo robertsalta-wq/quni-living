@@ -254,18 +254,42 @@ export async function buildRentAgreedOverridePatch(
  * @param {object} args
  */
 export async function insertRentAgreedOverrideEvent(admin, args) {
-  const { booking, property, landlordProfileId, studentId, metadata } = args
-  const { error } = await admin.from('service_tier_events').insert({
-    booking_id: booking.id,
-    property_id: booking.property_id ?? property?.id ?? null,
-    landlord_id: landlordProfileId,
-    student_id: studentId ?? booking.student_id ?? null,
-    event_type: RENT_AGREED_OVERRIDE_EVENT,
-    service_tier: booking.service_tier_at_request === 'managed' ? 'managed' : 'listing',
-    metadata: {
-      ...metadata,
-      recorded_at: new Date().toISOString(),
+  const { booking, landlordProfileId, studentId, metadata } = args
+  const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+  const changes = []
+  if (metadata && typeof metadata === 'object') {
+    if ('from_weekly_rent_aud' in metadata || 'to_weekly_rent_aud' in metadata) {
+      changes.push({
+        field: 'weekly_rent',
+        old: metadata.from_weekly_rent_aud ?? null,
+        new: metadata.to_weekly_rent_aud ?? null,
+      })
+    }
+    if ('from_bond_amount_aud' in metadata || 'to_bond_amount_aud' in metadata) {
+      changes.push({
+        field: 'bond_amount',
+        old: metadata.from_bond_amount_aud ?? null,
+        new: metadata.to_bond_amount_aud ?? null,
+      })
+    }
+  }
+
+  await recordBookingEvent(
+    admin,
+    {
+      bookingId: booking.id,
+      landlordId: landlordProfileId,
+      studentId: studentId ?? booking.student_id ?? null,
+      eventType: 'rent.agreed_override',
+      actorType: 'landlord',
+      actorId: landlordProfileId,
+      reason: typeof metadata?.reason === 'string' ? metadata.reason : null,
+      changes: changes.length ? changes : null,
+      metadata: {
+        ...metadata,
+        service_tier: booking.service_tier_at_request === 'managed' ? 'managed' : 'listing',
+      },
     },
-  })
-  if (error) throw error
+    { required: true },
+  )
 }

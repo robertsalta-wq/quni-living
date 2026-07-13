@@ -80,18 +80,23 @@ export async function runExpireListingBondPendingBooking(args: {
     ...(piId ? { stripe_payment_intent_id: piId } : {}),
   }
 
-  const { error: evErr } = await admin.from('service_tier_events').insert({
-    booking_id: bookingId,
-    property_id: booking.property_id,
-    landlord_id: booking.landlord_id,
-    student_id: booking.student_id,
-    event_type: 'bond_pending_expired',
-    service_tier: 'listing',
-    metadata,
-  })
-
-  if (evErr) {
-    console.error('expire-bookings bond_pending telemetry', bookingId, evErr)
+  try {
+    const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+    await recordBookingEvent(admin, {
+      bookingId,
+      landlordId: booking.landlord_id,
+      studentId: booking.student_id,
+      eventType: 'bond.pending_expired',
+      actorType: 'cron',
+      provider: piId ? 'stripe' : null,
+      providerRef: piId || null,
+      metadata: {
+        ...metadata,
+        service_tier: 'listing',
+      },
+    })
+  } catch (evErr) {
+    console.error('expire-bookings bond.pending_expired event', bookingId, evErr)
   }
 
   try {

@@ -56,3 +56,9 @@ export {
   type DocusealEventSource,
   type DocusealSignatureParty,
 } from './emitDocusealDocumentEvents.js'
+
+export {
+  findLatestLifecycleEvent,
+  stripePaymentIntentIdFromMetadata,
+  type LifecycleEventLookup,
+} from './findLatestLifecycleEvent.js'

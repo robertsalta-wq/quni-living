@@ -172,18 +172,21 @@ export async function runMarkBondReceivedLandlord(args: {
     }
   }
 
-  const { error: evErr } = await admin.from('service_tier_events').insert({
-    booking_id: updated.id,
-    property_id: updated.property_id,
-    landlord_id: updated.landlord_id,
-    student_id: updated.student_id,
-    event_type: 'bond_received_acknowledged',
-    service_tier: 'listing',
-    metadata: { bond_received_at: nowIso },
-  })
-
-  if (evErr) {
-    warn(logger, '[mark-bond-received] service_tier_events insert', evErr)
+  try {
+    const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+    const ev = await recordBookingEvent(admin, {
+      bookingId: updated.id,
+      landlordId: updated.landlord_id,
+      studentId: updated.student_id,
+      eventType: 'bond.received_acknowledged',
+      actorType: 'landlord',
+      metadata: { bond_received_at: nowIso, service_tier: 'listing' },
+    })
+    if (!ev.ok) {
+      warn(logger, '[mark-bond-received] bond.received_acknowledged event', ev.message)
+    }
+  } catch (evErr) {
+    warn(logger, '[mark-bond-received] bond.received_acknowledged event', evErr)
   }
 
   if (updated.property_id) {

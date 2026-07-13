@@ -11,8 +11,6 @@ export const config = { runtime: 'nodejs', maxDuration: 30 }
 
 const TERMS_UPDATE_ALLOWED_STATUSES = ['pending_confirmation', 'awaiting_info', 'bond_pending']
 
-const BOOKING_TERMS_UPDATE_EVENT = 'booking_terms_update'
-
 function corsJson(res, body, status = 200, origin) {
   const allowOrigin = origin || '*'
   res.setHeader('Access-Control-Allow-Origin', allowOrigin)
@@ -120,20 +118,40 @@ function tenancySyncPatchFromBookingPatch(bookingPatch) {
  * @param {object} args
  */
 async function insertBookingTermsUpdateEvent(admin, args) {
-  const { booking, property, landlordProfileId, studentId, metadata } = args
-  const { error } = await admin.from('service_tier_events').insert({
-    booking_id: booking.id,
-    property_id: booking.property_id ?? property?.id ?? null,
-    landlord_id: landlordProfileId,
-    student_id: studentId ?? booking.student_id ?? null,
-    event_type: BOOKING_TERMS_UPDATE_EVENT,
-    service_tier: 'listing',
-    metadata: {
-      ...metadata,
-      recorded_at: new Date().toISOString(),
-    },
+  const { booking, landlordProfileId, studentId, metadata } = args
+  const changeMap =
+    metadata?.changes && typeof metadata.changes === 'object' && !Array.isArray(metadata.changes)
+      ? metadata.changes
+      : {}
+  const changes = Object.entries(changeMap).map(([field, diff]) => {
+    const d = diff && typeof diff === 'object' ? diff : {}
+    return {
+      field,
+      old: Object.prototype.hasOwnProperty.call(d, 'from') ? d.from : null,
+      new: Object.prototype.hasOwnProperty.call(d, 'to') ? d.to : null,
+    }
   })
-  if (error) throw error
+
+  const { recordBookingEvent } = await import('./lib/booking/events/recordBookingEvent.js')
+  await recordBookingEvent(
+    admin,
+    {
+      bookingId: booking.id,
+      landlordId: landlordProfileId,
+      studentId: studentId ?? booking.student_id ?? null,
+      eventType: 'booking.terms_updated',
+      actorType: 'landlord',
+      actorId: landlordProfileId,
+      reason: typeof metadata?.reason === 'string' ? metadata.reason : null,
+      changes,
+      metadata: {
+        ...(metadata?.co_tenant_unverified ? { co_tenant_unverified: true } : {}),
+        service_tier: 'listing',
+        actor_landlord_id: landlordProfileId,
+      },
+    },
+    { required: true },
+  )
 }
 
 export default async function handler(req, res) {

@@ -159,18 +159,24 @@ export async function runCancelListingBookingLandlord(args: {
     ...(piId ? { stripe_payment_intent_id: piId } : {}),
   }
 
-  const { error: evErr } = await admin.from('service_tier_events').insert({
-    booking_id: bookingId,
-    property_id: booking.property_id,
-    landlord_id: booking.landlord_id,
-    student_id: booking.student_id,
-    event_type: 'bond_pending_cancelled_by_landlord',
-    service_tier: 'listing',
-    metadata: metaPayload,
-  })
-
-  if (evErr) {
-    console.error('[cancel-listing] service_tier_events insert', evErr)
+  try {
+    const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+    await recordBookingEvent(admin, {
+      bookingId,
+      landlordId: booking.landlord_id,
+      studentId: booking.student_id,
+      eventType: 'bond.pending_cancelled_by_landlord',
+      actorType: 'landlord',
+      reason: reasonTrim || null,
+      provider: piId ? 'stripe' : null,
+      providerRef: piId || null,
+      metadata: {
+        ...metaPayload,
+        service_tier: 'listing',
+      },
+    })
+  } catch (evErr) {
+    console.error('[cancel-listing] bond.pending_cancelled_by_landlord event', evErr)
   }
 
   try {

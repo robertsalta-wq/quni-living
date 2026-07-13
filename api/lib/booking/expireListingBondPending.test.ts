@@ -56,12 +56,16 @@ describe('runExpireListingBondPendingBooking', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
+        if (table === 'booking_events') {
           return {
-            insert: async (row: Record<string, unknown>) => {
-              eventInsert = row
-              return { error: null }
-            },
+            insert: (row: Record<string, unknown>) => ({
+              select: () => ({
+                single: async () => {
+                  eventInsert = row
+                  return { data: { id: 'evt-1' }, error: null }
+                },
+              }),
+            }),
           }
         }
         return {}
@@ -84,8 +88,7 @@ describe('runExpireListingBondPendingBooking', () => {
       { refund_id: null, refund_amount_cents: null },
     )
     expect(eventInsert).toMatchObject({
-      event_type: 'bond_pending_expired',
-      service_tier: 'listing',
+      event_type: 'bond.pending_expired',
       booking_id: bookingId,
     })
     expect(eventInsert?.metadata).toMatchObject({
@@ -115,12 +118,16 @@ describe('runExpireListingBondPendingBooking', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
+        if (table === 'booking_events') {
           return {
-            insert: async (row: Record<string, unknown>) => {
-              eventInsert = row
-              return { error: null }
-            },
+            insert: (row: Record<string, unknown>) => ({
+              select: () => ({
+                single: async () => {
+                  eventInsert = row
+                  return { data: { id: 'evt-1' }, error: null }
+                },
+              }),
+            }),
           }
         }
         return {}
