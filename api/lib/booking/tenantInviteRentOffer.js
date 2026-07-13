@@ -104,18 +104,29 @@ export function applyTenantInviteRentOffer(listingResolved, property, invite, mo
  */
 export async function insertRentInviteOfferAppliedEvent(admin, args) {
   const { booking, property, invite, landlordProfileId, studentId, metadata } = args
-  const { error } = await admin.from('service_tier_events').insert({
-    booking_id: booking.id,
-    property_id: booking.property_id ?? property?.id ?? null,
-    landlord_id: landlordProfileId ?? property?.landlord_id ?? null,
-    student_id: studentId ?? booking.student_id ?? null,
-    event_type: RENT_INVITE_OFFER_APPLIED_EVENT,
-    service_tier: 'listing',
-    metadata: {
-      ...metadata,
-      tenant_invite_id: invite?.id ?? null,
-      recorded_at: new Date().toISOString(),
+  const { recordBookingEvent } = await import('./events/recordBookingEvent.js')
+  await recordBookingEvent(
+    admin,
+    {
+      bookingId: booking.id,
+      landlordId: landlordProfileId ?? property?.landlord_id ?? null,
+      studentId: studentId ?? booking.student_id ?? null,
+      eventType: 'rent.invite_offer_applied',
+      actorType: 'system',
+      actorId: landlordProfileId ?? property?.landlord_id ?? null,
+      changes: [
+        {
+          field: 'weekly_rent',
+          old: metadata?.listing_weekly_rent_aud ?? null,
+          new: metadata?.applied_weekly_rent_aud ?? null,
+        },
+      ],
+      metadata: {
+        ...metadata,
+        tenant_invite_id: invite?.id ?? null,
+        service_tier: 'listing',
+      },
     },
-  })
-  if (error) throw error
+    { required: true },
+  )
 }
