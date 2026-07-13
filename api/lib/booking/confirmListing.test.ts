@@ -90,9 +90,13 @@ function mockAdmin(opts: {
         }),
       }
     }
-    if (table === 'service_tier_events') {
+    if (table === 'booking_events') {
       return {
-        insert: async () => ({ error: eventError }),
+        insert: () => ({
+          select: () => ({
+            single: async () => ({ data: { id: 'evt-1' }, error: eventError }),
+          }),
+        }),
       }
     }
     if (table === 'property_payout_details') {
@@ -174,7 +178,7 @@ describe('runListingConfirmBooking', () => {
     )
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
     expect(stripe.paymentIntents.create).toHaveBeenCalled()
-    expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+    expect(admin.from).toHaveBeenCalledWith('booking_events')
   })
 
   it('preflight failure blocks charge and bond_pending', async () => {
@@ -347,7 +351,7 @@ describe('runListingConfirmBooking', () => {
     if (result.ok) return
     expect(result.status).toBe(402)
     expect(result.body.error).toBe('charge_failed')
-    const insertCalls = admin.from.mock.calls.filter((c) => c[0] === 'service_tier_events')
+    const insertCalls = admin.from.mock.calls.filter((c) => c[0] === 'booking_events')
     expect(insertCalls.length).toBe(0)
   })
 
@@ -425,8 +429,14 @@ describe('runListingConfirmBooking', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
-          return { insert: async () => ({ error: null }) }
+        if (table === 'booking_events') {
+          return {
+            insert: () => ({
+              select: () => ({
+                single: async () => ({ data: { id: 'evt-1' }, error: null }),
+              }),
+            }),
+          }
         }
         return {}
       }),

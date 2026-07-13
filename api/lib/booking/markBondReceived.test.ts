@@ -100,9 +100,13 @@ function mockAdmin(opts: {
         }),
       }
     }
-    if (table === 'service_tier_events') {
+    if (table === 'booking_events') {
       return {
-        insert: async () => ({ error: eventError }),
+        insert: () => ({
+          select: () => ({
+            single: async () => ({ data: { id: 'evt-1' }, error: eventError }),
+          }),
+        }),
       }
     }
     if (table === 'platform_config') {
@@ -164,7 +168,7 @@ describe('runMarkBondReceivedLandlord', () => {
     if (!result.ok) return
     expect(result.idempotent).toBe(false)
     expect(result.booking.status).toBe('confirmed')
-    expect(admin.from).toHaveBeenCalledWith('service_tier_events')
+    expect(admin.from).toHaveBeenCalledWith('booking_events')
     expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
     expect(declineCompetingBookings).toHaveBeenCalledWith(
       expect.anything(),
@@ -284,7 +288,7 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.idempotent).toBe(true)
-    expect(admin.from.mock.calls.filter((c) => c[0] === 'service_tier_events')).toHaveLength(0)
+    expect(admin.from.mock.calls.filter((c) => c[0] === 'booking_events')).toHaveLength(0)
   })
 
   it('Managed / tier mismatch rejected', async () => {

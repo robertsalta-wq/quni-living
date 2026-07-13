@@ -77,9 +77,13 @@ describe('runCancelListingBookingLandlord', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
+        if (table === 'booking_events') {
           return {
-            insert: async () => ({ error: null }),
+            insert: () => ({
+              select: () => ({
+                single: async () => ({ data: { id: 'evt-1' }, error: null }),
+              }),
+            }),
           }
         }
         return {}
@@ -277,12 +281,16 @@ describe('runCancelListingBookingLandlord', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
+        if (table === 'booking_events') {
           return {
-            insert: async (row: Record<string, unknown>) => {
-              eventInsert = row
-              return { error: null }
-            },
+            insert: (row: Record<string, unknown>) => ({
+              select: () => ({
+                single: async () => {
+                  eventInsert = row
+                  return { data: { id: 'evt-1' }, error: null }
+                },
+              }),
+            }),
           }
         }
         return {}
@@ -304,8 +312,7 @@ describe('runCancelListingBookingLandlord', () => {
     expect(mocks.refundListingFeePaymentIntentFull).not.toHaveBeenCalled()
     expect(mocks.sendListingCancelledByLandlordEmails).toHaveBeenCalledTimes(1)
     expect(eventInsert).toMatchObject({
-      event_type: 'bond_pending_cancelled_by_landlord',
-      service_tier: 'listing',
+      event_type: 'bond.pending_cancelled_by_landlord',
     })
     expect(eventInsert?.metadata).toMatchObject({ fee_exempt: true })
     expect(eventInsert?.metadata).not.toHaveProperty('stripe_payment_intent_id')
@@ -356,8 +363,14 @@ describe('runCancelListingBookingLandlord', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
-          return { insert: async () => ({ error: null }) }
+        if (table === 'booking_events') {
+          return {
+            insert: () => ({
+              select: () => ({
+                single: async () => ({ data: { id: 'evt-1' }, error: null }),
+              }),
+            }),
+          }
         }
         return {}
       }),
