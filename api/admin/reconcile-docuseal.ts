@@ -208,6 +208,12 @@ export default async function handler(request: Request): Promise<Response> {
           reconciled_at: reconciledAt,
         },
       },
+      eventOptions: {
+        source: 'reconcile',
+        actorType: 'admin',
+        actorId: user.id,
+        ensureMissing: true,
+      },
     })
 
     const reinstateResult = await reinstateBookingAfterDocusealReconcile({
@@ -226,30 +232,32 @@ export default async function handler(request: Request): Promise<Response> {
     ]
 
     const auditMetadata = {
-      docuseal_submission_id: submissionId,
-      admin_user_id: user.id,
-      reconciled_at: reconciledAt,
       booking_status_before: bookingStatusBefore,
       booking_status_after: reinstateResult.bookingStatusAfter,
       doc_status_before: docStatusBefore,
       doc_status_after: 'signed',
-      changes,
       signed_path: syncResult.signedPath,
-      ...(refundMarker.found ? { listing_fee_refunded_on_expiry: true, refund_metadata: refundMarker.metadata } : {}),
+      ...(refundMarker.found
+        ? { listing_fee_refunded_on_expiry: true, refund_metadata: refundMarker.metadata }
+        : {}),
     }
 
-    const { error: evErr } = await admin.from('service_tier_events').insert({
-      booking_id: booking.id,
-      property_id: booking.property_id,
-      landlord_id: booking.landlord_id,
-      student_id: booking.student_id,
-      event_type: 'reconciled_from_docuseal',
-      service_tier: booking.service_tier_final,
-      metadata: auditMetadata,
-    })
-
-    if (evErr) {
-      console.error('[api/admin/reconcile-docuseal] service_tier_events insert', evErr)
+    try {
+      const { emitDocumentReconciled } = await import('../lib/booking/events/emitDocusealDocumentEvents.js')
+      await emitDocumentReconciled(admin, {
+        bookingId: booking.id,
+        landlordId: booking.landlord_id,
+        studentId: booking.student_id,
+        documentId: doc.id,
+        submissionId,
+        source: 'reconcile',
+        actorType: 'admin',
+        actorId: user.id,
+        changes,
+        metadataExtra: auditMetadata,
+      })
+    } catch (evErr) {
+      console.error('[api/admin/reconcile-docuseal] document.reconciled', evErr)
     }
 
     return json(
