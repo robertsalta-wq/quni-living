@@ -1,5 +1,5 @@
 /**
- * Gap monitors for booking_events (Stage 4).
+ * Gap monitors for booking_events (Stage 4 + Stage 5 signature invariant).
  * Vercel Cron: GET /api/cron/booking-events-invariants
  * Secure with Authorization: Bearer CRON_SECRET
  *
@@ -7,6 +7,8 @@
  * (a) provider webhook health stale (>24h or never received)
  * (b) bond_pending without payment-instructions email attempt/accepted
  * (c) email.accepted older than 24h without delivered/bounced/complained
+ * (d) sent_for_signing without signature_recorded within N days
+ * (e) *_signed_at set without matching document.signature_recorded
  */
 import { createClient } from '@supabase/supabase-js'
 import { captureSentryMessageEdge } from '../lib/sentryEdgeCapture.js'
@@ -15,6 +17,7 @@ export const config = { runtime: 'edge' }
 
 const STALE_WEBHOOK_HOURS = 24
 const EMAIL_OUTCOME_HOURS = 24
+const SIGNATURE_WAIT_DAYS = 7
 const PAYMENT_TEMPLATE_KEYS = ['listing_payment_instructions', 'listing_booking_accepted_renter']
 
 function json(body, status = 200) {
@@ -26,6 +29,10 @@ function json(body, status = 200) {
 
 function hoursAgoIso(hours) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+}
+
+function daysAgoIso(days) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
 export default async function handler(request) {
@@ -202,6 +209,124 @@ export default async function handler(request) {
           fingerprint: ['booking-events-email-no-outcome', ref],
         },
       )
+    }
+  }
+
+  // (d) document.sent_for_signing without signature_recorded within N days
+  const sentCutoff = daysAgoIso(SIGNATURE_WAIT_DAYS)
+  const { data: sentRows, error: sentErr } = await admin
+    .from('booking_events')
+    .select('id, booking_id, document_id, provider_ref, occurred_at')
+    .eq('event_type', 'document.sent_for_signing')
+    .lt('occurred_at', sentCutoff)
+    .order('occurred_at', { ascending: false })
+    .limit(100)
+
+  if (sentErr) {
+    await captureSentryMessageEdge('booking-events-invariants: sent_for_signing query failed', {
+      error: sentErr.message,
+    })
+  } else {
+    for (const row of sentRows || []) {
+      const { data: sig, error: sigErr } = await admin
+        .from('booking_events')
+        .select('id')
+        .eq('booking_id', row.booking_id)
+        .eq('event_type', 'document.signature_recorded')
+        .limit(1)
+        .maybeSingle()
+      if (sigErr) continue
+      if (sig?.id) continue
+
+      const finding = {
+        kind: 'sent_for_signing_missing_signature',
+        booking_id: row.booking_id,
+        document_id: row.document_id,
+        provider_ref: row.provider_ref,
+        occurred_at: row.occurred_at,
+      }
+      findings.push(finding)
+      await captureSentryMessageEdge(
+        'document.sent_for_signing has no signature_recorded within window',
+        finding,
+        {
+          level: 'error',
+          tags: { monitor: 'booking_events' },
+          fingerprint: ['booking-events-sent-no-signature', String(row.booking_id)],
+        },
+      )
+    }
+  }
+
+  // (e) *_signed_at set without matching document.signature_recorded
+  const { data: signedDocs, error: signedDocsErr } = await admin
+    .from('tenancy_documents')
+    .select(
+      'id, landlord_signed_at, student_signed_at, co_tenant_signed_at, tenancies!inner(booking_id)',
+    )
+    .or(
+      'landlord_signed_at.not.is.null,student_signed_at.not.is.null,co_tenant_signed_at.not.is.null',
+    )
+    .in('document_type', ['lease', 'residential_tenancy'])
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (signedDocsErr) {
+    await captureSentryMessageEdge('booking-events-invariants: signed docs query failed', {
+      error: signedDocsErr.message,
+    })
+  } else {
+    for (const doc of signedDocs || []) {
+      const bookingId = doc.tenancies?.booking_id
+      if (!bookingId) continue
+
+      const expectedParties = []
+      if (doc.landlord_signed_at) expectedParties.push('landlord')
+      if (doc.student_signed_at) expectedParties.push('student')
+      if (doc.co_tenant_signed_at) expectedParties.push('co_tenant')
+      if (!expectedParties.length) continue
+
+      const { data: sigEvents, error: sigEvErr } = await admin
+        .from('booking_events')
+        .select('id, metadata')
+        .eq('booking_id', bookingId)
+        .eq('document_id', doc.id)
+        .eq('event_type', 'document.signature_recorded')
+        .limit(20)
+
+      if (sigEvErr) continue
+
+      const parties = new Set(
+        (sigEvents || [])
+          .map((ev) => {
+            const meta =
+              ev.metadata && typeof ev.metadata === 'object' && !Array.isArray(ev.metadata)
+                ? ev.metadata
+                : {}
+            return typeof meta.party === 'string' ? meta.party : null
+          })
+          .filter(Boolean),
+      )
+
+      for (const party of expectedParties) {
+        if (parties.has(party)) continue
+        const finding = {
+          kind: 'signed_at_missing_signature_event',
+          booking_id: bookingId,
+          document_id: doc.id,
+          party,
+        }
+        findings.push(finding)
+        await captureSentryMessageEdge(
+          'tenancy_documents signed_at has no matching signature_recorded event',
+          finding,
+          {
+            level: 'error',
+            tags: { monitor: 'booking_events' },
+            fingerprint: ['booking-events-signed-at-no-event', String(doc.id), party],
+          },
+        )
+      }
     }
   }
 

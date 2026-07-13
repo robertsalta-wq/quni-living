@@ -22,22 +22,20 @@ async function emitDocusealArchiveAnomaly(
   error: string,
   status?: number,
 ): Promise<void> {
-  const { error: evErr } = await admin.from('service_tier_events').insert({
-    booking_id: ctx.bookingId,
-    property_id: ctx.propertyId ?? null,
-    landlord_id: ctx.landlordId ?? null,
-    student_id: ctx.studentId ?? null,
-    event_type: 'docuseal_archive_failed',
-    service_tier: ctx.serviceTier ?? 'listing',
-    metadata: {
-      docuseal_submission_id: submissionId,
-      unwind_reason: ctx.unwindReason,
+  try {
+    const { emitDocumentArchiveFailed } = await import('./events/emitDocusealDocumentEvents.js')
+    await emitDocumentArchiveFailed(admin, {
+      bookingId: ctx.bookingId,
+      landlordId: ctx.landlordId,
+      studentId: ctx.studentId,
+      submissionId,
       error,
-      ...(status != null ? { http_status: status } : {}),
-    },
-  })
-  if (evErr) {
-    console.error('[unwind-listing-agreement] docuseal_archive_failed telemetry', evErr)
+      httpStatus: status,
+      unwindReason: ctx.unwindReason,
+      actorType: 'system',
+    })
+  } catch (evErr) {
+    console.error('[unwind-listing-agreement] document.archive_failed telemetry', evErr)
   }
 }
 
@@ -113,6 +111,21 @@ export async function runUnwindListingAgreementCleanup(
 
           if (docUpErr) {
             console.error('[unwind-listing-agreement] document archive update', doc.id, docUpErr)
+          } else if (ctx.unwindReason !== 'regenerate') {
+            try {
+              const { emitDocumentVoided } = await import('./events/emitDocusealDocumentEvents.js')
+              await emitDocumentVoided(admin, {
+                bookingId: ctx.bookingId,
+                landlordId: ctx.landlordId,
+                studentId: ctx.studentId,
+                documentId: doc.id,
+                submissionId: submissionId || null,
+                reason: ctx.unwindReason,
+                actorType: 'system',
+              })
+            } catch (evErr) {
+              console.error('[unwind-listing-agreement] document.voided', doc.id, evErr)
+            }
           }
         }
       }

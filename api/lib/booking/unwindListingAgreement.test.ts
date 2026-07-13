@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   archiveDocusealSubmission: vi.fn(),
   setListingAgreementStatus: vi.fn(),
+  emitDocumentArchiveFailed: vi.fn(),
+  emitDocumentVoided: vi.fn(),
 }))
 
 vi.mock('../docusealArchive.js', () => ({
@@ -11,6 +13,11 @@ vi.mock('../docusealArchive.js', () => ({
 
 vi.mock('./listingAgreementStatus.js', () => ({
   setListingAgreementStatus: mocks.setListingAgreementStatus,
+}))
+
+vi.mock('./events/emitDocusealDocumentEvents.js', () => ({
+  emitDocumentArchiveFailed: (...args: unknown[]) => mocks.emitDocumentArchiveFailed(...args),
+  emitDocumentVoided: (...args: unknown[]) => mocks.emitDocumentVoided(...args),
 }))
 
 import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
@@ -43,11 +50,12 @@ function buildAdmin(options: {
 }) {
   let docUpdate: Record<string, unknown> | null = null
   let tenancyUpdate: Record<string, unknown> | null = null
-  let eventInsert: Record<string, unknown> | null = null
 
   mocks.archiveDocusealSubmission.mockResolvedValue(
     options.archiveResult ?? { ok: true, outcome: 'archived' },
   )
+  mocks.emitDocumentArchiveFailed.mockResolvedValue({ ok: true, id: 'evt-archive' })
+  mocks.emitDocumentVoided.mockResolvedValue({ ok: true, id: 'evt-void' })
 
   const admin = {
     from: (table: string) => {
@@ -98,19 +106,10 @@ function buildAdmin(options: {
           }),
         }
       }
-      if (table === 'service_tier_events') {
-        return {
-          insert: async (row: Record<string, unknown>) => {
-            eventInsert = row
-            return { error: null }
-          },
-        }
-      }
       return {}
     },
     _docUpdate: () => docUpdate,
     _tenancyUpdate: () => tenancyUpdate,
-    _eventInsert: () => eventInsert,
   }
 
   return admin
@@ -134,7 +133,8 @@ describe('runUnwindListingAgreementCleanup', () => {
     expect(meta.docuseal_response.submitters[0].embed_src).toBeUndefined()
     expect(mocks.setListingAgreementStatus).toHaveBeenCalledWith(admin, bookingId, 'voided', null)
     expect(admin._tenancyUpdate()).toEqual({ status: 'ended' })
-    expect(admin._eventInsert()).toBeNull()
+    expect(mocks.emitDocumentVoided).toHaveBeenCalled()
+    expect(mocks.emitDocumentArchiveFailed).not.toHaveBeenCalled()
   })
 
   it('skips remote archive when no submission id but still does local cleanup', async () => {
@@ -154,13 +154,14 @@ describe('runUnwindListingAgreementCleanup', () => {
 
     expect(admin._docUpdate()).toMatchObject({ status: 'archived' })
     expect(mocks.setListingAgreementStatus).toHaveBeenCalled()
-    expect(admin._eventInsert()).toMatchObject({
-      event_type: 'docuseal_archive_failed',
-      booking_id: bookingId,
-      metadata: expect.objectContaining({
-        docuseal_submission_id: submissionId,
-        unwind_reason: 'cancelled',
+    expect(mocks.emitDocumentArchiveFailed).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({
+        bookingId,
+        submissionId,
+        error: 'server error',
+        httpStatus: 500,
       }),
-    })
+    )
   })
 })

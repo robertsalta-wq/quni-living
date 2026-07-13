@@ -99,5 +99,20 @@ export async function resetTenancyDocumentForNewSigningRound(admin, bookingId) {
     return { ok: false, reason: 'update_failed' }
   }
 
+  try {
+    const { emitDocumentRegenerated } = await import('./events/emitDocusealDocumentEvents.js')
+    await emitDocumentRegenerated(admin, {
+      bookingId,
+      landlordId: booking?.landlord_id ?? null,
+      studentId: booking?.student_id ?? null,
+      documentId: doc.id,
+      previousSubmissionId: submissionId || null,
+      previousStatus: status || 'unknown',
+      actorType: 'system',
+    })
+  } catch (evErr) {
+    console.error('[reset-tenancy-doc-signing] document.regenerated', bookingId, evErr)
+  }
+
   return { ok: true, reset: true, documentId: doc.id, previousStatus: status || 'unknown' }
 }

@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   archiveDocusealSubmission: vi.fn(),
+  emitDocumentRegenerated: vi.fn(),
 }))
 
 vi.mock('../docusealArchive.js', () => ({
   archiveDocusealSubmission: mocks.archiveDocusealSubmission,
+}))
+
+vi.mock('./events/emitDocusealDocumentEvents.js', () => ({
+  emitDocumentRegenerated: (...args: unknown[]) => mocks.emitDocumentRegenerated(...args),
 }))
 
 import { resetTenancyDocumentForNewSigningRound } from './resetTenancyDocumentForNewSigningRound.js'
@@ -19,6 +24,7 @@ describe('resetTenancyDocumentForNewSigningRound', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.archiveDocusealSubmission.mockResolvedValue({ ok: true, outcome: 'archived' })
+    mocks.emitDocumentRegenerated.mockResolvedValue({ ok: true, id: 'evt-regen' })
   })
 
   it('archives old submission before clearing docuseal_submission_id', async () => {
@@ -82,9 +88,6 @@ describe('resetTenancyDocumentForNewSigningRound', () => {
             }),
           }
         }
-        if (table === 'service_tier_events') {
-          return { insert: async () => ({ error: null }) }
-        }
         return {}
       },
     }
@@ -98,5 +101,13 @@ describe('resetTenancyDocumentForNewSigningRound', () => {
       docuseal_submission_id: null,
     })
     expect(docUpdate?.metadata).not.toHaveProperty('docuseal_response')
+    expect(mocks.emitDocumentRegenerated).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({
+        bookingId,
+        documentId: docId,
+        previousSubmissionId: submissionId,
+      }),
+    )
   })
 })

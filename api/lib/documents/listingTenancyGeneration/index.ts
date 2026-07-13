@@ -85,5 +85,29 @@ export async function runListingTenancyGeneration(
     }
   }
 
-  return mod.run(admin, bookingId, { deferSigning: opts.deferSigning })
+  const result = await mod.run(admin, bookingId, { deferSigning: opts.deferSigning })
+
+  if (result.ok && !('skipped' in result && result.skipped) && 'documentId' in result && result.documentId) {
+    try {
+      const { data: booking } = await admin
+        .from('bookings')
+        .select('landlord_id, student_id')
+        .eq('id', bookingId)
+        .maybeSingle()
+      const { emitDocumentGenerated } = await import('../../booking/events/emitDocusealDocumentEvents.js')
+      await emitDocumentGenerated(admin, {
+        bookingId,
+        landlordId: booking?.landlord_id ?? null,
+        studentId: booking?.student_id ?? null,
+        documentId: result.documentId,
+        generator,
+        deferSigning: opts.deferSigning,
+        actorType: 'system',
+      })
+    } catch (evErr) {
+      console.error('[listing-tenancy-gen] document.generated', bookingId, evErr)
+    }
+  }
+
+  return result
 }

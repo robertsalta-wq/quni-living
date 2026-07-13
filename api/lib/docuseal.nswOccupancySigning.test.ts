@@ -72,6 +72,7 @@ function buildSendForSigningAdmin() {
                 data: {
                   landlord_profile_id: 'll_1',
                   student_profile_id: 'st_1',
+                  booking_id: bookingId,
                 },
                 error: null,
               }),
@@ -119,6 +120,27 @@ function buildSendForSigningAdmin() {
         return {
           select: () => ({
             in: async () => ({ data: [], error: null }),
+          }),
+        }
+      }
+      if (table === 'bookings') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: bookingId, landlord_id: 'll_1', student_id: 'st_1' },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
+      if (table === 'booking_events') {
+        return {
+          insert: () => ({
+            select: () => ({
+              single: async () => ({ data: { id: 'evt-sent' }, error: null }),
+            }),
           }),
         }
       }
@@ -216,6 +238,15 @@ function buildWebhookAdmin(options?: { trackDocUpdate?: boolean }) {
                 },
                 error: null,
               }),
+            }),
+          }),
+        }
+      }
+      if (table === 'booking_events') {
+        return {
+          insert: () => ({
+            select: () => ({
+              single: async () => ({ data: { id: 'evt-sig' }, error: null }),
             }),
           }),
         }
