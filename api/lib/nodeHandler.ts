@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import type { IncomingMessage } from 'node:http'
+import { requestContextFromRequest } from './journey/requestContext.js'
 
 /**
  * Read a header from Node `IncomingMessage` headers (keys are lowercased).
@@ -9,6 +10,21 @@ export function headerString(headers: IncomingMessage['headers'], name: string):
   const v = headers[name]
   if (v == null) return ''
   return Array.isArray(v) ? String(v[0] ?? '') : String(v)
+}
+
+/**
+ * Device context for Node serverless handlers (plain header object).
+ * Adapts to requestContextFromRequest without changing the journey helper.
+ */
+export function requestContextFromNodeRequest(req: IncomingMessage | { headers?: IncomingMessage['headers'] } | null | undefined) {
+  return requestContextFromRequest({
+    headers: {
+      get: (name: string) => {
+        const v = headerString(req?.headers ?? {}, name.toLowerCase())
+        return v || null
+      },
+    },
+  })
 }
 
 type JsonBodyReq = IncomingMessage & { body?: unknown }

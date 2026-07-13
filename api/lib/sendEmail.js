@@ -7,8 +7,9 @@
  * @param {string} args.html
  * @param {string} [args.replyTo] - shown as Reply-To on the outbound message
  * @param {string|string[]} [args.cc]
+ * @param {{ name: string, value: string }[]} [args.tags] - Resend tags (max 50 chars each)
  */
-export async function sendEmail({ to, subject, html, replyTo, cc }) {
+export async function sendEmail({ to, subject, html, replyTo, cc, tags }) {
   const key = (process.env.RESEND_API_KEY || '').trim()
   if (!key) {
     console.error('Resend: missing RESEND_API_KEY')
@@ -31,6 +32,20 @@ export async function sendEmail({ to, subject, html, replyTo, cc }) {
     const ccList = (Array.isArray(cc) ? cc : [cc]).map((e) => String(e).trim()).filter(Boolean)
     if (ccList.length) {
       payload.cc = ccList
+    }
+  }
+  if (Array.isArray(tags) && tags.length) {
+    const cleaned = tags
+      .map((t) => {
+        if (!t || typeof t !== 'object') return null
+        const name = typeof t.name === 'string' ? t.name.trim().slice(0, 50) : ''
+        const value = typeof t.value === 'string' ? t.value.trim().slice(0, 50) : ''
+        if (!name || !value) return null
+        return { name, value }
+      })
+      .filter(Boolean)
+    if (cleaned.length) {
+      payload.tags = cleaned
     }
   }
 

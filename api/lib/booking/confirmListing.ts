@@ -72,12 +72,13 @@ export type RunListingConfirmBookingParams = {
   }
   bookingId: string
   origin?: string
+  deviceCtx?: { user_agent: string; is_mobile: boolean } | null
 }
 
 export async function runListingConfirmBooking(
   params: RunListingConfirmBookingParams,
 ): Promise<ConfirmFail | ConfirmOk> {
-  const { stripe, admin, landlord, bookingId } = params
+  const { stripe, admin, landlord, bookingId, deviceCtx = null } = params
   const landlordUserId =
     typeof landlord.user_id === 'string' && landlord.user_id.trim() ? landlord.user_id.trim() : null
 
@@ -429,6 +430,7 @@ export async function runListingConfirmBooking(
   try {
     await sendListingBookingAcceptedEmails(admin, booking.id, {
       bond_window_expires_at: bondWindow,
+      deviceCtx,
     })
   } catch (e) {
     console.error('[confirm-listing] acceptance emails', e)

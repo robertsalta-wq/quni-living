@@ -1,11 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+export type BookingEmailDeviceContext = {
+  user_agent: string
+  is_mobile: boolean
+}
+
 export function siteBaseUrl(): string
 
 export function sendListingBookingAcceptedEmails(
   admin: SupabaseClient,
   bookingId: string,
-  opts: { bond_window_expires_at: string },
+  opts: {
+    bond_window_expires_at: string
+    deviceCtx?: BookingEmailDeviceContext | null
+  },
 ): Promise<void>
 
 export function sendListingAgreementReadyEmails(admin: SupabaseClient, bookingId: string): Promise<void>
@@ -32,4 +40,5 @@ export function buildListingRenterPaymentEmailPayload(
 export function sendListingPaymentInstructionsRenter(
   admin: SupabaseClient,
   bookingId: string,
+  opts?: { deviceCtx?: BookingEmailDeviceContext | null },
 ): Promise<{ ok: true } | { ok: false; code: string; message: string }>

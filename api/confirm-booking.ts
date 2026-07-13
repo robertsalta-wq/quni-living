@@ -1,7 +1,7 @@
 // @ts-nocheck - Landlord booking confirm: Listing (fee + bond_pending) or Managed (existing subscription path).
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { headerString, readJsonBody } from './lib/nodeHandler.js'
+import { headerString, readJsonBody, requestContextFromNodeRequest } from './lib/nodeHandler.js'
 import { runManagedConfirmBooking } from './lib/booking/confirmManaged.js'
 import { runListingConfirmBooking } from './lib/booking/confirmListing.js'
 import { fetchServiceTierResolverContext } from './lib/platformConfig.js'
@@ -269,6 +269,7 @@ export default async function handler(req, res) {
         landlord,
         bookingId,
         origin,
+        deviceCtx: requestContextFromNodeRequest(req),
       })
 
       if (!listingResult.ok) {

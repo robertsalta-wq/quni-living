@@ -1,6 +1,6 @@
 // @ts-nocheck - Vercel Node handler; mirrors booking-mark-bond-received typing style.
 import { createClient } from '@supabase/supabase-js'
-import { headerString, readJsonBody } from './lib/nodeHandler.js'
+import { headerString, readJsonBody, requestContextFromNodeRequest } from './lib/nodeHandler.js'
 import { runResendPaymentInstructionsLandlord } from './lib/booking/resendPaymentInstructions.js'
 
 export const config = { runtime: 'nodejs', maxDuration: 30 }
@@ -85,6 +85,7 @@ export default async function handler(req, res) {
       admin,
       landlordProfileId: landlord.id,
       bookingId,
+      deviceCtx: requestContextFromNodeRequest(req),
     })
 
     if (!result.ok) {

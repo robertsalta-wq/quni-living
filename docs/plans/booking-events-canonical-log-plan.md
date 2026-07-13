@@ -63,6 +63,8 @@ Landlord/admin and renter timelines (see product copy in chat 13 Jul) require th
 
 **Invariant:** Renter view = `WHERE audience = 'both'` over the same table. Never a parallel write.
 
+**Device context:** Handler-emitted rows may include `metadata.user_agent` / `metadata.is_mobile` via `mergeDeviceContextMetadata` (same helper as `journey_events`). DB trigger, webhooks, and cron omit device context — no request / not the actor's device.
+
 ---
 
 ## Schema (`booking_events`)

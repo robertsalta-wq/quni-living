@@ -1,7 +1,10 @@
 /**
- * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort.
+ * Listing-tier transactional emails (Resend). Failures are logged; callers treat email as best-effort
+ * except sendListingPaymentInstructionsRenter (propagates). Payment-instruction paths use
+ * sendBookingEmail so attempt/accept/fail land in booking_events.
  */
 import { sendEmail } from '../sendEmail.js'
+import { sendBookingEmail } from './sendBookingEmail.js'
 import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { resolveBookingBondAmountAud } from './bookingBondAmount.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
@@ -62,6 +65,8 @@ async function loadListingEmailContext(admin, bookingId) {
       `
       id,
       property_id,
+      landlord_id,
+      student_id,
       status,
       service_tier_final,
       confirmed_at,
@@ -174,7 +179,9 @@ async function loadListingEmailContext(admin, bookingId) {
       : null
 
   return {
-    bookingId,
+    bookingId: typeof booking.id === 'string' ? booking.id : bookingId,
+    landlordId: typeof booking.landlord_id === 'string' ? booking.landlord_id : null,
+    studentId: typeof booking.student_id === 'string' ? booking.student_id : null,
     studentEmail,
     landlordEmail,
     studentName,
@@ -230,9 +237,10 @@ export function buildListingRenterPaymentEmailPayload(ctx, opts) {
  * User-initiated payment instructions email (landlord resend). Propagates send failures.
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
+ * @param {{ deviceCtx?: { user_agent: string, is_mobile: boolean } | null }} [opts]
  * @returns {Promise<{ ok: true } | { ok: false; code: string; message: string }>}
  */
-export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
+export async function sendListingPaymentInstructionsRenter(admin, bookingId, opts = {}) {
   const ctx = await loadListingEmailContext(admin, bookingId)
   if (!ctx) {
     return { ok: false, code: 'not_found', message: 'Booking not found.' }
@@ -245,11 +253,17 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
   const payload = buildListingRenterPaymentEmailPayload(ctx, { bondDeadlineDisplay: bondDeadline })
   const t = listingPaymentInstructionsRenter(payload)
   const landlordCc = ctx.landlordEmail?.trim() || ''
-  await sendEmail({
+  await sendBookingEmail(admin, {
+    bookingId: ctx.bookingId,
+    templateKey: 'listing_payment_instructions',
     to: ctx.studentEmail,
     subject: t.subject,
     html: t.html,
     ...(landlordCc ? { cc: landlordCc } : {}),
+    landlordId: ctx.landlordId,
+    studentId: ctx.studentId,
+    actorType: 'landlord',
+    deviceCtx: opts.deviceCtx ?? null,
   })
   return { ok: true }
 }
@@ -258,7 +272,7 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
  * After Listing confirm (bond_pending).
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
- * @param {{ bond_window_expires_at: string }} opts
+ * @param {{ bond_window_expires_at: string, deviceCtx?: { user_agent: string, is_mobile: boolean } | null }} opts
  */
 export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
   try {
@@ -270,6 +284,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
     const bondDeadline = formatAuLongDate(opts.bond_window_expires_at)
     const studentDash = `${base}/student-dashboard?tab=bookings`
     const markBond = `${base}/landlord/bookings/${bookingId}/review`
+    const deviceCtx = opts.deviceCtx ?? null
 
     const sendRenter = async () => {
       if (!ctx.studentEmail) return
@@ -280,7 +295,17 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
           bookingReference: bookingRef,
         }),
       )
-      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+      await sendBookingEmail(admin, {
+        bookingId,
+        templateKey: 'listing_booking_accepted_renter',
+        to: ctx.studentEmail,
+        subject: t.subject,
+        html: t.html,
+        landlordId: ctx.landlordId,
+        studentId: ctx.studentId,
+        actorType: 'system',
+        deviceCtx,
+      })
     }
 
     const sendLl = async () => {

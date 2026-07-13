@@ -33,6 +33,33 @@ describe('booking event defaults', () => {
   })
 })
 
+describe('recordBookingEvent device context', () => {
+  it('merges user_agent and is_mobile into metadata', async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: 'evt-d' }, error: null })
+    const select = vi.fn(() => ({ single }))
+    const insert = vi.fn(() => ({ select }))
+    const from = vi.fn(() => ({ insert }))
+    const admin = { from } as never
+
+    await recordBookingEvent(admin, {
+      bookingId: 'book-1',
+      eventType: 'booking.confirmed',
+      metadata: { template_key: 'x' },
+      deviceCtx: { user_agent: 'Mozilla/5.0 iPhone', is_mobile: true },
+    })
+
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          template_key: 'x',
+          user_agent: 'Mozilla/5.0 iPhone',
+          is_mobile: true,
+        },
+      }),
+    )
+  })
+})
+
 describe('recordBookingEvent', () => {
   it('inserts into booking_events with defaults', async () => {
     const { admin, from, insert } = mockAdmin({

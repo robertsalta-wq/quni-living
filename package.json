@@ -62,7 +62,8 @@
     "react-router-dom": "^7.13.1",
     "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
-    "stripe": "^20.4.1"
+    "stripe": "^20.4.1",
+    "svix": "^1.96.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

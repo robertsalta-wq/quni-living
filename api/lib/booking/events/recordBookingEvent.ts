@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Json } from '../../../../src/lib/database.types.js'
+import { mergeDeviceContextMetadata } from '../../journey/requestContext.js'
 import {
   defaultsForEventType,
   resolveAudience,
@@ -10,6 +11,12 @@ import {
   type BookingEventProvider,
   type BookingEventType,
 } from './types.js'
+
+/** Same shape as journey requestContextFromRequest / mergeDeviceContextMetadata. */
+export type BookingEventDeviceContext = {
+  user_agent: string
+  is_mobile: boolean
+}
 
 export type RecordBookingEventInput = {
   bookingId: string
@@ -29,6 +36,8 @@ export type RecordBookingEventInput = {
   correlationId?: string | null
   documentId?: string | null
   metadata?: Record<string, unknown> | null
+  /** Handler-only: merge user_agent / is_mobile into metadata. Omit for trigger/webhook/cron. */
+  deviceCtx?: BookingEventDeviceContext | null
   schemaVersion?: number
 }
 
@@ -83,6 +92,12 @@ export async function recordBookingEvent(
   const outcome = input.outcome ?? defaults.outcome
   const actorType = input.actorType ?? 'system'
 
+  const baseMeta =
+    input.metadata && typeof input.metadata === 'object' && !Array.isArray(input.metadata)
+      ? input.metadata
+      : {}
+  const metadata = mergeDeviceContextMetadata(baseMeta, input.deviceCtx ?? null)
+
   const row = {
     booking_id: bookingId,
     landlord_id: input.landlordId ?? null,
@@ -100,7 +115,7 @@ export async function recordBookingEvent(
     provider_ref: input.providerRef?.trim() ? input.providerRef.trim() : null,
     correlation_id: input.correlationId?.trim() ? input.correlationId.trim() : null,
     document_id: input.documentId ?? null,
-    metadata: asJson(input.metadata && typeof input.metadata === 'object' ? input.metadata : {}),
+    metadata: asJson(metadata),
     schema_version: input.schemaVersion ?? 1,
   }
 

@@ -3,4 +3,6 @@ export function sendEmail(args: {
   subject: string
   html: string
   replyTo?: string
+  cc?: string | string[]
+  tags?: { name: string; value: string }[]
 }): Promise<unknown>
