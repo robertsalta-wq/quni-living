@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmail } from '../sendEmail.js'
 import { captureSentryMessageEdge } from '../sentryEdgeCapture.js'
-import { recordBookingEvent } from './events/recordBookingEvent.js'
+import { recordBookingEvent, type BookingEventDeviceContext } from './events/recordBookingEvent.js'
 import type { BookingEventActorType } from './events/types.js'
 
 export type SendBookingEmailArgs = {
@@ -18,6 +18,8 @@ export type SendBookingEmailArgs = {
   actorId?: string | null
   actorLabel?: string | null
   metadata?: Record<string, unknown> | null
+  /** Handler device context — omit for cron/system sends. */
+  deviceCtx?: BookingEventDeviceContext | null
 }
 
 export type SendBookingEmailResult = {
@@ -91,6 +93,7 @@ export async function sendBookingEmail(
       provider: 'resend',
       correlationId,
       metadata: baseMeta,
+      deviceCtx: args.deviceCtx,
     },
     { required: true },
   )
@@ -122,6 +125,7 @@ export async function sendBookingEmail(
       provider: 'resend',
       correlationId,
       metadata: { ...baseMeta, error: message.slice(0, 500) },
+      deviceCtx: args.deviceCtx,
     })
     throw err
   }
@@ -143,6 +147,7 @@ export async function sendBookingEmail(
         providerRef: resendId,
         correlationId,
         metadata: baseMeta,
+        deviceCtx: args.deviceCtx,
       },
       { required: true },
     )

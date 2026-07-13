@@ -37,8 +37,9 @@ export async function runResendPaymentInstructionsLandlord(args: {
   landlordProfileId: string
   bookingId: string
   logger?: Pick<Console, 'warn'>
+  deviceCtx?: { user_agent: string; is_mobile: boolean } | null
 }): Promise<ResendPaymentInstructionsResult> {
-  const { admin, landlordProfileId, bookingId, logger } = args
+  const { admin, landlordProfileId, bookingId, logger, deviceCtx = null } = args
 
   const { data: booking, error: loadErr } = await admin
     .from('bookings')
@@ -188,7 +189,7 @@ export async function runResendPaymentInstructionsLandlord(args: {
 
   let sendResult: Awaited<ReturnType<typeof sendListingPaymentInstructionsRenter>>
   try {
-    sendResult = await sendListingPaymentInstructionsRenter(admin, bookingId)
+    sendResult = await sendListingPaymentInstructionsRenter(admin, bookingId, { deviceCtx })
   } catch (e) {
     warn(logger, '[resend-payment-instructions] send email', e)
     const msg = e instanceof Error ? e.message : 'Could not send email.'

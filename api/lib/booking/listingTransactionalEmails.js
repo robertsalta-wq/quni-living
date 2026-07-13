@@ -237,9 +237,10 @@ export function buildListingRenterPaymentEmailPayload(ctx, opts) {
  * User-initiated payment instructions email (landlord resend). Propagates send failures.
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
+ * @param {{ deviceCtx?: { user_agent: string, is_mobile: boolean } | null }} [opts]
  * @returns {Promise<{ ok: true } | { ok: false; code: string; message: string }>}
  */
-export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
+export async function sendListingPaymentInstructionsRenter(admin, bookingId, opts = {}) {
   const ctx = await loadListingEmailContext(admin, bookingId)
   if (!ctx) {
     return { ok: false, code: 'not_found', message: 'Booking not found.' }
@@ -262,6 +263,7 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
     landlordId: ctx.landlordId,
     studentId: ctx.studentId,
     actorType: 'landlord',
+    deviceCtx: opts.deviceCtx ?? null,
   })
   return { ok: true }
 }
@@ -270,7 +272,7 @@ export async function sendListingPaymentInstructionsRenter(admin, bookingId) {
  * After Listing confirm (bond_pending).
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
- * @param {{ bond_window_expires_at: string }} opts
+ * @param {{ bond_window_expires_at: string, deviceCtx?: { user_agent: string, is_mobile: boolean } | null }} opts
  */
 export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
   try {
@@ -282,6 +284,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
     const bondDeadline = formatAuLongDate(opts.bond_window_expires_at)
     const studentDash = `${base}/student-dashboard?tab=bookings`
     const markBond = `${base}/landlord/bookings/${bookingId}/review`
+    const deviceCtx = opts.deviceCtx ?? null
 
     const sendRenter = async () => {
       if (!ctx.studentEmail) return
@@ -301,6 +304,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
         landlordId: ctx.landlordId,
         studentId: ctx.studentId,
         actorType: 'system',
+        deviceCtx,
       })
     }
 

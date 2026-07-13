@@ -19,6 +19,7 @@ export {
 
 export {
   recordBookingEvent,
+  type BookingEventDeviceContext,
   type RecordBookingEventInput,
   type RecordBookingEventOptions,
   type RecordBookingEventResult,

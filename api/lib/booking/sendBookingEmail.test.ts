@@ -104,4 +104,23 @@ describe('sendBookingEmail', () => {
       'email.failed',
     ])
   })
+
+  it('passes deviceCtx through to email.attempt', async () => {
+    const { sendBookingEmail } = await import('./sendBookingEmail.js')
+    recordBookingEvent.mockResolvedValue({ ok: true, id: 'e1' })
+    sendEmail.mockResolvedValue({ id: 're_123' })
+
+    const deviceCtx = { user_agent: 'Mozilla/5.0 iPhone', is_mobile: true }
+    await sendBookingEmail({} as never, {
+      bookingId: 'book-1',
+      templateKey: 'listing_payment_instructions',
+      to: 'renter@example.com',
+      subject: 'Pay',
+      html: '<p>x</p>',
+      deviceCtx,
+    })
+
+    expect(recordBookingEvent.mock.calls[0][1].deviceCtx).toEqual(deviceCtx)
+    expect(recordBookingEvent.mock.calls[1][1].deviceCtx).toEqual(deviceCtx)
+  })
 })
