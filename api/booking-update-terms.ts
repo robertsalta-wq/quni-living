@@ -59,7 +59,9 @@ async function resolveLeaseDocumentForBooking(admin, bookingId) {
 
   const { data: docRows, error: dErr } = await admin
     .from('tenancy_documents')
-    .select('id, document_type, landlord_signed_at, student_signed_at, co_tenant_signed_at')
+    .select(
+      'id, tenancy_id, document_type, status, metadata, file_path, docuseal_submission_id, landlord_signed_at, student_signed_at, co_tenant_signed_at',
+    )
     .eq('tenancy_id', tenancy.id)
     .in('document_type', ['residential_tenancy', 'lease'])
 
@@ -304,6 +306,38 @@ export default async function handler(req, res) {
       leaseCtx = await resolveLeaseDocumentForBooking(admin, bookingId)
     } catch {
       return corsJson(res, { error: 'Could not load tenancy agreement' }, 500, origin)
+    }
+
+    if (leaseCtx.doc) {
+      const sid =
+        typeof leaseCtx.doc.docuseal_submission_id === 'string'
+          ? leaseCtx.doc.docuseal_submission_id.trim()
+          : ''
+      const unsigned =
+        !anyPartySignedOnLeaseDoc(leaseCtx.doc) && Boolean(sid) && Boolean(leaseCtx.tenancyId)
+      if (unsigned) {
+        try {
+          const { refreshUnsignedLeaseSignaturesFromDocuseal } = await import(
+            './lib/docuseal/reconcileFromDocuseal.js'
+          )
+          const refreshed = await refreshUnsignedLeaseSignaturesFromDocuseal(admin, {
+            ...leaseCtx.doc,
+            tenancy_id: leaseCtx.tenancyId,
+          })
+          leaseCtx = { ...leaseCtx, doc: refreshed.doc }
+        } catch (refreshErr) {
+          console.error('[booking-update-terms] signature refresh', refreshErr)
+          return corsJson(
+            res,
+            {
+              error: 'signature_state_unavailable',
+              message: 'Could not verify agreement signature state with DocuSeal. Try again shortly.',
+            },
+            503,
+            origin,
+          )
+        }
+      }
     }
 
     if (anyPartySignedOnLeaseDoc(leaseCtx.doc)) {

@@ -85,23 +85,17 @@ function parseDocMetadata(row: TenancyDocumentSyncRow) {
   }
 }
 
-/** Webhook event_type fallback, then DocuSeal GET submission root completed_at. */
+/** Webhook event_type fallback for full submission completion only — never form.completed. */
 export function extractSubmissionCompletedAtFromPayload(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
   const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
-  if (evt === 'submission.completed' || evt === 'form.completed') {
-    const data = o.data
-    const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
-    const completedAt = root.completed_at
-    if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
-    return new Date().toISOString()
-  }
+  if (evt !== 'submission.completed') return null
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const completedAt = root.completed_at
   if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
-  return null
+  return new Date().toISOString()
 }
 
 export function summarizeSubmitters(payload: unknown): SubmitterStatusSummary[] {
@@ -290,6 +284,52 @@ export async function isDocusealReconcileInSync(args: {
   return true
 }
 
+export function localLeaseDocLooksUnsigned(doc: {
+  landlord_signed_at?: string | null
+  student_signed_at?: string | null
+  co_tenant_signed_at?: string | null
+}): boolean {
+  const set = (v: unknown) => Boolean(v && String(v).trim())
+  return !set(doc.landlord_signed_at) && !set(doc.student_signed_at) && !set(doc.co_tenant_signed_at)
+}
+
+/**
+ * Defense-in-depth: when local *_signed_at columns are all null but a DocuSeal submission
+ * exists, GET the submission and write through timestamps (and finalize PDF if fully signed).
+ */
+export async function refreshUnsignedLeaseSignaturesFromDocuseal(
+  admin: SupabaseClient,
+  docRow: TenancyDocumentSyncRow,
+): Promise<{ doc: TenancyDocumentSyncRow; refreshed: boolean }> {
+  const submissionId =
+    typeof docRow.docuseal_submission_id === 'string' ? docRow.docuseal_submission_id.trim() : ''
+  if (!submissionId) return { doc: docRow, refreshed: false }
+  if (!localLeaseDocLooksUnsigned(docRow)) return { doc: docRow, refreshed: false }
+
+  const submissionPayload = await fetchDocusealSubmission(submissionId)
+  const sync = await syncFullySignedDocusealSubmission({
+    admin,
+    docRow,
+    submissionId,
+    submissionPayload,
+    metadataExtra: {
+      last_signature_refresh_at: new Date().toISOString(),
+    },
+  })
+
+  return {
+    refreshed: true,
+    doc: {
+      ...docRow,
+      status: sync.fullySigned ? 'signed' : docRow.status === 'signed' ? 'signed' : 'sent_for_signing',
+      landlord_signed_at: sync.nextLandlordAt,
+      student_signed_at: sync.nextStudentAt,
+      co_tenant_signed_at: sync.nextCoTenantAt,
+      file_path: sync.signedPath ?? docRow.file_path,
+    },
+  }
+}
+
 export async function syncFullySignedDocusealSubmission(args: {
   admin: SupabaseClient
   docRow: TenancyDocumentSyncRow
@@ -318,8 +358,37 @@ export async function syncFullySignedDocusealSubmission(args: {
       coTenantRequired,
     })
 
-  let signedPath: string
   let nextMetadata: Record<string, unknown> = { ...rowMeta, ...metadataExtra }
+
+  // Always persist per-party timestamps (and keep sent_for_signing until fully signed).
+  // Do not require PDF download for partial signatures — that blocked *_signed_at writes.
+  if (!fullySigned) {
+    const { error: partialErr } = await admin
+      .from('tenancy_documents')
+      .update({
+        status: nextStatus,
+        landlord_signed_at: nextLandlordAt,
+        student_signed_at: nextStudentAt,
+        co_tenant_signed_at: coTenantRequired ? nextCoTenantAt : null,
+        metadata: nextMetadata as Json,
+      })
+      .eq('id', docRow.id)
+    if (partialErr) throw partialErr
+
+    return {
+      fullySigned: false,
+      signedPath: typeof docRow.file_path === 'string' ? docRow.file_path : null,
+      signedUrl: null,
+      isResidentialTenancyPackage,
+      isQldResidentialPackage,
+      isVicResidentialPackage,
+      nextLandlordAt,
+      nextStudentAt,
+      nextCoTenantAt,
+    }
+  }
+
+  let signedPath: string
 
   if (isResidentialTenancyPackage) {
     const dual = await downloadSignedResidentialTenancyPackagePartsFromDocuseal(submissionId)

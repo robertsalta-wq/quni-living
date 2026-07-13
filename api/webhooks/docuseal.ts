@@ -1,7 +1,8 @@
 /// <reference types="node" />
 // @ts-nocheck - Vercel isolated API TS pass.
 /**
- * DocuSeal webhook - submission completed → signed PDF in Storage + emails.
+ * DocuSeal webhook - form.completed / submission.completed → per-party signed_at,
+ * and when fully signed: signed PDF in Storage + emails.
  * Configure in DocuSeal: POST https://YOUR_DOMAIN/api/webhooks/docuseal
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DOCUSEAL_API_URL, DOCUSEAL_API_TOKEN, RESEND_API_KEY
