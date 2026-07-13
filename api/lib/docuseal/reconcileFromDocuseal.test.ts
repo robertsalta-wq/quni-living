@@ -29,6 +29,7 @@ import {
   isWithdrawnBookingStatus,
   listingBondWindowExpiresAt,
   localLeaseDocLooksUnsigned,
+  nextTenancyDocumentStatusAfterSync,
   reinstateBookingAfterDocusealReconcile,
   syncFullySignedDocusealSubmission,
   targetBookingStatusAfterReinstate,
@@ -169,6 +170,137 @@ describe('reconcileFromDocuseal helpers', () => {
     expect(full.nextLandlordAt).toBe('2026-07-12T08:40:42.777Z')
     expect(full.nextStudentAt).toBe('2026-07-12T08:40:42.777Z')
     expect(full.fullySigned).toBe(true)
+  })
+
+  it('nextTenancyDocumentStatusAfterSync never resurrects archived to sent_for_signing', () => {
+    expect(
+      nextTenancyDocumentStatusAfterSync({ previousStatus: 'archived', fullySigned: false }),
+    ).toBe('archived')
+    expect(
+      nextTenancyDocumentStatusAfterSync({ previousStatus: 'voided', fullySigned: false }),
+    ).toBe('voided')
+    expect(
+      nextTenancyDocumentStatusAfterSync({ previousStatus: 'sent_for_signing', fullySigned: false }),
+    ).toBe('sent_for_signing')
+    expect(
+      nextTenancyDocumentStatusAfterSync({ previousStatus: 'archived', fullySigned: true }),
+    ).toBe('signed')
+  })
+
+  it('syncFullySignedDocusealSubmission keeps archived status on partial historical sync', async () => {
+    mocks.extractCompletedAt.mockImplementation((_payload, role: string) => {
+      if (role === 'landlord') return '2026-07-06T04:45:54.111Z'
+      return null
+    })
+    mocks.fetchCoTenantSignerForTenancy.mockResolvedValue(null)
+
+    const updates: Record<string, unknown>[] = []
+    const bookingEvents: Record<string, unknown>[] = []
+    const admin = {
+      from: (table: string) => {
+        if (table === 'tenancy_documents') {
+          return {
+            update: (patch: Record<string, unknown>) => ({
+              eq: async () => {
+                updates.push(patch)
+                return { error: null }
+              },
+            }),
+          }
+        }
+        if (table === 'tenancies') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: { booking_id: 'book-withdrawn' },
+                  error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'bookings') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: { id: 'book-withdrawn', landlord_id: 'll', student_id: 'st' },
+                  error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        if (table === 'booking_events') {
+          return {
+            insert: (row: Record<string, unknown>) => ({
+              select: () => ({
+                single: async () => {
+                  bookingEvents.push(row)
+                  return { data: { id: `evt-${bookingEvents.length}` }, error: null }
+                },
+              }),
+            }),
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  in: async () => ({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }
+        }
+        throw new Error(`unexpected table ${table}`)
+      },
+      storage: {
+        from: () => ({
+          upload: async () => {
+            throw new Error('PDF download/upload must not run for partial signatures')
+          },
+        }),
+      },
+    }
+
+    const result = await syncFullySignedDocusealSubmission({
+      admin: admin as never,
+      docRow: {
+        id: 'doc-135',
+        tenancy_id: 'ten-135',
+        docuseal_submission_id: '135',
+        metadata: { signing_package: 'residential_tenancy' },
+        status: 'archived',
+        landlord_signed_at: null,
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+        file_path: 'ten-135/residential_tenancy/draft.pdf',
+      },
+      submissionId: '135',
+      submissionPayload: {
+        status: 'pending',
+        submitters: [
+          { role: 'First Party', completed_at: '2026-07-06T04:45:54.111Z' },
+          { role: 'Second Party', completed_at: null },
+        ],
+      },
+      eventOptions: {
+        source: 'historical_reconcile',
+        actorType: 'system',
+        ensureMissing: true,
+      },
+    })
+
+    expect(result.fullySigned).toBe(false)
+    expect(result.nextLandlordAt).toBe('2026-07-06T04:45:54.111Z')
+    expect(result.nextStudentAt).toBeNull()
+    expect(updates).toHaveLength(1)
+    expect(updates[0]).toMatchObject({
+      status: 'archived',
+      landlord_signed_at: '2026-07-06T04:45:54.111Z',
+      student_signed_at: null,
+    })
+    expect(updates[0].status).not.toBe('sent_for_signing')
+    expect(bookingEvents.some((e) => e.event_type === 'document.signature_recorded')).toBe(true)
   })
 
   it('syncFullySignedDocusealSubmission persists partial signed_at without downloading PDFs', async () => {

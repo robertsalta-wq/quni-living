@@ -169,6 +169,25 @@ export async function isCoTenantRequiredForTenancy(
   )
 }
 
+/**
+ * Live signing statuses may move to sent_for_signing on partial sync.
+ * Terminal / void document statuses must never be resurrected to sent_for_signing
+ * (historical partial reconcile of archived leases — e.g. withdrawn bookings).
+ */
+const LIVE_PARTIAL_DOC_STATUSES = new Set(['draft', 'sent_for_signing'])
+
+export function nextTenancyDocumentStatusAfterSync(args: {
+  previousStatus: string
+  fullySigned: boolean
+}): string {
+  const previous = (args.previousStatus || '').trim() || 'sent_for_signing'
+  if (args.fullySigned) return 'signed'
+  if (previous === 'signed') return 'signed'
+  if (LIVE_PARTIAL_DOC_STATUSES.has(previous)) return 'sent_for_signing'
+  // archived / voided / unknown terminal states: preserve — never archived → sent_for_signing
+  return previous
+}
+
 export function computeSignatureTimestamps(args: {
   docRow: TenancyDocumentSyncRow
   submissionPayload: unknown
@@ -178,7 +197,7 @@ export function computeSignatureTimestamps(args: {
   nextStudentAt: string | null
   nextCoTenantAt: string | null
   fullySigned: boolean
-  nextStatus: 'signed' | 'sent_for_signing'
+  nextStatus: string
 } {
   const { docRow, submissionPayload, coTenantRequired } = args
 
@@ -210,7 +229,7 @@ export function computeSignatureTimestamps(args: {
     (!coTenantRequired || Boolean(nextCoTenantAt))
 
   const previousStatus = typeof docRow.status === 'string' ? docRow.status : 'sent_for_signing'
-  const nextStatus = fullySigned ? 'signed' : previousStatus === 'signed' ? 'signed' : 'sent_for_signing'
+  const nextStatus = nextTenancyDocumentStatusAfterSync({ previousStatus, fullySigned })
 
   return { nextLandlordAt, nextStudentAt, nextCoTenantAt, fullySigned, nextStatus }
 }
