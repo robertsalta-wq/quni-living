@@ -85,23 +85,17 @@ function parseDocMetadata(row: TenancyDocumentSyncRow) {
   }
 }
 
-/** Webhook event_type fallback, then DocuSeal GET submission root completed_at. */
+/** Webhook event_type fallback for full submission completion only — never form.completed. */
 export function extractSubmissionCompletedAtFromPayload(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
   const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
-  if (evt === 'submission.completed' || evt === 'form.completed') {
-    const data = o.data
-    const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
-    const completedAt = root.completed_at
-    if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
-    return new Date().toISOString()
-  }
+  if (evt !== 'submission.completed') return null
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const completedAt = root.completed_at
   if (typeof completedAt === 'string' && completedAt.trim()) return completedAt
-  return null
+  return new Date().toISOString()
 }
 
 export function summarizeSubmitters(payload: unknown): SubmitterStatusSummary[] {

@@ -954,7 +954,7 @@ function extractSubmissionCompletedAt(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const o = payload as Record<string, unknown>
   const evt = typeof o.event_type === 'string' ? o.event_type.toLowerCase() : ''
-  if (evt !== 'submission.completed' && evt !== 'form.completed') return null
+  if (evt !== 'submission.completed') return null
   const data = o.data
   const root = data && typeof data === 'object' ? (data as Record<string, unknown>) : o
   const completedAt = root.completed_at

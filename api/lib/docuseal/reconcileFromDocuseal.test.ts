@@ -108,6 +108,68 @@ describe('reconcileFromDocuseal helpers', () => {
     expect(withCo.fullySigned).toBe(true)
   })
 
+  it('does not apply submissionCompletedAt fallback for form.completed', () => {
+    mocks.extractCompletedAt.mockImplementation((_payload, role: string) => {
+      if (role === 'landlord') return '2026-07-12T08:12:51.867Z'
+      return null
+    })
+    const partial = computeSignatureTimestamps({
+      docRow: {
+        id: 'doc',
+        tenancy_id: 'ten',
+        docuseal_submission_id: '165',
+        metadata: null,
+        status: 'sent_for_signing',
+        landlord_signed_at: null,
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+        file_path: null,
+      },
+      submissionPayload: {
+        event_type: 'form.completed',
+        data: {
+          role: 'First Party',
+          completed_at: '2026-07-12T08:12:51.867Z',
+          submission: { id: 165, completed_at: '2026-07-12T08:12:51.867Z' },
+        },
+      },
+      coTenantRequired: false,
+    })
+    expect(partial.nextLandlordAt).toBe('2026-07-12T08:12:51.867Z')
+    expect(partial.nextStudentAt).toBeNull()
+    expect(partial.fullySigned).toBe(false)
+  })
+
+  it('applies submissionCompletedAt fallback only for submission.completed', () => {
+    mocks.extractCompletedAt.mockReturnValue(null)
+    const full = computeSignatureTimestamps({
+      docRow: {
+        id: 'doc',
+        tenancy_id: 'ten',
+        docuseal_submission_id: '165',
+        metadata: null,
+        status: 'sent_for_signing',
+        landlord_signed_at: null,
+        student_signed_at: null,
+        co_tenant_signed_at: null,
+        file_path: null,
+      },
+      submissionPayload: {
+        event_type: 'submission.completed',
+        data: {
+          id: 165,
+          status: 'completed',
+          completed_at: '2026-07-12T08:40:42.777Z',
+          submitters: [],
+        },
+      },
+      coTenantRequired: false,
+    })
+    expect(full.nextLandlordAt).toBe('2026-07-12T08:40:42.777Z')
+    expect(full.nextStudentAt).toBe('2026-07-12T08:40:42.777Z')
+    expect(full.fullySigned).toBe(true)
+  })
+
   it('syncFullySignedDocusealSubmission persists partial signed_at without downloading PDFs', async () => {
     mocks.extractCompletedAt.mockImplementation((_payload, role: string) => {
       if (role === 'landlord') return '2026-07-12T08:12:51.867Z'
