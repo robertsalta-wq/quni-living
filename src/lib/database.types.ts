@@ -946,6 +946,114 @@ export interface Database {
           },
         ]
       }
+      booking_events: {
+        Row: {
+          id: string
+          booking_id: string
+          landlord_id: string | null
+          student_id: string | null
+          event_type: string
+          occurred_at: string
+          created_at: string
+          audience: 'internal' | 'both'
+          outcome: 'success' | 'failure' | 'pending' | 'n/a'
+          actor_type: 'system' | 'student' | 'landlord' | 'admin' | 'webhook' | 'cron'
+          actor_id: string | null
+          actor_label: string | null
+          changes: Json | null
+          reason: string | null
+          provider: string | null
+          provider_ref: string | null
+          correlation_id: string | null
+          document_id: string | null
+          metadata: Json
+          schema_version: number
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          landlord_id?: string | null
+          student_id?: string | null
+          event_type: string
+          occurred_at?: string
+          created_at?: string
+          audience?: 'internal' | 'both'
+          outcome?: 'success' | 'failure' | 'pending' | 'n/a'
+          actor_type?: 'system' | 'student' | 'landlord' | 'admin' | 'webhook' | 'cron'
+          actor_id?: string | null
+          actor_label?: string | null
+          changes?: Json | null
+          reason?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          correlation_id?: string | null
+          document_id?: string | null
+          metadata?: Json
+          schema_version?: number
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          landlord_id?: string | null
+          student_id?: string | null
+          event_type?: string
+          occurred_at?: string
+          created_at?: string
+          audience?: 'internal' | 'both'
+          outcome?: 'success' | 'failure' | 'pending' | 'n/a'
+          actor_type?: 'system' | 'student' | 'landlord' | 'admin' | 'webhook' | 'cron'
+          actor_id?: string | null
+          actor_label?: string | null
+          changes?: Json | null
+          reason?: string | null
+          provider?: string | null
+          provider_ref?: string | null
+          correlation_id?: string | null
+          document_id?: string | null
+          metadata?: Json
+          schema_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'booking_events_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'bookings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'booking_events_document_id_fkey'
+            columns: ['document_id']
+            isOneToOne: false
+            referencedRelation: 'tenancy_documents'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      provider_webhook_health: {
+        Row: {
+          provider: 'resend' | 'docuseal' | 'stripe'
+          last_received_at: string | null
+          last_event_type: string | null
+          last_error: string | null
+          updated_at: string
+        }
+        Insert: {
+          provider: 'resend' | 'docuseal' | 'stripe'
+          last_received_at?: string | null
+          last_event_type?: string | null
+          last_error?: string | null
+          updated_at?: string
+        }
+        Update: {
+          provider?: 'resend' | 'docuseal' | 'stripe'
+          last_received_at?: string | null
+          last_event_type?: string | null
+          last_error?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pricing_config: {
         Row: {
           id: string
@@ -2579,6 +2687,37 @@ export interface Database {
           id: string
           distance_km: number
         }[]
+      }
+      insert_booking_event: {
+        Args: {
+          p_event_type: string
+          p_booking_id: string
+          p_landlord_id?: string | null
+          p_student_id?: string | null
+          p_occurred_at?: string | null
+          p_audience?: string
+          p_outcome?: string
+          p_actor_type?: string
+          p_actor_id?: string | null
+          p_actor_label?: string | null
+          p_changes?: Json | null
+          p_reason?: string | null
+          p_provider?: string | null
+          p_provider_ref?: string | null
+          p_correlation_id?: string | null
+          p_document_id?: string | null
+          p_metadata?: Json
+          p_schema_version?: number
+        }
+        Returns: string
+      }
+      touch_provider_webhook_health: {
+        Args: {
+          p_provider: string
+          p_event_type?: string | null
+          p_error?: string | null
+        }
+        Returns: undefined
       }
     }
     Enums: Record<string, never>
