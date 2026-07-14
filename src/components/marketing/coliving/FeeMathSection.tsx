@@ -100,7 +100,7 @@ export default function FeeMathSection() {
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg">
             Fee comparisons for a $300/wk room - agent letting fee vs Quni Listing at $99 on
-            acceptance. Arithmetic on published fee schedules, not time-to-fill claims.
+            acceptance. Fee comparison based on published fee schedules.
           </p>
         </SceneReveal>
 
@@ -178,7 +178,7 @@ export default function FeeMathSection() {
                       </defs>
                       <XAxis
                         dataKey="fills"
-                        tickFormatter={(v) => `${v}x`}
+                        tickFormatter={(v) => (v === 1 ? '1 fill' : `${v} fills`)}
                         tick={{ fill: '#6B7280', fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}

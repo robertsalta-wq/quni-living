@@ -106,7 +106,7 @@ export default function BondRoutingScene() {
         </div>
       </div>
 
-      <p className="mt-4 text-center text-[11px] text-gray-500">Quni never receives the bond</p>
+      <p className="mt-4 text-center text-[11px] text-gray-500">Quni never holds the bond</p>
     </div>
   )
 }
