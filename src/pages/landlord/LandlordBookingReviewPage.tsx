@@ -230,6 +230,9 @@ export default function LandlordBookingReviewPage() {
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
 
+  /** Zone 2 (Who) expand/collapse — defaults by status, overridable by the user's toggle. */
+  const [zone2ExpandedOverride, setZone2ExpandedOverride] = useState<boolean | null>(null)
+
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
 
@@ -918,6 +921,10 @@ export default function LandlordBookingReviewPage() {
     showResendPaymentInstructions ||
     tierModel?.showManagedUpgrade === true
 
+  // Zone 2 (Who): prominent pre-acceptance, collapses to a summary once the landlord has decided.
+  const zone2Expanded = zone2ExpandedOverride ?? isPreAcceptStatus
+  const zone2Summary = `${displayName} · applicant, verification & fit`
+
   return (
     <div className="min-h-full bg-admin-surface-2">
       <div className="mx-auto max-w-[860px] px-6 py-7 pb-[72px]">
@@ -1371,23 +1378,87 @@ export default function LandlordBookingReviewPage() {
             </div>
           </Section>
 
-          {/* —— Temporary unzoned stack (Who / Terms / History land here in later commits) —— */}
-          <div className="flex min-w-0 flex-col gap-5">
-            <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-              <div id="applicant-review" className="scroll-mt-4">
-                <LandlordApplicantReviewHeader
-                  student={snapshot}
-                  displayName={displayName}
-                  bio={data.student?.bio}
-                  embedded
-                />
+          {/* —— Zone 2: Who —— */}
+          <Section
+            id="zone-who"
+            ordinal={2}
+            title="Who is this?"
+            summary={zone2Summary}
+            expanded={zone2Expanded}
+            onToggle={() => setZone2ExpandedOverride(!zone2Expanded)}
+            editLabel="View applicant"
+          >
+            <div className="space-y-5">
+              <div>
+                <div id="applicant-review" className="scroll-mt-4">
+                  <LandlordApplicantReviewHeader
+                    student={snapshot}
+                    displayName={displayName}
+                    bio={data.student?.bio}
+                    embedded
+                  />
+                </div>
+
+                <hr className="my-3 border-admin-line-soft" aria-hidden />
+
+                <LandlordApplicantVerificationSection student={snapshot} embedded />
               </div>
 
-              <hr className="my-3 border-admin-line-soft" aria-hidden />
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-admin-ink">Fit summary</h3>
+                <BookingFitSummaryTable rows={fitRows} />
+              </div>
 
-              <LandlordApplicantVerificationSection student={snapshot} embedded />
+              <LandlordApplicantAIAssessmentPanel
+                assessment={aiAssessment}
+                assessmentAt={aiAssessmentAt}
+                loading={aiLoading}
+                error={aiError}
+                onGenerate={() => void callAssessmentApi({ refresh: false })}
+                onRefresh={() => void callAssessmentApi({ refresh: true })}
+                refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
+                refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
+                showGenerate={!aiAssessment}
+              />
+
+              {booking.student_message?.trim() && (
+                <div>
+                  <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+                    Message from the student
+                  </p>
+                  <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
+                    &ldquo;{booking.student_message.trim()}&rdquo;
+                  </blockquote>
+                  <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
+                </div>
+              )}
+
+              {messages.length > 0 && (
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold text-admin-ink">Message thread</h3>
+                  <ul className="space-y-3">
+                    {messages.map((m) => (
+                      <li
+                        key={m.id}
+                        className={`rounded-admin-md px-3 py-2 text-sm ${
+                          m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
+                        }`}
+                      >
+                        <p className="mb-1 text-xs font-semibold text-admin-ink-5">
+                          {m.sender_role === 'landlord' ? 'You' : 'Student'} ·{' '}
+                          {new Date(m.created_at).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}
+                        </p>
+                        <p className="whitespace-pre-wrap text-admin-ink-2">{m.message}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
+          </Section>
 
+          {/* —— Temporary unzoned stack (Terms / History land here in later commits) —— */}
+          <div className="flex min-w-0 flex-col gap-5">
             {(booking.status === 'bond_pending' ||
               booking.status === 'confirmed' ||
               booking.status === 'active') &&
@@ -1434,25 +1505,6 @@ export default function LandlordBookingReviewPage() {
                 )}
               </section>
             )}
-
-            {!isListingBondPending && (
-              <LandlordApplicantAIAssessmentPanel
-                assessment={aiAssessment}
-                assessmentAt={aiAssessmentAt}
-                loading={aiLoading}
-                error={aiError}
-                onGenerate={() => void callAssessmentApi({ refresh: false })}
-                onRefresh={() => void callAssessmentApi({ refresh: true })}
-                refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
-                refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
-                showGenerate={!aiAssessment}
-              />
-            )}
-
-            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
-              <h2 className="mb-2 text-lg font-semibold text-admin-ink">Fit summary</h2>
-              <BookingFitSummaryTable rows={fitRows} />
-            </section>
 
             <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
               <h2 className="mb-3 text-lg font-semibold text-admin-ink">Activity</h2>
@@ -1514,54 +1566,6 @@ export default function LandlordBookingReviewPage() {
                 serviceTierAtRequest={booking.service_tier_at_request}
                 onSaved={() => void reload()}
               />
-            )}
-
-            {isListingBondPending && (
-              <LandlordApplicantAIAssessmentPanel
-                assessment={aiAssessment}
-                assessmentAt={aiAssessmentAt}
-                loading={aiLoading}
-                error={aiError}
-                onGenerate={() => void callAssessmentApi({ refresh: false })}
-                onRefresh={() => void callAssessmentApi({ refresh: true })}
-                refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
-                refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
-                showGenerate={!aiAssessment}
-              />
-            )}
-
-            {booking.student_message?.trim() && (
-              <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
-                <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                  Message from the student
-                </p>
-                <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
-                  &ldquo;{booking.student_message.trim()}&rdquo;
-                </blockquote>
-                <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
-              </section>
-            )}
-
-            {messages.length > 0 && (
-              <section className="space-y-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                <h2 className="text-sm font-semibold text-admin-ink">Message thread</h2>
-                <ul className="space-y-3">
-                  {messages.map((m) => (
-                    <li
-                      key={m.id}
-                      className={`rounded-admin-md px-3 py-2 text-sm ${
-                        m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
-                      }`}
-                    >
-                      <p className="mb-1 text-xs font-semibold text-admin-ink-5">
-                        {m.sender_role === 'landlord' ? 'You' : 'Student'} ·{' '}
-                        {new Date(m.created_at).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}
-                      </p>
-                      <p className="whitespace-pre-wrap text-admin-ink-2">{m.message}</p>
-                    </li>
-                  ))}
-                </ul>
-              </section>
             )}
           </div>
         </div>
