@@ -118,7 +118,7 @@ describe('resolveBookingReviewLayout', () => {
   })
 
   describe('payment_failed → pre-acceptance shell (§17 confirmed)', () => {
-    it('uses pre shell for both roles (deposit PI failure, not bond-state)', () => {
+    it('uses pre shell, hides tier/backups, landlord title waits on payment', () => {
       expect(bookingReviewShellForStatus('payment_failed')).toBe('pre')
       const landlord = resolveBookingReviewLayout('payment_failed', 'landlord')
       const renter = resolveBookingReviewLayout('payment_failed', 'renter')
@@ -126,7 +126,9 @@ describe('resolveBookingReviewLayout', () => {
       expect(renter.shell).toBe('pre')
       expect(landlord.stepperIndex).toBe(0)
       expect(landlord.showAgreement).toBe(false)
-      expect(landlord.pageTitle).toBe('Payment failed')
+      expect(landlord.showTierChooser).toBe(false)
+      expect(landlord.showBackupsWarning).toBe(false)
+      expect(landlord.pageTitle).toBe('Waiting on payment')
       expect(renter.pageTitle).toBe('Payment failed')
     })
   })

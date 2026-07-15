@@ -70,7 +70,10 @@ function pageTitleFor(role: BookingReviewRole, status: BookingReviewStatus): str
   if (status === 'declined') return 'Request declined'
   if (status === 'cancelled') return 'Booking cancelled'
   if (status === 'expired') return 'Request expired'
-  if (status === 'payment_failed') return 'Payment failed'
+  // Managed deposit-auth PI failure — landlord waits on the renter; only the renter retries.
+  if (status === 'payment_failed') {
+    return role === 'landlord' ? 'Waiting on payment' : 'Payment failed'
+  }
   if (status === 'completed') return 'Tenancy complete'
 
   const titles: Record<
@@ -158,13 +161,11 @@ export function resolveBookingReviewLayout(
   const isPreish = status === 'pending_confirmation' || status === 'awaiting_info' ||
     status === 'pending' || status === 'pending_payment' || status === 'payment_failed' ||
     status === 'expired'
-  // Strict "pre only" for tier/backups — awaiting_info hides them (§11).
+  // Strict "pre only" for tier/backups — awaiting_info + payment_failed hide them
+  // (nothing to accept until the renter's deposit auth succeeds).
   const isLandlordPreOnly =
     role === 'landlord' &&
-    (status === 'pending_confirmation' ||
-      status === 'pending' ||
-      status === 'pending_payment' ||
-      status === 'payment_failed')
+    (status === 'pending_confirmation' || status === 'pending' || status === 'pending_payment')
 
   const showAgreement = !isPreish && shell !== 'declined' && shell !== 'expired'
   // Keep agreement/activity available on accepted+ shells; declined/expired hide them.
