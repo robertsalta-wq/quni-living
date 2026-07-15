@@ -144,15 +144,12 @@ export default function LandlordBookingAgreedRentEditor({
   if (!editable && !prov.overrideApplied) return null
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+    <section className="rounded-admin-lg border border-admin-line-soft bg-white p-5 shadow-sm space-y-4">
       <div>
-        <h2
-          className="text-sm font-semibold text-gray-900"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-        >
+        <h2 className="text-sm font-semibold text-admin-ink">
           Agreed weekly rent
         </h2>
-        <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+        <p className="mt-1 text-sm text-admin-ink-4 leading-relaxed">
           Set a lower agreed rent before you accept. The student will see this figure before signing. Listing price
           stays unchanged.
         </p>
@@ -171,7 +168,7 @@ export default function LandlordBookingAgreedRentEditor({
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="agreed-rent" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <label htmlFor="agreed-rent" className="block text-xs font-semibold text-admin-ink-4 uppercase tracking-wide">
                 Agreed rent (AUD / week)
               </label>
               <input
@@ -182,41 +179,41 @@ export default function LandlordBookingAgreedRentEditor({
                 max={applyCap ?? undefined}
                 value={agreedRent}
                 onChange={(e) => setAgreedRent(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm tabular-nums"
               />
               {applyCap != null ? (
-                <p className="mt-1 text-xs text-gray-500">Max {formatAudWeekly(applyCap)}/wk (student&apos;s apply-time rent)</p>
+                <p className="mt-1 text-xs text-admin-ink-5">Max {formatAudWeekly(applyCap)}/wk (student&apos;s apply-time rent)</p>
               ) : null}
             </div>
             <div>
-              <label htmlFor="agreed-rent-bond" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              <label htmlFor="agreed-rent-bond" className="block text-xs font-semibold text-admin-ink-4 uppercase tracking-wide">
                 Bond (preview)
               </label>
-              <p id="agreed-rent-bond" className="mt-2 text-sm text-gray-800 tabular-nums">
+              <p id="agreed-rent-bond" className="mt-2 text-sm text-admin-ink-2 tabular-nums">
                 {previewBondAud != null ? formatAudWeekly(previewBondAud) : 'No bond'}
               </p>
-              <p className="mt-1 text-xs text-gray-500">Updates when you save a new agreed rent or bond override.</p>
+              <p className="mt-1 text-xs text-admin-ink-5">Updates when you save a new agreed rent or bond override.</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-stone-50/80 p-4 space-y-3">
+          <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 p-4 space-y-3">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={bondOverrideEnabled}
                 onChange={(e) => setBondOverrideEnabled(e.target.checked)}
-                className="mt-1 rounded border-gray-300"
+                className="mt-1 rounded border-admin-line"
               />
               <span>
-                <span className="block text-sm font-semibold text-gray-900">Override bond for this booking</span>
-                <span className="block text-xs text-gray-600 mt-0.5 leading-relaxed">
+                <span className="block text-sm font-semibold text-admin-ink">Override bond for this booking</span>
+                <span className="block text-xs text-admin-ink-4 mt-0.5 leading-relaxed">
                   Optional. Otherwise bond follows the listing default (or invite offer) and scales with agreed rent.
                 </span>
               </span>
             </label>
             {bondOverrideEnabled ? (
               <div className="pl-7">
-                <label htmlFor="agreed-rent-bond-weeks" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                <label htmlFor="agreed-rent-bond-weeks" className="block text-xs font-semibold text-admin-ink-4 uppercase tracking-wide">
                   Bond (weeks of rent)
                 </label>
                 <input
@@ -228,15 +225,15 @@ export default function LandlordBookingAgreedRentEditor({
                   value={bondOverrideWeeks}
                   onChange={(e) => setBondOverrideWeeks(e.target.value)}
                   placeholder="Weeks of rent"
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                  className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm tabular-nums"
                 />
-                <p className="mt-1 text-xs text-gray-500">Enter 0 for no bond.</p>
+                <p className="mt-1 text-xs text-admin-ink-5">Enter 0 for no bond.</p>
               </div>
             ) : null}
           </div>
 
           <div>
-            <label htmlFor="agreed-rent-reason" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <label htmlFor="agreed-rent-reason" className="block text-xs font-semibold text-admin-ink-4 uppercase tracking-wide">
               Reason
             </label>
             <textarea
@@ -245,16 +242,16 @@ export default function LandlordBookingAgreedRentEditor({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Longer lease, includes utilities discussion"
-              className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
             />
           </div>
           {error ? (
-            <p className="text-sm text-red-800" role="alert">
+            <p className="text-sm text-admin-danger-fg" role="alert">
               {error}
             </p>
           ) : null}
           {savedToast ? (
-            <p className="text-sm text-emerald-800" role="status">
+            <p className="text-sm text-admin-success-fg" role="status">
               {savedToast}
             </p>
           ) : null}
@@ -262,7 +259,7 @@ export default function LandlordBookingAgreedRentEditor({
             type="button"
             disabled={busy}
             onClick={() => void onSubmit()}
-            className="rounded-xl bg-gray-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
+            className="rounded-admin-md bg-gray-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
           >
             {busy ? 'Saving…' : prov.overrideApplied ? 'Update agreed rent' : 'Set agreed rent'}
           </button>

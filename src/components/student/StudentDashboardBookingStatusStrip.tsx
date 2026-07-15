@@ -8,13 +8,13 @@ export default function StudentDashboardBookingStatusStrip({ status }: { status:
 
   return (
     <section className={strip.containerClass} aria-live="polite">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-600">{strip.eyebrow}</p>
-      <p className="mt-1 text-lg sm:text-xl font-bold text-gray-900 leading-snug">{strip.title}</p>
-      <p className="mt-1.5 text-sm text-gray-700 leading-relaxed">{strip.detail}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-4">{strip.eyebrow}</p>
+      <p className="mt-1 text-lg sm:text-xl font-bold text-admin-ink leading-snug">{strip.title}</p>
+      <p className="mt-1.5 text-sm text-admin-ink-3 leading-relaxed">{strip.detail}</p>
       {status === 'awaiting_info' && (
         <Link
           to="/messages"
-          className="mt-3 inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900"
+          className="mt-3 inline-flex text-sm font-semibold text-admin-coral hover:text-admin-ink"
         >
           Open messages →
         </Link>

@@ -1,19 +1,12 @@
 import type { ReactNode } from 'react'
 
-export type SectionStatus = 'todo' | 'done' | 'optional'
-
-export type CollapsibleProfileSectionProps = {
-  ordinal?: number
-  icon: ReactNode
-  title: string
-  subtitle?: string
-  status: SectionStatus
-  summary?: ReactNode
-  expanded: boolean
-  onToggle: () => void
-  editLabel?: string
-  children: ReactNode
-}
+/** Re-export canonical types from `ui/Section`. Prefer importing from `../ui/sectionTypes`. */
+export type {
+  SectionStatus,
+  SectionTone,
+  SectionProps,
+  CollapsibleProfileSectionProps,
+} from '../ui/sectionTypes'
 
 export type ReadinessStepState = 'done' | 'active' | 'todo'
 

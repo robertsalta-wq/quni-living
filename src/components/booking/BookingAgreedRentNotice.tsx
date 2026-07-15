@@ -25,10 +25,10 @@ export default function BookingAgreedRentNotice({
 
   return (
     <div
-      className={`rounded-xl border px-4 py-3 text-sm space-y-2 ${
+      className={`rounded-admin-md border px-4 py-3 text-sm space-y-2 ${
         audience === 'student'
-          ? 'border-sky-200 bg-sky-50 text-sky-950'
-          : 'border-amber-200 bg-amber-50 text-amber-950'
+          ? 'border-admin-info bg-admin-info-bg text-admin-info-fg'
+          : 'border-admin-warning bg-admin-warning-bg text-admin-warning-fg'
       }`}
       role="status"
     >

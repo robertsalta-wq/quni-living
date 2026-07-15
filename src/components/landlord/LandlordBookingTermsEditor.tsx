@@ -386,7 +386,7 @@ export default function LandlordBookingTermsEditor({
             max={applyCap ?? undefined}
             value={weeklyRentInput}
             onChange={(e) => setWeeklyRentInput(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm tabular-nums"
+            className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm tabular-nums"
           />
           {applyCap != null ? (
             <p className="mt-1 text-xs text-admin-ink-5">Max {formatAudWeekly(applyCap)}/wk (student&apos;s apply-time rent)</p>
@@ -402,7 +402,7 @@ export default function LandlordBookingTermsEditor({
         </div>
       </div>
 
-      <div className="rounded-xl border border-admin-line bg-admin-surface-2/80 p-4 space-y-3">
+      <div className="rounded-admin-md border border-admin-line bg-admin-surface-2/80 p-4 space-y-3">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -428,7 +428,7 @@ export default function LandlordBookingTermsEditor({
               step={1}
               value={bondOverrideWeeks}
               onChange={(e) => setBondOverrideWeeks(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm tabular-nums"
+              className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm tabular-nums"
             />
           </div>
         ) : null}
@@ -443,7 +443,7 @@ export default function LandlordBookingTermsEditor({
             id="terms-lease-length"
             value={leaseLengthInput}
             onChange={(e) => setLeaseLengthInput(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-admin-line bg-white px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-admin-md border border-admin-line bg-white px-3 py-2 text-sm"
           >
             {LEASE_LENGTH_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>
@@ -461,7 +461,7 @@ export default function LandlordBookingTermsEditor({
             type="date"
             value={moveInInput}
             onChange={(e) => setMoveInInput(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
           />
         </div>
       </div>
@@ -478,7 +478,7 @@ export default function LandlordBookingTermsEditor({
           step={1}
           value={occupantCountInput}
           onChange={(e) => setOccupantCountInput(e.target.value)}
-          className="mt-1 w-full max-w-[8rem] rounded-xl border border-admin-line px-3 py-2 text-sm tabular-nums"
+          className="mt-1 w-full max-w-[8rem] rounded-admin-md border border-admin-line px-3 py-2 text-sm tabular-nums"
         />
       </div>
 
@@ -492,11 +492,11 @@ export default function LandlordBookingTermsEditor({
           value={notesInput}
           onChange={(e) => setNotesInput(e.target.value)}
           placeholder="Printed on the agreement when saved and regenerated"
-          className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
         />
       </div>
 
-      <div className="rounded-xl border border-admin-line bg-admin-surface-2/50 p-4 space-y-3">
+      <div className="rounded-admin-md border border-admin-line bg-admin-surface-2/50 p-4 space-y-3">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -526,7 +526,7 @@ export default function LandlordBookingTermsEditor({
                 type="text"
                 value={coName}
                 onChange={(e) => setCoName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
               />
             </div>
             <div>
@@ -538,7 +538,7 @@ export default function LandlordBookingTermsEditor({
                 type="email"
                 value={coEmail}
                 onChange={(e) => setCoEmail(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
               />
             </div>
             <div>
@@ -550,7 +550,7 @@ export default function LandlordBookingTermsEditor({
                 type="tel"
                 value={coPhone}
                 onChange={(e) => setCoPhone(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
               />
             </div>
             <div>
@@ -562,7 +562,7 @@ export default function LandlordBookingTermsEditor({
                 type="date"
                 value={coDob}
                 onChange={(e) => setCoDob(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -579,25 +579,25 @@ export default function LandlordBookingTermsEditor({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Required — e.g. Agreed longer lease with renter"
-          className="mt-1 w-full rounded-xl border border-admin-line px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-admin-md border border-admin-line px-3 py-2 text-sm"
         />
       </div>
 
       {coTenantUnverifiedWarning ? (
-        <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2" role="status">
+        <p className="text-sm text-admin-warning-fg bg-admin-warning-bg border border-admin-warning rounded-admin-md px-3 py-2" role="status">
           The co-tenant&apos;s identity has not been verified on Quni. They can still sign; identity checks are handled
           separately.
         </p>
       ) : null}
 
       {error ? (
-        <p className="text-sm text-red-800" role="alert">
+        <p className="text-sm text-admin-danger-fg" role="alert">
           {error}
         </p>
       ) : null}
 
       {savedNotice ? (
-        <p className="text-sm text-emerald-900 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2" role="status">
+        <p className="text-sm text-admin-success-fg bg-admin-success-bg border border-admin-success rounded-admin-md px-3 py-2" role="status">
           {savedNotice}
         </p>
       ) : null}
@@ -606,7 +606,7 @@ export default function LandlordBookingTermsEditor({
         type="button"
         disabled={busy}
         onClick={() => void onSubmit()}
-        className="rounded-xl bg-admin-ink text-white px-4 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+        className="rounded-admin-md bg-admin-ink text-white px-4 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50"
       >
         {busy ? 'Saving…' : 'Save booking terms'}
       </button>
