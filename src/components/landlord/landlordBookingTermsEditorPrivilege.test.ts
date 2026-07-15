@@ -12,6 +12,7 @@ function readSrc(relPath: string): string {
 const RENTER_SURFACES = [
   'src/pages/StudentDashboard.tsx',
   'src/components/student/StudentDashboardBookingCard.tsx',
+  'src/components/booking/RenterBookingZones.tsx',
   'src/components/booking/BookingLeasePanel.tsx',
 ] as const
 
@@ -33,8 +34,9 @@ describe('landlord booking terms editor privilege boundary', () => {
   }
 
   it('renter BookingLeasePanel call sites do not pass landlord-only regenerate/prepare props that imply edit UI', () => {
+    // Live mount is RenterBookingZones (StudentDashboard delegates). Orphan card kept in the scan until deleted.
     for (const surface of [
-      'src/pages/StudentDashboard.tsx',
+      'src/components/booking/RenterBookingZones.tsx',
       'src/components/student/StudentDashboardBookingCard.tsx',
     ] as const) {
       const src = readSrc(surface)
