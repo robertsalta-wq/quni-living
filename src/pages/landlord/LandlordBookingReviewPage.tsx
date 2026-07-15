@@ -236,6 +236,11 @@ export default function LandlordBookingReviewPage() {
   /** Zone 4 (History) — collapsed by default, independent of the other zones. */
   const [zone4Expanded, setZone4Expanded] = useState(false)
 
+  /** Zone 3 (Terms) — expanded by default (money block leads); independent of the other zones' toggles. */
+  const [zone3Expanded, setZone3Expanded] = useState(true)
+  /** Zone 3 body: "Edit terms" swaps the read-only money block/terms dl for the editor, in place. */
+  const [zone3Editing, setZone3Editing] = useState(false)
+
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
 
@@ -928,6 +933,14 @@ export default function LandlordBookingReviewPage() {
   const zone2Expanded = zone2ExpandedOverride ?? isPreAcceptStatus
   const zone2Summary = `${displayName} · applicant, verification & fit`
 
+  // Zone 3 (Terms): quick recap shown when the section is collapsed.
+  const zone3Summary = [
+    booking.weekly_rent != null ? `$${Number(booking.weekly_rent).toLocaleString('en-AU')}/wk` : null,
+    bondDisplayAud != null ? `$${bondDisplayAud.toLocaleString('en-AU')} bond` : 'No bond',
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <div className="min-h-full bg-admin-surface-2">
       <div className="mx-auto max-w-[860px] px-6 py-7 pb-[72px]">
@@ -1524,65 +1537,81 @@ export default function LandlordBookingReviewPage() {
             </div>
           </Section>
 
-          {/* —— Temporary unzoned stack (Terms lands here in the next commit) —— */}
-          <div className="flex min-w-0 flex-col gap-5">
-            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
-              <h2 className="mb-3 text-lg font-semibold text-admin-ink">Terms</h2>
-              <BookingTermsBlock
-                money={{
-                  tier: isListingApplyBooking ? 'listing' : 'managed',
-                  status: booking.status,
-                  weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
-                  bondAud: bondDisplayAud,
-                  listingFeeExempt: landlordFeeExempt,
-                  depositAmountCents: depositCents,
-                  depositReleasedAt: booking.deposit_released_at ?? null,
-                  platformFeeCents: feeCents,
-                }}
-                moveInIso={moveIn || null}
-                leaseLength={booking.lease_length}
-                occupantCount={booking.occupant_count}
-                parkingSelected={booking.parking_selected}
-                coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
-                serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
-              />
-            </section>
+          {/* —— Zone 3: Terms —— */}
+          <Section
+            id="zone-terms"
+            ordinal={3}
+            title="Terms"
+            summary={zone3Summary}
+            expanded={zone3Expanded}
+            onToggle={() => setZone3Expanded((v) => !v)}
+          >
+            <div className="space-y-4">
+              {zone3Editing ? (
+                showListingTermsEditor ? (
+                  <LandlordBookingTermsEditor
+                    bookingId={booking.id}
+                    status={booking.status}
+                    serviceTierAtRequest={booking.service_tier_at_request}
+                    serviceTierFinal={booking.service_tier_final}
+                    weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                    bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                    rentBreakdown={booking.rent_breakdown}
+                    propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                    moveInDate={booking.move_in_date}
+                    startDate={booking.start_date}
+                    leaseLength={booking.lease_length}
+                    occupantCount={booking.occupant_count}
+                    notes={booking.notes}
+                    coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                    onSaved={() => {
+                      void reload()
+                      setLeasePanelRefreshKey((k) => k + 1)
+                    }}
+                  />
+                ) : (
+                  <LandlordBookingAgreedRentEditor
+                    bookingId={booking.id}
+                    status={booking.status}
+                    weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                    bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                    rentBreakdown={booking.rent_breakdown}
+                    propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                    serviceTierAtRequest={booking.service_tier_at_request}
+                    onSaved={() => void reload()}
+                  />
+                )
+              ) : (
+                <BookingTermsBlock
+                  money={{
+                    tier: isListingApplyBooking ? 'listing' : 'managed',
+                    status: booking.status,
+                    weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                    bondAud: bondDisplayAud,
+                    listingFeeExempt: landlordFeeExempt,
+                    depositAmountCents: depositCents,
+                    depositReleasedAt: booking.deposit_released_at ?? null,
+                    platformFeeCents: feeCents,
+                  }}
+                  moveInIso={moveIn || null}
+                  leaseLength={booking.lease_length}
+                  occupantCount={booking.occupant_count}
+                  parkingSelected={booking.parking_selected}
+                  coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                  breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
+                  serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
+                />
+              )}
 
-            {showListingTermsEditor ? (
-              <LandlordBookingTermsEditor
-                bookingId={booking.id}
-                status={booking.status}
-                serviceTierAtRequest={booking.service_tier_at_request}
-                serviceTierFinal={booking.service_tier_final}
-                weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                rentBreakdown={booking.rent_breakdown}
-                propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                moveInDate={booking.move_in_date}
-                startDate={booking.start_date}
-                leaseLength={booking.lease_length}
-                occupantCount={booking.occupant_count}
-                notes={booking.notes}
-                coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                onSaved={() => {
-                  void reload()
-                  setLeasePanelRefreshKey((k) => k + 1)
-                }}
-              />
-            ) : (
-              <LandlordBookingAgreedRentEditor
-                bookingId={booking.id}
-                status={booking.status}
-                weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                rentBreakdown={booking.rent_breakdown}
-                propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                serviceTierAtRequest={booking.service_tier_at_request}
-                onSaved={() => void reload()}
-              />
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => setZone3Editing((v) => !v)}
+                className="text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
+              >
+                {zone3Editing ? 'Done editing' : 'Edit terms'}
+              </button>
+            </div>
+          </Section>
         </div>
       </div>
 
