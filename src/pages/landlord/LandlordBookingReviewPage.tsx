@@ -233,6 +233,9 @@ export default function LandlordBookingReviewPage() {
   /** Zone 2 (Who) expand/collapse — defaults by status, overridable by the user's toggle. */
   const [zone2ExpandedOverride, setZone2ExpandedOverride] = useState<boolean | null>(null)
 
+  /** Zone 4 (History) — collapsed by default, independent of the other zones. */
+  const [zone4Expanded, setZone4Expanded] = useState(false)
+
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
 
@@ -1457,60 +1460,72 @@ export default function LandlordBookingReviewPage() {
             </div>
           </Section>
 
-          {/* —— Temporary unzoned stack (Terms / History land here in later commits) —— */}
-          <div className="flex min-w-0 flex-col gap-5">
-            {(booking.status === 'bond_pending' ||
-              booking.status === 'confirmed' ||
-              booking.status === 'active') &&
-              property && (
-              <section id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
-                <h2 className="text-lg font-semibold text-admin-ink">Tenancy agreement</h2>
-                <TenancyAgreementExplainer
-                  state={property.state ?? ''}
-                  propertyType={property.property_type ?? ''}
-                  isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
-                />
-                <BookingLeasePanel
-                  bookingId={booking.id}
-                  refreshKey={leasePanelRefreshKey}
-                  allowPrepareRetry={
-                    booking.service_tier_final === 'listing' &&
-                    booking.status === 'bond_pending' &&
-                    booking.listing_agreement_status === 'failed'
-                  }
-                  allowRegenerateAgreement={
-                    booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
-                  }
-                />
-                {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
-                  <div className="space-y-1 rounded-admin-md border border-admin-line-soft bg-admin-surface-1 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
-                      {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
-                    </p>
-                    <p className="text-sm text-admin-ink-2">
-                      Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
-                      {tenancy.bond_lodged_at ? (
-                        <>
-                          {' · '}
-                          {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
-                        </>
-                      ) : null}
-                    </p>
-                    {isQldBoardingProperty ? (
-                      <p className="text-xs leading-relaxed text-admin-ink-5">
-                        Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
+          {/* —— Zone 4: History —— */}
+          <Section
+            id="zone-history"
+            ordinal={4}
+            title="History"
+            collapsible
+            expanded={zone4Expanded}
+            onToggle={() => setZone4Expanded((v) => !v)}
+          >
+            <div className="space-y-5">
+              {(booking.status === 'bond_pending' ||
+                booking.status === 'confirmed' ||
+                booking.status === 'active') &&
+                property && (
+                <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
+                  <h3 className="text-sm font-semibold text-admin-ink">Tenancy agreement</h3>
+                  <TenancyAgreementExplainer
+                    state={property.state ?? ''}
+                    propertyType={property.property_type ?? ''}
+                    isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                  />
+                  <BookingLeasePanel
+                    bookingId={booking.id}
+                    refreshKey={leasePanelRefreshKey}
+                    allowPrepareRetry={
+                      booking.service_tier_final === 'listing' &&
+                      booking.status === 'bond_pending' &&
+                      booking.listing_agreement_status === 'failed'
+                    }
+                    allowRegenerateAgreement={
+                      booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
+                    }
+                  />
+                  {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
+                    <div className="space-y-1 rounded-admin-md border border-admin-line-soft bg-admin-surface-2 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
+                        {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
                       </p>
-                    ) : null}
-                  </div>
-                )}
-              </section>
-            )}
+                      <p className="text-sm text-admin-ink-2">
+                        Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
+                        {tenancy.bond_lodged_at ? (
+                          <>
+                            {' · '}
+                            {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
+                          </>
+                        ) : null}
+                      </p>
+                      {isQldBoardingProperty ? (
+                        <p className="text-xs leading-relaxed text-admin-ink-5">
+                          Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
-              <h2 className="mb-3 text-lg font-semibold text-admin-ink">Activity</h2>
-              <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
-            </section>
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-admin-ink">Activity</h3>
+                <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
+              </div>
+            </div>
+          </Section>
 
+          {/* —— Temporary unzoned stack (Terms lands here in the next commit) —— */}
+          <div className="flex min-w-0 flex-col gap-5">
             <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
               <h2 className="mb-3 text-lg font-semibold text-admin-ink">Terms</h2>
               <BookingTermsBlock
