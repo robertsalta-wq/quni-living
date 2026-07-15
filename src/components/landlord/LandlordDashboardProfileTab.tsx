@@ -9,8 +9,8 @@ import { formatDisplayName } from '../../lib/formatDisplayName'
 import { isValidAuPhone } from '../../lib/studentOnboarding'
 import { prepareProfilePhotoForUpload } from '../../lib/prepareProfilePhotoForUpload'
 import {
-  CollapsibleProfileSection,
   ProfileReadinessDriver,
+  Section,
 } from '../profile'
 import LanguagesSpokenSelector from '../profile/LanguagesSpokenSelector'
 import { formatLanguagesSpoken, normalizeLanguagesSpoken, type SpokenLanguageCode } from '../../lib/languagesSpoken'
@@ -741,14 +741,14 @@ export default function LandlordDashboardProfileTab({
       />
 
       <div className="flex flex-col gap-3">
-        <div id="landlord-section-personal">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-personal"
             ordinal={1}
             icon={<UserIcon />}
             title="Personal details"
             subtitle="Your name and contact details"
             status={readiness.publish.sections.personal ? 'done' : 'todo'}
-            summary={formatPersonalSummary(profile)}
+            summary={readiness.publish.sections.personal ? formatPersonalSummary(profile) : undefined}
             expanded={expanded === 'personal'}
             onToggle={() => toggleSection('personal')}
           >
@@ -920,17 +920,16 @@ export default function LandlordDashboardProfileTab({
                 {savingSection === 'personal' ? 'Saving…' : 'Save details'}
               </button>
             </form>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
 
-        <div id="landlord-section-address">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-address"
             ordinal={2}
             icon={<PinIcon />}
             title="Address"
             subtitle="Where you're based"
             status={readiness.publish.sections.address ? 'done' : 'todo'}
-            summary={formatAddressSummary(profile)}
+            summary={readiness.publish.sections.address ? formatAddressSummary(profile) : undefined}
             expanded={expanded === 'address'}
             onToggle={() => toggleSection('address')}
           >
@@ -1071,17 +1070,16 @@ export default function LandlordDashboardProfileTab({
                 {savingSection === 'address' ? 'Saving…' : 'Save details'}
               </button>
             </form>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
 
-        <div id="landlord-section-about">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-about"
             ordinal={3}
             icon={<PhotoIcon />}
             title="About you"
             subtitle="Photo and a short bio for students"
             status={readiness.publish.sections.about ? 'done' : 'todo'}
-            summary={formatAboutSummary(profile)}
+            summary={readiness.publish.sections.about ? formatAboutSummary(profile) : undefined}
             expanded={expanded === 'about'}
             onToggle={() => toggleSection('about')}
           >
@@ -1139,17 +1137,16 @@ export default function LandlordDashboardProfileTab({
                 {savingSection === 'about' ? 'Saving…' : 'Save details'}
               </button>
             </form>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
 
-        <div id="landlord-section-agreements">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-agreements"
             ordinal={4}
             icon={<DocIcon />}
             title="Agreements"
             subtitle="Accept Quni's landlord agreements"
             status={readiness.publish.sections.agreements ? 'done' : 'todo'}
-            summary={formatAgreementsSummary(profile)}
+            summary={readiness.publish.sections.agreements ? formatAgreementsSummary(profile) : undefined}
             expanded={expanded === 'agreements'}
             onToggle={() => toggleSection('agreements')}
             editLabel="View"
@@ -1206,22 +1203,22 @@ export default function LandlordDashboardProfileTab({
                 </>
               )}
             </div>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
       </div>
 
       <PublishThresholdMarker complete={publishSectionsComplete} />
 
       <GroupHeader title="Step 2 · Required to accept bookings" complete={readiness.accept.complete} />
 
-      <div id="landlord-section-payouts" className="mb-3">
-        <CollapsibleProfileSection
+      <div className="mb-3">
+        <Section
+            id="landlord-section-payouts"
           ordinal={5}
           icon={<BankIcon />}
           title="Payouts & identity"
           subtitle="Get paid and verify your identity"
           status={readiness.accept.complete ? 'done' : 'todo'}
-          summary={formatPayoutsSummary(profile, cardLabel)}
+          summary={readiness.accept.complete ? formatPayoutsSummary(profile, cardLabel) : undefined}
           expanded={expanded === 'payouts'}
           onToggle={() => toggleSection('payouts')}
           editLabel="Manage"
@@ -1283,14 +1280,14 @@ export default function LandlordDashboardProfileTab({
             ) : null}
             {connectError ? <p className="text-sm text-red-700">{connectError}</p> : null}
           </div>
-        </CollapsibleProfileSection>
+        </Section>
       </div>
 
       <OptionalDivider />
 
       <div className="flex flex-col gap-3">
-        <div id="landlord-section-insurance">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-insurance"
             icon={<ShieldIcon />}
             title="Insurance"
             subtitle="Optional — for your own protection, not a Quni requirement"
@@ -1317,11 +1314,10 @@ export default function LandlordDashboardProfileTab({
             <button type="button" onClick={() => void saveInsurance()} disabled={savingSection === 'insurance'} className={`${saveBtnClass} mt-4`}>
               {savingSection === 'insurance' ? 'Saving…' : 'Save'}
             </button>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
 
-        <div id="landlord-section-languages">
-          <CollapsibleProfileSection
+        <Section
+            id="landlord-section-languages"
             icon={<GlobeIcon />}
             title="Languages spoken"
             subtitle="Languages you can help students in"
@@ -1335,8 +1331,7 @@ export default function LandlordDashboardProfileTab({
             <button type="button" onClick={() => void saveLanguages()} disabled={savingSection === 'languages'} className={`${saveBtnClass} mt-4`}>
               {savingSection === 'languages' ? 'Saving…' : 'Save languages'}
             </button>
-          </CollapsibleProfileSection>
-        </div>
+          </Section>
       </div>
 
       <div className="mt-5 rounded-admin-lg border border-admin-line-soft bg-admin-surface-2 p-5">
