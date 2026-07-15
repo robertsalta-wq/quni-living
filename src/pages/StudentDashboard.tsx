@@ -84,12 +84,12 @@ type BookingWithProperty = BookingRow & {
 type TabId = 'overview' | 'bookings'
 
 const statCardClass =
-  'rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md hover:border-[rgba(255,111,97,0.35)] text-left'
+  'rounded-admin-lg border border-admin-line-soft bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md hover:border-admin-coral-30 text-left'
 
 const profileStatCardClass =
-  'flex flex-col rounded-2xl border border-[rgba(255,111,97,0.35)] bg-[rgba(255,111,97,0.06)] p-4 sm:p-5 shadow-sm min-w-0 lg:min-h-[10rem] h-full'
+  'flex flex-col rounded-admin-lg border border-admin-coral-30 bg-admin-coral-tint p-4 sm:p-5 shadow-sm min-w-0 lg:min-h-[10rem] h-full'
 
-const cardClass = 'rounded-2xl border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
+const cardClass = 'rounded-admin-lg border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
 
 function propertyAddressLine(property: PropertyBookingEmbed): string {
   return (
@@ -146,13 +146,13 @@ function firstNameFromStudent(p: StudentRow): string {
 }
 
 function bookingStatusClass(s: BookingStatus) {
-  if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-amber-100 text-amber-900'
-  if (s === 'awaiting_info') return 'bg-sky-100 text-sky-900'
-  if (s === 'bond_pending') return 'bg-emerald-100 text-emerald-900'
-  if (s === 'confirmed' || s === 'active') return 'bg-green-100 text-green-800'
-  if (s === 'completed') return 'bg-indigo-100 text-indigo-800'
-  if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-red-50 text-red-800'
-  return 'bg-gray-100 text-gray-600'
+  if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'bg-admin-warning-bg text-admin-warning-fg'
+  if (s === 'awaiting_info') return 'bg-admin-info-bg text-admin-info-fg'
+  if (s === 'bond_pending') return 'bg-admin-success-bg text-admin-success-fg'
+  if (s === 'confirmed' || s === 'active') return 'bg-admin-success-bg text-admin-success-fg'
+  if (s === 'completed') return 'bg-admin-coral-tint text-admin-coral'
+  if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'bg-admin-danger-bg text-admin-danger-fg'
+  return 'bg-admin-surface-3 text-admin-ink-4'
 }
 
 function formatWeeklyRent(n: number | null | undefined): string {
@@ -162,7 +162,7 @@ function formatWeeklyRent(n: number | null | undefined): string {
 
 function PropertyThumbPlaceholder() {
   return (
-    <div className="w-full h-full min-h-[5.5rem] flex items-center justify-center text-gray-300 bg-gray-100">
+    <div className="w-full h-full min-h-[5.5rem] flex items-center justify-center text-gray-300 bg-admin-surface-3">
       <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
         <path
           strokeLinecap="round"
@@ -348,19 +348,19 @@ export default function StudentDashboard() {
   }, [profile])
 
   const primaryBtnClass =
-    'inline-flex items-center justify-center rounded-[10px] bg-[#FF6F61] text-white text-sm font-semibold px-[18px] py-[11px] shadow-sm hover:bg-[#F2604F] active:bg-[#CC4A3C] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2 w-full sm:w-auto'
+    'inline-flex items-center justify-center rounded-[10px] bg-admin-coral text-white text-sm font-semibold px-[18px] py-[11px] shadow-sm hover:bg-admin-coral-hover active:bg-admin-coral-active transition-colors focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2 w-full sm:w-auto'
 
   if (!isSupabaseConfigured) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
-        <p className="text-gray-600 text-center">Connect Supabase in your environment to use the dashboard.</p>
+        <p className="text-admin-ink-4 text-center">Connect Supabase in your environment to use the dashboard.</p>
       </div>
     )
   }
 
   if (dataLoading && !profile) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA]">
+      <div className="flex-1 flex flex-col min-h-0 w-full bg-admin-surface-2">
         <DashboardPageSkeleton />
       </div>
     )
@@ -370,7 +370,7 @@ export default function StudentDashboard() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className={`${cardClass} text-center`}>
-          <p className="text-gray-800">{error}</p>
+          <p className="text-admin-ink-2">{error}</p>
           <Link to="/student-profile" className={`${primaryBtnClass} mt-6`}>
             Go to profile
           </Link>
@@ -380,21 +380,21 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] pb-16 overflow-x-hidden">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-admin-surface-2 pb-16 overflow-x-hidden">
       {welcomeToast ? (
         <div
-          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg flex gap-3 items-start"
+          className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-admin-md border border-admin-line bg-white px-4 py-3 shadow-lg flex gap-3 items-start"
           role="status"
         >
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-success-bg text-admin-success-fg text-sm font-bold"
             aria-hidden
           >
             ✓
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">{welcomeToast}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Dismisses on its own · login only</p>
+            <p className="text-sm font-semibold text-admin-ink">{welcomeToast}</p>
+            <p className="text-xs text-admin-ink-5 mt-0.5">Dismisses on its own · login only</p>
           </div>
         </div>
       ) : null}
@@ -402,7 +402,7 @@ export default function StudentDashboard() {
       <div className={renterDashboardPageInsetClass}>
         {error && profile && (
           <div
-            className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            className="mb-6 rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
             role="alert"
           >
             {error}
@@ -424,23 +424,23 @@ export default function StudentDashboard() {
                 onClick={() => selectDashboardTab('bookings')}
                 className={`${statCardClass} lg:min-h-[10rem]`}
               >
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Bookings</p>
-                <p className="text-[30px] sm:text-[34px] font-bold text-gray-900 mt-2 tabular-nums leading-none">
+                <p className="text-[11px] font-semibold text-admin-ink-5 uppercase tracking-wide">Bookings</p>
+                <p className="text-[30px] sm:text-[34px] font-bold text-admin-ink mt-2 tabular-nums leading-none">
                   {bookings.length}
                 </p>
-                <p className="text-xs text-gray-500 mt-auto pt-2">
+                <p className="text-xs text-admin-ink-5 mt-auto pt-2">
                   {bookings.length === 0 ? 'No requests' : `${bookings.length} total`}
                 </p>
               </button>
 
               <Link to="/messages" className={`${statCardClass} lg:min-h-[10rem]`}>
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Messages</p>
-                <p className="text-[30px] sm:text-[34px] font-bold text-gray-900 mt-2 tabular-nums leading-none">
+                <p className="text-[11px] font-semibold text-admin-ink-5 uppercase tracking-wide">Messages</p>
+                <p className="text-[30px] sm:text-[34px] font-bold text-admin-ink mt-2 tabular-nums leading-none">
                   {unreadMessageCount}
                 </p>
                 <p
                   className={`text-xs mt-auto pt-2 ${
-                    unreadMessageCount > 0 ? 'font-semibold text-[#CC4A3C]' : 'text-gray-500'
+                    unreadMessageCount > 0 ? 'font-semibold text-admin-coral-active' : 'text-admin-ink-5'
                   }`}
                 >
                   {unreadMessageCount > 0 ? `${unreadMessageCount} unread` : 'No new messages'}
@@ -450,12 +450,12 @@ export default function StudentDashboard() {
               <div className={`${profileStatCardClass} col-span-2 lg:col-span-1`}>
                 {profileStatCard.complete ? (
                   <>
-                    <p className="text-sm font-semibold text-gray-900 leading-snug">
+                    <p className="text-sm font-semibold text-admin-ink leading-snug">
                       Profile {profileStatCard.pct}% Complete
                     </p>
-                    <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-admin-coral-tint-15 mt-3 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                        className="h-full rounded-full bg-admin-coral transition-all duration-300"
                         style={{ width: `${profileStatCard.pct}%` }}
                         role="progressbar"
                         aria-valuenow={profileStatCard.pct}
@@ -468,23 +468,23 @@ export default function StudentDashboard() {
                 ) : (
                   <>
                     <div className="flex items-start justify-between gap-3 sm:block">
-                      <p className="text-[11px] font-semibold text-[#B25548] uppercase tracking-wide">Your profile</p>
+                      <p className="text-[11px] font-semibold text-admin-coral-active uppercase tracking-wide">Your profile</p>
                       <Link
                         to="/student-profile"
-                        className="text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline shrink-0 sm:hidden"
+                        className="text-[13px] font-semibold text-admin-coral hover:text-admin-coral-active hover:underline shrink-0 sm:hidden"
                       >
                         Finish setup →
                       </Link>
                     </div>
                     <p className="mt-2 leading-none">
-                      <span className="text-[30px] sm:text-[34px] font-bold text-gray-900 tabular-nums">
+                      <span className="text-[30px] sm:text-[34px] font-bold text-admin-ink tabular-nums">
                         {profileStatCard.pct}%
                       </span>
-                      <span className="text-[13px] text-gray-500 ml-1.5">complete</span>
+                      <span className="text-[13px] text-admin-ink-5 ml-1.5">complete</span>
                     </p>
-                    <div className="h-1.5 rounded-full bg-[rgba(255,111,97,0.18)] mt-3 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-admin-coral-tint-15 mt-3 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#FF6F61] transition-all duration-300"
+                        className="h-full rounded-full bg-admin-coral transition-all duration-300"
                         style={{ width: `${profileStatCard.pct}%` }}
                         role="progressbar"
                         aria-valuenow={profileStatCard.pct}
@@ -495,7 +495,7 @@ export default function StudentDashboard() {
                     </div>
                     <Link
                       to="/student-profile"
-                      className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline mt-auto pt-3"
+                      className="hidden sm:inline text-[13px] font-semibold text-admin-coral hover:text-admin-coral-active hover:underline mt-auto pt-3"
                     >
                       Finish setup →
                     </Link>
@@ -509,19 +509,19 @@ export default function StudentDashboard() {
               >
                 <div className="flex items-center justify-between gap-3 sm:block min-w-0">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                    <p className="text-[11px] font-semibold text-admin-ink-5 uppercase tracking-wide">
                       Find accommodation
                     </p>
-                    <p className="text-sm text-gray-600 mt-2 leading-snug sm:hidden">Browse rooms near your uni</p>
-                    <p className="hidden sm:block text-sm text-gray-600 mt-2 leading-snug">
+                    <p className="text-sm text-admin-ink-4 mt-2 leading-snug sm:hidden">Browse rooms near your uni</p>
+                    <p className="hidden sm:block text-sm text-admin-ink-4 mt-2 leading-snug">
                       Browse student-friendly rooms near your uni.
                     </p>
                   </div>
-                  <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                  <span className="text-admin-coral font-semibold text-lg sm:hidden shrink-0" aria-hidden>
                     →
                   </span>
                 </div>
-                <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+                <span className="hidden sm:inline text-[13px] font-semibold text-admin-coral group-hover:text-admin-coral-active group-hover:underline mt-auto pt-3">
                   Browse listings →
                 </span>
               </Link>
@@ -533,17 +533,17 @@ export default function StudentDashboard() {
               >
                 <div className="flex items-center justify-between gap-3 sm:block min-w-0">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Get support</p>
-                    <p className="text-sm text-gray-600 mt-2 leading-snug sm:hidden">We&apos;ll get back to you</p>
-                    <p className="hidden sm:block text-sm text-gray-600 mt-2 leading-snug">
+                    <p className="text-[11px] font-semibold text-admin-ink-5 uppercase tracking-wide">Get support</p>
+                    <p className="text-sm text-admin-ink-4 mt-2 leading-snug sm:hidden">We&apos;ll get back to you</p>
+                    <p className="hidden sm:block text-sm text-admin-ink-4 mt-2 leading-snug">
                       Submit a request and we&apos;ll get back to you.
                     </p>
                   </div>
-                  <span className="text-[#FF6F61] font-semibold text-lg sm:hidden shrink-0" aria-hidden>
+                  <span className="text-admin-coral font-semibold text-lg sm:hidden shrink-0" aria-hidden>
                     →
                   </span>
                 </div>
-                <span className="hidden sm:inline text-[13px] font-semibold text-[#FF6F61] group-hover:text-[#CC4A3C] group-hover:underline mt-auto pt-3">
+                <span className="hidden sm:inline text-[13px] font-semibold text-admin-coral group-hover:text-admin-coral-active group-hover:underline mt-auto pt-3">
                   Contact support →
                 </span>
               </button>
@@ -557,7 +557,7 @@ export default function StudentDashboard() {
 
             <Link
               to="/sample-agreements"
-              className="inline-block text-sm font-semibold text-[#FF6F61] hover:text-[#CC4A3C] hover:underline"
+              className="inline-block text-sm font-semibold text-admin-coral hover:text-admin-coral-active hover:underline"
             >
               View sample agreements →
             </Link>
@@ -580,8 +580,8 @@ export default function StudentDashboard() {
             )}
           {bookings.length === 0 ? (
             <div className={`${cardClass} text-center py-12`}>
-              <p className="text-gray-800 font-medium">No bookings yet</p>
-              <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
+              <p className="text-admin-ink-2 font-medium">No bookings yet</p>
+              <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
                 When you request a stay, it’ll show up here so you can track the status.
               </p>
               <Link to="/listings" className={`${primaryBtnClass} mt-6`}>
@@ -598,14 +598,14 @@ export default function StudentDashboard() {
                 return (
                   <li
                     key={b.id}
-                    className={`rounded-2xl border bg-white shadow-sm overflow-hidden ${
+                    className={`rounded-admin-lg border bg-white shadow-sm overflow-hidden ${
                       currentBooking?.id === b.id
-                        ? 'border-indigo-200 ring-2 ring-indigo-100'
-                        : 'border-gray-100'
+                        ? 'border-admin-line ring-2 ring-admin-coral/20'
+                        : 'border-admin-line-soft'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row gap-4 p-5">
-                      <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-100">
+                      <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
                         {img ? (
                           <img src={img} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -617,12 +617,12 @@ export default function StudentDashboard() {
                           {slug ? (
                             <Link
                               to={`/properties/${slug}`}
-                              className="text-lg font-bold text-gray-900 hover:text-indigo-700 line-clamp-2"
+                              className="text-lg font-bold text-admin-ink hover:text-admin-coral line-clamp-2"
                             >
                               {prop?.title ?? 'Property'}
                             </Link>
                           ) : (
-                            <span className="text-lg font-bold text-gray-900">{prop?.title ?? 'Property'}</span>
+                            <span className="text-lg font-bold text-admin-ink">{prop?.title ?? 'Property'}</span>
                           )}
                           <span
                             className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
@@ -630,17 +630,17 @@ export default function StudentDashboard() {
                             {tenantBookingStatusLabel(b.status)}
                           </span>
                         </div>
-                        {prop?.suburb && <p className="text-sm text-gray-500 mt-0.5">{prop.suburb}</p>}
-                        <p className="text-sm text-gray-700 mt-2">
-                          <span className="text-gray-500">Stay:</span>{' '}
+                        {prop?.suburb && <p className="text-sm text-admin-ink-5 mt-0.5">{prop.suburb}</p>}
+                        <p className="text-sm text-admin-ink-3 mt-2">
+                          <span className="text-admin-ink-5">Stay:</span>{' '}
                           {formatDate(b.start_date)}
                           {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
                         </p>
-                        <p className="text-base font-bold text-gray-900 mt-1">{formatWeeklyRent(rent)}</p>
+                        <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
                         {prop?.landlord_profiles && (
-                          <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2.5">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your host</p>
-                            <p className="text-sm font-medium text-gray-900 mt-0.5 capitalize">
+                          <div className="mt-3 rounded-admin-md border border-admin-line-soft bg-admin-surface-2/80 px-3 py-2.5">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">Your host</p>
+                            <p className="text-sm font-medium text-admin-ink mt-0.5 capitalize">
                               {(prop.landlord_profiles.full_name ?? 'Host').toLowerCase()}
                             </p>
                             <LanguagesSpokenDisplay
@@ -658,7 +658,7 @@ export default function StudentDashboard() {
                     {(b.status === 'bond_pending' ||
                       b.status === 'confirmed' ||
                       b.status === 'active') && (
-                      <div className="border-t border-indigo-100 bg-indigo-50/80 px-5 py-3 text-sm text-indigo-950 space-y-3">
+                      <div className="border-t border-admin-line bg-admin-coral-tint px-5 py-3 text-sm text-admin-ink space-y-3">
                         {profile &&
                         prop &&
                         shouldShowListingPaymentInstructions({ booking: b, property: prop }) ? (
@@ -686,9 +686,9 @@ export default function StudentDashboard() {
                     {(b.status === 'confirmed' || b.status === 'active') &&
                       prop &&
                       isBondPaymentReceiptContext(prop.property_type) && (
-                        <div className="border-t border-stone-200 bg-[#FEF9E4]/70 px-5 py-3 text-sm text-stone-800 space-y-2">
+                        <div className="border-t border-stone-200 bg-admin-cream/70 px-5 py-3 text-sm text-stone-800 space-y-2">
                           {bondDownloadErrorId === b.id ? (
-                            <p className="text-amber-900 text-xs leading-relaxed">
+                            <p className="text-admin-warning-fg text-xs leading-relaxed">
                               Bond receipt isn&apos;t available yet. Your host will generate it from their dashboard after
                               they record your bond payment.
                             </p>
@@ -697,13 +697,13 @@ export default function StudentDashboard() {
                             type="button"
                             disabled={bondDownloadBusyId === b.id}
                             onClick={() => void downloadBondReceipt(b.id)}
-                            className="inline-flex items-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2 hover:bg-[#e85d52] disabled:opacity-50"
+                            className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover disabled:opacity-50"
                           >
                             {bondDownloadBusyId === b.id ? 'Opening…' : 'Download bond receipt'}
                           </button>
                         </div>
                       )}
-                    <div className="border-t border-gray-100 px-5 py-4">
+                    <div className="border-t border-admin-line-soft px-5 py-4">
                       <BookingActivityTimeline bookingId={b.id} mode="renter" />
                     </div>
                   </li>

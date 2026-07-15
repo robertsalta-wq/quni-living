@@ -182,17 +182,17 @@ export default function BookingLeasePanel({
     data.state !== 'fully_signed'
 
   const regenerateButton = showRegenerateControl ? (
-    <div className="pt-2 border-t border-indigo-200/80 space-y-2">
-      <p className="text-xs text-indigo-900/80 leading-relaxed">
+    <div className="pt-2 border-t border-admin-line space-y-2">
+      <p className="text-xs text-admin-ink leading-relaxed">
         Wrong or blank agreement? Regenerate to issue a new PDF and signing links. Tell renters to use the new
         links only.
       </p>
-      {regenerateError && <p className="text-xs text-red-800">{regenerateError}</p>}
+      {regenerateError && <p className="text-xs text-admin-danger-fg">{regenerateError}</p>}
       <button
         type="button"
         disabled={regenerateBusy || prepareBusy}
         onClick={() => void regenerateAgreement()}
-        className="inline-flex items-center rounded-lg border border-amber-300 bg-white text-sm font-semibold text-amber-950 px-4 py-2 hover:bg-amber-50 disabled:opacity-60"
+        className="inline-flex items-center rounded-admin-sm border border-admin-warning bg-white text-sm font-semibold text-admin-warning-fg px-4 py-2 hover:bg-admin-warning-bg disabled:opacity-60"
       >
         {regenerateBusy ? 'Regenerating…' : 'Regenerate agreement'}
       </button>
@@ -202,7 +202,7 @@ export default function BookingLeasePanel({
   if (loading && !data) {
     return (
       <div
-        className={`rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-500 ${className ?? ''}`.trim()}
+        className={`rounded-admin-md border border-stone-200 bg-white px-4 py-3 text-sm text-stone-500 ${className ?? ''}`.trim()}
       >
         Loading tenancy agreement…
       </div>
@@ -212,7 +212,7 @@ export default function BookingLeasePanel({
   if (error) {
     return (
       <div
-        className={`rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 ${className ?? ''}`.trim()}
+        className={`rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg ${className ?? ''}`.trim()}
         role="status"
       >
         {error}
@@ -227,7 +227,7 @@ export default function BookingLeasePanel({
   if (data.state === 'agreement_preparing') {
     return (
       <div
-        className={`rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 ${className ?? ''}`.trim()}
+        className={`rounded-admin-md border border-admin-info bg-admin-info-bg px-4 py-3 text-sm text-admin-info-fg ${className ?? ''}`.trim()}
         role="status"
       >
         <p className="font-semibold leading-snug">Tenancy agreement</p>
@@ -247,7 +247,7 @@ export default function BookingLeasePanel({
       (data.listing_agreement_status === 'failed' || data.state === 'agreement_failed')
     return (
       <div
-        className={`rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-3 ${className ?? ''}`.trim()}
+        className={`rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg space-y-3 ${className ?? ''}`.trim()}
         role="status"
       >
         <p className="font-semibold leading-snug">Tenancy agreement needs attention</p>
@@ -257,15 +257,15 @@ export default function BookingLeasePanel({
             : 'Agreement generation did not complete. Use the button below to retry, or contact support if this keeps happening.'}
         </p>
         {data.listing_agreement_error && (
-          <p className="text-xs text-red-800">{data.listing_agreement_error}</p>
+          <p className="text-xs text-admin-danger-fg">{data.listing_agreement_error}</p>
         )}
-        {prepareError && <p className="text-xs text-red-800">{prepareError}</p>}
+        {prepareError && <p className="text-xs text-admin-danger-fg">{prepareError}</p>}
         {showRetry && (
           <button
             type="button"
             disabled={prepareBusy}
             onClick={() => void prepareAgreement()}
-            className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700 disabled:opacity-60"
+            className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover disabled:opacity-60"
           >
             {prepareBusy ? 'Retrying…' : 'Retry agreement generation'}
           </button>
@@ -292,12 +292,12 @@ export default function BookingLeasePanel({
 
   return (
     <div
-      className={`rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-950 space-y-3 ${className ?? ''}`.trim()}
+      className={`rounded-admin-md border border-admin-line bg-admin-coral-tint px-4 py-3 text-sm text-admin-ink space-y-3 ${className ?? ''}`.trim()}
     >
       {state === 'preview' && (
         <>
           <p className="font-semibold leading-snug">Lease preview (draft)</p>
-          <p className="text-xs leading-relaxed text-indigo-900/90">
+          <p className="text-xs leading-relaxed text-admin-ink">
             Your residential tenancy agreement has been drafted.{' '}
             {viewer_role === 'tenant'
               ? 'Check your email for DocuSeal signing, or use the button below when ready. Bond payment is separate - see bond guidance on your dashboard.'
@@ -308,7 +308,7 @@ export default function BookingLeasePanel({
               href={preview_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg border border-indigo-300 bg-white text-sm font-semibold text-indigo-700 px-4 py-2 hover:bg-indigo-50"
+              className="inline-flex items-center rounded-admin-sm border border-admin-coral-30 bg-white text-sm font-semibold text-admin-coral px-4 py-2 hover:bg-admin-coral-tint"
             >
               View draft agreement
             </a>
@@ -319,7 +319,7 @@ export default function BookingLeasePanel({
       {state === 'ready_to_sign' && (
         <>
           <p className="font-semibold leading-snug">Sign your tenancy agreement</p>
-          <p className="text-xs leading-relaxed text-indigo-900/90">
+          <p className="text-xs leading-relaxed text-admin-ink">
             Your tenancy agreement is ready to sign. {signingPartyNote}
           </p>
           {signing_url ? (
@@ -327,12 +327,12 @@ export default function BookingLeasePanel({
               href={signing_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700"
+              className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover"
             >
               Open signing page
             </a>
           ) : (
-            <p className="text-xs text-amber-900">
+            <p className="text-xs text-admin-warning-fg">
               Signing link is not yet available in-app. Check the email we sent you with your DocuSeal signing link.
             </p>
           )}
@@ -341,7 +341,7 @@ export default function BookingLeasePanel({
               href={preview_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-2 inline-flex items-center rounded-lg border border-indigo-200 bg-white text-xs font-semibold text-indigo-700 px-3 py-1.5 hover:bg-indigo-50"
+              className="ml-2 inline-flex items-center rounded-admin-sm border border-admin-line bg-white text-xs font-semibold text-admin-coral px-3 py-1.5 hover:bg-admin-coral-tint"
             >
               View draft
             </a>
@@ -358,7 +358,7 @@ export default function BookingLeasePanel({
                 ? 'Awaiting host and co-tenant signatures'
                 : `Awaiting ${counterpartyLabel(viewer_role)} signature`}
           </p>
-          <p className="text-xs leading-relaxed text-indigo-900/90">
+          <p className="text-xs leading-relaxed text-admin-ink">
             You&apos;ve signed your tenancy agreement.{' '}
             {co_tenant_signing_required && !co_tenant_signed
               ? 'The signed PDF will appear here once your host and co-tenant have also signed (your co-tenant receives a separate signing link by email).'
@@ -369,7 +369,7 @@ export default function BookingLeasePanel({
               href={preview_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg border border-indigo-200 bg-white text-xs font-semibold text-indigo-700 px-3 py-1.5 hover:bg-indigo-50"
+              className="inline-flex items-center rounded-admin-sm border border-admin-line bg-white text-xs font-semibold text-admin-coral px-3 py-1.5 hover:bg-admin-coral-tint"
             >
               View draft
             </a>
@@ -380,7 +380,7 @@ export default function BookingLeasePanel({
       {state === 'fully_signed' && (
         <>
           <p className="font-semibold leading-snug">Tenancy agreement signed</p>
-          <p className="text-xs leading-relaxed text-indigo-900/90">
+          <p className="text-xs leading-relaxed text-admin-ink">
             Your residential tenancy agreement is fully executed
             {co_tenant_signing_required ? ' by all parties' : ' by both parties'}.
           </p>
@@ -390,7 +390,7 @@ export default function BookingLeasePanel({
                 href={signed_url_rta}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700"
+                className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover"
               >
                 Download tenancy agreement
               </a>
@@ -398,7 +398,7 @@ export default function BookingLeasePanel({
                 href={signed_url_addendum}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg border border-indigo-300 bg-white text-sm font-semibold text-indigo-700 px-4 py-2 hover:bg-indigo-50"
+                className="inline-flex items-center rounded-admin-sm border border-admin-coral-30 bg-white text-sm font-semibold text-admin-coral px-4 py-2 hover:bg-admin-coral-tint"
               >
                 Download Quni platform addendum
               </a>
@@ -408,7 +408,7 @@ export default function BookingLeasePanel({
               href={signed_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-semibold px-4 py-2 hover:bg-indigo-700"
+              className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover"
             >
               Download signed agreement
             </a>

@@ -731,9 +731,9 @@ export default function LandlordBookingReviewPage() {
 
   if (!bookingId) {
     return (
-      <div className="max-w-site mx-auto px-4 py-10 text-sm text-gray-600">
+      <div className="max-w-site mx-auto px-4 py-10 text-sm text-admin-ink-4">
         Missing booking id.{' '}
-        <Link to="/landlord/dashboard?tab=bookings" className="text-[#FF6F61] font-medium underline">
+        <Link to="/landlord/dashboard?tab=bookings" className="text-admin-coral font-medium underline">
           Back to dashboard
         </Link>
       </div>
@@ -742,8 +742,8 @@ export default function LandlordBookingReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center bg-[#FEF9E4]/30">
-        <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[40vh] flex items-center justify-center bg-admin-cream/30">
+        <div className="h-10 w-10 border-2 border-admin-coral border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -751,8 +751,8 @@ export default function LandlordBookingReviewPage() {
   if (error || !data) {
     return (
       <div className="max-w-site mx-auto px-4 py-10">
-        <p className="text-red-700 text-sm">{error ?? 'Could not load booking.'}</p>
-        <Link to="/landlord/dashboard?tab=bookings" className="mt-4 inline-block text-sm font-medium text-[#FF6F61]">
+        <p className="text-admin-danger-fg text-sm">{error ?? 'Could not load booking.'}</p>
+        <Link to="/landlord/dashboard?tab=bookings" className="mt-4 inline-block text-sm font-medium text-admin-coral">
           ← Back to bookings
         </Link>
       </div>
@@ -1082,7 +1082,7 @@ export default function LandlordBookingReviewPage() {
                 <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
                   Message from the student
                 </p>
-                <blockquote className="m-0 max-w-[620px] rounded-lg border-l-[3px] border-[#FF6F61] bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
+                <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
                   &ldquo;{booking.student_message.trim()}&rdquo;
                 </blockquote>
                 <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
@@ -1100,9 +1100,9 @@ export default function LandlordBookingReviewPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedConfirmTier('listing')}
-                    className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                    className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
                       selectedConfirmTier === 'listing'
-                        ? 'border-[#FF6F61] bg-admin-coral-tint shadow-admin-card'
+                        ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
                         : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
                     }`}
                   >
@@ -1114,9 +1114,9 @@ export default function LandlordBookingReviewPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedConfirmTier('managed')}
-                    className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+                    className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
                       selectedConfirmTier === 'managed'
-                        ? 'border-[#FF6F61] bg-admin-coral-tint shadow-admin-card'
+                        ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
                         : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
                     }`}
                   >
@@ -1131,7 +1131,7 @@ export default function LandlordBookingReviewPage() {
 
             {otherPendingPipelineCount > 0 && (
               <div
-                className="rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg shadow-admin-card"
+                className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg shadow-admin-card"
                 role="status"
               >
                 <p className="font-medium leading-snug">
@@ -1159,7 +1159,7 @@ export default function LandlordBookingReviewPage() {
             {confirmBlockedBanner === 'host_identity_required' && (
               <div
                 id="confirm-requirements"
-                className="scroll-mt-4 rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
               >
                 <p className="font-medium">Verify your identity before confirming</p>
                 <p className="mt-1 text-admin-warning-fg/90">
@@ -1175,7 +1175,7 @@ export default function LandlordBookingReviewPage() {
                   type="button"
                   disabled={stripeConnectLoading}
                   onClick={() => void onVerifyWithStripe()}
-                  className="mt-2 inline-block text-sm font-semibold text-[#FF6F61] underline underline-offset-2 disabled:opacity-60"
+                  className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
                 >
                   {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
                 </button>
@@ -1186,7 +1186,7 @@ export default function LandlordBookingReviewPage() {
             )}
 
             {confirmBlockedBanner === 'listing_module_disabled' && (
-              <div className="rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+              <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
                 <p className="leading-relaxed">
                   Listing bookings are temporarily paused. Please try again in a few minutes.
                 </p>
@@ -1196,7 +1196,7 @@ export default function LandlordBookingReviewPage() {
             {confirmBlockedBanner === 'listing_no_payment_method' && (
               <div
                 id="confirm-requirements"
-                className="scroll-mt-4 rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
               >
                 <p className="font-medium">Add a payment method to confirm</p>
                 <p className="mt-1 text-admin-warning-fg/90">
@@ -1206,7 +1206,7 @@ export default function LandlordBookingReviewPage() {
                 <button
                   type="button"
                   onClick={() => setListingPaymentModalOpen(true)}
-                  className="mt-2 inline-block text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
+                  className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
                 >
                   Add a card
                 </button>
@@ -1216,7 +1216,7 @@ export default function LandlordBookingReviewPage() {
             {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
               <div
                 id="confirm-requirements"
-                className="scroll-mt-4 rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
               >
                 <p className="font-medium">Add payee bank details to accept</p>
                 <p className="mt-1 text-admin-warning-fg/90">
@@ -1225,7 +1225,7 @@ export default function LandlordBookingReviewPage() {
                 </p>
                 <Link
                   to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
-                  className="mt-2 inline-block text-sm font-semibold text-[#FF6F61] underline underline-offset-2"
+                  className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
                 >
                   Add payee bank details →
                 </Link>
@@ -1233,7 +1233,7 @@ export default function LandlordBookingReviewPage() {
             ) : null}
 
             {confirmBlockedBanner === 'listing_billing_unavailable' && (
-              <div className="rounded-xl border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+              <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
                 <p className="font-medium">Could not verify Listing billing</p>
                 <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
               </div>
@@ -1246,7 +1246,7 @@ export default function LandlordBookingReviewPage() {
                   {messages.map((m) => (
                     <li
                       key={m.id}
-                      className={`rounded-xl px-3 py-2 text-sm ${
+                      className={`rounded-admin-md px-3 py-2 text-sm ${
                         m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
                       }`}
                     >
@@ -1376,7 +1376,7 @@ export default function LandlordBookingReviewPage() {
                   <button
                     type="button"
                     onClick={openBondModal}
-                    className="w-full rounded-admin-md bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#F2604F] sm:w-auto"
+                    className="w-full rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover sm:w-auto"
                   >
                     Mark bond as received
                   </button>
@@ -1389,24 +1389,23 @@ export default function LandlordBookingReviewPage() {
               )}
 
               {isListingBondPending && bondDeadlineLabel ? (
-                <div className="mt-3.5 flex items-center gap-2.5 rounded-xl border border-[rgba(255,111,97,0.25)] bg-admin-coral-tint px-3 py-2.5">
+                <div className="mt-3.5 flex items-center gap-2.5 rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-3 py-2.5">
                   <svg
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#CC4A3C"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     aria-hidden
-                    className="shrink-0"
+                    className="shrink-0 stroke-admin-coral-active"
                   >
                     <rect x="3" y="4" width="18" height="18" rx="2" />
                     <path d="M16 2v4M8 2v4M3 10h18" />
                   </svg>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.02em] text-[#CC4A3C]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.02em] text-admin-coral-active">
                       Confirm bond received by
                     </p>
                     <p className="text-[15px] font-bold text-admin-ink">{bondDeadlineLabel}</p>
@@ -1418,20 +1417,20 @@ export default function LandlordBookingReviewPage() {
 
               <div className="space-y-2">
                 {actionError && (
-                  <div className="rounded-lg border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
                     {actionError}
                   </div>
                 )}
 
                 {bondReceivedError && (
-                  <div className="rounded-lg border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
                     {bondReceivedError}
                   </div>
                 )}
 
                 {!showBondReceivedPrimary && !canConfirm && confirmBlockedMessage && (
                   <p
-                    className="rounded-lg border border-admin-warning/40 bg-admin-warning-bg px-3 py-2 text-xs leading-relaxed text-admin-warning-fg"
+                    className="rounded-admin-sm border border-admin-warning/40 bg-admin-warning-bg px-3 py-2 text-xs leading-relaxed text-admin-warning-fg"
                     role="status"
                   >
                     {confirmBlockedMessage}{' '}
@@ -1440,7 +1439,7 @@ export default function LandlordBookingReviewPage() {
                         type="button"
                         disabled={stripeConnectLoading}
                         onClick={() => void onVerifyWithStripe()}
-                        className="font-semibold text-[#FF6F61] underline underline-offset-2 disabled:opacity-60"
+                        className="font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
                       >
                         {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
                       </button>
@@ -1449,7 +1448,7 @@ export default function LandlordBookingReviewPage() {
                       <button
                         type="button"
                         onClick={() => setListingPaymentModalOpen(true)}
-                        className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                        className="font-semibold text-admin-coral underline underline-offset-2"
                       >
                         Add a card →
                       </button>
@@ -1457,7 +1456,7 @@ export default function LandlordBookingReviewPage() {
                     {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
                       <Link
                         to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
-                        className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                        className="font-semibold text-admin-coral underline underline-offset-2"
                       >
                         Add payee bank details →
                       </Link>
@@ -1490,7 +1489,7 @@ export default function LandlordBookingReviewPage() {
                       type="button"
                       disabled={bondReceivedBusy}
                       onClick={() => void onMarkBondReceived()}
-                      className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-[#FF6F61] px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-[#F2604F] disabled:opacity-60"
+                      className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60"
                     >
                       {bondReceivedBusy ? (
                         <>
@@ -1511,14 +1510,14 @@ export default function LandlordBookingReviewPage() {
                         <>Confirms you&apos;ve received bond directly from the renter.</>
                       )}{' '}
                       Signing links are in{' '}
-                      <a href="#tenancy-agreement-preview" className="font-semibold text-[#FF6F61] underline underline-offset-2">
+                      <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
                         Tenancy agreement
                       </a>{' '}
                       above and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
                     </p>
                     {isQldSchemeListing ? <QldRtaLodgementGuidance className="mt-2" /> : null}
                     {showRtaBondRecord ? (
-                      <div className="mt-3 space-y-3 rounded-xl border border-admin-line bg-admin-surface-1 p-4">
+                      <div className="mt-3 space-y-3 rounded-admin-md border border-admin-line bg-admin-surface-1 p-4">
                         <p className="text-sm font-semibold text-admin-ink">RTA bond record (optional)</p>
                         <p className="text-xs leading-relaxed text-admin-ink-4">
                           After lodgement, save the bond number from your Acknowledgement of Rental Bond. This does not gate
@@ -1534,7 +1533,7 @@ export default function LandlordBookingReviewPage() {
                               type="text"
                               value={rtaBondNumber}
                               onChange={(e) => setRtaBondNumber(e.target.value)}
-                              className="w-full rounded-lg border border-admin-line px-3 py-2 text-sm"
+                              className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
                               placeholder="From Acknowledgement of Rental Bond"
                             />
                           </div>
@@ -1547,7 +1546,7 @@ export default function LandlordBookingReviewPage() {
                               type="text"
                               value={rtaAckRef}
                               onChange={(e) => setRtaAckRef(e.target.value)}
-                              className="w-full rounded-lg border border-admin-line px-3 py-2 text-sm"
+                              className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
                             />
                           </div>
                           <div>
@@ -1559,7 +1558,7 @@ export default function LandlordBookingReviewPage() {
                               type="date"
                               value={rtaLodgedDate}
                               onChange={(e) => setRtaLodgedDate(e.target.value)}
-                              className="w-full rounded-lg border border-admin-line px-3 py-2 text-sm"
+                              className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
                             />
                           </div>
                         </div>
@@ -1569,7 +1568,7 @@ export default function LandlordBookingReviewPage() {
                           type="button"
                           disabled={rtaRecordBusy}
                           onClick={() => void onSaveRtaBondDetails()}
-                          className="inline-flex items-center justify-center rounded-lg border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
+                          className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
                         >
                           {rtaRecordBusy ? 'Saving…' : 'Save RTA bond details'}
                         </button>
@@ -1612,7 +1611,7 @@ export default function LandlordBookingReviewPage() {
                       }}
                       className={`inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md px-4 py-3 text-[15px] font-semibold shadow-admin-card ${
                         canConfirm && !actionBusy
-                          ? 'bg-[#FF6F61] text-white hover:bg-[#F2604F]'
+                          ? 'bg-admin-coral text-white hover:bg-admin-coral-hover'
                           : 'cursor-not-allowed bg-admin-surface-3 text-admin-ink-5'
                       }`}
                     >
@@ -1661,25 +1660,25 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !listingCancelBusy && setListingCancelOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Cancel this booking?</h3>
-            <p className="mt-2 text-sm text-gray-600">
+          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+            <h3 className="text-lg font-semibold text-admin-ink">Cancel this booking?</h3>
+            <p className="mt-2 text-sm text-admin-ink-4">
               {listingFeeDisplay === '$0.00'
                 ? 'No Listing fee was charged for this booking. The renter will be notified.'
                 : `Your ${listingFeeDisplay} Listing fee will be refunded in full. The renter will be notified.`}
             </p>
-            <label className="block mt-4 text-sm font-medium text-gray-700">
+            <label className="block mt-4 text-sm font-medium text-admin-ink-3">
               Optional note to the renter <span className="text-gray-400 font-normal">(shown in their email)</span>
             </label>
             <textarea
               value={listingCancelReason}
               onChange={(e) => setListingCancelReason(e.target.value)}
               rows={3}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
               placeholder="Reason for cancelling (optional)"
             />
             {listingCancelError && (
-              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="mt-3 text-sm text-admin-danger-fg bg-admin-danger-bg border border-admin-danger rounded-admin-sm px-3 py-2">
                 {listingCancelError}
               </p>
             )}
@@ -1688,7 +1687,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => void onConfirmCancelListing()}
                 disabled={listingCancelBusy}
-                className="rounded-xl bg-gray-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
+                className="rounded-admin-md bg-gray-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-gray-800 disabled:opacity-50"
               >
                 {listingCancelBusy ? 'Cancelling…' : 'Confirm cancellation'}
               </button>
@@ -1696,7 +1695,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setListingCancelOpen(false)}
                 disabled={listingCancelBusy}
-                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+                className="rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-3"
               >
                 Back
               </button>
@@ -1713,14 +1712,14 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !resendPaymentBusy && setResendPaymentOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Resend payment instructions?</h3>
-            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+            <h3 className="text-lg font-semibold text-admin-ink">Resend payment instructions?</h3>
+            <p className="mt-2 text-sm text-admin-ink-4 leading-relaxed">
               Resend payment instructions to {displayName}? They&apos;ll get an email with the bond and rent payment
               details.
             </p>
             {resendPaymentError && (
-              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="mt-3 text-sm text-admin-danger-fg bg-admin-danger-bg border border-admin-danger rounded-admin-sm px-3 py-2">
                 {resendPaymentError}
               </p>
             )}
@@ -1729,7 +1728,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => void onConfirmResendPaymentInstructions()}
                 disabled={resendPaymentBusy}
-                className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#F2604F] disabled:opacity-50"
+                className="rounded-admin-md bg-admin-coral text-white px-4 py-2.5 text-sm font-semibold hover:bg-admin-coral-hover disabled:opacity-50"
               >
                 {resendPaymentBusy ? 'Sending…' : 'Send email'}
               </button>
@@ -1737,7 +1736,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setResendPaymentOpen(false)}
                 disabled={resendPaymentBusy}
-                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+                className="rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-3"
               >
                 Back
               </button>
@@ -1749,18 +1748,18 @@ export default function LandlordBookingReviewPage() {
       {declineOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => setDeclineOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Decline this booking?</h3>
-            <p className="mt-2 text-sm text-gray-600">
+          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+            <h3 className="text-lg font-semibold text-admin-ink">Decline this booking?</h3>
+            <p className="mt-2 text-sm text-admin-ink-4">
               The renter&apos;s deposit authorisation will be cancelled or refunded. You can optionally leave a short note
               for your records.
             </p>
-            <label className="block mt-4 text-sm font-medium text-gray-700">Reason (optional)</label>
+            <label className="block mt-4 text-sm font-medium text-admin-ink-3">Reason (optional)</label>
             <textarea
               value={declineReason}
               onChange={(e) => setDeclineReason(e.target.value)}
               rows={3}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
               placeholder="Optional - not shown to the renter"
             />
             <div className="mt-5 flex flex-wrap gap-3">
@@ -1768,7 +1767,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => void onDecline()}
                 disabled={actionBusy}
-                className="rounded-xl bg-rose-600 text-white px-4 py-2.5 text-sm font-semibold hover:bg-rose-700 disabled:opacity-50"
+                className="rounded-admin-md bg-admin-danger text-white px-4 py-2.5 text-sm font-semibold hover:bg-admin-danger disabled:opacity-50"
               >
                 {actionBusy ? '…' : 'Decline'}
               </button>
@@ -1776,7 +1775,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setDeclineOpen(false)}
                 disabled={actionBusy}
-                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+                className="rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-3"
               >
                 Cancel
               </button>
@@ -1793,19 +1792,19 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !bondBusy && setBondModalOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900">Mark bond as received</h3>
-            <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-admin-ink">Mark bond as received</h3>
+            <p className="mt-2 text-sm text-admin-ink-4 leading-relaxed">
               {isQldBoardingProperty
                 ? 'We\u2019ll generate a bond payment receipt PDF (not RTA lodgement confirmation), save it to this tenancy, and email a copy to you and the renter. You must still lodge with the RTA within 10 days.'
                 : 'We\u2019ll generate a bond receipt PDF, save it to this tenancy, and email a copy to you and the renter.'}
             </p>
             {bondFormError && (
-              <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{bondFormError}</p>
+              <p className="mt-3 text-sm text-admin-danger-fg bg-admin-danger-bg border border-admin-danger rounded-admin-sm px-3 py-2">{bondFormError}</p>
             )}
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-date">
+                <label className="block text-sm font-medium text-admin-ink-3" htmlFor="bond-date">
                   Date received
                 </label>
                 <input
@@ -1813,11 +1812,11 @@ export default function LandlordBookingReviewPage() {
                   type="date"
                   value={bondDate}
                   onChange={(e) => setBondDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-amt">
+                <label className="block text-sm font-medium text-admin-ink-3" htmlFor="bond-amt">
                   Amount received (AUD)
                 </label>
                 <input
@@ -1827,18 +1826,18 @@ export default function LandlordBookingReviewPage() {
                   step="0.01"
                   value={bondAmount}
                   onChange={(e) => setBondAmount(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm tabular-nums"
+                  className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm tabular-nums"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-method">
+                <label className="block text-sm font-medium text-admin-ink-3" htmlFor="bond-method">
                   Payment method
                 </label>
                 <select
                   id="bond-method"
                   value={bondMethod}
                   onChange={(e) => setBondMethod(e.target.value as typeof bondMethod)}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
                 >
                   <option value="Cash">Cash</option>
                   <option value="Bank Transfer">Bank Transfer</option>
@@ -1846,7 +1845,7 @@ export default function LandlordBookingReviewPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="bond-notes">
+                <label className="block text-sm font-medium text-admin-ink-3" htmlFor="bond-notes">
                   Notes <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <textarea
@@ -1854,7 +1853,7 @@ export default function LandlordBookingReviewPage() {
                   rows={3}
                   value={bondNotes}
                   onChange={(e) => setBondNotes(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y"
+                  className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm resize-y"
                   placeholder="Reference, transaction ID, etc."
                 />
               </div>
@@ -1864,7 +1863,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => void onSubmitBondReceipt()}
                 disabled={bondBusy}
-                className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                className="rounded-admin-md bg-admin-coral text-white px-4 py-2.5 text-sm font-semibold hover:bg-admin-coral-hover disabled:opacity-50"
               >
                 {bondBusy ? 'Generating…' : 'Generate receipt'}
               </button>
@@ -1872,7 +1871,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setBondModalOpen(false)}
                 disabled={bondBusy}
-                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+                className="rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-3"
               >
                 Cancel
               </button>
@@ -1892,7 +1891,7 @@ export default function LandlordBookingReviewPage() {
 
       {bondReceivedToast && (
         <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
-          <div className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg bg-emerald-600">
+          <div className="rounded-admin-md px-4 py-3 text-center text-sm font-semibold text-white shadow-lg bg-admin-success">
             {bondReceivedToast}
           </div>
         </div>
@@ -1901,8 +1900,8 @@ export default function LandlordBookingReviewPage() {
       {resendPaymentNotice && (
         <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
           <div
-            className={`rounded-xl px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
-              resendPaymentNotice.tone === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+            className={`rounded-admin-md px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
+              resendPaymentNotice.tone === 'success' ? 'bg-admin-success' : 'bg-admin-danger'
             }`}
           >
             {resendPaymentNotice.message}
@@ -1913,9 +1912,9 @@ export default function LandlordBookingReviewPage() {
       {infoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => setInfoOpen(false)} />
-          <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[85vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900">Request more information</h3>
-            <p className="mt-2 text-sm text-gray-600">
+          <div className="relative z-10 w-full max-w-lg rounded-admin-lg bg-white shadow-xl border border-admin-line p-6 max-h-[85vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-admin-ink">Request more information</h3>
+            <p className="mt-2 text-sm text-admin-ink-4">
               We&apos;ll email the renter and set this booking to &quot;awaiting info&quot; until they reply from their
               dashboard.
             </p>
@@ -1925,18 +1924,18 @@ export default function LandlordBookingReviewPage() {
                   key={q}
                   type="button"
                   onClick={() => setInfoMessage((prev) => (prev.trim() ? `${prev.trim()}\n\n${q}` : q))}
-                  className="text-xs rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-left text-gray-700 hover:bg-gray-100"
+                  className="text-xs rounded-full border border-admin-line bg-admin-surface-2 px-3 py-1.5 text-left text-admin-ink-3 hover:bg-admin-surface-3"
                 >
                   + {q}
                 </button>
               ))}
             </div>
-            <label className="block mt-4 text-sm font-medium text-gray-700">Your message</label>
+            <label className="block mt-4 text-sm font-medium text-admin-ink-3">Your message</label>
             <textarea
               value={infoMessage}
               onChange={(e) => setInfoMessage(e.target.value)}
               rows={6}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
               placeholder="What would you like to know?"
             />
             <div className="mt-5 flex flex-wrap gap-3">
@@ -1944,7 +1943,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => void onRequestInfo()}
                 disabled={actionBusy || !infoMessage.trim()}
-                className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                className="rounded-admin-md bg-admin-coral text-white px-4 py-2.5 text-sm font-semibold hover:bg-admin-coral-hover disabled:opacity-50"
               >
                 {actionBusy ? '…' : 'Send'}
               </button>
@@ -1952,7 +1951,7 @@ export default function LandlordBookingReviewPage() {
                 type="button"
                 onClick={() => setInfoOpen(false)}
                 disabled={actionBusy}
-                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700"
+                className="rounded-admin-md border border-admin-line bg-white px-4 py-2.5 text-sm font-semibold text-admin-ink-3"
               >
                 Cancel
               </button>

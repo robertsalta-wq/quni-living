@@ -82,29 +82,29 @@ export function BookingOccupancySection({
   const fmt = (n: number) => n.toLocaleString('en-AU', { maximumFractionDigits: 0 })
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-5">
+    <div className="rounded-admin-lg border border-admin-line-soft bg-white p-5 space-y-5">
       <div>
-        <h2 className="text-sm font-bold text-gray-900">Who will be living here?</h2>
-        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+        <h2 className="text-sm font-bold text-admin-ink">Who will be living here?</h2>
+        <p className="text-xs text-admin-ink-4 mt-1 leading-relaxed">
           This sets your weekly rent and who appears on the lease. You can change it until you pay the deposit.
         </p>
       </div>
 
       <fieldset className="space-y-2">
         <legend className="sr-only">Number of occupants</legend>
-        <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-stone-200 px-4 py-3 has-[:checked]:border-[#FF6F61] has-[:checked]:bg-[#FF6F61]/5">
+        <label className="flex items-center gap-3 cursor-pointer rounded-admin-md border border-stone-200 px-4 py-3 has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5">
           <input
             type="radio"
             name="bk-occupants"
             checked={occupantCount === 1}
             onChange={() => onOccupantCountChange(1)}
-            className="h-4 w-4 accent-[#FF6F61]"
+            className="h-4 w-4 accent-admin-coral"
           />
-          <span className="text-sm font-medium text-gray-900">Just me (1 person)</span>
+          <span className="text-sm font-medium text-admin-ink">Just me (1 person)</span>
         </label>
         <label
-          className={`flex items-center gap-3 rounded-xl border border-stone-200 px-4 py-3 ${
-            coupleAllowed ? 'cursor-pointer has-[:checked]:border-[#FF6F61] has-[:checked]:bg-[#FF6F61]/5' : 'opacity-50 cursor-not-allowed'
+          className={`flex items-center gap-3 rounded-admin-md border border-stone-200 px-4 py-3 ${
+            coupleAllowed ? 'cursor-pointer has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5' : 'opacity-50 cursor-not-allowed'
           }`}
         >
           <input
@@ -113,15 +113,15 @@ export function BookingOccupancySection({
             checked={occupantCount === 2}
             disabled={!coupleAllowed}
             onChange={() => onOccupantCountChange(2)}
-            className="h-4 w-4 accent-[#FF6F61] disabled:cursor-not-allowed"
+            className="h-4 w-4 accent-admin-coral disabled:cursor-not-allowed"
           />
-          <span className="text-sm font-medium text-gray-900">Two of us (2 people)</span>
+          <span className="text-sm font-medium text-admin-ink">Two of us (2 people)</span>
         </label>
       </fieldset>
 
       {occupantCount === 2 ? (
         <div className="space-y-3 pt-1 border-t border-stone-100">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Co-tenant details</p>
+          <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Co-tenant details</p>
           <div>
             <label htmlFor="bk-co-name" className={labelClass}>
               Full name
@@ -150,7 +150,7 @@ export function BookingOccupancySection({
               className={inputClass}
             />
             {coTenantEmailWarning && studentEmail ? (
-              <p className="mt-1.5 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              <p className="mt-1.5 text-xs text-admin-warning-fg bg-admin-warning-bg border border-admin-warning rounded-admin-sm px-3 py-2">
                 This matches your account email ({studentEmail}). Your partner may not receive a separate copy of
                 signing emails until we add a second signer.
               </p>
@@ -173,7 +173,7 @@ export function BookingOccupancySection({
           <div>
             <label htmlFor="bk-co-dob" className={labelClass}>
               Date of birth
-              <span className="block text-xs font-normal text-gray-500 mt-0.5">
+              <span className="block text-xs font-normal text-admin-ink-5 mt-0.5">
                 Australian format: day / month / year
               </span>
             </label>
@@ -195,43 +195,43 @@ export function BookingOccupancySection({
             type="checkbox"
             checked={parkingSelected}
             onChange={(e) => onParkingSelectedChange(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-gray-300 accent-[#FF6F61]"
+            className="mt-1 h-4 w-4 rounded border-admin-line accent-admin-coral"
           />
-          <span className="text-sm text-gray-800">
-            <span className="font-semibold text-gray-900">Include carpark</span>
+          <span className="text-sm text-admin-ink-2">
+            <span className="font-semibold text-admin-ink">Include carpark</span>
             {breakdownAud.parking != null && breakdownAud.parking > 0 ? (
-              <span className="text-gray-600"> (+${fmt(breakdownAud.parking)}/week)</span>
+              <span className="text-admin-ink-4"> (+${fmt(breakdownAud.parking)}/week)</span>
             ) : null}
           </span>
         </label>
       ) : null}
 
-      <div className="rounded-xl bg-stone-50 border border-stone-100 px-4 py-3 space-y-1.5 text-sm">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Weekly rent summary</p>
+      <div className="rounded-admin-md bg-stone-50 border border-stone-100 px-4 py-3 space-y-1.5 text-sm">
+        <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Weekly rent summary</p>
         <div className="flex justify-between">
-          <span className="text-gray-600">Base rent</span>
+          <span className="text-admin-ink-4">Base rent</span>
           <span className="tabular-nums font-medium">${fmt(breakdownAud.base)}</span>
         </div>
         {breakdownAud.couple != null && breakdownAud.couple > 0 ? (
           <div className="flex justify-between">
-            <span className="text-gray-600">Second person</span>
+            <span className="text-admin-ink-4">Second person</span>
             <span className="tabular-nums font-medium">+${fmt(breakdownAud.couple)}</span>
           </div>
         ) : null}
         {breakdownAud.parking != null && breakdownAud.parking > 0 && parkingSelected ? (
           <div className="flex justify-between">
-            <span className="text-gray-600">Carpark</span>
+            <span className="text-admin-ink-4">Carpark</span>
             <span className="tabular-nums font-medium">+${fmt(breakdownAud.parking)}</span>
           </div>
         ) : null}
-        <div className="flex justify-between pt-1.5 border-t border-stone-200 font-semibold text-gray-900">
+        <div className="flex justify-between pt-1.5 border-t border-stone-200 font-semibold text-admin-ink">
           <span>Total per week</span>
           <span className="tabular-nums">${fmt(weeklyRent)}</span>
         </div>
       </div>
 
       {occupancyError ? (
-        <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+        <p className="text-sm text-admin-danger-fg bg-admin-danger-bg border border-admin-danger rounded-admin-sm px-3 py-2" role="alert">
           {occupancyError}
         </p>
       ) : null}

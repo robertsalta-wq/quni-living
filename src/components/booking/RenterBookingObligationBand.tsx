@@ -20,12 +20,12 @@ export default function RenterBookingObligationBand({ booking, property, classNa
 
   return (
     <section
-      className={`rounded-2xl border border-amber-300 bg-amber-50 px-4 py-4 sm:px-5 sm:py-5 shadow-sm ${className}`}
+      className={`rounded-admin-lg border border-admin-warning bg-admin-warning-bg px-4 py-4 sm:px-5 sm:py-5 shadow-sm ${className}`}
       aria-live="polite"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Action needed</p>
-      <p className="mt-1 text-lg sm:text-xl font-bold text-amber-950 leading-snug">{band.title}</p>
-      <p className="mt-1.5 text-sm text-amber-900 leading-relaxed">{band.detail}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-admin-warning-fg">Action needed</p>
+      <p className="mt-1 text-lg sm:text-xl font-bold text-admin-warning-fg leading-snug">{band.title}</p>
+      <p className="mt-1.5 text-sm text-admin-warning-fg leading-relaxed">{band.detail}</p>
     </section>
   )
 }

@@ -23,9 +23,9 @@ export type BookingActivityTimelineProps = {
 
 function toneIconClass(tone: BookingActivityTone, variant: 'admin' | 'student'): string {
   if (variant === 'student') {
-    if (tone === 'success') return 'text-emerald-600'
-    if (tone === 'warning') return 'text-amber-600'
-    if (tone === 'danger') return 'text-red-600'
+    if (tone === 'success') return 'text-admin-success'
+    if (tone === 'warning') return 'text-admin-warning'
+    if (tone === 'danger') return 'text-admin-danger'
     return 'text-gray-400'
   }
   if (tone === 'success') return 'text-admin-success-fg'
@@ -50,15 +50,15 @@ function TimelineList({
   variant: 'admin' | 'student'
 }) {
   const titleCls =
-    variant === 'student' ? 'text-sm font-semibold text-gray-900' : 'text-[13px] font-semibold text-admin-ink-2'
+    variant === 'student' ? 'text-sm font-semibold text-admin-ink' : 'text-[13px] font-semibold text-admin-ink-2'
   const detailCls =
-    variant === 'student' ? 'text-sm text-gray-600' : 'text-[12px] leading-[1.5] text-admin-ink-3'
+    variant === 'student' ? 'text-sm text-admin-ink-4' : 'text-[12px] leading-[1.5] text-admin-ink-3'
   const dateCls =
-    variant === 'student' ? 'text-xs tabular-nums text-gray-500' : 'text-[11px] tabular-nums text-admin-ink-5'
+    variant === 'student' ? 'text-xs tabular-nums text-admin-ink-5' : 'text-[11px] tabular-nums text-admin-ink-5'
   const surfaceCls = variant === 'student' ? 'bg-white' : 'bg-admin-surface-1'
   const linkCls =
     variant === 'student'
-      ? 'font-medium text-indigo-700 hover:text-indigo-900 underline-offset-2 hover:underline'
+      ? 'font-medium text-admin-coral hover:text-admin-ink underline-offset-2 hover:underline'
       : 'font-medium text-admin-coral hover:text-admin-coral-active underline-offset-2 hover:underline'
 
   return (
@@ -67,7 +67,7 @@ function TimelineList({
         <li key={item.key} className="flex gap-3">
           <span className={`mt-0.5 shrink-0 ${surfaceCls}`}>
             {variant === 'student' && item.tone === 'success' ? (
-              <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-admin-success-bg text-admin-success-fg">
                 <Check size={10} strokeWidth={2.5} aria-hidden />
               </span>
             ) : (
@@ -124,7 +124,7 @@ export default function BookingActivityTimeline({
       {loading && items.length === 0 ? (
         <p
           className={
-            variant === 'student' ? 'text-sm text-gray-500' : 'text-[12px] text-admin-ink-4'
+            variant === 'student' ? 'text-sm text-admin-ink-5' : 'text-[12px] text-admin-ink-4'
           }
         >
           Loading activity…
@@ -133,7 +133,7 @@ export default function BookingActivityTimeline({
       {error ? (
         <p
           className={
-            variant === 'student' ? 'text-sm text-red-700' : 'text-[12px] text-admin-danger-fg'
+            variant === 'student' ? 'text-sm text-admin-danger-fg' : 'text-[12px] text-admin-danger-fg'
           }
           role="alert"
         >
@@ -143,7 +143,7 @@ export default function BookingActivityTimeline({
       {!loading && !error && items.length === 0 ? (
         <p
           className={
-            variant === 'student' ? 'text-sm text-gray-500' : 'text-[12px] text-admin-ink-4'
+            variant === 'student' ? 'text-sm text-admin-ink-5' : 'text-[12px] text-admin-ink-4'
           }
         >
           No activity yet.
@@ -160,7 +160,7 @@ export default function BookingActivityTimeline({
   if (variant === 'student') {
     return (
       <section className={className} aria-label={heading}>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">{heading}</h3>
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-admin-ink-5">{heading}</h3>
         {body}
       </section>
     )
