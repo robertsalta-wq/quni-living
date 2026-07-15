@@ -12,7 +12,7 @@ import LandlordApplicantReviewHeader from '../../components/landlord/LandlordApp
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
-import LandlordBookingOccupancySummary from '../../components/landlord/LandlordBookingOccupancySummary'
+import BookingTermsBlock from '../../components/booking/BookingTermsBlock'
 import {
   bookingHasOccupancySnapshot,
   parseCoTenantSnapshot,
@@ -1021,13 +1021,28 @@ export default function LandlordBookingReviewPage() {
               <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
             </section>
 
-            <LandlordBookingOccupancySummary
-              occupantCount={booking.occupant_count}
-              parkingSelected={booking.parking_selected}
-              weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-              breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
-              coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-            />
+            <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
+              <h2 className="mb-3 text-lg font-semibold text-admin-ink">Terms</h2>
+              <BookingTermsBlock
+                money={{
+                  tier: isListingApplyBooking ? 'listing' : 'managed',
+                  status: booking.status,
+                  weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                  bondAud: bondDisplayAud,
+                  listingFeeExempt: landlordFeeExempt,
+                  depositAmountCents: depositCents,
+                  depositReleasedAt: booking.deposit_released_at ?? null,
+                  platformFeeCents: feeCents,
+                }}
+                moveInIso={moveIn || null}
+                leaseLength={booking.lease_length}
+                occupantCount={booking.occupant_count}
+                parkingSelected={booking.parking_selected}
+                coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
+                serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
+              />
+            </section>
 
             {showListingTermsEditor ? (
               <LandlordBookingTermsEditor
