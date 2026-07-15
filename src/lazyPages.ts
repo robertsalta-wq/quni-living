@@ -15,7 +15,6 @@ export const routeImports = {
   studentDashboard: () => import('./pages/StudentDashboard'),
   landlordDashboard: () => import('./pages/LandlordDashboard'),
   studentProfile: () => import('./pages/StudentProfile'),
-  landlordProfile: () => import('./pages/LandlordProfile'),
   booking: () => import('./pages/Booking'),
   sampleAgreementsPage: () => import('./pages/SampleAgreementsPage'),
   inviteTenantPage: () => import('./pages/InviteTenantPage'),
@@ -94,7 +93,6 @@ export const LandlordOnboarding = lazy(routeImports.landlordOnboarding)
 export const StudentDashboard = lazy(routeImports.studentDashboard)
 export const LandlordDashboard = lazy(routeImports.landlordDashboard)
 export const StudentProfile = lazy(routeImports.studentProfile)
-export const LandlordProfile = lazy(routeImports.landlordProfile)
 export const Booking = lazy(routeImports.booking)
 export const SampleAgreementsPage = lazy(routeImports.sampleAgreementsPage)
 

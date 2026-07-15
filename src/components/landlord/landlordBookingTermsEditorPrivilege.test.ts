@@ -11,7 +11,6 @@ function readSrc(relPath: string): string {
 /** Student / shared renter surfaces that mount BookingLeasePanel — must never host the landlord terms editor. */
 const RENTER_SURFACES = [
   'src/pages/StudentDashboard.tsx',
-  'src/components/student/StudentDashboardBookingCard.tsx',
   'src/components/booking/RenterBookingZones.tsx',
   'src/components/booking/BookingLeasePanel.tsx',
 ] as const
@@ -34,16 +33,10 @@ describe('landlord booking terms editor privilege boundary', () => {
   }
 
   it('renter BookingLeasePanel call sites do not pass landlord-only regenerate/prepare props that imply edit UI', () => {
-    // Live mount is RenterBookingZones (StudentDashboard delegates). Orphan card kept in the scan until deleted.
-    for (const surface of [
-      'src/components/booking/RenterBookingZones.tsx',
-      'src/components/student/StudentDashboardBookingCard.tsx',
-    ] as const) {
-      const src = readSrc(surface)
-      expect(src).toMatch(/<BookingLeasePanel\s+bookingId=\{[^}]+\}\s*\/>/)
-      expect(src).not.toMatch(/allowRegenerateAgreement/)
-      expect(src).not.toMatch(/allowPrepareRetry/)
-    }
+    const src = readSrc('src/components/booking/RenterBookingZones.tsx')
+    expect(src).toMatch(/<BookingLeasePanel\s+bookingId=\{[^}]+\}\s*\/>/)
+    expect(src).not.toMatch(/allowRegenerateAgreement/)
+    expect(src).not.toMatch(/allowPrepareRetry/)
   })
 
   it('landlord review page is the only UI mount of LandlordBookingTermsEditor', () => {
