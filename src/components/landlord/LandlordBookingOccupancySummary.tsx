@@ -57,7 +57,7 @@ export default function LandlordBookingOccupancySummary({
       </dl>
 
       {showBreakdown && breakdown ? (
-        <div className="rounded-admin-md bg-stone-50 border border-stone-100 px-4 py-3 space-y-1.5 text-sm">
+        <div className="rounded-admin-md bg-admin-surface-2 border border-admin-line-soft px-4 py-3 space-y-1.5 text-sm">
           <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Weekly rent breakdown</p>
           <div className="flex justify-between">
             <span className="text-admin-ink-4">Base rent</span>
@@ -76,7 +76,7 @@ export default function LandlordBookingOccupancySummary({
             </div>
           ) : null}
           {weeklyRent != null && Number.isFinite(Number(weeklyRent)) ? (
-            <div className="flex justify-between pt-1.5 border-t border-stone-200 font-semibold text-admin-ink">
+            <div className="flex justify-between pt-1.5 border-t border-admin-line font-semibold text-admin-ink">
               <span>Total per week</span>
               <span className="tabular-nums">${fmtAud(Number(weeklyRent))}</span>
             </div>

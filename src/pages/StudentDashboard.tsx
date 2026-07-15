@@ -686,7 +686,7 @@ export default function StudentDashboard() {
                     {(b.status === 'confirmed' || b.status === 'active') &&
                       prop &&
                       isBondPaymentReceiptContext(prop.property_type) && (
-                        <div className="border-t border-stone-200 bg-admin-cream/70 px-5 py-3 text-sm text-stone-800 space-y-2">
+                        <div className="border-t border-admin-line bg-admin-cream/70 px-5 py-3 text-sm text-admin-ink-2 space-y-2">
                           {bondDownloadErrorId === b.id ? (
                             <p className="text-admin-warning-fg text-xs leading-relaxed">
                               Bond receipt isn&apos;t available yet. Your host will generate it from their dashboard after

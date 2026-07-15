@@ -92,7 +92,7 @@ export function BookingOccupancySection({
 
       <fieldset className="space-y-2">
         <legend className="sr-only">Number of occupants</legend>
-        <label className="flex items-center gap-3 cursor-pointer rounded-admin-md border border-stone-200 px-4 py-3 has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5">
+        <label className="flex items-center gap-3 cursor-pointer rounded-admin-md border border-admin-line px-4 py-3 has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5">
           <input
             type="radio"
             name="bk-occupants"
@@ -103,7 +103,7 @@ export function BookingOccupancySection({
           <span className="text-sm font-medium text-admin-ink">Just me (1 person)</span>
         </label>
         <label
-          className={`flex items-center gap-3 rounded-admin-md border border-stone-200 px-4 py-3 ${
+          className={`flex items-center gap-3 rounded-admin-md border border-admin-line px-4 py-3 ${
             coupleAllowed ? 'cursor-pointer has-[:checked]:border-admin-coral has-[:checked]:bg-admin-coral/5' : 'opacity-50 cursor-not-allowed'
           }`}
         >
@@ -120,7 +120,7 @@ export function BookingOccupancySection({
       </fieldset>
 
       {occupantCount === 2 ? (
-        <div className="space-y-3 pt-1 border-t border-stone-100">
+        <div className="space-y-3 pt-1 border-t border-admin-line-soft">
           <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Co-tenant details</p>
           <div>
             <label htmlFor="bk-co-name" className={labelClass}>
@@ -190,7 +190,7 @@ export function BookingOccupancySection({
       ) : null}
 
       {parkingAvailable ? (
-        <label className="flex items-start gap-3 cursor-pointer pt-1 border-t border-stone-100">
+        <label className="flex items-start gap-3 cursor-pointer pt-1 border-t border-admin-line-soft">
           <input
             type="checkbox"
             checked={parkingSelected}
@@ -206,7 +206,7 @@ export function BookingOccupancySection({
         </label>
       ) : null}
 
-      <div className="rounded-admin-md bg-stone-50 border border-stone-100 px-4 py-3 space-y-1.5 text-sm">
+      <div className="rounded-admin-md bg-admin-surface-2 border border-admin-line-soft px-4 py-3 space-y-1.5 text-sm">
         <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Weekly rent summary</p>
         <div className="flex justify-between">
           <span className="text-admin-ink-4">Base rent</span>
@@ -224,7 +224,7 @@ export function BookingOccupancySection({
             <span className="tabular-nums font-medium">+${fmt(breakdownAud.parking)}</span>
           </div>
         ) : null}
-        <div className="flex justify-between pt-1.5 border-t border-stone-200 font-semibold text-admin-ink">
+        <div className="flex justify-between pt-1.5 border-t border-admin-line font-semibold text-admin-ink">
           <span>Total per week</span>
           <span className="tabular-nums">${fmt(weeklyRent)}</span>
         </div>

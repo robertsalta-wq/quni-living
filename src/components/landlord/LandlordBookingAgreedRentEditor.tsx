@@ -196,7 +196,7 @@ export default function LandlordBookingAgreedRentEditor({
             </div>
           </div>
 
-          <div className="rounded-admin-md border border-admin-line bg-stone-50/80 p-4 space-y-3">
+          <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 p-4 space-y-3">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"

@@ -202,7 +202,7 @@ export default function BookingLeasePanel({
   if (loading && !data) {
     return (
       <div
-        className={`rounded-admin-md border border-stone-200 bg-white px-4 py-3 text-sm text-stone-500 ${className ?? ''}`.trim()}
+        className={`rounded-admin-md border border-admin-line bg-white px-4 py-3 text-sm text-admin-ink-5 ${className ?? ''}`.trim()}
       >
         Loading tenancy agreement…
       </div>
