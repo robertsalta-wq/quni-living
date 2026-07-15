@@ -18,11 +18,7 @@ import { isBondPaymentReceiptContext } from '../../lib/listings'
 import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
 import QldRtaLodgementGuidance from '../../components/bond/QldRtaLodgementGuidance'
 import { apiUrl } from '../../lib/apiUrl'
-import {
-  landlordBookingConfirmAllowed,
-  landlordBookingConfirmBlockedBanner,
-  landlordBookingConfirmBlockedUserMessage,
-} from '../../lib/landlordBookingConfirmGate'
+import { landlordBookingConfirmAllowed, landlordBookingConfirmBlockedBanner } from '../../lib/landlordBookingConfirmGate'
 import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
@@ -40,14 +36,23 @@ import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listing
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 import {
+  BookingReadinessDriver,
+  BookingReadinessReadyRibbon,
   BookingReviewActionCard,
   BookingReviewBookingSummary,
   BookingReviewPropertySummary,
   BookingReviewSummaryStrip,
   BookingReviewSurfaceCard,
   BookingReviewTermsRail,
+  type BookingReadinessGate,
 } from '../../components/booking/review'
 import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
+import {
+  resolveBookingReviewReadinessGates,
+  bookingReviewReadinessAllClear,
+  bookingReviewReadinessHint,
+  type BookingReviewReadinessGate as BookingReadinessGateDef,
+} from '../../lib/booking/bookingReviewReadinessGates'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { studentDisplayName } from '../../lib/nameResolution'
@@ -812,11 +817,47 @@ export default function LandlordBookingReviewPage() {
     property: property ?? undefined,
     booking,
   })
-  const confirmBlockedMessage =
-    landlordBookingConfirmBlockedUserMessage(confirmBlockedBanner, booking.status, property ?? undefined) ??
-    (!canConfirm && (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
-      ? 'Complete the steps above before you can accept this booking.'
-      : null)
+  const readinessGates: BookingReadinessGateDef[] =
+    booking.status === 'pending_confirmation'
+      ? resolveBookingReviewReadinessGates({
+          selectedConfirmTier,
+          stripeChargesEnabled,
+          adminOverrideVerified,
+          property,
+          booking,
+          listingUsesOccupancyAgreement,
+          propertyPayoutComplete,
+          listingFeeExempt: landlordFeeExempt,
+          listingBillingLoaded,
+          listingBilling,
+        })
+      : []
+  const readinessAllClear = readinessGates.length > 0 && bookingReviewReadinessAllClear(readinessGates)
+  const readinessHint = bookingReviewReadinessHint(readinessGates)
+  const showReadinessDriver = booking.status === 'pending_confirmation' && readinessGates.length > 0 && !readinessAllClear
+  const showReadinessReady = booking.status === 'pending_confirmation' && readinessAllClear
+  const readinessUiGates: BookingReadinessGate[] = readinessGates.map((g) => ({
+    id: g.id,
+    label: g.label,
+    sub: g.sub,
+    state: g.state,
+    actionLabel: g.actionLabel,
+    onAction:
+      g.state === 'done'
+        ? undefined
+        : () => {
+            if (g.actionKind === 'verify_identity') {
+              void onVerifyWithStripe()
+              return
+            }
+            if (g.actionKind === 'add_payment_method') {
+              setListingPaymentModalOpen(true)
+              return
+            }
+            if (g.actionHref) navigate(g.actionHref)
+          },
+  }))
+
   const isQldSchemeListing =
     (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
     listingBondObligations != null
@@ -952,88 +993,99 @@ export default function LandlordBookingReviewPage() {
                   />
                 )}
 
-                {confirmBlockedBanner === 'host_identity_required' && (
-                <div
-                  id="confirm-requirements"
-                  className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                >
-                  <p className="font-medium">Verify your identity before confirming</p>
-                  <p className="mt-1 text-admin-warning-fg/90">
-                    Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
-                    verification before you can accept. This also unlocks your Verified host badge when approved.
-                  </p>
-                  {stripeConnectError && (
-                    <p className="mt-2 text-sm text-admin-danger-fg" role="alert">
-                      {stripeConnectError}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    disabled={stripeConnectLoading}
-                    onClick={() => void onVerifyWithStripe()}
-                    className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
-                  >
-                    {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
-                  </button>
-                  <p className="mt-2 text-xs text-admin-warning-fg/80">
-                    Complete verification in Stripe, then return here - we refresh when you switch back to this tab.
-                  </p>
-                </div>
-              )}
+                {booking.status === 'pending_confirmation' ? (
+                  <div id="confirm-requirements" className="scroll-mt-4">
+                    {showReadinessDriver ? (
+                      <BookingReadinessDriver gates={readinessUiGates} hint={readinessHint ?? undefined} />
+                    ) : null}
+                    {showReadinessReady ? <BookingReadinessReadyRibbon /> : null}
+                  </div>
+                ) : (
+                  <>
+                    {confirmBlockedBanner === 'host_identity_required' && (
+                      <div
+                        id="confirm-requirements"
+                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                      >
+                        <p className="font-medium">Verify your identity before confirming</p>
+                        <p className="mt-1 text-admin-warning-fg/90">
+                          Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
+                          verification before you can accept. This also unlocks your Verified host badge when approved.
+                        </p>
+                        {stripeConnectError && (
+                          <p className="mt-2 text-sm text-admin-danger-fg" role="alert">
+                            {stripeConnectError}
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          disabled={stripeConnectLoading}
+                          onClick={() => void onVerifyWithStripe()}
+                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
+                        >
+                          {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
+                        </button>
+                        <p className="mt-2 text-xs text-admin-warning-fg/80">
+                          Complete verification in Stripe, then return here - we refresh when you switch back to this tab.
+                        </p>
+                      </div>
+                    )}
 
-              {confirmBlockedBanner === 'listing_module_disabled' && (
-                <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-                  <p className="leading-relaxed">
-                    Listing bookings are temporarily paused. Please try again in a few minutes.
-                  </p>
-                </div>
-              )}
+                    {confirmBlockedBanner === 'listing_module_disabled' && (
+                      <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+                        <p className="leading-relaxed">
+                          Listing bookings are temporarily paused. Please try again in a few minutes.
+                        </p>
+                      </div>
+                    )}
 
-              {confirmBlockedBanner === 'listing_no_payment_method' && (
-                <div
-                  id="confirm-requirements"
-                  className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                >
-                  <p className="font-medium">Add a payment method to confirm</p>
-                  <p className="mt-1 text-admin-warning-fg/90">
-                    You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
-                    card on accept.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setListingPaymentModalOpen(true)}
-                    className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
-                  >
-                    Add a card
-                  </button>
-                </div>
-              )}
+                    {confirmBlockedBanner === 'listing_no_payment_method' && (
+                      <div
+                        id="confirm-requirements"
+                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                      >
+                        <p className="font-medium">Add a payment method to confirm</p>
+                        <p className="mt-1 text-admin-warning-fg/90">
+                          You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
+                          card on accept.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setListingPaymentModalOpen(true)}
+                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
+                        >
+                          Add a card
+                        </button>
+                      </div>
+                    )}
 
-              {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
-                <div
-                  id="confirm-requirements"
-                  className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                >
-                  <p className="font-medium">Add payee bank details to accept</p>
-                  <p className="mt-1 text-admin-warning-fg/90">
-                    This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
-                    weekly rent directly to this account by fee-free bank transfer.
-                  </p>
-                  <Link
-                    to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
-                    className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
-                  >
-                    Add payee bank details →
-                  </Link>
-                </div>
-              ) : null}
+                    {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
+                      <div
+                        id="confirm-requirements"
+                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                      >
+                        <p className="font-medium">Add payee bank details to accept</p>
+                        <p className="mt-1 text-admin-warning-fg/90">
+                          This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
+                          weekly rent directly to this account by fee-free bank transfer.
+                        </p>
+                        <Link
+                          to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
+                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
+                        >
+                          Add payee bank details →
+                        </Link>
+                      </div>
+                    ) : null}
 
-              {confirmBlockedBanner === 'listing_billing_unavailable' && (
-                <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-                  <p className="font-medium">Could not verify Listing billing</p>
-                  <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
-                </div>
-              )}
+                    {confirmBlockedBanner === 'listing_billing_unavailable' && (
+                      <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+                        <p className="font-medium">Could not verify Listing billing</p>
+                        <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
+                      </div>
+                    )}
+                  </>
+                )}
 
               {showResendPaymentInstructions ? (
                 <div className="space-y-2">
@@ -1204,7 +1256,6 @@ export default function LandlordBookingReviewPage() {
                     type="button"
                     disabled={!canConfirm || actionBusy}
                     aria-disabled={!canConfirm || actionBusy}
-                    title={!canConfirm ? confirmBlockedMessage ?? 'Accept is not available yet' : undefined}
                     onClick={() => {
                       if (!canConfirm) {
                         document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1231,6 +1282,9 @@ export default function LandlordBookingReviewPage() {
                       'Accept as Quni Managed'
                     )}
                   </button>
+                  {!canConfirm && !actionBusy ? (
+                    <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
+                  ) : null}
                   <button
                     type="button"
                     disabled={!canDeclineOrInfo || actionBusy}
