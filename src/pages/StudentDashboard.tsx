@@ -15,10 +15,7 @@ import {
   renterProfileStatCardCopy,
 } from '../lib/renterReadiness'
 import { consumeLoginWelcomePending } from '../lib/loginWelcomeToast'
-import { isBondPaymentReceiptContext } from '../lib/listings'
-import TenancyAgreementExplainer from '../components/TenancyAgreementExplainer'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
-import BookingLeasePanel from '../components/booking/BookingLeasePanel'
 import ListingBondPaymentGuidance from '../components/booking/ListingBondPaymentGuidance'
 import { resolveTenancyPackage } from '../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentTenantGuidance } from '../lib/tenancy/listingBondPaymentCopy'
@@ -30,19 +27,14 @@ import RenterDashboardPageHeader, {
   renterDashboardPageInsetClass,
 } from '../components/student/RenterDashboardPageHeader'
 import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
-import { tenantBookingCardBanner, tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
-import StudentDashboardBookingStatusStrip from '../components/student/StudentDashboardBookingStatusStrip'
+import { tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
 import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
 import {
   normalizePropertyPayoutEmbed,
   propertyPayoutDetailsComplete,
 } from '../lib/propertyPayoutDetails'
-import ListingPaymentInstructions, {
-  shouldShowListingPaymentInstructions,
-} from '../components/student/ListingPaymentInstructions'
-import BookingActivityTimeline from '../components/booking/BookingActivityTimeline'
-import RenterBookingObligationBand from '../components/booking/RenterBookingObligationBand'
+import RenterBookingZones from '../components/booking/RenterBookingZones'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -569,16 +561,7 @@ export default function StudentDashboard() {
             <h2 id="bookings-heading" className="sr-only">
               Your bookings
             </h2>
-            {currentBooking && (
-              <div className="mb-4 space-y-3">
-                <RenterBookingObligationBand
-                  booking={currentBooking}
-                  property={currentBooking.properties}
-                />
-                <StudentDashboardBookingStatusStrip status={currentBooking.status} />
-              </div>
-            )}
-          {bookings.length === 0 ? (
+            {bookings.length === 0 ? (
             <div className={`${cardClass} text-center py-12`}>
               <p className="text-admin-ink-2 font-medium">No bookings yet</p>
               <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
@@ -595,11 +578,12 @@ export default function StudentDashboard() {
                 const slug = prop?.slug
                 const img = firstPropertyImageUrl(prop?.images ?? null)
                 const rent = b.weekly_rent ?? prop?.rent_per_week ?? null
+                const isCurrent = currentBooking?.id === b.id
                 return (
                   <li
                     key={b.id}
                     className={`rounded-admin-lg border bg-white shadow-sm overflow-hidden ${
-                      currentBooking?.id === b.id
+                      isCurrent
                         ? 'border-admin-line ring-2 ring-admin-coral/20'
                         : 'border-admin-line-soft'
                     }`}
@@ -651,60 +635,28 @@ export default function StudentDashboard() {
                         )}
                       </div>
                     </div>
-                    {(() => {
-                      const banner = tenantBookingCardBanner(b.status, b.service_tier_at_request)
-                      return banner ? <div className={banner.panelClass}>{banner.text}</div> : null
-                    })()}
-                    {(b.status === 'bond_pending' ||
-                      b.status === 'confirmed' ||
-                      b.status === 'active') && (
-                      <div className="border-t border-admin-line bg-admin-coral-tint px-5 py-3 text-sm text-admin-ink space-y-3">
-                        {profile &&
-                        prop &&
-                        shouldShowListingPaymentInstructions({ booking: b, property: prop }) ? (
-                          <ListingPaymentInstructions
-                            booking={b}
-                            property={prop}
-                            renterDisplayName={studentDisplayName(profile)}
-                          />
-                        ) : null}
-                        {b.status === 'bond_pending' && b.service_tier_final === 'listing' && prop && profile && (
-                          <ListingBondGuidanceForBooking
-                            booking={b}
-                            property={prop}
-                            renterDisplayName={studentDisplayName(profile)}
-                          />
-                        )}
-                        <TenancyAgreementExplainer
-                          state={prop?.state ?? ''}
-                          propertyType={prop?.property_type ?? ''}
-                          isRegisteredRoomingHouse={Boolean(prop?.is_registered_rooming_house)}
-                        />
-                        <BookingLeasePanel bookingId={b.id} />
-                      </div>
-                    )}
-                    {(b.status === 'confirmed' || b.status === 'active') &&
-                      prop &&
-                      isBondPaymentReceiptContext(prop.property_type) && (
-                        <div className="border-t border-admin-line bg-admin-cream/70 px-5 py-3 text-sm text-admin-ink-2 space-y-2">
-                          {bondDownloadErrorId === b.id ? (
-                            <p className="text-admin-warning-fg text-xs leading-relaxed">
-                              Bond receipt isn&apos;t available yet. Your host will generate it from their dashboard after
-                              they record your bond payment.
-                            </p>
-                          ) : null}
-                          <button
-                            type="button"
-                            disabled={bondDownloadBusyId === b.id}
-                            onClick={() => void downloadBondReceipt(b.id)}
-                            className="inline-flex items-center rounded-admin-sm bg-admin-coral text-white text-sm font-semibold px-4 py-2 hover:bg-admin-coral-hover disabled:opacity-50"
-                          >
-                            {bondDownloadBusyId === b.id ? 'Opening…' : 'Download bond receipt'}
-                          </button>
-                        </div>
-                      )}
-                    <div className="border-t border-admin-line-soft px-5 py-4">
-                      <BookingActivityTimeline bookingId={b.id} mode="renter" />
+                    <div className="border-t border-admin-line-soft">
+                      <RenterBookingZones
+                        booking={b}
+                        property={prop}
+                        renterDisplayName={profile ? studentDisplayName(profile) : 'Renter'}
+                        isCurrent={isCurrent}
+                        bondDownloadBusy={bondDownloadBusyId === b.id}
+                        bondDownloadError={bondDownloadErrorId === b.id}
+                        onDownloadBondReceipt={() => void downloadBondReceipt(b.id)}
+                        bondGuidance={
+                          b.status === 'bond_pending' &&
+                          b.service_tier_final === 'listing' &&
+                          prop &&
+                          profile ? (
+                            <ListingBondGuidanceForBooking
+                              booking={b}
+                              property={prop}
+                              renterDisplayName={studentDisplayName(profile)}
+                            />
+                          ) : null
+                        }
+                      />
                     </div>
                   </li>
                 )

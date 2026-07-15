@@ -20,6 +20,8 @@ export type BookingMoneyBlockInput = {
   depositReleasedAt: string | null
   /** Managed only: platform fee, cents. */
   platformFeeCents: number | null
+  /** Voice for labels — landlord sees “to you”; renter sees tenant-facing wording. Default landlord. */
+  viewer?: 'landlord' | 'renter'
 }
 
 export type BookingMoneyBlockLine = {
@@ -54,32 +56,40 @@ export function managedQuniHoldsCents(input: {
 }
 
 export function computeBookingMoneyBlockLines(input: BookingMoneyBlockInput): BookingMoneyBlockLine[] {
+  const viewer = input.viewer ?? 'landlord'
+  const isRenter = viewer === 'renter'
+
   if (input.tier === 'listing') {
     const listingFeeLabel = input.listingFeeExempt ? '$0.00' : '-$99.00'
-    return [
+    const lines: BookingMoneyBlockLine[] = [
       {
         key: 'rent',
-        label: 'Rent to you',
+        label: isRenter ? 'Weekly rent' : 'Rent to you',
         valueLabel: input.weeklyRentAud != null ? `${fmtAud(input.weeklyRentAud)}/wk` : '-',
       },
       {
         key: 'bond',
-        label: 'Bond — paid direct to you',
+        label: isRenter ? 'Bond — paid direct to your host' : 'Bond — paid direct to you',
         valueLabel: input.bondAud != null ? fmtAud(input.bondAud) : 'No bond',
       },
-      {
+    ]
+    if (!isRenter) {
+      lines.push({
         key: 'listing-fee',
         label: 'Quni listing fee',
         valueLabel: listingFeeLabel,
-      },
-      {
-        key: 'quni-holds',
-        label: 'Quni holds',
-        valueLabel: '$0',
-        helpText: 'Bond and rent are arranged directly between you and the renter.',
-        emphasis: true,
-      },
-    ]
+      })
+    }
+    lines.push({
+      key: 'quni-holds',
+      label: 'Quni holds',
+      valueLabel: '$0',
+      helpText: isRenter
+        ? 'Bond and rent are arranged directly with your host.'
+        : 'Bond and rent are arranged directly between you and the renter.',
+      emphasis: true,
+    })
+    return lines
   }
 
   const isPreAccept = PRE_ACCEPT_STATUSES.has(input.status)
@@ -88,7 +98,7 @@ export function computeBookingMoneyBlockLines(input: BookingMoneyBlockInput): Bo
   return [
     {
       key: 'rent',
-      label: 'Rent',
+      label: isRenter ? 'Weekly rent' : 'Rent',
       valueLabel: input.weeklyRentAud != null ? `${fmtAud(input.weeklyRentAud)}/wk` : '-',
     },
     {
@@ -102,20 +112,28 @@ export function computeBookingMoneyBlockLines(input: BookingMoneyBlockInput): Bo
       valueLabel: fmtAudCents(input.depositAmountCents),
       helpText: isPreAccept ? 'One week\u2019s rent, authorised on request.' : undefined,
     },
-    {
-      key: 'platform-fee',
-      label: 'Platform fee',
-      valueLabel: fmtAudCents(input.platformFeeCents),
-    },
+    ...(isRenter
+      ? []
+      : [
+          {
+            key: 'platform-fee',
+            label: 'Platform fee',
+            valueLabel: fmtAudCents(input.platformFeeCents),
+          } satisfies BookingMoneyBlockLine,
+        ]),
     {
       key: 'quni-holds',
       label: 'Quni holds',
       valueLabel: fmtAudCents(holdsCents),
       helpText:
         holdsCents > 0
-          ? 'Released to you the day after move-in.'
+          ? isRenter
+            ? 'Held until the day after move-in.'
+            : 'Released to you the day after move-in.'
           : input.depositReleasedAt?.trim()
-            ? 'Released to you.'
+            ? isRenter
+              ? 'Released to your host.'
+              : 'Released to you.'
             : undefined,
       emphasis: true,
     },
