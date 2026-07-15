@@ -78,14 +78,22 @@ export default {
           fg: '#075985',
           bg: '#E0F2FE',
         },
+        /** AI purple — booking review AI assessment (and nowhere decorative). */
+        'admin-ai': {
+          DEFAULT: '#AA3BFF',
+          tint: 'rgba(170,59,255,0.10)',
+          border: 'rgba(170,59,255,0.32)',
+        },
       },
       backgroundColor: {
         'admin-coral-tint': 'rgba(255,111,97,0.08)',
         'admin-coral-tint-15': 'rgba(255,111,97,0.15)',
         'admin-navy-tint': 'rgba(31,42,68,0.08)',
+        'admin-ai-tint': 'rgba(170,59,255,0.10)',
       },
       borderColor: {
         'admin-coral-30': 'rgba(255,111,97,0.30)',
+        'admin-ai-border': 'rgba(170,59,255,0.32)',
       },
       boxShadow: {
         'admin-card': '0 1px 2px rgba(8,6,13,.05), 0 1px 1px rgba(8,6,13,.03)',

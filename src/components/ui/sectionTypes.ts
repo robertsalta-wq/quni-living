@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 
 export type SectionStatus = 'todo' | 'done' | 'optional' | 'locked'
 
-export type SectionTone = 'default' | 'warning' | 'danger'
+/** `ai` = purple chrome (AI assessment only — design-system rule). */
+export type SectionTone = 'default' | 'warning' | 'danger' | 'ai'
 
 export type SectionProps = {
   id: string

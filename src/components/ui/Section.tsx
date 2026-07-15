@@ -52,7 +52,15 @@ function StatusPill({ status }: { status: SectionStatus }) {
 function toneBorderClass(tone: SectionTone): string {
   if (tone === 'warning') return 'border-admin-warning'
   if (tone === 'danger') return 'border-admin-danger'
+  if (tone === 'ai') return 'border-admin-ai-border'
   return 'border-admin-line'
+}
+
+function iconTileClass(tone: SectionTone): string {
+  if (tone === 'ai') {
+    return 'bg-admin-ai-tint text-admin-ai [&_svg]:h-[18px] [&_svg]:w-[18px]'
+  }
+  return 'bg-admin-coral-tint text-admin-coral [&_svg]:h-[18px] [&_svg]:w-[18px]'
 }
 
 export default function Section({
@@ -83,7 +91,9 @@ export default function Section({
       ) : null}
 
       {icon != null ? (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-admin-md bg-admin-coral-tint text-admin-coral [&_svg]:h-[18px] [&_svg]:w-[18px]">
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-admin-md ${iconTileClass(tone)}`}
+        >
           {icon}
         </span>
       ) : null}
@@ -91,7 +101,11 @@ export default function Section({
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold text-admin-ink">{title}</span>
         {subtitle ? (
-          <span className="mt-0.5 block text-[12.5px] text-admin-ink-4">{subtitle}</span>
+          <span
+            className={`mt-0.5 block text-[12.5px] ${tone === 'ai' ? 'text-admin-ai' : 'text-admin-ink-4'}`}
+          >
+            {subtitle}
+          </span>
         ) : null}
       </span>
 
