@@ -16,3 +16,5 @@ export {
   BookingReviewSummaryStrip,
   BookingReviewSurfaceCard,
 } from './BookingReviewSummaryStrip'
+export { default as BookingReviewTermsRail } from './BookingReviewTermsRail'
+export type { BookingReviewTermsRailProps } from './BookingReviewTermsRail'

@@ -12,8 +12,6 @@ import LandlordApplicantReviewHeader from '../../components/landlord/LandlordApp
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
-import BookingTermsBlock from '../../components/booking/BookingTermsBlock'
-import { parseCoTenantSnapshot, parseRentBreakdownAud } from '../../lib/pricing/bookingOccupancySnapshot'
 import { formatDate } from '../admin/adminUi'
 import type { Database } from '../../lib/database.types'
 import { isBondPaymentReceiptContext } from '../../lib/listings'
@@ -40,10 +38,6 @@ import { landlordBookingsPath, userDashboardBreadcrumbs } from '../../lib/userDa
 import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
-import LandlordBookingAgreedRentEditor from '../../components/landlord/LandlordBookingAgreedRentEditor'
-import LandlordBookingTermsEditor, {
-  listingBookingTermsEditorEligible,
-} from '../../components/landlord/LandlordBookingTermsEditor'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
 import {
   BookingReviewActionCard,
@@ -51,6 +45,7 @@ import {
   BookingReviewPropertySummary,
   BookingReviewSummaryStrip,
   BookingReviewSurfaceCard,
+  BookingReviewTermsRail,
 } from '../../components/booking/review'
 import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
@@ -208,8 +203,6 @@ export default function LandlordBookingReviewPage() {
   const [messagesExpandedOverride, setMessagesExpandedOverride] = useState<boolean | null>(null)
   const [agreementExpanded, setAgreementExpanded] = useState(false)
   const [activityExpanded, setActivityExpanded] = useState(false)
-  /** Rail terms: "Edit" swaps money block for the editor. */
-  const [termsEditing, setTermsEditing] = useState(false)
 
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
@@ -777,12 +770,6 @@ export default function LandlordBookingReviewPage() {
   const isListingBondPending =
     booking.status === 'bond_pending' && booking.service_tier_final === 'listing'
 
-  const showListingTermsEditor = listingBookingTermsEditorEligible(
-    booking.status,
-    booking.service_tier_at_request,
-    booking.service_tier_final,
-  )
-
   const isListingPropertyContext =
     property?.service_tier === 'listing' ||
     booking.service_tier_at_request === 'listing' ||
@@ -830,10 +817,6 @@ export default function LandlordBookingReviewPage() {
     (!canConfirm && (booking.status === 'pending_confirmation' || booking.status === 'awaiting_info')
       ? 'Complete the steps above before you can accept this booking.'
       : null)
-  const moveIn = (booking.move_in_date || booking.start_date || '').slice(0, 10)
-  const depositCents = booking.deposit_amount ?? null
-  const feeCents = booking.platform_fee_amount ?? null
-
   const isQldSchemeListing =
     (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
     listingBondObligations != null
@@ -1276,79 +1259,19 @@ export default function LandlordBookingReviewPage() {
             </BookingReviewActionCard>
 
             <BookingReviewSurfaceCard padding="rail">
-              <div className="mb-3 flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-admin-md bg-admin-coral-tint text-admin-coral [&_svg]:h-[18px] [&_svg]:w-[18px]">
-                    <FileText />
-                  </span>
-                  <span className="text-[15px] font-semibold text-admin-ink">Terms</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setTermsEditing((v) => !v)}
-                  className="shrink-0 text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
-                >
-                  {termsEditing ? 'Done editing' : 'Edit'}
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {termsEditing ? (
-                  showListingTermsEditor ? (
-                    <LandlordBookingTermsEditor
-                      bookingId={booking.id}
-                      status={booking.status}
-                      serviceTierAtRequest={booking.service_tier_at_request}
-                      serviceTierFinal={booking.service_tier_final}
-                      weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                      bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                      rentBreakdown={booking.rent_breakdown}
-                      propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                      moveInDate={booking.move_in_date}
-                      startDate={booking.start_date}
-                      leaseLength={booking.lease_length}
-                      occupantCount={booking.occupant_count}
-                      notes={booking.notes}
-                      coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                      onSaved={() => {
-                        void reload()
-                        setLeasePanelRefreshKey((k) => k + 1)
-                      }}
-                    />
-                  ) : (
-                    <LandlordBookingAgreedRentEditor
-                      bookingId={booking.id}
-                      status={booking.status}
-                      weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                      bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                      rentBreakdown={booking.rent_breakdown}
-                      propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                      serviceTierAtRequest={booking.service_tier_at_request}
-                      onSaved={() => void reload()}
-                    />
-                  )
-                ) : (
-                  <BookingTermsBlock
-                    money={{
-                      tier: isListingApplyBooking ? 'listing' : 'managed',
-                      status: booking.status,
-                      weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
-                      bondAud: bondDisplayAud,
-                      listingFeeExempt: landlordFeeExempt,
-                      depositAmountCents: depositCents,
-                      depositReleasedAt: booking.deposit_released_at ?? null,
-                      platformFeeCents: feeCents,
-                    }}
-                    moveInIso={moveIn || null}
-                    leaseLength={booking.lease_length}
-                    occupantCount={booking.occupant_count}
-                    parkingSelected={booking.parking_selected}
-                    coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                    breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
-                    serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
-                  />
-                )}
-              </div>
+              <BookingReviewTermsRail
+                booking={booking}
+                propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                tier={isListingApplyBooking ? 'listing' : 'managed'}
+                bondDisplayAud={bondDisplayAud}
+                serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
+                leaseHolderName={displayName}
+                inputsDisabled={reviewLayout.inputsDisabled}
+                onSaved={() => {
+                  void reload()
+                  setLeasePanelRefreshKey((k) => k + 1)
+                }}
+              />
             </BookingReviewSurfaceCard>
           </div>
 

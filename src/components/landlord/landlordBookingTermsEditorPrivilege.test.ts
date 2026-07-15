@@ -20,6 +20,7 @@ const EDITOR_MARKERS = [
   'listingBookingTermsEditorEligible',
   'booking-update-terms',
   'Edit booking terms',
+  'BookingReviewTermsRail',
 ] as const
 
 describe('landlord booking terms editor privilege boundary', () => {
@@ -39,10 +40,13 @@ describe('landlord booking terms editor privilege boundary', () => {
     expect(src).not.toMatch(/allowPrepareRetry/)
   })
 
-  it('landlord review page is the only UI mount of LandlordBookingTermsEditor', () => {
+  it('landlord review page mounts the terms rail, which is the sole UI mount of LandlordBookingTermsEditor', () => {
     const review = readSrc('src/pages/landlord/LandlordBookingReviewPage.tsx')
-    expect(review).toContain('LandlordBookingTermsEditor')
-    expect(review).toContain('listingBookingTermsEditorEligible')
+    expect(review).toContain('BookingReviewTermsRail')
+
+    const rail = readSrc('src/components/booking/review/BookingReviewTermsRail.tsx')
+    expect(rail).toContain('LandlordBookingTermsEditor')
+    expect(rail).toContain('listingBookingTermsEditorEligible')
 
     const editorModule = readSrc('src/components/landlord/LandlordBookingTermsEditor.tsx')
     expect(editorModule).toContain('Edit booking terms')
