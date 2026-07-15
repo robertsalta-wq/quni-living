@@ -928,7 +928,7 @@ export default function LandlordBookingReviewPage() {
 
         <div className="grid grid-cols-1 items-start gap-7 min-[921px]:grid-cols-[minmax(0,1fr)_356px]">
           {/* —— Rail (first in DOM for mobile order) —— */}
-          <div className="order-first flex flex-col gap-4 min-[921px]:order-none min-[921px]:sticky min-[921px]:top-5">
+          <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
             <BookingReviewActionCard
               eyebrow={zone1HasContent && isPreAcceptStatus ? 'What you need to do' : 'Status'}
               eyebrowTone={zone1HasContent && isPreAcceptStatus ? 'action' : 'status'}
