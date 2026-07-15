@@ -18,6 +18,8 @@ import {
   parseRentBreakdownAud,
 } from '../../lib/pricing/bookingOccupancySnapshot'
 import { resolveBookingBondAmountAud } from '../../lib/booking/resolveBookingBondAmount'
+import { parseRentOverrideProvenance } from '../../lib/pricing/rentAgreedOverride'
+import BookingAgreedRentNotice from './BookingAgreedRentNotice'
 import type { Database } from '../../lib/database.types'
 
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -92,6 +94,13 @@ export default function RenterBookingZones({
     .filter(Boolean)
     .join(' · ')
 
+  const rentOverride = parseRentOverrideProvenance(booking.rent_breakdown)
+  const showAgreedRentNotice =
+    rentOverride.overrideApplied &&
+    (booking.status === 'pending_confirmation' ||
+      booking.status === 'awaiting_info' ||
+      booking.status === 'bond_pending')
+
   const bannerClass = banner?.panelClass.replace(/^border-t\s+/, 'rounded-admin-md border ') ?? ''
 
   return (
@@ -153,28 +162,38 @@ export default function RenterBookingZones({
         expanded={agreedExpanded}
         onToggle={() => setAgreedExpanded((v) => !v)}
       >
-        <BookingTermsBlock
-          money={{
-            tier: isListing ? 'listing' : 'managed',
-            status: booking.status,
-            weeklyRentAud: weeklyRent,
-            bondAud,
-            listingFeeExempt: false,
-            depositAmountCents: booking.deposit_amount,
-            depositReleasedAt: booking.deposit_released_at,
-            platformFeeCents: booking.platform_fee_amount,
-            viewer: 'renter',
-          }}
-          moveInIso={(booking.move_in_date || booking.start_date || '').slice(0, 10) || null}
-          leaseLength={booking.lease_length}
-          occupantCount={booking.occupant_count}
-          parkingSelected={booking.parking_selected}
-          coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-          breakdown={
-            bookingHasOccupancySnapshot(booking) ? parseRentBreakdownAud(booking.rent_breakdown) : null
-          }
-          serviceTierTitle={landlordServiceTierTitle(tierFinal)}
-        />
+        <div className="space-y-4">
+          {showAgreedRentNotice ? (
+            <BookingAgreedRentNotice
+              weeklyRent={booking.weekly_rent}
+              rentBreakdown={booking.rent_breakdown}
+              bondAmount={booking.bond_amount}
+              audience="student"
+            />
+          ) : null}
+          <BookingTermsBlock
+            money={{
+              tier: isListing ? 'listing' : 'managed',
+              status: booking.status,
+              weeklyRentAud: weeklyRent,
+              bondAud,
+              listingFeeExempt: false,
+              depositAmountCents: booking.deposit_amount,
+              depositReleasedAt: booking.deposit_released_at,
+              platformFeeCents: booking.platform_fee_amount,
+              viewer: 'renter',
+            }}
+            moveInIso={(booking.move_in_date || booking.start_date || '').slice(0, 10) || null}
+            leaseLength={booking.lease_length}
+            occupantCount={booking.occupant_count}
+            parkingSelected={booking.parking_selected}
+            coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+            breakdown={
+              bookingHasOccupancySnapshot(booking) ? parseRentBreakdownAud(booking.rent_breakdown) : null
+            }
+            serviceTierTitle={landlordServiceTierTitle(tierFinal)}
+          />
+        </div>
       </Section>
 
       <Section
