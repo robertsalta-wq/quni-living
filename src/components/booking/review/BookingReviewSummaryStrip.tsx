@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import BookingLifecycleStepper from './BookingLifecycleStepper'
-import type { BookingReviewStepperIndex } from '../../lib/booking/bookingReviewLayout'
+import type { BookingReviewStepperIndex } from '../../../lib/booking/bookingReviewLayout'
 
 export type BookingReviewBookingSummaryProps = {
   /** Page H1 — state title. */

@@ -45,13 +45,19 @@ import LandlordBookingTermsEditor, {
   listingBookingTermsEditorEligible,
 } from '../../components/landlord/LandlordBookingTermsEditor'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
+import {
+  BookingReviewActionCard,
+  BookingReviewBookingSummary,
+  BookingReviewPropertySummary,
+  BookingReviewSummaryStrip,
+  BookingReviewSurfaceCard,
+} from '../../components/booking/review'
+import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
-import { Pill, type PillTone } from '../../components/admin/primitives/Pill'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { studentDisplayName } from '../../lib/nameResolution'
 import Section from '../../components/ui/Section'
-
-type BookingStatus = Database['public']['Tables']['bookings']['Row']['status']
+import { User, Sparkles, TrendingUp, MessageSquare, ArrowLeftRight, FileText, Clock } from 'lucide-react'
 
 const SUGGESTED_QUESTIONS = [
   'Could you tell me more about your daily routine?',
@@ -59,41 +65,6 @@ const SUGGESTED_QUESTIONS = [
   'What are your expectations around shared spaces?',
   'Can you confirm your preferred move-in date?',
 ]
-
-function statusPillTone(s: BookingStatus): PillTone {
-  if (s === 'pending' || s === 'pending_payment' || s === 'pending_confirmation') return 'info'
-  if (s === 'bond_pending') return 'warning'
-  if (s === 'awaiting_info') return 'info'
-  if (s === 'confirmed' || s === 'active') return 'success'
-  if (s === 'declined' || s === 'expired' || s === 'payment_failed') return 'danger'
-  return 'neutral'
-}
-
-/** Zone 0 header title — accurate per status, so it never contradicts the status pill next to it. */
-function landlordBookingReviewHeaderTitle(status: BookingStatus): string {
-  switch (status) {
-    case 'pending_confirmation':
-    case 'awaiting_info':
-      return 'Review booking request'
-    case 'bond_pending':
-      return 'Booking request'
-    case 'confirmed':
-    case 'active':
-      return 'Booking confirmed'
-    case 'completed':
-      return 'Booking complete'
-    case 'declined':
-      return 'Booking declined'
-    case 'expired':
-      return 'Booking expired'
-    case 'cancelled':
-      return 'Booking cancelled'
-    case 'payment_failed':
-      return 'Payment failed'
-    default:
-      return 'Booking request'
-  }
-}
 
 type ConfirmPhase = 'idle' | 'submitting' | 'payment' | 'finalizing'
 
@@ -230,16 +201,15 @@ export default function LandlordBookingReviewPage() {
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
 
-  /** Zone 2 (Who) expand/collapse — defaults by status, overridable by the user's toggle. */
-  const [zone2ExpandedOverride, setZone2ExpandedOverride] = useState<boolean | null>(null)
-
-  /** Zone 4 (History) — collapsed by default, independent of the other zones. */
-  const [zone4Expanded, setZone4Expanded] = useState(false)
-
-  /** Zone 3 (Terms) — expanded by default (money block leads); independent of the other zones' toggles. */
-  const [zone3Expanded, setZone3Expanded] = useState(true)
-  /** Zone 3 body: "Edit terms" swaps the read-only money block/terms dl for the editor, in place. */
-  const [zone3Editing, setZone3Editing] = useState(false)
+  /** Collapsible section overrides — null means use layout defaults for the current status. */
+  const [applicantExpandedOverride, setApplicantExpandedOverride] = useState<boolean | null>(null)
+  const [aiExpandedOverride, setAiExpandedOverride] = useState<boolean | null>(null)
+  const [fitExpandedOverride, setFitExpandedOverride] = useState<boolean | null>(null)
+  const [messagesExpandedOverride, setMessagesExpandedOverride] = useState<boolean | null>(null)
+  const [agreementExpanded, setAgreementExpanded] = useState(false)
+  const [activityExpanded, setActivityExpanded] = useState(false)
+  /** Rail terms: "Edit" swaps money block for the editor. */
+  const [termsEditing, setTermsEditing] = useState(false)
 
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [stripeConnectError, setStripeConnectError] = useState<string | null>(null)
@@ -894,6 +864,8 @@ export default function LandlordBookingReviewPage() {
         ? 'Awaiting your response'
         : null
 
+  const reviewLayout = resolveBookingReviewLayout(booking.status, 'landlord')
+
   const propertyPhotoUrl = property ? firstPropertyImageUrl(property.images) : null
   const propertyStreetLine = property?.address?.trim() || property?.title?.trim() || ''
   const bondDisplayAud =
@@ -912,8 +884,6 @@ export default function LandlordBookingReviewPage() {
         { label: 'Review request' },
       )
 
-  // Zone 1 (Do): only the pending_confirmation / awaiting_info statuses put the Accept / Decline / Request
-  // info panel in play — everything else is either a specific bond/agreement action or nothing at all.
   const isPreAcceptStatus = booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
   const zone1PrimaryAction: 'bond-received' | 'mark-bond' | 'accept-decline-info' | 'none' = showBondReceivedPrimary
     ? 'bond-received'
@@ -929,126 +899,77 @@ export default function LandlordBookingReviewPage() {
     showResendPaymentInstructions ||
     tierModel?.showManagedUpgrade === true
 
-  // Zone 2 (Who): prominent pre-acceptance, collapses to a summary once the landlord has decided.
-  const zone2Expanded = zone2ExpandedOverride ?? isPreAcceptStatus
-  const zone2Summary = `${displayName} · applicant, verification & fit`
+  const applicantExpanded =
+    applicantExpandedOverride ?? reviewLayout.applicantDefaultOpen
+  const aiExpanded = aiExpandedOverride ?? reviewLayout.evaluationDefaultOpen
+  const fitExpanded = fitExpandedOverride ?? reviewLayout.evaluationDefaultOpen
+  const messagesExpanded = messagesExpandedOverride ?? reviewLayout.messagesDefaultOpen
 
-  // Zone 3 (Terms): quick recap shown when the section is collapsed.
-  const zone3Summary = [
-    booking.weekly_rent != null ? `$${Number(booking.weekly_rent).toLocaleString('en-AU')}/wk` : null,
-    bondDisplayAud != null ? `$${bondDisplayAud.toLocaleString('en-AU')} bond` : 'No bond',
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const serviceTierResolved = booking.service_tier_final ?? selectedConfirmTier
+  const planLabel =
+    serviceTierResolved === 'managed' ? 'Managed by Quni' : 'Quni Listing'
+  const planTooltip =
+    serviceTierResolved === 'managed'
+      ? 'Managed by Quni — we collect rent, chase signatures and handle the tenancy for a 6% fee.'
+      : 'Quni Listing — you manage this tenancy yourself. Quni holds no money; bond and rent are paid to you directly.'
+  const listingHref = property?.id ? `/property/${property.id}` : null
+  const propertySubtitle = propertyAddressLine || propertyStreetLine || null
+
+  const receivedLabel = booking.created_at
+    ? `Received ${formatDate(booking.created_at.slice(0, 10))}`
+    : receivedAgo
+      ? `Received ${receivedAgo}`
+      : null
 
   return (
     <div className="min-h-full bg-admin-surface-2">
-      <div className="mx-auto max-w-[860px] px-6 py-7 pb-[72px]">
+      <div className="mx-auto max-w-[1180px] px-6 py-6 pb-20">
         <UserDashboardBreadcrumb segments={breadcrumbSegments} className="mb-[26px] text-[13px] text-admin-ink-5" />
 
-        <div className="flex min-w-0 flex-col gap-5">
-          {/* —— Zone 0: header chrome —— */}
-          <div className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-            <div className="flex flex-wrap items-start gap-4">
-              {propertyPhotoUrl ? (
-                <img
-                  src={propertyPhotoUrl}
-                  alt=""
-                  className="h-14 w-14 shrink-0 rounded-admin-md border border-admin-cream-border object-cover"
-                />
-              ) : null}
-              <div className="min-w-0 flex-1">
-                <h1 className="m-0 text-[21px] font-bold leading-[1.2] tracking-[-0.01em] text-admin-ink">
-                  {landlordBookingReviewHeaderTitle(booking.status)}
-                </h1>
-                <p className="mt-1 text-sm text-admin-ink-4">
-                  {[propertyStreetLine || propertyAddressLine || property?.title?.trim(), displayName]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Pill tone={statusPillTone(booking.status)}>{booking.status.replace(/_/g, ' ')}</Pill>
-                <Pill tone="navy">{landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}</Pill>
-                {flowLabel ? <Pill tone="neutral">{flowLabel}</Pill> : null}
-              </div>
-            </div>
-            <p className="mt-3 text-[13px] text-admin-ink-4">
-              Reference{' '}
-              <span className="font-mono font-semibold text-admin-ink-2">{bookingReferenceLabel(booking.id)}</span>
-              {receivedAgo ? (
-                <>
-                  {' '}
-                  · <span>{receivedAgo}</span>
-                </>
-              ) : null}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 items-start gap-7 min-[921px]:grid-cols-[minmax(0,1fr)_356px]">
+          {/* —— Rail (first in DOM for mobile order) —— */}
+          <div className="order-first flex flex-col gap-4 min-[921px]:order-none min-[921px]:sticky min-[921px]:top-5">
+            <BookingReviewActionCard
+              eyebrow={zone1HasContent && isPreAcceptStatus ? 'What you need to do' : 'Status'}
+              eyebrowTone={zone1HasContent && isPreAcceptStatus ? 'action' : 'status'}
+              title={reviewLayout.pageTitle}
+              sub={flowLabel ?? null}
+            >
+              <div className="space-y-3.5">
+                {actionError && (
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                    {actionError}
+                  </div>
+                )}
 
-          {/* —— Zone 1: Do —— */}
-          <Section id="zone-do" ordinal={1} title="What you need to do" tone="warning" collapsible={false}>
-            <div className="space-y-3.5">
-              {actionError && (
-                <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
-                  {actionError}
-                </div>
-              )}
+                {bondReceivedError && (
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                    {bondReceivedError}
+                  </div>
+                )}
 
-              {bondReceivedError && (
-                <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
-                  {bondReceivedError}
-                </div>
-              )}
+                {isListingBondPending && (
+                  <LandlordListingAcceptedSummary
+                    bookingReference={bookingReferenceLabel(booking.id)}
+                    propertyTitle={property?.title?.trim() ?? ''}
+                    propertyAddress={propertyAddressLine}
+                    bondAmountAud={
+                      booking.bond_amount != null
+                        ? Number(booking.bond_amount)
+                        : resolveListingBondAud(
+                            property,
+                            booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                          )
+                    }
+                    bondDeadlineIso={booking.bond_window_expires_at}
+                    listingFeeDisplay={listingFeeDisplay}
+                    bondObligations={listingBondObligations}
+                    justAccepted={listingAcceptCelebration}
+                    onDismissCelebration={() => setListingAcceptCelebration(false)}
+                  />
+                )}
 
-              {isListingBondPending && (
-                <LandlordListingAcceptedSummary
-                  bookingReference={bookingReferenceLabel(booking.id)}
-                  propertyTitle={property?.title?.trim() ?? ''}
-                  propertyAddress={propertyAddressLine}
-                  bondAmountAud={
-                    booking.bond_amount != null
-                      ? Number(booking.bond_amount)
-                      : resolveListingBondAud(
-                          property,
-                          booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
-                        )
-                  }
-                  bondDeadlineIso={booking.bond_window_expires_at}
-                  listingFeeDisplay={listingFeeDisplay}
-                  bondObligations={listingBondObligations}
-                  justAccepted={listingAcceptCelebration}
-                  onDismissCelebration={() => setListingAcceptCelebration(false)}
-                />
-              )}
-
-              {otherPendingPipelineCount > 0 && (
-                <div
-                  className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg shadow-admin-card"
-                  role="status"
-                >
-                  <p className="font-medium leading-snug">
-                    ⚠️ {otherPendingPipelineCount} other student{otherPendingPipelineCount === 1 ? '' : 's'} have also
-                    requested this property.{' '}
-                    {isListingPropertyContext ? (
-                      isListingBondPending ? (
-                        <>
-                          They remain as backups until you confirm bond receipt below; confirming bond will automatically
-                          decline them. Quni does not hold deposits on Listing applications.
-                        </>
-                      ) : (
-                        <>
-                          They stay as backups while you review this request. If you accept and later confirm bond receipt,
-                          remaining applicants are automatically declined. Quni does not hold deposits on Listing applications.
-                        </>
-                      )
-                    ) : (
-                      <>Confirming this booking will automatically decline and refund the others.</>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {confirmBlockedBanner === 'host_identity_required' && (
+                {confirmBlockedBanner === 'host_identity_required' && (
                 <div
                   id="confirm-requirements"
                   className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
@@ -1129,46 +1050,6 @@ export default function LandlordBookingReviewPage() {
                   <p className="font-medium">Could not verify Listing billing</p>
                   <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
                 </div>
-              )}
-
-              {tierModel?.showManagedUpgrade && (
-                <section className="space-y-3 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-5 shadow-admin-card">
-                  <h2 className="text-sm font-semibold text-admin-ink">This property is on Quni Listing</h2>
-                  <p className="text-sm leading-relaxed text-admin-ink-4">
-                    You chose to self-manage this property. You can accept this request as Listing, or permanently upgrade the
-                    property to Quni Managed for this and future bookings.
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedConfirmTier('listing')}
-                      className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
-                        selectedConfirmTier === 'listing'
-                          ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
-                          : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
-                      }`}
-                    >
-                      <div className="text-sm font-bold text-admin-ink">Accept as Quni Listing</div>
-                      <p className="mt-2 text-sm leading-relaxed text-admin-ink-4">
-                        You arrange bond and rent directly with the renter. The one-off Listing acceptance fee applies.
-                      </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedConfirmTier('managed')}
-                      className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
-                        selectedConfirmTier === 'managed'
-                          ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
-                          : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
-                      }`}
-                    >
-                      <div className="text-sm font-bold text-admin-ink">Upgrade property to Quni Managed</div>
-                      <p className="mt-2 text-sm leading-relaxed text-admin-ink-4">
-                        Quni handles the managed tenancy workflow. This permanently switches this property to Managed.
-                      </p>
-                    </button>
-                  </div>
-                </section>
               )}
 
               {showResendPaymentInstructions ? (
@@ -1391,21 +1272,120 @@ export default function LandlordBookingReviewPage() {
                   Nothing to do — we&apos;ll notify you when something needs your attention.
                 </p>
               )}
-            </div>
-          </Section>
+              </div>
+            </BookingReviewActionCard>
 
-          {/* —— Zone 2: Who —— */}
-          <Section
-            id="zone-who"
-            ordinal={2}
-            title="Who is this?"
-            summary={zone2Summary}
-            expanded={zone2Expanded}
-            onToggle={() => setZone2ExpandedOverride(!zone2Expanded)}
-            editLabel="View applicant"
-          >
-            <div className="space-y-5">
-              <div>
+            <BookingReviewSurfaceCard padding="rail">
+              <div className="mb-3 flex items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-admin-md bg-admin-coral-tint text-admin-coral [&_svg]:h-[18px] [&_svg]:w-[18px]">
+                    <FileText />
+                  </span>
+                  <span className="text-[15px] font-semibold text-admin-ink">Terms</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTermsEditing((v) => !v)}
+                  className="shrink-0 text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
+                >
+                  {termsEditing ? 'Done editing' : 'Edit'}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {termsEditing ? (
+                  showListingTermsEditor ? (
+                    <LandlordBookingTermsEditor
+                      bookingId={booking.id}
+                      status={booking.status}
+                      serviceTierAtRequest={booking.service_tier_at_request}
+                      serviceTierFinal={booking.service_tier_final}
+                      weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                      bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                      rentBreakdown={booking.rent_breakdown}
+                      propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                      moveInDate={booking.move_in_date}
+                      startDate={booking.start_date}
+                      leaseLength={booking.lease_length}
+                      occupantCount={booking.occupant_count}
+                      notes={booking.notes}
+                      coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                      onSaved={() => {
+                        void reload()
+                        setLeasePanelRefreshKey((k) => k + 1)
+                      }}
+                    />
+                  ) : (
+                    <LandlordBookingAgreedRentEditor
+                      bookingId={booking.id}
+                      status={booking.status}
+                      weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
+                      bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
+                      rentBreakdown={booking.rent_breakdown}
+                      propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
+                      serviceTierAtRequest={booking.service_tier_at_request}
+                      onSaved={() => void reload()}
+                    />
+                  )
+                ) : (
+                  <BookingTermsBlock
+                    money={{
+                      tier: isListingApplyBooking ? 'listing' : 'managed',
+                      status: booking.status,
+                      weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                      bondAud: bondDisplayAud,
+                      listingFeeExempt: landlordFeeExempt,
+                      depositAmountCents: depositCents,
+                      depositReleasedAt: booking.deposit_released_at ?? null,
+                      platformFeeCents: feeCents,
+                    }}
+                    moveInIso={moveIn || null}
+                    leaseLength={booking.lease_length}
+                    occupantCount={booking.occupant_count}
+                    parkingSelected={booking.parking_selected}
+                    coTenant={parseCoTenantSnapshot(booking.co_tenant)}
+                    breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
+                    serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
+                  />
+                )}
+              </div>
+            </BookingReviewSurfaceCard>
+          </div>
+
+          {/* —— Main column —— */}
+          <div className="flex min-w-0 flex-col gap-4">
+            <BookingReviewSummaryStrip
+              booking={
+                <BookingReviewBookingSummary
+                  title={reviewLayout.pageTitle}
+                  referenceLabel={bookingReferenceLabel(booking.id)}
+                  receivedLabel={receivedLabel}
+                  stepperIndex={reviewLayout.stepperIndex}
+                  stepperComplete={reviewLayout.stepperComplete}
+                />
+              }
+              property={
+                <BookingReviewPropertySummary
+                  title={property?.title?.trim() || propertyStreetLine || 'Property'}
+                  subtitle={propertySubtitle}
+                  planLabel={planLabel}
+                  planTooltip={planTooltip}
+                  listingHref={listingHref}
+                  photoUrl={propertyPhotoUrl}
+                />
+              }
+            />
+
+            <Section
+              id="review-applicant"
+              title="The applicant"
+              icon={<User />}
+              collapsible={reviewLayout.applicantCollapsible}
+              expanded={applicantExpanded}
+              onToggle={() => setApplicantExpandedOverride(!applicantExpanded)}
+              summary={`${displayName} · applicant`}
+            >
+              <div className="space-y-5">
                 <div id="applicant-review" className="scroll-mt-4">
                   <LandlordApplicantReviewHeader
                     student={snapshot}
@@ -1419,12 +1399,16 @@ export default function LandlordBookingReviewPage() {
 
                 <LandlordApplicantVerificationSection student={snapshot} embedded />
               </div>
+            </Section>
 
-              <div>
-                <h3 className="mb-2 text-sm font-semibold text-admin-ink">Fit summary</h3>
-                <BookingFitSummaryTable rows={fitRows} />
-              </div>
-
+            <Section
+              id="review-ai"
+              title="AI assessment"
+              tone="ai"
+              icon={<Sparkles />}
+              expanded={aiExpanded}
+              onToggle={() => setAiExpandedOverride(!aiExpanded)}
+            >
               <LandlordApplicantAIAssessmentPanel
                 assessment={aiAssessment}
                 assessmentAt={aiAssessmentAt}
@@ -1436,182 +1420,206 @@ export default function LandlordBookingReviewPage() {
                 refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
                 showGenerate={!aiAssessment}
               />
+            </Section>
 
-              {booking.student_message?.trim() && (
-                <div>
-                  <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                    Message from the student
+            <Section
+              id="review-fit"
+              title="Fit summary"
+              icon={<TrendingUp />}
+              expanded={fitExpanded}
+              onToggle={() => setFitExpandedOverride(!fitExpanded)}
+            >
+              <BookingFitSummaryTable rows={fitRows} />
+            </Section>
+
+            <Section
+              id="review-messages"
+              title="Messages"
+              icon={<MessageSquare />}
+              expanded={messagesExpanded}
+              onToggle={() => setMessagesExpandedOverride(!messagesExpanded)}
+            >
+              <div className="space-y-5">
+                {booking.student_message?.trim() && (
+                  <div>
+                    <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+                      Message from the student
+                    </p>
+                    <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
+                      &ldquo;{booking.student_message.trim()}&rdquo;
+                    </blockquote>
+                    <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
+                  </div>
+                )}
+
+                {messages.length > 0 && (
+                  <div>
+                    <h3 className="mb-3 text-sm font-semibold text-admin-ink">Message thread</h3>
+                    <ul className="space-y-3">
+                      {messages.map((m) => (
+                        <li
+                          key={m.id}
+                          className={`rounded-admin-md px-3 py-2 text-sm ${
+                            m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
+                          }`}
+                        >
+                          <p className="mb-1 text-xs font-semibold text-admin-ink-5">
+                            {m.sender_role === 'landlord' ? 'You' : 'Student'} ·{' '}
+                            {new Date(m.created_at).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}
+                          </p>
+                          <p className="whitespace-pre-wrap text-admin-ink-2">{m.message}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {reviewLayout.showTierChooser && tierModel?.showManagedUpgrade && (
+              <Section
+                id="review-tier"
+                title="How will you handle this tenancy?"
+                icon={<ArrowLeftRight />}
+                collapsible={false}
+              >
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-admin-ink">This property is on Quni Listing</h3>
+                  <p className="text-sm leading-relaxed text-admin-ink-4">
+                    You chose to self-manage this property. You can accept this request as Listing, or permanently upgrade the
+                    property to Quni Managed for this and future bookings.
                   </p>
-                  <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
-                    &ldquo;{booking.student_message.trim()}&rdquo;
-                  </blockquote>
-                  <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
-                </div>
-              )}
-
-              {messages.length > 0 && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-admin-ink">Message thread</h3>
-                  <ul className="space-y-3">
-                    {messages.map((m) => (
-                      <li
-                        key={m.id}
-                        className={`rounded-admin-md px-3 py-2 text-sm ${
-                          m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
-                        }`}
-                      >
-                        <p className="mb-1 text-xs font-semibold text-admin-ink-5">
-                          {m.sender_role === 'landlord' ? 'You' : 'Student'} ·{' '}
-                          {new Date(m.created_at).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}
-                        </p>
-                        <p className="whitespace-pre-wrap text-admin-ink-2">{m.message}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </Section>
-
-          {/* —— Zone 4: History —— */}
-          <Section
-            id="zone-history"
-            ordinal={4}
-            title="History"
-            collapsible
-            expanded={zone4Expanded}
-            onToggle={() => setZone4Expanded((v) => !v)}
-          >
-            <div className="space-y-5">
-              {(booking.status === 'bond_pending' ||
-                booking.status === 'confirmed' ||
-                booking.status === 'active') &&
-                property && (
-                <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
-                  <h3 className="text-sm font-semibold text-admin-ink">Tenancy agreement</h3>
-                  <TenancyAgreementExplainer
-                    state={property.state ?? ''}
-                    propertyType={property.property_type ?? ''}
-                    isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
-                  />
-                  <BookingLeasePanel
-                    bookingId={booking.id}
-                    refreshKey={leasePanelRefreshKey}
-                    allowPrepareRetry={
-                      booking.service_tier_final === 'listing' &&
-                      booking.status === 'bond_pending' &&
-                      booking.listing_agreement_status === 'failed'
-                    }
-                    allowRegenerateAgreement={
-                      booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
-                    }
-                  />
-                  {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
-                    <div className="space-y-1 rounded-admin-md border border-admin-line-soft bg-admin-surface-2 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
-                        {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedConfirmTier('listing')}
+                      className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
+                        selectedConfirmTier === 'listing'
+                          ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
+                          : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
+                      }`}
+                    >
+                      <div className="text-sm font-bold text-admin-ink">Accept as Quni Listing</div>
+                      <p className="mt-2 text-sm leading-relaxed text-admin-ink-4">
+                        You arrange bond and rent directly with the renter. The one-off Listing acceptance fee applies.
                       </p>
-                      <p className="text-sm text-admin-ink-2">
-                        Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
-                        {tenancy.bond_lodged_at ? (
-                          <>
-                            {' · '}
-                            {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
-                          </>
-                        ) : null}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedConfirmTier('managed')}
+                      className={`rounded-admin-lg border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
+                        selectedConfirmTier === 'managed'
+                          ? 'border-admin-coral bg-admin-coral-tint shadow-admin-card'
+                          : 'border-admin-line bg-admin-surface-1 hover:border-admin-ink-5'
+                      }`}
+                    >
+                      <div className="text-sm font-bold text-admin-ink">Upgrade property to Quni Managed</div>
+                      <p className="mt-2 text-sm leading-relaxed text-admin-ink-4">
+                        Quni handles the managed tenancy workflow. This permanently switches this property to Managed.
                       </p>
-                      {isQldBoardingProperty ? (
-                        <p className="text-xs leading-relaxed text-admin-ink-5">
-                          Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
-                        </p>
-                      ) : null}
+                    </button>
+                  </div>
+                </div>
+              </Section>
+            )}
+
+            {reviewLayout.showBackupsWarning && otherPendingPipelineCount > 0 && (
+              <div
+                className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg shadow-admin-card"
+                role="status"
+              >
+                <p className="font-medium leading-snug">
+                  {otherPendingPipelineCount} other student{otherPendingPipelineCount === 1 ? '' : 's'} have also
+                  requested this property.{' '}
+                  {isListingPropertyContext ? (
+                    isListingBondPending ? (
+                      <>
+                        They remain as backups until you confirm bond receipt below; confirming bond will automatically
+                        decline them. Quni does not hold deposits on Listing applications.
+                      </>
+                    ) : (
+                      <>
+                        They stay as backups while you review this request. If you accept and later confirm bond receipt,
+                        remaining applicants are automatically declined. Quni does not hold deposits on Listing applications.
+                      </>
+                    )
+                  ) : (
+                    <>Confirming this booking will automatically decline and refund the others.</>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {reviewLayout.showAgreement && (
+              <Section
+                id="review-agreement"
+                title="Tenancy agreement"
+                icon={<FileText />}
+                expanded={agreementExpanded}
+                onToggle={() => setAgreementExpanded((v) => !v)}
+              >
+                <div className="space-y-5">
+                  {(booking.status === 'bond_pending' ||
+                    booking.status === 'confirmed' ||
+                    booking.status === 'active') &&
+                    property && (
+                    <div id="tenancy-agreement-preview" className="scroll-mt-4 space-y-2">
+                      <TenancyAgreementExplainer
+                        state={property.state ?? ''}
+                        propertyType={property.property_type ?? ''}
+                        isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                      />
+                      <BookingLeasePanel
+                        bookingId={booking.id}
+                        refreshKey={leasePanelRefreshKey}
+                        allowPrepareRetry={
+                          booking.service_tier_final === 'listing' &&
+                          booking.status === 'bond_pending' &&
+                          booking.listing_agreement_status === 'failed'
+                        }
+                        allowRegenerateAgreement={
+                          booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
+                        }
+                      />
+                      {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
+                        <div className="space-y-1 rounded-admin-md border border-admin-line-soft bg-admin-surface-2 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
+                            {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
+                          </p>
+                          <p className="text-sm text-admin-ink-2">
+                            Receipt <span className="font-mono font-semibold">{tenancy.bond_lodgement_reference}</span>
+                            {tenancy.bond_lodged_at ? (
+                              <>
+                                {' · '}
+                                {formatDate(tenancy.bond_lodged_at.slice(0, 10))}
+                              </>
+                            ) : null}
+                          </p>
+                          {isQldBoardingProperty ? (
+                            <p className="text-xs leading-relaxed text-admin-ink-5">
+                              Payment receipt only — not RTA lodgement. Keep your RTA Acknowledgement of Rental Bond when lodged.
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
+              </Section>
+            )}
 
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-admin-ink">Activity</h3>
-                <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
-              </div>
-            </div>
-          </Section>
-
-          {/* —— Zone 3: Terms —— */}
-          <Section
-            id="zone-terms"
-            ordinal={3}
-            title="Terms"
-            summary={zone3Summary}
-            expanded={zone3Expanded}
-            onToggle={() => setZone3Expanded((v) => !v)}
-          >
-            <div className="space-y-4">
-              {zone3Editing ? (
-                showListingTermsEditor ? (
-                  <LandlordBookingTermsEditor
-                    bookingId={booking.id}
-                    status={booking.status}
-                    serviceTierAtRequest={booking.service_tier_at_request}
-                    serviceTierFinal={booking.service_tier_final}
-                    weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                    bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                    rentBreakdown={booking.rent_breakdown}
-                    propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                    moveInDate={booking.move_in_date}
-                    startDate={booking.start_date}
-                    leaseLength={booking.lease_length}
-                    occupantCount={booking.occupant_count}
-                    notes={booking.notes}
-                    coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                    onSaved={() => {
-                      void reload()
-                      setLeasePanelRefreshKey((k) => k + 1)
-                    }}
-                  />
-                ) : (
-                  <LandlordBookingAgreedRentEditor
-                    bookingId={booking.id}
-                    status={booking.status}
-                    weeklyRent={booking.weekly_rent != null ? Number(booking.weekly_rent) : null}
-                    bondAmount={booking.bond_amount != null ? Number(booking.bond_amount) : null}
-                    rentBreakdown={booking.rent_breakdown}
-                    propertyBondWeeks={property?.bond_weeks != null ? Number(property.bond_weeks) : null}
-                    serviceTierAtRequest={booking.service_tier_at_request}
-                    onSaved={() => void reload()}
-                  />
-                )
-              ) : (
-                <BookingTermsBlock
-                  money={{
-                    tier: isListingApplyBooking ? 'listing' : 'managed',
-                    status: booking.status,
-                    weeklyRentAud: booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
-                    bondAud: bondDisplayAud,
-                    listingFeeExempt: landlordFeeExempt,
-                    depositAmountCents: depositCents,
-                    depositReleasedAt: booking.deposit_released_at ?? null,
-                    platformFeeCents: feeCents,
-                  }}
-                  moveInIso={moveIn || null}
-                  leaseLength={booking.lease_length}
-                  occupantCount={booking.occupant_count}
-                  parkingSelected={booking.parking_selected}
-                  coTenant={parseCoTenantSnapshot(booking.co_tenant)}
-                  breakdown={parseRentBreakdownAud(booking.rent_breakdown)}
-                  serviceTierTitle={landlordServiceTierTitle(booking.service_tier_final ?? selectedConfirmTier)}
-                />
-              )}
-
-              <button
-                type="button"
-                onClick={() => setZone3Editing((v) => !v)}
-                className="text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
+            {reviewLayout.showActivity && (
+              <Section
+                id="review-activity"
+                title="Activity"
+                icon={<Clock />}
+                expanded={activityExpanded}
+                onToggle={() => setActivityExpanded((v) => !v)}
               >
-                {zone3Editing ? 'Done editing' : 'Edit terms'}
-              </button>
-            </div>
-          </Section>
+                <BookingActivityTimeline bookingId={booking.id} mode="internal" embedded />
+              </Section>
+            )}
+          </div>
         </div>
       </div>
 

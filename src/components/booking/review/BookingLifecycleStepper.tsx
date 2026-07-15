@@ -1,4 +1,4 @@
-import { BOOKING_REVIEW_STEPPER_LABELS, type BookingReviewStepperIndex } from '../../lib/booking/bookingReviewLayout'
+import { BOOKING_REVIEW_STEPPER_LABELS, type BookingReviewStepperIndex } from '../../../lib/booking/bookingReviewLayout'
 
 export type BookingLifecycleStepperProps = {
   /** 0 = Request … 3 = Active */
