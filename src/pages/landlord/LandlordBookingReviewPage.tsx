@@ -93,6 +93,28 @@ function confirmBookingBusyLabel(phase: ConfirmPhase, tier: 'listing' | 'managed
   }
 }
 
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  const first = parts[0]?.[0] ?? ''
+  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : ''
+  return (first + last).toUpperCase() || '?'
+}
+
+function formatMessageTimestamp(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+}
+
+type BookingReviewChatBubble = {
+  key: string
+  fromLandlord: boolean
+  name: string
+  timeLabel: string
+  text: string
+}
+
 function todayYmdLocal(): string {
   const d = new Date()
   const y = d.getFullYear()
@@ -934,6 +956,36 @@ export default function LandlordBookingReviewPage() {
 
   const awaitingInfoQuestion = resolveLandlordAwaitingInfoQuestion(messages)
 
+  // Inline chat thread (commit 6): intro student_message first (unless already duplicated in booking_messages),
+  // then the booking_messages history, oldest to newest, as left/right bubbles.
+  const chatThread: BookingReviewChatBubble[] = useMemo(() => {
+    const intro = booking.student_message?.trim() ?? ''
+    const introDuplicated = intro.length > 0 && messages.some((m) => m.message.trim() === intro)
+    const items: BookingReviewChatBubble[] = []
+    if (intro && !introDuplicated) {
+      items.push({
+        key: 'intro',
+        fromLandlord: false,
+        name: displayName,
+        timeLabel: booking.created_at ? formatMessageTimestamp(booking.created_at) : '',
+        text: intro,
+      })
+    }
+    for (const m of messages) {
+      if (!m.message.trim()) continue
+      items.push({
+        key: m.id,
+        fromLandlord: m.sender_role === 'landlord',
+        name: m.sender_role === 'landlord' ? 'You' : displayName,
+        timeLabel: formatMessageTimestamp(m.created_at),
+        text: m.message.trim(),
+      })
+    }
+    return items
+  }, [booking.student_message, booking.created_at, messages, displayName])
+
+  const canReplyInThread = Boolean(canDeclineOrInfo)
+
   const openMessagesSection = useCallback(() => {
     setMessagesExpandedOverride(true)
     requestAnimationFrame(() => {
@@ -1489,43 +1541,74 @@ export default function LandlordBookingReviewPage() {
               id="review-messages"
               title="Messages"
               icon={<MessageSquare />}
+              summary={`Conversation with ${displayName} · ${chatThread.length} message${chatThread.length === 1 ? '' : 's'}`}
               expanded={messagesExpanded}
               onToggle={() => setMessagesExpandedOverride(!messagesExpanded)}
             >
-              <div className="space-y-5">
-                {booking.student_message?.trim() && (
-                  <div>
-                    <p className="mb-3.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                      Message from the student
-                    </p>
-                    <blockquote className="m-0 max-w-[620px] rounded-admin-sm border-l-[3px] border-admin-coral bg-admin-surface-2 px-[18px] py-4 text-[15px] leading-[1.65] text-admin-ink-2">
-                      &ldquo;{booking.student_message.trim()}&rdquo;
-                    </blockquote>
-                    <p className="mt-3 text-[13px] text-admin-ink-5">&mdash; {displayName}</p>
-                  </div>
-                )}
-
-                {messages.length > 0 && (
-                  <div>
-                    <h3 className="mb-3 text-sm font-semibold text-admin-ink">Message thread</h3>
-                    <ul className="space-y-3">
-                      {messages.map((m) => (
-                        <li
-                          key={m.id}
-                          className={`rounded-admin-md px-3 py-2 text-sm ${
-                            m.sender_role === 'landlord' ? 'ml-4 bg-admin-cream/80' : 'mr-4 bg-admin-surface-2'
+              <div className="space-y-3.5">
+                {chatThread.length === 0 ? (
+                  <p className="text-sm text-admin-ink-4">No messages yet.</p>
+                ) : (
+                  chatThread.map((m) => (
+                    <div key={m.key} className={`flex gap-2.5 ${m.fromLandlord ? 'flex-row-reverse' : ''}`}>
+                      <span
+                        className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                          m.fromLandlord ? 'bg-admin-coral-tint text-admin-coral-active' : 'bg-admin-navy-tint text-admin-navy'
+                        }`}
+                      >
+                        {initialsOf(m.name)}
+                      </span>
+                      <div className={`min-w-0 max-w-[78%] ${m.fromLandlord ? 'text-right' : ''}`}>
+                        <div className={`mb-1 flex items-baseline gap-2 ${m.fromLandlord ? 'flex-row-reverse' : ''}`}>
+                          <span className="text-[12.5px] font-semibold text-admin-ink">{m.name}</span>
+                          <span className="text-[11.5px] text-admin-ink-5">{m.timeLabel}</span>
+                        </div>
+                        <div
+                          className={`inline-block rounded-admin-md px-3.5 py-2.5 text-left text-[13.5px] leading-relaxed text-admin-ink-2 ${
+                            m.fromLandlord
+                              ? 'border border-admin-coral-30 bg-admin-coral-tint'
+                              : 'bg-admin-surface-2'
                           }`}
                         >
-                          <p className="mb-1 text-xs font-semibold text-admin-ink-5">
-                            {m.sender_role === 'landlord' ? 'You' : 'Student'} ·{' '}
-                            {new Date(m.created_at).toLocaleString('en-AU', { dateStyle: 'short', timeStyle: 'short' })}
-                          </p>
-                          <p className="whitespace-pre-wrap text-admin-ink-2">{m.message}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                          {m.text}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
+
+                <div className="mt-2 border-t border-admin-line-soft pt-3.5">
+                  {canReplyInThread ? (
+                    <>
+                      <label htmlFor="review-messages-reply" className="sr-only">
+                        Reply to {displayName}
+                      </label>
+                      <textarea
+                        id="review-messages-reply"
+                        value={infoMessage}
+                        onChange={(e) => setInfoMessage(e.target.value)}
+                        rows={3}
+                        placeholder={`Reply to ${displayName}…`}
+                        className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          disabled={actionBusy || !infoMessage.trim()}
+                          onClick={() => void onRequestInfo()}
+                          className="inline-flex items-center gap-1.5 rounded-admin-md bg-admin-coral px-4 py-2 text-sm font-semibold text-white hover:bg-admin-coral-hover disabled:opacity-50"
+                        >
+                          {actionBusy ? 'Sending…' : 'Send'}
+                        </button>
+                      </div>
+                      {actionError && <p className="mt-2 text-xs text-admin-danger-fg">{actionError}</p>}
+                    </>
+                  ) : (
+                    <p className="text-xs leading-relaxed text-admin-ink-5">
+                      You can reply while this request is pending or awaiting more information.
+                    </p>
+                  )}
+                </div>
               </div>
             </Section>
 
