@@ -12,9 +12,14 @@ vi.mock('./declineCompetingBookings.js', () => ({
   declineCompetingBookings: vi.fn().mockResolvedValue({ declined: 0 }),
 }))
 
+vi.mock('./maybeAdvanceListingBookingToActive.js', () => ({
+  maybeAdvanceListingBookingToActive: vi.fn().mockResolvedValue({ advanced: false, reason: 'not_fully_signed' }),
+}))
+
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { declineCompetingBookings } from './declineCompetingBookings.js'
+import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'
@@ -175,6 +180,29 @@ describe('runMarkBondReceivedLandlord', () => {
       null,
       expect.objectContaining({ propertyId: 'pr1', winningBookingId: bookingBase.id }),
     )
+    expect(maybeAdvanceListingBookingToActive).toHaveBeenCalledWith(
+      expect.anything(),
+      bookingBase.id,
+      expect.objectContaining({}),
+    )
+  })
+
+  it('advances to active when lease already fully signed (sign-then-bond)', async () => {
+    vi.mocked(maybeAdvanceListingBookingToActive).mockResolvedValueOnce({
+      advanced: true,
+      from: 'confirmed',
+      to: 'active',
+    })
+    const admin = mockAdmin({ tenancyDocStatuses: ['signed'] })
+    const result = await runMarkBondReceivedLandlord({
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId: bookingBase.id,
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.booking.status).toBe('active')
   })
 
   it('bond received retries document generation when signing was never sent', async () => {

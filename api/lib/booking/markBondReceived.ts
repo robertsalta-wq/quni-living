@@ -7,6 +7,7 @@ import {
   assertStudentLegalNameForSigningByBookingId,
   TenantLegalNameNotReadyError,
 } from './assertStudentLegalNameForSigning.js'
+import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
@@ -225,6 +226,26 @@ export async function runMarkBondReceivedLandlord(args: {
       } else {
         warn(logger, '[mark-bond-received] listing signing trigger', e)
       }
+    }
+
+    // Sign-then-bond (normal Listing order): lease may already be fully signed.
+    try {
+      const adv = await maybeAdvanceListingBookingToActive(admin, bookingId, { logger })
+      if (adv.advanced) {
+        return {
+          ok: true,
+          idempotent: false,
+          booking: {
+            id: updated.id,
+            status: 'active',
+            bond_received_by_landlord_at: updated.bond_received_by_landlord_at as string | null,
+            service_tier_final: updated.service_tier_final as string | null,
+            confirmed_at: updated.confirmed_at as string | null,
+          },
+        }
+      }
+    } catch (e) {
+      warn(logger, '[mark-bond-received] maybeAdvanceListingBookingToActive', e)
     }
   }
 
