@@ -4,13 +4,14 @@ import AiSparkleIcon from '../AiSparkleIcon'
 import ChatPanel from './ChatPanel'
 import { useBookingFlowChrome } from '../../context/BookingFlowChromeContext'
 import { useAuthContext } from '../../context/AuthContext'
-import { isLandlordDashboardChromePath } from '../../lib/landlordMobileChrome'
+import type { UserRole } from '../../lib/authProfile'
+import { isDashboardMobileChromePath } from '../../lib/dashboardMobileChrome'
 
 /** Mobile routes with a fixed bottom action bar that the FAB must sit above. */
-function mobileHasStickyBottomBar(pathname: string, role: string | null | undefined): boolean {
+function mobileHasStickyBottomBar(pathname: string, role: UserRole | undefined): boolean {
   if (/^\/landlord\/bookings\/[^/]+\/review$/.test(pathname)) return true
   if (/^\/(listings|properties)\/[^/]+$/.test(pathname)) return true
-  if (role === 'landlord' && isLandlordDashboardChromePath(pathname)) return true
+  if (isDashboardMobileChromePath(role, pathname)) return true
   return false
 }
 

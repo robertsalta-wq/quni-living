@@ -378,7 +378,7 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-admin-surface-2 pb-16 overflow-x-hidden">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-admin-surface-2 max-sm:pb-0 pb-16 overflow-x-hidden">
       {welcomeToast ? (
         <div
           className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-admin-md border border-admin-line bg-white px-4 py-3 shadow-lg flex gap-3 items-start"

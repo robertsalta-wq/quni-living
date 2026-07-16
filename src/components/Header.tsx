@@ -6,9 +6,10 @@ import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import {
-  isLandlordDashboardChromePath,
-  landlordMobileSectionTitle,
-} from '../lib/landlordMobileChrome'
+  dashboardMobileHomePath,
+  dashboardMobileSectionTitle,
+  isDashboardMobileChromePath,
+} from '../lib/dashboardMobileChrome'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
@@ -63,11 +64,11 @@ function warmListingsNav() {
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const location = useLocation()
-  const landlordMobileChrome =
-    role === 'landlord' && isLandlordDashboardChromePath(location.pathname)
-  const landlordMobileTitle = landlordMobileChrome
-    ? landlordMobileSectionTitle(location.pathname, location.search)
+  const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
+  const dashboardMobileTitle = dashboardMobileChrome
+    ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
+  const dashboardHomeHref = dashboardMobileHomePath(role)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const [studentsOpen, setStudentsOpen] = useState(false)
@@ -343,7 +344,7 @@ export default function Header() {
     <header
       className={[
         'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50',
-        landlordMobileChrome
+        dashboardMobileChrome
           ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
           : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0',
       ].join(' ')}
@@ -351,26 +352,26 @@ export default function Header() {
       <div
         ref={mobileNavRootRef}
         className={`${SITE_CONTENT_MAX_CLASS} ${
-          landlordMobileChrome ? 'max-sm:py-0 max-sm:h-14 max-sm:flex max-sm:items-center py-4' : 'py-4'
+          dashboardMobileChrome ? 'max-sm:py-0 max-sm:h-14 max-sm:flex max-sm:items-center py-4' : 'py-4'
         }`}
       >
         <div
           className={`grid w-full max-w-full items-center gap-2 sm:gap-3 md:gap-4 ${
-            landlordMobileChrome
+            dashboardMobileChrome
               ? 'max-sm:grid-cols-[minmax(0,1fr)_auto] grid-cols-[auto_minmax(0,1fr)_auto]'
               : 'grid-cols-[auto_minmax(0,1fr)_auto]'
           }`}
         >
         <div className="min-w-0 shrink-0">
-          {landlordMobileChrome && landlordMobileTitle ? (
+          {dashboardMobileChrome && dashboardMobileTitle ? (
             <>
               <Link
-                to="/landlord/dashboard"
+                to={dashboardHomeHref}
                 className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-1.5 font-display text-[22px] font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
-                aria-label={`Quni ${landlordMobileTitle}`}
+                aria-label={`Quni ${dashboardMobileTitle}`}
               >
                 <span className="text-[#FF6F61]">Quni</span>
-                <span className="truncate text-[#1F2A44]">{landlordMobileTitle}</span>
+                <span className="truncate text-[#1F2A44]">{dashboardMobileTitle}</span>
               </Link>
               <div className="hidden sm:block">
                 <SiteBrandLockup />
@@ -383,7 +384,7 @@ export default function Header() {
 
         <div
           className={`flex min-w-0 items-center justify-center ${
-            landlordMobileChrome ? 'max-sm:hidden' : ''
+            dashboardMobileChrome ? 'max-sm:hidden' : ''
           }`}
         >
           <nav
@@ -436,7 +437,7 @@ export default function Header() {
                   <span className="hidden lg:inline">Admin dashboard</span>
                 </Link>
               )}
-              {landlordMobileChrome ? (
+              {dashboardMobileChrome ? (
                 <button
                   type="button"
                   className="inline-flex sm:hidden h-9 w-9 items-center justify-center rounded-full text-[#1F2A44] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
@@ -583,7 +584,7 @@ export default function Header() {
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
             className={`inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 min-h-11 min-w-11 ${
-              landlordMobileChrome ? 'max-sm:hidden' : ''
+              dashboardMobileChrome ? 'max-sm:hidden' : ''
             }`}
             aria-expanded={mobileNavOpen}
             aria-haspopup="true"
