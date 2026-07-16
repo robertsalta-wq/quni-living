@@ -20,6 +20,7 @@ const EDITOR_MARKERS = [
   'listingBookingTermsEditorEligible',
   'booking-update-terms',
   'Edit booking terms',
+  'BookingReviewTermsRail',
 ] as const
 
 describe('landlord booking terms editor privilege boundary', () => {
@@ -39,13 +40,36 @@ describe('landlord booking terms editor privilege boundary', () => {
     expect(src).not.toMatch(/allowPrepareRetry/)
   })
 
-  it('landlord review page is the only UI mount of LandlordBookingTermsEditor', () => {
+  it('landlord review page mounts the terms rail, which is the sole UI mount of LandlordBookingTermsEditor', () => {
     const review = readSrc('src/pages/landlord/LandlordBookingReviewPage.tsx')
-    expect(review).toContain('LandlordBookingTermsEditor')
-    expect(review).toContain('listingBookingTermsEditorEligible')
+    expect(review).toContain('BookingReviewTermsRail')
+    // Editors must not mount directly on the page — only via the rail modal.
+    expect(review).not.toContain('LandlordBookingTermsEditor')
+    expect(review).not.toContain('LandlordBookingAgreedRentEditor')
+
+    const rail = readSrc('src/components/booking/review/BookingReviewTermsRail.tsx')
+    expect(rail).toContain('LandlordBookingTermsEditor')
+    expect(rail).toContain('LandlordBookingAgreedRentEditor')
+    expect(rail).toContain('listingBookingTermsEditorEligible')
 
     const editorModule = readSrc('src/components/landlord/LandlordBookingTermsEditor.tsx')
     expect(editorModule).toContain('Edit booking terms')
     expect(editorModule).toContain('booking-update-terms')
+  })
+
+  it('applicant profile drawer is type-enforced to LandlordSafeStudentSnapshot and does not widen PII', () => {
+    const drawer = readSrc('src/components/landlord/LandlordApplicantProfileDrawer.tsx')
+    expect(drawer).toContain('LandlordSafeStudentSnapshot')
+    // Tripwire: no contact/identity document fields introduced beyond the safe snapshot.
+    // Matches on the constraint doc-comment are allowed; field reads/renders are not.
+    const withoutDocComments = drawer
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('*') && !line.trim().startsWith('//'))
+      .join('\n')
+    expect(withoutDocComments).not.toMatch(/\bemail\b/i)
+    expect(withoutDocComments).not.toMatch(/\bphone\b/i)
+    expect(withoutDocComments).not.toMatch(/\bdate_of_birth\b/i)
+    expect(withoutDocComments).not.toMatch(/\bemergency\b/i)
+    expect(withoutDocComments).not.toMatch(/\bdocument_url\b/i)
   })
 })
