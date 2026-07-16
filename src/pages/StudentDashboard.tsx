@@ -28,7 +28,6 @@ import RenterDashboardPageHeader, {
 } from '../components/student/RenterDashboardPageHeader'
 import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
 import { tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
-import LanguagesSpokenDisplay from '../components/profile/LanguagesSpokenDisplay'
 import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
 import {
   normalizePropertyPayoutEmbed,
@@ -61,12 +60,19 @@ type PropertyBookingEmbed = Pick<
   | 'state'
   | 'is_registered_rooming_house'
   | 'qld_bond_remittance_preference'
+  | 'room_type'
+  | 'available_from'
+  | 'max_occupants'
+  | 'parking_available'
+  | 'furnished'
+  | 'lease_length'
 > & {
   property_payout_details: PropertyPayoutEmbed | PropertyPayoutEmbed[] | null
   landlord_profiles: Pick<
     Database['public']['Tables']['landlord_profiles']['Row'],
     'full_name' | 'avatar_url' | 'verified' | 'languages_spoken'
   > | null
+  property_features?: { features?: { name?: string | null } | null }[] | null
 }
 
 type BookingWithProperty = BookingRow & {
@@ -228,7 +234,7 @@ export default function StudentDashboard() {
       const bookRes = await supabase
         .from('bookings')
         .select(
-          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, qld_bond_remittance_preference, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ) )',
+          '*, properties ( id, title, slug, address, suburb, postcode, images, rent_per_week, bond, bond_weeks, property_type, state, is_registered_rooming_house, qld_bond_remittance_preference, room_type, available_from, max_occupants, parking_available, furnished, lease_length, property_payout_details ( account_name, bsb, account_number ), landlord_profiles ( full_name, avatar_url, verified, languages_spoken ), property_features ( features ( name ) ) )',
         )
         .eq('student_id', prof.id)
         .order('created_at', { ascending: false })
@@ -621,24 +627,13 @@ export default function StudentDashboard() {
                           {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
                         </p>
                         <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
-                        {prop?.landlord_profiles && (
-                          <div className="mt-3 rounded-admin-md border border-admin-line-soft bg-admin-surface-2/80 px-3 py-2.5">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">Your host</p>
-                            <p className="text-sm font-medium text-admin-ink mt-0.5 capitalize">
-                              {(prop.landlord_profiles.full_name ?? 'Host').toLowerCase()}
-                            </p>
-                            <LanguagesSpokenDisplay
-                              languages={prop.landlord_profiles.languages_spoken}
-                              className="mt-2"
-                            />
-                          </div>
-                        )}
                       </div>
                     </div>
                     <div className="border-t border-admin-line-soft">
                       <RenterBookingZones
                         booking={b}
                         property={prop}
+                        studentProfile={profile}
                         renterDisplayName={profile ? studentDisplayName(profile) : 'Renter'}
                         isCurrent={isCurrent}
                         bondDownloadBusy={bondDownloadBusyId === b.id}

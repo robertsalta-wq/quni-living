@@ -66,6 +66,7 @@ import {
   resolveLandlordAwaitingInfoQuestion,
   resolveLandlordBookingReviewActionCopy,
 } from '../../lib/booking/bookingReviewActionModel'
+import { buildBookingReviewChatThread, initialsOf } from '../../lib/booking/bookingReviewChatThread'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { studentDisplayName } from '../../lib/nameResolution'
@@ -92,28 +93,6 @@ function confirmBookingBusyLabel(phase: ConfirmPhase, tier: 'listing' | 'managed
     default:
       return 'Confirm booking'
   }
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '?'
-  const first = parts[0]?.[0] ?? ''
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : ''
-  return (first + last).toUpperCase() || '?'
-}
-
-function formatMessageTimestamp(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
-}
-
-type BookingReviewChatBubble = {
-  key: string
-  fromLandlord: boolean
-  name: string
-  timeLabel: string
-  text: string
 }
 
 function todayYmdLocal(): string {
@@ -961,31 +940,17 @@ export default function LandlordBookingReviewPage() {
 
   // Inline chat thread (commit 6): intro student_message first (unless already duplicated in booking_messages),
   // then the booking_messages history, oldest to newest, as left/right bubbles.
-  const chatThread: BookingReviewChatBubble[] = useMemo(() => {
-    const intro = booking.student_message?.trim() ?? ''
-    const introDuplicated = intro.length > 0 && messages.some((m) => m.message.trim() === intro)
-    const items: BookingReviewChatBubble[] = []
-    if (intro && !introDuplicated) {
-      items.push({
-        key: 'intro',
-        fromLandlord: false,
-        name: displayName,
-        timeLabel: booking.created_at ? formatMessageTimestamp(booking.created_at) : '',
-        text: intro,
-      })
-    }
-    for (const m of messages) {
-      if (!m.message.trim()) continue
-      items.push({
-        key: m.id,
-        fromLandlord: m.sender_role === 'landlord',
-        name: m.sender_role === 'landlord' ? 'You' : displayName,
-        timeLabel: formatMessageTimestamp(m.created_at),
-        text: m.message.trim(),
-      })
-    }
-    return items
-  }, [booking.student_message, booking.created_at, messages, displayName])
+  const chatThread = useMemo(
+    () =>
+      buildBookingReviewChatThread({
+        viewerRole: 'landlord',
+        introMessage: booking.student_message,
+        introCreatedAt: booking.created_at,
+        otherPartyName: displayName,
+        messages,
+      }),
+    [booking.student_message, booking.created_at, messages, displayName],
+  )
 
   const canReplyInThread = Boolean(canDeclineOrInfo)
 
@@ -1554,22 +1519,22 @@ export default function LandlordBookingReviewPage() {
                   <p className="text-sm text-admin-ink-4">No messages yet.</p>
                 ) : (
                   chatThread.map((m) => (
-                    <div key={m.key} className={`flex gap-2.5 ${m.fromLandlord ? 'flex-row-reverse' : ''}`}>
+                    <div key={m.key} className={`flex gap-2.5 ${m.fromViewer ? 'flex-row-reverse' : ''}`}>
                       <span
                         className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                          m.fromLandlord ? 'bg-admin-coral-tint text-admin-coral-active' : 'bg-admin-navy-tint text-admin-navy'
+                          m.fromViewer ? 'bg-admin-coral-tint text-admin-coral-active' : 'bg-admin-navy-tint text-admin-navy'
                         }`}
                       >
                         {initialsOf(m.name)}
                       </span>
-                      <div className={`min-w-0 max-w-[78%] ${m.fromLandlord ? 'text-right' : ''}`}>
-                        <div className={`mb-1 flex items-baseline gap-2 ${m.fromLandlord ? 'flex-row-reverse' : ''}`}>
+                      <div className={`min-w-0 max-w-[78%] ${m.fromViewer ? 'text-right' : ''}`}>
+                        <div className={`mb-1 flex items-baseline gap-2 ${m.fromViewer ? 'flex-row-reverse' : ''}`}>
                           <span className="text-[12.5px] font-semibold text-admin-ink">{m.name}</span>
                           <span className="text-[11.5px] text-admin-ink-5">{m.timeLabel}</span>
                         </div>
                         <div
                           className={`inline-block rounded-admin-md px-3.5 py-2.5 text-left text-[13.5px] leading-relaxed text-admin-ink-2 ${
-                            m.fromLandlord
+                            m.fromViewer
                               ? 'border border-admin-coral-30 bg-admin-coral-tint'
                               : 'bg-admin-surface-2'
                           }`}
