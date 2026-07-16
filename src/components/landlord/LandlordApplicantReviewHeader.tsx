@@ -11,6 +11,8 @@ type Props = {
   bio?: string | null
   /** Strip outer card chrome — for embedding in the right summary card. */
   embedded?: boolean
+  /** Opens the full-profile drawer (commit 7). Hidden when omitted. */
+  onOpenFullProfile?: () => void
 }
 
 export default function LandlordApplicantReviewHeader({
@@ -18,6 +20,7 @@ export default function LandlordApplicantReviewHeader({
   displayName,
   bio,
   embedded = false,
+  onOpenFullProfile,
 }: Props) {
   const [bioOpen, setBioOpen] = useState(false)
   const uni = student?.universities?.name?.trim()
@@ -32,7 +35,18 @@ export default function LandlordApplicantReviewHeader({
     return (
       <>
         <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Applicant</p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">Applicant</p>
+            {onOpenFullProfile ? (
+              <button
+                type="button"
+                onClick={onOpenFullProfile}
+                className="shrink-0 border-0 bg-transparent p-0 text-[13px] font-semibold text-admin-coral hover:text-admin-coral-hover"
+              >
+                Full profile →
+              </button>
+            ) : null}
+          </div>
           <div className="flex items-center gap-3">
             {student?.avatar_url ? (
               <img

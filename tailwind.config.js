@@ -106,6 +106,15 @@ export default {
         'admin-lg': '16px',
         'admin-pill': '999px',
       },
+      keyframes: {
+        'booking-drawer-slide': {
+          from: { transform: 'translateX(24px)', opacity: '0.4' },
+          to: { transform: 'translateX(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'booking-drawer-slide': 'booking-drawer-slide .22s cubic-bezier(.2,0,0,1)',
+      },
     },
   },
   plugins: [],

@@ -9,6 +9,7 @@ import {
 } from '../../hooks/useLandlordBookingReview'
 import type { LandlordSafeStudentSnapshot } from '../../components/landlord/LandlordStudentProfileModal'
 import LandlordApplicantReviewHeader from '../../components/landlord/LandlordApplicantReviewHeader'
+import LandlordApplicantProfileDrawer from '../../components/landlord/LandlordApplicantProfileDrawer'
 import LandlordApplicantVerificationSection from '../../components/landlord/LandlordApplicantVerificationSection'
 import LandlordApplicantAIAssessmentPanel from '../../components/landlord/LandlordApplicantAIAssessmentPanel'
 import BookingFitSummaryTable from '../../components/landlord/BookingFitSummaryTable'
@@ -234,6 +235,8 @@ export default function LandlordBookingReviewPage() {
   )
 
   const [selectedConfirmTier, setSelectedConfirmTier] = useState<'listing' | 'managed'>('managed')
+
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
   /** Collapsible section overrides — null means use layout defaults for the current status. */
   const [applicantExpandedOverride, setApplicantExpandedOverride] = useState<boolean | null>(null)
@@ -1497,6 +1500,7 @@ export default function LandlordBookingReviewPage() {
                     displayName={displayName}
                     bio={data.student?.bio}
                     embedded
+                    onOpenFullProfile={() => setProfileDrawerOpen(true)}
                   />
                 </div>
 
@@ -2066,6 +2070,17 @@ export default function LandlordBookingReviewPage() {
           </div>
         </div>
       )}
+
+      <LandlordApplicantProfileDrawer
+        open={profileDrawerOpen}
+        onClose={() => setProfileDrawerOpen(false)}
+        student={snapshot}
+        displayName={displayName}
+        onMessage={() => {
+          setProfileDrawerOpen(false)
+          openMessagesSection()
+        }}
+      />
     </div>
   )
 }
