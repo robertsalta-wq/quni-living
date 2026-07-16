@@ -128,7 +128,8 @@ test.describe('booking review render smoke', () => {
       await page.goto('/student-dashboard?tab=bookings')
 
       const bookings = page.getByRole('region', { name: 'Your bookings' })
-      await expect(bookings.getByRole('heading', { level: 1, name: renterTitle })).toBeVisible({
+      // Action-card titles are h2; summary-strip h1 copy differs for some statuses (e.g. Bond due vs Pay your bond).
+      await expect(bookings.getByRole('heading', { level: 2, name: renterTitle })).toBeVisible({
         timeout: 60_000,
       })
       await assertNoAppErrorBoundary(page)
