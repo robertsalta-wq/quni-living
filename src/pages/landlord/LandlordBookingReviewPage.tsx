@@ -48,6 +48,8 @@ import {
   BookingReviewSummaryStrip,
   BookingReviewSurfaceCard,
   BookingReviewTermsRail,
+  bookingReviewGhostButtonClass,
+  bookingReviewPrimaryButtonClass,
   type BookingReadinessGate,
 } from '../../components/booking/review'
 import { resolveBookingReviewLayout } from '../../lib/booking/bookingReviewLayout'
@@ -59,6 +61,10 @@ import {
   bookingReviewHasNonGateBlocker,
   type BookingReviewReadinessGate as BookingReadinessGateDef,
 } from '../../lib/booking/bookingReviewReadinessGates'
+import {
+  resolveLandlordAwaitingInfoQuestion,
+  resolveLandlordBookingReviewActionCopy,
+} from '../../lib/booking/bookingReviewActionModel'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
 import { firstPropertyImageUrl } from '../../lib/propertyImages'
 import { studentDisplayName } from '../../lib/nameResolution'
@@ -895,13 +901,6 @@ export default function LandlordBookingReviewPage() {
       booking.status === 'active' ||
       booking.status === 'completed')
 
-  const flowLabel =
-    booking.status === 'awaiting_info'
-      ? 'Awaiting student response'
-      : booking.status === 'pending_confirmation'
-        ? 'Awaiting your response'
-        : null
-
   const reviewLayout = resolveBookingReviewLayout(booking.status, 'landlord')
 
   const propertyPhotoUrl = property ? firstPropertyImageUrl(property.images) : null
@@ -922,7 +921,9 @@ export default function LandlordBookingReviewPage() {
         { label: 'Review request' },
       )
 
-  const isPreAcceptStatus = booking.status === 'pending_confirmation' || booking.status === 'awaiting_info'
+  // Only pending_confirmation keeps the Accept / Decline / Request-info primary (5b: awaiting_info gets its
+  // own "waiting on the applicant" body instead — see the action-model switch in the rail below).
+  const isPreAcceptStatus = booking.status === 'pending_confirmation'
   const zone1PrimaryAction: 'bond-received' | 'mark-bond' | 'accept-decline-info' | 'none' = showBondReceivedPrimary
     ? 'bond-received'
     : showMarkBondReceived
@@ -930,12 +931,36 @@ export default function LandlordBookingReviewPage() {
       : isPreAcceptStatus
         ? 'accept-decline-info'
         : 'none'
-  const zone1HasContent =
-    zone1PrimaryAction !== 'none' ||
-    otherPendingPipelineCount > 0 ||
-    confirmBlockedBanner != null ||
-    showResendPaymentInstructions ||
-    tierModel?.showManagedUpgrade === true
+
+  const awaitingInfoQuestion = resolveLandlordAwaitingInfoQuestion(messages)
+
+  const openMessagesSection = useCallback(() => {
+    setMessagesExpandedOverride(true)
+    requestAnimationFrame(() => {
+      document.getElementById('review-messages')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
+  const scrollToAgreement = useCallback(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('tenancy-agreement-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
+  // Action-card copy by status (pure model, HTML SoT §6/§11/§17). The one override: when the boarding/homestay
+  // "mark bond as received" CTA is showing (confirmed/active/completed with bond still outstanding), the actual
+  // actionable thing is confirming the bond, not the status' default copy — so we borrow bond_pending's copy.
+  const actionCopyStatus = zone1PrimaryAction === 'mark-bond' ? 'bond_pending' : booking.status
+  const actionCopy = resolveLandlordBookingReviewActionCopy({
+    status: actionCopyStatus,
+    studentDisplayName: displayName,
+    askedAtLabel: awaitingInfoQuestion?.askedAtLabel ?? null,
+    bondDeadlineLabel,
+    hasActionRequired: booking.status === 'pending_confirmation',
+  })
+  // The bond-received flow already shows its own prominent "Confirm bond received by" callout inline —
+  // skip the duplicate top-of-card deadline pill for that state.
+  const actionDeadlineLabel = zone1PrimaryAction === 'bond-received' ? null : actionCopy.deadlineLabel
 
   const applicantExpanded =
     applicantExpandedOverride ?? reviewLayout.applicantDefaultOpen
@@ -968,10 +993,12 @@ export default function LandlordBookingReviewPage() {
           {/* —— Rail (first in DOM for mobile order) —— */}
           <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
             <BookingReviewActionCard
-              eyebrow={zone1HasContent && isPreAcceptStatus ? 'What you need to do' : 'Status'}
-              eyebrowTone={zone1HasContent && isPreAcceptStatus ? 'action' : 'status'}
-              title={reviewLayout.pageTitle}
-              sub={flowLabel ?? null}
+              eyebrow={actionCopy.eyebrow}
+              eyebrowTone={actionCopy.eyebrowTone}
+              title={actionCopy.title}
+              sub={actionCopy.sub}
+              deadline={actionDeadlineLabel ?? undefined}
+              deadlineTone={actionCopy.deadlineTone}
             >
               <div className="space-y-3.5">
                 {actionError && (
@@ -1321,13 +1348,43 @@ export default function LandlordBookingReviewPage() {
                     Request more information
                   </button>
                 </div>
+              ) : booking.status === 'awaiting_info' ? (
+                <div className="space-y-3">
+                  {awaitingInfoQuestion ? (
+                    <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
+                      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+                        Your question
+                      </p>
+                      <blockquote className="m-0 text-sm leading-relaxed text-admin-ink-2">
+                        &ldquo;{awaitingInfoQuestion.text}&rdquo;
+                      </blockquote>
+                    </div>
+                  ) : null}
+                  <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
+                    Send another message
+                  </button>
+                </div>
+              ) : booking.status === 'confirmed' ? (
+                <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
+                  View agreement
+                </button>
+              ) : booking.status === 'active' || booking.status === 'completed' ? (
+                <div className="flex flex-col gap-2.5">
+                  <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
+                    View tenancy
+                  </button>
+                  <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
+                    Message tenant
+                  </button>
+                </div>
+              ) : booking.status === 'expired' ? (
+                <Link
+                  to={landlordBookingsPath()}
+                  className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
+                >
+                  ← Back to bookings
+                </Link>
               ) : null}
-
-              {!zone1HasContent && (
-                <p className="text-sm text-admin-ink-4">
-                  Nothing to do — we&apos;ll notify you when something needs your attention.
-                </p>
-              )}
               </div>
             </BookingReviewActionCard>
 
