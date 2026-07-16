@@ -3,11 +3,14 @@ import { useLocation } from 'react-router-dom'
 import AiSparkleIcon from '../AiSparkleIcon'
 import ChatPanel from './ChatPanel'
 import { useBookingFlowChrome } from '../../context/BookingFlowChromeContext'
+import { useAuthContext } from '../../context/AuthContext'
+import { isLandlordDashboardChromePath } from '../../lib/landlordMobileChrome'
 
 /** Mobile routes with a fixed bottom action bar that the FAB must sit above. */
-function mobileHasStickyBottomBar(pathname: string): boolean {
+function mobileHasStickyBottomBar(pathname: string, role: string | null | undefined): boolean {
   if (/^\/landlord\/bookings\/[^/]+\/review$/.test(pathname)) return true
   if (/^\/(listings|properties)\/[^/]+$/.test(pathname)) return true
+  if (role === 'landlord' && isLandlordDashboardChromePath(pathname)) return true
   return false
 }
 
@@ -16,6 +19,7 @@ const MOBILE_FAB_BASE =
 
 export default function AIChatWidget() {
   const { pathname } = useLocation()
+  const { role } = useAuthContext()
   const { elevateFloatingChrome } = useBookingFlowChrome()
   const [open, setOpen] = useState(false)
 
@@ -23,11 +27,11 @@ export default function AIChatWidget() {
     if (elevateFloatingChrome) {
       return 'max-md:bottom-[calc(22rem+env(safe-area-inset-bottom,0px))]'
     }
-    if (mobileHasStickyBottomBar(pathname)) {
+    if (mobileHasStickyBottomBar(pathname, role)) {
       return 'max-md:bottom-[max(5rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))]'
     }
     return 'max-md:bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))]'
-  }, [elevateFloatingChrome, pathname])
+  }, [elevateFloatingChrome, pathname, role])
 
   const close = useCallback(() => setOpen(false), [])
   const toggle = useCallback(() => setOpen(true), [])

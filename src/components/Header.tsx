@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Info, Mail } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Bell, Info, Mail } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
+import {
+  isLandlordDashboardChromePath,
+  landlordMobileSectionTitle,
+} from '../lib/landlordMobileChrome'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
@@ -58,6 +62,12 @@ function warmListingsNav() {
 
 export default function Header() {
   const { user, profile, loading, signOut, role } = useAuthContext()
+  const location = useLocation()
+  const landlordMobileChrome =
+    role === 'landlord' && isLandlordDashboardChromePath(location.pathname)
+  const landlordMobileTitle = landlordMobileChrome
+    ? landlordMobileSectionTitle(location.pathname, location.search)
+    : null
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const [studentsOpen, setStudentsOpen] = useState(false)
@@ -330,14 +340,52 @@ export default function Header() {
   }
 
   return (
-    <header className="pt-safe-top w-full max-w-full shrink-0 overflow-x-clip bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50 max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0">
-      <div ref={mobileNavRootRef} className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
-        <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
+    <header
+      className={[
+        'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50',
+        landlordMobileChrome
+          ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
+          : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0',
+      ].join(' ')}
+    >
+      <div
+        ref={mobileNavRootRef}
+        className={`${SITE_CONTENT_MAX_CLASS} ${
+          landlordMobileChrome ? 'max-sm:py-0 max-sm:h-14 max-sm:flex max-sm:items-center py-4' : 'py-4'
+        }`}
+      >
+        <div
+          className={`grid w-full max-w-full items-center gap-2 sm:gap-3 md:gap-4 ${
+            landlordMobileChrome
+              ? 'max-sm:grid-cols-[minmax(0,1fr)_auto] grid-cols-[auto_minmax(0,1fr)_auto]'
+              : 'grid-cols-[auto_minmax(0,1fr)_auto]'
+          }`}
+        >
         <div className="min-w-0 shrink-0">
-          <SiteBrandLockup />
+          {landlordMobileChrome && landlordMobileTitle ? (
+            <>
+              <Link
+                to="/landlord/dashboard"
+                className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-1.5 font-display text-[22px] font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+                aria-label={`Quni ${landlordMobileTitle}`}
+              >
+                <span className="text-[#FF6F61]">Quni</span>
+                <span className="truncate text-[#1F2A44]">{landlordMobileTitle}</span>
+              </Link>
+              <div className="hidden sm:block">
+                <SiteBrandLockup />
+              </div>
+            </>
+          ) : (
+            <SiteBrandLockup />
+          )}
         </div>
 
-        <div className="flex min-w-0 items-center justify-center">
+        <div
+          className={`flex min-w-0 items-center justify-center ${
+            landlordMobileChrome ? 'max-sm:hidden' : ''
+          }`}
+        >
           <nav
             className="hidden md:flex min-w-0 items-center justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
             aria-label="Main"
@@ -388,6 +436,16 @@ export default function Header() {
                   <span className="hidden lg:inline">Admin dashboard</span>
                 </Link>
               )}
+              {landlordMobileChrome ? (
+                <button
+                  type="button"
+                  className="inline-flex sm:hidden h-9 w-9 items-center justify-center rounded-full text-[#1F2A44] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+                  aria-label="Notifications"
+                  title="Notifications"
+                >
+                  <Bell className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+                </button>
+              ) : null}
               {showMessagesNav && (
                 <Link
                   to="/messages"
@@ -524,7 +582,9 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
-            className="inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 min-h-11 min-w-11"
+            className={`inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 min-h-11 min-w-11 ${
+              landlordMobileChrome ? 'max-sm:hidden' : ''
+            }`}
             aria-expanded={mobileNavOpen}
             aria-haspopup="true"
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}

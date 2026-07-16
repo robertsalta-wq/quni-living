@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { User } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import type { UserDashboardSection } from '../../lib/userDashboardNav'
 import { landlordBookingsPath } from '../../lib/userDashboardNav'
@@ -15,7 +14,7 @@ type Props = {
 }
 
 const landlordTabBaseClass =
-  'flex w-full sm:inline-flex sm:w-auto items-center justify-center gap-0.5 min-h-[44px] sm:min-h-0 min-w-0 px-0 sm:px-4 py-2.5 text-[11px] sm:text-sm border-b-2 transition-colors whitespace-nowrap sm:rounded-t-lg'
+  'inline-flex items-center justify-center gap-0.5 min-w-0 px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap rounded-t-lg'
 
 const landlordTabBadgeClass =
   'tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-[9px] font-bold text-white leading-none'
@@ -24,8 +23,8 @@ function landlordTabClass(isActive: boolean): string {
   return [
     landlordTabBaseClass,
     isActive
-      ? 'border-admin-coral text-admin-ink font-semibold -mb-px sm:border-indigo-600 sm:text-indigo-700 sm:bg-white sm:font-medium'
-      : 'border-transparent text-admin-ink-4 font-medium sm:text-gray-500 sm:hover:text-gray-800 sm:hover:bg-gray-100/80',
+      ? 'border-indigo-600 text-indigo-700 bg-white font-medium -mb-px'
+      : 'border-transparent text-gray-500 font-medium hover:text-gray-800 hover:bg-gray-100/80',
   ].join(' ')
 }
 
@@ -55,10 +54,11 @@ export default function UserDashboardSectionNav({
     const bookingsBadge =
       pendingBookings > 0 ? pendingBookings : totalBookings > 0 ? totalBookings : null
 
+    // Desktop / sm+ top strip only — mobile uses LandlordMobileBottomNav.
     return (
-      <div className="border-b border-gray-200 mb-6 -mx-4 overflow-hidden sm:mx-0">
+      <div className="mb-6 border-b border-gray-200">
         <nav
-          className="grid w-full min-w-0 grid-cols-5 items-end -mb-px sm:flex sm:justify-start sm:gap-1 sm:overflow-x-auto"
+          className="flex justify-start gap-1 overflow-x-auto -mb-px"
           aria-label="Dashboard sections"
         >
           <button
@@ -98,8 +98,7 @@ export default function UserDashboardSectionNav({
             aria-label="Profile"
             title="Profile"
           >
-            <User className="h-[18px] w-[18px] sm:hidden shrink-0" strokeWidth={1.9} aria-hidden />
-            <span className="hidden sm:inline">Profile</span>
+            <span>Profile</span>
           </button>
         </nav>
       </div>

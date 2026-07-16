@@ -39,20 +39,22 @@ export default function LandlordDashboardPageHeader({
 }: Props) {
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-6 hidden sm:block">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{landlordDashboardHeading(profile)}</h1>
         <p className="text-sm text-gray-500 mt-1">{landlordDashboardTabSubtitle(activeTab)}</p>
       </div>
-      <UserDashboardSectionNav
-        role="landlord"
-        active={activeTab}
-        pendingBookings={pendingBookings}
-        totalBookings={totalBookings}
-        onSelect={(section) => {
-          if (section === 'saved') return
-          onTabSelect(section)
-        }}
-      />
+      <div className="hidden sm:block">
+        <UserDashboardSectionNav
+          role="landlord"
+          active={activeTab}
+          pendingBookings={pendingBookings}
+          totalBookings={totalBookings}
+          onSelect={(section) => {
+            if (section === 'saved') return
+            onTabSelect(section)
+          }}
+        />
+      </div>
     </>
   )
 }
@@ -67,7 +69,7 @@ type LandlordMessagesTabShellProps = {
 export function LandlordMessagesTabShell({ profile, children, contentClassName = '' }: LandlordMessagesTabShellProps) {
   const navigate = useNavigate()
   return (
-    <div className={`flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16 ${contentClassName}`}>
+    <div className={`flex-1 flex flex-col min-h-0 w-full bg-gray-50 max-sm:pb-0 pb-16 ${contentClassName}`}>
       <div className={landlordDashboardPageInsetClass}>
         <LandlordDashboardPageHeader
           profile={profile}
