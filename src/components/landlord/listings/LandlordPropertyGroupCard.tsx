@@ -1,6 +1,4 @@
-import { Building2, ChevronDown, ChevronUp, Plus } from 'lucide-react'
-import { firstPropertyImageUrl } from '../../../lib/propertyImages'
-import { parseLandlordServiceTier } from '../../../lib/landlordServiceTier'
+import { Building2, ChevronDown, ChevronUp, Home, Plus } from 'lucide-react'
 import {
   landlordListingRollupChipClass,
   landlordListingUiStatusLabel,
@@ -38,18 +36,18 @@ type GroupCardProps = Actions & {
   bookings: Array<{ property_id: string | null; status: string }>
 }
 
-function PropertyThumb({ listing }: { listing: LandlordListingForGroup }) {
-  const images = Array.isArray(listing.images)
-    ? listing.images.filter((x): x is string => typeof x === 'string')
-    : null
-  const image = firstPropertyImageUrl(images)
+function PropertyBuildingIcon() {
   return (
     <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F3EC]">
-      {image ? (
-        <img src={image} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <Building2 className="h-5 w-5 text-[#908897]" aria-hidden />
-      )}
+      <Building2 className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
+    </div>
+  )
+}
+
+function WholePlaceHouseIcon() {
+  return (
+    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F3EC]">
+      <Home className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
     </div>
   )
 }
@@ -72,7 +70,7 @@ export function LandlordWholePlaceListingCard({
         onClick={() => onEdit(listing)}
         className="flex w-full items-center gap-3 p-4 text-left hover:bg-[#FBFAF7]"
       >
-        <PropertyThumb listing={listing} />
+        <WholePlaceHouseIcon />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14.5px] font-bold text-[#08060D]">{group.addressLabel}</p>
           <p className="mt-0.5 truncate text-[12px] text-[#6B6375]">{suburbLine}</p>
@@ -91,9 +89,7 @@ export default function LandlordPropertyGroupCard({
   onEdit,
   onDuplicate,
   onTogglePause,
-  onPublish,
   onDeleteDraft,
-  onInviteTenant,
   onAddRoom,
   busyListingId,
 }: GroupCardProps) {
@@ -111,7 +107,7 @@ export default function LandlordPropertyGroupCard({
         aria-expanded={expanded}
         className="flex w-full items-start gap-3 p-4 text-left hover:bg-[#FBFAF7]"
       >
-        <PropertyThumb listing={group.thumbnailListing} />
+        <PropertyBuildingIcon />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14.5px] font-bold text-[#08060D]">{group.addressLabel}</p>
           <p className="mt-0.5 truncate text-[12px] text-[#6B6375]">{suburbLine}</p>
@@ -149,6 +145,7 @@ export default function LandlordPropertyGroupCard({
                     uiStatus={uiStatus}
                     weeklyRentLabel={formatWeeklyRent(listing.rent_per_week)}
                     busy={busyListingId === listing.id}
+                    onOpenDetail={() => onEdit(listing)}
                     onEdit={() => onEdit(listing)}
                     onDuplicate={() => onDuplicate(listing)}
                     onTogglePause={
@@ -156,17 +153,9 @@ export default function LandlordPropertyGroupCard({
                         ? () => onTogglePause(listing)
                         : undefined
                     }
-                    onPublish={listing.status === 'draft' ? () => onPublish(listing) : undefined}
                     onDeleteDraft={
                       listing.status === 'draft' && onDeleteDraft
                         ? () => onDeleteDraft(listing)
-                        : undefined
-                    }
-                    onInviteTenant={
-                      onInviteTenant &&
-                      listing.status === 'active' &&
-                      parseLandlordServiceTier(listing.service_tier) === 'listing'
-                        ? () => onInviteTenant(listing)
                         : undefined
                     }
                   />

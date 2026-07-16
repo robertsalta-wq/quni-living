@@ -16,36 +16,39 @@ type Props = {
 
 export default function LandlordListingsStatusChips({ active, counts, onChange }: Props) {
   return (
-    <div
-      className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin"
-      role="tablist"
-      aria-label="Filter listings by status"
-    >
-      {CHIPS.map((chip) => {
-        const isActive = active === chip.id
-        const count = counts[chip.id]
-        const showCount = chip.id !== 'paused' || count > 0 || isActive
-        return (
-          <button
-            key={chip.id}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onChange(chip.id)}
-            className={[
-              'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition-colors',
-              isActive
-                ? 'border-transparent bg-[rgba(255,111,97,0.14)] text-[#CC4A3C]'
-                : 'border-[#E5E4E7] bg-white text-[#6B6375] hover:bg-[#FBFAF7]',
-            ].join(' ')}
-          >
-            <span>{chip.label}</span>
-            {showCount ? (
+    <div className="relative -mx-4 sm:-mx-6">
+      <div
+        className="flex gap-1.5 overflow-x-auto px-4 sm:px-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Filter listings by status"
+      >
+        {CHIPS.map((chip) => {
+          const isActive = active === chip.id
+          const count = counts[chip.id]
+          return (
+            <button
+              key={chip.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onChange(chip.id)}
+              className={[
+                'inline-flex shrink-0 items-center gap-1 rounded-full border px-[11px] py-1.5 text-[12px] font-semibold transition-colors',
+                isActive
+                  ? 'border-transparent bg-[rgba(255,111,97,0.14)] text-[#CC4A3C]'
+                  : 'border-[#E5E4E7] bg-white text-[#6B6375] hover:bg-[#FBFAF7]',
+              ].join(' ')}
+            >
+              <span>{chip.label}</span>
               <span className="tabular-nums font-bold">{count}</span>
-            ) : null}
-          </button>
-        )
-      })}
+            </button>
+          )
+        })}
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-7 bg-gradient-to-l from-gray-50 to-transparent"
+      />
     </div>
   )
 }

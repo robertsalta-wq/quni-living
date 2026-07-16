@@ -171,7 +171,7 @@ export default function LandlordListingsGroupedPanel({
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4">
-      <div className="sticky top-0 z-10 -mx-1 space-y-3 bg-gray-50/95 px-1 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-gray-50/80">
+      <div className="sticky top-0 z-10 space-y-3 bg-gray-50/95 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-gray-50/80">
         <div className="flex items-center gap-2">
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Search address or room</span>
