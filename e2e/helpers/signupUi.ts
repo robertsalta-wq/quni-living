@@ -108,3 +108,14 @@ export async function signInRenter(page: Page, email: string, password: string):
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 60_000 })
 }
+
+/** Same login form as renters — destination depends on role. */
+export async function signInLandlord(page: Page, email: string, password: string): Promise<void> {
+  await signInRenter(page, email, password)
+}
+
+/** AppErrorBoundary chrome — must stay absent on page-load smokes. */
+export async function assertNoAppErrorBoundary(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', { name: 'Something went wrong' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Go to homepage' })).toHaveCount(0)
+}

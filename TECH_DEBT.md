@@ -4,6 +4,7 @@ Items that are acceptable for now but must be revisited before related work ship
 
 - ESLint: ~188 errors on clean checkout (exhaustive-deps, unused-vars, prefer-const, react-refresh across src/). Full `npm run lint` in CI stays non-blocking until cleaned up.
 - **Exception (blocking):** `react-hooks/rules-of-hooks` runs as its own CI step via `npm run lint:rules-of-hooks` (`eslint.rules-of-hooks.config.js`). That step must stay required — it is what stops React #310-class hook-order crashes from merging.
+- **Page-load smoke:** `e2e/booking-review-smoke.spec.ts` loads landlord review + renter booking zones for `pending_confirmation` and `bond_pending` and asserts `AppErrorBoundary` does not fire. Lives in the required `e2e` job.
 
 ## DocuSeal - duplicate signature tags on official FT6600 (NSW)
 
