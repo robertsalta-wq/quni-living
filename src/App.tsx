@@ -11,6 +11,7 @@ import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import PageRouteFallback from './components/PageRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import LandlordMobileBottomNav from './components/landlord/LandlordMobileBottomNav'
+import RenterMobileBottomNav from './components/student/RenterMobileBottomNav'
 import Home from './pages/Home'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
@@ -18,8 +19,12 @@ import Login from './pages/Login'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import { useAuthContext } from './context/AuthContext'
+import { isRenterRole } from './lib/authProfile'
 import { isFocusFormFlowPath } from './lib/site'
-import { isLandlordDashboardChromePath } from './lib/landlordMobileChrome'
+import {
+  DASHBOARD_MOBILE_SCROLL_ATTR,
+  isDashboardMobileChromePath,
+} from './lib/dashboardMobileChrome'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
@@ -53,8 +58,7 @@ function App() {
   const aiLandingShell = location.pathname === '/landlords/ai'
   const showPublicChrome = !adminShell && !aiLandingShell
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
-  const landlordMobileAppShell =
-    role === 'landlord' && isLandlordDashboardChromePath(location.pathname)
+  const dashboardMobileAppShell = isDashboardMobileChromePath(role, location.pathname)
 
   return (
       <BookingFlowChromeProvider>
@@ -64,7 +68,7 @@ function App() {
         <SeoPrivateRoutes />
         <div
           className={
-            landlordMobileAppShell
+            dashboardMobileAppShell
               ? 'flex min-h-0 w-full flex-1 flex-col max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:overflow-hidden'
               : 'flex min-h-0 w-full flex-1 flex-col'
           }
@@ -73,12 +77,12 @@ function App() {
         <main
           className={
             showPublicChrome
-              ? landlordMobileAppShell
+              ? dashboardMobileAppShell
                 ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain sm:max-md:pt-main-below-fixed-header md:pt-0'
                 : 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:pt-main-below-fixed-header md:pt-0'
               : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
           }
-          data-landlord-mobile-scroll={landlordMobileAppShell ? '' : undefined}
+          {...(dashboardMobileAppShell ? { [DASHBOARD_MOBILE_SCROLL_ATTR]: '' } : {})}
         >
           {showPublicChrome && <OnboardingResumeBanner />}
           <Routes>
@@ -304,9 +308,10 @@ function App() {
           </Route>
           </Routes>
         </main>
-        {landlordMobileAppShell ? <LandlordMobileBottomNav /> : null}
+        {dashboardMobileAppShell && role === 'landlord' ? <LandlordMobileBottomNav /> : null}
+        {dashboardMobileAppShell && isRenterRole(role) ? <RenterMobileBottomNav /> : null}
         {showPublicChrome && !hideFooterForFormFlow && (
-          landlordMobileAppShell ? (
+          dashboardMobileAppShell ? (
             <div className="hidden sm:block">
               <Footer />
             </div>

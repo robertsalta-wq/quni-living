@@ -16,8 +16,12 @@ export const renterDashboardPageInsetClass =
 export default function RenterDashboardPageHeader({ activeTab, onTabSelect }: Props) {
   return (
     <>
-      <h1 className="text-[28px] font-bold text-[#08060D] tracking-tight leading-tight mb-4">Dashboard</h1>
-      <UserDashboardSectionNav role="renter" active={activeTab} onSelect={onTabSelect} />
+      <h1 className="mb-4 hidden text-[28px] font-bold leading-tight tracking-tight text-[#08060D] sm:block">
+        Dashboard
+      </h1>
+      <div className="hidden sm:block">
+        <UserDashboardSectionNav role="renter" active={activeTab} onSelect={onTabSelect} />
+      </div>
     </>
   )
 }
@@ -36,7 +40,7 @@ export function RenterDashboardTabShell({
 }: RenterDashboardTabShellProps) {
   const navigate = useNavigate()
   return (
-    <div className={`flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] pb-16 ${contentClassName}`}>
+    <div className={`flex-1 flex flex-col min-h-0 w-full bg-[#F7F8FA] max-sm:pb-0 pb-16 ${contentClassName}`}>
       <div className={renterDashboardPageInsetClass}>
         <RenterDashboardPageHeader
           activeTab={activeTab}
