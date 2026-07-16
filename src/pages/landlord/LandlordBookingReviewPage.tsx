@@ -925,10 +925,9 @@ export default function LandlordBookingReviewPage() {
         { label: 'Review request' },
       )
 
-  // Only pending_confirmation keeps the Accept / Decline / Request-info primary (5b: awaiting_info gets its
-  // own "waiting on the applicant" body instead — see the action-model switch in the rail below).
+  // pending_confirmation keeps Accept / Decline / Request-info; awaiting_info uses its own waiting body.
   const isPreAcceptStatus = booking.status === 'pending_confirmation'
-  const zone1PrimaryAction: 'bond-received' | 'mark-bond' | 'accept-decline-info' | 'none' = showBondReceivedPrimary
+  const primaryActionKind: 'bond-received' | 'mark-bond' | 'accept-decline-info' | 'none' = showBondReceivedPrimary
     ? 'bond-received'
     : showMarkBondReceived
       ? 'mark-bond'
@@ -938,8 +937,6 @@ export default function LandlordBookingReviewPage() {
 
   const awaitingInfoQuestion = resolveLandlordAwaitingInfoQuestion(messages)
 
-  // Inline chat thread (commit 6): intro student_message first (unless already duplicated in booking_messages),
-  // then the booking_messages history, oldest to newest, as left/right bubbles.
   const chatThread = useMemo(
     () =>
       buildBookingReviewChatThread({
@@ -970,7 +967,7 @@ export default function LandlordBookingReviewPage() {
   // Action-card copy by status (pure model, HTML SoT §6/§11/§17). The one override: when the boarding/homestay
   // "mark bond as received" CTA is showing (confirmed/active/completed with bond still outstanding), the actual
   // actionable thing is confirming the bond, not the status' default copy — so we borrow bond_pending's copy.
-  const actionCopyStatus = zone1PrimaryAction === 'mark-bond' ? 'bond_pending' : booking.status
+  const actionCopyStatus = primaryActionKind === 'mark-bond' ? 'bond_pending' : booking.status
   const actionCopy = resolveLandlordBookingReviewActionCopy({
     status: actionCopyStatus,
     studentDisplayName: displayName,
@@ -980,7 +977,7 @@ export default function LandlordBookingReviewPage() {
   })
   // The bond-received flow already shows its own prominent "Confirm bond received by" callout inline —
   // skip the duplicate top-of-card deadline pill for that state.
-  const actionDeadlineLabel = zone1PrimaryAction === 'bond-received' ? null : actionCopy.deadlineLabel
+  const actionDeadlineLabel = primaryActionKind === 'bond-received' ? null : actionCopy.deadlineLabel
 
   const applicantExpanded =
     applicantExpandedOverride ?? reviewLayout.applicantDefaultOpen
@@ -1172,7 +1169,7 @@ export default function LandlordBookingReviewPage() {
                 </div>
               ) : null}
 
-              {zone1PrimaryAction === 'bond-received' ? (
+              {primaryActionKind === 'bond-received' ? (
                 <div className="space-y-2">
                   {bondDeadlineLabel ? (
                     <div className="flex items-center gap-2.5 rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-3 py-2.5">
@@ -1301,7 +1298,7 @@ export default function LandlordBookingReviewPage() {
                     </button>
                   )}
                 </div>
-              ) : zone1PrimaryAction === 'mark-bond' ? (
+              ) : primaryActionKind === 'mark-bond' ? (
                 <div>
                   <button
                     type="button"
@@ -1316,7 +1313,7 @@ export default function LandlordBookingReviewPage() {
                       : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
                   </p>
                 </div>
-              ) : zone1PrimaryAction === 'accept-decline-info' ? (
+              ) : primaryActionKind === 'accept-decline-info' ? (
                 <div className="flex flex-col gap-2.5">
                   <button
                     type="button"
