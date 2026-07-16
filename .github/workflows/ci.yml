@@ -25,6 +25,11 @@ jobs:
         continue-on-error: true
         run: npm run lint
 
+      # Blocking carve-out: Rules of Hooks only. Full lint stays advisory above.
+      # Catches conditional / post-return hooks (React #310 class) before merge.
+      - name: Rules of Hooks
+        run: npm run lint:rules-of-hooks
+
       - name: Typecheck
         run: npx tsc -b --noEmit
 

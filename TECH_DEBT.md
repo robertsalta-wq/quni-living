@@ -2,7 +2,8 @@
 
 Items that are acceptable for now but must be revisited before related work ships or dependencies upgrade.
 
-- ESLint: 188 errors on clean checkout (react-hooks, unused-vars, prefer-const across src/). Lint step in CI is non-blocking until cleaned up.
+- ESLint: ~188 errors on clean checkout (exhaustive-deps, unused-vars, prefer-const, react-refresh across src/). Full `npm run lint` in CI stays non-blocking until cleaned up.
+- **Exception (blocking):** `react-hooks/rules-of-hooks` runs as its own CI step via `npm run lint:rules-of-hooks` (`eslint.rules-of-hooks.config.js`). That step must stay required — it is what stops React #310-class hook-order crashes from merging.
 
 ## DocuSeal - duplicate signature tags on official FT6600 (NSW)
 
