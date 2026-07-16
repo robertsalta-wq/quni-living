@@ -54,6 +54,7 @@ import {
 } from '../lib/landlordServiceTier'
 import { signedTenancyAgreementDownloadFilename } from '../lib/tenancy/jurisdictionCopy'
 import { landlordResponseExpiryLabel } from '../lib/booking/landlordResponseExpiry'
+import LandlordBookingMobileCard from '../components/booking/list/LandlordBookingMobileCard'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -1514,7 +1515,70 @@ export default function LandlordDashboard() {
               ) : otherBookings.length === 0 ? (
                 <p className="p-6 text-center text-xs text-gray-500">No other booking records.</p>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  <div className="flex flex-col gap-3 p-4 sm:hidden">
+                    {otherBookings.map((b) => {
+                      const verification = buildLandlordVerificationFromProfile(b.student_profiles)
+                      const isAgreementBusy = agreementActionBusyId === b.id
+                      const showAgreementFootnote =
+                        leaseDownloadErrorId === b.id && (b.status === 'confirmed' || b.status === 'active')
+                      const actions =
+                        b.status === 'confirmed' || b.status === 'active'
+                          ? [
+                              {
+                                label: isAgreementBusy
+                                  ? 'Opening…'
+                                  : b.landlord_agreement_signed_paths
+                                    ? 'Download agreement'
+                                    : 'Open agreement',
+                                variant: 'primary' as const,
+                                onClick: () => void handleLandlordAgreement(b),
+                                disabled: isAgreementBusy,
+                              },
+                              {
+                                label: 'Booking details',
+                                variant: 'secondary' as const,
+                                href: `/landlord/bookings/${b.id}/review`,
+                              },
+                            ]
+                          : [
+                              {
+                                label: 'Review request',
+                                variant: 'primary' as const,
+                                href: `/landlord/bookings/${b.id}/review`,
+                              },
+                            ]
+
+                      return (
+                        <LandlordBookingMobileCard
+                          key={b.id}
+                          studentName={studentDisplayFromBooking(b)}
+                          onStudentClick={() =>
+                            setStudentProfileModal({
+                              student: b.student_profiles,
+                              fallbackName: studentDisplayFromBooking(b),
+                              scrollToVerification: false,
+                              scrollToAiAssessment: false,
+                              sessionKey: applicantSessionKeyFromBooking(b),
+                              assessmentBookingId: b.id,
+                            })
+                          }
+                          verification={verification}
+                          propertyTitle={b.properties?.title ?? '-'}
+                          propertySuburb={b.properties?.suburb}
+                          serviceLabel={landlordServiceTierShortLabel(bookingServiceTier(b))}
+                          moveInLabel={formatDate(b.move_in_date || b.start_date)}
+                          endLabel={formatDate(b.end_date)}
+                          weeklyRent={b.weekly_rent != null ? Number(b.weekly_rent) : null}
+                          status={b.status}
+                          actions={actions}
+                          footnote={showAgreementFootnote ? 'Agreement not yet generated' : null}
+                        />
+                      )
+                    })}
+                  </div>
+
+                  <div className="hidden overflow-x-auto sm:block">
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -1628,7 +1692,8 @@ export default function LandlordDashboard() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -34,6 +34,8 @@ import {
   propertyPayoutDetailsComplete,
 } from '../lib/propertyPayoutDetails'
 import RenterBookingZones from '../components/booking/RenterBookingZones'
+import RenterBookingMobileCard from '../components/booking/list/RenterBookingMobileCard'
+import { landlordServiceTierShortLabel, parseLandlordServiceTier } from '../lib/landlordServiceTier'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -578,80 +580,101 @@ export default function StudentDashboard() {
               </Link>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="flex flex-col gap-3 sm:gap-4">
               {bookings.map((b) => {
                 const prop = b.properties
                 const slug = prop?.slug
                 const img = firstPropertyImageUrl(prop?.images ?? null)
                 const rent = b.weekly_rent ?? prop?.rent_per_week ?? null
                 const isCurrent = currentBooking?.id === b.id
+                const serviceTier =
+                  parseLandlordServiceTier(b.service_tier_final) ??
+                  parseLandlordServiceTier(b.service_tier_at_request)
+                const bookingZones = (
+                  <RenterBookingZones
+                    booking={b}
+                    property={prop}
+                    studentProfile={profile}
+                    renterDisplayName={profile ? studentDisplayName(profile) : 'Renter'}
+                    isCurrent={isCurrent}
+                    bondDownloadBusy={bondDownloadBusyId === b.id}
+                    bondDownloadError={bondDownloadErrorId === b.id}
+                    onDownloadBondReceipt={() => void downloadBondReceipt(b.id)}
+                    bondGuidance={
+                      b.status === 'bond_pending' &&
+                      b.service_tier_final === 'listing' &&
+                      prop &&
+                      profile ? (
+                        <ListingBondGuidanceForBooking
+                          booking={b}
+                          property={prop}
+                          renterDisplayName={studentDisplayName(profile)}
+                        />
+                      ) : null
+                    }
+                  />
+                )
                 return (
-                  <li
-                    key={b.id}
-                    className={`rounded-admin-lg border bg-white shadow-sm overflow-hidden ${
-                      isCurrent
-                        ? 'border-admin-line ring-2 ring-admin-coral/20'
-                        : 'border-admin-line-soft'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row gap-4 p-5">
-                      <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
-                        {img ? (
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <PropertyThumbPlaceholder />
-                        )}
+                  <li key={b.id} className="min-w-0">
+                    <div
+                      className={`flex flex-col gap-3 sm:gap-0 sm:overflow-hidden sm:rounded-admin-lg sm:border sm:bg-white sm:shadow-sm ${
+                        isCurrent
+                          ? 'sm:border-admin-line sm:ring-2 sm:ring-admin-coral/20'
+                          : 'sm:border-admin-line-soft'
+                      }`}
+                    >
+                      <div className="sm:hidden">
+                        <RenterBookingMobileCard
+                          propertyTitle={prop?.title ?? 'Property'}
+                          propertySuburb={prop?.suburb}
+                          serviceLabel={landlordServiceTierShortLabel(serviceTier)}
+                          moveInLabel={formatDate(b.start_date)}
+                          endLabel={b.end_date ? formatDate(b.end_date) : '—'}
+                          weeklyRent={rent}
+                          status={b.status}
+                          propertySlug={slug}
+                        />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          {slug ? (
-                            <Link
-                              to={`/properties/${slug}`}
-                              className="text-lg font-bold text-admin-ink hover:text-admin-coral line-clamp-2"
-                            >
-                              {prop?.title ?? 'Property'}
-                            </Link>
+
+                      <div className="hidden sm:flex flex-row gap-4 p-5">
+                        <div className="shrink-0 w-40 aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
+                          {img ? (
+                            <img src={img} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-lg font-bold text-admin-ink">{prop?.title ?? 'Property'}</span>
+                            <PropertyThumbPlaceholder />
                           )}
-                          <span
-                            className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
-                          >
-                            {tenantBookingStatusLabel(b.status)}
-                          </span>
                         </div>
-                        {prop?.suburb && <p className="text-sm text-admin-ink-5 mt-0.5">{prop.suburb}</p>}
-                        <p className="text-sm text-admin-ink-3 mt-2">
-                          <span className="text-admin-ink-5">Stay:</span>{' '}
-                          {formatDate(b.start_date)}
-                          {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
-                        </p>
-                        <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            {slug ? (
+                              <Link
+                                to={`/properties/${slug}`}
+                                className="text-lg font-bold text-admin-ink hover:text-admin-coral line-clamp-2"
+                              >
+                                {prop?.title ?? 'Property'}
+                              </Link>
+                            ) : (
+                              <span className="text-lg font-bold text-admin-ink">{prop?.title ?? 'Property'}</span>
+                            )}
+                            <span
+                              className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
+                            >
+                              {tenantBookingStatusLabel(b.status)}
+                            </span>
+                          </div>
+                          {prop?.suburb && <p className="text-sm text-admin-ink-5 mt-0.5">{prop.suburb}</p>}
+                          <p className="text-sm text-admin-ink-3 mt-2">
+                            <span className="text-admin-ink-5">Stay:</span>{' '}
+                            {formatDate(b.start_date)}
+                            {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
+                          </p>
+                          <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="border-t border-admin-line-soft">
-                      <RenterBookingZones
-                        booking={b}
-                        property={prop}
-                        studentProfile={profile}
-                        renterDisplayName={profile ? studentDisplayName(profile) : 'Renter'}
-                        isCurrent={isCurrent}
-                        bondDownloadBusy={bondDownloadBusyId === b.id}
-                        bondDownloadError={bondDownloadErrorId === b.id}
-                        onDownloadBondReceipt={() => void downloadBondReceipt(b.id)}
-                        bondGuidance={
-                          b.status === 'bond_pending' &&
-                          b.service_tier_final === 'listing' &&
-                          prop &&
-                          profile ? (
-                            <ListingBondGuidanceForBooking
-                              booking={b}
-                              property={prop}
-                              renterDisplayName={studentDisplayName(profile)}
-                            />
-                          ) : null
-                        }
-                      />
+
+                      <div className="overflow-hidden rounded-2xl border border-[#E5E4E7] bg-white shadow-sm sm:rounded-none sm:border-0 sm:border-t sm:border-admin-line-soft sm:shadow-none">
+                        {bookingZones}
+                      </div>
                     </div>
                   </li>
                 )

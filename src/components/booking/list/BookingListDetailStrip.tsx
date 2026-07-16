@@ -1,0 +1,26 @@
+type Props = {
+  moveInLabel: string
+  endLabel: string
+  weeklyRentLabel: string
+}
+
+export default function BookingListDetailStrip({ moveInLabel, endLabel, weeklyRentLabel }: Props) {
+  return (
+    <div className="border-y border-[#F0EFEA] py-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="min-w-0">
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[#908897]">Move-in → End</p>
+          <p className="mt-1 text-[13px] text-[#08060D]">
+            {moveInLabel}
+            <span className="text-[#6B6375]"> → </span>
+            {endLabel}
+          </p>
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[#908897]">Rent / wk</p>
+          <p className="mt-1 text-[13px] font-bold tabular-nums text-[#08060D]">{weeklyRentLabel}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
