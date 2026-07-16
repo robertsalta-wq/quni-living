@@ -920,6 +920,7 @@ export default function LandlordBookingReviewPage() {
     Boolean(tenancy) &&
     !tenancy?.bond_lodged_at &&
     !tenancy?.bond_lodgement_reference &&
+    booking.bond_received_by_landlord_at == null &&
     property &&
     isBondPaymentReceiptContext(property.property_type) &&
     (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
@@ -966,8 +967,8 @@ export default function LandlordBookingReviewPage() {
   const canReplyInThread = Boolean(canDeclineOrInfo)
 
   // Action-card copy by status (pure model, HTML SoT §6/§11/§17). The one override: when the boarding/homestay
-  // "mark bond as received" CTA is showing (confirmed/active/completed with bond still outstanding), the actual
-  // actionable thing is confirming the bond, not the status' default copy — so we borrow bond_pending's copy.
+  // "mark bond as received" CTA is showing (confirmed/active/completed and bond_received_by_landlord_at still null),
+  // the actionable thing is confirming the bond, not the status' default copy — so we borrow bond_pending's copy.
   const actionCopyStatus = primaryActionKind === 'mark-bond' ? 'bond_pending' : booking.status
   const actionCopy = resolveLandlordBookingReviewActionCopy({
     status: actionCopyStatus,
