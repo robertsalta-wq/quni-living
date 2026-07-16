@@ -4,7 +4,6 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
 import DashboardPageSkeleton from '../components/DashboardPageSkeleton'
 import type { Database } from '../lib/database.types'
-import { isRoomType, ROOM_TYPE_LABELS } from '../lib/listings'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
 import { formatDate } from './admin/adminUi'
@@ -31,23 +30,20 @@ import { startLandlordStripeConnect } from '../lib/startLandlordStripeConnect'
 import QaseSubmitModal from '../components/qase/QaseSubmitModal'
 import LandlordDuplicateListingModal from '../components/landlord/LandlordDuplicateListingModal'
 import LandlordListingPaymentModal from '../components/landlord/LandlordListingPaymentModal'
-import LandlordPropertyListingActions from '../components/landlord/LandlordPropertyListingActions'
+import LandlordListingsGroupedPanel from '../components/landlord/listings/LandlordListingsGroupedPanel'
 import LandlordTenantInviteModal from '../components/landlord/LandlordTenantInviteModal'
 import LandlordDashboardProfileTab from '../components/landlord/LandlordDashboardProfileTab'
 import { useLandlordPropertyListingActions } from '../hooks/useLandlordPropertyListingActions'
 import { useConversationInbox } from '../hooks/useConversationInbox'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
-import { listingStatusClass, listingStatusLabel } from '../lib/landlordListingStatus'
 import LandlordDashboardPageHeader, {
   landlordDashboardPageInsetClass,
 } from '../components/landlord/LandlordDashboardPageHeader'
-import { firstPropertyImageUrl } from '../lib/propertyImages'
 import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
 } from '../lib/landlordListingBilling'
 import {
-  landlordServiceTierDescription,
   landlordServiceTierShortLabel,
   landlordServiceTierTitle,
   parseLandlordServiceTier,
@@ -68,6 +64,7 @@ type PropertySummary = Pick<
   | 'rent_per_week'
   | 'room_type'
   | 'suburb'
+  | 'address'
   | 'images'
   | 'status'
   | 'featured'
@@ -79,6 +76,9 @@ type PropertySummary = Pick<
   | 'couple_surcharge_per_week'
   | 'parking_surcharge_per_week'
   | 'parking_available'
+  | 'property_type'
+  | 'property_group_id'
+  | 'bedrooms'
 >
 
 /** Signed agreement objects in Storage (`tenancy-documents` bucket), from `tenancy_documents` after signing. */
@@ -633,7 +633,7 @@ export default function LandlordDashboard() {
       const [propRes, bookRes] = await Promise.all([
         supabase
           .from('properties')
-          .select('id, title, slug, rent_per_week, room_type, suburb, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available')
+          .select('id, title, slug, rent_per_week, room_type, suburb, address, images, status, featured, created_at, service_tier, authority_to_let_attested_at, open_to_non_students, max_occupants, couple_surcharge_per_week, parking_surcharge_per_week, parking_available, property_type, property_group_id, bedrooms')
           .eq('landlord_id', prof.id)
           .order('created_at', { ascending: false }),
         supabase.from('bookings').select('*').eq('landlord_id', prof.id).order('created_at', { ascending: false }),
@@ -1181,155 +1181,68 @@ export default function LandlordDashboard() {
         ) : null}
 
         {tab === 'listings' && (
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-6">
-              {canCreateListing ? (
-                <Link
-                  to="/landlord/property/new"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm shrink-0"
-                >
-                  Add new listing
-                </Link>
-              ) : (
-                <Link
-                  to={firstIncomplete?.href ?? landlordDashboardProfilePath()}
-                  className="inline-flex items-center justify-center rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-700 px-5 py-2.5 text-sm font-medium hover:bg-stone-50 shadow-sm shrink-0"
-                  title={firstIncomplete?.label ?? 'Complete your account setup to add listings'}
-                >
-                  Add new listing
-                </Link>
-              )}
-            </div>
-            {dataLoading && properties.length === 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-label="Loading listings">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm animate-pulse">
-                    <div className="aspect-[4/3] bg-gray-200" />
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 w-3/4 rounded bg-gray-200" />
-                      <div className="h-3 w-1/2 rounded bg-gray-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : properties.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
-                <p className="text-gray-600 text-sm mb-4">You haven&apos;t listed any properties yet.</p>
-                {canCreateListing ? (
-                  <Link
-                    to="/landlord/property/new"
-                    className="inline-flex rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52]"
-                  >
-                    Add new listing
-                  </Link>
-                ) : (
-                  <Link
-                    to={firstIncomplete?.href ?? landlordDashboardProfilePath()}
-                    className="inline-flex rounded-xl border-2 border-stone-300 bg-stone-100 text-stone-800 px-5 py-2.5 text-sm font-medium hover:bg-stone-50"
-                  >
-                    Complete setup to add a listing
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((p) => {
-                  const image = firstPropertyImageUrl(p.images)
-                  const roomLabel =
-                    p.room_type && isRoomType(p.room_type) ? ROOM_TYPE_LABELS[p.room_type] : null
-                  return (
-                    <div
-                      key={p.id}
-                      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col"
-                    >
-                      <div className="relative h-48 bg-gray-100 overflow-hidden">
-                        {image ? (
-                          <img src={image} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1}
-                                d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                        {p.featured && (
-                          <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-medium px-2 py-1 rounded-full">
-                            Featured
-                          </span>
-                        )}
-                        <span
-                          className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${listingStatusClass(p.status)}`}
-                        >
-                          {listingStatusLabel(p.status)}
-                        </span>
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <div className="flex items-baseline justify-between mb-1 gap-2">
-                          <span className="text-xl font-bold text-gray-900">
-                            ${Number(p.rent_per_week).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            <span className="text-sm font-normal text-gray-500"> /wk</span>
-                          </span>
-                          {roomLabel && (
-                            <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium shrink-0">
-                              {roomLabel}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">
-                          {p.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mb-4">{p.suburb ?? 'Location TBC'}</p>
-                        <div
-                          className={`mb-4 rounded-xl border px-3 py-2 ${
-                            parseLandlordServiceTier(p.service_tier) === 'listing'
-                              ? 'border-stone-200 bg-stone-50'
-                              : 'border-[#FF6F61]/15 bg-[#FF6F61]/5'
-                          }`}
-                        >
-                          <p className="text-xs font-semibold text-gray-900">
-                            {landlordServiceTierTitle(parseLandlordServiceTier(p.service_tier))}
-                          </p>
-                          <p className="mt-0.5 text-[11px] leading-snug text-gray-600">
-                            {landlordServiceTierDescription(parseLandlordServiceTier(p.service_tier))}
-                          </p>
-                        </div>
-                        <LandlordPropertyListingActions
-                          property={p}
-                          publishingListingId={publishingListingId}
-                          duplicatingListingId={duplicatingListingId}
-                          updatingListingId={updatingListingId}
-                          onPublish={publishDraftListing}
-                          onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
-                          onToggle={togglePropertyStatus}
-                          canInviteTenant={
-                            p.status === 'active' && parseLandlordServiceTier(p.service_tier) === 'listing'
-                          }
-                          onInviteTenant={(prop) =>
-                            openInviteModal({
-                              id: prop.id,
-                              title: prop.title,
-                              slug: prop.slug,
-                              open_to_non_students: prop.open_to_non_students,
-                              rent_per_week: prop.rent_per_week,
-                              max_occupants: prop.max_occupants,
-                              couple_surcharge_per_week: prop.couple_surcharge_per_week,
-                              parking_surcharge_per_week: prop.parking_surcharge_per_week,
-                              parking_available: prop.parking_available,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          <LandlordListingsGroupedPanel
+            listings={properties}
+            bookings={bookings.map((b) => ({ property_id: b.property_id, status: b.status }))}
+            dataLoading={dataLoading}
+            canCreateListing={canCreateListing}
+            createListingHref="/landlord/property/new"
+            setupHref={firstIncomplete?.href ?? landlordDashboardProfilePath()}
+            setupLabel={firstIncomplete?.label ?? 'Complete your account setup to add listings'}
+            publishingListingId={publishingListingId}
+            duplicatingListingId={duplicatingListingId}
+            updatingListingId={updatingListingId}
+            onPublish={publishDraftListing}
+            onDuplicateClick={(prop) => setDuplicateConfirmProperty({ id: prop.id, title: prop.title })}
+            onToggle={togglePropertyStatus}
+            onDeleteDraft={(listing) => {
+              if (!window.confirm(`Delete draft “${listing.title}”? This cannot be undone.`)) return
+              void (async () => {
+                try {
+                  const { error } = await supabase.from('properties').delete().eq('id', listing.id)
+                  if (error) throw error
+                  await load()
+                  showToast({ kind: 'success', message: 'Draft listing deleted.' })
+                } catch (e) {
+                  showToast({ kind: 'error', message: messageFromSupabaseError(e) })
+                }
+              })()
+            }}
+            onInviteTenant={(listing) => {
+              const full = properties.find((p) => p.id === listing.id)
+              if (!full) return
+              if (full.status !== 'active' || parseLandlordServiceTier(full.service_tier) !== 'listing') return
+              openInviteModal({
+                id: full.id,
+                title: full.title,
+                slug: full.slug,
+                open_to_non_students: full.open_to_non_students,
+                rent_per_week: full.rent_per_week,
+                max_occupants: full.max_occupants,
+                couple_surcharge_per_week: full.couple_surcharge_per_week,
+                parking_surcharge_per_week: full.parking_surcharge_per_week,
+                parking_available: full.parking_available,
+              })
+            }}
+            toActionListing={(listing) => {
+              const full = properties.find((p) => p.id === listing.id)
+              if (full) return full
+              return {
+                id: listing.id,
+                title: listing.title,
+                slug: listing.slug,
+                status: listing.status,
+                authority_to_let_attested_at: null,
+                service_tier: 'listing',
+                open_to_non_students: false,
+                rent_per_week: listing.rent_per_week ?? 0,
+                max_occupants: 1,
+                couple_surcharge_per_week: null,
+                parking_surcharge_per_week: null,
+                parking_available: false,
+              }
+            }}
+          />
         )}
 
         {tab === 'bookings' && (
