@@ -530,6 +530,24 @@ export async function syncFullySignedDocusealSubmission(args: {
 
   await emitSyncEvents(signedPath)
 
+  // Listing: confirmed → active when bond + signature both done (order-independent).
+  // Soft-fail — do not break webhook / reconcile if advance fails.
+  try {
+    if (docRow.tenancy_id) {
+      const bookingIds = await loadBookingIdsForTenancy(admin, docRow.tenancy_id)
+      if (bookingIds?.bookingId) {
+        const { maybeAdvanceListingBookingToActive } = await import(
+          '../booking/maybeAdvanceListingBookingToActive.js'
+        )
+        await maybeAdvanceListingBookingToActive(admin, bookingIds.bookingId, {
+          assumeLeaseFullySigned: true,
+        })
+      }
+    }
+  } catch (advErr) {
+    console.warn('[syncFullySignedDocusealSubmission] maybeAdvanceListingBookingToActive', advErr)
+  }
+
   return {
     fullySigned,
     signedPath,
