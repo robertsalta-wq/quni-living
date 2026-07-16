@@ -616,65 +616,65 @@ export default function StudentDashboard() {
                 )
                 return (
                   <li key={b.id} className="min-w-0">
-                    <div className="flex flex-col gap-3 sm:hidden">
-                      <RenterBookingMobileCard
-                        propertyTitle={prop?.title ?? 'Property'}
-                        propertySuburb={prop?.suburb}
-                        serviceLabel={landlordServiceTierShortLabel(serviceTier)}
-                        moveInLabel={formatDate(b.start_date)}
-                        endLabel={b.end_date ? formatDate(b.end_date) : '—'}
-                        weeklyRent={rent}
-                        status={b.status}
-                        propertySlug={slug}
-                      />
-                      <div className="overflow-hidden rounded-2xl border border-[#E5E4E7] bg-white shadow-sm">
-                        {bookingZones}
-                      </div>
-                    </div>
-
                     <div
-                      className={`hidden overflow-hidden rounded-admin-lg border bg-white shadow-sm sm:block ${
+                      className={`flex flex-col gap-3 sm:gap-0 sm:overflow-hidden sm:rounded-admin-lg sm:border sm:bg-white sm:shadow-sm ${
                         isCurrent
-                          ? 'border-admin-line ring-2 ring-admin-coral/20'
-                          : 'border-admin-line-soft'
+                          ? 'sm:border-admin-line sm:ring-2 sm:ring-admin-coral/20'
+                          : 'sm:border-admin-line-soft'
                       }`}
                     >
-                    <div className="flex flex-col sm:flex-row gap-4 p-5">
-                      <div className="shrink-0 w-full sm:w-40 aspect-[4/3] sm:aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
-                        {img ? (
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <PropertyThumbPlaceholder />
-                        )}
+                      <div className="sm:hidden">
+                        <RenterBookingMobileCard
+                          propertyTitle={prop?.title ?? 'Property'}
+                          propertySuburb={prop?.suburb}
+                          serviceLabel={landlordServiceTierShortLabel(serviceTier)}
+                          moveInLabel={formatDate(b.start_date)}
+                          endLabel={b.end_date ? formatDate(b.end_date) : '—'}
+                          weeklyRent={rent}
+                          status={b.status}
+                          propertySlug={slug}
+                        />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          {slug ? (
-                            <Link
-                              to={`/properties/${slug}`}
-                              className="text-lg font-bold text-admin-ink hover:text-admin-coral line-clamp-2"
-                            >
-                              {prop?.title ?? 'Property'}
-                            </Link>
+
+                      <div className="hidden sm:flex flex-row gap-4 p-5">
+                        <div className="shrink-0 w-40 aspect-square rounded-admin-md overflow-hidden border border-admin-line-soft bg-admin-surface-3">
+                          {img ? (
+                            <img src={img} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-lg font-bold text-admin-ink">{prop?.title ?? 'Property'}</span>
+                            <PropertyThumbPlaceholder />
                           )}
-                          <span
-                            className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
-                          >
-                            {tenantBookingStatusLabel(b.status)}
-                          </span>
                         </div>
-                        {prop?.suburb && <p className="text-sm text-admin-ink-5 mt-0.5">{prop.suburb}</p>}
-                        <p className="text-sm text-admin-ink-3 mt-2">
-                          <span className="text-admin-ink-5">Stay:</span>{' '}
-                          {formatDate(b.start_date)}
-                          {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
-                        </p>
-                        <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            {slug ? (
+                              <Link
+                                to={`/properties/${slug}`}
+                                className="text-lg font-bold text-admin-ink hover:text-admin-coral line-clamp-2"
+                              >
+                                {prop?.title ?? 'Property'}
+                              </Link>
+                            ) : (
+                              <span className="text-lg font-bold text-admin-ink">{prop?.title ?? 'Property'}</span>
+                            )}
+                            <span
+                              className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${bookingStatusClass(b.status)}`}
+                            >
+                              {tenantBookingStatusLabel(b.status)}
+                            </span>
+                          </div>
+                          {prop?.suburb && <p className="text-sm text-admin-ink-5 mt-0.5">{prop.suburb}</p>}
+                          <p className="text-sm text-admin-ink-3 mt-2">
+                            <span className="text-admin-ink-5">Stay:</span>{' '}
+                            {formatDate(b.start_date)}
+                            {b.end_date ? ` → ${formatDate(b.end_date)}` : ''}
+                          </p>
+                          <p className="text-base font-bold text-admin-ink mt-1">{formatWeeklyRent(rent)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="border-t border-admin-line-soft">{bookingZones}</div>
+
+                      <div className="overflow-hidden rounded-2xl border border-[#E5E4E7] bg-white shadow-sm sm:rounded-none sm:border-0 sm:border-t sm:border-admin-line-soft sm:shadow-none">
+                        {bookingZones}
+                      </div>
                     </div>
                   </li>
                 )
