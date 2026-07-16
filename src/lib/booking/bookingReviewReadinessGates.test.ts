@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { landlordBookingConfirmBlockedUserMessage } from '../landlordBookingConfirmGate'
 import {
+  bookingReviewHasNonGateBlocker,
   bookingReviewReadinessAllClear,
   bookingReviewReadinessHint,
+  bookingReviewShowReadyRibbon,
   resolveBookingReviewReadinessGates,
   type BookingReviewReadinessGatesInput,
 } from './bookingReviewReadinessGates'
@@ -114,5 +117,29 @@ describe('resolveBookingReviewReadinessGates', () => {
       baseInput({ stripeChargesEnabled: false, adminOverrideVerified: true }),
     )
     expect(gates.find((g) => g.id === 'host_identity')?.state).toBe('done')
+  })
+
+  it('module-disabled with all gates clear must not show the ready ribbon; surface the specific block message', () => {
+    // Gates can be all clear while Listing is globally paused (no user-fixable gate).
+    const gates = resolveBookingReviewReadinessGates(
+      baseInput({
+        stripeChargesEnabled: true,
+        listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
+      }),
+    )
+    expect(bookingReviewReadinessAllClear(gates)).toBe(true)
+    // canConfirm is false when module is paused — ribbon must stay off.
+    expect(bookingReviewShowReadyRibbon({ readinessAllClear: true, canConfirm: false })).toBe(false)
+    expect(bookingReviewHasNonGateBlocker({ readinessAllClear: true, canConfirm: false })).toBe(true)
+    expect(landlordBookingConfirmBlockedUserMessage('listing_module_disabled', 'pending_confirmation')).toBe(
+      'Listing bookings are temporarily paused. Try again in a few minutes.',
+    )
+  })
+
+  it('billing-unavailable with all gates clear must not show the ready ribbon; surface the specific block message', () => {
+    expect(bookingReviewShowReadyRibbon({ readinessAllClear: true, canConfirm: false })).toBe(false)
+    expect(landlordBookingConfirmBlockedUserMessage('listing_billing_unavailable', 'pending_confirmation')).toBe(
+      'Could not verify Listing billing. Refresh this page and try again.',
+    )
   })
 })

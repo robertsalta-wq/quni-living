@@ -180,3 +180,22 @@ export function bookingReviewReadinessHint(gates: BookingReviewReadinessGate[]):
   const current = gates.find((g) => g.state === 'current')
   return current ? `${current.label} to unlock accepting this request.` : null
 }
+
+/**
+ * Green ready ribbon only when gates are clear AND Accept is actually allowed.
+ * Non-gate blockers (module paused / billing unavailable) must not show the ribbon.
+ */
+export function bookingReviewShowReadyRibbon(args: {
+  readinessAllClear: boolean
+  canConfirm: boolean
+}): boolean {
+  return args.readinessAllClear && args.canConfirm
+}
+
+/** True when gates look done but Accept is still blocked by a non-gate reason. */
+export function bookingReviewHasNonGateBlocker(args: {
+  readinessAllClear: boolean
+  canConfirm: boolean
+}): boolean {
+  return args.readinessAllClear && !args.canConfirm
+}

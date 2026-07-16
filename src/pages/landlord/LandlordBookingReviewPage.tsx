@@ -18,7 +18,11 @@ import { isBondPaymentReceiptContext } from '../../lib/listings'
 import { parseQldBondRemittancePreference } from '../../lib/tenancy/qldBondRemittance'
 import QldRtaLodgementGuidance from '../../components/bond/QldRtaLodgementGuidance'
 import { apiUrl } from '../../lib/apiUrl'
-import { landlordBookingConfirmAllowed, landlordBookingConfirmBlockedBanner } from '../../lib/landlordBookingConfirmGate'
+import {
+  landlordBookingConfirmAllowed,
+  landlordBookingConfirmBlockedBanner,
+  landlordBookingConfirmBlockedUserMessage,
+} from '../../lib/landlordBookingConfirmGate'
 import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
@@ -51,6 +55,8 @@ import {
   resolveBookingReviewReadinessGates,
   bookingReviewReadinessAllClear,
   bookingReviewReadinessHint,
+  bookingReviewShowReadyRibbon,
+  bookingReviewHasNonGateBlocker,
   type BookingReviewReadinessGate as BookingReadinessGateDef,
 } from '../../lib/booking/bookingReviewReadinessGates'
 import { resolveListingBondAud } from '../../lib/booking/resolveBookingBondAmount'
@@ -835,7 +841,15 @@ export default function LandlordBookingReviewPage() {
   const readinessAllClear = readinessGates.length > 0 && bookingReviewReadinessAllClear(readinessGates)
   const readinessHint = bookingReviewReadinessHint(readinessGates)
   const showReadinessDriver = booking.status === 'pending_confirmation' && readinessGates.length > 0 && !readinessAllClear
-  const showReadinessReady = booking.status === 'pending_confirmation' && readinessAllClear
+  // Non-gate blockers (module paused / billing unavailable) keep Accept off — never show the green ribbon then.
+  const showReadinessReady =
+    booking.status === 'pending_confirmation' &&
+    bookingReviewShowReadyRibbon({ readinessAllClear, canConfirm })
+  const readinessNonGateBlockMessage =
+    booking.status === 'pending_confirmation' &&
+    bookingReviewHasNonGateBlocker({ readinessAllClear, canConfirm })
+      ? landlordBookingConfirmBlockedUserMessage(confirmBlockedBanner, booking.status, property ?? undefined)
+      : null
   const readinessUiGates: BookingReadinessGate[] = readinessGates.map((g) => ({
     id: g.id,
     label: g.label,
@@ -994,11 +1008,16 @@ export default function LandlordBookingReviewPage() {
                 )}
 
                 {booking.status === 'pending_confirmation' ? (
-                  <div id="confirm-requirements" className="scroll-mt-4">
+                  <div id="confirm-requirements" className="scroll-mt-4 space-y-3">
                     {showReadinessDriver ? (
                       <BookingReadinessDriver gates={readinessUiGates} hint={readinessHint ?? undefined} />
                     ) : null}
                     {showReadinessReady ? <BookingReadinessReadyRibbon /> : null}
+                    {readinessNonGateBlockMessage ? (
+                      <p className="m-0 text-[13px] leading-snug text-admin-warning-fg" role="status">
+                        {readinessNonGateBlockMessage}
+                      </p>
+                    ) : null}
                   </div>
                 ) : (
                   <>
@@ -1282,7 +1301,7 @@ export default function LandlordBookingReviewPage() {
                       'Accept as Quni Managed'
                     )}
                   </button>
-                  {!canConfirm && !actionBusy ? (
+                  {!canConfirm && !actionBusy && showReadinessDriver ? (
                     <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
                   ) : null}
                   <button
