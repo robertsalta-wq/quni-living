@@ -205,6 +205,121 @@ export async function waitForStudentProfileDocUrl(
   )
 }
 
+/** Confirmed landlord with a profile row (admin Auth API + profile bootstrap). */
+export async function createConfirmedLandlord(
+  admin: SupabaseClient,
+  email: string,
+  password: string,
+  fullName = 'E2E Landlord',
+): Promise<string> {
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      role: 'landlord',
+    },
+  })
+  if (error) throw error
+  if (!data.user?.id) throw new Error('createUser returned no user id')
+  const userId = data.user.id
+
+  const { error: profileErr } = await admin.from('landlord_profiles').upsert(
+    {
+      user_id: userId,
+      email,
+      full_name: fullName,
+      first_name: 'E2E',
+      last_name: 'Landlord',
+      phone: '0411111111',
+      bio: 'E2E landlord profile for booking review smoke.',
+      onboarding_complete: true,
+      terms_accepted_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  )
+  if (profileErr) throw profileErr
+  return userId
+}
+
+export async function getLandlordProfileId(admin: SupabaseClient, userId: string): Promise<string> {
+  const { data, error } = await admin
+    .from('landlord_profiles')
+    .select('id')
+    .eq('user_id', userId)
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+/**
+ * Fake verification doc URLs so student-dashboard bookings tab is unlocked
+ * (ProtectedRoute requireStudentListingActions) without UI uploads.
+ */
+export async function seedStudentVerificationDocsForUnlock(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  const now = new Date().toISOString()
+  const { error } = await admin
+    .from('student_profiles')
+    .update({
+      id_document_url: `e2e/${userId}/id-document.pdf`,
+      id_submitted_at: now,
+      enrolment_doc_url: `e2e/${userId}/enrolment.pdf`,
+      enrolment_submitted_at: now,
+      identity_supporting_doc_url: `e2e/${userId}/identity-supporting.pdf`,
+      identity_supporting_submitted_at: now,
+      verification_type: 'student',
+    })
+    .eq('user_id', userId)
+  if (error) throw error
+}
+
+export type ReviewSmokeBookingStatus = 'pending_confirmation' | 'bond_pending'
+
+/** Minimal booking owned by the test landlord, attached to an existing listing property. */
+export async function insertReviewSmokeBooking(
+  admin: SupabaseClient,
+  args: {
+    propertyId: string
+    studentProfileId: string
+    landlordProfileId: string
+    status: ReviewSmokeBookingStatus
+  },
+): Promise<string> {
+  const start = new Date()
+  start.setUTCDate(start.getUTCDate() + 21)
+  const startDate = start.toISOString().slice(0, 10)
+
+  const row: Record<string, unknown> = {
+    property_id: args.propertyId,
+    student_id: args.studentProfileId,
+    landlord_id: args.landlordProfileId,
+    start_date: startDate,
+    move_in_date: startDate,
+    weekly_rent: 250,
+    status: args.status,
+    student_message: 'E2E booking review smoke message',
+    lease_length: '6 months',
+    service_tier_at_request: 'listing',
+    occupant_count: 1,
+    parking_selected: false,
+  }
+
+  if (args.status === 'bond_pending') {
+    row.service_tier_final = 'listing'
+    row.confirmed_at = new Date().toISOString()
+    row.bond_window_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  }
+
+  const { data, error } = await admin.from('bookings').insert(row).select('id').single()
+  if (error) throw error
+  if (!data?.id) throw new Error('insertReviewSmokeBooking returned no id')
+  return data.id
+}
+
 export async function findActiveListingPropertyId(admin: SupabaseClient): Promise<string> {
   const { data: properties, error: propErr } = await admin
     .from('properties')

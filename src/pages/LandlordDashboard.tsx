@@ -1026,7 +1026,7 @@ export default function LandlordDashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 max-sm:pb-0 pb-16">
       {welcomeToast ? (
         <div
           className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"

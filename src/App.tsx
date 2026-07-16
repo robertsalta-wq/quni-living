@@ -10,13 +10,16 @@ import NativePushNotificationsInitializer from './components/NativePushNotificat
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import PageRouteFallback from './components/PageRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
+import LandlordMobileBottomNav from './components/landlord/LandlordMobileBottomNav'
 import Home from './pages/Home'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
 import AIChatWidget from './components/aiChat/AIChatWidget'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
+import { useAuthContext } from './context/AuthContext'
 import { isFocusFormFlowPath } from './lib/site'
+import { isLandlordDashboardChromePath } from './lib/landlordMobileChrome'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
@@ -35,6 +38,7 @@ function AdminPropertyFeesDeepLinkRedirect() {
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { role } = useAuthContext()
 
   useLayoutEffect(() => {
     const authRedirect = apexAuthTokenRedirectPath(location.pathname, location.search)
@@ -49,6 +53,8 @@ function App() {
   const aiLandingShell = location.pathname === '/landlords/ai'
   const showPublicChrome = !adminShell && !aiLandingShell
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
+  const landlordMobileAppShell =
+    role === 'landlord' && isLandlordDashboardChromePath(location.pathname)
 
   return (
       <BookingFlowChromeProvider>
@@ -56,13 +62,23 @@ function App() {
         <ScrollToTop />
         <NativePushNotificationsInitializer />
         <SeoPrivateRoutes />
+        <div
+          className={
+            landlordMobileAppShell
+              ? 'flex min-h-0 w-full flex-1 flex-col max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:overflow-hidden'
+              : 'flex min-h-0 w-full flex-1 flex-col'
+          }
+        >
         {showPublicChrome && <Header />}
         <main
           className={
             showPublicChrome
-              ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:pt-main-below-fixed-header md:pt-0'
+              ? landlordMobileAppShell
+                ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain sm:max-md:pt-main-below-fixed-header md:pt-0'
+                : 'flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:pt-main-below-fixed-header md:pt-0'
               : 'flex min-h-0 w-full min-w-0 flex-1 flex-col'
           }
+          data-landlord-mobile-scroll={landlordMobileAppShell ? '' : undefined}
         >
           {showPublicChrome && <OnboardingResumeBanner />}
           <Routes>
@@ -288,9 +304,19 @@ function App() {
           </Route>
           </Routes>
         </main>
-        {showPublicChrome && !hideFooterForFormFlow && <Footer />}
+        {landlordMobileAppShell ? <LandlordMobileBottomNav /> : null}
+        {showPublicChrome && !hideFooterForFormFlow && (
+          landlordMobileAppShell ? (
+            <div className="hidden sm:block">
+              <Footer />
+            </div>
+          ) : (
+            <Footer />
+          )
+        )}
         {showPublicChrome && hideFooterForFormFlow && <FocusFormLegalStrip />}
         <AIChatWidget />
+        </div>
         </>
       </BookingFlowChromeProvider>
   )
