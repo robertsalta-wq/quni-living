@@ -741,6 +741,32 @@ export default function LandlordBookingReviewPage() {
     }
   }, [bookingId, listingCancelReason, reload])
 
+  // Hooks must stay above loading/error early returns — otherwise React #310 when data arrives.
+  const chatThread = useMemo(
+    () =>
+      buildBookingReviewChatThread({
+        viewerRole: 'landlord',
+        introMessage: data?.booking?.student_message,
+        introCreatedAt: data?.booking?.created_at,
+        otherPartyName: displayName,
+        messages: data?.messages ?? [],
+      }),
+    [data?.booking?.student_message, data?.booking?.created_at, data?.messages, displayName],
+  )
+
+  const openMessagesSection = useCallback(() => {
+    setMessagesExpandedOverride(true)
+    requestAnimationFrame(() => {
+      document.getElementById('review-messages')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
+  const scrollToAgreement = useCallback(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('tenancy-agreement-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
+
   if (!bookingId) {
     return (
       <div className="max-w-site mx-auto px-4 py-10 text-sm text-admin-ink-4">
@@ -937,32 +963,7 @@ export default function LandlordBookingReviewPage() {
 
   const awaitingInfoQuestion = resolveLandlordAwaitingInfoQuestion(messages)
 
-  const chatThread = useMemo(
-    () =>
-      buildBookingReviewChatThread({
-        viewerRole: 'landlord',
-        introMessage: booking.student_message,
-        introCreatedAt: booking.created_at,
-        otherPartyName: displayName,
-        messages,
-      }),
-    [booking.student_message, booking.created_at, messages, displayName],
-  )
-
   const canReplyInThread = Boolean(canDeclineOrInfo)
-
-  const openMessagesSection = useCallback(() => {
-    setMessagesExpandedOverride(true)
-    requestAnimationFrame(() => {
-      document.getElementById('review-messages')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [])
-
-  const scrollToAgreement = useCallback(() => {
-    requestAnimationFrame(() => {
-      document.getElementById('tenancy-agreement-preview')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [])
 
   // Action-card copy by status (pure model, HTML SoT §6/§11/§17). The one override: when the boarding/homestay
   // "mark bond as received" CTA is showing (confirmed/active/completed with bond still outstanding), the actual
