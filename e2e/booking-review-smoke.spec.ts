@@ -128,7 +128,9 @@ test.describe('booking review render smoke', () => {
       await page.goto('/student-dashboard?tab=bookings')
 
       const bookings = page.getByRole('region', { name: 'Your bookings' })
-      await expect(bookings.getByRole('heading', { name: renterTitle })).toBeVisible({ timeout: 60_000 })
+      await expect(bookings.getByRole('heading', { level: 1, name: renterTitle })).toBeVisible({
+        timeout: 60_000,
+      })
       await assertNoAppErrorBoundary(page)
       await expect(page.getByText('E2E booking review smoke message')).toBeVisible()
     })
