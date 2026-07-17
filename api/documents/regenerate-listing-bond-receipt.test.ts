@@ -42,6 +42,37 @@ import { generateAndPersistListingBondReceipt } from './listingBondReceipt.js'
 import { sendListingBondReceivedEmails } from '../lib/booking/listingTransactionalEmails.js'
 import handler from './regenerate-listing-bond-receipt.js'
 
+function mockRes() {
+  const res: {
+    statusCode: number
+    body: unknown
+    headers: Record<string, string>
+    status: (n: number) => typeof res
+    json: (b: unknown) => typeof res
+    setHeader: (k: string, v: string) => void
+    end: () => typeof res
+  } = {
+    statusCode: 200,
+    body: null,
+    headers: {},
+    status(n: number) {
+      this.statusCode = n
+      return this
+    },
+    json(b: unknown) {
+      this.body = b
+      return this
+    },
+    setHeader(k: string, v: string) {
+      this.headers[k] = v
+    },
+    end() {
+      return this
+    },
+  }
+  return res
+}
+
 describe('POST /api/documents/regenerate-listing-bond-receipt', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -62,19 +93,20 @@ describe('POST /api/documents/regenerate-listing-bond-receipt', () => {
       receiptNumber: 'QR-2026-TEN1',
     })
 
-    const req = new Request('https://quni.com.au/api/documents/regenerate-listing-bond-receipt', {
+    const req = {
       method: 'POST',
-      headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+      body: {
         bookingId: '771acf77-0000-4000-8000-000000000001',
         force: true,
         reEmail: true,
-      }),
-    })
+      },
+    }
+    const res = mockRes()
 
-    const res = await handler(req)
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as Record<string, unknown>
+    await handler(req, res)
+    expect(res.statusCode).toBe(200)
+    const body = res.body as Record<string, unknown>
     expect(body.ok).toBe(true)
     expect(body.status).toBe('created')
     expect(body.emailed).toBe(true)
@@ -98,18 +130,19 @@ describe('POST /api/documents/regenerate-listing-bond-receipt', () => {
       documentId: 'doc-existing',
     })
 
-    const req = new Request('https://quni.com.au/api/documents/regenerate-listing-bond-receipt', {
+    const req = {
       method: 'POST',
-      headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+      body: {
         bookingId: '771acf77-0000-4000-8000-000000000001',
         force: false,
-      }),
-    })
+      },
+    }
+    const res = mockRes()
 
-    const res = await handler(req)
-    expect(res.status).toBe(200)
-    const body = (await res.json()) as Record<string, unknown>
+    await handler(req, res)
+    expect(res.statusCode).toBe(200)
+    const body = res.body as Record<string, unknown>
     expect(body.status).toBe('skipped_exists')
     expect(sendListingBondReceivedEmails).not.toHaveBeenCalled()
   })
