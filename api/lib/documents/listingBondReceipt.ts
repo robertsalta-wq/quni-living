@@ -13,7 +13,7 @@ import { tenantLegalNameForDocuments } from '../booking/tenantLegalNameForDocume
 
 export type ListingBondReceiptGenResult =
   | {
-      status: 'created'
+      status: 'created' | 'overwritten'
       documentId: string
       filePath: string
       pdfBase64: string
@@ -68,7 +68,8 @@ function ymdFromIsoOrToday(iso: string | null | undefined): string {
 }
 
 /**
- * Idempotent: if a bond_receipt row already exists, returns skipped_exists.
+ * Idempotent by default: if a bond_receipt row already exists, returns skipped_exists.
+ * Pass `force: true` to overwrite storage + update the existing row (admin backfill).
  * Soft failures return skipped with a reason (never throws).
  */
 export async function generateAndPersistListingBondReceipt(args: {
@@ -76,9 +77,11 @@ export async function generateAndPersistListingBondReceipt(args: {
   bookingId: string
   /** Optional auth user id for generated_by */
   generatedByUserId?: string | null
+  /** When true, regenerate PDF and update existing bond_receipt row instead of skipping. */
+  force?: boolean
   logger?: Pick<Console, 'warn'>
 }): Promise<ListingBondReceiptGenResult> {
-  const { admin, bookingId, generatedByUserId, logger } = args
+  const { admin, bookingId, generatedByUserId, force = false, logger } = args
 
   try {
     const { data: tenancy, error: tErr } = await admin
@@ -106,13 +109,13 @@ export async function generateAndPersistListingBondReceipt(args: {
       warn(logger, '[listing-bond-receipt] check existing', existErr)
       return { status: 'skipped', reason: 'existing_check_error' }
     }
-    if (existingDoc?.id) {
+    if (existingDoc?.id && !force) {
       return { status: 'skipped_exists', documentId: existingDoc.id }
     }
 
     const { data: booking, error: bErr } = await admin
       .from('bookings')
-      .select('bond_amount, weekly_rent, bond_received_by_landlord_at')
+      .select('bond_amount, weekly_rent, bond_received_by_landlord_at, service_tier_final')
       .eq('id', bookingId)
       .maybeSingle()
 
@@ -209,6 +212,45 @@ export async function generateAndPersistListingBondReceipt(args: {
       return { status: 'skipped', reason: 'storage_upload_error' }
     }
 
+    const metadata = {
+      payment_method: 'Other',
+      notes: 'Landlord confirmed bond received on Quni',
+      amount_received: amount,
+      receipt_variant: 'listing_residential',
+      receipt_number: receiptNumber,
+      ...(force && existingDoc?.id
+        ? { regenerated_at: new Date().toISOString(), admin_force: true }
+        : {}),
+    }
+
+    if (existingDoc?.id && force) {
+      const { data: updated, error: upDocErr } = await admin
+        .from('tenancy_documents')
+        .update({
+          status: 'signed',
+          file_path: storagePath,
+          generated_by: generatedByUserId ?? null,
+          metadata,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingDoc.id)
+        .select('id')
+        .single()
+
+      if (upDocErr || !updated?.id) {
+        warn(logger, '[listing-bond-receipt] tenancy_documents update', upDocErr)
+        return { status: 'skipped', reason: 'document_update_error' }
+      }
+
+      return {
+        status: 'overwritten',
+        documentId: updated.id,
+        filePath: storagePath,
+        pdfBase64: Buffer.from(pdfBuffer).toString('base64'),
+        receiptNumber,
+      }
+    }
+
     const { data: docRow, error: docErr } = await admin
       .from('tenancy_documents')
       .insert({
@@ -217,19 +259,13 @@ export async function generateAndPersistListingBondReceipt(args: {
         status: 'signed',
         file_path: storagePath,
         generated_by: generatedByUserId ?? null,
-        metadata: {
-          payment_method: 'Other',
-          notes: 'Landlord confirmed bond received on Quni',
-          amount_received: amount,
-          receipt_variant: 'listing_residential',
-          receipt_number: receiptNumber,
-        },
+        metadata,
       })
       .select('id')
       .single()
 
     if (docErr || !docRow?.id) {
-      // Concurrent insert: treat existing row as success-skip
+      // Concurrent insert: treat existing row as success-skip (unless force already handled)
       const { data: raced } = await admin
         .from('tenancy_documents')
         .select('id')
