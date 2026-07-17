@@ -4,9 +4,8 @@
  * Drives real handlers (confirmListing → lease-signed sim → markBondReceived) and asserts
  * bookingReviewActionModel copy + status after each stage. Sign-then-bond order (771acf77).
  *
- * Coverage: status-transition / writer class (#57).
- * NOT covered: #55 landlord page-gate (primaryActionKind forcing bond_pending copy at confirmed)
- * — that lands in a follow-up via a pure landlord-primary-action extract.
+ * Asserts real `deriveLandlordPrimaryAction` (page-gate class / #55 extract) at each stage —
+ * not a by-status model alone.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -57,6 +56,7 @@ import {
   resolveLandlordBookingReviewActionCopy,
   resolveRenterBookingReviewActionCopy,
 } from '../../../src/lib/booking/bookingReviewActionModel'
+import { deriveLandlordPrimaryAction } from '../../../src/lib/booking/landlordPrimaryAction'
 import { runListingConfirmBooking } from './confirmListing.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
@@ -103,6 +103,22 @@ function cardSnapshot(status: string) {
     obligationSub: null,
   })
   return { landlord, renter }
+}
+
+/** Real landlord primary derivation from lifecycle store (non-boarding entire_place). */
+function landlordPrimaryFromStore(store: Store) {
+  return deriveLandlordPrimaryAction({
+    bookingStatus: String(store.booking.status),
+    serviceTierFinal: store.booking.service_tier_final as string | null,
+    bookingLandlordId: LL_ID,
+    viewerLandlordProfileId: LL_ID,
+    bondReceivedByLandlordAt: store.booking.bond_received_by_landlord_at as string | null,
+    hasTenancy: Boolean(store.tenancyId),
+    tenancyBondLodgedAt: null,
+    tenancyBondLodgementReference: null,
+    propertyType: 'entire_place',
+    hasProperty: true,
+  })
 }
 
 function assertNoLeftoverStuckTitles(landlordTitle: string, renterTitle: string) {
@@ -325,6 +341,9 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
       expect(ll.title).toMatch(/^Respond to /)
       expect(renter.title).toBe('Request sent')
       expect(store.booking.status).toBe('pending_confirmation')
+      const primary = landlordPrimaryFromStore(store)
+      expect(primary.kind).toBe('accept-decline-info')
+      expect(primary.copyStatus).toBe('pending_confirmation')
     }
 
     const confirm = await runListingConfirmBooking({
@@ -344,6 +363,10 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
       const { landlord: ll, renter } = cardSnapshot(String(store.booking.status))
       expect(ll.title).toBe('Confirm the bond')
       expect(renter.title).toBe('Pay your bond')
+      const primary = landlordPrimaryFromStore(store)
+      expect(primary.kind).toBe('bond-received')
+      expect(primary.copyStatus).toBe('bond_pending')
+      expect(primary.kind).not.toBe('mark-bond')
     }
 
     // Simulate DocuSeal full sign WHILE still bond_pending (771acf77 ordering)
@@ -365,6 +388,7 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
       const { landlord: ll, renter } = cardSnapshot('bond_pending')
       expect(ll.title).toBe('Confirm the bond')
       expect(renter.title).toBe('Pay your bond')
+      expect(landlordPrimaryFromStore(store).kind).toBe('bond-received')
     }
 
     const mark = await runMarkBondReceivedLandlord({
@@ -382,6 +406,10 @@ describe('Listing card-model lifecycle (status-transition class)', () => {
     expect(ll.title).toBe('Tenancy is active')
     expect(renter.title).toBe("You're all set")
     assertNoLeftoverStuckTitles(ll.title, renter.title)
+    const primaryActive = landlordPrimaryFromStore(store)
+    expect(primaryActive.kind).toBe('none')
+    expect(primaryActive.copyStatus).toBe('active')
+    expect(primaryActive.kind).not.toBe('mark-bond')
   })
 
   it('FAILS the active assertion when maybeAdvanceListingBookingToActive is mocked away (proves #57 value)', async () => {
@@ -440,9 +468,7 @@ describe.skip('Managed card-model lifecycle (queued)', () => {
 })
 
 describe.skip('Boarding Listing card-model lifecycle (queued)', () => {
-  // Stage list + #55 page-gate class (landlord primaryActionKind / mark-bond override):
-  // pending_confirmation → bond_pending → confirmed (sign) → active
-  // Plus boarding mark-bond CTA path; page-gate extract is the next PR.
+  // Boarding mark-bond CTA path + full boarding walk still queued.
+  // #55 page-gate lock lives in landlordPrimaryAction.test.ts (confirmed + bond set + boarding).
   it.todo('walks boarding Listing lifecycle including mark-bond CTA path')
-  it.todo('asserts landlord card does not force Confirm the bond after bond_received at confirmed (#55)')
 })
