@@ -23,6 +23,7 @@ import {
 import { resolveBookingBondAmountAud } from '../../lib/booking/resolveBookingBondAmount'
 import { parseRentOverrideProvenance } from '../../lib/pricing/rentAgreedOverride'
 import BookingAgreedRentNotice from './BookingAgreedRentNotice'
+import BookingReinstatementPanel from './BookingReinstatementPanel'
 import { buildBookingFitSummary } from '../../lib/bookingFitSummary'
 import { bookingReferenceLabel } from '../../lib/bookingReference'
 import { formatDate } from '../../pages/admin/adminUi'
@@ -357,6 +358,8 @@ export default function RenterBookingZones({
                     Withdraw request
                   </button>
                 </div>
+              ) : booking.status === 'expired' ? (
+                <BookingReinstatementPanel bookingId={booking.id} bookingStatus={booking.status} />
               ) : null}
             </div>
           </BookingReviewActionCard>

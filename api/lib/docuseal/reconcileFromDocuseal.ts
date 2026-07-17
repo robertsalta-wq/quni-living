@@ -1,6 +1,7 @@
 /**
- * Shared DocuSeal completion sync (webhook + admin reconcile).
- * reinstateBookingAfterDocusealReconcile is admin-only.
+ * Shared DocuSeal completion sync (webhook + admin reconcile + self-serve reinstatement).
+ * reinstateBookingAfterDocusealReconcile may be called from admin or party-facing routes;
+ * keep admin HTTP endpoints admin-gated separately.
  */
 // @ts-nocheck - Vercel isolated API TS pass.
 import type { SupabaseClient } from '@supabase/supabase-js'
