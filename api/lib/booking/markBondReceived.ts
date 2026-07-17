@@ -8,6 +8,7 @@ import {
   TenantLegalNameNotReadyError,
 } from './assertStudentLegalNameForSigning.js'
 import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
+import { generateAndPersistListingBondReceipt } from '../documents/listingBondReceipt.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {
@@ -46,6 +47,41 @@ async function listingLeaseSigningAlreadyInitiated(
     const st = typeof d.status === 'string' ? d.status : ''
     return st === 'sent_for_signing' || st === 'signed'
   })
+}
+
+/**
+ * Soft-fail: generate+persist bond_receipt if missing; optionally email when newly created (repair).
+ * Never throws to the caller.
+ */
+async function softEnsureListingBondReceipt(args: {
+  admin: SupabaseClient
+  bookingId: string
+  logger?: Pick<Console, 'warn'>
+  /** When true, send bond-received emails with PDF if we just created the receipt (repair path). */
+  emailIfCreated?: boolean
+}): Promise<{ pdfAttachment: { filename: string; content: string } | null; created: boolean }> {
+  const { admin, bookingId, logger, emailIfCreated } = args
+  try {
+    const gen = await generateAndPersistListingBondReceipt({ admin, bookingId, logger })
+    if (gen.status === 'created') {
+      const pdfAttachment = {
+        filename: 'bond_receipt.pdf',
+        content: gen.pdfBase64,
+      }
+      if (emailIfCreated) {
+        try {
+          await sendListingBondReceivedEmails(admin, bookingId, { pdfAttachment })
+        } catch (e) {
+          warn(logger, '[mark-bond-received] listing bond-received emails (repair)', e)
+        }
+      }
+      return { pdfAttachment, created: true }
+    }
+    return { pdfAttachment: null, created: false }
+  } catch (e) {
+    warn(logger, '[mark-bond-received] listing bond receipt', e)
+    return { pdfAttachment: null, created: false }
+  }
 }
 
 /**
@@ -100,6 +136,8 @@ export async function runMarkBondReceivedLandlord(args: {
 
   const st = booking.status as string
   if (st === 'confirmed' || st === 'active') {
+    // Repair-friendly: if receipt never persisted, soft-generate (and email if newly created).
+    await softEnsureListingBondReceipt({ admin, bookingId, logger, emailIfCreated: true })
     const row: MarkBondReceivedBookingPayload = {
       id: booking.id,
       status: st,
@@ -155,6 +193,7 @@ export async function runMarkBondReceivedLandlord(args: {
 
     const againStatus = again?.status as string | undefined
     if (againStatus === 'confirmed' || againStatus === 'active') {
+      await softEnsureListingBondReceipt({ admin, bookingId, logger, emailIfCreated: true })
       const row: MarkBondReceivedBookingPayload = {
         id: again!.id,
         status: againStatus,
@@ -202,8 +241,18 @@ export async function runMarkBondReceivedLandlord(args: {
   }
 
   if (updated.service_tier_final === 'listing') {
+    let pdfAttachment: { filename: string; content: string } | null = null
     try {
-      await sendListingBondReceivedEmails(admin, bookingId)
+      const ensured = await softEnsureListingBondReceipt({ admin, bookingId, logger })
+      pdfAttachment = ensured.pdfAttachment
+    } catch (e) {
+      warn(logger, '[mark-bond-received] listing bond receipt', e)
+    }
+
+    try {
+      await sendListingBondReceivedEmails(admin, bookingId, {
+        pdfAttachment,
+      })
     } catch (e) {
       warn(logger, '[mark-bond-received] listing bond-received emails', e)
     }

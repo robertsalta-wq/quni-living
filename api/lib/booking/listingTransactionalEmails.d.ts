@@ -18,7 +18,11 @@ export function sendListingBookingAcceptedEmails(
 
 export function sendListingAgreementReadyEmails(admin: SupabaseClient, bookingId: string): Promise<void>
 
-export function sendListingBondReceivedEmails(admin: SupabaseClient, bookingId: string): Promise<void>
+export function sendListingBondReceivedEmails(
+  admin: SupabaseClient,
+  bookingId: string,
+  opts?: { pdfAttachment?: { filename: string; content: string } | null },
+): Promise<void>
 
 export function sendListingBondPendingExpiredEmails(
   admin: SupabaseClient,

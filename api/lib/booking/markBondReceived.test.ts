@@ -16,10 +16,21 @@ vi.mock('./maybeAdvanceListingBookingToActive.js', () => ({
   maybeAdvanceListingBookingToActive: vi.fn().mockResolvedValue({ advanced: false, reason: 'not_fully_signed' }),
 }))
 
+vi.mock('../documents/listingBondReceipt.js', () => ({
+  generateAndPersistListingBondReceipt: vi.fn().mockResolvedValue({
+    status: 'created',
+    documentId: 'doc-bond-1',
+    filePath: 'ten1/bond/bond_receipt.pdf',
+    pdfBase64: 'cGRm',
+    receiptNumber: 'QR-2026-TEN1',
+  }),
+}))
+
 import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { declineCompetingBookings } from './declineCompetingBookings.js'
 import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
+import { generateAndPersistListingBondReceipt } from '../documents/listingBondReceipt.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'
@@ -174,7 +185,12 @@ describe('runMarkBondReceivedLandlord', () => {
     expect(result.idempotent).toBe(false)
     expect(result.booking.status).toBe('confirmed')
     expect(admin.from).toHaveBeenCalledWith('booking_events')
-    expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id)
+    expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id, {
+      pdfAttachment: { filename: 'bond_receipt.pdf', content: 'cGRm' },
+    })
+    expect(generateAndPersistListingBondReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ bookingId: bookingBase.id }),
+    )
     expect(declineCompetingBookings).toHaveBeenCalledWith(
       expect.anything(),
       null,
@@ -296,10 +312,16 @@ describe('runMarkBondReceivedLandlord', () => {
     if (!result.ok) return
     expect(result.idempotent).toBe(true)
     expect(result.booking.status).toBe('active')
-    expect(sendListingBondReceivedEmails).not.toHaveBeenCalled()
+    // Repair path still attempts receipt ensure; emails only if newly created (mock creates → email)
+    expect(generateAndPersistListingBondReceipt).toHaveBeenCalled()
+    expect(sendListingBondReceivedEmails).toHaveBeenCalled()
   })
 
   it('idempotent re-call when already confirmed', async () => {
+    vi.mocked(generateAndPersistListingBondReceipt).mockResolvedValueOnce({
+      status: 'skipped_exists',
+      documentId: 'doc-existing',
+    })
     const admin = mockAdmin({
       booking: {
         ...bookingBase,
@@ -317,6 +339,28 @@ describe('runMarkBondReceivedLandlord', () => {
     if (!result.ok) return
     expect(result.idempotent).toBe(true)
     expect(admin.from.mock.calls.filter((c) => c[0] === 'booking_events')).toHaveLength(0)
+    expect(generateAndPersistListingBondReceipt).toHaveBeenCalled()
+    expect(sendListingBondReceivedEmails).not.toHaveBeenCalled()
+  })
+
+  it('soft-fails receipt generation: bond ack still succeeds and emails without attachment', async () => {
+    vi.mocked(generateAndPersistListingBondReceipt).mockResolvedValueOnce({
+      status: 'skipped',
+      reason: 'no_tenancy',
+    })
+    const admin = mockAdmin({})
+    const result = await runMarkBondReceivedLandlord({
+      admin: admin as never,
+      landlordProfileId: llId,
+      bookingId: bookingBase.id,
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.idempotent).toBe(false)
+    expect(sendListingBondReceivedEmails).toHaveBeenCalledWith(expect.anything(), bookingBase.id, {
+      pdfAttachment: null,
+    })
   })
 
   it('Managed / tier mismatch rejected', async () => {

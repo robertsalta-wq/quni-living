@@ -40,6 +40,16 @@ vi.mock('./declineCompetingBookings.js', () => ({
   declineCompetingBookings: vi.fn().mockResolvedValue({ declined: 0 }),
 }))
 
+vi.mock('../documents/listingBondReceipt.js', () => ({
+  generateAndPersistListingBondReceipt: vi.fn().mockResolvedValue({
+    status: 'created',
+    documentId: 'doc-bond-1',
+    filePath: 'ten1/bond/bond_receipt.pdf',
+    pdfBase64: 'cGRm',
+    receiptNumber: 'QR-2026-TEN1',
+  }),
+}))
+
 vi.mock('./coTenantSigning.js', () => ({
   fetchCoTenantSignerForTenancy: vi.fn().mockResolvedValue(null),
 }))

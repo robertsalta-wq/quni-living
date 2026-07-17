@@ -8,8 +8,9 @@
  * @param {string} [args.replyTo] - shown as Reply-To on the outbound message
  * @param {string|string[]} [args.cc]
  * @param {{ name: string, value: string }[]} [args.tags] - Resend tags (max 50 chars each)
+ * @param {{ filename: string, content: string }[]} [args.attachments] - Resend attachments (content = base64)
  */
-export async function sendEmail({ to, subject, html, replyTo, cc, tags }) {
+export async function sendEmail({ to, subject, html, replyTo, cc, tags, attachments }) {
   const key = (process.env.RESEND_API_KEY || '').trim()
   if (!key) {
     console.error('Resend: missing RESEND_API_KEY')
@@ -46,6 +47,20 @@ export async function sendEmail({ to, subject, html, replyTo, cc, tags }) {
       .filter(Boolean)
     if (cleaned.length) {
       payload.tags = cleaned
+    }
+  }
+  if (Array.isArray(attachments) && attachments.length) {
+    const cleanedAtt = attachments
+      .map((a) => {
+        if (!a || typeof a !== 'object') return null
+        const filename = typeof a.filename === 'string' ? a.filename.trim() : ''
+        const content = typeof a.content === 'string' ? a.content : ''
+        if (!filename || !content) return null
+        return { filename, content }
+      })
+      .filter(Boolean)
+    if (cleanedAtt.length) {
+      payload.attachments = cleanedAtt
     }
   }
 
