@@ -1,4 +1,5 @@
 import { formatDate } from '../../pages/admin/adminUi'
+import BookingListVerificationChips from '../booking/list/BookingListVerificationChips'
 
 export type LandlordSeenStudentVerification = {
   verification_type: 'student' | 'identity' | 'none' | null
@@ -15,9 +16,6 @@ export type LandlordSeenStudentVerification = {
   identity_supporting_provided: boolean
   identity_supporting_submitted_at: string | null
 }
-
-const pillClass =
-  'inline-flex max-w-full min-w-0 items-center gap-0.5 whitespace-normal break-words rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-emerald-900'
 
 /**
  * Landlord queries must not select `id_document_url` / `enrolment_doc_url`.
@@ -55,77 +53,15 @@ export function buildLandlordVerificationFromProfile(row: {
   }
 }
 
-const tierPillClass =
-  'inline-flex max-w-full min-w-0 items-center gap-0.5 whitespace-normal break-words rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-indigo-900 ring-1 ring-indigo-200/80'
-
+/** Compact verification chips — shared role-based colours with mobile booking cards. */
 export function LandlordApplicantVerificationBadges({
   verification,
 }: {
   verification: LandlordSeenStudentVerification | null | undefined
 }) {
-  const v = verification
-  if (v?.verification_type === 'student') {
-    return (
-      <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Tenant verification">
-        <span className={tierPillClass} title="Fully verified student tenant">
-          <span aria-hidden>🎓</span> Verified Student
-        </span>
-      </div>
-    )
-  }
-  if (v?.verification_type === 'identity') {
-    return (
-      <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Tenant verification">
-        <span className={tierPillClass} title="Identity verification complete">
-          <span aria-hidden>✅</span> Verified Identity
-        </span>
-        {v.work_email_verified === true && (
-          <span className={pillClass} title="Work email verified">
-            <span aria-hidden>✅</span> Work Email Verified
-          </span>
-        )}
-      </div>
-    )
-  }
-
-  const uni = v?.uni_email_verified === true
-  const work = v?.work_email_verified === true
-  const id = Boolean(v?.id_provided)
-  const en = Boolean(v?.enrolment_provided)
-  const sup = Boolean(v?.identity_supporting_provided)
-  const any = uni || work || id || en || sup
-
-  if (!any) {
-    return <p className="text-[11px] sm:text-xs text-gray-500 mt-1.5">No verification completed.</p>
-  }
-
   return (
-    <div className="mt-1.5 flex max-w-full min-w-0 flex-wrap gap-1.5" aria-label="Applicant verification">
-      {uni && (
-        <span className={pillClass} title="University email verified">
-          <span aria-hidden>✅</span> Uni Email Verified
-        </span>
-      )}
-      {work && (
-        <span className={pillClass} title="Work email verified">
-          <span aria-hidden>✅</span> Work Email Verified
-        </span>
-      )}
-      {id && (
-        <span className={pillClass} title="ID document on file">
-          <span aria-hidden>📄</span> ID Provided
-        </span>
-      )}
-      {en && (
-        <span className={pillClass} title="Enrolment document on file">
-          <span aria-hidden>🎓</span> Enrolment Provided
-        </span>
-      )}
-      {sup && (
-        <span className={pillClass} title="Supporting document on file">
-          <span aria-hidden>📎</span> Supporting doc
-        </span>
-      )}
+    <div className="mt-1.5 min-w-0 max-w-full">
+      <BookingListVerificationChips verification={verification} />
     </div>
   )
 }
@@ -213,7 +149,7 @@ export function LandlordApplicantVerificationDetail({
           <li key={r.label} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
             <span className="min-w-[10rem] font-medium text-gray-900">{r.label}</span>
             {okLine ? (
-              <span className="text-emerald-800">{okLine}</span>
+              <span className="text-[#0F6E56]">{okLine}</span>
             ) : (
               <span className="text-gray-500">Not provided</span>
             )}

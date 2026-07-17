@@ -12,7 +12,7 @@ type Props = {
   verification: LandlordSeenStudentVerification | null | undefined
 }
 
-/** Mobile booking list chips — role-based neutral/navy styling per design system. */
+/** Role-based verification chips — shared by mobile booking cards and desktop landlord table. */
 export default function BookingListVerificationChips({ verification }: Props) {
   const chips = buildBookingListVerificationChips(verification)
   if (chips.length === 0) {
