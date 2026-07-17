@@ -228,6 +228,25 @@ function buildSignedAgreementPathsByBookingId(rows: TenancyWithDocsForSigning[] 
 
 type TabId = 'overview' | 'listings' | 'bookings' | 'profile'
 
+function landlordTabFromSearch(search: string): TabId {
+  const t = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search).get('tab')
+  if (t === 'bookings' || t === 'listings' || t === 'profile') return t
+  return 'overview'
+}
+
+/** Survives remount when leaving /messages (separate route) and returning to the dashboard. */
+type LandlordDashboardCache = {
+  properties: PropertySummary[]
+  bookings: BookingWithRelations[]
+}
+
+const landlordDashboardCacheByUserId = new Map<string, LandlordDashboardCache>()
+
+function readLandlordDashboardCache(userId: string | undefined): LandlordDashboardCache | null {
+  if (!userId) return null
+  return landlordDashboardCacheByUserId.get(userId) ?? null
+}
+
 const LANDLORD_INVITE_MODAL_SESSION_KEY = 'quni-landlord-invite-modal:v1'
 
 type InviteModalProperty = {
@@ -402,12 +421,19 @@ export default function LandlordDashboard() {
     role === 'landlord' && authProfile && 'id' in authProfile ? (authProfile as LandlordRow) : null
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [dataLoading, setDataLoading] = useState(true)
+  const cachedDash = readLandlordDashboardCache(user?.id)
+  const [dataLoading, setDataLoading] = useState(() => !cachedDash)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<LandlordRow | null>(authLandlord)
-  const [properties, setProperties] = useState<PropertySummary[]>([])
-  const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [tab, setTab] = useState<TabId>('overview')
+  const [properties, setProperties] = useState<PropertySummary[]>(() => cachedDash?.properties ?? [])
+  const [bookings, setBookings] = useState<BookingWithRelations[]>(() => cachedDash?.bookings ?? [])
+  const [tab, setTab] = useState<TabId>(() => {
+    try {
+      return landlordTabFromSearch(window.location.search)
+    } catch {
+      return 'overview'
+    }
+  })
   const [welcomeToast, setWelcomeToast] = useState<string | null>(null)
   const welcomeToastTimerRef = useRef<number | null>(null)
   const { items: conversations } = useConversationInbox(user?.id)
@@ -610,8 +636,9 @@ export default function LandlordDashboard() {
       return
     }
 
+    const hadCache = Boolean(readLandlordDashboardCache(userId))
     if (isCurrent()) {
-      setDataLoading(true)
+      if (!hadCache) setDataLoading(true)
       setError(null)
     }
 
@@ -782,8 +809,13 @@ export default function LandlordDashboard() {
       })
 
       if (!isCurrent()) return
-      setProperties((propRes.data ?? []) as PropertySummary[])
+      const nextProperties = (propRes.data ?? []) as PropertySummary[]
+      setProperties(nextProperties)
       setBookings(mergedBookings)
+      landlordDashboardCacheByUserId.set(userId, {
+        properties: nextProperties,
+        bookings: mergedBookings,
+      })
 
       void fetchLandlordListingBillingSnapshot().then((snapshot) => {
         if (isCurrent()) setListingBilling(snapshot)
@@ -800,6 +832,7 @@ export default function LandlordDashboard() {
         setProperties([])
         setBookings([])
         setListingBilling(null)
+        landlordDashboardCacheByUserId.delete(userId)
         return null
       })
     } finally {
@@ -810,6 +843,14 @@ export default function LandlordDashboard() {
   useEffect(() => {
     if (authLandlord) setProfile(authLandlord)
   }, [authLandlord])
+
+  useEffect(() => {
+    const cached = readLandlordDashboardCache(user?.id)
+    if (!cached) return
+    setProperties(cached.properties)
+    setBookings(cached.bookings)
+    setDataLoading(false)
+  }, [user?.id])
 
   useEffect(() => {
     void load()
@@ -1503,7 +1544,12 @@ export default function LandlordDashboard() {
             )}
 
             <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-              {otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
+              {dataLoading && otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
+                <div className="space-y-3 p-4 animate-pulse" aria-busy="true">
+                  <div className="h-20 rounded-xl bg-gray-100" />
+                  <div className="h-20 rounded-xl bg-gray-100" />
+                </div>
+              ) : otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
                 <p className="p-10 text-center text-sm text-gray-500">No bookings yet.</p>
               ) : otherBookings.length === 0 ? (
                 <p className="p-6 text-center text-xs text-gray-500">No other booking records.</p>

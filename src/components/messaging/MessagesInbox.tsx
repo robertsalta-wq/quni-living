@@ -10,7 +10,7 @@ type Props = {
 }
 
 export default function MessagesInbox({ items, loading, error, onRetry, viewerRole = 'tenant' }: Props) {
-  if (loading) {
+  if (loading && items.length === 0) {
     return (
       <div className="px-4 py-8 space-y-4" aria-busy="true">
         {[1, 2, 3].map((i) => (

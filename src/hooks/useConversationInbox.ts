@@ -32,6 +32,18 @@ export type InboxConversation = ConversationRow & {
   counterpartyDisplayName: string
 }
 
+/** Survives route remounts so Messages ↔ Dashboard tab hops don't flash the inbox skeleton. */
+const inboxCacheByUserId = new Map<string, InboxConversation[]>()
+
+function readInboxCache(userId: string | undefined): InboxConversation[] {
+  if (!userId) return []
+  return inboxCacheByUserId.get(userId) ?? []
+}
+
+function hasInboxCache(userId: string | undefined): boolean {
+  return Boolean(userId && inboxCacheByUserId.has(userId))
+}
+
 async function loadStudentProfilesByUserId(
   userIds: string[],
 ): Promise<Map<string, InboxStudentProfile>> {
@@ -62,8 +74,8 @@ function studentProfileForConversation(
 }
 
 export function useConversationInbox(userId: string | undefined) {
-  const [items, setItems] = useState<InboxConversation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<InboxConversation[]>(() => readInboxCache(userId))
+  const [loading, setLoading] = useState(() => !hasInboxCache(userId))
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -72,7 +84,8 @@ export function useConversationInbox(userId: string | undefined) {
       setLoading(false)
       return
     }
-    setLoading(true)
+    const hadCache = hasInboxCache(userId)
+    if (!hadCache) setLoading(true)
     setError(null)
     try {
       const { data, error: qErr } = await supabase
@@ -123,18 +136,23 @@ export function useConversationInbox(userId: string | undefined) {
         const { landlord_profile: _lp, tenant_profile: _tp, ...conversation } = row
         return { ...conversation, unread, counterpartyDisplayName }
       })
+      inboxCacheByUserId.set(userId, rows)
       setItems(rows)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load messages')
-      setItems([])
+      if (!hadCache) setItems([])
     } finally {
       setLoading(false)
     }
   }, [userId])
 
   useEffect(() => {
+    if (hasInboxCache(userId)) {
+      setItems(readInboxCache(userId))
+      setLoading(false)
+    }
     void load()
-  }, [load])
+  }, [load, userId])
 
   useEffect(() => {
     if (!userId) return
