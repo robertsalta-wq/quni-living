@@ -69,7 +69,8 @@ function App() {
 
   const adminShell = location.pathname.startsWith('/admin')
   const aiLandingShell = location.pathname === '/landlords/ai'
-  const showPublicChrome = !adminShell && !aiLandingShell
+  const electricLandingShell = location.pathname === '/landlords/co-living-electric'
+  const showPublicChrome = !adminShell && !aiLandingShell && !electricLandingShell
   const hideFooterForFormFlow = isFocusFormFlowPath(location.pathname)
   const dashboardMobileAppShell = isDashboardMobileChromePath(role, location.pathname)
 
@@ -139,6 +140,8 @@ function App() {
           <Route path="/services/fully-furnished" element={<Lazy.ServiceFullyFurnished />} />
           <Route path="/for-landlords" element={<Navigate to="/services/landlord-partnerships" replace />} />
           <Route path="/landlords/ai" element={<Lazy.LandlordAIFeaturePage />} />
+          <Route path="/landlords/co-living" element={<Lazy.CoLivingLandingPage />} />
+          <Route path="/landlords/co-living-electric" element={<Lazy.CoLivingElectricLandingPage />} />
           <Route path="/landlord/onboarding" element={<Navigate to="/landlord/dashboard?tab=profile" replace />} />
 
           {/* Auth */}
