@@ -24,8 +24,8 @@ export default function CoLivingLandingPage() {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
       <Seo
-        title="Rent-by-the-room lifecycle for portfolio landlords"
-        description="Quni runs the room lifecycle for rent-by-the-room landlords near Australian universities - verified applicants, correct agreements, correct bond routing, signed and filled. $99 Listing or 7% Managed."
+        title="Co-living landlord platform"
+        description="The full room lifecycle for co-living investors: verified applicants, correct agreements, correct bond handling. $99 flat or 7% Managed."
         canonicalPath="/landlords/co-living"
       />
 
@@ -35,15 +35,15 @@ export default function CoLivingLandingPage() {
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <div className="min-w-0">
               <p className="mb-4 max-w-xl text-[11px] font-semibold uppercase leading-snug tracking-[0.12em] text-white/70 sm:text-xs sm:tracking-[0.16em]">
-                For rent-by-the-room portfolio operators
+                For co-living landlords
               </p>
               <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
                 Rent-by-the-room is a high-yield business. The admin shouldn&apos;t kill it.
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
-                Flatmates finds you a stranger and leaves. Agents won&apos;t touch per-room lets. Quni
-                runs the whole room lifecycle - verified applicant, correct agreement, correct bond
-                handling, signed, filled.
+                Flatmates finds you a stranger and leaves. Agents won&apos;t touch co-living
+                room-by-room. Quni runs the whole room lifecycle - verified applicant, correct
+                agreement, correct bond handling, signed, filled.
               </p>
               <div className="mt-8">
                 <Link
