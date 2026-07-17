@@ -1202,7 +1202,10 @@ export default function LandlordBookingReviewPage() {
                         must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
                       </>
                     ) : (
-                      <>Confirms you&apos;ve received bond directly from the renter.</>
+                      <>
+                        Confirms you&apos;ve received bond directly from the renter. We&apos;ll generate a PDF receipt,
+                        save it to this tenancy, and email a copy to you and the renter.
+                      </>
                     )}{' '}
                     Signing links are in{' '}
                     <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
