@@ -12,14 +12,17 @@
  *
  * Auth: Bearer <admin Supabase JWT> via requireAdminUser
  *
- * NFT: PDF components must be .ts (not .tsx). Vercel NFT resolves `.js` → `.ts`
- * but not `.js` → `.tsx`, which caused FUNCTION_INVOCATION_FAILED / MODULE_NOT_FOUND.
- * Entry also imports them directly (listingBondReceipt's complex TS is a weak NFT root).
+ * Node (req, res) handler — Vercel Node runtime does not pass Fetch Request here
+ * (Web-style handler crashed: request.headers.get is not a function).
+ *
+ * NFT: PDF components are .ts so `./BondReceiptPdf.js` resolves; entry imports them
+ * so the lambda package includes the modules.
  */
 // @ts-nocheck - Vercel isolated API TS pass.
 import { createClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
+import { headerString, readJsonBody } from '../lib/nodeHandler.js'
 import { BondReceiptPdf } from './BondReceiptPdf.js'
 import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
 import { generateAndPersistListingBondReceipt } from './listingBondReceipt.js'
@@ -34,38 +37,28 @@ export const config = {
   maxDuration: 60,
 }
 
-function json(body: unknown, status = 200, origin: string) {
+function corsJson(res, body, status = 200, origin) {
   const allowOrigin = origin || '*'
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': allowOrigin,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-      'Access-Control-Max-Age': '86400',
-      'Cache-Control': 'no-store',
-    },
-  })
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin)
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  res.setHeader('Cache-Control', 'no-store')
+  return res.status(status).json(body)
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  const origin = request.headers.get('origin') || '*'
+export default async function handler(req, res) {
+  const origin = headerString(req.headers, 'origin') || '*'
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-        'Access-Control-Max-Age': '86400',
-      },
-    })
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    res.setHeader('Access-Control-Max-Age', '86400')
+    return res.status(204).end()
   }
 
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405, origin)
+  if (req.method !== 'POST') {
+    return corsJson(res, { error: 'Method not allowed' }, 405, origin)
   }
 
   const supabaseUrl = (process.env.SUPABASE_URL || '').trim()
@@ -73,26 +66,36 @@ export default async function handler(request: Request): Promise<Response> {
   const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
   if (!supabaseUrl || !serviceRole || !anonKey) {
-    return json({ error: 'Server misconfigured' }, 500, origin)
+    return corsJson(res, { error: 'Server misconfigured' }, 500, origin)
   }
 
-  const authResult = await requireAdminUser(request, supabaseUrl, anonKey)
+  // Adapt Node headers to the Fetch-shaped object requireAdminUser expects.
+  const authRequest = {
+    headers: {
+      get: (name) => {
+        const v = headerString(req.headers, String(name).toLowerCase())
+        return v || null
+      },
+    },
+  }
+
+  const authResult = await requireAdminUser(authRequest, supabaseUrl, anonKey)
   if ('error' in authResult) {
-    return json({ error: authResult.error }, authResult.status, origin)
+    return corsJson(res, { error: authResult.error }, authResult.status, origin)
   }
   const { user } = authResult
 
-  let body: unknown
+  let body
   try {
-    body = await request.json()
+    body = await readJsonBody(req)
   } catch {
-    return json({ error: 'Invalid JSON' }, 400, origin)
+    return corsJson(res, { error: 'Invalid JSON' }, 400, origin)
   }
 
-  const rec = body && typeof body === 'object' ? (body as Record<string, unknown>) : {}
+  const rec = body && typeof body === 'object' ? body : {}
   const bookingId = typeof rec.bookingId === 'string' ? rec.bookingId.trim() : ''
   if (!bookingId) {
-    return json({ error: 'bookingId is required' }, 400, origin)
+    return corsJson(res, { error: 'bookingId is required' }, 400, origin)
   }
 
   const force = rec.force === false ? false : true
@@ -108,13 +111,13 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (bookingErr) {
     console.error('[admin/regenerate-listing-bond-receipt] booking load', bookingErr)
-    return json({ error: 'Could not load booking' }, 500, origin)
+    return corsJson(res, { error: 'Could not load booking' }, 500, origin)
   }
   if (!booking) {
-    return json({ error: 'Booking not found' }, 404, origin)
+    return corsJson(res, { error: 'Booking not found' }, 404, origin)
   }
   if (booking.service_tier_final !== 'listing') {
-    return json({ error: 'Only Listing bookings support this bond receipt backfill' }, 400, origin)
+    return corsJson(res, { error: 'Only Listing bookings support this bond receipt backfill' }, 400, origin)
   }
 
   const gen = await generateAndPersistListingBondReceipt({
@@ -126,7 +129,8 @@ export default async function handler(request: Request): Promise<Response> {
   })
 
   if (gen.status === 'skipped') {
-    return json(
+    return corsJson(
+      res,
       {
         ok: false,
         code: gen.reason,
@@ -140,7 +144,8 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (gen.status === 'skipped_exists') {
-    return json(
+    return corsJson(
+      res,
       {
         ok: true,
         status: 'skipped_exists',
@@ -154,7 +159,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   let emailed = false
-  let emailWarning: string | null = null
+  let emailWarning = null
   if (reEmail) {
     try {
       await sendListingBondReceivedEmails(admin, bookingId, {
@@ -167,7 +172,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
 
-  return json(
+  return corsJson(
+    res,
     {
       ok: true,
       status: gen.status,
