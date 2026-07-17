@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { execSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import { renderToBuffer } from '@react-pdf/renderer'
-import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.tsx'
+import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
 
 describe('QldBondPaymentReceiptPdf raster', () => {
   it('writes PDF + PNG for visual payment-receipt review', async () => {
