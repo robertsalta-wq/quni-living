@@ -9,6 +9,7 @@ import ScrollToTop from './components/ScrollToTop'
 import NativePushNotificationsInitializer from './components/NativePushNotificationsInitializer'
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import PageRouteFallback from './components/PageRouteFallback'
+import DashboardChromeRouteFallback from './components/DashboardChromeRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
 import LandlordMobileBottomNav from './components/landlord/LandlordMobileBottomNav'
 import RenterMobileBottomNav from './components/student/RenterMobileBottomNav'
@@ -38,6 +39,18 @@ function AdminPropertyFeesDeepLinkRedirect() {
   const { propertyId } = useParams<{ propertyId: string }>()
   const q = encodeURIComponent(propertyId ?? '')
   return <Navigate to={`/admin/properties?fees=${q}`} replace />
+}
+
+/** Soft Suspense hole under dashboard mobile chrome; keep marketing "Loading page…" elsewhere. */
+function AppRoutesOutlet() {
+  const location = useLocation()
+  const { role } = useAuthContext()
+  const softFallback = isDashboardMobileChromePath(role, location.pathname)
+  return (
+    <Suspense fallback={softFallback ? <DashboardChromeRouteFallback /> : <PageRouteFallback />}>
+      <Outlet />
+    </Suspense>
+  )
 }
 
 function App() {
@@ -91,11 +104,7 @@ function App() {
           <Route path="/guides/:slug" element={<GuideArticlePage />} />
           <Route path="/for-universities" element={<ForUniversities />} />
           <Route
-            element={
-              <Suspense fallback={<PageRouteFallback />}>
-                <Outlet />
-              </Suspense>
-            }
+            element={<AppRoutesOutlet />}
           >
           {/* Public - eager: home, listings funnel, login */}
           <Route path="/" element={<Home />} />

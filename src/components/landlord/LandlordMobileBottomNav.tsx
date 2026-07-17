@@ -4,7 +4,7 @@ import { Building2, CalendarDays, LayoutGrid, MessageSquare, User } from 'lucide
 import { useAuthContext } from '../../context/AuthContext'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 import { landlordMobileActiveSection } from '../../lib/landlordMobileChrome'
-import { prefetchRouteChunks } from '../../lib/routePrefetch'
+import { prefetchDashboardMobileTabChunks, prefetchRouteChunks } from '../../lib/routePrefetch'
 import { landlordBookingsPath, landlordDashboardTabPath } from '../../lib/userDashboardNav'
 
 const items = [
@@ -33,10 +33,9 @@ export default function LandlordMobileBottomNav() {
   const unreadMessageCount = useUnreadMessageCount(user?.id)
   const active = landlordMobileActiveSection(location.pathname, location.search)
 
-  // Warm the Messages chunk (the only cross-chunk tab) so tapping it doesn't
-  // flash the route-loading spinner.
+  // Warm every tab destination (Messages is the main cross-chunk hop).
   useEffect(() => {
-    prefetchRouteChunks('/messages')
+    prefetchDashboardMobileTabChunks('landlord')
   }, [])
 
   return (

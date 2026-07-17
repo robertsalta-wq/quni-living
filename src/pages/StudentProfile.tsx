@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthContext } from '../context/AuthContext'
+import { isRenterRole } from '../lib/authProfile'
 import { getValidAccessTokenForFunctions } from '../lib/supabaseEdgeInvoke'
 import { readSupabaseFunctionInvokeError } from '../lib/readSupabaseFunctionInvokeError'
 import { removeAllStudentVerificationDocuments } from '../lib/studentDocumentsStorage'
@@ -62,7 +63,9 @@ function bookingStatusClass(status: BookingWithProperty['status']) {
 type StudentTab = 'profile' | 'bookings'
 
 export default function StudentProfile() {
-  const { user, signOut } = useAuthContext()
+  const { user, profile: authProfile, role, signOut } = useAuthContext()
+  const authStudent =
+    isRenterRole(role) && authProfile && 'id' in authProfile ? (authProfile as StudentRow) : null
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<StudentTab>(() => {
     try {
@@ -73,13 +76,13 @@ export default function StudentProfile() {
     }
     return 'profile'
   })
-  const [profile, setProfile] = useState<StudentRow | null>(null)
+  const [profile, setProfile] = useState<StudentRow | null>(authStudent)
   const [bookings, setBookings] = useState<BookingWithProperty[]>([])
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [bookingsError, setBookingsError] = useState<string | null>(null)
 
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !authStudent)
 
   const [bookingReplyById, setBookingReplyById] = useState<Record<string, string>>({})
   const [bookingReplyBusy, setBookingReplyBusy] = useState<string | null>(null)
@@ -128,8 +131,12 @@ export default function StudentProfile() {
   const refreshProfileData = useCallback(() => load({ background: true }), [load])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    if (authStudent) setProfile(authStudent)
+  }, [authStudent])
+
+  useEffect(() => {
+    void load({ background: Boolean(authStudent) })
+  }, [load, authStudent])
 
   useEffect(() => {
     const tab = searchParams.get('tab')
