@@ -19,7 +19,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
-import { generateAndPersistListingBondReceipt } from '../lib/documents/listingBondReceipt.js'
+import { generateAndPersistListingBondReceipt } from './listingBondReceipt.js'
 import { sendListingBondReceivedEmails } from '../lib/booking/listingTransactionalEmails.js'
 
 export const config = {

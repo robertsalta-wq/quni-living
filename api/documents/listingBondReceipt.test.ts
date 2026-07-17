@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../booking/bookingBondAmount.js', () => ({
+vi.mock('../lib/booking/bookingBondAmount.js', () => ({
   resolveBookingBondAmountAud: vi.fn(() => 1600),
 }))
 
-vi.mock('../booking/tenantLegalNameForDocuments.js', () => ({
+vi.mock('../lib/booking/tenantLegalNameForDocuments.js', () => ({
   tenantLegalNameForDocuments: vi.fn(() => 'Alex Student'),
 }))
 
@@ -12,13 +12,13 @@ vi.mock('@react-pdf/renderer', () => ({
   renderToBuffer: vi.fn(async () => Buffer.from('%PDF-mock')),
 }))
 
-vi.mock('../../documents/BondReceiptPdf.js', () => ({
+vi.mock('./BondReceiptPdf.js', () => ({
   BondReceiptPdf: function BondReceiptPdf() {
     return null
   },
 }))
 
-vi.mock('../../documents/QldBondPaymentReceiptPdf.js', () => ({
+vi.mock('./QldBondPaymentReceiptPdf.js', () => ({
   QldBondPaymentReceiptPdf: function QldBondPaymentReceiptPdf() {
     return null
   },
