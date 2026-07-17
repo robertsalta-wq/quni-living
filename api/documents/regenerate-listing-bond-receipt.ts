@@ -12,9 +12,9 @@
  *
  * Auth: Bearer <admin Supabase JWT> via requireAdminUser
  *
- * NFT: BondReceiptPdf.tsx must be imported from this lambda entry (not only via
- * listingBondReceipt.ts). Vercel packages the .ts helper but omits sibling .tsx
- * unless the entry imports it — same pattern as generate-bond-receipt.
+ * NFT: PDF components must be .ts (not .tsx). Vercel NFT resolves `.js` → `.ts`
+ * but not `.js` → `.tsx`, which caused FUNCTION_INVOCATION_FAILED / MODULE_NOT_FOUND.
+ * Entry also imports them directly (listingBondReceipt's complex TS is a weak NFT root).
  */
 // @ts-nocheck - Vercel isolated API TS pass.
 import { createClient } from '@supabase/supabase-js'
