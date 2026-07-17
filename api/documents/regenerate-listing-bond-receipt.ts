@@ -1,5 +1,6 @@
 /**
- * POST /api/admin/regenerate-listing-bond-receipt
+ * POST /api/documents/regenerate-listing-bond-receipt
+ * (also rewritten from /api/admin/regenerate-listing-bond-receipt)
  *
  * Admin backfill / force-regenerate Listing bond_receipt PDF for a booking
  * (including already-active bookings that never got a receipt row).
@@ -10,6 +11,9 @@
  *   - reEmail (default false): email PDF to landlord + renter after success
  *
  * Auth: Bearer <admin Supabase JWT> via requireAdminUser
+ *
+ * Lives under api/documents/ so Vercel NFT includes BondReceiptPdf.tsx the same way as
+ * generate-bond-receipt (api/admin entry was FUNCTION_INVOCATION_FAILED on cold start).
  */
 // @ts-nocheck - Vercel isolated API TS pass.
 import { createClient } from '@supabase/supabase-js'

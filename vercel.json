@@ -70,7 +70,7 @@
     "api/documents/bond-receipt-signed-url.ts": {
       "maxDuration": 30
     },
-    "api/admin/regenerate-listing-bond-receipt.ts": {
+    "api/documents/regenerate-listing-bond-receipt.ts": {
       "maxDuration": 60
     },
     "api/documents/lease-signed-url.ts": {
@@ -114,6 +114,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/admin/regenerate-listing-bond-receipt",
+      "destination": "/api/documents/regenerate-listing-bond-receipt"
+    },
     {
       "source": "/((?!api/).+)",
       "destination": "/index.html"

@@ -42,7 +42,7 @@ import { generateAndPersistListingBondReceipt } from '../lib/documents/listingBo
 import { sendListingBondReceivedEmails } from '../lib/booking/listingTransactionalEmails.js'
 import handler from './regenerate-listing-bond-receipt.js'
 
-describe('POST /api/admin/regenerate-listing-bond-receipt', () => {
+describe('POST /api/documents/regenerate-listing-bond-receipt', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.SUPABASE_URL = 'https://example.supabase.co'
@@ -62,7 +62,7 @@ describe('POST /api/admin/regenerate-listing-bond-receipt', () => {
       receiptNumber: 'QR-2026-TEN1',
     })
 
-    const req = new Request('https://quni.com.au/api/admin/regenerate-listing-bond-receipt', {
+    const req = new Request('https://quni.com.au/api/documents/regenerate-listing-bond-receipt', {
       method: 'POST',
       headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -98,7 +98,7 @@ describe('POST /api/admin/regenerate-listing-bond-receipt', () => {
       documentId: 'doc-existing',
     })
 
-    const req = new Request('https://quni.com.au/api/admin/regenerate-listing-bond-receipt', {
+    const req = new Request('https://quni.com.au/api/documents/regenerate-listing-bond-receipt', {
       method: 'POST',
       headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
       body: JSON.stringify({
