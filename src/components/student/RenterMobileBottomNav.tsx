@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CalendarDays, LayoutGrid, MessageSquare, User } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 import { renterMobileActiveSection } from '../../lib/renterMobileChrome'
+import { prefetchRouteChunks } from '../../lib/routePrefetch'
 import { studentDashboardTabPath } from '../../lib/userDashboardNav'
 
 const items = [
@@ -14,7 +16,7 @@ const items = [
 
 function itemClass(active: boolean): string {
   return [
-    'relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5',
+    'relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 select-none touch-manipulation [-webkit-touch-callout:none]',
     active ? 'text-[#FF6F61]' : 'text-[#6B6375]',
   ].join(' ')
 }
@@ -29,6 +31,12 @@ export default function RenterMobileBottomNav() {
   const { user } = useAuthContext()
   const unreadMessageCount = useUnreadMessageCount(user?.id)
   const active = renterMobileActiveSection(location.pathname, location.search)
+
+  // Warm the Messages chunk (the only cross-chunk tab) so tapping it doesn't
+  // flash the route-loading spinner.
+  useEffect(() => {
+    prefetchRouteChunks('/messages')
+  }, [])
 
   return (
     <nav
@@ -46,6 +54,9 @@ export default function RenterMobileBottomNav() {
               to={to}
               className={itemClass(isActive)}
               aria-current={isActive ? 'page' : undefined}
+              draggable={false}
+              onPointerDown={() => prefetchRouteChunks(to)}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <span className="relative inline-flex">
                 <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.9} aria-hidden />
