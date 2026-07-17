@@ -30,7 +30,7 @@ export function formatBookingListWeeklyRent(weeklyRent: number | null | undefine
   return `$${Number(weeklyRent).toLocaleString('en-AU', { maximumFractionDigits: 0 })}`
 }
 
-/** Role-based verification chips for mobile booking cards (not desktop table badges). */
+/** Role-based verification chips (identity → neutral, email trust → navy). */
 export function buildBookingListVerificationChips(
   verification: LandlordSeenStudentVerification | null | undefined,
 ): BookingListVerificationChip[] {
