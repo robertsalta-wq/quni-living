@@ -587,6 +587,25 @@ function resolvePlatformLegalEntityName(legalName) {
 
 // src/lib/documents/addendumCoTenantExecution.tsx
 import { Text as Text2, View as View2 } from "@react-pdf/renderer";
+
+// src/lib/documents/platformAddendumDocusealTags.ts
+var PLATFORM_ADDENDUM_DOCUSEAL_SIGNATURE_SIZE = { width: 240, height: 72 };
+var PLATFORM_ADDENDUM_DOCUSEAL_DATE_SIZE = { width: 140, height: 28 };
+var DOCUSEAL_AU_DATE_FORMAT = "DD/MM/YYYY";
+function platformAddendumDocusealTag(fieldName, role, type) {
+  const size = type === "signature" ? PLATFORM_ADDENDUM_DOCUSEAL_SIGNATURE_SIZE : PLATFORM_ADDENDUM_DOCUSEAL_DATE_SIZE;
+  const parts = [
+    fieldName,
+    `role=${role}`,
+    `type=${type}`,
+    ...type === "date" ? [`format=${DOCUSEAL_AU_DATE_FORMAT}`] : [],
+    `width=${size.width}`,
+    `height=${size.height}`
+  ];
+  return `{{${parts.join(";")}}}`;
+}
+
+// src/lib/documents/addendumCoTenantExecution.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
 function coTenantNameFromAddendumProps(additionalTenantNames) {
   return additionalTenantNames?.[0]?.trim() ?? "";
@@ -607,11 +626,11 @@ function AddendumCoTenantSignatureBlock({ coTenantName }) {
         /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigNameBold, children: coTenantName }),
         /* @__PURE__ */ jsx2(View2, { style: [occupancyMatchPdf.docusealSignatureFieldBox, { marginTop: 6 }], children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
           /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Signature " }),
-          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Co-tenant Signature;role=Co-tenant;type=signature}}" })
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: platformAddendumDocusealTag("Addendum Co-tenant Signature", "Co-tenant", "signature") })
         ] }) }),
         /* @__PURE__ */ jsx2(View2, { style: occupancyMatchPdf.docusealDateFieldBox, children: /* @__PURE__ */ jsxs2(View2, { style: occupancyMatchPdf.sigLabelRow, children: [
           /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.sigLabel, children: "Date " }),
-          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: "{{Addendum Co-tenant Date;role=Co-tenant;type=date}}" })
+          /* @__PURE__ */ jsx2(Text2, { style: occupancyMatchPdf.docusealTagOa, children: platformAddendumDocusealTag("Addendum Co-tenant Date", "Co-tenant", "date") })
         ] }) })
       ]
     }

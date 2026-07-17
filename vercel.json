@@ -7,7 +7,8 @@
       "maxDuration": 60
     },
     "api/booking-mark-bond-received.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "api/documents/{BondReceiptPdf,QldBondPaymentReceiptPdf,listingBondReceipt}.ts"
     },
     "api/booking-record-rta-bond.ts": {
       "maxDuration": 30
@@ -65,13 +66,15 @@
       "maxDuration": 60
     },
     "api/documents/generate-bond-receipt.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/documents/{BondReceiptPdf,QldBondPaymentReceiptPdf}.ts"
     },
     "api/documents/bond-receipt-signed-url.ts": {
       "maxDuration": 30
     },
     "api/documents/regenerate-listing-bond-receipt.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "api/documents/{BondReceiptPdf,QldBondPaymentReceiptPdf,listingBondReceipt}.ts"
     },
     "api/documents/lease-signed-url.ts": {
       "maxDuration": 30
