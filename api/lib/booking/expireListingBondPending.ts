@@ -6,6 +6,7 @@ import {
 } from './listingFeePaymentIntent.js'
 import { sendListingBondPendingExpiredEmails } from './listingTransactionalEmails.js'
 import { runUnwindListingAgreementCleanup } from './unwindListingAgreement.js'
+import { guardBondExpiryForSignedLease } from './guardSignedLeaseExpiry.js'
 
 /** Row shape from expire-bookings bond_pending select (includes email joins). */
 export type ExpireListingBondPendingRow = {
@@ -20,6 +21,7 @@ export type ExpireListingBondPendingRow = {
 
 export type ExpireListingBondPendingResult =
   | { ok: true; expired: true }
+  | { ok: true; expired: false; blocked: 'signed_lease' }
   | { ok: false; retry: true }
 
 /**
@@ -34,6 +36,13 @@ export async function runExpireListingBondPendingBooking(args: {
 }): Promise<ExpireListingBondPendingResult> {
   const { stripe, admin, booking, nowIso } = args
   const bookingId = booking.id
+
+  // Never expire a booking whose lease is already fully signed (missed
+  // DocuSeal completion webhook). Blocks before any refund/mutation.
+  const signedGuard = await guardBondExpiryForSignedLease({ admin, booking, nowIso })
+  if (signedGuard.blocked) {
+    return { ok: true, expired: false, blocked: 'signed_lease' }
+  }
 
   const piId = await fetchListingFeePaymentIntentId(admin, bookingId)
 

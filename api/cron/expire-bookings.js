@@ -136,6 +136,7 @@ export default async function handler(request) {
   }
 
   let bondCount = 0
+  let blockedSignedLease = 0
   for (const b of bondRows ?? []) {
     try {
       const result = await runExpireListingBondPendingBooking({
@@ -145,13 +146,19 @@ export default async function handler(request) {
         nowIso,
       })
       if (result.ok && result.expired) bondCount += 1
+      else if (result.ok && result.blocked === 'signed_lease') blockedSignedLease += 1
     } catch (loopErr) {
       console.error('expire-bookings bond_pending row', b?.id, loopErr)
     }
   }
 
   return new Response(
-    JSON.stringify({ ok: true, expired: count, bond_pending_expired: bondCount }),
+    JSON.stringify({
+      ok: true,
+      expired: count,
+      bond_pending_expired: bondCount,
+      bond_expiry_blocked_signed_lease: blockedSignedLease,
+    }),
     {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
