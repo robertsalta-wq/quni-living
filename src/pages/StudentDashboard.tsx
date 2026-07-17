@@ -86,6 +86,14 @@ type BookingWithProperty = BookingRow & {
 
 type TabId = 'overview' | 'bookings'
 
+/** Survives remount when leaving /messages and returning to the student dashboard. */
+const studentDashboardBookingsCacheByUserId = new Map<string, BookingWithProperty[]>()
+
+function readStudentBookingsCache(userId: string | undefined): BookingWithProperty[] | null {
+  if (!userId) return null
+  return studentDashboardBookingsCacheByUserId.get(userId) ?? null
+}
+
 const statCardClass =
   'rounded-admin-lg border border-admin-line-soft bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md hover:border-admin-coral-30 text-left'
 
@@ -191,11 +199,18 @@ export default function StudentDashboard() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const unreadMessageCount = useUnreadMessageCount(user?.id)
-  const [dataLoading, setDataLoading] = useState(true)
+  const cachedBookings = readStudentBookingsCache(user?.id)
+  const [dataLoading, setDataLoading] = useState(() => !cachedBookings)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<StudentRow | null>(authStudent)
-  const [bookings, setBookings] = useState<BookingWithProperty[]>([])
-  const [tab, setTab] = useState<TabId>('overview')
+  const [bookings, setBookings] = useState<BookingWithProperty[]>(() => cachedBookings ?? [])
+  const [tab, setTab] = useState<TabId>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('tab') === 'bookings' ? 'bookings' : 'overview'
+    } catch {
+      return 'overview'
+    }
+  })
   const [welcomeToast, setWelcomeToast] = useState<string | null>(null)
   const welcomeToastTimerRef = useRef<number | null>(null)
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
@@ -207,7 +222,8 @@ export default function StudentDashboard() {
       setDataLoading(false)
       return
     }
-    setDataLoading(true)
+    const hadCache = Boolean(readStudentBookingsCache(user.id))
+    if (!hadCache) setDataLoading(true)
     setError(null)
     try {
       let prof: StudentRow | null = authStudent
@@ -220,7 +236,7 @@ export default function StudentDashboard() {
 
         if (pErr) {
           setProfile(null)
-          setBookings([])
+          if (!hadCache) setBookings([])
           setError(pErr.message || 'Could not load your profile.')
           return
         }
@@ -229,7 +245,7 @@ export default function StudentDashboard() {
 
       if (!prof) {
         setProfile(null)
-        setBookings([])
+        if (!hadCache) setBookings([])
         setError('We couldn’t find your student profile yet. If you just signed up, try completing onboarding or your profile.')
         return
       }
@@ -245,7 +261,7 @@ export default function StudentDashboard() {
         .order('created_at', { ascending: false })
 
       if (bookRes.error) {
-        setBookings([])
+        if (!hadCache) setBookings([])
         setError(bookRes.error.message || 'Could not load bookings.')
         return
       }
@@ -266,15 +282,18 @@ export default function StudentDashboard() {
         }
       }
 
-      setBookings(
-        rows.map((b) => ({
-          ...b,
-          hasBondReceipt: receiptByBookingId.has(b.id),
-        })),
-      )
+      const nextBookings = rows.map((b) => ({
+        ...b,
+        hasBondReceipt: receiptByBookingId.has(b.id),
+      }))
+      setBookings(nextBookings)
+      studentDashboardBookingsCacheByUserId.set(user.id, nextBookings)
     } catch (e: unknown) {
-      setProfile(null)
-      setBookings([])
+      if (!hadCache) {
+        setProfile(null)
+        setBookings([])
+        studentDashboardBookingsCacheByUserId.delete(user.id)
+      }
       setError(e instanceof Error ? e.message : 'Something went wrong loading your dashboard.')
     } finally {
       setDataLoading(false)
@@ -311,6 +330,13 @@ export default function StudentDashboard() {
       setBondDownloadBusyId(null)
     }
   }, [])
+
+  useEffect(() => {
+    const cached = readStudentBookingsCache(user?.id)
+    if (!cached) return
+    setBookings(cached)
+    setDataLoading(false)
+  }, [user?.id])
 
   useEffect(() => {
     void load()
@@ -593,7 +619,12 @@ export default function StudentDashboard() {
             <h2 id="bookings-heading" className="sr-only">
               Your bookings
             </h2>
-            {bookings.length === 0 ? (
+            {dataLoading && bookings.length === 0 ? (
+            <div className={`${cardClass} space-y-3 py-6 animate-pulse`} aria-busy="true">
+              <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
+              <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
+            </div>
+          ) : bookings.length === 0 ? (
             <div className={`${cardClass} text-center py-12`}>
               <p className="text-admin-ink-2 font-medium">No bookings yet</p>
               <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
