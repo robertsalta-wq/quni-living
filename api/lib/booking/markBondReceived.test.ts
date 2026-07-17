@@ -16,7 +16,7 @@ vi.mock('./maybeAdvanceListingBookingToActive.js', () => ({
   maybeAdvanceListingBookingToActive: vi.fn().mockResolvedValue({ advanced: false, reason: 'not_fully_signed' }),
 }))
 
-vi.mock('../documents/listingBondReceipt.js', () => ({
+vi.mock('../../documents/listingBondReceipt.js', () => ({
   generateAndPersistListingBondReceipt: vi.fn().mockResolvedValue({
     status: 'created',
     documentId: 'doc-bond-1',
@@ -30,7 +30,7 @@ import { sendListingBondReceivedEmails } from './listingTransactionalEmails.js'
 import { triggerListingDocumentGeneration } from './triggerListingDocumentGeneration.js'
 import { declineCompetingBookings } from './declineCompetingBookings.js'
 import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
-import { generateAndPersistListingBondReceipt } from '../documents/listingBondReceipt.js'
+import { generateAndPersistListingBondReceipt } from '../../documents/listingBondReceipt.js'
 import { runMarkBondReceivedLandlord } from './markBondReceived.js'
 
 const llId = 'll1'

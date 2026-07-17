@@ -8,7 +8,7 @@ import {
   TenantLegalNameNotReadyError,
 } from './assertStudentLegalNameForSigning.js'
 import { maybeAdvanceListingBookingToActive } from './maybeAdvanceListingBookingToActive.js'
-import { generateAndPersistListingBondReceipt } from '../documents/listingBondReceipt.js'
+import { generateAndPersistListingBondReceipt } from '../../documents/listingBondReceipt.js'
 
 /** Payload returned to clients after mark-bond-received (subset of `bookings`). */
 export type MarkBondReceivedBookingPayload = {

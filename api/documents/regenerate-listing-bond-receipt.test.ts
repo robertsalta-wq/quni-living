@@ -4,7 +4,7 @@ vi.mock('../lib/adminAuth.js', () => ({
   requireAdminUser: vi.fn(),
 }))
 
-vi.mock('../lib/documents/listingBondReceipt.js', () => ({
+vi.mock('./listingBondReceipt.js', () => ({
   generateAndPersistListingBondReceipt: vi.fn(),
 }))
 
@@ -38,7 +38,7 @@ vi.mock('@supabase/supabase-js', () => ({
 }))
 
 import { requireAdminUser } from '../lib/adminAuth.js'
-import { generateAndPersistListingBondReceipt } from '../lib/documents/listingBondReceipt.js'
+import { generateAndPersistListingBondReceipt } from './listingBondReceipt.js'
 import { sendListingBondReceivedEmails } from '../lib/booking/listingTransactionalEmails.js'
 import handler from './regenerate-listing-bond-receipt.js'
 

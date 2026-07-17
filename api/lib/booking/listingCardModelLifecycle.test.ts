@@ -40,7 +40,7 @@ vi.mock('./declineCompetingBookings.js', () => ({
   declineCompetingBookings: vi.fn().mockResolvedValue({ declined: 0 }),
 }))
 
-vi.mock('../documents/listingBondReceipt.js', () => ({
+vi.mock('../../documents/listingBondReceipt.js', () => ({
   generateAndPersistListingBondReceipt: vi.fn().mockResolvedValue({
     status: 'created',
     documentId: 'doc-bond-1',

@@ -6,10 +6,10 @@ import React from 'react'
 import { renderToBuffer } from '@react-pdf/renderer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { BondReceiptPdf } from '../../documents/BondReceiptPdf.js'
-import { QldBondPaymentReceiptPdf } from '../../documents/QldBondPaymentReceiptPdf.js'
-import { resolveBookingBondAmountAud } from '../booking/bookingBondAmount.js'
-import { tenantLegalNameForDocuments } from '../booking/tenantLegalNameForDocuments.js'
+import { BondReceiptPdf } from './BondReceiptPdf.js'
+import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
+import { resolveBookingBondAmountAud } from '../lib/booking/bookingBondAmount.js'
+import { tenantLegalNameForDocuments } from '../lib/booking/tenantLegalNameForDocuments.js'
 
 export type ListingBondReceiptGenResult =
   | {
