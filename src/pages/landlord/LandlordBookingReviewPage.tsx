@@ -40,6 +40,7 @@ import { resolveTenancyPackage } from '../../../api/lib/resolveTenancyPackage'
 import { listingBondPaymentLandlordObligations } from '../../lib/tenancy/listingBondPaymentCopy'
 import { bookingHasStudentDepositAuthorization } from '../../lib/bookingStudentDepositAuthorization'
 import BookingActivityTimeline from '../../components/booking/BookingActivityTimeline'
+import BookingReinstatementPanel from '../../components/booking/BookingReinstatementPanel'
 import {
   BookingReadinessDriver,
   BookingReadinessReadyRibbon,
@@ -1383,12 +1384,15 @@ export default function LandlordBookingReviewPage() {
                   </button>
                 </div>
               ) : booking.status === 'expired' ? (
-                <Link
-                  to={landlordBookingsPath()}
-                  className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
-                >
-                  ← Back to bookings
-                </Link>
+                <div className="space-y-2.5">
+                  <BookingReinstatementPanel bookingId={booking.id} bookingStatus={booking.status} onChanged={() => void reload()} />
+                  <Link
+                    to={landlordBookingsPath()}
+                    className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
+                  >
+                    ← Back to bookings
+                  </Link>
+                </div>
               ) : null}
               </div>
             </BookingReviewActionCard>

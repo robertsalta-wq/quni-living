@@ -149,7 +149,7 @@ export function resolveLandlordBookingReviewActionCopy(
         eyebrow: 'Status',
         eyebrowTone: 'status',
         title: 'Request expired — room stays listed',
-        sub: 'This request expired before it was accepted.',
+        sub: 'This request expired before it was accepted. If you both still want to proceed, you can request reinstatement within 30 days.',
         deadlineLabel: null,
         deadlineTone: 'info',
       }
@@ -257,7 +257,7 @@ export function resolveRenterBookingReviewActionCopy(
         eyebrow: 'Status',
         eyebrowTone: 'status',
         title: 'Request expired',
-        sub: 'This request expired before your host responded.',
+        sub: 'This request expired before your host responded. If you both still want to proceed, you can request reinstatement within 30 days.',
         deadlineLabel: null,
         deadlineTone: 'info',
       }

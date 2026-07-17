@@ -567,6 +567,98 @@ export function listingCancelledByLandlordLandlord(data) {
   }
 }
 
+/** Self-serve reinstatement — request to other party */
+export function listingReinstatementRequested(data) {
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const requesterLabel = escapeHtml(data.requester_label || 'The other party')
+  const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au')
+  const inner = `<h2 style="color: #1A1A2E;">Reinstatement requested</h2>
+<p>${requesterLabel} asked to reinstate the expired booking for <strong>${propertyAddress}</strong>.</p>
+<p>Confirm within the grace window if you still want to proceed. The room is <strong>not reserved</strong> until bond is marked received.</p>
+<a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Review request →</a>`
+  return {
+    subject: `Reinstatement requested - ${data.property_address || data.property_title || 'booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+/** Self-serve reinstatement — confirmed (both parties) */
+export function listingReinstatementConfirmed(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au')
+  const status = escapeHtml(data.booking_status || 'bond_pending')
+  let signingLine = ''
+  if (data.signing_resent) {
+    signingLine =
+      '<p>Signing has been re-sent — check your email for the agreement.</p>'
+  } else if (data.signing_resend_failed) {
+    signingLine =
+      '<p>Signing could not be re-sent automatically. The host can regenerate the agreement from the booking page.</p>'
+  }
+  const feeLine = data.listing_fee_refunded
+    ? '<p><strong>Listing fee:</strong> Booking reinstated; listing fee was refunded on expiry — confirm payment separately.</p>'
+    : ''
+  const reserveNote =
+    status === 'active'
+      ? '<p>Bond was already marked received, so this booking is active again.</p>'
+      : '<p>The booking is back in <strong>bond pending</strong>. The property is <strong>not reserved</strong> until the bond is marked received.</p>'
+
+  const inner = `<h2 style="color: #1A1A2E;">Booking reinstated</h2>
+<p>Hi ${name},</p>
+<p>Your booking for <strong>${propertyAddress}</strong> has been reinstated.</p>
+${reserveNote}
+${signingLine}
+${feeLine}
+<a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking →</a>`
+  return {
+    subject: `Booking reinstated - ${data.property_address || data.property_title || 'your booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+export function listingReinstatementDeclined(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au')
+  const inner = `<h2 style="color: #1A1A2E;">Reinstatement declined</h2>
+<p>Hi ${name},</p>
+<p>The other party declined reinstating the booking for <strong>${propertyAddress}</strong>.</p>
+<a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
+  return {
+    subject: `Reinstatement declined - ${data.property_address || data.property_title || 'booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+export function listingReinstatementCancelled(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au')
+  const inner = `<h2 style="color: #1A1A2E;">Reinstatement cancelled</h2>
+<p>Hi ${name},</p>
+<p>The pending reinstatement request for <strong>${propertyAddress}</strong> was cancelled.</p>
+<a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
+  return {
+    subject: `Reinstatement cancelled - ${data.property_address || data.property_title || 'booking'}`,
+    html: wrapContent(inner),
+  }
+}
+
+export function listingReinstatementBlockedUnavailable(data) {
+  const name = escapeHtml(data.recipient_name || 'there')
+  const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
+  const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au/listings')
+  const inner = `<h2 style="color: #1A1A2E;">Room no longer available</h2>
+<p>Hi ${name},</p>
+<p>The booking for <strong>${propertyAddress}</strong> could not be reinstated because another booking now holds the room.</p>
+<a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Continue →</a>`
+  return {
+    subject: `Reinstatement blocked - ${data.property_address || data.property_title || 'room taken'}`,
+    html: wrapContent(inner),
+  }
+}
+
 /** Landlord-sourced tenant invite — prospect books through Quni verification flow. */
 export function tenantInviteProspectEmail(data) {
   const inviteeName = escapeHtml(data.invitee_name || 'there')
