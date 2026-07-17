@@ -33,8 +33,17 @@ function mockAdmin(opts: {
   property?: Record<string, unknown> | null
   insertError?: unknown
   insertId?: string
+  updateError?: unknown
 }) {
   const upload = vi.fn(async () => ({ error: null }))
+  const updateEq = vi.fn(() => ({
+    select: () => ({
+      single: async () =>
+        opts.updateError
+          ? { data: null, error: opts.updateError }
+          : { data: { id: opts.existingDoc?.id ?? 'existing-doc' }, error: null },
+    }),
+  }))
   const from = vi.fn((table: string) => {
     if (table === 'tenancies') {
       return {
@@ -68,6 +77,9 @@ function mockAdmin(opts: {
                 : { data: { id: opts.insertId ?? 'doc-bond-1' }, error: null },
           }),
         }),
+        update: () => ({
+          eq: updateEq,
+        }),
       }
     }
     if (table === 'bookings') {
@@ -81,6 +93,7 @@ function mockAdmin(opts: {
                   bond_amount: 1600,
                   weekly_rent: 400,
                   bond_received_by_landlord_at: '2026-05-09T12:00:00.000Z',
+                  service_tier_final: 'listing',
                 } as Record<string, unknown>),
               error: null,
             }),
@@ -138,6 +151,7 @@ function mockAdmin(opts: {
       from: () => ({ upload }),
     },
     _upload: upload,
+    _updateEq: updateEq,
   }
 }
 
@@ -208,5 +222,20 @@ describe('generateAndPersistListingBondReceipt', () => {
       bookingId: 'bk1',
     })
     expect(result.status).toBe('created')
+  })
+
+  it('force:true overwrites existing bond_receipt PDF + row', async () => {
+    const admin = mockAdmin({ existingDoc: { id: 'existing-doc' } })
+    const result = await generateAndPersistListingBondReceipt({
+      admin: admin as never,
+      bookingId: 'bk1',
+      force: true,
+    })
+
+    expect(result.status).toBe('overwritten')
+    if (result.status !== 'overwritten') return
+    expect(result.documentId).toBe('existing-doc')
+    expect(admin._upload).toHaveBeenCalled()
+    expect(admin._updateEq).toHaveBeenCalled()
   })
 })
