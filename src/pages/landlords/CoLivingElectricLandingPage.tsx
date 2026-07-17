@@ -34,8 +34,8 @@ export default function CoLivingElectricLandingPage() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
       <Seo
-        title="Rent-by-the-room lifecycle for portfolio landlords"
-        description="Quni runs the room lifecycle for rent-by-the-room landlords near Australian universities - verified applicants, correct agreements, correct bond routing, signed and filled. $99 Listing or 7% Managed."
+        title="Co-living landlord platform"
+        description="The full room lifecycle for co-living investors: verified applicants, correct agreements, correct bond handling. $99 flat or 7% Managed."
         canonicalPath="/landlords/co-living-electric"
         noindex
       />
@@ -56,7 +56,7 @@ export default function CoLivingElectricLandingPage() {
             <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
               <div className="min-w-0">
                 <p className="mb-4 max-w-xl bg-gradient-to-r from-fuchsia-400 via-violet-400 to-cyan-300 bg-clip-text text-[11px] font-semibold uppercase leading-snug tracking-[0.14em] text-transparent sm:text-xs sm:tracking-[0.18em]">
-                  For rent-by-the-room portfolio operators
+                  For co-living landlords
                 </p>
                 <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
                   Rent-by-the-room is a high-yield business. The{' '}
@@ -70,9 +70,9 @@ export default function CoLivingElectricLandingPage() {
                   .
                 </h1>
                 <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-                  Flatmates finds you a stranger and leaves. Agents won&apos;t touch per-room lets. Quni
-                  runs the whole room lifecycle - verified applicant, correct agreement, correct bond
-                  handling, signed, filled.
+                  Flatmates finds you a stranger and leaves. Agents won&apos;t touch co-living
+                  room-by-room. Quni runs the whole room lifecycle - verified applicant, correct
+                  agreement, correct bond handling, signed, filled.
                 </p>
                 <div className="mt-8">
                   <GlowCta />
