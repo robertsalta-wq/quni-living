@@ -1,4 +1,5 @@
 // @ts-nocheck - Vercel API TS graph; JSX for @react-pdf/renderer
+import React from 'react'
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 
 const coral = '#FF6F61'
