@@ -28,6 +28,7 @@ import RenterDashboardPageHeader, {
 } from '../components/student/RenterDashboardPageHeader'
 import { pickCurrentTenantBooking } from '../lib/tenantCurrentBooking'
 import { tenantBookingStatusLabel } from '../lib/tenantBookingStatus'
+import { bookingHasBondReceiptDocument } from '../lib/booking/renterBondReceiptCta'
 import { resolveBookingBondAmountAud } from '../lib/booking/resolveBookingBondAmount'
 import {
   normalizePropertyPayoutEmbed,
@@ -79,6 +80,8 @@ type PropertyBookingEmbed = Pick<
 
 type BookingWithProperty = BookingRow & {
   properties: PropertyBookingEmbed | null
+  /** Derived client-side from tenancy_documents lookup — not a PostgREST embed. */
+  hasBondReceipt?: boolean
 }
 
 type TabId = 'overview' | 'bookings'
@@ -247,7 +250,28 @@ export default function StudentDashboard() {
         return
       }
 
-      setBookings((bookRes.data ?? []) as BookingWithProperty[])
+      const rows = (bookRes.data ?? []) as BookingWithProperty[]
+      const bookingIds = rows.map((b) => b.id).filter(Boolean)
+      const receiptByBookingId = new Set<string>()
+      if (bookingIds.length > 0) {
+        const { data: tenancyRows } = await supabase
+          .from('tenancies')
+          .select('booking_id, tenancy_documents ( document_type )')
+          .in('booking_id', bookingIds)
+        for (const t of tenancyRows ?? []) {
+          const bid = typeof t.booking_id === 'string' ? t.booking_id : ''
+          if (!bid) continue
+          const docs = Array.isArray(t.tenancy_documents) ? t.tenancy_documents : []
+          if (bookingHasBondReceiptDocument(docs)) receiptByBookingId.add(bid)
+        }
+      }
+
+      setBookings(
+        rows.map((b) => ({
+          ...b,
+          hasBondReceipt: receiptByBookingId.has(b.id),
+        })),
+      )
     } catch (e: unknown) {
       setProfile(null)
       setBookings([])
@@ -590,6 +614,7 @@ export default function StudentDashboard() {
                 const serviceTier =
                   parseLandlordServiceTier(b.service_tier_final) ??
                   parseLandlordServiceTier(b.service_tier_at_request)
+                const hasBondReceipt = Boolean(b.hasBondReceipt)
                 const bookingZones = (
                   <RenterBookingZones
                     booking={b}
@@ -600,6 +625,7 @@ export default function StudentDashboard() {
                     bondDownloadBusy={bondDownloadBusyId === b.id}
                     bondDownloadError={bondDownloadErrorId === b.id}
                     onDownloadBondReceipt={() => void downloadBondReceipt(b.id)}
+                    hasBondReceipt={hasBondReceipt}
                     bondGuidance={
                       b.status === 'bond_pending' &&
                       b.service_tier_final === 'listing' &&
