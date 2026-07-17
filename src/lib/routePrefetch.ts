@@ -142,3 +142,15 @@ export function prefetchRouteChunks(pathname: string): void {
     prefetch(exact)
   }
 }
+
+/** Warm every bottom-nav destination for landlord/renter mobile chrome. */
+export function prefetchDashboardMobileTabChunks(role: 'landlord' | 'renter'): void {
+  if (role === 'landlord') {
+    prefetchRouteChunks('/landlord/dashboard')
+    prefetchRouteChunks('/messages')
+    return
+  }
+  prefetchRouteChunks('/student-dashboard')
+  prefetchRouteChunks('/messages')
+  prefetchRouteChunks('/student-profile')
+}

@@ -4,7 +4,7 @@ import { CalendarDays, LayoutGrid, MessageSquare, User } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 import { renterMobileActiveSection } from '../../lib/renterMobileChrome'
-import { prefetchRouteChunks } from '../../lib/routePrefetch'
+import { prefetchDashboardMobileTabChunks, prefetchRouteChunks } from '../../lib/routePrefetch'
 import { studentDashboardTabPath } from '../../lib/userDashboardNav'
 
 const items = [
@@ -32,10 +32,9 @@ export default function RenterMobileBottomNav() {
   const unreadMessageCount = useUnreadMessageCount(user?.id)
   const active = renterMobileActiveSection(location.pathname, location.search)
 
-  // Warm the Messages chunk (the only cross-chunk tab) so tapping it doesn't
-  // flash the route-loading spinner.
+  // Warm every tab destination (Messages + Profile are cross-chunk hops).
   useEffect(() => {
-    prefetchRouteChunks('/messages')
+    prefetchDashboardMobileTabChunks('renter')
   }, [])
 
   return (
