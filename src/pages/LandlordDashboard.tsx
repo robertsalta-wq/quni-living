@@ -51,6 +51,16 @@ import {
 import { signedTenancyAgreementDownloadFilename } from '../lib/tenancy/jurisdictionCopy'
 import { landlordResponseExpiryLabel } from '../lib/booking/landlordResponseExpiry'
 import LandlordBookingMobileCard from '../components/booking/list/LandlordBookingMobileCard'
+import BookingsViewToggle from '../components/landlord/bookings/BookingsViewToggle'
+import LandlordBookingsCalendar from '../components/landlord/bookings/LandlordBookingsCalendar'
+import LandlordBookingsTimeline from '../components/landlord/bookings/LandlordBookingsTimeline'
+import LandlordNext7Days from '../components/landlord/bookings/LandlordNext7Days'
+import {
+  parseBookingsScheduleView,
+  type BookingsScheduleView,
+  type SchedulingBooking,
+} from '../lib/landlordBookingsScheduling'
+import type { LandlordListingForGroup } from '../lib/landlordListingsGrouped'
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 type PropertyRow = Database['public']['Tables']['properties']['Row']
 type BookingRow = Database['public']['Tables']['bookings']['Row']
@@ -923,12 +933,15 @@ export default function LandlordDashboard() {
       if (next === 'overview') {
         params.delete('tab')
         params.delete('section')
+        params.delete('view')
       } else if (next === 'listings') {
         params.set('tab', 'listings')
         params.delete('section')
+        params.delete('view')
       } else {
         params.set('tab', next)
         if (next !== 'profile') params.delete('section')
+        if (next !== 'bookings') params.delete('view')
       }
       const q = params.toString()
       navigate(q ? `/landlord/dashboard?${q}` : '/landlord/dashboard', { replace: true })
@@ -987,6 +1000,59 @@ export default function LandlordDashboard() {
       ),
     [bookings],
   )
+
+  const bookingsScheduleView = useMemo(
+    () => parseBookingsScheduleView(searchParams.get('view')),
+    [searchParams],
+  )
+
+  const selectBookingsScheduleView = useCallback(
+    (next: BookingsScheduleView) => {
+      const params = new URLSearchParams(searchParams)
+      params.set('tab', 'bookings')
+      if (next === 'requests') params.delete('view')
+      else params.set('view', next)
+      navigate(`/landlord/dashboard?${params.toString()}`, { replace: true })
+    },
+    [navigate, searchParams],
+  )
+
+  const schedulingBookings = useMemo((): SchedulingBooking[] => {
+    return bookings.map((b) => ({
+      id: b.id,
+      property_id: b.property_id,
+      status: b.status,
+      move_in_date: b.move_in_date,
+      start_date: b.start_date,
+      end_date: b.end_date,
+      weekly_rent: b.weekly_rent,
+      expires_at: b.expires_at,
+      confirmed_at: b.confirmed_at,
+      created_at: b.created_at,
+      student_name: studentDisplayFromBooking(b),
+      property_title: b.properties?.title ?? null,
+      service_tier: bookingServiceTier(b),
+    }))
+  }, [bookings])
+
+  const listingsForTimeline = useMemo((): LandlordListingForGroup[] => {
+    return properties.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      rent_per_week: p.rent_per_week,
+      room_type: p.room_type,
+      suburb: p.suburb,
+      address: p.address,
+      images: p.images,
+      status: p.status,
+      property_type: p.property_type,
+      property_group_id: p.property_group_id,
+      bedrooms: p.bedrooms,
+      created_at: p.created_at,
+      service_tier: p.service_tier,
+    }))
+  }, [properties])
 
   const landlordReadiness = useMemo(() => computeLandlordReadiness(profile), [profile])
   const profileStatCard = useMemo(
@@ -1163,6 +1229,8 @@ export default function LandlordDashboard() {
               </button>
             </div>
 
+            <LandlordNext7Days bookings={schedulingBookings} />
+
             <div className="mb-6">
               <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                 View sample agreements →
@@ -1250,6 +1318,18 @@ export default function LandlordDashboard() {
             {landlordBookingPaymentError && (
               <LandlordBookingPaymentErrorBanner onDismiss={() => setLandlordBookingPaymentError(false)} />
             )}
+            <BookingsViewToggle value={bookingsScheduleView} onChange={selectBookingsScheduleView} />
+
+            {bookingsScheduleView === 'timeline' ? (
+              <LandlordBookingsTimeline listings={listingsForTimeline} bookings={schedulingBookings} />
+            ) : null}
+
+            {bookingsScheduleView === 'calendar' ? (
+              <LandlordBookingsCalendar bookings={schedulingBookings} />
+            ) : null}
+
+            {bookingsScheduleView === 'requests' ? (
+              <>
             {pendingConfirmation.length > 0 && (
               <div className="space-y-4 w-full min-w-0 max-w-full">
                 <h3 className="text-sm font-semibold text-gray-900">Booking requests</h3>
@@ -1604,6 +1684,8 @@ export default function LandlordDashboard() {
                 </>
               )}
             </div>
+              </>
+            ) : null}
           </div>
         )}
 

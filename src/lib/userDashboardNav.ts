@@ -32,8 +32,9 @@ export function studentDashboardTabPath(section: 'overview' | 'bookings'): strin
   return `${userDashboardHomePath('renter')}?tab=${section}`
 }
 
-export function landlordBookingsPath(): string {
-  return '/landlord/dashboard?tab=bookings'
+export function landlordBookingsPath(view?: 'requests' | 'calendar' | 'timeline'): string {
+  if (!view || view === 'requests') return '/landlord/dashboard?tab=bookings'
+  return `/landlord/dashboard?tab=bookings&view=${view}`
 }
 
 export function landlordDashboardTabPath(
