@@ -1560,41 +1560,36 @@ export default function LandlordDashboard() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                {b.status === 'confirmed' || b.status === 'active' ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      disabled={agreementActionBusyId === b.id}
-                                      onClick={() => void handleLandlordAgreement(b)}
-                                      className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
-                                    >
-                                      {agreementActionBusyId === b.id
-                                        ? 'Opening…'
-                                        : b.landlord_agreement_signed_paths
-                                          ? 'Download agreement'
-                                          : 'Open agreement'}
-                                    </button>
-                                    <span className="text-gray-300 select-none" aria-hidden>
-                                      ·
-                                    </span>
-                                    <Link
-                                      to={`/landlord/bookings/${b.id}/review`}
-                                      className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
-                                    >
-                                      Booking details
-                                    </Link>
-                                  </>
-                                ) : (
+                            <div className="flex flex-col items-start gap-1">
+                              {b.status === 'confirmed' || b.status === 'active' ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={agreementActionBusyId === b.id}
+                                    onClick={() => void handleLandlordAgreement(b)}
+                                    className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+                                  >
+                                    {agreementActionBusyId === b.id
+                                      ? 'Opening…'
+                                      : b.landlord_agreement_signed_paths
+                                        ? 'Download agreement'
+                                        : 'Open agreement'}
+                                  </button>
                                   <Link
                                     to={`/landlord/bookings/${b.id}/review`}
-                                    className="text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                                    className="text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
                                   >
-                                    Review request
+                                    Booking details
                                   </Link>
-                                )}
-                              </div>
+                                </>
+                              ) : (
+                                <Link
+                                  to={`/landlord/bookings/${b.id}/review`}
+                                  className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                                >
+                                  Review request
+                                </Link>
+                              )}
                               {leaseDownloadErrorId === b.id &&
                                 (b.status === 'confirmed' || b.status === 'active') && (
                                   <p className="text-[11px] leading-snug text-gray-500">Agreement not yet generated</p>
