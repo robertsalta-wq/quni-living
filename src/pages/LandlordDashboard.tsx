@@ -1567,7 +1567,7 @@ export default function LandlordDashboard() {
                                     type="button"
                                     disabled={agreementActionBusyId === b.id}
                                     onClick={() => void handleLandlordAgreement(b)}
-                                    className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+                                    className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
                                   >
                                     {agreementActionBusyId === b.id
                                       ? 'Opening…'
@@ -1577,7 +1577,7 @@ export default function LandlordDashboard() {
                                   </button>
                                   <Link
                                     to={`/landlord/bookings/${b.id}/review`}
-                                    className="text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
+                                    className="block w-full text-left text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2"
                                   >
                                     Booking details
                                   </Link>
