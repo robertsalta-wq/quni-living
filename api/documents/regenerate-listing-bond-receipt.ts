@@ -12,15 +12,22 @@
  *
  * Auth: Bearer <admin Supabase JWT> via requireAdminUser
  *
- * Lives under api/documents/ so Vercel NFT includes BondReceiptPdf.tsx the same way as
- * generate-bond-receipt (api/admin entry was FUNCTION_INVOCATION_FAILED on cold start).
+ * NFT: BondReceiptPdf.tsx must be imported from this lambda entry (not only via
+ * listingBondReceipt.ts). Vercel packages the .ts helper but omits sibling .tsx
+ * unless the entry imports it — same pattern as generate-bond-receipt.
  */
 // @ts-nocheck - Vercel isolated API TS pass.
 import { createClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
+import { BondReceiptPdf } from './BondReceiptPdf.js'
+import { QldBondPaymentReceiptPdf } from './QldBondPaymentReceiptPdf.js'
 import { generateAndPersistListingBondReceipt } from './listingBondReceipt.js'
 import { sendListingBondReceivedEmails } from '../lib/booking/listingTransactionalEmails.js'
+
+// Keep entry-level bindings so NFT cannot tree-shake the PDF modules away.
+void BondReceiptPdf
+void QldBondPaymentReceiptPdf
 
 export const config = {
   runtime: 'nodejs',

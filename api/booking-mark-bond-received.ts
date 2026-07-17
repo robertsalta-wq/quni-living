@@ -1,7 +1,14 @@
 // @ts-nocheck - Vercel Node handler; mirrors confirm-booking typing style.
 import { createClient } from '@supabase/supabase-js'
+import { BondReceiptPdf } from './documents/BondReceiptPdf.js'
+import { QldBondPaymentReceiptPdf } from './documents/QldBondPaymentReceiptPdf.js'
 import { headerString, readJsonBody } from './lib/nodeHandler.js'
 import { runMarkBondReceivedLandlord } from './lib/booking/markBondReceived.js'
+
+// Listing soft-generate reaches BondReceiptPdf via markBondReceived → listingBondReceipt;
+// NFT omits sibling .tsx unless this entry imports them (see regenerate-listing-bond-receipt).
+void BondReceiptPdf
+void QldBondPaymentReceiptPdf
 
 export const config = { runtime: 'nodejs', maxDuration: 30 }
 
