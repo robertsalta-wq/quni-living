@@ -24,7 +24,7 @@ import {
   landlordBookingConfirmBlockedBanner,
   landlordBookingConfirmBlockedUserMessage,
 } from '../../lib/landlordBookingConfirmGate'
-import { landlordListingBondReceivedPrimaryVisible } from '../../lib/landlordListingBondReceivedGate'
+import { deriveLandlordPrimaryAction } from '../../lib/booking/landlordPrimaryAction'
 import { confirmLandlordBookingWithOptionalThreeDS } from '../../lib/landlordBookingConfirm'
 import LandlordListingPaymentModal from '../../components/landlord/LandlordListingPaymentModal'
 import { landlordAcceptTierUiModel } from '../../lib/landlordAcceptTierOptions'
@@ -830,13 +830,6 @@ export default function LandlordBookingReviewPage() {
       ''
     : ''
 
-  const showBondReceivedPrimary = landlordListingBondReceivedPrimaryVisible({
-    bookingStatus: booking.status,
-    serviceTierFinal: booking.service_tier_final,
-    bookingLandlordId: booking.landlord_id,
-    viewerLandlordProfileId: landlordProfileId,
-  })
-
   const showResendPaymentInstructions =
     booking.service_tier_final === 'listing' &&
     listingUsesOccupancyAgreement &&
@@ -916,15 +909,6 @@ export default function LandlordBookingReviewPage() {
     (property?.state ?? '').trim().toUpperCase() === 'QLD' &&
     isBondPaymentReceiptContext(property?.property_type)
 
-  const showMarkBondReceived =
-    Boolean(tenancy) &&
-    !tenancy?.bond_lodged_at &&
-    !tenancy?.bond_lodgement_reference &&
-    booking.bond_received_by_landlord_at == null &&
-    property &&
-    isBondPaymentReceiptContext(property.property_type) &&
-    (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed')
-
   const showRtaBondRecord =
     isQldSchemeListing &&
     (isListingBondPending ||
@@ -952,34 +936,33 @@ export default function LandlordBookingReviewPage() {
         { label: 'Review request' },
       )
 
-  // pending_confirmation keeps Accept / Decline / Request-info; awaiting_info uses its own waiting body.
-  const isPreAcceptStatus = booking.status === 'pending_confirmation'
-  const primaryActionKind: 'bond-received' | 'mark-bond' | 'accept-decline-info' | 'none' = showBondReceivedPrimary
-    ? 'bond-received'
-    : showMarkBondReceived
-      ? 'mark-bond'
-      : isPreAcceptStatus
-        ? 'accept-decline-info'
-        : 'none'
+  const primaryAction = deriveLandlordPrimaryAction({
+    bookingStatus: booking.status,
+    serviceTierFinal: booking.service_tier_final,
+    bookingLandlordId: booking.landlord_id,
+    viewerLandlordProfileId: landlordProfileId,
+    bondReceivedByLandlordAt: booking.bond_received_by_landlord_at,
+    hasTenancy: Boolean(tenancy),
+    tenancyBondLodgedAt: tenancy?.bond_lodged_at ?? null,
+    tenancyBondLodgementReference: tenancy?.bond_lodgement_reference ?? null,
+    propertyType: property?.property_type ?? null,
+    hasProperty: Boolean(property),
+  })
+  const primaryActionKind = primaryAction.kind
 
   const awaitingInfoQuestion = resolveLandlordAwaitingInfoQuestion(messages)
 
   const canReplyInThread = Boolean(canDeclineOrInfo)
 
-  // Action-card copy by status (pure model, HTML SoT §6/§11/§17). The one override: when the boarding/homestay
-  // "mark bond as received" CTA is showing (confirmed/active/completed and bond_received_by_landlord_at still null),
-  // the actionable thing is confirming the bond, not the status' default copy — so we borrow bond_pending's copy.
-  const actionCopyStatus = primaryActionKind === 'mark-bond' ? 'bond_pending' : booking.status
+  // Action-card copy by status (pure model). copyStatus may borrow bond_pending when mark-bond.
   const actionCopy = resolveLandlordBookingReviewActionCopy({
-    status: actionCopyStatus,
+    status: primaryAction.copyStatus,
     studentDisplayName: displayName,
     askedAtLabel: awaitingInfoQuestion?.askedAtLabel ?? null,
     bondDeadlineLabel,
     hasActionRequired: booking.status === 'pending_confirmation',
   })
-  // The bond-received flow already shows its own prominent "Confirm bond received by" callout inline —
-  // skip the duplicate top-of-card deadline pill for that state.
-  const actionDeadlineLabel = primaryActionKind === 'bond-received' ? null : actionCopy.deadlineLabel
+  const actionDeadlineLabel = primaryAction.suppressDeadlinePill ? null : actionCopy.deadlineLabel
 
   const applicantExpanded =
     applicantExpandedOverride ?? reviewLayout.applicantDefaultOpen
