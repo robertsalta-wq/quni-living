@@ -379,14 +379,23 @@ export async function sendListingAgreementReadyEmails(admin, bookingId) {
  * After bond received → confirmed.
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
+ * @param {{ pdfAttachment?: { filename: string, content: string } | null }} [opts]
  */
-export async function sendListingBondReceivedEmails(admin, bookingId) {
+export async function sendListingBondReceivedEmails(admin, bookingId, opts) {
   try {
     const ctx = await loadListingEmailContext(admin, bookingId)
     if (!ctx) return
 
     const base = siteBaseUrl()
     const studentDash = `${base}/student-dashboard?tab=bookings`
+    const pdfAttachment =
+      opts?.pdfAttachment &&
+      typeof opts.pdfAttachment.filename === 'string' &&
+      typeof opts.pdfAttachment.content === 'string'
+        ? opts.pdfAttachment
+        : null
+    const attachments = pdfAttachment ? [pdfAttachment] : undefined
+    const receiptAttached = Boolean(pdfAttachment)
 
     const sendRenter = async () => {
       if (!ctx.studentEmail) return
@@ -396,8 +405,9 @@ export async function sendListingBondReceivedEmails(admin, bookingId) {
         property_title: ctx.propertyTitle,
         sign_agreement_url: studentDash,
         student_dashboard_url: studentDash,
+        receipt_attached: receiptAttached,
       })
-      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html })
+      await sendEmail({ to: ctx.studentEmail, subject: t.subject, html: t.html, attachments })
     }
 
     const sendLl = async () => {
@@ -407,8 +417,9 @@ export async function sendListingBondReceivedEmails(admin, bookingId) {
         property_address: ctx.propertyAddress,
         property_title: ctx.propertyTitle,
         dashboard_url: `${base}/landlord/dashboard?tab=bookings`,
+        receipt_attached: receiptAttached,
       })
-      await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html })
+      await sendEmail({ to: ctx.landlordEmail, subject: t.subject, html: t.html, attachments })
     }
 
     await Promise.all([sendRenter(), sendLl()])

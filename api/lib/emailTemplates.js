@@ -448,10 +448,14 @@ export function listingBondReceivedRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
   const signUrl = escapeHtml(data.sign_agreement_url || data.student_dashboard_url || '#')
+  const receiptLine = data.receipt_attached
+    ? '<p>A PDF bond receipt is attached to this email. You can also download it later from your student dashboard.</p>'
+    : ''
 
   const inner = `<h2 style="color: #1A1A2E;">Bond received - sign your tenancy agreement</h2>
 <p>Hi ${studentName},</p>
 <p>Your landlord has confirmed bond receipt for <strong>${propertyAddress}</strong>.</p>
+${receiptLine}
 <p><strong>Next step:</strong> Your tenancy agreement is now ready to sign electronically.</p>
 <a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>`
 
@@ -466,10 +470,14 @@ export function listingBondReceivedLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
   const dashboardUrl = escapeHtml(data.dashboard_url || 'https://quni.com.au/landlord/dashboard?tab=bookings')
+  const receiptLine = data.receipt_attached
+    ? '<p>A PDF bond receipt is attached to this email (also saved on the tenancy for the renter to re-download).</p>'
+    : ''
 
   const inner = `<h2 style="color: #1A1A2E;">Bond receipt recorded</h2>
 <p>Hi ${landlordName},</p>
 <p>Thanks - we&apos;ve recorded bond receipt for your Listing booking at <strong>${propertyAddress}</strong>.</p>
+${receiptLine}
 <p>The renter can now complete signing on their side. You&apos;ll receive DocuSeal notifications as usual.</p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
 

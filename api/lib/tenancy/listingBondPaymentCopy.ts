@@ -212,7 +212,7 @@ export function listingBondPaymentLandlordObligations(
   const ifPaidToLandlord =
     st === 'QLD'
       ? `If the renter pays you directly, lodge the bond with ${bond.authorityPublicLabel} within ${deadline}, keep the RTA Acknowledgement of Rental Bond, and record the bond number on Quni when you have it. Recording receipt on Quni is not RTA lodgement.`
-      : `If the renter pays you directly, lodge the bond with ${bond.authorityPublicLabel} within ${deadline} and provide a receipt (you can generate one on Quni after you record bond received).`
+      : `If the renter pays you directly, lodge the bond with ${bond.authorityPublicLabel} within ${deadline}. When you record bond received on Quni, we email a PDF receipt to you and the renter.`
 
   const qldRecordReceiptNote =
     st === 'QLD'

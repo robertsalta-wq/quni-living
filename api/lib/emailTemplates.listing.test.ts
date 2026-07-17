@@ -188,6 +188,8 @@ describe('Listing email templates', () => {
     const l = listingBondReceivedLandlord(sample)
     expect(r.html).toContain('Sign')
     expect(l.html).toContain('Bond receipt')
+    const rAttached = listingBondReceivedRenter({ ...sample, receipt_attached: true })
+    expect(rAttached.html).toContain('PDF bond receipt')
   })
 
   it('renders expiry templates', () => {

@@ -13,7 +13,7 @@ import { VerifiedLandlordBadge } from '../VerifiedLandlordBadge'
 import ListingPaymentInstructions, {
   shouldShowListingPaymentInstructions,
 } from '../student/ListingPaymentInstructions'
-import { isBondPaymentReceiptContext } from '../../lib/listings'
+import { renterBondReceiptDownloadVisible } from '../../lib/booking/renterBondReceiptCta'
 import { landlordServiceTierTitle } from '../../lib/landlordServiceTier'
 import {
   bookingHasOccupancySnapshot,
@@ -81,6 +81,8 @@ type Props = {
   bondDownloadBusy: boolean
   bondDownloadError: boolean
   onDownloadBondReceipt: () => void
+  /** Persisted tenancy_documents bond_receipt row exists for this booking. */
+  hasBondReceipt: boolean
   bondGuidance?: ReactNode
 }
 
@@ -119,6 +121,7 @@ export default function RenterBookingZones({
   bondDownloadBusy,
   bondDownloadError,
   onDownloadBondReceipt,
+  hasBondReceipt,
   bondGuidance,
 }: Props) {
   const [fitExpandedOverride, setFitExpandedOverride] = useState<boolean | null>(null)
@@ -160,10 +163,10 @@ export default function RenterBookingZones({
 
   const showLeaseStrip =
     booking.status === 'bond_pending' || booking.status === 'confirmed' || booking.status === 'active'
-  const showBondReceipt =
-    (booking.status === 'confirmed' || booking.status === 'active' || booking.status === 'completed') &&
-    property != null &&
-    isBondPaymentReceiptContext(property.property_type)
+  const showBondReceipt = renterBondReceiptDownloadVisible({
+    bookingStatus: booking.status,
+    hasBondReceipt,
+  })
 
   const rentOverride = parseRentOverrideProvenance(booking.rent_breakdown)
   const showAgreedRentNotice =
