@@ -7,9 +7,11 @@ import { generatePropertySlug } from '../../lib/generatePropertySlug'
 import {
   LISTING_HUB_SECTION_IDS,
   LISTING_HUB_SECTIONS,
+  hubSectionIdFromFormSectionId,
   listingHubPath,
   type ListingHubSectionId,
 } from '../../lib/listingEditHubHealth'
+import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import {
   ACCOMMODATION_UI_OPTIONS,
@@ -488,15 +490,21 @@ function ListingDescriptionAiBlock({
 }
 
 function sectionClass(title: string, children: ReactNode, sectionId?: string) {
+  const hubId = sectionId ? hubSectionIdFromFormSectionId(sectionId) : null
   return (
     <section
       id={sectionId}
-      className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm scroll-mt-below-header"
+      className="scroll-mt-below-header overflow-hidden rounded-2xl border border-[var(--quni-line)] bg-white shadow-[0_1px_2px_rgba(8,6,13,0.05)]"
     >
-      <div className="bg-[#FF6F61] px-4 py-3 sm:px-6 lg:px-8">
-        <h2 className="text-base font-medium text-white">{title}</h2>
+      <div className="flex w-full items-center gap-3.5 px-5 py-[18px] text-left">
+        {hubId ? (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--quni-coral-tint)] text-[var(--quni-coral)] [&_svg]:h-[18px] [&_svg]:w-[18px]">
+            <ListingHubSectionIcon id={hubId} />
+          </span>
+        ) : null}
+        <h2 className="min-w-0 flex-1 text-[15px] font-semibold text-[var(--quni-ink)]">{title}</h2>
       </div>
-      <div className="bg-white p-4 sm:p-6 lg:p-8">{children}</div>
+      <div className="border-t border-[var(--quni-line-soft)] px-5 pb-[22px] pt-[18px]">{children}</div>
     </section>
   )
 }
@@ -2483,14 +2491,12 @@ export default function LandlordPropertyFormPage() {
   }
 
   const inputClass =
-    'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-400'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
+    'w-full rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
+  const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
 
   return (
     <div
-      className={`flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col max-sm:pb-0 pb-16 ${
-        isHubSectionMode ? 'bg-[var(--quni-surface-2)]' : 'bg-[#d4e9e2]'
-      }`}
+      className={`flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col max-sm:pb-0 pb-16 bg-[var(--quni-surface-2)]`}
     >
       <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 pt-3 pb-4 sm:px-6 sm:pt-5 sm:pb-8">
         {isHubSectionMode ? (
@@ -2584,8 +2590,8 @@ export default function LandlordPropertyFormPage() {
                         href={`#${id}`}
                         className={
                           isActive
-                            ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
-                            : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 text-center text-xs font-medium text-[#D85A30] hover:bg-[#D85A30] hover:text-white sm:text-sm'
+                            ? 'shrink-0 rounded-full border border-[var(--quni-coral)] bg-[var(--quni-coral)] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
+                            : 'shrink-0 rounded-full border border-[var(--quni-line)] bg-white px-3 py-1.5 text-center text-xs font-medium text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] sm:text-sm'
                         }
                       >
                         {label}
@@ -3945,7 +3951,7 @@ export default function LandlordPropertyFormPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-gray-900 text-white px-6 py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
             >
               {submitting
                 ? 'Saving…'
@@ -3957,7 +3963,7 @@ export default function LandlordPropertyFormPage() {
             </button>
             <Link
               to="/landlord-dashboard"
-              className="rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-[10px] border border-[#D8D3C7] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
             >
               Cancel
             </Link>
