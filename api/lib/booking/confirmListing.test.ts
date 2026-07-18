@@ -59,7 +59,9 @@ function mockAdmin(opts: {
   const updateRows = opts.updateRows ?? [{ id: booking.id }]
   const eventError = opts.eventError ?? null
   const feeExempt = opts.feeExempt ?? false
-  const payoutRow = opts.payoutRow ?? null
+  const payoutRow = opts.payoutRow === undefined
+    ? { account_name: 'Host Trust', bsb: '123456', account_number: '98765432' }
+    : opts.payoutRow
 
   const from = vi.fn((table: string) => {
     if (table === 'landlord_profiles') {
@@ -257,7 +259,7 @@ describe('runListingConfirmBooking', () => {
     expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_hold')
   })
 
-  it('blocks boarder/lodger Listing accept when payout details are missing', async () => {
+  it('blocks Listing accept when payout details are missing', async () => {
     const occupancyBooking = {
       ...baseBooking,
       move_in_date: '2026-07-01',
@@ -283,6 +285,33 @@ describe('runListingConfirmBooking', () => {
     expect(result.body.error).toBe('listing_payout_details_missing')
     expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
     expect(preflightListingTenancyDocument).not.toHaveBeenCalled()
+  })
+
+  it('blocks off-site Listing accept when payout details are missing', async () => {
+    const offSiteBooking = {
+      ...baseBooking,
+      move_in_date: '2026-07-01',
+      properties: {
+        state: 'NSW',
+        property_type: 'private_room_landlord_off_site',
+        is_registered_rooming_house: false,
+      },
+    }
+    const stripe = stripeHappy()
+    const admin = mockAdmin({ booking: offSiteBooking, payoutRow: null })
+
+    const result = await runListingConfirmBooking({
+      stripe: stripe as never,
+      admin: admin as never,
+      landlord,
+      bookingId: baseBooking.id,
+      origin: '*',
+    })
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.body.error).toBe('listing_payout_details_missing')
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled()
   })
 
   it('confirm Listing triggers document generation with signing at accept (defer_signing=false)', async () => {
@@ -434,6 +463,18 @@ describe('runListingConfirmBooking', () => {
             insert: () => ({
               select: () => ({
                 single: async () => ({ data: { id: 'evt-1' }, error: null }),
+              }),
+            }),
+          }
+        }
+        if (table === 'property_payout_details') {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432' },
+                  error: null,
+                }),
               }),
             }),
           }

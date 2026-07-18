@@ -56,7 +56,10 @@ export function landlordBookingConfirmAllowed(args: {
   adminOverrideVerified: boolean
   /** When true, Listing acceptance fee is $0 — saved card is not required. */
   listingFeeExempt?: boolean
-  /** Listing + boarder/lodger (occupancy agreement) — requires complete property payout row. */
+  /**
+   * @deprecated Occupancy no longer gates payout — Listing always needs property_payout_details.
+   * Kept optional so callers can still pass it without breaking.
+   */
   listingUsesOccupancyAgreement?: boolean
   propertyPayoutComplete?: boolean
   property?: LandlordBookingReviewProperty | null
@@ -93,7 +96,7 @@ export function landlordBookingConfirmAllowed(args: {
   }
 
   if (args.selectedConfirmTier === 'listing') {
-    if (args.listingUsesOccupancyAgreement && args.propertyPayoutComplete !== true) {
+    if (args.propertyPayoutComplete !== true) {
       return false
     }
     if (!args.listingBillingLoaded) return false
@@ -115,6 +118,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
   stripeChargesEnabled: boolean
   adminOverrideVerified: boolean
   listingFeeExempt?: boolean
+  /** @deprecated Occupancy no longer gates payout — Listing always needs property_payout_details. */
   listingUsesOccupancyAgreement?: boolean
   propertyPayoutComplete?: boolean
   property?: LandlordBookingReviewProperty | null
@@ -149,7 +153,7 @@ export function landlordBookingConfirmBlockedBanner(args: {
     return null
   }
 
-  if (args.listingUsesOccupancyAgreement && args.propertyPayoutComplete !== true) {
+  if (args.propertyPayoutComplete !== true) {
     return 'listing_payout_details_missing'
   }
 

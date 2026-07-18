@@ -207,7 +207,10 @@ function createLifecycleAdmin(store: Store) {
       return {
         select: () => ({
           eq: () => ({
-            maybeSingle: async () => ({ data: null, error: null }),
+            maybeSingle: async () => ({
+              data: { account_name: 'Host Trust', bsb: '123456', account_number: '98765432' },
+              error: null,
+            }),
           }),
         }),
       }

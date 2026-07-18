@@ -4,6 +4,17 @@ export type PropertyPayoutDetailsInput = {
   account_number?: string | null
 }
 
+/**
+ * Listing tier: bond and rent are paid off-platform to the host's nominated account.
+ * Every Listing property needs `property_payout_details` — not only boarder/lodger (occupancy) types.
+ * Managed uses Stripe Connect instead.
+ */
+export function listingTierRequiresPropertyPayoutDetails(
+  serviceTier: string | null | undefined,
+): boolean {
+  return serviceTier === 'listing'
+}
+
 export function propertyPayoutDetailsComplete(p: PropertyPayoutDetailsInput | null | undefined): boolean {
   return Boolean(p?.account_name?.trim() && p?.bsb?.trim() && p?.account_number?.trim())
 }

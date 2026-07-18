@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { resolveTenancyPackage, tenancyPackageUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
+import { resolveTenancyPackage } from '../resolveTenancyPackage.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 import { sendListingPaymentInstructionsRenter } from './listingTransactionalEmails.js'
 
@@ -116,12 +116,12 @@ export async function runResendPaymentInstructionsLandlord(args: {
     date: moveInRaw || undefined,
   })
 
-  if (!tenancyPackageUsesOccupancyAgreement(tenancyPackage)) {
+  if (!tenancyPackage.supported) {
     return {
       ok: false,
       status: 400,
-      code: 'not_boarder_lodger',
-      message: 'Payment instructions resend applies only to boarder/lodger Listing bookings.',
+      code: 'unsupported_tenancy',
+      message: 'Payment instructions are not available for this property type.',
     }
   }
 

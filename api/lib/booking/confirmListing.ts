@@ -15,7 +15,6 @@ import { landlordHostIdentityReadyForConfirm } from '../landlordVerifiedSync.js'
 import { preflightListingTenancyDocument } from '../documents/listingTenancyGeneration/index.js'
 import { TENANT_LEGAL_NAME_NOT_READY_CODE } from './assertStudentLegalNameForSigning.js'
 import { setListingAgreementStatus } from './listingAgreementStatus.js'
-import { bookingUsesOccupancyAgreement } from '../resolveTenancyPackage.js'
 import { propertyPayoutDetailsComplete } from '../../../src/lib/propertyPayoutDetails.js'
 
 const LISTING_FEE_CENTS = 9900
@@ -125,11 +124,7 @@ export async function runListingConfirmBooking(
     })
   }
 
-  const prop =
-    booking.properties && typeof booking.properties === 'object' && !Array.isArray(booking.properties)
-      ? booking.properties
-      : null
-  if (bookingUsesOccupancyAgreement(booking, prop)) {
+  {
     const propertyId =
       typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
     if (!propertyId) {

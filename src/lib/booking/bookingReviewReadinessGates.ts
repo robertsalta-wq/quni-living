@@ -50,7 +50,10 @@ export type BookingReviewReadinessGatesInput = {
   adminOverrideVerified: boolean
   property: BookingReviewReadinessGatesProperty | null
   booking: BookingReviewReadinessGatesBooking | null
-  /** Listing + boarder/lodger (occupancy agreement) for this property/booking. */
+  /**
+   * @deprecated Occupancy no longer gates the payout checklist — Listing always needs
+   * property_payout_details. Kept so existing callers keep compiling.
+   */
   listingUsesOccupancyAgreement: boolean
   propertyPayoutComplete: boolean
   listingFeeExempt: boolean
@@ -90,14 +93,13 @@ function listingActiveGate(input: BookingReviewReadinessGatesInput): GateDef {
   }
 }
 
-/** Listing + occupancy agreement needs payee bank details; Managed needs a payout-capable Stripe account. */
+/** Listing needs payee bank details (direct-to-host bond/rent); Managed needs Stripe Connect. */
 function payoutMethodGate(input: BookingReviewReadinessGatesInput): GateDef | null {
   if (input.selectedConfirmTier === 'listing') {
-    if (!input.listingUsesOccupancyAgreement) return null
     return {
       id: 'payout_method',
       label: 'Add a payout method',
-      sub: 'Payee bank details for bond and rent — required for this listing type.',
+      sub: 'Payee bank details for bond and rent — required for Quni Listing.',
       done: input.propertyPayoutComplete === true,
       actionLabel: 'Add',
       actionKind: 'add_payout_method',

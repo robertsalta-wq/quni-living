@@ -35,22 +35,23 @@ describe('resolveBookingReviewReadinessGates', () => {
     expect(billing?.state).toBe('todo')
   })
 
-  it('moves "current" to the billing card once identity is verified (ordering: first incomplete = current)', () => {
+  it('moves "current" to the payout method once identity is verified (ordering: first incomplete = current)', () => {
     const gates = resolveBookingReviewReadinessGates(
       baseInput({ stripeChargesEnabled: true }),
     )
     const identity = gates.find((g) => g.id === 'host_identity')
     const listingActive = gates.find((g) => g.id === 'listing_active')
-    const billing = gates.find((g) => g.id === 'billing_card')
+    const payout = gates.find((g) => g.id === 'payout_method')
     expect(identity?.state).toBe('done')
     expect(listingActive?.state).toBe('done')
-    expect(billing?.state).toBe('current')
+    expect(payout?.state).toBe('current')
   })
 
-  it('is all-clear (done) once identity + billing card are both satisfied for a fee-exempt-false listing', () => {
+  it('is all-clear (done) once identity + payout + billing card are all satisfied for a fee-exempt-false listing', () => {
     const gates = resolveBookingReviewReadinessGates(
       baseInput({
         stripeChargesEnabled: true,
+        propertyPayoutComplete: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: { brand: 'visa', last4: '4242' } },
       }),
     )
@@ -58,26 +59,30 @@ describe('resolveBookingReviewReadinessGates', () => {
   })
 
   it('omits the billing card gate entirely when the landlord is fee-exempt', () => {
-    const gates = resolveBookingReviewReadinessGates(baseInput({ listingFeeExempt: true, stripeChargesEnabled: true }))
+    const gates = resolveBookingReviewReadinessGates(
+      baseInput({ listingFeeExempt: true, stripeChargesEnabled: true, propertyPayoutComplete: true }),
+    )
     expect(gates.find((g) => g.id === 'billing_card')).toBeUndefined()
     expect(bookingReviewReadinessAllClear(gates)).toBe(true)
   })
 
-  it('omits the payout-method gate for Listing without an occupancy agreement', () => {
-    const gates = resolveBookingReviewReadinessGates(baseInput({ listingUsesOccupancyAgreement: false }))
-    expect(gates.find((g) => g.id === 'payout_method')).toBeUndefined()
-  })
-
-  it('includes the payout-method gate for Listing + occupancy agreement, gated on propertyPayoutComplete', () => {
+  it('includes the payout-method gate for all Listing bookings, gated on propertyPayoutComplete', () => {
     const incomplete = resolveBookingReviewReadinessGates(
-      baseInput({ listingUsesOccupancyAgreement: true, propertyPayoutComplete: false, stripeChargesEnabled: true }),
+      baseInput({ propertyPayoutComplete: false, stripeChargesEnabled: true }),
     )
     expect(incomplete.find((g) => g.id === 'payout_method')?.state).not.toBe('done')
 
     const complete = resolveBookingReviewReadinessGates(
-      baseInput({ listingUsesOccupancyAgreement: true, propertyPayoutComplete: true, stripeChargesEnabled: true }),
+      baseInput({ propertyPayoutComplete: true, stripeChargesEnabled: true }),
     )
     expect(complete.find((g) => g.id === 'payout_method')?.state).toBe('done')
+  })
+
+  it('still includes the payout-method gate for Listing without an occupancy agreement', () => {
+    const gates = resolveBookingReviewReadinessGates(
+      baseInput({ listingUsesOccupancyAgreement: false, propertyPayoutComplete: true, stripeChargesEnabled: true }),
+    )
+    expect(gates.find((g) => g.id === 'payout_method')).toBeDefined()
   })
 
   it('includes a Stripe-backed payout-method gate for Managed, no billing card gate', () => {
@@ -106,6 +111,7 @@ describe('resolveBookingReviewReadinessGates', () => {
     const gates = resolveBookingReviewReadinessGates(
       baseInput({
         stripeChargesEnabled: true,
+        propertyPayoutComplete: true,
         listingBilling: { moduleEnabled: true, hasPaymentMethod: true, card: null },
       }),
     )
@@ -124,6 +130,7 @@ describe('resolveBookingReviewReadinessGates', () => {
     const gates = resolveBookingReviewReadinessGates(
       baseInput({
         stripeChargesEnabled: true,
+        propertyPayoutComplete: true,
         listingBilling: { moduleEnabled: false, hasPaymentMethod: true, card: null },
       }),
     )
