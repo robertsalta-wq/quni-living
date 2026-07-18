@@ -2244,13 +2244,11 @@ export default function Booking() {
                     <p className="mt-1">{bondRegulatoryCopy.amberBody}</p>
                   </div>
                   {isQldOnSiteBoarderLodgerListing(property.state, property.property_type) ? (
-                    <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
-                      <p>{qldOnSiteTenantBondCallout()}</p>
-                    </div>
+                    <p className="text-sm text-sky-950">{qldOnSiteTenantBondCallout()}</p>
                   ) : null}
                   {(property.state ?? '').trim().toUpperCase() === 'QLD' &&
                   bondRegulatoryCopy.mode === 'scheme' ? (
-                    <QldRtaLodgementGuidance />
+                    <QldRtaLodgementGuidance embedded />
                   ) : null}
                 </>
               )

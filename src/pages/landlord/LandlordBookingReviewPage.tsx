@@ -1678,6 +1678,7 @@ export default function LandlordBookingReviewPage() {
                         state={property.state ?? ''}
                         propertyType={property.property_type ?? ''}
                         isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                        embedded
                       />
                       <BookingLeasePanel
                         bookingId={booking.id}
@@ -1690,9 +1691,10 @@ export default function LandlordBookingReviewPage() {
                         allowRegenerateAgreement={
                           booking.service_tier_final === 'listing' && booking.status === 'bond_pending'
                         }
+                        embedded
                       />
                       {(tenancy?.bond_lodged_at || tenancy?.bond_lodgement_reference) && (
-                        <div className="space-y-1 rounded-admin-md border border-admin-line-soft bg-admin-surface-2 p-4">
+                        <div className="space-y-1">
                           <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
                             {isQldBoardingProperty ? 'Bond payment receipt' : 'Bond received'}
                           </p>

@@ -114,7 +114,7 @@ export default function ListingBondPaymentGuidance({ guidance, bondAmountAud, cl
       {guidance.preferLandlordCollection && guidance.directPayNote ? (
         <p className="text-xs text-admin-warning-fg">{guidance.directPayNote}</p>
       ) : null}
-      {guidance.stateLabel === 'QLD' ? <QldRtaLodgementGuidance compact /> : null}
+      {guidance.stateLabel === 'QLD' ? <QldRtaLodgementGuidance compact embedded /> : null}
       <p className="text-xs text-admin-warning-fg border-t border-admin-warning/80 pt-2">
         Sign your tenancy agreement on Quni when you receive the signing email - you do not need to wait for bond
         confirmation to sign.

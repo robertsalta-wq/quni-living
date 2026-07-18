@@ -47,10 +47,19 @@ export type BookingLeasePanelProps = {
   /** Listing landlord: reset DocuSeal round and regenerate PDF when draft/signing is wrong. */
   allowRegenerateAgreement?: boolean
   className?: string
+  /** Strip bordered/tinted card chrome when nested inside Section. */
+  embedded?: boolean
 }
 
 function counterpartyLabel(viewer: 'landlord' | 'tenant'): string {
   return viewer === 'landlord' ? 'renter' : 'host'
+}
+
+function leaseShell(embedded: boolean, chrome: string, className?: string): string {
+  if (embedded) {
+    return `text-sm space-y-3 ${className ?? ''}`.trim()
+  }
+  return `${chrome} ${className ?? ''}`.trim()
 }
 
 export default function BookingLeasePanel({
@@ -59,6 +68,7 @@ export default function BookingLeasePanel({
   allowPrepareRetry = false,
   allowRegenerateAgreement = false,
   className,
+  embedded = false,
 }: BookingLeasePanelProps) {
   const [data, setData] = useState<LeaseStateApiResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -202,7 +212,11 @@ export default function BookingLeasePanel({
   if (loading && !data) {
     return (
       <div
-        className={`rounded-admin-md border border-admin-line bg-white px-4 py-3 text-sm text-admin-ink-5 ${className ?? ''}`.trim()}
+        className={leaseShell(
+          embedded,
+          'rounded-admin-md border border-admin-line bg-white px-4 py-3 text-sm text-admin-ink-5',
+          className,
+        )}
       >
         Loading tenancy agreement…
       </div>
@@ -212,7 +226,11 @@ export default function BookingLeasePanel({
   if (error) {
     return (
       <div
-        className={`rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg ${className ?? ''}`.trim()}
+        className={leaseShell(
+          embedded,
+          'rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg',
+          className,
+        )}
         role="status"
       >
         {error}
@@ -227,7 +245,11 @@ export default function BookingLeasePanel({
   if (data.state === 'agreement_preparing') {
     return (
       <div
-        className={`rounded-admin-md border border-admin-info bg-admin-info-bg px-4 py-3 text-sm text-admin-info-fg ${className ?? ''}`.trim()}
+        className={leaseShell(
+          embedded,
+          'rounded-admin-md border border-admin-info bg-admin-info-bg px-4 py-3 text-sm text-admin-info-fg',
+          className,
+        )}
         role="status"
       >
         <p className="font-semibold leading-snug">Tenancy agreement</p>
@@ -247,7 +269,11 @@ export default function BookingLeasePanel({
       (data.listing_agreement_status === 'failed' || data.state === 'agreement_failed')
     return (
       <div
-        className={`rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg space-y-3 ${className ?? ''}`.trim()}
+        className={leaseShell(
+          embedded,
+          'rounded-admin-md border border-admin-warning bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg space-y-3',
+          className,
+        )}
         role="status"
       >
         <p className="font-semibold leading-snug">Tenancy agreement needs attention</p>
@@ -292,7 +318,11 @@ export default function BookingLeasePanel({
 
   return (
     <div
-      className={`rounded-admin-md border border-admin-line bg-admin-coral-tint px-4 py-3 text-sm text-admin-ink space-y-3 ${className ?? ''}`.trim()}
+      className={leaseShell(
+        embedded,
+        'rounded-admin-md border border-admin-line bg-admin-coral-tint px-4 py-3 text-sm text-admin-ink space-y-3',
+        className,
+      )}
     >
       {state === 'preview' && (
         <>

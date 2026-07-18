@@ -118,7 +118,7 @@ export default function LandlordListingAcceptedSummary({
         </li>
       </ul>
 
-      {bondObligations && <LandlordListingBondObligations obligations={bondObligations} />}
+      {bondObligations && <LandlordListingBondObligations obligations={bondObligations} embedded />}
 
       <p className="text-sm text-admin-ink-3 leading-relaxed pt-1 border-t border-admin-success/80">
         When bond is received (paid to you or lodged with the authority), use{' '}

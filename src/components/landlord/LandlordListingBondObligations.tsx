@@ -4,12 +4,18 @@ import QldRtaLodgementGuidance from '../bond/QldRtaLodgementGuidance'
 type Props = {
   obligations: ListingBondPaymentLandlordObligations
   className?: string
+  /** Strip bordered card chrome when nested inside LandlordListingAcceptedSummary (etc.). */
+  embedded?: boolean
 }
 
-export default function LandlordListingBondObligations({ obligations, className }: Props) {
+export default function LandlordListingBondObligations({ obligations, className, embedded = false }: Props) {
   return (
     <div
-      className={`rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-950 space-y-2 ${className ?? ''}`.trim()}
+      className={`${
+        embedded
+          ? 'text-sm text-sky-950 space-y-2'
+          : 'rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-950 space-y-2'
+      } ${className ?? ''}`.trim()}
       role="note"
     >
       <p className="font-semibold leading-snug">Bond - your legal obligations ({obligations.stateLabel})</p>
@@ -28,7 +34,9 @@ export default function LandlordListingBondObligations({ obligations, className 
         </li>
         {obligations.qldRecordReceiptNote ? <li>{obligations.qldRecordReceiptNote}</li> : null}
       </ul>
-      {obligations.stateLabel === 'QLD' ? <QldRtaLodgementGuidance compact className="mt-2" /> : null}
+      {obligations.stateLabel === 'QLD' ? (
+        <QldRtaLodgementGuidance compact embedded className="mt-2" />
+      ) : null}
     </div>
   )
 }

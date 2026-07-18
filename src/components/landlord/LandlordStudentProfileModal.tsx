@@ -353,16 +353,16 @@ export default function LandlordStudentProfileModal({
 
           <div className="mt-6 space-y-6">
             {bio && (
-              <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">About</h3>
-                <p className="mt-3 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{bio}</p>
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-500">About</h3>
+                <p className="mt-2 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{bio}</p>
               </section>
             )}
 
             {isStudentRoute && (
-              <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Study</h3>
-                <dl className="mt-3 space-y-2 text-sm">
+              <section>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-500">Study</h3>
+                <dl className="mt-2 space-y-2 text-sm">
                   {uni && (
                     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
                       <dt className="text-gray-500 shrink-0 sm:w-36">University</dt>
@@ -400,11 +400,11 @@ export default function LandlordStudentProfileModal({
               </section>
             )}
 
-            <LanguagesSpokenDisplay languages={student?.languages_spoken} className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3" />
+            <LanguagesSpokenDisplay languages={student?.languages_spoken} />
 
-            <section className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Housing preferences</h3>
-              <dl className="mt-3 space-y-2 text-sm">
+            <section>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-500">Housing preferences</h3>
+              <dl className="mt-2 space-y-2 text-sm">
                 {roomPref && (
                   <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
                     <dt className="text-gray-500 shrink-0 sm:w-36">Room type</dt>
@@ -490,7 +490,11 @@ export default function LandlordStudentProfileModal({
               </dl>
             </section>
 
-            <LandlordApplicantVerificationSection student={student} verificationAnchorId={verificationAnchorId} />
+            <LandlordApplicantVerificationSection
+              student={student}
+              verificationAnchorId={verificationAnchorId}
+              embedded
+            />
 
             <LandlordApplicantAIAssessmentPanel
               anchorId={aiAssessmentAnchorId}
@@ -502,6 +506,7 @@ export default function LandlordStudentProfileModal({
               onRefresh={() => void requestAiAssessment()}
               refreshDisabled={false}
               showGenerate
+              embedded
             />
           </div>
         </div>

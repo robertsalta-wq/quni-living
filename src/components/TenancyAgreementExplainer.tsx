@@ -8,6 +8,8 @@ type Props = {
   propertyType: string
   isRegisteredRoomingHouse?: boolean
   className?: string
+  /** Strip bordered card chrome when nested inside Section / another panel. */
+  embedded?: boolean
 }
 
 /** Trust copy for the in-platform DocuSeal signing flow - keyed to the listing's jurisdiction. */
@@ -16,6 +18,7 @@ export default function TenancyAgreementExplainer({
   propertyType,
   isRegisteredRoomingHouse = false,
   className = '',
+  embedded = false,
 }: Props) {
   const copy: TenancyAgreementExplainerCopy | null = tenancyAgreementExplainerCopy({
     state,
@@ -27,7 +30,9 @@ export default function TenancyAgreementExplainer({
 
   return (
     <div
-      className={`rounded-xl border border-sky-200/90 bg-sky-50/90 px-3 py-2.5 text-left ${className}`.trim()}
+      className={`${
+        embedded ? 'text-left' : 'rounded-xl border border-sky-200/90 bg-sky-50/90 px-3 py-2.5 text-left'
+      } ${className}`.trim()}
       role="note"
     >
       <div className="flex gap-2.5">

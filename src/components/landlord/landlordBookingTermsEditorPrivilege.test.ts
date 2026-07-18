@@ -35,7 +35,7 @@ describe('landlord booking terms editor privilege boundary', () => {
 
   it('renter BookingLeasePanel call sites do not pass landlord-only regenerate/prepare props that imply edit UI', () => {
     const src = readSrc('src/components/booking/RenterBookingZones.tsx')
-    expect(src).toMatch(/<BookingLeasePanel\s+bookingId=\{[^}]+\}\s*\/>/)
+    expect(src).toMatch(/<BookingLeasePanel\s+bookingId=\{[^}]+\}\s+embedded\s*\/>/)
     expect(src).not.toMatch(/allowRegenerateAgreement/)
     expect(src).not.toMatch(/allowPrepareRetry/)
   })
