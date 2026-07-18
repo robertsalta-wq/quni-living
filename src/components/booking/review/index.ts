@@ -4,6 +4,7 @@ export {
   BookingReadinessReadyRibbon,
 } from './BookingReadinessDriver'
 export type { BookingReadinessGate, ReadinessGateState } from './BookingReadinessDriver'
+/** ActionCard: never nest bordered/tinted cards inside — see BookingReviewActionCard JSDoc. */
 export {
   default as BookingReviewActionCard,
   bookingReviewGhostButtonClass,

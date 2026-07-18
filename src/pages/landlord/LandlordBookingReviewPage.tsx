@@ -995,6 +995,123 @@ export default function LandlordBookingReviewPage() {
         <div className="grid grid-cols-1 items-start gap-7 min-[921px]:grid-cols-[minmax(0,1fr)_356px]">
           {/* —— Rail (first in DOM for mobile order) —— */}
           <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
+            {/* Gating / attention siblings — above ActionCard (never nested inside it) */}
+            {(actionError || bondReceivedError) && (
+              <div className="space-y-3.5">
+                {actionError ? (
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                    {actionError}
+                  </div>
+                ) : null}
+                {bondReceivedError ? (
+                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
+                    {bondReceivedError}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {booking.status === 'pending_confirmation' ? (
+              showReadinessDriver || showReadinessReady || readinessNonGateBlockMessage ? (
+                <div id="confirm-requirements" className="scroll-mt-4 space-y-3">
+                  {showReadinessDriver ? (
+                    <BookingReadinessDriver gates={readinessUiGates} hint={readinessHint ?? undefined} />
+                  ) : null}
+                  {showReadinessReady ? <BookingReadinessReadyRibbon /> : null}
+                  {readinessNonGateBlockMessage ? (
+                    <p className="m-0 text-[13px] leading-snug text-admin-warning-fg" role="status">
+                      {readinessNonGateBlockMessage}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null
+            ) : (
+              <>
+                {confirmBlockedBanner === 'host_identity_required' && (
+                  <div
+                    id="confirm-requirements"
+                    className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                  >
+                    <p className="font-medium">Verify your identity before confirming</p>
+                    <p className="mt-1 text-admin-warning-fg/90">
+                      Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
+                      verification before you can accept. This also unlocks your Verified host badge when approved.
+                    </p>
+                    {stripeConnectError && (
+                      <p className="mt-2 text-sm text-admin-danger-fg" role="alert">
+                        {stripeConnectError}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={stripeConnectLoading}
+                      onClick={() => void onVerifyWithStripe()}
+                      className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
+                    >
+                      {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
+                    </button>
+                    <p className="mt-2 text-xs text-admin-warning-fg/80">
+                      Complete verification in Stripe, then return here - we refresh when you switch back to this tab.
+                    </p>
+                  </div>
+                )}
+
+                {confirmBlockedBanner === 'listing_module_disabled' && (
+                  <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+                    <p className="leading-relaxed">
+                      Listing bookings are temporarily paused. Please try again in a few minutes.
+                    </p>
+                  </div>
+                )}
+
+                {confirmBlockedBanner === 'listing_no_payment_method' && (
+                  <div
+                    id="confirm-requirements"
+                    className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                  >
+                    <p className="font-medium">Add a payment method to confirm</p>
+                    <p className="mt-1 text-admin-warning-fg/90">
+                      You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
+                      card on accept.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setListingPaymentModalOpen(true)}
+                      className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
+                    >
+                      Add a card
+                    </button>
+                  </div>
+                )}
+
+                {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
+                  <div
+                    id="confirm-requirements"
+                    className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+                  >
+                    <p className="font-medium">Add payee bank details to accept</p>
+                    <p className="mt-1 text-admin-warning-fg/90">
+                      This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
+                      weekly rent directly to this account by fee-free bank transfer.
+                    </p>
+                    <Link
+                      to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
+                      className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
+                    >
+                      Add payee bank details →
+                    </Link>
+                  </div>
+                ) : null}
+
+                {confirmBlockedBanner === 'listing_billing_unavailable' && (
+                  <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+                    <p className="font-medium">Could not verify Listing billing</p>
+                    <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
+                  </div>
+                )}
+              </>
+            )}
+
             <BookingReviewActionCard
               eyebrow={actionCopy.eyebrow}
               eyebrowTone={actionCopy.eyebrowTone}
@@ -1004,398 +1121,297 @@ export default function LandlordBookingReviewPage() {
               deadlineTone={actionCopy.deadlineTone}
             >
               <div className="space-y-3.5">
-                {actionError && (
-                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
-                    {actionError}
-                  </div>
-                )}
-
-                {bondReceivedError && (
-                  <div className="rounded-admin-sm border border-admin-danger/30 bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
-                    {bondReceivedError}
-                  </div>
-                )}
-
-                {isListingBondPending && (
-                  <LandlordListingAcceptedSummary
-                    bookingReference={bookingReferenceLabel(booking.id)}
-                    propertyTitle={property?.title?.trim() ?? ''}
-                    propertyAddress={propertyAddressLine}
-                    bondAmountAud={
-                      booking.bond_amount != null
-                        ? Number(booking.bond_amount)
-                        : resolveListingBondAud(
-                            property,
-                            booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
-                          )
-                    }
-                    bondDeadlineIso={booking.bond_window_expires_at}
-                    listingFeeDisplay={listingFeeDisplay}
-                    bondObligations={listingBondObligations}
-                    justAccepted={listingAcceptCelebration}
-                    onDismissCelebration={() => setListingAcceptCelebration(false)}
-                  />
-                )}
-
-                {booking.status === 'pending_confirmation' ? (
-                  <div id="confirm-requirements" className="scroll-mt-4 space-y-3">
-                    {showReadinessDriver ? (
-                      <BookingReadinessDriver gates={readinessUiGates} hint={readinessHint ?? undefined} />
-                    ) : null}
-                    {showReadinessReady ? <BookingReadinessReadyRibbon /> : null}
-                    {readinessNonGateBlockMessage ? (
-                      <p className="m-0 text-[13px] leading-snug text-admin-warning-fg" role="status">
-                        {readinessNonGateBlockMessage}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : (
-                  <>
-                    {confirmBlockedBanner === 'host_identity_required' && (
-                      <div
-                        id="confirm-requirements"
-                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                      >
-                        <p className="font-medium">Verify your identity before confirming</p>
-                        <p className="mt-1 text-admin-warning-fg/90">
-                          Renters can place booking requests and pay a holding deposit, but you must complete Stripe identity
-                          verification before you can accept. This also unlocks your Verified host badge when approved.
-                        </p>
-                        {stripeConnectError && (
-                          <p className="mt-2 text-sm text-admin-danger-fg" role="alert">
-                            {stripeConnectError}
-                          </p>
-                        )}
-                        <button
-                          type="button"
-                          disabled={stripeConnectLoading}
-                          onClick={() => void onVerifyWithStripe()}
-                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2 disabled:opacity-60"
-                        >
-                          {stripeConnectLoading ? 'Opening Stripe…' : 'Verify with Stripe →'}
-                        </button>
-                        <p className="mt-2 text-xs text-admin-warning-fg/80">
-                          Complete verification in Stripe, then return here - we refresh when you switch back to this tab.
-                        </p>
-                      </div>
-                    )}
-
-                    {confirmBlockedBanner === 'listing_module_disabled' && (
-                      <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-                        <p className="leading-relaxed">
-                          Listing bookings are temporarily paused. Please try again in a few minutes.
-                        </p>
-                      </div>
-                    )}
-
-                    {confirmBlockedBanner === 'listing_no_payment_method' && (
-                      <div
-                        id="confirm-requirements"
-                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                      >
-                        <p className="font-medium">Add a payment method to confirm</p>
-                        <p className="mt-1 text-admin-warning-fg/90">
-                          You need a saved payment method to accept Quni Listing bookings. The platform fee ($99) is charged to your
-                          card on accept.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setListingPaymentModalOpen(true)}
-                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
-                        >
-                          Add a card
-                        </button>
-                      </div>
-                    )}
-
-                    {confirmBlockedBanner === 'listing_payout_details_missing' && property ? (
-                      <div
-                        id="confirm-requirements"
-                        className="scroll-mt-4 rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
-                      >
-                        <p className="font-medium">Add payee bank details to accept</p>
-                        <p className="mt-1 text-admin-warning-fg/90">
-                          This listing needs payout bank details before you can accept Quni Listing bookings. Renters pay bond and
-                          weekly rent directly to this account by fee-free bank transfer.
-                        </p>
-                        <Link
-                          to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
-                          className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
-                        >
-                          Add payee bank details →
-                        </Link>
-                      </div>
-                    ) : null}
-
-                    {confirmBlockedBanner === 'listing_billing_unavailable' && (
-                      <div className="rounded-admin-md border border-admin-warning/40 bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-                        <p className="font-medium">Could not verify Listing billing</p>
-                        <p className="mt-1 text-admin-warning-fg/90">Refresh the page and try again. If this keeps happening, contact support.</p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-              {showResendPaymentInstructions ? (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    disabled={resendPaymentBusy}
-                    onClick={() => {
-                      setResendPaymentError(null)
-                      setResendPaymentOpen(true)
-                    }}
-                    className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
-                  >
-                    Resend payment instructions to renter
-                  </button>
-                  <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
-                    Email the renter the current bond and rent payment details (same as at acceptance).
-                  </p>
-                </div>
-              ) : null}
-
-              {primaryActionKind === 'bond-received' ? (
-                <div className="space-y-2">
-                  {bondDeadlineLabel ? (
-                    <div className="flex items-center gap-2.5 rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-3 py-2.5">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden
-                        className="shrink-0 stroke-admin-coral-active"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" />
-                        <path d="M16 2v4M8 2v4M3 10h18" />
-                      </svg>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.02em] text-admin-coral-active">
-                          Confirm bond received by
-                        </p>
-                        <p className="text-[15px] font-bold text-admin-ink">{bondDeadlineLabel}</p>
-                      </div>
-                    </div>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={bondReceivedBusy}
-                    onClick={() => void onMarkBondReceived()}
-                    className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60"
-                  >
-                    {bondReceivedBusy ? (
-                      <>
-                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>Saving…</span>
-                      </>
-                    ) : (
-                      'Bond received from renter'
-                    )}
-                  </button>
-                  <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
-                    {isQldBoardingProperty ? (
-                      <>
-                        Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
-                        must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
-                      </>
-                    ) : (
-                      <>
-                        Confirms you&apos;ve received bond directly from the renter. We&apos;ll generate a PDF receipt,
-                        save it to this tenancy, and email a copy to you and the renter.
-                      </>
-                    )}{' '}
-                    Signing links are in{' '}
-                    <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
-                      Tenancy agreement
-                    </a>{' '}
-                    below and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
-                  </p>
-                  {isQldSchemeListing ? <QldRtaLodgementGuidance className="mt-2" /> : null}
-                  {showRtaBondRecord ? (
-                    <div className="mt-1 space-y-3 rounded-admin-md border border-admin-line bg-admin-surface-1 p-4">
-                      <p className="text-sm font-semibold text-admin-ink">RTA bond record (optional)</p>
-                      <p className="text-xs leading-relaxed text-admin-ink-4">
-                        After lodgement, save the bond number from your Acknowledgement of Rental Bond. This does not gate
-                        booking confirmation.
-                      </p>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <label htmlFor="rta-bond-number" className="mb-1 block text-xs font-medium text-admin-ink-3">
-                            RTA bond number
-                          </label>
-                          <input
-                            id="rta-bond-number"
-                            type="text"
-                            value={rtaBondNumber}
-                            onChange={(e) => setRtaBondNumber(e.target.value)}
-                            className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
-                            placeholder="From Acknowledgement of Rental Bond"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="rta-ack-ref" className="mb-1 block text-xs font-medium text-admin-ink-3">
-                            Acknowledgement reference
-                          </label>
-                          <input
-                            id="rta-ack-ref"
-                            type="text"
-                            value={rtaAckRef}
-                            onChange={(e) => setRtaAckRef(e.target.value)}
-                            className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="rta-lodged-date" className="mb-1 block text-xs font-medium text-admin-ink-3">
-                            Lodgement date
-                          </label>
-                          <input
-                            id="rta-lodged-date"
-                            type="date"
-                            value={rtaLodgedDate}
-                            onChange={(e) => setRtaLodgedDate(e.target.value)}
-                            className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
-                          />
-                        </div>
-                      </div>
-                      {rtaRecordError ? <p className="text-xs text-admin-danger-fg">{rtaRecordError}</p> : null}
-                      {rtaRecordToast ? <p className="text-xs text-admin-success-fg">{rtaRecordToast}</p> : null}
-                      <button
-                        type="button"
-                        disabled={rtaRecordBusy}
-                        onClick={() => void onSaveRtaBondDetails()}
-                        className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
-                      >
-                        {rtaRecordBusy ? 'Saving…' : 'Save RTA bond details'}
-                      </button>
-                    </div>
-                  ) : null}
-                  {canCancelListingBondPending && (
+                {showResendPaymentInstructions ? (
+                  <div className="space-y-2">
                     <button
                       type="button"
-                      disabled={bondReceivedBusy || listingCancelBusy}
+                      disabled={resendPaymentBusy}
                       onClick={() => {
-                        setListingCancelError(null)
-                        setListingCancelOpen(true)
+                        setResendPaymentError(null)
+                        setResendPaymentOpen(true)
                       }}
-                      className="min-h-[3rem] w-full rounded-admin-md border-2 border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
                     >
-                      Cancel booking
+                      Resend payment instructions to renter
                     </button>
-                  )}
-                </div>
-              ) : primaryActionKind === 'mark-bond' ? (
-                <div>
-                  <button
-                    type="button"
-                    onClick={openBondModal}
-                    className="w-full rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover sm:w-auto"
-                  >
-                    Mark bond as received
-                  </button>
-                  <p className="mt-2 text-xs leading-relaxed text-admin-ink-5">
-                    {isQldBoardingProperty
-                      ? 'Record when you receive bond payment from the renter. We\u2019ll email a payment receipt (not RTA lodgement confirmation) and remind you to lodge with the RTA within 10 days.'
-                      : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
-                  </p>
-                </div>
-              ) : primaryActionKind === 'accept-decline-info' ? (
-                <div className="flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    disabled={!canConfirm || actionBusy}
-                    aria-disabled={!canConfirm || actionBusy}
-                    onClick={() => {
-                      if (!canConfirm) {
-                        document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        return
-                      }
-                      void onConfirm()
-                    }}
-                    className={`inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md px-4 py-3 text-[15px] font-semibold shadow-admin-card ${
-                      canConfirm && !actionBusy
-                        ? 'bg-admin-coral text-white hover:bg-admin-coral-hover'
-                        : 'cursor-not-allowed bg-admin-surface-3 text-admin-ink-5'
-                    }`}
-                  >
-                    {actionBusy ? (
-                      <>
-                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
-                      </>
-                    ) : selectedConfirmTier === 'listing' ? (
-                      'Accept as Quni Listing'
-                    ) : tierModel?.propertyServiceTier === 'listing' ? (
-                      'Upgrade and accept as Quni Managed'
-                    ) : (
-                      'Accept as Quni Managed'
+                    <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
+                      Email the renter the current bond and rent payment details (same as at acceptance).
+                    </p>
+                  </div>
+                ) : null}
+
+                {primaryActionKind === 'bond-received' ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={bondReceivedBusy}
+                      onClick={() => void onMarkBondReceived()}
+                      className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60"
+                    >
+                      {bondReceivedBusy ? (
+                        <>
+                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>Saving…</span>
+                        </>
+                      ) : (
+                        'Bond received from renter'
+                      )}
+                    </button>
+                    <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
+                      {isQldBoardingProperty ? (
+                        <>
+                          Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
+                          must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
+                        </>
+                      ) : (
+                        <>
+                          Confirms you&apos;ve received bond directly from the renter. We&apos;ll generate a PDF receipt,
+                          save it to this tenancy, and email a copy to you and the renter.
+                        </>
+                      )}{' '}
+                      Signing links are in{' '}
+                      <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
+                        Tenancy agreement
+                      </a>{' '}
+                      below and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
+                    </p>
+                    {canCancelListingBondPending && (
+                      <button
+                        type="button"
+                        disabled={bondReceivedBusy || listingCancelBusy}
+                        onClick={() => {
+                          setListingCancelError(null)
+                          setListingCancelOpen(true)
+                        }}
+                        className="min-h-[3rem] w-full rounded-admin-md border-2 border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                      >
+                        Cancel booking
+                      </button>
                     )}
-                  </button>
-                  {!canConfirm && !actionBusy && showReadinessDriver ? (
-                    <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={!canDeclineOrInfo || actionBusy}
-                    onClick={() => setDeclineOpen(true)}
-                    className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-transparent px-4 py-3 text-sm font-semibold text-admin-ink-4 hover:bg-admin-surface-2 disabled:opacity-50"
-                  >
-                    Decline booking
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!canDeclineOrInfo || actionBusy}
-                    onClick={() => setInfoOpen(true)}
-                    className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
-                  >
-                    Request more information
-                  </button>
-                </div>
-              ) : booking.status === 'awaiting_info' ? (
-                <div className="space-y-3">
-                  {awaitingInfoQuestion ? (
-                    <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
-                      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                        Your question
-                      </p>
-                      <blockquote className="m-0 text-sm leading-relaxed text-admin-ink-2">
-                        &ldquo;{awaitingInfoQuestion.text}&rdquo;
-                      </blockquote>
-                    </div>
-                  ) : null}
+                  </div>
+                ) : primaryActionKind === 'mark-bond' ? (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={openBondModal}
+                      className="w-full rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover sm:w-auto"
+                    >
+                      Mark bond as received
+                    </button>
+                    <p className="mt-2 text-xs leading-relaxed text-admin-ink-5">
+                      {isQldBoardingProperty
+                        ? 'Record when you receive bond payment from the renter. We\u2019ll email a payment receipt (not RTA lodgement confirmation) and remind you to lodge with the RTA within 10 days.'
+                        : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
+                    </p>
+                  </div>
+                ) : primaryActionKind === 'accept-decline-info' ? (
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      type="button"
+                      disabled={!canConfirm || actionBusy}
+                      aria-disabled={!canConfirm || actionBusy}
+                      onClick={() => {
+                        if (!canConfirm) {
+                          document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          return
+                        }
+                        void onConfirm()
+                      }}
+                      className={`inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md px-4 py-3 text-[15px] font-semibold shadow-admin-card ${
+                        canConfirm && !actionBusy
+                          ? 'bg-admin-coral text-white hover:bg-admin-coral-hover'
+                          : 'cursor-not-allowed bg-admin-surface-3 text-admin-ink-5'
+                      }`}
+                    >
+                      {actionBusy ? (
+                        <>
+                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
+                        </>
+                      ) : selectedConfirmTier === 'listing' ? (
+                        'Accept as Quni Listing'
+                      ) : tierModel?.propertyServiceTier === 'listing' ? (
+                        'Upgrade and accept as Quni Managed'
+                      ) : (
+                        'Accept as Quni Managed'
+                      )}
+                    </button>
+                    {!canConfirm && !actionBusy && showReadinessDriver ? (
+                      <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={!canDeclineOrInfo || actionBusy}
+                      onClick={() => setDeclineOpen(true)}
+                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-transparent px-4 py-3 text-sm font-semibold text-admin-ink-4 hover:bg-admin-surface-2 disabled:opacity-50"
+                    >
+                      Decline booking
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!canDeclineOrInfo || actionBusy}
+                      onClick={() => setInfoOpen(true)}
+                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                    >
+                      Request more information
+                    </button>
+                  </div>
+                ) : booking.status === 'awaiting_info' ? (
                   <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
                     Send another message
                   </button>
-                </div>
-              ) : booking.status === 'confirmed' ? (
-                <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
-                  View agreement
-                </button>
-              ) : booking.status === 'active' || booking.status === 'completed' ? (
-                <div className="flex flex-col gap-2.5">
-                  <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
-                    View tenancy
+                ) : booking.status === 'confirmed' ? (
+                  <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
+                    View agreement
                   </button>
-                  <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
-                    Message tenant
-                  </button>
-                </div>
-              ) : booking.status === 'expired' ? (
-                <div className="space-y-2.5">
-                  <BookingReinstatementPanel bookingId={booking.id} bookingStatus={booking.status} onChanged={() => void reload()} />
+                ) : booking.status === 'active' || booking.status === 'completed' ? (
+                  <div className="flex flex-col gap-2.5">
+                    <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
+                      View tenancy
+                    </button>
+                    <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
+                      Message tenant
+                    </button>
+                  </div>
+                ) : booking.status === 'expired' ? (
                   <Link
                     to={landlordBookingsPath()}
                     className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
                   >
                     ← Back to bookings
                   </Link>
-                </div>
-              ) : null}
+                ) : null}
               </div>
             </BookingReviewActionCard>
+
+            {/* Info siblings — below ActionCard (never nested inside it) */}
+            {isListingBondPending ? (
+              <LandlordListingAcceptedSummary
+                bookingReference={bookingReferenceLabel(booking.id)}
+                propertyTitle={property?.title?.trim() ?? ''}
+                propertyAddress={propertyAddressLine}
+                bondAmountAud={
+                  booking.bond_amount != null
+                    ? Number(booking.bond_amount)
+                    : resolveListingBondAud(
+                        property,
+                        booking.weekly_rent != null ? Number(booking.weekly_rent) : null,
+                      )
+                }
+                bondDeadlineIso={booking.bond_window_expires_at}
+                listingFeeDisplay={listingFeeDisplay}
+                bondObligations={listingBondObligations}
+                justAccepted={listingAcceptCelebration}
+                onDismissCelebration={() => setListingAcceptCelebration(false)}
+              />
+            ) : null}
+
+            {primaryActionKind === 'bond-received' && bondDeadlineLabel ? (
+              <div className="flex items-center gap-2.5 rounded-admin-md border border-admin-coral-30 bg-admin-coral-tint px-3 py-2.5">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  className="shrink-0 stroke-admin-coral-active"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.02em] text-admin-coral-active">
+                    Confirm bond received by
+                  </p>
+                  <p className="text-[15px] font-bold text-admin-ink">{bondDeadlineLabel}</p>
+                </div>
+              </div>
+            ) : null}
+
+            {primaryActionKind === 'bond-received' && isQldSchemeListing ? (
+              <QldRtaLodgementGuidance />
+            ) : null}
+
+            {primaryActionKind === 'bond-received' && showRtaBondRecord ? (
+              <div className="space-y-3 rounded-admin-md border border-admin-line bg-admin-surface-1 p-4">
+                <p className="text-sm font-semibold text-admin-ink">RTA bond record (optional)</p>
+                <p className="text-xs leading-relaxed text-admin-ink-4">
+                  After lodgement, save the bond number from your Acknowledgement of Rental Bond. This does not gate
+                  booking confirmation.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="rta-bond-number" className="mb-1 block text-xs font-medium text-admin-ink-3">
+                      RTA bond number
+                    </label>
+                    <input
+                      id="rta-bond-number"
+                      type="text"
+                      value={rtaBondNumber}
+                      onChange={(e) => setRtaBondNumber(e.target.value)}
+                      className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
+                      placeholder="From Acknowledgement of Rental Bond"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="rta-ack-ref" className="mb-1 block text-xs font-medium text-admin-ink-3">
+                      Acknowledgement reference
+                    </label>
+                    <input
+                      id="rta-ack-ref"
+                      type="text"
+                      value={rtaAckRef}
+                      onChange={(e) => setRtaAckRef(e.target.value)}
+                      className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="rta-lodged-date" className="mb-1 block text-xs font-medium text-admin-ink-3">
+                      Lodgement date
+                    </label>
+                    <input
+                      id="rta-lodged-date"
+                      type="date"
+                      value={rtaLodgedDate}
+                      onChange={(e) => setRtaLodgedDate(e.target.value)}
+                      className="w-full rounded-admin-sm border border-admin-line px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                {rtaRecordError ? <p className="text-xs text-admin-danger-fg">{rtaRecordError}</p> : null}
+                {rtaRecordToast ? <p className="text-xs text-admin-success-fg">{rtaRecordToast}</p> : null}
+                <button
+                  type="button"
+                  disabled={rtaRecordBusy}
+                  onClick={() => void onSaveRtaBondDetails()}
+                  className="inline-flex items-center justify-center rounded-admin-sm border border-admin-line bg-admin-surface-1 px-4 py-2 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-60"
+                >
+                  {rtaRecordBusy ? 'Saving…' : 'Save RTA bond details'}
+                </button>
+              </div>
+            ) : null}
+
+            {booking.status === 'awaiting_info' && awaitingInfoQuestion ? (
+              <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+                  Your question
+                </p>
+                <blockquote className="m-0 text-sm leading-relaxed text-admin-ink-2">
+                  &ldquo;{awaitingInfoQuestion.text}&rdquo;
+                </blockquote>
+              </div>
+            ) : null}
+
+            {booking.status === 'expired' ? (
+              <BookingReinstatementPanel
+                bookingId={booking.id}
+                bookingStatus={booking.status}
+                onChanged={() => void reload()}
+              />
+            ) : null}
 
             <BookingReviewSurfaceCard padding="rail">
               <BookingReviewTermsRail

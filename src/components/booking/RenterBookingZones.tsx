@@ -273,37 +273,13 @@ export default function RenterBookingZones({
           >
             <div className="space-y-3">
               {booking.status === 'awaiting_info' ? (
-                <div className="space-y-3">
-                  {askedQuestion ? (
-                    <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
-                      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
-                        Your host asked
-                      </p>
-                      <blockquote className="m-0 text-sm leading-relaxed text-admin-ink-2">
-                        &ldquo;{askedQuestion.text}&rdquo;
-                      </blockquote>
-                    </div>
-                  ) : null}
-                  <button type="button" onClick={openMessagesSection} className={bookingReviewPrimaryButtonClass()}>
-                    Reply
-                  </button>
-                </div>
+                <button type="button" onClick={openMessagesSection} className={bookingReviewPrimaryButtonClass()}>
+                  Reply
+                </button>
               ) : booking.status === 'bond_pending' ? (
-                <div className="space-y-3">
-                  {bondGuidance}
-                  {showLeaseStrip &&
-                  property &&
-                  shouldShowListingPaymentInstructions({ booking, property: property as never }) ? (
-                    <ListingPaymentInstructions
-                      booking={booking}
-                      property={property as never}
-                      renterDisplayName={renterDisplayName}
-                    />
-                  ) : null}
-                  <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
-                    Paid directly to {hostName}. Quni holds $0 and never touches your bond.
-                  </p>
-                </div>
+                <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
+                  Paid directly to {hostName}. Quni holds $0 and never touches your bond.
+                </p>
               ) : booking.status === 'confirmed' ? (
                 <div className="flex flex-col gap-2.5">
                   <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
@@ -358,11 +334,40 @@ export default function RenterBookingZones({
                     Withdraw request
                   </button>
                 </div>
-              ) : booking.status === 'expired' ? (
-                <BookingReinstatementPanel bookingId={booking.id} bookingStatus={booking.status} />
               ) : null}
             </div>
           </BookingReviewActionCard>
+
+          {/* Info siblings — below ActionCard (never nested inside it) */}
+          {booking.status === 'awaiting_info' && askedQuestion ? (
+            <div className="rounded-admin-md border border-admin-line bg-admin-surface-2 px-4 py-3">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
+                Your host asked
+              </p>
+              <blockquote className="m-0 text-sm leading-relaxed text-admin-ink-2">
+                &ldquo;{askedQuestion.text}&rdquo;
+              </blockquote>
+            </div>
+          ) : null}
+
+          {booking.status === 'bond_pending' ? (
+            <>
+              {bondGuidance}
+              {showLeaseStrip &&
+              property &&
+              shouldShowListingPaymentInstructions({ booking, property: property as never }) ? (
+                <ListingPaymentInstructions
+                  booking={booking}
+                  property={property as never}
+                  renterDisplayName={renterDisplayName}
+                />
+              ) : null}
+            </>
+          ) : null}
+
+          {booking.status === 'expired' ? (
+            <BookingReinstatementPanel bookingId={booking.id} bookingStatus={booking.status} />
+          ) : null}
 
           <BookingReviewSurfaceCard padding="rail">
             <div className="mb-3 flex items-center gap-2.5">
