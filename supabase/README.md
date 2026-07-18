@@ -16,9 +16,7 @@ Schema file: **`quni_supabase_schema.sql`** - matches the Claude/Wix-style model
 | `bookings` | Student ↔ property bookings |
 | `enquiries` | Messages (anonymous insert allowed for “contact” forms) |
 | `landlord_leads` | Landlord partnerships page lead form (public insert; admin read - run **`landlord_leads.sql`** then re-run **`admin_rls_policies.sql`** for `Platform admins select all landlord_leads`) |
-
-There is **no** `saved_properties` table in this version (add later if you want favourites).
-
+| `saved_properties` | Renter favourites (`user_id` + `property_id`, unique pair; own-row RLS) |
 ## Phase D - Supabase CLI (linked project, functions, secrets, migrations)
 
 Use this after [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) is installed (`npx supabase@latest` works without a global install). From the repo root, run `supabase login` once per machine, then `supabase link --project-ref <REF>` if this checkout is not linked yet.

@@ -13,6 +13,7 @@ import {
 } from '../lib/listingAccommodationDisplay'
 import { buildListingCardBadgeDisplay } from '../lib/listingCardImageBadges'
 import { VerifiedLandlordBadge } from './VerifiedLandlordBadge'
+import { SavePropertyButton } from './SavePropertyButton'
 
 type Props = {
   property: Property
@@ -128,6 +129,9 @@ export function PropertyCard({
             {unavailableBadgeLabel}
           </span>
         )}
+        {!staticDisplay ? (
+          <SavePropertyButton propertyId={property.id} listingPath={to} variant="card" />
+        ) : null}
       </div>
 
       <div className="p-4">

@@ -36,6 +36,9 @@ import {
 } from '../lib/propertyPayoutDetails'
 import RenterBookingZones from '../components/booking/RenterBookingZones'
 import RenterBookingMobileCard from '../components/booking/list/RenterBookingMobileCard'
+import { PropertyCard } from '../components/PropertyCard'
+import { useSavedProperties } from '../context/SavedPropertiesContext'
+import type { Property } from '../lib/listings'
 import { landlordServiceTierShortLabel, parseLandlordServiceTier } from '../lib/landlordServiceTier'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
@@ -84,7 +87,7 @@ type BookingWithProperty = BookingRow & {
   hasBondReceipt?: boolean
 }
 
-type TabId = 'overview' | 'bookings'
+type TabId = 'overview' | 'bookings' | 'saved'
 
 /** Survives remount when leaving /messages and returning to the student dashboard. */
 const studentDashboardBookingsCacheByUserId = new Map<string, BookingWithProperty[]>()
@@ -206,7 +209,9 @@ export default function StudentDashboard() {
   const [bookings, setBookings] = useState<BookingWithProperty[]>(() => cachedBookings ?? [])
   const [tab, setTab] = useState<TabId>(() => {
     try {
-      return new URLSearchParams(window.location.search).get('tab') === 'bookings' ? 'bookings' : 'overview'
+      const t = new URLSearchParams(window.location.search).get('tab')
+      if (t === 'bookings' || t === 'saved') return t
+      return 'overview'
     } catch {
       return 'overview'
     }
@@ -216,6 +221,10 @@ export default function StudentDashboard() {
   const [bondDownloadBusyId, setBondDownloadBusyId] = useState<string | null>(null)
   const [bondDownloadErrorId, setBondDownloadErrorId] = useState<string | null>(null)
   const [qaseOpen, setQaseOpen] = useState(false)
+  const { listSaved, savedIds, idsLoading: savedIdsLoading } = useSavedProperties()
+  const [savedProperties, setSavedProperties] = useState<Property[]>([])
+  const [savedLoading, setSavedLoading] = useState(false)
+  const [savedError, setSavedError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -348,13 +357,38 @@ export default function StudentDashboard() {
       navigate('/messages', { replace: true })
       return
     }
-    if (t === 'saved') {
-      navigate('/student-profile', { replace: true })
-      return
-    }
     if (t === 'bookings') setTab('bookings')
+    else if (t === 'saved') setTab('saved')
     else setTab('overview')
   }, [searchParams, navigate])
+
+  const loadSaved = useCallback(async () => {
+    setSavedLoading(true)
+    setSavedError(null)
+    try {
+      const rows = await listSaved()
+      setSavedProperties(rows)
+    } catch (e: unknown) {
+      setSavedError(e instanceof Error ? e.message : 'Could not load saved properties.')
+      setSavedProperties([])
+    } finally {
+      setSavedLoading(false)
+    }
+  }, [listSaved])
+
+  useEffect(() => {
+    if (tab !== 'saved') return
+    void loadSaved()
+  }, [tab, loadSaved])
+
+  useEffect(() => {
+    if (tab !== 'saved' || savedIdsLoading) return
+    setSavedProperties((prev) => {
+      if (prev.length === 0) return prev
+      const next = prev.filter((p) => savedIds.has(p.id))
+      return next.length === prev.length ? prev : next
+    })
+  }, [savedIds, savedIdsLoading, tab])
 
   const selectDashboardTab = useCallback(
     (next: TabId) => {
@@ -462,7 +496,9 @@ export default function StudentDashboard() {
         <RenterDashboardPageHeader
           activeTab={tab}
           onTabSelect={(section) => {
-            if (section === 'overview' || section === 'bookings') selectDashboardTab(section)
+            if (section === 'overview' || section === 'bookings' || section === 'saved') {
+              selectDashboardTab(section)
+            }
           }}
         />
 
@@ -739,6 +775,43 @@ export default function StudentDashboard() {
             </ul>
           )}
         </section>
+        )}
+
+        {tab === 'saved' && (
+          <section aria-labelledby="saved-heading" className="mb-6 min-w-0">
+            <h2 id="saved-heading" className="sr-only">
+              Saved properties
+            </h2>
+            {savedLoading && savedProperties.length === 0 ? (
+              <div className={`${cardClass} space-y-3 py-6 animate-pulse`} aria-busy="true">
+                <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
+                <div className="mx-auto h-20 max-w-md rounded-xl bg-admin-surface-3" />
+              </div>
+            ) : savedError ? (
+              <div className={`${cardClass} text-center py-12`}>
+                <p className="text-admin-ink-2 font-medium">{savedError}</p>
+                <button type="button" onClick={() => void loadSaved()} className={`${primaryBtnClass} mt-6`}>
+                  Try again
+                </button>
+              </div>
+            ) : savedProperties.length === 0 ? (
+              <div className={`${cardClass} text-center py-12`}>
+                <p className="text-admin-ink-2 font-medium">No saved properties yet</p>
+                <p className="text-admin-ink-5 text-sm mt-2 max-w-sm mx-auto">
+                  Tap the heart on a listing to save it — your favourites will show up here.
+                </p>
+                <Link to="/listings" className={`${primaryBtnClass} mt-6`}>
+                  Browse listings
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {savedProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         {profile && (

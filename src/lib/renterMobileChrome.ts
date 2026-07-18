@@ -1,8 +1,8 @@
 import type { UserDashboardSection } from './userDashboardNav'
 
-export type RenterMobileSectionTitle = 'Dashboard' | 'Bookings' | 'Messages' | 'Profile'
+export type RenterMobileSectionTitle = 'Dashboard' | 'Bookings' | 'Saved' | 'Messages' | 'Profile'
 
-export type RenterMobileSection = Exclude<UserDashboardSection, 'listings' | 'saved'>
+export type RenterMobileSection = Exclude<UserDashboardSection, 'listings'>
 
 /** Renter dashboard chrome paths: student-dashboard, messages, student-profile (+ alias). */
 export function isRenterDashboardChromePath(pathname: string): boolean {
@@ -19,6 +19,7 @@ export function renterMobileSectionTitle(pathname: string, search: string): Rent
   if (pathname === '/student-profile' || pathname === '/student/profile') return 'Profile'
   const tab = new URLSearchParams(search).get('tab')
   if (tab === 'bookings') return 'Bookings'
+  if (tab === 'saved') return 'Saved'
   return 'Dashboard'
 }
 
@@ -27,5 +28,6 @@ export function renterMobileActiveSection(pathname: string, search: string): Ren
   if (pathname === '/student-profile' || pathname === '/student/profile') return 'profile'
   const tab = new URLSearchParams(search).get('tab')
   if (tab === 'bookings') return 'bookings'
+  if (tab === 'saved') return 'saved'
   return 'overview'
 }

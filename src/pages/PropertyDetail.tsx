@@ -10,6 +10,7 @@ import {
   type ConversationThreadNavigationState,
 } from '../lib/messaging/conversationsApi'
 import { setPostAuthRedirect } from '../lib/postAuthRedirect'
+import { SavePropertyButton } from '../components/SavePropertyButton'
 import { appendTenantInviteToBookingPath } from '../lib/quniTenantInvite'
 import { computeRenterReadiness, renterReadinessActionHref } from '../lib/renterReadiness'
 import type { Database, LandlordProfileRow } from '../lib/database.types'
@@ -1473,6 +1474,13 @@ export default function PropertyDetail() {
                 <div className="py-4 space-y-3 border-b border-stone-100">
                   <ListingAccommodationStats property={property} roomLabel={roomLabel} variant="compact" />
                 </div>
+                <div className="pt-4">
+                  <SavePropertyButton
+                    propertyId={property.id}
+                    listingPath={`/properties/${property.slug}`}
+                    variant="detail"
+                  />
+                </div>
               </div>
             </aside>
           </div>
@@ -1905,6 +1913,11 @@ export default function PropertyDetail() {
                         )}
                       </>
                     )}
+                    <SavePropertyButton
+                      propertyId={property.id}
+                      listingPath={`/properties/${property.slug}`}
+                      variant="detail"
+                    />
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-stone-100 space-y-2 text-xs text-stone-500">

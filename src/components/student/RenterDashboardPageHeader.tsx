@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import UserDashboardSectionNav from '../dashboard/UserDashboardSectionNav'
 import { studentDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
 
-export type RenterDashboardTab = 'overview' | 'bookings'
+export type RenterDashboardTab = 'overview' | 'bookings' | 'saved'
 
 type Props = {
   activeTab: RenterDashboardTab | 'messages' | 'profile'
@@ -45,7 +45,7 @@ export function RenterDashboardTabShell({
         <RenterDashboardPageHeader
           activeTab={activeTab}
           onTabSelect={(section) => {
-            if (section === 'overview' || section === 'bookings') {
+            if (section === 'overview' || section === 'bookings' || section === 'saved') {
               navigate(studentDashboardTabPath(section))
             }
           }}

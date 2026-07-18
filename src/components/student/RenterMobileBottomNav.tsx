@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { CalendarDays, LayoutGrid, MessageSquare, User } from 'lucide-react'
+import { CalendarDays, Heart, LayoutGrid, MessageSquare, User } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 import { renterMobileActiveSection } from '../../lib/renterMobileChrome'
@@ -10,6 +10,7 @@ import { studentDashboardTabPath } from '../../lib/userDashboardNav'
 const items = [
   { id: 'overview' as const, label: 'Overview', to: studentDashboardTabPath('overview'), Icon: LayoutGrid },
   { id: 'bookings' as const, label: 'Bookings', to: studentDashboardTabPath('bookings'), Icon: CalendarDays },
+  { id: 'saved' as const, label: 'Saved', to: studentDashboardTabPath('saved'), Icon: Heart },
   { id: 'messages' as const, label: 'Messages', to: '/messages', Icon: MessageSquare },
   { id: 'profile' as const, label: 'Profile', to: '/student-profile', Icon: User },
 ]

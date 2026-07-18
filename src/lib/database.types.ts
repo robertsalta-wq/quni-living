@@ -2598,6 +2598,35 @@ export interface Database {
         }
         Relationships: []
       }
+      saved_properties: {
+        Row: {
+          id: string
+          user_id: string
+          property_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string
+          property_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          property_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'saved_properties_property_id_fkey'
+            columns: ['property_id']
+            isOneToOne: false
+            referencedRelation: 'properties'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {
