@@ -9,7 +9,6 @@ import { removeAllStudentVerificationDocuments } from '../lib/studentDocumentsSt
 import type { Database } from '../lib/database.types'
 import { RenterProfileSetup } from '../components/student/profile/RenterProfileSetup'
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
-import PageHeroBand from '../components/PageHeroBand'
 import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
 
@@ -231,18 +230,8 @@ export default function StudentProfile() {
   }
 
   if (loading) {
-    if (activeTab === 'bookings') {
-      return (
-        <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-          <PageHeroBand title="Your bookings" subtitle="Properties you have booked or applied for" />
-          <div className="min-h-[40vh] flex flex-1 items-center justify-center">
-            <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        </div>
-      )
-    }
     return (
-      <RenterDashboardTabShell activeTab="profile">
+      <RenterDashboardTabShell activeTab={activeTab === 'bookings' ? 'bookings' : 'profile'}>
         <div className="flex flex-1 items-center justify-center min-h-[40vh]">
           <div
             className="h-10 w-10 border-2 border-t-transparent rounded-full animate-spin"
@@ -254,21 +243,8 @@ export default function StudentProfile() {
   }
 
   if (loadError || !profile) {
-    if (activeTab === 'bookings') {
-      return (
-        <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-          <PageHeroBand title="Your bookings" subtitle="Properties you have booked or applied for" />
-          <div className="max-w-site mx-auto px-4 sm:px-6 py-10">
-            <p className="text-red-600 text-sm">{loadError ?? 'Profile unavailable.'}</p>
-            <Link to="/student-dashboard" className="text-indigo-600 text-sm font-medium mt-4 inline-block">
-              Go to dashboard
-            </Link>
-          </div>
-        </div>
-      )
-    }
     return (
-      <RenterDashboardTabShell activeTab="profile">
+      <RenterDashboardTabShell activeTab={activeTab === 'bookings' ? 'bookings' : 'profile'}>
         <p className="renter-profile-error">{loadError ?? 'Profile unavailable.'}</p>
         <Link to="/student-dashboard" className="renter-profile-edit-btn" style={{ marginTop: 16, display: 'inline-flex' }}>
           Go to dashboard
@@ -279,10 +255,8 @@ export default function StudentProfile() {
 
   if (activeTab === 'bookings') {
     return (
-      <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50">
-        <PageHeroBand title="Your bookings" subtitle="Properties you have booked or applied for" />
-        <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 w-full">
-          <section className="w-full">
+      <RenterDashboardTabShell activeTab="bookings">
+        <section className="w-full">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">Your bookings</h2>
             <p className="text-sm text-gray-500 mb-6">Properties you&apos;ve booked or applied for.</p>
 
@@ -480,8 +454,7 @@ export default function StudentProfile() {
               </ul>
             )}
           </section>
-        </div>
-      </div>
+      </RenterDashboardTabShell>
     )
   }
 
