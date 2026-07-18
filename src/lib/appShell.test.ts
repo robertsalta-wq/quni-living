@@ -7,6 +7,7 @@ import {
   isAppShellFocusPath,
   isAppShellPath,
   isDashboardMobileChromePath,
+  isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
 } from './appShell'
 
@@ -76,5 +77,11 @@ describe('appShell membership', () => {
     expect(isListingEditHubChromePath('/landlord/property/edit/1', true)).toBe(true)
     expect(isListingEditHubChromePath('/landlord/property/edit/1', false)).toBe(false)
     expect(isListingEditHubChromePath('/landlord/dashboard', true)).toBe(false)
+  })
+
+  it('uses desktop section chrome for listing edit on sm+', () => {
+    expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', false)).toBe(true)
+    expect(isListingEditDesktopSectionChrome('/landlord/property/new', false)).toBe(true)
+    expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', true)).toBe(false)
   })
 })

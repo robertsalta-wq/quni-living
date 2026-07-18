@@ -6,6 +6,7 @@ import {
   appShellFocusFallbackPath,
   appShellFocusTitle,
   isAppShellFocusPath,
+  isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
 } from '../../lib/appShell'
 import { getAppShellScrollElement } from '../../lib/appShellScroll'
@@ -32,12 +33,15 @@ export default function AppShellHeader({ trailing }: Props) {
   const { role, user } = useAuthContext()
   const location = useLocation()
   const navigate = useNavigate()
-  const focus = isAppShellFocusPath(location.pathname)
+  const focusPath = isAppShellFocusPath(location.pathname)
   const isMobile = useIsMobile()
   const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
+  const listingDesktopSection = isListingEditDesktopSectionChrome(location.pathname, isMobile)
+  /** Desktop listing edit uses standard Quni section header, not focus back-bar. */
+  const focus = focusPath && !listingDesktopSection
   const title =
     dashboardMobileSectionTitle(role, location.pathname, location.search) ??
-    (focus ? appShellFocusTitle(location.pathname) : 'Dashboard')
+    (focusPath ? appShellFocusTitle(location.pathname) : 'Dashboard')
   const homeHref = dashboardMobileHomePath(role)
   const profileHref =
     role === 'landlord' || isRenterRole(role)

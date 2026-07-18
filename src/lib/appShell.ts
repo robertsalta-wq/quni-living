@@ -129,10 +129,15 @@ export function isListingEditPath(pathname: string): boolean {
 
 /**
  * Cream hub chrome + no bottom tabs — mobile listing edit only (`sm` breakpoint).
- * Desktop listing edit uses standard focus chrome over the long form.
+ * Desktop listing edit uses standard section chrome (Quni header + dashboard strip).
  */
 export function isListingEditHubChromePath(pathname: string, isMobile: boolean): boolean {
   return isMobile && isListingEditPath(pathname)
+}
+
+/** Desktop listing edit — use dashboard section chrome, not focus back-bar. */
+export function isListingEditDesktopSectionChrome(pathname: string, isMobile: boolean): boolean {
+  return !isMobile && isListingEditPath(pathname)
 }
 
 /** @deprecated Prefer isListingEditPath / isListingEditHubChromePath */

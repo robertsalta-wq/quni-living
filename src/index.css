@@ -223,7 +223,8 @@ code {
   /** Section jump nav on listing form - fixed on mobile (overflow-x breaks sticky). */
   .listing-form-section-nav {
     z-index: 40;
-    background-color: #d4e9e2;
+    background-color: var(--quni-surface-1, #fff);
+    border-bottom: 1px solid var(--quni-line-soft, #efede9);
   }
 
   @media (max-width: 767px) {
@@ -232,8 +233,7 @@ code {
       left: 0;
       right: 0;
       top: var(--quni-fixed-header-offset);
-      border-bottom: 1px solid rgb(0 0 0 / 0.06);
-      box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+      box-shadow: 0 1px 3px rgb(8 6 13 / 0.06);
     }
 
     [data-app-shell] .listing-form-section-nav {
@@ -249,6 +249,9 @@ code {
 
     [data-app-shell] .listing-form-section-nav {
       top: 0.5rem;
+      border: 1px solid var(--quni-line, #e5e4e7);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgb(8 6 13 / 0.04);
     }
   }
 }
