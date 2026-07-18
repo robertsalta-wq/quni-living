@@ -63,6 +63,15 @@ function iconTileClass(tone: SectionTone): string {
   return 'bg-admin-coral-tint text-admin-coral [&_svg]:h-[18px] [&_svg]:w-[18px]'
 }
 
+/**
+ * Collapsible page section chrome (status-bearing surfaces).
+ *
+ * Layout rule (enforce in review): Section never contains another bordered/
+ * tinted card. Children may include plain content, tables, dividers, and
+ * non-card chrome only. Panels that own their own border+background must
+ * accept `embedded` (or equivalent) and strip that chrome when nested here —
+ * same rule as BookingReviewActionCard.
+ */
 export default function Section({
   id,
   ordinal,

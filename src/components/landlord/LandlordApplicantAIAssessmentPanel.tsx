@@ -11,6 +11,12 @@ type Props = {
   refreshDisabled: boolean
   refreshDisabledReason?: string
   showGenerate: boolean
+  /**
+   * Strip outer card chrome + title — for embedding inside `<Section>` (or any
+   * parent that already provides the bordered surface). Never nest a bordered
+   * card inside Section / ActionCard.
+   */
+  embedded?: boolean
 }
 
 function formatAssessmentAt(iso: string | null): string {
@@ -36,20 +42,16 @@ export default function LandlordApplicantAIAssessmentPanel({
   refreshDisabled,
   refreshDisabledReason,
   showGenerate,
+  embedded = false,
 }: Props) {
-  return (
-    <section id={anchorId} className="scroll-mt-4 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
-      <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-        <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]" />
-        AI assessment
-      </h3>
-
+  const body = (
+    <>
       {showGenerate && !assessment && (
         <button
           type="button"
           onClick={onGenerate}
           disabled={loading}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF6F61] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] disabled:opacity-60"
+          className={`${embedded ? '' : 'mt-3 '}flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF6F61] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] disabled:opacity-60`}
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -69,11 +71,11 @@ export default function LandlordApplicantAIAssessmentPanel({
       )}
 
       {assessment && (
-        <div className="mt-3 max-w-[600px] space-y-3">
-          <div className="rounded-xl border border-stone-200/90 bg-[#FFF8F0] px-3 py-3 text-left text-sm leading-relaxed text-gray-800">
+        <div className={`${embedded ? '' : 'mt-3 '}max-w-[600px] space-y-3`}>
+          <div className="text-left text-sm leading-relaxed text-admin-ink-2">
             <p className="max-w-[600px] whitespace-pre-wrap">{assessment}</p>
             {assessmentAt && (
-              <p className="mt-2 text-[11px] text-gray-500">Generated {formatAssessmentAt(assessmentAt)}</p>
+              <p className="mt-2 text-[11px] text-admin-ink-5">Generated {formatAssessmentAt(assessmentAt)}</p>
             )}
           </div>
           <button
@@ -88,12 +90,30 @@ export default function LandlordApplicantAIAssessmentPanel({
         </div>
       )}
 
-      {error && <p className="mt-2 text-center text-xs text-gray-500">Assessment unavailable. Please try again.</p>}
+      {error && <p className="mt-2 text-center text-xs text-admin-ink-5">Assessment unavailable. Please try again.</p>}
 
-      <p className="mt-3 text-[11px] leading-snug text-gray-500">
+      <p className="mt-3 text-[11px] leading-snug text-admin-ink-5">
         This assessment is AI-generated and assistive only. It does not constitute verification of the applicant&apos;s
         identity or credentials.
       </p>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div id={anchorId} className="scroll-mt-4">
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <section id={anchorId} className="scroll-mt-4 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
+      <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
+        <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]" />
+        AI assessment
+      </h3>
+      {body}
     </section>
   )
 }

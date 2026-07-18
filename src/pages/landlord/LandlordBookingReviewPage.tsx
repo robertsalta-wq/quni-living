@@ -1498,6 +1498,7 @@ export default function LandlordBookingReviewPage() {
                 refreshDisabled={refreshCooldownRemainingSec > 0 && !aiLoading}
                 refreshDisabledReason={`Available in ${Math.ceil(refreshCooldownRemainingSec / 60)} min`}
                 showGenerate={!aiAssessment}
+                embedded
               />
             </Section>
 
