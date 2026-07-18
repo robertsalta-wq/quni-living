@@ -23,7 +23,12 @@ const DEADLINE_TONE: Record<'info' | 'warning', string> = {
 
 /**
  * Sticky-rail action / status card chrome — HTML visual SoT.
- * Content by role×state is wired in later commits (5a / 5b).
+ *
+ * Layout rule (enforce in review): ActionCard never contains another
+ * bordered/tinted card. Children/footer may include plain text, buttons,
+ * form controls, and non-card chrome only. Status/info/checklist panels
+ * (border + filled/tinted background, or a full bordered section) must be
+ * siblings of ActionCard in the rail — gating panels above, info panels below.
  */
 export default function BookingReviewActionCard({
   eyebrow,
