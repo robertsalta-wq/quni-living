@@ -33,7 +33,7 @@ const QUICK_ANSWERS = [
   },
   {
     q: "I don't have my enrolment document yet. Can I still start?",
-    a: "Yes. You can sign up and browse straight away. You'll need student verification before you can request to book on student-only listings, so it's worth getting your documents ready early.",
+    a: "Yes. You can sign up and browse straight away. You'll need student verification before you can apply on student-only listings, so it's worth getting your documents ready early.",
   },
   {
     q: 'Is my information safe?',
@@ -41,7 +41,7 @@ const QUICK_ANSWERS = [
   },
   {
     q: 'Can I send a booking request before I\u2019m fully verified?',
-    a: 'You can sign up and browse first. Student-only listings require full student verification before a request can go through. On listings open to non-students, a complete profile is required to request to book; photo ID and a supporting document complete identity verification shown to landlords.',
+    a: 'You can sign up and browse first. Student-only listings require full student verification before a request can go through. On listings open to non-students, a complete profile is required to apply; photo ID and a supporting document complete identity verification shown to landlords.',
   },
 ] as const
 

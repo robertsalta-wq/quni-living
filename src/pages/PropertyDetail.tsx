@@ -550,7 +550,7 @@ export default function PropertyDetail() {
     : '/student-profile'
   const renterReadinessBlockMessage =
     renterReadiness?.blocksBooking[0] ??
-    'Complete your profile to message landlords and request bookings'
+    'Complete your profile to message landlords and apply'
 
   useEffect(() => {
     if (!user || !property?.id || !isRenterRole(role) || !studentListingActionsOk) return
@@ -1888,7 +1888,7 @@ export default function PropertyDetail() {
                           state={bookState}
                           className="flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
                         >
-                          Request to book
+                          Apply
                         </Link>
                         <button
                           type="button"
@@ -1978,7 +1978,7 @@ export default function PropertyDetail() {
               state={bookState}
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shadow-sm shrink-0"
             >
-              Request to book →
+              Apply →
             </Link>
           )}
         </div>

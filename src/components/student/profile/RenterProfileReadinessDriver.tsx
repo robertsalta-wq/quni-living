@@ -18,7 +18,7 @@ type Props = {
 export function RenterProfileReadinessDriver({ readiness, profile, situation, verificationComplete }: Props) {
   const { done, total, pct } = computeRenterProfileDriverProgress(profile, situation, verificationComplete)
   const complete = done === total && total > 0
-  const driverText = readiness.blocksBooking[0] ?? 'Complete your profile to request bookings'
+  const driverText = readiness.blocksBooking[0] ?? 'Complete your profile to apply'
 
   if (complete) {
     return (

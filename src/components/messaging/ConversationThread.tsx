@@ -367,7 +367,7 @@ export default function ConversationThread({ conversation, currentUserId, viewer
             to={bookHref}
             className="block text-center rounded-xl bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:opacity-95"
           >
-            Request to book
+            Apply
           </Link>
         )}
       </div>
