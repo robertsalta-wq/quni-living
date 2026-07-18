@@ -74,6 +74,11 @@ import { studentDisplayName } from '../../lib/nameResolution'
 import Section from '../../components/ui/Section'
 import { User, Sparkles, TrendingUp, MessageSquare, ArrowLeftRight, FileText, Clock } from 'lucide-react'
 
+/** DO NOT MERGE — deliberate render crash so booking-review e2e smoke must go red. */
+function ProveBookingReviewE2eRejectsProbe(): never {
+  throw new Error('DO NOT MERGE: deliberate booking-review render crash for e2e proof')
+}
+
 const SUGGESTED_QUESTIONS = [
   'Could you tell me more about your daily routine?',
   'Do you have any pets?',
@@ -988,6 +993,8 @@ export default function LandlordBookingReviewPage() {
 
   return (
     <div className="min-h-full bg-admin-surface-2">
+      {/* DO NOT MERGE — throwaway probe: prove booking-review e2e smoke goes red on render crash. */}
+      <ProveBookingReviewE2eRejectsProbe />
       <div className="mx-auto max-w-[1180px] px-6 py-6 pb-20">
         <UserDashboardBreadcrumb segments={breadcrumbSegments} className="mb-[26px] text-[13px] text-admin-ink-5" />
 
