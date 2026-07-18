@@ -112,12 +112,44 @@ function App() {
                 path="/landlord/property/new"
                 element={
                   <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                    <Lazy.LandlordListingEditHubPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/landlord/property/new/basic"
+                element={
+                  <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                    <Lazy.LandlordListingEditHubPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/landlord/property/new/section/:sectionId"
+                element={
+                  <ProtectedRoute allowedRoles={['landlord', 'admin']}>
                     <Lazy.LandlordPropertyFormPage />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/landlord/property/edit/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                    <Lazy.LandlordListingEditHubPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/landlord/property/edit/:id/basic"
+                element={
+                  <ProtectedRoute allowedRoles={['landlord', 'admin']}>
+                    <Lazy.LandlordListingEditHubPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/landlord/property/edit/:id/section/:sectionId"
                 element={
                   <ProtectedRoute allowedRoles={['landlord', 'admin']}>
                     <Lazy.LandlordPropertyFormPage />

@@ -37,9 +37,10 @@ export function appShellMode(pathname: string): AppShellMode | null {
 
   if (p.startsWith('/admin')) return null
 
-  // Focus (still framed — tabs stay; top bar is back/close)
+  // Focus (still framed — top bar is back/close; listing edit hub hides bottom tabs)
   if (/^\/landlord\/bookings\/[^/]+\/review\/?$/.test(p)) return 'focus'
-  if (p === '/landlord/property/new' || p.startsWith('/landlord/property/edit/')) return 'focus'
+  if (p === '/landlord/property/new' || p.startsWith('/landlord/property/new/')) return 'focus'
+  if (p.startsWith('/landlord/property/edit/')) return 'focus'
   if (/^\/booking\/[^/]+\/?$/.test(p)) return 'focus'
 
   // Section destinations
@@ -104,10 +105,26 @@ export function appShellActiveSection(
 
 export function appShellFocusTitle(pathname: string): string {
   if (/^\/landlord\/bookings\//.test(pathname)) return 'Booking review'
-  if (pathname === '/landlord/property/new') return 'New listing'
-  if (pathname.startsWith('/landlord/property/edit/')) return 'Edit listing'
+  if (pathname === '/landlord/property/new' || pathname.startsWith('/landlord/property/new/')) {
+    if (pathname.endsWith('/basic')) return 'Basic info'
+    if (pathname.includes('/section/')) return 'Edit section'
+    return 'New listing'
+  }
+  if (pathname.startsWith('/landlord/property/edit/')) {
+    if (pathname.endsWith('/basic')) return 'Basic info'
+    if (pathname.includes('/section/')) return 'Edit section'
+    return 'Listing health'
+  }
   if (/^\/booking\//.test(pathname)) return 'Apply'
   return 'Back'
+}
+
+/** Listing edit hub / drill-ins — cream Dashboard header, no bottom tab bar. */
+export function isListingEditHubPath(pathname: string): boolean {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  if (p === '/landlord/property/new' || p.startsWith('/landlord/property/new/')) return true
+  if (p.startsWith('/landlord/property/edit/')) return true
+  return false
 }
 
 /** Default back target when no location.state.returnTo is present. */

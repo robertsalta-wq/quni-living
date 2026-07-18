@@ -19,7 +19,11 @@ describe('appShell membership', () => {
 
   it('frames focus destinations without dropping to marketing', () => {
     expect(appShellMode('/landlord/property/new')).toBe('focus')
+    expect(appShellMode('/landlord/property/new/basic')).toBe('focus')
+    expect(appShellMode('/landlord/property/new/section/photos')).toBe('focus')
     expect(appShellMode('/landlord/property/edit/x')).toBe('focus')
+    expect(appShellMode('/landlord/property/edit/x/basic')).toBe('focus')
+    expect(appShellMode('/landlord/property/edit/x/section/pricing')).toBe('focus')
     expect(appShellMode('/landlord/bookings/b1/review')).toBe('focus')
     expect(appShellMode('/booking/prop1')).toBe('focus')
     expect(isAppShellFocusPath('/booking/prop1')).toBe(true)

@@ -103,9 +103,9 @@ function payoutMethodGate(input: BookingReviewReadinessGatesInput): GateDef | nu
       done: input.propertyPayoutComplete === true,
       actionLabel: 'Add',
       actionKind: 'add_payout_method',
-      actionHref: input.property?.id
-        ? `/landlord/property/edit/${input.property.id}#section-pricing-availability`
-        : undefined,
+    actionHref: input.property?.id
+      ? `/landlord/property/edit/${input.property.id}/section/pricing`
+      : undefined,
     }
   }
   return {
@@ -144,7 +144,9 @@ function ft6600Gate(input: BookingReviewReadinessGatesInput): GateDef | null {
     done: missing.length === 0,
     actionLabel: 'Complete',
     actionKind: 'complete_compliance',
-    actionHref: input.property?.id ? `/landlord/property/edit/${input.property.id}` : undefined,
+    actionHref: input.property?.id
+      ? `/landlord/property/edit/${input.property.id}/section/property`
+      : undefined,
   }
 }
 

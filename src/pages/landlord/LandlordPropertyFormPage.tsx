@@ -4,6 +4,12 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
 import { generatePropertySlug } from '../../lib/generatePropertySlug'
+import {
+  LISTING_HUB_SECTION_IDS,
+  LISTING_HUB_SECTIONS,
+  listingHubPath,
+  type ListingHubSectionId,
+} from '../../lib/listingEditHubHealth'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import {
   ACCOMMODATION_UI_OPTIONS,
@@ -501,10 +507,37 @@ export default function LandlordPropertyFormPage() {
   const { user, profile, role } = useAuthContext()
 
   const propertyId = useMemo(() => {
+    const sectionMatch = matchPath(
+      { path: '/landlord/property/edit/:id/section/:sectionId', end: true },
+      location.pathname,
+    )
+    if (sectionMatch?.params.id) return sectionMatch.params.id
     const m = matchPath({ path: '/landlord/property/edit/:id', end: true }, location.pathname)
     return m?.params.id ?? null
   }, [location.pathname])
   const isEdit = Boolean(propertyId)
+
+  const hubSectionId = useMemo((): ListingHubSectionId | null => {
+    const editSection = matchPath(
+      { path: '/landlord/property/edit/:id/section/:sectionId', end: true },
+      location.pathname,
+    )
+    const newSection = matchPath(
+      { path: '/landlord/property/new/section/:sectionId', end: true },
+      location.pathname,
+    )
+    const raw = editSection?.params.sectionId ?? newSection?.params.sectionId
+    if (!raw) return null
+    return (LISTING_HUB_SECTION_IDS as readonly string[]).includes(raw)
+      ? (raw as ListingHubSectionId)
+      : null
+  }, [location.pathname])
+
+  const isHubSectionMode = hubSectionId != null
+  const hubReturnPath = listingHubPath({ propertyId })
+  const hubSectionMeta = hubSectionId
+    ? LISTING_HUB_SECTIONS.find((s) => s.id === hubSectionId) ?? null
+    : null
 
   const landlordProfile = role === 'landlord' && profile ? (profile as LandlordProfileRow) : null
   const { managedTierEnabled } = usePlatformFeatures()
@@ -630,6 +663,22 @@ export default function LandlordPropertyFormPage() {
     }
     return sections
   }, [showNswFt6600ComplianceSection, showPropertyUtilitiesSection])
+
+  const showFormSection = useCallback(
+    (sectionDomId: string) => {
+      if (!hubSectionId || !hubSectionMeta) return true
+      if (!hubSectionMeta.formSectionIds.includes(sectionDomId)) return false
+      if (sectionDomId === 'section-ft6600-compliance') return showNswFt6600ComplianceSection
+      if (sectionDomId === 'section-utilities') return showPropertyUtilitiesSection
+      return true
+    },
+    [
+      hubSectionId,
+      hubSectionMeta,
+      showNswFt6600ComplianceSection,
+      showPropertyUtilitiesSection,
+    ],
+  )
 
   const qldRoomsRentedError = useMemo(
     () =>
@@ -2305,7 +2354,9 @@ export default function LandlordPropertyFormPage() {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
         }
-        if (existingListingStatus === 'draft') {
+        if (isHubSectionMode) {
+          navigate(hubReturnPath, { replace: true })
+        } else if (existingListingStatus === 'draft') {
           navigate('/landlord-dashboard', { replace: true })
         } else {
           setSubmitSuccessMessage(
@@ -2368,7 +2419,11 @@ export default function LandlordPropertyFormPage() {
         } catch {
           /* ignore */
         }
-        navigate('/landlord-dashboard', { replace: true })
+        if (isHubSectionMode) {
+          navigate(listingHubPath({ propertyId: newId }), { replace: true })
+        } else {
+          navigate('/landlord-dashboard', { replace: true })
+        }
       }
     } catch (err) {
       console.error('[LandlordPropertyFormPage] save failed', err)
@@ -2421,31 +2476,59 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-[#d4e9e2] max-sm:pb-0 pb-16">
+    <div
+      className={`flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col max-sm:pb-0 pb-16 ${
+        isHubSectionMode ? 'bg-[var(--quni-surface-2)]' : 'bg-[#d4e9e2]'
+      }`}
+    >
       <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 pt-3 pb-4 sm:px-6 sm:pt-5 sm:pb-8">
-        <div className="mb-3 min-w-0">
-          <UserDashboardBreadcrumb
-            segments={userDashboardBreadcrumbs('landlord', {
-              label: isEdit ? 'Edit listing' : 'New listing',
-            })}
-            className="mb-2"
-          />
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight sm:text-2xl">
-                {isEdit ? 'Edit your listing' : 'New listing'}
+        {isHubSectionMode ? (
+          <div className="mb-4 min-w-0">
+            <Link
+              to={hubReturnPath}
+              className="mb-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--quni-ink-4)] hover:text-[var(--quni-ink)]"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Listing health
+            </Link>
+            <div className="flex items-baseline justify-between gap-3">
+              <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[var(--quni-ink)]">
+                {hubSectionMeta?.title ?? 'Edit section'}
               </h1>
-              {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
+              {hubSectionMeta ? (
+                <span className="text-xs font-semibold text-[var(--quni-ink-5)]">
+                  Step {hubSectionMeta.step} of 8
+                </span>
+              ) : null}
             </div>
-            {!isEdit && draftSavedVisible && (
-              <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
-                Draft saved
-              </p>
-            )}
           </div>
-        </div>
+        ) : (
+          <div className="mb-3 min-w-0">
+            <UserDashboardBreadcrumb
+              segments={userDashboardBreadcrumbs('landlord', {
+                label: isEdit ? 'Edit listing' : 'New listing',
+              })}
+              className="mb-2"
+            />
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-gray-900 tracking-tight sm:text-2xl">
+                  {isEdit ? 'Edit your listing' : 'New listing'}
+                </h1>
+                {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
+              </div>
+              {!isEdit && draftSavedVisible && (
+                <p className="text-xs text-gray-400 shrink-0 mt-1 tabular-nums" aria-live="polite">
+                  Draft saved
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
-        {!isEdit && showResumeDraftBanner && (
+        {!isEdit && showResumeDraftBanner && !isHubSectionMode && (
           <div
             className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
             role="region"
@@ -2475,31 +2558,35 @@ export default function LandlordPropertyFormPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
-          <nav
-            className="listing-form-section-nav mb-3 px-2 py-2 sm:-mx-6 sm:px-6"
-            aria-label="Jump to section"
-          >
-            <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-              {formNavSections.map(({ id, label }) => {
-                const isActive = activeSection === id
-                return (
-                  <a
-                    key={id}
-                    href={`#${id}`}
-                    className={
-                      isActive
-                        ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
-                        : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 text-center text-xs font-medium text-[#D85A30] hover:bg-[#D85A30] hover:text-white sm:text-sm'
-                    }
-                  >
-                    {label}
-                  </a>
-                )
-              })}
-            </div>
-          </nav>
-          {/* Reserve space while section pills are position:fixed on mobile — keep tight (8px rhythm). */}
-          <div className="mb-3 h-10 max-md:block md:hidden" aria-hidden />
+          {!isHubSectionMode ? (
+            <>
+              <nav
+                className="listing-form-section-nav mb-3 px-2 py-2 sm:-mx-6 sm:px-6"
+                aria-label="Jump to section"
+              >
+                <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
+                  {formNavSections.map(({ id, label }) => {
+                    const isActive = activeSection === id
+                    return (
+                      <a
+                        key={id}
+                        href={`#${id}`}
+                        className={
+                          isActive
+                            ? 'shrink-0 rounded-full border border-[#D85A30] bg-[#D85A30] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
+                            : 'shrink-0 rounded-full border border-[#D85A30] bg-white px-3 py-1.5 text-center text-xs font-medium text-[#D85A30] hover:bg-[#D85A30] hover:text-white sm:text-sm'
+                        }
+                      >
+                        {label}
+                      </a>
+                    )
+                  })}
+                </div>
+              </nav>
+              {/* Reserve space while section pills are position:fixed on mobile — keep tight (8px rhythm). */}
+              <div className="mb-3 h-10 max-md:block md:hidden" aria-hidden />
+            </>
+          ) : null}
 
           <div className="space-y-8">
           {submitError && (
@@ -2545,7 +2632,8 @@ export default function LandlordPropertyFormPage() {
             </section>
           )}
 
-          {sectionClass(
+          {showFormSection('section-basic-info') &&
+            sectionClass(
             'Basic information',
             <div className="space-y-4">
               <div>
@@ -2564,7 +2652,8 @@ export default function LandlordPropertyFormPage() {
             'section-basic-info',
           )}
 
-          {sectionClass(
+          {showFormSection('section-property-details') &&
+            sectionClass(
             'Property details',
             <div className="space-y-4">
               <div className="space-y-3">
@@ -2849,7 +2938,8 @@ export default function LandlordPropertyFormPage() {
             'section-property-details',
           )}
 
-          {sectionClass(
+          {showFormSection('section-inclusions-features') &&
+            sectionClass(
             'Inclusions & features',
             <div className="space-y-4">
               <div>
@@ -2924,7 +3014,7 @@ export default function LandlordPropertyFormPage() {
             'section-inclusions-features',
           )}
 
-          {showPropertyUtilitiesSection
+          {showFormSection('section-utilities') && showPropertyUtilitiesSection
             ? sectionClass(
                 'Utilities & water',
                 <LandlordPropertyUtilitiesFields
@@ -2947,7 +3037,7 @@ export default function LandlordPropertyFormPage() {
               )
             : null}
 
-          {showNswFt6600ComplianceSection
+          {showFormSection('section-ft6600-compliance') && showNswFt6600ComplianceSection
             ? sectionClass(
                 'Smoke alarms & compliance (NSW)',
                 <div className="space-y-5">
@@ -3002,7 +3092,8 @@ export default function LandlordPropertyFormPage() {
               )
             : null}
 
-          {sectionClass(
+          {showFormSection('section-house-rules') &&
+            sectionClass(
             'House rules',
             <div className="space-y-6">
               <div className="space-y-2">
@@ -3078,7 +3169,8 @@ export default function LandlordPropertyFormPage() {
             'section-house-rules',
           )}
 
-          {sectionClass(
+          {showFormSection('section-location') &&
+            sectionClass(
             'Location',
             <div className="space-y-4">
               <p className="text-xs text-gray-600 rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2 leading-relaxed">
@@ -3269,7 +3361,8 @@ export default function LandlordPropertyFormPage() {
             'section-location',
           )}
 
-          {sectionClass(
+          {showFormSection('section-pricing-availability') &&
+            sectionClass(
             'Pricing & availability',
             <div className="space-y-4">
               <div>
@@ -3745,7 +3838,8 @@ export default function LandlordPropertyFormPage() {
             'section-pricing-availability',
           )}
 
-          {sectionClass(
+          {showFormSection('section-description') &&
+            sectionClass(
             'Description',
             <div className="space-y-4">
               <div>
@@ -3766,7 +3860,8 @@ export default function LandlordPropertyFormPage() {
             'section-description',
           )}
 
-          {sectionClass(
+          {showFormSection('section-photos') &&
+            sectionClass(
             'Property photos',
             <div className="space-y-4">
               <p className="text-xs text-gray-500">Up to {MAX_IMAGES} images, max 5MB each.</p>
@@ -3841,7 +3936,13 @@ export default function LandlordPropertyFormPage() {
               disabled={submitting}
               className="rounded-xl bg-gray-900 text-white px-6 py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
             >
-              {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Publish listing'}
+              {submitting
+                ? 'Saving…'
+                : isHubSectionMode
+                  ? 'Save & return'
+                  : isEdit
+                    ? 'Save changes'
+                    : 'Publish listing'}
             </button>
             <Link
               to="/landlord-dashboard"

@@ -19,6 +19,7 @@ export const routeImports = {
   sampleAgreementsPage: () => import('./pages/SampleAgreementsPage'),
   inviteTenantPage: () => import('./pages/InviteTenantPage'),
   landlordPropertyFormPage: () => import('./pages/landlord/LandlordPropertyFormPage'),
+  landlordListingEditHubPage: () => import('./pages/landlord/LandlordListingEditHubPage'),
   landlordBookingReviewPage: () => import('./pages/landlord/LandlordBookingReviewPage'),
   messagesPage: () => import('./pages/MessagesPage'),
   /** @deprecated — re-exports MessagesPage */
@@ -100,6 +101,7 @@ export const InviteTenantPage = lazy(routeImports.inviteTenantPage)
 
 // Landlord tools
 export const LandlordPropertyFormPage = lazy(routeImports.landlordPropertyFormPage)
+export const LandlordListingEditHubPage = lazy(routeImports.landlordListingEditHubPage)
 export const LandlordBookingReviewPage = lazy(routeImports.landlordBookingReviewPage)
 
 // Messaging

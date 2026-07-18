@@ -6,6 +6,7 @@ import {
   appShellFocusFallbackPath,
   appShellFocusTitle,
   isAppShellFocusPath,
+  isListingEditHubPath,
 } from '../../lib/appShell'
 import { getAppShellScrollElement } from '../../lib/appShellScroll'
 import {
@@ -31,6 +32,7 @@ export default function AppShellHeader({ trailing }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
   const focus = isAppShellFocusPath(location.pathname)
+  const listingHub = isListingEditHubPath(location.pathname)
   const title =
     dashboardMobileSectionTitle(role, location.pathname, location.search) ??
     (focus ? appShellFocusTitle(location.pathname) : 'Dashboard')
@@ -44,6 +46,10 @@ export default function AppShellHeader({ trailing }: Props) {
   const lastScrollRef = useRef(0)
 
   useEffect(() => {
+    if (listingHub) {
+      setHidden(false)
+      return
+    }
     const main = getAppShellScrollElement()
     if (!main) return
 
@@ -65,7 +71,7 @@ export default function AppShellHeader({ trailing }: Props) {
 
     main.addEventListener('scroll', onScroll, { passive: true })
     return () => main.removeEventListener('scroll', onScroll)
-  }, [location.pathname, location.search])
+  }, [location.pathname, location.search, listingHub])
 
   function onFocusBack() {
     const state = location.state as { returnTo?: string } | null
@@ -79,6 +85,51 @@ export default function AppShellHeader({ trailing }: Props) {
       return
     }
     navigate(appShellFocusFallbackPath(role, location.pathname))
+  }
+
+  const initials = (() => {
+    const email = user?.email?.trim() || ''
+    if (!email) return 'Me'
+    const local = email.split('@')[0] || 'Me'
+    const parts = local.split(/[._-]+/).filter(Boolean)
+    if (parts.length >= 2) return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
+    return local.slice(0, 2).toUpperCase()
+  })()
+
+  if (listingHub) {
+    return (
+      <header
+        className="z-50 w-full max-w-full shrink-0 overflow-x-clip border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)] pt-safe-top"
+        data-app-shell-header="listing-hub"
+      >
+        <div className="mx-auto flex h-12 max-w-site items-center justify-between gap-2 px-3 sm:h-14 sm:px-6 lg:px-8">
+          <Link
+            to="/landlord/dashboard"
+            className="inline-flex min-w-0 items-baseline gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            aria-label="Quni Dashboard"
+          >
+            <span className="font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-coral)]">
+              Quni
+            </span>
+            <span className="text-[19px] font-bold leading-none tracking-[-0.01em] text-[var(--quni-navy)]">
+              Dashboard
+            </span>
+          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            {trailing}
+            {user ? (
+              <Link
+                to={profileHref}
+                className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                aria-label="Profile"
+              >
+                {initials}
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </header>
+    )
   }
 
   return (

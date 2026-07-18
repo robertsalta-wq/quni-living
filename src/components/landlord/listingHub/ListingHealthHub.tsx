@@ -1,0 +1,190 @@
+import { Link } from 'react-router-dom'
+import {
+  LISTING_HUB_SECTIONS,
+  listingHubPath,
+  type ListingHubHealthResult,
+  type ListingHubSectionId,
+} from '../../../lib/listingEditHubHealth'
+import {
+  ListingHubQualityRing,
+  ListingHubSectionIcon,
+  ListingHubStatusDot,
+} from './ListingHubVisuals'
+
+type Props = {
+  propertyId: string | null
+  listingName: string
+  thumbUrl: string | null
+  statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
+  health: ListingHubHealthResult
+  previewHref: string | null
+  onHubPrimary: () => void
+}
+
+export default function ListingHealthHub({
+  propertyId,
+  listingName,
+  thumbUrl,
+  statusLabel,
+  health,
+  previewHref,
+  onHubPrimary,
+}: Props) {
+  const isSetup = health.isSetupMode
+  const statusBadgeClass =
+    statusLabel === 'Active'
+      ? 'border-[rgba(29,158,117,0.32)] bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]'
+      : 'border-[#E1DDD2] bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]'
+
+  function sectionHref(id: ListingHubSectionId) {
+    if (id === 'basic') return listingHubPath({ propertyId, view: 'basic' })
+    return listingHubPath({ propertyId, view: id })
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-[var(--quni-surface-2)]">
+      {/* App bar */}
+      <div className="shrink-0 border-b border-[var(--quni-line-soft)] bg-white">
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 sm:px-4">
+          <span className="flex h-9 w-9 shrink-0 overflow-hidden rounded-[9px] bg-[var(--quni-surface-3)]">
+            {thumbUrl ? (
+              <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
+            ) : null}
+          </span>
+          <p className="min-w-0 flex-1 truncate text-[15px] font-bold text-[var(--quni-ink)]">
+            {listingName}
+          </p>
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.04em] ${statusBadgeClass}`}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        <div className="flex gap-[22px] px-4">
+          <span className="border-b-2 border-[var(--quni-coral)] pb-2.5 text-[13.5px] font-semibold text-[var(--quni-ink)]">
+            Listing health
+          </span>
+          <span
+            className="cursor-default pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)]"
+            title="Coming soon"
+          >
+            Insights
+          </span>
+          {previewHref ? (
+            <Link
+              to={previewHref}
+              className="pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)] hover:text-[var(--quni-ink)]"
+            >
+              Preview
+            </Link>
+          ) : (
+            <span
+              className="cursor-default pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)]"
+              title="Save your listing first to preview"
+            >
+              Preview
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3 sm:px-4">
+        <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3.5 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]">
+          <ListingHubQualityRing score={health.score} />
+          <div className="min-w-0">
+            <p className="mb-1 text-[15.5px] font-bold leading-tight text-[var(--quni-ink)]">
+              {health.qualityHeadline}
+            </p>
+            <p className="text-[12.5px] leading-snug text-[var(--quni-ink-4)] text-pretty">
+              {health.qualitySubtext}
+            </p>
+          </div>
+        </div>
+
+        {isSetup ? (
+          <div className="mb-3.5 flex items-start gap-2.5 rounded-xl border border-[var(--quni-cream-border)] bg-[var(--quni-cream)] px-3.5 py-3">
+            <span className="mt-0.5 shrink-0 text-[var(--quni-warning)]" aria-hidden>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                <path d="M12 8v5" />
+                <path d="M12 16h.01" />
+              </svg>
+            </span>
+            <p className="text-[12.5px] leading-snug text-[#5C5326]">
+              We&apos;ll walk you through each section in order. Your progress saves as you go.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-1.5">
+          {LISTING_HUB_SECTIONS.map((s) => {
+            const status = health.statuses[s.id]
+            return (
+              <Link
+                key={s.id}
+                to={sectionHref(s.id)}
+                className="flex w-full items-center gap-2.5 rounded-[13px] border border-[var(--quni-line)] bg-white px-[11px] py-[7px] text-left shadow-[0_1px_2px_rgba(8,6,13,0.04)] transition-colors hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              >
+                <span className="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[var(--quni-surface-3)] text-[var(--quni-ink-3)]">
+                  <ListingHubSectionIcon id={s.id} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-semibold text-[var(--quni-ink)]">{s.title}</span>
+                    {s.aiTag === 'writer' ? (
+                      <span className="rounded-full border border-[var(--quni-ai-border)] bg-[var(--quni-ai-tint)] px-1.5 py-px text-[9.5px] font-semibold text-[var(--quni-ai)]">
+                        ✦ AI writer
+                      </span>
+                    ) : null}
+                    {s.aiTag === 'price' ? (
+                      <span className="rounded-full border border-[var(--quni-ai-border)] bg-[var(--quni-ai-tint)] px-1.5 py-px text-[9.5px] font-semibold text-[var(--quni-ai)]">
+                        ✦ AI price
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-px block truncate text-[11.5px] text-[var(--quni-ink-5)]">
+                    {s.subtitle}
+                  </span>
+                </span>
+                <ListingHubStatusDot status={status} />
+                <span className="shrink-0 text-[#C4BFCB]" aria-hidden>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex shrink-0 gap-2.5 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(8,6,13,0.04)]">
+        {previewHref ? (
+          <Link
+            to={previewHref}
+            className="shrink-0 rounded-[10px] border border-[#D8D3C7] bg-white px-[18px] py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+          >
+            Preview
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="shrink-0 rounded-[10px] border border-[#D8D3C7] bg-white px-[18px] py-3 text-sm font-semibold text-[var(--quni-navy)] opacity-50"
+          >
+            Preview
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onHubPrimary}
+          className="flex-1 rounded-[10px] bg-[var(--quni-coral)] py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)]"
+        >
+          {isSetup ? 'Save & next' : 'Save changes'}
+        </button>
+      </div>
+    </div>
+  )
+}

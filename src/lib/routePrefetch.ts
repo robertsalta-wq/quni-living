@@ -65,7 +65,7 @@ const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
   '/landlord/dashboard': [routeImports.landlordDashboard],
   '/landlord-profile': [routeImports.landlordDashboard],
   '/landlord/profile': [routeImports.landlordDashboard],
-  '/landlord/property/new': [routeImports.landlordPropertyFormPage],
+  '/landlord/property/new': [routeImports.landlordListingEditHubPage],
   '/sample-agreements': [routeImports.sampleAgreementsPage],
 }
 
@@ -122,8 +122,12 @@ export function prefetchRouteChunks(pathname: string): void {
     return
   }
 
-  if (path.startsWith('/landlord/property/edit/')) {
-    prefetch([routeImports.landlordPropertyFormPage])
+  if (path.startsWith('/landlord/property/edit/') || path.startsWith('/landlord/property/new')) {
+    if (path.includes('/section/')) {
+      prefetch([routeImports.landlordPropertyFormPage])
+    } else {
+      prefetch([routeImports.landlordListingEditHubPage, routeImports.landlordPropertyFormPage])
+    }
     return
   }
 
