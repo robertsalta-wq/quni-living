@@ -2463,7 +2463,7 @@ export default function LandlordPropertyFormPage() {
   if (loadingPage) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -2472,7 +2472,7 @@ export default function LandlordPropertyFormPage() {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
         <p className="text-red-700 text-sm">{pageError}</p>
-        <Link to="/landlord-dashboard" className="mt-4 inline-block text-sm font-medium text-indigo-600">
+        <Link to="/landlord-dashboard" className="mt-4 inline-block text-sm font-medium text-[var(--quni-coral)]">
           Back to dashboard
         </Link>
       </div>
@@ -2482,7 +2482,7 @@ export default function LandlordPropertyFormPage() {
   if (role === 'landlord' && !landlordProfile) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-sm text-gray-600">
-        <Link to={landlordDashboardProfilePath()} className="text-indigo-600 font-medium">
+        <Link to={landlordDashboardProfilePath()} className="text-[var(--quni-coral)] font-medium">
           Complete your landlord profile
         </Link>{' '}
         before creating a listing.
@@ -2547,7 +2547,7 @@ export default function LandlordPropertyFormPage() {
 
         {!isEdit && showResumeDraftBanner && !isHubSectionMode && (
           <div
-            className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-sm text-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            className="mb-6 rounded-xl border border-[var(--quni-line)] bg-[var(--quni-surface-3)] px-4 py-3 text-sm text-[var(--quni-ink)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
             role="region"
             aria-label="Saved draft"
           >
@@ -2559,7 +2559,7 @@ export default function LandlordPropertyFormPage() {
                   resumeDraftBannerDismissedKeyRef.current = location.key
                   setShowResumeDraftBanner(false)
                 }}
-                className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-xs font-medium hover:bg-gray-800"
+                className="rounded-lg bg-[var(--quni-coral)] text-white px-3 py-1.5 text-xs font-medium hover:bg-[var(--quni-coral-hover)]"
               >
                 Continue editing
               </button>
@@ -3324,7 +3324,7 @@ export default function LandlordPropertyFormPage() {
                     </label>
                     <button
                       type="button"
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
                       aria-label="Help: additional university"
                       aria-expanded={addAnotherUniversityHelpOpen}
                       onClick={() => setAddAnotherUniversityHelpOpen((o) => !o)}
@@ -3983,7 +3983,7 @@ export default function LandlordPropertyFormPage() {
         >
           <div className="max-w-sm w-full rounded-2xl bg-white shadow-xl border border-gray-100 px-8 py-10 text-center">
             <div
-              className="mx-auto h-12 w-12 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-5"
+              className="mx-auto h-12 w-12 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin mb-5"
               aria-hidden
             />
             <p id="campus-search-overlay-title" className="text-base font-semibold text-gray-900">
