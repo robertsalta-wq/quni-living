@@ -1,5 +1,7 @@
 import { AuthProvider } from './context/AuthContext'
+import { SavedPropertiesProvider } from './context/SavedPropertiesContext'
 import { PostAuthOnboardingRedirect } from './components/PostAuthOnboardingRedirect'
+import { PendingSaveConsumer } from './components/PendingSaveConsumer'
 import { LegalEntityProvider } from './context/LegalEntityContext'
 import { PlatformFeaturesProvider } from './context/PlatformFeaturesContext'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
@@ -13,13 +15,16 @@ export function AppTree() {
       <AppNavigationRegistrar />
       <AuthProvider>
         <PostAuthOnboardingRedirect />
-        <LegalEntityProvider>
-          <PlatformFeaturesProvider>
-            <AppErrorBoundary>
-              <App />
-            </AppErrorBoundary>
-          </PlatformFeaturesProvider>
-        </LegalEntityProvider>
+        <SavedPropertiesProvider>
+          <PendingSaveConsumer />
+          <LegalEntityProvider>
+            <PlatformFeaturesProvider>
+              <AppErrorBoundary>
+                <App />
+              </AppErrorBoundary>
+            </PlatformFeaturesProvider>
+          </LegalEntityProvider>
+        </SavedPropertiesProvider>
       </AuthProvider>
     </>
   )

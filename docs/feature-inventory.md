@@ -16,7 +16,7 @@ Search this file (`Ctrl+F`) before digging through routes or asking in chat. Use
 | Status | Meaning |
 |--------|---------|
 | **Live** | Shipped and wired end-to-end |
-| **UI only** | Surfaced in product but not fully backed (e.g. Saved listings) |
+| **UI only** | Surfaced in product but not fully backed |
 | **Deprecated** | Replaced; kept here so support/marketing do not resurrect it |
 
 ### 2. Keep marketing and FAQ honest
@@ -129,16 +129,18 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 
 - Cards: bookings (+ pending), messages, profile completeness, browse CTA
 - Dismissible **onboarding checklist** with deep links
-- Tabs: **Bookings** | **Messages** (link) | **Saved**
+- Tabs: **Overview** | **Bookings** | **Saved** | **Messages** (link) | **Profile**
 - **Get support** (Qase modal)
 - Stripe payments card; NSW tenancy copy + lease panel when applicable
 - **Download bond receipt** (where listing type supports it)
 - **View sample agreements** → `/sample-agreements`
 - Legacy `?tab=enquiries` → `/messages`
 
-### Saved listings - UI only
+### Saved properties - Live
 
-- **Saved** tab shows “coming soon”; no backend favourites yet
+- Heart on listing cards and property detail; optimistic save/unsave
+- Guest save → sign-in; pending intent resumes via central auth-session consumer
+- Dashboard **Saved** tab: grid of favourites, unsave, empty state → `/listings`
 
 ### Search & browse - Live
 
@@ -161,6 +163,7 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **Verified host** label when landlord has completed Stripe identity (badge on cards; inline on detail)
 - **Message landlord** (conversation); pending intent after onboarding
 - **Apply** (gated until core profile complete)
+- **Save property** (heart; guest pending intent after sign-in)
 - Link if **active pipeline booking** exists
 - **Property enquiry form** - Deprecated (redirects to Messages)
 

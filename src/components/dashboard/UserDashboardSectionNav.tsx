@@ -108,7 +108,7 @@ export default function UserDashboardSectionNav({
   return (
     <div className="border-b border-[#E5E4E7] mb-6 -mx-4 overflow-hidden sm:mx-0">
       <nav
-        className="grid w-full min-w-0 grid-cols-4 items-end -mb-px sm:flex sm:justify-start sm:gap-5"
+        className="grid w-full min-w-0 grid-cols-5 items-end -mb-px sm:flex sm:justify-start sm:gap-5"
         aria-label="Dashboard sections"
       >
         <button
@@ -124,6 +124,13 @@ export default function UserDashboardSectionNav({
           className={renterTabClass(active === 'bookings')}
         >
           <span className="truncate">Bookings</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelect?.('saved')}
+          className={renterTabClass(active === 'saved')}
+        >
+          <span className="truncate">Saved</span>
         </button>
         <Link to="/messages" className={renterTabClass(active === 'messages')}>
           <span className="truncate">Messages</span>
