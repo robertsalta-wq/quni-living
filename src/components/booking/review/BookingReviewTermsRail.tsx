@@ -299,6 +299,7 @@ export default function BookingReviewTermsRail({
                   notes={booking.notes}
                   coTenant={coTenant}
                   onSaved={handleSaved}
+                  embedded
                 />
               ) : (
                 <LandlordBookingAgreedRentEditor
@@ -310,6 +311,7 @@ export default function BookingReviewTermsRail({
                   propertyBondWeeks={propertyBondWeeks}
                   serviceTierAtRequest={booking.service_tier_at_request}
                   onSaved={handleSaved}
+                  embedded
                 />
               )}
             </div>

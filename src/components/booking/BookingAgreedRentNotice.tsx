@@ -9,6 +9,8 @@ type Props = {
   rentBreakdown: unknown
   bondAmount?: number | null
   audience: 'landlord' | 'student'
+  /** Strip bordered card chrome when nested inside SurfaceCard / editor. */
+  embedded?: boolean
 }
 
 export default function BookingAgreedRentNotice({
@@ -16,6 +18,7 @@ export default function BookingAgreedRentNotice({
   rentBreakdown,
   bondAmount,
   audience,
+  embedded = false,
 }: Props) {
   const prov = parseRentOverrideProvenance(rentBreakdown)
   if (!prov.overrideApplied) return null
@@ -23,13 +26,18 @@ export default function BookingAgreedRentNotice({
   const applyRent = prov.applyWeeklyRentAud
   const agreedRent = weeklyRent != null ? Number(weeklyRent) : prov.agreedWeeklyRentAud
 
+  const tone =
+    audience === 'student'
+      ? 'border-admin-info bg-admin-info-bg text-admin-info-fg'
+      : 'border-admin-warning bg-admin-warning-bg text-admin-warning-fg'
+
   return (
     <div
-      className={`rounded-admin-md border px-4 py-3 text-sm space-y-2 ${
-        audience === 'student'
-          ? 'border-admin-info bg-admin-info-bg text-admin-info-fg'
-          : 'border-admin-warning bg-admin-warning-bg text-admin-warning-fg'
-      }`}
+      className={
+        embedded
+          ? `text-sm space-y-2 ${audience === 'student' ? 'text-admin-info-fg' : 'text-admin-warning-fg'}`
+          : `rounded-admin-md border px-4 py-3 text-sm space-y-2 ${tone}`
+      }
       role="status"
     >
       <p className="font-semibold">

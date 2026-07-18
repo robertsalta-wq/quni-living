@@ -383,6 +383,7 @@ export default function RenterBookingZones({
                   rentBreakdown={booking.rent_breakdown}
                   bondAmount={booking.bond_amount}
                   audience="student"
+                  embedded
                 />
               ) : null}
               <BookingTermsBlock
@@ -536,8 +537,9 @@ export default function RenterBookingZones({
                       state={property.state ?? ''}
                       propertyType={property.property_type ?? ''}
                       isRegisteredRoomingHouse={Boolean(property.is_registered_rooming_house)}
+                      embedded
                     />
-                    <BookingLeasePanel bookingId={booking.id} />
+                    <BookingLeasePanel bookingId={booking.id} embedded />
                   </div>
                 )}
               </div>

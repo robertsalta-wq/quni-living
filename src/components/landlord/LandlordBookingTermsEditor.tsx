@@ -24,6 +24,8 @@ export type LandlordBookingTermsEditorProps = {
   notes: string | null | undefined
   coTenant: CoTenantSnapshot | null
   onSaved: () => void
+  /** Strip outer card chrome when hosted in the terms rail modal. */
+  embedded?: boolean
 }
 
 type LeaseStateGate = {
@@ -75,6 +77,7 @@ export default function LandlordBookingTermsEditor({
   notes,
   coTenant,
   onSaved,
+  embedded = false,
 }: LandlordBookingTermsEditorProps) {
   const eligible = listingBookingTermsEditorEligible(status, serviceTierAtRequest, serviceTierFinal)
 
@@ -355,7 +358,13 @@ export default function LandlordBookingTermsEditor({
 
   if (leaseGateLoading && !leaseGate) {
     return (
-      <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card text-sm text-admin-ink-5">
+      <section
+        className={
+          embedded
+            ? 'text-sm text-admin-ink-5'
+            : 'rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card text-sm text-admin-ink-5'
+        }
+      >
         Loading booking terms editor…
       </section>
     )
@@ -364,14 +373,22 @@ export default function LandlordBookingTermsEditor({
   if (signingBlocked) return null
 
   return (
-    <section className="rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-admin-ink">Edit booking terms</h2>
-        <p className="mt-1 text-sm text-admin-ink-3 leading-relaxed">
-          Update rent, bond, lease length, move-in date, occupants, special conditions, or co-tenant details before
-          anyone signs. Save here first, then regenerate the agreement to reissue the PDF and signing links.
-        </p>
-      </div>
+    <section
+      className={
+        embedded
+          ? 'space-y-4'
+          : 'rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card space-y-4'
+      }
+    >
+      {embedded ? null : (
+        <div>
+          <h2 className="text-lg font-semibold text-admin-ink">Edit booking terms</h2>
+          <p className="mt-1 text-sm text-admin-ink-3 leading-relaxed">
+            Update rent, bond, lease length, move-in date, occupants, special conditions, or co-tenant details before
+            anyone signs. Save here first, then regenerate the agreement to reissue the PDF and signing links.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>

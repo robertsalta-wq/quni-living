@@ -3,13 +3,19 @@ import { QLD_RTA_BOARDERS_LODGERS_URL, QLD_RTA_HOME_URL, QLD_RTA_LODGEMENT_STEPS
 type Props = {
   className?: string
   compact?: boolean
+  /** Strip bordered card chrome when nested inside another tinted panel. */
+  embedded?: boolean
 }
 
 /** QLD scheme: receipt → RTA Web Services / Form 2 → Acknowledgement of Rental Bond. */
-export default function QldRtaLodgementGuidance({ className, compact = false }: Props) {
+export default function QldRtaLodgementGuidance({ className, compact = false, embedded = false }: Props) {
   return (
     <div
-      className={`rounded-lg border border-sky-200/90 bg-sky-50/60 px-3 py-2.5 text-xs leading-relaxed text-sky-950 ${className ?? ''}`.trim()}
+      className={`${
+        embedded
+          ? 'text-xs leading-relaxed text-sky-950'
+          : 'rounded-lg border border-sky-200/90 bg-sky-50/60 px-3 py-2.5 text-xs leading-relaxed text-sky-950'
+      } ${className ?? ''}`.trim()}
       role="note"
     >
       <p className="font-semibold text-sky-900">{compact ? 'QLD RTA lodgement' : 'After bond is received or paid (Queensland)'}</p>

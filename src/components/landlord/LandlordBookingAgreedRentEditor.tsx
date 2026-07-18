@@ -18,6 +18,8 @@ type Props = {
   propertyBondWeeks?: number | null
   serviceTierAtRequest: string | null | undefined
   onSaved: () => void
+  /** Strip outer card chrome when hosted in the terms rail modal. */
+  embedded?: boolean
 }
 
 async function readJsonApiResponse(res: Response): Promise<{ error?: string; message?: string } & Record<string, unknown>> {
@@ -39,6 +41,7 @@ export default function LandlordBookingAgreedRentEditor({
   propertyBondWeeks,
   serviceTierAtRequest,
   onSaved,
+  embedded = false,
 }: Props) {
   const prov = parseRentOverrideProvenance(rentBreakdown)
   const applyCap = useMemo(
@@ -144,16 +147,24 @@ export default function LandlordBookingAgreedRentEditor({
   if (!editable && !prov.overrideApplied) return null
 
   return (
-    <section className="rounded-admin-lg border border-admin-line-soft bg-white p-5 shadow-sm space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold text-admin-ink">
-          Agreed weekly rent
-        </h2>
-        <p className="mt-1 text-sm text-admin-ink-4 leading-relaxed">
-          Set a lower agreed rent before you accept. The student will see this figure before signing. Listing price
-          stays unchanged.
-        </p>
-      </div>
+    <section
+      className={
+        embedded
+          ? 'space-y-4'
+          : 'rounded-admin-lg border border-admin-line-soft bg-white p-5 shadow-sm space-y-4'
+      }
+    >
+      {embedded ? null : (
+        <div>
+          <h2 className="text-sm font-semibold text-admin-ink">
+            Agreed weekly rent
+          </h2>
+          <p className="mt-1 text-sm text-admin-ink-4 leading-relaxed">
+            Set a lower agreed rent before you accept. The student will see this figure before signing. Listing price
+            stays unchanged.
+          </p>
+        </div>
+      )}
 
       {prov.overrideApplied ? (
         <BookingAgreedRentNotice
@@ -161,6 +172,7 @@ export default function LandlordBookingAgreedRentEditor({
           rentBreakdown={rentBreakdown}
           bondAmount={bondAmount}
           audience="landlord"
+          embedded={embedded}
         />
       ) : null}
 
