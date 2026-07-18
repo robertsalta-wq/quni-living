@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   appShellFocusFallbackPath,
+  appShellFocusTitle,
   appShellMode,
   appShellScrollSectionKey,
   isAppShellFocusPath,
   isAppShellPath,
   isDashboardMobileChromePath,
+  isListingEditHubChromePath,
 } from './appShell'
 
 describe('appShell membership', () => {
@@ -62,5 +64,17 @@ describe('appShell membership', () => {
       '/landlord/dashboard?tab=listings',
     )
     expect(appShellFocusFallbackPath('renter', '/booking/abc')).toBe('/student-dashboard?tab=bookings')
+  })
+
+  it('uses Edit listing / New listing focus titles on base property paths', () => {
+    expect(appShellFocusTitle('/landlord/property/edit/1')).toBe('Edit listing')
+    expect(appShellFocusTitle('/landlord/property/new')).toBe('New listing')
+    expect(appShellFocusTitle('/landlord/property/edit/1/basic')).toBe('Basic info')
+  })
+
+  it('applies listing hub chrome only on mobile listing-edit paths', () => {
+    expect(isListingEditHubChromePath('/landlord/property/edit/1', true)).toBe(true)
+    expect(isListingEditHubChromePath('/landlord/property/edit/1', false)).toBe(false)
+    expect(isListingEditHubChromePath('/landlord/dashboard', true)).toBe(false)
   })
 })

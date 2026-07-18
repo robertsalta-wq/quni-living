@@ -6,7 +6,7 @@ import {
   appShellFocusFallbackPath,
   appShellFocusTitle,
   isAppShellFocusPath,
-  isListingEditHubPath,
+  isListingEditHubChromePath,
 } from '../../lib/appShell'
 import { getAppShellScrollElement } from '../../lib/appShellScroll'
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../lib/dashboardMobileChrome'
 import { isRenterRole } from '../../lib/authProfile'
 import { userDashboardProfilePath } from '../../lib/userDashboardNav'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 type Props = {
   /** Optional trailing actions (desktop account already in marketing; keep light). */
@@ -32,7 +33,8 @@ export default function AppShellHeader({ trailing }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
   const focus = isAppShellFocusPath(location.pathname)
-  const listingHub = isListingEditHubPath(location.pathname)
+  const isMobile = useIsMobile()
+  const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
   const title =
     dashboardMobileSectionTitle(role, location.pathname, location.search) ??
     (focus ? appShellFocusTitle(location.pathname) : 'Dashboard')
@@ -46,7 +48,7 @@ export default function AppShellHeader({ trailing }: Props) {
   const lastScrollRef = useRef(0)
 
   useEffect(() => {
-    if (listingHub) {
+    if (listingHubChrome) {
       setHidden(false)
       return
     }
@@ -71,7 +73,7 @@ export default function AppShellHeader({ trailing }: Props) {
 
     main.addEventListener('scroll', onScroll, { passive: true })
     return () => main.removeEventListener('scroll', onScroll)
-  }, [location.pathname, location.search, listingHub])
+  }, [location.pathname, location.search, listingHubChrome])
 
   function onFocusBack() {
     const state = location.state as { returnTo?: string } | null
@@ -96,7 +98,7 @@ export default function AppShellHeader({ trailing }: Props) {
     return local.slice(0, 2).toUpperCase()
   })()
 
-  if (listingHub) {
+  if (listingHubChrome) {
     return (
       <header
         className="z-50 w-full max-w-full shrink-0 overflow-x-clip border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)] pt-safe-top"

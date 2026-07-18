@@ -5,7 +5,7 @@ import { isRenterRole } from '../../lib/authProfile'
 import {
   APP_SHELL_SCROLL_PB_CLASS,
   isAppShellFocusPath,
-  isListingEditHubPath,
+  isListingEditHubChromePath,
 } from '../../lib/appShell'
 import { DASHBOARD_MOBILE_SCROLL_ATTR } from '../../lib/appShellScroll'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
@@ -15,6 +15,7 @@ import LandlordMobileBottomNav from '../landlord/LandlordMobileBottomNav'
 import RenterMobileBottomNav from '../student/RenterMobileBottomNav'
 import AppShellHeader from './AppShellHeader'
 import AppShellSectionNav from './AppShellSectionNav'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 /**
  * Nested layout for authenticated app destinations (section + focus).
@@ -23,10 +24,11 @@ import AppShellSectionNav from './AppShellSectionNav'
 export default function AppShellLayout() {
   const { role } = useAuthContext()
   const location = useLocation()
+  const isMobile = useIsMobile()
   const focus = isAppShellFocusPath(location.pathname)
-  const listingHub = isListingEditHubPath(location.pathname)
-  const showLandlordNav = role === 'landlord' && !listingHub
-  const showRenterNav = isRenterRole(role) && !listingHub
+  const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
+  const showLandlordNav = role === 'landlord' && !listingHubChrome
+  const showRenterNav = isRenterRole(role) && !listingHubChrome
 
   return (
     <div
@@ -36,7 +38,7 @@ export default function AppShellLayout() {
       <AppShellHeader />
       <main
         className={`flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain ${
-          listingHub ? '' : APP_SHELL_SCROLL_PB_CLASS
+          listingHubChrome ? '' : APP_SHELL_SCROLL_PB_CLASS
         }`}
         {...{ [DASHBOARD_MOBILE_SCROLL_ATTR]: '' }}
       >
