@@ -208,7 +208,11 @@ export async function confirmReinstatement(args: {
         blocked_reason: avail.error || 'property_unavailable',
       },
     })
-    void sendReinstatementBlockedUnavailableEmails(admin, booking.id)
+    try {
+      await sendReinstatementBlockedUnavailableEmails(admin, booking.id)
+    } catch (emailErr) {
+      console.error('[confirmReinstatement] blocked_unavailable email', emailErr)
+    }
     return {
       ok: false,
       status: 409,
@@ -347,12 +351,16 @@ export async function confirmReinstatement(args: {
     console.error('[confirmReinstatement] audit event', evErr)
   }
 
-  void sendReinstatementConfirmedEmails(admin, booking.id, {
-    signingResent: signingNeedsResend && !signingResendFailed,
-    signingResendFailed,
-    listingFeeRefunded: refundMarker.found,
-    bookingStatusAfter: reinstateResult.bookingStatusAfter,
-  })
+  try {
+    await sendReinstatementConfirmedEmails(admin, booking.id, {
+      signingResent: signingNeedsResend && !signingResendFailed,
+      signingResendFailed,
+      listingFeeRefunded: refundMarker.found,
+      bookingStatusAfter: reinstateResult.bookingStatusAfter,
+    })
+  } catch (emailErr) {
+    console.error('[confirmReinstatement] confirmed email', emailErr)
+  }
 
   return {
     ok: true,

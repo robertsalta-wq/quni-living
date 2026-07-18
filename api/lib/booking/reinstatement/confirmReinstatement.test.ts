@@ -160,6 +160,8 @@ describe('confirmReinstatement', () => {
     mocks.triggerListingDocumentGeneration.mockResolvedValue({ ok: true })
     mocks.isPropertyBlockedForReinstatement.mockResolvedValue({ blocked: false })
     mocks.recordBookingEvent.mockResolvedValue(undefined)
+    mocks.sendReinstatementConfirmedEmails.mockResolvedValue(undefined)
+    mocks.sendReinstatementBlockedUnavailableEmails.mockResolvedValue(undefined)
   })
 
   it('blocks self-confirm', async () => {
@@ -206,6 +208,31 @@ describe('confirmReinstatement', () => {
       admin,
       expect.objectContaining({ eventType: 'booking.reinstated_self_serve' }),
     )
+    expect(mocks.sendReinstatementConfirmedEmails).toHaveBeenCalledTimes(1)
+    expect(mocks.sendReinstatementConfirmedEmails).toHaveBeenCalledWith(
+      admin,
+      'b1',
+      expect.objectContaining({
+        signingResent: true,
+        signingResendFailed: false,
+        listingFeeRefunded: true,
+        bookingStatusAfter: 'bond_pending',
+      }),
+    )
+  })
+
+  it('confirmed email failure does not roll back reinstatement', async () => {
+    mocks.sendReinstatementConfirmedEmails.mockRejectedValue(new Error('resend down'))
+    const admin = mockAdmin(pendingRequest())
+    const result = await confirmReinstatement({
+      admin,
+      party: party(),
+      requestId: 'req1',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.bookingStatusAfter).toBe('bond_pending')
+    expect(mocks.reinstateBookingAfterDocusealReconcile).toHaveBeenCalled()
   })
 
   it('signed path syncs then reinstates without regenerate', async () => {

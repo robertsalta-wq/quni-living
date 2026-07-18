@@ -1,5 +1,6 @@
 /**
  * Self-serve reinstatement transactional emails (best-effort).
+ * Mirrors listingTransactionalEmails dual-party pattern.
  */
 import { sendEmail } from '../../sendEmail.js'
 import {
@@ -8,8 +9,28 @@ import {
   listingReinstatementConfirmed,
   listingReinstatementDeclined,
   listingReinstatementRequested,
+  propertyAddressLine,
 } from '../../emailTemplates.js'
 import { siteBaseUrl } from '../listingTransactionalEmails.js'
+
+/** PostgREST may return a nested row or a one-element array. */
+export function unwrapRelation(value) {
+  if (Array.isArray(value)) {
+    const first = value[0]
+    return first && typeof first === 'object' && !Array.isArray(first) ? first : {}
+  }
+  if (value && typeof value === 'object') return value
+  return {}
+}
+
+export function graceDaysRemaining(graceWindowExpiresAt, nowMs = Date.now()) {
+  if (typeof graceWindowExpiresAt !== 'string' || !graceWindowExpiresAt.trim()) return null
+  const end = new Date(graceWindowExpiresAt).getTime()
+  if (!Number.isFinite(end)) return null
+  const ms = end - nowMs
+  if (ms <= 0) return 0
+  return Math.max(1, Math.ceil(ms / (24 * 60 * 60 * 1000)))
+}
 
 async function loadCtx(admin, bookingId) {
   const { data: booking, error } = await admin
@@ -24,20 +45,21 @@ async function loadCtx(admin, bookingId) {
     )
     .eq('id', bookingId)
     .maybeSingle()
-  if (error || !booking) return null
 
-  const prop = booking.properties && typeof booking.properties === 'object' ? booking.properties : {}
-  const st =
-    booking.student_profiles && typeof booking.student_profiles === 'object'
-      ? booking.student_profiles
-      : {}
-  const lp =
-    booking.landlord_profiles && typeof booking.landlord_profiles === 'object'
-      ? booking.landlord_profiles
-      : {}
+  if (error) {
+    console.error('[reinstatement-emails] load booking', bookingId, error.message)
+    return null
+  }
+  if (!booking) {
+    console.error('[reinstatement-emails] booking not found', bookingId)
+    return null
+  }
 
-  const addrParts = [prop.address, prop.suburb, prop.state, prop.postcode].filter(Boolean)
-  const propertyAddress = addrParts.join(', ') || String(prop.title || '')
+  const prop = unwrapRelation(booking.properties)
+  const st = unwrapRelation(booking.student_profiles)
+  const lp = unwrapRelation(booking.landlord_profiles)
+
+  const propertyAddress = propertyAddressLine(prop) || String(prop.title || '')
   const propertyTitle = typeof prop.title === 'string' ? prop.title : ''
 
   const studentName =
@@ -47,9 +69,12 @@ async function loadCtx(admin, bookingId) {
   const landlordName =
     typeof lp.full_name === 'string' && lp.full_name.trim() ? lp.full_name.trim() : 'Host'
 
+  const studentEmail = typeof st.email === 'string' ? st.email.trim() : ''
+  const landlordEmail = typeof lp.email === 'string' ? lp.email.trim() : ''
+
   return {
-    studentEmail: typeof st.email === 'string' ? st.email.trim() : '',
-    landlordEmail: typeof lp.email === 'string' ? lp.email.trim() : '',
+    studentEmail,
+    landlordEmail,
     studentName,
     landlordName,
     propertyAddress,
@@ -71,18 +96,23 @@ export async function sendReinstatementRequestEmails(admin, bookingId, meta) {
     const base = siteBaseUrl()
     const urls = bookingUrls(base)
     const requesterLabel = meta.requesterRole === 'landlord' ? 'Your host' : 'The renter'
+    const days = graceDaysRemaining(meta.graceWindowExpiresAt)
     const t = listingReinstatementRequested({
       property_address: ctx.propertyAddress,
       property_title: ctx.propertyTitle,
       requester_label: requesterLabel,
+      grace_days: days,
       grace_window_expires_at: meta.graceWindowExpiresAt,
       action_url: meta.otherPartyRole === 'landlord' ? urls.landlordUrl : urls.renterUrl,
     })
     const to = meta.otherPartyRole === 'landlord' ? ctx.landlordEmail : ctx.studentEmail
-    if (!to) return
+    if (!to) {
+      console.error('[reinstatement-emails] request: missing recipient email', bookingId, meta.otherPartyRole)
+      return
+    }
     await sendEmail({ to, subject: t.subject, html: t.html })
   } catch (e) {
-    console.error('[listing-emails] sendReinstatementRequestEmails', bookingId, e)
+    console.error('[reinstatement-emails] sendReinstatementRequestEmails', bookingId, e)
   }
 }
 
@@ -94,7 +124,14 @@ export async function sendReinstatementConfirmedEmails(admin, bookingId, meta) {
     const urls = bookingUrls(base)
 
     const sendOne = async (to, name, actionUrl, isLandlord) => {
-      if (!to) return
+      if (!to) {
+        console.error(
+          '[reinstatement-emails] confirmed: missing recipient email',
+          bookingId,
+          isLandlord ? 'landlord' : 'tenant',
+        )
+        return
+      }
       const t = listingReinstatementConfirmed({
         recipient_name: name,
         property_address: ctx.propertyAddress,
@@ -113,7 +150,7 @@ export async function sendReinstatementConfirmedEmails(admin, bookingId, meta) {
       sendOne(ctx.landlordEmail, ctx.landlordName, urls.landlordUrl, true),
     ])
   } catch (e) {
-    console.error('[listing-emails] sendReinstatementConfirmedEmails', bookingId, e)
+    console.error('[reinstatement-emails] sendReinstatementConfirmedEmails', bookingId, e)
   }
 }
 
@@ -123,13 +160,14 @@ export async function sendReinstatementDeclinedEmails(admin, bookingId, meta) {
     if (!ctx) return
     const base = siteBaseUrl()
     const urls = bookingUrls(base)
-    // Notify requester — we don't know requester role from meta.declinedByRole alone:
-    // if landlord declined, tenant was requester; if tenant declined, landlord requested.
     const toRequester =
       meta.declinedByRole === 'landlord'
         ? { email: ctx.studentEmail, name: ctx.studentName, url: urls.renterUrl }
         : { email: ctx.landlordEmail, name: ctx.landlordName, url: urls.landlordUrl }
-    if (!toRequester.email) return
+    if (!toRequester.email) {
+      console.error('[reinstatement-emails] declined: missing requester email', bookingId)
+      return
+    }
     const t = listingReinstatementDeclined({
       recipient_name: toRequester.name,
       property_address: ctx.propertyAddress,
@@ -138,7 +176,7 @@ export async function sendReinstatementDeclinedEmails(admin, bookingId, meta) {
     })
     await sendEmail({ to: toRequester.email, subject: t.subject, html: t.html })
   } catch (e) {
-    console.error('[listing-emails] sendReinstatementDeclinedEmails', bookingId, e)
+    console.error('[reinstatement-emails] sendReinstatementDeclinedEmails', bookingId, e)
   }
 }
 
@@ -152,7 +190,10 @@ export async function sendReinstatementCancelledEmails(admin, bookingId, meta) {
       meta.cancelledByRole === 'landlord'
         ? { email: ctx.studentEmail, name: ctx.studentName, url: urls.renterUrl }
         : { email: ctx.landlordEmail, name: ctx.landlordName, url: urls.landlordUrl }
-    if (!toOther.email) return
+    if (!toOther.email) {
+      console.error('[reinstatement-emails] cancelled: missing other-party email', bookingId)
+      return
+    }
     const t = listingReinstatementCancelled({
       recipient_name: toOther.name,
       property_address: ctx.propertyAddress,
@@ -161,7 +202,7 @@ export async function sendReinstatementCancelledEmails(admin, bookingId, meta) {
     })
     await sendEmail({ to: toOther.email, subject: t.subject, html: t.html })
   } catch (e) {
-    console.error('[listing-emails] sendReinstatementCancelledEmails', bookingId, e)
+    console.error('[reinstatement-emails] sendReinstatementCancelledEmails', bookingId, e)
   }
 }
 
@@ -192,6 +233,6 @@ export async function sendReinstatementBlockedUnavailableEmails(admin, bookingId
         : Promise.resolve(),
     ])
   } catch (e) {
-    console.error('[listing-emails] sendReinstatementBlockedUnavailableEmails', bookingId, e)
+    console.error('[reinstatement-emails] sendReinstatementBlockedUnavailableEmails', bookingId, e)
   }
 }
