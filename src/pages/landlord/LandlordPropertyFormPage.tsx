@@ -1516,6 +1516,17 @@ export default function LandlordPropertyFormPage() {
     return () => observer.disconnect()
   }, [isSupabaseConfigured, loadingPage, pageError, role, landlordProfile])
 
+  // Desktop redirects from hub `/section/:id` land as `#section-…` — scroll once loaded.
+  useEffect(() => {
+    if (loadingPage || pageError) return
+    const id = location.hash.replace(/^#/, '').trim()
+    if (!id) return
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+    return () => window.clearTimeout(t)
+  }, [loadingPage, pageError, location.hash, location.pathname])
+
   // Keep a small local cache so we don't repeatedly geocode the same suburb/address.
   // (Also helps Nominatim rate limits while the user types.)
   useEffect(() => {

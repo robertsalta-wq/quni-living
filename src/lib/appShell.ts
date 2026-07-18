@@ -113,18 +113,31 @@ export function appShellFocusTitle(pathname: string): string {
   if (pathname.startsWith('/landlord/property/edit/')) {
     if (pathname.endsWith('/basic')) return 'Basic info'
     if (pathname.includes('/section/')) return 'Edit section'
-    return 'Listing health'
+    return 'Edit listing'
   }
   if (/^\/booking\//.test(pathname)) return 'Apply'
   return 'Back'
 }
 
-/** Listing edit hub / drill-ins — cream Dashboard header, no bottom tab bar. */
-export function isListingEditHubPath(pathname: string): boolean {
+/** Listing edit paths (hub or long form). */
+export function isListingEditPath(pathname: string): boolean {
   const p = pathname.startsWith('/') ? pathname : `/${pathname}`
   if (p === '/landlord/property/new' || p.startsWith('/landlord/property/new/')) return true
   if (p.startsWith('/landlord/property/edit/')) return true
   return false
+}
+
+/**
+ * Cream hub chrome + no bottom tabs — mobile listing edit only (`sm` breakpoint).
+ * Desktop listing edit uses standard focus chrome over the long form.
+ */
+export function isListingEditHubChromePath(pathname: string, isMobile: boolean): boolean {
+  return isMobile && isListingEditPath(pathname)
+}
+
+/** @deprecated Prefer isListingEditPath / isListingEditHubChromePath */
+export function isListingEditHubPath(pathname: string): boolean {
+  return isListingEditPath(pathname)
 }
 
 /** Default back target when no location.state.returnTo is present. */
