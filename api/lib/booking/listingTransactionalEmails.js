@@ -136,7 +136,8 @@ async function loadListingEmailContext(admin, bookingId) {
   let payout = null
   const propertyId =
     typeof booking.property_id === 'string' && booking.property_id.trim() ? booking.property_id.trim() : ''
-  if (isBoarderLodger && propertyId) {
+  // Listing: load payee for all property types (rent + optional host-collected bond), not only occupancy.
+  if (propertyId) {
     const { data: payoutRow, error: payoutErr } = await admin
       .from('property_payout_details')
       .select('account_name, bsb, account_number')

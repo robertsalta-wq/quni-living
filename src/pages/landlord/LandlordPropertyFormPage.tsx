@@ -30,6 +30,7 @@ import { QLD_RTA_RENTAL_BOND_URL } from '../../lib/tenancy/qldRtaBondCopy'
 import { resolveTenancyPackage } from '../../lib/tenancy/resolveTenancyPackage'
 import {
   formatPropertyPayoutBsbDisplay,
+  listingTierRequiresPropertyPayoutDetails,
   propertyPayoutDetailsComplete,
   propertyPayoutDetailsFieldErrors,
 } from '../../lib/propertyPayoutDetails'
@@ -742,15 +743,10 @@ export default function LandlordPropertyFormPage() {
     })
     return pkg.supported && pkg.rules.bond.schemeApplies
   }, [state, propertyListingType, isRegisteredRoomingHouse])
-  const showListingPayeeBankDetails = useMemo(() => {
-    if (serviceTier !== 'listing') return false
-    const pkg = resolveTenancyPackage({
-      state: state.trim() || 'NSW',
-      property_type: propertyListingType,
-      is_registered_rooming_house: isRegisteredRoomingHouse,
-    })
-    return pkg.supported && pkg.pdfKind === 'occupancy_agreement'
-  }, [serviceTier, state, propertyListingType, isRegisteredRoomingHouse])
+  const showListingPayeeBankDetails = useMemo(
+    () => listingTierRequiresPropertyPayoutDetails(serviceTier),
+    [serviceTier],
+  )
   const managedTierAvailable = serviceTierAvailability.managed === 'available'
   const managedTierUnavailableReason =
     serviceTierAvailability.managed === 'gated'

@@ -833,7 +833,6 @@ export default function LandlordBookingReviewPage() {
 
   const showResendPaymentInstructions =
     booking.service_tier_final === 'listing' &&
-    listingUsesOccupancyAgreement &&
     propertyPayoutComplete &&
     (booking.status === 'bond_pending' || booking.status === 'confirmed' || booking.status === 'active')
 

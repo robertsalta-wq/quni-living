@@ -310,7 +310,6 @@ Account number: ${accountNumber}</p>
 
 /** Scheme-aware bond + rent payment block (shared by acceptance and payment-instructions emails). */
 export function listingRenterPaymentInstructionsBlockHtml(data) {
-  const isBoarderLodger = data.is_boarder_lodger === true
   const schemeApplies = data.bond_scheme_applies === true
   const payout =
     data.payout && typeof data.payout === 'object' && data.payout.account_name && data.payout.bsb && data.payout.account_number
@@ -319,11 +318,12 @@ export function listingRenterPaymentInstructionsBlockHtml(data) {
   const statutoryBondHtml =
     typeof data.bond_payment_html === 'string' && data.bond_payment_html.trim() ? data.bond_payment_html : ''
 
-  if (isBoarderLodger && payout && schemeApplies) {
+  // Any Listing property with complete payee details: show bank transfer block (bond+rent or rent-only when scheme).
+  if (payout && schemeApplies) {
     const rentBlock = listingRentPayeeBlockHtml({ ...data, rent_only_heading: true })
     return `${statutoryBondHtml}${rentBlock}`
   }
-  if (isBoarderLodger && payout) {
+  if (payout) {
     return listingRentPayeeBlockHtml({ ...data, rent_only_heading: false })
   }
   if (statutoryBondHtml) {
