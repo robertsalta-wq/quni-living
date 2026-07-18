@@ -572,12 +572,20 @@ export function listingReinstatementRequested(data) {
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'the property')
   const requesterLabel = escapeHtml(data.requester_label || 'The other party')
   const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au')
+  const graceDays =
+    data.grace_days != null && Number.isFinite(Number(data.grace_days))
+      ? Math.max(0, Math.floor(Number(data.grace_days)))
+      : null
+  const confirmWindow =
+    graceDays != null
+      ? `Confirm within <strong>${graceDays} day${graceDays === 1 ? '' : 's'}</strong> if you still want to proceed.`
+      : 'Confirm within the grace window if you still want to proceed.'
   const inner = `<h2 style="color: #1A1A2E;">Reinstatement requested</h2>
-<p>${requesterLabel} asked to reinstate the expired booking for <strong>${propertyAddress}</strong>.</p>
-<p>Confirm within the grace window if you still want to proceed. The room is <strong>not reserved</strong> until bond is marked received.</p>
+<p>${requesterLabel} asked to reinstate your booking at <strong>${propertyAddress}</strong>.</p>
+<p>${confirmWindow} The room is <strong>not reserved</strong> until bond is marked received.</p>
 <a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Review request →</a>`
   return {
-    subject: `Reinstatement requested - ${data.property_address || data.property_title || 'booking'}`,
+    subject: `${data.requester_label || 'Someone'} asked to reinstate your booking at ${data.property_address || data.property_title || 'the property'}`,
     html: wrapContent(inner),
   }
 }
@@ -651,7 +659,7 @@ export function listingReinstatementBlockedUnavailable(data) {
   const actionUrl = escapeHtml(data.action_url || 'https://quni.com.au/listings')
   const inner = `<h2 style="color: #1A1A2E;">Room no longer available</h2>
 <p>Hi ${name},</p>
-<p>The booking for <strong>${propertyAddress}</strong> could not be reinstated because another booking now holds the room.</p>
+<p>The booking for <strong>${propertyAddress}</strong> could not be reinstated — the room was taken while this reinstatement was pending.</p>
 <a href="${actionUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Continue →</a>`
   return {
     subject: `Reinstatement blocked - ${data.property_address || data.property_title || 'room taken'}`,

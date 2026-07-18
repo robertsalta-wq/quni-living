@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+export function unwrapRelation(value: unknown): Record<string, unknown>
+
+export function graceDaysRemaining(graceWindowExpiresAt: string, nowMs?: number): number | null
+
 export function sendReinstatementRequestEmails(
   admin: SupabaseClient,
   bookingId: string,

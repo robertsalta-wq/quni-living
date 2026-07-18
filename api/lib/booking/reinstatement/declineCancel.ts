@@ -101,9 +101,13 @@ export async function declineReinstatement(args: {
     }
   }
 
-  void sendReinstatementDeclinedEmails(args.admin, args.party.booking.id, {
-    declinedByRole: args.party.role,
-  })
+  try {
+    await sendReinstatementDeclinedEmails(args.admin, args.party.booking.id, {
+      declinedByRole: args.party.role,
+    })
+  } catch (emailErr) {
+    console.error('[declineReinstatement] email', emailErr)
+  }
   return { ok: true, request: data as ReinstatementRequestRow }
 }
 
@@ -152,8 +156,12 @@ export async function cancelReinstatement(args: {
     }
   }
 
-  void sendReinstatementCancelledEmails(args.admin, args.party.booking.id, {
-    cancelledByRole: args.party.role,
-  })
+  try {
+    await sendReinstatementCancelledEmails(args.admin, args.party.booking.id, {
+      cancelledByRole: args.party.role,
+    })
+  } catch (emailErr) {
+    console.error('[cancelReinstatement] email', emailErr)
+  }
   return { ok: true, request: data as ReinstatementRequestRow }
 }

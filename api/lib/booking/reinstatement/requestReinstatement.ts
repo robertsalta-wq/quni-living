@@ -112,11 +112,15 @@ export async function requestReinstatement(args: {
     console.error('[requestReinstatement] event', evErr)
   }
 
-  void sendReinstatementRequestEmails(admin, booking.id, {
-    requesterRole: party.role,
-    otherPartyRole,
-    graceWindowExpiresAt: request.grace_window_expires_at,
-  })
+  try {
+    await sendReinstatementRequestEmails(admin, booking.id, {
+      requesterRole: party.role,
+      otherPartyRole,
+      graceWindowExpiresAt: request.grace_window_expires_at,
+    })
+  } catch (emailErr) {
+    console.error('[requestReinstatement] email', emailErr)
+  }
 
   return { ok: true, request, otherPartyRole }
 }
