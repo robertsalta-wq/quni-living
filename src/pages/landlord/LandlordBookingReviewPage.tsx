@@ -1971,7 +1971,7 @@ export default function LandlordBookingReviewPage() {
       />
 
       {bondReceivedToast && (
-        <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4 sm:bottom-6" role="status">
           <div className="rounded-admin-md px-4 py-3 text-center text-sm font-semibold text-white shadow-lg bg-admin-success">
             {bondReceivedToast}
           </div>
@@ -1979,7 +1979,7 @@ export default function LandlordBookingReviewPage() {
       )}
 
       {resendPaymentNotice && (
-        <div className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4" role="status">
+        <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4 sm:bottom-6" role="status">
           <div
             className={`rounded-admin-md px-4 py-3 text-center text-sm font-semibold text-white shadow-lg ${
               resendPaymentNotice.tone === 'success' ? 'bg-admin-success' : 'bg-admin-danger'

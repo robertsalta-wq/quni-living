@@ -5,11 +5,12 @@ import ChatPanel from './ChatPanel'
 import { useBookingFlowChrome } from '../../context/BookingFlowChromeContext'
 import { useAuthContext } from '../../context/AuthContext'
 import type { UserRole } from '../../lib/authProfile'
+import { APP_SHELL_FAB_BOTTOM_CLASS, isAppShellPath } from '../../lib/appShell'
 import { isDashboardMobileChromePath } from '../../lib/dashboardMobileChrome'
 
 /** Mobile routes with a fixed bottom action bar that the FAB must sit above. */
 function mobileHasStickyBottomBar(pathname: string, role: UserRole | undefined): boolean {
-  if (/^\/landlord\/bookings\/[^/]+\/review$/.test(pathname)) return true
+  if (isAppShellPath(pathname)) return true
   if (/^\/(listings|properties)\/[^/]+$/.test(pathname)) return true
   if (isDashboardMobileChromePath(role, pathname)) return true
   return false
@@ -29,7 +30,9 @@ export default function AIChatWidget() {
       return 'max-md:bottom-[calc(22rem+env(safe-area-inset-bottom,0px))]'
     }
     if (mobileHasStickyBottomBar(pathname, role)) {
-      return 'max-md:bottom-[max(5rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))]'
+      return isAppShellPath(pathname)
+        ? APP_SHELL_FAB_BOTTOM_CLASS
+        : 'max-md:bottom-[max(5rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))]'
     }
     return 'max-md:bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))]'
   }, [elevateFloatingChrome, pathname, role])

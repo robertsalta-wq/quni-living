@@ -1803,7 +1803,7 @@ export default function LandlordDashboard() {
 
         {toast && (
           <div
-            className="fixed bottom-6 left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4"
+            className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-[60] w-[min(100%-2rem,28rem)] -translate-x-1/2 px-4 sm:bottom-6"
             role={toast.kind === 'success' ? 'status' : 'alert'}
           >
             <div

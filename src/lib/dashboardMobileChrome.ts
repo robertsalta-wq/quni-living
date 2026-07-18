@@ -1,12 +1,16 @@
 import type { UserRole } from './authProfile'
 import { isRenterRole } from './authProfile'
 import {
-  isLandlordDashboardChromePath,
+  appShellActiveSection,
+  appShellFocusTitle,
+  isAppShellPath,
+  isDashboardMobileChromePath as isAppShellChromeForRole,
+} from './appShell'
+import {
   landlordMobileSectionTitle,
   type LandlordMobileSectionTitle,
 } from './landlordMobileChrome'
 import {
-  isRenterDashboardChromePath,
   renterMobileSectionTitle,
   type RenterMobileSectionTitle,
 } from './renterMobileChrome'
@@ -14,17 +18,18 @@ import { userDashboardHomePath } from './userDashboardNav'
 
 export type DashboardMobileSectionTitle = LandlordMobileSectionTitle | RenterMobileSectionTitle
 
+export { DASHBOARD_MOBILE_SCROLL_ATTR } from './appShellScroll'
+export { isAppShellPath, isAppShellFocusPath, isAppShellSectionPath } from './appShell'
+
 /**
- * Shared gate for landlord/renter mobile app chrome (bottom tabs + folded header).
- * Role-specific path lists live in landlordMobileChrome / renterMobileChrome.
+ * Shared gate for landlord/renter mobile app chrome (bottom tabs + shell header).
+ * Membership lives in `appShell.ts`; this keeps older call sites working.
  */
 export function isDashboardMobileChromePath(
   role: UserRole | undefined,
   pathname: string,
 ): boolean {
-  if (role === 'landlord') return isLandlordDashboardChromePath(pathname)
-  if (isRenterRole(role)) return isRenterDashboardChromePath(pathname)
-  return false
+  return isAppShellChromeForRole(role, pathname)
 }
 
 export function dashboardMobileSectionTitle(
@@ -32,8 +37,18 @@ export function dashboardMobileSectionTitle(
   pathname: string,
   search: string,
 ): DashboardMobileSectionTitle | null {
-  if (role === 'landlord') return landlordMobileSectionTitle(pathname, search)
-  if (isRenterRole(role)) return renterMobileSectionTitle(pathname, search)
+  if (!isAppShellPath(pathname)) return null
+  if (role === 'landlord') {
+    if (pathname.startsWith('/landlord/property')) return 'Listings'
+    if (/^\/landlord\/bookings\//.test(pathname)) return 'Bookings'
+    return landlordMobileSectionTitle(pathname, search)
+  }
+  if (isRenterRole(role)) {
+    if (/^\/booking\//.test(pathname)) return 'Bookings'
+    return renterMobileSectionTitle(pathname, search)
+  }
+  // Focus title for admin property edit
+  if (role === 'admin') return appShellFocusTitle(pathname) as DashboardMobileSectionTitle
   return null
 }
 
@@ -44,5 +59,10 @@ export function dashboardMobileHomePath(role: UserRole | undefined): string {
   return '/'
 }
 
-/** Attribute on `<main>` so ScrollToTop resets the chrome scroll region. */
-export const DASHBOARD_MOBILE_SCROLL_ATTR = 'data-dashboard-mobile-scroll'
+export function dashboardShellActiveSection(
+  role: UserRole | undefined,
+  pathname: string,
+  search: string,
+) {
+  return appShellActiveSection(role, pathname, search)
+}
