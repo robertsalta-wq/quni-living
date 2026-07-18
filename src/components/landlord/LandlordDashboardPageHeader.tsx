@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import UserDashboardSectionNav from '../dashboard/UserDashboardSectionNav'
 import { landlordDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
 import { landlordDashboardHeading } from '../../lib/landlordProfileReadiness'
 import type { LandlordProfileRow } from '../../lib/authProfile'
@@ -33,29 +32,16 @@ export function landlordDashboardTabSubtitle(tab: LandlordTab): string {
 export default function LandlordDashboardPageHeader({
   profile,
   activeTab,
-  pendingBookings,
-  totalBookings,
-  onTabSelect,
+  pendingBookings: _pendingBookings,
+  totalBookings: _totalBookings,
+  onTabSelect: _onTabSelect,
 }: Props) {
+  // Section strip lives in AppShellSectionNav; page keeps title + subtitle only.
   return (
-    <>
-      <div className="mb-6 hidden sm:block">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{landlordDashboardHeading(profile)}</h1>
-        <p className="text-sm text-gray-500 mt-1">{landlordDashboardTabSubtitle(activeTab)}</p>
-      </div>
-      <div className="hidden sm:block">
-        <UserDashboardSectionNav
-          role="landlord"
-          active={activeTab}
-          pendingBookings={pendingBookings}
-          totalBookings={totalBookings}
-          onSelect={(section) => {
-            if (section === 'saved') return
-            onTabSelect(section)
-          }}
-        />
-      </div>
-    </>
+    <div className="mb-6 hidden sm:block">
+      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{landlordDashboardHeading(profile)}</h1>
+      <p className="text-sm text-gray-500 mt-1">{landlordDashboardTabSubtitle(activeTab)}</p>
+    </div>
   )
 }
 

@@ -27,6 +27,14 @@
       var(--quni-status-bar-fallback, 0px)
     )
   );
+  /* Slimmer offset when authenticated app shell header is in use (h-12 = 3rem). */
+  --quni-app-shell-header-offset: calc(
+    3rem + max(
+      env(safe-area-inset-top, 0px),
+      var(--safe-area-inset-top, 0px),
+      var(--quni-status-bar-fallback, 0px)
+    )
+  );
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -227,12 +235,20 @@ code {
       border-bottom: 1px solid rgb(0 0 0 / 0.06);
       box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
     }
+
+    [data-app-shell] .listing-form-section-nav {
+      top: var(--quni-app-shell-header-offset);
+    }
   }
 
   @media (min-width: 768px) {
     .listing-form-section-nav {
       position: sticky;
       top: var(--quni-fixed-header-offset);
+    }
+
+    [data-app-shell] .listing-form-section-nav {
+      top: 0.5rem;
     }
   }
 }

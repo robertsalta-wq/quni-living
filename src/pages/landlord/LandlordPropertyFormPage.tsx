@@ -2421,8 +2421,8 @@ export default function LandlordPropertyFormPage() {
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 
   return (
-    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-[#d4e9e2] pb-16">
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 py-4 sm:px-6 sm:py-8">
+    <div className="flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col bg-[#d4e9e2] max-sm:pb-0 pb-16">
+      <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 pt-3 pb-4 sm:px-6 sm:pt-5 sm:pb-8">
         <div className="mb-3 min-w-0">
           <UserDashboardBreadcrumb
             segments={userDashboardBreadcrumbs('landlord', {
@@ -2432,7 +2432,7 @@ export default function LandlordPropertyFormPage() {
           />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight sm:text-2xl">
                 {isEdit ? 'Edit your listing' : 'New listing'}
               </h1>
               {!isEdit ? <p className="text-sm text-gray-500 mt-1">Create a new property on Quni.</p> : null}
@@ -2474,9 +2474,9 @@ export default function LandlordPropertyFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full space-y-8">
+        <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
           <nav
-            className="listing-form-section-nav px-2 py-2 sm:-mx-6 sm:px-6"
+            className="listing-form-section-nav mb-3 px-2 py-2 sm:-mx-6 sm:px-6"
             aria-label="Jump to section"
           >
             <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
@@ -2498,9 +2498,10 @@ export default function LandlordPropertyFormPage() {
               })}
             </div>
           </nav>
-          {/* Reserve space while section pills are position:fixed on mobile */}
-          <div className="h-12 max-md:block md:hidden" aria-hidden />
+          {/* Reserve space while section pills are position:fixed on mobile — keep tight (8px rhythm). */}
+          <div className="mb-3 h-10 max-md:block md:hidden" aria-hidden />
 
+          <div className="space-y-8">
           {submitError && (
             <div
               id="listing-form-feedback-top"
@@ -3849,6 +3850,7 @@ export default function LandlordPropertyFormPage() {
               Cancel
             </Link>
             </div>
+          </div>
           </div>
         </form>
       </div>
