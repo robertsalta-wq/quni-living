@@ -1094,7 +1094,7 @@ export default function LandlordBookingReviewPage() {
                       weekly rent directly to this account by fee-free bank transfer.
                     </p>
                     <Link
-                      to={`/landlord/property/edit/${property.id}#section-pricing-availability`}
+                      to={`/landlord/property/edit/${property.id}/section/pricing`}
                       className="mt-2 inline-block text-sm font-semibold text-admin-coral underline underline-offset-2"
                     >
                       Add payee bank details →

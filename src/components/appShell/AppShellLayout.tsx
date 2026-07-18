@@ -5,6 +5,7 @@ import { isRenterRole } from '../../lib/authProfile'
 import {
   APP_SHELL_SCROLL_PB_CLASS,
   isAppShellFocusPath,
+  isListingEditHubPath,
 } from '../../lib/appShell'
 import { DASHBOARD_MOBILE_SCROLL_ATTR } from '../../lib/appShellScroll'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
@@ -23,8 +24,9 @@ export default function AppShellLayout() {
   const { role } = useAuthContext()
   const location = useLocation()
   const focus = isAppShellFocusPath(location.pathname)
-  const showLandlordNav = role === 'landlord'
-  const showRenterNav = isRenterRole(role)
+  const listingHub = isListingEditHubPath(location.pathname)
+  const showLandlordNav = role === 'landlord' && !listingHub
+  const showRenterNav = isRenterRole(role) && !listingHub
 
   return (
     <div
@@ -33,7 +35,9 @@ export default function AppShellLayout() {
     >
       <AppShellHeader />
       <main
-        className={`flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain ${APP_SHELL_SCROLL_PB_CLASS}`}
+        className={`flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain ${
+          listingHub ? '' : APP_SHELL_SCROLL_PB_CLASS
+        }`}
         {...{ [DASHBOARD_MOBILE_SCROLL_ATTR]: '' }}
       >
         <OnboardingResumeBanner />
