@@ -160,7 +160,7 @@ See [`ai-knowledge-sync.md`](./ai-knowledge-sync.md) for system prompts and othe
 - **Share listing**
 - **Verified host** label when landlord has completed Stripe identity (badge on cards; inline on detail)
 - **Message landlord** (conversation); pending intent after onboarding
-- **Request to book** (gated until core profile complete)
+- **Apply** (gated until core profile complete)
 - Link if **active pipeline booking** exists
 - **Property enquiry form** - Deprecated (redirects to Messages)
 

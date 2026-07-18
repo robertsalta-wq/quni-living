@@ -100,7 +100,7 @@ test.describe('booking apply', () => {
     expect(profileAfterUpload?.enrolment_doc_url).toBeTruthy()
 
     await page.goto(`/booking/${propertyId}`)
-    await expect(page.getByText('Request to book')).toBeVisible({ timeout: 60_000 })
+    await expect(page.getByText('Apply')).toBeVisible({ timeout: 60_000 })
 
     await page.locator('#bk-lease').selectOption('6 months')
     await page.locator('#bk-msg').fill('E2E booking apply test message')

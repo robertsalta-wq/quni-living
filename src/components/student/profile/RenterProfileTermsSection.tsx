@@ -80,7 +80,7 @@ export function RenterProfileTermsSection({ userId, onAccepted }: Props) {
     <form onSubmit={(e) => void handleSubmit(e)} className="renter-profile-form-stack">
       <RenterProfileSectionErrorBanner message={sectionError} />
       <p style={{ fontSize: 'var(--text-body-sm-size)', color: 'var(--quni-ink-3)' }}>
-        Accept our policies before you browse listings or request bookings.
+        Accept our policies before you browse listings or apply.
       </p>
       <div>
         <label

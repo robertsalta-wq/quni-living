@@ -34,7 +34,7 @@ const LISTING_STUDENT: Step[] = [
     description: 'Browse Quni Listing homes and message landlords on-platform.',
   },
   {
-    title: '2. Request to book',
+    title: '2. Apply',
     description:
       'Authorise a refundable deposit hold only. You pay no booking fee, platform fee, service fee, or surcharge to Quni - ever.',
   },
@@ -67,7 +67,7 @@ const MANAGED_STUDENT: Step[] = [
     description: 'Browse Quni Managed listings where Quni supports the full tenancy journey.',
   },
   {
-    title: '2. Request to book',
+    title: '2. Apply',
     description:
       'Authorise a deposit hold only. You still pay no Quni booking, platform, service, or surcharge fees.',
   },

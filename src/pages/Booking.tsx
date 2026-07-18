@@ -1661,7 +1661,7 @@ export default function Booking() {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
         <h1 className="text-2xl font-bold text-gray-900">Book a property</h1>
-        <p className="text-gray-600 text-sm mt-2">Open a listing and choose Request to book to start.</p>
+        <p className="text-gray-600 text-sm mt-2">Open a listing and choose Apply to start.</p>
         <Link to="/listings" className="inline-block mt-6 text-sm font-medium text-indigo-600 hover:text-indigo-800">
           Browse listings
         </Link>
@@ -1815,7 +1815,7 @@ export default function Booking() {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Request to book</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Apply</p>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mt-1">{property.title}</h1>
           {property.suburb && <p className="text-sm text-gray-500 mt-0.5">{property.suburb}</p>}
           <p className="text-lg font-semibold text-gray-900 mt-2">

@@ -111,7 +111,7 @@ export function VerificationStudentSection() {
     <div className="space-y-4">
       <VerificationTable rows={STUDENT_STEPS} />
       <p className="text-sm leading-relaxed text-gray-700">
-        Required to request to book on student-only listings. You&apos;ll also complete a short profile with your
+        Required to apply on student-only listings. You&apos;ll also complete a short profile with your
         university, course, phone, budget, and move-in date before your first request.
       </p>
     </div>
@@ -123,11 +123,11 @@ export function VerificationWorkingTenantSection() {
     <div className="space-y-4">
       <VerificationTable rows={WORKING_TENANT_STEPS} />
       <p className="text-sm leading-relaxed text-gray-700">
-        Complete your profile to request to book on listings open to non-students. Photo ID and a supporting document
+        Complete your profile to apply on listings open to non-students. Photo ID and a supporting document
         complete identity verification for landlords reviewing your application.
       </p>
       <p className="text-sm leading-relaxed text-gray-600">
-        Work email verification is optional. It adds a badge to your profile but is not required to request to book.
+        Work email verification is optional. It adds a badge to your profile but is not required to apply.
       </p>
     </div>
   )
