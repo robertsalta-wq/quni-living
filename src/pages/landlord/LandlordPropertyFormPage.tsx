@@ -13,6 +13,7 @@ import {
 } from '../../lib/listingEditHubHealth'
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
+import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
   ACCOMMODATION_UI_OPTIONS,
   accommodationChoiceFromFields,
@@ -2498,7 +2499,7 @@ export default function LandlordPropertyFormPage() {
     <div
       className={`flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col max-sm:pb-0 pb-16 bg-[var(--quni-surface-2)]`}
     >
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] box-border px-3 pt-3 pb-4 sm:px-6 sm:pt-5 sm:pb-8">
+      <div className={`${SITE_CONTENT_MAX_CLASS} box-border pt-3 pb-4 sm:pt-5 sm:pb-8`}>
         {isHubSectionMode ? (
           <div className="mb-4 min-w-0">
             <Link
@@ -2578,7 +2579,7 @@ export default function LandlordPropertyFormPage() {
           {!isHubSectionMode ? (
             <>
               <nav
-                className="listing-form-section-nav mb-3 px-2 py-2 sm:-mx-6 sm:px-6"
+                className="listing-form-section-nav mb-3 py-2"
                 aria-label="Jump to section"
               >
                 <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">

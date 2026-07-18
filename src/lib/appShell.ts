@@ -135,7 +135,7 @@ export function isListingEditHubChromePath(pathname: string, isMobile: boolean):
   return isMobile && isListingEditPath(pathname)
 }
 
-/** Desktop listing edit — use dashboard section chrome, not focus back-bar. */
+/** Desktop listing edit — standard marketing Header (not focus back-bar / dashboard strip). */
 export function isListingEditDesktopSectionChrome(pathname: string, isMobile: boolean): boolean {
   return !isMobile && isListingEditPath(pathname)
 }

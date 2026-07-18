@@ -244,14 +244,22 @@ code {
   @media (min-width: 768px) {
     .listing-form-section-nav {
       position: sticky;
+      /* Sit flush under the sticky marketing / site header — never a bare 0.5rem gap. */
+      top: var(--quni-fixed-header-offset);
+      width: 100%;
+      border-radius: 0;
+      box-shadow: none;
+      border: 0;
+      border-bottom: 1px solid var(--quni-line-soft, #efede9);
+    }
+
+    [data-app-shell][data-listing-edit-desktop] .listing-form-section-nav {
       top: var(--quni-fixed-header-offset);
     }
 
-    [data-app-shell] .listing-form-section-nav {
-      top: 0.5rem;
-      border: 1px solid var(--quni-line, #e5e4e7);
-      border-radius: 12px;
-      box-shadow: 0 1px 2px rgb(8 6 13 / 0.04);
+    /* Header + sticky pills so in-page section jumps clear both. */
+    [data-app-shell][data-listing-edit-desktop] .scroll-mt-below-header {
+      scroll-margin-top: calc(var(--quni-fixed-header-offset) + 3.25rem);
     }
   }
 }
