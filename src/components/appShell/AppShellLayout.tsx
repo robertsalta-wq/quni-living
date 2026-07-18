@@ -5,6 +5,7 @@ import { isRenterRole } from '../../lib/authProfile'
 import {
   APP_SHELL_SCROLL_PB_CLASS,
   isAppShellFocusPath,
+  isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
 } from '../../lib/appShell'
 import { DASHBOARD_MOBILE_SCROLL_ATTR } from '../../lib/appShellScroll'
@@ -27,6 +28,8 @@ export default function AppShellLayout() {
   const isMobile = useIsMobile()
   const focus = isAppShellFocusPath(location.pathname)
   const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
+  const listingDesktopSection = isListingEditDesktopSectionChrome(location.pathname, isMobile)
+  const showSectionNav = !focus || listingDesktopSection
   const showLandlordNav = role === 'landlord' && !listingHubChrome
   const showRenterNav = isRenterRole(role) && !listingHubChrome
 
@@ -43,7 +46,7 @@ export default function AppShellLayout() {
         {...{ [DASHBOARD_MOBILE_SCROLL_ATTR]: '' }}
       >
         <OnboardingResumeBanner />
-        {!focus ? <AppShellSectionNav /> : null}
+        {showSectionNav ? <AppShellSectionNav /> : null}
         <Suspense fallback={<DashboardChromeRouteFallback />}>
           <Outlet />
         </Suspense>
