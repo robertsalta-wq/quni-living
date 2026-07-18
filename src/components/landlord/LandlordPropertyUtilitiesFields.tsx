@@ -91,7 +91,7 @@ function PerServiceUtilitiesFields({
   const tenantPays = form.tenantPays === 'yes'
 
   return (
-    <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+    <div className="space-y-4">
       <p className="text-sm font-semibold text-gray-900">{label}</p>
       <YesNoField
         id={`utilities-${serviceId}-tenant-pays`}

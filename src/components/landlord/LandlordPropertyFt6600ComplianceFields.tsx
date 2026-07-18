@@ -300,7 +300,7 @@ export default function LandlordPropertyFt6600ComplianceFields({
       ) : null}
 
       {showSmokeAlarmReplaceability && form.smokeAlarmType === 'battery' ? (
-        <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+        <div className="space-y-4">
           <YesNoField
             id="ft6600-battery-replaceable"
             label="Can the tenant replace smoke alarm batteries?"
@@ -334,7 +334,7 @@ export default function LandlordPropertyFt6600ComplianceFields({
       ) : null}
 
       {showSmokeAlarmReplaceability && form.smokeAlarmType === 'hardwired' ? (
-        <div className="space-y-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+        <div className="space-y-4">
           <YesNoField
             id="ft6600-backup-replaceable"
             label="Can the tenant replace backup batteries in hardwired alarms?"

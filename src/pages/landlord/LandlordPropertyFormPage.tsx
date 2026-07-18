@@ -2595,7 +2595,7 @@ export default function LandlordPropertyFormPage() {
                 </div>
               </div>
               {qldOnSiteBoarderLodger ? (
-                <div className="rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-3 space-y-3">
+                <div className="space-y-3">
                   <p className="text-sm text-sky-950 leading-relaxed">{qldOnSiteListingCallout()}</p>
                   <div>
                     <label htmlFor="pf-qld-rooms-rented" className={labelClass}>
@@ -2854,7 +2854,7 @@ export default function LandlordPropertyFormPage() {
             <div className="space-y-4">
               <div>
                 <p className="mb-2 text-xs font-semibold text-gray-700">Inclusions</p>
-                <div className="grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/50 p-3 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -2886,7 +2886,7 @@ export default function LandlordPropertyFormPage() {
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold text-gray-700">Property features</p>
-                <div className="grid grid-cols-1 gap-2 rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {features.map((f) => (
                     <label key={f.id} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -2903,7 +2903,7 @@ export default function LandlordPropertyFormPage() {
                   )}
                 </div>
               </div>
-              <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 shadow-sm">
+              <div>
                 <p className="text-xs font-semibold text-gray-700 mb-3">Tenant eligibility</p>
                 <label htmlFor="pf-open-non-students" className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -3447,7 +3447,7 @@ export default function LandlordPropertyFormPage() {
                   </div>
                 ) : null}
               </div>
-              <div className="rounded-xl border border-gray-200/90 bg-stone-50/60 p-4 space-y-4">
+              <div className="space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Occupancy &amp; optional extras</p>
                   <p className="mt-1 text-xs text-gray-500 leading-relaxed">
@@ -3600,7 +3600,7 @@ export default function LandlordPropertyFormPage() {
                 ) : null}
               </div>
               {showListingPayeeBankDetails ? (
-                <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+                <div className="space-y-3">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900">Payee bank details</h3>
                     <p className="mt-1 text-xs text-gray-600 leading-relaxed">
@@ -3661,8 +3661,8 @@ export default function LandlordPropertyFormPage() {
                 </div>
               ) : null}
               {showQldBondRemittance ? (
-                <fieldset className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-                  <legend className="text-sm font-semibold text-gray-900 px-1">QLD bond payment preference</legend>
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-semibold text-gray-900">QLD bond payment preference</legend>
                   <p className="text-xs text-gray-600 leading-relaxed">
                     How do you prefer the renter to pay bond? This steers booking instructions — renters can still lodge
                     directly with the RTA. Quni never holds or remits bond.
