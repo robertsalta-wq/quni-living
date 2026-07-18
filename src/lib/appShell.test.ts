@@ -79,7 +79,7 @@ describe('appShell membership', () => {
     expect(isListingEditHubChromePath('/landlord/dashboard', true)).toBe(false)
   })
 
-  it('uses desktop section chrome for listing edit on sm+', () => {
+  it('uses desktop marketing chrome for listing edit on sm+', () => {
     expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', false)).toBe(true)
     expect(isListingEditDesktopSectionChrome('/landlord/property/new', false)).toBe(true)
     expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', true)).toBe(false)
