@@ -30,6 +30,10 @@ jobs:
       - name: Rules of Hooks
         run: npm run lint:rules-of-hooks
 
+      # Blocking: app chrome must stay in AppHeader / AppActionBar (docs/app-chrome-brief.md §6).
+      - name: App chrome lint guard
+        run: npm run lint:app-chrome
+
       - name: Typecheck
         run: npx tsc -b --noEmit
 
