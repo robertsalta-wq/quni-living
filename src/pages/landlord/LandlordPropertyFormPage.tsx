@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
@@ -12,6 +13,8 @@ import {
   type ListingHubSectionId,
 } from '../../lib/listingEditHubHealth'
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
+import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
@@ -544,6 +547,7 @@ export default function LandlordPropertyFormPage() {
 
   const isHubSectionMode = hubSectionId != null
   const hubReturnPath = listingHubPath({ propertyId })
+  const formRef = useRef<HTMLFormElement>(null)
   const hubSectionMeta = hubSectionId
     ? LISTING_HUB_SECTIONS.find((s) => s.id === hubSectionId) ?? null
     : null
@@ -2453,6 +2457,24 @@ export default function LandlordPropertyFormPage() {
     }
   }
 
+  /**
+   * Section drill-in (`isHubSectionMode`, always mobile — desktop redirects to the
+   * long form before this component mounts in hub-section mode) — bar mirrors this
+   * page's existing controls (Cancel + submit), no hub-only behaviour invented.
+   */
+  const hubSectionActionItems: AppActionBarItem[] = useMemo(
+    () =>
+      listingSectionDrillInActionBarItemSpecs({ saving: submitting }).map((spec) => ({
+        ...spec,
+        icon: spec.primary ? Check : X,
+        ...(spec.id === 'cancel'
+          ? { to: '/landlord-dashboard' }
+          : { onClick: () => formRef.current?.requestSubmit() }),
+      })),
+    [submitting],
+  )
+  useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
+
   if (!isSupabaseConfigured) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-sm text-gray-600">
@@ -2605,7 +2627,7 @@ export default function LandlordPropertyFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
           <div className="space-y-8">
           {submitError && (
             <div
@@ -3948,27 +3970,23 @@ export default function LandlordPropertyFormPage() {
                 </div>
               ) : null}
             </div>
-            <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
-            >
-              {submitting
-                ? 'Saving…'
-                : isHubSectionMode
-                  ? 'Save & return'
-                  : isEdit
-                    ? 'Save changes'
-                    : 'Publish listing'}
-            </button>
-            <Link
-              to="/landlord-dashboard"
-              className="rounded-[10px] border border-[#D8D3C7] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
-            >
-              Cancel
-            </Link>
-            </div>
+            {isHubSectionMode ? null : (
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] disabled:opacity-50"
+                >
+                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Publish listing'}
+                </button>
+                <Link
+                  to="/landlord-dashboard"
+                  className="rounded-[10px] border border-[#D8D3C7] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                >
+                  Cancel
+                </Link>
+              </div>
+            )}
           </div>
           </div>
         </form>

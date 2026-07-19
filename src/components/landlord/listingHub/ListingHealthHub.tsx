@@ -17,18 +17,20 @@ type Props = {
   thumbUrl: string | null
   statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
   health: ListingHubHealthResult
-  previewHref: string | null
-  onHubPrimary: () => void
 }
 
+/**
+ * Listing health hub — identity row + section checklist.
+ * View switcher + footer are gone: bar items (Health · Preview) live in
+ * `AppActionBar` via `useSetAppChromeActions` (see `LandlordListingEditHubPage`).
+ * Exit is via the `AppHeader` back control only (no in-page Save/Done).
+ */
 export default function ListingHealthHub({
   propertyId,
   listingName,
   thumbUrl,
   statusLabel,
   health,
-  previewHref,
-  onHubPrimary,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -59,32 +61,6 @@ export default function ListingHealthHub({
           >
             {statusLabel}
           </span>
-        </div>
-        <div className="flex gap-[22px] px-4">
-          <span className="border-b-2 border-[var(--quni-coral)] pb-2.5 text-[13.5px] font-semibold text-[var(--quni-ink)]">
-            Listing health
-          </span>
-          <span
-            className="cursor-default pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)]"
-            title="Coming soon"
-          >
-            Insights
-          </span>
-          {previewHref ? (
-            <Link
-              to={previewHref}
-              className="pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)] hover:text-[var(--quni-ink)]"
-            >
-              Preview
-            </Link>
-          ) : (
-            <span
-              className="cursor-default pb-2.5 text-[13.5px] font-medium text-[var(--quni-ink-5)]"
-              title="Save your listing first to preview"
-            >
-              Preview
-            </span>
-          )}
         </div>
       </div>
 
@@ -157,33 +133,6 @@ export default function ListingHealthHub({
             )
           })}
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex shrink-0 gap-2.5 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(8,6,13,0.04)]">
-        {previewHref ? (
-          <Link
-            to={previewHref}
-            className="shrink-0 rounded-[10px] border border-[#D8D3C7] bg-white px-[18px] py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
-          >
-            Preview
-          </Link>
-        ) : (
-          <button
-            type="button"
-            disabled
-            className="shrink-0 rounded-[10px] border border-[#D8D3C7] bg-white px-[18px] py-3 text-sm font-semibold text-[var(--quni-navy)] opacity-50"
-          >
-            Preview
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onHubPrimary}
-          className="flex-1 rounded-[10px] bg-[var(--quni-coral)] py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)]"
-        >
-          {isSetup ? 'Save & next' : 'Save changes'}
-        </button>
       </div>
     </div>
   )

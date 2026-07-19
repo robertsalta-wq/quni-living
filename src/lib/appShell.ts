@@ -19,6 +19,50 @@ export const APP_SHELL_FAB_BOTTOM_CLASS =
 
 export type AppShellMode = 'section' | 'focus'
 
+/**
+ * Chrome mode — drives `AppHeader` + `AppActionBar` (see docs/app-chrome-brief.md).
+ * `map` = brand + "Dashboard" + nav bar. `task` = back + title + action bar.
+ * `task-header` (Phase 1 only) = back + title header, but nav bar still (booking
+ * review / renter apply — convert to `task` in Phase 2).
+ */
+export type AppChromeMode = 'map' | 'task' | 'task-header'
+
+/**
+ * One function decides chrome mode for both shells — viewport-aware because
+ * listing edit is `task` on mobile but Map-shaped on desktop (Option A, §2).
+ */
+export function appChromeMode(pathname: string, isMobile: boolean): AppChromeMode | null {
+  const mode = appShellMode(pathname)
+  if (mode == null) return null
+  if (mode === 'section') return 'map'
+  if (isListingEditPath(pathname)) return isMobile ? 'task' : 'map'
+  return 'task-header'
+}
+
+/** Back-control destination label for task / task-header headers (`‹ {destination}`). */
+export function appShellBackDestination(pathname: string): string {
+  if (isListingEditPath(pathname)) return 'Listings'
+  if (/^\/landlord\/bookings\//.test(pathname) || /^\/booking\//.test(pathname)) return 'Bookings'
+  return 'Back'
+}
+
+export type AppChromeHeaderKind = 'map' | 'task'
+export type AppChromeBarKind = 'nav' | 'action' | 'none'
+
+/** Header shape for a mode — `task` and `task-header` share the same (back + title) shape, §1a. */
+export function appChromeHeaderKind(mode: AppChromeMode): AppChromeHeaderKind {
+  return mode === 'map' ? 'map' : 'task'
+}
+
+/**
+ * Bar shape for a mode + viewport — the bottom bar is mobile-only (§3 "Desktop
+ * placement"); `task-header` keeps the Nav bar in Phase 1 (§2 "is a *pass*").
+ */
+export function appChromeBarKind(mode: AppChromeMode, isMobile: boolean): AppChromeBarKind {
+  if (!isMobile) return 'none'
+  return mode === 'task' ? 'action' : 'nav'
+}
+
 export function isAppShellPath(pathname: string): boolean {
   return appShellMode(pathname) != null
 }

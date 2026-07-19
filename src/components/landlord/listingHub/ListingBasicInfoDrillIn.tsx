@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import {
   fieldsFromHubListingTypeTile,
@@ -7,6 +8,8 @@ import {
   listingHubPath,
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
+import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
 import { ListingHubStatusDot } from './ListingHubVisuals'
 
 const TITLE_MAX = 60
@@ -115,6 +118,20 @@ export default function ListingBasicInfoDrillIn({
 
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
+
+  const actionItems: AppActionBarItem[] = useMemo(() => {
+    const canSubmit = Boolean(title.trim())
+    const specs = listingBasicInfoActionBarItemSpecs({ isSetupMode, saving, canSubmit })
+    return specs.map((spec) => ({
+      ...spec,
+      icon: spec.primary ? Check : X,
+      onClick:
+        spec.id === 'cancel'
+          ? onCancel
+          : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
+    }))
+  }, [isSetupMode, saving, title, values, onSave, onCancel])
+  useSetAppChromeActions(actionItems)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--quni-surface-2)]">
@@ -271,29 +288,6 @@ export default function ListingBasicInfoDrillIn({
               : 'Add a listing title and listing type to complete this section and turn it green.'}
           </p>
         </div>
-      </div>
-
-      <div className="flex shrink-0 gap-2.5 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(8,6,13,0.04)]">
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => (isSetupMode ? onSave(values, 'draft') : onCancel())}
-          className="shrink-0 rounded-[10px] border border-[#D8D3C7] bg-white px-[18px] py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-60"
-        >
-          {isSetupMode ? 'Save draft' : 'Cancel'}
-        </button>
-        <button
-          type="button"
-          disabled={saving || !title.trim()}
-          onClick={() => onSave(values, isSetupMode ? 'next' : 'save')}
-          className="flex-1 rounded-[10px] bg-[var(--quni-coral)] py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"
-        >
-          {saving
-            ? 'Saving…'
-            : isSetupMode
-              ? 'Save & next → Property details'
-              : 'Save'}
-        </button>
       </div>
 
       {/* Prefetch hint for next step (setup) */}

@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
+import { Activity, Eye } from 'lucide-react'
 import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import ListingBasicInfoDrillIn, {
   type ListingBasicInfoValues,
 } from '../../components/landlord/listingHub/ListingBasicInfoDrillIn'
 import ListingHealthHub from '../../components/landlord/listingHub/ListingHealthHub'
 import { useListingHubProperty } from '../../hooks/useListingHubProperty'
+import { listingHubActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import {
   computeListingHubHealth,
   listingHubPath,
@@ -223,18 +226,19 @@ export default function LandlordListingEditHubPage() {
     }
   }
 
-  function onHubPrimary() {
-    if (health.isSetupMode) {
-      const next = health.firstIncomplete ?? 'basic'
-      navigate(
-        next === 'basic'
-          ? listingHubPath({ propertyId, view: 'basic' })
-          : listingHubPath({ propertyId, view: next }),
-      )
-      return
-    }
-    navigate('/landlord/dashboard?tab=listings')
-  }
+  const hubActionItems: AppActionBarItem[] = useMemo(() => {
+    const icons = { health: Activity, preview: Eye }
+    return listingHubActionBarItemSpecs(previewHref != null).map((spec) => ({
+      ...spec,
+      icon: icons[spec.id as keyof typeof icons],
+      ...(spec.id === 'preview' && previewHref ? { to: previewHref } : {}),
+    }))
+  }, [previewHref])
+  /**
+   * `null` when `isBasic` — `ListingBasicInfoDrillIn` owns its own registration in that
+   * case, and it mounts as a child in the same commit, so this must not clobber it.
+   */
+  useSetAppChromeActions(isBasic ? null : hubActionItems)
 
   if (propertyId && loading) {
     return (
@@ -280,8 +284,6 @@ export default function LandlordListingEditHubPage() {
       thumbUrl={property?.thumbUrl ?? null}
       statusLabel={statusLabel}
       health={health}
-      previewHref={previewHref}
-      onHubPrimary={onHubPrimary}
     />
   )
 }
