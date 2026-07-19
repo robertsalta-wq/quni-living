@@ -23,10 +23,9 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 /**
  * Authenticated app destinations.
  *
- * Desktop (sm+): renter dashboard sections + listing-edit use the marketing
- * Header (section tabs flush under it). Landlord section destinations use the
- * authenticated AppShellHeader (tabs + actions in-bar). Mobile: slim
- * AppShellHeader + bottom tabs.
+ * Desktop (sm+): renter sections use the marketing Header. Landlord sections
+ * and landlord listing-edit use AppShellHeader (Quni Dashboard). Mobile: slim
+ * AppShellHeader + bottom tabs (listing hub chrome on mobile listing edit).
  */
 export default function AppShellLayout() {
   const { role } = useAuthContext()
@@ -37,16 +36,18 @@ export default function AppShellLayout() {
   const listingDesktop = isListingEditDesktopSectionChrome(location.pathname, isMobile)
   const landlordDesktopChrome = isLandlordDesktopAppChrome(role, location.pathname, isMobile)
 
-  /** Marketing Header on desktop for renter sections + listing edit only. */
+  /** Marketing Header on desktop for renter sections only (landlord listing edit uses app shell). */
   const useSiteHeader = !isMobile && !landlordDesktopChrome && (section || listingDesktop)
   const showSectionNav = useSiteHeader && section && !listingDesktop
   const showLandlordNav = role === 'landlord' && !listingHubChrome
   const showRenterNav = isRenterRole(role) && !listingHubChrome
+  /** Measure sticky header height for listing-edit section pills when using app shell. */
+  const measureListingEditChrome = listingDesktop && landlordDesktopChrome
 
   const chromeStackRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
-    if (!useSiteHeader) {
+    if (!useSiteHeader && !measureListingEditChrome) {
       document.documentElement.style.removeProperty('--site-header-height')
       return
     }
@@ -64,7 +65,7 @@ export default function AppShellLayout() {
       ro.disconnect()
       document.documentElement.style.removeProperty('--site-header-height')
     }
-  }, [useSiteHeader, showSectionNav, location.pathname])
+  }, [useSiteHeader, measureListingEditChrome, showSectionNav, location.pathname])
 
   return (
     <div
@@ -87,7 +88,9 @@ export default function AppShellLayout() {
           ) : null}
         </div>
       ) : (
-        <AppShellHeader />
+        <div ref={measureListingEditChrome ? chromeStackRef : undefined}>
+          <AppShellHeader />
+        </div>
       )}
 
       <main

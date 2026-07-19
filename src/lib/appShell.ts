@@ -129,27 +129,29 @@ export function isListingEditPath(pathname: string): boolean {
 
 /**
  * Cream hub chrome + no bottom tabs — mobile listing edit only (`sm` breakpoint).
- * Desktop listing edit uses standard section chrome (Quni header + dashboard strip).
+ * Desktop landlord listing edit uses AppShellHeader (see isLandlordDesktopAppChrome).
  */
 export function isListingEditHubChromePath(pathname: string, isMobile: boolean): boolean {
   return isMobile && isListingEditPath(pathname)
 }
 
-/** Desktop listing edit — standard marketing Header (not focus back-bar / dashboard strip). */
-export function isListingEditDesktopSectionChrome(pathname: string, isMobile: boolean): boolean {
-  return !isMobile && isListingEditPath(pathname)
-}
-
 /**
- * Landlord section destinations on sm+ use the authenticated app-shell header
- * (not the public marketing Header). Mobile and listing-edit desktop are unchanged.
+ * Landlord destinations on sm+ use the authenticated app-shell header
+ * (not the public marketing Header). Includes section tabs and listing edit.
+ * Mobile is unchanged (slim header / listing hub chrome).
  */
 export function isLandlordDesktopAppChrome(
   role: UserRole | undefined,
   pathname: string,
   isMobile: boolean,
 ): boolean {
-  return !isMobile && role === 'landlord' && isAppShellSectionPath(pathname)
+  if (isMobile || role !== 'landlord') return false
+  return isAppShellSectionPath(pathname) || isListingEditPath(pathname)
+}
+
+/** Desktop listing edit path — sticky section-pill offsets (`data-listing-edit-desktop`). */
+export function isListingEditDesktopSectionChrome(pathname: string, isMobile: boolean): boolean {
+  return !isMobile && isListingEditPath(pathname)
 }
 
 /** @deprecated Prefer isListingEditPath / isListingEditHubChromePath */
