@@ -279,12 +279,13 @@ export function buildLandlordReadinessDriverContent(
 
 export function landlordProfileDefaultExpandedSection(
   readiness: LandlordReadiness,
-): LandlordPublishSectionKey | 'payouts' {
+): LandlordPublishSectionKey | 'payouts' | null {
   if (!readiness.publish.complete) {
     return readiness.publish.missing[0] ?? 'personal'
   }
   if (!readiness.accept.complete) return 'payouts'
-  return 'personal'
+  /** Fully set up — all section rows start collapsed. */
+  return null
 }
 
 export function landlordProfileStatCardCopy(readiness: LandlordReadiness): {

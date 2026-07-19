@@ -301,7 +301,7 @@ export default function LandlordDashboardProfileTab({
   const driverContent = useMemo(() => buildLandlordReadinessDriverContent(readiness), [readiness])
 
   const defaultExpanded = landlordProfileDefaultExpandedSection(readiness)
-  const [expanded, setExpanded] = useState<ExpandKey>(defaultExpanded)
+  const [expanded, setExpanded] = useState<ExpandKey | null>(defaultExpanded)
 
   const [firstName, setFirstName] = useState(profile.first_name?.trim() ?? '')
   const [lastName, setLastName] = useState(profile.last_name?.trim() ?? '')
@@ -743,7 +743,6 @@ export default function LandlordDashboardProfileTab({
       <div className="flex flex-col gap-3">
         <Section
             id="landlord-section-personal"
-            ordinal={1}
             icon={<UserIcon />}
             title="Personal details"
             subtitle="Your name and contact details"
@@ -924,7 +923,6 @@ export default function LandlordDashboardProfileTab({
 
         <Section
             id="landlord-section-address"
-            ordinal={2}
             icon={<PinIcon />}
             title="Address"
             subtitle="Where you're based"
@@ -1074,7 +1072,6 @@ export default function LandlordDashboardProfileTab({
 
         <Section
             id="landlord-section-about"
-            ordinal={3}
             icon={<PhotoIcon />}
             title="About you"
             subtitle="Photo and a short bio for students"
@@ -1141,7 +1138,6 @@ export default function LandlordDashboardProfileTab({
 
         <Section
             id="landlord-section-agreements"
-            ordinal={4}
             icon={<DocIcon />}
             title="Agreements"
             subtitle="Accept Quni's landlord agreements"
@@ -1213,7 +1209,6 @@ export default function LandlordDashboardProfileTab({
       <div className="mb-3">
         <Section
             id="landlord-section-payouts"
-          ordinal={5}
           icon={<BankIcon />}
           title="Payouts & identity"
           subtitle="Get paid and verify your identity"
