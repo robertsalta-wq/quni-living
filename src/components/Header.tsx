@@ -61,7 +61,15 @@ function warmListingsNav() {
   warmListingsBrowseCache()
 }
 
-export default function Header() {
+type HeaderProps = {
+  /**
+   * Inside the app-shell sticky chrome stack — parent owns stickiness.
+   * Also kills the bogus vertical scrollbar from overflow-x-clip alone.
+   */
+  embedded?: boolean
+}
+
+export default function Header({ embedded = false }: HeaderProps) {
   const { user, profile, loading, signOut, role } = useAuthContext()
   const location = useLocation()
   const dashboardMobileChrome = isDashboardMobileChromePath(role, location.pathname)
@@ -343,11 +351,16 @@ export default function Header() {
   return (
     <header
       className={[
-        'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50',
-        dashboardMobileChrome
-          ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
-          : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0',
+        // overflow-y-hidden with overflow-x-clip — clip alone forces overflow-y:auto in Chrome
+        // and paints a vertical scrollbar inside the header.
+        'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50',
+        embedded
+          ? 'relative'
+          : dashboardMobileChrome
+            ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
+            : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0',
       ].join(' ')}
+      {...(embedded ? { 'data-header-embedded': '' } : {})}
     >
       <div
         ref={mobileNavRootRef}

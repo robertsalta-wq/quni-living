@@ -2499,6 +2499,36 @@ export default function LandlordPropertyFormPage() {
     <div
       className={`flex min-h-0 w-full min-w-0 max-w-[100vw] flex-1 flex-col max-sm:pb-0 pb-16 bg-[var(--quni-surface-2)]`}
     >
+      {/* Section pills sit flush under the sticky site header (no top padding gap). */}
+      {!isHubSectionMode ? (
+        <>
+          <nav className="listing-form-section-nav py-2" aria-label="Jump to section">
+            <div className={`${SITE_CONTENT_MAX_CLASS} box-border`}>
+              <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+                {formNavSections.map(({ id, label }) => {
+                  const isActive = activeSection === id
+                  return (
+                    <a
+                      key={id}
+                      href={`#${id}`}
+                      className={
+                        isActive
+                          ? 'shrink-0 rounded-full border border-[var(--quni-coral)] bg-[var(--quni-coral)] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
+                          : 'shrink-0 rounded-full border border-[var(--quni-line)] bg-white px-3 py-1.5 text-center text-xs font-medium text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] sm:text-sm'
+                      }
+                    >
+                      {label}
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          </nav>
+          {/* Reserve space while section pills are position:fixed on mobile. */}
+          <div className="mb-3 h-10 max-md:block md:hidden" aria-hidden />
+        </>
+      ) : null}
+
       <div className={`${SITE_CONTENT_MAX_CLASS} box-border pt-3 pb-4 sm:pt-5 sm:pb-8`}>
         {isHubSectionMode ? (
           <div className="mb-4 min-w-0">
@@ -2576,36 +2606,6 @@ export default function LandlordPropertyFormPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="min-w-0 max-w-full">
-          {!isHubSectionMode ? (
-            <>
-              <nav
-                className="listing-form-section-nav mb-3 py-2"
-                aria-label="Jump to section"
-              >
-                <div className="flex w-full max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-                  {formNavSections.map(({ id, label }) => {
-                    const isActive = activeSection === id
-                    return (
-                      <a
-                        key={id}
-                        href={`#${id}`}
-                        className={
-                          isActive
-                            ? 'shrink-0 rounded-full border border-[var(--quni-coral)] bg-[var(--quni-coral)] px-3 py-1.5 text-center text-xs font-medium text-white sm:text-sm'
-                            : 'shrink-0 rounded-full border border-[var(--quni-line)] bg-white px-3 py-1.5 text-center text-xs font-medium text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] sm:text-sm'
-                        }
-                      >
-                        {label}
-                      </a>
-                    )
-                  })}
-                </div>
-              </nav>
-              {/* Reserve space while section pills are position:fixed on mobile — keep tight (8px rhythm). */}
-              <div className="mb-3 h-10 max-md:block md:hidden" aria-hidden />
-            </>
-          ) : null}
-
           <div className="space-y-8">
           {submitError && (
             <div

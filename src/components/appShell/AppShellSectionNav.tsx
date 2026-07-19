@@ -10,8 +10,13 @@ import {
 } from '../../lib/userDashboardNav'
 import UserDashboardSectionNav from '../dashboard/UserDashboardSectionNav'
 
+type Props = {
+  /** No top padding — sits flush under the site header in the sticky chrome stack. */
+  flush?: boolean
+}
+
 /** Desktop / sm+ section strip owned by the app shell (not per-page). */
-export default function AppShellSectionNav() {
+export default function AppShellSectionNav({ flush = false }: Props) {
   const { role } = useAuthContext()
   const location = useLocation()
   const navigate = useNavigate()
@@ -42,11 +47,12 @@ export default function AppShellSectionNav() {
 
   return (
     <div className="hidden sm:block">
-      <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 pt-4">
+      <div className={`mx-auto max-w-site px-3 sm:px-6 ${flush ? 'pt-0' : 'pt-4'}`}>
         <UserDashboardSectionNav
           role={role === 'landlord' ? 'landlord' : 'renter'}
           active={active}
           onSelect={onSelect}
+          embedded={flush}
         />
       </div>
     </div>
