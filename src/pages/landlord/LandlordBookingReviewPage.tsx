@@ -993,7 +993,7 @@ export default function LandlordBookingReviewPage() {
 
         <div className="grid grid-cols-1 items-start gap-7 min-[921px]:grid-cols-[minmax(0,1fr)_356px]">
           {/* —— Rail (first in DOM for mobile order) —— */}
-          <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
+          <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-[calc(var(--site-header-height,5.5rem)+0.75rem)]">
             {/* Gating / attention siblings — above ActionCard (never nested inside it) */}
             {(actionError || bondReceivedError) && (
               <div className="space-y-3.5">

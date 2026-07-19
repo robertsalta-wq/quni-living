@@ -130,6 +130,14 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
               </Link>
             )
           }
+          // Indicator-only (e.g. hub "Health" current view) — not a dead button.
+          if (!item.onClick && !item.to) {
+            return (
+              <span key={item.id} className={itemClass(coral)} aria-current={item.active ? 'page' : undefined}>
+                <ActionBarItemContent item={item} />
+              </span>
+            )
+          }
           return (
             <button
               key={item.id}
