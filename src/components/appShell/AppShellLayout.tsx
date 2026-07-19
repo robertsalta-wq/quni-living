@@ -54,7 +54,12 @@ export default function AppShellLayout() {
         data-app-shell=""
         {...(listingDesktop ? { 'data-listing-edit-desktop': '' } : {})}
       >
-        <div ref={headerRef}>
+        {/*
+          Sticky lives on this wrapper (sm+), not on <header> itself.
+          overflow-x-clip on a sticky element breaks stickiness in Chromium;
+          the header child may still clip horizontally.
+        */}
+        <div ref={headerRef} className="sticky top-0 z-50 shrink-0 max-sm:static">
           <AppHeader />
         </div>
 
