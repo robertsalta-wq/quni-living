@@ -20,6 +20,7 @@ import { isRenterRole, type LandlordProfileRow } from '../../lib/authProfile'
 import { formatDisplayName } from '../../lib/formatDisplayName'
 import { landlordDisplayName } from '../../lib/nameResolution'
 import { canLandlordCreateListing } from '../../lib/onboardingChecklist'
+import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
   landlordBookingsPath,
   landlordDashboardTabPath,
@@ -35,12 +36,13 @@ type Props = {
 
 const HIDE_THRESHOLD_PX = 12
 
+/** Match marketing Header main nav: text-sm + same gap scale. */
 function landlordDesktopTabClass(active: boolean): string {
   return [
-    'qtab inline-flex items-center gap-1.5 px-1.5 text-sm cursor-pointer border-b-2 transition-colors',
+    'inline-flex items-center gap-1.5 whitespace-nowrap text-sm border-b-2 transition-colors cursor-pointer',
     active
-      ? 'font-semibold text-[var(--quni-coral-active)] border-[var(--quni-coral)] -mb-px'
-      : 'font-medium text-[var(--quni-ink-4)] border-transparent hover:text-[var(--quni-coral-active)]',
+      ? 'font-semibold text-[var(--quni-coral-active)] border-[var(--quni-coral)]'
+      : 'font-medium text-gray-600 border-transparent hover:text-gray-900',
   ].join(' ')
 }
 
@@ -188,125 +190,140 @@ export default function AppShellHeader({ trailing }: Props) {
   if (landlordDesktopChrome) {
     return (
       <header
-        className="sticky top-0 z-50 w-full max-w-full shrink-0 border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)]"
+        className="sticky top-0 z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
         data-app-shell-header="landlord-desktop"
       >
-        <div className="mx-auto flex h-16 max-w-site items-center gap-7 px-8">
-          <Link
-            to="/landlord/dashboard"
-            className="inline-flex shrink-0 items-baseline gap-1.5 font-display text-2xl font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            aria-label="Quni Dashboard"
-          >
-            <span className="text-[var(--quni-coral)]">Quni</span>
-            <span className="text-[var(--quni-ink)]">Dashboard</span>
-          </Link>
+        {/* Same content column + padding as marketing Header (SITE_CONTENT_MAX_CLASS + py-4). */}
+        <div className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
+          <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
+            <Link
+              to="/landlord/dashboard"
+              className="inline-flex min-w-0 shrink-0 items-center gap-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              aria-label="Quni Dashboard"
+            >
+              {/* Same asset + size as SiteBrandLockup / marketing header. */}
+              <img
+                src="/quni-logo.png"
+                srcSet="/quni-logo.png 1x, /quni-logo@2x.png 2x"
+                alt=""
+                width={120}
+                height={40}
+                className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
+              />
+              <span className="font-display text-[40px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)]">
+                Dashboard
+              </span>
+            </Link>
 
-          <nav
-            className="ml-3.5 flex flex-1 items-stretch gap-1.5 self-stretch"
-            aria-label="Dashboard sections"
-          >
-            <button
-              type="button"
-              onClick={() => goLandlordSection('overview')}
-              className={landlordDesktopTabClass(activeSection === 'overview')}
-            >
-              Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => goLandlordSection('listings')}
-              className={landlordDesktopTabClass(activeSection === 'listings')}
-            >
-              Listings
-            </button>
-            <Link to="/messages" className={landlordDesktopTabClass(activeSection === 'messages')}>
-              Messages
-              {unreadMessageCount > 0 ? (
-                <span className="rounded-full bg-[var(--quni-coral)] px-1.5 py-px text-[10px] font-bold leading-[1.4] text-white tabular-nums">
-                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
-                </span>
-              ) : null}
-            </Link>
-            <Link
-              to={landlordBookingsPath()}
-              className={landlordDesktopTabClass(activeSection === 'bookings')}
-            >
-              Bookings
-            </Link>
-            <button
-              type="button"
-              onClick={() => goLandlordSection('profile')}
-              className={landlordDesktopTabClass(activeSection === 'profile')}
-            >
-              Profile
-            </button>
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-[18px]">
-            <Link
-              to={addListingHref}
-              className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-[15px] py-[9px] text-[13.5px] font-semibold text-white transition-colors duration-200 ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            >
-              + Add new listing
-            </Link>
-            <Link
-              to="/messages"
-              className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
-              aria-label={
-                unreadMessageCount > 0
-                  ? `Messages, ${unreadMessageCount} unread`
-                  : 'Messages'
-              }
-            >
-              <Bell className="h-[21px] w-[21px]" strokeWidth={1.8} aria-hidden />
-              {unreadMessageCount > 0 ? (
-                <span
-                  className="absolute -right-[3px] -top-[3px] h-2 w-2 rounded-full border-[1.5px] border-[var(--quni-cream)] bg-[var(--quni-coral)]"
-                  aria-hidden
-                />
-              ) : null}
-            </Link>
-            <div className="relative" ref={accountMenuRef}>
-              <button
-                type="button"
-                onClick={() => setAccountMenuOpen((o) => !o)}
-                className="inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-                aria-expanded={accountMenuOpen}
-                aria-haspopup="menu"
-                aria-label="Account menu"
+            <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
+              <nav
+                className="flex min-w-0 items-stretch justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
+                aria-label="Dashboard sections"
               >
-                <span className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)]">
-                  {desktopInitials}
-                </span>
-                <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{accountFirstName}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
-              </button>
-              {accountMenuOpen ? (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full z-[60] mt-2 w-44 overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-[var(--shadow-3)]"
+                <button
+                  type="button"
+                  onClick={() => goLandlordSection('overview')}
+                  className={landlordDesktopTabClass(activeSection === 'overview')}
                 >
-                  <Link
-                    to={profileHref}
-                    role="menuitem"
-                    className="block px-4 py-2 text-sm text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)]"
-                    onClick={() => setAccountMenuOpen(false)}
+                  Overview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goLandlordSection('listings')}
+                  className={landlordDesktopTabClass(activeSection === 'listings')}
+                >
+                  Listings
+                </button>
+                <Link to="/messages" className={landlordDesktopTabClass(activeSection === 'messages')}>
+                  Messages
+                  {unreadMessageCount > 0 ? (
+                    <span className="rounded-full bg-[var(--quni-coral)] px-1.5 py-px text-[10px] font-bold leading-[1.4] text-white tabular-nums">
+                      {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                    </span>
+                  ) : null}
+                </Link>
+                <Link
+                  to={landlordBookingsPath()}
+                  className={landlordDesktopTabClass(activeSection === 'bookings')}
+                >
+                  Bookings
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => goLandlordSection('profile')}
+                  className={landlordDesktopTabClass(activeSection === 'profile')}
+                >
+                  Profile
+                </button>
+              </nav>
+            </div>
+
+            <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+              <Link
+                to={addListingHref}
+                className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-[15px] py-[9px] text-[13.5px] font-semibold text-white transition-colors duration-200 ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              >
+                + Add new listing
+              </Link>
+              <Link
+                to="/messages"
+                className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
+                aria-label={
+                  unreadMessageCount > 0
+                    ? `Messages, ${unreadMessageCount} unread`
+                    : 'Messages'
+                }
+              >
+                <Bell className="h-[21px] w-[21px]" strokeWidth={1.8} aria-hidden />
+                {unreadMessageCount > 0 ? (
+                  <span
+                    className="absolute -right-[3px] -top-[3px] h-2 w-2 rounded-full border-[1.5px] border-[var(--quni-cream)] bg-[var(--quni-coral)]"
+                    aria-hidden
+                  />
+                ) : null}
+              </Link>
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountMenuOpen((o) => !o)}
+                  className="inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                  aria-expanded={accountMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Account menu"
+                >
+                  <span className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)]">
+                    {desktopInitials}
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{accountFirstName}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
+                </button>
+                {accountMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full z-[60] mt-2 w-44 overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-[var(--shadow-3)]"
                   >
-                    Profile
-                  </Link>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full px-4 py-2 text-left text-sm text-[var(--quni-danger)] hover:bg-[var(--quni-surface-2)]"
-                    onClick={() => {
-                      setAccountMenuOpen(false)
-                      void signOut()
-                    }}
-                  >
-                    Sign out
-                  </button>
-                </div>
-              ) : null}
+                    <Link
+                      to={profileHref}
+                      role="menuitem"
+                      className="block px-4 py-2 text-sm text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)]"
+                      onClick={() => setAccountMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="w-full px-4 py-2 text-left text-sm text-[var(--quni-danger)] hover:bg-[var(--quni-surface-2)]"
+                      onClick={() => {
+                        setAccountMenuOpen(false)
+                        void signOut()
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
