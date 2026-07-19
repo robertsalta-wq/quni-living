@@ -28,6 +28,7 @@ import {
 } from '../../lib/userDashboardNav'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
+import { QuniLogoHomeLink, quniDashboardLabelClassName } from '../SiteBrandLockup'
 
 type Props = {
   /** Optional trailing actions (desktop account already in marketing; keep light). */
@@ -64,11 +65,11 @@ export default function AppShellHeader({ trailing }: Props) {
   const title =
     dashboardMobileSectionTitle(role, location.pathname, location.search) ??
     (focusPath ? appShellFocusTitle(location.pathname) : 'Dashboard')
-  const homeHref = dashboardMobileHomePath(role)
+  const dashboardHomeHref = dashboardMobileHomePath(role)
   const profileHref =
     role === 'landlord' || isRenterRole(role)
       ? userDashboardProfilePath(role === 'landlord' ? 'landlord' : 'renter')
-      : homeHref
+      : dashboardHomeHref
 
   const unreadMessageCount = useUnreadMessageCount(
     landlordDesktopChrome || listingHubChrome ? user?.id : undefined,
@@ -193,27 +194,12 @@ export default function AppShellHeader({ trailing }: Props) {
         className="sticky top-0 z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
         data-app-shell-header="landlord-desktop"
       >
-        {/* Same content column + padding as marketing Header (SITE_CONTENT_MAX_CLASS + py-4). */}
         <div className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
           <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-            <Link
-              to="/landlord/dashboard"
-              className="inline-flex min-w-0 shrink-0 items-center gap-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-              aria-label="Quni Dashboard"
-            >
-              {/* Same asset + size as SiteBrandLockup / marketing header. */}
-              <img
-                src="/quni-logo.png"
-                srcSet="/quni-logo.png 1x, /quni-logo@2x.png 2x"
-                alt=""
-                width={120}
-                height={40}
-                className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
-              />
-              <span className="font-display text-[40px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)]">
-                Dashboard
-              </span>
-            </Link>
+            <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
+              <QuniLogoHomeLink />
+              <span className={quniDashboardLabelClassName}>Dashboard</span>
+            </div>
 
             <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
               <nav
@@ -338,18 +324,10 @@ export default function AppShellHeader({ trailing }: Props) {
         data-app-shell-header="listing-hub"
       >
         <div className="mx-auto flex h-12 max-w-site items-center justify-between gap-2 px-3 sm:h-14 sm:px-6 lg:px-8">
-          <Link
-            to="/landlord/dashboard"
-            className="inline-flex min-w-0 items-baseline gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            aria-label="Quni Dashboard"
-          >
-            <span className="font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-coral)]">
-              Quni
-            </span>
-            <span className="text-[19px] font-bold leading-none tracking-[-0.01em] text-[var(--quni-navy)]">
-              Dashboard
-            </span>
-          </Link>
+          <div className="inline-flex min-w-0 items-center gap-2">
+            <QuniLogoHomeLink />
+            <span className={quniDashboardLabelClassName}>Dashboard</span>
+          </div>
           <div className="flex shrink-0 items-center gap-3">
             {trailing}
             {user ? (
@@ -387,14 +365,10 @@ export default function AppShellHeader({ trailing }: Props) {
             <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
           </button>
         ) : (
-          <Link
-            to={homeHref}
-            className="inline-flex min-w-0 items-center gap-1.5 font-display text-[20px] font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:text-[22px]"
-            aria-label={`Quni ${title}`}
-          >
-            <span className="text-[#FF6F61]">Quni</span>
-            <span className="truncate text-[#1F2A44] sm:hidden">{title}</span>
-          </Link>
+          <div className="inline-flex min-w-0 items-center gap-2">
+            <QuniLogoHomeLink />
+            <span className="truncate text-sm font-semibold text-[#1F2A44] sm:hidden">{title}</span>
+          </div>
         )}
 
         <div className="min-w-0 flex-1">

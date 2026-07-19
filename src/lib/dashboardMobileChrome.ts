@@ -52,7 +52,7 @@ export function dashboardMobileSectionTitle(
   return null
 }
 
-/** Home destination for the folded Quni wordmark link. */
+/** Home destination helpers for app chrome (dashboard overview — not marketing `/`). */
 export function dashboardMobileHomePath(role: UserRole | undefined): string {
   if (role === 'landlord') return userDashboardHomePath('landlord')
   if (isRenterRole(role)) return userDashboardHomePath('renter')

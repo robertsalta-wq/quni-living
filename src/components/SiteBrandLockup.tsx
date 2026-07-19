@@ -8,7 +8,15 @@ const LOGO = {
 
 type LogoVariant = keyof typeof LOGO
 
-function QuniLogoImg({ variant }: { variant: LogoVariant }) {
+/** Same focus ring as marketing header — no coral dashboard-only outline. */
+export const quniLogoHomeLinkClassName =
+  'flex min-w-0 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900'
+
+/** “Dashboard” next to the logo — matches logo box height (h-9 / sm:h-10). */
+export const quniDashboardLabelClassName =
+  'font-display text-[36px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)] sm:text-[40px]'
+
+export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) {
   const { src, srcSet } = LOGO[variant]
   return (
     <img
@@ -22,19 +30,38 @@ function QuniLogoImg({ variant }: { variant: LogoVariant }) {
   )
 }
 
+/**
+ * Brand logo → marketing home `/`.
+ * Established rule: logo is the Home control; no separate Home nav item.
+ */
+export function QuniLogoHomeLink({ className = '' }: { className?: string }) {
+  return (
+    <Link
+      to="/"
+      className={[quniLogoHomeLinkClassName, className].filter(Boolean).join(' ')}
+      aria-label="Quni home"
+    >
+      <QuniLogoImg />
+    </Link>
+  )
+}
+
 /** Same logo + AI entry as the main site header (size, spacing, home link). */
 export default function SiteBrandLockup({ variant = 'default' }: { variant?: LogoVariant }) {
   const isAi = variant === 'ai'
   return (
     <div className="flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2">
-      <Link
-        to="/"
-        className={`flex min-w-0 items-center shrink-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
-          isAi ? 'focus-visible:outline-stone-200' : 'focus-visible:outline-gray-900'
-        }`}
-      >
-        <QuniLogoImg variant={variant} />
-      </Link>
+      {isAi ? (
+        <Link
+          to="/"
+          className={`${quniLogoHomeLinkClassName} focus-visible:outline-stone-200`}
+          aria-label="Quni home"
+        >
+          <QuniLogoImg variant="ai" />
+        </Link>
+      ) : (
+        <QuniLogoHomeLink />
+      )}
       <Link
         to="/landlords/ai"
         className={`items-center justify-center rounded-xl border border-[#FF6F61]/25 bg-[#FF6F61]/[0.08] p-2 text-[#FF6F61] hover:bg-[#FF6F61]/15 hover:border-[#FF6F61]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] transition-colors ${
