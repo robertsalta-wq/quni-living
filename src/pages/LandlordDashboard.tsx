@@ -39,6 +39,7 @@ import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
 import LandlordDashboardPageHeader, {
   landlordDashboardPageInsetClass,
 } from '../components/landlord/LandlordDashboardPageHeader'
+import LandlordDashboardOverviewDesktop from '../components/landlord/LandlordDashboardOverviewDesktop'
 import {
   fetchLandlordListingBillingSnapshot,
   type LandlordListingBillingSnapshot,
@@ -1134,7 +1135,7 @@ export default function LandlordDashboard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 max-sm:pb-0 pb-16">
+    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 sm:bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
       {welcomeToast ? (
         <div
           className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"
@@ -1160,6 +1161,31 @@ export default function LandlordDashboard() {
 
         {tab === 'overview' && (
           <>
+            <LandlordDashboardOverviewDesktop
+              profile={profile}
+              activeListings={activeListings}
+              bookingsCount={bookings.length}
+              pendingBookings={pendingBookings}
+              unreadMessageCount={unreadMessageCount}
+              conversationsCount={conversations.length}
+              schedulingBookings={schedulingBookings}
+              firstActiveListingSlug={
+                properties.find((p) => p.status === 'active')?.slug?.trim() || null
+              }
+              finishProfileHref={firstIncomplete?.href ?? landlordDashboardProfilePath()}
+              onRefresh={load}
+              onOpenSupport={() => setQaseOpen(true)}
+              onGoListings={() => selectDashboardTab('listings')}
+              onGoBookings={() => selectDashboardTab('bookings')}
+              connectSetupError={connectSetupError}
+              mixedServiceNote={
+                listingTierProperties > 0 && managedTierProperties > 0
+                  ? `Mixed service models: ${listingTierProperties} self-managed and ${managedTierProperties} Quni Managed - each property keeps its own tier.`
+                  : null
+              }
+            />
+
+            <div className="sm:hidden">
             {connectSetupError && (
               <div
                 className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
@@ -1276,6 +1302,7 @@ export default function LandlordDashboard() {
               <Link to="/sample-agreements" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                 View sample agreements →
               </Link>
+            </div>
             </div>
           </>
         )}

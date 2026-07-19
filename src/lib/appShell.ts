@@ -140,6 +140,18 @@ export function isListingEditDesktopSectionChrome(pathname: string, isMobile: bo
   return !isMobile && isListingEditPath(pathname)
 }
 
+/**
+ * Landlord section destinations on sm+ use the authenticated app-shell header
+ * (not the public marketing Header). Mobile and listing-edit desktop are unchanged.
+ */
+export function isLandlordDesktopAppChrome(
+  role: UserRole | undefined,
+  pathname: string,
+  isMobile: boolean,
+): boolean {
+  return !isMobile && role === 'landlord' && isAppShellSectionPath(pathname)
+}
+
 /** @deprecated Prefer isListingEditPath / isListingEditHubChromePath */
 export function isListingEditHubPath(pathname: string): boolean {
   return isListingEditPath(pathname)

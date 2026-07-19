@@ -5,6 +5,7 @@ import { isRenterRole } from '../../lib/authProfile'
 import {
   APP_SHELL_SCROLL_PB_CLASS,
   isAppShellSectionPath,
+  isLandlordDesktopAppChrome,
   isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
 } from '../../lib/appShell'
@@ -22,10 +23,10 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 /**
  * Authenticated app destinations.
  *
- * Desktop (sm+): standard marketing Header in a sticky chrome stack. Dashboard
- * section tabs sit flush under it in the same stack. Listing-edit desktop uses
- * the same Header (section pills stick via CSS under --site-header-height).
- * Mobile: slim AppShellHeader + bottom tabs (section tabs live in bottom nav).
+ * Desktop (sm+): renter dashboard sections + listing-edit use the marketing
+ * Header (section tabs flush under it). Landlord section destinations use the
+ * authenticated AppShellHeader (tabs + actions in-bar). Mobile: slim
+ * AppShellHeader + bottom tabs.
  */
 export default function AppShellLayout() {
   const { role } = useAuthContext()
@@ -34,9 +35,10 @@ export default function AppShellLayout() {
   const section = isAppShellSectionPath(location.pathname)
   const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
   const listingDesktop = isListingEditDesktopSectionChrome(location.pathname, isMobile)
+  const landlordDesktopChrome = isLandlordDesktopAppChrome(role, location.pathname, isMobile)
 
-  /** Standard site Header on desktop for dashboard sections + listing edit. */
-  const useSiteHeader = !isMobile && (section || listingDesktop)
+  /** Marketing Header on desktop for renter sections + listing edit only. */
+  const useSiteHeader = !isMobile && !landlordDesktopChrome && (section || listingDesktop)
   const showSectionNav = useSiteHeader && section && !listingDesktop
   const showLandlordNav = role === 'landlord' && !listingHubChrome
   const showRenterNav = isRenterRole(role) && !listingHubChrome

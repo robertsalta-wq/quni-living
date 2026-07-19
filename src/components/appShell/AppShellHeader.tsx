@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
+import { Bell, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import {
   appShellFocusFallbackPath,
   appShellFocusTitle,
   isAppShellFocusPath,
+  isLandlordDesktopAppChrome,
   isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
 } from '../../lib/appShell'
@@ -13,10 +14,19 @@ import { getAppShellScrollElement } from '../../lib/appShellScroll'
 import {
   dashboardMobileHomePath,
   dashboardMobileSectionTitle,
+  dashboardShellActiveSection,
 } from '../../lib/dashboardMobileChrome'
-import { isRenterRole } from '../../lib/authProfile'
-import { userDashboardProfilePath } from '../../lib/userDashboardNav'
+import { isRenterRole, type LandlordProfileRow } from '../../lib/authProfile'
+import { formatDisplayName } from '../../lib/formatDisplayName'
+import { landlordDisplayName } from '../../lib/nameResolution'
+import { canLandlordCreateListing } from '../../lib/onboardingChecklist'
+import {
+  landlordBookingsPath,
+  landlordDashboardTabPath,
+  userDashboardProfilePath,
+} from '../../lib/userDashboardNav'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 
 type Props = {
   /** Optional trailing actions (desktop account already in marketing; keep light). */
@@ -25,18 +35,28 @@ type Props = {
 
 const HIDE_THRESHOLD_PX = 12
 
+function landlordDesktopTabClass(active: boolean): string {
+  return [
+    'qtab inline-flex items-center gap-1.5 px-1.5 text-sm cursor-pointer border-b-2 transition-colors',
+    active
+      ? 'font-semibold text-[var(--quni-coral-active)] border-[var(--quni-coral)] -mb-px'
+      : 'font-medium text-[var(--quni-ink-4)] border-transparent hover:text-[var(--quni-coral-active)]',
+  ].join(' ')
+}
+
 /**
  * Slim app-shell top bar (chrome routes only). Condenses / hides on scroll-down
  * inside the shell scroller; returns on scroll-up. Not used on marketing pages.
  */
 export default function AppShellHeader({ trailing }: Props) {
-  const { role, user } = useAuthContext()
+  const { role, user, profile, signOut } = useAuthContext()
   const location = useLocation()
   const navigate = useNavigate()
   const focusPath = isAppShellFocusPath(location.pathname)
   const isMobile = useIsMobile()
   const listingHubChrome = isListingEditHubChromePath(location.pathname, isMobile)
   const listingDesktopSection = isListingEditDesktopSectionChrome(location.pathname, isMobile)
+  const landlordDesktopChrome = isLandlordDesktopAppChrome(role, location.pathname, isMobile)
   /** Desktop listing edit uses standard Quni section header, not focus back-bar. */
   const focus = focusPath && !listingDesktopSection
   const title =
@@ -48,11 +68,18 @@ export default function AppShellHeader({ trailing }: Props) {
       ? userDashboardProfilePath(role === 'landlord' ? 'landlord' : 'renter')
       : homeHref
 
+  const unreadMessageCount = useUnreadMessageCount(
+    landlordDesktopChrome || listingHubChrome ? user?.id : undefined,
+  )
+  const activeSection = dashboardShellActiveSection(role, location.pathname, location.search)
+
   const [hidden, setHidden] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
   const lastScrollRef = useRef(0)
 
   useEffect(() => {
-    if (listingHubChrome) {
+    if (listingHubChrome || landlordDesktopChrome) {
       setHidden(false)
       return
     }
@@ -77,7 +104,25 @@ export default function AppShellHeader({ trailing }: Props) {
 
     main.addEventListener('scroll', onScroll, { passive: true })
     return () => main.removeEventListener('scroll', onScroll)
-  }, [location.pathname, location.search, listingHubChrome])
+  }, [location.pathname, location.search, listingHubChrome, landlordDesktopChrome])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return
+    const onPointer = (e: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAccountMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [accountMenuOpen])
 
   function onFocusBack() {
     const state = location.state as { returnTo?: string } | null
@@ -93,6 +138,31 @@ export default function AppShellHeader({ trailing }: Props) {
     navigate(appShellFocusFallbackPath(role, location.pathname))
   }
 
+  const landlordProfile = role === 'landlord' ? (profile as LandlordProfileRow | null) : null
+
+  const displayName = (() => {
+    if (landlordProfile) {
+      const name = formatDisplayName(landlordDisplayName(landlordProfile, ''))
+      if (name) return name
+    }
+    const email = user?.email?.trim() || ''
+    if (!email) return 'Account'
+    return email.split('@')[0] || 'Account'
+  })()
+
+  const accountFirstName = displayName.split(/\s+/)[0] || 'Account'
+
+  /** Desktop landlord chrome: initials from display name. */
+  const desktopInitials = (() => {
+    const parts = displayName.split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
+    }
+    if (parts.length === 1 && parts[0]!.length >= 2) return parts[0]!.slice(0, 2).toUpperCase()
+    return 'Me'
+  })()
+
+  /** Mobile / listing-hub: email-based initials (unchanged). */
   const initials = (() => {
     const email = user?.email?.trim() || ''
     if (!email) return 'Me'
@@ -101,6 +171,148 @@ export default function AppShellHeader({ trailing }: Props) {
     if (parts.length >= 2) return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
     return local.slice(0, 2).toUpperCase()
   })()
+
+  const addListingHref =
+    landlordProfile && canLandlordCreateListing(landlordProfile)
+      ? '/landlord/property/new'
+      : landlordDashboardTabPath('profile')
+
+  function goLandlordSection(section: 'overview' | 'listings' | 'bookings' | 'profile') {
+    if (section === 'bookings') {
+      navigate(landlordBookingsPath())
+      return
+    }
+    navigate(landlordDashboardTabPath(section))
+  }
+
+  if (landlordDesktopChrome) {
+    return (
+      <header
+        className="sticky top-0 z-50 w-full max-w-full shrink-0 border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)]"
+        data-app-shell-header="landlord-desktop"
+      >
+        <div className="mx-auto flex h-16 max-w-site items-center gap-7 px-8">
+          <Link
+            to="/landlord/dashboard"
+            className="inline-flex shrink-0 items-baseline gap-1.5 font-display text-2xl font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            aria-label="Quni Dashboard"
+          >
+            <span className="text-[var(--quni-coral)]">Quni</span>
+            <span className="text-[var(--quni-ink)]">Dashboard</span>
+          </Link>
+
+          <nav
+            className="ml-3.5 flex flex-1 items-stretch gap-1.5 self-stretch"
+            aria-label="Dashboard sections"
+          >
+            <button
+              type="button"
+              onClick={() => goLandlordSection('overview')}
+              className={landlordDesktopTabClass(activeSection === 'overview')}
+            >
+              Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => goLandlordSection('listings')}
+              className={landlordDesktopTabClass(activeSection === 'listings')}
+            >
+              Listings
+            </button>
+            <Link to="/messages" className={landlordDesktopTabClass(activeSection === 'messages')}>
+              Messages
+              {unreadMessageCount > 0 ? (
+                <span className="rounded-full bg-[var(--quni-coral)] px-1.5 py-px text-[10px] font-bold leading-[1.4] text-white tabular-nums">
+                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                </span>
+              ) : null}
+            </Link>
+            <Link
+              to={landlordBookingsPath()}
+              className={landlordDesktopTabClass(activeSection === 'bookings')}
+            >
+              Bookings
+            </Link>
+            <button
+              type="button"
+              onClick={() => goLandlordSection('profile')}
+              className={landlordDesktopTabClass(activeSection === 'profile')}
+            >
+              Profile
+            </button>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-[18px]">
+            <Link
+              to={addListingHref}
+              className="inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] bg-[var(--quni-coral)] px-[15px] py-[9px] text-[13.5px] font-semibold text-white transition-colors duration-200 ease-[var(--ease-standard)] hover:bg-[var(--quni-coral-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            >
+              + Add new listing
+            </Link>
+            <Link
+              to="/messages"
+              className="relative inline-flex text-[var(--quni-ink-4)] hover:text-[var(--quni-coral-active)]"
+              aria-label={
+                unreadMessageCount > 0
+                  ? `Messages, ${unreadMessageCount} unread`
+                  : 'Messages'
+              }
+            >
+              <Bell className="h-[21px] w-[21px]" strokeWidth={1.8} aria-hidden />
+              {unreadMessageCount > 0 ? (
+                <span
+                  className="absolute -right-[3px] -top-[3px] h-2 w-2 rounded-full border-[1.5px] border-[var(--quni-cream)] bg-[var(--quni-coral)]"
+                  aria-hidden
+                />
+              ) : null}
+            </Link>
+            <div className="relative" ref={accountMenuRef}>
+              <button
+                type="button"
+                onClick={() => setAccountMenuOpen((o) => !o)}
+                className="inline-flex items-center gap-2.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Account menu"
+              >
+                <span className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)]">
+                  {desktopInitials}
+                </span>
+                <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{accountFirstName}</span>
+                <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
+              </button>
+              {accountMenuOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-[60] mt-2 w-44 overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-[var(--shadow-3)]"
+                >
+                  <Link
+                    to={profileHref}
+                    role="menuitem"
+                    className="block px-4 py-2 text-sm text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)]"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full px-4 py-2 text-left text-sm text-[var(--quni-danger)] hover:bg-[var(--quni-surface-2)]"
+                    onClick={() => {
+                      setAccountMenuOpen(false)
+                      void signOut()
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </header>
+    )
+  }
 
   if (listingHubChrome) {
     return (
