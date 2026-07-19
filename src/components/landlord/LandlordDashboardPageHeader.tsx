@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { landlordDashboardTabPath, type UserDashboardSection } from '../../lib/userDashboardNav'
-import { landlordDashboardHeading } from '../../lib/landlordProfileReadiness'
 import type { LandlordProfileRow } from '../../lib/authProfile'
 
 type LandlordTab = Exclude<UserDashboardSection, 'saved'>
@@ -23,26 +22,21 @@ type Props = {
 }
 
 export const landlordDashboardPageInsetClass =
-  'max-w-site mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 pt-4 pb-8 lg:pt-5 lg:pb-10'
+  'max-w-site mx-auto w-full min-w-0 px-4 sm:px-8 pt-4 pb-8 sm:py-8 lg:pb-14'
 
 export function landlordDashboardTabSubtitle(tab: LandlordTab): string {
   return TAB_SUBTITLES[tab]
 }
 
 export default function LandlordDashboardPageHeader({
-  profile,
-  activeTab,
+  profile: _profile,
+  activeTab: _activeTab,
   pendingBookings: _pendingBookings,
   totalBookings: _totalBookings,
   onTabSelect: _onTabSelect,
 }: Props) {
-  // Section strip lives in AppShellSectionNav; page keeps title + subtitle only.
-  return (
-    <div className="mb-6 hidden sm:block">
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{landlordDashboardHeading(profile)}</h1>
-      <p className="text-sm text-gray-500 mt-1">{landlordDashboardTabSubtitle(activeTab)}</p>
-    </div>
-  )
+  // Section strip + wordmark live in AppShellHeader; no body page title.
+  return null
 }
 
 type LandlordMessagesTabShellProps = {

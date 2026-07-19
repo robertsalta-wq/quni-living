@@ -9,6 +9,7 @@ import {
   isDashboardMobileChromePath,
   isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
+  isLandlordDesktopAppChrome,
 } from './appShell'
 
 describe('appShell membership', () => {
@@ -83,5 +84,13 @@ describe('appShell membership', () => {
     expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', false)).toBe(true)
     expect(isListingEditDesktopSectionChrome('/landlord/property/new', false)).toBe(true)
     expect(isListingEditDesktopSectionChrome('/landlord/property/edit/1', true)).toBe(false)
+  })
+
+  it('uses authenticated app chrome for landlord section destinations on sm+', () => {
+    expect(isLandlordDesktopAppChrome('landlord', '/landlord/dashboard', false)).toBe(true)
+    expect(isLandlordDesktopAppChrome('landlord', '/messages', false)).toBe(true)
+    expect(isLandlordDesktopAppChrome('landlord', '/landlord/dashboard', true)).toBe(false)
+    expect(isLandlordDesktopAppChrome('renter', '/student-dashboard', false)).toBe(false)
+    expect(isLandlordDesktopAppChrome('landlord', '/landlord/property/edit/1', false)).toBe(false)
   })
 })

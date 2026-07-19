@@ -17,9 +17,19 @@ type Props = {
   onRefresh: () => Promise<void>
   /** For deep links from profile (“open dashboard payouts”). */
   anchorId?: string
+  /**
+   * `full` — existing dashboard card (mobile + legacy).
+   * `status` — compact enabled / not-set-up card for desktop overview.
+   */
+  presentation?: 'full' | 'status'
 }
 
-export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent-payouts' }: Props) {
+export function LandlordStripePayoutsCard({
+  profile,
+  onRefresh,
+  anchorId = 'rent-payouts',
+  presentation = 'full',
+}: Props) {
   const [connectLoading, setConnectLoading] = useState(false)
   const [syncLoading, setSyncLoading] = useState(false)
   const [manageLoading, setManageLoading] = useState(false)
@@ -171,6 +181,94 @@ export function LandlordStripePayoutsCard({ profile, onRefresh, anchorId = 'rent
       setResetLoading(false)
     }
   }, [onRefresh])
+
+  if (presentation === 'status') {
+    if (stripePayoutsReady) {
+      return (
+        <div
+          id={anchorId}
+          className="flex w-full flex-col justify-center rounded-[var(--radius-lg)] border border-[rgba(29,158,117,0.30)] bg-[var(--quni-success-bg)] px-[18px] py-4 shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] scroll-mt-24"
+        >
+          <div className="mb-1.5 flex items-center gap-2.5">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--quni-success-strong)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0"
+              aria-hidden
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <path d="m9 11 3 3L22 4" />
+            </svg>
+            <p className="m-0 text-sm font-bold text-[var(--quni-success-strong)]">Rent payouts enabled</p>
+          </div>
+          <p className="m-0 mb-2.5 text-[12.5px] leading-normal text-[var(--quni-success-strong)]">
+            Connected & verified — paid out within 2 business days.
+          </p>
+          <button
+            type="button"
+            disabled={manageLoading || syncLoading}
+            onClick={() => void manageBankAccount()}
+            className="w-fit text-[13px] font-semibold text-[var(--quni-success-strong)] transition-colors hover:text-[var(--quni-coral-active)] disabled:opacity-50"
+          >
+            {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
+          </button>
+          {connectError ? (
+            <p className="mt-2 text-sm text-[var(--quni-danger)]" role="alert">
+              {connectError}
+            </p>
+          ) : null}
+        </div>
+      )
+    }
+
+    return (
+      <div
+        id={anchorId}
+        className="flex w-full flex-col justify-center rounded-[var(--radius-lg)] border border-[rgba(255,111,97,0.40)] bg-[rgba(255,111,97,0.06)] px-[18px] py-4 shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] scroll-mt-24"
+      >
+        <div className="mb-1.5 flex items-center gap-2.5">
+          <span className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[#FBEBE9] text-[#B4322A]">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+            </svg>
+          </span>
+          <p className="m-0 text-sm font-bold text-[var(--quni-ink)]">Rent payouts not set up</p>
+        </div>
+        <p className="m-0 mb-2.5 text-[12.5px] leading-normal text-[var(--quni-ink-4)]">
+          Connect a bank account so rent can be paid out to you.
+        </p>
+        <button
+          type="button"
+          disabled={connectLoading || syncLoading || manageLoading}
+          onClick={() => void (stripeNeedsOnboarding ? manageBankAccount() : startStripeConnect())}
+          className="w-fit text-[13px] font-semibold text-[var(--quni-coral)] transition-colors hover:text-[var(--quni-coral-active)] disabled:opacity-50"
+        >
+          {connectLoading || manageLoading ? 'Opening Stripe…' : 'Set up payouts →'}
+        </button>
+        {connectError ? (
+          <p className="mt-2 text-sm text-[var(--quni-danger)]" role="alert">
+            {connectError}
+          </p>
+        ) : null}
+      </div>
+    )
+  }
 
   if (stripePayoutsReady) {
     return (
