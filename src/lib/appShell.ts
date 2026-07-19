@@ -28,16 +28,22 @@ export type AppShellMode = 'section' | 'focus'
 export type AppChromeMode = 'map' | 'task' | 'task-header'
 
 /**
- * One function decides chrome mode for both shells — viewport-aware (Option A, §2):
- * focus flows use Task chrome on mobile, Map (dashboard template) on desktop so
- * landlords/renters stay in the same header when opening a booking or apply.
+ * One function decides chrome mode for both shells.
+ *
+ * Landlord rule: every app-shell surface is Map (dashboard template). Landlords
+ * never enter Task / task-header chrome — exit is always via global nav (or
+ * marketing Header outside the shell).
+ *
+ * Renter apply keeps task-header on mobile / Map on desktop until a later pass.
  */
 export function appChromeMode(pathname: string, isMobile: boolean): AppChromeMode | null {
   const mode = appShellMode(pathname)
   if (mode == null) return null
   if (mode === 'section') return 'map'
-  if (isListingEditPath(pathname)) return isMobile ? 'task' : 'map'
-  // Booking review + renter apply: task-header on mobile, Map on desktop.
+  // Landlord listing edit + booking review — always dashboard chrome.
+  if (isListingEditPath(pathname)) return 'map'
+  if (/^\/landlord\/bookings\//.test(pathname)) return 'map'
+  // Renter apply: task-header on mobile, Map on desktop.
   return isMobile ? 'task-header' : 'map'
 }
 

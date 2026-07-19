@@ -113,15 +113,15 @@ describe('appChromeMode — Template System Brief (docs/app-chrome-brief.md) §3
     { path: '/student/profile', mobile: 'map', desktop: 'map' },
     { path: '/messages', mobile: 'map', desktop: 'map' },
     { path: '/messages/abc123', mobile: 'map', desktop: 'map' },
-    // Listing edit / new — Option A: task on mobile, Map-shaped on desktop (§2, §3 rows 5-8)
-    { path: '/landlord/property/edit/1', mobile: 'task', desktop: 'map' },
-    { path: '/landlord/property/new', mobile: 'task', desktop: 'map' },
-    { path: '/landlord/property/edit/1/basic', mobile: 'task', desktop: 'map' },
-    { path: '/landlord/property/new/basic', mobile: 'task', desktop: 'map' },
-    { path: '/landlord/property/edit/1/section/pricing', mobile: 'task', desktop: 'map' },
-    { path: '/landlord/property/new/section/photos', mobile: 'task', desktop: 'map' },
-    // task-header on mobile / Map on desktop — booking review + apply stay in dashboard chrome on sm+
-    { path: '/landlord/bookings/b1/review', mobile: 'task-header', desktop: 'map' },
+    // Landlord focus flows — always Map (dashboard). Never task / task-header.
+    { path: '/landlord/property/edit/1', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/property/new', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/property/edit/1/basic', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/property/new/basic', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/property/edit/1/section/pricing', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/property/new/section/photos', mobile: 'map', desktop: 'map' },
+    { path: '/landlord/bookings/b1/review', mobile: 'map', desktop: 'map' },
+    // Renter apply — task-header on mobile / Map on desktop
     { path: '/booking/prop1', mobile: 'task-header', desktop: 'map' },
   ]
 

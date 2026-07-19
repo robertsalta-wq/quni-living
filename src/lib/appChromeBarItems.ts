@@ -29,7 +29,7 @@ export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'profile', label: 'Profile' },
 ]
 
-/** Listing hub action bar — Phase 1 lock, §5.4: Health · Preview only (no Insights, no Save/Done). */
+/** Listing hub Preview affordance specs (in-page under Map chrome; formerly action-bar). */
 export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChromeBarItemSpec[] {
   return [
     { id: 'health', label: 'Health', active: true },
@@ -37,7 +37,7 @@ export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChrome
   ]
 }
 
-/** Basic-info drill-in — §3 row 7 (edit: Cancel · Save) / row 8 (setup: Draft · Next). */
+/** Basic-info drill-in footer — edit: Cancel · Save / setup: Draft · Next. */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean

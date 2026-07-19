@@ -23,7 +23,7 @@ describe('AppActionBar — Nav bar item sets (§3, §6 "dashboard = 5 nav")', ()
   })
 })
 
-describe('AppActionBar — listing hub items (§5.4 Phase 1 lock: Health · Preview only)', () => {
+describe('Listing hub Preview specs (in-page under Map chrome)', () => {
   it('has exactly two items — no Insights stub, no reserved slots', () => {
     const items = listingHubActionBarItemSpecs(true)
     expect(items).toHaveLength(2)
