@@ -347,6 +347,7 @@ export default function Header({ embedded = false }: HeaderProps) {
   }
 
   return (
+    <>
     <ChromeHeaderShell
       embedded={embedded}
       data-chrome-header="marketing"
@@ -605,7 +606,7 @@ export default function Header({ embedded = false }: HeaderProps) {
           </button>
         </div>
         </div>
-
+    </ChromeHeaderShell>
         {mobileNavOpen && (
           <>
             <div
@@ -736,6 +737,6 @@ export default function Header({ embedded = false }: HeaderProps) {
             </div>
           </>
         )}
-    </ChromeHeaderShell>
+    </>
   )
 }

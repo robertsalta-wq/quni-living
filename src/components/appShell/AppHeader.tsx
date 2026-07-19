@@ -237,9 +237,11 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop-landlord">
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-          <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
-            <QuniLogoHomeLink />
-            <span className={quniDashboardLabelClassName}>Dashboard</span>
+          <div className="min-w-0 shrink-0">
+            <div className="inline-flex min-w-0 items-center gap-2">
+              <QuniLogoHomeLink />
+              <span className={quniDashboardLabelClassName}>Dashboard</span>
+            </div>
           </div>
           <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
             <nav
@@ -304,9 +306,11 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop-renter">
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-          <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
-            <QuniLogoHomeLink />
-            <span className={quniDashboardLabelClassName}>Dashboard</span>
+          <div className="min-w-0 shrink-0">
+            <div className="inline-flex min-w-0 items-center gap-2">
+              <QuniLogoHomeLink />
+              <span className={quniDashboardLabelClassName}>Dashboard</span>
+            </div>
           </div>
           <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
             <nav
@@ -352,9 +356,11 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop">
         <div className="flex w-full max-w-full items-center justify-between gap-3">
-          <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
-            <QuniLogoHomeLink />
-            <span className={quniDashboardLabelClassName}>Dashboard</span>
+          <div className="min-w-0 shrink-0">
+            <div className="inline-flex min-w-0 items-center gap-2">
+              <QuniLogoHomeLink />
+              <span className={quniDashboardLabelClassName}>Dashboard</span>
+            </div>
           </div>
           {user ? (
             <DesktopAccountMenu
@@ -371,20 +377,26 @@ export default function AppHeader() {
 
   return (
     <ChromeHeaderShell data-chrome-header="dashboard-mobile">
-      <div className="flex w-full max-w-full items-center justify-between gap-2">
-        <div className="inline-flex min-w-0 items-center gap-2">
-          <QuniLogoHomeLink />
-          <span className={quniDashboardLabelClassName}>Dashboard</span>
+      {/* Same 3-column grid as marketing Header so the logo sits in the same left cell. */}
+      <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
+        <div className="min-w-0 shrink-0">
+          <div className="inline-flex min-w-0 items-center gap-2">
+            <QuniLogoHomeLink />
+            <span className={quniDashboardLabelClassName}>Dashboard</span>
+          </div>
         </div>
-        {user ? (
-          <Link
-            to={profileHref}
-            className="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
-            aria-label="Profile"
-          >
-            {mobileInitials}
-          </Link>
-        ) : null}
+        <div className="min-w-0" aria-hidden />
+        <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
+          {user ? (
+            <Link
+              to={profileHref}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              aria-label="Profile"
+            >
+              {mobileInitials}
+            </Link>
+          ) : null}
+        </div>
       </div>
     </ChromeHeaderShell>
   )
