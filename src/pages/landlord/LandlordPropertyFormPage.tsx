@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { useAuthContext } from '../../context/AuthContext'
 import type { Database } from '../../lib/database.types'
@@ -12,6 +13,8 @@ import {
   type ListingHubSectionId,
 } from '../../lib/listingEditHubHealth'
 import { ListingHubSectionIcon } from '../../components/landlord/listingHub/ListingHubVisuals'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
+import { listingSectionDrillInActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import { ROOM_TYPE_LABELS, isPropertyListingType, isRoomType, type PropertyListingType, type RoomType } from '../../lib/listings'
 import { SITE_CONTENT_MAX_CLASS } from '../../lib/site'
 import {
@@ -2454,6 +2457,19 @@ export default function LandlordPropertyFormPage() {
     }
   }
 
+  const hubSectionActionItems: AppActionBarItem[] = useMemo(
+    () =>
+      listingSectionDrillInActionBarItemSpecs({ saving: submitting }).map((spec) => ({
+        ...spec,
+        icon: spec.primary ? Check : X,
+        ...(spec.id === 'cancel'
+          ? { to: hubReturnPath }
+          : { onClick: () => formRef.current?.requestSubmit() }),
+      })),
+    [submitting, hubReturnPath],
+  )
+  useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
+
   if (!isSupabaseConfigured) {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-sm text-gray-600">
@@ -3949,7 +3965,7 @@ export default function LandlordPropertyFormPage() {
                 </div>
               ) : null}
             </div>
-            <div className="flex gap-3">
+            <div className={isHubSectionMode ? 'hidden gap-3 sm:flex' : 'flex gap-3'}>
               <button
                 type="submit"
                 disabled={submitting}

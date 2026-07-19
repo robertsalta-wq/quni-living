@@ -24,8 +24,8 @@ type Props = {
 
 /**
  * Listing health hub — identity row + section checklist.
- * Landlord chrome is always Map (dashboard): Preview lives in-page; exit via
- * global nav (Listings tab) — no Task action bar.
+ * Mobile actions (‹ Listings · Health · Preview) live in AppActionBar.
+ * Desktop Preview stays in-page (max-sm:hidden).
  */
 export default function ListingHealthHub({
   propertyId,
@@ -69,14 +69,14 @@ export default function ListingHealthHub({
               to={previewHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
               Preview
             </Link>
           ) : (
             <span
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line-soft)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-5)]"
+              className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line-soft)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-5)]"
               title="Publish the listing to preview the public page"
             >
               <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />

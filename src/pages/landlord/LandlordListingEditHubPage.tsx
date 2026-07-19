@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
+import { Activity, ChevronLeft, Eye } from 'lucide-react'
 import { matchPath, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../components/appShell/AppChromeActionsContext'
 import ListingBasicInfoDrillIn, {
   type ListingBasicInfoValues,
 } from '../../components/landlord/listingHub/ListingBasicInfoDrillIn'
 import ListingHealthHub from '../../components/landlord/listingHub/ListingHealthHub'
 import { useListingHubProperty } from '../../hooks/useListingHubProperty'
+import { LANDLORD_LISTINGS_EXIT_HREF, listingHubActionBarItemSpecs } from '../../lib/appChromeBarItems'
 import {
   computeListingHubHealth,
   listingHubPath,
@@ -223,6 +226,21 @@ export default function LandlordListingEditHubPage() {
     }
   }
 
+  const hubActionItems: AppActionBarItem[] = useMemo(() => {
+    const icons = { 'exit-listings': ChevronLeft, health: Activity, preview: Eye } as const
+    return listingHubActionBarItemSpecs(previewHref != null).map((spec) => ({
+      ...spec,
+      icon: icons[spec.id as keyof typeof icons],
+      ...(spec.id === 'exit-listings' ? { to: LANDLORD_LISTINGS_EXIT_HREF } : {}),
+      ...(spec.id === 'preview' && previewHref ? { to: previewHref } : {}),
+    }))
+  }, [previewHref])
+
+  /**
+   * `null` when `isBasic` — ListingBasicInfoDrillIn owns registration.
+   */
+  useSetAppChromeActions(isBasic ? null : hubActionItems)
+
   if (propertyId && loading) {
     return (
       <div className="flex flex-1 items-center justify-center bg-[var(--quni-surface-2)] p-8 text-sm text-[var(--quni-ink-4)]">
@@ -237,7 +255,7 @@ export default function LandlordListingEditHubPage() {
         <p className="text-sm text-[var(--quni-danger-fg)]">{error}</p>
         <button
           type="button"
-          onClick={() => navigate('/landlord/dashboard?tab=listings')}
+          onClick={() => navigate(LANDLORD_LISTINGS_EXIT_HREF)}
           className="rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white"
         >
           Back to listings

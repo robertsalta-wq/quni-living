@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Building2, CalendarDays, Heart, LayoutGrid, MessageSquare, User, type LucideIcon } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
 import { isRenterRole } from '../../lib/authProfile'
-import { appChromeMode } from '../../lib/appShell'
+import { appChromeBarContents } from '../../lib/appShell'
 import { LANDLORD_NAV_BAR_ITEMS, RENTER_NAV_BAR_ITEMS } from '../../lib/appChromeBarItems'
 import { landlordMobileActiveSection } from '../../lib/landlordMobileChrome'
 import { renterMobileActiveSection } from '../../lib/renterMobileChrome'
@@ -156,20 +156,18 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
 }
 
 /**
- * One bottom bar, per `appChromeMode` — nav (global tabs) for `map` / `task-header`,
- * action (page-scoped, from `AppChromeActionsContext`) for `task`. Mobile only.
+ * One bottom bar (mobile only). Contents from appChromeBarContents — independent
+ * of the header. Browse → nav; listing edit → page-actions from context.
  */
 export default function AppActionBar() {
   const { role } = useAuthContext()
   const location = useLocation()
   const isMobile = useIsMobile()
   const actionItems = useAppChromeActions()
+  const bar = appChromeBarContents(location.pathname, role, isMobile)
 
-  if (!isMobile) return null
-  const mode = appChromeMode(location.pathname, isMobile)
-  if (mode == null) return null
-
-  if (mode === 'task') return <ActionBar items={actionItems} />
+  if (bar === 'none') return null
+  if (bar === 'page-actions') return <ActionBar items={actionItems} />
 
   if (role === 'landlord') return <NavBar role="landlord" />
   if (isRenterRole(role)) return <NavBar role="renter" />

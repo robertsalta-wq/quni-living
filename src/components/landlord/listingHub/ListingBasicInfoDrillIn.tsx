@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Check, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import {
   fieldsFromHubListingTypeTile,
@@ -8,6 +9,7 @@ import {
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
+import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { ListingHubStatusDot } from './ListingHubVisuals'
 
 const TITLE_MAX = 60
@@ -116,6 +118,24 @@ export default function ListingBasicInfoDrillIn({
 
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
+
+  const actionItems: AppActionBarItem[] = useMemo(() => {
+    const specs = listingBasicInfoActionBarItemSpecs({
+      isSetupMode,
+      saving,
+      canSubmit: Boolean(title.trim()),
+    })
+    return specs.map((spec) => ({
+      ...spec,
+      icon: spec.primary ? Check : X,
+      onClick:
+        spec.id === 'cancel'
+          ? onCancel
+          : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
+    }))
+  }, [isSetupMode, saving, title, values, onSave, onCancel])
+  useSetAppChromeActions(actionItems)
+
   const footerSpecs = listingBasicInfoActionBarItemSpecs({
     isSetupMode,
     saving,
@@ -297,7 +317,8 @@ export default function ListingBasicInfoDrillIn({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3">
+      {/* Desktop only — mobile uses AppActionBar (same specs). */}
+      <div className="hidden shrink-0 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3 sm:block">
         <div className="flex gap-3">
           {footerSpecs.map((spec) => {
             const primary = Boolean(spec.primary)

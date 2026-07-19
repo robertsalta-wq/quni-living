@@ -1,7 +1,6 @@
 /**
- * Pure, framework-agnostic item specs for `AppActionBar` — kept separate from the
- * component/icons so §6 "bar shows the declared items" is unit-testable without
- * rendering (see appChromeBarItems.test.ts + docs/app-chrome-brief.md §3, §6).
+ * Pure, framework-agnostic item specs for `AppActionBar` — and for desktop
+ * in-page footers (same source, two targets). See docs/app-chrome-brief.md.
  */
 export type AppChromeBarItemSpec = {
   id: string
@@ -11,7 +10,10 @@ export type AppChromeBarItemSpec = {
   disabled?: boolean
 }
 
-/** Nav bar — landlord, §3 row 1. */
+/** Fixed hub exit — listings tab. */
+export const LANDLORD_LISTINGS_EXIT_HREF = '/landlord/dashboard?tab=listings'
+
+/** Nav bar — landlord browse. */
 export const LANDLORD_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'listings', label: 'Listings' },
@@ -20,7 +22,7 @@ export const LANDLORD_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'profile', label: 'Profile' },
 ]
 
-/** Nav bar — renter, §3 row 2. */
+/** Nav bar — renter browse. */
 export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'bookings', label: 'Bookings' },
@@ -29,15 +31,16 @@ export const RENTER_NAV_BAR_ITEMS: AppChromeBarItemSpec[] = [
   { id: 'profile', label: 'Profile' },
 ]
 
-/** Listing hub Preview affordance specs (in-page under Map chrome; formerly action-bar). */
+/** Listing hub — mobile action bar: exit · Health · Preview. */
 export function listingHubActionBarItemSpecs(hasPreviewHref: boolean): AppChromeBarItemSpec[] {
   return [
+    { id: 'exit-listings', label: '‹ Listings' },
     { id: 'health', label: 'Health', active: true },
     { id: 'preview', label: 'Preview', disabled: !hasPreviewHref },
   ]
 }
 
-/** Basic-info drill-in footer — edit: Cancel · Save / setup: Draft · Next. */
+/** Basic-info drill-in — Cancel · Save / setup: Draft · Next. Cancel → hub (fixed). */
 export function listingBasicInfoActionBarItemSpecs(opts: {
   isSetupMode: boolean
   saving: boolean
@@ -55,11 +58,7 @@ export function listingBasicInfoActionBarItemSpecs(opts: {
       ]
 }
 
-/**
- * Section drill-in (`LandlordPropertyFormPage`, hub-section mode) — §3 row 7.
- * Only Cancel + submit exist on this page today (no distinct draft/next intent),
- * so setup vs edit does not change the item set here (unlike Basic info above).
- */
+/** Section drill-in — Cancel · Save. Cancel → hub (fixed). */
 export function listingSectionDrillInActionBarItemSpecs(opts: { saving: boolean }): AppChromeBarItemSpec[] {
   return [
     { id: 'cancel', label: 'Cancel', disabled: opts.saving },
