@@ -134,7 +134,16 @@ describe('one header geometry shell (marketing reference)', () => {
   it('AppHeader mobile uses the same logo grid cell as marketing', () => {
     const appHeader = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
     expect(appHeader).toMatch(/grid-cols-\[auto_minmax\(0,1fr\)_auto\]/)
-    expect(appHeader).toMatch(/min-w-0 shrink-0/)
+    expect(appHeader).toContain('DashboardBrandLockup')
+  })
+
+  it('DashboardBrandLockup locks logo cluster height to the marketing logo box', () => {
+    const lockup = readFileSync(join(process.cwd(), 'src/components/SiteBrandLockup.tsx'), 'utf8')
+    expect(lockup).toContain('export function DashboardBrandLockup')
+    expect(lockup).toMatch(/flex h-9 items-center gap-2 sm:h-10/)
+    expect(lockup).toContain('QUNI_LOGO_MARK_WRAP_CLASS')
+    expect(lockup).toMatch(/data-chrome-brand="dashboard"/)
+    expect(lockup).toMatch(/data-chrome-brand="marketing"/)
   })
 
   it('AppHeader and marketing Header route through the shell', () => {

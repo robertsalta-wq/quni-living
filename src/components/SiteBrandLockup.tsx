@@ -50,11 +50,35 @@ export function QuniLogoHomeLink({ className = '' }: { className?: string }) {
   )
 }
 
+/**
+ * Marketing mobile left-cell logo wrapper (SiteBrandLockup without the AI control).
+ * Keep this class string identical so dashboard and marketing share the same mark box.
+ */
+export const QUNI_LOGO_MARK_WRAP_CLASS = 'flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2'
+
+/**
+ * Dashboard brand: same logo mark box as marketing, plus "Dashboard".
+ * Height is locked to the logo (`h-9` / `sm:h-10`) so the label’s font metrics
+ * cannot grow the flex cluster and shift the logo within the chrome row.
+ */
+export function DashboardBrandLockup() {
+  return (
+    <div className="min-w-0 shrink-0" data-chrome-brand="dashboard">
+      <div className="flex h-9 items-center gap-2 sm:h-10">
+        <div className={QUNI_LOGO_MARK_WRAP_CLASS}>
+          <QuniLogoHomeLink />
+        </div>
+        <span className={quniDashboardLabelClassName}>Dashboard</span>
+      </div>
+    </div>
+  )
+}
+
 /** Same logo + AI entry as the main site header (size, spacing, home link). */
 export default function SiteBrandLockup({ variant = 'default' }: { variant?: LogoVariant }) {
   const isAi = variant === 'ai'
   return (
-    <div className="flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2">
+    <div className={QUNI_LOGO_MARK_WRAP_CLASS} data-chrome-brand="marketing">
       {isAi ? (
         <Link
           to="/"
