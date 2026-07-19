@@ -6,7 +6,7 @@
 
 ### 1. Header — one shell, identical geometry everywhere
 - Exactly **one** geometry owner: `ChromeHeaderShell` (marketing Header is the visual reference).
-- Same height, colour, border, logo size, logo position, max-width, padding, safe-area for marketing and dashboard.
+- Same **fixed** height (row `h-11`, not `min-h-11`), colour, border, logo size, logo position, max-width, padding, safe-area for marketing and dashboard. A min-height floor is not “same height.”
 - Only **inner content** varies (marketing links vs brand + "Dashboard" + tabs).
 - **Landlords** in the app shell: always dashboard-inner. Never a back/title task header.
 
