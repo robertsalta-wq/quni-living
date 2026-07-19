@@ -109,14 +109,17 @@ describe('fixed-URL exits — never history.back', () => {
 })
 
 describe('one header geometry shell (marketing reference)', () => {
-  it('exports marketing geometry constants including locked row min-height', () => {
+  it('exports marketing geometry constants including FIXED row height (not min-height)', () => {
     expect(CHROME_HEADER_INNER_CLASS).toContain(SITE_CONTENT_MAX_CLASS)
     expect(CHROME_HEADER_INNER_CLASS).toContain('py-4')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('bg-[var(--brand-header-bg)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('border-[var(--brand-header-border)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('pt-safe-top')
-    expect(CHROME_HEADER_ROW_CLASS).toContain('min-h-11')
+    // Fixed h-11 — min-h-11 is a floor and lets marketing grow past dashboard.
+    expect(CHROME_HEADER_ROW_CLASS).toMatch(/(?:^|\s)h-11(?:\s|$)/)
+    expect(CHROME_HEADER_ROW_CLASS).not.toContain('min-h-11')
     expect(CHROME_HEADER_ROW_CLASS).toContain('items-center')
+    expect(CHROME_HEADER_ROW_CLASS).toContain('overflow-hidden')
   })
 
   it('only ChromeHeaderShell declares the geometry container attribute', () => {
@@ -134,7 +137,16 @@ describe('one header geometry shell (marketing reference)', () => {
   it('AppHeader mobile uses the same logo grid cell as marketing', () => {
     const appHeader = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
     expect(appHeader).toMatch(/grid-cols-\[auto_minmax\(0,1fr\)_auto\]/)
-    expect(appHeader).toMatch(/min-w-0 shrink-0/)
+    expect(appHeader).toContain('DashboardBrandLockup')
+  })
+
+  it('DashboardBrandLockup locks logo cluster height to the marketing logo box', () => {
+    const lockup = readFileSync(join(process.cwd(), 'src/components/SiteBrandLockup.tsx'), 'utf8')
+    expect(lockup).toContain('export function DashboardBrandLockup')
+    expect(lockup).toMatch(/flex h-9 items-center gap-2 sm:h-10/)
+    expect(lockup).toContain('QUNI_LOGO_MARK_WRAP_CLASS')
+    expect(lockup).toMatch(/data-chrome-brand="dashboard"/)
+    expect(lockup).toMatch(/data-chrome-brand="marketing"/)
   })
 
   it('AppHeader and marketing Header route through the shell', () => {

@@ -23,7 +23,7 @@ import {
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
 import ChromeHeaderShell from '../ChromeHeaderShell'
-import { QuniLogoHomeLink, quniDashboardLabelClassName } from '../SiteBrandLockup'
+import { DashboardBrandLockup } from '../SiteBrandLockup'
 
 /** Match marketing Header main nav: text-sm + same gap scale. */
 function desktopTabClass(active: boolean): string {
@@ -237,12 +237,7 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop-landlord">
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-          <div className="min-w-0 shrink-0">
-            <div className="inline-flex min-w-0 items-center gap-2">
-              <QuniLogoHomeLink />
-              <span className={quniDashboardLabelClassName}>Dashboard</span>
-            </div>
-          </div>
+          <DashboardBrandLockup />
           <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
             <nav
               className="flex min-w-0 items-stretch justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
@@ -306,12 +301,7 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop-renter">
         <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-          <div className="min-w-0 shrink-0">
-            <div className="inline-flex min-w-0 items-center gap-2">
-              <QuniLogoHomeLink />
-              <span className={quniDashboardLabelClassName}>Dashboard</span>
-            </div>
-          </div>
+          <DashboardBrandLockup />
           <div className="-my-4 flex min-w-0 items-stretch justify-center self-stretch">
             <nav
               className="flex min-w-0 items-stretch justify-center gap-3 overflow-x-hidden lg:gap-4 xl:gap-5"
@@ -356,12 +346,7 @@ export default function AppHeader() {
     return (
       <ChromeHeaderShell data-chrome-header="dashboard-desktop">
         <div className="flex w-full max-w-full items-center justify-between gap-3">
-          <div className="min-w-0 shrink-0">
-            <div className="inline-flex min-w-0 items-center gap-2">
-              <QuniLogoHomeLink />
-              <span className={quniDashboardLabelClassName}>Dashboard</span>
-            </div>
-          </div>
+          <DashboardBrandLockup />
           {user ? (
             <DesktopAccountMenu
               displayName={displayName}
@@ -377,14 +362,9 @@ export default function AppHeader() {
 
   return (
     <ChromeHeaderShell data-chrome-header="dashboard-mobile">
-      {/* Same 3-column grid as marketing Header so the logo sits in the same left cell. */}
+      {/* Same 3-column grid as marketing; brand lockup locks logo box to h-9 like marketing. */}
       <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-        <div className="min-w-0 shrink-0">
-          <div className="inline-flex min-w-0 items-center gap-2">
-            <QuniLogoHomeLink />
-            <span className={quniDashboardLabelClassName}>Dashboard</span>
-          </div>
-        </div>
+        <DashboardBrandLockup />
         <div className="min-w-0" aria-hidden />
         <div className="relative z-10 flex shrink-0 items-center justify-end gap-2 sm:gap-3">
           {user ? (

@@ -587,7 +587,7 @@ export default function Header({ embedded = false }: HeaderProps) {
           <button
             type="button"
             onClick={() => setMobileNavOpen((o) => !o)}
-            className={`inline-flex md:hidden shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 min-h-11 min-w-11 ${
+            className={`inline-flex md:hidden h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 hover:bg-gray-50 ${
               dashboardMobileChrome ? 'max-sm:hidden' : ''
             }`}
             aria-expanded={mobileNavOpen}
