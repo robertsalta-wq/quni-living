@@ -6,14 +6,13 @@ import { useAuthContext } from '../context/AuthContext'
 import { getNavDashboardPath, INCOMPLETE_RENTER_DESTINATION, isRenterRole, needsOnboarding, type UserRole } from '../lib/authProfile'
 import { landlordDashboardProfilePath } from '../lib/landlordDashboardProfilePaths'
 import {
-  dashboardMobileHomePath,
   dashboardMobileSectionTitle,
   isDashboardMobileChromePath,
 } from '../lib/dashboardMobileChrome'
 import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
-import SiteBrandLockup from './SiteBrandLockup'
+import SiteBrandLockup, { QuniLogoHomeLink } from './SiteBrandLockup'
 import AiSparkleIcon from './AiSparkleIcon'
 import SiteSocialLinks from './SiteSocialLinks'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
@@ -76,7 +75,6 @@ export default function Header({ embedded = false }: HeaderProps) {
   const dashboardMobileTitle = dashboardMobileChrome
     ? dashboardMobileSectionTitle(role, location.pathname, location.search)
     : null
-  const dashboardHomeHref = dashboardMobileHomePath(role)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<DOMRect | null>(null)
   const [studentsOpen, setStudentsOpen] = useState(false)
@@ -378,14 +376,10 @@ export default function Header({ embedded = false }: HeaderProps) {
         <div className="min-w-0 shrink-0">
           {dashboardMobileChrome && dashboardMobileTitle ? (
             <>
-              <Link
-                to={dashboardHomeHref}
-                className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-1.5 font-display text-[22px] font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
-                aria-label={`Quni ${dashboardMobileTitle}`}
-              >
-                <span className="text-[#FF6F61]">Quni</span>
-                <span className="truncate text-[#1F2A44]">{dashboardMobileTitle}</span>
-              </Link>
+              <div className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-2">
+                <QuniLogoHomeLink />
+                <span className="truncate text-sm font-semibold text-[#1F2A44]">{dashboardMobileTitle}</span>
+              </div>
               <div className="hidden sm:block">
                 <SiteBrandLockup />
               </div>
