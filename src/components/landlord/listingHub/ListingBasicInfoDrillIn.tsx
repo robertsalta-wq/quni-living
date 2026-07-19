@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, X } from 'lucide-react'
 import type { PropertyListingType, RoomType } from '../../../lib/listings'
 import {
   fieldsFromHubListingTypeTile,
@@ -8,7 +7,6 @@ import {
   listingHubPath,
   type HubListingTypeTile,
 } from '../../../lib/listingEditHubHealth'
-import { useSetAppChromeActions, type AppActionBarItem } from '../../appShell/AppChromeActionsContext'
 import { listingBasicInfoActionBarItemSpecs } from '../../../lib/appChromeBarItems'
 import { ListingHubStatusDot } from './ListingHubVisuals'
 
@@ -118,20 +116,11 @@ export default function ListingBasicInfoDrillIn({
 
   const hubHref = listingHubPath({ propertyId })
   const nextHref = listingHubPath({ propertyId, view: 'property' })
-
-  const actionItems: AppActionBarItem[] = useMemo(() => {
-    const canSubmit = Boolean(title.trim())
-    const specs = listingBasicInfoActionBarItemSpecs({ isSetupMode, saving, canSubmit })
-    return specs.map((spec) => ({
-      ...spec,
-      icon: spec.primary ? Check : X,
-      onClick:
-        spec.id === 'cancel'
-          ? onCancel
-          : () => onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save'),
-    }))
-  }, [isSetupMode, saving, title, values, onSave, onCancel])
-  useSetAppChromeActions(actionItems)
+  const footerSpecs = listingBasicInfoActionBarItemSpecs({
+    isSetupMode,
+    saving,
+    canSubmit: Boolean(title.trim()),
+  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--quni-surface-2)]">
@@ -153,13 +142,19 @@ export default function ListingBasicInfoDrillIn({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         {error ? (
-          <div className="mb-4 rounded-xl border border-[var(--quni-danger-bg)] bg-[var(--quni-danger-bg)] px-3 py-2 text-sm text-[var(--quni-danger-fg)]" role="alert">
+          <div
+            className="mb-4 rounded-xl border border-[var(--quni-danger-bg)] bg-[var(--quni-danger-bg)] px-3 py-2 text-sm text-[var(--quni-danger-fg)]"
+            role="alert"
+          >
             {error}
           </div>
         ) : null}
 
         <div className="mb-[22px]">
-          <label htmlFor="hub-listing-title" className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]">
+          <label
+            htmlFor="hub-listing-title"
+            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]"
+          >
             Listing title
           </label>
           <input
@@ -201,7 +196,13 @@ export default function ListingBasicInfoDrillIn({
                     {sel ? (
                       <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--quni-coral)]">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
-                          <path d="M4 12.5l5 5L20 6" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          <path
+                            d="M4 12.5l5 5L20 6"
+                            stroke="#fff"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       </span>
                     ) : (
@@ -216,7 +217,10 @@ export default function ListingBasicInfoDrillIn({
         </div>
 
         <div className="mb-[22px]">
-          <label htmlFor="hub-listing-headline" className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]">
+          <label
+            htmlFor="hub-listing-headline"
+            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]"
+          >
             Headline <span className="font-medium normal-case tracking-normal text-[#B2AAB9]">· optional</span>
           </label>
           <input
@@ -233,7 +237,10 @@ export default function ListingBasicInfoDrillIn({
         </div>
 
         <div className="mb-[22px]">
-          <label htmlFor="hub-available-from" className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]">
+          <label
+            htmlFor="hub-available-from"
+            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]"
+          >
             Available from
           </label>
           <div className="flex items-center gap-2.5 rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-3">
@@ -290,7 +297,36 @@ export default function ListingBasicInfoDrillIn({
         </div>
       </div>
 
-      {/* Prefetch hint for next step (setup) */}
+      <div className="shrink-0 border-t border-[var(--quni-line-soft)] bg-white px-4 py-3">
+        <div className="flex gap-3">
+          {footerSpecs.map((spec) => {
+            const primary = Boolean(spec.primary)
+            const disabled = Boolean(spec.disabled)
+            return (
+              <button
+                key={spec.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (spec.id === 'cancel') {
+                    onCancel()
+                    return
+                  }
+                  onSave(values, spec.id === 'draft' ? 'draft' : spec.id === 'next' ? 'next' : 'save')
+                }}
+                className={
+                  primary
+                    ? 'flex-1 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50'
+                    : 'flex-1 rounded-[10px] border border-[#D8D3C7] bg-white px-4 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
+                }
+              >
+                {spec.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {isSetupMode ? <Link to={nextHref} className="hidden" tabIndex={-1} aria-hidden /> : null}
     </div>
   )

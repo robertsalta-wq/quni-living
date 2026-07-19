@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Eye } from 'lucide-react'
 import {
   LISTING_HUB_SECTIONS,
   listingHubPath,
@@ -17,13 +18,14 @@ type Props = {
   thumbUrl: string | null
   statusLabel: 'Active' | 'Draft' | 'Inactive' | 'Pending' | 'Suspended'
   health: ListingHubHealthResult
+  /** Public listing URL when live — otherwise Preview is disabled. */
+  previewHref?: string | null
 }
 
 /**
  * Listing health hub — identity row + section checklist.
- * View switcher + footer are gone: bar items (Health · Preview) live in
- * `AppActionBar` via `useSetAppChromeActions` (see `LandlordListingEditHubPage`).
- * Exit is via the `AppHeader` back control only (no in-page Save/Done).
+ * Landlord chrome is always Map (dashboard): Preview lives in-page; exit via
+ * global nav (Listings tab) — no Task action bar.
  */
 export default function ListingHealthHub({
   propertyId,
@@ -31,6 +33,7 @@ export default function ListingHealthHub({
   thumbUrl,
   statusLabel,
   health,
+  previewHref = null,
 }: Props) {
   const isSetup = health.isSetupMode
   const statusBadgeClass =
@@ -45,7 +48,7 @@ export default function ListingHealthHub({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--quni-surface-2)]">
-      {/* App bar */}
+      {/* Identity */}
       <div className="shrink-0 border-b border-[var(--quni-line-soft)] bg-white">
         <div className="flex items-center gap-2.5 px-3.5 py-2.5 sm:px-4">
           <span className="flex h-9 w-9 shrink-0 overflow-hidden rounded-[9px] bg-[var(--quni-surface-3)]">
@@ -61,6 +64,25 @@ export default function ListingHealthHub({
           >
             {statusLabel}
           </span>
+          {previewHref ? (
+            <Link
+              to={previewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            >
+              <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              Preview
+            </Link>
+          ) : (
+            <span
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--quni-line-soft)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--quni-ink-5)]"
+              title="Publish the listing to preview the public page"
+            >
+              <Eye className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              Preview
+            </span>
+          )}
         </div>
       </div>
 
