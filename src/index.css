@@ -244,8 +244,8 @@ code {
   @media (min-width: 768px) {
     .listing-form-section-nav {
       position: sticky;
-      /* Sit flush under the sticky marketing / site header — never a bare 0.5rem gap. */
-      top: var(--quni-fixed-header-offset);
+      /* Measured header height from AppShellLayout; fallback for marketing pages. */
+      top: var(--site-header-height, var(--quni-fixed-header-offset));
       width: 100%;
       border-radius: 0;
       box-shadow: none;
@@ -254,12 +254,14 @@ code {
     }
 
     [data-app-shell][data-listing-edit-desktop] .listing-form-section-nav {
-      top: var(--quni-fixed-header-offset);
+      top: var(--site-header-height, var(--quni-fixed-header-offset));
     }
 
     /* Header + sticky pills so in-page section jumps clear both. */
     [data-app-shell][data-listing-edit-desktop] .scroll-mt-below-header {
-      scroll-margin-top: calc(var(--quni-fixed-header-offset) + 3.25rem);
+      scroll-margin-top: calc(
+        var(--site-header-height, var(--quni-fixed-header-offset)) + 3.25rem
+      );
     }
   }
 }

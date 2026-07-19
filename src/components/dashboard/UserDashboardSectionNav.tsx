@@ -11,10 +11,12 @@ type Props = {
   pendingBookings?: number
   totalBookings?: number
   onSelect?: (section: Exclude<UserDashboardSection, 'messages'>) => void
+  /** Flush under site header — no outer margin; parent owns the border. */
+  embedded?: boolean
 }
 
 const landlordTabBaseClass =
-  'inline-flex items-center justify-center gap-0.5 min-w-0 px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap rounded-t-lg'
+  'inline-flex items-center justify-center gap-0.5 min-w-0 px-4 py-2.5 text-sm border-b-2 transition-colors whitespace-nowrap'
 
 const landlordTabBadgeClass =
   'tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-[9px] font-bold text-white leading-none'
@@ -23,8 +25,8 @@ function landlordTabClass(isActive: boolean): string {
   return [
     landlordTabBaseClass,
     isActive
-      ? 'border-indigo-600 text-indigo-700 bg-white font-medium -mb-px'
-      : 'border-transparent text-gray-500 font-medium hover:text-gray-800 hover:bg-gray-100/80',
+      ? 'border-[var(--quni-coral)] text-[var(--quni-ink)] bg-white/80 font-semibold -mb-px'
+      : 'border-transparent text-[var(--quni-ink-4)] font-medium hover:text-[var(--quni-ink)] hover:bg-white/50',
   ].join(' ')
 }
 
@@ -46,6 +48,7 @@ export default function UserDashboardSectionNav({
   pendingBookings = 0,
   totalBookings = 0,
   onSelect,
+  embedded = false,
 }: Props) {
   const { user } = useAuthContext()
   const unreadMessageCount = useUnreadMessageCount(user?.id)
@@ -56,9 +59,9 @@ export default function UserDashboardSectionNav({
 
     // Desktop / sm+ top strip only — mobile uses LandlordMobileBottomNav.
     return (
-      <div className="mb-6 border-b border-gray-200">
+      <div className={embedded ? '' : 'mb-6 border-b border-gray-200'}>
         <nav
-          className="flex justify-start gap-1 overflow-x-auto -mb-px"
+          className="flex justify-start gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mb-px"
           aria-label="Dashboard sections"
         >
           <button
@@ -106,7 +109,13 @@ export default function UserDashboardSectionNav({
   }
 
   return (
-    <div className="border-b border-[#E5E4E7] mb-6 -mx-4 overflow-hidden sm:mx-0">
+    <div
+      className={
+        embedded
+          ? 'overflow-hidden'
+          : 'border-b border-[#E5E4E7] mb-6 -mx-4 overflow-hidden sm:mx-0'
+      }
+    >
       <nav
         className="grid w-full min-w-0 grid-cols-5 items-end -mb-px sm:flex sm:justify-start sm:gap-5"
         aria-label="Dashboard sections"

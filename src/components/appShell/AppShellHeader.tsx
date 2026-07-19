@@ -105,7 +105,7 @@ export default function AppShellHeader({ trailing }: Props) {
   if (listingHubChrome) {
     return (
       <header
-        className="z-50 w-full max-w-full shrink-0 overflow-x-clip border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)] pt-safe-top"
+        className="z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--quni-cream-border)] bg-[var(--quni-cream)] pt-safe-top"
         data-app-shell-header="listing-hub"
       >
         <div className="mx-auto flex h-12 max-w-site items-center justify-between gap-2 px-3 sm:h-14 sm:px-6 lg:px-8">
@@ -141,7 +141,7 @@ export default function AppShellHeader({ trailing }: Props) {
   return (
     <header
       className={[
-        'z-50 w-full max-w-full shrink-0 overflow-x-clip border-b border-[#E8E0CC] bg-white pt-safe-top',
+        'z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[#E8E0CC] bg-white pt-safe-top',
         'transition-transform duration-200 ease-out will-change-transform',
         hidden ? 'max-sm:-translate-y-full max-sm:pointer-events-none' : 'translate-y-0',
       ].join(' ')}
