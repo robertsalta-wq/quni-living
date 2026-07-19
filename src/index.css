@@ -16,9 +16,7 @@
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
-  /* Logo panel + main nav bar (warm cream; not sage #8FB9AB) */
-  --brand-header-bg: #fef9e4;
-  --brand-header-border: #e8e0cc;
+  /* --brand-header-bg / --brand-header-border: defined once, in quni-design-tokens.css. */
   /* Fixed mobile header block height (logo row + padding + safe area). */
   --quni-fixed-header-offset: calc(
     5rem + max(

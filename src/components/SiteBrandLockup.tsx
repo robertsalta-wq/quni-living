@@ -12,9 +12,12 @@ type LogoVariant = keyof typeof LOGO
 export const quniLogoHomeLinkClassName =
   'flex min-w-0 shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900'
 
-/** “Dashboard” next to the logo — matches logo box height (h-9 / sm:h-10). */
+/**
+ * "Dashboard" next to the logo — optically matched to the Quni letterforms
+ * (not the 36/40px logo image box). Pair with `items-baseline` on the parent.
+ */
 export const quniDashboardLabelClassName =
-  'font-display text-[36px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)] sm:text-[40px]'
+  'font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)] sm:text-2xl'
 
 export function QuniLogoImg({ variant = 'default' }: { variant?: LogoVariant }) {
   const { src, srcSet } = LOGO[variant]
