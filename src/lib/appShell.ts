@@ -20,55 +20,83 @@ export const APP_SHELL_FAB_BOTTOM_CLASS =
 export type AppShellMode = 'section' | 'focus'
 
 /**
- * Chrome mode — drives `AppHeader` + `AppActionBar` (see docs/app-chrome-brief.md).
- * `map` = brand + "Dashboard" + nav bar. `task` = back + title + action bar.
- * `task-header` (Phase 1 only) = back + title header, but nav bar still (booking
- * review / renter apply — convert to `task` in Phase 2).
+ * Header and action bar are decided INDEPENDENTLY (docs/app-chrome-brief.md).
+ * Header state must never dictate bar contents.
  */
+
+/** Fixed exit from listing hub → listings tab (never history.back). */
+export const LANDLORD_LISTINGS_TAB_HREF = '/landlord/dashboard?tab=listings'
+
+/** Fixed exit from booking review → bookings tab. */
+export const LANDLORD_BOOKINGS_TAB_HREF = '/landlord/dashboard?tab=bookings'
+
+/**
+ * What to put *inside* the shared header shell on an app-shell route.
+ * `dashboard` = brand + "Dashboard" (+ desktop tabs). `task` = back + title
+ * (renter apply only this PR — landlords always `dashboard`).
+ */
+export type AppChromeHeaderInner = 'dashboard' | 'task'
+
+/**
+ * Mobile bottom bar contents. Desktop is always `none` (bar is mobile-only).
+ * `page-actions` = current page's controls via AppChromeActionsContext.
+ */
+export type AppChromeBarContents = 'nav' | 'page-actions' | 'none'
+
+/**
+ * Header inner slot — independent of the bar.
+ * Landlords in the app shell: always dashboard. Renter apply (deferred): task on mobile.
+ */
+export function appChromeHeaderInner(
+  pathname: string,
+  role: UserRole | undefined,
+  isMobile: boolean,
+): AppChromeHeaderInner | null {
+  if (!isAppShellPath(pathname)) return null
+  if (role === 'landlord') return 'dashboard'
+  if (role === 'admin') return 'dashboard'
+  if (isRenterRole(role) && /^\/booking\//.test(pathname) && isMobile) return 'task'
+  if (isRenterRole(role)) return 'dashboard'
+  return 'dashboard'
+}
+
+/**
+ * Mobile action bar contents — independent of the header.
+ * Landlord listing edit (hub + drill-ins) → page-actions.
+ * Booking review stays `nav` this PR (inline actions unchanged).
+ * Renter apply stays `nav` this PR.
+ */
+export function appChromeBarContents(
+  pathname: string,
+  role: UserRole | undefined,
+  isMobile: boolean,
+): AppChromeBarContents {
+  if (!isMobile) return 'none'
+  if (!isAppShellPath(pathname)) return 'none'
+  if ((role === 'landlord' || role === 'admin') && isListingEditPath(pathname)) {
+    return 'page-actions'
+  }
+  return 'nav'
+}
+
+/** @deprecated Coupled mode — do not use for new code. Prefer appChromeHeaderInner + appChromeBarContents. */
 export type AppChromeMode = 'map' | 'task' | 'task-header'
 
 /**
- * One function decides chrome mode for both shells.
- *
- * Landlord rule: every app-shell surface is Map (dashboard template). Landlords
- * never enter Task / task-header chrome — exit is always via global nav (or
- * marketing Header outside the shell).
- *
- * Renter apply keeps task-header on mobile / Map on desktop until a later pass.
+ * @deprecated Prefer appChromeHeaderInner + appChromeBarContents.
+ * Kept only so old imports compile; always returns a coarse legacy label.
  */
 export function appChromeMode(pathname: string, isMobile: boolean): AppChromeMode | null {
-  const mode = appShellMode(pathname)
-  if (mode == null) return null
-  if (mode === 'section') return 'map'
-  // Landlord listing edit + booking review — always dashboard chrome.
-  if (isListingEditPath(pathname)) return 'map'
-  if (/^\/landlord\/bookings\//.test(pathname)) return 'map'
-  // Renter apply: task-header on mobile, Map on desktop.
-  return isMobile ? 'task-header' : 'map'
+  if (!isAppShellPath(pathname)) return null
+  if (/^\/booking\//.test(pathname)) return isMobile ? 'task-header' : 'map'
+  return 'map'
 }
 
-/** Back-control destination label for task / task-header headers (`‹ {destination}`). */
+/** Back-control destination label for task headers (`‹ {destination}`). */
 export function appShellBackDestination(pathname: string): string {
   if (isListingEditPath(pathname)) return 'Listings'
   if (/^\/landlord\/bookings\//.test(pathname) || /^\/booking\//.test(pathname)) return 'Bookings'
   return 'Back'
-}
-
-export type AppChromeHeaderKind = 'map' | 'task'
-export type AppChromeBarKind = 'nav' | 'action' | 'none'
-
-/** Header shape for a mode — `task` and `task-header` share the same (back + title) shape, §1a. */
-export function appChromeHeaderKind(mode: AppChromeMode): AppChromeHeaderKind {
-  return mode === 'map' ? 'map' : 'task'
-}
-
-/**
- * Bar shape for a mode + viewport — the bottom bar is mobile-only (§3 "Desktop
- * placement"); `task-header` keeps the Nav bar in Phase 1 (§2 "is a *pass*").
- */
-export function appChromeBarKind(mode: AppChromeMode, isMobile: boolean): AppChromeBarKind {
-  if (!isMobile) return 'none'
-  return mode === 'task' ? 'action' : 'nav'
 }
 
 export function isAppShellPath(pathname: string): boolean {
@@ -211,11 +239,11 @@ export function isListingEditHubPath(pathname: string): boolean {
   return isListingEditPath(pathname)
 }
 
-/** Default back target when no location.state.returnTo is present. */
+/** Default back target — fixed URL only (never history.back). */
 export function appShellFocusFallbackPath(role: UserRole | undefined, pathname: string): string {
   if (role === 'landlord') {
-    if (pathname.startsWith('/landlord/property')) return '/landlord/dashboard?tab=listings'
-    if (/^\/landlord\/bookings\//.test(pathname)) return '/landlord/dashboard?tab=bookings'
+    if (pathname.startsWith('/landlord/property')) return LANDLORD_LISTINGS_TAB_HREF
+    if (/^\/landlord\/bookings\//.test(pathname)) return LANDLORD_BOOKINGS_TAB_HREF
     return '/landlord/dashboard'
   }
   if (isRenterRole(role)) {

@@ -9,10 +9,10 @@ import {
   dashboardMobileSectionTitle,
   isDashboardMobileChromePath,
 } from '../lib/dashboardMobileChrome'
-import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
 import SiteBrandLockup, { QuniLogoHomeLink } from './SiteBrandLockup'
+import ChromeHeaderShell from './ChromeHeaderShell'
 import AiSparkleIcon from './AiSparkleIcon'
 import SiteSocialLinks from './SiteSocialLinks'
 import { useUnreadMessageCount } from '../hooks/useUnreadMessageCount'
@@ -347,25 +347,21 @@ export default function Header({ embedded = false }: HeaderProps) {
   }
 
   return (
-    <header
-      className={[
-        // overflow-y-hidden with overflow-x-clip — clip alone forces overflow-y:auto in Chrome
-        // and paints a vertical scrollbar inside the header.
-        'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50',
+    <ChromeHeaderShell
+      embedded={embedded}
+      data-chrome-header="marketing"
+      className={
         embedded
           ? 'relative'
           : dashboardMobileChrome
             ? 'max-sm:relative sm:max-md:fixed sm:max-md:inset-x-0 sm:max-md:top-0 md:sticky md:top-0'
-            : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0',
-      ].join(' ')}
-      {...(embedded ? { 'data-header-embedded': '' } : {})}
+            : 'max-md:fixed max-md:inset-x-0 max-md:top-0 md:sticky md:top-0'
+      }
+      innerRef={mobileNavRootRef}
+      innerClassName={
+        dashboardMobileChrome ? 'max-sm:py-0 max-sm:h-14 max-sm:flex max-sm:items-center' : undefined
+      }
     >
-      <div
-        ref={mobileNavRootRef}
-        className={`${SITE_CONTENT_MAX_CLASS} ${
-          dashboardMobileChrome ? 'max-sm:py-0 max-sm:h-14 max-sm:flex max-sm:items-center py-4' : 'py-4'
-        }`}
-      >
         <div
           className={`grid w-full max-w-full items-center gap-2 sm:gap-3 md:gap-4 ${
             dashboardMobileChrome
@@ -740,7 +736,6 @@ export default function Header({ embedded = false }: HeaderProps) {
             </div>
           </>
         )}
-      </div>
-    </header>
+    </ChromeHeaderShell>
   )
 }

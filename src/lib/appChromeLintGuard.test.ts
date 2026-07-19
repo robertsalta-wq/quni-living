@@ -60,12 +60,14 @@ describe('findChromeViolations', () => {
     )
   })
 
-  it('allowlists AppHeader, AppActionBar, and marketing Header even with chrome tokens', () => {
-    const headerSrc = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
+  it('allowlists ChromeHeaderShell + AppActionBar; Header/AppHeader must not redeclare geometry', () => {
+    const shellSrc = readFileSync(join(process.cwd(), 'src/components/ChromeHeaderShell.tsx'), 'utf8')
     const barSrc = readFileSync(join(process.cwd(), 'src/components/appShell/AppActionBar.tsx'), 'utf8')
+    const headerSrc = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
     const marketingSrc = readFileSync(join(process.cwd(), 'src/components/Header.tsx'), 'utf8')
-    expect(findChromeViolations('src/components/appShell/AppHeader.tsx', headerSrc)).toEqual([])
+    expect(findChromeViolations('src/components/ChromeHeaderShell.tsx', shellSrc)).toEqual([])
     expect(findChromeViolations('src/components/appShell/AppActionBar.tsx', barSrc)).toEqual([])
+    expect(findChromeViolations('src/components/appShell/AppHeader.tsx', headerSrc)).toEqual([])
     expect(findChromeViolations('src/components/Header.tsx', marketingSrc)).toEqual([])
   })
 

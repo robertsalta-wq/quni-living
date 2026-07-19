@@ -23,24 +23,24 @@ describe('AppActionBar — Nav bar item sets (§3, §6 "dashboard = 5 nav")', ()
   })
 })
 
-describe('Listing hub Preview specs (in-page under Map chrome)', () => {
-  it('has exactly two items — no Insights stub, no reserved slots', () => {
+describe('Listing hub action bar — ‹ Listings · Health · Preview', () => {
+  it('has exactly three items — exit, Health, Preview', () => {
     const items = listingHubActionBarItemSpecs(true)
-    expect(items).toHaveLength(2)
-    expect(items.map((i) => i.id)).toEqual(['health', 'preview'])
+    expect(items).toHaveLength(3)
+    expect(items.map((i) => i.id)).toEqual(['exit-listings', 'health', 'preview'])
   })
 
-  it('Health is always the active (current view) item', () => {
-    expect(listingHubActionBarItemSpecs(true)[0]).toMatchObject({ id: 'health', active: true })
-    expect(listingHubActionBarItemSpecs(false)[0]).toMatchObject({ id: 'health', active: true })
+  it('Health is the active (current view) item', () => {
+    expect(listingHubActionBarItemSpecs(true)[1]).toMatchObject({ id: 'health', active: true })
+    expect(listingHubActionBarItemSpecs(false)[1]).toMatchObject({ id: 'health', active: true })
   })
 
   it('Preview is disabled without a preview href, enabled with one', () => {
-    expect(listingHubActionBarItemSpecs(false)[1]).toMatchObject({ id: 'preview', disabled: true })
-    expect(listingHubActionBarItemSpecs(true)[1]).toMatchObject({ id: 'preview', disabled: false })
+    expect(listingHubActionBarItemSpecs(false)[2]).toMatchObject({ id: 'preview', disabled: true })
+    expect(listingHubActionBarItemSpecs(true)[2]).toMatchObject({ id: 'preview', disabled: false })
   })
 
-  it('never includes a Save/Done item (§5.4 "no no-op Save, no Done")', () => {
+  it('never includes a Save/Done/Insights item', () => {
     for (const hasPreview of [true, false]) {
       const ids = listingHubActionBarItemSpecs(hasPreview).map((i) => i.id)
       expect(ids).not.toContain('save')

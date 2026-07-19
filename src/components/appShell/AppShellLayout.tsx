@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { Suspense, useLayoutEffect, useRef } from 'react'
-import { appChromeMode, isListingEditDesktopSectionChrome, APP_SHELL_SCROLL_PB_CLASS } from '../../lib/appShell'
+import { appChromeHeaderInner, isListingEditDesktopSectionChrome, APP_SHELL_SCROLL_PB_CLASS } from '../../lib/appShell'
 import { DASHBOARD_MOBILE_SCROLL_ATTR } from '../../lib/appShellScroll'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
 import DashboardChromeRouteFallback from '../DashboardChromeRouteFallback'
@@ -9,21 +9,21 @@ import AppActionBar from './AppActionBar'
 import AppHeader from './AppHeader'
 import { AppChromeActionsProvider } from './AppChromeActionsContext'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { useAuthContext } from '../../context/AuthContext'
 
 /**
- * Authenticated app destinations — one `AppHeader` + one `AppActionBar`, driven by
- * `appChromeMode` (see docs/app-chrome-brief.md). Pages never render their own chrome.
+ * Authenticated app destinations — AppHeader + AppActionBar decided independently
+ * (docs/app-chrome-brief.md). Pages never declare header geometry.
  */
 export default function AppShellLayout() {
   const location = useLocation()
   const isMobile = useIsMobile()
-  const mode = appChromeMode(location.pathname, isMobile)
-  /** Desktop listing edit — sticky section-pill offsets need the header's measured height. */
+  const { role } = useAuthContext()
+  const headerInner = appChromeHeaderInner(location.pathname, role, isMobile)
   const listingDesktop = isListingEditDesktopSectionChrome(location.pathname, isMobile)
 
   const headerRef = useRef<HTMLDivElement>(null)
-  /** Measure header on desktop so sticky page rails can clear Map chrome. */
-  const measureHeader = !isMobile && mode != null
+  const measureHeader = !isMobile && headerInner != null
 
   useLayoutEffect(() => {
     if (!measureHeader) {
@@ -46,8 +46,7 @@ export default function AppShellLayout() {
     }
   }, [measureHeader, location.pathname])
 
-  /** Both shells are mobile-only nav/action bars — reserve scroll clearance whenever one mounts. */
-  const showBar = isMobile && mode != null
+  const showBar = isMobile && headerInner != null
 
   return (
     <AppChromeActionsProvider>
@@ -58,8 +57,7 @@ export default function AppShellLayout() {
       >
         {/*
           Sticky lives on this wrapper (sm+), not on <header> itself.
-          overflow-x-clip on a sticky element breaks stickiness in Chromium;
-          the header child may still clip horizontally.
+          overflow-x-clip on a sticky element breaks stickiness in Chromium.
         */}
         <div ref={headerRef} className="sticky top-0 z-50 shrink-0 max-sm:static">
           <AppHeader />

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  appChromeBarKind,
-  appChromeHeaderKind,
-  appChromeMode,
   appShellBackDestination,
   appShellFocusFallbackPath,
   appShellFocusTitle,
@@ -14,7 +11,6 @@ import {
   isListingEditDesktopSectionChrome,
   isListingEditHubChromePath,
   isLandlordDesktopAppChrome,
-  type AppChromeMode,
 } from './appShell'
 
 describe('appShell membership', () => {
@@ -100,91 +96,10 @@ describe('appShell membership', () => {
     expect(isLandlordDesktopAppChrome('landlord', '/landlord/property/edit/1', true)).toBe(false)
     expect(isLandlordDesktopAppChrome('renter', '/student-dashboard', false)).toBe(false)
   })
-})
 
-describe('appChromeMode — Template System Brief (docs/app-chrome-brief.md) §3 matrix', () => {
-  type Case = { path: string; mobile: AppChromeMode; desktop: AppChromeMode }
-
-  const cases: Case[] = [
-    // Map — dashboards, messages, profile (§3 rows 1-4)
-    { path: '/landlord/dashboard', mobile: 'map', desktop: 'map' },
-    { path: '/student-dashboard', mobile: 'map', desktop: 'map' },
-    { path: '/student-profile', mobile: 'map', desktop: 'map' },
-    { path: '/student/profile', mobile: 'map', desktop: 'map' },
-    { path: '/messages', mobile: 'map', desktop: 'map' },
-    { path: '/messages/abc123', mobile: 'map', desktop: 'map' },
-    // Landlord focus flows — always Map (dashboard). Never task / task-header.
-    { path: '/landlord/property/edit/1', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/property/new', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/property/edit/1/basic', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/property/new/basic', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/property/edit/1/section/pricing', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/property/new/section/photos', mobile: 'map', desktop: 'map' },
-    { path: '/landlord/bookings/b1/review', mobile: 'map', desktop: 'map' },
-    // Renter apply — task-header on mobile / Map on desktop
-    { path: '/booking/prop1', mobile: 'task-header', desktop: 'map' },
-  ]
-
-  it.each(cases)('$path — mobile=$mobile, desktop=$desktop', ({ path, mobile, desktop }) => {
-    expect(appChromeMode(path, true)).toBe(mobile)
-    expect(appChromeMode(path, false)).toBe(desktop)
-  })
-
-  it('is null outside the app shell (marketing / admin)', () => {
-    expect(appChromeMode('/', true)).toBeNull()
-    expect(appChromeMode('/', false)).toBeNull()
-    expect(appChromeMode('/listings', false)).toBeNull()
-    expect(appChromeMode('/admin', false)).toBeNull()
-    expect(appChromeMode('/admin/bookings', true)).toBeNull()
-  })
-
-  it('gives the header its back-control destination (`‹ {destination}`, §1a)', () => {
+  it('gives task-header back destinations', () => {
     expect(appShellBackDestination('/landlord/property/edit/1')).toBe('Listings')
-    expect(appShellBackDestination('/landlord/property/new/section/photos')).toBe('Listings')
     expect(appShellBackDestination('/landlord/bookings/b1/review')).toBe('Bookings')
     expect(appShellBackDestination('/booking/prop1')).toBe('Bookings')
-  })
-})
-
-describe('appChrome coherence — §2 "both shells render the shape the mode declares"', () => {
-  it('map → map header, nav bar on mobile, no bar on desktop', () => {
-    expect(appChromeHeaderKind('map')).toBe('map')
-    expect(appChromeBarKind('map', true)).toBe('nav')
-    expect(appChromeBarKind('map', false)).toBe('none')
-  })
-
-  it('task → task header, action bar on mobile, no bar on desktop', () => {
-    expect(appChromeHeaderKind('task')).toBe('task')
-    expect(appChromeBarKind('task', true)).toBe('action')
-    expect(appChromeBarKind('task', false)).toBe('none')
-  })
-
-  it('task-header (Phase 1) → task header, but Nav bar still on mobile — a pass, not a desync', () => {
-    expect(appChromeHeaderKind('task-header')).toBe('task')
-    expect(appChromeBarKind('task-header', true)).toBe('nav')
-    expect(appChromeBarKind('task-header', false)).toBe('none')
-  })
-
-  it('never desyncs: every surface × device resolves to exactly one coherent (header, bar) pair', () => {
-    const paths = [
-      '/landlord/dashboard',
-      '/student-dashboard',
-      '/messages',
-      '/landlord/property/edit/1',
-      '/landlord/property/edit/1/section/pricing',
-      '/landlord/bookings/b1/review',
-      '/booking/prop1',
-    ]
-    for (const path of paths) {
-      for (const isMobile of [true, false]) {
-        const mode = appChromeMode(path, isMobile)
-        expect(mode).not.toBeNull()
-        if (!mode) continue
-        // A `task` surface must never render a Nav bar; a `map` surface never an Action bar.
-        const bar = appChromeBarKind(mode, isMobile)
-        if (mode === 'task') expect(bar).not.toBe('nav')
-        if (mode === 'map') expect(bar).not.toBe('action')
-      }
-    }
   })
 })

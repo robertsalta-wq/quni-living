@@ -1,29 +1,29 @@
 /**
- * App-chrome lint matchers (docs/app-chrome-brief.md §6).
- * Pure functions — used by the CLI and unit tests. Zero colour literals.
+ * App-chrome lint matchers (docs/app-chrome-brief.md).
+ * Pure functions — used by the CLI and unit tests.
  */
 
 /** @typedef {{ file: string, line: number, id: string, message: string }} ChromeViolation */
 
-/** Files allowed to declare sticky/cream app or marketing header chrome. */
-export const HEADER_ALLOW = new Set([
-  'src/components/appShell/AppHeader.tsx',
-  'src/components/Header.tsx',
-])
+/** Sole owner of header geometry (marketing reference). */
+export const HEADER_GEOMETRY_ALLOW = new Set(['src/components/ChromeHeaderShell.tsx'])
 
-/** Files allowed to declare the mobile bottom nav / task action bar. */
+/** Files allowed to declare the mobile bottom nav / page action bar. */
 export const BAR_ALLOW = new Set(['src/components/appShell/AppActionBar.tsx'])
+
+/** @deprecated Prefer HEADER_GEOMETRY_ALLOW */
+export const HEADER_ALLOW = HEADER_GEOMETRY_ALLOW
 
 const HEADER_PATTERNS = [
   {
     id: 'brand-header-bg',
     re: /bg-\[var\(--brand-header-bg\)\]/g,
-    message: 'bg-[var(--brand-header-bg)] belongs only in AppHeader (or marketing Header)',
+    message: 'bg-[var(--brand-header-bg)] belongs only in ChromeHeaderShell',
   },
   {
-    id: 'data-app-shell-header',
-    re: /data-app-shell-header/g,
-    message: 'data-app-shell-header belongs only in AppHeader',
+    id: 'chrome-header-shell-attr',
+    re: /data-chrome-header-shell/g,
+    message: 'data-chrome-header-shell belongs only in ChromeHeaderShell',
   },
 ]
 
@@ -33,10 +33,6 @@ const BAR_PATTERNS = [
     re: /border-t[^"'`\n]*border-\[var\(--brand-header-border\)\][^"'`\n]*sm:hidden|sm:hidden[^"'`\n]*border-t[^"'`\n]*border-\[var\(--brand-header-border\)\]/g,
     message: 'mobile bottom bar with --brand-header-border belongs only in AppActionBar',
   },
-  /**
-   * Placement: classic mobile bottom chrome shape (border-t + sm:hidden) outside the shell.
-   * Property Apply bar uses md:hidden — intentionally not matched.
-   */
   {
     id: 'bottom-bar-placement',
     re: /border-t[^"'`\n]*sm:hidden|sm:hidden[^"'`\n]*border-t/g,
@@ -53,7 +49,7 @@ const SHARED_CHROME_TOKEN = {
   id: 'brand-header-border',
   re: /border-\[var\(--brand-header-border\)\]/g,
   message:
-    'border-[var(--brand-header-border)] belongs only in AppHeader, AppActionBar, or marketing Header',
+    'border-[var(--brand-header-border)] belongs only in ChromeHeaderShell or AppActionBar',
 }
 
 function lineOf(source, index) {
@@ -70,11 +66,6 @@ function collect(source, file, patterns, out) {
   }
 }
 
-/**
- * Placement: quoted class strings that combine pt-safe-top + z-50 + border-b
- * (order-independent). Skips ConversationHeader (no pt-safe-top/z-50) and
- * marketing AI landings (no pt-safe-top).
- */
 function collectHeaderSafeAreaPlacement(source, file, out) {
   const re = /['"`]([^'"`]{0,800})['"`]/g
   let m
@@ -87,22 +78,20 @@ function collectHeaderSafeAreaPlacement(source, file, out) {
       file,
       line: lineOf(source, m.index),
       id: 'header-safe-area-placement',
-      message:
-        'pt-safe-top + z-50 + border-b top chrome belongs only in AppHeader (or marketing Header)',
+      message: 'pt-safe-top + z-50 + border-b top chrome belongs only in ChromeHeaderShell',
     })
   }
 }
 
 /**
- * Find chrome-guard violations in one file.
- * @param {string} relPath posix path from repo root (e.g. src/components/Foo.tsx)
- * @param {string} source file contents
+ * @param {string} relPath
+ * @param {string} source
  * @returns {ChromeViolation[]}
  */
 export function findChromeViolations(relPath, source) {
   /** @type {ChromeViolation[]} */
   const out = []
-  const headerOk = HEADER_ALLOW.has(relPath)
+  const headerOk = HEADER_GEOMETRY_ALLOW.has(relPath)
   const barOk = BAR_ALLOW.has(relPath)
 
   if (!headerOk) {
