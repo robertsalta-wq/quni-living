@@ -35,7 +35,7 @@ export default function LandlordDashboardPageHeader({
   totalBookings: _totalBookings,
   onTabSelect: _onTabSelect,
 }: Props) {
-  // Section strip + wordmark live in AppShellHeader; no body page title.
+  // Section strip + wordmark live in AppHeader; no body page title.
   return null
 }
 
