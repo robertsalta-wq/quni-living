@@ -21,7 +21,7 @@ Marketing / public / admin pages are outside this system (they keep the marketin
 ## 1. The two shells
 
 ### 1a. `AppHeader` — one component, header modes
-Replaces the three branches in `src/components/appShell/AppShellHeader.tsx`.
+Replaces the former multi-branch app-shell header.
 
 **Invariants (identical every mode):** logo = `QuniLogoHomeLink` (always → `/`, `/quni-logo.png` at `h-9 sm:h-10`, no text stand-in); background `var(--brand-header-bg)`; border-bottom `var(--brand-header-border)`; height, safe-area top, sticky/z, focus-ring — all fixed here.
 
@@ -102,7 +102,7 @@ Header colours = `--brand-header-bg` (#FEF9E4) and `--brand-header-border` (#E8E
 
 ## 6. Enforcement
 
-- **Lint (app chrome only):** forbid hand-rolled **app-shell chrome** outside `AppHeader` / `AppActionBar` — i.e. no cream/`#E8E0CC` header bars and no global-nav/action bottom bars declared anywhere else, and no raw hex for chrome colours. **Do NOT** ban legitimate in-page `<header>`/title elements (e.g. `ConversationHeader`, the in-hub section title) — the rule targets *chrome*, identified by the chrome tokens/placement, not every `<header>`. **Enforced by** `npm run lint:app-chrome` (`scripts/check-app-chrome.mjs`) — blocking CI step; marketing `Header.tsx` is allowlisted.
+- **Lint (app chrome only):** forbid hand-rolled **app-shell chrome** outside `AppHeader` / `AppActionBar` — keyed on chrome **tokens** (`--brand-header-bg` / `--brand-header-border`, `data-app-shell-header`) and **placement** (`pt-safe-top`+`z-50`+`border-b` top bars; `border-t`+`sm:hidden` bottom bars), not colour literals and not every `<header>`. **Do NOT** ban in-page titles (e.g. `ConversationHeader`, hub headings). **Enforced by** `npm run lint:app-chrome` (`scripts/check-app-chrome.mjs` + `findChromeViolations` in `scripts/appChromeLint.mjs`, unit-tested) — blocking CI; marketing `Header.tsx` allowlisted.
 - **Structure:** render both shells once from `AppShellLayout`, driven by `appChromeMode`; pages never render their own chrome.
 - **Tests (takes Rob out of the manual-diff loop):** mode function returns the correct value per surface; header — each surface at `<640` and `≥640` shows the declared header shape, logo → `/` everywhere; bar — each surface shows the declared bar (dashboard = 5 nav; hub = Health · Preview in Phase 1; edit drill-in = Cancel/Save; setup drill-in = Draft/Next; booking/apply = Nav bar); **coherence test** per §2.
 

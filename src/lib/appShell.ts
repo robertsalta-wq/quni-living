@@ -173,7 +173,7 @@ export function isListingEditPath(pathname: string): boolean {
 
 /**
  * Cream hub chrome + no bottom tabs — mobile listing edit only (`sm` breakpoint).
- * Desktop landlord listing edit uses AppShellHeader (see isLandlordDesktopAppChrome).
+ * Desktop landlord listing edit uses AppHeader Map chrome (see isLandlordDesktopAppChrome).
  */
 export function isListingEditHubChromePath(pathname: string, isMobile: boolean): boolean {
   return isMobile && isListingEditPath(pathname)
