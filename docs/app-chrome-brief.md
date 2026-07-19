@@ -42,7 +42,9 @@ Generalise `src/components/landlord/LandlordMobileBottomNav.tsx` into a shared s
 
 ## 2. Coherence
 
-One function decides mode — extend `src/lib/appShell.ts` to expose `appChromeMode(pathname, isMobile): 'map' | 'task' | 'task-header' | null`. **It is viewport-aware:** where Phase 1 Option A applies, the same path resolves to different modes by device — e.g. listing edit is `task` on mobile but Map-looking on desktop (treat as `map` header shape, no bottom bar) until the desktop pass. Do **not** hard-code pathname→mode ignoring `isMobile`. Both shells read that one value; each renders the shape the table declares. Viewport = single `useIsMobile()` / `src/lib/breakpoints.ts` (`sm` = 640). No scattered `sm:` logic.
+One function decides mode — extend `src/lib/appShell.ts` to expose `appChromeMode(pathname, isMobile): 'map' | 'task' | 'task-header' | null`. **It is viewport-aware:** listing edit, booking review, and renter apply are Task/`task-header` on mobile but **Map (dashboard template)** on desktop until the desktop-ideal pass. Do **not** hard-code pathname→mode ignoring `isMobile`. Both shells read that one value; each renders the shape the table declares. Viewport = single `useIsMobile()` / `src/lib/breakpoints.ts` (`sm` = 640). No scattered `sm:` logic.
+
+**Sticky header:** on `sm+`, stickiness is owned by the `AppShellLayout` chrome wrapper (`sticky top-0 z-50`), not by `overflow-x-clip` on the `<header>` itself (that combination breaks sticky in Chromium).
 
 **Coherence test** asserts: for each surface, at each breakpoint, the header shape and the bar contents are exactly those the surface's mode value declares. Desync (e.g. a `task` surface rendering a Nav bar) → CI red. `task-header` surfaces are expected to show a Task header + Nav bar — that is a *pass*, not a failure.
 
@@ -60,8 +62,8 @@ One function decides mode — extend `src/lib/appShell.ts` to expose `appChromeM
 | `/landlord/property/new` (mobile hub) | `task` | Back "‹ Listings" + **"New listing"** | as above |
 | Listing drill-in — **edit** (`…/basic`, `…/section/:id`) | `task` | Back + section title | Action: Cancel · Save |
 | Listing drill-in — **setup** (new listing) | `task` | Back + section title | Action: Save draft ("Draft") · Save & next ("Next") |
-| `/landlord/bookings/:id/review` | `task-header` (P1) | Back + "Booking review" | Nav bar retained; inline actions unchanged. → `task` in Phase 2 |
-| `/booking/:propertyId` (renter apply) | `task-header` (P1) | Back + "Apply" | Nav bar retained; inline actions unchanged. → `task` in Phase 2 |
+| `/landlord/bookings/:id/review` | mobile `task-header` / desktop `map` | Mobile: Back + "Booking review". Desktop: Map dashboard header (tabs). | Mobile: Nav bar retained; inline actions unchanged. → full `task` in Phase 2 |
+| `/booking/:propertyId` (renter apply) | mobile `task-header` / desktop `map` | Mobile: Back + "Apply". Desktop: Map dashboard header. | Mobile: Nav bar retained; inline actions unchanged. → full `task` in Phase 2 |
 | Marketing / admin / invite / sample-agreements / public property Apply bar | *(outside)* | Marketing `Header` + lockup → `/` | *(none)* |
 
 **Desktop placement (scope):** the bottom bar is a **mobile** construct. On desktop, `map` nav lives as header tabs (existing `landlordDesktopChrome`); `task` actions keep their **current** desktop placement this pass. Do **not** put a bottom bar on wide desktop now — deferred (§7).

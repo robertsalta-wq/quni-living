@@ -113,7 +113,9 @@ function DesktopAccountMenu({ displayName, initials, profileHref, onSignOut }: A
 /**
  * `AppHeader` — one component, per docs/app-chrome-brief.md §1a.
  * Invariants (every mode): logo → `/`; `var(--brand-header-bg)` /
- * `var(--brand-header-border)`; height, safe-area top, sticky/z, focus-ring.
+ * `var(--brand-header-border)`; height, safe-area top, focus-ring.
+ * Stickiness on sm+ is owned by AppShellLayout's wrapper — do not put
+ * `sticky` + `overflow-x-clip` on this <header> (breaks sticky in Chromium).
  */
 export default function AppHeader() {
   const { role, user, profile, signOut } = useAuthContext()
@@ -243,12 +245,12 @@ export default function AppHeader() {
   if (!isMobile && role === 'landlord') {
     return (
       <header
-        className="sticky top-0 z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
+        className="w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
         data-app-shell-header="map-desktop-landlord"
       >
         <div className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
           <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-            <div className="inline-flex min-w-0 shrink-0 items-baseline gap-2">
+            <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
               <QuniLogoHomeLink />
               <span className={quniDashboardLabelClassName}>Dashboard</span>
             </div>
@@ -329,12 +331,12 @@ export default function AppHeader() {
   if (!isMobile && isRenterRole(role)) {
     return (
       <header
-        className="sticky top-0 z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
+        className="w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
         data-app-shell-header="map-desktop-renter"
       >
         <div className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
           <div className="grid w-full max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3 md:gap-4">
-            <div className="inline-flex min-w-0 shrink-0 items-baseline gap-2">
+            <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
               <QuniLogoHomeLink />
               <span className={quniDashboardLabelClassName}>Dashboard</span>
             </div>
@@ -401,12 +403,12 @@ export default function AppHeader() {
     // Map desktop, no dashboard role (e.g. admin visiting a shared shell route) — brand + account only.
     return (
       <header
-        className="sticky top-0 z-50 w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
+        className="w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden border-b border-[var(--brand-header-border)] bg-[var(--brand-header-bg)]"
         data-app-shell-header="map-desktop"
       >
         <div className={`${SITE_CONTENT_MAX_CLASS} py-4`}>
           <div className="flex w-full max-w-full items-center justify-between gap-3">
-            <div className="inline-flex min-w-0 shrink-0 items-baseline gap-2">
+            <div className="inline-flex min-w-0 shrink-0 items-center gap-2">
               <QuniLogoHomeLink />
               <span className={quniDashboardLabelClassName}>Dashboard</span>
             </div>
@@ -431,7 +433,7 @@ export default function AppHeader() {
       data-app-shell-header="map-mobile"
     >
       <div className="mx-auto flex h-12 max-w-site items-center justify-between gap-2 px-3 sm:h-14 sm:px-6 lg:px-8">
-        <div className="inline-flex min-w-0 items-baseline gap-2">
+        <div className="inline-flex min-w-0 items-center gap-2">
           <QuniLogoHomeLink />
           <span className={quniDashboardLabelClassName}>Dashboard</span>
         </div>

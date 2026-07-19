@@ -14,7 +14,8 @@ export const quniLogoHomeLinkClassName =
 
 /**
  * "Dashboard" next to the logo — optically matched to the Quni letterforms
- * (not the 36/40px logo image box). Pair with `items-baseline` on the parent.
+ * (not the 36/40px logo image box). Pair with `items-center` on the parent
+ * (baseline alignment with an <img> sits the word too high).
  */
 export const quniDashboardLabelClassName =
   'font-display text-[22px] font-bold leading-none tracking-[-0.02em] text-[var(--quni-ink)] sm:text-2xl'

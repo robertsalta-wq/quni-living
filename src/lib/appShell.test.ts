@@ -120,9 +120,9 @@ describe('appChromeMode — Template System Brief (docs/app-chrome-brief.md) §3
     { path: '/landlord/property/new/basic', mobile: 'task', desktop: 'map' },
     { path: '/landlord/property/edit/1/section/pricing', mobile: 'task', desktop: 'map' },
     { path: '/landlord/property/new/section/photos', mobile: 'task', desktop: 'map' },
-    // task-header (Phase 1 only) — booking review + renter apply, both devices (§3 rows 9-10)
-    { path: '/landlord/bookings/b1/review', mobile: 'task-header', desktop: 'task-header' },
-    { path: '/booking/prop1', mobile: 'task-header', desktop: 'task-header' },
+    // task-header on mobile / Map on desktop — booking review + apply stay in dashboard chrome on sm+
+    { path: '/landlord/bookings/b1/review', mobile: 'task-header', desktop: 'map' },
+    { path: '/booking/prop1', mobile: 'task-header', desktop: 'map' },
   ]
 
   it.each(cases)('$path — mobile=$mobile, desktop=$desktop', ({ path, mobile, desktop }) => {
