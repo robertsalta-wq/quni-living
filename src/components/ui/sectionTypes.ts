@@ -7,7 +7,6 @@ export type SectionTone = 'default' | 'warning' | 'danger' | 'ai'
 
 export type SectionProps = {
   id: string
-  ordinal?: number
   icon?: ReactNode
   title: string
   subtitle?: string

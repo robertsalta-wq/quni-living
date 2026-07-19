@@ -112,12 +112,12 @@ export default function ProfileReadinessDriver({
 
   const stepsBlock =
     steps.length > 0 ? (
-      <div className="mb-1 mt-4 flex items-center gap-2.5">
+      <div className="mb-1 mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2.5">
         {steps.map((step, index) => (
           <span key={`${step.label}-${index}`} className="contents">
             <span
               className={[
-                'inline-flex shrink-0 items-center gap-2 rounded-admin-pill px-3 py-1.5 text-xs font-semibold',
+                'inline-flex w-full items-center gap-2 rounded-admin-pill px-3 py-1.5 text-xs font-semibold sm:w-auto sm:shrink-0',
                 stepChipClass(step.state),
               ].join(' ')}
             >
@@ -127,7 +127,7 @@ export default function ProfileReadinessDriver({
             {index < steps.length - 1 ? (
               <span
                 className={[
-                  'h-0.5 min-w-[18px] flex-1 rounded-sm',
+                  'hidden h-0.5 min-w-[18px] flex-1 rounded-sm sm:block',
                   step.state === 'done' ? 'bg-admin-coral' : 'bg-admin-line',
                 ].join(' ')}
                 aria-hidden

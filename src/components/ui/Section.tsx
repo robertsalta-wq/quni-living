@@ -22,7 +22,7 @@ function CheckIcon({ className }: { className?: string }) {
 function StatusPill({ status }: { status: SectionStatus }) {
   if (status === 'done') {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-admin-pill bg-admin-success-bg px-[11px] py-1 text-xs font-semibold text-admin-success-fg">
+      <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-admin-pill bg-admin-success-bg px-2 py-1 text-xs font-semibold text-admin-success-fg">
         <CheckIcon />
         Done
       </span>
@@ -30,20 +30,20 @@ function StatusPill({ status }: { status: SectionStatus }) {
   }
   if (status === 'optional') {
     return (
-      <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-surface-3 px-[11px] py-1 text-xs font-semibold text-admin-ink-4">
+      <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-surface-3 px-2 py-1 text-xs font-semibold text-admin-ink-4">
         Optional
       </span>
     )
   }
   if (status === 'locked') {
     return (
-      <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-surface-3 px-[11px] py-1 text-xs font-semibold text-admin-ink-5">
+      <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-surface-3 px-2 py-1 text-xs font-semibold text-admin-ink-5">
         Locked
       </span>
     )
   }
   return (
-    <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-warning-bg px-[11px] py-1 text-xs font-semibold text-admin-warning-fg">
+    <span className="inline-flex shrink-0 whitespace-nowrap rounded-admin-pill bg-admin-warning-bg px-2 py-1 text-xs font-semibold text-admin-warning-fg">
       To do
     </span>
   )
@@ -74,7 +74,6 @@ function iconTileClass(tone: SectionTone): string {
  */
 export default function Section({
   id,
-  ordinal,
   icon,
   title,
   subtitle,
@@ -93,12 +92,6 @@ export default function Section({
 
   const headerInner = (
     <>
-      {ordinal != null ? (
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-admin-surface-3 text-xs font-bold text-admin-ink-3">
-          {ordinal}
-        </span>
-      ) : null}
-
       {icon != null ? (
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-admin-md ${iconTileClass(tone)}`}
@@ -146,14 +139,14 @@ export default function Section({
         <button
           type="button"
           onClick={onToggle}
-          className="flex w-full cursor-pointer items-center gap-3.5 border-0 bg-transparent px-5 py-[18px] text-left"
+          className="flex w-full cursor-pointer items-center gap-2.5 border-0 bg-transparent px-5 py-[18px] text-left"
           aria-expanded={expanded}
           aria-controls={`${id}-body`}
         >
           {headerInner}
         </button>
       ) : (
-        <div className="flex w-full items-center gap-3.5 px-5 py-[18px] text-left">{headerInner}</div>
+        <div className="flex w-full items-center gap-2.5 px-5 py-[18px] text-left">{headerInner}</div>
       )}
 
       {isOpen ? (
