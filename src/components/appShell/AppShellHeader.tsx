@@ -194,7 +194,7 @@ export default function AppShellHeader({ trailing }: Props) {
         <div className="mx-auto flex h-16 max-w-site items-center gap-7 px-8">
           <Link
             to="/landlord/dashboard"
-            className="inline-flex shrink-0 items-baseline gap-1.5 font-display text-2xl font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+            className="inline-flex shrink-0 items-baseline gap-1.5 font-display text-[40px] font-bold leading-none tracking-[-0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             aria-label="Quni Dashboard"
           >
             <span className="text-[var(--quni-coral)]">Quni</span>
