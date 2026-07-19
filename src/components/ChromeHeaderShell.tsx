@@ -3,27 +3,35 @@ import { SITE_CONTENT_MAX_CLASS } from '../lib/site'
 
 /**
  * Sole owner of header geometry for marketing + dashboard.
- * Marketing Header is the reference (stable): cream bg, border, safe-area,
- * SITE_CONTENT_MAX_CLASS + py-4. No other component may re-declare this chrome.
+ * Marketing Header is the reference: cream bg, border, safe-area, content max-width,
+ * horizontal padding, vertical padding, and a content track at least as tall as the
+ * marketing hamburger (`min-h-11`) so logo vertical position matches.
  *
- * Stickiness / fixed positioning is passed via `className` (marketing sticky;
- * app shell stickiness lives on AppShellLayout's wrapper).
+ * Stickiness / fixed positioning is passed via `className` only.
  */
 export const CHROME_HEADER_OUTER_CLASS =
   'pt-safe-top w-full max-w-full shrink-0 overflow-x-clip overflow-y-hidden bg-[var(--brand-header-bg)] border-b border-[var(--brand-header-border)] z-50'
 
-/** Inner content width + vertical padding — marketing reference. */
+/**
+ * Marketing reference content track: same max-width + px as the site, py-4, and
+ * min-h-11 so a short dashboard row cannot collapse shorter than marketing.
+ */
 export const CHROME_HEADER_INNER_CLASS = `${SITE_CONTENT_MAX_CLASS} py-4`
+
+/** Locked content-row height — matches marketing `min-h-11` menu control. */
+export const CHROME_HEADER_ROW_CLASS = 'flex min-h-11 w-full max-w-full items-center'
 
 type Props = {
   children: ReactNode
   /** Extra classes on <header> (positioning only — not geometry tokens). */
   className?: string
-  /** Extra classes on the inner max-width row. */
+  /**
+   * Extra classes on the padded max-width wrapper.
+   * Must not remove py-4 / max-w-site / px unless replacing with an equivalent lock.
+   */
   innerClassName?: string
   innerRef?: Ref<HTMLDivElement>
   embedded?: boolean
-  /** Diagnostic attribute for which surface owns the slot content. */
   'data-chrome-header'?: string
 }
 
@@ -46,7 +54,9 @@ export default function ChromeHeaderShell({
         ref={innerRef}
         className={[CHROME_HEADER_INNER_CLASS, innerClassName].filter(Boolean).join(' ')}
       >
-        {children}
+        <div className={CHROME_HEADER_ROW_CLASS} data-chrome-header-row="">
+          {children}
+        </div>
       </div>
     </header>
   )

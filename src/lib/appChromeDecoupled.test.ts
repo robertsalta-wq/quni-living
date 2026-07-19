@@ -13,7 +13,7 @@ import {
   listingBasicInfoActionBarItemSpecs,
   listingHubActionBarItemSpecs,
 } from './appChromeBarItems'
-import { CHROME_HEADER_INNER_CLASS, CHROME_HEADER_OUTER_CLASS } from '../components/ChromeHeaderShell'
+import { CHROME_HEADER_INNER_CLASS, CHROME_HEADER_OUTER_CLASS, CHROME_HEADER_ROW_CLASS } from '../components/ChromeHeaderShell'
 import { SITE_CONTENT_MAX_CLASS } from './site'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -109,12 +109,14 @@ describe('fixed-URL exits — never history.back', () => {
 })
 
 describe('one header geometry shell (marketing reference)', () => {
-  it('exports marketing geometry constants', () => {
+  it('exports marketing geometry constants including locked row min-height', () => {
     expect(CHROME_HEADER_INNER_CLASS).toContain(SITE_CONTENT_MAX_CLASS)
     expect(CHROME_HEADER_INNER_CLASS).toContain('py-4')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('bg-[var(--brand-header-bg)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('border-[var(--brand-header-border)]')
     expect(CHROME_HEADER_OUTER_CLASS).toContain('pt-safe-top')
+    expect(CHROME_HEADER_ROW_CLASS).toContain('min-h-11')
+    expect(CHROME_HEADER_ROW_CLASS).toContain('items-center')
   })
 
   it('only ChromeHeaderShell declares the geometry container attribute', () => {
@@ -122,12 +124,17 @@ describe('one header geometry shell (marketing reference)', () => {
     const header = readFileSync(join(process.cwd(), 'src/components/Header.tsx'), 'utf8')
     const appHeader = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
     expect(shell).toContain('data-chrome-header-shell')
-    expect(header).not.toContain('data-chrome-header-shell=""')
+    expect(shell).toContain('data-chrome-header-row')
     expect(header).toContain('ChromeHeaderShell')
     expect(appHeader).toContain('ChromeHeaderShell')
-    // App / marketing must not re-declare cream header bg on their own <header>
     expect(appHeader).not.toMatch(/<header[^>]*brand-header-bg/)
     expect(header).not.toMatch(/<header[^>]*brand-header-bg/)
+  })
+
+  it('AppHeader mobile uses the same logo grid cell as marketing', () => {
+    const appHeader = readFileSync(join(process.cwd(), 'src/components/appShell/AppHeader.tsx'), 'utf8')
+    expect(appHeader).toMatch(/grid-cols-\[auto_minmax\(0,1fr\)_auto\]/)
+    expect(appHeader).toMatch(/min-w-0 shrink-0/)
   })
 
   it('AppHeader and marketing Header route through the shell', () => {
