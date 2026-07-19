@@ -22,9 +22,11 @@ export default function AppShellLayout() {
   const listingDesktop = isListingEditDesktopSectionChrome(location.pathname, isMobile)
 
   const headerRef = useRef<HTMLDivElement>(null)
+  /** Measure header on desktop so sticky page rails can clear Map chrome. */
+  const measureHeader = !isMobile && mode != null
 
   useLayoutEffect(() => {
-    if (!listingDesktop) {
+    if (!measureHeader) {
       document.documentElement.style.removeProperty('--site-header-height')
       return
     }
@@ -42,7 +44,7 @@ export default function AppShellLayout() {
       ro.disconnect()
       document.documentElement.style.removeProperty('--site-header-height')
     }
-  }, [listingDesktop, location.pathname])
+  }, [measureHeader, location.pathname])
 
   /** Both shells are mobile-only nav/action bars — reserve scroll clearance whenever one mounts. */
   const showBar = isMobile && mode != null

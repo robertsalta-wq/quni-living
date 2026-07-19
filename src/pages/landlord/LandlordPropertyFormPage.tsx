@@ -2381,7 +2381,7 @@ export default function LandlordPropertyFormPage() {
         if (isHubSectionMode) {
           navigate(hubReturnPath, { replace: true })
         } else if (existingListingStatus === 'draft') {
-          navigate('/landlord-dashboard', { replace: true })
+          navigate('/landlord/dashboard?tab=listings', { replace: true })
         } else {
           setSubmitSuccessMessage(
             existingSlug
@@ -2446,7 +2446,7 @@ export default function LandlordPropertyFormPage() {
         if (isHubSectionMode) {
           navigate(listingHubPath({ propertyId: newId }), { replace: true })
         } else {
-          navigate('/landlord-dashboard', { replace: true })
+          navigate('/landlord/dashboard?tab=listings', { replace: true })
         }
       }
     } catch (err) {
@@ -2468,10 +2468,10 @@ export default function LandlordPropertyFormPage() {
         ...spec,
         icon: spec.primary ? Check : X,
         ...(spec.id === 'cancel'
-          ? { to: '/landlord-dashboard' }
+          ? { to: hubReturnPath }
           : { onClick: () => formRef.current?.requestSubmit() }),
       })),
-    [submitting],
+    [submitting, hubReturnPath],
   )
   useSetAppChromeActions(isHubSectionMode ? hubSectionActionItems : null)
 
@@ -2495,7 +2495,7 @@ export default function LandlordPropertyFormPage() {
     return (
       <div className="max-w-lg mx-auto px-6 py-12">
         <p className="text-red-700 text-sm">{pageError}</p>
-        <Link to="/landlord-dashboard" className="mt-4 inline-block text-sm font-medium text-indigo-600">
+        <Link to="/landlord/dashboard?tab=listings" className="mt-4 inline-block text-sm font-medium text-indigo-600">
           Back to dashboard
         </Link>
       </div>
@@ -3980,7 +3980,7 @@ export default function LandlordPropertyFormPage() {
                   {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Publish listing'}
                 </button>
                 <Link
-                  to="/landlord-dashboard"
+                  to="/landlord/dashboard?tab=listings"
                   className="rounded-[10px] border border-[#D8D3C7] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
                 >
                   Cancel
