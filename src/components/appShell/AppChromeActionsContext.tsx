@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 /** One `AppActionBar` item in `task` (action bar) mode. */
@@ -18,7 +26,7 @@ export type AppActionBarItem = {
 
 type AppChromeActionsContextValue = {
   items: AppActionBarItem[]
-  setItems: (items: AppActionBarItem[]) => void
+  setItems: (items: AppActionBarItem[] | ((prev: AppActionBarItem[]) => AppActionBarItem[])) => void
 }
 
 const AppChromeActionsContext = createContext<AppChromeActionsContextValue | null>(null)
@@ -45,23 +53,50 @@ export function useAppChromeActions(): AppActionBarItem[] {
   return useAppChromeActionsContext().items
 }
 
+/** Stable key for bar *content* — ignores onClick/icon identity (those change every render). */
+export function appChromeActionsSignature(items: AppActionBarItem[] | null): string | null {
+  if (items == null) return null
+  return items
+    .map((i) =>
+      [i.id, i.label, i.active ? '1' : '0', i.primary ? '1' : '0', i.disabled ? '1' : '0', i.to ?? ''].join(
+        ':',
+      ),
+    )
+    .join('|')
+}
+
 /**
- * Register this page's `AppActionBar` items — sets on mount, clears on unmount.
- * Safe to pass a fresh array literal each render (setItems targets the provider's
- * state, not the caller's, so it does not retrigger the caller's own render loop).
+ * Register this page's `AppActionBar` items.
  *
- * Pass `null` to opt out entirely (e.g. a parent that conditionally renders a child
- * which owns its own registration) — avoids the parent's effect clobbering the
- * child's on the same mount.
+ * Depends on a content signature, not array/function identity — otherwise a parent
+ * re-render (new `onClick` closures) retriggers setItems → provider re-render →
+ * infinite loop (React #185 / maximum update depth).
+ *
+ * Pass `null` to opt out (parent defers to a child that owns registration).
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSetAppChromeActions(items: AppActionBarItem[] | null): void {
   const { setItems } = useAppChromeActionsContext()
+  const latestRef = useRef(items)
+  latestRef.current = items
+  const signature = appChromeActionsSignature(items)
 
   useEffect(() => {
-    if (items == null) return
-    setItems(items)
+    if (signature == null) return
+    const latest = latestRef.current
+    if (latest == null) return
+
+    // Bind clicks through the ref so handlers stay fresh without changing signature.
+    setItems(
+      latest.map((item) => ({
+        ...item,
+        onClick: item.onClick
+          ? () => {
+              latestRef.current?.find((x) => x.id === item.id)?.onClick?.()
+            }
+          : undefined,
+      })),
+    )
     return () => setItems([])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items])
+  }, [signature, setItems])
 }
