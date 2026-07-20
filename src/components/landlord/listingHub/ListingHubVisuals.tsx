@@ -140,44 +140,59 @@ export function ListingHubStatusDot({
   )
 }
 
+/** Quality ring — label centred over the SVG; stroke colour is green only at 100%. */
 export function ListingHubQualityRing({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score))
+  const complete = clamped >= 100
   const r = 52
   const c = 2 * Math.PI * r
   const off = c * (1 - clamped / 100)
+  const stroke = complete ? 'var(--quni-success)' : 'var(--quni-coral)'
+  const track = complete ? 'var(--quni-success-bg)' : 'var(--quni-coral-tint-15)'
+
   return (
-    <svg width={82} height={82} viewBox="0 0 132 132" className="shrink-0" aria-hidden>
-      <circle cx={66} cy={66} r={r} fill="none" stroke="#EDE8DF" strokeWidth={12} />
-      <circle
-        cx={66}
-        cy={66}
-        r={r}
-        fill="none"
-        stroke="var(--quni-coral)"
-        strokeWidth={12}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={off}
-        transform="rotate(-90 66 66)"
-      />
-      <text
-        x={66}
-        y={64}
-        textAnchor="middle"
-        className="fill-[var(--quni-ink)]"
-        style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
+    <div className="relative h-[82px] w-[82px] shrink-0" aria-hidden>
+      <svg
+        className="absolute inset-0 h-full w-full"
+        width={82}
+        height={82}
+        viewBox="0 0 132 132"
       >
-        {clamped}%
-      </text>
-      <text
-        x={66}
-        y={86}
-        textAnchor="middle"
-        className="fill-[var(--quni-ink-5)]"
-        style={{ fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}
-      >
-        QUALITY
-      </text>
-    </svg>
+        <circle cx={66} cy={66} r={r} fill="none" stroke={track} strokeWidth={12} />
+        <circle
+          cx={66}
+          cy={66}
+          r={r}
+          fill="none"
+          stroke={stroke}
+          strokeWidth={12}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+          transform="rotate(-90 66 66)"
+        />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center">
+        <div className="flex flex-col items-center leading-none">
+          <span
+            className="text-[var(--quni-ink)]"
+            style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
+          >
+            {clamped}%
+          </span>
+          <span
+            className="mt-1 text-[var(--quni-ink-5)]"
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              letterSpacing: '0.06em',
+            }}
+          >
+            QUALITY
+          </span>
+        </div>
+      </div>
+    </div>
   )
 }

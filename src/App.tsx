@@ -10,7 +10,7 @@ import Home from './pages/Home'
 import Listings from './pages/Listings'
 import PropertyDetail from './pages/PropertyDetail'
 import Login from './pages/Login'
-import AIChatWidget from './components/aiChat/AIChatWidget'
+import { AiChatOpenProvider } from './context/AiChatOpenContext'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
@@ -52,7 +52,7 @@ function App() {
 
   return (
     <BookingFlowChromeProvider>
-      <>
+      <AiChatOpenProvider>
         <ScrollToTop />
         <NativePushNotificationsInitializer />
         <SeoPrivateRoutes />
@@ -337,9 +337,8 @@ function App() {
               </Route>
             </Route>
           </Routes>
-          <AIChatWidget />
         </div>
-      </>
+      </AiChatOpenProvider>
     </BookingFlowChromeProvider>
   )
 }
