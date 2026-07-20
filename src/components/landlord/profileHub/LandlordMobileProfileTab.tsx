@@ -833,10 +833,10 @@ function DeleteAccountModal({ onClose }: { onClose: () => void }) {
         <p id="delete-account-title" className="text-[15px] leading-relaxed text-[var(--quni-ink)]">
           To delete your landlord account, email{' '}
           <a
-            href="mailto:hell@quni.com.au"
+            href="mailto:hello@quni.com.au"
             className="font-semibold text-[var(--quni-coral)] hover:underline"
           >
-            hell@quni.com.au
+            hello@quni.com.au
           </a>
         </p>
         <button
