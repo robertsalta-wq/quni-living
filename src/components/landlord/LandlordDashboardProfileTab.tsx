@@ -37,6 +37,8 @@ import {
   type LandlordListingBillingSnapshot,
 } from '../../lib/landlordListingBilling'
 import { usePlatformFeatures } from '../../context/PlatformFeaturesContext'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import LandlordMobileProfileTab from './profileHub/LandlordMobileProfileTab'
 
 type LandlordRow = Database['public']['Tables']['landlord_profiles']['Row']
 
@@ -288,7 +290,13 @@ function formatPayoutsSummary(p: LandlordRow, cardLabel: string | null): string 
 
 type ExpandKey = LandlordDashboardProfileSectionKey
 
-export default function LandlordDashboardProfileTab({
+export default function LandlordDashboardProfileTab(props: Props) {
+  const isMobile = useIsMobile()
+  if (isMobile) return <LandlordMobileProfileTab {...props} />
+  return <LandlordDesktopProfileTab {...props} />
+}
+
+function LandlordDesktopProfileTab({
   profile,
   onRefresh,
   sectionParam,

@@ -59,8 +59,26 @@ export function appChromeHeaderInner(
 }
 
 /**
+ * Mobile landlord Profile section drill-in (`?tab=profile&section=…`) → page-actions.
+ */
+export function isLandlordProfileSectionEditPath(pathname: string, search = ''): boolean {
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`
+  if (p !== '/landlord/dashboard') return false
+  const params = new URLSearchParams(search)
+  if (params.get('tab') !== 'profile') return false
+  const section = params.get('section')
+  return Boolean(
+    section &&
+      ['personal', 'address', 'about', 'agreements', 'payouts', 'insurance', 'languages'].includes(
+        section,
+      ),
+  )
+}
+
+/**
  * Mobile action bar contents — independent of the header.
  * Landlord listing edit (hub + drill-ins) → page-actions.
+ * Landlord Profile section drill-in → page-actions.
  * Booking review stays `nav` this PR (inline actions unchanged).
  * Renter apply stays `nav` this PR.
  */
@@ -68,10 +86,14 @@ export function appChromeBarContents(
   pathname: string,
   role: UserRole | undefined,
   isMobile: boolean,
+  search = '',
 ): AppChromeBarContents {
   if (!isMobile) return 'none'
   if (!isAppShellPath(pathname)) return 'none'
   if ((role === 'landlord' || role === 'admin') && isListingEditPath(pathname)) {
+    return 'page-actions'
+  }
+  if ((role === 'landlord' || role === 'admin') && isLandlordProfileSectionEditPath(pathname, search)) {
     return 'page-actions'
   }
   return 'nav'
