@@ -190,7 +190,7 @@ export default function AppActionBar() {
   const location = useLocation()
   const isMobile = useIsMobile()
   const actionItems = useAppChromeActions()
-  const bar = appChromeBarContents(location.pathname, role, isMobile)
+  const bar = appChromeBarContents(location.pathname, role, isMobile, location.search)
 
   if (bar === 'none') return null
   if (bar === 'page-actions') return <ActionBar items={actionItems} />

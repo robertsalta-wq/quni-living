@@ -33,6 +33,17 @@ describe('decoupled chrome — header vs bar are independent', () => {
     expect(appChromeBarContents(path, 'landlord', true)).toBe('nav')
   })
 
+  it('landlord profile hub: nav bar; section drill-in: page-actions', () => {
+    const path = '/landlord/dashboard'
+    expect(appChromeBarContents(path, 'landlord', true, '?tab=profile')).toBe('nav')
+    expect(appChromeBarContents(path, 'landlord', true, '?tab=profile&section=personal')).toBe(
+      'page-actions',
+    )
+    expect(appChromeBarContents(path, 'landlord', false, '?tab=profile&section=personal')).toBe(
+      'none',
+    )
+  })
+
   it('landlord booking review: dashboard header + nav (deferred page-actions)', () => {
     const path = '/landlord/bookings/b1/review'
     expect(appChromeHeaderInner(path, 'landlord', true)).toBe('dashboard')
@@ -143,7 +154,7 @@ describe('one header geometry shell (marketing reference)', () => {
   it('DashboardBrandLockup locks logo cluster height to the marketing logo box', () => {
     const lockup = readFileSync(join(process.cwd(), 'src/components/SiteBrandLockup.tsx'), 'utf8')
     expect(lockup).toContain('export function DashboardBrandLockup')
-    expect(lockup).toMatch(/flex h-9 items-center gap-2 sm:h-10/)
+    expect(lockup).toMatch(/flex h-9 items-center gap-2 whitespace-nowrap sm:h-10/)
     expect(lockup).toContain('QUNI_LOGO_MARK_WRAP_CLASS')
     expect(lockup).toMatch(/data-chrome-brand="dashboard"/)
     expect(lockup).toMatch(/data-chrome-brand="marketing"/)

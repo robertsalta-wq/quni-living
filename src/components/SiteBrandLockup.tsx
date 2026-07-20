@@ -64,7 +64,7 @@ export const QUNI_LOGO_MARK_WRAP_CLASS = 'flex min-w-0 max-w-full items-center g
 export function DashboardBrandLockup() {
   return (
     <div className="min-w-0 shrink-0" data-chrome-brand="dashboard">
-      <div className="flex h-9 items-center gap-2 sm:h-10">
+      <div className="flex h-9 items-center gap-2 whitespace-nowrap sm:h-10">
         <div className={QUNI_LOGO_MARK_WRAP_CLASS}>
           <QuniLogoHomeLink />
         </div>
