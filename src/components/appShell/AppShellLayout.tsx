@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { Suspense, useLayoutEffect, useRef } from 'react'
-import { appChromeHeaderInner, isListingEditDesktopSectionChrome, APP_SHELL_SCROLL_PB_CLASS } from '../../lib/appShell'
+import { appChromeHeaderInner, isListingEditDesktopSectionChrome } from '../../lib/appShell'
 import { DASHBOARD_MOBILE_SCROLL_ATTR } from '../../lib/appShellScroll'
 import { OnboardingResumeBanner } from '../OnboardingResumeBanner'
 import DashboardChromeRouteFallback from '../DashboardChromeRouteFallback'
@@ -46,8 +46,6 @@ export default function AppShellLayout() {
     }
   }, [measureHeader, location.pathname])
 
-  const showBar = isMobile && headerInner != null
-
   return (
     <AppChromeActionsProvider>
       <div
@@ -64,9 +62,7 @@ export default function AppShellLayout() {
         </div>
 
         <main
-          className={`flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain ${
-            showBar ? APP_SHELL_SCROLL_PB_CLASS : ''
-          }`}
+          className="flex min-h-0 w-full min-w-0 flex-1 flex-col max-sm:overflow-y-auto max-sm:overscroll-y-contain"
           {...{ [DASHBOARD_MOBILE_SCROLL_ATTR]: '' }}
         >
           <OnboardingResumeBanner />

@@ -140,7 +140,11 @@ export function ListingHubStatusDot({
   )
 }
 
-/** Quality ring — label centred over the SVG; stroke colour is green only at 100%. */
+/**
+ * Quality ring — label centred over the SVG; stroke colour is green only at 100%.
+ * Ring stays 82px; type is sized so the widest label ("100%") spans ~65% of the
+ * inner diameter (~57px) and never touches the stroke.
+ */
 export function ListingHubQualityRing({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score))
   const complete = clamped >= 100
@@ -173,17 +177,17 @@ export function ListingHubQualityRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <div className="flex flex-col items-center leading-none">
+        <div className="flex max-w-[70%] flex-col items-center leading-none">
           <span
             className="text-[var(--quni-ink)]"
-            style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
+            style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-sans)' }}
           >
             {clamped}%
           </span>
           <span
-            className="mt-1 text-[var(--quni-ink-5)]"
+            className="mt-0.5 text-[var(--quni-ink-5)]"
             style={{
-              fontSize: 9,
+              fontSize: 7,
               fontWeight: 600,
               fontFamily: 'var(--font-sans)',
               letterSpacing: '0.06em',
