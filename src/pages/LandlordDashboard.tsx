@@ -1134,8 +1134,18 @@ export default function LandlordDashboard() {
     )
   }
 
+  // Mobile Profile matches Listing Health: full-bleed page bg, no dashboard inset panel.
+  const profileMobileBleed = tab === 'profile'
+
   return (
-    <div className="flex-1 flex flex-col min-h-0 w-full bg-gray-50 sm:bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
+    <div
+      className={[
+        'flex min-h-0 w-full flex-1 flex-col max-sm:pb-0 pb-16',
+        profileMobileBleed
+          ? 'bg-[var(--quni-surface-2)]'
+          : 'bg-gray-50 sm:bg-[var(--quni-surface-2)]',
+      ].join(' ')}
+    >
       {welcomeToast ? (
         <div
           className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"
@@ -1146,7 +1156,14 @@ export default function LandlordDashboard() {
         </div>
       ) : null}
 
-      <div className={landlordDashboardPageInsetClass}>
+      <div
+        className={
+          profileMobileBleed
+            ? // max-sm:contents drops the inset box so hub/drill-in sit on page bg like Listing Health
+              'max-sm:contents max-w-site mx-auto w-full min-w-0 sm:px-8 sm:py-8 lg:pb-14'
+            : landlordDashboardPageInsetClass
+        }
+      >
         <LandlordDashboardPageHeader
           profile={profile}
           activeTab={tab}

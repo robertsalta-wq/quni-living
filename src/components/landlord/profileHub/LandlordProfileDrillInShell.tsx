@@ -14,8 +14,9 @@ type Props = {
 }
 
 /**
- * Profile section edit — same pattern as ListingBasicInfoDrillIn:
- * back crumb + title, then a single section card with the form.
+ * Profile section edit — outer layout matches ListingBasicInfoDrillIn
+ * (task header + scroll body on page bg). The section card sits on that bg
+ * with no extra enclosing panel.
  * Cancel · Save live in AppActionBar (page-actions).
  */
 export default function LandlordProfileDrillInShell({ sectionId, error, children }: Props) {
@@ -37,7 +38,7 @@ export default function LandlordProfileDrillInShell({ sectionId, error, children
         <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[var(--quni-ink)]">{title}</h1>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         {error ? (
           <div
             className="mb-4 rounded-xl border border-[var(--quni-danger-bg)] bg-[var(--quni-danger-bg)] px-3 py-2 text-sm text-[var(--quni-danger-fg)]"
