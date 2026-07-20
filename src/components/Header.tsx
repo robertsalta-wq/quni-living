@@ -11,6 +11,7 @@ import {
 } from '../lib/dashboardMobileChrome'
 import { formatDisplayName } from '../lib/formatDisplayName'
 import { landlordDisplayName, studentDisplayName } from '../lib/nameResolution'
+import AccountAvatar, { ACCOUNT_AVATAR_FRAME_CLASS } from './AccountAvatar'
 import SiteBrandLockup, { QuniLogoHomeLink } from './SiteBrandLockup'
 import ChromeHeaderShell from './ChromeHeaderShell'
 import AiSparkleIcon from './AiSparkleIcon'
@@ -477,27 +478,17 @@ export default function Header({ embedded = false }: HeaderProps) {
                   ref={menuButtonRef}
                   type="button"
                   onClick={toggleAccountMenu}
-                  className="flex items-center gap-1 overflow-hidden rounded-full border border-gray-200 p-1 hover:bg-gray-50"
+                  className={`${ACCOUNT_AVATAR_FRAME_CLASS} gap-1 hover:bg-[var(--quni-surface-2)]`}
                   aria-expanded={menuOpen}
                   aria-haspopup="menu"
                   aria-label="Account menu"
                 >
-                  {profilePhotoUrl ? (
-                    <img
-                      src={profilePhotoUrl}
-                      alt=""
-                      className="h-8 w-8 rounded-full object-cover bg-gray-100"
-                    />
-                  ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-800">
-                      {initials}
-                    </span>
-                  )}
-                  <span className="hidden sm:inline max-w-[7rem] truncate text-sm font-medium text-gray-800 pl-0.5">
+                  <AccountAvatar photoUrl={profilePhotoUrl} initials={initials} />
+                  <span className="hidden sm:inline max-w-[7rem] truncate pl-0.5 text-sm font-medium text-[var(--quni-ink-2)]">
                     {accountFirstName}
                   </span>
                   <svg
-                    className="w-4 h-4 text-gray-500 mr-1 hidden sm:block"
+                    className="mr-1 hidden h-4 w-4 text-[var(--quni-ink-5)] sm:block"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

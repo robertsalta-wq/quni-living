@@ -22,6 +22,7 @@ import {
 } from '../../lib/userDashboardNav'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
+import AccountAvatar, { ACCOUNT_AVATAR_FRAME_CLASS } from '../AccountAvatar'
 import ChromeHeaderShell from '../ChromeHeaderShell'
 import { DashboardBrandLockup } from '../SiteBrandLockup'
 
@@ -38,11 +39,18 @@ function desktopTabClass(active: boolean): string {
 type AccountMenuProps = {
   displayName: string
   initials: string
+  photoUrl: string | null
   profileHref: string
   onSignOut: () => void
 }
 
-function DesktopAccountMenu({ displayName, initials, profileHref, onSignOut }: AccountMenuProps) {
+function DesktopAccountMenu({
+  displayName,
+  initials,
+  photoUrl,
+  profileHref,
+  onSignOut,
+}: AccountMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const firstName = displayName.split(/\s+/)[0] || 'Account'
@@ -73,8 +81,8 @@ function DesktopAccountMenu({ displayName, initials, profileHref, onSignOut }: A
         aria-haspopup="menu"
         aria-label="Account menu"
       >
-        <span className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)]">
-          {initials}
+        <span className={ACCOUNT_AVATAR_FRAME_CLASS}>
+          <AccountAvatar photoUrl={photoUrl} initials={initials} />
         </span>
         <span className="text-[13.5px] font-semibold text-[var(--quni-ink)]">{firstName}</span>
         <ChevronDown className="h-3.5 w-3.5 text-[var(--quni-ink-4)]" aria-hidden />
@@ -160,6 +168,9 @@ export default function AppHeader() {
     return local.slice(0, 2).toUpperCase()
   })()
 
+  /** Same source as marketing Header — initials only when no photo. */
+  const profilePhotoUrl = profile?.avatar_url?.trim() || null
+
   const addListingHref =
     landlordProfile && canLandlordCreateListing(landlordProfile)
       ? '/landlord/property/new'
@@ -219,10 +230,10 @@ export default function AppHeader() {
           {user ? (
             <Link
               to={profileHref}
-              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white text-xs font-semibold text-[var(--quni-coral-active)] hover:bg-[var(--quni-surface-3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+              className={`${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`}
               aria-label="Profile"
             >
-              {mobileInitials}
+              <AccountAvatar photoUrl={profilePhotoUrl} initials={mobileInitials} />
             </Link>
           ) : (
             <span className="min-w-11 shrink-0" aria-hidden />
@@ -288,6 +299,7 @@ export default function AppHeader() {
             <DesktopAccountMenu
               displayName={displayName}
               initials={desktopInitials}
+              photoUrl={profilePhotoUrl}
               profileHref={profileHref}
               onSignOut={() => void signOut()}
             />
@@ -333,6 +345,7 @@ export default function AppHeader() {
             <DesktopAccountMenu
               displayName={displayName}
               initials={desktopInitials}
+              photoUrl={profilePhotoUrl}
               profileHref={profileHref}
               onSignOut={() => void signOut()}
             />
@@ -351,6 +364,7 @@ export default function AppHeader() {
             <DesktopAccountMenu
               displayName={displayName}
               initials={desktopInitials}
+              photoUrl={profilePhotoUrl}
               profileHref={profileHref}
               onSignOut={() => void signOut()}
             />
@@ -370,10 +384,10 @@ export default function AppHeader() {
           {user ? (
             <Link
               to={profileHref}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--quni-cream-border)] bg-white font-display text-[13px] font-bold text-[var(--quni-coral-active)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+              className={`${ACCOUNT_AVATAR_FRAME_CLASS} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]`}
               aria-label="Profile"
             >
-              {mobileInitials}
+              <AccountAvatar photoUrl={profilePhotoUrl} initials={mobileInitials} />
             </Link>
           ) : null}
         </div>
