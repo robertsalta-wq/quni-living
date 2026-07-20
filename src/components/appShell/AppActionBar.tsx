@@ -58,46 +58,23 @@ const barContainerClass =
 const barContainerStyle = { paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }
 
 /**
- * Permanent trailing Ask AI control — coral chip identity, never an "active" nav tab.
- * `compact`: nav density — hide label under ~380px so six slots keep 44px targets.
+ * Permanent trailing Ask AI control — coral chip + label on every surface.
+ * Same flex-1 / 44px target as nav items; no divider, label never hidden.
  */
-function AskAiBarItem({
-  compact = false,
-  showDivider = true,
-}: {
-  compact?: boolean
-  showDivider?: boolean
-}) {
+function AskAiBarItem() {
   const openChat = useOpenAiChat()
   return (
-    <>
-      {showDivider ? (
-        <span
-          className="mx-1 w-px shrink-0 self-stretch bg-[var(--brand-header-border)]"
-          aria-hidden
-        />
-      ) : null}
-      <button
-        type="button"
-        onClick={openChat}
-        aria-label={ASK_AI_BUTTON_LABEL}
-        className="relative flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 px-1.5 select-none touch-manipulation text-[var(--quni-coral)] [-webkit-touch-callout:none]"
-      >
-        <span className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[var(--quni-coral)] text-white">
-          <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
-        </span>
-        <span
-          className={[
-            'text-[10.5px] font-semibold leading-none',
-            compact ? 'max-[380px]:hidden' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {ASK_AI_BUTTON_LABEL}
-        </span>
-      </button>
-    </>
+    <button
+      type="button"
+      onClick={openChat}
+      aria-label={ASK_AI_BUTTON_LABEL}
+      className="relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 select-none touch-manipulation text-[var(--quni-coral)] [-webkit-touch-callout:none]"
+    >
+      <span className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[var(--quni-coral)] text-white">
+        <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
+      </span>
+      <span className="text-[10.5px] font-semibold leading-none">{ASK_AI_BUTTON_LABEL}</span>
+    </button>
   )
 }
 
@@ -146,7 +123,7 @@ function NavBar({ role }: { role: 'landlord' | 'renter' }) {
             </Link>
           )
         })}
-        <AskAiBarItem compact />
+        <AskAiBarItem />
       </div>
     </nav>
   )
