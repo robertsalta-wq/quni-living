@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Building2, CalendarDays, Heart, LayoutGrid, MessageSquare, User, type LucideIcon } from 'lucide-react'
 import { useAuthContext } from '../../context/AuthContext'
+import { useOpenAiChat } from '../../context/AiChatOpenContext'
 import { isRenterRole } from '../../lib/authProfile'
 import { appChromeBarContents } from '../../lib/appShell'
 import { LANDLORD_NAV_BAR_ITEMS, RENTER_NAV_BAR_ITEMS } from '../../lib/appChromeBarItems'
@@ -11,6 +12,8 @@ import { prefetchDashboardMobileTabChunks, prefetchRouteChunks } from '../../lib
 import { landlordBookingsPath, landlordDashboardTabPath, studentDashboardTabPath } from '../../lib/userDashboardNav'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useUnreadMessageCount } from '../../hooks/useUnreadMessageCount'
+import { ASK_AI_BUTTON_LABEL } from '../aiChat/chatAiLabels'
+import AiSparkleIcon from '../AiSparkleIcon'
 import { useAppChromeActions, type AppActionBarItem } from './AppChromeActionsContext'
 
 const NAV_ICONS: Record<string, LucideIcon> = {
@@ -53,6 +56,50 @@ function labelClass(coral: boolean): string {
 const barContainerClass =
   'shrink-0 border-t border-[var(--brand-header-border)] bg-white px-2 pt-2 sm:hidden'
 const barContainerStyle = { paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }
+
+/**
+ * Permanent trailing Ask AI control — coral chip identity, never an "active" nav tab.
+ * `compact`: nav density — hide label under ~380px so six slots keep 44px targets.
+ */
+function AskAiBarItem({
+  compact = false,
+  showDivider = true,
+}: {
+  compact?: boolean
+  showDivider?: boolean
+}) {
+  const openChat = useOpenAiChat()
+  return (
+    <>
+      {showDivider ? (
+        <span
+          className="mx-1 w-px shrink-0 self-stretch bg-[var(--brand-header-border)]"
+          aria-hidden
+        />
+      ) : null}
+      <button
+        type="button"
+        onClick={openChat}
+        aria-label={ASK_AI_BUTTON_LABEL}
+        className="relative flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 px-1.5 select-none touch-manipulation text-[var(--quni-coral)] [-webkit-touch-callout:none]"
+      >
+        <span className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-[var(--quni-coral)] text-white">
+          <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
+        </span>
+        <span
+          className={[
+            'text-[10.5px] font-semibold leading-none',
+            compact ? 'max-[380px]:hidden' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {ASK_AI_BUTTON_LABEL}
+        </span>
+      </button>
+    </>
+  )
+}
 
 function NavBar({ role }: { role: 'landlord' | 'renter' }) {
   const location = useLocation()
@@ -99,6 +146,7 @@ function NavBar({ role }: { role: 'landlord' | 'renter' }) {
             </Link>
           )
         })}
+        <AskAiBarItem compact />
       </div>
     </nav>
   )
@@ -115,9 +163,8 @@ function ActionBarItemContent({ item }: { item: AppActionBarItem }) {
   )
 }
 
-/** Action mode — page-scoped items only, no global nav, no reserved slots (§1b). */
+/** Action mode — page-scoped items + permanent Ask AI trailing chip (§1b). */
 function ActionBar({ items }: { items: AppActionBarItem[] }) {
-  if (items.length === 0) return null
   return (
     <nav className={barContainerClass} style={barContainerStyle} aria-label="Page actions">
       <div className="flex w-full items-stretch justify-between gap-0">
@@ -150,6 +197,7 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
             </button>
           )
         })}
+        <AskAiBarItem />
       </div>
     </nav>
   )
@@ -158,6 +206,7 @@ function ActionBar({ items }: { items: AppActionBarItem[] }) {
 /**
  * One bottom bar (mobile only). Contents from appChromeBarContents — independent
  * of the header. Browse → nav; listing edit → page-actions from context.
+ * Ask AI is chrome — always appended by this shell, never by pages.
  */
 export default function AppActionBar() {
   const { role } = useAuthContext()

@@ -91,10 +91,20 @@ export default function ListingHealthHub({
         <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3.5 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]">
           <ListingHubQualityRing score={health.score} />
           <div className="min-w-0">
-            <p className="mb-1 text-[15.5px] font-bold leading-tight text-[var(--quni-ink)]">
+            <p
+              className={`mb-1 text-[15.5px] font-bold leading-tight ${
+                health.score >= 100 ? 'text-[var(--quni-success-strong)]' : 'text-[var(--quni-ink)]'
+              }`}
+            >
               {health.qualityHeadline}
             </p>
-            <p className="text-[12.5px] leading-snug text-[var(--quni-ink-4)] text-pretty">
+            <p
+              className={`text-[12.5px] leading-snug text-pretty ${
+                health.score >= 100
+                  ? 'text-[var(--quni-success-fg)]'
+                  : 'text-[var(--quni-ink-4)]'
+              }`}
+            >
               {health.qualitySubtext}
             </p>
           </div>
