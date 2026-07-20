@@ -6,16 +6,14 @@ import type { UserRole } from './authProfile'
 import { isRenterRole } from './authProfile'
 import type { UserDashboardSection } from './userDashboardNav'
 
-/** Approximate tab bar content height (icons+label); safe-area is added separately in CSS. */
+/**
+ * Approximate action-bar content height (icons+label), rem.
+ * The bar is in document flow under `<main>` — do **not** add matching
+ * bottom padding on the scroll container (that left a dead white gap after
+ * the floating AI button was removed). Overlay toasts should clear ~this
+ * height + safe-area, not an extra FAB band.
+ */
 export const APP_SHELL_TAB_BAR_CONTENT_REM = 3.75
-
-/** Bottom padding so scroll content clears the tab bar + home indicator (mobile only). */
-export const APP_SHELL_SCROLL_PB_CLASS =
-  'max-sm:pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))]'
-
-/** FAB / toast offset above the tab bar on mobile when app shell is active. */
-export const APP_SHELL_FAB_BOTTOM_CLASS =
-  'max-md:bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
 
 export type AppShellMode = 'section' | 'focus'
 
