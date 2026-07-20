@@ -1134,18 +1134,12 @@ export default function LandlordDashboard() {
     )
   }
 
-  // Mobile Profile matches Listing Health: full-bleed page bg, no dashboard inset panel.
-  const profileMobileBleed = tab === 'profile'
+  // Profile hub/drill-in already own Listing-style padding — skip the shared inset on mobile
+  // so they aren't double-padded. Other tabs use landlordDashboardPageInsetClass.
+  const profileOwnsPadding = tab === 'profile'
 
   return (
-    <div
-      className={[
-        'flex min-h-0 w-full flex-1 flex-col max-sm:pb-0 pb-16',
-        profileMobileBleed
-          ? 'bg-[var(--quni-surface-2)]'
-          : 'bg-gray-50 sm:bg-[var(--quni-surface-2)]',
-      ].join(' ')}
-    >
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)] max-sm:pb-0 pb-16">
       {welcomeToast ? (
         <div
           className="fixed top-20 right-4 z-[70] w-[min(100%-2rem,22rem)] rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg"
@@ -1158,9 +1152,8 @@ export default function LandlordDashboard() {
 
       <div
         className={
-          profileMobileBleed
-            ? // max-sm:contents drops the inset box so hub/drill-in sit on page bg like Listing Health
-              'max-sm:contents max-w-site mx-auto w-full min-w-0 sm:px-8 sm:py-8 lg:pb-14'
+          profileOwnsPadding
+            ? 'max-sm:contents max-w-site mx-auto w-full min-w-0 sm:px-4 sm:py-6 lg:px-8 lg:pb-14'
             : landlordDashboardPageInsetClass
         }
       >
