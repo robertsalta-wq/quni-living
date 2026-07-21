@@ -1580,19 +1580,19 @@ export default function LandlordDashboard() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+            <div className="overflow-hidden sm:rounded-2xl sm:border sm:border-gray-100 sm:bg-white sm:shadow-sm">
               {dataLoading && otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
-                <div className="space-y-3 p-4 animate-pulse" aria-busy="true">
-                  <div className="h-20 rounded-xl bg-gray-100" />
-                  <div className="h-20 rounded-xl bg-gray-100" />
+                <div className="space-y-3 animate-pulse sm:p-4" aria-busy="true">
+                  <div className="h-20 rounded-xl border border-[#E5E4E7] bg-white sm:border-0 sm:bg-gray-100" />
+                  <div className="h-20 rounded-xl border border-[#E5E4E7] bg-white sm:border-0 sm:bg-gray-100" />
                 </div>
               ) : otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
-                <p className="p-10 text-center text-sm text-gray-500">No bookings yet.</p>
+                <p className="py-10 text-center text-sm text-gray-500 sm:p-10">No bookings yet.</p>
               ) : otherBookings.length === 0 ? (
-                <p className="p-6 text-center text-xs text-gray-500">No other booking records.</p>
+                <p className="py-6 text-center text-xs text-gray-500 sm:p-6">No other booking records.</p>
               ) : (
                 <>
-                  <div className="flex flex-col gap-3 p-4 sm:hidden">
+                  <div className="flex flex-col gap-3 sm:hidden">
                     {otherBookings.map((b) => {
                       const verification = buildLandlordVerificationFromProfile(b.student_profiles)
                       const isAgreementBusy = agreementActionBusyId === b.id
