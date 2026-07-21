@@ -7,15 +7,16 @@
 :root {
   /* Set to 48px on native Android only (see nativeStatusBarInsetFallback.ts). */
   --quni-status-bar-fallback: 0px;
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  /* Colour aliases — values live in quni-design-tokens.css (imported above). */
+  --text: var(--quni-ink-4);
+  --text-h: var(--quni-ink);
+  --bg: var(--quni-surface-1);
+  --border: var(--quni-line);
+  --code-bg: var(--quni-surface-3);
+  --accent: var(--quni-ai);
+  --accent-bg: var(--quni-ai-tint);
+  --accent-border: var(--quni-ai-border);
+  --social-bg: color-mix(in srgb, var(--quni-surface-3) 50%, transparent);
   /* --brand-header-bg / --brand-header-border: defined once, in quni-design-tokens.css. */
   /* Fixed mobile header block height (logo row + padding + safe area). */
   --quni-fixed-header-offset: calc(

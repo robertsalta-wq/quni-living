@@ -1,4 +1,13 @@
 /** @type {import('tailwindcss').Config} */
+
+/**
+ * Opacity-safe colour backed by a CSS variable in quni-design-tokens.css.
+ * Tailwind v3 needs <alpha-value> (or equivalent) for `/30`-style modifiers;
+ * plain `var(--token)` drops those utilities at build time.
+ */
+const quni = (token) =>
+  `color-mix(in srgb, var(${token}) calc(100% * <alpha-value>), transparent)`
+
 export default {
   content: [
     "./index.html",
@@ -32,73 +41,76 @@ export default {
       },
       colors: {
         /**
-         * Admin redesign palette ("The Living Console") - keep in sync with
-         * `docs/admin-redesign/HANDOFF.md` §6 and `prototype/colors_and_type.css`.
-         * Prefixed with `admin-` so they never collide with existing brand tokens.
+         * Living Console / admin palette — aliases of `src/styles/quni-design-tokens.css`.
+         * Hex lives only in the tokens file; these keys exist so existing `admin-*`
+         * utilities keep working (including `/opacity` modifiers via color-mix).
          */
-        'admin-coral': '#FF6F61',
-        'admin-coral-hover': '#F2604F',
-        'admin-coral-active': '#CC4A3C',
-        'admin-cream': '#FEF9E4',
-        'admin-cream-border': '#E8E0CC',
-        'admin-navy': '#1F2A44',
+        'admin-coral': quni('--quni-coral'),
+        'admin-coral-hover': quni('--quni-coral-hover'),
+        'admin-coral-active': quni('--quni-coral-active'),
+        'admin-cream': quni('--quni-cream'),
+        'admin-cream-border': quni('--quni-cream-border'),
+        'admin-navy': quni('--quni-navy'),
         'admin-ink': {
-          DEFAULT: '#08060D',
-          2: '#2A2433',
-          3: '#4A4253',
-          4: '#6B6375',
-          5: '#908897',
+          DEFAULT: quni('--quni-ink'),
+          2: quni('--quni-ink-2'),
+          3: quni('--quni-ink-3'),
+          4: quni('--quni-ink-4'),
+          5: quni('--quni-ink-5'),
         },
         'admin-line': {
-          DEFAULT: '#E5E4E7',
-          soft: '#EFEDE9',
+          DEFAULT: quni('--quni-line'),
+          soft: quni('--quni-line-soft'),
         },
         'admin-surface': {
-          1: '#FFFFFF',
-          2: '#F8F6F1',
-          3: '#F4F3EC',
+          1: quni('--quni-surface-1'),
+          2: quni('--quni-surface-2'),
+          3: quni('--quni-surface-3'),
         },
         'admin-success': {
-          DEFAULT: '#1D9E75',
-          fg: '#0F6E56',
-          bg: '#E6F4EE',
+          DEFAULT: quni('--quni-success'),
+          fg: quni('--quni-success-strong'),
+          bg: quni('--quni-success-bg'),
         },
         'admin-warning': {
-          DEFAULT: '#B7791F',
-          fg: '#92400E',
-          bg: '#FEF3C7',
+          DEFAULT: quni('--quni-warning'),
+          fg: quni('--quni-warning-fg'),
+          bg: quni('--quni-warning-bg'),
         },
         'admin-danger': {
-          DEFAULT: '#DC2626',
-          fg: '#991B1B',
-          bg: '#FEF2F2',
+          DEFAULT: quni('--quni-danger'),
+          fg: quni('--quni-danger-fg'),
+          bg: quni('--quni-danger-bg'),
         },
         'admin-info': {
-          DEFAULT: '#0369A1',
-          fg: '#075985',
-          bg: '#E0F2FE',
+          DEFAULT: quni('--quni-info'),
+          fg: quni('--quni-info-fg'),
+          bg: quni('--quni-info-bg'),
         },
         /** AI purple — booking review AI assessment (and nowhere decorative). */
         'admin-ai': {
-          DEFAULT: '#AA3BFF',
-          tint: 'rgba(170,59,255,0.10)',
-          border: 'rgba(170,59,255,0.32)',
+          DEFAULT: quni('--quni-ai'),
+          // Pre-composited tint/border tokens (already carry alpha).
+          tint: 'var(--quni-ai-tint)',
+          border: 'var(--quni-ai-border)',
         },
       },
       backgroundColor: {
-        'admin-coral-tint': 'rgba(255,111,97,0.08)',
-        'admin-coral-tint-15': 'rgba(255,111,97,0.15)',
-        'admin-navy-tint': 'rgba(31,42,68,0.08)',
-        'admin-ai-tint': 'rgba(170,59,255,0.10)',
+        // Tint tokens already carry alpha; still use color-mix so `/50`-style modifiers emit.
+        'admin-coral-tint': quni('--quni-coral-tint'),
+        'admin-coral-tint-15': quni('--quni-coral-tint-15'),
+        'admin-navy-tint': quni('--quni-navy-tint'),
+        'admin-ai-tint': quni('--quni-ai-tint'),
       },
       borderColor: {
-        'admin-coral-30': 'rgba(255,111,97,0.30)',
-        'admin-ai-border': 'rgba(170,59,255,0.32)',
+        // Fixed 30% coral border (named utility). Token border is 25%; keep 30% mix for parity with prior admin-coral-30.
+        'admin-coral-30': 'color-mix(in srgb, var(--quni-coral) 30%, transparent)',
+        'admin-ai-border': quni('--quni-ai-border'),
       },
       boxShadow: {
-        'admin-card': '0 1px 2px rgba(8,6,13,.05), 0 1px 1px rgba(8,6,13,.03)',
-        'admin-card-hover': '0 4px 12px rgba(8,6,13,.06), 0 2px 4px rgba(8,6,13,.04)',
-        'admin-modal': '0 16px 32px rgba(8,6,13,.10), 0 4px 8px rgba(8,6,13,.05)',
+        'admin-card': 'var(--shadow-1)',
+        'admin-card-hover': 'var(--shadow-2)',
+        'admin-modal': 'var(--shadow-3)',
       },
       borderRadius: {
         'admin-sm': '6px',

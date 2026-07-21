@@ -34,6 +34,10 @@ jobs:
       - name: App chrome lint guard
         run: npm run lint:app-chrome
 
+      # Blocking: admin-* /opacity must emit color-mix alpha (Tailwind v3 + CSS vars).
+      - name: Admin opacity smoke test
+        run: npm run lint:opacity
+
       - name: Typecheck
         run: npx tsc -b --noEmit
 
