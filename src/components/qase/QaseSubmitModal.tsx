@@ -450,7 +450,7 @@ export default function QaseSubmitModal({
         disabled={submitting}
       />
       <div
-        className="relative z-10 max-w-lg w-full rounded-2xl border border-gray-100 bg-white p-6 shadow-xl"
+        className="quni-modal relative z-10 w-full max-w-lg p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="qase-submit-title"

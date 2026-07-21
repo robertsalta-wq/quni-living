@@ -338,7 +338,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
         }}
         aria-hidden
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+      <div className="quni-modal relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto overscroll-contain p-6">
         <h3 className="text-lg font-semibold text-gray-900">Invite a tenant</h3>
         <p className="mt-1 text-sm text-gray-600">
           Share a link or email for <span className="font-medium text-gray-900">{property.title}</span>. Your tenant

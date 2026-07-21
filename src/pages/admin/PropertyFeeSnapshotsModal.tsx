@@ -259,7 +259,7 @@ export function PropertyFeeSnapshotsModal({ open, propertyId, onClose }: Propert
         role="dialog"
         aria-modal="true"
         aria-labelledby="fee-snapshots-title"
-        className="relative z-10 flex max-h-[min(92vh,900px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+        className="quni-modal relative z-10 flex max-h-[min(92vh,900px)] w-full max-w-5xl flex-col overflow-hidden"
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-5 py-4">
           <div>

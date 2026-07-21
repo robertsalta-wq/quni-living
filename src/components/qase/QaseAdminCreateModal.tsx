@@ -296,7 +296,7 @@ export default function QaseAdminCreateModal({ isOpen, onClose, onCreated }: Qas
         disabled={submitting}
       />
       <div
-        className="relative z-10 max-w-lg w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-6 shadow-xl"
+        className="quni-modal relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="qase-admin-create-title"

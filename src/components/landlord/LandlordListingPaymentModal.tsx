@@ -235,7 +235,7 @@ export default function LandlordListingPaymentModal({ open, onClose, onSuccess }
         aria-label="Close"
         onClick={() => !loadingSetup && onClose()}
       />
-      <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6 max-h-[90vh] overflow-y-auto">
+      <div className="quni-modal relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Save a payment method</h3>

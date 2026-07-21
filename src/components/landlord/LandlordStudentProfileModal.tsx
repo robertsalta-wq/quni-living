@@ -322,7 +322,7 @@ export default function LandlordStudentProfileModal({
         onClick={onClose}
       />
       <div
-        className="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-gray-200 bg-white shadow-xl"
+        className="quni-modal relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
