@@ -144,24 +144,52 @@ describe('findChromeViolations', () => {
     ).toEqual([])
   })
 
-  it('skips chips without block padding; padded button-shaped clusters still match', () => {
-    const chip = `<span className="rounded-full border border-gray-200 bg-white shadow-sm" />`
+  it('skips chips, buttons, inputs, and py-only menus; still flags content cards', () => {
+    const chip = `<span className="rounded-full border border-gray-200 bg-white px-3 py-1.5 shadow-sm" />`
     expect(
       findChromeViolations('src/pages/CardLintProbe.tsx', chip).filter((x) => x.id === 'hand-rolled-card'),
     ).toEqual([])
 
-    const buttonShaped = `<button className="rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-sm" />`
+    const inlineFlexBtn = `<button className="inline-flex rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-sm" />`
     expect(
-      findChromeViolations('src/pages/CardLintProbe.tsx', buttonShaped).some(
+      findChromeViolations('src/pages/CardLintProbe.tsx', inlineFlexBtn).filter(
         (x) => x.id === 'hand-rolled-card',
       ),
+    ).toEqual([])
+
+    const hoverBtn = `<button className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', hoverBtn).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+
+    const input = `<input className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 shadow-sm placeholder:text-gray-400 focus:ring-2" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', input).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+
+    const menu = `<div className="absolute z-20 rounded-xl border border-gray-100 bg-white py-1 shadow-lg" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', menu).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+
+    const card = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', card).some((x) => x.id === 'hand-rolled-card'),
     ).toBe(true)
   })
 
   it('allowlists containerLegacy + primitive card wrappers for hand-rolled-card', () => {
     const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
     expect(
-      findChromeViolations('src/pages/Faq.tsx', dirty).filter((x) => x.id === 'hand-rolled-card'),
+      findChromeViolations('src/pages/LandlordDashboard.tsx', dirty).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
     ).toEqual([])
     expect(
       findChromeViolations('src/components/ui/Section.tsx', dirty).filter(

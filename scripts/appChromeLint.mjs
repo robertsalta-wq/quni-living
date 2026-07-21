@@ -255,25 +255,63 @@ function collectHeaderSafeAreaPlacement(source, file, out) {
 const HAND_ROLLED_CARD_MESSAGE =
   'Hand-rolled card chrome (rounded + border + white/surface + shadow + padding) is banned — use .quni-card (or .quni-modal / admin Card). See container system C2/C-lint.'
 
+const BP = '(?:sm:|md:|lg:|xl:)?'
+
+/** Resting (non-hover/focus/active) surface fill. */
+function hasRestingCardSurface(s) {
+  const prefix = `(?:^|[\\s])${BP}`
+  return (
+    new RegExp(`${prefix}bg-white\\b`).test(s) ||
+    new RegExp(`${prefix}bg-\\[var\\(--quni-surface-1\\)\\]`).test(s) ||
+    new RegExp(`${prefix}bg-admin-surface-1\\b`).test(s)
+  )
+}
+
+/** Resting (non-hover/focus/active) elevation. */
+function hasRestingCardShadow(s) {
+  return new RegExp(`(?:^|[\\s])${BP}shadow(?:-|\\b|\\[)`).test(s)
+}
+
+function hasBlockPadding(s) {
+  // `p-5` / `sm:p-6` — not `px-*` / `py-*` / `pt-*` …
+  return new RegExp(`(?:^|[\\s:])${BP}p-\\d`).test(s)
+}
+
+function hasAxisPaddingX(s) {
+  return new RegExp(`(?:^|[\\s:])${BP}px-(?:\\d|\\[[^\\]]+\\])`).test(s)
+}
+
+function hasAxisPaddingY(s) {
+  return new RegExp(`(?:^|[\\s:])${BP}py-(?:\\d|\\[[^\\]]+\\])`).test(s)
+}
+
 /**
  * True when a class string looks like a hand-rolled elevated content card.
- * Requires a block-padding tell (`p-*` / `px-*` / …) to reduce button/input noise.
+ * Requires padding (`p-*` / `px-*` / …). Excludes clear controls (buttons, inputs,
+ * chips, py-only menus) so those files are actively locked instead of grandfathered.
  * @param {string} s
  */
 export function classLooksLikeHandRolledCard(s) {
   if (/\bquni-card\b/.test(s) || /\bquni-dashboard-panel\b/.test(s) || /\bquni-modal\b/.test(s)) {
     return false
   }
+
+  // —— Control / chrome exclusions (precision pass after C4) ——
+  if (/\binline-flex\b/.test(s)) return false
+  if (/\brounded-full\b/.test(s)) return false
+  if (/\bplaceholder:/.test(s)) return false
+  if (/\bquni-input-border\b/.test(s)) return false
+  // Inputs use focus:*; interactive cards use focus-visible:*.
+  if (/\bfocus:(?:ring|border|shadow)(?:-|\b|\[)/.test(s)) return false
+  // Axis-padded buttons with hover fill (no uniform p-*).
+  if (/\bhover:bg-/.test(s) && !hasBlockPadding(s)) return false
+  // Menus: vertical padding only (e.g. py-1), no px / p-*.
+  if (hasAxisPaddingY(s) && !hasAxisPaddingX(s) && !hasBlockPadding(s)) return false
+
   if (!/\brounded-/.test(s)) return false
   if (!/\bborder\b/.test(s)) return false
-  if (
-    !/\bbg-white\b/.test(s) &&
-    !/\bbg-\[var\(--quni-surface-1\)\]/.test(s) &&
-    !/\bbg-admin-surface-1\b/.test(s)
-  ) {
-    return false
-  }
-  if (!/\bshadow(?:-|\b|\[)/.test(s)) return false
+  if (!hasRestingCardSurface(s)) return false
+  if (!hasRestingCardShadow(s)) return false
   // Container tell: padding utility (not bare `p` in other words).
   if (!/(?:^|[\s:])(?:sm:|md:|lg:|xl:)?p(?:[xytbrl])?(?:-\d|-\[[^\]]+\])/.test(s)) return false
   return true
