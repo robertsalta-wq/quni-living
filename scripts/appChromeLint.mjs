@@ -21,6 +21,11 @@ const CONTAINER_LEGACY = new Set(
   JSON.parse(readFileSync(join(__dirname, 'containerLegacy.json'), 'utf8')).files,
 )
 
+/** @type {Set<string>} */
+const MODAL_LEGACY = new Set(
+  JSON.parse(readFileSync(join(__dirname, 'modalLegacy.json'), 'utf8')).files,
+)
+
 /**
  * React wrappers that own `.quni-card` composition (tone/pad/sticky on top).
  * CSS definition lives in quni-design-tokens.css (not scanned by this CLI).
@@ -29,6 +34,14 @@ export const CONTAINER_PRIMITIVE_ALLOW = new Set([
   'src/components/ui/Section.tsx',
   'src/components/booking/review/BookingReviewSummaryStrip.tsx',
   'src/components/booking/review/BookingReviewActionCard.tsx',
+])
+
+/**
+ * React wrappers that own `.quni-modal` composition (mobile un-elevate, etc.).
+ * CSS definition lives in quni-design-tokens.css (not scanned by this CLI).
+ */
+export const MODAL_PRIMITIVE_ALLOW = new Set([
+  'src/components/legal/LegalDocumentModal.tsx',
 ])
 
 /** Sole owner of header geometry (marketing reference). */
@@ -281,6 +294,47 @@ function collectHandRolledCard(source, file, out) {
   }
 }
 
+const HAND_ROLLED_MODAL_MESSAGE =
+  'Hand-rolled modal chrome (rounded + border + white/surface + shadow-xl|2xl|admin-modal + z-10/max-w) is banned — use .quni-modal. See container system C3 / modal lint.'
+
+/**
+ * True when a class string looks like a hand-rolled dialog panel (heavier than a card).
+ * Dialog tell: `z-10` or `max-w-*` — reduces dropdown/drawer noise.
+ * @param {string} s
+ */
+export function classLooksLikeHandRolledModal(s) {
+  if (/\bquni-modal\b/.test(s) || /\bquni-card\b/.test(s) || /\bquni-dashboard-panel\b/.test(s)) {
+    return false
+  }
+  if (!/\brounded-/.test(s)) return false
+  if (!/\bborder\b/.test(s)) return false
+  if (
+    !/\bbg-white\b/.test(s) &&
+    !/\bbg-\[var\(--quni-surface-1\)\]/.test(s) &&
+    !/\bbg-admin-surface-1\b/.test(s)
+  ) {
+    return false
+  }
+  if (!/\bshadow-(?:xl|2xl|admin-modal)\b/.test(s)) return false
+  if (!/\bz-10\b/.test(s) && !/\bmax-w-/.test(s)) return false
+  return true
+}
+
+function collectHandRolledModal(source, file, out) {
+  const re = /['"`]([^'"`]{0,900})['"`]/g
+  let m
+  while ((m = re.exec(source))) {
+    const s = m[1] ?? ''
+    if (!classLooksLikeHandRolledModal(s)) continue
+    out.push({
+      file,
+      line: lineOf(source, m.index),
+      id: 'hand-rolled-modal',
+      message: HAND_ROLLED_MODAL_MESSAGE,
+    })
+  }
+}
+
 /**
  * @param {string} relPath
  * @param {string} source
@@ -317,6 +371,11 @@ export function findChromeViolations(relPath, source) {
   // Container system — hand-rolled cards banned outside primitives + grandfather list.
   if (!CONTAINER_PRIMITIVE_ALLOW.has(relPath) && !CONTAINER_LEGACY.has(relPath)) {
     collectHandRolledCard(source, relPath, out)
+  }
+
+  // Container system — hand-rolled modal panels banned outside .quni-modal + grandfather list.
+  if (!MODAL_PRIMITIVE_ALLOW.has(relPath) && !MODAL_LEGACY.has(relPath)) {
+    collectHandRolledModal(source, relPath, out)
   }
 
   return out

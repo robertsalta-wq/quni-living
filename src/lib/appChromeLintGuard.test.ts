@@ -171,6 +171,35 @@ describe('findChromeViolations', () => {
       ),
     ).toEqual([])
   })
+
+  it('flags hand-rolled modal chrome on non-legacy files', () => {
+    const dirty = `<div className="relative z-10 max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl" />`
+    const v = findChromeViolations('src/pages/ModalLintProbe.tsx', dirty)
+    expect(v.some((x) => x.id === 'hand-rolled-modal')).toBe(true)
+
+    const viaPrimitive = `<div className="quni-modal relative z-10 max-w-md p-6" />`
+    expect(
+      findChromeViolations('src/pages/ModalLintProbe.tsx', viaPrimitive).filter(
+        (x) => x.id === 'hand-rolled-modal',
+      ),
+    ).toEqual([])
+  })
+
+  it('skips dropdowns without dialog tell; allowlists LegalDocumentModal for modal rule', () => {
+    const dropdown = `<div className="absolute z-30 mt-1 min-w-[180px] rounded-admin-md border border-admin-line bg-white shadow-admin-modal" />`
+    expect(
+      findChromeViolations('src/pages/ModalLintProbe.tsx', dropdown).filter(
+        (x) => x.id === 'hand-rolled-modal',
+      ),
+    ).toEqual([])
+
+    const dirty = `<div className="relative z-10 max-w-md rounded-2xl border bg-white p-6 shadow-xl" />`
+    expect(
+      findChromeViolations('src/components/legal/LegalDocumentModal.tsx', dirty).filter(
+        (x) => x.id === 'hand-rolled-modal',
+      ),
+    ).toEqual([])
+  })
 })
 
 describe('app chrome lint guard CLI (§6)', () => {
