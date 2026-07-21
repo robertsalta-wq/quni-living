@@ -478,7 +478,6 @@ export default function StudentDashboard() {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-admin-ink">{welcomeToast}</p>
-            <p className="text-xs text-admin-ink-5 mt-0.5">Dismisses on its own · login only</p>
           </div>
         </div>
       ) : null}
