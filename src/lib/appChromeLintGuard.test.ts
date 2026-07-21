@@ -62,6 +62,40 @@ describe('findChromeViolations', () => {
     ).toEqual([])
   })
 
+  it('flags Batch-1 canonical brand hex literals', () => {
+    const dirty = `const c = '#FF6F61'\n`
+    const v = findChromeViolations('src/pages/Batch1HexProbe.tsx', dirty)
+    expect(v.some((x) => x.id === 'batch1-canonical-hex')).toBe(true)
+  })
+
+  it('allowlists Stripe colorPrimary and theme-color lines for Batch-1 hex', () => {
+    const stripe = `appearance: { theme: 'stripe', variables: { colorPrimary: '#FF6F61' } },\n`
+    expect(
+      findChromeViolations('src/pages/Booking.tsx', stripe).filter((x) => x.id === 'batch1-canonical-hex'),
+    ).toEqual([])
+
+    const theme = `<meta name="theme-color" content="#FF6F61" />\n`
+    expect(
+      findChromeViolations('src/components/Seo.tsx', theme).filter((x) => x.id === 'batch1-canonical-hex'),
+    ).toEqual([])
+
+    const themeSingle = `<meta name='theme-color' content='#FF6F61' />\n`
+    expect(
+      findChromeViolations('src/components/Seo.tsx', themeSingle).filter(
+        (x) => x.id === 'batch1-canonical-hex',
+      ),
+    ).toEqual([])
+  })
+
+  it('skips Batch-1 hex checks under src/lib/documents', () => {
+    const src = `const coral = '#FF6F61'\n`
+    expect(
+      findChromeViolations('src/lib/documents/quniDocumentPdfTheme.tsx', src).filter(
+        (x) => x.id === 'batch1-canonical-hex',
+      ),
+    ).toEqual([])
+  })
+
   it('stays silent on in-hub titles using surface/line tokens (not chrome tokens)', () => {
     const src = `
       <h1 className="text-[15px] font-bold text-[var(--quni-ink)] border-b border-[var(--quni-line-soft)]">

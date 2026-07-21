@@ -76,6 +76,75 @@ export const patterns = [
   },
 ]
 
+/** Batch-1 brand hexes — fully tokenized; must not return as literals in UI code. */
+const BATCH1_CANONICAL_HEX = new Set(
+  [
+    'ff6f61',
+    'f2604f',
+    'e85d52',
+    'e8583a',
+    'e85a4f',
+    'e86357',
+    'cc4a3c',
+    '1f2a44',
+    '1b2a4a',
+    '161e33',
+    '08060d',
+    '2a2433',
+    '4a4253',
+    '6b6375',
+    '908897',
+    'e5e4e7',
+    'efede9',
+    'fef9e4',
+    'e8e0cc',
+    '1d9e75',
+    '0f6e56',
+    'e6f4ee',
+  ].map((h) => h.toLowerCase()),
+)
+
+const BATCH1_HEX_RE = /#([0-9A-Fa-f]{6})\b/g
+
+const BATCH1_HEX_MESSAGE =
+  'canonical brand colour as a literal — use the token (var(--quni-*) / --chart-*) or the admin-* utility'
+
+function isDocumentsPath(relPath) {
+  return relPath === 'src/lib/documents' || relPath.startsWith('src/lib/documents/')
+}
+
+/** Stripe colorPrimary and <meta name="theme-color"> may keep literal coral. */
+function isBatch1HexAllowlistedLine(line) {
+  if (/colorPrimary/.test(line)) return true
+  if (/name\s*=\s*['"]theme-color['"]/.test(line)) return true
+  return false
+}
+
+/**
+ * @param {string} source
+ * @param {string} file
+ * @param {ChromeViolation[]} out
+ */
+function collectBatch1CanonicalHex(source, file, out) {
+  if (isDocumentsPath(file)) return
+  const lines = source.split(/\r?\n/)
+  BATCH1_HEX_RE.lastIndex = 0
+  let m
+  while ((m = BATCH1_HEX_RE.exec(source))) {
+    const hex = m[1].toLowerCase()
+    if (!BATCH1_CANONICAL_HEX.has(hex)) continue
+    const lineNo = lineOf(source, m.index)
+    const line = lines[lineNo - 1] ?? ''
+    if (isBatch1HexAllowlistedLine(line)) continue
+    out.push({
+      file,
+      line: lineNo,
+      id: 'batch1-canonical-hex',
+      message: BATCH1_HEX_MESSAGE,
+    })
+  }
+}
+
 function lineOf(source, index) {
   return source.slice(0, index).split(/\r?\n/).length
 }
@@ -136,6 +205,9 @@ export function findChromeViolations(relPath, source) {
   if (!ARBITRARY_HEX_LEGACY.has(relPath)) {
     collect(source, relPath, patterns, out)
   }
+
+  // Batch-1 brand hexes — always on (documents + Stripe/theme-color line allowlist).
+  collectBatch1CanonicalHex(source, relPath, out)
 
   return out
 }
