@@ -1,4 +1,4 @@
-const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm animate-pulse'
+const cardClass = 'quni-card animate-pulse p-5'
 
 /** Layout placeholder while dashboard data loads (profile may already be in auth context). */
 export default function DashboardPageSkeleton() {

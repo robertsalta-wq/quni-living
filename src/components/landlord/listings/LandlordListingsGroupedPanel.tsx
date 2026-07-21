@@ -141,7 +141,7 @@ export default function LandlordListingsGroupedPanel({
 
   if (listings.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[var(--quni-line)] bg-white px-6 py-14 text-center">
+      <div className="quni-card border-dashed border-[var(--quni-line)] px-6 py-14 text-center">
         <p className="text-sm text-[var(--quni-ink-4)]">You haven&apos;t listed any properties yet.</p>
         {canCreateListing ? (
           <Link
@@ -193,7 +193,7 @@ export default function LandlordListingsGroupedPanel({
       </div>
 
       {groups.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--quni-line)] bg-white px-6 py-10 text-center">
+        <div className="quni-card px-6 py-10 text-center">
           <p className="text-sm text-[var(--quni-ink-4)]">No listings match this filter.</p>
         </div>
       ) : (

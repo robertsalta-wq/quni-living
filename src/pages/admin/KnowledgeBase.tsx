@@ -176,7 +176,7 @@ export default function KnowledgeBase() {
               </button>
             )}
           </div>
-          <form onSubmit={submitForm} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <form onSubmit={submitForm} className="quni-card space-y-4 p-5">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
               <input

@@ -91,7 +91,7 @@ export default function GuideArticlePage() {
       />
 
       <div className={`${SITE_CONTENT_MAX_CLASS} py-8 sm:py-10`}>
-        <article className="mx-auto max-w-3xl rounded-2xl border border-gray-100 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-10">
+        <article className="quni-card mx-auto max-w-3xl px-6 py-8 sm:px-10 sm:py-10">
           <GuideMarkdown markdown={bodyMarkdown} />
           {faqs.length > 0 ? (
             <section className="mt-10 border-t border-gray-100 pt-10">

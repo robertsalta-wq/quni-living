@@ -322,7 +322,7 @@ export default function Listings() {
 
         <div className="grid w-full grid-cols-1 md:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start justify-items-stretch">
           <aside className="w-full min-w-0 md:w-auto md:max-w-[16rem]">
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm md:sticky md:top-24">
+            <div className="quni-card p-5 md:sticky md:top-24">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900 text-sm">Filters</h2>
                 {filters.hasActiveFilters && (

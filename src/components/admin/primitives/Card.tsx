@@ -17,7 +17,7 @@ export interface CardProps {
  */
 export function Card({ padding = 24, hoverable = false, children, className, style }: CardProps) {
   const cls = [
-    'rounded-admin-lg border border-admin-line bg-white shadow-admin-card transition-shadow',
+    'quni-card transition-shadow',
     hoverable ? 'hover:shadow-admin-card-hover' : '',
     className ?? '',
   ]

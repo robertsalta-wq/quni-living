@@ -172,7 +172,7 @@ export default function HowItWorks() {
                 className="pointer-events-none absolute inset-x-0 top-24 z-10 flex justify-center px-4"
                 aria-hidden
               >
-                <div className="rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-5 py-3 text-center shadow-md">
+                <div className="quni-card border-[rgba(108,142,89,0.35)] px-5 py-3 text-center">
                   <p className="font-lora text-base font-semibold text-[var(--quni-trust)]">{MANAGED_COMING_SOON_HEADLINE}</p>
                   <p className="mt-1 max-w-sm text-xs text-[var(--quni-ink-4)]">{MANAGED_COMING_SOON_SUBLINE}</p>
                 </div>

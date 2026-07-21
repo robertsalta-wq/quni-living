@@ -136,7 +136,7 @@ type HowStep = {
 function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
   const { heading, steps } = props
   return (
-    <div className="rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-8 shadow-sm">
+    <div className="quni-card border-[var(--quni-trust-bg)] p-6 sm:p-8">
       <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--quni-coral)] mb-6">{heading}</h3>
       <ol className="m-0 list-none space-y-6 p-0">
         {steps.map((step) => (

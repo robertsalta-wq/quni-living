@@ -221,7 +221,7 @@ export default function RentNearCampus() {
             {WHO_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
+                className="quni-card border-[var(--quni-trust-bg)] p-6 text-center sm:p-7 md:text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{card.title}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">{card.body}</p>
@@ -244,7 +244,7 @@ export default function RentNearCampus() {
             {HOW_STEPS.map((step) => (
               <div
                 key={step.n}
-                className="relative rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
+                className="relative quni-card border-[var(--quni-trust-bg)] p-6 text-center sm:p-7 md:text-left"
               >
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[var(--quni-coral)] mb-4 mx-auto md:mx-0">
                   {step.n === 1 && (

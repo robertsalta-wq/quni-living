@@ -409,7 +409,7 @@ export default function CampusAccommodation() {
                 </Link>
               </div>
               {exactListings.length === 0 && nearbyListings.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center">
+                <div className="quni-card border-dashed border-gray-200 p-8 text-center">
                   <p className="text-gray-700 font-medium">No listings yet - check back soon</p>
                   <p className="text-sm text-gray-500 mt-2">Get notified when properties go live near {campus.name}.</p>
                   <Link
@@ -442,7 +442,7 @@ export default function CampusAccommodation() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm" aria-labelledby="about-campus-heading">
+            <section className="quni-card p-6 sm:p-8" aria-labelledby="about-campus-heading">
               <h2 id="about-campus-heading" className="font-display text-xl font-bold text-gray-900">
                 About this campus
               </h2>
@@ -483,7 +483,7 @@ export default function CampusAccommodation() {
                     <Link
                       key={c.id}
                       to={`/student-accommodation/${university.slug}/${campusUrlSlug(c)}`}
-                      className="block rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all"
+                      className="quni-card block p-5 transition-all hover:shadow-md"
                     >
                       <h3 className="font-semibold text-gray-900">{c.name}</h3>
                       <p className="text-sm text-gray-500 mt-1">

@@ -52,7 +52,7 @@ export default function SampleAgreementsPage() {
           className="mb-4"
         />
 
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="quni-card mb-6 p-5">
           <h1 className="text-2xl font-bold text-gray-900">Sample agreements</h1>
           <p className="mt-2 text-sm text-gray-600">
             This is a preview library of agreement templates used on Quni. These are read-only samples and are not signed or

@@ -108,7 +108,7 @@ export default function LandlordApplicantAIAssessmentPanel({
   }
 
   return (
-    <section id={anchorId} className="scroll-mt-4 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
+    <section id={anchorId} className="quni-card scroll-mt-4 p-6">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
         <AiSparkleIcon className="h-4 w-4 shrink-0 text-[var(--quni-coral)]" />
         AI assessment
