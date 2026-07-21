@@ -53,7 +53,7 @@ function MessagesPanes({
   const showThreadOnMobile = Boolean(conversationId)
 
   return (
-    <div className="flex flex-col md:flex-row md:min-h-[min(70vh,calc(100dvh-12rem))] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="flex flex-col overflow-hidden md:min-h-[min(70vh,calc(100dvh-12rem))] md:flex-row md:rounded-2xl md:border md:border-gray-100 md:bg-white md:shadow-sm">
       <aside
         className={`md:w-80 md:shrink-0 md:border-r md:border-gray-100 min-h-0 ${
           showListOnMobile ? 'flex flex-col' : 'hidden md:flex md:flex-col'
