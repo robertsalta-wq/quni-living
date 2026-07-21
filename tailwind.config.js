@@ -81,6 +81,7 @@ export default {
         },
         'admin-danger': {
           DEFAULT: quni('--quni-danger'),
+          strong: quni('--quni-danger-strong'),
           fg: quni('--quni-danger-fg'),
           bg: quni('--quni-danger-bg'),
         },
@@ -92,10 +93,24 @@ export default {
         /** AI purple — booking review AI assessment (and nowhere decorative). */
         'admin-ai': {
           DEFAULT: quni('--quni-ai'),
+          accent: quni('--quni-ai-accent'),
+          dark: quni('--quni-ai-dark'),
+          'dark-2': quni('--quni-ai-dark-2'),
+          'dark-3': quni('--quni-ai-dark-3'),
           // Pre-composited tint/border tokens (already carry alpha).
           tint: 'var(--quni-ai-tint)',
           border: 'var(--quni-ai-border)',
         },
+        /** Trust / eco green (marketing + property trust — not status success). */
+        'admin-trust': {
+          DEFAULT: quni('--quni-trust'),
+          hover: quni('--quni-trust-hover'),
+          soft: quni('--quni-trust-soft'),
+          text: quni('--quni-trust-text'),
+          bg: quni('--quni-trust-bg'),
+        },
+        /** Rust accent (compliance / HowItWorks — not coral). */
+        'admin-rust': quni('--quni-rust'),
       },
       backgroundColor: {
         // Tint tokens already carry alpha; still use color-mix so `/50`-style modifiers emit.

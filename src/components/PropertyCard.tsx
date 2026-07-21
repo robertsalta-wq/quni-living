@@ -115,7 +115,7 @@ export function PropertyCard({
               const className =
                 badge.variant === 'featured'
                   ? 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[var(--quni-coral)] text-white shadow-sm'
-                  : 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#8FB9AB] text-white shadow-sm'
+                  : 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[var(--quni-trust-soft)] text-white shadow-sm'
               return (
                 <span key={badge.id} className={className}>
                   {badge.label}
@@ -170,7 +170,7 @@ export function PropertyCard({
             {extraInclusionLabels.map((label) => (
               <span
                 key={label}
-                className="inline-flex items-center rounded-md bg-[#8FB9AB]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#5a8f7f]"
+                className="inline-flex items-center rounded-md bg-admin-trust-soft/15 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--quni-trust-text)]"
               >
                 {label}
               </span>

@@ -136,7 +136,7 @@ type HowStep = {
 function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
   const { heading, steps } = props
   return (
-    <div className="rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
+    <div className="rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-8 shadow-sm">
       <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--quni-coral)] mb-6">{heading}</h3>
       <ol className="m-0 list-none space-y-6 p-0">
         {steps.map((step) => (
@@ -501,7 +501,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-5 sm:py-6">
+      <section className="border-b border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] py-5 sm:py-6">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-gray-600 sm:text-base">
             Built so you can&apos;t be filtered out for being international. Our AI never receives
@@ -512,7 +512,7 @@ export default function Home() {
       </section>
 
       {/* How it works - below hero / search */}
-      <section className="border-b border-[#E3EEE9] bg-[#F6FAF8] py-14 sm:py-16">
+      <section className="border-b border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] py-14 sm:py-16">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-3">
             How it works
@@ -521,7 +521,7 @@ export default function Home() {
             Whether you&apos;re looking for a room or listing one, Quni keeps the journey clear and on-platform.
           </p>
           {!managedTierEnabled ? (
-            <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-[#376256] sm:mb-12 sm:text-base">
+            <p className="mx-auto mb-10 max-w-2xl text-center text-sm text-[var(--quni-trust)] sm:mb-12 sm:text-base">
               <Link to="/pricing" className="font-medium underline underline-offset-2 hover:opacity-90">
                 Quni Listing is live
               </Link>
@@ -546,7 +546,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-[#E3EEE9] bg-white py-14 sm:py-16" aria-labelledby="why-quni-trust">
+      <section className="border-b border-[var(--quni-trust-bg)] bg-white py-14 sm:py-16" aria-labelledby="why-quni-trust">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <WhyQuniTrustBlock />
         </div>
@@ -692,7 +692,7 @@ export default function Home() {
         </div>
       )}
 
-      <section className="bg-[#8FB9AB] w-full py-16 sm:py-20">
+      <section className="bg-[var(--quni-trust-soft)] w-full py-16 sm:py-20">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-stretch">
             <div className="order-2 lg:order-1 flex flex-col justify-center">

@@ -32,9 +32,9 @@ export default function BookingLifecycleStepper({
         {BOOKING_REVIEW_STEPPER_LABELS.map((label, i) => {
           const st = allDone || i < activeIndex ? 'done' : i === activeIndex ? 'current' : 'todo'
           const leftColor =
-            i === 0 ? 'transparent' : activeIndex >= i || allDone ? 'var(--quni-success)' : '#E0DCE3'
+            i === 0 ? 'transparent' : activeIndex >= i || allDone ? 'var(--quni-success)' : 'var(--quni-line)'
           const rightColor =
-            i === 3 ? 'transparent' : activeIndex >= i + 1 || allDone ? 'var(--quni-success)' : '#E0DCE3'
+            i === 3 ? 'transparent' : activeIndex >= i + 1 || allDone ? 'var(--quni-success)' : 'var(--quni-line)'
           return (
             <div
               key={label}
@@ -56,7 +56,7 @@ export default function BookingLifecycleStepper({
                     ? 'bg-admin-success'
                     : st === 'current'
                       ? 'border-2 border-admin-coral bg-white'
-                      : 'border-2 border-[#E0DCE3] bg-white'
+                      : 'border-2 border-[var(--quni-line)] bg-white'
                 }`}
                 aria-current={st === 'current' ? 'step' : undefined}
               >

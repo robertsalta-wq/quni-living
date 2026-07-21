@@ -30,14 +30,14 @@ function LineItem({
   valueKind: ValueKind
 }) {
   const muted = tone === 'muted'
-  const iconWrap = muted ? 'text-[#B5B5B5]' : 'text-[#D85A30]'
-  const nameCls = muted ? 'text-[#9A9A9A]' : 'text-[#1A1A1A]'
-  const descCls = muted ? 'text-[#9A9A9A]' : 'text-[#6B6B6B]'
+  const iconWrap = muted ? 'text-[#B5B5B5]' : 'text-[var(--quni-rust)]'
+  const nameCls = muted ? 'text-[var(--quni-ink-5)]' : 'text-[var(--quni-ink)]'
+  const descCls = muted ? 'text-[var(--quni-ink-5)]' : 'text-[var(--quni-ink-4)]'
   const valueCls =
     valueKind === 'coralLg'
-      ? 'font-lora text-lg font-semibold text-[#D85A30]'
+      ? 'font-lora text-lg font-semibold text-[var(--quni-rust)]'
       : valueKind === 'coralSm'
-        ? 'font-lora text-sm font-semibold text-[#D85A30]'
+        ? 'font-lora text-sm font-semibold text-[var(--quni-rust)]'
         : 'font-lora text-sm font-semibold text-[#B5B5B5]'
 
   return (
@@ -210,9 +210,9 @@ export default function Pricing() {
   }, [])
 
   const ctaPrimary =
-    'mt-4 flex w-full items-center justify-center rounded-[10px] bg-[#D85A30] px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-[#993C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D85A30]'
+    'mt-4 flex w-full items-center justify-center rounded-[10px] bg-[var(--quni-rust)] px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-[#993C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-rust)]'
   const ctaSecondary =
-    'mt-4 flex w-full items-center justify-center rounded-[10px] border border-[#D85A30] bg-transparent px-3 py-3 text-sm font-medium text-[#D85A30] transition-colors hover:bg-[rgba(216,90,48,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D85A30]'
+    'mt-4 flex w-full items-center justify-center rounded-[10px] border border-[var(--quni-rust)] bg-transparent px-3 py-3 text-sm font-medium text-[var(--quni-rust)] transition-colors hover:bg-[rgba(216,90,48,0.06)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-rust)]'
 
   return (
     <>
@@ -222,7 +222,7 @@ export default function Pricing() {
         canonicalPath="/pricing"
       />
 
-      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[#1A1A1A] antialiased">
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[var(--quni-ink)] antialiased">
         <div className={PAGE_HERO_OUTER_CLASS}>
           <div className="max-w-site mx-auto w-full px-4 py-7 text-center sm:px-6 lg:px-8">
             <p className="m-0 text-[15px] text-white opacity-[0.96]">
@@ -243,22 +243,22 @@ export default function Pricing() {
         </div>
 
         <div className="mx-auto w-full max-w-[1180px] px-8 pb-12 pt-14 md:pb-16">
-          <h1 className="m-0 mb-2.5 text-center font-lora text-[38px] font-semibold tracking-[-0.01em] text-[#1A1A1A]">
+          <h1 className="m-0 mb-2.5 text-center font-lora text-[38px] font-semibold tracking-[-0.01em] text-[var(--quni-ink)]">
             Pricing
           </h1>
-          <p className="m-0 mb-12 text-center text-base text-[#6B6B6B]">
+          <p className="m-0 mb-12 text-center text-base text-[var(--quni-ink-4)]">
             Free for renters. Free to list for landlords. Choose how much you want Quni to do.
           </p>
 
           <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1fr_2fr]">
             {/* Renters */}
             <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(216,90,48,0.2)] bg-[#FFF1EB]">
-              <div className="border-b border-[rgba(216,90,48,0.18)] bg-[rgba(216,90,48,0.06)] px-8 py-5 font-lora text-[22px] font-semibold text-[#1A1A1A]">
+              <div className="border-b border-[rgba(216,90,48,0.18)] bg-[rgba(216,90,48,0.06)] px-8 py-5 font-lora text-[22px] font-semibold text-[var(--quni-ink)]">
                 For renters
               </div>
               <div className="flex flex-1 flex-col px-7 pb-6 pt-7">
-                <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Free</div>
-                <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                <div className="font-lora text-[22px] font-semibold text-[var(--quni-ink)]">Free</div>
+                <p className="mt-1.5 text-[13px] text-[var(--quni-ink-4)]">
                   Always. Whether you&apos;re a student or a professional near campus.
                 </p>
 
@@ -312,7 +312,7 @@ export default function Pricing() {
                   />
                 </div>
 
-                <p className="mt-auto pt-2 text-xs italic leading-normal text-[#6B6B6B]">
+                <p className="mt-auto pt-2 text-xs italic leading-normal text-[var(--quni-ink-4)]">
                   Optional card surcharge if you pay rent by card. Free bank transfer always offered.
                 </p>
 
@@ -323,16 +323,16 @@ export default function Pricing() {
             </div>
 
             {/* Landlords */}
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(108,142,89,0.22)] bg-[#E8EFE3]">
-              <div className="border-b border-[rgba(108,142,89,0.22)] bg-[rgba(108,142,89,0.10)] px-8 py-5 font-lora text-[22px] font-semibold text-[#1A1A1A]">
+            <div className="flex flex-col overflow-hidden rounded-2xl border border-[rgba(108,142,89,0.22)] bg-[var(--quni-trust-bg)]">
+              <div className="border-b border-[rgba(108,142,89,0.22)] bg-[rgba(108,142,89,0.10)] px-8 py-5 font-lora text-[22px] font-semibold text-[var(--quni-ink)]">
                 For landlords
               </div>
 
               <div className="grid flex-1 grid-cols-1 divide-y divide-[rgba(108,142,89,0.2)] md:grid-cols-2 md:divide-x md:divide-y-0 md:divide-[rgba(108,142,89,0.2)]">
                 {/* Quni Listing */}
                 <div className="flex flex-col px-7 pb-6 pt-7">
-                  <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Listing</div>
-                  <p className="mt-1.5 text-[13px] text-[#6B6B6B]">
+                  <div className="font-lora text-[22px] font-semibold text-[var(--quni-ink)]">Quni Listing</div>
+                  <p className="mt-1.5 text-[13px] text-[var(--quni-ink-4)]">
                     List your room and find a tenant. You run the tenancy.
                   </p>
 
@@ -462,7 +462,7 @@ export default function Pricing() {
                     />
                   </div>
 
-                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
+                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[var(--quni-ink-4)]">
                     {pricingTierAvailabilitySummary('listing', serviceTierOptions)}
                   </p>
 
@@ -473,8 +473,8 @@ export default function Pricing() {
 
                 {/* Quni Managed */}
                 <div className="flex flex-col px-7 pb-6 pt-7">
-                  <div className="font-lora text-[22px] font-semibold text-[#1A1A1A]">Quni Managed</div>
-                  <p className="mt-1.5 text-[13px] leading-snug text-[#6B6B6B]">
+                  <div className="font-lora text-[22px] font-semibold text-[var(--quni-ink)]">Quni Managed</div>
+                  <p className="mt-1.5 text-[13px] leading-snug text-[var(--quni-ink-4)]">
                     We run the whole tenancy. From listing to move-out.
                   </p>
                   {!managedTierEnabled ? (
@@ -482,8 +482,8 @@ export default function Pricing() {
                       className="mt-3 rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-3.5 py-2.5"
                       role="status"
                     >
-                      <p className="font-lora text-sm font-semibold text-[#376256]">{MANAGED_COMING_SOON_HEADLINE}</p>
-                      <p className="mt-0.5 text-[13px] leading-snug text-[#6B6B6B]">{MANAGED_COMING_SOON_SUBLINE}</p>
+                      <p className="font-lora text-sm font-semibold text-[var(--quni-trust)]">{MANAGED_COMING_SOON_HEADLINE}</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--quni-ink-4)]">{MANAGED_COMING_SOON_SUBLINE}</p>
                     </div>
                   ) : null}
 
@@ -610,7 +610,7 @@ export default function Pricing() {
                     />
                   </div>
 
-                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[#6B6B6B]">
+                  <p className="mt-auto pt-2 text-xs italic leading-snug text-[var(--quni-ink-4)]">
                     {pricingTierAvailabilitySummary('managed', serviceTierOptions)}
                   </p>
 
@@ -620,7 +620,7 @@ export default function Pricing() {
                     </Link>
                   ) : (
                     <span
-                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed bg-[#9A9A9A] hover:bg-[#9A9A9A]`}
+                      className={`${ctaPrimary} pointer-events-none cursor-not-allowed bg-[var(--quni-ink-5)] hover:bg-[var(--quni-ink-5)]`}
                       aria-disabled="true"
                     >
                       Coming soon
@@ -634,7 +634,7 @@ export default function Pricing() {
 
         <section className="max-w-site mx-auto w-full px-6 py-10 md:py-12">
           <h2 className="font-display text-center text-3xl font-bold text-[var(--quni-coral)] sm:text-4xl">How it works</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--quni-ink-4)]">
             {managedTierEnabled
               ? 'Parallel flows for Quni Listing and Quni Managed - three steps each for renters and landlords.'
               : 'Quni Listing is live now. Compare both tiers - Quni Managed launches within the next month.'}
@@ -656,7 +656,7 @@ export default function Pricing() {
           <div className="mt-8 space-y-10 rounded-2xl bg-white p-4 shadow-md sm:p-6 md:p-8">
             {faqBuckets.map((bucket) => (
               <div key={bucket.id}>
-                <h3 className="border-b border-stone-100 pb-2 font-display text-lg font-bold text-[#376256]">
+                <h3 className="border-b border-stone-100 pb-2 font-display text-lg font-bold text-[var(--quni-trust)]">
                   {bucket.label}
                 </h3>
                 <div className="mt-3 divide-y divide-stone-100 rounded-xl border border-stone-100">

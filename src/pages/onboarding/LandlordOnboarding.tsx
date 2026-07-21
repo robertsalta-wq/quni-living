@@ -1192,8 +1192,8 @@ export default function LandlordOnboarding() {
                     from your profile if you skip now.
                   </p>
                   {!managedTierEnabled ? (
-                    <div className="rounded-lg border border-[#E8EFE3] bg-[#F6FAF8] px-3 py-2.5 text-xs text-stone-700 leading-relaxed">
-                      <p className="font-semibold text-[#376256]">Quni Managed - coming soon</p>
+                    <div className="rounded-lg border border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] px-3 py-2.5 text-xs text-stone-700 leading-relaxed">
+                      <p className="font-semibold text-[var(--quni-trust)]">Quni Managed - coming soon</p>
                       <p className="mt-1">{MANAGED_COMING_SOON_SHORT} You can connect a bank account now if you want to be ready when Managed opens.</p>
                       <button
                         type="button"

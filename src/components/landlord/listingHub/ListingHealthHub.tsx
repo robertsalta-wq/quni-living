@@ -156,7 +156,7 @@ export default function ListingHealthHub({
                   </span>
                 </span>
                 <ListingHubStatusDot status={status} />
-                <span className="shrink-0 text-[#C4BFCB]" aria-hidden>
+                <span className="shrink-0 text-[var(--quni-line)]" aria-hidden>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M9 18l6-6-6-6" />
                   </svg>

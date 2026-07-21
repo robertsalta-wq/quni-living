@@ -441,9 +441,9 @@ export function calendarEventDotClass(kind: CalendarEventKind): string {
     case 'move_in':
       return 'bg-[var(--quni-success)]'
     case 'move_out':
-      return 'bg-[#C99A00]'
+      return 'bg-[var(--quni-warning)]'
     case 'bond_due':
-      return 'bg-[#B4322A]'
+      return 'bg-[var(--quni-danger-strong)]'
     case 'rent_payout':
       return 'bg-[var(--quni-coral)]'
     case 'pending_request':
@@ -458,11 +458,11 @@ export function calendarEventChipClass(kind: CalendarEventKind): string {
     case 'move_in':
       return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)] border-admin-success/30'
     case 'move_out':
-      return 'bg-[var(--quni-warning-bg)] text-[#8A6D00] border-[#C99A00]/40'
+      return 'bg-[var(--quni-warning-bg)] text-[var(--quni-warning-fg)] border-admin-warning/40'
     case 'bond_due':
-      return 'bg-[var(--quni-danger-bg)] text-[#B4322A] border-[#B4322A]/30'
+      return 'bg-[var(--quni-danger-bg)] text-[var(--quni-danger-strong)] border-admin-danger-strong/30'
     case 'rent_payout':
-      return 'bg-[rgba(255,111,97,0.12)] text-[#B4322A] border-[rgba(255,111,97,0.35)]'
+      return 'bg-[rgba(255,111,97,0.12)] text-[var(--quni-danger-strong)] border-[rgba(255,111,97,0.35)]'
     case 'pending_request':
       return 'bg-[rgba(255,111,97,0.12)] text-[var(--quni-coral)] border-[rgba(255,111,97,0.4)]'
     default:
@@ -690,14 +690,14 @@ export function buildNext7Days(
 }
 
 export function next7TagClass(tag: Next7DayTag): string {
-  if (tag === 'Urgent') return 'bg-admin-coral-tint-15 text-[#B4322A]'
-  if (tag === 'Action') return 'bg-[var(--quni-warning-bg)] text-[#8A6D00]'
+  if (tag === 'Urgent') return 'bg-admin-coral-tint-15 text-[var(--quni-danger-strong)]'
+  if (tag === 'Action') return 'bg-[var(--quni-warning-bg)] text-[var(--quni-warning-fg)]'
   return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]'
 }
 
 export function next7DotClass(tag: Next7DayTag): string {
-  if (tag === 'Urgent') return 'bg-[#B4322A]'
-  if (tag === 'Action') return 'bg-[#C99A00]'
+  if (tag === 'Urgent') return 'bg-[var(--quni-danger-strong)]'
+  if (tag === 'Action') return 'bg-[var(--quni-warning)]'
   return 'bg-[var(--quni-success)]'
 }
 

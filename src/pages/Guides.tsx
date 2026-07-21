@@ -20,7 +20,7 @@ export default function Guides() {
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FAF6EE]">
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-[var(--quni-surface-2)]">
       <Seo title={SEO_TITLE} description={SEO_DESCRIPTION} canonicalPath="/guides" />
       <PageHeroBand
         title="Guides & advice for student renters"

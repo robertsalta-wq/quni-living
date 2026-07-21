@@ -162,7 +162,7 @@ function submitErrorMessageFromUnknown(err: unknown, showComplianceSection: bool
 
 /** Checkbox styling - single pattern for every landlord form checkbox. */
 const LANDLORD_FORM_CHECKBOX_CLASS =
-  'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[#D85A30] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
+  'h-4 w-4 flex-shrink-0 rounded border-gray-300 accent-[var(--quni-rust)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
 
 const LANDLORD_FORM_NAV_SECTIONS: { id: string; label: string }[] = [
   { id: 'section-basic-info', label: 'Basic info' },
@@ -3147,7 +3147,7 @@ export default function LandlordPropertyFormPage() {
                       aria-label={`${r.name} permitted`}
                       value={selectedRules[r.id] ?? ''}
                       onChange={(e) => setRulePermitted(r.id, e.target.value)}
-                      className="w-28 max-w-[7rem] shrink-0 rounded-md border border-gray-200 px-2 py-0.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#D85A30]"
+                      className="w-28 max-w-[7rem] shrink-0 rounded-md border border-gray-200 px-2 py-0.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[var(--quni-rust)]"
                     >
                       <option value="">Select…</option>
                       <option value="yes">Yes</option>
@@ -3457,7 +3457,7 @@ export default function LandlordPropertyFormPage() {
                         <span className="block text-sm font-semibold text-gray-900">
                           {landlordServiceTierTitle(tier)}
                           {managedComingSoon ? (
-                            <span className="ml-2 inline-flex rounded-full bg-[#E8EFE3] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#376256]">
+                            <span className="ml-2 inline-flex rounded-full bg-[var(--quni-trust-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--quni-trust)]">
                               Coming soon
                             </span>
                           ) : null}
@@ -3477,7 +3477,7 @@ export default function LandlordPropertyFormPage() {
                   })}
                 </div>
                 {serviceTier === 'listing' ? (
-                  <p className="mt-3 rounded-lg border border-[#E8EFE3] bg-[#F7FAF5] px-3 py-2.5 text-xs leading-relaxed text-gray-700">
+                  <p className="mt-3 rounded-lg border border-[var(--quni-trust-bg)] bg-[#F7FAF5] px-3 py-2.5 text-xs leading-relaxed text-gray-700">
                     {LISTING_TIER_ADDRESS_ON_LEASE_NOTICE}
                   </p>
                 ) : null}

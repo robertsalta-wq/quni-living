@@ -189,7 +189,7 @@ function YesNoField({
             name={id}
             checked={value === 'yes'}
             onChange={() => onChange('yes')}
-            className="h-4 w-4 accent-[#D85A30]"
+            className="h-4 w-4 accent-[var(--quni-rust)]"
           />
           Yes
         </label>
@@ -200,7 +200,7 @@ function YesNoField({
             name={id}
             checked={value === 'no'}
             onChange={() => onChange('no')}
-            className="h-4 w-4 accent-[#D85A30]"
+            className="h-4 w-4 accent-[var(--quni-rust)]"
           />
           No
         </label>
@@ -254,7 +254,7 @@ export default function LandlordPropertyFt6600ComplianceFields({
                     smokeAlarmBackupBatteryType: '',
                   })
                 }
-                className="h-4 w-4 accent-[#D85A30]"
+                className="h-4 w-4 accent-[var(--quni-rust)]"
               />
               {type === 'hardwired' ? 'Hardwired' : 'Battery operated'}
             </label>

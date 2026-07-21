@@ -20,7 +20,7 @@ export function bookingListStatusPillClass(status: string): string {
     return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
   }
   if (status === 'expired' || status === 'declined' || status === 'payment_failed') {
-    return `${base} bg-[#FBEBE9] text-[#B4322A]`
+    return `${base} bg-[var(--quni-danger-bg)] text-[var(--quni-danger-strong)]`
   }
   return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }

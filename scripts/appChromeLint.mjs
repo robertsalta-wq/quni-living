@@ -76,8 +76,8 @@ export const patterns = [
   },
 ]
 
-/** Batch-1 + Batch-2 brand hexes — tokenized; must not return as literals in UI code. */
-const BATCH1_CANONICAL_HEX = new Set(
+/** Tokenized brand hexes — must not return as literals in UI code. */
+const CANONICAL_BRAND_HEX = new Set(
   [
     // Batch 1
     'ff6f61',
@@ -114,12 +114,47 @@ const BATCH1_CANONICAL_HEX = new Set(
     'fff5f4',
     'fff5f5',
     'd8d3c7',
+    // Batch 2b — trust / rust / ai-dark / collapse
+    '376256',
+    '2a4a42',
+    '8fb9ab',
+    '5a8f7f',
+    'f6faf8',
+    'e1eae5',
+    'e3eee9',
+    'e8efe3',
+    'd85a30',
+    'd49ee8',
+    '0f0d0b',
+    '171310',
+    '1b1512',
+    '16120f',
+    '1a120f',
+    '120f0d',
+    '2a1713',
+    '1a1a1a',
+    '222222',
+    '6b6b6b',
+    '6b7280',
+    '374151',
+    '999999',
+    '9a9a9a',
+    'b4322a',
+    'fbebe9',
+    'c99a00',
+    '8a6d00',
+    'fbfaf7',
+    'faf6ee',
+    'f0efea',
+    'f5edd8',
+    'c4bfcb',
+    'e0dce3',
   ].map((h) => h.toLowerCase()),
 )
 
-const BATCH1_HEX_RE = /#([0-9A-Fa-f]{6})\b/g
+const CANONICAL_HEX_RE = /#([0-9A-Fa-f]{6})\b/g
 
-const BATCH1_HEX_MESSAGE =
+const CANONICAL_HEX_MESSAGE =
   'canonical brand colour as a literal — use the token (var(--quni-*) / --chart-*) or the admin-* utility'
 
 function isDocumentsPath(relPath) {
@@ -127,7 +162,7 @@ function isDocumentsPath(relPath) {
 }
 
 /** Stripe colorPrimary and <meta name="theme-color"> may keep literal coral. */
-function isBatch1HexAllowlistedLine(line) {
+function isCanonicalHexAllowlistedLine(line) {
   if (/colorPrimary/.test(line)) return true
   if (/name\s*=\s*['"]theme-color['"]/.test(line)) return true
   return false
@@ -138,22 +173,22 @@ function isBatch1HexAllowlistedLine(line) {
  * @param {string} file
  * @param {ChromeViolation[]} out
  */
-function collectBatch1CanonicalHex(source, file, out) {
+function collectCanonicalBrandHex(source, file, out) {
   if (isDocumentsPath(file)) return
   const lines = source.split(/\r?\n/)
-  BATCH1_HEX_RE.lastIndex = 0
+  CANONICAL_HEX_RE.lastIndex = 0
   let m
-  while ((m = BATCH1_HEX_RE.exec(source))) {
+  while ((m = CANONICAL_HEX_RE.exec(source))) {
     const hex = m[1].toLowerCase()
-    if (!BATCH1_CANONICAL_HEX.has(hex)) continue
+    if (!CANONICAL_BRAND_HEX.has(hex)) continue
     const lineNo = lineOf(source, m.index)
     const line = lines[lineNo - 1] ?? ''
-    if (isBatch1HexAllowlistedLine(line)) continue
+    if (isCanonicalHexAllowlistedLine(line)) continue
     out.push({
       file,
       line: lineNo,
-      id: 'batch1-canonical-hex',
-      message: BATCH1_HEX_MESSAGE,
+      id: 'canonical-brand-hex',
+      message: CANONICAL_HEX_MESSAGE,
     })
   }
 }
@@ -219,8 +254,8 @@ export function findChromeViolations(relPath, source) {
     collect(source, relPath, patterns, out)
   }
 
-  // Batch-1 brand hexes — always on (documents + Stripe/theme-color line allowlist).
-  collectBatch1CanonicalHex(source, relPath, out)
+  // Canonical brand hexes — always on (documents + Stripe/theme-color line allowlist).
+  collectCanonicalBrandHex(source, relPath, out)
 
   return out
 }

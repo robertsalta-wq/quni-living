@@ -50,7 +50,7 @@ function BarSegment({ bar }: { bar: TimelineBar }) {
       title={bar.label ?? 'Empty'}
     >
       {bar.widthPct >= 8 && bar.label ? (
-        <span className="truncate px-1 text-[9px] font-semibold leading-none text-[#B4322A] sm:text-[10px]">
+        <span className="truncate px-1 text-[9px] font-semibold leading-none text-[var(--quni-danger-strong)] sm:text-[10px]">
           {bar.label}
         </span>
       ) : null}
@@ -176,8 +176,8 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
                           style={{ left: `${m.leftPct}%`, top: '2px' }}
                           title={m.label}
                         >
-                          <span className="block h-2 w-2 rounded-full bg-[#C99A00] ring-2 ring-white" />
-                          <span className="absolute left-1/2 top-2.5 -translate-x-1/2 whitespace-nowrap text-[8px] font-semibold text-[#8A6D00] sm:text-[9px]">
+                          <span className="block h-2 w-2 rounded-full bg-[var(--quni-warning)] ring-2 ring-white" />
+                          <span className="absolute left-1/2 top-2.5 -translate-x-1/2 whitespace-nowrap text-[8px] font-semibold text-[var(--quni-warning-fg)] sm:text-[9px]">
                             {m.label}
                           </span>
                         </div>
@@ -223,7 +223,7 @@ function StatChip({
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--quni-ink-4)]">{label}</p>
       <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--quni-ink)]">{value}</p>
-      {sub ? <p className="text-[10px] font-medium text-[#B4322A]">{sub}</p> : null}
+      {sub ? <p className="text-[10px] font-medium text-[var(--quni-danger-strong)]">{sub}</p> : null}
     </div>
   )
 }

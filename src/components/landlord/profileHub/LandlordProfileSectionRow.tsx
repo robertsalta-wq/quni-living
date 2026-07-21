@@ -48,7 +48,7 @@ export default function LandlordProfileSectionRow({ id, title, subtitleLines, st
       <span className={multiLine ? 'mt-0.5 shrink-0' : 'shrink-0'}>
         <ListingHubStatusDot status={status} />
       </span>
-      <span className={['shrink-0 text-[#C4BFCB]', multiLine ? 'mt-0.5' : ''].join(' ')} aria-hidden>
+      <span className={['shrink-0 text-[var(--quni-line)]', multiLine ? 'mt-0.5' : ''].join(' ')} aria-hidden>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 18l6-6-6-6" />
         </svg>

@@ -109,7 +109,7 @@ export default function HowItWorks() {
         }
         canonicalPath="/how-it-works"
       />
-      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[#1A1A1A] antialiased">
+      <div className="flex min-h-0 w-full flex-1 flex-col bg-[#FFF7E6] font-inter text-[var(--quni-ink)] antialiased">
         <PageHeroBand
           title="How it works"
           subtitle={
@@ -121,7 +121,7 @@ export default function HowItWorks() {
 
         <div className="max-w-site mx-auto w-full px-4 py-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm leading-relaxed text-[#6B6B6B] sm:text-base">
+            <p className="text-sm leading-relaxed text-[var(--quni-ink-4)] sm:text-base">
               Renters pay <strong className="font-semibold text-gray-800">no</strong> booking, platform, service, or
               surcharge fees to Quni.{' '}
               {managedTierEnabled ? (
@@ -140,8 +140,8 @@ export default function HowItWorks() {
           </div>
 
           <section className="mx-auto mt-14 max-w-[1180px]">
-            <h2 className="font-display text-center text-2xl font-bold text-[#376256] sm:text-3xl">Quni Listing</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
+            <h2 className="font-display text-center text-2xl font-bold text-[var(--quni-trust)] sm:text-3xl">Quni Listing</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--quni-ink-4)]">
               You run the tenancy. Bond and rent stay between landlord and renter.
             </p>
             <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
@@ -161,8 +161,8 @@ export default function HowItWorks() {
           </section>
 
           <section className="mx-auto mt-16 max-w-[1180px]">
-            <h2 className="font-display text-center text-2xl font-bold text-[#376256] sm:text-3xl">Quni Managed</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
+            <h2 className="font-display text-center text-2xl font-bold text-[var(--quni-trust)] sm:text-3xl">Quni Managed</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--quni-ink-4)]">
               {managedTierEnabled
                 ? 'Quni supports escrow-style rent flows and lease execution where available. Availability varies by state.'
                 : 'Preview the Managed flow - rent collection, bond coordination, and weekly payouts. Launching within the next month.'}
@@ -173,8 +173,8 @@ export default function HowItWorks() {
                 aria-hidden
               >
                 <div className="rounded-lg border border-[rgba(108,142,89,0.35)] bg-white px-5 py-3 text-center shadow-md">
-                  <p className="font-lora text-base font-semibold text-[#376256]">{MANAGED_COMING_SOON_HEADLINE}</p>
-                  <p className="mt-1 max-w-sm text-xs text-[#6B6B6B]">{MANAGED_COMING_SOON_SUBLINE}</p>
+                  <p className="font-lora text-base font-semibold text-[var(--quni-trust)]">{MANAGED_COMING_SOON_HEADLINE}</p>
+                  <p className="mt-1 max-w-sm text-xs text-[var(--quni-ink-4)]">{MANAGED_COMING_SOON_SUBLINE}</p>
                 </div>
               </div>
             ) : null}
@@ -183,13 +183,13 @@ export default function HowItWorks() {
                 heading="Renters"
                 steps={MANAGED_STUDENT}
                 bgClass="bg-[#F0F7F4]"
-                accentClass="text-[#376256]"
+                accentClass="text-[var(--quni-trust)]"
               />
               <FlowColumn
                 heading="Landlords"
                 steps={MANAGED_LANDLORD}
                 bgClass="bg-[#F0F7F4]"
-                accentClass="text-[#376256]"
+                accentClass="text-[var(--quni-trust)]"
               />
             </div>
           </section>
@@ -197,7 +197,7 @@ export default function HowItWorks() {
           <div className="mx-auto mt-14 flex max-w-xl flex-col gap-3 text-center sm:flex-row sm:justify-center">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center rounded-xl border border-[#D85A30] bg-transparent px-6 py-3 text-sm font-semibold text-[#D85A30] hover:bg-[rgba(216,90,48,0.06)]"
+              className="inline-flex items-center justify-center rounded-xl border border-[var(--quni-rust)] bg-transparent px-6 py-3 text-sm font-semibold text-[var(--quni-rust)] hover:bg-[rgba(216,90,48,0.06)]"
             >
               View pricing
             </Link>

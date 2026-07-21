@@ -43,7 +43,7 @@ export default function RenterPlatformTrustPanel({ compact = false, className = 
 
       <nav className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-gray-600" aria-label="Learn more">
         {RENTER_PLATFORM_TRUST_LINKS.map((link) => (
-          <Link key={link.to} to={link.to} className="text-[#376256] hover:text-[#2a4a42] hover:underline">
+          <Link key={link.to} to={link.to} className="text-[var(--quni-trust)] hover:text-[var(--quni-trust-hover)] hover:underline">
             {link.label}
           </Link>
         ))}

@@ -1378,7 +1378,7 @@ export default function PropertyDetail() {
                 className={
                   badge.variant === 'featured'
                     ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--quni-coral)] text-white shadow-sm'
-                    : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm'
+                    : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--quni-trust-soft)] text-white shadow-sm'
                 }
               >
                 {badge.label}

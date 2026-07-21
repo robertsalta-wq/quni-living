@@ -46,7 +46,7 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
       ) : null}
       <p className="mt-3 text-xs text-gray-500">
         Already have a Quni account?{' '}
-        <Link to={loginHref} className="font-medium text-[#376256] hover:text-[#2a4a42]">
+        <Link to={loginHref} className="font-medium text-[var(--quni-trust)] hover:text-[var(--quni-trust-hover)]">
           Log in
         </Link>{' '}
         to continue to the booking.

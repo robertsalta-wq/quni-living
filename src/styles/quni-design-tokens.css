@@ -33,6 +33,22 @@
   --quni-ai:              #AA3BFF;
   --quni-ai-tint:         rgba(170, 59, 255, 0.10);
   --quni-ai-border:       rgba(170, 59, 255, 0.50);
+  --quni-ai-accent:       #D49EE8;   /* soft purple highlight on AI marketing */
+  /* Landlord AI dark theme — grouped by role (page / elevated / inset). */
+  --quni-ai-dark:         #0F0D0B;   /* page background (also covers #171310) */
+  --quni-ai-dark-2:       #1B1512;   /* elevated panel / sticky (also #16120f, #1a120f, #120f0d) */
+  --quni-ai-dark-3:       #2A1713;   /* inset card on dark */
+
+  /* Trust / eco green — marketing + property trust surfaces (not success status). */
+  --quni-trust:           #376256;
+  --quni-trust-hover:     #2A4A42;
+  --quni-trust-soft:      #8FB9AB;
+  /* Text on soft-mint chips only — do not reuse as general trust body text. */
+  --quni-trust-text:      #5A8F7F;
+  --quni-trust-bg:        #F6FAF8;   /* pale trust wash (also maps near #e1eae5/#e3eee9/#e8efe3) */
+
+  /* Rust — shared accent (FT6600 compliance + HowItWorks/Pricing CTAs); not coral. */
+  --quni-rust:            #D85A30;
 
   /* Neutral ramp — warm, derived from cream. NOT cool slate.
      Use these instead of Tailwind's `gray-*` going forward. */
@@ -58,6 +74,7 @@
   --quni-warning-fg:      #92400E;   /* amber-800 */
 
   --quni-danger:          #DC2626;
+  --quni-danger-strong:   #B4322A;   /* payout / timeline emphasis (darker than danger) */
   --quni-danger-bg:       #FEF2F2;   /* red-50 */
   --quni-danger-fg:       #991B1B;   /* red-800 */
 

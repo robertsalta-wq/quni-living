@@ -117,7 +117,7 @@ export default function StudentAccommodationIndex() {
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        <aside className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
+        <aside className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-8 shadow-sm">
           <h2 className="font-display text-lg font-bold text-gray-900 sm:text-xl !mt-0 !mb-3">
             {INTERNATIONAL_STUDENTS.title}
           </h2>
