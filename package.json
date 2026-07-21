@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "lint:rules-of-hooks": "eslint src -c eslint.rules-of-hooks.config.js --max-warnings 0",
     "lint:app-chrome": "node scripts/check-app-chrome.mjs",
+    "lint:opacity": "node scripts/smoke-admin-opacity.mjs",
     "lint:no-em-dash": "node scripts/replace-em-dashes.mjs --check",
     "check:anthropic-models": "node scripts/check-anthropic-model-ids.mjs",
     "test": "vitest run --project unit",
