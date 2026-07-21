@@ -1153,7 +1153,7 @@ export default function StudentOnboarding() {
   const routeChoiceCardClass = (selected: boolean) =>
     `rounded-xl border-2 p-5 text-left transition-colors w-full ${
       selected
-        ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
+        ? 'border-[var(--quni-coral)] bg-[var(--quni-coral-soft)] ring-1 ring-admin-coral/20'
         : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/80'
     }`
 

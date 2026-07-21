@@ -14,7 +14,7 @@ function renterStatusPillClass(status: TenantBookingStatus): string {
   if (status === 'expired' || status === 'declined' || status === 'payment_failed' || status === 'cancelled') {
     return bookingListStatusPillClass('expired')
   }
-  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
+  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }
 
 type Props = {

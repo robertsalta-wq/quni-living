@@ -458,15 +458,15 @@ export function calendarEventChipClass(kind: CalendarEventKind): string {
     case 'move_in':
       return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)] border-admin-success/30'
     case 'move_out':
-      return 'bg-[#FEF3C7] text-[#8A6D00] border-[#C99A00]/40'
+      return 'bg-[var(--quni-warning-bg)] text-[#8A6D00] border-[#C99A00]/40'
     case 'bond_due':
-      return 'bg-[#FEF2F2] text-[#B4322A] border-[#B4322A]/30'
+      return 'bg-[var(--quni-danger-bg)] text-[#B4322A] border-[#B4322A]/30'
     case 'rent_payout':
       return 'bg-[rgba(255,111,97,0.12)] text-[#B4322A] border-[rgba(255,111,97,0.35)]'
     case 'pending_request':
       return 'bg-[rgba(255,111,97,0.12)] text-[var(--quni-coral)] border-[rgba(255,111,97,0.4)]'
     default:
-      return 'bg-[#F4F3EC] text-[var(--quni-ink-4)] border-[var(--quni-line)]'
+      return 'bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)] border-[var(--quni-line)]'
   }
 }
 
@@ -690,8 +690,8 @@ export function buildNext7Days(
 }
 
 export function next7TagClass(tag: Next7DayTag): string {
-  if (tag === 'Urgent') return 'bg-[rgba(255,111,97,0.15)] text-[#B4322A]'
-  if (tag === 'Action') return 'bg-[#FEF3C7] text-[#8A6D00]'
+  if (tag === 'Urgent') return 'bg-admin-coral-tint-15 text-[#B4322A]'
+  if (tag === 'Action') return 'bg-[var(--quni-warning-bg)] text-[#8A6D00]'
   return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]'
 }
 

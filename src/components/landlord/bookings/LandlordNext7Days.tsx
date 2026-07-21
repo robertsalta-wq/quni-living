@@ -34,7 +34,7 @@ export default function LandlordNext7Days({ bookings }: Props) {
           <li key={item.id}>
             <Link
               to={calendarHref}
-              className="flex items-start gap-3 rounded-xl border border-transparent px-1 py-1.5 hover:border-[var(--quni-line)] hover:bg-[#F8F6F1]/80 transition-colors"
+              className="flex items-start gap-3 rounded-xl border border-transparent px-1 py-1.5 hover:border-[var(--quni-line)] hover:bg-admin-surface-2/80 transition-colors"
             >
               <span
                 className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${next7DotClass(item.tag)}`}

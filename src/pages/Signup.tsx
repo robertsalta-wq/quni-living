@@ -517,7 +517,7 @@ export default function Signup() {
   const roleCardClass = (k: SignupAccountKind) =>
     `flex h-full flex-col rounded-xl border-2 p-5 text-left transition-colors ${
       accountKind === k
-        ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
+        ? 'border-[var(--quni-coral)] bg-[var(--quni-coral-soft)] ring-1 ring-admin-coral/20'
         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
     }`
 

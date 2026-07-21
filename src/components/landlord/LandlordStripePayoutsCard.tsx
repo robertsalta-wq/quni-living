@@ -303,7 +303,7 @@ export function LandlordStripePayoutsCard({
         type="button"
         disabled={manageLoading || connectLoading || syncLoading}
         onClick={() => void manageBankAccount()}
-        className="inline-flex items-center justify-center rounded-xl border border-admin-coral/40 bg-white text-[var(--quni-coral)] px-5 py-2.5 text-sm font-medium hover:bg-[#FFF5F4] shadow-sm disabled:opacity-50 whitespace-nowrap"
+        className="inline-flex items-center justify-center rounded-xl border border-admin-coral/40 bg-white text-[var(--quni-coral)] px-5 py-2.5 text-sm font-medium hover:bg-[var(--quni-coral-soft)] shadow-sm disabled:opacity-50 whitespace-nowrap"
       >
         {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
       </button>

@@ -73,7 +73,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
         <button
           type="button"
           onClick={() => shiftMonth(-1)}
-          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[#F8F6F1]"
+          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-2)]"
           aria-label="Previous month"
         >
           ‹
@@ -84,7 +84,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
         <button
           type="button"
           onClick={() => shiftMonth(1)}
-          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[#F8F6F1]"
+          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-2)]"
           aria-label="Next month"
         >
           ›
@@ -172,7 +172,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
 
       {/* Desktop: month grid with chips */}
       <div className="hidden sm:block rounded-2xl border border-[var(--quni-line)] bg-white overflow-hidden shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
-        <div className="grid grid-cols-7 border-b border-[var(--quni-line)] bg-[#F8F6F1]">
+        <div className="grid grid-cols-7 border-b border-[var(--quni-line)] bg-[var(--quni-surface-2)]">
           {WEEKDAYS.map((d) => (
             <div
               key={d}
@@ -192,7 +192,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
                 key={cell.dateIso}
                 className={[
                   'min-h-[96px] border-b border-r border-[var(--quni-line)] p-1.5',
-                  !cell.inMonth ? 'bg-[#F8F6F1]/60' : 'bg-white',
+                  !cell.inMonth ? 'bg-admin-surface-2/60' : 'bg-white',
                   isPast && cell.inMonth ? 'opacity-60' : '',
                 ].join(' ')}
               >
@@ -248,7 +248,7 @@ function AgendaRow({ event, date }: { event: CalendarEvent; date: Date }) {
   const badge = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
   const body = (
     <div className="flex items-start gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]">
-      <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[#F8F6F1] text-center">
+      <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--quni-surface-2)] text-center">
         <span className="text-[10px] font-semibold uppercase text-[var(--quni-ink-4)]">
           {date.toLocaleDateString('en-AU', { weekday: 'short' })}
         </span>

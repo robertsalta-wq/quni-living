@@ -170,7 +170,7 @@ export default function AdminTeam() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               {saving ? 'Adding…' : 'Add to team'}
             </button>

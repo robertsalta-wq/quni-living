@@ -7,7 +7,7 @@ import {
 } from '../lib/proofreadSuggestions'
 
 export const proofreadBtnClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-[#FF6B6B] bg-white px-4 py-2 text-sm font-semibold text-[#FF6B6B] shadow-sm hover:bg-[#FFF5F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--quni-coral)] bg-white px-4 py-2 text-sm font-semibold text-[var(--quni-coral)] shadow-sm hover:bg-[var(--quni-coral-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
 
 type ProofreadPhase = 'idle' | 'loading' | 'results' | 'empty' | 'error'
 
@@ -122,7 +122,7 @@ export function useListingProofread(
         </>
       ) : (
         <>
-          <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6B6B]" />
+          <AiSparkleIcon className="h-4 w-4 shrink-0 text-[var(--quni-coral)]" />
           Proofread
         </>
       )}
@@ -158,7 +158,7 @@ export function useListingProofread(
                 <button
                   type="button"
                   onClick={() => acceptSuggestion(suggestion)}
-                  className="rounded-md bg-[var(--quni-success-strong)] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#0d5c4a]"
+                  className="rounded-md bg-[var(--quni-success-strong)] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[var(--quni-success-strong)]"
                 >
                   Accept
                 </button>

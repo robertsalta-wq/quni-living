@@ -76,9 +76,10 @@ export const patterns = [
   },
 ]
 
-/** Batch-1 brand hexes — fully tokenized; must not return as literals in UI code. */
+/** Batch-1 + Batch-2 brand hexes — tokenized; must not return as literals in UI code. */
 const BATCH1_CANONICAL_HEX = new Set(
   [
+    // Batch 1
     'ff6f61',
     'f2604f',
     'e85d52',
@@ -101,6 +102,18 @@ const BATCH1_CANONICAL_HEX = new Set(
     '1d9e75',
     '0f6e56',
     'e6f4ee',
+    // Batch 2
+    'ff6b6b',
+    'f4f3ec',
+    'f8f6f1',
+    'fef3c7',
+    'fef2f2',
+    'f1eeea',
+    '0d5c4a',
+    'fff8f0',
+    'fff5f4',
+    'fff5f5',
+    'd8d3c7',
   ].map((h) => h.toLowerCase()),
 )
 

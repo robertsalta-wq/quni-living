@@ -2509,7 +2509,7 @@ export default function LandlordPropertyFormPage() {
   }
 
   const inputClass =
-    'w-full rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
+    'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2.5 text-sm text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
   const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
 
   return (
@@ -2707,7 +2707,7 @@ export default function LandlordPropertyFormPage() {
                         onClick={() => selectAccommodationChoice(opt.value)}
                         className={`rounded-xl border-2 p-4 text-left transition-colors ${
                           selected
-                            ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
+                            ? 'border-[var(--quni-coral)] bg-[var(--quni-coral-soft)] ring-1 ring-admin-coral/20'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
                         }`}
                       >
@@ -3495,7 +3495,7 @@ export default function LandlordPropertyFormPage() {
                   <button
                     type="button"
                     onClick={() => setPricingSuggestionOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[#FF6B6B] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--quni-coral)] hover:underline"
                   >
                     <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                     Get AI price suggestion
@@ -3981,7 +3981,7 @@ export default function LandlordPropertyFormPage() {
               </button>
               <Link
                 to={isHubSectionMode ? hubReturnPath : '/landlord/dashboard?tab=listings'}
-                className="rounded-[10px] border border-[#D8D3C7] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
+                className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)]"
               >
                 Cancel
               </Link>

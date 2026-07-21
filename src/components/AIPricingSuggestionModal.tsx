@@ -158,7 +158,7 @@ export default function AIPricingSuggestionModal({
               id={titleId}
               className="flex items-center gap-2 text-lg font-semibold text-gray-900"
             >
-              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[#FF6B6B]" />
+              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[var(--quni-coral)]" />
               AI pricing suggestion
             </h2>
             <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
@@ -170,7 +170,7 @@ export default function AIPricingSuggestionModal({
                 onClick={() => {
                   void run()
                 }}
-                className="rounded-lg bg-[#FF6B6B] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
+                className="rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
               >
                 Try again
               </button>
@@ -189,7 +189,7 @@ export default function AIPricingSuggestionModal({
               id={titleId}
               className="flex items-center gap-2 text-lg font-semibold text-gray-900"
             >
-              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[#FF6B6B]" />
+              <AiSparkleIcon className="h-5 w-5 shrink-0 text-[var(--quni-coral)]" />
               Suggested price range
             </h2>
             <p className="text-3xl font-bold tracking-tight text-gray-900">
@@ -204,7 +204,7 @@ export default function AIPricingSuggestionModal({
                   onAccept(midpoint)
                   onClose()
                 }}
-                className="rounded-lg bg-[#FF6B6B] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
+                className="rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
               >
                 Use this price
               </button>

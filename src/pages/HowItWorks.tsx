@@ -148,13 +148,13 @@ export default function HowItWorks() {
               <FlowColumn
                 heading="Renters"
                 steps={LISTING_STUDENT}
-                bgClass="bg-[#FFF5F4]"
+                bgClass="bg-[var(--quni-coral-soft)]"
                 accentClass="text-[#C8554A]"
               />
               <FlowColumn
                 heading="Landlords"
                 steps={LISTING_LANDLORD}
-                bgClass="bg-[#FFF5F4]"
+                bgClass="bg-[var(--quni-coral-soft)]"
                 accentClass="text-[#C8554A]"
               />
             </div>

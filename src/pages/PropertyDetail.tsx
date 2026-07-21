@@ -235,7 +235,7 @@ function PreviewGateOverlay({
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[#FFF8F0]/80 backdrop-blur-[2px] px-4 py-12">
+    <div className="absolute inset-0 flex items-center justify-center bg-admin-coral-soft/80 backdrop-blur-[2px] px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white border border-admin-coral/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
         <p className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance leading-snug">
           Create a free account to see the full listing and send an enquiry.
@@ -251,7 +251,7 @@ function PreviewGateOverlay({
           <Link
             to={`/login?redirect=${encodedRedirect}`}
             onClick={rememberMessageIntent}
-            className="inline-flex items-center justify-center rounded-xl border-2 border-[var(--quni-coral)] text-[var(--quni-coral)] bg-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#FFF8F0] transition-colors"
+            className="inline-flex items-center justify-center rounded-xl border-2 border-[var(--quni-coral)] text-[var(--quni-coral)] bg-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[var(--quni-coral-soft)] transition-colors"
           >
             Log in
           </Link>

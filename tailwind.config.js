@@ -48,8 +48,10 @@ export default {
         'admin-coral': quni('--quni-coral'),
         'admin-coral-hover': quni('--quni-coral-hover'),
         'admin-coral-active': quni('--quni-coral-active'),
+        'admin-coral-soft': quni('--quni-coral-soft'),
         'admin-cream': quni('--quni-cream'),
         'admin-cream-border': quni('--quni-cream-border'),
+        'admin-input-border': quni('--quni-input-border'),
         'admin-navy': quni('--quni-navy'),
         'admin-ink': {
           DEFAULT: quni('--quni-ink'),

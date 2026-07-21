@@ -184,7 +184,7 @@ export default function LandlordListingsGroupedPanel({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search address or room"
-              className="w-full rounded-[10px] border border-[var(--quni-line)] bg-white py-2.5 pl-9 pr-3 text-sm text-[var(--quni-ink)] placeholder:text-[var(--quni-ink-5)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-[rgba(255,111,97,0.25)]"
+              className="w-full rounded-[10px] border border-[var(--quni-line)] bg-white py-2.5 pl-9 pr-3 text-sm text-[var(--quni-ink)] placeholder:text-[var(--quni-ink-5)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral-border)]"
             />
           </label>
           {addButton}

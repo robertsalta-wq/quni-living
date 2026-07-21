@@ -22,7 +22,7 @@ export function bookingListStatusPillClass(status: string): string {
   if (status === 'expired' || status === 'declined' || status === 'payment_failed') {
     return `${base} bg-[#FBEBE9] text-[#B4322A]`
   }
-  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
+  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }
 
 export function formatBookingListWeeklyRent(weeklyRent: number | null | undefined): string {

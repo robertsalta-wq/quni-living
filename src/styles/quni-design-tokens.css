@@ -18,9 +18,11 @@
   --quni-coral-tint:      rgba(255, 111, 97, 0.08);
   --quni-coral-tint-15:   rgba(255, 111, 97, 0.15);
   --quni-coral-border:    rgba(255, 111, 97, 0.25);
+  --quni-coral-soft:      #FFF8F0;   /* coral-washed panel / chip bg */
 
   --quni-cream:           #FEF9E4;   /* sidebar / header panel */
   --quni-cream-border:    #E8E0CC;   /* paired border */
+  --quni-input-border:    #D8D3C7;   /* form field border (warm stone) */
 
   --quni-navy:            #1F2A44;   /* secondary brand / chart series */
   --quni-navy-hover:      #161E33;

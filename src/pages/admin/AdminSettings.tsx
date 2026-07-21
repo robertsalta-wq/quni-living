@@ -612,7 +612,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'business'}
               onClick={() => void saveTab('business')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save business
             </button>
@@ -684,7 +684,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'contact'}
               onClick={() => void saveTab('contact')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save contact & address
             </button>
@@ -739,7 +739,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'bank'}
               onClick={() => void saveTab('bank')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save bank accounts
             </button>
@@ -793,7 +793,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'compliance'}
               onClick={() => void saveTab('compliance')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save compliance & legal
             </button>
@@ -817,7 +817,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'docs'}
               onClick={() => void saveTab('docs')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save document defaults
             </button>
@@ -839,7 +839,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'house_rules'}
               onClick={() => void saveTab('house_rules')}
-              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--quni-success-strong)] disabled:opacity-50"
             >
               Save house rules
             </button>

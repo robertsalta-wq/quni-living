@@ -76,7 +76,7 @@ export default function BookingReviewActionCard({
 /** Primary coral CTA — full width. */
 export function bookingReviewPrimaryButtonClass(disabled = false): string {
   if (disabled) {
-    return 'inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-[10px] border-0 bg-[#F1EEEA] px-4 py-3 text-[14.5px] font-semibold text-[#B8B2C0]'
+    return 'inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-[10px] border-0 bg-[var(--quni-lifecycle-deferred-bg)] px-4 py-3 text-[14.5px] font-semibold text-[#B8B2C0]'
   }
   return 'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border-0 bg-admin-coral px-4 py-3 text-[14.5px] font-semibold text-white hover:bg-admin-coral-hover'
 }

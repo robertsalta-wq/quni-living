@@ -61,16 +61,16 @@ export function landlordListingUiStatusPillClass(status: LandlordListingUiStatus
   const base =
     'inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
   if (status === 'live') return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
-  if (status === 'booked') return `${base} bg-[rgba(31,42,68,0.08)] text-[var(--quni-navy)]`
-  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
+  if (status === 'booked') return `${base} bg-admin-navy-tint text-[var(--quni-navy)]`
+  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }
 
 export function landlordListingRollupChipClass(status: LandlordListingUiStatus): string {
   const base =
     'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none'
   if (status === 'live') return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
-  if (status === 'booked') return `${base} bg-[rgba(31,42,68,0.08)] text-[var(--quni-navy)]`
-  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
+  if (status === 'booked') return `${base} bg-admin-navy-tint text-[var(--quni-navy)]`
+  return `${base} bg-[var(--quni-surface-3)] text-[var(--quni-ink-4)]`
 }
 
 function normalizeAddressKey(address: string | null | undefined, suburb: string | null | undefined): string | null {
