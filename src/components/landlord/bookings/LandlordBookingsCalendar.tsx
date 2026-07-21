@@ -102,7 +102,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
 
       {/* Mobile: mini grid + agenda */}
       <div className="sm:hidden space-y-4">
-        <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-3 shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
+        <div className="quni-dashboard-panel p-3">
           <div className="grid grid-cols-7 gap-0.5 mb-1">
             {WEEKDAYS.map((d) => (
               <div key={d} className="text-center text-[9px] font-semibold uppercase text-[var(--quni-ink-5)]">
@@ -171,7 +171,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
       </div>
 
       {/* Desktop: month grid with chips */}
-      <div className="hidden sm:block rounded-2xl border border-[var(--quni-line)] bg-white overflow-hidden shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
+      <div className="quni-dashboard-panel hidden sm:block">
         <div className="grid grid-cols-7 border-b border-[var(--quni-line)] bg-[var(--quni-surface-2)]">
           {WEEKDAYS.map((d) => (
             <div

@@ -19,7 +19,7 @@ export default function LandlordNext7Days({ bookings }: Props) {
   if (items.length === 0) return null
 
   return (
-    <section className="mb-6 rounded-2xl border border-[var(--quni-line)] bg-white p-4 sm:p-5 shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)]">
+    <section className="quni-dashboard-panel mb-6 p-4 sm:p-5">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-semibold text-[var(--quni-ink)]">Next 7 days</h2>
         <Link
