@@ -3999,7 +3999,7 @@ export default function LandlordPropertyFormPage() {
           aria-labelledby="campus-search-overlay-title"
           aria-busy="true"
         >
-          <div className="max-w-sm w-full rounded-2xl bg-white shadow-xl border border-gray-100 px-8 py-10 text-center">
+          <div className="quni-modal w-full max-w-sm px-8 py-10 text-center">
             <div
               className="mx-auto h-12 w-12 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-5"
               aria-hidden

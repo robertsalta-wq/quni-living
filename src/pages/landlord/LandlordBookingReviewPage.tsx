@@ -1768,7 +1768,7 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !listingCancelBusy && setListingCancelOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+          <div className="quni-modal relative z-10 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-admin-ink">Cancel this booking?</h3>
             <p className="mt-2 text-sm text-admin-ink-4">
               {listingFeeDisplay === '$0.00'
@@ -1820,7 +1820,7 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !resendPaymentBusy && setResendPaymentOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+          <div className="quni-modal relative z-10 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-admin-ink">Resend payment instructions?</h3>
             <p className="mt-2 text-sm text-admin-ink-4 leading-relaxed">
               Resend payment instructions to {displayName}? They&apos;ll get an email with the bond and rent payment
@@ -1856,7 +1856,7 @@ export default function LandlordBookingReviewPage() {
       {declineOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => setDeclineOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6">
+          <div className="quni-modal relative z-10 w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-admin-ink">Decline this booking?</h3>
             <p className="mt-2 text-sm text-admin-ink-4">
               The renter&apos;s deposit authorisation will be cancelled or refunded. You can optionally leave a short note
@@ -1900,7 +1900,7 @@ export default function LandlordBookingReviewPage() {
             aria-label="Close"
             onClick={() => !bondBusy && setBondModalOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md rounded-admin-lg bg-white shadow-xl border border-admin-line p-6 max-h-[90vh] overflow-y-auto">
+          <div className="quni-modal relative z-10 w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-admin-ink">Mark bond as received</h3>
             <p className="mt-2 text-sm text-admin-ink-4 leading-relaxed">
               {isQldBoardingProperty
@@ -2020,7 +2020,7 @@ export default function LandlordBookingReviewPage() {
       {infoOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => setInfoOpen(false)} />
-          <div className="relative z-10 w-full max-w-lg rounded-admin-lg bg-white shadow-xl border border-admin-line p-6 max-h-[85vh] overflow-y-auto">
+          <div className="quni-modal relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto p-6">
             <h3 className="text-lg font-semibold text-admin-ink">Request more information</h3>
             <p className="mt-2 text-sm text-admin-ink-4">
               We&apos;ll email the renter and set this booking to &quot;awaiting info&quot; until they reply from their

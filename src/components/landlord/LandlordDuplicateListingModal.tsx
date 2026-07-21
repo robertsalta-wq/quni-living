@@ -22,7 +22,7 @@ export default function LandlordDuplicateListingModal({
         }}
         aria-hidden
       />
-      <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+      <div className="quni-modal relative z-10 w-full max-w-md p-6">
         <h3 className="text-lg font-semibold text-gray-900">Duplicate listing?</h3>
         <p className="mt-2 text-sm text-gray-600">
           This will create a draft copy of this listing. You can then edit the room details.

@@ -927,7 +927,7 @@ function SubscriptionsTab() {
 
       {cancelId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="quni-modal w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-gray-900">Cancel subscription?</h3>
             <p className="text-sm text-gray-600 mt-2">
               Are you sure you want to cancel this subscription? This will stop all future rent payments.
@@ -1573,7 +1573,7 @@ function BondsTab() {
 
       {disputeRow && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="quni-modal w-full max-w-md p-6">
             <h3 className="text-lg font-semibold text-gray-900">Dispute notes</h3>
             <p className="text-sm text-gray-600 mt-1">Record details and outcome for this bond.</p>
             <textarea

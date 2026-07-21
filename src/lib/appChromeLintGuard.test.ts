@@ -130,6 +130,47 @@ describe('findChromeViolations', () => {
     const v = findChromeViolations('src/pages/HandRolled.tsx', src)
     expect(v.some((x) => x.id === 'header-safe-area-placement')).toBe(true)
   })
+
+  it('flags hand-rolled card chrome on non-legacy files', () => {
+    const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    const v = findChromeViolations('src/pages/CardLintProbe.tsx', dirty)
+    expect(v.some((x) => x.id === 'hand-rolled-card')).toBe(true)
+
+    const viaPrimitive = `<div className="quni-card p-5" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', viaPrimitive).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+  })
+
+  it('skips chips without block padding; padded button-shaped clusters still match', () => {
+    const chip = `<span className="rounded-full border border-gray-200 bg-white shadow-sm" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', chip).filter((x) => x.id === 'hand-rolled-card'),
+    ).toEqual([])
+
+    const buttonShaped = `<button className="rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-sm" />`
+    expect(
+      findChromeViolations('src/pages/CardLintProbe.tsx', buttonShaped).some(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toBe(true)
+  })
+
+  it('allowlists containerLegacy + primitive card wrappers for hand-rolled-card', () => {
+    const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
+    expect(
+      findChromeViolations('src/components/DashboardPageSkeleton.tsx', dirty).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+    expect(
+      findChromeViolations('src/components/ui/Section.tsx', dirty).filter(
+        (x) => x.id === 'hand-rolled-card',
+      ),
+    ).toEqual([])
+  })
 })
 
 describe('app chrome lint guard CLI (§6)', () => {

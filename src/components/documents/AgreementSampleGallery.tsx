@@ -93,7 +93,7 @@ export function AgreementSampleGallery({
 
       {active && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4" role="dialog" aria-modal="true">
-          <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+          <div className="quni-modal flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-gray-900">{active.document}</p>

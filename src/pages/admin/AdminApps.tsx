@@ -821,7 +821,7 @@ function VendorEditModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border border-gray-100 relative z-10"
+        className="quni-modal relative z-10 w-full max-w-lg p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-gray-900">Edit subscription - {row.title}</h2>

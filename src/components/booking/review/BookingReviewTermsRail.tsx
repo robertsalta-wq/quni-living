@@ -269,7 +269,7 @@ export default function BookingReviewTermsRail({
             aria-label="Close"
             onClick={() => setEditorOpen(false)}
           />
-          <div className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-admin-lg bg-white p-1 shadow-xl">
+          <div className="quni-modal relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto p-1">
             <div className="flex items-center justify-between border-b border-admin-line px-5 py-4">
               <h3 className="text-base font-semibold text-admin-ink">Edit terms</h3>
               <button

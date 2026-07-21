@@ -1811,7 +1811,7 @@ export default function LandlordDashboard() {
         {stripeRequiredModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/40" onClick={() => setStripeRequiredModalOpen(false)} aria-hidden />
-            <div className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6">
+            <div className="quni-modal relative z-10 w-full max-w-md p-6">
               <h3 className="text-lg font-semibold text-gray-900">Bank account required</h3>
               <p className="mt-2 text-sm text-gray-600">
                 You need to connect your bank account before you can accept bookings. This only takes a few minutes.

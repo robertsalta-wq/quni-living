@@ -356,3 +356,15 @@ a:hover { color: var(--quni-coral-active); text-decoration: underline; }
   background: var(--quni-surface-1);
   box-shadow: var(--shadow-1);
 }
+
+/* =============================================================================
+   Modal / dialog panels — elevated at all breakpoints (heavier than .quni-card).
+   Overlay (fixed inset-0 + scrim), z-index, max-width, and padding stay per-usage.
+   ============================================================================= */
+
+.quni-modal {
+  border: 1px solid var(--quni-line);
+  border-radius: var(--radius-lg);
+  background: var(--quni-surface-1);
+  box-shadow: var(--shadow-3);
+}

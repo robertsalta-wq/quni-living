@@ -83,7 +83,7 @@ export function LegalDocumentModal({ open, onClose, title, children, subtitle }:
       />
       <div
         ref={dialogRef}
-        className="relative z-10 flex h-full w-full flex-col bg-white md:h-auto md:max-h-[min(90vh,900px)] md:max-w-3xl md:overflow-hidden md:rounded-2xl md:shadow-2xl md:ring-1 md:ring-stone-900/5"
+        className="quni-modal relative z-10 flex h-full w-full flex-col max-md:rounded-none max-md:border-0 max-md:shadow-none md:h-auto md:max-h-[min(90vh,900px)] md:max-w-3xl md:overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

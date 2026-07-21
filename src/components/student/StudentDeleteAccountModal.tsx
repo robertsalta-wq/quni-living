@@ -28,7 +28,7 @@ export function StudentDeleteAccountModal({ open, onClose, onDelete, deleting, e
         onClick={() => !deleting && onClose()}
       />
       <div
-        className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl border border-gray-200 p-6"
+        className="quni-modal relative z-10 w-full max-w-md p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-account-title"

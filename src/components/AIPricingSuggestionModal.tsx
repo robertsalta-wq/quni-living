@@ -144,7 +144,7 @@ export default function AIPricingSuggestionModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-6 shadow-xl"
+        className="quni-modal w-full max-w-lg p-6"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {loading ? (

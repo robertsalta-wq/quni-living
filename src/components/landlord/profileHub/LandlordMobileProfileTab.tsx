@@ -829,7 +829,7 @@ function DeleteAccountModal({ onClose }: { onClose: () => void }) {
       aria-modal="true"
       aria-labelledby="delete-account-title"
     >
-      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-lg">
+      <div className="quni-modal w-full max-w-sm p-5">
         <p id="delete-account-title" className="text-[15px] leading-relaxed text-[var(--quni-ink)]">
           To delete your landlord account, email{' '}
           <a
