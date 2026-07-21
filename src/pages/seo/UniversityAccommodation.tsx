@@ -635,7 +635,7 @@ export default function UniversityAccommodation({
                   </p>
                   <Link
                     to="/contact"
-                    className="inline-flex mt-4 rounded-xl bg-[#FF6F61] text-white font-semibold text-sm px-5 py-2.5 hover:bg-[#e85a4f]"
+                    className="inline-flex mt-4 rounded-xl bg-[var(--quni-coral)] text-white font-semibold text-sm px-5 py-2.5 hover:bg-[var(--quni-coral-hover)]"
                   >
                     Join the waitlist
                   </Link>

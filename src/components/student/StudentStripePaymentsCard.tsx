@@ -73,7 +73,7 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
   const hasCustomer = Boolean(profile.stripe_customer_id?.trim())
 
   return (
-    <div className="rounded-2xl border border-[#E5E4E7] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(8,6,13,0.05)] scroll-mt-24">
+    <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(8,6,13,0.05)] scroll-mt-24">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Rent billing</h2>
@@ -96,7 +96,7 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
           type="button"
           disabled={loading}
           onClick={() => void startSetup()}
-          className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#F2604F] active:bg-[#CC4A3C] shadow-sm disabled:opacity-50 w-full sm:w-auto"
+          className="shrink-0 inline-flex items-center justify-center rounded-[10px] bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] active:bg-[var(--quni-coral-active)] shadow-sm disabled:opacity-50 w-full sm:w-auto"
         >
           {loading ? 'Opening Stripe…' : hasCustomer ? 'Add or update card' : 'Save a card for rent'}
         </button>

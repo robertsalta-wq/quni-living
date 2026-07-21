@@ -24,7 +24,7 @@ export function TermsContent() {
         These Terms of Service (&quot;Terms&quot;) govern your use of the Quni Living platform, website, and services
         (&quot;Platform&quot;), operated by Quni Living Pty Ltd (&quot;Quni Living&quot;, &quot;we&quot;, &quot;us&quot;,
         &quot;our&quot;). By creating an account or using our Platform, you agree to be bound by these Terms and our{' '}
-        <Link to="/non-discrimination" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+        <Link to="/non-discrimination" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
           Non-Discrimination Policy
         </Link>
         .
@@ -111,7 +111,7 @@ export function TermsContent() {
       <LegalH3 id="rules-discrimination">3.3 Non-Discrimination</LegalH3>
       <LegalP>
         All users must comply with our{' '}
-        <Link to="/non-discrimination" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+        <Link to="/non-discrimination" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
           Non-Discrimination Policy
         </Link>
         . You must not treat other users unfavourably because of a protected attribute, or use listings, messages, or
@@ -210,7 +210,7 @@ export function TermsContent() {
       <LegalH3 id="payments-refunds">6.4 Refunds</LegalH3>
       <LegalP>
         Refund and reversal rules for <strong>fees and charges that Quni actually receives</strong> are set out in our{' '}
-        <Link to="/refunds" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+        <Link to="/refunds" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
           Refund Policy
         </Link>{' '}
         on the website. <strong>Bond and rent</strong> (tenancy money) are governed by your{' '}

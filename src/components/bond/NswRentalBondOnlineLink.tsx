@@ -9,7 +9,7 @@ export default function NswRentalBondOnlineLink({ when }: { when: boolean }) {
         href="https://www.nsw.gov.au/housing-and-construction/renting/rental-bonds"
         target="_blank"
         rel="noopener noreferrer"
-        className="font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+        className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
       >
         NSW Rental Bonds Online
       </a>

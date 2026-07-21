@@ -15,7 +15,7 @@ export const renterDashboardPageInsetClass =
 export default function RenterDashboardPageHeader({ activeTab: _activeTab, onTabSelect: _onTabSelect }: Props) {
   // Section strip lives in AppHeader (Map mode, desktop tabs); page keeps title only.
   return (
-    <h1 className="mb-4 hidden text-[28px] font-bold leading-tight tracking-tight text-[#08060D] sm:block">
+    <h1 className="mb-4 hidden text-[28px] font-bold leading-tight tracking-tight text-[var(--quni-ink)] sm:block">
       Dashboard
     </h1>
   )

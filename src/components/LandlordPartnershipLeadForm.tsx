@@ -14,7 +14,7 @@ const PROPERTY_OPTIONS = [
 type FieldKey = 'name' | 'email' | 'phone' | 'suburb' | 'property_count' | 'captcha'
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61] focus:border-[#FF6F61]'
+  'w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--quni-coral)] focus:border-[var(--quni-coral)]'
 
 const labelClass = 'block text-sm font-medium text-white/95 mb-1.5'
 
@@ -277,7 +277,7 @@ export default function LandlordPartnershipLeadForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-white/95 disabled:opacity-60 transition-colors"
+        className="w-full rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] shadow-md hover:bg-white/95 disabled:opacity-60 transition-colors"
       >
         {submitting ? 'Sending…' : 'Get in touch'}
       </button>

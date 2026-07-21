@@ -17,12 +17,12 @@ export function bookingListStatusLabel(status: string): string {
 export function bookingListStatusPillClass(status: string): string {
   const base = 'inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none'
   if (status === 'confirmed' || status === 'active') {
-    return `${base} bg-[#E6F4EE] text-[#0F6E56]`
+    return `${base} bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]`
   }
   if (status === 'expired' || status === 'declined' || status === 'payment_failed') {
     return `${base} bg-[#FBEBE9] text-[#B4322A]`
   }
-  return `${base} bg-[#F4F3EC] text-[#6B6375]`
+  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
 }
 
 export function formatBookingListWeeklyRent(weeklyRent: number | null | undefined): string {

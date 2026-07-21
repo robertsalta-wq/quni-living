@@ -103,7 +103,7 @@ export default function RentNearCampus() {
       />
 
       {/* Hero */}
-      <section className="bg-[#FF6F61] border-b border-black/10">
+      <section className="bg-[var(--quni-coral)] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
@@ -122,14 +122,14 @@ export default function RentNearCampus() {
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full max-w-xl">
                 <Link
                   to="/listings"
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--quni-coral)] transition-colors"
                 >
                   Browse listings
                   <span aria-hidden>→</span>
                 </Link>
                 <Link
                   to="/signup"
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border-2 border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border-2 border-white px-6 py-3 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--quni-coral)] transition-colors"
                 >
                   Create an account
                   <span aria-hidden>→</span>
@@ -139,7 +139,7 @@ export default function RentNearCampus() {
 
             <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
               <div
-                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6F61] text-white shadow-lg ring-2 ring-white/50"
+                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white shadow-lg ring-2 ring-white/50"
                 aria-hidden
               >
                 <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -157,7 +157,7 @@ export default function RentNearCampus() {
                 Verified listings
               </div>
               <div
-                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF6F61] px-2.5 py-2 text-white shadow-lg"
+                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[var(--quni-coral-active)] bg-[var(--quni-coral)] px-2.5 py-2 text-white shadow-lg"
                 aria-hidden
               >
                 <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -246,7 +246,7 @@ export default function RentNearCampus() {
                 key={step.n}
                 className="relative rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
               >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[#FF6F61] mb-4 mx-auto md:mx-0">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[var(--quni-coral)] mb-4 mx-auto md:mx-0">
                   {step.n === 1 && (
                     <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
                       <path
@@ -275,7 +275,7 @@ export default function RentNearCampus() {
                     </svg>
                   )}
                 </div>
-                <div className="absolute right-4 top-4 inline-flex items-center justify-center h-7 min-w-7 rounded-full bg-[#FDEDEA] px-2 text-xs font-bold text-[#CC4A3C]">
+                <div className="absolute right-4 top-4 inline-flex items-center justify-center h-7 min-w-7 rounded-full bg-[#FDEDEA] px-2 text-xs font-bold text-[var(--quni-coral-active)]">
                   {step.n}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{step.title}</h3>
@@ -335,7 +335,7 @@ export default function RentNearCampus() {
                   >
                     <span className="font-semibold text-gray-900">{item.question}</span>
                     <svg
-                      className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                      className={`h-5 w-5 shrink-0 text-[var(--quni-coral)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
                       viewBox="0 0 20 20"
                       fill="none"
                       stroke="currentColor"
@@ -354,7 +354,7 @@ export default function RentNearCampus() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="w-full bg-[#FF6F61]">
+      <section className="w-full bg-[var(--quni-coral)]">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-14 text-center">
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white !mt-0 !mb-3">See what is available now</h2>
           <p className="mx-auto mb-8 max-w-2xl text-sm text-white/80 sm:text-base">
@@ -363,7 +363,7 @@ export default function RentNearCampus() {
           </p>
           <Link
             to="/signup"
-            className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] border border-white hover:bg-white/95 transition-colors"
+            className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] border border-white hover:bg-white/95 transition-colors"
           >
             Create an account
             <span aria-hidden>→</span>

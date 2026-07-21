@@ -13,8 +13,8 @@ export interface SparklineProps {
 
 const COLOR_HEX: Record<SparklineColor, string> = {
   // Mirrors `tailwind.config.js` admin-navy + admin-coral.
-  coral: '#FF6F61',
-  navy: '#1F2A44',
+  coral: 'var(--chart-1)',
+  navy: 'var(--chart-2)',
 }
 
 /**

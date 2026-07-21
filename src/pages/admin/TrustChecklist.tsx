@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { adminTableWrapClass } from './adminUi'
 import { AdminPageHeader } from '../../components/admin/primitives'
 
-const CORAL = '#FF6F61'
+const CORAL = 'var(--quni-coral)'
 const TRUST_KEY = 'trust_checklist'
 const TOTAL_TASKS = 52
 
@@ -379,7 +379,7 @@ function parseCompletedItems(raw: unknown): number[] {
 function toneBadgeClass(tone: PhaseTone): string {
   switch (tone) {
     case 'coral':
-      return 'border-[#FF6F61] bg-[#FF6F61]/10 text-gray-900'
+      return 'border-[var(--quni-coral)] bg-admin-coral/10 text-gray-900'
     case 'amber':
       return 'border-amber-500 bg-amber-50 text-amber-950'
     case 'green':
@@ -398,7 +398,7 @@ function toneBadgeClass(tone: PhaseTone): string {
 function phaseAccentBar(tone: PhaseTone): string {
   switch (tone) {
     case 'coral':
-      return 'bg-[#FF6F61]'
+      return 'bg-[var(--quni-coral)]'
     case 'amber':
       return 'bg-amber-500'
     case 'green':
@@ -642,7 +642,7 @@ export default function TrustChecklist() {
                       isActive
                         ? activeAmber
                           ? 'bg-white text-amber-800 border border-b-0 border-gray-200 -mb-px border-t-2 border-t-amber-500'
-                          : 'bg-white text-[#FF6F61] border border-b-0 border-gray-200 -mb-px border-t-2 border-t-[#FF6F61]'
+                          : 'bg-white text-[var(--quni-coral)] border border-b-0 border-gray-200 -mb-px border-t-2 border-t-[var(--quni-coral)]'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -653,7 +653,7 @@ export default function TrustChecklist() {
                         isActive
                           ? activeAmber
                             ? 'bg-amber-100 text-amber-900'
-                            : 'bg-[#FF6F61]/15 text-[#FF6F61]'
+                            : 'bg-admin-coral/15 text-[var(--quni-coral)]'
                           : 'bg-gray-100 text-gray-600',
                       ].join(' ')}
                     >

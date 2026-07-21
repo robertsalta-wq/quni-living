@@ -218,7 +218,7 @@ export function PrivacyContent() {
           href="https://www.oaic.gov.au"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+          className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
         >
           www.oaic.gov.au
         </a>

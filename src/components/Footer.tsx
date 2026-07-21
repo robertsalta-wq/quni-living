@@ -31,7 +31,7 @@ const GUIDE_NAV_ITEMS = listGuideNavItems()
 
 export default function Footer() {
   return (
-    <footer className="bg-[#FF6F61] text-[#333] font-footer mt-auto">
+    <footer className="bg-[var(--quni-coral)] text-[#333] font-footer mt-auto">
       <div className={`${SITE_CONTENT_MAX_CLASS} py-14 md:py-16`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-1">

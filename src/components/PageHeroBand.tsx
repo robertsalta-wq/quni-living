@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 /** Outer coral band - matches `/student-accommodation` page header */
-export const PAGE_HERO_OUTER_CLASS = 'w-full bg-[#FF6F61] border-b border-[#CC4A3C]/20'
+export const PAGE_HERO_OUTER_CLASS = 'w-full bg-[var(--quni-coral)] border-b border-admin-coral-active/20'
 
 const INNER =
   'max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 text-left'

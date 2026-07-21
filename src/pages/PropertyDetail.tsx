@@ -176,7 +176,7 @@ function SidebarRow({ label, children }: { label: string; children: ReactNode })
   )
 }
 
-const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.2em] text-[#FF6F61]'
+const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.2em] text-[var(--quni-coral)]'
 const sectionHeadingClass =
   'text-base sm:text-lg font-bold text-stone-900 tracking-tight scroll-mt-below-header md:scroll-mt-28'
 
@@ -236,7 +236,7 @@ function PreviewGateOverlay({
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#FFF8F0]/80 backdrop-blur-[2px] px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl bg-white border border-[#FF6F61]/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
+      <div className="w-full max-w-md rounded-2xl bg-white border border-admin-coral/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
         <p className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance leading-snug">
           Create a free account to see the full listing and send an enquiry.
         </p>
@@ -244,14 +244,14 @@ function PreviewGateOverlay({
           <Link
             to={`/signup?redirect=${encodedRedirect}`}
             onClick={rememberMessageIntent}
-            className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
+            className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[var(--quni-coral-hover)] transition-colors shadow-sm"
           >
             Sign up free
           </Link>
           <Link
             to={`/login?redirect=${encodedRedirect}`}
             onClick={rememberMessageIntent}
-            className="inline-flex items-center justify-center rounded-xl border-2 border-[#FF6F61] text-[#FF6F61] bg-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#FFF8F0] transition-colors"
+            className="inline-flex items-center justify-center rounded-xl border-2 border-[var(--quni-coral)] text-[var(--quni-coral)] bg-white py-3 px-5 text-sm font-semibold tracking-wide hover:bg-[#FFF8F0] transition-colors"
           >
             Log in
           </Link>
@@ -1010,7 +1010,7 @@ export default function PropertyDetail() {
           canonicalPath={`/listings/${slug}`}
         />
         <div
-          className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#FEF9E4] pb-20 md:pb-16 min-h-[50vh]"
+          className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[var(--quni-cream)] pb-20 md:pb-16 min-h-[50vh]"
           aria-busy="true"
         >
           <div className={`${SITE_CONTENT_MAX_CLASS} pt-3 sm:pt-4 text-left`}>
@@ -1267,7 +1267,7 @@ export default function PropertyDetail() {
     setImageIndex((i) => (propertyImages.length ? (i < propertyImages.length - 1 ? i + 1 : 0) : 0))
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[#FEF9E4] pb-20 md:pb-16">
+    <div className="flex-1 flex flex-col min-h-0 min-w-0 w-full bg-[var(--quni-cream)] pb-20 md:pb-16">
       <Seo
         title={property.title}
         description={listingMetaDesc}
@@ -1315,7 +1315,7 @@ export default function PropertyDetail() {
             /
           </span>
           <span
-            className="min-w-0 truncate text-[#FF6F61] font-medium"
+            className="min-w-0 truncate text-[var(--quni-coral)] font-medium"
             title={property.title}
           >
             {property.title}
@@ -1377,7 +1377,7 @@ export default function PropertyDetail() {
                 key={badge.id}
                 className={
                   badge.variant === 'featured'
-                    ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#FF6F61] text-white shadow-sm'
+                    ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--quni-coral)] text-white shadow-sm'
                     : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#8FB9AB] text-white shadow-sm'
                 }
               >
@@ -1392,7 +1392,7 @@ export default function PropertyDetail() {
               type="button"
               aria-label="Previous photo"
               onClick={goPrevImage}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#FF6F61] text-white shadow-md hover:bg-[#e85d52] flex items-center justify-center"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[var(--quni-coral)] text-white shadow-md hover:bg-[var(--quni-coral-hover)] flex items-center justify-center"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1402,7 +1402,7 @@ export default function PropertyDetail() {
               type="button"
               aria-label="Next photo"
               onClick={goNextImage}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#FF6F61] text-white shadow-md hover:bg-[#e85d52] flex items-center justify-center"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[var(--quni-coral)] text-white shadow-md hover:bg-[var(--quni-coral-hover)] flex items-center justify-center"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1446,7 +1446,7 @@ export default function PropertyDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             <div className="lg:col-span-7 xl:col-span-8 space-y-3 order-2 lg:order-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#FF6F61] tracking-tight text-balance min-w-0 flex-1">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--quni-coral)] tracking-tight text-balance min-w-0 flex-1">
                   {property.title}
                 </h1>
                 <ShareListingButton
@@ -1463,7 +1463,7 @@ export default function PropertyDetail() {
               <div className="rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                 <div className="pb-4 border-b border-stone-100">
                   <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
-                  <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[#FF6F61] tracking-tight">
+                  <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
                     ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
                   </p>
@@ -1520,7 +1520,7 @@ export default function PropertyDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-6 lg:gap-9 xl:gap-10 items-start">
             <div className="space-y-5 sm:space-y-6 order-1 min-w-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#FF6F61] tracking-tight text-balance min-w-0 flex-1">
+                <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--quni-coral)] tracking-tight text-balance min-w-0 flex-1">
                   {property.title}
                 </h1>
                 <ShareListingButton
@@ -1543,7 +1543,7 @@ export default function PropertyDetail() {
                     ) : null}
                     <span className="inline-flex items-center gap-2">
                       <span
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FF6F61]/12 text-base leading-none"
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-admin-coral/12 text-base leading-none"
                         aria-hidden
                       >
                         {item.icon}
@@ -1670,7 +1670,7 @@ export default function PropertyDetail() {
                               <p className="text-sm sm:text-base text-stone-900 leading-snug">
                                 {c.universityName} - {c.campusName}
                               </p>
-                              <p className="text-sm font-medium text-[#FF6F61]">
+                              <p className="text-sm font-medium text-[var(--quni-coral)]">
                                 {c.distanceKm < 10 ? c.distanceKm.toFixed(1) : Math.round(c.distanceKm)} km away
                               </p>
                             </div>
@@ -1684,7 +1684,7 @@ export default function PropertyDetail() {
 
               {nearbyListings.length >= 2 && (
                 <section className="space-y-3 border-t border-stone-100 pt-5" aria-labelledby="more-nearby-heading">
-                  <h2 id="more-nearby-heading" className="font-display text-xl font-bold text-[#FF6F61]">
+                  <h2 id="more-nearby-heading" className="font-display text-xl font-bold text-[var(--quni-coral)]">
                     {similarHomesHeading}
                   </h2>
                   <p className="text-xs text-stone-500">Approximate distances shown - straight-line, not driving time.</p>
@@ -1723,7 +1723,7 @@ export default function PropertyDetail() {
                 <div className="hidden md:block rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
                   <div className="pb-4 border-b border-stone-100">
                     <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
-                    <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[#FF6F61] tracking-tight">
+                    <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
                       ${rent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       <span className="text-lg sm:text-xl font-semibold text-stone-500 font-sans"> / week</span>
                     </p>
@@ -1764,8 +1764,8 @@ export default function PropertyDetail() {
                           min={listingFromForPicker ?? undefined}
                           max={listingToForPicker ?? undefined}
                           onChange={(iso) => patchAvailabilityParams({ move_in: iso || null })}
-                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30"
-                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 bg-white"
+                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/30"
+                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-admin-coral/30 bg-white"
                         />
                       </div>
                       <div>
@@ -1784,8 +1784,8 @@ export default function PropertyDetail() {
                               lease: null,
                             })
                           }
-                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 disabled:bg-stone-50 disabled:text-stone-400"
-                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 bg-white"
+                          className="w-full py-2 px-3 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/30 disabled:bg-stone-50 disabled:text-stone-400"
+                          calendarButtonClassName="shrink-0 rounded-lg border border-stone-200 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-admin-coral/30 bg-white"
                         />
                       </div>
                       <div>
@@ -1802,7 +1802,7 @@ export default function PropertyDetail() {
                               move_out: null,
                             })
                           }
-                          className="w-full py-2 pl-3 pr-8 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 disabled:bg-stone-50 disabled:text-stone-400"
+                          className="w-full py-2 pl-3 pr-8 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-admin-coral/30 disabled:bg-stone-50 disabled:text-stone-400"
                         >
                           <option value="">Open-ended (from move-in)</option>
                           <option value="3">3 months from move-in</option>
@@ -1815,7 +1815,7 @@ export default function PropertyDetail() {
                       <div className="flex justify-between gap-4 text-sm">
                         <span className="shrink-0 text-stone-500">Available</span>
                         <span
-                          className={`text-right font-medium tabular-nums ${availableFormatted === 'Available now' ? 'text-emerald-700' : 'text-[#FF6F61]'}`}
+                          className={`text-right font-medium tabular-nums ${availableFormatted === 'Available now' ? 'text-emerald-700' : 'text-[var(--quni-coral)]'}`}
                         >
                           {availableFormatted}
                         </span>
@@ -1862,13 +1862,13 @@ export default function PropertyDetail() {
 
                   <div className="pt-4 flex flex-col gap-3">
                     {isRenterRole(role) && !studentListingActionsOk ? (
-                      <div className="rounded-xl border border-[#FF6F61]/25 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
+                      <div className="rounded-xl border border-admin-coral/25 bg-[var(--quni-cream)] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
                           {renterReadinessBlockMessage}
                         </p>
                         <Link
                           to={renterReadinessCtaHref}
-                          className="inline-flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors"
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[var(--quni-coral-hover)] transition-colors"
                         >
                           Complete profile →
                         </Link>
@@ -1878,13 +1878,13 @@ export default function PropertyDetail() {
                         Currently unavailable
                       </div>
                     ) : showActiveBookingLink ? (
-                      <div className="rounded-xl border border-[#FF6F61]/20 bg-[#FEF9E4] px-4 py-4 text-center space-y-3">
+                      <div className="rounded-xl border border-admin-coral/20 bg-[var(--quni-cream)] px-4 py-4 text-center space-y-3">
                         <p className="text-sm font-medium text-stone-800 leading-snug">
                           You have an active booking request for this property.
                         </p>
                         <Link
                           to="/student-dashboard?tab=bookings"
-                          className="inline-flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold tracking-wide hover:bg-[var(--quni-coral-hover)] transition-colors shadow-sm"
                         >
                           View your booking
                         </Link>
@@ -1894,7 +1894,7 @@ export default function PropertyDetail() {
                         <Link
                           to={bookHref}
                           state={bookState}
-                          className="flex w-full items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold tracking-wide hover:bg-[#e85d52] transition-colors shadow-sm"
+                          className="flex w-full items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold tracking-wide hover:bg-[var(--quni-coral-hover)] transition-colors shadow-sm"
                         >
                           Apply
                         </Link>
@@ -1902,7 +1902,7 @@ export default function PropertyDetail() {
                           type="button"
                           onClick={handleMessageLandlord}
                           disabled={messageOpening}
-                          className="flex w-full items-center justify-center rounded-xl border-2 border-[#FF6F61] bg-white text-[#FF6F61] py-3.5 text-sm font-semibold tracking-wide hover:bg-[#FF6F61]/10 hover:border-[#e85d52] hover:text-[#e85d52] transition-colors disabled:opacity-60"
+                          className="flex w-full items-center justify-center rounded-xl border-2 border-[var(--quni-coral)] bg-white text-[var(--quni-coral)] py-3.5 text-sm font-semibold tracking-wide hover:bg-admin-coral/10 hover:border-[var(--quni-coral-hover)] hover:text-[var(--quni-coral-hover)] transition-colors disabled:opacity-60"
                         >
                           {messageOpening ? 'Opening…' : user ? 'Message landlord' : 'Sign in to message'}
                         </button>
@@ -1922,19 +1922,19 @@ export default function PropertyDetail() {
 
                   <div className="mt-4 pt-4 border-t border-stone-100 space-y-2 text-xs text-stone-500">
                     <p className="flex gap-2">
-                      <span className="text-[#FF6F61] font-semibold" aria-hidden>
+                      <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
                       Verified listing
                     </p>
                     <p className="flex gap-2">
-                      <span className="text-[#FF6F61] font-semibold" aria-hidden>
+                      <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
                       Secure payments via Quni
                     </p>
                     <p className="flex gap-2">
-                      <span className="text-[#FF6F61] font-semibold" aria-hidden>
+                      <span className="text-[var(--quni-coral)] font-semibold" aria-hidden>
                         ✓
                       </span>
                       Support available 7 days
@@ -1960,7 +1960,7 @@ export default function PropertyDetail() {
           role="region"
           aria-label="Book this listing"
         >
-          <p className="font-display text-lg font-bold text-[#FF6F61] tabular-nums shrink-0">
+          <p className="font-display text-lg font-bold text-[var(--quni-coral)] tabular-nums shrink-0">
             {listingRent.showFromPrefix ? (
               <span className="text-sm font-semibold text-stone-500 font-sans">From </span>
             ) : null}
@@ -1970,7 +1970,7 @@ export default function PropertyDetail() {
           {isRenterRole(role) && !studentListingActionsOk ? (
             <Link
               to={renterReadinessCtaHref}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shrink-0"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shrink-0"
             >
               Complete profile
             </Link>
@@ -1981,7 +1981,7 @@ export default function PropertyDetail() {
           ) : showActiveBookingLink ? (
             <Link
               to="/student-dashboard?tab=bookings"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shadow-sm shrink-0"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
             >
               Your booking →
             </Link>
@@ -1989,7 +1989,7 @@ export default function PropertyDetail() {
             <Link
               to={bookHref}
               state={bookState}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[#e85d52] shadow-sm shrink-0"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 hover:bg-[var(--quni-coral-hover)] shadow-sm shrink-0"
             >
               Apply →
             </Link>

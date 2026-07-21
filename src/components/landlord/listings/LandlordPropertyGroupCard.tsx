@@ -72,8 +72,8 @@ export function LandlordWholePlaceListingCard({
       >
         <WholePlaceHouseIcon />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14.5px] font-bold text-[#08060D]">{group.addressLabel}</p>
-          <p className="mt-0.5 truncate text-[12px] text-[#6B6375]">{suburbLine}</p>
+          <p className="truncate text-[14.5px] font-bold text-[var(--quni-ink)]">{group.addressLabel}</p>
+          <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
         </div>
         <LandlordListingStatusPill status={uiStatus} />
       </button>
@@ -109,8 +109,8 @@ export default function LandlordPropertyGroupCard({
       >
         <PropertyBuildingIcon />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14.5px] font-bold text-[#08060D]">{group.addressLabel}</p>
-          <p className="mt-0.5 truncate text-[12px] text-[#6B6375]">{suburbLine}</p>
+          <p className="truncate text-[14.5px] font-bold text-[var(--quni-ink)]">{group.addressLabel}</p>
+          <p className="mt-0.5 truncate text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {ROLLUP_ORDER.map((status) => {
               const count = group.rollup[status] ?? 0
@@ -123,7 +123,7 @@ export default function LandlordPropertyGroupCard({
             })}
           </div>
         </div>
-        <span className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[#6B6375]">
+        <span className="mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[var(--quni-ink-4)]">
           {expanded ? <ChevronUp className="h-4 w-4" aria-hidden /> : <ChevronDown className="h-4 w-4" aria-hidden />}
         </span>
       </button>
@@ -166,7 +166,7 @@ export default function LandlordPropertyGroupCard({
               <button
                 type="button"
                 onClick={() => onAddRoom(group)}
-                className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-semibold text-[#FF6F61] hover:underline underline-offset-2"
+                className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-semibold text-[var(--quni-coral)] hover:underline underline-offset-2"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 Add room

@@ -170,7 +170,7 @@ export default function InviteTenantPage() {
         <p className="text-sm text-gray-600 leading-relaxed mb-6">
           {resolveError ?? inviteErrorMessage('invalid')}
         </p>
-        <Link to="/listings" className="text-sm font-medium text-[#FF6F61] hover:underline">
+        <Link to="/listings" className="text-sm font-medium text-[var(--quni-coral)] hover:underline">
           Browse listings
         </Link>
       </div>
@@ -187,7 +187,7 @@ export default function InviteTenantPage() {
           booking flow.
         </p>
         <p className="text-xs text-gray-500 break-all mb-6">{absoluteUrl(`/invite/${token}`)}</p>
-        <Link to="/landlord/dashboard" className="text-sm font-medium text-[#FF6F61] hover:underline">
+        <Link to="/landlord/dashboard" className="text-sm font-medium text-[var(--quni-coral)] hover:underline">
           Back to dashboard
         </Link>
       </div>
@@ -303,7 +303,7 @@ export default function InviteTenantPage() {
             <button
               type="button"
               onClick={continueToSignup}
-              className="w-full rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] shadow-sm"
+              className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] shadow-sm"
             >
               Create account to continue
             </button>

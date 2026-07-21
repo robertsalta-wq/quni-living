@@ -137,12 +137,12 @@ function HowStepColumn(props: { heading: string; steps: readonly HowStep[] }) {
   const { heading, steps } = props
   return (
     <div className="rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-8 shadow-sm">
-      <h3 className="font-display text-lg sm:text-xl font-bold text-[#FF6F61] mb-6">{heading}</h3>
+      <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--quni-coral)] mb-6">{heading}</h3>
       <ol className="m-0 list-none space-y-6 p-0">
         {steps.map((step) => (
           <li key={step.n} className="flex gap-4">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6F61] text-sm font-bold text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--quni-coral)] text-sm font-bold text-white"
               aria-hidden
             >
               {step.n}
@@ -361,7 +361,7 @@ export default function Home() {
         jsonLd={homeJsonLd}
       />
       {/* Hero - coral band; collage + badges reference Wix trial */}
-      <section className="bg-[#FF6F61] border-b border-black/10">
+      <section className="bg-[var(--quni-coral)] border-b border-black/10">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-20 sm:pb-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center lg:items-stretch">
             <div className="flex flex-col justify-center min-w-0">
@@ -427,7 +427,7 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={locationSearchBusy}
-                  className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#FF6F61] transition-colors disabled:opacity-70"
+                  className="w-full shrink-0 rounded-xl border border-white/90 bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--quni-coral)] transition-colors disabled:opacity-70"
                 >
                   {locationSearchBusy ? 'Searching…' : 'Search'}
                 </button>
@@ -449,7 +449,7 @@ export default function Home() {
             <div className="relative w-full min-h-[280px] sm:min-h-[340px] lg:min-h-[380px] pt-4 pb-6 lg:py-4">
               {/* Floating badges */}
               <div
-                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6F61] text-white shadow-lg ring-2 ring-white/50"
+                className="absolute left-0 top-6 sm:top-10 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--quni-coral)] text-white shadow-lg ring-2 ring-white/50"
                 aria-hidden
               >
                 <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -467,7 +467,7 @@ export default function Home() {
                 $ All Inclusive
               </div>
               <div
-                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[#CC4A3C] bg-[#FF6F61] px-2.5 py-2 text-white shadow-lg"
+                className="absolute bottom-4 right-4 z-30 flex max-w-[120px] items-center gap-1.5 rounded-xl border-2 border-[var(--quni-coral-active)] bg-[var(--quni-coral)] px-2.5 py-2 text-white shadow-lg"
                 aria-hidden
               >
                 <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -538,7 +538,7 @@ export default function Home() {
           <div className="mt-10 flex justify-center sm:mt-12">
             <Link
               to="/listings"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--quni-coral-hover)] focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2"
             >
               Browse listings
             </Link>
@@ -569,7 +569,7 @@ export default function Home() {
                       {item.a}{' '}
                       <Link
                         to={item.linkTo}
-                        className="font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+                        className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
                       >
                         For international students
                       </Link>
@@ -582,7 +582,7 @@ export default function Home() {
                     <button
                       type="button"
                       id={`${item.id}-btn`}
-                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 sm:text-base"
+                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40 sm:text-base"
                       aria-expanded={open}
                       aria-controls={`${item.id}-panel`}
                       onClick={() => setOpenFaqId(open ? null : item.id)}
@@ -632,7 +632,7 @@ export default function Home() {
                     <button
                       type="button"
                       id={`${item.id}-btn`}
-                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 sm:text-base"
+                      className="flex w-full items-center justify-between gap-4 rounded-sm py-4 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40 sm:text-base"
                       aria-expanded={open}
                       aria-controls={`${item.id}-panel`}
                       onClick={() => setOpenFaqId(open ? null : item.id)}

@@ -66,7 +66,7 @@ export default function MessageComposer({ disabled, onSend, onTypingActivity, on
         <button
           type="submit"
           disabled={disabled || sending || !body.trim()}
-          className="shrink-0 rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:opacity-95 disabled:opacity-50"
+          className="shrink-0 rounded-xl bg-[var(--quni-coral)] text-white px-4 py-2.5 text-sm font-semibold hover:opacity-95 disabled:opacity-50"
         >
           {sending ? '…' : 'Send'}
         </button>

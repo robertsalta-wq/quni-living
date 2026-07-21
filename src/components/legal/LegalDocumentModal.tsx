@@ -90,7 +90,7 @@ export function LegalDocumentModal({ open, onClose, title, children, subtitle }:
       >
         <header className="flex shrink-0 items-start gap-3 border-b border-stone-200 bg-white px-4 py-4 sm:px-6 [padding-top:max(1rem,env(safe-area-inset-top))]">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="font-display text-xl font-bold text-[#FF6F61] tracking-tight sm:text-2xl">
+            <h2 id={titleId} className="font-display text-xl font-bold text-[var(--quni-coral)] tracking-tight sm:text-2xl">
               {title}
             </h2>
             {subtitle !== undefined ? (
@@ -103,7 +103,7 @@ export function LegalDocumentModal({ open, onClose, title, children, subtitle }:
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-2"
+            className="shrink-0 rounded-lg p-2 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2"
             aria-label="Close"
           >
             <CloseIcon />
@@ -121,7 +121,7 @@ export function LegalDocumentModal({ open, onClose, title, children, subtitle }:
 export type LegalDocumentKind = 'terms' | 'privacy' | 'landlord-agreement'
 
 const LEGAL_DOC_LINK_CLASS =
-  'text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-1 rounded-sm'
+  'text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-1 rounded-sm'
 
 type SignupLegalDocLinkProps = {
   kind: LegalDocumentKind

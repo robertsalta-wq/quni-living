@@ -114,7 +114,7 @@ export default function ResetPassword() {
   if (loading || bootstrapping) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -132,7 +132,7 @@ export default function ResetPassword() {
         )}
         <Link
           to="/forgot-password"
-          className="mt-8 inline-flex w-full items-center justify-center rounded-lg bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e85d52]"
+          className="mt-8 inline-flex w-full items-center justify-center rounded-lg bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
         >
           Request a new reset link
         </Link>

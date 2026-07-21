@@ -37,8 +37,8 @@ function renterTabClass(isActive: boolean): string {
   return [
     renterTabBaseClass,
     isActive
-      ? 'border-[#FF6F61] text-[#08060D] font-semibold -mb-px'
-      : 'border-transparent text-[#6B6375] font-medium hover:text-[#08060D]',
+      ? 'border-[var(--quni-coral)] text-[var(--quni-ink)] font-semibold -mb-px'
+      : 'border-transparent text-[var(--quni-ink-4)] font-medium hover:text-[var(--quni-ink)]',
   ].join(' ')
 }
 
@@ -113,7 +113,7 @@ export default function UserDashboardSectionNav({
       className={
         embedded
           ? 'overflow-hidden'
-          : 'border-b border-[#E5E4E7] mb-6 -mx-4 overflow-hidden sm:mx-0'
+          : 'border-b border-[var(--quni-line)] mb-6 -mx-4 overflow-hidden sm:mx-0'
       }
     >
       <nav
@@ -144,7 +144,7 @@ export default function UserDashboardSectionNav({
         <Link to="/messages" className={renterTabClass(active === 'messages')}>
           <span className="truncate">Messages</span>
           {unreadMessageCount > 0 && (
-            <span className="tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#FF6F61] text-[9px] font-bold text-white leading-none">
+            <span className="tabular-nums inline-flex shrink-0 items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-[var(--quni-coral)] text-[9px] font-bold text-white leading-none">
               {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
             </span>
           )}

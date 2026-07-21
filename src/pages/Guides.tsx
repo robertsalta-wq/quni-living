@@ -29,21 +29,21 @@ export default function Guides() {
 
       <div className={`${SITE_CONTENT_MAX_CLASS} py-10 md:py-14`}>
         <section aria-labelledby="guides-articles-heading">
-          <h2 id="guides-articles-heading" className="font-display text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+          <h2 id="guides-articles-heading" className="font-display text-xl font-bold text-[var(--quni-navy)] sm:text-2xl">
             Articles
           </h2>
           {articles.length === 0 ? (
-            <p className="mt-4 text-sm text-[#1B2A4A]/70">New guides are on the way.</p>
+            <p className="mt-4 text-sm text-admin-navy/70">New guides are on the way.</p>
           ) : (
             <ul className="mt-5 space-y-3">
               {articles.map(({ seo }) => (
                 <li key={seo.slug}>
                   <Link
                     to={`/guides/${seo.slug}`}
-                    className="block rounded-2xl border border-[#1B2A4A]/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-[#FF6F61]/35 hover:bg-[#FF6F61]/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]/40"
+                    className="block rounded-2xl border border-admin-navy/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
                   >
-                    <span className="block font-medium text-[#1B2A4A]">{seo.navLabel ?? seo.headline}</span>
-                    <span className="mt-1 block text-sm leading-relaxed text-[#1B2A4A]/70">{seo.metaDescription}</span>
+                    <span className="block font-medium text-[var(--quni-navy)]">{seo.navLabel ?? seo.headline}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-admin-navy/70">{seo.metaDescription}</span>
                   </Link>
                 </li>
               ))}
@@ -52,7 +52,7 @@ export default function Guides() {
         </section>
 
         <section className="mt-12 md:mt-16" aria-labelledby="guides-platform-help-heading">
-          <h2 id="guides-platform-help-heading" className="font-display text-xl font-bold text-[#1B2A4A] sm:text-2xl">
+          <h2 id="guides-platform-help-heading" className="font-display text-xl font-bold text-[var(--quni-navy)] sm:text-2xl">
             Platform help
           </h2>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -60,10 +60,10 @@ export default function Guides() {
               <li key={item.to}>
                 <Link
                   to={item.to}
-                  className="flex h-full flex-col rounded-2xl border border-[#1B2A4A]/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-[#FF6F61]/35 hover:bg-[#FF6F61]/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]/40"
+                  className="flex h-full flex-col rounded-2xl border border-admin-navy/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
                 >
-                  <span className="font-medium text-[#1B2A4A]">{item.label}</span>
-                  <span className="mt-1 text-sm leading-relaxed text-[#1B2A4A]/70">{item.description}</span>
+                  <span className="font-medium text-[var(--quni-navy)]">{item.label}</span>
+                  <span className="mt-1 text-sm leading-relaxed text-admin-navy/70">{item.description}</span>
                 </Link>
               </li>
             ))}

@@ -21,7 +21,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { adminCardClass } from './adminUi'
 
-const CORAL = '#FF6F61'
+const CORAL = 'var(--quni-coral)'
 
 type MatrixRow = Database['public']['Tables']['service_tier_state_matrix']['Row']
 
@@ -504,7 +504,7 @@ export default function AdminStateWorkflows() {
                           onClick={() => setSelectedId(cell.scenario.id)}
                           className={`w-full text-left rounded-xl border-2 p-3 transition-colors ${
                             selectedId === cell.scenario.id
-                              ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                              ? 'border-[var(--quni-coral)] bg-admin-coral/5'
                               : 'border-gray-200 hover:border-gray-300 bg-white'
                           }`}
                         >
@@ -583,7 +583,7 @@ export default function AdminStateWorkflows() {
                       onClick={() => setSelectedId(cell.scenario.id)}
                       className={`w-full text-left rounded-xl border-2 p-3 transition-colors ${
                         selectedId === cell.scenario.id
-                          ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                          ? 'border-[var(--quni-coral)] bg-admin-coral/5'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                     >

@@ -183,7 +183,7 @@ function DateOverlapConflictActions(opts: {
       <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
         <Link
           to="/student-dashboard?tab=bookings"
-          className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-4 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+          className="inline-flex justify-center rounded-xl bg-[var(--quni-coral)] text-white px-4 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
         >
           View my bookings
         </Link>
@@ -254,7 +254,7 @@ function BookingDateOverlapOverlay(opts: {
       {/* Mobile: bottom sheet */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex max-h-[min(92dvh,100%)] flex-col justify-end md:hidden">
         <div
-          className={`pointer-events-auto w-full max-h-[min(92dvh,100%)] overflow-y-auto rounded-t-2xl border border-b-0 border-stone-200 bg-[#FEF9E4] shadow-2xl transition-transform duration-300 ease-out ${
+          className={`pointer-events-auto w-full max-h-[min(92dvh,100%)] overflow-y-auto rounded-t-2xl border border-b-0 border-stone-200 bg-[var(--quni-cream)] shadow-2xl transition-transform duration-300 ease-out ${
             sheetEnter ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
@@ -273,7 +273,7 @@ function BookingDateOverlapOverlay(opts: {
 
       {/* Desktop: modal */}
       <div className="pointer-events-none relative z-10 hidden w-full max-w-md flex-col md:flex">
-        <div className="pointer-events-auto relative w-full rounded-xl border border-stone-200 bg-[#FEF9E4] px-4 py-4 text-sm text-stone-900 shadow-2xl space-y-3">
+        <div className="pointer-events-auto relative w-full rounded-xl border border-stone-200 bg-[var(--quni-cream)] px-4 py-4 text-sm text-stone-900 shadow-2xl space-y-3">
           <button
             type="button"
             onClick={opts.onDismiss}
@@ -332,7 +332,7 @@ function BookingConflictPanel(opts: {
           }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-[#FEF9E4] px-4 py-4 text-sm text-stone-900 space-y-3">
+    <div className="rounded-xl border border-stone-200 bg-[var(--quni-cream)] px-4 py-4 text-sm text-stone-900 space-y-3">
       <p className="font-semibold text-stone-900" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
         {copy.title}
       </p>
@@ -340,7 +340,7 @@ function BookingConflictPanel(opts: {
       <div className="flex flex-col sm:flex-row gap-2">
         <Link
           to={copy.primary.to}
-          className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-4 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+          className="inline-flex justify-center rounded-xl bg-[var(--quni-coral)] text-white px-4 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
         >
           {copy.primary.label}
         </Link>
@@ -1768,7 +1768,7 @@ export default function Booking() {
         <p className="text-gray-600 text-sm mt-3">Track status on your dashboard.</p>
         <Link
           to="/student-dashboard?tab=bookings"
-          className="inline-flex justify-center mt-8 rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+          className="inline-flex justify-center mt-8 rounded-xl bg-[var(--quni-coral)] text-white px-5 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
         >
           Go to dashboard
         </Link>
@@ -1787,7 +1787,7 @@ export default function Booking() {
   const bondWeeksVsRent = bondAmountAud != null && weeklyRent > 0 ? bondAmountAud / weeklyRent : null
 
   const inputClass =
-    'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
+    'w-full rounded-lg border border-gray-900/20 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
   const bookingRootStyle: CSSProperties | undefined =
@@ -1865,13 +1865,13 @@ export default function Booking() {
         ref={formTopRef}
         className="scroll-mt-below-header mt-8 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-gray-500"
       >
-        <span className={step >= 1 ? 'text-[#FF6F61]' : ''}>1. Details</span>
+        <span className={step >= 1 ? 'text-[var(--quni-coral)]' : ''}>1. Details</span>
         <span aria-hidden>→</span>
-        <span className={step >= 2 ? 'text-[#FF6F61]' : ''}>2. Rent payment</span>
+        <span className={step >= 2 ? 'text-[var(--quni-coral)]' : ''}>2. Rent payment</span>
         <span aria-hidden>→</span>
-        <span className={step >= 3 ? 'text-[#FF6F61]' : ''}>3. Bond info</span>
+        <span className={step >= 3 ? 'text-[var(--quni-coral)]' : ''}>3. Bond info</span>
         <span aria-hidden>→</span>
-        <span className={step >= 4 ? 'text-[#FF6F61]' : ''}>4. Payment</span>
+        <span className={step >= 4 ? 'text-[var(--quni-coral)]' : ''}>4. Payment</span>
       </div>
 
       {step === 1 && (
@@ -2086,7 +2086,7 @@ export default function Booking() {
                 setStep(isListingProperty ? 3 : 2)
               }}
               disabled={rentResolution != null && 'error' in rentResolution}
-              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 disabled:pointer-events-none"
+              className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50 disabled:pointer-events-none"
             >
               Continue
             </button>
@@ -2126,9 +2126,9 @@ export default function Booking() {
               role="radio"
               aria-checked={rentPaymentMethod === 'quni_platform'}
               onClick={() => setRentPaymentMethod('quni_platform')}
-              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
                 rentPaymentMethod === 'quni_platform'
-                  ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
+                  ? 'border-[var(--quni-coral)] bg-admin-coral/5 shadow-sm'
                   : 'border-stone-200 bg-white hover:border-stone-300'
               }`}
             >
@@ -2148,9 +2148,9 @@ export default function Booking() {
               role="radio"
               aria-checked={rentPaymentMethod === 'bank_transfer'}
               onClick={() => setRentPaymentMethod('bank_transfer')}
-              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/50 ${
+              className={`w-full rounded-2xl border-2 p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/50 ${
                 rentPaymentMethod === 'bank_transfer'
-                  ? 'border-[#FF6F61] bg-[#FF6F61]/5'
+                  ? 'border-[var(--quni-coral)] bg-admin-coral/5'
                   : 'border-stone-200 bg-white hover:border-stone-300'
               }`}
             >
@@ -2183,7 +2183,7 @@ export default function Booking() {
                 setSubmitError(null)
                 setStep(3)
               }}
-              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52]"
+              className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
             >
               Continue
             </button>
@@ -2288,7 +2288,7 @@ export default function Booking() {
               type="checkbox"
               checked={bondCheck}
               onChange={(e) => setBondCheck(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
             />
             <span className="text-sm text-gray-800">
               {bondAmountAud != null ? (
@@ -2331,7 +2331,7 @@ export default function Booking() {
                 }
                 void startPaymentStep()
               }}
-              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+              className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
             >
               {isListingProperty
                 ? submittingBooking

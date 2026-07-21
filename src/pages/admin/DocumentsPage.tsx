@@ -204,7 +204,7 @@ export default function DocumentsPage() {
                           e.stopPropagation()
                           openHref(href)
                         }}
-                        className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] p-2 text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+                        className="inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] p-2 text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                         aria-label={`Open ${row.name}`}
                       >
                         <ExternalLinkIcon className="h-4 w-4" />

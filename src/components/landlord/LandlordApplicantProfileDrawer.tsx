@@ -111,7 +111,7 @@ export default function LandlordApplicantProfileDrawer({ open, onClose, student,
               <img
                 src={student.avatar_url}
                 alt=""
-                className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[#FEF9E4]"
+                className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[var(--quni-cream)]"
               />
             ) : (
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-admin-navy-tint text-lg font-semibold text-admin-navy">

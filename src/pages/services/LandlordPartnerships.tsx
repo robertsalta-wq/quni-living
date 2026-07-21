@@ -25,7 +25,7 @@ function IconCheck({ className }: { className?: string }) {
 
 function LandlordLeadCaptureBand() {
   return (
-    <section className="bg-[#FF6F61] text-white w-full shrink-0" aria-labelledby="landlord-lead-heading">
+    <section className="bg-[var(--quni-coral)] text-white w-full shrink-0" aria-labelledby="landlord-lead-heading">
       <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
         <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2
@@ -80,10 +80,10 @@ export default function LandlordPartnerships() {
       </section>
 
       {/* AI features banner */}
-      <section className="bg-[#FDF0EC] border-b border-[#FF6F61]/20">
+      <section className="bg-[#FDF0EC] border-b border-admin-coral/20">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
-          <div className="w-full rounded-2xl border border-[#FF6F61]/25 bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
-            <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FF6F61] sm:text-xs">
+          <div className="w-full rounded-2xl border border-admin-coral/25 bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
+            <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--quni-coral)] sm:text-xs">
               <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
               Powered by AI
             </p>
@@ -97,7 +97,7 @@ export default function LandlordPartnerships() {
             <div className="mt-5">
               <Link
                 to="/landlords/ai"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6F61] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-95"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--quni-coral)] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-95"
               >
                 <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
                 See our AI features →
@@ -110,7 +110,7 @@ export default function LandlordPartnerships() {
       {/* The numbers that matter - stat cards */}
       <section className="bg-gray-50 border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
-          <p className="text-center text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#FF6F61] mb-2">
+          <p className="text-center text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[var(--quni-coral)] mb-2">
             Why rent to students
           </p>
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 text-center tracking-tight mb-6">
@@ -118,20 +118,20 @@ export default function LandlordPartnerships() {
           </h2>
           <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-display text-lg font-bold text-[#FF6F61]">Yield</h3>
+              <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Yield</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Choose whole-property stability or room-by-room optimisation. Pricing is structured for consistent cash flow.
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-display text-lg font-bold text-[#FF6F61]">Vacancy</h3>
+              <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Vacancy</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Built around demand near universities - recurring student interest and longer stays improve occupancy
                 stability.
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-display text-lg font-bold text-[#FF6F61]">Predictability</h3>
+              <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Predictability</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Clear weekly rent, documented house rules and standards, and one professional manager overseeing the process.
               </p>
@@ -143,7 +143,7 @@ export default function LandlordPartnerships() {
       {/* Why explore - callout full width */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-site mx-auto px-6 pt-10 md:pt-12 pb-0">
-          <div className="w-full rounded-2xl border border-[#FF6F61]/20 bg-gradient-to-br from-[#FF6F61]/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
+          <div className="w-full rounded-2xl border border-admin-coral/20 bg-gradient-to-br from-admin-coral/[0.06] to-white px-6 py-8 sm:px-10 sm:py-10 shadow-sm">
             <h2 className="font-display text-xl sm:text-2xl font-bold text-gray-900 text-center sm:text-left">
               Why explore renting to students?
             </h2>
@@ -156,7 +156,7 @@ export default function LandlordPartnerships() {
             <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-3">
               <Link
                 to="/contact"
-                className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
               >
                 Speak with Quni
               </Link>
@@ -211,15 +211,15 @@ export default function LandlordPartnerships() {
                 <p className="mt-2 text-gray-700">Ideal if you want traditional leasing with stronger demand and fewer empty weeks.</p>
                 <ul className="mt-3 space-y-2 text-gray-700">
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
+                    <span className="text-[var(--quni-coral)] font-bold shrink-0" aria-hidden>•</span>
                     <span>Competitive market rent supported by student demand</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
+                    <span className="text-[var(--quni-coral)] font-bold shrink-0" aria-hidden>•</span>
                     <span>Medium–longer stays reduce re-letting gaps</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="text-[#FF6F61] font-bold shrink-0" aria-hidden>•</span>
+                    <span className="text-[var(--quni-coral)] font-bold shrink-0" aria-hidden>•</span>
                     <span>One lease, one manager, predictable income</span>
                   </li>
                 </ul>
@@ -251,7 +251,7 @@ export default function LandlordPartnerships() {
                 {CHECKLIST.map((item) => (
                   <li key={item} className="flex gap-3 text-gray-700">
                     <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6F61]/10 text-[#FF6F61]"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-admin-coral/10 text-[var(--quni-coral)]"
                       aria-hidden
                     >
                       <IconCheck className="h-4 w-4" />
@@ -263,7 +263,7 @@ export default function LandlordPartnerships() {
               <p className="mt-5 text-gray-900 font-semibold">One manager. One process. No chaos.</p>
             </div>
             <div>
-              <div className="rounded-2xl border-2 border-[#FF6F61]/35 bg-white p-6 sm:p-8 shadow-md">
+              <div className="rounded-2xl border-2 border-admin-coral/35 bg-white p-6 sm:p-8 shadow-md">
                 <h2 className="font-display text-xl font-bold text-gray-900">Quick example</h2>
                 <p className="mt-2 font-medium text-gray-900">Example: three-bedroom apartment</p>
                 <ul className="mt-4 space-y-3 text-gray-700 text-sm sm:text-base leading-relaxed">
@@ -296,7 +296,7 @@ export default function LandlordPartnerships() {
           <div className="mt-5">
             <Link
               to={SIGNUP_LANDLORD}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-6 py-3 text-sm font-semibold hover:opacity-95 transition-opacity"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-6 py-3 text-sm font-semibold hover:opacity-95 transition-opacity"
             >
               List your property free →
             </Link>

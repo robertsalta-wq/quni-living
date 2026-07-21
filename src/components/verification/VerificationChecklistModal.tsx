@@ -35,7 +35,7 @@ export default function VerificationChecklistModal({ open, onClose, focus }: Pro
         <Link
           to={fullPageHref}
           onClick={onClose}
-          className="font-medium text-[#FF6F61] hover:underline"
+          className="font-medium text-[var(--quni-coral)] hover:underline"
         >
           View full verification checklist
         </Link>

@@ -123,7 +123,7 @@ export function FeeExemptAccountsSection() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
           />
         </label>
         <label className="block min-w-[12rem] flex-1">
@@ -133,13 +133,13 @@ export function FeeExemptAccountsSection() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Quinn test"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
           />
         </label>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+          className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
         >
           {saving ? 'Adding…' : 'Add'}
         </button>

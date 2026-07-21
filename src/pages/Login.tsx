@@ -314,7 +314,7 @@ export default function Login() {
                 setResendLoading(false)
               }
             }}
-            className="w-full rounded-lg bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50"
+            className="w-full rounded-lg bg-[var(--quni-coral)] text-white py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50"
           >
             {resendLoading ? 'Resending…' : 'Resend confirmation email'}
           </button>

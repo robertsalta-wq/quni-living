@@ -163,13 +163,13 @@ export function StudentWorkEmailVerification({
   const inputClass =
     variant === 'renter-profile'
       ? 'renter-profile-input'
-      : 'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
+      : 'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 bg-white'
   const labelClass =
     variant === 'renter-profile' ? 'renter-profile-field-label' : 'block text-sm font-semibold text-gray-900 mb-1'
   const coralBtn =
     variant === 'renter-profile'
       ? 'renter-profile-btn-primary'
-      : 'inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[#e85d52] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-2 disabled:opacity-50'
+      : 'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2 disabled:opacity-50'
   const blockClass = variant === 'renter-profile' ? 'renter-profile-email-block' : 'space-y-4'
   const errorClass = variant === 'renter-profile' ? 'renter-profile-error' : 'text-xs text-red-600 mt-2'
   const waitBoxClass =
@@ -319,7 +319,7 @@ export function StudentWorkEmailVerification({
                 ) : (
                   <button
                     type="button"
-                    className="text-sm font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                    className="text-sm font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2"
                     disabled={workSending}
                     onClick={() => void sendWorkCode()}
                   >

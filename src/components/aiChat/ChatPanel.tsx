@@ -409,7 +409,7 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
                 }}
                 rows={isCompactInline ? 1 : 3}
                 className={[
-                  'w-full resize-none rounded-xl border border-gray-200 px-3 text-sm leading-snug text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30 focus:border-[#FF6F61] bg-white',
+                  'w-full resize-none rounded-xl border border-gray-200 px-3 text-sm leading-snug text-gray-900 focus:outline-none focus:ring-2 focus:ring-admin-coral/30 focus:border-[var(--quni-coral)] bg-white',
                   isCompactInline
                     ? 'min-h-[44px] max-h-[min(200px,40vh)] overflow-y-auto py-2.5'
                     : 'py-2.5 leading-relaxed',
@@ -439,8 +439,8 @@ export default function ChatPanel({ variant, listingContext, onClose }: Props) {
                     }
                     className={
                       isCompactInline
-                        ? 'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
-                        : 'inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60 disabled:cursor-not-allowed'
+                        ? 'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[var(--quni-coral)] text-white px-4 py-2 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-60 disabled:cursor-not-allowed'
+                        : 'inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-60 disabled:cursor-not-allowed'
                     }
                   >
                     <AiSparkleIcon className="h-4 w-4 shrink-0" />

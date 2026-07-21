@@ -61,7 +61,7 @@ export function AgreementSampleGallery({
             <a
               href={doc.href}
               download={doc.fileName}
-              className="rounded-md bg-[#FF6F61] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
+              className="rounded-md bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
             >
               Download
             </a>
@@ -113,7 +113,7 @@ export function AgreementSampleGallery({
                 <a
                   href={active.href}
                   download={active.fileName}
-                  className="rounded-md bg-[#FF6F61] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
+                  className="rounded-md bg-[var(--quni-coral)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
                 >
                   Download
                 </a>

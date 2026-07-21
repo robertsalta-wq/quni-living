@@ -36,7 +36,7 @@ export default function LandlordPropertyListingActions({
         </Link>
         <Link
           to={p.status === 'draft' ? `/landlord/property/edit/${p.id}` : `/properties/${p.slug}`}
-          className="flex-1 text-center rounded-lg bg-[#FF6F61] py-2 text-sm font-medium text-white hover:bg-[#e85d52]"
+          className="flex-1 text-center rounded-lg bg-[var(--quni-coral)] py-2 text-sm font-medium text-white hover:bg-[var(--quni-coral-hover)]"
         >
           {p.status === 'draft' ? 'Continue' : 'View'}
         </Link>

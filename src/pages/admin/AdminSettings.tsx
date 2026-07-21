@@ -305,7 +305,7 @@ function SensitiveField({ row, value, onChange, forceMasked, visible, onToggleVi
         {masked ? (
           <button
             type="button"
-            className="text-[12px] font-medium text-[#0F6E56] hover:underline"
+            className="text-[12px] font-medium text-[var(--quni-success-strong)] hover:underline"
             onClick={onToggleVisible}
           >
             {visible ? 'Hide' : 'Show'}
@@ -315,7 +315,7 @@ function SensitiveField({ row, value, onChange, forceMasked, visible, onToggleVi
       <input
         type={masked && !visible ? 'password' : 'text'}
         autoComplete="off"
-        className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+        className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -531,7 +531,7 @@ export default function AdminSettings() {
         <label className="flex items-start gap-3 text-sm">
           <input
             type="checkbox"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#0F6E56] focus:ring-[#0F6E56]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[var(--quni-success-strong)] focus:ring-[var(--quni-success-strong)]"
             checked={checked}
             onChange={(e) => {
               const next = e.target.checked
@@ -561,7 +561,7 @@ export default function AdminSettings() {
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center px-4">
-        <div className="h-10 w-10 border-2 border-[#0F6E56] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-success-strong)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -595,7 +595,7 @@ export default function AdminSettings() {
             onClick={() => setActiveTab(id)}
             className={`border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
               activeTab === id
-                ? 'border-[#0F6E56] font-medium text-[#0F6E56]'
+                ? 'border-[var(--quni-success-strong)] font-medium text-[var(--quni-success-strong)]'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -612,7 +612,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'business'}
               onClick={() => void saveTab('business')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save business
             </button>
@@ -628,7 +628,7 @@ export default function AdminSettings() {
                       {row.label}
                     </label>
                     <select
-                      className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                      className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                       value={draft[row.config_key] ?? 'Sole trader'}
                       onChange={(e) => setField(row.config_key, e.target.value)}
                     >
@@ -647,7 +647,7 @@ export default function AdminSettings() {
                   <label key={row.id} className="flex items-center gap-3 text-sm">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-[#0F6E56]"
+                      className="h-4 w-4 rounded border-gray-300 text-[var(--quni-success-strong)]"
                       checked={gstRegistered}
                       onChange={(e) => setField(row.config_key, e.target.checked ? 'true' : 'false')}
                     />
@@ -664,7 +664,7 @@ export default function AdminSettings() {
                   <input
                     type="text"
                     autoComplete="off"
-                    className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                    className="w-full max-w-xl rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                     value={draft[row.config_key] ?? ''}
                     onChange={(e) => setField(row.config_key, e.target.value)}
                   />
@@ -684,7 +684,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'contact'}
               onClick={() => void saveTab('contact')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save contact & address
             </button>
@@ -705,7 +705,7 @@ export default function AdminSettings() {
                   <label className="flex items-center gap-3 text-sm">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-[#0F6E56]"
+                      className="h-4 w-4 rounded border-gray-300 text-[var(--quni-success-strong)]"
                       checked={mailingSameAsRegistered}
                       onChange={(e) => setField(MAIL_SAME_KEY, e.target.checked ? 'true' : 'false')}
                     />
@@ -739,7 +739,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'bank'}
               onClick={() => void saveTab('bank')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save bank accounts
             </button>
@@ -793,7 +793,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'compliance'}
               onClick={() => void saveTab('compliance')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save compliance & legal
             </button>
@@ -817,7 +817,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'docs'}
               onClick={() => void saveTab('docs')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save document defaults
             </button>
@@ -839,7 +839,7 @@ export default function AdminSettings() {
               type="button"
               disabled={savingTab === 'house_rules'}
               onClick={() => void saveTab('house_rules')}
-              className="rounded-lg bg-[#0F6E56] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
+              className="rounded-lg bg-[var(--quni-success-strong)] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d5c4a] disabled:opacity-50"
             >
               Save house rules
             </button>
@@ -858,7 +858,7 @@ export default function AdminSettings() {
                   </Note>
                   <textarea
                     rows={12}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                     value={draft[row.config_key] ?? ''}
                     onChange={(e) => setField(row.config_key, e.target.value)}
                   />
@@ -906,7 +906,7 @@ export default function AdminSettings() {
                           {isFullRowEditing ? (
                             <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                               <select
-                                className="max-w-[10rem] rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                                className="max-w-[10rem] rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                                 value={selPlatform ?? 'Other'}
                                 onChange={(e) => {
                                   const v = e.target.value as (typeof SOCIAL_PLATFORM_OPTIONS)[number]
@@ -925,7 +925,7 @@ export default function AdminSettings() {
                                   type="text"
                                   autoComplete="off"
                                   placeholder="Platform name"
-                                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                                   value={row.platform}
                                   onChange={(e) => updateSocialRow(idx, { platform: e.target.value })}
                                 />
@@ -939,7 +939,7 @@ export default function AdminSettings() {
                       <td className={adminTdClass}>
                         {isFullRowEditing ? (
                           <select
-                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                             value={row.type}
                             onChange={(e) =>
                               updateSocialRow(idx, { type: e.target.value as SocialAccount['type'] })
@@ -958,7 +958,7 @@ export default function AdminSettings() {
                         <input
                           type="text"
                           autoComplete="off"
-                          className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                          className="w-full min-w-[6rem] max-w-[14rem] rounded-lg border border-gray-200 px-2 py-1.5 font-mono text-[13px] text-gray-800 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                           value={row.handle}
                           onChange={(e) => updateSocialRow(idx, { handle: e.target.value })}
                           disabled={isUrlEditing}
@@ -971,13 +971,13 @@ export default function AdminSettings() {
                             <input
                               type="url"
                               autoComplete="off"
-                              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                               value={urlEditDraft}
                               onChange={(e) => setUrlEditDraft(e.target.value)}
                             />
                             <button
                               type="button"
-                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-[#0F6E56] hover:bg-emerald-50"
+                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-[var(--quni-success-strong)] hover:bg-emerald-50"
                               title="Save URL"
                               aria-label="Save URL"
                               onClick={() => void confirmUrlEdit()}
@@ -998,7 +998,7 @@ export default function AdminSettings() {
                           <input
                             type="url"
                             autoComplete="off"
-                            className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[#0F6E56] focus:ring-1 focus:ring-[#0F6E56]"
+                            className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-[var(--quni-success-strong)] focus:ring-1 focus:ring-[var(--quni-success-strong)]"
                             value={row.url}
                             onChange={(e) => updateSocialRow(idx, { url: e.target.value })}
                           />
@@ -1040,7 +1040,7 @@ export default function AdminSettings() {
                             <>
                               <button
                                 type="button"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-[#0F6E56] hover:bg-emerald-50"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-[var(--quni-success-strong)] hover:bg-emerald-50"
                                 title="Save new account"
                                 aria-label="Save new account"
                                 onClick={() => void confirmFullRowEdit()}
@@ -1076,7 +1076,7 @@ export default function AdminSettings() {
                                   href={row.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[#0F6E56]"
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-[var(--quni-success-strong)]"
                                   title={`Open ${row.platform || 'profile'}`}
                                   aria-label="Open in new tab"
                                 >

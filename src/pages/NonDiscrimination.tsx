@@ -79,12 +79,12 @@ export default function NonDiscrimination() {
           If you believe you have experienced or witnessed discrimination on Quni, please contact us at{' '}
           <a
             href="mailto:hello@quni.com.au"
-            className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+            className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
           >
             hello@quni.com.au
           </a>
           . Reports are treated confidentially, investigated promptly, and handled in accordance with our{' '}
-          <Link to="/privacy" className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90">
+          <Link to="/privacy" className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90">
             Privacy Policy
           </Link>
           .

@@ -233,7 +233,7 @@ export function LandlordPropertyUtilitiesFields({
               type="checkbox"
               checked={form.waterSeparatelyMeteredAgreed}
               onChange={(e) => onChange({ waterSeparatelyMeteredAgreed: e.target.checked })}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
             />
             <span className="space-y-2">
               <span className="block font-medium text-gray-900">

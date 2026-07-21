@@ -72,7 +72,7 @@ export default function Verification() {
               <a
                 key={item.href}
                 href={item.href}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-[#FF6F61]/40 hover:text-[#FF6F61] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-admin-coral/40 hover:text-[var(--quni-coral)] focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40"
               >
                 {item.label}
               </a>

@@ -113,7 +113,7 @@ export default function LandlordListingsGroupedPanel({
   const addButton = canCreateListing ? (
     <Link
       to={createListingHref}
-      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52]"
+      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--quni-coral-hover)]"
     >
       <Plus className="h-4 w-4" aria-hidden />
       Add
@@ -133,7 +133,7 @@ export default function LandlordListingsGroupedPanel({
     return (
       <div className="space-y-3" aria-busy="true" aria-label="Loading listings">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl border border-[#E5E4E7] bg-white" />
+          <div key={i} className="h-24 animate-pulse rounded-2xl border border-[var(--quni-line)] bg-white" />
         ))}
       </div>
     )
@@ -141,12 +141,12 @@ export default function LandlordListingsGroupedPanel({
 
   if (listings.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#E5E4E7] bg-white px-6 py-14 text-center">
-        <p className="text-sm text-[#6B6375]">You haven&apos;t listed any properties yet.</p>
+      <div className="rounded-2xl border border-dashed border-[var(--quni-line)] bg-white px-6 py-14 text-center">
+        <p className="text-sm text-[var(--quni-ink-4)]">You haven&apos;t listed any properties yet.</p>
         {canCreateListing ? (
           <Link
             to={createListingHref}
-            className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-[#FF6F61] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#e85d52]"
+            className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-[var(--quni-coral)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Add your first listing
@@ -171,12 +171,12 @@ export default function LandlordListingsGroupedPanel({
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-4">
-      <div className="sticky top-0 z-10 space-y-3 bg-[var(--quni-surface-2)]/95 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-[var(--quni-surface-2)]/80">
+      <div className="sticky top-0 z-10 space-y-3 bg-admin-surface-2/95 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-admin-surface-2/80">
         <div className="flex items-center gap-2">
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Search address or room</span>
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#908897]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--quni-ink-5)]"
               aria-hidden
             />
             <input
@@ -184,7 +184,7 @@ export default function LandlordListingsGroupedPanel({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search address or room"
-              className="w-full rounded-[10px] border border-[#E5E4E7] bg-white py-2.5 pl-9 pr-3 text-sm text-[#08060D] placeholder:text-[#908897] focus:border-[#FF6F61] focus:outline-none focus:ring-2 focus:ring-[rgba(255,111,97,0.25)]"
+              className="w-full rounded-[10px] border border-[var(--quni-line)] bg-white py-2.5 pl-9 pr-3 text-sm text-[var(--quni-ink)] placeholder:text-[var(--quni-ink-5)] focus:border-[var(--quni-coral)] focus:outline-none focus:ring-2 focus:ring-[rgba(255,111,97,0.25)]"
             />
           </label>
           {addButton}
@@ -193,8 +193,8 @@ export default function LandlordListingsGroupedPanel({
       </div>
 
       {groups.length === 0 ? (
-        <div className="rounded-2xl border border-[#E5E4E7] bg-white px-6 py-10 text-center">
-          <p className="text-sm text-[#6B6375]">No listings match this filter.</p>
+        <div className="rounded-2xl border border-[var(--quni-line)] bg-white px-6 py-10 text-center">
+          <p className="text-sm text-[var(--quni-ink-4)]">No listings match this filter.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

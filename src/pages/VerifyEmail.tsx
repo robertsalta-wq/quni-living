@@ -33,7 +33,7 @@ export default function VerifyEmail() {
   if (loading) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -114,7 +114,7 @@ export default function VerifyEmail() {
           type="button"
           disabled={busy}
           onClick={() => void resend()}
-          className="w-full rounded-lg bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+          className="w-full rounded-lg bg-[var(--quni-coral)] text-white py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
         >
           {busy ? 'Working…' : 'Resend confirmation email'}
         </button>

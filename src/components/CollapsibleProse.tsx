@@ -123,7 +123,7 @@ export function CollapsibleProse({
       {canCollapse ? (
         <button
           type="button"
-          className="text-sm font-medium text-[#FF6F61] hover:text-[#e85d52] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 focus-visible:ring-offset-2 rounded"
+          className="text-sm font-medium text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40 focus-visible:ring-offset-2 rounded"
           aria-expanded={expanded}
           aria-controls={id}
           onClick={handleToggle}

@@ -114,10 +114,10 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id']
 
 const coralBtnClass =
-  'inline-flex items-center justify-center rounded-lg bg-[#FF6F61] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed'
+  'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed'
 
 const coralOutlineBtnClass =
-  'inline-flex items-center justify-center rounded-lg border border-[#FF6F61] text-[#FF6F61] px-4 py-2 text-sm font-semibold hover:bg-[#FF6F61]/5 disabled:opacity-50'
+  'inline-flex items-center justify-center rounded-lg border border-[var(--quni-coral)] text-[var(--quni-coral)] px-4 py-2 text-sm font-semibold hover:bg-admin-coral/5 disabled:opacity-50'
 
 function landlordDisplayName(row: {
   full_name?: string | null
@@ -388,7 +388,7 @@ function OverviewTab() {
                     'Platform fees',
                   ]}
                 />
-                <Bar dataKey="revenueAud" fill="#FF6F61" radius={[4, 4, 0, 0]} name="Revenue (AUD)" />
+                <Bar dataKey="revenueAud" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="Revenue (AUD)" />
               </BarChart>
             </ResponsiveContainer>
           </div>

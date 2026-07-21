@@ -32,9 +32,9 @@ export default function BookingLifecycleStepper({
         {BOOKING_REVIEW_STEPPER_LABELS.map((label, i) => {
           const st = allDone || i < activeIndex ? 'done' : i === activeIndex ? 'current' : 'todo'
           const leftColor =
-            i === 0 ? 'transparent' : activeIndex >= i || allDone ? '#1D9E75' : '#E0DCE3'
+            i === 0 ? 'transparent' : activeIndex >= i || allDone ? 'var(--quni-success)' : '#E0DCE3'
           const rightColor =
-            i === 3 ? 'transparent' : activeIndex >= i + 1 || allDone ? '#1D9E75' : '#E0DCE3'
+            i === 3 ? 'transparent' : activeIndex >= i + 1 || allDone ? 'var(--quni-success)' : '#E0DCE3'
           return (
             <div
               key={label}

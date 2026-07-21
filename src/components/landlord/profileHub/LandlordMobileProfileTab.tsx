@@ -921,7 +921,7 @@ function PersonalSectionForm({
                 'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                 landlordType === opt.value
                   ? 'border-[var(--quni-coral)] bg-[rgba(255,111,97,0.08)] text-[var(--quni-coral-active)]'
-                  : 'border-[#D8D3C7] bg-white text-[var(--quni-ink-3)] hover:border-[var(--quni-coral)]/40',
+                  : 'border-[#D8D3C7] bg-white text-[var(--quni-ink-3)] hover:border-admin-coral/40',
               ].join(' ')}
             >
               {opt.label}

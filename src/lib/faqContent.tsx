@@ -11,32 +11,32 @@ export type FaqItem = { id: string; question: string; answer: ReactNode }
 export type FaqSection = { id: string; label: string; items: FaqItem[] }
 
 const pricingLink = (
-  <Link to="/pricing" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/pricing" className="font-medium text-[var(--quni-coral)] hover:underline">
     Pricing
   </Link>
 )
 const refundsLink = (
-  <Link to="/refunds" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/refunds" className="font-medium text-[var(--quni-coral)] hover:underline">
     Refund Policy
   </Link>
 )
 const contactLink = (
-  <Link to="/contact" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/contact" className="font-medium text-[var(--quni-coral)] hover:underline">
     Contact
   </Link>
 )
 const partnershipsLink = (
-  <Link to="/services/landlord-partnerships" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/services/landlord-partnerships" className="font-medium text-[var(--quni-coral)] hover:underline">
     landlord partnerships
   </Link>
 )
 const internationalStudentsLink = (
-  <Link to="/international" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/international" className="font-medium text-[var(--quni-coral)] hover:underline">
     international students
   </Link>
 )
 const verificationLink = (
-  <Link to="/verification" className="font-medium text-[#FF6F61] hover:underline">
+  <Link to="/verification" className="font-medium text-[var(--quni-coral)] hover:underline">
     verification checklist
   </Link>
 )
@@ -185,11 +185,11 @@ export const FAQ_SECTIONS: FaqSection[] = [
         answer: (
           <>
             Create a landlord account via{' '}
-            <Link to={landlordDashboardProfilePath()} className="font-medium text-[#FF6F61] hover:underline">
+            <Link to={landlordDashboardProfilePath()} className="font-medium text-[var(--quni-coral)] hover:underline">
               landlord onboarding
             </Link>
             , then add your property from the landlord dashboard. See{' '}
-            <Link to="/how-it-works" className="font-medium text-[#FF6F61] hover:underline">
+            <Link to="/how-it-works" className="font-medium text-[var(--quni-coral)] hover:underline">
               How it works
             </Link>{' '}
             for the full flow.
@@ -390,7 +390,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
         answer: (
           <>
             Email{' '}
-            <a href="mailto:hello@quni.com.au" className="font-medium text-[#FF6F61] hover:underline">
+            <a href="mailto:hello@quni.com.au" className="font-medium text-[var(--quni-coral)] hover:underline">
               hello@quni.com.au
             </a>{' '}
             or use our {contactLink} form - we usually reply within 1 business day. Signed-in users can also use support

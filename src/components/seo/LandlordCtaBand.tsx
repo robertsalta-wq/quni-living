@@ -17,7 +17,7 @@ export default function LandlordCtaBand({ universityName }: Props) {
       </p>
       <Link
         to="/landlord-signup"
-        className="inline-flex items-center justify-center mt-6 rounded-xl bg-[#FF6F61] text-white font-semibold text-sm px-6 py-3 shadow-sm hover:bg-[#e85a4f] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-900 focus-visible:ring-offset-2 focus-visible:ring-offset-[#8FB9AB]"
+        className="inline-flex items-center justify-center mt-6 rounded-xl bg-[var(--quni-coral)] text-white font-semibold text-sm px-6 py-3 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-900 focus-visible:ring-offset-2 focus-visible:ring-offset-[#8FB9AB]"
       >
         List your property →
       </Link>

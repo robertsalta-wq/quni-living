@@ -52,7 +52,7 @@ export default function LandlordApplicantReviewHeader({
               <img
                 src={student.avatar_url}
                 alt=""
-                className="h-[42px] w-[42px] shrink-0 rounded-full object-cover ring-2 ring-[#FEF9E4]"
+                className="h-[42px] w-[42px] shrink-0 rounded-full object-cover ring-2 ring-[var(--quni-cream)]"
               />
             ) : (
               <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-admin-navy-tint text-[15px] font-semibold text-admin-navy">
@@ -118,7 +118,7 @@ export default function LandlordApplicantReviewHeader({
           <img
             src={student.avatar_url}
             alt=""
-            className="mx-auto h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-[#FEF9E4] sm:mx-0"
+            className="mx-auto h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-[var(--quni-cream)] sm:mx-0"
           />
         ) : (
           <div className="mx-auto flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xl font-semibold text-gray-600 sm:mx-0">
@@ -136,7 +136,7 @@ export default function LandlordApplicantReviewHeader({
             {year != null && <p>Year {year}</p>}
           </div>
           {bioText ? (
-            <div className="mt-4 rounded-xl border border-[#e8e0cc]/80 bg-[#FEF9E4]/60 px-4 py-3 text-left">
+            <div className="mt-4 rounded-xl border border-admin-cream-border/80 bg-admin-cream/60 px-4 py-3 text-left">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Bio</p>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">{bioText}</p>
             </div>

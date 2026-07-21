@@ -83,12 +83,12 @@ export default function ShareListingButton({
       title={disabled ? disabledTitle : isCopied ? 'Link copied to clipboard' : 'Share this listing'}
       className={[
         'inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]',
         disabled || !slug.trim()
           ? 'border-stone-200 bg-stone-50 text-stone-400 cursor-not-allowed'
           : isCopied
             ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-            : 'border-stone-200 bg-white text-stone-700 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/5 hover:text-[#FF6F61]',
+            : 'border-stone-200 bg-white text-stone-700 hover:border-admin-coral/40 hover:bg-admin-coral/5 hover:text-[var(--quni-coral)]',
         className,
       ].join(' ')}
     >

@@ -317,7 +317,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
     workResendAt != null && Date.now() < workResendAt ? Math.ceil((workResendAt - Date.now()) / 1000) : 0
 
   const inputClass =
-    'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white'
+    'w-full rounded-lg border border-gray-900/20 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 bg-white'
   const labelClass = 'block text-sm font-semibold text-gray-900 mb-1'
 
   const sendWorkCode = useCallback(async () => {
@@ -399,7 +399,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
   }, [workOtpInput, onRefresh, userId])
 
   const coralBtn =
-    'inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[#e85d52] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] focus-visible:ring-offset-2 disabled:opacity-50'
+    'inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--quni-coral)] focus-visible:ring-offset-2 disabled:opacity-50'
 
   if (useIdentityFlow) {
     return (
@@ -407,7 +407,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         {hoistedFileInputs}
         {uploadFlashBanner}
         <section
-          className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
+          className="rounded-2xl border border-admin-coral/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
         >
           <h2 id="verification-summary-heading" className="text-lg font-bold text-gray-900">
@@ -420,7 +420,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
           <div className="mt-4 h-2.5 rounded-full bg-stone-200 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${progressPct}%`, backgroundColor: '#FF6F61' }}
+              style={{ width: `${progressPct}%`, backgroundColor: 'var(--quni-coral)' }}
               role="progressbar"
               aria-valuenow={progressPct}
               aria-valuemin={0}
@@ -578,7 +578,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
                     ) : (
                       <button
                         type="button"
-                        className="text-sm font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                        className="text-sm font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2"
                         disabled={workSending}
                         onClick={() => void sendWorkCode()}
                       >
@@ -635,7 +635,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       {hoistedFileInputs}
       {uploadFlashBanner}
       <section
-        className="rounded-2xl border border-[#FF6F61]/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
+        className="rounded-2xl border border-admin-coral/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
       >
         <h2 id="verification-summary-heading" className="text-lg font-bold text-gray-900">
@@ -647,7 +647,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         <div className="mt-4 h-2.5 rounded-full bg-stone-200 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progressPct}%`, backgroundColor: '#FF6F61' }}
+            style={{ width: `${progressPct}%`, backgroundColor: 'var(--quni-coral)' }}
             role="progressbar"
             aria-valuenow={progressPct}
             aria-valuemin={0}

@@ -51,7 +51,7 @@ export default function LandlordApplicantAIAssessmentPanel({
           type="button"
           onClick={onGenerate}
           disabled={loading}
-          className={`${embedded ? '' : 'mt-3 '}flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF6F61] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] disabled:opacity-60`}
+          className={`${embedded ? '' : 'mt-3 '}flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--quni-coral)] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--quni-coral-hover)] disabled:opacity-60`}
         >
           {loading ? (
             <span className="flex items-center gap-2">
@@ -83,7 +83,7 @@ export default function LandlordApplicantAIAssessmentPanel({
             onClick={onRefresh}
             disabled={loading || refreshDisabled}
             title={refreshDisabled ? refreshDisabledReason : undefined}
-            className="text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] disabled:opacity-50 disabled:cursor-not-allowed underline underline-offset-2"
+            className="text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] disabled:opacity-50 disabled:cursor-not-allowed underline underline-offset-2"
           >
             {loading ? 'Refreshing…' : 'Refresh assessment'}
           </button>
@@ -110,7 +110,7 @@ export default function LandlordApplicantAIAssessmentPanel({
   return (
     <section id={anchorId} className="scroll-mt-4 rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card">
       <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-admin-ink-5">
-        <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]" />
+        <AiSparkleIcon className="h-4 w-4 shrink-0 text-[var(--quni-coral)]" />
         AI assessment
       </h3>
       {body}

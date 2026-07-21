@@ -35,7 +35,7 @@ export default function InternationalStudents() {
               </p>
               <Link
                 to="/guides/can-a-landlord-refuse-international-students-australia"
-                className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2"
+                className="mt-5 inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--quni-coral-hover)] focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2"
               >
                 Can a landlord refuse international students?
               </Link>
@@ -44,7 +44,7 @@ export default function InternationalStudents() {
             <div className="flex flex-wrap gap-3 pt-2">
               <Link
                 to="/student-accommodation"
-                className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#e85d52] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--quni-coral-hover)] focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2"
               >
                 Browse by university
               </Link>

@@ -1263,7 +1263,7 @@ export default function LandlordDashboard() {
                   'rounded-2xl border bg-white p-5 shadow-sm flex flex-col h-full hover:shadow-md transition-all text-left',
                   landlordReadiness.phase === 'complete'
                     ? 'border-emerald-200 hover:border-emerald-300'
-                    : 'border-[#FF6F61]/30 hover:border-[#FF6F61]/50',
+                    : 'border-admin-coral/30 hover:border-admin-coral/50',
                 ].join(' ')}
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your profile</p>
@@ -1279,7 +1279,7 @@ export default function LandlordDashboard() {
                     <div className="mt-3 h-2 rounded-full bg-stone-200/80 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
-                        style={{ width: `${profileStatCard.publishPct}%`, backgroundColor: '#FF6F61' }}
+                        style={{ width: `${profileStatCard.publishPct}%`, backgroundColor: 'var(--quni-coral)' }}
                         aria-label={`Profile completion ${profileStatCard.publishPct}%`}
                         role="progressbar"
                         aria-valuenow={profileStatCard.publishPct}
@@ -1294,13 +1294,13 @@ export default function LandlordDashboard() {
               <button
                 type="button"
                 onClick={() => setQaseOpen(true)}
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-[#FF6F61]/30 hover:shadow-md transition-all group"
+                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-admin-coral/30 hover:shadow-md transition-all group"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help?</p>
                 <p className="text-xs text-gray-500 mt-1 leading-snug">
                   Submit a support request and we&apos;ll get back to you.
                 </p>
-                <span className="text-xs font-semibold text-[#FF6F61] mt-auto pt-2 inline-block group-hover:text-[#e85d52]">
+                <span className="text-xs font-semibold text-[var(--quni-coral)] mt-auto pt-2 inline-block group-hover:text-[var(--quni-coral-hover)]">
                   Contact support →
                 </span>
               </button>
@@ -1549,10 +1549,10 @@ export default function LandlordDashboard() {
                               assessmentBookingId: b.id,
                             })
                           }
-                          className="group w-full min-w-0 rounded-lg border border-[#FF6F61]/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-[#FF6F61]/85 underline-offset-2 hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/[0.07] hover:text-[#FF6F61] hover:underline sm:text-center"
+                          className="group w-full min-w-0 rounded-lg border border-admin-coral/25 bg-white/60 px-3 py-2 text-left text-xs font-medium leading-snug text-admin-coral/85 underline-offset-2 hover:border-admin-coral/40 hover:bg-admin-coral/[0.07] hover:text-[var(--quni-coral)] hover:underline sm:text-center"
                         >
                           <span className="inline-flex min-w-0 max-w-full items-center justify-center gap-2 sm:mx-auto sm:max-w-md">
-                            <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6F61]/85 group-hover:text-[#FF6F61]" />
+                            <AiSparkleIcon className="h-4 w-4 shrink-0 text-admin-coral/85 group-hover:text-[var(--quni-coral)]" />
                             <span className="min-w-0 flex-1 break-words sm:flex-none sm:text-center">
                               {hasAiAssessmentThisSession
                                 ? 'View AI assessment'
@@ -1564,7 +1564,7 @@ export default function LandlordDashboard() {
                       <div className="flex min-w-0 flex-wrap gap-3 pt-2">
                         <Link
                           to={`/landlord/bookings/${b.id}/review`}
-                          className="inline-flex w-full min-w-0 max-w-full shrink-0 items-center justify-center break-words rounded-xl bg-[#FF6F61] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#e85d52] sm:w-auto"
+                          className="inline-flex w-full min-w-0 max-w-full shrink-0 items-center justify-center break-words rounded-xl bg-[var(--quni-coral)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[var(--quni-coral-hover)] sm:w-auto"
                         >
                           Review request →
                         </Link>
@@ -1730,7 +1730,7 @@ export default function LandlordDashboard() {
                                     type="button"
                                     disabled={agreementActionBusyId === b.id}
                                     onClick={() => void handleLandlordAgreement(b)}
-                                    className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
+                                    className="m-0 block w-full appearance-none border-0 bg-transparent p-0 text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2 disabled:opacity-50 disabled:no-underline"
                                   >
                                     {agreementActionBusyId === b.id
                                       ? 'Opening…'
@@ -1748,7 +1748,7 @@ export default function LandlordDashboard() {
                               ) : (
                                 <Link
                                   to={`/landlord/bookings/${b.id}/review`}
-                                  className="text-left text-xs font-semibold text-[#FF6F61] hover:text-[#e85d52] underline underline-offset-2"
+                                  className="text-left text-xs font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)] underline underline-offset-2"
                                 >
                                   Review request
                                 </Link>
@@ -1821,7 +1821,7 @@ export default function LandlordDashboard() {
                   type="button"
                   onClick={() => void startStripeConnect()}
                   disabled={connectLoading}
-                  className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
+                  className="rounded-xl bg-[var(--quni-coral)] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"
                 >
                   {connectLoading ? 'Opening Stripe…' : 'Connect now →'}
                 </button>

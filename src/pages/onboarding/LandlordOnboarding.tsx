@@ -139,7 +139,7 @@ function isLandlordOnboardingDraftMeaningful(d: LandlordOnboardingDraftV1): bool
 }
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
+  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:border-[var(--quni-coral)]'
 const selectClass = inputClass
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 const errClass = 'text-red-600 text-xs mt-1'
@@ -790,7 +790,7 @@ export default function LandlordOnboarding() {
   if (loading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center bg-stone-50">
-        <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -799,7 +799,7 @@ export default function LandlordOnboarding() {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-center">
         <p className="text-red-700 text-sm">{loadError ?? 'Landlord profile not found.'}</p>
-        <Link to="/landlord/dashboard" className="text-sm text-[#FF6F61] font-medium mt-4 inline-block">
+        <Link to="/landlord/dashboard" className="text-sm text-[var(--quni-coral)] font-medium mt-4 inline-block">
           Back to dashboard
         </Link>
       </div>
@@ -833,7 +833,7 @@ export default function LandlordOnboarding() {
               {([1, 2, 3, 4, 5] as const).map((n) => (
                 <div
                   key={n}
-                  className={`h-1.5 flex-1 rounded-full ${step >= n ? 'bg-[#FF6F61]' : 'bg-stone-200'}`}
+                  className={`h-1.5 flex-1 rounded-full ${step >= n ? 'bg-[var(--quni-coral)]' : 'bg-stone-200'}`}
                   aria-hidden
                 />
               ))}
@@ -866,7 +866,7 @@ export default function LandlordOnboarding() {
                   )}
                 </div>
                 <label className="cursor-pointer">
-                  <span className="text-sm font-medium text-[#FF6F61] hover:underline">Upload profile photo</span>
+                  <span className="text-sm font-medium text-[var(--quni-coral)] hover:underline">Upload profile photo</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
                 </label>
                 {photoUploading && <p className="text-xs text-stone-500">Uploading…</p>}
@@ -1044,7 +1044,7 @@ export default function LandlordOnboarding() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
               >
                 {submitting ? 'Saving…' : 'Continue →'}
               </button>
@@ -1068,15 +1068,15 @@ export default function LandlordOnboarding() {
                     setTermsPrivacy(e.target.checked)
                     setTermsSubmitError(false)
                   }}
-                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)]"
                 />
                 <span>
                   I agree to the{' '}
-                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#FF6F61] font-medium underline underline-offset-2">
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[var(--quni-coral)] font-medium underline underline-offset-2">
                     Terms of Service
                   </a>{' '}
                   and{' '}
-                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#FF6F61] font-medium underline underline-offset-2">
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[var(--quni-coral)] font-medium underline underline-offset-2">
                     Privacy Policy
                   </a>
                 </span>
@@ -1090,7 +1090,7 @@ export default function LandlordOnboarding() {
                     setLandlordAgreement(e.target.checked)
                     setTermsSubmitError(false)
                   }}
-                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)]"
                 />
                 <span>
                   I agree to the{' '}
@@ -1098,7 +1098,7 @@ export default function LandlordOnboarding() {
                     href="/landlord-service-agreement"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                    className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
                   >
                     Landlord Service Agreement
                   </a>
@@ -1113,7 +1113,7 @@ export default function LandlordOnboarding() {
                     setNonDiscriminationAgreed(e.target.checked)
                     setTermsSubmitError(false)
                   }}
-                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)]"
                 />
                 <span>
                   I have read and agree to Quni&apos;s{' '}
@@ -1121,7 +1121,7 @@ export default function LandlordOnboarding() {
                     href="/non-discrimination"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                    className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
                   >
                     Non-Discrimination Policy
                   </a>
@@ -1132,7 +1132,7 @@ export default function LandlordOnboarding() {
                 type="button"
                 disabled={submitting}
                 onClick={() => void saveStep2()}
-                className="w-full rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
               >
                 {submitting ? 'Saving…' : 'Continue →'}
               </button>
@@ -1160,7 +1160,7 @@ export default function LandlordOnboarding() {
                     <button
                       type="button"
                       onClick={() => setStep(4)}
-                      className="mt-3 rounded-lg bg-[#FF6F61] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e85d52]"
+                      className="mt-3 rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
                     >
                       Continue →
                     </button>
@@ -1172,7 +1172,7 @@ export default function LandlordOnboarding() {
                     <button
                       type="button"
                       onClick={() => setCardModalOpen(true)}
-                      className="rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                      className="rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
                     >
                       Save card for Listing fees →
                     </button>
@@ -1256,7 +1256,7 @@ export default function LandlordOnboarding() {
                       type="button"
                       disabled={connectLoading}
                       onClick={() => void startStripeConnect()}
-                      className="rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                      className="rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
                     >
                       {connectLoading ? 'Opening Stripe…' : 'Connect bank account →'}
                     </button>
@@ -1310,7 +1310,7 @@ export default function LandlordOnboarding() {
                       href={p.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-[#FF6F61] hover:underline"
+                      className="text-sm font-semibold text-[var(--quni-coral)] hover:underline"
                     >
                       Visit website →
                     </a>
@@ -1326,7 +1326,7 @@ export default function LandlordOnboarding() {
                     setHasInsurance(e.target.checked)
                     if (e.target.checked) setInsuranceWarning(false)
                   }}
-                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61]"
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 accent-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)]"
                 />
                 <span>I have landlord insurance (or I understand the risks and choose to proceed without it)</span>
               </label>
@@ -1340,7 +1340,7 @@ export default function LandlordOnboarding() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+                className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
               >
                 {submitting ? 'Saving…' : 'Continue →'}
               </button>
@@ -1365,7 +1365,7 @@ export default function LandlordOnboarding() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   to="/landlord/property/new"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white py-3.5 px-6 text-sm font-semibold hover:bg-[#e85d52] transition-colors shadow-sm"
+                  className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white py-3.5 px-6 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors shadow-sm"
                 >
                   Add your first listing →
                 </Link>

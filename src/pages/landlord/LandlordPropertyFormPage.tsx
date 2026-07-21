@@ -2707,7 +2707,7 @@ export default function LandlordPropertyFormPage() {
                         onClick={() => selectAccommodationChoice(opt.value)}
                         className={`rounded-xl border-2 p-4 text-left transition-colors ${
                           selected
-                            ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+                            ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
                         }`}
                       >
@@ -2851,7 +2851,7 @@ export default function LandlordPropertyFormPage() {
               <div id="section-lister-role" className="space-y-3">
                 <p className="text-sm font-medium text-gray-900">Who is listing this property?</p>
                 <div className="space-y-2">
-                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-[#FF6F61]/50 has-[:checked]:bg-[#FF6F61]/5">
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-admin-coral/50 has-[:checked]:bg-admin-coral/5">
                     <input
                       type="radio"
                       name="lister-role"
@@ -2865,7 +2865,7 @@ export default function LandlordPropertyFormPage() {
                     />
                     <span>I own this property</span>
                   </label>
-                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-[#FF6F61]/50 has-[:checked]:bg-[#FF6F61]/5">
+                  <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 has-[:checked]:border-admin-coral/50 has-[:checked]:bg-admin-coral/5">
                     <input
                       type="radio"
                       name="lister-role"
@@ -3447,10 +3447,10 @@ export default function LandlordPropertyFormPage() {
                           setServiceTier(tier)
                         }}
                         className={[
-                          'rounded-2xl border p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 disabled:cursor-not-allowed',
+                          'rounded-2xl border p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40 disabled:cursor-not-allowed',
                           selected
-                            ? 'border-[#FF6F61] bg-[#FF6F61]/5 shadow-sm'
-                            : 'border-gray-200 bg-white hover:border-[#FF6F61]/40',
+                            ? 'border-[var(--quni-coral)] bg-admin-coral/5 shadow-sm'
+                            : 'border-gray-200 bg-white hover:border-admin-coral/40',
                           disabled && !selected ? 'opacity-60 hover:border-gray-200' : '',
                         ].join(' ')}
                       >
@@ -3530,7 +3530,7 @@ export default function LandlordPropertyFormPage() {
                     </p>
                     <ul className="mt-2 list-none space-y-2 pl-0">
                       <li className="flex gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6F61]/80" aria-hidden />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-admin-coral/80" aria-hidden />
                         <span>
                           <strong className="text-gray-900">Quni Listing:</strong>{' '}
                           <span className="tabular-nums">
@@ -3542,7 +3542,7 @@ export default function LandlordPropertyFormPage() {
                         </span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6F61]/80" aria-hidden />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-admin-coral/80" aria-hidden />
                         <span>
                           <strong className="text-gray-900">Quni Managed:</strong>{' '}
                           {(() => {
@@ -3626,7 +3626,7 @@ export default function LandlordPropertyFormPage() {
                     type="checkbox"
                     checked={parkingAvailable}
                     onChange={(e) => setParkingAvailableWithFeature(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FF6F61] focus:ring-[#FF6F61]/40"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--quni-coral)] focus:ring-admin-coral/40"
                   />
                   <label htmlFor="pf-parking-available" className="text-sm text-gray-700 leading-snug">
                     <span className="font-medium text-gray-900">Carpark available</span>
@@ -3669,9 +3669,9 @@ export default function LandlordPropertyFormPage() {
                           type="button"
                           aria-pressed={selected}
                           onClick={() => setBondWeeks(String(opt.value))}
-                          className={`rounded-lg border px-1.5 py-2.5 text-xs sm:text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]/50 ${
+                          className={`rounded-lg border px-1.5 py-2.5 text-xs sm:text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/50 ${
                             selected
-                              ? 'border-[#FF6F61] bg-[#FF6F61]/10 text-[#FF6F61]'
+                              ? 'border-[var(--quni-coral)] bg-admin-coral/10 text-[var(--quni-coral)]'
                               : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
                           }`}
                         >
@@ -3801,7 +3801,7 @@ export default function LandlordPropertyFormPage() {
                         key={opt.value}
                         className={`flex gap-3 rounded-lg border px-3 py-2.5 cursor-pointer ${
                           qldBondRemittancePreference === opt.value
-                            ? 'border-[#FF6F61] bg-white ring-1 ring-[#FF6F61]/30'
+                            ? 'border-[var(--quni-coral)] bg-white ring-1 ring-admin-coral/30'
                             : 'border-gray-200 bg-white/80'
                         }`}
                       >
@@ -3824,7 +3824,7 @@ export default function LandlordPropertyFormPage() {
                                 href={QLD_RTA_RENTAL_BOND_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+                                className="font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
                               >
                                 RTA Queensland — rental bonds
                               </a>
@@ -3946,7 +3946,7 @@ export default function LandlordPropertyFormPage() {
                     href="/non-discrimination"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#FF6F61] font-medium underline underline-offset-2"
+                    className="text-[var(--quni-coral)] font-medium underline underline-offset-2"
                   >
                     Non-Discrimination Policy
                   </a>
