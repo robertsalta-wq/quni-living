@@ -38,7 +38,7 @@ export default function LandlordBookingOccupancySummary({
     (breakdown.couple != null || breakdown.parking != null || breakdown.base !== weeklyRent)
 
   return (
-    <section className="rounded-admin-lg border border-admin-line-soft bg-white p-5 shadow-sm space-y-4">
+    <section className="quni-card space-y-4 p-5">
       <h2 className="text-sm font-semibold text-admin-ink">
         Occupancy &amp; rent
       </h2>
@@ -57,8 +57,8 @@ export default function LandlordBookingOccupancySummary({
       </dl>
 
       {showBreakdown && breakdown ? (
-        <div className="rounded-admin-md bg-admin-surface-2 border border-admin-line-soft px-4 py-3 space-y-1.5 text-sm">
-          <p className="text-xs font-semibold text-admin-ink-5 uppercase tracking-wide">Weekly rent breakdown</p>
+        <div className="space-y-1.5 border-t border-admin-line-soft pt-3 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">Weekly rent breakdown</p>
           <div className="flex justify-between">
             <span className="text-admin-ink-4">Base rent</span>
             <span className="tabular-nums font-medium">${fmtAud(breakdown.base)}</span>
@@ -76,7 +76,7 @@ export default function LandlordBookingOccupancySummary({
             </div>
           ) : null}
           {weeklyRent != null && Number.isFinite(Number(weeklyRent)) ? (
-            <div className="flex justify-between pt-1.5 border-t border-admin-line font-semibold text-admin-ink">
+            <div className="flex justify-between border-t border-admin-line pt-1.5 font-semibold text-admin-ink">
               <span>Total per week</span>
               <span className="tabular-nums">${fmtAud(Number(weeklyRent))}</span>
             </div>

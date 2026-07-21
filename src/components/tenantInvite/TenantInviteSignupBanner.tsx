@@ -13,7 +13,7 @@ export default function TenantInviteSignupBanner({ hints, loginHref }: Props) {
   const greeting = hints.invitedName ? `Hi ${hints.invitedName.split(/\s+/)[0]}, ` : ''
 
   return (
-    <div className="mb-8 rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 shadow-sm">
+    <div className="quni-card mb-8 p-5 sm:p-6">
       <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Landlord invitation</p>
       <h2 className="mt-1 text-lg font-semibold text-gray-900 leading-snug">
         {greeting}you&apos;re invited to apply on Quni

@@ -73,7 +73,7 @@ export function StudentStripePaymentsCard({ profile, onRefresh }: Props) {
   const hasCustomer = Boolean(profile.stripe_customer_id?.trim())
 
   return (
-    <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(8,6,13,0.05)] scroll-mt-24">
+    <div className="quni-card scroll-mt-24 p-5 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Rent billing</h2>

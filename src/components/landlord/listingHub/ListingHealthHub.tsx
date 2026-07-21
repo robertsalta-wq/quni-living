@@ -88,7 +88,7 @@ export default function ListingHealthHub({
 
       {/* Body */}
       <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3 sm:px-4">
-        <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3.5 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]">
+        <div className="quni-card mb-2.5 flex items-center gap-3 px-3.5 py-2.5">
           <ListingHubQualityRing score={health.score} />
           <div className="min-w-0">
             <p
@@ -132,7 +132,7 @@ export default function ListingHealthHub({
               <Link
                 key={s.id}
                 to={sectionHref(s.id)}
-                className="flex w-full items-center gap-2.5 rounded-[13px] border border-[var(--quni-line)] bg-white px-[11px] py-[7px] text-left shadow-[0_1px_2px_rgba(8,6,13,0.04)] transition-colors hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
+                className="quni-card flex w-full items-center gap-2.5 px-[11px] py-[7px] text-left transition-colors hover:bg-[var(--quni-surface-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
               >
                 <span className="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[var(--quni-surface-3)] text-[var(--quni-ink-3)]">
                   <ListingHubSectionIcon id={s.id} />

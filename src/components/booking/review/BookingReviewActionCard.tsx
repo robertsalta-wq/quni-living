@@ -43,7 +43,7 @@ export default function BookingReviewActionCard({
 }: BookingReviewActionCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-admin-line bg-white p-5 shadow-admin-card-hover ${className}`}
+      className={`quni-card p-4 ${className}`}
     >
       <div className="mb-1 flex items-center justify-between gap-2.5">
         <p

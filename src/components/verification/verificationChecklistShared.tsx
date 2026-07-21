@@ -13,7 +13,7 @@ export const VERIFICATION_CHECKLIST_MODAL_TITLES: Record<VerificationChecklistFo
 export const VERIFICATION_CHECKLIST_MODAL_SUBTITLE =
   'You can browse before you finish verification. Renting is free for renters; landlords pay $99 only when they accept a booking on Quni Listing.'
 
-const TABLE_WRAP = 'overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm'
+const TABLE_WRAP = 'quni-card overflow-x-auto'
 const TH =
   'border border-gray-100 bg-gray-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-700 sm:text-sm'
 const TD = 'border border-gray-100 px-4 py-3 text-sm leading-relaxed text-gray-700 align-top'

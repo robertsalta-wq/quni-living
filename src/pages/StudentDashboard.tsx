@@ -98,12 +98,12 @@ function readStudentBookingsCache(userId: string | undefined): BookingWithProper
 }
 
 const statCardClass =
-  'rounded-admin-lg border border-admin-line-soft bg-white p-4 sm:p-5 shadow-sm flex flex-col h-full min-w-0 transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:shadow-md hover:border-admin-coral-30 text-left'
+  'quni-card flex h-full min-w-0 flex-col p-4 text-left transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 hover:border-admin-coral-30 hover:shadow-md sm:p-5'
 
 const profileStatCardClass =
-  'flex flex-col rounded-admin-lg border border-admin-coral-30 bg-admin-coral-tint p-4 sm:p-5 shadow-sm min-w-0 lg:min-h-[10rem] h-full'
+  'flex h-full min-w-0 flex-col rounded-admin-lg border border-admin-coral-30 bg-admin-coral-tint p-4 shadow-sm sm:p-5 lg:min-h-[10rem]'
 
-const cardClass = 'rounded-admin-lg border border-[var(--quni-line)] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
+const cardClass = 'quni-card p-5'
 
 function propertyAddressLine(property: PropertyBookingEmbed): string {
   return (

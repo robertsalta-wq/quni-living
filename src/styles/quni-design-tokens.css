@@ -343,3 +343,16 @@ a:hover { color: var(--quni-coral-active); text-decoration: underline; }
     box-shadow: var(--shadow-1);
   }
 }
+
+/* =============================================================================
+   Content cards — elevated at all breakpoints (unlike .quni-dashboard-panel).
+   Use for standard white content / interactive cards. Padding stays per-usage;
+   tone / hover / sticky layer on as utilities after this class.
+   ============================================================================= */
+
+.quni-card {
+  border: 1px solid var(--quni-line);
+  border-radius: var(--radius-lg);
+  background: var(--quni-surface-1);
+  box-shadow: var(--shadow-1);
+}

@@ -294,7 +294,7 @@ export default function StudentProfile() {
                   return (
                     <li
                       key={b.id}
-                      className="flex flex-col sm:flex-row gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                      className="quni-card flex flex-col gap-4 overflow-hidden sm:flex-row"
                     >
                       <div className="sm:w-40 h-36 sm:h-auto shrink-0 bg-gray-100">
                         {thumb ? (

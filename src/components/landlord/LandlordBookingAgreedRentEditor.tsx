@@ -151,7 +151,7 @@ export default function LandlordBookingAgreedRentEditor({
       className={
         embedded
           ? 'space-y-4'
-          : 'rounded-admin-lg border border-admin-line-soft bg-white p-5 shadow-sm space-y-4'
+          : 'quni-card space-y-4 p-5'
       }
     >
       {embedded ? null : (

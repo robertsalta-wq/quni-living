@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuthContext } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -1119,8 +1119,8 @@ export default function LandlordBookingReviewPage() {
               deadline={actionDeadlineLabel ?? undefined}
               deadlineTone={actionCopy.deadlineTone}
             >
-              <div className="space-y-3.5">
-                {showResendPaymentInstructions ? (
+              {(() => {
+                const resendBlock: ReactNode = showResendPaymentInstructions ? (
                   <div className="space-y-2">
                     <button
                       type="button"
@@ -1137,150 +1137,175 @@ export default function LandlordBookingReviewPage() {
                       Email the renter the current bond and rent payment details (same as at acceptance).
                     </p>
                   </div>
-                ) : null}
+                ) : null
 
-                {primaryActionKind === 'bond-received' ? (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      disabled={bondReceivedBusy}
-                      onClick={() => void onMarkBondReceived()}
-                      className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60"
-                    >
-                      {bondReceivedBusy ? (
-                        <>
-                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                          <span>Saving…</span>
-                        </>
-                      ) : (
-                        'Bond received from renter'
-                      )}
-                    </button>
-                    <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
-                      {isQldBoardingProperty ? (
-                        <>
-                          Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
-                          must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
-                        </>
-                      ) : (
-                        <>
-                          Confirms you&apos;ve received bond directly from the renter. We&apos;ll generate a PDF receipt,
-                          save it to this tenancy, and email a copy to you and the renter.
-                        </>
-                      )}{' '}
-                      Signing links are in{' '}
-                      <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
-                        Tenancy agreement
-                      </a>{' '}
-                      below and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
-                    </p>
-                    {canCancelListingBondPending && (
+                let primaryBlock: ReactNode
+                if (primaryActionKind === 'bond-received') {
+                  primaryBlock = (
+                    <div className="space-y-2">
                       <button
                         type="button"
-                        disabled={bondReceivedBusy || listingCancelBusy}
-                        onClick={() => {
-                          setListingCancelError(null)
-                          setListingCancelOpen(true)
-                        }}
-                        className="min-h-[3rem] w-full rounded-admin-md border-2 border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                        disabled={bondReceivedBusy}
+                        onClick={() => void onMarkBondReceived()}
+                        className="inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md bg-admin-coral px-4 py-3 text-sm font-semibold text-white shadow-admin-card hover:bg-admin-coral-hover disabled:opacity-60"
                       >
-                        Cancel booking
+                        {bondReceivedBusy ? (
+                          <>
+                            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            <span>Saving…</span>
+                          </>
+                        ) : (
+                          'Bond received from renter'
+                        )}
                       </button>
-                    )}
-                  </div>
-                ) : primaryActionKind === 'mark-bond' ? (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={openBondModal}
-                      className="w-full rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover sm:w-auto"
-                    >
-                      Mark bond as received
-                    </button>
-                    <p className="mt-2 text-xs leading-relaxed text-admin-ink-5">
-                      {isQldBoardingProperty
-                        ? 'Record when you receive bond payment from the renter. We\u2019ll email a payment receipt (not RTA lodgement confirmation) and remind you to lodge with the RTA within 10 days.'
-                        : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
-                    </p>
-                  </div>
-                ) : primaryActionKind === 'accept-decline-info' ? (
-                  <div className="flex flex-col gap-2.5">
-                    <button
-                      type="button"
-                      disabled={!canConfirm || actionBusy}
-                      aria-disabled={!canConfirm || actionBusy}
-                      onClick={() => {
-                        if (!canConfirm) {
-                          document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                          return
-                        }
-                        void onConfirm()
-                      }}
-                      className={`inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md px-4 py-3 text-[15px] font-semibold shadow-admin-card ${
-                        canConfirm && !actionBusy
-                          ? 'bg-admin-coral text-white hover:bg-admin-coral-hover'
-                          : 'cursor-not-allowed bg-admin-surface-3 text-admin-ink-5'
-                      }`}
-                    >
-                      {actionBusy ? (
-                        <>
-                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                          <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
-                        </>
-                      ) : selectedConfirmTier === 'listing' ? (
-                        'Accept as Quni Listing'
-                      ) : tierModel?.propertyServiceTier === 'listing' ? (
-                        'Upgrade and accept as Quni Managed'
-                      ) : (
-                        'Accept as Quni Managed'
+                      <p className="px-0.5 text-xs leading-relaxed text-admin-ink-4">
+                        {isQldBoardingProperty ? (
+                          <>
+                            Records off-platform bond receipt on Quni only — this is <strong>not</strong> RTA lodgement. You
+                            must still lodge with the RTA within 10 days and keep the Acknowledgement of Rental Bond.
+                          </>
+                        ) : (
+                          <>
+                            Confirms you&apos;ve received bond directly from the renter. We&apos;ll generate a PDF receipt,
+                            save it to this tenancy, and email a copy to you and the renter.
+                          </>
+                        )}{' '}
+                        Signing links are in{' '}
+                        <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
+                          Tenancy agreement
+                        </a>{' '}
+                        below and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
+                      </p>
+                      {canCancelListingBondPending && (
+                        <button
+                          type="button"
+                          disabled={bondReceivedBusy || listingCancelBusy}
+                          onClick={() => {
+                            setListingCancelError(null)
+                            setListingCancelOpen(true)
+                          }}
+                          className="min-h-[3rem] w-full rounded-admin-md border-2 border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                        >
+                          Cancel booking
+                        </button>
                       )}
-                    </button>
-                    {!canConfirm && !actionBusy && showReadinessDriver ? (
-                      <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
-                    ) : null}
-                    <button
-                      type="button"
-                      disabled={!canDeclineOrInfo || actionBusy}
-                      onClick={() => setDeclineOpen(true)}
-                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-transparent px-4 py-3 text-sm font-semibold text-admin-ink-4 hover:bg-admin-surface-2 disabled:opacity-50"
-                    >
-                      Decline booking
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!canDeclineOrInfo || actionBusy}
-                      onClick={() => setInfoOpen(true)}
-                      className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
-                    >
-                      Request more information
-                    </button>
-                  </div>
-                ) : booking.status === 'awaiting_info' ? (
-                  <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
-                    Send another message
-                  </button>
-                ) : booking.status === 'confirmed' ? (
-                  <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
-                    View agreement
-                  </button>
-                ) : booking.status === 'active' || booking.status === 'completed' ? (
-                  <div className="flex flex-col gap-2.5">
-                    <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
-                      View tenancy
-                    </button>
+                    </div>
+                  )
+                } else if (primaryActionKind === 'mark-bond') {
+                  primaryBlock = (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={openBondModal}
+                        className="w-full rounded-admin-md bg-admin-coral px-4 py-2.5 text-sm font-semibold text-white hover:bg-admin-coral-hover sm:w-auto"
+                      >
+                        Mark bond as received
+                      </button>
+                      <p className="mt-2 text-xs leading-relaxed text-admin-ink-5">
+                        {isQldBoardingProperty
+                          ? 'Record when you receive bond payment from the renter. We\u2019ll email a payment receipt (not RTA lodgement confirmation) and remind you to lodge with the RTA within 10 days.'
+                          : 'For boarding/lodger or homestay stays, record when you receive the bond and we\u2019ll email a PDF receipt to you and the renter.'}
+                      </p>
+                    </div>
+                  )
+                } else if (primaryActionKind === 'accept-decline-info') {
+                  primaryBlock = (
+                    <div className="flex flex-col gap-2.5">
+                      <button
+                        type="button"
+                        disabled={!canConfirm || actionBusy}
+                        aria-disabled={!canConfirm || actionBusy}
+                        onClick={() => {
+                          if (!canConfirm) {
+                            document.getElementById('confirm-requirements')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            return
+                          }
+                          void onConfirm()
+                        }}
+                        className={`inline-flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-admin-md px-4 py-3 text-[15px] font-semibold shadow-admin-card ${
+                          canConfirm && !actionBusy
+                            ? 'bg-admin-coral text-white hover:bg-admin-coral-hover'
+                            : 'cursor-not-allowed bg-admin-surface-3 text-admin-ink-5'
+                        }`}
+                      >
+                        {actionBusy ? (
+                          <>
+                            <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            <span>{confirmBookingBusyLabel(confirmPhase, selectedConfirmTier)}</span>
+                          </>
+                        ) : selectedConfirmTier === 'listing' ? (
+                          'Accept as Quni Listing'
+                        ) : tierModel?.propertyServiceTier === 'listing' ? (
+                          'Upgrade and accept as Quni Managed'
+                        ) : (
+                          'Accept as Quni Managed'
+                        )}
+                      </button>
+                      {!canConfirm && !actionBusy && showReadinessDriver ? (
+                        <p className="mt-0.5 text-center text-xs text-admin-ink-5">Complete the steps above to accept.</p>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={!canDeclineOrInfo || actionBusy}
+                        onClick={() => setDeclineOpen(true)}
+                        className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-transparent px-4 py-3 text-sm font-semibold text-admin-ink-4 hover:bg-admin-surface-2 disabled:opacity-50"
+                      >
+                        Decline booking
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!canDeclineOrInfo || actionBusy}
+                        onClick={() => setInfoOpen(true)}
+                        className="min-h-[3rem] w-full rounded-admin-md border border-admin-line bg-admin-surface-1 px-4 py-3 text-sm font-semibold text-admin-ink-2 hover:bg-admin-surface-2 disabled:opacity-50"
+                      >
+                        Request more information
+                      </button>
+                    </div>
+                  )
+                } else if (booking.status === 'awaiting_info') {
+                  primaryBlock = (
                     <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
-                      Message tenant
+                      Send another message
                     </button>
+                  )
+                } else if (booking.status === 'confirmed') {
+                  primaryBlock = (
+                    <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
+                      View agreement
+                    </button>
+                  )
+                } else if (booking.status === 'active' || booking.status === 'completed') {
+                  primaryBlock = (
+                    <div className="flex flex-col gap-2.5">
+                      <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
+                        View tenancy
+                      </button>
+                      <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
+                        Message tenant
+                      </button>
+                    </div>
+                  )
+                } else if (booking.status === 'expired') {
+                  primaryBlock = (
+                    <Link
+                      to={landlordBookingsPath()}
+                      className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
+                    >
+                      ← Back to bookings
+                    </Link>
+                  )
+                } else {
+                  primaryBlock = null
+                }
+
+                if (!resendBlock && !primaryBlock) return undefined
+                return (
+                  <div className="space-y-3.5">
+                    {resendBlock}
+                    {primaryBlock}
                   </div>
-                ) : booking.status === 'expired' ? (
-                  <Link
-                    to={landlordBookingsPath()}
-                    className={`${bookingReviewGhostButtonClass()} inline-flex items-center justify-center`}
-                  >
-                    ← Back to bookings
-                  </Link>
-                ) : null}
-              </div>
+                )
+              })()}
             </BookingReviewActionCard>
 
             {/* Info siblings — below ActionCard (never nested inside it) */}

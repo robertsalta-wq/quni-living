@@ -35,7 +35,7 @@ export function BookingReviewSurfaceCard({
     padding === 'strip' ? 'px-5 py-[18px]' : padding === 'rail' ? 'p-5' : 'px-6 py-[22px]'
   return (
     <div
-      className={`flex flex-col rounded-2xl border border-admin-line bg-white shadow-admin-card ${pad} ${className}`}
+      className={`quni-card flex flex-col ${pad} ${className}`}
     >
       {children}
     </div>
