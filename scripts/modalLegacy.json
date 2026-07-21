@@ -1,0 +1,4 @@
+{
+  "_comment": "Files with hand-rolled modal chrome (rounded+border+white/surface+shadow-xl|2xl|admin-modal+z-10/max-w). Remove a path when migrated to .quni-modal. New files are never listed — they must use the modal primitive.",
+  "files": []
+}
