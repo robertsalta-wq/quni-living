@@ -255,7 +255,7 @@ export function ListingAccommodationStats({ property, roomLabel, variant = 'hero
   if (compact) return inner
 
   return (
-    <div className="rounded-xl border border-stone-200/80 bg-white p-3 sm:p-3.5 shadow-sm">
+    <div className="quni-card p-3 sm:p-3.5">
       {inner}
     </div>
   )

@@ -112,7 +112,7 @@ export default function LandlordApplicantReviewHeader({
   }
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="quni-card p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         {student?.avatar_url ? (
           <img

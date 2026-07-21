@@ -135,7 +135,7 @@ function DocReceivedCard({
   )
 }
 
-const cardClass = 'rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm'
+const cardClass = 'quni-card p-5 sm:p-6'
 
 type DocUploadApi = ReturnType<typeof useStudentVerificationDocUpload>
 

@@ -330,7 +330,7 @@ export function LandlordStripePayoutsCard({
   return (
     <div
       id={anchorId}
-      className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 shadow-sm mb-6 scroll-mt-24"
+      className="quni-card mb-6 scroll-mt-24 p-5 sm:p-6"
     >
       {stripeNeedsOnboarding && (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">

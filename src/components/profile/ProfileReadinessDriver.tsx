@@ -5,14 +5,12 @@ import type { ProfileReadinessDriverProps, ReadinessDriverStep } from './types'
 const DRIVER_TITLE_CLASS =
   'font-display text-[28px] font-bold leading-[1.12] tracking-[-0.02em] text-balance text-admin-ink'
 
-const CARD_CLASS =
-  'sticky z-[5] mb-4 rounded-admin-lg border border-admin-line bg-white shadow-admin-card'
+const CARD_CLASS = 'quni-card sticky z-[5] mb-4'
 
-const COMPLETE_CARD_CLASS =
-  'sticky z-[5] mb-4 rounded-admin-lg border border-admin-success/35 bg-white shadow-admin-card'
+const COMPLETE_CARD_CLASS = 'quni-card sticky z-[5] mb-4 border-admin-success/35'
 
 const COMPLETE_CARD_COLLAPSED_CLASS =
-  'sticky z-[5] mb-4 rounded-admin-lg border border-admin-success/35 bg-admin-success-bg shadow-admin-card'
+  'quni-card sticky z-[5] mb-4 border-admin-success/35 bg-admin-success-bg'
 
 function clampProgress(progress: number): number {
   if (!Number.isFinite(progress)) return 0

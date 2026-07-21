@@ -72,7 +72,7 @@ export function PropertyCard({
       }
 
   const shellClassName = [
-    'group block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all duration-200',
+    'quni-card group block overflow-hidden transition-all duration-200',
     staticDisplay ? '' : 'hover:shadow-md hover:-translate-y-0.5',
     unavailableForSelectedDates ? 'opacity-60 grayscale-[0.35]' : '',
   ]

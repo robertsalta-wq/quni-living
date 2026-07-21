@@ -18,10 +18,7 @@ import { LandlordStripePayoutsCard } from './LandlordStripePayoutsCard'
 const cardHover =
   'transition-[transform,box-shadow] duration-200 ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]'
 
-const whiteCard = [
-  'rounded-[var(--radius-lg)] border border-[var(--quni-line)] bg-white shadow-[var(--shadow-1)]',
-  cardHover,
-].join(' ')
+const whiteCard = ['quni-card', cardHover].join(' ')
 
 type Props = {
   profile: LandlordProfileRow

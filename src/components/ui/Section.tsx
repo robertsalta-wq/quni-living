@@ -133,7 +133,7 @@ export default function Section({
   return (
     <section
       id={id}
-      className={`scroll-mt-below-header overflow-hidden rounded-admin-lg border bg-white shadow-admin-card ${toneBorderClass(tone)}`}
+      className={`quni-card scroll-mt-below-header overflow-hidden ${toneBorderClass(tone)}`}
     >
       {collapsible ? (
         <button

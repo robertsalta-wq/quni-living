@@ -258,6 +258,85 @@ export default function RenterBookingZones({
     ],
   )
 
+  let actionBody: ReactNode
+  if (booking.status === 'awaiting_info') {
+    actionBody = (
+      <button type="button" onClick={openMessagesSection} className={bookingReviewPrimaryButtonClass()}>
+        Reply
+      </button>
+    )
+  } else if (booking.status === 'bond_pending') {
+    actionBody = (
+      <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
+        Paid directly to {hostName}. Quni holds $0 and never touches your bond.
+      </p>
+    )
+  } else if (booking.status === 'confirmed') {
+    actionBody = (
+      <div className="flex flex-col gap-2.5">
+        <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
+          Review &amp; sign
+        </button>
+        {showBondReceipt ? (
+          <button
+            type="button"
+            disabled={bondDownloadBusy}
+            onClick={onDownloadBondReceipt}
+            className={bookingReviewGhostButtonClass()}
+          >
+            {bondDownloadBusy ? 'Opening…' : 'View bond receipt'}
+          </button>
+        ) : null}
+      </div>
+    )
+  } else if (booking.status === 'active' || booking.status === 'completed') {
+    actionBody = (
+      <div className="flex flex-col gap-2.5">
+        {showBondReceipt ? (
+          <button
+            type="button"
+            disabled={bondDownloadBusy}
+            onClick={onDownloadBondReceipt}
+            className={bookingReviewGhostButtonClass()}
+          >
+            {bondDownloadBusy ? 'Opening…' : 'Download bond receipt'}
+          </button>
+        ) : null}
+        <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
+          View agreement
+        </button>
+        {bondDownloadError ? (
+          <p className="text-xs leading-relaxed text-admin-warning-fg">
+            Bond receipt isn&apos;t available yet — check back after your host records your bond payment.
+          </p>
+        ) : null}
+      </div>
+    )
+  } else if (
+    booking.status === 'pending' ||
+    booking.status === 'pending_payment' ||
+    booking.status === 'pending_confirmation'
+  ) {
+    actionBody = (
+      <div className="flex flex-col gap-2.5">
+        <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
+          Message host
+        </button>
+        <button
+          type="button"
+          disabled
+          aria-disabled
+          title="Contact support to withdraw a request"
+          className={`${bookingReviewLinkButtonClass(true)} cursor-not-allowed opacity-60`}
+        >
+          Withdraw request
+        </button>
+      </div>
+    )
+  } else {
+    actionBody = undefined
+  }
+
   return (
     <div className="bg-admin-surface-2 px-5 py-6" aria-current={isCurrent ? 'true' : undefined}>
       <div className="grid grid-cols-1 items-start gap-6 min-[921px]:grid-cols-[minmax(0,1fr)_320px]">
@@ -271,71 +350,7 @@ export default function RenterBookingZones({
             deadline={actionCopy.deadlineLabel ?? undefined}
             deadlineTone={actionCopy.deadlineTone}
           >
-            <div className="space-y-3">
-              {booking.status === 'awaiting_info' ? (
-                <button type="button" onClick={openMessagesSection} className={bookingReviewPrimaryButtonClass()}>
-                  Reply
-                </button>
-              ) : booking.status === 'bond_pending' ? (
-                <p className="px-0.5 text-xs leading-relaxed text-admin-ink-5">
-                  Paid directly to {hostName}. Quni holds $0 and never touches your bond.
-                </p>
-              ) : booking.status === 'confirmed' ? (
-                <div className="flex flex-col gap-2.5">
-                  <button type="button" onClick={scrollToAgreement} className={bookingReviewPrimaryButtonClass()}>
-                    Review &amp; sign
-                  </button>
-                  {showBondReceipt ? (
-                    <button
-                      type="button"
-                      disabled={bondDownloadBusy}
-                      onClick={onDownloadBondReceipt}
-                      className={bookingReviewGhostButtonClass()}
-                    >
-                      {bondDownloadBusy ? 'Opening…' : 'View bond receipt'}
-                    </button>
-                  ) : null}
-                </div>
-              ) : booking.status === 'active' || booking.status === 'completed' ? (
-                <div className="flex flex-col gap-2.5">
-                  {showBondReceipt ? (
-                    <button
-                      type="button"
-                      disabled={bondDownloadBusy}
-                      onClick={onDownloadBondReceipt}
-                      className={bookingReviewGhostButtonClass()}
-                    >
-                      {bondDownloadBusy ? 'Opening…' : 'Download bond receipt'}
-                    </button>
-                  ) : null}
-                  <button type="button" onClick={scrollToAgreement} className={bookingReviewGhostButtonClass()}>
-                    View agreement
-                  </button>
-                  {bondDownloadError ? (
-                    <p className="text-xs leading-relaxed text-admin-warning-fg">
-                      Bond receipt isn&apos;t available yet — check back after your host records your bond payment.
-                    </p>
-                  ) : null}
-                </div>
-              ) : booking.status === 'pending' ||
-                booking.status === 'pending_payment' ||
-                booking.status === 'pending_confirmation' ? (
-                <div className="flex flex-col gap-2.5">
-                  <button type="button" onClick={openMessagesSection} className={bookingReviewGhostButtonClass()}>
-                    Message host
-                  </button>
-                  <button
-                    type="button"
-                    disabled
-                    aria-disabled
-                    title="Contact support to withdraw a request"
-                    className={`${bookingReviewLinkButtonClass(true)} cursor-not-allowed opacity-60`}
-                  >
-                    Withdraw request
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            {actionBody}
           </BookingReviewActionCard>
 
           {/* Info siblings — below ActionCard (never nested inside it) */}

@@ -60,7 +60,7 @@ export default function BookingTermsBlock({
       </div>
 
       {showBreakdown && breakdown ? (
-        <div className="space-y-1.5 rounded-admin-md border border-admin-line-soft bg-admin-surface-2 px-4 py-3 text-sm">
+        <div className="space-y-1.5 border-t border-admin-line-soft pt-3 text-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink-5">Weekly rent breakdown</p>
           <div className="flex justify-between">
             <span className="text-admin-ink-4">Base rent</span>

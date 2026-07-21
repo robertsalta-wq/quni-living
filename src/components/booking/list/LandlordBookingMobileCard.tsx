@@ -5,8 +5,7 @@ import BookingListDetailStrip from './BookingListDetailStrip'
 import BookingListStatusPill from './BookingListStatusPill'
 import BookingListVerificationChips from './BookingListVerificationChips'
 
-export const bookingListMobileCardClass =
-  'rounded-2xl border border-[var(--quni-line)] bg-white p-4 shadow-sm'
+export const bookingListMobileCardClass = 'quni-card p-4'
 
 type ActionLink = {
   label: string

@@ -48,7 +48,7 @@ export default function LandlordProfileDrillInShell({ sectionId, error, children
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-4 shadow-[0_1px_2px_rgba(8,6,13,0.05)]">
+        <div className="quni-card p-4">
           <div className="mb-[18px] flex items-center gap-2.5">
             <span className="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[var(--quni-surface-3)] text-[var(--quni-ink-3)]">
               <ProfileHubSectionIcon id={sectionId} />

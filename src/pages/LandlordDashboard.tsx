@@ -1219,7 +1219,7 @@ export default function LandlordDashboard() {
               <button
                 type="button"
                 onClick={() => selectDashboardTab('listings')}
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all text-left"
+                className="quni-card flex h-full flex-col p-5 text-left transition-all hover:border-indigo-200 hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active listings</p>
                 <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{activeListings}</p>
@@ -1229,7 +1229,7 @@ export default function LandlordDashboard() {
               </button>
               <Link
                 to="/messages"
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all"
+                className="quni-card flex h-full flex-col p-5 transition-all hover:border-indigo-200 hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Messages</p>
                 <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{conversations.length}</p>
@@ -1244,7 +1244,7 @@ export default function LandlordDashboard() {
               <button
                 type="button"
                 onClick={() => selectDashboardTab('bookings')}
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm flex flex-col h-full hover:border-indigo-200 hover:shadow-md transition-all text-left"
+                className="quni-card flex h-full flex-col p-5 text-left transition-all hover:border-indigo-200 hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bookings</p>
                 <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums">{bookings.length}</p>
@@ -1260,7 +1260,7 @@ export default function LandlordDashboard() {
                 type="button"
                 onClick={() => selectDashboardTab('profile')}
                 className={[
-                  'rounded-2xl border bg-white p-5 shadow-sm flex flex-col h-full hover:shadow-md transition-all text-left',
+                  'quni-card flex h-full flex-col p-5 text-left transition-all hover:shadow-md',
                   landlordReadiness.phase === 'complete'
                     ? 'border-emerald-200 hover:border-emerald-300'
                     : 'border-admin-coral/30 hover:border-admin-coral/50',
@@ -1294,7 +1294,7 @@ export default function LandlordDashboard() {
               <button
                 type="button"
                 onClick={() => setQaseOpen(true)}
-                className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm w-full text-left flex flex-col h-full hover:border-admin-coral/30 hover:shadow-md transition-all group"
+                className="quni-card group flex h-full w-full flex-col p-5 text-left transition-all hover:border-admin-coral/30 hover:shadow-md"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-900">Need help?</p>
                 <p className="text-xs text-gray-500 mt-1 leading-snug">

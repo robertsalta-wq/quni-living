@@ -498,7 +498,7 @@ function sectionClass(title: string, children: ReactNode, sectionId?: string) {
   return (
     <section
       id={sectionId}
-      className="scroll-mt-below-header overflow-hidden rounded-2xl border border-[var(--quni-line)] bg-white shadow-[0_1px_2px_rgba(8,6,13,0.05)]"
+      className="quni-card scroll-mt-below-header overflow-hidden"
     >
       <div className="flex w-full items-center gap-3.5 px-5 py-[18px] text-left">
         {hubId ? (
