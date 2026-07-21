@@ -25,9 +25,33 @@ import { DEFAULT_NEAR_RADIUS_KM, nearSearchParams } from '../lib/workplaceLocati
 import WhyQuniTrustBlock from '../components/WhyQuniTrustBlock'
 
 const HERO_COLLAGE_TOP_FALLBACK =
-  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=80&auto=format&fit=crop'
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop'
 const HERO_COLLAGE_BOTTOM_FALLBACK =
-  'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600'
+  'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=640&q=70&auto=format&fit=crop'
+const LANDLORD_SECTION_IMAGE =
+  'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=960&q=70&auto=format&fit=crop'
+
+/** Responsive Unsplash variants for the stable homepage LCP image. */
+const HERO_TOP_SRCSET = [
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=480&q=75&auto=format&fit=crop 480w',
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=640&q=75&auto=format&fit=crop 640w',
+  'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop 800w',
+].join(', ')
+const HERO_TOP_SIZES = '(min-width: 1024px) 36vw, 75vw'
+
+function withUnsplashWidth(url: string, width: number, quality = 70): string {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'images.unsplash.com') return url
+    parsed.searchParams.set('w', String(width))
+    parsed.searchParams.set('q', String(quality))
+    parsed.searchParams.set('auto', 'format')
+    if (!parsed.searchParams.has('fit')) parsed.searchParams.set('fit', 'crop')
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
 
 const STUDENT_HOW_STEPS = [
   {
@@ -314,11 +338,13 @@ export default function Home() {
     return `${listingCount} listing${listingCount !== 1 ? 's' : ''} available near Australian universities`
   })()
 
-  const heroCollageTopSrc = firstPropertyImageUrl(featured[0]?.images ?? null) ?? HERO_COLLAGE_TOP_FALLBACK
-  const heroCollageBottomSrc = firstPropertyImageUrl(featured[1]?.images ?? null) ?? HERO_COLLAGE_BOTTOM_FALLBACK
+  // Keep the top collage on the preloaded Unsplash fallback so LCP is discoverable
+  // immediately (do not wait on / swap after the featured Supabase fetch).
+  const heroCollageTopSrc = HERO_COLLAGE_TOP_FALLBACK
+  const heroCollageBottomSrc =
+    withUnsplashWidth(firstPropertyImageUrl(featured[0]?.images ?? null) ?? HERO_COLLAGE_BOTTOM_FALLBACK, 640)
 
-  const homeOgImage =
-    heroCollageTopSrc && /^https?:\/\//i.test(heroCollageTopSrc) ? heroCollageTopSrc : undefined
+  const homeOgImage = HERO_COLLAGE_TOP_FALLBACK
 
   const homeJsonLd = {
     '@context': 'https://schema.org',
@@ -481,7 +507,13 @@ export default function Home() {
                 <div className="w-3/4 aspect-[4/3] rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10">
                   <img
                     src={heroCollageTopSrc}
+                    srcSet={HERO_TOP_SRCSET}
+                    sizes={HERO_TOP_SIZES}
                     alt=""
+                    width={800}
+                    height={600}
+                    fetchPriority="high"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -492,6 +524,11 @@ export default function Home() {
                   <img
                     src={heroCollageBottomSrc}
                     alt=""
+                    width={640}
+                    height={480}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -724,8 +761,13 @@ export default function Home() {
             </div>
             <div className="order-1 lg:order-2 lg:h-full min-h-0">
               <img
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"
+                src={LANDLORD_SECTION_IMAGE}
                 alt=""
+                width={960}
+                height={540}
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
                 className="w-full rounded-2xl object-cover shadow-lg aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[280px]"
               />
             </div>

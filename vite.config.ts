@@ -35,6 +35,14 @@ export default defineConfig(({ mode }) => {
     base: process.env.CAPACITOR_BUILD === 'true' ? './' : '/',
     build: {
       sourcemap: uploadSourceMaps ? 'hidden' : false,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/@supabase/')) return 'supabase'
+            if (id.includes('node_modules/@sentry/')) return 'sentry'
+          },
+        },
+      },
     },
     plugins: [
       react(),

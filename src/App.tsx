@@ -6,10 +6,6 @@ import NativePushNotificationsInitializer from './components/NativePushNotificat
 import SeoPrivateRoutes from './components/SeoPrivateRoutes'
 import PageRouteFallback from './components/PageRouteFallback'
 import { ProtectedRoute, RequireUser } from './components/ProtectedRoute'
-import Home from './pages/Home'
-import Listings from './pages/Listings'
-import PropertyDetail from './pages/PropertyDetail'
-import Login from './pages/Login'
 import { AiChatOpenProvider } from './context/AiChatOpenContext'
 import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
@@ -219,16 +215,17 @@ function App() {
 
             {/* Marketing / auth — public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
+              {/* Eager: prerendered SEO routes (must not Suspense-empty on SSR). */}
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideArticlePage />} />
               <Route path="/for-universities" element={<ForUniversities />} />
               <Route element={<LazyOutlet />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/listings" element={<Listings />} />
-                <Route path="/listings/:slug" element={<PropertyDetail />} />
+                <Route path="/" element={<Lazy.Home />} />
+                <Route path="/listings" element={<Lazy.Listings />} />
+                <Route path="/listings/:slug" element={<Lazy.PropertyDetail />} />
                 <Route path="/search" element={<Navigate to="/listings" replace />} />
                 <Route path="/properties" element={<Navigate to="/listings" replace />} />
-                <Route path="/properties/:slug" element={<PropertyDetail />} />
+                <Route path="/properties/:slug" element={<Lazy.PropertyDetail />} />
                 <Route path="/rent-near-campus" element={<Lazy.RentNearCampus />} />
                 <Route path="/international" element={<Lazy.InternationalStudents />} />
                 <Route path="/student-accommodation" element={<Lazy.StudentAccommodationIndex />} />
@@ -275,7 +272,7 @@ function App() {
                 />
 
                 <Route path="/auth/callback" element={<Lazy.AuthCallback />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<Lazy.Login />} />
                 <Route path="/forgot-password" element={<Lazy.ForgotPassword />} />
                 <Route path="/reset-password" element={<Lazy.ResetPassword />} />
                 <Route path="/verify-email" element={<Lazy.VerifyEmail />} />

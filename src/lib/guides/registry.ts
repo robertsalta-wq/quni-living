@@ -2,6 +2,9 @@ import articleCanLandlordRefuseInternationalStudents from '../../../content/guid
 import { guideSeo as seoCanLandlordRefuseInternationalStudents } from '../../../content/guides/can-a-landlord-refuse-international-students-australia/seo.ts'
 import type { GuideEntry } from './types'
 
+export type { GuideNavItem } from './nav'
+export { listGuideNavItems } from './nav'
+
 const GUIDE_BY_SLUG: Record<string, GuideEntry> = {
   [seoCanLandlordRefuseInternationalStudents.slug]: {
     seo: seoCanLandlordRefuseInternationalStudents,
@@ -15,16 +18,4 @@ export function getGuideBySlug(slug: string): GuideEntry | undefined {
 
 export function listGuideSlugs(): string[] {
   return Object.keys(GUIDE_BY_SLUG)
-}
-
-export type GuideNavItem = {
-  to: string
-  label: string
-}
-
-export function listGuideNavItems(): GuideNavItem[] {
-  return Object.values(GUIDE_BY_SLUG).map(({ seo }) => ({
-    to: `/guides/${seo.slug}`,
-    label: seo.navLabel ?? seo.headline,
-  }))
 }
