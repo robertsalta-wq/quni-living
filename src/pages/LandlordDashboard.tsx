@@ -1146,7 +1146,6 @@ export default function LandlordDashboard() {
           role="status"
         >
           <p className="text-sm font-semibold text-emerald-900">{welcomeToast}</p>
-          <p className="text-xs text-emerald-700/80 mt-0.5">Dismisses on its own · login only</p>
         </div>
       ) : null}
 
