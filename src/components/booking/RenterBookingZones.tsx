@@ -338,7 +338,7 @@ export default function RenterBookingZones({
   }
 
   return (
-    <div className="bg-admin-surface-2 px-5 py-6" aria-current={isCurrent ? 'true' : undefined}>
+    <div className="bg-admin-surface-2 py-6 sm:px-5" aria-current={isCurrent ? 'true' : undefined}>
       <div className="grid grid-cols-1 items-start gap-6 min-[921px]:grid-cols-[minmax(0,1fr)_320px]">
         {/* —— Rail (first in DOM for mobile order) —— */}
         <div className="order-first flex flex-col gap-4 min-[921px]:order-last min-[921px]:sticky min-[921px]:top-5">
