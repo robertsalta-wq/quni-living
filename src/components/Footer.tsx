@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MARKETPLACE_TAGLINE, SITE_CONTENT_MAX_CLASS } from '../lib/site'
-import { listGuideNavItems } from '../lib/guides/registry'
+import { listGuideNavItems } from '../lib/guides/nav'
 import AiSparkleIcon from './AiSparkleIcon'
 import LegalFooter from './LegalFooter'
 import SiteSocialLinks from './SiteSocialLinks'

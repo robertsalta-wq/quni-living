@@ -39,10 +39,34 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <!-- Stable homepage LCP candidate (hero collage fallback). -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@500;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="image"
+      href="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop"
+      imagesrcset="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=640&q=75&auto=format&fit=crop 640w, https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop 800w"
+      imagesizes="(min-width: 1024px) 36vw, 75vw"
+      fetchpriority="high"
     />
+    <!-- Non-blocking Google Fonts (avoids render-blocking css2 stylesheet). -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@500;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@500;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@500;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;700&display=swap"
+      />
+    </noscript>
     <title>Quni Living - verified accommodation near campus & work</title>
   </head>
   <body>

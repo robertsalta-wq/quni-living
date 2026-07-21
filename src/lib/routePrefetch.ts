@@ -28,6 +28,9 @@ const ADMIN_SEGMENT_IMPORTERS: Record<string, RouteImporter> = {
 }
 
 const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
+  '/': [routeImports.home],
+  '/listings': [routeImports.listings],
+  '/login': [routeImports.login],
   '/rent-near-campus': [routeImports.rentNearCampus],
   '/international': [routeImports.internationalStudents],
   '/student-accommodation': [routeImports.studentAccommodationIndex],
@@ -106,6 +109,11 @@ export function prefetchRouteChunks(pathname: string): void {
       if (child) importers.push(child)
     }
     prefetch(importers)
+    return
+  }
+
+  if (path.startsWith('/listings/') || path.startsWith('/properties/')) {
+    prefetch([routeImports.propertyDetail])
     return
   }
 
