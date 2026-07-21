@@ -38,7 +38,7 @@ type GroupCardProps = Actions & {
 
 function PropertyBuildingIcon() {
   return (
-    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F3EC]">
+    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--quni-surface-3)]">
       <Building2 className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
     </div>
   )
@@ -46,7 +46,7 @@ function PropertyBuildingIcon() {
 
 function WholePlaceHouseIcon() {
   return (
-    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F4F3EC]">
+    <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--quni-surface-3)]">
       <Home className="h-5 w-5 text-[#B8B2BE]" aria-hidden />
     </div>
   )

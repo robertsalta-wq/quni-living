@@ -65,7 +65,7 @@ const BIO_PLACEHOLDER =
   'Tell students about yourself — your management style, response times, and what makes your properties great to live in.'
 
 const inputClass =
-  'w-full rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
+  'w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]'
 const labelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--quni-ink-4)]'
 const errClass = 'text-red-600 text-xs mt-1'
 
@@ -920,8 +920,8 @@ function PersonalSectionForm({
               className={[
                 'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                 landlordType === opt.value
-                  ? 'border-[var(--quni-coral)] bg-[rgba(255,111,97,0.08)] text-[var(--quni-coral-active)]'
-                  : 'border-[#D8D3C7] bg-white text-[var(--quni-ink-3)] hover:border-admin-coral/40',
+                  ? 'border-[var(--quni-coral)] bg-admin-coral-tint text-[var(--quni-coral-active)]'
+                  : 'border-[var(--quni-input-border)] bg-white text-[var(--quni-ink-3)] hover:border-admin-coral/40',
               ].join(' ')}
             >
               {opt.label}
@@ -936,7 +936,7 @@ function PersonalSectionForm({
       </div>
 
       {needsBiz ? (
-        <div className="rounded-xl border border-[rgba(255,111,97,0.25)] bg-[rgba(255,111,97,0.06)] p-3.5 space-y-3">
+        <div className="rounded-xl border border-[var(--quni-coral-border)] bg-[rgba(255,111,97,0.06)] p-3.5 space-y-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--quni-coral-active)]">
             Required for {landlordTypeLabel(landlordType)} landlords
           </p>
@@ -1298,7 +1298,7 @@ function AboutSectionForm({
           </span>
         )}
         <div>
-          <label className="inline-flex cursor-pointer rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]">
+          <label className="inline-flex cursor-pointer rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]">
             {photoUploading ? 'Uploading…' : 'Change photo'}
             <input
               type="file"
@@ -1588,7 +1588,7 @@ function PayoutsSectionForm({
                 <button
                   type="button"
                   onClick={onAddCard}
-                  className="rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
+                  className="rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
                 >
                   Add card
                 </button>
@@ -1683,7 +1683,7 @@ function InsuranceSectionForm({
             href={p.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#D8D3C7] bg-white px-3 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--quni-input-border)] bg-white px-3 py-2 text-[13px] font-semibold text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
           >
             {p.name}
           </a>

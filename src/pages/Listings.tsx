@@ -243,7 +243,7 @@ export default function Listings() {
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
         {studentOnboardingWelcome && (
           <div
-            className="mb-6 rounded-xl border border-admin-coral/30 bg-[#FFF8F0] px-4 py-3 text-sm text-stone-800 shadow-sm"
+            className="mb-6 rounded-xl border border-admin-coral/30 bg-[var(--quni-coral-soft)] px-4 py-3 text-sm text-stone-800 shadow-sm"
             role="status"
           >
             <span className="font-semibold text-stone-900">Welcome!</span>{' '}

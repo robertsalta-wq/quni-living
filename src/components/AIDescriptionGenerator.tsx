@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 import AiSparkleIcon from './AiSparkleIcon'
 
 const coralBtnClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF6B6B] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--quni-coral)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
 const coralOutlineBtnClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-[#FF6B6B] bg-white px-4 py-2 text-sm font-semibold text-[#FF6B6B] shadow-sm hover:bg-[#FFF5F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--quni-coral)] bg-white px-4 py-2 text-sm font-semibold text-[var(--quni-coral)] shadow-sm hover:bg-[var(--quni-coral-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export type AIDescriptionGeneratorProps = {
   roomType: string
@@ -134,7 +134,7 @@ export default function AIDescriptionGenerator({
               'Generating…'
             ) : (
               <>
-                <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#FF6B6B]" />
+                <AiSparkleIcon className="h-4 w-4 shrink-0 text-[var(--quni-coral)]" />
                 Improve mine
               </>
             )}

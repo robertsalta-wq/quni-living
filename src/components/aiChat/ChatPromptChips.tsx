@@ -42,7 +42,7 @@ export default function ChatPromptChips({ personaKey, onPick, disabled }: Props)
           onClick={() => onPick(c)}
           className={[
             'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
-            'border-admin-coral/30 bg-[#FFF8F0] text-[var(--quni-coral-active)] hover:bg-admin-coral/10 hover:border-admin-coral/50',
+            'border-admin-coral/30 bg-[var(--quni-coral-soft)] text-[var(--quni-coral-active)] hover:bg-admin-coral/10 hover:border-admin-coral/50',
             'disabled:opacity-50 disabled:cursor-not-allowed',
           ].join(' ')}
         >

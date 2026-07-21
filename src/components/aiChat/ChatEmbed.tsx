@@ -28,7 +28,7 @@ export default function ChatEmbed({ listingContext, defaultOpen, variant = 'defa
   }
 
   return (
-    <div className="w-full rounded-2xl border border-admin-coral/30 bg-[#FFF8F0] p-4 shadow-sm">
+    <div className="w-full rounded-2xl border border-admin-coral/30 bg-[var(--quni-coral-soft)] p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[var(--quni-coral-active)]">Ask Quni AI</p>

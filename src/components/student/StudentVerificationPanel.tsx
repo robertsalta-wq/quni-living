@@ -407,7 +407,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
         {hoistedFileInputs}
         {uploadFlashBanner}
         <section
-          className="rounded-2xl border border-admin-coral/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
+          className="rounded-2xl border border-admin-coral/20 bg-[var(--quni-coral-soft)] p-5 sm:p-6 shadow-sm"
           aria-labelledby="verification-summary-heading"
         >
           <h2 id="verification-summary-heading" className="text-lg font-bold text-gray-900">
@@ -635,7 +635,7 @@ export function StudentVerificationPanel({ profile, userId, onRefresh, docUpload
       {hoistedFileInputs}
       {uploadFlashBanner}
       <section
-        className="rounded-2xl border border-admin-coral/20 bg-[#FFF8F0] p-5 sm:p-6 shadow-sm"
+        className="rounded-2xl border border-admin-coral/20 bg-[var(--quni-coral-soft)] p-5 sm:p-6 shadow-sm"
         aria-labelledby="verification-summary-heading"
       >
         <h2 id="verification-summary-heading" className="text-lg font-bold text-gray-900">

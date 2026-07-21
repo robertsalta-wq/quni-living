@@ -45,7 +45,7 @@ function BarSegment({ bar }: { bar: TimelineBar }) {
         left: `${bar.leftPct}%`,
         width: `${bar.widthPct}%`,
         background:
-          'repeating-linear-gradient(45deg, rgba(255,111,97,0.22), rgba(255,111,97,0.22) 4px, rgba(255,111,97,0.08) 4px, rgba(255,111,97,0.08) 8px)',
+          'repeating-linear-gradient(45deg, rgba(255,111,97,0.22), rgba(255,111,97,0.22) 4px, var(--quni-coral-tint) 4px, var(--quni-coral-tint) 8px)',
       }}
       title={bar.label ?? 'Empty'}
     >
@@ -107,7 +107,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
           className="border-[1.5px] border-dashed border-[rgba(255,111,97,0.55)]"
           style={{
             background:
-              'repeating-linear-gradient(45deg, rgba(255,111,97,0.22), rgba(255,111,97,0.22) 3px, rgba(255,111,97,0.08) 3px, rgba(255,111,97,0.08) 6px)',
+              'repeating-linear-gradient(45deg, rgba(255,111,97,0.22), rgba(255,111,97,0.22) 3px, var(--quni-coral-tint) 3px, var(--quni-coral-tint) 6px)',
           }}
           label="Empty"
         />
@@ -150,7 +150,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
                       ${Math.round(room.rentPerWeek)}/wk
                     </p>
                   </div>
-                  <div className="relative h-9 min-w-0 flex-1 rounded-md bg-[#F8F6F1]">
+                  <div className="relative h-9 min-w-0 flex-1 rounded-md bg-[var(--quni-surface-2)]">
                     {/* month gridlines */}
                     {Array.from({ length: 5 }, (_, i) => (
                       <div

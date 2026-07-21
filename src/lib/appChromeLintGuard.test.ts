@@ -66,6 +66,13 @@ describe('findChromeViolations', () => {
     const dirty = `const c = '#FF6F61'\n`
     const v = findChromeViolations('src/pages/Batch1HexProbe.tsx', dirty)
     expect(v.some((x) => x.id === 'batch1-canonical-hex')).toBe(true)
+
+    const batch2 = `const soft = '#FFF8F0'\n`
+    expect(
+      findChromeViolations('src/pages/Batch2HexProbe.tsx', batch2).some(
+        (x) => x.id === 'batch1-canonical-hex',
+      ),
+    ).toBe(true)
   })
 
   it('allowlists Stripe colorPrimary and theme-color lines for Batch-1 hex', () => {

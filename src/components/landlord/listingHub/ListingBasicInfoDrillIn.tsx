@@ -183,7 +183,7 @@ export default function ListingBasicInfoDrillIn({
             maxLength={TITLE_MAX}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Sunny room near UNSW"
-            className="w-full rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
+            className="w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
           />
           <div className="mt-1.5 flex justify-between gap-2">
             <span className="text-xs text-[var(--quni-ink-5)]">Clear and specific helps students find you.</span>
@@ -208,7 +208,7 @@ export default function ListingBasicInfoDrillIn({
                   className={`flex-1 rounded-xl p-3 text-left ${
                     sel
                       ? 'border-[1.5px] border-[var(--quni-coral)] bg-[rgba(255,111,97,0.06)] shadow-[0_0_0_1px_var(--quni-coral)]'
-                      : 'border border-[#D8D3C7] bg-white'
+                      : 'border border-[var(--quni-input-border)] bg-white'
                   }`}
                 >
                   <span className="mb-0.5 flex items-center justify-between gap-1">
@@ -249,7 +249,7 @@ export default function ListingBasicInfoDrillIn({
             onChange={(e) => setHeadline(e.target.value)}
             placeholder="One line students see first"
             maxLength={120}
-            className="w-full rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
+            className="w-full rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3 text-[15px] text-[var(--quni-ink)] outline-none focus:border-[var(--quni-coral)] focus:shadow-[0_0_0_3px_rgba(255,111,97,0.18)]"
           />
           <p className="mt-1.5 text-xs text-[var(--quni-ink-5)]">
             Optional — shown on your edit hub for now until a dedicated field ships.
@@ -263,7 +263,7 @@ export default function ListingBasicInfoDrillIn({
           >
             Available from
           </label>
-          <div className="flex items-center gap-2.5 rounded-[10px] border border-[#D8D3C7] bg-white px-3.5 py-3">
+          <div className="flex items-center gap-2.5 rounded-[10px] border border-[var(--quni-input-border)] bg-white px-3.5 py-3">
             <span className="text-[var(--quni-ink-5)]" aria-hidden>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -338,7 +338,7 @@ export default function ListingBasicInfoDrillIn({
                 className={
                   primary
                     ? 'flex-1 rounded-[10px] bg-[var(--quni-coral)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)] disabled:opacity-50'
-                    : 'flex-1 rounded-[10px] border border-[#D8D3C7] bg-white px-4 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
+                    : 'flex-1 rounded-[10px] border border-[var(--quni-input-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50'
                 }
               >
                 {spec.label}

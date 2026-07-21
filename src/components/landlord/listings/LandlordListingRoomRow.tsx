@@ -93,7 +93,7 @@ export default function LandlordListingRoomRow({
             e.preventDefault()
             setOpen((v) => !v)
           }}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--quni-ink-4)] hover:bg-[#F4F3EC] disabled:opacity-50"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--quni-ink-4)] hover:bg-[var(--quni-surface-3)] disabled:opacity-50"
         >
           <MoreHorizontal className="h-4 w-4" aria-hidden />
         </button>
