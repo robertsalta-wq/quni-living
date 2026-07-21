@@ -67,7 +67,7 @@ export default function LandlordAIFeaturePage() {
   }, [])
 
   return (
-    <div className="w-full min-h-screen bg-[#0F0D0B] text-stone-100">
+    <div className="w-full min-h-screen bg-[var(--quni-ai-dark)] text-stone-100">
       <style>{`
         .ai-reveal {
           opacity: 0;
@@ -84,7 +84,7 @@ export default function LandlordAIFeaturePage() {
         .ai-feature-card {
           border-top: 3px solid transparent;
           border-image: linear-gradient(90deg, var(--quni-coral-hover), #f08f79, var(--quni-coral-hover)) 1;
-          background: #16120f;
+          background: var(--quni-ai-dark-2);
           border-radius: 1rem;
           border-left: 1px solid rgba(232, 88, 58, 0.25);
           border-right: 1px solid rgba(232, 88, 58, 0.25);
@@ -106,7 +106,7 @@ export default function LandlordAIFeaturePage() {
         }
       `}</style>
 
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0F0D0B]/75 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-admin-ai-dark/75 backdrop-blur-md">
         <div className="max-w-site mx-auto w-full px-3 py-4 sm:px-6 flex items-center justify-between gap-3">
           <SiteBrandLockup variant="ai" />
           <Link
@@ -120,7 +120,7 @@ export default function LandlordAIFeaturePage() {
 
       <section className="pt-10 sm:pt-12 pb-16">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 text-center">
-          <div className="ai-reveal inline-flex items-center gap-2 rounded-full border border-admin-coral-hover/35 bg-[#1b1512] px-4 py-1.5 text-xs uppercase tracking-[0.16em] text-stone-200">
+          <div className="ai-reveal inline-flex items-center gap-2 rounded-full border border-admin-coral-hover/35 bg-[var(--quni-ai-dark-2)] px-4 py-1.5 text-xs uppercase tracking-[0.16em] text-stone-200">
             <span className="h-2 w-2 rounded-full bg-[var(--quni-coral-hover)] animate-pulse" /> Now live across Australia
           </div>
           <h1 className="ai-reveal mt-7 text-5xl md:text-7xl leading-[1.04] tracking-tight font-serif text-stone-100">
@@ -149,7 +149,7 @@ export default function LandlordAIFeaturePage() {
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#171310] py-3 overflow-hidden">
+      <section className="border-y border-white/10 bg-[var(--quni-ai-dark)] py-3 overflow-hidden">
         <div className="whitespace-nowrap ai-marquee text-xs md:text-sm uppercase tracking-[0.25em] text-stone-400">
           AI Listing Writer · Smart Pricing Engine · Instant Enquiry Replies · 41 Universities · Stripe Payments ·
           Student Verified · AI Listing Writer · Smart Pricing Engine · Instant Enquiry Replies · 41 Universities ·
@@ -157,7 +157,7 @@ export default function LandlordAIFeaturePage() {
         </div>
       </section>
 
-      <section id="features" className="bg-[#171310] py-20">
+      <section id="features" className="bg-[var(--quni-ai-dark)] py-20">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
           <div className="ai-reveal">
             <p className="text-xs uppercase tracking-[0.2em] text-admin-coral-hover/80">The old way</p>
@@ -175,7 +175,7 @@ export default function LandlordAIFeaturePage() {
               ['💸', 'No idea what to charge', 'Too high students ignore you, too low you lose hundreds per week.'],
               ['📬', 'Enquiries go cold fast', 'Students message five landlords, first to reply wins, slow responses cost tenants.'],
             ].map(([icon, title, desc], i) => (
-              <article key={title} className="ai-reveal rounded-2xl border border-white/10 bg-[#120f0d] p-5">
+              <article key={title} className="ai-reveal rounded-2xl border border-white/10 bg-[var(--quni-ai-dark-2)] p-5">
                 <p className="text-xl">{icon}</p>
                 <h3 className="mt-2 text-lg font-semibold text-stone-100">{title}</h3>
                 <p className="mt-2 text-sm text-stone-400 leading-relaxed">{desc}</p>
@@ -206,7 +206,7 @@ export default function LandlordAIFeaturePage() {
               <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-stone-300">
                 Amenities: Furnished, Wi-Fi, Near campus
               </div>
-              <div className="rounded-lg border border-admin-coral-hover/30 bg-[#2a1713] p-3 text-stone-200">
+              <div className="rounded-lg border border-admin-coral-hover/30 bg-[var(--quni-ai-dark-3)] p-3 text-stone-200">
                 Bright and fully furnished private room in a quiet student-friendly home...
               </div>
               <div className="flex gap-2">
@@ -283,7 +283,7 @@ export default function LandlordAIFeaturePage() {
                   Draft a reply with AI
                 </button>
               </div>
-              <div className="rounded-lg border border-admin-coral-hover/30 bg-[#2a1713] p-3 text-stone-200">
+              <div className="rounded-lg border border-admin-coral-hover/30 bg-[var(--quni-ai-dark-3)] p-3 text-stone-200">
                 Hi Emily, thanks for your enquiry and yes, the room is currently available from next month...
               </div>
               <span className="inline-flex rounded-full bg-emerald-900/35 border border-emerald-600/50 px-2.5 py-1 text-xs font-semibold text-emerald-300">
@@ -294,10 +294,10 @@ export default function LandlordAIFeaturePage() {
         </div>
       </section>
 
-      <section className="bg-[#171310] py-20">
+      <section className="bg-[var(--quni-ai-dark)] py-20">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-5">
-            <article className="ai-reveal rounded-2xl border border-white/15 bg-[#120f0d] p-6">
+            <article className="ai-reveal rounded-2xl border border-white/15 bg-[var(--quni-ai-dark-2)] p-6">
               <h3 className="text-xl font-serif text-stone-100">Other platforms:</h3>
               <ul className="mt-4 space-y-2 text-sm text-stone-300/85">
                 {[
@@ -312,7 +312,7 @@ export default function LandlordAIFeaturePage() {
                 ))}
               </ul>
             </article>
-            <article className="ai-reveal rounded-2xl border border-admin-coral-hover/70 bg-[#1a120f] p-6">
+            <article className="ai-reveal rounded-2xl border border-admin-coral-hover/70 bg-[var(--quni-ai-dark-2)] p-6">
               <h3 className="text-xl font-serif text-[var(--quni-coral-hover)]">Quni Living:</h3>
               <ul className="mt-4 space-y-2 text-sm text-stone-200/90">
                 {[
@@ -331,7 +331,7 @@ export default function LandlordAIFeaturePage() {
         </div>
       </section>
 
-      <section className="bg-[#171310] py-20">
+      <section className="bg-[var(--quni-ai-dark)] py-20">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-5">
             {[
@@ -348,7 +348,7 @@ export default function LandlordAIFeaturePage() {
                 'I used to dread writing replies. Now I click one button and it’s done. I replied to six enquiries in two minutes.',
               ],
             ].map(([name, quote]) => (
-              <article key={name} className="ai-reveal rounded-2xl border border-white/10 bg-[#120f0d] p-6">
+              <article key={name} className="ai-reveal rounded-2xl border border-white/10 bg-[var(--quni-ai-dark-2)] p-6">
                 <p className="text-sm leading-relaxed text-stone-200/95">“{quote}”</p>
                 <p className="mt-4 text-xs uppercase tracking-[0.16em] text-stone-400">{name}</p>
               </article>

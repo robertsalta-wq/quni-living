@@ -36,7 +36,7 @@ export default function LandlordListingsStatusChips({ active, counts, onChange }
                 'inline-flex shrink-0 items-center gap-1 rounded-full border px-[11px] py-1.5 text-[12px] font-semibold transition-colors',
                 isActive
                   ? 'border-transparent bg-[rgba(255,111,97,0.14)] text-[var(--quni-coral-active)]'
-                  : 'border-[var(--quni-line)] bg-white text-[var(--quni-ink-4)] hover:bg-[#FBFAF7]',
+                  : 'border-[var(--quni-line)] bg-white text-[var(--quni-ink-4)] hover:bg-[var(--quni-surface-2)]',
               ].join(' ')}
             >
               <span>{chip.label}</span>

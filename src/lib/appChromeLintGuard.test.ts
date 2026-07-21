@@ -65,12 +65,12 @@ describe('findChromeViolations', () => {
   it('flags Batch-1 canonical brand hex literals', () => {
     const dirty = `const c = '#FF6F61'\n`
     const v = findChromeViolations('src/pages/Batch1HexProbe.tsx', dirty)
-    expect(v.some((x) => x.id === 'batch1-canonical-hex')).toBe(true)
+    expect(v.some((x) => x.id === 'canonical-brand-hex')).toBe(true)
 
     const batch2 = `const soft = '#FFF8F0'\n`
     expect(
       findChromeViolations('src/pages/Batch2HexProbe.tsx', batch2).some(
-        (x) => x.id === 'batch1-canonical-hex',
+        (x) => x.id === 'canonical-brand-hex',
       ),
     ).toBe(true)
   })
@@ -78,18 +78,18 @@ describe('findChromeViolations', () => {
   it('allowlists Stripe colorPrimary and theme-color lines for Batch-1 hex', () => {
     const stripe = `appearance: { theme: 'stripe', variables: { colorPrimary: '#FF6F61' } },\n`
     expect(
-      findChromeViolations('src/pages/Booking.tsx', stripe).filter((x) => x.id === 'batch1-canonical-hex'),
+      findChromeViolations('src/pages/Booking.tsx', stripe).filter((x) => x.id === 'canonical-brand-hex'),
     ).toEqual([])
 
     const theme = `<meta name="theme-color" content="#FF6F61" />\n`
     expect(
-      findChromeViolations('src/components/Seo.tsx', theme).filter((x) => x.id === 'batch1-canonical-hex'),
+      findChromeViolations('src/components/Seo.tsx', theme).filter((x) => x.id === 'canonical-brand-hex'),
     ).toEqual([])
 
     const themeSingle = `<meta name='theme-color' content='#FF6F61' />\n`
     expect(
       findChromeViolations('src/components/Seo.tsx', themeSingle).filter(
-        (x) => x.id === 'batch1-canonical-hex',
+        (x) => x.id === 'canonical-brand-hex',
       ),
     ).toEqual([])
   })
@@ -98,7 +98,7 @@ describe('findChromeViolations', () => {
     const src = `const coral = '#FF6F61'\n`
     expect(
       findChromeViolations('src/lib/documents/quniDocumentPdfTheme.tsx', src).filter(
-        (x) => x.id === 'batch1-canonical-hex',
+        (x) => x.id === 'canonical-brand-hex',
       ),
     ).toEqual([])
   })

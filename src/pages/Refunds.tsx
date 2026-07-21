@@ -150,7 +150,7 @@ export default function Refunds() {
               </div>
             </section>
 
-            <section className="space-y-3 rounded-xl border border-stone-100 bg-[#F6FAF8] px-4 py-5 sm:px-6">
+            <section className="space-y-3 rounded-xl border border-stone-100 bg-[var(--quni-trust-bg)] px-4 py-5 sm:px-6">
               <h2 className="font-display text-lg font-bold text-gray-900">Bond refunds</h2>
               <p className="text-gray-700">
                 Cash bonds and tribunal outcomes are governed by <strong>state or territory residential laws</strong> and{' '}

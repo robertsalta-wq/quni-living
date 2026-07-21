@@ -189,7 +189,7 @@ export default function RentNearCampus() {
         </div>
       </section>
 
-      <div className="w-full overflow-hidden bg-[#1A1A1A] py-3" aria-hidden>
+      <div className="w-full overflow-hidden bg-[var(--quni-ink)] py-3" aria-hidden>
         <div
           className="flex w-fit whitespace-nowrap"
           style={{ animation: 'ticker 30s linear infinite' }}
@@ -221,7 +221,7 @@ export default function RentNearCampus() {
             {WHO_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
+                className="rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-1.5">{card.title}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">{card.body}</p>
@@ -232,7 +232,7 @@ export default function RentNearCampus() {
       </section>
 
       {/* How it works */}
-      <section className="bg-[#F6FAF8] py-14 sm:py-16 border-y border-[#E3EEE9]">
+      <section className="bg-[var(--quni-trust-bg)] py-14 sm:py-16 border-y border-[var(--quni-trust-bg)]">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center !mt-0 !mb-3">
             How it works
@@ -244,7 +244,7 @@ export default function RentNearCampus() {
             {HOW_STEPS.map((step) => (
               <div
                 key={step.n}
-                className="relative rounded-2xl border border-[#E1EAE5] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
+                className="relative rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-7 shadow-sm text-center md:text-left"
               >
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#FFE7E3] text-[var(--quni-coral)] mb-4 mx-auto md:mx-0">
                   {step.n === 1 && (
@@ -317,7 +317,7 @@ export default function RentNearCampus() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-[#F6FAF8] py-12 sm:py-16 border-y border-[#E3EEE9]">
+      <section className="bg-[var(--quni-trust-bg)] py-12 sm:py-16 border-y border-[var(--quni-trust-bg)]">
         <div className="max-w-site mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight text-center !mt-0 !mb-8">
             Common questions

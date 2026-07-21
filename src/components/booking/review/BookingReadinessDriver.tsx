@@ -34,7 +34,7 @@ export default function BookingReadinessDriver({
 
   return (
     <div
-      className={`rounded-xl border border-admin-line-soft bg-[#FBFAF7] px-[15px] pb-1.5 pt-[15px] ${className}`}
+      className={`rounded-xl border border-admin-line-soft bg-[var(--quni-surface-2)] px-[15px] pb-1.5 pt-[15px] ${className}`}
     >
       <div className="mb-0.5 flex items-baseline justify-between gap-2.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-admin-ink-5">
@@ -85,7 +85,7 @@ export default function BookingReadinessDriver({
                   ? 'bg-admin-success'
                   : g.state === 'current'
                     ? 'border-2 border-admin-coral bg-white'
-                    : 'border-2 border-[#E0DCE3] bg-white'
+                    : 'border-2 border-[var(--quni-line)] bg-white'
               }`}
               aria-hidden
             >

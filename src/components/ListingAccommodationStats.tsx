@@ -133,12 +133,12 @@ function RoomInHouseLayout({
       </span>
 
       <div
-        className={`flex min-w-0 flex-1 items-center justify-evenly rounded-xl border border-[#8FB9AB]/30 bg-[#8FB9AB]/10 ${
+        className={`flex min-w-0 flex-1 items-center justify-evenly rounded-xl border border-admin-trust-soft/30 bg-admin-trust-soft/10 ${
           compact ? 'px-2 py-2' : 'px-3 py-3 sm:px-4 sm:py-3.5'
         }`}
       >
         <PropertyStat icon="bed" value={model.beds} label={bedLabel} compact={compact} />
-        <div className={`w-px self-stretch bg-[#8FB9AB]/25 ${compact ? 'my-0.5' : 'my-1'}`} aria-hidden />
+        <div className={`w-px self-stretch bg-admin-trust-soft/25 ${compact ? 'my-0.5' : 'my-1'}`} aria-hidden />
         <PropertyStat icon="bath" value={model.baths} label={bathLabel} compact={compact} />
       </div>
     </div>

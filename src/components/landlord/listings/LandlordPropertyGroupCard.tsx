@@ -68,7 +68,7 @@ export function LandlordWholePlaceListingCard({
       <button
         type="button"
         onClick={() => onEdit(listing)}
-        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[#FBFAF7]"
+        className="flex w-full items-center gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
       >
         <WholePlaceHouseIcon />
         <div className="min-w-0 flex-1">
@@ -105,7 +105,7 @@ export default function LandlordPropertyGroupCard({
         type="button"
         onClick={onToggleExpanded}
         aria-expanded={expanded}
-        className="flex w-full items-start gap-3 p-4 text-left hover:bg-[#FBFAF7]"
+        className="flex w-full items-start gap-3 p-4 text-left hover:bg-[var(--quni-surface-2)]"
       >
         <PropertyBuildingIcon />
         <div className="min-w-0 flex-1">
@@ -133,12 +133,12 @@ export default function LandlordPropertyGroupCard({
         style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="border-t border-[#F0EFEA] bg-[#FBFAF7]">
+          <div className="border-t border-[var(--quni-line-soft)] bg-[var(--quni-surface-2)]">
             {group.visibleListings.map((listing) => {
               const index = group.listings.findIndex((l) => l.id === listing.id)
               const uiStatus = toLandlordListingUiStatus(listing, bookings)
               return (
-                <div key={listing.id} className="border-b border-[#F0EFEA] last:border-b-0">
+                <div key={listing.id} className="border-b border-[var(--quni-line-soft)] last:border-b-0">
                   <LandlordListingRoomRow
                     listing={listing}
                     roomName={landlordRoomDisplayName(listing, index >= 0 ? index : 0)}

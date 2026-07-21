@@ -8,9 +8,9 @@ type Props = {
 export default function WhyQuniTrustBlock({ className = '' }: Props) {
   return (
     <div
-      className={`mx-auto max-w-3xl rounded-2xl border border-[#E1EAE5] bg-[#F6FAF8] p-8 sm:p-10 shadow-sm ${className}`.trim()}
+      className={`mx-auto max-w-3xl rounded-2xl border border-[var(--quni-trust-bg)] bg-[var(--quni-trust-bg)] p-8 sm:p-10 shadow-sm ${className}`.trim()}
     >
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#376256]">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--quni-trust)]">
         {WHY_QUNI_TRUST.eyebrow}
       </p>
       <h2 className="font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl !mt-0 !mb-4">

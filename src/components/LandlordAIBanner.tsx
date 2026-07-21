@@ -66,8 +66,8 @@ export default function LandlordAIBanner() {
       <div className="ai-banner-grid max-w-site mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(182,95,207,0.45)] bg-[rgba(182,95,207,0.2)] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-[#D49EE8]">
-              <AiSparkleIcon className="h-4 w-4 shrink-0 text-[#D49EE8]" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(182,95,207,0.45)] bg-[rgba(182,95,207,0.2)] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-[var(--quni-ai-accent)]">
+              <AiSparkleIcon className="h-4 w-4 shrink-0 text-[var(--quni-ai-accent)]" />
               AI-powered platform
             </div>
             <h2 className="mt-5 font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white">
@@ -129,7 +129,7 @@ export default function LandlordAIBanner() {
 
             <div className="ai-card ai-card-4 absolute bottom-4 right-4 sm:bottom-5 sm:right-5 p-3 w-[42%] min-w-[152px] text-right">
               <p className="text-[10px] uppercase tracking-[0.16em] text-white/50">Data from</p>
-              <p className="mt-1 text-sm font-medium text-[#D49EE8]">Flatmates · Scape · Iglu</p>
+              <p className="mt-1 text-sm font-medium text-[var(--quni-ai-accent)]">Flatmates · Scape · Iglu</p>
             </div>
           </div>
         </div>

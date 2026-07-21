@@ -6,7 +6,7 @@ type Props = {
 
 export default function BookingListDetailStrip({ moveInLabel, endLabel, weeklyRentLabel }: Props) {
   return (
-    <div className="border-y border-[#F0EFEA] py-3">
+    <div className="border-y border-[var(--quni-line-soft)] py-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="min-w-0">
           <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[var(--quni-ink-5)]">Move-in → End</p>

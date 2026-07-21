@@ -107,7 +107,7 @@ export default function LandlordListingRoomRow({
             <button
               type="button"
               role="menuitem"
-              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
+              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
               onClick={() => {
                 setOpen(false)
                 onEdit()
@@ -119,7 +119,7 @@ export default function LandlordListingRoomRow({
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
+                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
                 onClick={() => {
                   setOpen(false)
                   onTogglePause()
@@ -131,7 +131,7 @@ export default function LandlordListingRoomRow({
             <button
               type="button"
               role="menuitem"
-              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
+              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[var(--quni-surface-2)]"
               onClick={() => {
                 setOpen(false)
                 onDuplicate()
@@ -143,7 +143,7 @@ export default function LandlordListingRoomRow({
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[#B4322A] hover:bg-[#FBEBE9]"
+                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-danger-strong)] hover:bg-[var(--quni-danger-bg)]"
                 onClick={() => {
                   setOpen(false)
                   onDeleteDraft()

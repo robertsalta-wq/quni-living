@@ -128,7 +128,7 @@ export default function LandlordProfileHub({
           >
             Sign out
           </button>
-          <span className="text-[#C4BFCB]" aria-hidden>
+          <span className="text-[var(--quni-line)]" aria-hidden>
             ·
           </span>
           <button

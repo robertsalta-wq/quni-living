@@ -233,7 +233,7 @@ export function LandlordStripePayoutsCard({
         className="flex w-full flex-col justify-center rounded-[var(--radius-lg)] border border-[rgba(255,111,97,0.40)] bg-[rgba(255,111,97,0.06)] px-[18px] py-4 shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)] scroll-mt-24"
       >
         <div className="mb-1.5 flex items-center gap-2.5">
-          <span className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[#FBEBE9] text-[#B4322A]">
+          <span className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--quni-danger-bg)] text-[var(--quni-danger-strong)]">
             <svg
               width="15"
               height="15"
