@@ -710,10 +710,8 @@ export default function StudentDashboard() {
                 return (
                   <li key={b.id} className="min-w-0">
                     <div
-                      className={`flex flex-col gap-3 sm:gap-0 sm:overflow-hidden sm:rounded-admin-lg sm:border sm:bg-white sm:shadow-sm ${
-                        isCurrent
-                          ? 'sm:border-admin-line sm:ring-2 sm:ring-admin-coral/20'
-                          : 'sm:border-admin-line-soft'
+                      className={`quni-dashboard-panel flex flex-col gap-3 sm:gap-0 ${
+                        isCurrent ? 'sm:ring-2 sm:ring-admin-coral/20' : ''
                       }`}
                     >
                       <div className="sm:hidden">
@@ -765,7 +763,7 @@ export default function StudentDashboard() {
                         </div>
                       </div>
 
-                      <div className="overflow-hidden rounded-2xl border border-[var(--quni-line)] bg-white shadow-sm sm:rounded-none sm:border-0 sm:border-t sm:border-admin-line-soft sm:shadow-none">
+                      <div className="overflow-hidden sm:border-t sm:border-admin-line-soft">
                         {bookingZones}
                       </div>
                     </div>

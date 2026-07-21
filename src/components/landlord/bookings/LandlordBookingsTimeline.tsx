@@ -75,7 +75,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
 
   if (groups.length === 0) {
     return (
-      <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-8 text-center text-sm text-[var(--quni-ink-4)] shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)]">
+      <div className="quni-dashboard-panel p-8 text-center text-sm text-[var(--quni-ink-4)]">
         Add an active listing to see occupancy across your rooms.
       </div>
     )
@@ -117,7 +117,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
         </span>
       </div>
 
-      <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-3 sm:p-5 shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)] overflow-hidden">
+      <div className="quni-dashboard-panel p-3 sm:p-5">
         <div className="mb-2 flex items-end gap-0">
           <div className="w-[88px] shrink-0 sm:w-[220px]" />
           <div className="relative min-w-0 flex-1">
