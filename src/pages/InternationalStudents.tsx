@@ -24,7 +24,7 @@ export default function InternationalStudents() {
 
             <WhyQuniTrustBlock />
 
-            <section className="rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-8 shadow-sm">
+            <section className="quni-card border-[var(--quni-trust-bg)] p-6 sm:p-8">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
                 Your rights when renting in Australia
               </h2>

@@ -236,7 +236,7 @@ function PreviewGateOverlay({
 
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-admin-coral-soft/80 backdrop-blur-[2px] px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl bg-white border border-admin-coral/25 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.18)] ring-1 ring-stone-900/5 px-6 py-8 sm:px-8 sm:py-9 text-center space-y-4">
+      <div className="quni-card w-full max-w-md space-y-4 border-admin-coral/25 px-6 py-8 text-center sm:px-8 sm:py-9">
         <p className="font-display text-xl sm:text-2xl font-bold text-stone-900 text-balance leading-snug">
           Create a free account to see the full listing and send an enquiry.
         </p>
@@ -1460,7 +1460,7 @@ export default function PropertyDetail() {
               <ListingAccommodationStats property={property} roomLabel={roomLabel} />
             </div>
             <aside className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 w-full">
-              <div className="rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
+              <div className="quni-card p-5 sm:p-6">
                 <div className="pb-4 border-b border-stone-100">
                   <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
                   <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">
@@ -1533,7 +1533,7 @@ export default function PropertyDetail() {
 
               <ListingAccommodationStats property={property} roomLabel={roomLabel} />
 
-              <div className="flex flex-wrap items-center gap-y-2 gap-x-2 rounded-xl bg-white border border-stone-100 px-4 py-2.5 text-sm text-stone-700 shadow-sm">
+              <div className="quni-card flex flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2.5 text-sm text-stone-700">
                 {quickInfoItems.map((item, i) => (
                   <Fragment key={`${item.text}-${i}`}>
                     {i > 0 ? (
@@ -1720,7 +1720,7 @@ export default function PropertyDetail() {
 
             <aside className="order-2 w-full min-w-0">
               <div ref={bookingCardRef} className="md:sticky md:top-28">
-                <div className="hidden md:block rounded-2xl bg-white border border-stone-200 shadow-md p-5 sm:p-6">
+                <div className="quni-card hidden p-5 sm:p-6 md:block">
                   <div className="pb-4 border-b border-stone-100">
                     <p className={`${sectionLabelClass} mb-1.5`}>{listingRent.showFromPrefix ? 'From' : 'Rent'}</p>
                     <p className="font-display text-4xl sm:text-[2.75rem] font-bold text-[var(--quni-coral)] tracking-tight">

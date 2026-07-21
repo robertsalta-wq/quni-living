@@ -117,7 +117,7 @@ export default function StudentAccommodationIndex() {
       />
 
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        <aside className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[var(--quni-trust-bg)] bg-white p-6 sm:p-8 shadow-sm">
+        <aside className="quni-card mx-auto mb-10 max-w-3xl border-[var(--quni-trust-bg)] p-6 sm:p-8">
           <h2 className="font-display text-lg font-bold text-gray-900 sm:text-xl !mt-0 !mb-3">
             {INTERNATIONAL_STUDENTS.title}
           </h2>
@@ -195,7 +195,7 @@ export default function StudentAccommodationIndex() {
                         <Link
                           key={u.id}
                           to={`/student-accommodation/${u.slug}`}
-                          className="block rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="quni-card block p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <h3 className="font-semibold text-gray-900 text-base">{u.name}</h3>
                           <p className="text-sm text-gray-500 mt-1">
@@ -228,7 +228,7 @@ export default function StudentAccommodationIndex() {
                         <Link
                           key={u.id}
                           to={`/student-accommodation/${u.slug}`}
-                          className="block rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all"
+                          className="quni-card block p-5 transition-all hover:shadow-md"
                         >
                           <h3 className="font-semibold text-gray-900 text-base">{u.name}</h3>
                           <p className="text-sm text-gray-500 mt-1">

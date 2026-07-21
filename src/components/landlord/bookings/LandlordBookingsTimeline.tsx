@@ -217,8 +217,8 @@ function StatChip({
   return (
     <div
       className={[
-        'rounded-2xl border bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]',
-        accent ? 'border-[rgba(255,111,97,0.35)]' : 'border-[var(--quni-line)]',
+        'quni-card px-3 py-2.5',
+        accent ? 'border-[rgba(255,111,97,0.35)]' : '',
       ].join(' ')}
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--quni-ink-4)]">{label}</p>

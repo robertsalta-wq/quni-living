@@ -44,7 +44,7 @@ export default function Faq() {
           {FAQ_SECTIONS.map((section) => (
             <section key={section.id} id={`faq-${section.id}`} className="scroll-mt-32 md:scroll-mt-36">
               <h2 className="font-display text-xl font-bold text-gray-900 sm:text-2xl">{section.label}</h2>
-              <div className="mt-4 rounded-2xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-100">
+              <div className="quni-card mt-4 divide-y divide-gray-100">
                 {section.items.map((item) => {
                   const open = openFaqId === item.id
                   return (

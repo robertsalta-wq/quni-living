@@ -124,7 +124,7 @@ export default function Verification() {
             <h2 id="quick-answers-heading" className="font-display text-xl font-bold text-gray-900 sm:text-2xl">
               Quick answers
             </h2>
-            <dl className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <dl className="quni-card mt-6 divide-y divide-gray-100">
               {QUICK_ANSWERS.map((item) => (
                 <div key={item.q} className="px-5 py-4 sm:px-6">
                   <dt className="text-sm font-medium text-gray-900 sm:text-base">{item.q}</dt>

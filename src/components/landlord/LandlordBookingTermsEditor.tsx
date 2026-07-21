@@ -362,7 +362,7 @@ export default function LandlordBookingTermsEditor({
         className={
           embedded
             ? 'text-sm text-admin-ink-5'
-            : 'rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card text-sm text-admin-ink-5'
+            : 'quni-card p-6 text-sm text-admin-ink-5'
         }
       >
         Loading booking terms editor…
@@ -377,7 +377,7 @@ export default function LandlordBookingTermsEditor({
       className={
         embedded
           ? 'space-y-4'
-          : 'rounded-admin-lg border border-admin-line bg-admin-surface-1 p-6 shadow-admin-card space-y-4'
+          : 'quni-card space-y-4 p-6'
       }
     >
       {embedded ? null : (

@@ -2201,7 +2201,7 @@ export default function Booking() {
               request.
             </p>
           ) : null}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 space-y-4 text-sm text-gray-700 leading-relaxed">
+          <div className="quni-card space-y-4 p-5 text-sm leading-relaxed text-gray-700 sm:p-6">
             <p>
               {bondAmountAud != null ? (
                 <>

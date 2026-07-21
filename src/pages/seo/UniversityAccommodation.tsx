@@ -84,7 +84,7 @@ function AreaGuideBlock(props: {
     : 'Check your local operator for student and concession fares.'
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm" aria-labelledby="area-guide-heading">
+    <section className="quni-card p-6 sm:p-8" aria-labelledby="area-guide-heading">
       <h2 id="area-guide-heading" className="font-display text-xl font-bold text-gray-900">
         Living near {props.universityName}
       </h2>
@@ -567,7 +567,7 @@ export default function UniversityAccommodation({
 
         {!loading && university && (
           <>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-700 bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm">
+            <div className="quni-card flex flex-wrap gap-4 px-5 py-4 text-sm text-gray-700">
               <span className="font-medium">
                 {stats.propertyCount} propert{stats.propertyCount !== 1 ? 'ies' : 'y'} available
               </span>
@@ -599,7 +599,7 @@ export default function UniversityAccommodation({
                     <Link
                       key={c.id}
                       to={`/student-accommodation/${university.slug}/${pathSlug}`}
-                      className="block rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      className="quni-card block p-5 transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
                       <h3 className="font-semibold text-gray-900">{c.name}</h3>
                       <p className="text-sm text-gray-500 mt-1">
@@ -628,7 +628,7 @@ export default function UniversityAccommodation({
                 </Link>
               </div>
               {featuredExact.length === 0 && featuredNearby.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center">
+                <div className="quni-card border-dashed border-gray-200 p-8 text-center">
                   <p className="text-gray-700 font-medium">No listings yet - check back soon</p>
                   <p className="text-sm text-gray-500 mt-2">
                     Want updates when rooms go live near {university.name}?

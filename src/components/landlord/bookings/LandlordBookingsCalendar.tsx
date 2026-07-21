@@ -152,7 +152,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
 
         <div className="space-y-2">
           {agendaDays.length === 0 ? (
-            <p className="rounded-2xl border border-[var(--quni-line)] bg-white p-6 text-center text-sm text-[var(--quni-ink-4)]">
+            <p className="quni-card p-6 text-center text-sm text-[var(--quni-ink-4)]">
               No events this month.
             </p>
           ) : (
@@ -247,7 +247,7 @@ function EventChip({ event }: { event: CalendarEvent }) {
 function AgendaRow({ event, date }: { event: CalendarEvent; date: Date }) {
   const badge = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
   const body = (
-    <div className="flex items-start gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]">
+    <div className="quni-card flex items-start gap-3 px-3 py-2.5">
       <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[var(--quni-surface-2)] text-center">
         <span className="text-[10px] font-semibold uppercase text-[var(--quni-ink-4)]">
           {date.toLocaleDateString('en-AU', { weekday: 'short' })}

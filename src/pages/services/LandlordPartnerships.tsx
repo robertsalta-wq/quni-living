@@ -82,7 +82,7 @@ export default function LandlordPartnerships() {
       {/* AI features banner */}
       <section className="bg-[#FDF0EC] border-b border-admin-coral/20">
         <div className="max-w-site mx-auto px-6 py-10 md:py-12">
-          <div className="w-full rounded-2xl border border-admin-coral/25 bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
+          <div className="quni-card w-full border-admin-coral/25 px-6 py-7 sm:px-8 sm:py-8">
             <p className="mb-2 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--quni-coral)] sm:text-xs">
               <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
               Powered by AI
@@ -117,20 +117,20 @@ export default function LandlordPartnerships() {
             The numbers that matter
           </h2>
           <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="quni-card p-6 transition-shadow hover:shadow-md sm:p-8">
               <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Yield</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Choose whole-property stability or room-by-room optimisation. Pricing is structured for consistent cash flow.
               </p>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="quni-card p-6 transition-shadow hover:shadow-md sm:p-8">
               <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Vacancy</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Built around demand near universities - recurring student interest and longer stays improve occupancy
                 stability.
               </p>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="quni-card p-6 transition-shadow hover:shadow-md sm:p-8">
               <h3 className="font-display text-lg font-bold text-[var(--quni-coral)]">Predictability</h3>
               <p className="mt-3 text-sm text-gray-600 leading-relaxed">
                 Clear weekly rent, documented house rules and standards, and one professional manager overseeing the process.
@@ -263,7 +263,7 @@ export default function LandlordPartnerships() {
               <p className="mt-5 text-gray-900 font-semibold">One manager. One process. No chaos.</p>
             </div>
             <div>
-              <div className="rounded-2xl border-2 border-admin-coral/35 bg-white p-6 sm:p-8 shadow-md">
+              <div className="quni-card border-2 border-admin-coral/35 p-6 sm:p-8">
                 <h2 className="font-display text-xl font-bold text-gray-900">Quick example</h2>
                 <p className="mt-2 font-medium text-gray-900">Example: three-bedroom apartment</p>
                 <ul className="mt-4 space-y-3 text-gray-700 text-sm sm:text-base leading-relaxed">

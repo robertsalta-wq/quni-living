@@ -40,7 +40,7 @@ export default function Guides() {
                 <li key={seo.slug}>
                   <Link
                     to={`/guides/${seo.slug}`}
-                    className="block rounded-2xl border border-admin-navy/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
+                    className="quni-card block px-5 py-4 transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
                   >
                     <span className="block font-medium text-[var(--quni-navy)]">{seo.navLabel ?? seo.headline}</span>
                     <span className="mt-1 block text-sm leading-relaxed text-admin-navy/70">{seo.metaDescription}</span>
@@ -60,7 +60,7 @@ export default function Guides() {
               <li key={item.to}>
                 <Link
                   to={item.to}
-                  className="flex h-full flex-col rounded-2xl border border-admin-navy/10 bg-white px-5 py-4 shadow-sm transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
+                  className="quni-card flex h-full flex-col px-5 py-4 transition-colors hover:border-admin-coral/35 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40"
                 >
                   <span className="font-medium text-[var(--quni-navy)]">{item.label}</span>
                   <span className="mt-1 text-sm leading-relaxed text-admin-navy/70">{item.description}</span>

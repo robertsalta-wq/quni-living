@@ -1,10 +1,8 @@
 import type { Database } from '../../lib/database.types'
 import { studentDisplayName as resolveStudentDisplayName } from '../../lib/nameResolution'
 
-export const adminCardClass =
-  'rounded-admin-lg border border-admin-line bg-white p-5 shadow-admin-card'
-export const adminTableWrapClass =
-  'overflow-x-auto rounded-admin-lg border border-admin-line bg-white shadow-admin-card'
+export const adminCardClass = 'quni-card p-5'
+export const adminTableWrapClass = 'quni-card overflow-x-auto'
 export const adminThClass =
   'whitespace-nowrap border-b border-admin-line bg-admin-surface-2 px-3.5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-admin-ink-5'
 export const adminTdClass =

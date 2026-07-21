@@ -111,7 +111,7 @@ function LandlordPartnershipAd() {
 function ContactFaqPanel({ openFaqId, onToggleFaq }: { openFaqId: string | null; onToggleFaq: (id: string) => void }) {
   return (
     <aside className="lg:sticky lg:top-24">
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
+      <div className="quni-card p-5 md:p-6">
         <h2 className="font-display text-base font-bold text-gray-900">Common questions</h2>
         <div className="mt-3 divide-y divide-gray-100 border-t border-gray-100">
           {CONTACT_FAQ.map((item) => {
@@ -241,7 +241,7 @@ export default function Contact() {
       <div className="max-w-site mx-auto px-6 py-12 md:py-16 w-full">
         <div className="grid gap-10 lg:grid-cols-12 lg:gap-12 items-start">
           <div className="lg:col-span-8 space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+          <div className="quni-card p-6 md:p-8">
             <h2 className="font-display text-lg font-bold text-gray-900">Send a message</h2>
             <ContactDetails />
             {sent ? (

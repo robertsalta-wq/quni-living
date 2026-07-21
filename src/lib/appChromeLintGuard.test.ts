@@ -161,9 +161,7 @@ describe('findChromeViolations', () => {
   it('allowlists containerLegacy + primitive card wrappers for hand-rolled-card', () => {
     const dirty = `<div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" />`
     expect(
-      findChromeViolations('src/components/DashboardPageSkeleton.tsx', dirty).filter(
-        (x) => x.id === 'hand-rolled-card',
-      ),
+      findChromeViolations('src/pages/Faq.tsx', dirty).filter((x) => x.id === 'hand-rolled-card'),
     ).toEqual([])
     expect(
       findChromeViolations('src/components/ui/Section.tsx', dirty).filter(
