@@ -266,7 +266,7 @@ function studyLevelToYear(level: string): number | null {
 }
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:border-[#FF6F61]'
+  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:border-[var(--quni-coral)]'
 const selectClass = inputClass
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1'
 const errClass = 'text-red-600 text-xs mt-1'
@@ -302,7 +302,7 @@ function AccommodationRouteSwitchCallout({
 }: AccommodationRouteSwitchCalloutProps) {
   return (
     <div
-      className="rounded-xl border border-[#FF6F61]/15 bg-[#FF6F61]/5 px-4 py-3.5 space-y-3"
+      className="rounded-xl border border-admin-coral/15 bg-admin-coral/5 px-4 py-3.5 space-y-3"
       role="region"
       aria-label={`${badgeLabel} account type`}
     >
@@ -1122,7 +1122,7 @@ export default function StudentOnboarding() {
   if (loading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center bg-stone-50">
-        <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+        <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -1131,7 +1131,7 @@ export default function StudentOnboarding() {
     return (
       <div className="max-w-lg mx-auto px-6 py-12 text-center">
         <p className="text-red-700 text-sm">{loadError ?? 'Profile not found.'}</p>
-        <Link to="/student-dashboard" className="text-sm text-[#FF6F61] font-medium mt-4 inline-block">
+        <Link to="/student-dashboard" className="text-sm text-[var(--quni-coral)] font-medium mt-4 inline-block">
           Back to dashboard
         </Link>
       </div>
@@ -1153,7 +1153,7 @@ export default function StudentOnboarding() {
   const routeChoiceCardClass = (selected: boolean) =>
     `rounded-xl border-2 p-5 text-left transition-colors w-full ${
       selected
-        ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+        ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
         : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/80'
     }`
 
@@ -1168,7 +1168,7 @@ export default function StudentOnboarding() {
       <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-8">
         {!welcome && showResumeDraftBanner && (
           <div
-            className="mb-4 rounded-xl border border-[#FF6F61]/25 bg-[#FF6F61]/8 px-4 py-3 text-sm text-stone-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            className="mb-4 rounded-xl border border-admin-coral/25 bg-admin-coral/8 px-4 py-3 text-sm text-stone-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
             role="region"
             aria-label="Saved draft"
           >
@@ -1180,7 +1180,7 @@ export default function StudentOnboarding() {
                   resumeDraftBannerDismissedKeyRef.current = location.key
                   setShowResumeDraftBanner(false)
                 }}
-                className="rounded-lg bg-[#FF6F61] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#e85d52]"
+                className="rounded-lg bg-[var(--quni-coral)] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[var(--quni-coral-hover)]"
               >
                 Continue editing
               </button>
@@ -1216,7 +1216,7 @@ export default function StudentOnboarding() {
               <button
                 type="button"
                 onClick={finishToListings}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6F61] text-white px-6 py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors shadow-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--quni-coral)] text-white px-6 py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors shadow-sm"
               >
                 Browse listings →
               </button>
@@ -1262,13 +1262,13 @@ export default function StudentOnboarding() {
           ) : (
             <>
               {needsUniEmail ? (
-                <div className="h-1.5 rounded-full bg-[#FF6F61] mb-8" aria-hidden />
+                <div className="h-1.5 rounded-full bg-[var(--quni-coral)] mb-8" aria-hidden />
               ) : (
                 <div className="flex gap-2 mb-8">
                   {([1, 2, 3] as const).map((n) => (
                     <div
                       key={n}
-                      className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[#FF6F61]' : 'bg-stone-200'}`}
+                      className={`h-1.5 flex-1 rounded-full ${n <= step ? 'bg-[var(--quni-coral)]' : 'bg-stone-200'}`}
                       aria-hidden
                     />
                   ))}
@@ -1346,7 +1346,7 @@ export default function StudentOnboarding() {
                       )}
                     </div>
                     <label className="cursor-pointer">
-                      <span className="text-sm font-medium text-[#FF6F61] hover:underline">Upload photo</span>
+                      <span className="text-sm font-medium text-[var(--quni-coral)] hover:underline">Upload photo</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
                     </label>
                     {photoUploading && <p className="text-xs text-stone-500">Uploading…</p>}
@@ -1546,7 +1546,7 @@ export default function StudentOnboarding() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-6 py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-6 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50 transition-colors"
                     >
                       {submitting ? 'Saving…' : 'Continue →'}
                     </button>
@@ -1622,7 +1622,7 @@ export default function StudentOnboarding() {
                     {fieldErrors.emergencyEmail && <p className={errClass}>{fieldErrors.emergencyEmail}</p>}
                   </div>
 
-                  <div className="rounded-xl border border-stone-200 bg-[#FEF9E4]/50 px-4 py-4 space-y-4">
+                  <div className="rounded-xl border border-stone-200 bg-admin-cream/50 px-4 py-4 space-y-4">
                     <h3 className="text-sm font-bold text-stone-900">Living preferences</h3>
                     <p className="text-xs text-stone-600">Optional - helps landlords see if you&apos;re a good fit.</p>
                     <div>
@@ -1688,7 +1688,7 @@ export default function StudentOnboarding() {
                           type="checkbox"
                           checked={hasPets}
                           onChange={(ev) => setHasPets(ev.target.checked)}
-                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                          className="rounded border-stone-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
                         />
                         I have pets
                       </label>
@@ -1697,7 +1697,7 @@ export default function StudentOnboarding() {
                           type="checkbox"
                           checked={needsParking}
                           onChange={(ev) => setNeedsParking(ev.target.checked)}
-                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                          className="rounded border-stone-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
                         />
                         I need parking
                       </label>
@@ -1742,7 +1742,7 @@ export default function StudentOnboarding() {
                           type="checkbox"
                           checked={hasGuarantor}
                           onChange={(ev) => setHasGuarantor(ev.target.checked)}
-                          className="rounded border-stone-300 text-[#FF6F61] focus:ring-[#FF6F61]"
+                          className="rounded border-stone-300 text-[var(--quni-coral)] focus:ring-[var(--quni-coral)]"
                         />
                         I have a guarantor
                       </label>
@@ -1773,7 +1773,7 @@ export default function StudentOnboarding() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-6 py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 transition-colors"
+                      className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-6 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50 transition-colors"
                     >
                       {submitting ? 'Saving…' : 'Continue →'}
                     </button>
@@ -1801,7 +1801,7 @@ export default function StudentOnboarding() {
                           setTermsAccepted(ev.target.checked)
                           setFieldErrors((prev) => ({ ...prev, terms: '' }))
                         }}
-                        className="h-5 w-5 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] accent-[#FF6F61]"
+                        className="h-5 w-5 rounded border-stone-300 text-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)] accent-[var(--quni-coral)]"
                       />
                     </span>
                     <span className="pt-2.5 min-w-0">
@@ -1840,7 +1840,7 @@ export default function StudentOnboarding() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-6 py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50 transition-colors"
+                      className="order-1 sm:order-2 inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-6 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50 transition-colors"
                     >
                       {submitting ? 'Saving…' : 'Complete setup →'}
                     </button>

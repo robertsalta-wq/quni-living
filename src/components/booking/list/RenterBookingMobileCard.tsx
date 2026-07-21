@@ -14,7 +14,7 @@ function renterStatusPillClass(status: TenantBookingStatus): string {
   if (status === 'expired' || status === 'declined' || status === 'payment_failed' || status === 'cancelled') {
     return bookingListStatusPillClass('expired')
   }
-  return `${base} bg-[#F4F3EC] text-[#6B6375]`
+  return `${base} bg-[#F4F3EC] text-[var(--quni-ink-4)]`
 }
 
 type Props = {
@@ -46,12 +46,12 @@ export default function RenterBookingMobileCard({
         {propertySlug ? (
           <Link
             to={`/properties/${propertySlug}`}
-            className="min-w-0 text-[15px] font-semibold text-[#1F2A44] hover:underline underline-offset-2"
+            className="min-w-0 text-[15px] font-semibold text-[var(--quni-navy)] hover:underline underline-offset-2"
           >
             {propertyTitle}
           </Link>
         ) : (
-          <p className="min-w-0 text-[15px] font-semibold text-[#1F2A44]">{propertyTitle}</p>
+          <p className="min-w-0 text-[15px] font-semibold text-[var(--quni-navy)]">{propertyTitle}</p>
         )}
         <BookingListStatusPill
           status={status}
@@ -60,7 +60,7 @@ export default function RenterBookingMobileCard({
         />
       </div>
 
-      {suburbLine ? <p className="mt-2 text-[12px] text-[#6B6375]">{suburbLine}</p> : null}
+      {suburbLine ? <p className="mt-2 text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p> : null}
 
       <div className="mt-3">
         <BookingListDetailStrip

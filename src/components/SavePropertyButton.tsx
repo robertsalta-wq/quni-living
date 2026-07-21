@@ -52,8 +52,8 @@ export function SavePropertyButton({
         className={[
           'flex w-full items-center justify-center gap-2 rounded-xl border-2 py-3.5 text-sm font-semibold tracking-wide transition-colors',
           saved
-            ? 'border-[#FF6F61] bg-[#FF6F61]/10 text-[#FF6F61]'
-            : 'border-stone-200 bg-white text-stone-700 hover:border-[#FF6F61]/50 hover:text-[#FF6F61]',
+            ? 'border-[var(--quni-coral)] bg-admin-coral/10 text-[var(--quni-coral)]'
+            : 'border-stone-200 bg-white text-stone-700 hover:border-admin-coral/50 hover:text-[var(--quni-coral)]',
           className,
         ].join(' ')}
       >
@@ -70,8 +70,8 @@ export function SavePropertyButton({
       aria-pressed={saved}
       aria-label={label}
       className={[
-        'absolute top-3 right-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm transition-colors hover:text-[#FF6F61]',
-        saved ? 'text-[#FF6F61]' : '',
+        'absolute top-3 right-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm transition-colors hover:text-[var(--quni-coral)]',
+        saved ? 'text-[var(--quni-coral)]' : '',
         className,
       ].join(' ')}
     >

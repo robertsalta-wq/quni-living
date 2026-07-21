@@ -6,7 +6,7 @@ import BookingListStatusPill from './BookingListStatusPill'
 import BookingListVerificationChips from './BookingListVerificationChips'
 
 export const bookingListMobileCardClass =
-  'rounded-2xl border border-[#E5E4E7] bg-white p-4 shadow-sm'
+  'rounded-2xl border border-[var(--quni-line)] bg-white p-4 shadow-sm'
 
 type ActionLink = {
   label: string
@@ -34,9 +34,9 @@ type Props = {
 function actionClass(variant: 'primary' | 'secondary', disabled?: boolean): string {
   const base = 'inline-flex min-h-[44px] items-center text-[13px] font-semibold underline-offset-2'
   if (variant === 'primary') {
-    return `${base} text-[#FF6F61] hover:underline ${disabled ? 'opacity-50 pointer-events-none' : ''}`
+    return `${base} text-[var(--quni-coral)] hover:underline ${disabled ? 'opacity-50 pointer-events-none' : ''}`
   }
-  return `${base} text-[#6B6375] hover:underline`
+  return `${base} text-[var(--quni-ink-4)] hover:underline`
 }
 
 export default function LandlordBookingMobileCard({
@@ -62,19 +62,19 @@ export default function LandlordBookingMobileCard({
           <button
             type="button"
             onClick={onStudentClick}
-            className="min-w-0 text-left text-[15px] font-semibold text-[#1F2A44] hover:underline underline-offset-2"
+            className="min-w-0 text-left text-[15px] font-semibold text-[var(--quni-navy)] hover:underline underline-offset-2"
           >
             {studentName}
           </button>
         ) : (
-          <p className="min-w-0 text-[15px] font-semibold text-[#1F2A44]">{studentName}</p>
+          <p className="min-w-0 text-[15px] font-semibold text-[var(--quni-navy)]">{studentName}</p>
         )}
         <BookingListStatusPill status={status} />
       </div>
 
       <div className="mt-3 min-w-0">
-        <p className="text-[13px] font-semibold text-[#08060D]">{propertyTitle}</p>
-        {suburbLine ? <p className="mt-0.5 text-[12px] text-[#6B6375]">{suburbLine}</p> : null}
+        <p className="text-[13px] font-semibold text-[var(--quni-ink)]">{propertyTitle}</p>
+        {suburbLine ? <p className="mt-0.5 text-[12px] text-[var(--quni-ink-4)]">{suburbLine}</p> : null}
       </div>
 
       <div className="mt-3">
@@ -113,7 +113,7 @@ export default function LandlordBookingMobileCard({
         })}
       </div>
 
-      {footnote ? <p className="mt-2 text-[11px] leading-snug text-[#6B6375]">{footnote}</p> : null}
+      {footnote ? <p className="mt-2 text-[11px] leading-snug text-[var(--quni-ink-4)]">{footnote}</p> : null}
     </article>
   )
 }

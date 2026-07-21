@@ -45,7 +45,7 @@ const RENTER_NAV_TO: Record<string, string> = {
 function itemClass(coral: boolean): string {
   return [
     'relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 select-none touch-manipulation [-webkit-touch-callout:none]',
-    coral ? 'text-[#FF6F61]' : 'text-[#6B6375]',
+    coral ? 'text-[var(--quni-coral)]' : 'text-[var(--quni-ink-4)]',
   ].join(' ')
 }
 
@@ -114,7 +114,7 @@ function NavBar({ role }: { role: 'landlord' | 'renter' }) {
               <span className="relative inline-flex">
                 <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.9} aria-hidden />
                 {showBadge ? (
-                  <span className="absolute -right-2 -top-1 inline-flex min-h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF6F61] px-1 text-[9px] font-bold leading-none text-white tabular-nums">
+                  <span className="absolute -right-2 -top-1 inline-flex min-h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[var(--quni-coral)] px-1 text-[9px] font-bold leading-none text-white tabular-nums">
                     {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
                   </span>
                 ) : null}

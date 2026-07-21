@@ -19,7 +19,7 @@ function BarSegment({ bar }: { bar: TimelineBar }) {
   if (bar.kind === 'occupied') {
     return (
       <div
-        className={`${base} bg-[#1D9E75]`}
+        className={`${base} bg-[var(--quni-success)]`}
         style={{ left: `${bar.leftPct}%`, width: `${bar.widthPct}%` }}
         title="Occupied"
       />
@@ -28,7 +28,7 @@ function BarSegment({ bar }: { bar: TimelineBar }) {
   if (bar.kind === 'upcoming') {
     return (
       <div
-        className={`${base} border-[1.5px] border-dashed border-[#1D9E75]`}
+        className={`${base} border-[1.5px] border-dashed border-[var(--quni-success)]`}
         style={{
           left: `${bar.leftPct}%`,
           width: `${bar.widthPct}%`,
@@ -75,7 +75,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
 
   if (groups.length === 0) {
     return (
-      <div className="rounded-2xl border border-[#E5E4E7] bg-white p-8 text-center text-sm text-[#6B6375] shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)]">
+      <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-8 text-center text-sm text-[var(--quni-ink-4)] shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)]">
         Add an active listing to see occupancy across your rooms.
       </div>
     )
@@ -97,10 +97,10 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
         <StatChip label="Requests awaiting you" value={String(stats.requestsAwaiting)} accent />
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[#6B6375]">
-        <LegendSwatch className="bg-[#1D9E75]" label="Occupied" />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[var(--quni-ink-4)]">
+        <LegendSwatch className="bg-[var(--quni-success)]" label="Occupied" />
         <LegendSwatch
-          className="border-[1.5px] border-dashed border-[#1D9E75] bg-[rgba(29,158,117,0.15)]"
+          className="border-[1.5px] border-dashed border-[var(--quni-success)] bg-[rgba(29,158,117,0.15)]"
           label="Upcoming"
         />
         <LegendSwatch
@@ -112,16 +112,16 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
           label="Empty"
         />
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full border-2 border-[#FF6F61] bg-white" />
+          <span className="h-2.5 w-2.5 rounded-full border-2 border-[var(--quni-coral)] bg-white" />
           Pending request
         </span>
       </div>
 
-      <div className="rounded-2xl border border-[#E5E4E7] bg-white p-3 sm:p-5 shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)] overflow-hidden">
+      <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-3 sm:p-5 shadow-[0_1px_2px_rgba(8,6,13,0.08),0_1px_3px_rgba(8,6,13,0.06)] overflow-hidden">
         <div className="mb-2 flex items-end gap-0">
           <div className="w-[88px] shrink-0 sm:w-[220px]" />
           <div className="relative min-w-0 flex-1">
-            <div className="grid grid-cols-6 text-[10px] font-medium uppercase tracking-wide text-[#908897]">
+            <div className="grid grid-cols-6 text-[10px] font-medium uppercase tracking-wide text-[var(--quni-ink-5)]">
               {monthLabels.map((m) => (
                 <span key={m} className="truncate">
                   {m}
@@ -134,19 +134,19 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
         <div className="space-y-5">
           {groups.map((g) => (
             <div key={g.key} className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6B6375]">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--quni-ink-4)]">
                 {g.addressLabel}
                 {g.suburb ? (
-                  <span className="font-normal text-[#908897]"> · {g.suburb}</span>
+                  <span className="font-normal text-[var(--quni-ink-5)]"> · {g.suburb}</span>
                 ) : null}
               </p>
               {g.rooms.map((room) => (
                 <div key={room.propertyId} className="flex items-center gap-0 min-w-0">
                   <div className="w-[88px] shrink-0 pr-2 sm:w-[220px] sm:pr-3">
-                    <p className="truncate text-xs font-semibold text-[#08060D]" title={room.roomLabel}>
+                    <p className="truncate text-xs font-semibold text-[var(--quni-ink)]" title={room.roomLabel}>
                       {room.roomLabel}
                     </p>
-                    <p className="truncate text-[10px] text-[#908897]">
+                    <p className="truncate text-[10px] text-[var(--quni-ink-5)]">
                       ${Math.round(room.rentPerWeek)}/wk
                     </p>
                   </div>
@@ -155,7 +155,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
                     {Array.from({ length: 5 }, (_, i) => (
                       <div
                         key={i}
-                        className="absolute top-0 bottom-0 w-px bg-[#E5E4E7]/80"
+                        className="absolute top-0 bottom-0 w-px bg-admin-line/80"
                         style={{ left: `${((i + 1) / 6) * 100}%` }}
                       />
                     ))}
@@ -164,7 +164,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
                     ))}
                     {/* today line */}
                     <div
-                      className="absolute top-0 bottom-0 z-10 w-0 border-l border-dashed border-[#1F2A44]/50"
+                      className="absolute top-0 bottom-0 z-10 w-0 border-l border-dashed border-admin-navy/50"
                       style={{ left: `${todayLeft}%` }}
                       title="Today"
                     />
@@ -188,7 +188,7 @@ export default function LandlordBookingsTimeline({ listings, bookings }: Props) 
                           style={{ left: `${m.leftPct}%`, top: '50%', marginTop: -5 }}
                           title="Pending request"
                         >
-                          <span className="block h-2.5 w-2.5 rounded-full border-2 border-[#FF6F61] bg-white" />
+                          <span className="block h-2.5 w-2.5 rounded-full border-2 border-[var(--quni-coral)] bg-white" />
                         </div>
                       ),
                     )}
@@ -218,11 +218,11 @@ function StatChip({
     <div
       className={[
         'rounded-2xl border bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]',
-        accent ? 'border-[rgba(255,111,97,0.35)]' : 'border-[#E5E4E7]',
+        accent ? 'border-[rgba(255,111,97,0.35)]' : 'border-[var(--quni-line)]',
       ].join(' ')}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B6375]">{label}</p>
-      <p className="mt-0.5 text-lg font-bold tabular-nums text-[#08060D]">{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--quni-ink-4)]">{label}</p>
+      <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--quni-ink)]">{value}</p>
       {sub ? <p className="text-[10px] font-medium text-[#B4322A]">{sub}</p> : null}
     </div>
   )

@@ -103,7 +103,7 @@ const statCardClass =
 const profileStatCardClass =
   'flex flex-col rounded-admin-lg border border-admin-coral-30 bg-admin-coral-tint p-4 sm:p-5 shadow-sm min-w-0 lg:min-h-[10rem] h-full'
 
-const cardClass = 'rounded-admin-lg border border-[#E5E4E7] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
+const cardClass = 'rounded-admin-lg border border-[var(--quni-line)] bg-white p-5 shadow-[0_1px_2px_rgba(8,6,13,0.05)]'
 
 function propertyAddressLine(property: PropertyBookingEmbed): string {
   return (
@@ -765,7 +765,7 @@ export default function StudentDashboard() {
                         </div>
                       </div>
 
-                      <div className="overflow-hidden rounded-2xl border border-[#E5E4E7] bg-white shadow-sm sm:rounded-none sm:border-0 sm:border-t sm:border-admin-line-soft sm:shadow-none">
+                      <div className="overflow-hidden rounded-2xl border border-[var(--quni-line)] bg-white shadow-sm sm:rounded-none sm:border-0 sm:border-t sm:border-admin-line-soft sm:shadow-none">
                         {bookingZones}
                       </div>
                     </div>

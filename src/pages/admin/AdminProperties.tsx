@@ -21,7 +21,7 @@ function authorityToLetBadgeClass(attested: boolean) {
 }
 
 function listerRoleBadgeClass(role: PropertyRow['lister_role']) {
-  return role === 'head_tenant' ? 'bg-[#FF6F61]/15 text-[#1B2A4A]' : 'bg-slate-100 text-slate-700'
+  return role === 'head_tenant' ? 'bg-admin-coral/15 text-[var(--quni-navy)]' : 'bg-slate-100 text-slate-700'
 }
 
 function listerRoleLabel(role: PropertyRow['lister_role']) {
@@ -173,7 +173,7 @@ export default function AdminProperties() {
           onClick={() => setListerRoleFilter('all')}
           className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
             listerRoleFilter === 'all'
-              ? 'bg-[#1B2A4A] text-white'
+              ? 'bg-[var(--quni-navy)] text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -184,7 +184,7 @@ export default function AdminProperties() {
           onClick={() => setListerRoleFilter('head_tenant')}
           className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
             listerRoleFilter === 'head_tenant'
-              ? 'bg-[#FF6F61] text-white'
+              ? 'bg-[var(--quni-coral)] text-white'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >

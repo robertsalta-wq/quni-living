@@ -295,7 +295,7 @@ export function LandlordStripePayoutsCard({
         type="button"
         disabled={connectLoading || syncLoading}
         onClick={() => void startStripeConnect()}
-        className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50 whitespace-nowrap"
+        className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-medium hover:bg-[var(--quni-coral-hover)] shadow-sm disabled:opacity-50 whitespace-nowrap"
       >
         {connectLoading ? 'Opening Stripe…' : 'Continue Stripe setup'}
       </button>
@@ -303,7 +303,7 @@ export function LandlordStripePayoutsCard({
         type="button"
         disabled={manageLoading || connectLoading || syncLoading}
         onClick={() => void manageBankAccount()}
-        className="inline-flex items-center justify-center rounded-xl border border-[#FF6F61]/40 bg-white text-[#FF6F61] px-5 py-2.5 text-sm font-medium hover:bg-[#FFF5F4] shadow-sm disabled:opacity-50 whitespace-nowrap"
+        className="inline-flex items-center justify-center rounded-xl border border-admin-coral/40 bg-white text-[var(--quni-coral)] px-5 py-2.5 text-sm font-medium hover:bg-[#FFF5F4] shadow-sm disabled:opacity-50 whitespace-nowrap"
       >
         {manageLoading ? 'Opening Stripe…' : 'Manage bank account →'}
       </button>
@@ -321,7 +321,7 @@ export function LandlordStripePayoutsCard({
       type="button"
       disabled={connectLoading}
       onClick={() => void startStripeConnect()}
-      className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#e85d52] shadow-sm disabled:opacity-50 whitespace-nowrap"
+      className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-medium hover:bg-[var(--quni-coral-hover)] shadow-sm disabled:opacity-50 whitespace-nowrap"
     >
       {connectLoading ? 'Opening Stripe…' : 'Connect bank account →'}
     </button>
@@ -361,7 +361,7 @@ export function LandlordStripePayoutsCard({
       {landlordTypeHint && (
         <p className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-4 leading-relaxed">
           {landlordTypeHint}{' '}
-          <Link to={landlordDashboardProfilePath('personal')} className="font-semibold text-[#FF6F61] underline underline-offset-2">
+          <Link to={landlordDashboardProfilePath('personal')} className="font-semibold text-[var(--quni-coral)] underline underline-offset-2">
             Update profile type
           </Link>
         </p>
@@ -389,7 +389,7 @@ export function LandlordStripePayoutsCard({
               <button
                 type="button"
                 onClick={() => setResetConfirmOpen(true)}
-                className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
               >
                 Start Stripe setup over
               </button>
@@ -405,7 +405,7 @@ export function LandlordStripePayoutsCard({
                   type="button"
                   disabled={resetLoading}
                   onClick={() => void resetStripeSetup()}
-                  className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white px-4 py-2 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
                 >
                   {resetLoading ? 'Resetting…' : 'Yes, start over'}
                 </button>

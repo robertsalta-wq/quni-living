@@ -11,7 +11,7 @@ function childText(node: ReactNode): string {
 }
 
 const guideLinkClass =
-  'font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40 rounded-sm'
+  'font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40 rounded-sm'
 
 export default function GuideMarkdown({ markdown }: { markdown: string }) {
   return (
@@ -52,7 +52,7 @@ export default function GuideMarkdown({ markdown }: { markdown: string }) {
           </a>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="border-l-4 border-[#FF6F61]/40 pl-4 text-gray-600 italic mb-4">{children}</blockquote>
+          <blockquote className="border-l-4 border-admin-coral/40 pl-4 text-gray-600 italic mb-4">{children}</blockquote>
         ),
       }}
     >

@@ -491,7 +491,7 @@ export default function LandlordTenantInviteModal({ open, property, landlordProf
             <button
               type="submit"
               disabled={creating || !landlordProfileId || !canSendEmail}
-              className="flex-1 rounded-xl bg-[#FF6F61] text-white py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
+              className="flex-1 rounded-xl bg-[var(--quni-coral)] text-white py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"
             >
               {creating && canSendEmail ? 'Sending…' : 'Send invite email'}
             </button>

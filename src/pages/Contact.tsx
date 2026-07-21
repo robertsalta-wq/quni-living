@@ -26,7 +26,7 @@ const CONTACT_FAQ = [
     answer: (
       <>
         See{' '}
-        <Link to="/services/landlord-partnerships" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/services/landlord-partnerships" className="font-medium text-[var(--quni-coral)] hover:underline">
           landlord partnerships
         </Link>{' '}
         for how Listing and Managed differ, then choose <strong>Landlord Enquiry</strong> in the form if you still have
@@ -40,7 +40,7 @@ const CONTACT_FAQ = [
     answer: (
       <>
         Use subject <strong>Partnership</strong> in the form, or visit{' '}
-        <Link to="/services/landlord-partnerships" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/services/landlord-partnerships" className="font-medium text-[var(--quni-coral)] hover:underline">
           For landlords
         </Link>{' '}
         for an overview first.
@@ -53,7 +53,7 @@ const CONTACT_FAQ = [
     answer: (
       <>
         See our{' '}
-        <Link to="/refunds" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/refunds" className="font-medium text-[var(--quni-coral)] hover:underline">
           refunds policy
         </Link>{' '}
         for timelines. For a booking already in progress, sign in and use support from your dashboard.
@@ -67,7 +67,7 @@ function ContactDetails() {
     <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm">
       <p className="text-gray-700">
         Prefer email?{' '}
-        <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-[#FF6F61] hover:underline">
+        <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-[var(--quni-coral)] hover:underline">
           {CONTACT_EMAIL}
         </a>
         {' · '}
@@ -83,8 +83,8 @@ function ContactDetails() {
 
 function LandlordPartnershipAd() {
   return (
-    <div className="rounded-2xl border border-[#FF6F61]/25 bg-[#FF6F61]/5 p-6 md:p-7">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#FF6F61]">For landlords</p>
+    <div className="rounded-2xl border border-admin-coral/25 bg-admin-coral/5 p-6 md:p-7">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--quni-coral)]">For landlords</p>
       <h3 className="font-display mt-2 text-lg font-bold text-gray-900">Portfolio or many properties?</h3>
       <p className="mt-3 text-sm leading-relaxed text-gray-600">
         If you own several rentals near campus - or want to place a block of rooms with a university - Quni can help you
@@ -97,10 +97,10 @@ function LandlordPartnershipAd() {
         <strong className="font-medium text-gray-800">Landlord Enquiry</strong> above if you&apos;d like us to follow up.
       </p>
       <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
-        <Link to="/services/landlord-partnerships" className="text-[#FF6F61] hover:underline">
+        <Link to="/services/landlord-partnerships" className="text-[var(--quni-coral)] hover:underline">
           Explore landlord partnerships →
         </Link>
-        <Link to="/pricing" className="text-gray-700 hover:text-[#FF6F61] hover:underline">
+        <Link to="/pricing" className="text-gray-700 hover:text-[var(--quni-coral)] hover:underline">
           View pricing
         </Link>
       </div>
@@ -120,7 +120,7 @@ function ContactFaqPanel({ openFaqId, onToggleFaq }: { openFaqId: string | null;
               <div key={item.id} className="border-b border-gray-100">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-3 py-3 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40"
+                  className="flex w-full items-center justify-between gap-3 py-3 text-left text-sm font-medium text-gray-900 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40"
                   aria-expanded={open}
                   onClick={() => onToggleFaq(item.id)}
                 >
@@ -322,7 +322,7 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white px-6 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-60"
+                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white px-6 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity disabled:opacity-60"
                 >
                   {submitting ? 'Sending…' : 'Send Message'}
                 </button>

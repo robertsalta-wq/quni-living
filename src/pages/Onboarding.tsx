@@ -345,7 +345,7 @@ export default function Onboarding() {
               setTermsPrivacy(e.target.checked)
               setAgreementError(false)
             }}
-            className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-0 accent-[#FF6F61]"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)] focus:ring-offset-0 accent-[var(--quni-coral)]"
           />
           <span>
             I agree to the{' '}
@@ -353,7 +353,7 @@ export default function Onboarding() {
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+              className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
             >
               Terms of Service
             </a>{' '}
@@ -362,7 +362,7 @@ export default function Onboarding() {
               href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+              className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
             >
               Privacy Policy
             </a>
@@ -378,7 +378,7 @@ export default function Onboarding() {
                 setLandlordAgreement(e.target.checked)
                 setAgreementError(false)
               }}
-              className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-0 accent-[#FF6F61]"
+              className="mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)] focus:ring-offset-0 accent-[var(--quni-coral)]"
             />
             <span>
               I agree to the{' '}
@@ -386,7 +386,7 @@ export default function Onboarding() {
                 href="/landlord-service-agreement"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#FF6F61] font-medium underline underline-offset-2 hover:opacity-90"
+                className="text-[var(--quni-coral)] font-medium underline underline-offset-2 hover:opacity-90"
               >
                 Landlord Service Agreement
               </a>
@@ -399,7 +399,7 @@ export default function Onboarding() {
         type="button"
         disabled={submitting}
         onClick={() => void handleComplete()}
-        className="w-full rounded-xl bg-[#FF6F61] text-white py-3.5 text-sm font-semibold hover:bg-[#e85d52] transition-colors disabled:opacity-50 shadow-sm"
+        className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] transition-colors disabled:opacity-50 shadow-sm"
       >
         {submitting ? 'Saving…' : 'Continue'}
       </button>

@@ -34,7 +34,7 @@ export default function LandlordAIBanner() {
         .ai-cursor::after {
           content: '|';
           margin-left: 1px;
-          color: #E8583A;
+          color: var(--quni-coral-hover);
           animation: ai-cursor 900ms steps(1, end) infinite;
         }
         @keyframes ai-breathe {
@@ -72,7 +72,7 @@ export default function LandlordAIBanner() {
             </div>
             <h2 className="mt-5 font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-white">
               Your listings. Priced. Written.
-              <span className="block italic text-[#E8583A]">Filled by AI.</span>
+              <span className="block italic text-[var(--quni-coral-hover)]">Filled by AI.</span>
             </h2>
             <p className="mt-4 text-white/50 text-base sm:text-lg leading-relaxed max-w-xl">
               A verified accommodation platform where AI writes your listing, prices it with live market data,
@@ -81,7 +81,7 @@ export default function LandlordAIBanner() {
             <div className="mt-6">
               <Link
                 to="/landlords/ai"
-                className="inline-flex items-center justify-center rounded-xl bg-[#E8583A] text-white px-5 py-2.5 text-sm font-semibold hover:opacity-95 transition-opacity"
+                className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral-hover)] text-white px-5 py-2.5 text-sm font-semibold hover:opacity-95 transition-opacity"
               >
                 See how it works →
               </Link>
@@ -105,10 +105,10 @@ export default function LandlordAIBanner() {
 
             <div className="ai-card absolute top-4 left-4 sm:top-5 sm:left-5 p-3 w-[42%] min-w-[152px]">
               <p className="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-white/50">
-                <AiSparkleIcon className="h-3 w-3 shrink-0 text-[#E8583A]/90" />
+                <AiSparkleIcon className="h-3 w-3 shrink-0 text-admin-coral-hover/90" />
                 AI listing
               </p>
-              <p className="mt-1 text-sm font-medium text-[#E8583A] ai-cursor">Writing your description</p>
+              <p className="mt-1 text-sm font-medium text-[var(--quni-coral-hover)] ai-cursor">Writing your description</p>
             </div>
 
             <div className="ai-card ai-card-2 absolute top-4 right-4 sm:top-5 sm:right-5 p-3 w-[42%] min-w-[152px] text-right">

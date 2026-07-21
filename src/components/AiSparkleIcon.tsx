@@ -1,4 +1,4 @@
-/** Heroicons outline sparkles; use with `className` for size/colour (`text-[#FF6F61]`, `h-4 w-4`, etc.). */
+/** Heroicons outline sparkles; use with `className` for size/colour (`text-[var(--quni-coral)]`, `h-4 w-4`, etc.). */
 export default function AiSparkleIcon({ className }: { className?: string }) {
   return (
     <svg

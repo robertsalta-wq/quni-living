@@ -117,11 +117,11 @@ export default function GuideArticlePage() {
 
         <p className="mx-auto mt-8 max-w-3xl text-center text-sm text-gray-600">
           More for international students?{' '}
-          <Link to="/international" className="font-medium text-[#FF6F61] hover:underline">
+          <Link to="/international" className="font-medium text-[var(--quni-coral)] hover:underline">
             Australian platform &amp; your rights
           </Link>
           {' · '}
-          <Link to="/listings" className="font-medium text-[#FF6F61] hover:underline">
+          <Link to="/listings" className="font-medium text-[var(--quni-coral)] hover:underline">
             Browse listings
           </Link>
         </p>

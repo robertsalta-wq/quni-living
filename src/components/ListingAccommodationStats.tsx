@@ -102,12 +102,12 @@ function RoomInHouseLayout({
       aria-label={ariaLabel ?? undefined}
     >
       <div
-        className={`flex min-w-0 shrink-0 items-center gap-2.5 rounded-xl border border-[#FF6F61]/20 bg-[#FF6F61]/8 ${
+        className={`flex min-w-0 shrink-0 items-center gap-2.5 rounded-xl border border-admin-coral/20 bg-admin-coral/8 ${
           compact ? 'px-3 py-2' : 'px-3.5 py-3 sm:px-4 sm:py-3.5'
         }`}
       >
         <span
-          className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-[#FF6F61]/12 text-[#FF6F61] ${
+          className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-admin-coral/12 text-[var(--quni-coral)] ${
             compact ? 'h-8 w-8' : 'h-9 w-9'
           }`}
         >
@@ -198,11 +198,11 @@ function SimpleLayout({
     >
       {roomLabel ? (
         <span
-          className={`inline-flex items-center gap-1.5 rounded-full border border-[#FF6F61]/20 bg-[#FF6F61]/8 font-medium text-stone-800 ${
+          className={`inline-flex items-center gap-1.5 rounded-full border border-admin-coral/20 bg-admin-coral/8 font-medium text-stone-800 ${
             compact ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'
           }`}
         >
-          <DoorIcon className={`text-[#FF6F61] ${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
+          <DoorIcon className={`text-[var(--quni-coral)] ${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
           {roomLabel}
         </span>
       ) : null}

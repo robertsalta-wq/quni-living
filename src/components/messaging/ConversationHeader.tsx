@@ -45,7 +45,7 @@ export default function ConversationHeader({
       <div className="min-w-0 flex-1">
         <Link
           to={listingHref}
-          className="block truncate text-sm font-semibold text-gray-900 hover:text-[#FF6F61]"
+          className="block truncate text-sm font-semibold text-gray-900 hover:text-[var(--quni-coral)]"
         >
           {property.title}
         </Link>

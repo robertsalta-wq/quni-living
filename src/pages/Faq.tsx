@@ -33,7 +33,7 @@ export default function Faq() {
             <a
               key={section.id}
               href={`#faq-${section.id}`}
-              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-[#FF6F61]/40 hover:text-[#FF6F61] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]/40"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-admin-coral/40 hover:text-[var(--quni-coral)] focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-coral/40"
             >
               {section.label}
             </a>
@@ -51,7 +51,7 @@ export default function Faq() {
                     <div key={item.id}>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium text-gray-900 hover:bg-gray-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF6F61]/40 sm:px-6 sm:text-base"
+                        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-medium text-gray-900 hover:bg-gray-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-admin-coral/40 sm:px-6 sm:text-base"
                         aria-expanded={open}
                         onClick={() => setOpenFaqId((current) => (current === item.id ? null : item.id))}
                       >
@@ -78,14 +78,14 @@ export default function Faq() {
           ))}
         </div>
 
-        <div className="mt-14 rounded-2xl border border-[#FF6F61]/25 bg-[#FF6F61]/5 p-6 md:p-8 text-center">
+        <div className="mt-14 rounded-2xl border border-admin-coral/25 bg-admin-coral/5 p-6 md:p-8 text-center">
           <h2 className="font-display text-lg font-bold text-gray-900">Still have a question?</h2>
           <p className="mt-2 text-sm text-gray-600 max-w-lg mx-auto">
             We are happy to help - send a message and we will usually reply within one business day.
           </p>
           <Link
             to="/contact"
-            className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#FF6F61] px-6 py-2.5 text-sm font-medium text-white hover:opacity-95"
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] px-6 py-2.5 text-sm font-medium text-white hover:opacity-95"
           >
             Contact us
           </Link>

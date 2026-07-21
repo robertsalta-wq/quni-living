@@ -29,7 +29,7 @@ export default function QldRtaLodgementGuidance({ className, compact = false, em
           href={QLD_RTA_HOME_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-[#FF6F61] underline underline-offset-2"
+          className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
         >
           RTA Queensland
         </a>
@@ -38,7 +38,7 @@ export default function QldRtaLodgementGuidance({ className, compact = false, em
           href={QLD_RTA_BOARDERS_LODGERS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-[#FF6F61] underline underline-offset-2"
+          className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
         >
           Boarders and lodgers
         </a>

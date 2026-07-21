@@ -439,24 +439,24 @@ export function buildTimelineModel(
 export function calendarEventDotClass(kind: CalendarEventKind): string {
   switch (kind) {
     case 'move_in':
-      return 'bg-[#1D9E75]'
+      return 'bg-[var(--quni-success)]'
     case 'move_out':
       return 'bg-[#C99A00]'
     case 'bond_due':
       return 'bg-[#B4322A]'
     case 'rent_payout':
-      return 'bg-[#FF6F61]'
+      return 'bg-[var(--quni-coral)]'
     case 'pending_request':
-      return 'bg-[#FF6F61]'
+      return 'bg-[var(--quni-coral)]'
     default:
-      return 'bg-[#6B6375]'
+      return 'bg-[var(--quni-ink-4)]'
   }
 }
 
 export function calendarEventChipClass(kind: CalendarEventKind): string {
   switch (kind) {
     case 'move_in':
-      return 'bg-[#E6F4EE] text-[#0F6E56] border-[#1D9E75]/30'
+      return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)] border-admin-success/30'
     case 'move_out':
       return 'bg-[#FEF3C7] text-[#8A6D00] border-[#C99A00]/40'
     case 'bond_due':
@@ -464,9 +464,9 @@ export function calendarEventChipClass(kind: CalendarEventKind): string {
     case 'rent_payout':
       return 'bg-[rgba(255,111,97,0.12)] text-[#B4322A] border-[rgba(255,111,97,0.35)]'
     case 'pending_request':
-      return 'bg-[rgba(255,111,97,0.12)] text-[#FF6F61] border-[rgba(255,111,97,0.4)]'
+      return 'bg-[rgba(255,111,97,0.12)] text-[var(--quni-coral)] border-[rgba(255,111,97,0.4)]'
     default:
-      return 'bg-[#F4F3EC] text-[#6B6375] border-[#E5E4E7]'
+      return 'bg-[#F4F3EC] text-[var(--quni-ink-4)] border-[var(--quni-line)]'
   }
 }
 
@@ -692,13 +692,13 @@ export function buildNext7Days(
 export function next7TagClass(tag: Next7DayTag): string {
   if (tag === 'Urgent') return 'bg-[rgba(255,111,97,0.15)] text-[#B4322A]'
   if (tag === 'Action') return 'bg-[#FEF3C7] text-[#8A6D00]'
-  return 'bg-[#E6F4EE] text-[#0F6E56]'
+  return 'bg-[var(--quni-success-bg)] text-[var(--quni-success-strong)]'
 }
 
 export function next7DotClass(tag: Next7DayTag): string {
   if (tag === 'Urgent') return 'bg-[#B4322A]'
   if (tag === 'Action') return 'bg-[#C99A00]'
-  return 'bg-[#1D9E75]'
+  return 'bg-[var(--quni-success)]'
 }
 
 export function formatMoneyCompact(amount: number): string {

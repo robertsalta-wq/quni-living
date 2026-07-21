@@ -27,7 +27,7 @@ export default function LandlordListingBondObligations({ obligations, className,
             href={obligations.authorityUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[#FF6F61] underline underline-offset-2"
+            className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
           >
             {obligations.authorityLabel}
           </a>

@@ -106,7 +106,7 @@ export default function Services() {
               to={to}
               className="group flex flex-col bg-white rounded-2xl border border-gray-100 p-8 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#FF6F61]/10 text-[#FF6F61] mb-4">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-admin-coral/10 text-[var(--quni-coral)] mb-4">
                 <Icon className="w-6 h-6" />
               </span>
               <h2 className="font-display text-xl font-bold text-gray-900 group-hover:text-[#c45c52] transition-colors">
@@ -122,7 +122,7 @@ export default function Services() {
         </div>
       </section>
 
-      <section className="bg-[#FF6F61] text-white mt-auto">
+      <section className="bg-[var(--quni-coral)] text-white mt-auto">
         <div className="max-w-site mx-auto px-6 py-14 md:py-16 text-center">
           <h2 className="font-display text-2xl sm:text-3xl font-bold">Not sure where to start?</h2>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">

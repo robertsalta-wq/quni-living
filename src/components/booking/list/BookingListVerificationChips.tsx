@@ -4,8 +4,8 @@ import { buildBookingListVerificationChips } from '../../../lib/bookingListMobil
 
 const chipClass = {
   neutral:
-    'inline-flex items-center gap-1 rounded-full border border-[#E5E4E7] bg-[#F4F3EC] px-2.5 py-1 text-[11px] font-semibold text-[#08060D]',
-  navy: 'inline-flex items-center gap-1 rounded-full border border-[rgba(31,42,68,0.18)] bg-[rgba(31,42,68,0.08)] px-2.5 py-1 text-[11px] font-semibold text-[#1F2A44]',
+    'inline-flex items-center gap-1 rounded-full border border-[var(--quni-line)] bg-[#F4F3EC] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-ink)]',
+  navy: 'inline-flex items-center gap-1 rounded-full border border-[rgba(31,42,68,0.18)] bg-[rgba(31,42,68,0.08)] px-2.5 py-1 text-[11px] font-semibold text-[var(--quni-navy)]',
 } as const
 
 type Props = {
@@ -16,7 +16,7 @@ type Props = {
 export default function BookingListVerificationChips({ verification }: Props) {
   const chips = buildBookingListVerificationChips(verification)
   if (chips.length === 0) {
-    return <p className="text-[12px] text-[#6B6375]">No verification completed.</p>
+    return <p className="text-[12px] text-[var(--quni-ink-4)]">No verification completed.</p>
   }
 
   return (

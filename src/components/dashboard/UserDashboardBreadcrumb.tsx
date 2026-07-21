@@ -29,7 +29,7 @@ export default function UserDashboardBreadcrumb({ segments, className = '' }: Pr
               </Link>
             ) : (
               <span
-                className={`min-w-0 truncate ${isLast ? 'text-[#FF6F61] font-medium' : 'text-stone-600'}`}
+                className={`min-w-0 truncate ${isLast ? 'text-[var(--quni-coral)] font-medium' : 'text-stone-600'}`}
                 title={segment.label}
                 aria-current={isLast ? 'page' : undefined}
               >

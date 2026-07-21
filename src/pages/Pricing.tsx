@@ -165,7 +165,7 @@ const faqBuckets: FaqBucket[] = [
           <>
             Bond and tenancy disputes are between the parties or resolved through the relevant state tribunal. Quni may
             help with platform or payment administration where it custodies funds; see our{' '}
-            <Link to="/refunds" className="font-medium text-[#FF6F61] underline hover:opacity-90">
+            <Link to="/refunds" className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
               Refund Policy
             </Link>{' '}
             for money Quni actually receives.
@@ -633,7 +633,7 @@ export default function Pricing() {
         </div>
 
         <section className="max-w-site mx-auto w-full px-6 py-10 md:py-12">
-          <h2 className="font-display text-center text-3xl font-bold text-[#FF6F61] sm:text-4xl">How it works</h2>
+          <h2 className="font-display text-center text-3xl font-bold text-[var(--quni-coral)] sm:text-4xl">How it works</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[#6B6B6B]">
             {managedTierEnabled
               ? 'Parallel flows for Quni Listing and Quni Managed - three steps each for renters and landlords.'
@@ -642,7 +642,7 @@ export default function Pricing() {
           <div className="mt-8 flex justify-center">
             <Link
               to="/how-it-works"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white transition-colors hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white transition-colors hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             >
               See Listing vs Managed flows →
             </Link>
@@ -672,7 +672,7 @@ export default function Pricing() {
                         >
                           <span className="font-semibold text-gray-900">{item.question}</span>
                           <svg
-                            className={`h-5 w-5 shrink-0 text-[#FF6F61] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            className={`h-5 w-5 shrink-0 text-[var(--quni-coral)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
                             viewBox="0 0 20 20"
                             fill="none"
                             stroke="currentColor"
@@ -694,13 +694,13 @@ export default function Pricing() {
           </div>
         </section>
 
-        <section className="w-full bg-[#FF6F61]">
+        <section className="w-full bg-[var(--quni-coral)]">
           <div className="max-w-site mx-auto px-6 py-12 md:py-14 text-center">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">Ready to find your place?</h2>
             <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to="/properties"
-                className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] border border-white hover:bg-white/95 transition-colors"
+                className="inline-flex items-center justify-center gap-1 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] border border-white hover:bg-white/95 transition-colors"
               >
                 Find a property
                 <span aria-hidden>→</span>

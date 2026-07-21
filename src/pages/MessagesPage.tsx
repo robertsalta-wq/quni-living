@@ -82,7 +82,7 @@ function MessagesPanes({
         ) : threadError || !conversation ? (
           <div className="p-6">
             <p className="text-sm text-red-700">{threadError ?? 'Conversation not found'}</p>
-            <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[#FF6F61] hover:underline">
+            <Link to="/messages" className="mt-4 inline-block text-sm font-medium text-[var(--quni-coral)] hover:underline">
               Back to messages
             </Link>
           </div>

@@ -20,7 +20,7 @@ function FeatureRow({ number, tag, title, description, points, reverse = false, 
       className={`grid grid-cols-1 gap-8 lg:gap-14 items-center ${reverse ? 'lg:grid-cols-[1.05fr_0.95fr]' : 'lg:grid-cols-[0.95fr_1.05fr]'} ai-reveal`}
     >
       <div className={reverse ? 'lg:order-2' : ''}>
-        <p className="text-xs uppercase tracking-[0.2em] text-[#E8583A]/80">
+        <p className="text-xs uppercase tracking-[0.2em] text-admin-coral-hover/80">
           {number} · {tag}
         </p>
         <h3 className="mt-3 text-3xl md:text-4xl leading-tight text-stone-100 font-serif">{title}</h3>
@@ -28,7 +28,7 @@ function FeatureRow({ number, tag, title, description, points, reverse = false, 
         <ul className="mt-6 space-y-2 text-sm md:text-base text-stone-300/80">
           {points.map((point) => (
             <li key={point} className="flex items-start gap-2">
-              <span className="mt-1 text-[#E8583A]" aria-hidden>
+              <span className="mt-1 text-[var(--quni-coral-hover)]" aria-hidden>
                 •
               </span>
               <span>{point}</span>
@@ -83,7 +83,7 @@ export default function LandlordAIFeaturePage() {
         }
         .ai-feature-card {
           border-top: 3px solid transparent;
-          border-image: linear-gradient(90deg, #E8583A, #f08f79, #E8583A) 1;
+          border-image: linear-gradient(90deg, var(--quni-coral-hover), #f08f79, var(--quni-coral-hover)) 1;
           background: #16120f;
           border-radius: 1rem;
           border-left: 1px solid rgba(232, 88, 58, 0.25);
@@ -111,7 +111,7 @@ export default function LandlordAIFeaturePage() {
           <SiteBrandLockup variant="ai" />
           <Link
             to="/landlord/onboarding"
-            className="inline-flex items-center rounded-xl bg-[#E8583A] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 transition"
+            className="inline-flex items-center rounded-xl bg-[var(--quni-coral-hover)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 transition"
           >
             List your property →
           </Link>
@@ -120,12 +120,12 @@ export default function LandlordAIFeaturePage() {
 
       <section className="pt-10 sm:pt-12 pb-16">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 text-center">
-          <div className="ai-reveal inline-flex items-center gap-2 rounded-full border border-[#E8583A]/35 bg-[#1b1512] px-4 py-1.5 text-xs uppercase tracking-[0.16em] text-stone-200">
-            <span className="h-2 w-2 rounded-full bg-[#E8583A] animate-pulse" /> Now live across Australia
+          <div className="ai-reveal inline-flex items-center gap-2 rounded-full border border-admin-coral-hover/35 bg-[#1b1512] px-4 py-1.5 text-xs uppercase tracking-[0.16em] text-stone-200">
+            <span className="h-2 w-2 rounded-full bg-[var(--quni-coral-hover)] animate-pulse" /> Now live across Australia
           </div>
           <h1 className="ai-reveal mt-7 text-5xl md:text-7xl leading-[1.04] tracking-tight font-serif text-stone-100">
             The smartest way to
-            <span className="block italic text-[#E8583A]">rent to students.</span>
+            <span className="block italic text-[var(--quni-coral-hover)]">rent to students.</span>
           </h1>
           <p className="ai-reveal mt-6 max-w-3xl mx-auto text-base md:text-xl text-stone-300/90 leading-relaxed">
             Quni Living is a verified accommodation platform with built-in AI - from writing your listing to
@@ -134,7 +134,7 @@ export default function LandlordAIFeaturePage() {
           <div className="ai-reveal mt-8 flex flex-col sm:flex-row justify-center gap-3">
             <Link
               to="/landlord/onboarding"
-              className="inline-flex items-center justify-center rounded-xl bg-[#E8583A] px-6 py-3 text-sm font-semibold text-white hover:brightness-110 transition"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral-hover)] px-6 py-3 text-sm font-semibold text-white hover:brightness-110 transition"
             >
               List your property free →
             </Link>
@@ -160,7 +160,7 @@ export default function LandlordAIFeaturePage() {
       <section id="features" className="bg-[#171310] py-20">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
           <div className="ai-reveal">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#E8583A]/80">The old way</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-admin-coral-hover/80">The old way</p>
             <h2 className="mt-3 text-3xl md:text-5xl leading-tight text-stone-100 font-serif">
               Every other platform leaves you to figure it out alone.
             </h2>
@@ -206,20 +206,20 @@ export default function LandlordAIFeaturePage() {
               <div className="rounded-lg border border-white/10 bg-black/20 p-3 text-stone-300">
                 Amenities: Furnished, Wi-Fi, Near campus
               </div>
-              <div className="rounded-lg border border-[#E8583A]/30 bg-[#2a1713] p-3 text-stone-200">
+              <div className="rounded-lg border border-admin-coral-hover/30 bg-[#2a1713] p-3 text-stone-200">
                 Bright and fully furnished private room in a quiet student-friendly home...
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8583A] px-3 py-2 text-xs font-semibold text-white"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--quni-coral-hover)] px-3 py-2 text-xs font-semibold text-white"
                 >
                   <AiSparkleIcon className="h-3.5 w-3.5 shrink-0 text-white" />
                   Write with AI
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E8583A]/60 px-3 py-2 text-xs font-semibold text-[#E8583A]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-admin-coral-hover/60 px-3 py-2 text-xs font-semibold text-[var(--quni-coral-hover)]"
                 >
                   <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                   Improve mine
@@ -244,14 +244,14 @@ export default function LandlordAIFeaturePage() {
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-[0.16em] text-stone-400">Suggested weekly rent range</p>
               <p className="text-4xl md:text-5xl font-serif text-stone-100">$280 - $320 /week</p>
-              <div className="border-l-4 border-[#E8583A] bg-black/20 p-3 text-sm text-stone-300">
+              <div className="border-l-4 border-[var(--quni-coral-hover)] bg-black/20 p-3 text-sm text-stone-300">
                 Similar private rooms in Kensington are listing between $280-$320. Scape and Iglu sit higher, making
                 $300 competitive and realistic.
               </div>
               <p className="text-xs text-stone-500">Sources: Flatmates.com.au · Scape · Iglu</p>
               <button
                 type="button"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#E8583A] px-4 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--quni-coral-hover)] px-4 py-2.5 text-sm font-semibold text-white"
               >
                 <AiSparkleIcon className="h-4 w-4 shrink-0 text-white" />
                 Use $300/week →
@@ -277,13 +277,13 @@ export default function LandlordAIFeaturePage() {
                 <p className="mt-1 text-stone-300">Hi, is this room still available from next month?</p>
                 <button
                   type="button"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#E8583A]/60 px-3 py-1.5 text-xs font-semibold text-[#E8583A]"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-admin-coral-hover/60 px-3 py-1.5 text-xs font-semibold text-[var(--quni-coral-hover)]"
                 >
                   <AiSparkleIcon className="h-3.5 w-3.5 shrink-0" />
                   Draft a reply with AI
                 </button>
               </div>
-              <div className="rounded-lg border border-[#E8583A]/30 bg-[#2a1713] p-3 text-stone-200">
+              <div className="rounded-lg border border-admin-coral-hover/30 bg-[#2a1713] p-3 text-stone-200">
                 Hi Emily, thanks for your enquiry and yes, the room is currently available from next month...
               </div>
               <span className="inline-flex rounded-full bg-emerald-900/35 border border-emerald-600/50 px-2.5 py-1 text-xs font-semibold text-emerald-300">
@@ -312,8 +312,8 @@ export default function LandlordAIFeaturePage() {
                 ))}
               </ul>
             </article>
-            <article className="ai-reveal rounded-2xl border border-[#E8583A]/70 bg-[#1a120f] p-6">
-              <h3 className="text-xl font-serif text-[#E8583A]">Quni Living:</h3>
+            <article className="ai-reveal rounded-2xl border border-admin-coral-hover/70 bg-[#1a120f] p-6">
+              <h3 className="text-xl font-serif text-[var(--quni-coral-hover)]">Quni Living:</h3>
               <ul className="mt-4 space-y-2 text-sm text-stone-200/90">
                 {[
                   'AI writes a polished listing instantly',
@@ -361,14 +361,14 @@ export default function LandlordAIFeaturePage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center ai-reveal">
           <h2 className="text-4xl md:text-6xl font-serif leading-tight text-stone-100">
             Your property.
-            <span className="block italic text-[#E8583A]">Your AI advantage.</span>
+            <span className="block italic text-[var(--quni-coral-hover)]">Your AI advantage.</span>
           </h2>
           <p className="mt-6 text-base md:text-lg text-stone-300/85 leading-relaxed">
             List for free. Let AI do the heavy lifting. Find your next student tenant faster than ever.
           </p>
           <Link
             to="/landlord/onboarding"
-            className="mt-8 inline-flex items-center rounded-xl bg-[#E8583A] px-8 py-3.5 text-base font-semibold text-white hover:brightness-110 transition"
+            className="mt-8 inline-flex items-center rounded-xl bg-[var(--quni-coral-hover)] px-8 py-3.5 text-base font-semibold text-white hover:brightness-110 transition"
           >
             List your property free →
           </Link>
@@ -378,7 +378,7 @@ export default function LandlordAIFeaturePage() {
 
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto max-w-site px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-          <span className="text-[#E8583A] text-xl font-semibold">Quni</span>
+          <span className="text-[var(--quni-coral-hover)] text-xl font-semibold">Quni</span>
           <div className="text-stone-500 text-right sm:text-right">
             <p>© {new Date().getFullYear()} Quni Living · hello@quni.com.au · Australia</p>
             <LegalFooter className="mt-2 text-stone-400" />

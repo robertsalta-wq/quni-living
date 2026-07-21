@@ -28,10 +28,10 @@ export default function ChatEmbed({ listingContext, defaultOpen, variant = 'defa
   }
 
   return (
-    <div className="w-full rounded-2xl border border-[#FF6F61]/30 bg-[#FFF8F0] p-4 shadow-sm">
+    <div className="w-full rounded-2xl border border-admin-coral/30 bg-[#FFF8F0] p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#CC4A3C]">Ask Quni AI</p>
+          <p className="text-sm font-semibold text-[var(--quni-coral-active)]">Ask Quni AI</p>
           <p className="mt-1 text-xs text-stone-700">
             {hasAnyContext ? 'Get guidance tailored to these listings.' : 'Ask a question about the marketplace.'}
           </p>
@@ -39,7 +39,7 @@ export default function ChatEmbed({ listingContext, defaultOpen, variant = 'defa
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-xl bg-[#FF6F61] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#e85d52]"
+          className="shrink-0 rounded-xl bg-[var(--quni-coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--quni-coral-hover)]"
         >
           Open chat →
         </button>

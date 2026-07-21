@@ -114,7 +114,7 @@ export function PropertyCard({
             {photoBadges.map((badge) => {
               const className =
                 badge.variant === 'featured'
-                  ? 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#FF6F61] text-white shadow-sm'
+                  ? 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[var(--quni-coral)] text-white shadow-sm'
                   : 'inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-[#8FB9AB] text-white shadow-sm'
               return (
                 <span key={badge.id} className={className}>
@@ -197,7 +197,7 @@ export function PropertyCard({
         </p>
 
         {distanceKm != null && Number.isFinite(distanceKm) && distanceLabel && (
-          <p className="text-xs font-medium text-[#FF6F61] mb-2">
+          <p className="text-xs font-medium text-[var(--quni-coral)] mb-2">
             {formatDistanceKm(distanceKm)} km from {distanceLabel}
           </p>
         )}

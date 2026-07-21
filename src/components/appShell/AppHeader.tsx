@@ -218,13 +218,13 @@ export default function AppHeader() {
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[#1F2A44] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[var(--quni-navy)] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
             aria-label={`Back to ${destination}`}
           >
             <ChevronLeft className="h-6 w-6" strokeWidth={2} aria-hidden />
             <span className="text-sm font-semibold sm:text-base">{destination}</span>
           </button>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-[#08060D] sm:text-base">
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-[var(--quni-ink)] sm:text-base">
             {title}
           </p>
           {user ? (

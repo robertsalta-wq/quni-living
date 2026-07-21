@@ -42,7 +42,7 @@ export default function ConversationList({ items }: Props) {
                 <p className="text-sm text-gray-400 truncate mt-0.5">{preview}</p>
               </div>
               {item.unread && (
-                <span className="shrink-0 mt-2 h-2.5 w-2.5 rounded-full bg-[#FF6F61]" aria-label="Unread" />
+                <span className="shrink-0 mt-2 h-2.5 w-2.5 rounded-full bg-[var(--quni-coral)]" aria-label="Unread" />
               )}
             </Link>
           </li>

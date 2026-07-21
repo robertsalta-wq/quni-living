@@ -69,14 +69,14 @@ export default function LandlordListingRoomRow({
       <button
         type="button"
         onClick={onOpenDetail}
-        className="absolute inset-0 z-0 rounded-none text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FF6F61]"
+        className="absolute inset-0 z-0 rounded-none text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--quni-coral)]"
         aria-label={`Open ${roomName}`}
       />
       <div className="relative z-[1] pointer-events-none flex min-w-0 flex-1 items-center gap-3">
         <RoomThumb listing={listing} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold text-[#08060D]">{roomName}</p>
-          <p className="mt-0.5 text-[11.5px] tabular-nums text-[#6B6375]">{weeklyRentLabel}</p>
+          <p className="truncate text-[13px] font-semibold text-[var(--quni-ink)]">{roomName}</p>
+          <p className="mt-0.5 text-[11.5px] tabular-nums text-[var(--quni-ink-4)]">{weeklyRentLabel}</p>
         </div>
         <LandlordListingStatusPill status={uiStatus} />
       </div>
@@ -93,7 +93,7 @@ export default function LandlordListingRoomRow({
             e.preventDefault()
             setOpen((v) => !v)
           }}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#6B6375] hover:bg-[#F4F3EC] disabled:opacity-50"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[var(--quni-ink-4)] hover:bg-[#F4F3EC] disabled:opacity-50"
         >
           <MoreHorizontal className="h-4 w-4" aria-hidden />
         </button>
@@ -101,13 +101,13 @@ export default function LandlordListingRoomRow({
           <div
             id={menuId}
             role="menu"
-            className="absolute right-0 z-20 mt-1 min-w-[10.5rem] overflow-hidden rounded-xl border border-[#E5E4E7] bg-white py-1 shadow-md"
+            className="absolute right-0 z-20 mt-1 min-w-[10.5rem] overflow-hidden rounded-xl border border-[var(--quni-line)] bg-white py-1 shadow-md"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               role="menuitem"
-              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[#08060D] hover:bg-[#FBFAF7]"
+              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
               onClick={() => {
                 setOpen(false)
                 onEdit()
@@ -119,7 +119,7 @@ export default function LandlordListingRoomRow({
               <button
                 type="button"
                 role="menuitem"
-                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[#08060D] hover:bg-[#FBFAF7]"
+                className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
                 onClick={() => {
                   setOpen(false)
                   onTogglePause()
@@ -131,7 +131,7 @@ export default function LandlordListingRoomRow({
             <button
               type="button"
               role="menuitem"
-              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[#08060D] hover:bg-[#FBFAF7]"
+              className="block w-full px-3 py-2.5 text-left text-[13px] font-medium text-[var(--quni-ink)] hover:bg-[#FBFAF7]"
               onClick={() => {
                 setOpen(false)
                 onDuplicate()

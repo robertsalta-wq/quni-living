@@ -26,7 +26,7 @@ export default function ChatMessageBubble({ role, text, isStreaming }: Props) {
         className={[
           'max-w-[85%] whitespace-pre-wrap break-words px-4 py-2.5 text-sm leading-relaxed',
           isUser
-            ? 'rounded-2xl bg-[#FF6F61] text-white shadow-sm'
+            ? 'rounded-2xl bg-[var(--quni-coral)] text-white shadow-sm'
             : 'rounded-2xl bg-white border border-gray-100 text-gray-900 shadow-sm',
         ].join(' ')}
         aria-live={isUser ? undefined : 'polite'}

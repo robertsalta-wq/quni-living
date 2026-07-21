@@ -102,7 +102,7 @@ export default function TenantBookingRequestSubmittedSummary({
       <div className="mt-8 flex flex-col gap-3">
         <Link
           to="/student-dashboard?tab=bookings"
-          className="inline-flex justify-center rounded-xl bg-[#FF6F61] text-white px-5 py-3 text-sm font-semibold hover:bg-[#e85d52]"
+          className="inline-flex justify-center rounded-xl bg-[var(--quni-coral)] text-white px-5 py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)]"
         >
           View on dashboard
         </Link>

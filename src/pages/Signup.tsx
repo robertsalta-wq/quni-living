@@ -41,7 +41,7 @@ type SignupAccountKind = 'renter' | 'landlord'
 type SignupStep = 'primary' | 'details'
 
 const SIGNUP_TERMS_CHECKBOX_CLASS =
-  'mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[#FF6F61] focus:ring-2 focus:ring-[#FF6F61] focus:ring-offset-0 accent-[#FF6F61]'
+  'mt-1 h-4 w-4 shrink-0 rounded border-stone-300 text-[var(--quni-coral)] focus:ring-2 focus:ring-[var(--quni-coral)] focus:ring-offset-0 accent-[var(--quni-coral)]'
 
 function isSignupAuthRateLimitError(raw: string, err?: unknown): boolean {
   const lower = raw.toLowerCase()
@@ -517,12 +517,12 @@ export default function Signup() {
   const roleCardClass = (k: SignupAccountKind) =>
     `flex h-full flex-col rounded-xl border-2 p-5 text-left transition-colors ${
       accountKind === k
-        ? 'border-[#FF6F61] bg-[#FFF8F0] ring-1 ring-[#FF6F61]/20'
+        ? 'border-[var(--quni-coral)] bg-[#FFF8F0] ring-1 ring-admin-coral/20'
         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/80'
     }`
 
   const roleVerifyLinkClass =
-    'mt-auto pt-3 block w-full text-left text-xs font-medium text-[#FF6F61] hover:underline whitespace-nowrap'
+    'mt-auto pt-3 block w-full text-left text-xs font-medium text-[var(--quni-coral)] hover:underline whitespace-nowrap'
 
   const signupKindLabel = accountKind === 'landlord' ? 'Landlord' : 'Renter'
 
@@ -616,7 +616,7 @@ export default function Signup() {
               Not sure what verification involves?{' '}
               <button
                 type="button"
-                className="font-medium text-[#FF6F61] hover:underline"
+                className="font-medium text-[var(--quni-coral)] hover:underline"
                 onClick={() => setVerificationModalFocus('overview')}
               >
                 See what you&apos;ll verify on Quni
@@ -628,7 +628,7 @@ export default function Signup() {
               Create a renter account to book this room.{' '}
               <button
                 type="button"
-                className="font-medium text-[#FF6F61] hover:underline"
+                className="font-medium text-[var(--quni-coral)] hover:underline"
                 onClick={() => setVerificationModalFocus('overview')}
               >
                 See what you&apos;ll verify on Quni
@@ -683,13 +683,13 @@ export default function Signup() {
           </p>
 
           <div
-            className="mb-6 rounded-xl border border-stone-200/80 bg-[#FEF9E4] px-4 py-3"
-            style={{ borderLeftWidth: 4, borderLeftColor: '#FF6F61' }}
+            className="mb-6 rounded-xl border border-stone-200/80 bg-[var(--quni-cream)] px-4 py-3"
+            style={{ borderLeftWidth: 4, borderLeftColor: 'var(--quni-coral)' }}
             aria-label="Sign-up steps"
           >
             <p className="text-xs font-semibold text-stone-700 uppercase tracking-wide mb-2">Your sign-up steps</p>
             <div className="flex gap-1.5 mb-2" aria-hidden>
-              <div className="h-1.5 flex-1 rounded-full bg-[#FF6F61]" />
+              <div className="h-1.5 flex-1 rounded-full bg-[var(--quni-coral)]" />
               <div className="h-1.5 flex-1 rounded-full bg-stone-200" />
               <div className="h-1.5 flex-1 rounded-full bg-stone-200" />
             </div>

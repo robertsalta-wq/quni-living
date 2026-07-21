@@ -35,18 +35,18 @@ const STUDENT_NAV_ITEMS = [
 ] as const
 
 const mainNavLinkClass = 'whitespace-nowrap text-sm text-gray-600 hover:text-gray-900'
-const secondaryNavLinkClass = 'whitespace-nowrap text-sm text-[#1B2A4A]/75 hover:text-[#1B2A4A]'
+const secondaryNavLinkClass = 'whitespace-nowrap text-sm text-admin-navy/75 hover:text-[var(--quni-navy)]'
 
 const MOBILE_QUICK_NAV = [{ to: '/listings', label: 'Listings' }] as const
 
 const coralCtaClass =
-  'inline-flex items-center justify-center gap-1 rounded-lg bg-[#FF6F61] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-4 sm:py-2 sm:text-sm'
+  'inline-flex items-center justify-center gap-1 rounded-lg bg-[var(--quni-coral)] px-2 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:px-4 sm:py-2 sm:text-sm'
 
 const mobileListingsPillClass =
-  'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[#FF6F61] bg-[#FF6F61] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61] sm:px-3 sm:py-1 sm:text-xs'
+  'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-[var(--quni-coral)] bg-[var(--quni-coral)] px-2.5 py-0.5 text-[11px] font-semibold leading-tight text-white shadow-sm hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)] sm:px-3 sm:py-1 sm:text-xs'
 
 const mobileDrawerRowClass =
-  'flex min-h-11 items-center px-4 text-sm text-gray-800 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#FF6F61]/40'
+  'flex min-h-11 items-center px-4 text-sm text-gray-800 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-admin-coral/40'
 
 const ACCOUNT_MENU_WIDTH_PX = 208
 const STUDENTS_MENU_WIDTH_PX = 260
@@ -376,7 +376,7 @@ export default function Header({ embedded = false }: HeaderProps) {
             <>
               <div className="max-sm:inline-flex sm:hidden min-w-0 items-center gap-2">
                 <QuniLogoHomeLink />
-                <span className="truncate text-sm font-semibold text-[#1F2A44]">{dashboardMobileTitle}</span>
+                <span className="truncate text-sm font-semibold text-[var(--quni-navy)]">{dashboardMobileTitle}</span>
               </div>
               <div className="hidden sm:block">
                 <SiteBrandLockup />
@@ -403,7 +403,7 @@ export default function Header({ embedded = false }: HeaderProps) {
             <Link to="/pricing" className={mainNavLinkClass}>
               Pricing
             </Link>
-            <span className="mx-0.5 hidden h-4 w-px bg-[#1B2A4A]/15 lg:inline" aria-hidden />
+            <span className="mx-0.5 hidden h-4 w-px bg-admin-navy/15 lg:inline" aria-hidden />
             <Link to={LANDLORD_NAV_TO} className={secondaryNavLinkClass}>
               For landlords
             </Link>
@@ -445,7 +445,7 @@ export default function Header({ embedded = false }: HeaderProps) {
               {dashboardMobileChrome ? (
                 <button
                   type="button"
-                  className="inline-flex sm:hidden h-9 w-9 items-center justify-center rounded-full text-[#1F2A44] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]"
+                  className="inline-flex sm:hidden h-9 w-9 items-center justify-center rounded-full text-[var(--quni-navy)] hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--quni-coral)]"
                   aria-label="Notifications"
                   title="Notifications"
                 >
@@ -459,7 +459,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                 >
                   Messages
                   {unreadMessageCount > 0 && (
-                    <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums">
+                    <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[var(--quni-coral)] px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums">
                       {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
                     </span>
                   )}
@@ -639,7 +639,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                 <div className="border-t border-gray-100 my-1" />
                 <Link
                   to="/landlords/ai"
-                  className={`${mobileDrawerRowClass} gap-2 font-medium text-[#FF6F61]`}
+                  className={`${mobileDrawerRowClass} gap-2 font-medium text-[var(--quni-coral)]`}
                   onClick={closeMobileNav}
                 >
                   <AiSparkleIcon className="h-5 w-5 shrink-0" />
@@ -666,7 +666,7 @@ export default function Header({ embedded = false }: HeaderProps) {
                         >
                           Messages
                           {unreadMessageCount > 0 && (
-                            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF6F61] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[var(--quni-coral)] px-1.5 py-0.5 text-[10px] font-bold text-white">
                               {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
                             </span>
                           )}
@@ -714,11 +714,11 @@ export default function Header({ embedded = false }: HeaderProps) {
                 </div>
                 <div className="border-t border-gray-100 my-2" />
                 <Link to="/about" className={`${mobileDrawerRowClass} gap-3 text-gray-700`} onClick={closeMobileNav}>
-                  <Info className="h-5 w-5 shrink-0 text-[#1B2A4A]/70" aria-hidden />
+                  <Info className="h-5 w-5 shrink-0 text-admin-navy/70" aria-hidden />
                   About
                 </Link>
                 <Link to="/contact" className={`${mobileDrawerRowClass} gap-3 text-gray-700`} onClick={closeMobileNav}>
-                  <Mail className="h-5 w-5 shrink-0 text-[#1B2A4A]/70" aria-hidden />
+                  <Mail className="h-5 w-5 shrink-0 text-admin-navy/70" aria-hidden />
                   Contact
                 </Link>
                 <div className="px-4 pt-3 pb-4">

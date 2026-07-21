@@ -33,7 +33,7 @@ export default function MessagesInbox({ items, loading, error, onRetry, viewerRo
         <button
           type="button"
           onClick={onRetry}
-          className="mt-4 text-sm font-medium text-[#FF6F61] hover:underline"
+          className="mt-4 text-sm font-medium text-[var(--quni-coral)] hover:underline"
         >
           Try again
         </button>

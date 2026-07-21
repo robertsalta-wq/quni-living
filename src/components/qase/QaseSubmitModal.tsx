@@ -252,14 +252,14 @@ export default function QaseSubmitModal({
 
   const primaryBtnClass = useMemo(() => {
     if (submitterType === 'landlord') {
-      return 'inline-flex items-center justify-center rounded-xl bg-[#FF6F61] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[#e85d52] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
+      return 'inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-admin-coral/40 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
     }
     return 'inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
   }, [submitterType])
 
   const kbAnsweredBtnClass = useMemo(() => {
     if (submitterType === 'landlord') {
-      return 'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/30'
+      return 'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-admin-coral/30'
     }
     return 'inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-800 shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400/30'
   }, [submitterType])

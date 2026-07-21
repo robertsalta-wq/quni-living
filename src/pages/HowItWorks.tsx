@@ -203,7 +203,7 @@ export default function HowItWorks() {
             </Link>
             <Link
               to="/listings"
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6F61] px-6 py-3 text-sm font-semibold text-white hover:opacity-95"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--quni-coral)] px-6 py-3 text-sm font-semibold text-white hover:opacity-95"
             >
               Browse listings
             </Link>

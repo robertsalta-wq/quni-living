@@ -73,25 +73,25 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
         <button
           type="button"
           onClick={() => shiftMonth(-1)}
-          className="rounded-lg border border-[#E5E4E7] bg-white px-2.5 py-1.5 text-sm font-semibold text-[#1F2A44] hover:bg-[#F8F6F1]"
+          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[#F8F6F1]"
           aria-label="Previous month"
         >
           ‹
         </button>
-        <h3 className="text-base font-semibold text-[#08060D] font-admin-display sm:text-lg">
+        <h3 className="text-base font-semibold text-[var(--quni-ink)] font-admin-display sm:text-lg">
           {monthLabel(cursor.year, cursor.month)}
         </h3>
         <button
           type="button"
           onClick={() => shiftMonth(1)}
-          className="rounded-lg border border-[#E5E4E7] bg-white px-2.5 py-1.5 text-sm font-semibold text-[#1F2A44] hover:bg-[#F8F6F1]"
+          className="rounded-lg border border-[var(--quni-line)] bg-white px-2.5 py-1.5 text-sm font-semibold text-[var(--quni-navy)] hover:bg-[#F8F6F1]"
           aria-label="Next month"
         >
           ›
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-[#6B6375]">
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-[var(--quni-ink-4)]">
         {LEGEND.map((l) => (
           <span key={l.kind} className="inline-flex items-center gap-1.5">
             <span className={`h-2 w-2 rounded-full ${calendarEventDotClass(l.kind)}`} />
@@ -102,10 +102,10 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
 
       {/* Mobile: mini grid + agenda */}
       <div className="sm:hidden space-y-4">
-        <div className="rounded-2xl border border-[#E5E4E7] bg-white p-3 shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
+        <div className="rounded-2xl border border-[var(--quni-line)] bg-white p-3 shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
           <div className="grid grid-cols-7 gap-0.5 mb-1">
             {WEEKDAYS.map((d) => (
-              <div key={d} className="text-center text-[9px] font-semibold uppercase text-[#908897]">
+              <div key={d} className="text-center text-[9px] font-semibold uppercase text-[var(--quni-ink-5)]">
                 {d.slice(0, 1)}
               </div>
             ))}
@@ -128,8 +128,8 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
                     className={[
                       'flex h-6 w-6 items-center justify-center text-xs font-semibold',
                       isToday
-                        ? 'rounded-full ring-2 ring-[#FF6F61] text-[#08060D]'
-                        : 'text-[#2A2433]',
+                        ? 'rounded-full ring-2 ring-[var(--quni-coral)] text-[var(--quni-ink)]'
+                        : 'text-[var(--quni-ink-2)]',
                     ].join(' ')}
                   >
                     {cell.day}
@@ -152,7 +152,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
 
         <div className="space-y-2">
           {agendaDays.length === 0 ? (
-            <p className="rounded-2xl border border-[#E5E4E7] bg-white p-6 text-center text-sm text-[#6B6375]">
+            <p className="rounded-2xl border border-[var(--quni-line)] bg-white p-6 text-center text-sm text-[var(--quni-ink-4)]">
               No events this month.
             </p>
           ) : (
@@ -171,12 +171,12 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
       </div>
 
       {/* Desktop: month grid with chips */}
-      <div className="hidden sm:block rounded-2xl border border-[#E5E4E7] bg-white overflow-hidden shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
-        <div className="grid grid-cols-7 border-b border-[#E5E4E7] bg-[#F8F6F1]">
+      <div className="hidden sm:block rounded-2xl border border-[var(--quni-line)] bg-white overflow-hidden shadow-[0_1px_2px_rgba(8,6,13,0.08)]">
+        <div className="grid grid-cols-7 border-b border-[var(--quni-line)] bg-[#F8F6F1]">
           {WEEKDAYS.map((d) => (
             <div
               key={d}
-              className="px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-[#6B6375]"
+              className="px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--quni-ink-4)]"
             >
               {d}
             </div>
@@ -191,7 +191,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
               <div
                 key={cell.dateIso}
                 className={[
-                  'min-h-[96px] border-b border-r border-[#E5E4E7] p-1.5',
+                  'min-h-[96px] border-b border-r border-[var(--quni-line)] p-1.5',
                   !cell.inMonth ? 'bg-[#F8F6F1]/60' : 'bg-white',
                   isPast && cell.inMonth ? 'opacity-60' : '',
                 ].join(' ')}
@@ -200,10 +200,10 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
                   className={[
                     'inline-flex h-6 w-6 items-center justify-center text-xs font-semibold',
                     isToday
-                      ? 'rounded-full ring-2 ring-[#FF6F61] text-[#08060D]'
+                      ? 'rounded-full ring-2 ring-[var(--quni-coral)] text-[var(--quni-ink)]'
                       : cell.inMonth
-                        ? 'text-[#2A2433]'
-                        : 'text-[#908897]',
+                        ? 'text-[var(--quni-ink-2)]'
+                        : 'text-[var(--quni-ink-5)]',
                   ].join(' ')}
                 >
                   {cell.day}
@@ -213,7 +213,7 @@ export default function LandlordBookingsCalendar({ bookings }: Props) {
                     <EventChip key={e.id} event={e} />
                   ))}
                   {dayEvents.length > 3 ? (
-                    <p className="text-[10px] font-medium text-[#6B6375]">+{dayEvents.length - 3} more</p>
+                    <p className="text-[10px] font-medium text-[var(--quni-ink-4)]">+{dayEvents.length - 3} more</p>
                   ) : null}
                 </div>
               </div>
@@ -247,24 +247,24 @@ function EventChip({ event }: { event: CalendarEvent }) {
 function AgendaRow({ event, date }: { event: CalendarEvent; date: Date }) {
   const badge = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
   const body = (
-    <div className="flex items-start gap-3 rounded-2xl border border-[#E5E4E7] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]">
+    <div className="flex items-start gap-3 rounded-2xl border border-[var(--quni-line)] bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(8,6,13,0.06)]">
       <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-[#F8F6F1] text-center">
-        <span className="text-[10px] font-semibold uppercase text-[#6B6375]">
+        <span className="text-[10px] font-semibold uppercase text-[var(--quni-ink-4)]">
           {date.toLocaleDateString('en-AU', { weekday: 'short' })}
         </span>
-        <span className="text-sm font-bold tabular-nums text-[#08060D] leading-none">
+        <span className="text-sm font-bold tabular-nums text-[var(--quni-ink)] leading-none">
           {date.getDate()}
         </span>
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 shrink-0 rounded-full ${calendarEventDotClass(event.kind)}`} />
-          <p className="truncate text-sm font-semibold text-[#08060D]">{event.title}</p>
+          <p className="truncate text-sm font-semibold text-[var(--quni-ink)]">{event.title}</p>
         </div>
         {event.subtitle ? (
-          <p className="mt-0.5 truncate text-xs text-[#6B6375]">{event.subtitle}</p>
+          <p className="mt-0.5 truncate text-xs text-[var(--quni-ink-4)]">{event.subtitle}</p>
         ) : (
-          <p className="mt-0.5 text-xs text-[#908897]">{badge}</p>
+          <p className="mt-0.5 text-xs text-[var(--quni-ink-5)]">{badge}</p>
         )}
       </div>
     </div>

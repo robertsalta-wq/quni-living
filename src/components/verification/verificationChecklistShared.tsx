@@ -77,15 +77,15 @@ const LANDLORD_STEPS: VerificationStep[] = [
     step: 'Agree to the terms',
     what: (
       <>
-        <Link to="/terms" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/terms" className="font-medium text-[var(--quni-coral)] hover:underline">
           Terms of Use
         </Link>
         ,{' '}
-        <Link to="/privacy" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/privacy" className="font-medium text-[var(--quni-coral)] hover:underline">
           Privacy Policy
         </Link>
         , and the{' '}
-        <Link to="/landlord-service-agreement" className="font-medium text-[#FF6F61] hover:underline">
+        <Link to="/landlord-service-agreement" className="font-medium text-[var(--quni-coral)] hover:underline">
           Landlord Service Agreement
         </Link>
         .

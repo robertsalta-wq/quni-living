@@ -23,8 +23,8 @@ export function OnboardingResumeBanner() {
 
   return (
     <div
-      className="border-b border-amber-200 bg-[#FEF9E4] px-4 py-3 sm:px-6"
-      style={{ borderLeftWidth: 4, borderLeftColor: '#FF6F61' }}
+      className="border-b border-amber-200 bg-[var(--quni-cream)] px-4 py-3 sm:px-6"
+      style={{ borderLeftWidth: 4, borderLeftColor: 'var(--quni-coral)' }}
       role="status"
       aria-live="polite"
     >

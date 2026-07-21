@@ -170,8 +170,8 @@ export const AUDateField = forwardRef<HTMLInputElement, AUDateFieldProps>(functi
           className={
             calendarButtonClassName ??
             (birthDate
-              ? 'inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#FF6F61]/40 bg-white px-3 py-2 text-sm font-semibold text-[#FF6F61] hover:bg-[#FFF8F0] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 min-w-[5.5rem]'
-              : 'rounded-lg border border-gray-900/20 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#FF6F61]/40 bg-white')
+              ? 'inline-flex items-center justify-center gap-1.5 rounded-lg border border-admin-coral/40 bg-white px-3 py-2 text-sm font-semibold text-[var(--quni-coral)] hover:bg-[#FFF8F0] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-admin-coral/40 min-w-[5.5rem]'
+              : 'rounded-lg border border-gray-900/20 px-2.5 py-2 text-stone-600 hover:bg-stone-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-admin-coral/40 bg-white')
           }
           aria-label={birthDate ? 'Pick date from calendar' : 'Choose date'}
         >

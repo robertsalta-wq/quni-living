@@ -125,7 +125,7 @@ export default function StudentAccommodationIndex() {
           <p className="mt-4">
             <Link
               to="/international"
-              className="text-sm font-semibold text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+              className="text-sm font-semibold text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
             >
               Read more for international students
             </Link>
@@ -151,7 +151,7 @@ export default function StudentAccommodationIndex() {
           />
           <button
             type="submit"
-            className="rounded-xl bg-[#FF6F61] text-white font-semibold text-sm px-6 py-3 shadow-sm hover:bg-[#e85a4f] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FF6F61]"
+            className="rounded-xl bg-[var(--quni-coral)] text-white font-semibold text-sm px-6 py-3 shadow-sm hover:bg-[var(--quni-coral-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--quni-coral)]"
           >
             Search listings
           </button>

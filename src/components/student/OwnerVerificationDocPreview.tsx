@@ -104,7 +104,7 @@ export function OwnerVerificationDocPreview({
         href={signedUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs font-semibold text-[#FF6F61] hover:underline mt-2 inline-block"
+        className="text-xs font-semibold text-[var(--quni-coral)] hover:underline mt-2 inline-block"
       >
         Open full size
       </a>
@@ -132,7 +132,7 @@ function DocReceivedTile({ name, href }: { name: string; href?: string }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-semibold text-[#FF6F61] hover:underline mt-0.5 inline-block"
+            className="text-sm font-semibold text-[var(--quni-coral)] hover:underline mt-0.5 inline-block"
           >
             Open
           </a>

@@ -77,7 +77,7 @@ export default function ServicePageLayout({
                 <span className="inline-block rounded-xl p-[3px] bg-white shadow-md">
                   <Link
                     to={heroCta.to}
-                    className="inline-flex items-center justify-center rounded-[10px] bg-[#FF6F61] px-6 py-3 text-sm sm:text-base font-semibold text-white hover:opacity-95 transition-opacity"
+                    className="inline-flex items-center justify-center rounded-[10px] bg-[var(--quni-coral)] px-6 py-3 text-sm sm:text-base font-semibold text-white hover:opacity-95 transition-opacity"
                   >
                     {heroCta.label}
                   </Link>
@@ -85,7 +85,7 @@ export default function ServicePageLayout({
               ) : (
                 <Link
                   to={heroCta.to}
-                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#FF6F61] shadow-md hover:bg-white/95 transition-colors"
+                  className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[var(--quni-coral)] shadow-md hover:bg-white/95 transition-colors"
                 >
                   {heroCta.label}
                 </Link>
@@ -148,7 +148,7 @@ export default function ServicePageLayout({
           </Link>
           <Link
             to="/contact"
-            className="inline-flex items-center justify-center rounded-lg bg-[#FF6F61] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--quni-coral)] text-white px-5 py-2.5 text-sm font-medium hover:opacity-95 transition-opacity"
           >
             Get in touch
           </Link>

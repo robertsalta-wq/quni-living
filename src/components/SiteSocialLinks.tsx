@@ -62,11 +62,11 @@ export default function SiteSocialLinks({ variant = 'footer', className = '' }: 
 
   if (entries.length === 0) return null
 
-  const iconClass = variant === 'footer' ? 'h-5 w-5 text-[#1B2A4A]' : 'h-5 w-5 text-[#1B2A4A]'
+  const iconClass = variant === 'footer' ? 'h-5 w-5 text-[var(--quni-navy)]' : 'h-5 w-5 text-[var(--quni-navy)]'
   const buttonClass =
     variant === 'footer'
-      ? 'inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[#1B2A4A] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80'
-      : 'inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#1B2A4A]/15 text-[#1B2A4A] hover:border-[#FF6F61]/40 hover:bg-[#FF6F61]/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF6F61]/40'
+      ? 'inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--quni-navy)] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80'
+      : 'inline-flex h-11 w-11 items-center justify-center rounded-full border border-admin-navy/15 text-[var(--quni-navy)] hover:border-admin-coral/40 hover:bg-admin-coral/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-coral/40'
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`.trim()} role="list" aria-label="Social media">
@@ -100,7 +100,7 @@ export default function SiteSocialLinks({ variant = 'footer', className = '' }: 
             {wechatOpen ? (
               <span
                 id={`wechat-id-${entry.key}`}
-                className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1B2A4A] px-2.5 py-1.5 text-xs font-medium text-white shadow-lg"
+                className="absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[var(--quni-navy)] px-2.5 py-1.5 text-xs font-medium text-white shadow-lg"
                 role="status"
               >
                 {wechatCopied ? 'Copied!' : entry.id}

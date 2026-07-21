@@ -125,7 +125,7 @@ function ListingSetupPaymentInner({
         type="button"
         onClick={() => void submit()}
         disabled={disabled}
-        className="w-full rounded-xl bg-[#FF6F61] text-white py-3 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+        className="w-full rounded-xl bg-[var(--quni-coral)] text-white py-3 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
       >
         {busy ? 'Saving…' : 'Save card'}
       </button>
@@ -266,7 +266,7 @@ export default function LandlordListingPaymentModal({ open, onClose, onSuccess }
           </p>
         ) : loadingSetup || !clientSecret || !stripeJs ? (
           <div className="flex flex-col items-center gap-3 py-10">
-            <div className="h-10 w-10 border-2 border-[#FF6F61] border-t-transparent rounded-full animate-spin" />
+            <div className="h-10 w-10 border-2 border-[var(--quni-coral)] border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-gray-600">Preparing secure form…</p>
           </div>
         ) : (

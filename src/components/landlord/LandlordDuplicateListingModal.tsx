@@ -32,7 +32,7 @@ export default function LandlordDuplicateListingModal({
             type="button"
             onClick={() => void onConfirm()}
             disabled={Boolean(duplicatingListingId)}
-            className="rounded-xl bg-[#FF6F61] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-60"
+            className="rounded-xl bg-[var(--quni-coral)] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-60"
           >
             {duplicatingListingId ? 'Duplicating…' : 'Confirm'}
           </button>

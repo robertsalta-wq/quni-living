@@ -431,7 +431,7 @@ export default function StudentProfile() {
                                   setBookingReplyBusy(null)
                                 }
                               }}
-                              className="mt-2 rounded-lg bg-[#FF6F61] text-white px-4 py-2 text-sm font-semibold hover:bg-[#e85d52] disabled:opacity-50"
+                              className="mt-2 rounded-lg bg-[var(--quni-coral)] text-white px-4 py-2 text-sm font-semibold hover:bg-[var(--quni-coral-hover)] disabled:opacity-50"
                             >
                               {bookingReplyBusy === b.id ? 'Sending…' : 'Send reply'}
                             </button>

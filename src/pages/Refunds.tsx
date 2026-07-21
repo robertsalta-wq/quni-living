@@ -72,7 +72,7 @@ export default function Refunds() {
                       <td className={TD}>Tenancy unwinds after acceptance (cancellation / mutual exit)</td>
                       <td className={TD}>
                         <strong>Fee treatment</strong> depends on what was charged and why the booking unwound; contact{' '}
-                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
+                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                           {ORGANIZATION_EMAIL}
                         </a>{' '}
                         with your booking reference.
@@ -84,7 +84,7 @@ export default function Refunds() {
               <p className="text-xs italic text-gray-600">
                 Note: Listing acceptance fees are not yet charged automatically at landlord confirm in all flows; until
                 billing is fully wired, alignment with this table is handled case-by-case via{' '}
-                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
+                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                   {ORGANIZATION_EMAIL}
                 </a>
                 .
@@ -123,7 +123,7 @@ export default function Refunds() {
                         <strong>Deposit, bond, and ongoing rent after confirmation</strong> are governed by your{' '}
                         <strong>tenancy agreement</strong>, applicable law, and the payment flows you complete at booking -{' '}
                         <strong>not fully restated in this policy.</strong> Use{' '}
-                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
+                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                           {ORGANIZATION_EMAIL}
                         </a>{' '}
                         for questions about <strong>platform-side</strong> payments or reversals.
@@ -134,7 +134,7 @@ export default function Refunds() {
                       <td className={TD}>
                         Same as row above: outcomes depend on tenancy terms, timing, and what has already been captured or
                         paid - contact{' '}
-                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
+                        <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                           {ORGANIZATION_EMAIL}
                         </a>{' '}
                         for platform administration; bond and rent disputes outside money Quni custodies follow tribunal or
@@ -164,7 +164,7 @@ export default function Refunds() {
             <section className="border-t border-stone-200 pt-8 text-xs text-gray-500">
               <p>
                 Questions:{' '}
-                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[#FF6F61] underline hover:opacity-90">
+                <a href={`mailto:${ORGANIZATION_EMAIL}`} className="font-medium text-[var(--quni-coral)] underline hover:opacity-90">
                   {ORGANIZATION_EMAIL}
                 </a>
               </p>

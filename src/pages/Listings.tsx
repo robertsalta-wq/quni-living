@@ -243,7 +243,7 @@ export default function Listings() {
       <div className="max-w-site mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
         {studentOnboardingWelcome && (
           <div
-            className="mb-6 rounded-xl border border-[#FF6F61]/30 bg-[#FFF8F0] px-4 py-3 text-sm text-stone-800 shadow-sm"
+            className="mb-6 rounded-xl border border-admin-coral/30 bg-[#FFF8F0] px-4 py-3 text-sm text-stone-800 shadow-sm"
             role="status"
           >
             <span className="font-semibold text-stone-900">Welcome!</span>{' '}
@@ -258,7 +258,7 @@ export default function Listings() {
             You&apos;re browsing homes landlords have opened to professionals.{' '}
             <Link
               to="/student-profile?tab=verification"
-              className="font-semibold text-[#FF6F61] underline underline-offset-2"
+              className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
             >
               Complete identity verification
             </Link>{' '}
@@ -274,7 +274,7 @@ export default function Listings() {
             Complete{' '}
             <Link
               to="/student-profile?tab=verification"
-              className="font-semibold text-[#FF6F61] underline underline-offset-2"
+              className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
             >
               Verified Student verification
             </Link>{' '}
@@ -294,7 +294,7 @@ export default function Listings() {
               work.{' '}
               <Link
                 to="/student-profile"
-                className="font-semibold text-[#FF6F61] underline underline-offset-2"
+                className="font-semibold text-[var(--quni-coral)] underline underline-offset-2"
               >
                 Add work location
               </Link>
@@ -379,7 +379,7 @@ export default function Listings() {
                           sortDistance: true,
                         })
                       }}
-                      className="w-full text-left text-xs font-semibold text-[#FF6F61] hover:underline"
+                      className="w-full text-left text-xs font-semibold text-[var(--quni-coral)] hover:underline"
                     >
                       Use my saved work location
                     </button>

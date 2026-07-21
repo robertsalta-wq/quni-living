@@ -70,7 +70,7 @@ export function LegalPageShell({ bandTitle, pageTitle, toc, children }: LegalPag
                   <li key={d.to}>
                     <Link
                       to={d.to}
-                      className="text-sm font-medium text-[#FF6F61] underline underline-offset-2 hover:opacity-90"
+                      className="text-sm font-medium text-[var(--quni-coral)] underline underline-offset-2 hover:opacity-90"
                     >
                       {d.label}
                     </Link>
@@ -79,7 +79,7 @@ export function LegalPageShell({ bandTitle, pageTitle, toc, children }: LegalPag
               </ul>
             </div>
             <header className="mb-8 pb-6 border-b border-stone-100">
-              <h2 className="font-display text-3xl sm:text-[2rem] font-bold text-[#FF6F61] tracking-tight">{pageTitle}</h2>
+              <h2 className="font-display text-3xl sm:text-[2rem] font-bold text-[var(--quni-coral)] tracking-tight">{pageTitle}</h2>
               <p className="mt-2 text-sm text-stone-500">Last updated: 23 March 2026</p>
             </header>
             <div>{children}</div>

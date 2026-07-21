@@ -158,7 +158,7 @@ export function useListingProofread(
                 <button
                   type="button"
                   onClick={() => acceptSuggestion(suggestion)}
-                  className="rounded-md bg-[#0F6E56] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#0d5c4a]"
+                  className="rounded-md bg-[var(--quni-success-strong)] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#0d5c4a]"
                 >
                   Accept
                 </button>

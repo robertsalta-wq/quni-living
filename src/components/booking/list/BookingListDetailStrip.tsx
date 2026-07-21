@@ -9,16 +9,16 @@ export default function BookingListDetailStrip({ moveInLabel, endLabel, weeklyRe
     <div className="border-y border-[#F0EFEA] py-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="min-w-0">
-          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[#908897]">Move-in → End</p>
-          <p className="mt-1 text-[13px] text-[#08060D]">
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[var(--quni-ink-5)]">Move-in → End</p>
+          <p className="mt-1 text-[13px] text-[var(--quni-ink)]">
             {moveInLabel}
-            <span className="text-[#6B6375]"> → </span>
+            <span className="text-[var(--quni-ink-4)]"> → </span>
             {endLabel}
           </p>
         </div>
         <div className="min-w-0 text-right">
-          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[#908897]">Rent / wk</p>
-          <p className="mt-1 text-[13px] font-bold tabular-nums text-[#08060D]">{weeklyRentLabel}</p>
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-[var(--quni-ink-5)]">Rent / wk</p>
+          <p className="mt-1 text-[13px] font-bold tabular-nums text-[var(--quni-ink)]">{weeklyRentLabel}</p>
         </div>
       </div>
     </div>

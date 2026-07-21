@@ -23,7 +23,7 @@ export function RenterProfileReadinessDriver({ readiness, profile, situation, ve
   if (complete) {
     return (
       <div className="renter-profile-driver" role="status">
-        <p className="text-sm font-semibold text-[#08060D] leading-snug">
+        <p className="text-sm font-semibold text-[var(--quni-ink)] leading-snug">
           Profile {pct}% Complete
         </p>
         <div className="renter-profile-progress-track mt-3" aria-hidden>
