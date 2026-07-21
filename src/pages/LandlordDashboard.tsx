@@ -1580,11 +1580,11 @@ export default function LandlordDashboard() {
               </div>
             )}
 
-            <div className="overflow-hidden sm:rounded-2xl sm:border sm:border-gray-100 sm:bg-white sm:shadow-sm">
+            <div className="quni-dashboard-panel">
               {dataLoading && otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
                 <div className="space-y-3 animate-pulse sm:p-4" aria-busy="true">
-                  <div className="h-20 rounded-xl border border-[#E5E4E7] bg-white sm:border-0 sm:bg-gray-100" />
-                  <div className="h-20 rounded-xl border border-[#E5E4E7] bg-white sm:border-0 sm:bg-gray-100" />
+                  <div className="h-20 rounded-[var(--radius-lg)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] sm:border-0 sm:bg-[var(--quni-surface-3)]" />
+                  <div className="h-20 rounded-[var(--radius-lg)] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] sm:border-0 sm:bg-[var(--quni-surface-3)]" />
                 </div>
               ) : otherBookings.length === 0 && pendingConfirmation.length === 0 ? (
                 <p className="py-10 text-center text-sm text-gray-500 sm:p-10">No bookings yet.</p>

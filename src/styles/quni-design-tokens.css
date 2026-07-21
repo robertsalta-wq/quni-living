@@ -302,3 +302,25 @@ a { color: var(--quni-coral); text-decoration: none; }
 a:hover { color: var(--quni-coral-active); text-decoration: underline; }
 
 ::selection { background: var(--quni-coral-tint-15); color: var(--quni-ink); }
+
+/* =============================================================================
+   Dashboard panels — flush on mobile, elevated card from sm (640px) up.
+   Use for landlord tab list shells (Bookings, Messages, Listings groups).
+   ============================================================================= */
+
+.quni-dashboard-panel {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 640px) {
+  .quni-dashboard-panel {
+    border: 1px solid var(--quni-line);
+    border-radius: var(--radius-lg);
+    background: var(--quni-surface-1);
+    box-shadow: var(--shadow-1);
+  }
+}

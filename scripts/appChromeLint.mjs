@@ -3,7 +3,18 @@
  * Pure functions — used by the CLI and unit tests.
  */
 
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 /** @typedef {{ file: string, line: number, id: string, message: string }} ChromeViolation */
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+/** @type {Set<string>} */
+const ARBITRARY_HEX_LEGACY = new Set(
+  JSON.parse(readFileSync(join(__dirname, 'arbitraryHexLegacy.json'), 'utf8')).files,
+)
 
 /** Sole owner of header geometry (marketing reference). */
 export const HEADER_GEOMETRY_ALLOW = new Set(['src/components/ChromeHeaderShell.tsx'])
@@ -52,12 +63,25 @@ const SHARED_CHROME_TOKEN = {
     'border-[var(--brand-header-border)] belongs only in ChromeHeaderShell or AppActionBar',
 }
 
+/**
+ * Always-on design-token guards.
+ * Tailwind arbitrary-hex (border-[#E5E4E7]) slipped past bare-hex checks — ban it here.
+ */
+export const patterns = [
+  {
+    id: 'tailwind-arbitrary-hex',
+    re: /-\[#[0-9A-Fa-f]{3,8}\]/g,
+    message:
+      'Tailwind arbitrary-hex colour (e.g. border-[#E5E4E7], bg-[#fff]) is banned — use design tokens (var(--quni-*)) or a class in src/styles/quni-design-tokens.css',
+  },
+]
+
 function lineOf(source, index) {
   return source.slice(0, index).split(/\r?\n/).length
 }
 
-function collect(source, file, patterns, out) {
-  for (const { id, re, message } of patterns) {
+function collect(source, file, patternList, out) {
+  for (const { id, re, message } of patternList) {
     re.lastIndex = 0
     let m
     while ((m = re.exec(source))) {
@@ -105,6 +129,12 @@ export function findChromeViolations(relPath, source) {
 
   if (!headerOk && !barOk) {
     collect(source, relPath, [SHARED_CHROME_TOKEN], out)
+  }
+
+  // Design-token guards — always on (not chrome allowlisted).
+  // Legacy files are grandfathered until tokenized; new files must not use -[#hex].
+  if (!ARBITRARY_HEX_LEGACY.has(relPath)) {
+    collect(source, relPath, patterns, out)
   }
 
   return out
