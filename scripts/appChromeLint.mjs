@@ -16,6 +16,21 @@ const ARBITRARY_HEX_LEGACY = new Set(
   JSON.parse(readFileSync(join(__dirname, 'arbitraryHexLegacy.json'), 'utf8')).files,
 )
 
+/** @type {Set<string>} */
+const CONTAINER_LEGACY = new Set(
+  JSON.parse(readFileSync(join(__dirname, 'containerLegacy.json'), 'utf8')).files,
+)
+
+/**
+ * React wrappers that own `.quni-card` composition (tone/pad/sticky on top).
+ * CSS definition lives in quni-design-tokens.css (not scanned by this CLI).
+ */
+export const CONTAINER_PRIMITIVE_ALLOW = new Set([
+  'src/components/ui/Section.tsx',
+  'src/components/booking/review/BookingReviewSummaryStrip.tsx',
+  'src/components/booking/review/BookingReviewActionCard.tsx',
+])
+
 /** Sole owner of header geometry (marketing reference). */
 export const HEADER_GEOMETRY_ALLOW = new Set(['src/components/ChromeHeaderShell.tsx'])
 
@@ -224,6 +239,48 @@ function collectHeaderSafeAreaPlacement(source, file, out) {
   }
 }
 
+const HAND_ROLLED_CARD_MESSAGE =
+  'Hand-rolled card chrome (rounded + border + white/surface + shadow + padding) is banned — use .quni-card (or .quni-modal / admin Card). See container system C2/C-lint.'
+
+/**
+ * True when a class string looks like a hand-rolled elevated content card.
+ * Requires a block-padding tell (`p-*` / `px-*` / …) to reduce button/input noise.
+ * @param {string} s
+ */
+export function classLooksLikeHandRolledCard(s) {
+  if (/\bquni-card\b/.test(s) || /\bquni-dashboard-panel\b/.test(s) || /\bquni-modal\b/.test(s)) {
+    return false
+  }
+  if (!/\brounded-/.test(s)) return false
+  if (!/\bborder\b/.test(s)) return false
+  if (
+    !/\bbg-white\b/.test(s) &&
+    !/\bbg-\[var\(--quni-surface-1\)\]/.test(s) &&
+    !/\bbg-admin-surface-1\b/.test(s)
+  ) {
+    return false
+  }
+  if (!/\bshadow(?:-|\b|\[)/.test(s)) return false
+  // Container tell: padding utility (not bare `p` in other words).
+  if (!/(?:^|[\s:])(?:sm:|md:|lg:|xl:)?p(?:[xytbrl])?(?:-\d|-\[[^\]]+\])/.test(s)) return false
+  return true
+}
+
+function collectHandRolledCard(source, file, out) {
+  const re = /['"`]([^'"`]{0,900})['"`]/g
+  let m
+  while ((m = re.exec(source))) {
+    const s = m[1] ?? ''
+    if (!classLooksLikeHandRolledCard(s)) continue
+    out.push({
+      file,
+      line: lineOf(source, m.index),
+      id: 'hand-rolled-card',
+      message: HAND_ROLLED_CARD_MESSAGE,
+    })
+  }
+}
+
 /**
  * @param {string} relPath
  * @param {string} source
@@ -256,6 +313,11 @@ export function findChromeViolations(relPath, source) {
 
   // Canonical brand hexes — always on (documents + Stripe/theme-color line allowlist).
   collectCanonicalBrandHex(source, relPath, out)
+
+  // Container system — hand-rolled cards banned outside primitives + grandfather list.
+  if (!CONTAINER_PRIMITIVE_ALLOW.has(relPath) && !CONTAINER_LEGACY.has(relPath)) {
+    collectHandRolledCard(source, relPath, out)
+  }
 
   return out
 }
