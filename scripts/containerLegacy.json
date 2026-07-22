@@ -1,11 +1,4 @@
 {
   "_comment": "Files with hand-rolled card chrome (rounded+border+white/surface+shadow+padding). Remove a path when migrated to .quni-card / .quni-modal / admin Card. New files are never listed — they must use a container primitive.",
-  "files": [
-    "src/components/qase/QaseSubmitModal.tsx",
-    "src/context/SavedPropertiesContext.tsx",
-    "src/pages/LandlordDashboard.tsx",
-    "src/pages/StudentDashboard.tsx",
-    "src/pages/admin/AdminApps.tsx",
-    "src/pages/landlord/LandlordPropertyFormPage.tsx"
-  ]
+  "files": []
 }

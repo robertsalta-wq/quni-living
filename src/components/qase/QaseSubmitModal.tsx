@@ -554,7 +554,7 @@ export default function QaseSubmitModal({
                           return (
                             <li
                               key={article.id}
-                              className="rounded-lg border border-indigo-100/80 bg-white/90 px-3 py-2.5 shadow-sm"
+                              className="quni-card border-indigo-100/80 px-3 py-2.5"
                             >
                               <p className="text-sm font-semibold text-gray-900">{article.title}</p>
                               {article.category ? (
