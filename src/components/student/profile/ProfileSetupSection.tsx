@@ -124,7 +124,7 @@ export function ProfileSetupSection({
   )
 
   return (
-    <section id={id} className="renter-profile-card scroll-mt-below-header" aria-labelledby={headingId}>
+    <section id={id} className="quni-card overflow-hidden font-sans scroll-mt-below-header" aria-labelledby={headingId}>
       {staticHeader ? (
         <div className={headerClass} id={headingId}>
           {headerInner}

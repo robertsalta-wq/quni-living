@@ -26,15 +26,6 @@
   margin: 0 auto;
 }
 
-.renter-profile-card {
-  background: var(--quni-surface-1);
-  border: 1px solid var(--quni-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-  font-family: var(--font-sans);
-}
-
 .renter-profile-card-header {
   display: flex;
   align-items: center;
@@ -316,23 +307,6 @@
   line-height: 1.5;
 }
 
-.renter-profile-locked-card {
-  background: var(--quni-surface-1);
-  border: 1px dashed var(--quni-line);
-  border-radius: var(--radius-lg);
-  padding: 17px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.renter-profile-progress-track {
-  height: 8px;
-  border-radius: var(--radius-pill);
-  background: var(--quni-surface-3);
-  overflow: hidden;
-}
-
 .renter-profile-optional-divider {
   display: flex;
   align-items: center;
@@ -356,47 +330,6 @@
   color: var(--quni-ink-5);
   white-space: nowrap;
   text-align: center;
-}
-
-.renter-profile-driver {
-  background: var(--quni-surface-1);
-  border: 1px solid var(--quni-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-1);
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  position: sticky;
-  top: var(--quni-fixed-header-offset, 0px);
-  z-index: 30;
-}
-
-.renter-profile-driver-eyebrow {
-  font-size: 11px;
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--quni-ink-5);
-}
-
-.renter-profile-driver-title {
-  margin-top: 5px;
-  font-size: 22px;
-  font-weight: var(--weight-bold);
-  color: var(--quni-ink);
-  letter-spacing: -0.01em;
-}
-
-.renter-profile-driver-coral {
-  color: var(--quni-coral);
-}
-
-.renter-profile-progress-fill {
-  height: 100%;
-  background: var(--quni-coral);
-  border-radius: var(--radius-pill);
-  transition: width var(--dur-base) var(--ease-standard);
 }
 
 .renter-profile-situation-tile {

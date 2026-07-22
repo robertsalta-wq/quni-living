@@ -50,7 +50,10 @@ export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm,
 
 export function RenterProfileLockedRouteSection() {
   return (
-    <div className="renter-profile-locked-card" id="renter-section-route-locked">
+    <div
+      className="quni-card flex items-center gap-[14px] border-dashed border-[var(--quni-line)] px-5 py-[17px]"
+      id="renter-section-route-locked"
+    >
       <div className="renter-profile-icon-wrap renter-profile-icon-wrap-lg" style={{ background: 'var(--quni-surface-3)', color: 'var(--quni-ink-5)' }}>
         <ProfileSectionIcon kind="verify" />
       </div>
