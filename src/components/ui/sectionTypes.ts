@@ -9,18 +9,21 @@ export type SectionProps = {
   id: string
   icon?: ReactNode
   title: string
+  /** Optional coral section index shown before the title (e.g. renter profile "01"). */
+  sectionNum?: string
   subtitle?: string
   /** Omit to hide the status pill (e.g. booking history). */
   status?: SectionStatus
   summary?: ReactNode
-  /** Ignored when `collapsible={false}` — body always shown. */
+  /** Ignored when `collapsible={false}` — body always shown when children are present. */
   expanded?: boolean
   onToggle?: () => void
   editLabel?: string
-  /** Default true. When false: same chrome, no chevron, no toggle, body always open. */
+  /** Default true. When false: same chrome, no chevron, no toggle, body always open when children are present. */
   collapsible?: boolean
   tone?: SectionTone
-  children: ReactNode
+  /** Omit or pass null to hide the body (e.g. locked placeholder with no content). */
+  children?: ReactNode
 }
 
 /** @deprecated Use `SectionProps`. Alias kept for profile barrel consumers. */
