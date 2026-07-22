@@ -1,4 +1,4 @@
-/** Shared Tailwind field/layout classes for renter profile forms (R3a/R3b). */
+/** Shared Tailwind classes for renter profile (R3a–R4). */
 
 export const renterLabelClass =
   'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.04em] leading-[1.35] text-[var(--quni-ink-5)]'
@@ -79,7 +79,7 @@ export const renterPhotoRowClass = 'flex flex-wrap items-end gap-4'
 export const renterPhotoPreviewClass =
   'h-24 w-24 shrink-0 overflow-hidden rounded-[var(--radius-pill)] border border-[var(--quni-line)] bg-[var(--quni-surface-2)]'
 
-/** Form-tied secondary (photo upload, danger zone). Shell modal keeps CSS residual. */
+/** Form-tied + Shell modal secondary. */
 export const renterSecondaryBtnClass =
   'inline-flex items-center justify-center rounded-[11px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-3 font-[inherit] text-[length:var(--text-body-sm-size)] font-semibold text-[var(--quni-ink-2)] hover:bg-[var(--quni-surface-2)] disabled:cursor-not-allowed disabled:opacity-50'
 
@@ -91,3 +91,52 @@ export const renterEmailWaitBoxClass =
   'rounded-[10px] border border-[var(--quni-line-soft)] bg-[var(--quni-surface-2)] px-[13px] py-[11px] text-xs leading-[1.45] text-[var(--quni-ink-3)] [&_ul]:mt-1.5 [&_ul]:pl-4'
 
 export const renterEmailActionsClass = 'flex flex-wrap items-center gap-3'
+
+/* ——— R4 page chrome ——— */
+
+export const renterStackClass = 'mx-auto flex max-w-[744px] flex-col gap-4'
+
+export const renterOptionalDividerClass =
+  'mx-0.5 my-2 flex items-center gap-[13px] text-center text-[10.5px] font-semibold uppercase tracking-[0.04em] text-[var(--quni-ink-5)]'
+
+export const renterOptionalDividerLineClass = 'h-px flex-1 bg-[var(--quni-line)]'
+
+export const renterIconWrapClass =
+  'flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[var(--quni-coral-tint-15)] text-[var(--quni-coral)]'
+
+export const renterIconWrapLgClass =
+  'flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[var(--radius-md)]'
+
+export const renterEditBtnClass =
+  'inline-flex shrink-0 cursor-pointer items-center gap-1.5 border-0 bg-transparent px-1 py-1.5 font-[inherit] text-[length:var(--text-caption-size)] font-semibold text-[var(--quni-coral)] hover:text-[var(--quni-coral-hover)]'
+
+export const renterVerifyPillClass =
+  'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-pill)] px-[11px] py-1.5 text-[11px] font-semibold tracking-[0.01em]'
+
+export const renterVerifyPillDoneClass =
+  'bg-[var(--quni-success-bg)] text-[var(--quni-success-fg)]'
+
+export const renterVerifyPillReviewClass =
+  'bg-[var(--quni-navy-tint)] text-[var(--quni-ink-4)]'
+
+export const renterSituationGridClass =
+  'grid grid-cols-2 gap-3 sm:grid-cols-6 sm:gap-2.5'
+
+export const renterSituationTileClass =
+  'relative flex cursor-pointer flex-col items-center justify-center gap-[9px] rounded-[14px] border border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-2 py-4 font-[inherit] transition-[border-color,background] duration-[var(--dur-fast)] ease-[var(--ease-standard)] max-sm:px-3 max-sm:py-[18px] disabled:cursor-not-allowed disabled:opacity-50'
+
+export const renterSituationTileSelectedClass =
+  'border-[1.5px] border-[var(--quni-coral)] bg-[var(--quni-coral-tint)]'
+
+export const renterSituationTileLabelClass =
+  'text-center text-[length:var(--text-body-sm-size)] font-semibold leading-tight text-[var(--quni-ink-2)]'
+
+export const renterSituationTileLabelSelectedClass = 'text-[var(--quni-ink)]'
+
+export const renterNestedSectionClass =
+  'mt-[15px] border-t border-[var(--quni-line-soft)] pt-4'
+
+export const renterNestedHeaderClass =
+  'flex w-full cursor-pointer select-none items-center gap-[11px] border-0 bg-transparent p-0 text-left'
+
+export const renterNestedBodyClass = 'pt-4'

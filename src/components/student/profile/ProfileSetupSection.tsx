@@ -3,6 +3,10 @@ import Section, { StatusPill } from '../../ui/Section'
 import type { SectionStatus } from '../../ui/sectionTypes'
 import { ChevronDown, ChevronUp, ProfileSectionIcon, type ProfileSectionIconKind } from './profileSectionIcons'
 import {
+  renterIconWrapClass,
+  renterNestedBodyClass,
+  renterNestedHeaderClass,
+  renterNestedSectionClass,
   renterNoteClass,
 } from '../../../lib/renterProfileFormClasses'
 
@@ -89,16 +93,16 @@ export function ProfileNestedSection({
   }, [status])
 
   return (
-    <div id={id} className="renter-profile-nested-section" aria-labelledby={headingId}>
+    <div id={id} className={renterNestedSectionClass} aria-labelledby={headingId}>
       <button
         type="button"
         id={headingId}
-        className="renter-profile-nested-header"
+        className={renterNestedHeaderClass}
         aria-expanded={open}
         aria-controls={`${id}-panel`}
         onClick={() => setOpen((v) => !v)}
       >
-        <div className="renter-profile-icon-wrap">
+        <div className={renterIconWrapClass}>
           <ProfileSectionIcon kind={icon} />
         </div>
         <div className="min-w-0 flex-1">
@@ -112,7 +116,7 @@ export function ProfileNestedSection({
         </span>
       </button>
       {open ? (
-        <div id={`${id}-panel`} className="renter-profile-nested-body">
+        <div id={`${id}-panel`} className={renterNestedBodyClass}>
           {children}
           {note ? (
             <div className={renterNoteClass} role="note">

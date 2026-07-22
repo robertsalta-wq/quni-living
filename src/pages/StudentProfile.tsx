@@ -11,7 +11,7 @@ import { RenterProfileSetup } from '../components/student/profile/RenterProfileS
 import { StudentDeleteAccountModal } from '../components/student/StudentDeleteAccountModal'
 import { RenterDashboardTabShell } from '../components/student/RenterDashboardPageHeader'
 import { firstPropertyImageUrl } from '../lib/propertyImages'
-import { renterSecondaryBtnClass, renterWriteErrorClass } from '../lib/renterProfileFormClasses'
+import { renterEditBtnClass, renterSecondaryBtnClass, renterWriteErrorClass } from '../lib/renterProfileFormClasses'
 
 type StudentRow = Database['public']['Tables']['student_profiles']['Row']
 
@@ -247,7 +247,7 @@ export default function StudentProfile() {
     return (
       <RenterDashboardTabShell activeTab={activeTab === 'bookings' ? 'bookings' : 'profile'}>
         <p className={renterWriteErrorClass}>{loadError ?? 'Profile unavailable.'}</p>
-        <Link to="/student-dashboard" className="renter-profile-edit-btn" style={{ marginTop: 16, display: 'inline-flex' }}>
+        <Link to="/student-dashboard" className={`${renterEditBtnClass} mt-4`}>
           Go to dashboard
         </Link>
       </RenterDashboardTabShell>
@@ -485,8 +485,7 @@ export default function StudentProfile() {
                 return next
               })
             }}
-            className="renter-profile-edit-btn"
-            style={{ justifyContent: 'center', width: '100%' }}
+            className={`${renterEditBtnClass} w-full justify-center`}
           >
             {dangerZoneVisible ? 'Hide account deletion' : 'Delete my account'}
           </button>

@@ -2,6 +2,12 @@ import { StatusPill } from '../../ui/Section'
 import { RefreshCw, ProfileSectionIcon } from './profileSectionIcons'
 import { routeSectionTitle } from '../../../lib/renterProfileSection'
 import type { RenterSituation } from '../../../lib/renterSituation'
+import {
+  renterIconWrapClass,
+  renterIconWrapLgClass,
+  renterSaveBtnClass,
+  renterSecondaryBtnClass,
+} from '../../../lib/renterProfileFormClasses'
 
 type Props = {
   nextSituation: RenterSituation
@@ -31,7 +37,7 @@ export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm,
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} aria-hidden />
       <div className="quni-modal relative z-10 w-full max-w-[320px] px-[22px] pb-[18px] pt-[22px]">
         <div className="flex items-center gap-[11px]">
-          <div className="renter-profile-icon-wrap">
+          <div className={renterIconWrapClass}>
             <RefreshCw size={19} aria-hidden />
           </div>
           <div id="switch-situation-title" className="text-[17px] font-bold text-[var(--quni-ink)]">
@@ -44,10 +50,10 @@ export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm,
           section. Personal details, verification and emergency contact stay as they are.
         </p>
         <div className="mt-5 flex gap-2.5">
-          <button type="button" className="renter-profile-btn-secondary" onClick={onCancel}>
+          <button type="button" className={`${renterSecondaryBtnClass} flex-1`} onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="renter-profile-btn-primary flex-1" onClick={onConfirm}>
+          <button type="button" className={`${renterSaveBtnClass} flex-1 self-auto`} onClick={onConfirm}>
             Switch
           </button>
         </div>
@@ -62,7 +68,7 @@ export function RenterProfileLockedRouteSection() {
       className="quni-card flex items-center gap-[14px] border-dashed border-[var(--quni-line)] px-5 py-[17px] font-sans"
       id="renter-section-route-locked"
     >
-      <div className="renter-profile-icon-wrap renter-profile-icon-wrap-lg bg-[var(--quni-surface-3)] text-[var(--quni-ink-5)]">
+      <div className={`${renterIconWrapLgClass} bg-[var(--quni-surface-3)] text-[var(--quni-ink-5)]`}>
         <ProfileSectionIcon kind="verify" />
       </div>
       <div className="min-w-0 flex-1">

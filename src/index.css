@@ -1,5 +1,5 @@
 @import './styles/fonts.css';
-@import './styles/renter-profile.css';
+@import './styles/quni-design-tokens.css';
 
 @tailwind base;
 @tailwind components;

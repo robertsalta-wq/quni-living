@@ -3,6 +3,9 @@ import {
   renterFilledRowActionClass,
   renterUploadFilledClass,
   renterUploadFilledTextClass,
+  renterVerifyPillClass,
+  renterVerifyPillDoneClass,
+  renterVerifyPillReviewClass,
 } from '../../../lib/renterProfileFormClasses'
 
 type Props = {
@@ -63,12 +66,12 @@ export function RenterProfileVerificationRow({ value, rightSlot, onAction, actio
           {rightSlot.action === 'replace' ? 'Replace' : 'Edit'}
         </button>
       ) : rightSlot.kind === 'verified' ? (
-        <span className="renter-profile-pill renter-profile-pill-done renter-profile-pill-inline">
+        <span className={`${renterVerifyPillClass} ${renterVerifyPillDoneClass}`}>
           <PillCheckIcon />
           Verified
         </span>
       ) : (
-        <span className="renter-profile-pill renter-profile-pill-review renter-profile-pill-inline">In review</span>
+        <span className={`${renterVerifyPillClass} ${renterVerifyPillReviewClass}`}>In review</span>
       )}
     </div>
   )
