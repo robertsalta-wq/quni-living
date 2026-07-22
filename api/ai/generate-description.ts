@@ -14,6 +14,32 @@ export const config = {
   runtime: 'edge',
 }
 
+/**
+ * Mirrors the body sent by AIDescriptionGenerator.
+ * Widening this allowlist is a legal-review decision, not a routine change.
+ */
+const GENERATE_DESCRIPTION_BODY_ALLOWLIST = [
+  'roomType',
+  'suburb',
+  'existingDescription',
+  'weeklyRent',
+  'nearbyUniversities',
+  'amenities',
+  'furnished',
+] as const
+
+type AllowedDescriptionBodyKey = (typeof GENERATE_DESCRIPTION_BODY_ALLOWLIST)[number]
+
+function pickAllowedDescriptionBody(raw: Record<string, unknown>): Record<string, unknown> {
+  const picked: Record<string, unknown> = {}
+  for (const key of GENERATE_DESCRIPTION_BODY_ALLOWLIST) {
+    if (Object.prototype.hasOwnProperty.call(raw, key)) {
+      picked[key as AllowedDescriptionBodyKey] = raw[key]
+    }
+  }
+  return picked
+}
+
 function json(body: unknown, status = 200, origin: string) {
   const allowOrigin = origin || '*'
   return new Response(JSON.stringify(body), {
@@ -70,7 +96,8 @@ export default async function handler(request: Request) {
     return json({ error: 'Invalid JSON body' }, 400, origin)
   }
 
-  const body = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+  const rawBody = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+  const body = pickAllowedDescriptionBody(rawBody)
   const roomType = String(body.roomType ?? '').trim()
   const suburb = String(body.suburb ?? '').trim()
 
@@ -89,12 +116,6 @@ export default async function handler(request: Request) {
   }
   if (body.amenities !== undefined && body.amenities !== null && !isStringArray(body.amenities)) {
     return json({ error: 'amenities must be an array of strings when provided' }, 400, origin)
-  }
-  if (body.houseRules !== undefined && body.houseRules !== null && typeof body.houseRules !== 'string') {
-    return json({ error: 'houseRules must be a string when provided' }, 400, origin)
-  }
-  if (body.billsIncluded !== undefined && body.billsIncluded !== null && typeof body.billsIncluded !== 'boolean') {
-    return json({ error: 'billsIncluded must be a boolean when provided' }, 400, origin)
   }
   if (body.furnished !== undefined && body.furnished !== null && typeof body.furnished !== 'boolean') {
     return json({ error: 'furnished must be a boolean when provided' }, 400, origin)

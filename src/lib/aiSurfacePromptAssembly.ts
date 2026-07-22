@@ -549,14 +549,6 @@ export function buildImproveDescriptionUserPrompt(
     lines.push(`Amenities / features: ${body.amenities.join(', ')}`)
   }
 
-  if (typeof body.houseRules === 'string' && body.houseRules.trim()) {
-    lines.push(`House rules / expectations: ${body.houseRules.trim()}`)
-  }
-
-  if (typeof body.billsIncluded === 'boolean') {
-    lines.push(`Bills included: ${body.billsIncluded ? 'yes' : 'no'}`)
-  }
-
   if (typeof body.furnished === 'boolean') {
     lines.push(`Furnished: ${body.furnished ? 'yes' : 'no'}`)
   }
@@ -576,15 +568,11 @@ export function buildDescriptionUserPrompt(body: Record<string, unknown>): strin
     `Suburb: ${suburb}`,
   ]
 
-  if (typeof body.houseRules === 'string' && body.houseRules.trim()) {
-    lines.push(`House rules / expectations: ${body.houseRules.trim()}`)
-  }
-
   lines.push(
     '',
     'Requirements:',
     '- 3–4 paragraphs, 120–180 words total.',
-    '- Australian English; warm, practical tone.',
+    '- Australian English; clear, factual tone.',
     '- Never use em dashes; use commas, full stops, or a simple hyphen with spaces.',
     '- Plain paragraphs only (no bullet lists, no title line).',
   )
@@ -595,6 +583,7 @@ export function buildDescriptionUserPrompt(body: Record<string, unknown>): strin
 export const DESCRIPTION_GENERATOR_SYSTEM_PROMPT = `You write property listing descriptions for an Australian verified accommodation marketplace.
 ${NON_DISCRIMINATION_AI_RULE}
 ${NO_EM_DASH_RULE}
+- Describe only what is stated in the facts provided. Do not add subjective quality or condition claims (for example: bright, spacious, modern, renovated, stunning, cosy, charming) unless that exact fact is given in the inputs. Prefer concrete, structural, factual language over marketing adjectives.
 Output plain paragraphs only - no discriminatory tenant preferences.`
 
 export function assembleDescriptionGeneratorModelCall(body: Record<string, unknown>): {
