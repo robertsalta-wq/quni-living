@@ -1,23 +1,6 @@
 /* Renter profile completion page — uses quni-design-tokens.css variables only. */
 @import './quni-design-tokens.css';
 
-.renter-profile-page {
-  background: var(--quni-surface-2);
-  font-family: var(--font-sans);
-}
-
-.renter-profile-page-outer {
-  flex: 1;
-  padding: 34px 16px 42px;
-}
-
-@media (min-width: 640px) {
-  .renter-profile-page-outer {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-}
-
 .renter-profile-stack {
   display: flex;
   flex-direction: column;
@@ -365,26 +348,6 @@
 
 .renter-profile-situation-tile-selected .renter-profile-situation-tile-label {
   color: var(--quni-ink);
-}
-
-.renter-profile-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(8, 6, 13, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 22px;
-  z-index: 50;
-}
-
-.renter-profile-modal {
-  width: 100%;
-  max-width: 320px;
-  background: var(--quni-surface-1);
-  border-radius: 18px;
-  box-shadow: var(--shadow-3);
-  padding: 22px 22px 18px;
 }
 
 .renter-profile-form-grid {

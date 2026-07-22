@@ -20,26 +20,32 @@ export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm,
   const fromSectionTitle = routeSectionTitle(fromSituation)
 
   return (
-    <div className="renter-profile-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="switch-situation-title">
-      <div className="renter-profile-modal">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-[22px]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="switch-situation-title"
+    >
+      <div className="absolute inset-0 bg-black/50" onClick={onCancel} aria-hidden />
+      <div className="quni-modal relative z-10 w-full max-w-[320px] px-[22px] pb-[18px] pt-[22px]">
+        <div className="flex items-center gap-[11px]">
           <div className="renter-profile-icon-wrap">
             <RefreshCw size={19} aria-hidden />
           </div>
-          <div id="switch-situation-title" style={{ fontSize: 17, fontWeight: 700, color: 'var(--quni-ink)' }}>
+          <div id="switch-situation-title" className="text-[17px] font-bold text-[var(--quni-ink)]">
             Switch your situation?
           </div>
         </div>
-        <p style={{ marginTop: 13, fontSize: 13.5, color: 'var(--quni-ink-3)', lineHeight: 1.55 }}>
-          Switching to <strong style={{ color: 'var(--quni-ink)', fontWeight: 600 }}>{nextLabel}</strong> clears the
-          details in your <strong style={{ color: 'var(--quni-ink)', fontWeight: 600 }}>{fromSectionTitle}</strong>{' '}
+        <p className="mt-[13px] text-[13.5px] leading-normal text-[var(--quni-ink-3)]">
+          Switching to <strong className="font-semibold text-[var(--quni-ink)]">{nextLabel}</strong> clears the
+          details in your <strong className="font-semibold text-[var(--quni-ink)]">{fromSectionTitle}</strong>{' '}
           section. Personal details, verification and emergency contact stay as they are.
         </p>
-        <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+        <div className="mt-5 flex gap-2.5">
           <button type="button" className="renter-profile-btn-secondary" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="renter-profile-btn-primary" style={{ flex: 1 }} onClick={onConfirm}>
+          <button type="button" className="renter-profile-btn-primary flex-1" onClick={onConfirm}>
             Switch
           </button>
         </div>
