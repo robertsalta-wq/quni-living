@@ -92,6 +92,8 @@ export default function Section({
   const showSummaryRow = collapsible && !expanded && summary != null
   const showDoneGlyph = status === 'done'
 
+  const headingId = `${id}-heading`
+
   const headerInner = (
     <>
       {icon != null ? (
@@ -103,7 +105,7 @@ export default function Section({
       ) : null}
 
       <span className="min-w-0 flex-1">
-        <span className="flex min-w-0 items-baseline gap-[7px]">
+        <span id={headingId} className="flex min-w-0 items-baseline gap-[7px]">
           {sectionNum ? (
             <span className="shrink-0 text-[var(--text-caption-size)] font-bold tracking-[0.02em] text-admin-coral">
               {sectionNum}
@@ -142,6 +144,7 @@ export default function Section({
   return (
     <section
       id={id}
+      aria-labelledby={headingId}
       className={`quni-card scroll-mt-below-header overflow-hidden font-sans ${toneBorderClass(tone)}`}
     >
       {collapsible ? (
