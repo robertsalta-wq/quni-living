@@ -110,6 +110,13 @@ import {
   propertyHasAuthorityToLetAttestation,
 } from '../../lib/authorityToLetAttestation'
 import {
+  LISTING_ACCURACY_ATTESTATION_LABEL,
+  LISTING_ACCURACY_BLOCKED_MESSAGE,
+  computeListingAccuracyContentHash,
+  listingAccuracyAttestationPatch,
+  propertyHasCurrentListingAccuracyAttestation,
+} from '../../lib/listingAccuracyAttestation'
+import {
   LandlordPropertyUtilitiesFields,
   billsIncludedFromFeatureSelection,
   emptyLandlordPropertyUtilitiesFormState,
@@ -575,6 +582,11 @@ export default function LandlordPropertyFormPage() {
   const [nonDiscriminationAgreed, setNonDiscriminationAgreed] = useState(false)
   const [authorityToLetAgreed, setAuthorityToLetAgreed] = useState(false)
   const [authorityToLetAttestedAt, setAuthorityToLetAttestedAt] = useState<string | null>(null)
+  const [accuracyAgreed, setAccuracyAgreed] = useState(false)
+  const [accuracyAttestedAt, setAccuracyAttestedAt] = useState<string | null>(null)
+  const [accuracyAttestedContentHash, setAccuracyAttestedContentHash] = useState<string | null>(null)
+  const [loadedBond, setLoadedBond] = useState<number | null>(null)
+  const [loadedAvailableTo, setLoadedAvailableTo] = useState<string | null>(null)
   const [waterSeparatelyMeteredAttestedAt, setWaterSeparatelyMeteredAttestedAt] = useState<string | null>(
     null,
   )
@@ -1221,6 +1233,15 @@ export default function LandlordPropertyFormPage() {
         const loadedAttestedAt = prop.authority_to_let_attested_at ?? null
         setAuthorityToLetAttestedAt(loadedAttestedAt)
         setAuthorityToLetAgreed(Boolean(loadedAttestedAt))
+        setAccuracyAttestedAt(prop.accuracy_attested_at ?? null)
+        setAccuracyAttestedContentHash(prop.accuracy_attested_content_hash ?? null)
+        setAccuracyAgreed(false)
+        setLoadedBond(typeof prop.bond === 'number' ? prop.bond : null)
+        setLoadedAvailableTo(
+          typeof prop.available_to === 'string' && prop.available_to.trim()
+            ? prop.available_to.slice(0, 10)
+            : null,
+        )
         const loadedWaterAttestedAt = prop.water_separately_metered_efficient_attested_at ?? null
         setWaterSeparatelyMeteredAttestedAt(loadedWaterAttestedAt)
         setWaterSeparatelyMeteredAgreed(Boolean(loadedWaterAttestedAt))
@@ -2153,6 +2174,48 @@ export default function LandlordPropertyFormPage() {
       }
     }
 
+    let featureIds = [...selectedFeatureIds]
+    if (parkingFeatureId) {
+      if (parkingAvailable) {
+        if (!featureIds.includes(parkingFeatureId)) featureIds.push(parkingFeatureId)
+      } else {
+        featureIds = featureIds.filter((id) => id !== parkingFeatureId)
+      }
+    }
+
+    // Hash must resolve before the accuracy gate decides — do not write without awaiting.
+    const accommodationForHash = normalizeAccommodationForSave(propertyListingType, roomType)
+    const serializedImages = images.length ? serializePropertyImages(images) : null
+    const structuredHouseRules = Object.entries(selectedRules)
+      .filter((e): e is [string, RulePermitted] => e[1] === 'yes' || e[1] === 'no' || e[1] === 'approval')
+      .map(([rule_id, permitted]) => ({ rule_id, permitted }))
+    const accuracyContentHash = await computeListingAccuracyContentHash({
+      rent_per_week: rent,
+      bond: loadedBond,
+      bond_weeks: Math.min(MAX_BOND_WEEKS, Math.max(0, parseInt(bondWeeks, 10) || DEFAULT_BOND_WEEKS)),
+      room_type: accommodationForHash.roomType,
+      max_occupants: maxOcc,
+      available_from: availableFrom.trim() || null,
+      available_to: loadedAvailableTo,
+      furnished,
+      images: serializedImages,
+      house_rules: houseRules.trim() || null,
+      structured_house_rules: structuredHouseRules,
+      amenity_feature_ids: featureIds,
+    })
+    const hasCurrentAccuracyAttestation = propertyHasCurrentListingAccuracyAttestation(
+      {
+        accuracy_attested_at: accuracyAttestedAt,
+        accuracy_attested_content_hash: accuracyAttestedContentHash,
+      },
+      accuracyContentHash,
+    )
+    if (!hasCurrentAccuracyAttestation && !accuracyAgreed) {
+      reportSubmitError(LISTING_ACCURACY_BLOCKED_MESSAGE)
+      document.getElementById('section-listing-accuracy')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
     setSubmitting(true)
     try {
     if (role === 'admin') {
@@ -2179,15 +2242,6 @@ export default function LandlordPropertyFormPage() {
         .update(nonDiscriminationAcceptancePatch())
         .eq('user_id', user.id)
       if (policyErr) throw policyErr
-    }
-
-    let featureIds = [...selectedFeatureIds]
-    if (parkingFeatureId) {
-      if (parkingAvailable) {
-        if (!featureIds.includes(parkingFeatureId)) featureIds.push(parkingFeatureId)
-      } else {
-        featureIds = featureIds.filter((id) => id !== parkingFeatureId)
-      }
     }
 
     const topSuggest = nearbyCampusSuggestions[0]
@@ -2238,6 +2292,12 @@ export default function LandlordPropertyFormPage() {
         ? utilitiesForm.waterSeparatelyMeteredAgreed
         : waterSeparatelyMeteredAgreed,
       existingAttestedAt: waterSeparatelyMeteredAttestedAt,
+    })
+    const accuracyAttestationPatch = listingAccuracyAttestationPatch({
+      agreed: accuracyAgreed,
+      existingAttestedAt: accuracyAttestedAt,
+      existingContentHash: accuracyAttestedContentHash,
+      contentHash: accuracyContentHash,
     })
 
     const baseFields: PropertyUpdate & { show_add_another_university?: boolean } = {
@@ -2297,6 +2357,7 @@ export default function LandlordPropertyFormPage() {
           }),
       ...attestationPatch,
       ...waterAttestationPatch,
+      ...accuracyAttestationPatch,
       lister_role: listerRole,
     }
 
@@ -2385,6 +2446,11 @@ export default function LandlordPropertyFormPage() {
         if (attestationPatch.authority_to_let_attested_at) {
           setAuthorityToLetAttestedAt(attestationPatch.authority_to_let_attested_at)
           setAuthorityToLetAgreed(true)
+        }
+        if (accuracyAttestationPatch.accuracy_attested_at) {
+          setAccuracyAttestedAt(accuracyAttestationPatch.accuracy_attested_at)
+          setAccuracyAttestedContentHash(accuracyAttestationPatch.accuracy_attested_content_hash)
+          setAccuracyAgreed(false)
         }
         if (isHubSectionMode) {
           navigate(hubReturnPath, { replace: true })
@@ -3961,6 +4027,20 @@ export default function LandlordPropertyFormPage() {
                 </span>
               </label>
             ) : null}
+            <div id="section-listing-accuracy">
+              <label className="flex gap-3 items-start cursor-pointer text-sm text-gray-800 leading-relaxed rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={accuracyAgreed}
+                  onChange={(e) => {
+                    setAccuracyAgreed(e.target.checked)
+                    if (submitError === LISTING_ACCURACY_BLOCKED_MESSAGE) setSubmitError(null)
+                  }}
+                  className={`${LANDLORD_FORM_CHECKBOX_CLASS} mt-0.5`}
+                />
+                <span className="font-medium text-gray-900">{LISTING_ACCURACY_ATTESTATION_LABEL}</span>
+              </label>
+            </div>
             <div id="listing-form-feedback-bottom" className="space-y-3">
               {submitError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
