@@ -37,13 +37,15 @@
       name="twitter:description"
       content="Browse verified rooms near campus and work. Free for renters. Stripe-verified hosts, RTA-compliant agreements, direct payouts."
     />
+    <!-- Featured / lazy collage images may still hit Unsplash. -->
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
-    <!-- Stable homepage LCP candidate (hero collage fallback). -->
+    <!-- Homepage LCP: first-party AVIF (matches <picture> preference in Home.tsx). -->
     <link
       rel="preload"
       as="image"
-      href="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop"
-      imagesrcset="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=640&q=75&auto=format&fit=crop 640w, https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=800&q=75&auto=format&fit=crop 800w"
+      type="image/avif"
+      href="/hero/hero-top-800.avif"
+      imagesrcset="/hero/hero-top-480.avif 480w, /hero/hero-top-640.avif 640w, /hero/hero-top-800.avif 800w"
       imagesizes="(min-width: 1024px) 36vw, 75vw"
       fetchpriority="high"
     />
