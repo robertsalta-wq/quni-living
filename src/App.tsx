@@ -11,6 +11,7 @@ import { BookingFlowChromeProvider } from './context/BookingFlowChromeContext'
 import LandlordDashboardRedirect from './lib/LandlordDashboardRedirect'
 import LandlordProfileRedirect from './lib/LandlordProfileRedirect'
 import { landlordDashboardProfilePath } from './lib/landlordDashboardProfilePaths'
+import Home from './pages/Home'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
 import Guides from './pages/Guides'
 import ForUniversities from './pages/ForUniversities'
@@ -215,12 +216,12 @@ function App() {
 
             {/* Marketing / auth — public Header + Footer */}
             <Route element={<MarketingChromeLayout />}>
-              {/* Eager: prerendered SEO routes (must not Suspense-empty on SSR). */}
+              {/* Eager: homepage + prerendered SEO (avoid Suspense spinner CLS on `/`). */}
+              <Route path="/" element={<Home />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/guides/:slug" element={<GuideArticlePage />} />
               <Route path="/for-universities" element={<ForUniversities />} />
               <Route element={<LazyOutlet />}>
-                <Route path="/" element={<Lazy.Home />} />
                 <Route path="/listings" element={<Lazy.Listings />} />
                 <Route path="/listings/:slug" element={<Lazy.PropertyDetail />} />
                 <Route path="/search" element={<Navigate to="/listings" replace />} />

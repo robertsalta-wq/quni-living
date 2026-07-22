@@ -27,7 +27,6 @@ export const routeImports = {
   messagesInboxPage: () => import('./pages/MessagesInboxPage'),
   /** @deprecated — re-exports MessagesPage */
   conversationThreadPage: () => import('./pages/ConversationThreadPage'),
-  home: () => import('./pages/Home'),
   listings: () => import('./pages/Listings'),
   propertyDetail: () => import('./pages/PropertyDetail'),
   login: () => import('./pages/Login'),
@@ -118,7 +117,6 @@ export const MessagesInboxPage = lazy(routeImports.messagesInboxPage)
 export const ConversationThreadPage = lazy(routeImports.conversationThreadPage)
 
 // Marketing & SEO (primary + secondary)
-export const Home = lazy(routeImports.home)
 export const Listings = lazy(routeImports.listings)
 export const PropertyDetail = lazy(routeImports.propertyDetail)
 export const Login = lazy(routeImports.login)

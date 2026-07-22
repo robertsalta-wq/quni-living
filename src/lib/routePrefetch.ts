@@ -28,7 +28,6 @@ const ADMIN_SEGMENT_IMPORTERS: Record<string, RouteImporter> = {
 }
 
 const EXACT_PATH_IMPORTERS: Record<string, RouteImporter[]> = {
-  '/': [routeImports.home],
   '/listings': [routeImports.listings],
   '/login': [routeImports.login],
   '/rent-near-campus': [routeImports.rentNearCampus],
