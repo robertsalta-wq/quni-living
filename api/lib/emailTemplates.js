@@ -375,7 +375,7 @@ ${bondPaymentBlock}
   }
 }
 
-/** Listing tier - renter: agreement ready to sign (DocuSeal dispatched). */
+/** Listing tier - renter: agreement ready to sign (Quni/Resend + in-app signing link). */
 export function listingAgreementReadyRenter(data) {
   const studentName = escapeHtml(data.student_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your booking')
@@ -385,7 +385,7 @@ export function listingAgreementReadyRenter(data) {
   const inner = `<h2 style="color: #1A1A2E;">Your tenancy agreement is ready to sign</h2>
 <p>Hi ${studentName},</p>
 <p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
-<p>You should also receive a DocuSeal email with your signing link. Use the button below if you prefer to sign from your dashboard.</p>
+<p>Use the button below, or open your student dashboard to sign.</p>
 <a href="${signUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Sign tenancy agreement →</a>
 <a href="${dashboardUrl}" style="display:inline-block;margin-top:12px;color:#FF6F61;font-weight:600;">Student dashboard →</a>`
 
@@ -425,7 +425,7 @@ ${bondObligationsBlock}
   }
 }
 
-/** Listing tier - landlord: agreement ready to sign (DocuSeal dispatched). */
+/** Listing tier - landlord: agreement ready to sign (Quni/Resend + booking review). */
 export function listingAgreementReadyLandlord(data) {
   const landlordName = escapeHtml(data.landlord_name || 'there')
   const propertyAddress = escapeHtml(data.property_address || data.property_title || 'your listing')
@@ -434,7 +434,7 @@ export function listingAgreementReadyLandlord(data) {
   const inner = `<h2 style="color: #1A1A2E;">Tenancy agreement ready to sign</h2>
 <p>Hi ${landlordName},</p>
 <p>Your residential tenancy agreement for <strong>${propertyAddress}</strong> is ready for electronic signing.</p>
-<p>Check your email for the DocuSeal signing link, or open the booking on Quni to sign.</p>
+<p>Open the booking on Quni to sign, or use the signing link in the separate email we sent you.</p>
 <a href="${reviewUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Open booking review →</a>`
 
   return {
@@ -478,7 +478,7 @@ export function listingBondReceivedLandlord(data) {
 <p>Hi ${landlordName},</p>
 <p>Thanks - we&apos;ve recorded bond receipt for your Listing booking at <strong>${propertyAddress}</strong>.</p>
 ${receiptLine}
-<p>The renter can now complete signing on their side. You&apos;ll receive DocuSeal notifications as usual.</p>
+<p>The renter can now complete signing on their side. We&apos;ll email you when the agreement is fully signed.</p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
 
   return {

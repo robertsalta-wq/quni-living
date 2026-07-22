@@ -333,7 +333,7 @@ export async function sendListingBookingAcceptedEmails(admin, bookingId, opts) {
 }
 
 /**
- * After Listing confirm when DocuSeal signing is live.
+ * After Listing confirm when signing emails / in-app links are live.
  * @param {import('@supabase/supabase-js').SupabaseClient} admin
  * @param {string} bookingId
  */

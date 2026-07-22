@@ -83,8 +83,8 @@ export default function LandlordListingAcceptedSummary({
           <span>
             <span className="font-semibold">Listing fee ({listingFeeDisplay}):</span> Charged to your saved card. This
             includes your state-appropriate{' '}
-            <span className="font-semibold">tenancy agreement</span> - both parties should receive DocuSeal signing
-            emails now (or use the signing link on this page).
+            <span className="font-semibold">tenancy agreement</span> - both parties should receive a Quni signing
+            email now (or use the signing link on this page).
           </span>
         </li>
         <li className="flex gap-2">

@@ -1174,7 +1174,7 @@ export default function LandlordBookingReviewPage() {
                         <a href="#tenancy-agreement-preview" className="font-semibold text-admin-coral underline underline-offset-2">
                           Tenancy agreement
                         </a>{' '}
-                        below and in your DocuSeal email. This is a self-report - Quni does not hold bond on Listing tenancies.
+                        below and in your Quni signing email. This is a self-report - Quni does not hold bond on Listing tenancies.
                       </p>
                       {canCancelListingBondPending && (
                         <button
