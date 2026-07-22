@@ -18,6 +18,9 @@
 import { createClient } from '@supabase/supabase-js'
 
 import { requireAdminUser } from '../lib/adminAuth.js'
+import { classifySignedNotReserving } from '../lib/admin/classifySignedNotReserving.js'
+import { classifyWebhookHealth } from '../lib/admin/classifyWebhookHealth.js'
+import { loadSignedNotReservingCandidates } from '../lib/admin/loadSignedNotReservingCandidates.js'
 
 export const config = { runtime: 'edge' }
 
@@ -238,6 +241,8 @@ export default async function handler(request: Request): Promise<Response> {
       paymentsPrev7dQ,
       paymentsLast14dDailyQ,
       kbLatestQ,
+      webhookHealthQ,
+      signedNotReservingQ,
     ] = await Promise.all([
       admin
         .from('bookings')
@@ -333,7 +338,13 @@ export default async function handler(request: Request): Promise<Response> {
         .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      admin
+        .from('provider_webhook_health')
+        .select('provider, last_received_at, last_error'),
+      loadSignedNotReservingCandidates(admin),
     ])
+
+    if (webhookHealthQ.error) throw webhookHealthQ.error
 
     const pendingOver24hCount = pendingOver24hQ.count ?? 0
     const openEnquiriesCount = enquiriesNewQ.count ?? 0
@@ -354,6 +365,10 @@ export default async function handler(request: Request): Promise<Response> {
     const paymentsPrior7d = paymentsPrev7dQ.data ?? []
     const paymentsDaily = paymentsLast14dDailyQ.data ?? []
     const kbLatest = kbLatestQ.data
+    const webhookClassified = classifyWebhookHealth(webhookHealthQ.data ?? [], Date.now())
+    const signedNotReservingAttention = classifySignedNotReserving(signedNotReservingQ.rows, {
+      smokeBookingIds: signedNotReservingQ.smokeBookingIds,
+    })
 
     const collected7dCents = paymentsThis7d.reduce(
       (sum, p) => sum + (p.amount_total ?? 0),
@@ -420,6 +435,12 @@ export default async function handler(request: Request): Promise<Response> {
         fixHref: '/admin/landlords?verified=false',
       })
     }
+    for (const item of signedNotReservingAttention) {
+      attention.push(item)
+    }
+    for (const item of webhookClassified.attention) {
+      attention.push(item)
+    }
 
     const snapshot: LivingConsoleSnapshot = {
       range,
@@ -481,7 +502,8 @@ export default async function handler(request: Request): Promise<Response> {
           spark: platformSpark,
           sparkColor: 'navy',
           rows: [
-            { tone: 'ok', text: 'DocuSeal · Stripe · Resend · Sentry - all green' },
+            // One row per provider from provider_webhook_health (no hardcoded "all green").
+            ...webhookClassified.zoneRows,
             { tone: 'ok', text: '0 domains expiring ≤ 30 days', stub: true },
             kbLatest?.updated_at
               ? { tone: 'watch', text: `Knowledge base last edited ${relativeAgo(kbLatest.updated_at)}` }
