@@ -63,10 +63,10 @@ export const renterNoteClass =
 export const renterFullWidthClass = 'col-span-full'
 
 export const renterUploadBtnClass =
-  'box-border flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-[#dad8dc] bg-[var(--quni-surface-1)] px-3 py-[11px] font-[inherit] text-[13px] font-semibold text-[var(--quni-ink-4)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
+  'box-border flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-[var(--quni-line)] bg-[var(--quni-surface-1)] px-3 py-[11px] font-[inherit] text-[13px] font-semibold text-[var(--quni-ink-4)] hover:border-[var(--quni-coral)] hover:text-[var(--quni-coral)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export const renterUploadFilledClass =
-  'flex min-w-0 items-center gap-2 rounded-[10px] border border-[#cdebdd] bg-[#f3fbf7] px-3 py-2.5 text-[13px] text-[var(--quni-success-fg)]'
+  'flex min-w-0 items-center gap-2 rounded-[10px] border border-[var(--quni-success-border)] bg-[var(--quni-success-tint)] px-3 py-2.5 text-[13px] text-[var(--quni-success-fg)]'
 
 export const renterUploadFilledTextClass =
   'min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap'

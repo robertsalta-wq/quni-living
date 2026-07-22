@@ -68,6 +68,8 @@
   --quni-success-strong:  #0F6E56;   /* dark green for emphasis */
   --quni-success-bg:      #E6F4EE;   /* emerald-50/100 equivalent */
   --quni-success-fg:      #0F6E56;
+  --quni-success-border:  #CDEBDD;   /* soft success outline (upload filled) */
+  --quni-success-tint:    #F3FBF7;   /* lighter than success-bg (upload filled) */
 
   --quni-warning:         #B7791F;
   --quni-warning-bg:      #FEF3C7;   /* amber-100 */
