@@ -1,0 +1,18 @@
+{
+  "phase": "run-once-plan",
+  "confirm": true,
+  "property": {
+    "id": "a61bc272-70e7-419c-a721-f69f50a09346",
+    "title": "Renovated home with sweeping views",
+    "state": "QLD",
+    "property_type": "private_room_landlord_off_site",
+    "bond": 0,
+    "bond_weeks": 0,
+    "landlord_id": "cb567e3c-7c59-43dd-b704-9653f098ae56",
+    "status": "active"
+  },
+  "studentProfileId": "12c09292-6546-4ba0-a476-0620bab453a4",
+  "landlordProfileId": "cb567e3c-7c59-43dd-b704-9653f098ae56",
+  "note": "NSW FT6600 inventory is fully occupied by real tenancies; using free QLD residential package which still creates a Co-tenant DocuSeal submitter.",
+  "coTenantEmail": "rob+smoke-co@quni.com.au"
+}

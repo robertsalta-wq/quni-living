@@ -1,0 +1,89 @@
+{
+  "phase": "verify",
+  "ranAt": "2026-07-22T03:21:37.664Z",
+  "bookingId": "1b07c4e6-245e-4c51-87ed-b7a5a769405c",
+  "bookingStatus": "bond_pending",
+  "coTenantOnBooking": {
+    "email": "rob+smoke-co@quni.com.au",
+    "phone": "0400000002",
+    "full_name": "Smoke Co-Tenant",
+    "date_of_birth": "1995-06-15"
+  },
+  "occupantCount": 2,
+  "tenancyDocument": {
+    "id": "6afcd6c7-6567-40be-a9a4-5d802982fa82",
+    "status": "sent_for_signing",
+    "document_type": "residential_tenancy",
+    "docuseal_submission_id": "167",
+    "landlord_signed_at": null,
+    "student_signed_at": null,
+    "co_tenant_signed_at": null,
+    "signing_package": "residential_tenancy_qld",
+    "updated_at": "2026-07-22T03:20:49.251279+00:00"
+  },
+  "checks": {
+    "hasTenancyDocument": true,
+    "statusSigned": false,
+    "landlordSignedAt": false,
+    "studentSignedAt": false,
+    "coTenantRequired": true,
+    "coTenantSignedAt": false,
+    "fullySignedEvent": false,
+    "signatureRecordedEvents": 0
+  },
+  "failures": [
+    "status_not_signed:sent_for_signing",
+    "landlord_signed_at_null",
+    "student_signed_at_null",
+    "co_tenant_signed_at_null",
+    "missing_booking_events_document.fully_signed"
+  ],
+  "recentEvents": [
+    {
+      "event_type": "document.generated",
+      "occurred_at": "2026-07-22T03:20:50.661+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.sent_for_signing",
+      "occurred_at": "2026-07-22T03:20:49.832+00:00",
+      "outcome": "pending",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "booking.terms_updated",
+      "occurred_at": "2026-07-22T03:20:26.353+00:00",
+      "outcome": "success",
+      "document_id": null
+    }
+  ],
+  "docusealSubmitters": [
+    {
+      "id": 283,
+      "role": "First Party",
+      "party": "landlord",
+      "email": "davidsalta888@gmail.com",
+      "status": "awaiting",
+      "completed_at": null
+    },
+    {
+      "id": 284,
+      "role": "Second Party",
+      "party": "tenant",
+      "email": "rob@3thingsatonce.com.au",
+      "status": "awaiting",
+      "completed_at": null
+    },
+    {
+      "id": 285,
+      "role": "Co-tenant",
+      "party": "co_tenant",
+      "email": "rob+smoke-co@quni.com.au",
+      "status": "awaiting",
+      "completed_at": null
+    }
+  ],
+  "pass": false,
+  "refuse": "DO NOT run reconcile-historical-docuseal-signatures or manually patch *_signed_at. Fix webhook / co-tenant path, then re-sign on a fresh regenerate."
+}

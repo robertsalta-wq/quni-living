@@ -1,0 +1,33 @@
+{
+  "phase": "complete-via-api",
+  "ranAt": "2026-07-22T03:22:56.213Z",
+  "bookingId": "1b07c4e6-245e-4c51-87ed-b7a5a769405c",
+  "submissionId": "167",
+  "results": [
+    {
+      "party": "landlord",
+      "submitterId": 283,
+      "role": "First Party",
+      "fieldsSent": 0,
+      "statusAfter": "completed",
+      "completed_at": "2026-07-22T03:22:39.924Z"
+    },
+    {
+      "party": "tenant",
+      "submitterId": 284,
+      "role": "Second Party",
+      "fieldsSent": 0,
+      "statusAfter": "completed",
+      "completed_at": "2026-07-22T03:22:42.911Z"
+    },
+    {
+      "party": "co_tenant",
+      "submitterId": 285,
+      "role": "Co-tenant",
+      "fieldsSent": 0,
+      "statusAfter": "completed",
+      "completed_at": "2026-07-22T03:22:45.991Z"
+    }
+  ],
+  "note": "API PUT completed=true. Verify must still pass via webhooks — do not reconcile if verify fails."
+}

@@ -1,0 +1,119 @@
+{
+  "phase": "verify",
+  "ranAt": "2026-07-22T03:23:29.526Z",
+  "bookingId": "1b07c4e6-245e-4c51-87ed-b7a5a769405c",
+  "bookingStatus": "bond_pending",
+  "coTenantOnBooking": {
+    "email": "rob+smoke-co@quni.com.au",
+    "phone": "0400000002",
+    "full_name": "Smoke Co-Tenant",
+    "date_of_birth": "1995-06-15"
+  },
+  "occupantCount": 2,
+  "tenancyDocument": {
+    "id": "6afcd6c7-6567-40be-a9a4-5d802982fa82",
+    "status": "signed",
+    "document_type": "residential_tenancy",
+    "docuseal_submission_id": "167",
+    "landlord_signed_at": "2026-07-22T03:22:39.924+00:00",
+    "student_signed_at": "2026-07-22T03:22:42.911+00:00",
+    "co_tenant_signed_at": "2026-07-22T03:22:45.991+00:00",
+    "signing_package": "residential_tenancy_qld",
+    "updated_at": "2026-07-22T03:22:53.446809+00:00"
+  },
+  "checks": {
+    "hasTenancyDocument": true,
+    "statusSigned": true,
+    "landlordSignedAt": true,
+    "studentSignedAt": true,
+    "coTenantRequired": true,
+    "coTenantSignedAt": true,
+    "fullySignedEvent": true,
+    "signatureRecordedEvents": 5
+  },
+  "failures": [],
+  "recentEvents": [
+    {
+      "event_type": "document.signature_recorded",
+      "occurred_at": "2026-07-22T03:22:45.991+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.fully_signed",
+      "occurred_at": "2026-07-22T03:22:45.991+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.signature_recorded",
+      "occurred_at": "2026-07-22T03:22:45.991+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.signature_recorded",
+      "occurred_at": "2026-07-22T03:22:42.911+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.signature_recorded",
+      "occurred_at": "2026-07-22T03:22:39.924+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.signature_recorded",
+      "occurred_at": "2026-07-22T03:22:39.924+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.generated",
+      "occurred_at": "2026-07-22T03:20:50.661+00:00",
+      "outcome": "success",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "document.sent_for_signing",
+      "occurred_at": "2026-07-22T03:20:49.832+00:00",
+      "outcome": "pending",
+      "document_id": "6afcd6c7-6567-40be-a9a4-5d802982fa82"
+    },
+    {
+      "event_type": "booking.terms_updated",
+      "occurred_at": "2026-07-22T03:20:26.353+00:00",
+      "outcome": "success",
+      "document_id": null
+    }
+  ],
+  "docusealSubmitters": [
+    {
+      "id": 283,
+      "role": "First Party",
+      "party": "landlord",
+      "email": "davidsalta888@gmail.com",
+      "status": "completed",
+      "completed_at": "2026-07-22T03:22:39.924Z"
+    },
+    {
+      "id": 284,
+      "role": "Second Party",
+      "party": "tenant",
+      "email": "rob@3thingsatonce.com.au",
+      "status": "completed",
+      "completed_at": "2026-07-22T03:22:42.911Z"
+    },
+    {
+      "id": 285,
+      "role": "Co-tenant",
+      "party": "co_tenant",
+      "email": "rob+smoke-co@quni.com.au",
+      "status": "completed",
+      "completed_at": "2026-07-22T03:22:45.991Z"
+    }
+  ],
+  "pass": true,
+  "refuse": null
+}

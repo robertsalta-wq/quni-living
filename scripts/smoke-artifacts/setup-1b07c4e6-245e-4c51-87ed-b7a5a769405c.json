@@ -1,0 +1,100 @@
+{
+  "phase": "setup",
+  "ranAt": "2026-07-22T03:20:52.255Z",
+  "smokeTag": "[SMOKE three-party signing 2026-07-22]",
+  "bookingId": "1b07c4e6-245e-4c51-87ed-b7a5a769405c",
+  "bookingStatus": "bond_pending",
+  "tenancyDocumentId": "6afcd6c7-6567-40be-a9a4-5d802982fa82",
+  "documentStatus": "sent_for_signing",
+  "signingPackage": "residential_tenancy_qld",
+  "oldSubmissionId": null,
+  "newSubmissionId": "167",
+  "coTenant": {
+    "full_name": "Smoke Co-Tenant",
+    "email": "rob+smoke-co@quni.com.au",
+    "phone": "0400000002",
+    "date_of_birth": "1995-06-15"
+  },
+  "termsResult": {
+    "skipped": false,
+    "patch": {
+      "occupant_count": 2,
+      "co_tenant": {
+        "full_name": "Smoke Co-Tenant",
+        "email": "rob+smoke-co@quni.com.au",
+        "phone": "0400000002",
+        "date_of_birth": "1995-06-15"
+      },
+      "notes": "[SMOKE three-party signing 2026-07-22] co-tenant attached for webhook smoke"
+    },
+    "response": {
+      "ok": true,
+      "changes": {
+        "notes": {
+          "from": "[SMOKE three-party signing 2026-07-22] disposable booking — cancel after smoke",
+          "to": "[SMOKE three-party signing 2026-07-22] co-tenant attached for webhook smoke"
+        },
+        "occupant_count": {
+          "from": 1,
+          "to": 2
+        },
+        "housemates_count": {
+          "from": 0,
+          "to": 1
+        },
+        "co_tenant": {
+          "from": null,
+          "to": {
+            "full_name": "Smoke Co-Tenant",
+            "email": "rob+smoke-co@quni.com.au",
+            "phone": "0400000002",
+            "date_of_birth": "1995-06-15"
+          }
+        }
+      },
+      "co_tenant_unverified": true
+    }
+  },
+  "regenResult": {
+    "skipped": false,
+    "response": {
+      "ok": true,
+      "reset": false,
+      "previous_document_status": null,
+      "skipped": false,
+      "reason": null
+    }
+  },
+  "signingLinks": {
+    "landlord": {
+      "role": "First Party",
+      "email": "davidsalta888@gmail.com",
+      "submitterId": 283,
+      "wrapped_sign_url": "https://quni.com.au/api/sign/283.d.3fkC6etiP0L5kx5S79XLoIaFi-3YCzigVctOCq9cdIQ",
+      "instruction": "Sign FIRST as landlord"
+    },
+    "tenant": {
+      "role": "Second Party",
+      "email": "rob@3thingsatonce.com.au",
+      "submitterId": 284,
+      "wrapped_sign_url": "https://quni.com.au/api/sign/284.d.PWwWqHXx3wfyje74RJ9XsfwkRSx1ovU8Sbfz_8vjsrI",
+      "instruction": "Sign SECOND as primary tenant"
+    },
+    "co_tenant": {
+      "role": "Co-tenant",
+      "email": "rob+smoke-co@quni.com.au",
+      "submitterId": 285,
+      "wrapped_sign_url": "https://quni.com.au/api/sign/285.d.BZddyG8-6RGScSygldPPtNmoLChkqAmyu3z4ISWW3oc",
+      "instruction": "Sign THIRD as co-tenant"
+    }
+  },
+  "humanChecklist": [
+    "Confirm DocuSeal webhook: https://quni.com.au/api/webhooks/docuseal (form.completed + submission.completed).",
+    "Open landlord wrapped_sign_url → sign.",
+    "Open tenant wrapped_sign_url → sign.",
+    "Open co_tenant wrapped_sign_url → sign.",
+    "Then: node scripts/run-with-env.mjs node scripts/smoke-terms-signing-verify.mjs 1b07c4e6-245e-4c51-87ed-b7a5a769405c",
+    "On failure: STOP — do not run reconcile scripts or patch timestamps.",
+    "After pass: cancel/tear down this smoke booking."
+  ]
+}
