@@ -42,6 +42,9 @@ const CWV_INP_FAIL_MS = 200
 const CWV_CLS_FAIL = 0.1
 
 const ROUTE_PATTERNS: RoutePattern[] = [
+  // Homepage first — primary marketing LCP/CLS watch after the perf arc.
+  { label: '/', query: 'transaction:/' },
+  { label: '/for-universities', query: 'transaction:/for-universities' },
   { label: '/listings', query: 'transaction:/listings' },
   {
     label: '/student-accommodation/*',
