@@ -5,12 +5,13 @@
  * Listing: no student Stripe call — commit inserts pending_confirmation with no deposit fields.
  *
  * POST JSON (Managed create PI): {
- *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged, listingAcknowledged,
  *   occupantCount?: 1|2, parkingSelected?: boolean
  * }
  * POST JSON (Listing apply preview): same body → { listingApply: true, weeklyRent, ... }
  * POST JSON (commit): {
  *   commit: true, propertyId, moveInDate, leaseLength, studentMessage?, bondAcknowledged,
+ *   listingAcknowledged,
  *   paymentIntentId?,  // Managed only
  *   propertyType?, rentPaymentMethod?, conversationId?, occupantCount?, parkingSelected?,
  *   coTenant?: { full_name, email, phone, date_of_birth }
@@ -57,8 +58,10 @@ import {
 import { TENANT_BOOKING_PIPELINE_STATUSES } from './lib/booking/tenantBookingPipelineStatuses.js'
 import { checkPropertyAvailableForNewApplication } from './lib/booking/propertyAvailability.js'
 import {
+  buildListingAcknowledgmentColumns,
   buildListingApplyBookingRow,
   isListingServiceTier,
+  LISTING_SNAPSHOT_PROPERTY_COLUMNS,
 } from './lib/booking/listingBookingApply.js'
 import { bondAmountAtApplyFromProperty } from './lib/booking/bookingBondAmount.js'
 import { landlordResponseExpiresAtIso } from './lib/booking/landlordResponseExpiry.js'
@@ -190,14 +193,17 @@ function recordBookingSubmitAttempt(admin, user, propertyId, mode, attemptId, se
   })
 }
 
-function recordBookingCompleted(admin, user, propertyId, mode, attemptId, bookingId, serviceTier, deviceCtx) {
+function recordBookingCompleted(admin, user, propertyId, mode, attemptId, bookingId, serviceTier, deviceCtx, extraMeta) {
   recordJourneyEvent(admin, {
     ...journeyActor(user, attemptId),
     property_id: propertyId,
     event_type: 'booking_completed',
     step: mode,
     service_tier: serviceTier ?? null,
-    metadata: mergeDeviceContextMetadata({ booking_id: bookingId }, deviceCtx),
+    metadata: mergeDeviceContextMetadata(
+      { booking_id: bookingId, ...(extraMeta && typeof extraMeta === 'object' ? extraMeta : {}) },
+      deviceCtx,
+    ),
   })
 }
 
@@ -336,6 +342,7 @@ async function handleListingBookingCommit(request, origin, body) {
   const leaseLength = typeof body.leaseLength === 'string' ? body.leaseLength.trim() : ''
   const studentMessage = typeof body.studentMessage === 'string' ? body.studentMessage.slice(0, 4000) : ''
   const bondAcknowledged = body.bondAcknowledged === true
+  const listingAcknowledged = body.listingAcknowledged === true
   const propertyTypeRaw = typeof body.propertyType === 'string' ? body.propertyType.trim() : ''
   const propertyType = VALID_PROPERTY_TYPES.has(propertyTypeRaw) ? propertyTypeRaw : 'entire_property'
   const conversationIdHint =
@@ -352,6 +359,9 @@ async function handleListingBookingCommit(request, origin, body) {
   }
   if (!bondAcknowledged) {
     return json({ error: 'Bond acknowledgement is required' }, 400, origin)
+  }
+  if (!listingAcknowledged) {
+    return json({ error: 'Listing acknowledgement is required' }, 400, origin)
   }
 
   const auth = request.headers.get('authorization') || ''
@@ -438,7 +448,7 @@ async function handleListingBookingCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -519,6 +529,14 @@ async function handleListingBookingCommit(request, origin, body) {
   const expiresAt = landlordResponseExpiresAtIso('listing')
   const endDate = leaseEndDateIso(moveInDate, leaseLength)
 
+  let listingAcknowledgment
+  try {
+    listingAcknowledgment = await buildListingAcknowledgmentColumns(admin, property)
+  } catch (snapErr) {
+    console.error('[listing-apply] listing snapshot', snapErr)
+    return json({ error: 'Could not capture listing acknowledgment snapshot' }, 500, origin)
+  }
+
   const row = buildListingApplyBookingRow({
     property,
     student,
@@ -536,6 +554,7 @@ async function handleListingBookingCommit(request, origin, body) {
     endDate,
     tenantInviteId,
     bondAmount,
+    listingAcknowledgment,
   })
 
   const { data: inserted, error: insErr } = await admin.from('bookings').insert(row).select('id, student_id').single()
@@ -605,6 +624,10 @@ async function handleListingBookingCommit(request, origin, body) {
       inserted.id,
       property.service_tier ?? null,
       deviceCtx,
+      {
+        listing_acknowledged: true,
+        listing_snapshot_hash: listingAcknowledgment.listing_snapshot_hash,
+      },
     )
     return json({ ok: true, bookingId: inserted.id, listingApply: true }, 200, origin)
   }
@@ -649,6 +672,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const leaseLength = typeof body.leaseLength === 'string' ? body.leaseLength.trim() : ''
   const studentMessage = typeof body.studentMessage === 'string' ? body.studentMessage.slice(0, 4000) : ''
   const bondAcknowledged = body.bondAcknowledged === true
+  const listingAcknowledged = body.listingAcknowledged === true
   const propertyTypeRaw = typeof body.propertyType === 'string' ? body.propertyType.trim() : ''
   const propertyType = VALID_PROPERTY_TYPES.has(propertyTypeRaw) ? propertyTypeRaw : 'entire_property'
   const rentPaymentMethodRaw =
@@ -671,6 +695,9 @@ async function handlePaymentIntentCommit(request, origin, body) {
   }
   if (!bondAcknowledged) {
     return json({ error: 'Bond acknowledgement is required' }, 400, origin)
+  }
+  if (!listingAcknowledged) {
+    return json({ error: 'Listing acknowledgement is required' }, 400, origin)
   }
   if (!rentPaymentMethod) {
     return json(
@@ -774,7 +801,7 @@ async function handlePaymentIntentCommit(request, origin, body) {
   const { data: property, error: propErr } = await admin
     .from('properties')
     .select(
-      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}`,
+      `id, title, landlord_id, status, suburb, state, property_type, is_registered_rooming_house, service_tier, available_from, ${OCCUPANCY_PROPERTY_COLUMNS}, ${LISTING_SNAPSHOT_PROPERTY_COLUMNS}`,
     )
     .eq('id', propertyId)
     .maybeSingle()
@@ -903,6 +930,15 @@ async function handlePaymentIntentCommit(request, origin, body) {
 
   const bondAmount = bondAmountAtApplyFromProperty(property, weeklyRent)
 
+  let listingAcknowledgment
+  try {
+    listingAcknowledgment = await buildListingAcknowledgmentColumns(admin, property)
+  } catch (snapErr) {
+    console.error('[managed-commit] listing snapshot', snapErr)
+    await releaseAuthorisedDepositIntent(stripe, paymentIntentId, 'listing_snapshot_failed', managedVis)
+    return json({ error: 'Could not capture listing acknowledgment snapshot' }, 500, origin)
+  }
+
   const row = {
     property_id: property.id,
     student_id: student.id,
@@ -917,6 +953,10 @@ async function handlePaymentIntentCommit(request, origin, body) {
     student_message: studentMessage.trim() || null,
     lease_length: leaseLength,
     bond_acknowledged: true,
+    listing_acknowledged: listingAcknowledgment.listing_acknowledged,
+    listing_acknowledged_at: listingAcknowledgment.listing_acknowledged_at,
+    listing_snapshot: listingAcknowledgment.listing_snapshot,
+    listing_snapshot_hash: listingAcknowledgment.listing_snapshot_hash,
     stripe_payment_intent_id: paymentIntentId,
     deposit_amount: depositCents,
     platform_fee_amount: bookingFeeCents,
@@ -955,6 +995,10 @@ async function handlePaymentIntentCommit(request, origin, body) {
       inserted.id,
       property.service_tier ?? null,
       deviceCtx,
+      {
+        listing_acknowledged: true,
+        listing_snapshot_hash: listingAcknowledgment.listing_snapshot_hash,
+      },
     )
     return json({ ok: true, bookingId: inserted.id }, 200, origin)
   }
