@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ReadinessProgressBar from './ReadinessProgressBar'
 import type { ProfileReadinessDriverProps, ReadinessDriverStep } from './types'
 
 /** Serif display line — Playfair via app `font-display` token. */
@@ -136,20 +137,7 @@ export default function ProfileReadinessDriver({
       </div>
     ) : null
 
-  const progressBlock = (
-    <div
-      className="my-3.5 h-2 overflow-hidden rounded-full bg-admin-surface-3"
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={barWidth}
-    >
-      <div
-        className="h-full rounded-full bg-admin-coral transition-[width] duration-300"
-        style={{ width: `${barWidth}%` }}
-      />
-    </div>
-  )
+  const progressBlock = <ReadinessProgressBar value={barWidth} className="my-3.5" />
 
   if (allComplete) {
     return (

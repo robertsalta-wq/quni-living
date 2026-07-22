@@ -21,7 +21,7 @@ export function RenterSituationSection({ currentSituation, onSelect, busy = fals
   const collapsed = currentSituation != null && !editing
 
   return (
-    <section id="renter-section-situation" className="renter-profile-card scroll-mt-below-header">
+    <section id="renter-section-situation" className="quni-card overflow-hidden font-sans scroll-mt-below-header">
       <div
         className="renter-profile-card-header renter-profile-card-header-static renter-profile-card-header-situation"
       >

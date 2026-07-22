@@ -494,7 +494,7 @@ export default function StudentProfile() {
             <section
               ref={dangerZoneRef}
               id="student-profile-danger-zone"
-              className="renter-profile-card"
+              className="quni-card overflow-hidden font-sans"
               style={{ padding: '20px' }}
               aria-labelledby="danger-zone-heading"
             >
