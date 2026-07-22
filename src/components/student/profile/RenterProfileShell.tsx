@@ -9,6 +9,7 @@ type Props = {
   onCancel: () => void
 }
 
+/** R2a: quni-modal surface (visual-gate covered). */
 export function SwitchSituationDialog({ nextSituation, fromSituation, onConfirm, onCancel }: Props) {
   const nextLabel =
     nextSituation === 'working_holiday'
