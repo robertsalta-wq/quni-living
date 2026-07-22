@@ -149,7 +149,7 @@ export default function BookingLeasePanel({
   const regenerateAgreement = useCallback(async () => {
     if (!bookingId || !allowRegenerateAgreement) return
     const confirmed = window.confirm(
-      'Regenerate the tenancy agreement?\n\nThis creates a new PDF and new DocuSeal signing links. Any previous signing links (including emails already sent) will no longer apply. Only use this if the current agreement is wrong or was generated before a fix.\n\nContinue?',
+      'Regenerate the tenancy agreement?\n\nThis creates a new PDF and new signing links. Any previous signing links (including emails already sent) will no longer apply. Only use this if the current agreement is wrong or was generated before a fix.\n\nContinue?',
     )
     if (!confirmed) return
 

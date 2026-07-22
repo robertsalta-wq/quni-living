@@ -478,7 +478,7 @@ export function listingBondReceivedLandlord(data) {
 <p>Hi ${landlordName},</p>
 <p>Thanks - we&apos;ve recorded bond receipt for your Listing booking at <strong>${propertyAddress}</strong>.</p>
 ${receiptLine}
-<p>The renter can now complete signing on their side. You&apos;ll receive DocuSeal notifications as usual.</p>
+<p>The renter can now complete signing on their side. We&apos;ll email you when the agreement is fully signed.</p>
 <a href="${dashboardUrl}" style="background-color: #FF6F61; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">View booking →</a>`
 
   return {
