@@ -113,7 +113,11 @@ test.describe('booking apply', () => {
     await page.locator('#bk-msg').fill('E2E booking apply test message')
     await page.getByRole('button', { name: 'Continue' }).click()
 
-    await page.locator('input[type="checkbox"]').first().check()
+    // Bond ack + listing review ack (both required to enable submit)
+    const checkboxes = page.locator('input[type="checkbox"]')
+    await expect(checkboxes).toHaveCount(2)
+    await checkboxes.nth(0).check()
+    await checkboxes.nth(1).check()
     await page.getByRole('button', { name: 'Submit booking request' }).click()
 
     await expect(page.getByText('Request submitted', { exact: true }).first()).toBeVisible({
@@ -123,7 +127,9 @@ test.describe('booking apply', () => {
 
     const { data: booking, error: bookingErr } = await admin
       .from('bookings')
-      .select('id, status, property_id, student_id')
+      .select(
+        'id, status, property_id, student_id, listing_acknowledged, listing_acknowledged_at, listing_snapshot_hash',
+      )
       .eq('student_id', studentProfileId)
       .eq('property_id', propertyId)
       .order('created_at', { ascending: false })
@@ -134,6 +140,9 @@ test.describe('booking apply', () => {
     expect(booking?.status).toBe('pending_confirmation')
     expect(booking?.student_id).toBe(studentProfileId)
     expect(booking?.property_id).toBe(propertyId)
+    expect(booking?.listing_acknowledged).toBe(true)
+    expect(booking?.listing_acknowledged_at).toBeTruthy()
+    expect(booking?.listing_snapshot_hash).toMatch(/^[0-9a-f]{64}$/)
     bookingId = booking?.id ?? null
   })
 })
