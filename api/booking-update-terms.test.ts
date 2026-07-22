@@ -231,11 +231,15 @@ function buildClients(opts: HarnessOpts = {}) {
         }
       }
 
-      if (table === 'service_tier_events') {
+      if (table === 'booking_events') {
         return {
-          insert: async (row: Record<string, unknown>) => {
+          insert: (row: Record<string, unknown>) => {
             events.push(row)
-            return { error: null }
+            return {
+              select: () => ({
+                single: async () => ({ data: { id: `evt-${events.length}` }, error: null }),
+              }),
+            }
           },
         }
       }
@@ -381,7 +385,7 @@ describe('POST /api/booking-update-terms endpoint guards', () => {
     expect(admin.bookingUpdates).toHaveLength(1)
     expect(admin.bookingUpdates[0]).toMatchObject({ notes: 'Pre-doc note update' })
     expect(admin.tenancyUpdates).toHaveLength(0)
-    expect(admin.events[0]).toMatchObject({ event_type: 'booking_terms_update' })
+    expect(admin.events[0]).toMatchObject({ event_type: 'booking.terms_updated' })
   })
 
   it('applies co_tenant null as occupant_count 1 and housemates_count 0 on the booking update', async () => {

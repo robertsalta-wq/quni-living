@@ -15,7 +15,7 @@
 ## Pre-build amendments (apply before Stage 1)
 
 1. **`end_date` recompute is conditional** — only when the patch includes `lease_length`, `move_in_date`, or `start_date`. Notes-only, occupant-only, co-tenant-only, or rent/bond-only saves must **not** touch `end_date` (avoids silently shifting day-based apply-time values).
-2. **Hide `LandlordBookingAgreedRentEditor` for Listing only** — managed bookings (out of v1 scope) keep the existing agreed-rent editor as their only rent control. Hide agreed-rent editor when: listing tier **and** new terms editor is shown (same status allowlist).
+2. **Hide `LandlordBookingAgreedRentEditor` for Listing when terms editor shows** — Listing pre-sign uses `LandlordBookingTermsEditor`. Agreed-rent override remains listing-only at the API (`managed_booking` 400); Managed term edits are a follow-up, not “keep the old editor.”
 3. **`reason` required on every save** — ≥3 chars whenever any patch key is present (not only rent/bond). Weak audit trail otherwise for lease length / co-tenant / date changes. UI always shows reason field when editor is visible.
 4. **Admin events page** — `AdminServiceTierEvents` renders `event_type` as raw text and builds its filter dropdown from distinct DB values; `'booking_terms_update'` needs no code change (appears in filter after first event). Optional polish: human label in a follow-up.
 
@@ -245,7 +245,7 @@ When no doc / no tenancy: `any_party_signed: false`.
 - `src/pages/landlord/LandlordBookingReviewPage.tsx`:
   - Import and render `LandlordBookingTermsEditor` for listing bookings in `pending_confirmation | awaiting_info | bond_pending`.
   - Pass booking fields + `onSaved={() => { reload(); setLeasePanelRefreshKey(k => k+1) }}`.
-  - **Hide** `LandlordBookingAgreedRentEditor` only when listing tier **and** new terms editor is shown (same statuses). **Keep** agreed-rent editor for managed bookings.
+  - **Hide** `LandlordBookingAgreedRentEditor` when listing tier **and** new terms editor is shown (same statuses). **Managed:** Terms rail shows no Edit (API rejects agreed-rent override); use property/room rent for changes.
 
 **Do NOT edit** `BookingLeasePanel.tsx` except optionally document in comment — regenerate control stays there.
 
@@ -278,14 +278,14 @@ When no doc / no tenancy: `any_party_signed: false`.
 - [x] `lease_length: 'Flexible'` → `end_date` null on booking + tenancy sync (endpoint)
 - [x] Notes-only save → `end_date` unchanged (builder + endpoint)
 - [x] Conditional `end_date` recompute on lease-length change (prod: 6 months → 3 months, 2027-01-16 → 2026-10-16; only those fields)
-- [x] Audit row in `service_tier_events` with `event_type = 'booking_terms_update'` (prod: actor + clean old/new diff)
+- [x] Audit row in `booking_events` with `event_type = 'booking.terms_updated'` (endpoint tests + prod path; STE demoted)
 - [x] Regenerate agreement reissues DocuSeal submission (prod: 164 → 165)
 - [x] Student dashboard `BookingLeasePanel` — no edit form visible (`landlordBookingTermsEditorPrivilege.test.ts`)
 
 ### Still manual (UI / product smoke)
 
-- [ ] Managed booking review page → agreed-rent editor still visible (UI; not booking-update-terms)
-- [ ] Full landlord smoke: edit terms → Regenerate agreement → all parties sign (beyond Sahil partial path)
+- [x] Managed booking review → agreed-rent editor (closed 2026-07-22): `booking-set-agreed-rent` returns `managed_booking` 400; Terms rail uses `resolveBookingReviewTermsEditorMode` so Managed gets **no** Edit / listing terms editor. Full Managed term edits remain a follow-up.
+- [ ] Full landlord smoke: edit terms → Regenerate agreement → all parties sign via live DocuSeal webhooks (beyond Sahil regenerate + manual reconcile)
 
 ---
 
